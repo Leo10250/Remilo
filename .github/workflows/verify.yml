@@ -33,5 +33,9 @@ jobs:
           java-version: '17.0.20'
       - run: npm ci
       - run: chmod +x android/gradlew
-      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'build-tools;35.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
+      - name: Install Android build packages
+        run: |
+          task_sdkmanager="$(rg --files "$ANDROID_HOME/cmdline-tools" | rg '/bin/sdkmanager$' | sort -V | tail -n 1)"
+          test -x "$task_sdkmanager"
+          "$task_sdkmanager" --sdk_root="$ANDROID_HOME" 'platforms;android-36' 'build-tools;36.0.0' 'build-tools;35.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
       - run: npm run verify:android
