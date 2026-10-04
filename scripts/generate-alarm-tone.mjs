@@ -1,4 +1,5 @@
 // Original packaged tone; no external audio provider is needed before unlock.
+import { Buffer } from 'node:buffer';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { root } from './tools.mjs';

@@ -21,10 +21,16 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - uses: actions/setup-java@v4
+      - name: Download pinned Temurin JDK
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/remilo-jdk.tar.gz" 'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.20.1_1.tar.gz'
+          echo "3808d1d15e3ec6bd5b84057fb5d84c33d8a1536a258146bcea2e603fc726e08e  $RUNNER_TEMP/remilo-jdk.tar.gz" | sha256sum --check
+      - uses: actions/setup-java@v5
         with:
-          distribution: temurin
-          java-version: '17.0.20.1'
+          distribution: jdkfile
+          jdk-file: ${{ runner.temp }}/remilo-jdk.tar.gz
+          # setup-java's cache label requires SemVer; archive/checksum pins 17.0.20.1+1.
+          java-version: '17.0.20'
       - run: npm ci
       - run: chmod +x android/gradlew
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'build-tools;35.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
