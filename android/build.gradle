@@ -1,0 +1,41 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+    classpath('com.google.devtools.ksp:symbol-processing-gradle-plugin:2.1.20-2.0.1')
+    classpath('org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:2.1.20')
+  }
+}
+
+allprojects {
+  ['com.android.application', 'com.android.library'].each { pluginId ->
+    plugins.withId(pluginId) {
+      // Bound Ninja concurrency on developer machines and small CI runners.
+      android.defaultConfig.externalNativeBuild.cmake.arguments(
+        '-DCMAKE_JOB_POOLS=remilo_compile=2;remilo_link=1',
+        '-DCMAKE_JOB_POOL_COMPILE=remilo_compile', '-DCMAKE_JOB_POOL_LINK=remilo_link')
+    }
+  }
+  // AGP 8.12 K2 lint crashes on the applied Kotlin scripts in these dependencies.
+  // Keep K2 analysis for owned app/module source; only these dependencies use K1.
+  if (name in ['react-native-worklets', 'react-native-reanimated']) {
+    plugins.withId('com.android.library') {
+      android.experimentalProperties['android.lint.useK2Uast'] = false
+    }
+  }
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
+}
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

@@ -1,0 +1,36 @@
+package com.remilo.alarm.system
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import com.remilo.alarm.data.AlertRecord
+
+class AlarmScheduler(private val context: Context) : AlarmRegistrar {
+  private val alarms = context.getSystemService(AlarmManager::class.java)
+  override fun canSchedule(): Boolean = alarms.canScheduleExactAlarms()
+  override fun register(alert: AlertRecord) {
+    check(canSchedule()) { "Exact alarm access is missing" }
+    val launch = context.packageManager.getLaunchIntentForPackage(context.packageName)!!
+    val show = PendingIntent.getActivity(context, 0, launch,
+      PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+    alarms.setAlarmClock(AlarmManager.AlarmClockInfo(alert.targetMs, show), delivery(alert))
+  }
+  override fun cancel(alert: AlertRecord) { alarms.cancel(delivery(alert)) }
+  private fun delivery(alert: AlertRecord): PendingIntent = PendingIntent.getBroadcast(
+    context, 0, intent(context, "fire", alert.occurrenceId, alert.generation),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+  companion object {
+    fun intent(context: Context, purpose: String, id: String, generation: Long): Intent =
+      Intent(context, AlarmReceiver::class.java).apply {
+        action = "com.remilo.alarm.$purpose"
+        data = Uri.Builder().scheme("remilo-alarm").authority(purpose).appendPath(id)
+          .appendPath(generation.toString()).build()
+        putExtra("occurrenceId", id)
+        putExtra("generation", generation)
+      }
+    fun action(context: Context, purpose: String, alert: AlertRecord): PendingIntent =
+      PendingIntent.getBroadcast(context, 0, intent(context, purpose, alert.occurrenceId, alert.generation),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "remilo",
+  "main": "expo-router/entry",
+  "version": "0.1.0",
+  "dependencies": {
+    "@tanstack/react-query": "^5.104.1",
+    "expo": "~57.0.26",
+    "expo-constants": "~57.0.20",
+    "expo-dev-client": "~57.0.19",
+    "expo-font": "~57.0.4",
+    "expo-linking": "~57.0.11",
+    "expo-modules-core": "~57.0.20",
+    "expo-router": "~57.0.24",
+    "expo-splash-screen": "~57.0.9",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.2",
+    "vitest": "^5.0.3"
+  },
+  "scripts": {
+    "postinstall": "node scripts/decoder-compat.mjs",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "verify": "node scripts/verify.mjs",
+    "verify:android": "node scripts/android.mjs verify",
+    "verify:device": "node scripts/device.mjs",
+    "build:beta": "node scripts/android.mjs beta"
+  },
+  "private": true,
+  "overrides": {
+    "decode-uri-component": "0.5.0"
+  },
+  "engines": {
+    "node": "22.23.x"
+  }
+}
