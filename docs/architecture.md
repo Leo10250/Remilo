@@ -31,6 +31,12 @@ One-off deliveries have independent explicit immutable PendingIntent identities
 (purpose, occurrence, generation). Extras alone are not identity. A failed earlier
 callback must not remove the only future wake-up for unrelated reminders.
 
+Construct the alarm-clock show handle using explicit launcher resolution with both
+Direct Boot match flags. Default launcher lookup hides the credential-protected
+product activity before unlock; it cannot be a prerequisite for alarm registration.
+Creating a handle does not start that activity. The UI remains unavailable until
+unlock; actual pre-unlock controls belong to the Direct Boot aware native activity.
+
 One native audio session with an elapsed-time deadline. New members do not extend
 it. Audio termination is independent of persistence. FGS is systemExempted while
 exact-alarm eligibility holds; promote before requesting audio. Native wakefulness

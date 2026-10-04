@@ -3,11 +3,13 @@ package com.remilo.alarm.system
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.remilo.alarm.engine.AlarmEngine
 
 class RecoveryReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action !in ACTIONS) return
+    Log.i("Remilo", "Recovery received: ${intent.action}")
     val pending = goAsync()
     try { AlarmEngine.get(context).recover { pending.finish() } }
     catch (_: Exception) { pending.finish() }

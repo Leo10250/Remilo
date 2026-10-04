@@ -151,7 +151,10 @@ class AlarmEngine internal constructor(private val context: Context,
     val state = when {
       alert.targetMs <= now() -> "Missed"
       !ready() -> "Blocked"
-      else -> try { scheduler.register(alert); "Scheduled" } catch (_: Exception) { "Blocked" }
+      else -> try { scheduler.register(alert); "Scheduled" } catch (error: Exception) {
+        Log.w("Remilo", "Alarm registration failed: ${error.javaClass.simpleName}")
+        "Blocked"
+      }
     }
     return alert.copy(state = state, sessionId = null).also { alerts.put(it) }
   }
@@ -267,6 +270,8 @@ class AlarmEngine internal constructor(private val context: Context,
   fun recover(finished: () -> Unit = {}) = submit(finished) {
     if (unlocked()) { val db = content(); applyPending(db); replayHistory(db) }
     alerts.all().filter { it.state in setOf("Scheduled", "Pending", "Blocked") }.forEach { register(it) }
+    val caps = capabilities()
+    Log.i("Remilo", "Recovery finished: unlocked=${caps["unlocked"]} exact=${caps["exactAlarms"]} notifications=${caps["notifications"]} channel=${caps["channelEnabled"]}")
     changed()
   }
 

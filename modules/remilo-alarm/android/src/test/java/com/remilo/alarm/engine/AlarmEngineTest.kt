@@ -38,9 +38,9 @@ class AlarmEngineTest {
     engine.request(body, { result.complete(it) }, { result.completeExceptionally(AssertionError(it)) })
     return result.get(20, TimeUnit.SECONDS)
   }
-  @Suppress("UNCHECKED_CAST") private fun create(operation: String = "create"): Map<String, Any?> =
+  @Suppress("UNCHECKED_CAST") private fun create(operation: String = "create", delayMs: Long = 60_000): Map<String, Any?> =
     request { engine.apply(mapOf("kind" to "Create", "operationId" to operation,
-      "title" to "Private title", "alarmAtMs" to now + 60_000)) } as Map<String, Any?>
+      "title" to "Private title", "alarmAtMs" to now + delayMs)) } as Map<String, Any?>
   @Suppress("UNCHECKED_CAST") private fun id(result: Map<String, Any?>) =
     (result["occurrence"] as Map<String, Any?>)["id"] as String
   @Suppress("UNCHECKED_CAST") private fun action(id: String, kind: String, generation: Long, operation: String) =
@@ -134,6 +134,42 @@ class AlarmEngineTest {
     val after = request { engine.occurrence(id) } as Map<*, *>
     assertEquals("Interrupted", after["deliveryState"])
     assertTrue(os.registered.isEmpty())
+  }
+  @Test fun interruptedEarlierDeliveryDoesNotRemoveTheIndependentLaterAlarm() {
+    val first = id(create("first"))
+    val second = id(create("second", 120_000))
+    assertEquals(setOf(first, second), os.registered.map { it.occurrenceId }.toSet())
+    now += 60_000
+    fire(first)
+    engine.close()
+    engine = AlarmEngine(context, os, { now }, { 1L })
+    assertEquals("Interrupted", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
+    assertEquals("Scheduled", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
+    now += 60_000
+    fire(second)
+    assertEquals("Alerting", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
+  }
+  @Test fun joiningAnActiveSessionKeepsItsFirstDeadlineAndIndependentMembers() {
+    val first = id(create("first"))
+    val second = id(create("second"))
+    now += 60_000
+    fire(first)
+    val sessionId = request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().activeSession()!!.id } finally { db.close() }
+    } as String
+    engine.audioStarted(sessionId, 9_000L)
+    fire(second)
+    request {
+      val db = OperationalDatabase.open(context)
+      try {
+        assertEquals(309_000L, db.records().activeSession()!!.deadlineElapsedMs)
+        assertEquals(setOf(first, second), db.records().members(sessionId).map { it.occurrenceId }.toSet())
+      } finally { db.close() }
+    }
+    action(first, "Stop", 1, "stop-first")
+    assertEquals("Stopped", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
+    assertEquals("Alerting", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
   }
   @Test fun directBootDoesNotOpenCredentialStorage() {
     val id = id(create())
