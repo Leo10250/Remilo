@@ -134,6 +134,9 @@ registrations. Registration failures remain visible as Blocked. Protected rules 
 replenish before unlock; content materializes only after unlock.
 Reopen and Undo deletion restore recurring occurrences as independent exceptions,
 preserving their original target without enlarging the ordinary coverage window.
+Detaching the final ringing member ends its durable session before another arrival
+can join. The component-owned audio controller receives a direct, session-checked
+stop signal; it does not wait for credential history or recurrence materialization.
 
 Series-changing commands fence future ordinary generations before their credential
 transaction. Narrow pending-series records recover a committed change. A protected

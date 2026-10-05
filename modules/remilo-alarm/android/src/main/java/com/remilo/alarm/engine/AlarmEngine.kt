@@ -252,7 +252,7 @@ class AlarmEngine internal constructor(private val context: Context,
       .copy(generation = generation, state = "Changing", sessionId = null, previousState = previous?.state))
     previous?.let {
       try { scheduler.cancel(it) } catch (_: Exception) { /* stale generation remains fenced */ }
-      it.sessionId?.let { session -> RingingService.refresh(context, session) }
+      it.sessionId?.let { session -> refreshOrEndSession(session) }
     }
     db.runInTransaction {
       db.records().update(record)
@@ -554,7 +554,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
     try { scheduler.cancel(old) } catch (_: Exception) { /* generation already fences the old callback */ }
     val updated = if (kind in setOf("Snooze", "Postpone")) register(next) else next
-    old.sessionId?.let { RingingService.refresh(context, it) }
+    old.sessionId?.let { refreshOrEndSession(it) }
     if (kind == "Stop") AlarmNotifications(context).unresolved(updated)
     else AlarmNotifications(context).clearAttention(id)
     series.replenish(); series.materialize()
@@ -617,6 +617,14 @@ class AlarmEngine internal constructor(private val context: Context,
     }
   }
   fun audioEnded(sessionId: String, reason: String) = submit { endSession(sessionId, reason) }
+  private fun refreshOrEndSession(sessionId: String) {
+    if (alerts.members(sessionId).isEmpty()) {
+      // End the durable session before another delivery can join it. The
+      // component-owned controller guards the ID and stops without a CE query.
+      endSession(sessionId, "Stopped")
+      RingingService.stopSession(sessionId)
+    } else RingingService.refresh(context, sessionId)
+  }
   private fun endSession(sessionId: String, reason: String) {
     val session = alerts.session(sessionId) ?: return
     if (session.state !in setOf("Active", "Starting")) return

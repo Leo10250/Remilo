@@ -739,6 +739,21 @@ class AlarmEngineTest {
     assertEquals(1, protectedRows().count { it.exception && it.state == "Scheduled" })
     assertEquals(first.targetMs, protectedRows().first { it.occurrenceId == first.occurrenceId }.targetMs)
   }
+  @Test fun lastMemberSnoozeEndsSessionBeforeAnotherIndependentAlarmArrives() {
+    val first = id(create("last-member")); val second = id(create("next-member", 120_000))
+    now += 60_000; fire(first)
+    val (firstIntent, _) = deliveryNotification()
+    action(first, "Snooze", 1, "last-snooze")
+    request {
+      val db = OperationalDatabase.open(context)
+      try { assertNull(db.records().activeSession()) } finally { db.close() }
+    }
+    now += 60_000; fire(second)
+    val (nextIntent, _) = deliveryNotification()
+    assertNotEquals(firstIntent.getStringExtra("sessionId"), nextIntent.getStringExtra("sessionId"))
+    assertEquals("Alerting", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
+    assertEquals("Scheduled", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
+  }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
     var allowed = true

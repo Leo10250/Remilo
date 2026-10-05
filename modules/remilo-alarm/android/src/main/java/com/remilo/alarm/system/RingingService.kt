@@ -67,5 +67,13 @@ class RingingService : Service() {
     fun refresh(@Suppress("UNUSED_PARAMETER") context: Context, sessionId: String) {
       active?.let { service -> service.main.post { service.refreshMembers(sessionId) } }
     }
+    /** A completed native detach need not wait for another database query to stop sound. */
+    fun stopSession(sessionId: String) {
+      active?.let { service -> service.main.post {
+        if (service.sessionId != sessionId) return@post
+        service.audio?.stop(); service.audio = null
+        service.stopForeground(STOP_FOREGROUND_REMOVE); service.stopSelf()
+      } }
+    }
   }
 }
