@@ -1,6 +1,8 @@
-import { join } from 'node:path';
-import { localNode, root, run } from './tools.mjs';
-
-run(localNode(), [join(root, 'node_modules/typescript/bin/tsc'), '--noEmit']);
-run(localNode(), [join(root, 'node_modules/eslint/bin/eslint.js'), '.']);
-run(localNode(), [join(root, 'node_modules/vitest/vitest.mjs'), 'run']);
+import { cli, options, allowedOptions } from './lib/cli.mjs';
+import { verifyShared } from './lib/build.mjs';
+await cli(async () => {
+  const flags = options(process.argv.slice(2)); allowedOptions(flags, ['help', 'json']);
+  if (flags.help) return console.log('npm run verify -- [--json]\nTypeScript, ESLint, shared behavior and tooling tests. Records matching-source checks locally.');
+  const checks = await verifyShared({ json: flags.json });
+  if (flags.json) console.log(JSON.stringify({ ok: true, checks }));
+});

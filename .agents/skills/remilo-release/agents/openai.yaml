@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remilo Release"
+  short_description: "Prepare a signed beta with honest verification evidence"
+  default_prompt: "Use $remilo-release to prepare the signed Android beta and summarize automated checks and pending owner acceptance."

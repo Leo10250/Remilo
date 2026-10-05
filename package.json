@@ -44,7 +44,16 @@
     "verify": "node scripts/verify.mjs",
     "verify:android": "node scripts/android.mjs verify",
     "verify:device": "node scripts/device.mjs",
-    "build:beta": "node scripts/android.mjs beta"
+    "build:beta": "node scripts/android.mjs beta",
+    "deploy": "node scripts/deploy.mjs",
+    "devices": "node scripts/devices.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "device:logs": "node scripts/device-evidence.mjs logs",
+    "device:capture": "node scripts/device-evidence.mjs capture",
+    "preview:ui": "node scripts/preview-ui.mjs",
+    "verify:all": "node scripts/prepare.mjs verify",
+    "release:prepare": "node scripts/prepare.mjs release",
+    "test:tooling": "node scripts/tooling-tests.mjs"
   },
   "private": true,
   "overrides": {

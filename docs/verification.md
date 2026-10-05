@@ -16,6 +16,65 @@ The current workspace commit is not evidence of the installed build's source.
 Associate its hash with the source recorded at build time. A mismatched or unknown
 installed APK fails preflight; it never silently installs or changes the phone.
 
+## Toolkit receipts and private evidence
+
+`npm run deploy` builds and inspects a signed bundled release, compares the installed
+signer/version, updates user 0 with `install -r`, then compares the installed base
+APK SHA-256. It leaves the UI closed unless `--launch` is requested. Default deploy
+does not rerun the full tests; `npm run release:prepare` runs them before signed
+assembly. Neither command establishes physical alarm acceptance.
+
+Build commands write ignored `verification/local/build-receipt.json` (schema 1):
+
+- Build time, release variant, selected ABI, actual package/version/minimum and
+  target SDK, bundled-JavaScript presence, debug flag, launcher and verified signer.
+- APK absolute path and SHA-256.
+- Source commit, dirty-tree flag and content fingerprint of tracked/nonignored
+  application, native, asset, configuration and tooling inputs. Documentation and
+  private tooling/signing material are excluded from the content fingerprint.
+- Selected Node/Java/build-tools versions and lockfile SHA-256.
+- Successful checks recorded against that input fingerprint, when available.
+
+Inputs and commit are captured before and after assembly. If they change, no new
+receipt is written. Replacement builds invalidate the prior receipt before assembly.
+`--install-only` requires an existing matching artifact/receipt, re-inspects metadata
+and reports differences from current inputs instead of attributing it to the current
+workspace. An unsigned CI build can have a receipt but cannot be deployed.
+
+Release-producing commands and preflight share `verification/local/release.lock`.
+Concurrent workflows fail with a specific busy result. If a process crashes, or
+Windows child-tree termination cannot be confirmed, the lock is deliberately left
+for inspection: confirm no build workflow remains before removing it manually.
+
+Deployment records are timestamped under `verification/local/deployments/`; they
+include selected target/model/API/ABI, workspace and built identities, installation
+phase, installed hash, verification and launch outcomes. An install can complete
+while verification fails; that is reported as installed/unverified, never full
+success. Cancellation during install is uncertain and never automatically retried.
+Preflight writes `device-preflight.json` and keeps physical scenario results pending.
+
+`release:prepare` writes `release-summary.json`, links the owner checklist and
+records no installation/publication. `verify:all` can assemble an unsigned CI build.
+Use `--abi x86_64` for those commands when preparing that architecture.
+
+`device:logs` saves up to the last 2,000 log entries filtered to `Remilo:I`;
+`--follow` streams until Ctrl+C. It filters by tag rather than PID so process
+restarts remain visible, and never clears the log buffer. `device:capture` writes
+binary PNG output without unlocking, navigation or temporary device files.
+Both accept `--device SERIAL`. Keep their logs/screenshots and serials local;
+there is no automatic upload. Do not infer human audibility from either artifact.
+
+Doctor, devices, deployment and preflight support structured JSON. Use npm's
+`--silent` option to suppress its banner. All scripts offer `--help`. Read-only
+device commands can contact the shared ADB server, but never restart it, pair
+wireless devices or create emulators. A dry-run neither builds nor installs; with
+`--install-only` it may pull the installed base APK into a temporary local inspection
+file that is removed afterwards.
+
+Host toolkit tests use controlled device/process fixtures. The milestone does not
+initiate phone deployment or another alarm-testing sequence. The owner's real
+deployment and the consolidated physical checklist remain separate pending work.
+
 ## G0: foundation
 
 - Clean checkout builds with pinned tools and lockfile.

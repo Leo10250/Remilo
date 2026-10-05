@@ -60,11 +60,82 @@ configuration, `verify:android` assembles an **unsigned** release for CI; it nev
 falls back to a development key. `build:beta` requires the private signing config.
 No APK distribution or public release happens as part of verification.
 
+## Daily workflow
+
+Connect an Android 14+ test device, enable USB debugging and authorize this computer.
+Already authorized wireless devices and running emulators also work. From the repo root:
+
+```sh
+npm run deploy
+```
+
+This builds current source with the existing beta key, installs an in-place update
+for Android user 0, checks the installed APK hash and leaves the app closed. Open
+Remilo yourself afterwards. No Metro or network is required by the installed app.
+It never uninstalls, clears data, grants permissions, allows downgrades or starts
+an alarm test. Installation alone does not establish alarm reliability.
+
+```sh
+npm run devices
+npm run deploy -- --device SERIAL
+npm run deploy -- --dry-run
+npm run deploy -- --install-only
+npm run deploy -- --launch
+```
+
+Target selection is `--device`, then `ANDROID_SERIAL`, then automatic selection
+only if exactly one listed transport is authorized. Multiple transports require
+explicit selection, including an unauthorized companion. The chosen target must
+support ARM64 or x86-64; the build selects its ABI. `--install-only` requires a
+matching signed build receipt and displays whether current inputs differ.
+`--launch` opens the launcher only after installation verification.
+
+| Command | Purpose |
+|---|---|
+| `npm run doctor` | Read-only toolchain, dependency, signing and configuration diagnosis |
+| `npm run devices` | Transport states, model, Android/API and supported ABIs |
+| `npm run deploy` | Signed bundled build, in-place install and installed-hash verification |
+| `npm run device:logs -- --device SERIAL` | Bounded Remilo-tagged snapshot; add `--follow` for streaming, Ctrl+C to stop |
+| `npm run device:capture -- --device SERIAL` | Screenshot of the current screen; no unlocking or navigation |
+| `npm run preview:ui` | Fixture-only UI preview on port 8092; add `--port NUMBER` |
+| `npm run verify:all` | Shared/tooling tests plus Android unit tests, lint and assembly |
+| `npm run release:prepare` | Full host verification, required signed build and pending owner-check summary |
+| `npm run test:tooling` | Controlled workflow/process/device fixtures without installing on a phone |
+
+Every command accepts `--help` after `--`. Doctor, device listing, deployment,
+preflight and release preparation accept `--json`; build/test subprocess output
+goes to stderr in JSON mode. To obtain pure JSON without npm's banner, use
+`npm run --silent doctor -- --json` (or the corresponding command).
+`build:beta`, `verify:android`, `verify:all` and `release:prepare` accept
+`--abi x86_64`; their default is ARM64. Deployment chooses from the actual target.
+
+Scripts select the pinned project-local Node/JDK/SDK when available, including
+re-executing with the pinned Node. Doctor reports overrides and conflicting SDK
+configuration; it never downloads tools, accepts terms, creates keys or edits the
+machine. Build subprocesses remove preview-only variables from their environment.
+
+Build/deployment receipts, logs and screenshots stay under ignored
+`verification/local/`. A receipt records the actual APK, signer and stable build
+inputs; stale receipts cannot authorize installation. Release-producing workflows
+share a lock so an APK cannot be replaced during inspection or deployment. After
+a crash or an unconfirmed child-tree shutdown, confirm the workflow/build processes
+ended before manually removing `verification/local/release.lock`. Do not restart
+the shared ADB server to work around a connection problem.
+
+Repository skills in `.agents/skills` are discoverable by Codex:
+
+- `$remilo-deploy`: requested test-device deployment and build identity reporting.
+- `$remilo-device-debug`: connections, scoped logs/screenshots and read-only preflight.
+- `$remilo-release`: signed milestone preparation with honest pending acceptance.
+
+The release command does not install, publish, commit or push. Keep signing keys
+and raw device evidence local. See [receipt/evidence guidance](docs/verification.md#toolkit-receipts-and-private-evidence).
+
 ## Verification
 
 | Command | What it checks |
 |---|---|
-| `npm run verify` | TypeScript, ESLint, shared behavioral tests |
+| `npm run verify` | TypeScript, ESLint, shared behavioral tests and tooling fixtures |
 | `npm run verify:android` | Kotlin policy/Room recovery tests, native/app lint, bundled release assembly |
 | `npm run verify:device` | adb preflight, build hash, pending observation report; does not run alarm tests |
 | `npm run build:beta` | Locally signed bundled release APK |
@@ -104,11 +175,11 @@ after confirmed session termination. [Redesign evidence](docs/evidence/2026-10-0
 and [the owner checklist](docs/device-acceptance.md) distinguish host checks from
 pending physical acceptance. Install as an update with the existing signing key.
 
-For local visual review only, set `REMILO_UI_PREVIEW=1` and `EXPO_NO_WEB_SETUP=1`,
-then run `npx expo start --web --offline`. This uses synthetic reminders without
+For local visual review only, run `npm run preview:ui`. This uses synthetic reminders without
 touching phone data. Android always uses the native module. Default configuration
 remains Android-only; this preview does not verify native pickers, audio or OS text
-scaling. Clear both environment variables before ordinary development/builds.
+scaling. Preview variables are confined to its child process. An occupied port
+produces an error; the command never terminates the process using it.
 
 The owned vector master is `assets/brand/remilo.svg`. `node scripts/brand.mjs`
 exports all Android/Expo variants using Sharp (0.34.x); alternatively supply the

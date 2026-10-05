@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remilo Device Debug"
+  short_description: "Diagnose connections and collect scoped device evidence"
+  default_prompt: "Use $remilo-device-debug to inspect my connected test device and collect a Remilo log snapshot without changing its data."

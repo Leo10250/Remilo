@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remilo Deploy"
+  short_description: "Build and update Remilo on a selected test device"
+  default_prompt: "Use $remilo-deploy to deploy the current signed beta to my connected test phone and leave the app closed."

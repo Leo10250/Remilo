@@ -31,6 +31,10 @@ block verified release, rather than development. Known failures still require fi
 | UX-03 | Categorized automatic preferences, inline permissions, Test alarm | UX-01 | implemented/unverified | [sequencing/retry/contrast tests; phone persistence and permission-return checks pending](evidence/2026-10-04-redesign.md) |
 | UX-04 | Native controls/snapshot dismissal, notifications, launcher/splash identity | UX-01 | implemented/unverified | [session/Direct Boot/notification tests; signed physical actions and icon masks pending](evidence/2026-10-04-redesign.md) |
 | UX-05 | Signed 0.4.0, consolidated checklist and release evidence | UX-01/02/03/04 | implemented/unverified | [shared/native verification and signing; owner U/A–E observations pending](evidence/2026-10-04-redesign.md) |
+| TK-01 | Shared tool selection, stable build receipts and release serialization | P0-02 | in progress | tool/process fixtures, doctor and signed Android assembly; no application/version changes |
+| TK-02 | Safe ABI-aware deployment and reusable device preflight | TK-01 | in progress | selection/signature/version/hash/failure fixtures and local dry-run; real owner deployment remains pending |
+| TK-03 | Scoped logs/capture, isolated preview and combined release preparation | TK-01 | in progress | command help, process/environment fixtures and existing shared/native checks |
+| TK-04 | Discoverable repo skills and workflow documentation | TK-02/03 | in progress | bundled skill validation, command map, receipt contract and host evidence; push authorized origin |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -78,6 +82,25 @@ block verified release, rather than development. Known failures still require fi
   old Stop all and generic pre-unlock snapshots. U9/U10/U12 recheck real presentation.
 - UX-05: pass shared/native/lint/signed assembly, record source/hash/signer, and keep
   unobserved physical/200%-font/TalkBack scenarios pending in the single owner checklist.
+- TK-01: select/report pinned tools, detect configuration conflicts, attribute only
+  stable build inputs and serialize assembly/inspection/install. Require actual APK
+  inspection, hash and signer; controlled cancellation must not imply success.
+- TK-02: verify explicit/env/single-target precedence, unauthorized/offline/ambiguous
+  failures, API/ABI eligibility, safe in-place arguments and default no-launch.
+  Failed post-install verification stays separate from successful installation.
+  Use read-only local dry-run; do not initiate phone installation/alarm testing.
+- TK-03: scoped tag logs without clearing, binary capture, child-only preview vars,
+  and signed release preparation without installation/publication. Verify help and
+  controlled process fixtures, then shared/native checks. Real capture/live-log and
+  emulator deployment results are distinct from host fixtures.
+- TK-04: validate three scoped skills with the bundled validator, keep procedures
+  in scripts, and document actual host evidence. No global skill installation.
+
+## Later workflow opportunities (outside this kit)
+
+- Synchronized application-version bumping across Expo, npm and Gradle.
+- Reproducible icon generation with a pinned Sharp dependency.
+- Explicit toolchain download/bootstrap automation, with licensing and integrity checks.
 
 ## Host and device prerequisites
 

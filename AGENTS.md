@@ -25,7 +25,7 @@ Remilo is Android-first and offline. React Native presents the product UI; ordin
 
 ## Verification and handoff
 
-- npm run verify: shared checks.
+- npm run verify: shared checks and controlled tooling fixtures.
 - npm run verify:android: native unit tests, lint and release assembly.
 - npm run verify:device: preflight/evidence collection; human observations remain pending.
 - npm run build:beta: locally signed release APK.
@@ -37,3 +37,22 @@ Remilo is Android-first and offline. React Native presents the product UI; ordin
   instruction; they still block declaring the beta verified or distributing it.
   Fix known failures and never silently change product behavior.
 - Use focused commits/PRs when a remote is configured. Do not create a remote, distribute or publish without authorization.
+
+## Workflow commands and skills
+
+- `npm run doctor` / `npm run devices`: read-only prerequisites and target discovery.
+- `npm run deploy -- --device SERIAL`: requested signed in-place test-device update;
+  leaves UI closed. Omit serial only for an unambiguous single target. `--dry-run`
+  is read-only; `--install-only` requires a matching build receipt.
+- `npm run device:logs` / `npm run device:capture`: scoped private evidence; never
+  clear logs, unlock/navigate or upload raw captures.
+- `npm run preview:ui`: isolated fixture preview; never claim native verification.
+- `npm run verify:all` / `npm run release:prepare`: combined host checks; preparation
+  requires existing signing and does not install/publish/commit/push.
+- All commands provide `--help`. Doctor/devices/deploy/preflight provide `--json`.
+- Use repository skills `$remilo-deploy`, `$remilo-device-debug`, `$remilo-release`
+  for those specific requests. They call the scripts rather than duplicate them.
+- Never bypass a deployment failure with uninstall, data clear, automatic permission
+  grants, downgrade flags, a replacement key or an ADB-server restart. Keep receipts,
+  serials and captures under ignored `verification/local`; distinguish workspace,
+  built and installed source. See README and docs/verification.md.

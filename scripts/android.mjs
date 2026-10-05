@@ -1,19 +1,12 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { root, run, toolEnvironment } from './tools.mjs';
+import { cli, options, allowedOptions } from './lib/cli.mjs';
+import { buildRelease } from './lib/build.mjs';
 
-const mode = process.argv[2];
-const env = toolEnvironment();
-if (!env.JAVA_HOME || !env.ANDROID_HOME || !existsSync(env.ANDROID_HOME)) {
-  throw new Error('Set JAVA_HOME (JDK 17) and ANDROID_HOME; see README setup.');
-}
-if (mode === 'beta' && !existsSync(join(root, 'android/signing.properties'))) {
-  throw new Error('Private beta signing is missing. Run scripts/create-signing.mjs first.');
-}
-const args = mode === 'verify'
-  ? [':remilo-alarm:testDebugUnitTest', ':remilo-alarm:lintDebug', ':app:lintRelease', ':app:assembleRelease']
-  : mode === 'beta' ? [':app:assembleRelease', '-Premilo.requireSigning=true'] : null;
-if (!args) throw new Error('Expected verify or beta mode.');
-run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew',
-  [...args, '-PreactNativeArchitectures=arm64-v8a', '--console=plain'],
-  { cwd: join(root, 'android'), env });
+await cli(async () => {
+  const [mode, ...args] = process.argv.slice(2);
+  if (mode === '--help') return console.log('node scripts/android.mjs verify|beta [--abi arm64-v8a|x86_64] [--json]\nverify: native tests, lint, assembly; beta: required signed assembly. Both record build provenance.');
+  const flags = options(args, ['abi']); allowedOptions(flags, ['abi', 'json', 'help']);
+  if (flags.help) return console.log('npm run verify:android|build:beta -- [--abi arm64-v8a|x86_64] [--json]');
+  if (!['verify', 'beta'].includes(mode)) throw new Error('Expected verify or beta. Use --help.');
+  const receipt = await buildRelease({ abi: flags.abi, verify: mode === 'verify', requireSigning: mode === 'beta', json: flags.json });
+  if (flags.json) console.log(JSON.stringify({ ok: true, build: receipt }));
+});
