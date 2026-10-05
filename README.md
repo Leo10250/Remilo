@@ -130,6 +130,8 @@ Repository skills in `.agents/skills` are discoverable by Codex:
 
 The release command does not install, publish, commit or push. Keep signing keys
 and raw device evidence local. See [receipt/evidence guidance](docs/verification.md#toolkit-receipts-and-private-evidence).
+The [workflow kit evidence](docs/evidence/2026-10-05-workflow-kit.md) records host
+verification separately from the pending real-device deployment.
 
 ## Verification
 
