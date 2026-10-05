@@ -22,6 +22,13 @@ state. Alarm-affecting commands fence stale generations before acknowledgement.
 OS registration and database commits are not atomic: reconcile idempotently and
 return Scheduled/Blocked/Pending distinctly. Every callback rechecks eligibility.
 
+The serialized engine constructs a complete notification snapshot before service
+dispatch and passes it in the explicit, non-exported service intent. Foreground
+promotion is immediate and never waits for another Room query on the main thread.
+There is no actionless placeholder. Subsequent member refreshes update the same
+notification; actions retain the delivery generation from their snapshot and stale
+ones are rejected. Before unlock, the snapshot contains generic text only.
+
 Application startup and providers must be safe before unlock, not just receivers.
 Keep one process and avoid credential storage until UserManager says unlocked.
 

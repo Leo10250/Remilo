@@ -235,7 +235,9 @@ class AlarmEngine internal constructor(private val context: Context,
       alerts.put(alert.copy(state = "Alerting", sessionId = active.id))
     }
     try {
-      context.startForegroundService(Intent(context, RingingService::class.java).putExtra("sessionId", active.id))
+      val initial = AlarmNotifications(context).ringing(active.id, memberViews(active.id))
+      context.startForegroundService(Intent(context, RingingService::class.java)
+        .putExtra("sessionId", active.id).putExtra(RingingService.INITIAL_NOTIFICATION, initial))
     } catch (_: Exception) { endSession(active.id, "Blocked") }
     changed()
   }
@@ -264,9 +266,10 @@ class AlarmEngine internal constructor(private val context: Context,
     changed()
   }
   fun sessionMembers(sessionId: String, callback: (List<Pair<AlertRecord, String>>) -> Unit) = submit {
-    callback(alerts.members(sessionId).map { it to
-      if (unlocked()) (content().records().find(it.occurrenceId)?.title ?: "Reminder") else "Reminder" })
+    callback(memberViews(sessionId))
   }
+  private fun memberViews(sessionId: String) = alerts.members(sessionId).map { it to
+    if (unlocked()) (content().records().find(it.occurrenceId)?.title ?: "Reminder") else "Reminder" }
   fun recover(finished: () -> Unit = {}) = submit(finished) {
     if (unlocked()) { val db = content(); applyPending(db); replayHistory(db) }
     alerts.all().filter { it.state in setOf("Scheduled", "Pending", "Blocked") }.forEach { register(it) }

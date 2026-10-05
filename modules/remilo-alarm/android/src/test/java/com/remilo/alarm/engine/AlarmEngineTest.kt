@@ -1,11 +1,13 @@
 package com.remilo.alarm.engine
 
 import android.app.Application
+import android.app.Notification
 import android.content.Context
 import android.os.UserManager
 import com.remilo.alarm.data.*
 import com.remilo.alarm.system.AlarmRegistrar
 import com.remilo.alarm.system.AlarmScheduler
+import com.remilo.alarm.system.RingingService
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -51,6 +53,13 @@ class AlarmEngineTest {
     engine.receive(AlarmScheduler.intent(context, "fire", id, generation)) { done.complete(Unit) }
     done.get(20, TimeUnit.SECONDS)
   }
+  private fun deliveryNotification(): Pair<android.content.Intent, Notification> {
+    val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedService
+    assertNotNull("Native delivery must dispatch its foreground service", intent)
+    val notification = intent!!.getParcelableExtra(RingingService.INITIAL_NOTIFICATION, Notification::class.java)
+    assertNotNull("The first foreground notification must contain controls", notification)
+    return intent to notification!!
+  }
 
   @Test fun retryingCreationNeverDuplicatesTheReminder() {
     val first = create()
@@ -73,6 +82,32 @@ class AlarmEngineTest {
     assertEquals("Scheduled", after["deliveryState"])
     assertEquals(before["dueAtMs"], after["dueAtMs"])
     assertEquals(now + 600_000, after["nextAlertMs"])
+    assertEquals(false, after["completed"])
+  }
+  @Test fun firstAndSnoozedDeliveriesIncludeUsableControlsFromTheirFirstPost() {
+    val id = id(create())
+    now += 60_000; fire(id)
+    val (firstIntent, first) = deliveryNotification()
+    assertEquals(listOf("Stop", "Snooze 10 min"), first.actions.map { it.title.toString() })
+    assertTrue(first.actions.all { it.actionIntent.isImmutable })
+    val oldStop = shadowOf(first.actions[0].actionIntent).savedIntent
+    assertEquals(1L, oldStop.getLongExtra("generation", -1))
+    action(id, "Snooze", 1, "snooze")
+    engine.audioEnded(firstIntent.getStringExtra("sessionId")!!, "Stopped")
+    request { Unit }
+    now += 600_000; fire(id, 2)
+    val (_, second) = deliveryNotification()
+    assertEquals(listOf("Stop", "Snooze 10 min"), second.actions.map { it.title.toString() })
+    val newStop = shadowOf(second.actions[0].actionIntent).savedIntent
+    assertEquals(2L, newStop.getLongExtra("generation", -1))
+    assertNotEquals(first.actions[0].actionIntent, second.actions[0].actionIntent)
+    val done = CompletableFuture<Unit>()
+    engine.receive(oldStop) { done.complete(Unit) }; done.get(20, TimeUnit.SECONDS)
+    assertEquals("Alerting", (request { engine.occurrence(id) } as Map<*, *>)["deliveryState"])
+    val stopped = CompletableFuture<Unit>()
+    engine.receive(newStop) { stopped.complete(Unit) }; stopped.get(20, TimeUnit.SECONDS)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals("Stopped", after["deliveryState"])
     assertEquals(false, after["completed"])
   }
   @Test fun stopNeverCompletesAndCannotStopAFutureDelivery() {
@@ -177,6 +212,9 @@ class AlarmEngineTest {
     shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
     engine = AlarmEngine(context, os, { now }, { 10_000L })
     now += 60_000; fire(id)
+    val (_, notification) = deliveryNotification()
+    assertEquals("Reminder", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+    assertEquals(listOf("Stop", "Snooze 10 min"), notification.actions.map { it.title.toString() })
     val done = CompletableFuture<List<Pair<AlertRecord, String>>>()
     val session = request {
       val db = OperationalDatabase.open(context)

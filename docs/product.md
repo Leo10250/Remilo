@@ -22,6 +22,10 @@ work is the last optional phase, after optional Android cloud sync.
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
 - Stop silences only the selected delivery; Done is separate and cancels its alert.
+- Every ringing delivery, including one re-triggered by Snooze, provides native Stop
+  and Snooze. Single-reminder notifications include both from their first post;
+  grouped notifications open the native per-reminder controls. Android controls
+  compact/expanded presentation, so also retain the native alarm screen.
 - Quick Snooze defaults to 10 minutes. Postpone: 15/30/60 minutes, tomorrow
   10 AM/2 PM/5 PM (editable), or custom. Confirm the actual future instant.
 - Postpone replaces Snooze and changes only the current occurrence's next alert.

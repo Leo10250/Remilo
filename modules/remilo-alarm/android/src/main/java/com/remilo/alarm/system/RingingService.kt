@@ -1,6 +1,7 @@
 package com.remilo.alarm.system
 
 import android.app.Service
+import android.app.Notification
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -18,7 +19,10 @@ class RingingService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     val id = intent?.getStringExtra("sessionId") ?: run { stopSelf(); return START_NOT_STICKY }
     try {
-      startForeground(AlarmNotifications.FOREGROUND_ID, notifications.ringing(id),
+      // The engine supplies a complete snapshot before dispatch. Posting an empty
+      // placeholder first can leave the initial heads-up surface without controls.
+      val initial = requireNotNull(intent.getParcelableExtra(INITIAL_NOTIFICATION, Notification::class.java))
+      startForeground(AlarmNotifications.FOREGROUND_ID, initial,
         ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
     } catch (_: Exception) {
       AlarmEngine.get(this).audioEnded(id, "Blocked")
@@ -52,6 +56,7 @@ class RingingService : Service() {
   }
   override fun onBind(intent: Intent?): IBinder? = null
   companion object {
+    const val INITIAL_NOTIFICATION = "initialNotification"
     @Volatile private var active: RingingService? = null
     fun refresh(@Suppress("UNUSED_PARAMETER") context: Context, sessionId: String) {
       active?.let { service -> service.main.post { service.refreshMembers(sessionId) } }
