@@ -79,3 +79,38 @@ Add recurrence projections and two future registrations per series only in phase
 Calendar compatibility uses observed mismatches, not speculative DST repair.
 Supabase is isolated to optional phase 5; auth/sync foreground/manual initially.
 No iOS implementation or database placeholders exist before phase 6.
+
+## One-off product commands and upgrades
+
+Version 2 migrations retain v1 definitions, operational targets, generations,
+receipts and history. A definition's original alert belongs in credential storage;
+the current delivery target still belongs exclusively in protected operational
+storage. Editing text/list metadata preserves a pending Snooze/Postpone. A changed
+alarm definition replaces it. Done and deletion fence old callbacks before the
+content transaction; undo/reopen can reconstruct a future target but never replay
+an elapsed one.
+
+An operational Changing row retains the prior eligibility for interrupted-command
+recovery. If the content transaction never committed, recover the last committed
+definition and prior target with the new generation. If it committed, its pending
+intent supplies the new target. Recovery never revives an already stopped session.
+
+Sound/vibration choices are operational snapshots. A session preserves the first
+member's choices. User preferences and notes remain credential-protected; only
+non-private delivery settings needed before unlock reach protected records.
+Notification mode uses exact delivery when authorized and approximate Android
+scheduling otherwise. The five-minute lateness policy still applies; this is
+visible in the editor and never a substitute for Alarm mode.
+
+Backups validate all entries before their content transaction. Conflicts are
+preserved by default; selected copies get retry-stable identities. The same import
+operation ID is retained for retry. Definitions/history and portable pending alert
+times are exported, excluding generations, running sessions and OS handles.
+The current defensive import bound is 10 MB / 10,000 reminders; it is an application
+parser bound, not an Android scheduling-limit claim.
+
+File selection and sharing use SDK 57 FileSystem/DocumentPicker/Sharing. The native
+project remains owned and tracked; no regeneration or new config plugin is used.
+- [SDK 57 FileSystem](https://docs.expo.dev/versions/v57.0.0/sdk/filesystem/)
+- [SDK 57 DocumentPicker cache-copy behavior](https://docs.expo.dev/versions/v57.0.0/sdk/document-picker/)
+- [SDK 57 Sharing](https://docs.expo.dev/versions/v57.0.0/sdk/sharing/)

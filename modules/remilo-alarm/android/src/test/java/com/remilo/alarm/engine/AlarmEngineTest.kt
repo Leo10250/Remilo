@@ -350,11 +350,192 @@ class AlarmEngineTest {
     action(id, "Snooze", 1, "locked-snooze")
     assertEquals(2L, os.registered.last().generation)
   }
+  @Test fun postponeReplacesSnoozeAndPreservesOriginalTiming() {
+    val id = id(create())
+    val original = request { engine.occurrence(id) } as Map<*, *>
+    action(id, "Snooze", 1, "snooze")
+    val result = request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "postpone",
+      "occurrenceId" to id, "expectedGeneration" to 2, "alarmAtMs" to now + 900_000)) } as Map<*, *>
+    assertEquals("Applied", result["status"])
+    fire(id, 1); fire(id, 2)
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(3L, after["generation"])
+    assertEquals(now + 900_000, after["nextAlertMs"])
+    listOf("eventStartMs", "eventEndMs", "dueAtMs", "alarmAtMs").forEach { assertEquals(original[it], after[it]) }
+    assertEquals(3L, os.active[id]!!.generation)
+  }
+  @Test fun doneCancelsTheAlertAndPastReopenDoesNotReplayIt() {
+    val id = id(create())
+    val done = request { engine.apply(mapOf("kind" to "Done", "operationId" to "done",
+      "occurrenceId" to id, "expectedRevision" to 1)) } as Map<*, *>
+    assertEquals("Applied", done["status"])
+    assertNull(os.active[id])
+    assertEquals("STALE_GENERATION", action(id, "Snooze", 1, "old-snooze")["errorCode"])
+    now += 60_001
+    request { engine.apply(mapOf("kind" to "Reopen", "operationId" to "reopen",
+      "occurrenceId" to id, "expectedRevision" to 2)) }
+    fire(id, 1)
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(false, after["completed"])
+    assertEquals("Missed", after["deliveryState"])
+  }
+  @Test fun metadataEditPreservesPostponementAndStaleRevisionIsRejected() {
+    val id = id(create())
+    action(id, "Snooze", 1, "snooze")
+    now += 120_000 // The definition's original alert is now past, its Snooze is future.
+    val edited = request { engine.apply(mapOf("kind" to "Edit", "operationId" to "edit",
+      "occurrenceId" to id, "expectedRevision" to 1, "notes" to "Edited notes")) } as Map<*, *>
+    assertEquals("Scheduled", edited["status"])
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(2L, after["generation"])
+    assertEquals(now - 120_000 + 600_000, after["nextAlertMs"])
+    assertEquals("Edited notes", after["notes"])
+    val stale = request { engine.apply(mapOf("kind" to "Delete", "operationId" to "delete",
+      "occurrenceId" to id, "expectedRevision" to 1)) } as Map<*, *>
+    assertEquals("STALE_REVISION", stale["errorCode"])
+    assertEquals(false, (request { engine.occurrence(id) } as Map<*, *>)["deleted"])
+  }
+  @Test fun deleteAndUndoPreserveAFutureSnoozeWithoutRevivingOldCallbacks() {
+    val id = id(create())
+    action(id, "Snooze", 1, "snooze")
+    request { engine.apply(mapOf("kind" to "Delete", "operationId" to "delete",
+      "occurrenceId" to id, "expectedRevision" to 1)) }
+    assertNull(os.active[id])
+    fire(id, 1); fire(id, 2)
+    request { engine.apply(mapOf("kind" to "UndoDelete", "operationId" to "undo",
+      "occurrenceId" to id, "expectedRevision" to 2)) }
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(now + 600_000, after["nextAlertMs"])
+    assertEquals("Scheduled", after["deliveryState"])
+    assertEquals(false, after["deleted"])
+    assertEquals(4L, after["generation"])
+    assertEquals(4L, os.active[id]!!.generation)
+  }
+  @Test fun backupRestorePreservesConflictsAndCopiesOnlyExplicitSelection() {
+    val id = id(create())
+    val json = request { engine.exportBackup() } as String
+    assertFalse(json.contains("generation"))
+    assertFalse(json.contains("sessionId"))
+    val skipped = request { engine.importBackup(json, emptyList(), "restore-1") } as Map<*, *>
+    assertEquals(0, skipped["added"])
+    assertEquals(1, skipped["preserved"])
+    val copied = request { engine.importBackup(json, listOf(id), "restore-2") } as Map<*, *>
+    assertEquals(1, copied["added"])
+    request { engine.importBackup(json, listOf(id), "restore-2") }
+    val page = request { engine.query("all", null) } as Map<*, *>
+    assertEquals(2, (page["items"] as List<*>).size)
+    assertEquals(2, os.active.size)
+  }
+  @Test fun malformedBackupWritesNothingAndCompletedRestoreStaysSilent() {
+    val id = id(create())
+    request { engine.apply(mapOf("kind" to "Done", "operationId" to "done",
+      "occurrenceId" to id, "expectedRevision" to 1)) }
+    val json = request { engine.exportBackup() } as String
+    val bad = json.replace("\"mode\": \"Alarm\"", "\"mode\": \"Unknown\"")
+    request {
+      try { engine.importBackup(bad, listOf(id), "invalid-backup"); fail("Malformed backup must be rejected") }
+      catch (_: IllegalArgumentException) { /* no partial import */ }
+    }
+    assertEquals(1, (request { engine.query("history", null) } as Map<*, *>)["items"].let { (it as List<*>).size })
+    request { engine.importBackup(json, listOf(id), "restore-completed") }
+    assertTrue(os.active.isEmpty())
+    assertEquals(2, ((request { engine.query("history", null) } as Map<*, *>)["items"] as List<*>).size)
+  }
+  @Test fun allDayUsesAnExclusiveLocalBoundaryAcrossDst() {
+    val start = java.time.LocalDate.of(2027, 3, 14).atStartOfDay(java.time.ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()
+    now = start - 60_000
+    val result = request { engine.apply(mapOf("kind" to "Create", "operationId" to "all-day",
+      "title" to "All-day", "eventStartMs" to start, "allDay" to true, "zoneId" to "America/Los_Angeles")) } as Map<*, *>
+    val item = result["occurrence"] as Map<*, *>
+    assertEquals(start + 23 * 3_600_000L, item["dueAtMs"])
+    assertEquals(start + 8 * 3_600_000L, item["alarmAtMs"])
+    assertEquals(item["dueAtMs"], item["eventEndMs"])
+  }
+  @Test fun failedAlarmEditFencesTheOldGenerationAndRecoversTheNewTarget() {
+    val id = id(create())
+    os.fail = true
+    val edited = request { engine.apply(mapOf("kind" to "Edit", "operationId" to "edit-alarm",
+      "occurrenceId" to id, "expectedRevision" to 1, "alarmAtMs" to now + 300_000)) } as Map<*, *>
+    assertEquals("Blocked", edited["status"])
+    assertNull(os.active[id])
+    fire(id, 1)
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    os.fail = false
+    val recovered = CompletableFuture<Unit>()
+    engine.recover { recovered.complete(Unit) }; recovered.get(20, TimeUnit.SECONDS)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(now + 300_000, after["nextAlertMs"])
+    assertEquals(2L, after["generation"])
+    assertEquals(2L, os.active[id]!!.generation)
+  }
+  @Test fun preCommitFenceRecoveryPreservesThePreviouslySnoozedTarget() {
+    val id = id(create())
+    action(id, "Snooze", 1, "snooze")
+    request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().put(db.records().find(id)!!.copy(generation = 3, state = "Changing", previousState = "Scheduled")) }
+      finally { db.close() }
+    }
+    engine.close()
+    engine = AlarmEngine(context, os, { now }, { 1L })
+    val recovered = CompletableFuture<Unit>()
+    engine.recover { recovered.complete(Unit) }; recovered.get(20, TimeUnit.SECONDS)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(now + 600_000, after["nextAlertMs"])
+    assertEquals(3L, after["generation"])
+    fire(id, 2)
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+  }
+  @Test fun stopAllRejectsAnOldSessionAndKeepsMembersUnfinished() {
+    val first = id(create("first")); val second = id(create("second"))
+    now += 60_000; fire(first); fire(second)
+    val session = (request { engine.capabilities() } as Map<*, *>)["activeSessionId"] as String
+    val stale = request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "old-stop-all",
+      "expectedSessionId" to "obsolete")) } as Map<*, *>
+    assertEquals("STALE_SESSION", stale["errorCode"])
+    request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "stop-all", "expectedSessionId" to session)) }
+    listOf(first, second).forEach { id ->
+      val after = request { engine.occurrence(id) } as Map<*, *>
+      assertEquals("Stopped", after["deliveryState"])
+      assertEquals(false, after["completed"])
+    }
+  }
+  @Test fun changedSnoozePreferenceIsAvailableBeforeFirstUnlock() {
+    val id = id(create())
+    request { engine.apply(mapOf("kind" to "Settings", "operationId" to "settings",
+      "expectedRevision" to 1, "snoozeMinutes" to 15)) }
+    engine.close()
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    engine = AlarmEngine(context, os, { now }, { 1L })
+    now += 60_000; fire(id)
+    val (_, notification) = deliveryNotification()
+    assertEquals("Snooze 15 min", notification.actions[1].title.toString())
+    action(id, "Snooze", 1, "locked-snooze")
+    assertEquals(now + 900_000, os.active[id]!!.targetMs)
+  }
+  @Test fun notificationAndNoAlertModesDoNotStartTheRingingService() {
+    os.allowed = false
+    val noAlert = request { engine.apply(mapOf("kind" to "Create", "operationId" to "no-alert",
+      "title" to "No alert", "alarmAtMs" to now + 60_000, "mode" to "None")) } as Map<*, *>
+    assertEquals("Applied", noAlert["status"])
+    assertTrue(os.registered.isEmpty())
+    val notification = request { engine.apply(mapOf("kind" to "Create", "operationId" to "notification",
+      "title" to "Gentle reminder", "alarmAtMs" to now + 60_000, "mode" to "Notification")) } as Map<String, Any?>
+    assertEquals("Scheduled", notification["status"])
+    now += 60_000; fire(id(notification))
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    assertEquals("Notified", (request { engine.occurrence(id(notification)) } as Map<*, *>)["deliveryState"])
+    val alarm = create("exact-required")
+    assertEquals("Blocked", alarm["status"])
+  }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
+    var allowed = true
     val registered = mutableListOf<AlertRecord>()
     val active = mutableMapOf<String, AlertRecord>()
-    override fun canSchedule() = true
+    override fun canSchedule() = allowed
     override fun register(alert: AlertRecord) {
       if (fail) throw SecurityException()
       registered.add(alert)

@@ -3,7 +3,9 @@ import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import RemiloAlarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
+import { ThemeProvider, useTheme } from '../ui/theme';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -19,8 +21,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={client}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <ThemeProvider><Navigation /></ThemeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );
+}
+function Navigation() {
+  const colors = useTheme();
+  return <><StatusBar style={colors.background === '#111C18' ? 'light' : 'dark'} />
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} /></>;
 }

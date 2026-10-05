@@ -22,6 +22,8 @@ describe('honest command feedback', () => {
   });
   it('requests refresh for a stale action and preserves Stop versus Done', () => {
     expect(commandFeedback({ status: 'Rejected', errorCode: 'STALE_GENERATION' })).toContain('Refresh');
-    expect(commandFeedback({ status: 'Applied' })).toContain('unfinished');
+    expect(commandFeedback({ status: 'Applied' }, 'Stop')).toContain('unfinished');
+    expect(commandFeedback({ status: 'Applied' }, 'Done')).toContain('completed');
+    expect(commandFeedback({ status: 'Applied' }, 'Done')).not.toContain('unfinished');
   });
 });

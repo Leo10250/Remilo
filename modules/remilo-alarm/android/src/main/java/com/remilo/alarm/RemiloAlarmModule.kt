@@ -27,13 +27,22 @@ class RemiloAlarmModule : Module() {
     OnDestroy { observation?.close(); observation = null }
     Function("createOperationId") { UUID.randomUUID().toString() }
     AsyncFunction("getCapabilities") { promise: Promise -> dispatch(promise) { it.capabilities() } }
-    AsyncFunction("queryReminders") { filter: String, cursor: String?, promise: Promise ->
+    AsyncFunction("queryReminders") { filter: Map<String, Any?>, cursor: String?, promise: Promise ->
       dispatch(promise) { it.query(filter, cursor) }
     }
     AsyncFunction("getOccurrence") { id: String, promise: Promise -> dispatch(promise) { it.occurrence(id) } }
     AsyncFunction("previewSchedule") { draft: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.preview(draft) } }
     AsyncFunction("applyCommand") { command: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.apply(command) } }
     AsyncFunction("scheduleTestAlarm") { promise: Promise -> dispatch(promise) { it.testAlarm() } }
+    AsyncFunction("getSettings") { promise: Promise -> dispatch(promise) { it.settings() } }
+    AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
+    AsyncFunction("getDiagnostics") { promise: Promise -> dispatch(promise) { it.diagnostics() } }
+    AsyncFunction("previewSound") { sound: String, promise: Promise -> dispatch(promise) { it.previewSound(sound) } }
+    AsyncFunction("exportBackup") { promise: Promise -> dispatch(promise) { it.exportBackup() } }
+    AsyncFunction("previewImport") { json: String, promise: Promise -> dispatch(promise) { it.previewImport(json) } }
+    AsyncFunction("importBackup") { json: String, copyIds: List<String>, operation: String, promise: Promise ->
+      dispatch(promise) { it.importBackup(json, copyIds, operation) }
+    }
     AsyncFunction("reconcile") { engine().recover() }
     AsyncFunction("openSettings") { kind: String ->
       val context = requireNotNull(appContext.reactContext)

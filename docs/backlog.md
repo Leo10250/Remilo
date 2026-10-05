@@ -18,11 +18,11 @@ block verified release, rather than development. Known failures still require fi
 | P1-05 | Structured native command validation | P1-01 | verified | [invalid fields/generations leave data and registration unchanged; shared/native checks pass](evidence/2026-10-04-native-slice.md) |
 | P1-06 | Persisted interruption tests and installed-build evidence | P1-01, P0-02 | verified | [20 native tests; preflight distinguishes installed APK from local build](evidence/2026-10-04-native-slice.md) |
 | G1 | Native alarm reliability gate | P1-01/02/03/04/05/06, G0 | pending | signed physical tests; failures block wider beta |
-| P2-01 | One-off create/detail/views, readiness and timing controls | G1 | pending | quick creation and clear due/alert separation |
-| P2-02 | Done/Postpone/post-timeout actions and session grouping | G1 | pending | two occurrences, one sound, original deadline |
-| P2-03 | Settings, diagnostics, export/restore, upgrade safety | P2-01/02 | pending | no stale session/handle replay; safe restore preview |
+| P2-01 | One-off create/detail/views, readiness and timing controls | P1 implementation; physical acceptance deferred | implemented/unverified | [shared/native checks; signed UI acceptance deferred](evidence/2026-10-04-one-off.md) |
+| P2-02 | Done/Postpone/post-timeout actions and session grouping | P1 implementation; physical acceptance deferred | implemented/unverified | [action/generation tests; collisions/audio acceptance deferred](evidence/2026-10-04-one-off.md) |
+| P2-03 | Settings, diagnostics, export/restore, upgrade safety | P2-01/02 | implemented/unverified | [restore conflicts and both v1→v2 migrations pass; physical transfer/file checks deferred](evidence/2026-10-04-one-off.md) |
 | G2 | Complete one-off private beta | P2-01/02/03 | pending | all one-off scenarios pass |
-| P3-01 | Pure Kotlin recurrence kernel and portable fixtures | G2 | pending | supported rules, gap/fold/count/travel tests |
+| P3-01 | Pure Kotlin recurrence kernel and portable fixtures | P2 implementation; physical acceptance deferred | in progress | supported rules, gap/fold/count/travel tests |
 | P3-02 | Exceptions, series edits and protected replenishment | P3-01 | pending | old postponed items preserved; two future registrations |
 | P3-03 | Original accessible polish, management and history | P3-01/02 | pending | everyday Android workflow and accessibility |
 | G3 | Complete Android reminder product | P3-01/02/03 | pending | physical recurrence and tested OS matrix |

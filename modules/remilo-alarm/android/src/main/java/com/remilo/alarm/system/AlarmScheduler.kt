@@ -12,6 +12,13 @@ class AlarmScheduler(private val context: Context) : AlarmRegistrar {
   private val alarms = context.getSystemService(AlarmManager::class.java)
   override fun canSchedule(): Boolean = alarms.canScheduleExactAlarms()
   override fun register(alert: AlertRecord) {
+    if (alert.mode == "Notification") {
+      // Notification mode explicitly permits approximate delivery; it is never
+      // a fallback for an Alarm whose exact access was denied.
+      if (canSchedule()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alert.targetMs, delivery(alert))
+      else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alert.targetMs, delivery(alert))
+      return
+    }
     check(canSchedule()) { "Exact alarm access is missing" }
     // The UI is deliberately not Direct Boot aware. Default launcher lookup hides
     // it before unlock, but merely creating this show-alarm handle must still work.

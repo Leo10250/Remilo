@@ -1,4 +1,4 @@
-import type { CommandResult, CreateCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { Command, CommandResult, CreateCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function quickReminder(title: string, minutes: string, now: number, operationId: string): CreateCommand {
   const delay = Number(minutes);
@@ -9,12 +9,13 @@ export function quickReminder(title: string, minutes: string, now: number, opera
   return { kind: 'Create', operationId, title: title.trim(), alarmAtMs };
 }
 
-export function commandFeedback(result: CommandResult): string {
+export function commandFeedback(result: CommandResult, kind?: Command['kind']): string {
   switch (result.status) {
     case 'Scheduled': return 'Saved and registered with Android. Sound depends on your device settings.';
     case 'Blocked': return 'Saved, but alarm delivery is blocked. Check permissions and notification settings.';
     case 'Pending': return 'Saved. Scheduling is still pending; refresh to check its state.';
-    case 'Applied': return 'Action applied. The reminder remains unfinished.';
+    case 'Applied': return kind === 'Done' || result.occurrence?.completed ? 'Reminder completed.'
+      : kind === 'Stop' || kind === 'Snooze' || kind === 'Postpone' ? 'Action applied. The reminder remains unfinished.' : 'Saved.';
     case 'Rejected': return result.errorCode === 'STALE_GENERATION'
       ? 'This reminder changed. Refresh and try again.'
       : result.errorMessage ?? `Action rejected (${result.errorCode ?? 'unknown'}).`;

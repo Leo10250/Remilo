@@ -16,6 +16,7 @@ android {
   }
   buildFeatures { compose true }
   testOptions { unitTests.includeAndroidResources = true }
+  sourceSets { test.resources.srcDir('schemas') }
   lint { abortOnError true }
 }
 

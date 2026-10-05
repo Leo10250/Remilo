@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import com.remilo.alarm.data.AlertRecord
 
 /** Silent channels: only the native service owns alarm audio. */
@@ -19,6 +21,11 @@ class AlarmNotifications(private val context: Context) {
       NotificationManager.IMPORTANCE_HIGH).apply { setSound(null, null); enableVibration(false) })
     manager.createNotificationChannel(NotificationChannel(ATTENTION_CHANNEL, "Unresolved reminders",
       NotificationManager.IMPORTANCE_LOW).apply { setSound(null, null); enableVibration(false) })
+    manager.createNotificationChannel(NotificationChannel(NOTIFICATION_CHANNEL, "Notification reminders",
+      NotificationManager.IMPORTANCE_DEFAULT).apply {
+      setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+        AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
+    })
   }
   fun ringing(sessionId: String, members: List<Pair<AlertRecord, String>>): Notification {
     require(members.isNotEmpty()) { "Ringing notifications need actionable members" }
@@ -34,7 +41,7 @@ class AlarmNotifications(private val context: Context) {
     if (members.size == 1) {
       val record = members.first().first
       builder.addAction(Notification.Action.Builder(null, "Stop", AlarmScheduler.action(context, "stop", record)).build())
-      builder.addAction(Notification.Action.Builder(null, "Snooze 10 min", AlarmScheduler.action(context, "snooze", record)).build())
+      builder.addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
     } else {
       builder.addAction(Notification.Action.Builder(null, "Open controls", open).build())
     }
@@ -49,14 +56,29 @@ class AlarmNotifications(private val context: Context) {
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("Reminder needs attention")
       .setContentText("${record.state} · unfinished").setOnlyAlertOnce(true)
       .setVisibility(Notification.VISIBILITY_PRIVATE)
-      .addAction(Notification.Action.Builder(null, "Snooze 10 min", AlarmScheduler.action(context, "snooze", record)).build())
+      .setContentIntent(openReminder(record.occurrenceId))
+      .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
       .build())
   }
+  fun regular(record: AlertRecord, title: String) {
+    if (!allowed()) return
+    manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
+      .setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle(title)
+      .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
+      .setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(openReminder(record.occurrenceId))
+      .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
+      .build())
+  }
+  private fun openReminder(id: String): PendingIntent = PendingIntent.getActivity(context, 0,
+    Intent(Intent.ACTION_VIEW, Uri.Builder().scheme("remilo").authority("reminder").appendPath(id).build())
+      .setPackage(context.packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
   fun clearAttention(id: String) = manager.cancel(id, 1)
   private fun allowed() = context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
   companion object {
     const val RINGING_CHANNEL = "remilo-ringing-v1"
     const val ATTENTION_CHANNEL = "remilo-attention-v1"
+    const val NOTIFICATION_CHANNEL = "remilo-notification-v1"
     const val FOREGROUND_ID = 100
   }
 }

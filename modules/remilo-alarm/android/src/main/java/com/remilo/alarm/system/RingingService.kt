@@ -14,6 +14,8 @@ class RingingService : Service() {
   private val main = Handler(Looper.getMainLooper())
   private var sessionId: String? = null
   private var audio: AlarmAudio? = null
+  private var sound = "remilo"
+  private var vibration = false
   private lateinit var notifications: AlarmNotifications
   override fun onCreate() { super.onCreate(); notifications = AlarmNotifications(this); active = this }
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -28,7 +30,11 @@ class RingingService : Service() {
       AlarmEngine.get(this).audioEnded(id, "Blocked")
       stopSelf(); return START_NOT_STICKY
     }
-    if (sessionId != id) { audio?.stop("TimedOut"); audio = null; sessionId = id }
+    if (sessionId != id) {
+      audio?.stop("TimedOut"); audio = null; sessionId = id
+      sound = intent.getStringExtra("sound") ?: "remilo"
+      vibration = intent.getBooleanExtra("vibration", false)
+    }
     refreshMembers(id)
     return START_NOT_STICKY
   }
@@ -44,7 +50,7 @@ class RingingService : Service() {
           audio = AlarmAudio(this, { elapsed -> AlarmEngine.get(this).audioStarted(id, elapsed) }, { reason ->
             AlarmEngine.get(this).audioEnded(id, reason)
             main.post { if (sessionId == id) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() } }
-          }).also { it.start() }
+          }, sound = sound, vibration = vibration).also { it.start() }
         }
       }
     } }

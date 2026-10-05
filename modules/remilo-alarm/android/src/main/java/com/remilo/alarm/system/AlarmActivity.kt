@@ -5,6 +5,8 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -36,20 +38,24 @@ class AlarmActivity : ComponentActivity() {
     setContent {
       MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-          Column(Modifier.padding(24.dp).safeDrawingPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+          Column(Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("Remilo", style = MaterialTheme.typography.headlineLarge)
             if (members.value.isEmpty()) Text("This alarm session has ended. The reminder remains unfinished.")
             members.value.forEach { (record, title) ->
               Text(title, style = MaterialTheme.typography.titleLarge)
-              Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOf("Stop", "Snooze").forEach { kind ->
                   Button(onClick = {
                     engine.request({ engine.apply(mapOf("kind" to kind, "operationId" to UUID.randomUUID().toString(),
                       "occurrenceId" to record.occurrenceId, "expectedGeneration" to record.generation)) }, {}, {})
-                  }) { Text(if (kind == "Snooze") "Snooze 10 min" else "Stop") }
+                  }, modifier = Modifier.fillMaxWidth()) { Text(if (kind == "Snooze") "Snooze ${record.snoozeMinutes} min" else "Stop") }
                 }
               }
             }
+            if (members.value.size > 1) Button(onClick = {
+              engine.request({ engine.apply(mapOf("kind" to "StopAll", "operationId" to UUID.randomUUID().toString(),
+                "expectedSessionId" to intent.getStringExtra("sessionId"))) }, {}, {})
+            }, modifier = Modifier.fillMaxWidth()) { Text("Stop all ringing alarms") }
             Text("Stop silences this delivery. It does not complete the reminder.")
             TextButton(onClick = { finish() }) { Text("Close") }
           }
