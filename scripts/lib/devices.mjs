@@ -1,8 +1,5 @@
-import { mkdirSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import { checked, localEvidence, WorkflowError } from '../tools.mjs';
-import { APP_ID, inspectApk, requireFiles } from './android-tools.mjs';
+import { checked, WorkflowError } from '../tools.mjs';
+import { APP_ID, requireFiles } from './android-tools.mjs';
 
 export function parseDevices(output) {
   return output.split(/\r?\n/).flatMap((line) => {
@@ -60,13 +57,10 @@ export async function installedHash(tools, serial) {
   if (!hash) throw new WorkflowError('INSTALLED_INSPECTION', 'Could not read installed APK hash. Unlock the device and retry.');
   return hash.toLowerCase();
 }
-export async function inspectInstalled(tools, serial) {
-  const path = await installedPath(tools, serial);
-  if (!path) return null;
-  const directory = join(localEvidence, 'apk-inspection'); mkdirSync(directory, { recursive: true });
-  const temp = join(directory, `${randomUUID()}.apk`);
-  try {
-    await adb(tools, serial, ['pull', path, temp], { timeout: 120_000 });
-    return await inspectApk(temp, tools);
-  } finally { try { unlinkSync(temp); } catch { /* A failed pull may not create a file. */ } }
+
+export function compareApkHashes(local, installed) {
+  if (!local && !installed) return 'unavailable';
+  if (!local) return 'local_missing';
+  if (!installed) return 'not_installed';
+  return local === installed ? 'match' : 'different';
 }

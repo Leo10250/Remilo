@@ -5,57 +5,51 @@ npm run verify:device for preflight and a pending observation report, and
 npm run build:beta for the locally signed bundled release. All manual observations
 start pending; collecting adb output does not prove audible behavior.
 
-Each report records timestamp, Git commit, build variant, APK hash, device/OS,
-permissions, scenario, result, measured duration and observer. Store private local
-reports in ignored verification/local; commit only explicitly redacted evidence.
+Manual acceptance evidence records timestamp, build variant, device/OS, permissions,
+scenario, result, measured duration and observer. Record APK identity and source
+commit when that relationship is established; optional tool reports do not infer
+source or require those fields. Store private local reports in ignored
+verification/local; commit only explicitly redacted evidence.
 The owner's consolidated offline Android run is in [device-acceptance.md](device-acceptance.md).
 Use it for one batch of manual results; do not resume repeated unlock/test questions
 unless the owner asks. Technical fault/OS coverage remains separate and pending.
-Preflight distinguishes workspace revision, local APK hash and installed APK hash.
-The current workspace commit is not evidence of the installed build's source.
-Associate its hash with the source recorded at build time. A mismatched or unknown
-installed APK fails preflight; it never silently installs or changes the phone.
+Optional preflight distinguishes the local APK hash from the installed APK hash.
+Missing or mismatched artifacts are diagnostic results; transport or inspection
+errors fail the command. No receipt is required. The current workspace commit is
+not evidence of an APK's source; when recording release evidence, explicitly state
+the source/build relationship observed rather than inferring it from preflight.
+Preflight never installs or changes the phone.
 
-## Toolkit receipts and private evidence
+## Development workflow and private evidence
 
-`npm run deploy` builds and inspects a signed bundled release, compares the installed
-signer/version, updates user 0 with `install -r`, then compares the installed base
-APK SHA-256. It leaves the UI closed unless `--launch` is requested. Default deploy
-does not rerun the full tests; `npm run release:prepare` runs them before signed
-assembly. Neither command establishes physical alarm acceptance.
+`npm run deploy` is the daily build/install command. It checks prerequisites,
+selects a target and ABI, assembles with the existing beta signing key, inspects
+the resulting APK once and updates Android user 0 using `install -r`. It leaves
+the UI closed unless `--launch` is requested. Android's installer enforces update
+compatibility. Deploy reports ADB installation success separately from optional
+launch; it does not pull the installed APK or compare installed hashes. Cancellation
+during installation is uncertain and must not be automatically retried.
 
-Build commands write ignored `verification/local/build-receipt.json` (schema 1):
+Deploy accepts only `--device SERIAL`, `--launch` and `--help`. It does not require
+receipts, fingerprints, Git metadata or prior verification. Run only one
+release-producing command at a time per checkout; concurrent build/deployment is
+unsupported. Old ignored receipts or lock files are historical local artifacts,
+not inputs to the current commands. Default deploy does not rerun the full tests.
+Neither successful installation nor a matching APK hash establishes physical alarm
+acceptance.
 
-- Build time, release variant, selected ABI, actual package/version/minimum and
-  target SDK, bundled-JavaScript presence, debug flag, launcher and verified signer.
-- APK absolute path and SHA-256.
-- Source commit, dirty-tree flag and content fingerprint of tracked/nonignored
-  application, native, asset, configuration and tooling inputs. Documentation and
-  private tooling/signing material are excluded from the content fingerprint.
-- Selected Node/Java/build-tools versions and lockfile SHA-256.
-- Successful checks recorded against that input fingerprint, when available.
+`npm run release:prepare` runs shared/tooling checks, native unit tests and lint,
+then assembles and inspects a required signed APK. It writes a private summary of
+actual completed checks and artifact identity, links the owner checklist and leaves
+physical observations pending. It does not install or publish. `verify:all` can
+assemble an unsigned CI build. Use `--abi x86_64` for those commands when preparing
+that architecture. Keep release evidence tied to the actual tested build; do not
+edit sources while checks/assembly are running.
 
-Inputs and commit are captured before and after assembly. If they change, no new
-receipt is written. Replacement builds invalidate the prior receipt before assembly.
-`--install-only` requires an existing matching artifact/receipt, re-inspects metadata
-and reports differences from current inputs instead of attributing it to the current
-workspace. An unsigned CI build can have a receipt but cannot be deployed.
-
-Release-producing commands and preflight share `verification/local/release.lock`.
-Concurrent workflows fail with a specific busy result. If a process crashes, or
-Windows child-tree termination cannot be confirmed, the lock is deliberately left
-for inspection: confirm no build workflow remains before removing it manually.
-
-Deployment records are timestamped under `verification/local/deployments/`; they
-include selected target/model/API/ABI, workspace and built identities, installation
-phase, installed hash, verification and launch outcomes. An install can complete
-while verification fails; that is reported as installed/unverified, never full
-success. Cancellation during install is uncertain and never automatically retried.
-Preflight writes `device-preflight.json` and keeps physical scenario results pending.
-
-`release:prepare` writes `release-summary.json`, links the owner checklist and
-records no installation/publication. `verify:all` can assemble an unsigned CI build.
-Use `--abi x86_64` for those commands when preparing that architecture.
+`npm run verify:device` is optional diagnostic preflight. Its private report records
+selected device/model/API/ABI and available local/installed hashes, with matching,
+mismatched or unknown identity. It does not attribute source or pass physical gates.
+Run it when inspecting installation identity, not as a compulsory deployment step.
 
 `device:logs` saves up to the last 2,000 log entries filtered to `Remilo:I`;
 `--follow` streams until Ctrl+C. It filters by tag rather than PID so process
@@ -64,16 +58,15 @@ binary PNG output without unlocking, navigation or temporary device files.
 Both accept `--device SERIAL`. Keep their logs/screenshots and serials local;
 there is no automatic upload. Do not infer human audibility from either artifact.
 
-Doctor, devices, deployment and preflight support structured JSON. Use npm's
+Doctor, devices and preflight support structured JSON. Use npm's
 `--silent` option to suppress its banner. All scripts offer `--help`. Read-only
 device commands can contact the shared ADB server, but never restart it, pair
-wireless devices or create emulators. A dry-run neither builds nor installs; with
-`--install-only` it may pull the installed base APK into a temporary local inspection
-file that is removed afterwards.
+wireless devices or create emulators.
 
 Host toolkit tests use controlled device/process fixtures. The milestone does not
-initiate phone deployment or another alarm-testing sequence. The owner's real
-deployment and the consolidated physical checklist remain separate pending work.
+initiate phone deployment or another alarm-testing sequence. The simplified
+command's owner smoke and the consolidated physical checklist remain separate
+pending work; earlier deployment evidence retains its historical scope.
 
 ## G0: foundation
 

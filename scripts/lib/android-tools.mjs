@@ -68,11 +68,6 @@ export function validateApk(apk, abi, expected, requireSigned = true) {
   if (!apk.abis.includes(abi)) throw new WorkflowError('APK_ABI', `APK does not contain ${abi}. Rebuild for the selected device.`);
   if (expected && (apk.versionName !== expected.versionName || apk.versionCode !== expected.versionCode)) throw new WorkflowError('APK_VERSION', 'Built APK version differs from the repository configuration.');
 }
-export function validateUpdate(candidate, installed) {
-  if (!installed) return;
-  if (candidate.package !== installed.package || JSON.stringify(candidate.signers) !== JSON.stringify(installed.signers)) throw new WorkflowError('SIGNATURE_CONFLICT', 'The installed app uses a different signing identity. Restore its original beta key. No uninstall or data clearing was attempted.');
-  if (candidate.versionCode < installed.versionCode) throw new WorkflowError('DOWNGRADE', 'The installed app has a higher versionCode. Build a newer version; no downgrade was attempted.');
-}
 export async function toolVersions(tools) {
   requireFiles(tools, ['java', 'aapt', 'signer']);
   const [node, java, aapt, adb] = await Promise.all([

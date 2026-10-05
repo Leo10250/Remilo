@@ -41,18 +41,27 @@ Remilo is Android-first and offline. React Native presents the product UI; ordin
 ## Workflow commands and skills
 
 - `npm run doctor` / `npm run devices`: read-only prerequisites and target discovery.
-- `npm run deploy -- --device SERIAL`: requested signed in-place test-device update;
-  leaves UI closed. Omit serial only for an unambiguous single target. `--dry-run`
-  is read-only; `--install-only` requires a matching build receipt.
+- `npm run deploy`: build current source and install a signed bundled beta; leave
+  UI closed. Use `--device SERIAL` for a chosen target and `--launch` only when
+  opening the app is requested. Those options and `--help` are the deploy interface.
+  Target selection is explicit serial, then `ANDROID_SERIAL`, then exactly one
+  listed authorized transport. Multiple transports require explicit selection.
 - `npm run device:logs` / `npm run device:capture`: scoped private evidence; never
   clear logs, unlock/navigate or upload raw captures.
 - `npm run preview:ui`: isolated fixture preview; never claim native verification.
 - `npm run verify:all` / `npm run release:prepare`: combined host checks; preparation
   requires existing signing and does not install/publish/commit/push.
-- All commands provide `--help`. Doctor/devices/deploy/preflight provide `--json`.
+- `npm run verify:device`: optional read-only local/installed APK comparison;
+  missing or mismatched artifacts are diagnostics, not source attribution.
+- All commands provide `--help`. Doctor/devices/preflight provide `--json`.
 - Use repository skills `$remilo-deploy`, `$remilo-device-debug`, `$remilo-release`
   for those specific requests. They call the scripts rather than duplicate them.
+- Run one release-producing command per checkout at a time; concurrent workflows
+  are unsupported. Build/deploy use Gradle and ADB directly without receipt or Git
+  prerequisites. Routine deployment does not need doctor, full verification or
+  release preparation first. Use those optional tools when the task requires them.
 - Never bypass a deployment failure with uninstall, data clear, automatic permission
-  grants, downgrade flags, a replacement key or an ADB-server restart. Keep receipts,
-  serials and captures under ignored `verification/local`; distinguish workspace,
-  built and installed source. See README and docs/verification.md.
+  grants, downgrade flags, a replacement key or an ADB-server restart. Keep serials
+  and captures under ignored `verification/local`. Report installation separately
+  from optional launch; a cancelled install has an uncertain outcome. See README
+  and docs/verification.md. Installation does not establish alarm reliability.

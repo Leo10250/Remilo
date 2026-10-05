@@ -5,6 +5,22 @@ autonomous Kotlin engine owns Room, exact alarms, native controls and audio.
 The roadmap and implementation state live in [docs/backlog.md](docs/backlog.md).
 Read [AGENTS.md](AGENTS.md) before changing this repository.
 
+## Deploy to your phone
+
+Connect an Android 14+ device, enable USB debugging and approve this computer.
+From the repository root, run:
+
+```sh
+npm run deploy
+```
+
+The command builds a signed APK from current source and installs an update that
+preserves existing data. It leaves Remilo closed; open it yourself afterwards.
+The installed app includes JavaScript and works without Metro or a network.
+The local toolchain and existing beta signing key must already be configured.
+For multiple devices, use `npm run devices`, then
+`npm run deploy -- --device SERIAL`. Add `--launch` to open the app after install.
+
 ## Toolchain
 
 - Node **22.23.3** (see `.nvmrc`); npm lockfile is committed.
@@ -60,41 +76,37 @@ configuration, `verify:android` assembles an **unsigned** release for CI; it nev
 falls back to a development key. `build:beta` requires the private signing config.
 No APK distribution or public release happens as part of verification.
 
-## Daily workflow
+## Optional workflow tools
 
-Connect an Android 14+ test device, enable USB debugging and authorize this computer.
-Already authorized wireless devices and running emulators also work. From the repo root:
+Deployment also supports already authorized wireless connections and running
+emulators. It selects `--device`, then `ANDROID_SERIAL`, then automatically selects
+only when exactly one transport is listed and authorized. Multiple transports need
+explicit selection, including an unauthorized companion. Android API 34+ and ARM64
+or x86-64 are required; the build selects the target's ABI.
 
-```sh
-npm run deploy
-```
-
-This builds current source with the existing beta key, installs an in-place update
-for Android user 0, checks the installed APK hash and leaves the app closed. Open
-Remilo yourself afterwards. No Metro or network is required by the installed app.
-It never uninstalls, clears data, grants permissions, allows downgrades or starts
-an alarm test. Installation alone does not establish alarm reliability.
+Deployment inspects the resulting signed, bundled APK, then runs
+`adb -s SERIAL install -r --user 0`. Android checks update compatibility. The
+command reports ADB installation success; it does not verify the installed APK's
+hash or claim alarm reliability. `--launch` runs only after successful installation.
+If installation is interrupted, inspect the device before retrying.
 
 ```sh
 npm run devices
 npm run deploy -- --device SERIAL
-npm run deploy -- --dry-run
-npm run deploy -- --install-only
 npm run deploy -- --launch
+npm run deploy -- --help
 ```
 
-Target selection is `--device`, then `ANDROID_SERIAL`, then automatic selection
-only if exactly one listed transport is authorized. Multiple transports require
-explicit selection, including an unauthorized companion. The chosen target must
-support ARM64 or x86-64; the build selects its ABI. `--install-only` requires a
-matching signed build receipt and displays whether current inputs differ.
-`--launch` opens the launcher only after installation verification.
+For a manual APK install, run `npm run build:beta`, then install the output with
+`adb -s SERIAL install -r --user 0 android/app/build/outputs/apk/release/app-release.apk`.
+Use the existing signing key for updates. Never substitute uninstall, data clearing,
+permission grants or downgrade flags to get around an installation error.
 
 | Command | Purpose |
 |---|---|
 | `npm run doctor` | Read-only toolchain, dependency, signing and configuration diagnosis |
 | `npm run devices` | Transport states, model, Android/API and supported ABIs |
-| `npm run deploy` | Signed bundled build, in-place install and installed-hash verification |
+| `npm run deploy` | Signed bundled build and in-place install; app stays closed |
 | `npm run device:logs -- --device SERIAL` | Bounded Remilo-tagged snapshot; add `--follow` for streaming, Ctrl+C to stop |
 | `npm run device:capture -- --device SERIAL` | Screenshot of the current screen; no unlocking or navigation |
 | `npm run preview:ui` | Fixture-only UI preview on port 8092; add `--port NUMBER` |
@@ -102,7 +114,8 @@ matching signed build receipt and displays whether current inputs differ.
 | `npm run release:prepare` | Full host verification, required signed build and pending owner-check summary |
 | `npm run test:tooling` | Controlled workflow/process/device fixtures without installing on a phone |
 
-Every command accepts `--help` after `--`. Doctor, device listing, deployment,
+Every command accepts `--help` after `--`. Deploy supports only `--device SERIAL`,
+`--launch` and `--help`; it always builds current source. Doctor, device listing,
 preflight and release preparation accept `--json`; build/test subprocess output
 goes to stderr in JSON mode. To obtain pure JSON without npm's banner, use
 `npm run --silent doctor -- --json` (or the corresponding command).
@@ -114,13 +127,12 @@ re-executing with the pinned Node. Doctor reports overrides and conflicting SDK
 configuration; it never downloads tools, accepts terms, creates keys or edits the
 machine. Build subprocesses remove preview-only variables from their environment.
 
-Build/deployment receipts, logs and screenshots stay under ignored
-`verification/local/`. A receipt records the actual APK, signer and stable build
-inputs; stale receipts cannot authorize installation. Release-producing workflows
-share a lock so an APK cannot be replaced during inspection or deployment. After
-a crash or an unconfirmed child-tree shutdown, confirm the workflow/build processes
-ended before manually removing `verification/local/release.lock`. Do not restart
-the shared ADB server to work around a connection problem.
+Run one release-producing command at a time in each checkout. Concurrent builds
+or deployment from the same output directory are unsupported. Builds and deployment
+do not require receipts or Git metadata. Optional preflight can compare local and
+installed APK hashes; it cannot establish the installed build's source from the
+current workspace. Logs, screenshots and optional summaries stay under ignored
+`verification/local/`. Do not restart the shared ADB server for connection failures.
 
 Repository skills in `.agents/skills` are discoverable by Codex:
 
@@ -129,9 +141,10 @@ Repository skills in `.agents/skills` are discoverable by Codex:
 - `$remilo-release`: signed milestone preparation with honest pending acceptance.
 
 The release command does not install, publish, commit or push. Keep signing keys
-and raw device evidence local. See [receipt/evidence guidance](docs/verification.md#toolkit-receipts-and-private-evidence).
-The [workflow kit evidence](docs/evidence/2026-10-05-workflow-kit.md) records host
-verification separately from the pending real-device deployment.
+and raw device evidence local. See [workflow/evidence guidance](docs/verification.md#development-workflow-and-private-evidence).
+Historical [workflow kit evidence](docs/evidence/2026-10-05-workflow-kit.md) and
+[phone deployment evidence](docs/evidence/2026-10-05-phone-deployment.md) describe
+the earlier workflow; the backlog tracks the current simplification milestone.
 
 ## Verification
 
@@ -139,7 +152,7 @@ verification separately from the pending real-device deployment.
 |---|---|
 | `npm run verify` | TypeScript, ESLint, shared behavioral tests and tooling fixtures |
 | `npm run verify:android` | Kotlin policy/Room recovery tests, native/app lint, bundled release assembly |
-| `npm run verify:device` | adb preflight, build hash, pending observation report; does not run alarm tests |
+| `npm run verify:device` | Read-only device preflight and optional local/installed hash comparison; no alarm tests |
 | `npm run build:beta` | Locally signed bundled release APK |
 
 Host tests use Robolectric API 34 for persistence/recovery; they do **not** prove

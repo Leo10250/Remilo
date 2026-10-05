@@ -54,15 +54,15 @@ export function run(command, args, options = {}) {
 }
 // No shell expansion: APK paths, device serials and process arguments are separate values.
 export function execute(command, args, { env = toolEnvironment(), cwd = root, stream = false,
-  stderrStream = false, timeout = 30_000, binary = false, outputFile = null, cancelIsSuccess = false, protectRelease = false } = {}) {
+  stderrStream = false, timeout = 30_000, binary = false, outputFile = null, cancelIsSuccess = false } = {}) {
   return new Promise((resolveResult, reject) => {
     const child = spawn(command, args, { env, cwd, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
-    const stdout = [], stderr = []; let bytes = 0, cancelled = false, timedOut = false, treeUncertain = false;
+    const stdout = [], stderr = []; let bytes = 0, cancelled = false, timedOut = false;
     const terminate = () => {
       if (!child.pid) return;
       if (process.platform === 'win32') {
         const killed = spawnSync('taskkill.exe', ['/pid', String(child.pid), '/t', '/f'], { windowsHide: true, stdio: 'ignore' });
-        if (killed.status !== 0) { treeUncertain = true; child.kill('SIGTERM'); }
+        if (killed.status !== 0) child.kill('SIGTERM');
       }
       else { try { process.kill(-child.pid, 'SIGTERM'); } catch { /* Already exited. */ } }
     };
@@ -80,10 +80,8 @@ export function execute(command, args, { env = toolEnvironment(), cwd = root, st
     child.once('error', (error) => { cleanup(); reject(new WorkflowError('PROCESS_START', `${basename(command)} could not start: ${error.message}`)); });
     child.once('close', (status, signal) => {
       cleanup();
-      const details = protectRelease && treeUncertain ? { retainReleaseLock: true } : {};
-      const lockMessage = details.retainReleaseLock ? ' Release lock retained because child-tree termination could not be confirmed. Confirm the build processes ended before removing verification/local/release.lock.' : '';
-      if (cancelled && !cancelIsSuccess) return reject(new WorkflowError('CANCELLED', `Command cancelled; an interrupted install may need inspection with npm run verify:device.${lockMessage}`, details));
-      if (timedOut) return reject(new WorkflowError('TIMEOUT', `${basename(command)} timed out. No automatic retry was attempted.${lockMessage}`, details));
+      if (cancelled && !cancelIsSuccess) return reject(new WorkflowError('CANCELLED', 'Command cancelled. An interrupted install may need inspection with npm run verify:device; no retry was attempted.'));
+      if (timedOut) return reject(new WorkflowError('TIMEOUT', `${basename(command)} timed out. No automatic retry was attempted.`));
       if (!stream && !outputFile && bytes > 16 * 1024 * 1024) return reject(new WorkflowError('OUTPUT_LIMIT', 'Command output exceeded 16 MB; no truncated artifact was accepted.'));
       resolveResult({ status: cancelled && cancelIsSuccess ? 0 : status, signal,
         stdout: binary ? Buffer.concat(stdout) : Buffer.concat(stdout).toString('utf8'), stderr: Buffer.concat(stderr).toString('utf8') });

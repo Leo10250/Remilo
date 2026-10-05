@@ -35,6 +35,9 @@ block verified release, rather than development. Known failures still require fi
 | TK-02 | Safe ABI-aware deployment and reusable device preflight | TK-01 | verified | [host fixtures, blocked/successful dry-run and mismatch preflight](evidence/2026-10-05-workflow-kit.md); [owner deployment and installed hash confirmed after randomized-path fix](evidence/2026-10-05-phone-deployment.md) |
 | TK-03 | Scoped logs/capture, isolated preview and combined release preparation | TK-01 | verified | [help, scoped process/environment fixtures, HTTP preview and full host preparation](evidence/2026-10-05-workflow-kit.md); real device captures pending |
 | TK-04 | Discoverable repo skills and workflow documentation | TK-02/03 | verified | [bundled skill/metadata validation and workflow evidence](evidence/2026-10-05-workflow-kit.md); scripts are the shared procedure |
+| DS-01 | Shared Gradle build/inspection without receipts or release locks | TK-01 | verified | [signed ARM64/x86-64 assembly and full host preparation](evidence/2026-10-05-deployment-simplification.md); no Git or receipt prerequisite |
+| DS-02 | Sequential one-command deployment with target selection | DS-01 | verified | [35 controlled tooling cases, cancellation and optional launch](evidence/2026-10-05-deployment-simplification.md); simplified real-device deployment smoke remains pending |
+| DS-03 | Optional diagnostics, concise skills and current workflow guidance | DS-01/02 | verified | [doctor, discovery/preflight, help, three skill validators and metadata](evidence/2026-10-05-deployment-simplification.md); no new phone mutation |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -66,9 +69,10 @@ block verified release, rather than development. Known failures still require fi
   unchanged. Native authority validates independently of JavaScript form checks.
 - P1-06: seed committed storage boundaries, restart the engine and verify recovery
   without duplicate definitions/history or revived stopped generations. These are
-  host tests, not injected physical crashes. Device preflight records installed APK
-  identity separately from local APK and working-tree revision; mismatch fails
-  preflight without changing the installed app or declaring physical observations.
+  host tests, not injected physical crashes. Device preflight records available
+  local and installed APK hashes separately without source attribution. Missing
+  or mismatched artifacts are diagnostics; transport/inspection errors fail.
+  Preflight never changes the installed app or declares physical observations.
 - Later task groups are split into bounded work units when activated. Each new row
   must include purpose/scope, dependencies, behavior, required checks and evidence;
   place its status only in this backlog.
@@ -82,6 +86,8 @@ block verified release, rather than development. Known failures still require fi
   old Stop all and generic pre-unlock snapshots. U9/U10/U12 recheck real presentation.
 - UX-05: pass shared/native/lint/signed assembly, record source/hash/signer, and keep
   unobserved physical/200%-font/TalkBack scenarios pending in the single owner checklist.
+- TK-01–04 record the original toolkit contracts and evidence. Their receipt,
+  serialization and deployment-preflight details are superseded by DS-01–03.
 - TK-01: select/report pinned tools, detect configuration conflicts, attribute only
   stable build inputs and serialize assembly/inspection/install. Require actual APK
   inspection, hash and signer; controlled cancellation must not imply success.
@@ -96,6 +102,30 @@ block verified release, rather than development. Known failures still require fi
   emulator deployment results are distinct from host fixtures.
 - TK-04: validate three scoped skills with the bundled validator, keep procedures
   in scripts, and document actual host evidence. No global skill installation.
+- DS-01: remove receipt, fingerprint and lock prerequisites from active build
+  callers. Reuse the committed Gradle wrapper and existing signing identity; inspect
+  actual APK output and retain compatible ARM64/x86-64 assembly. Run shared/native
+  verification without changing the application version or behavior.
+- DS-02: expose only `--device SERIAL`, `--launch` and `--help`; automatic target
+  selection requires one listed authorized transport. Fail prerequisites, API/ABI
+  and artifact validation before installation. Use the selected serial with
+  `install -r --user 0`; leave UI closed by default. Tests cover cancellation,
+  install failure, separate launch failure, paths with spaces and preview isolation.
+  Missing receipts and unavailable Git metadata must not block deployment.
+- DS-03: keep doctor/devices/logs/capture/preview/preflight/release preparation
+  optional. Preflight diagnoses available APK hashes without source attribution.
+  Validate three concise skills and document one release-producing workflow per
+  checkout. Preserve historical evidence for TK-01–04 rather than rewriting it.
+
+## Simplified deployment owner smoke (pending)
+
+Once host verification is recorded for DS-01–03, connect and authorize one test
+device, then run `npm run deploy` from the repository root. Confirm installation
+succeeds and Remilo stays closed. Open it yourself and confirm version 0.4.0 and
+existing reminders are preserved. For multiple transports, select with `--device`.
+This checks the development workflow; remaining alarm/product observations still
+use [the consolidated owner checklist](device-acceptance.md). No new alarm-testing
+sequence is required by the tooling simplification.
 
 ## Later workflow opportunities (outside this kit)
 
