@@ -16,6 +16,7 @@ export function commandFeedback(result: CommandResult): string {
     case 'Pending': return 'Saved. Scheduling is still pending; refresh to check its state.';
     case 'Applied': return 'Action applied. The reminder remains unfinished.';
     case 'Rejected': return result.errorCode === 'STALE_GENERATION'
-      ? 'This reminder changed. Refresh and try again.' : `Action rejected (${result.errorCode ?? 'unknown'}).`;
+      ? 'This reminder changed. Refresh and try again.'
+      : result.errorMessage ?? `Action rejected (${result.errorCode ?? 'unknown'}).`;
   }
 }

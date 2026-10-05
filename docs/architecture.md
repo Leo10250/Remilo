@@ -29,6 +29,11 @@ There is no actionless placeholder. Subsequent member refreshes update the same
 notification; actions retain the delivery generation from their snapshot and stale
 ones are rejected. Before unlock, the snapshot contains generic text only.
 
+Native commands return field/error metadata for rejected input; JavaScript form
+validation is presentation assistance. Dates and generations must be finite
+integers in their supported range. A rejected command cannot leave a partial
+definition or scheduling intent. Error messages never embed private field values.
+
 Application startup and providers must be safe before unlock, not just receivers.
 Keep one process and avoid credential storage until UserManager says unlocked.
 

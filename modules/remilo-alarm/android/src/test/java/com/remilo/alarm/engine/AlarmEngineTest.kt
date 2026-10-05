@@ -69,6 +69,41 @@ class AlarmEngineTest {
     assertEquals(1, (page["items"] as List<*>).size)
     assertEquals("Scheduled", first["status"])
   }
+  @Test fun invalidCommandsIdentifyTheirFieldWithoutPersistingOrScheduling() {
+    val cases = listOf(
+      "operationId" to " ", "title" to " ", "alarmAtMs" to Double.NaN,
+      "alarmAtMs" to now, "alarmAtMs" to now + 60_000.5,
+      "eventEndMs" to now, "dueAtMs" to "not a date")
+    cases.forEachIndexed { index, (field, value) ->
+      val command = mapOf("kind" to "Create", "operationId" to "invalid-$index",
+        "title" to "Private title", "alarmAtMs" to now + 60_000) + (field to value)
+      val result = request { engine.apply(command) } as Map<*, *>
+      assertEquals("Rejected", result["status"])
+      assertEquals("INVALID_INPUT", result["errorCode"])
+      assertEquals(field, result["errorField"])
+      assertFalse(result["errorMessage"].toString().contains("Private title"))
+    }
+    assertTrue(os.registered.isEmpty())
+    val page = request { engine.query("all", null) } as Map<*, *>
+    assertTrue((page["items"] as List<*>).isEmpty())
+    request {
+      val db = ContentDatabase.open(context)
+      try { assertTrue(db.records().pending().isEmpty()) } finally { db.close() }
+    }
+  }
+  @Test fun malformedDeliveryGenerationsCannotSnoozeOrChangeTheCurrentAlarm() {
+    val id = id(create())
+    listOf(Double.NaN, Double.POSITIVE_INFINITY, 0.0, 1.5).forEachIndexed { index, generation ->
+      val result = request { engine.apply(mapOf("kind" to "Snooze", "operationId" to "invalid-$index",
+        "occurrenceId" to id, "expectedGeneration" to generation)) } as Map<*, *>
+      assertEquals("Rejected", result["status"])
+      assertEquals("expectedGeneration", result["errorField"])
+    }
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(1L, after["generation"])
+    assertEquals(now + 60_000, after["nextAlertMs"])
+    assertEquals(1, os.registered.size)
+  }
   @Test fun snoozeFencesOldActionsAndDoesNotChangeDueTime() {
     val id = id(create())
     now += 60_000

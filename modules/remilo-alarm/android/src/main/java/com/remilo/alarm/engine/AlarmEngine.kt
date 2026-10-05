@@ -24,6 +24,10 @@ class AlarmEngine internal constructor(private val context: Context,
   private val alerts = operational.records()
   private var content: ContentDatabase? = null
   private val listeners = CopyOnWriteArrayList<() -> Unit>()
+  private class InputError(val field: String, message: String) : IllegalArgumentException(message)
+  private fun validate(valid: Boolean, field: String, message: String) {
+    if (!valid) throw InputError(field, message)
+  }
 
   init {
     AlarmNotifications(context)
@@ -93,27 +97,41 @@ class AlarmEngine internal constructor(private val context: Context,
       "revision" to record.revision, "nextAlertMs" to alert?.targetMs,
       "generation" to (alert?.generation ?: 0L), "deliveryState" to (alert?.state ?: "Pending"))
   }
-  private fun epoch(value: Any?): Long {
-    val number = (value as? Number)?.toDouble() ?: throw IllegalArgumentException()
-    require(number.isFinite() && number >= 0 && number <= 8_640_000_000_000_000L)
+  private fun epoch(value: Any?, field: String): Long {
+    val number = (value as? Number)?.toDouble() ?: throw InputError(field, "Choose a valid date and time.")
+    validate(number.isFinite() && number >= 0 && number <= 8_640_000_000_000_000L && number % 1.0 == 0.0,
+      field, "Choose a valid date and time.")
     return number.toLong()
   }
   fun preview(draft: Map<String, Any?>): Map<String, Any> {
-    val at = epoch(draft["alarmAtMs"])
-    return mapOf("alarmAtMs" to at, "eventStartMs" to epoch(draft["eventStartMs"] ?: at),
-      "dueAtMs" to epoch(draft["dueAtMs"] ?: at), "warnings" to emptyList<String>())
+    val at = epoch(draft["alarmAtMs"], "alarmAtMs")
+    return mapOf("alarmAtMs" to at, "eventStartMs" to epoch(draft["eventStartMs"] ?: at, "eventStartMs"),
+      "dueAtMs" to epoch(draft["dueAtMs"] ?: at, "dueAtMs"), "warnings" to emptyList<String>())
   }
   fun apply(command: Map<String, Any?>): Map<String, Any?> {
-    val operationId = command["operationId"] as? String ?: throw IllegalArgumentException()
-    require(operationId.length in 1..200)
+    return try { applyValidated(command) } catch (error: InputError) {
+      mapOf("status" to "Rejected", "errorCode" to "INVALID_INPUT", "errorField" to error.field,
+        "errorMessage" to error.message)
+    }
+  }
+  private fun applyValidated(command: Map<String, Any?>): Map<String, Any?> {
+    val operationId = command["operationId"] as? String
+      ?: throw InputError("operationId", "Try this action again.")
+    validate(operationId.isNotBlank() && operationId.length <= 200, "operationId", "Try this action again.")
     return when (command["kind"]) {
       "Create" -> create(operationId, command)
       "Stop", "Snooze" -> {
-        val id = command["occurrenceId"] as? String ?: throw IllegalArgumentException()
-        val generation = (command["expectedGeneration"] as? Number)?.toLong() ?: throw IllegalArgumentException()
+        val id = command["occurrenceId"] as? String
+          ?: throw InputError("occurrenceId", "Choose an existing reminder.")
+        validate(id.isNotBlank() && id.length <= 200, "occurrenceId", "Choose an existing reminder.")
+        val number = (command["expectedGeneration"] as? Number)?.toDouble()
+          ?: throw InputError("expectedGeneration", "Refresh this reminder and try again.")
+        validate(number.isFinite() && number >= 1 && number <= 9_007_199_254_740_991L && number % 1.0 == 0.0,
+          "expectedGeneration", "Refresh this reminder and try again.")
+        val generation = number.toLong()
         applyAction(id, generation, command["kind"] as String, operationId)
       }
-      else -> mapOf("status" to "Rejected", "errorCode" to "UNSUPPORTED_COMMAND")
+      else -> mapOf("status" to "Rejected", "errorCode" to "UNSUPPORTED_COMMAND", "errorField" to "kind")
     }
   }
   fun testAlarm(): Map<String, Any?> = create(UUID.randomUUID().toString(), mapOf(
@@ -125,16 +143,16 @@ class AlarmEngine internal constructor(private val context: Context,
       return result(it.occurrenceId)
     }
     val title = (command["title"] as? String)?.trim() ?: ""
-    require(title.isNotEmpty() && title.length <= 200)
-    val target = epoch(command["alarmAtMs"])
-    require(target > now())
-    val eventStart = epoch(command["eventStartMs"] ?: target)
-    val eventEnd = epoch(command["eventEndMs"] ?: (eventStart + 30 * 60_000L))
-    require(eventEnd > eventStart)
+    validate(title.isNotEmpty() && title.length <= 200, "title", "Enter a title of 1–200 characters.")
+    val target = epoch(command["alarmAtMs"], "alarmAtMs")
+    validate(target > now(), "alarmAtMs", "Choose an alarm time in the future.")
+    val eventStart = epoch(command["eventStartMs"] ?: target, "eventStartMs")
+    val eventEnd = epoch(command["eventEndMs"] ?: (eventStart + 30 * 60_000L), "eventEndMs")
+    validate(eventEnd > eventStart, "eventEndMs", "Event end must follow event start.")
     val id = UUID.randomUUID().toString()
     db.runInTransaction {
       db.records().insert(ReminderRecord(id, title, eventStart, eventEnd,
-        epoch(command["dueAtMs"] ?: eventStart), now()))
+        epoch(command["dueAtMs"] ?: eventStart, "dueAtMs"), now()))
       db.records().pending(PendingSchedule(operationId, id, target, 1))
       db.records().receipt(CreationReceipt(operationId, id))
     }
@@ -186,7 +204,8 @@ class AlarmEngine internal constructor(private val context: Context,
   private fun applyAction(id: String, expected: Long, kind: String, operationId: String): Map<String, Any?> {
     val old = alerts.find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
     if (alerts.action(operationId) != null) return mapOf("status" to "Applied", "generation" to old.generation)
-    if (old.generation != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_GENERATION")
+    if (old.generation != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_GENERATION",
+      "errorField" to "expectedGeneration", "generation" to old.generation)
     if (kind == "Stop" && old.state != "Alerting") return mapOf("status" to "Rejected", "errorCode" to "NOT_RINGING")
     val next = old.copy(generation = old.generation + 1, sessionId = null,
       targetMs = if (kind == "Snooze") now() + AlarmPolicy.SNOOZE_MILLIS else old.targetMs,

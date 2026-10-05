@@ -18,4 +18,5 @@ export type DeliveryCommand = {
 export type CommandResult = {
   status: 'Scheduled' | 'Blocked' | 'Pending' | 'Applied' | 'Rejected';
   occurrence?: Occurrence; generation?: number; errorCode?: string;
+  errorField?: string; errorMessage?: string;
 };
