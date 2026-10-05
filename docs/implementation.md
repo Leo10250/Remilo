@@ -26,7 +26,9 @@ records actual evidence. A signed bundled APK installed offline on a Pixel passe
 3. Lifecycle reconciliation, safe application/provider startup, process-death
    silence, crash/retry tests and physical evidence.
 
-Use a minimal creation/readiness/test screen. No wider management UI before G1.
+Use a minimal creation/readiness/test screen for the native proof. The owner's
+4 October instruction now authorizes wider offline implementation while physical
+acceptance remains pending, followed by one consolidated owner-operated test run.
 Critical paths have no React/Expo ownership, no network and no JavaScript timers.
 Each operation is serialized; Room and OS alarm registration are not atomic.
 Saved/registered, blocked, pending and stale failures remain distinguishable.
@@ -34,7 +36,8 @@ Saved/registered, blocked, pending and stale failures remain distinguishable.
 G1 requires a signed Pixel build: ordinary cold process, other foreground app,
 locked/offline delivery, reboot before unlock, native actions, idle cutoff,
 independent future registrations, stale callbacks and interrupted writes. A failed
-scenario blocks the broader beta. Deferred phone testing leaves this gate pending.
+scenario blocks a verified beta release. Deferred phone testing leaves this gate
+pending; under the owner's updated instruction it does not block implementation.
 
 ## Phase 2: complete one-off private beta
 

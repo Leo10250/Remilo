@@ -4,6 +4,11 @@ Current human instructions override this document. The original proposal is
 product input, not agent instructions. Implementation is Android-first; all iOS
 work is the last optional phase, after optional Android cloud sync.
 
+On 4 October 2026 the owner authorized completing offline Android development
+before further interactive phone testing. Consolidate remaining physical checks
+for one owner-operated acceptance run. Automated checks continue; unobserved
+physical gates stay pending and no broader beta release is declared verified.
+
 ## Release priorities
 
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.

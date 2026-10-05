@@ -31,5 +31,9 @@ Remilo is Android-first and offline. React Native presents the product UI; ordin
 - npm run build:beta: locally signed release APK.
 - Run checks relevant to changed behavior. Physical alarm claims require a signed bundled build on a phone.
 - Report actual checks, build/device, limitations and next task. Emulator results never stand in for physical verification.
-- Phase gates are real dependencies. Do not skip a failed alarm gate or silently change product behavior.
+- The owner deferred further interactive phone testing on 4 October 2026 and
+  authorized completing the offline Android implementation before one consolidated
+  acceptance run. Pending physical gates do not block development under that
+  instruction; they still block declaring the beta verified or distributing it.
+  Fix known failures and never silently change product behavior.
 - Use focused commits/PRs when a remote is configured. Do not create a remote, distribute or publish without authorization.

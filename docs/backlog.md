@@ -2,16 +2,22 @@
 
 Statuses: pending, in progress, implemented/unverified, verified, blocked.
 Verified always links actual evidence. Implementation is not a passed release gate.
+Owner instruction, 4 October 2026: complete offline Android development now and
+consolidate physical checks for a later acceptance run. Pending G1/G2/G3 observations
+block verified release, rather than development. Known failures still require fixes.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
-| P0-01 | Expo 57 scaffold, pinned Node/JDK and tracked native project | none | implemented/unverified | local release assembly passes; clean CI/phone gate remains |
-| P0-02 | AI instructions, contracts, backlog, verification scripts/CI | P0-01 | implemented/unverified | shared verification passes; GitHub CI execution pending |
-| G0 | Foundation release gate | P0-01/02 | pending | signed offline APK installed on Pixel, no Metro |
-| P1-01 | Native persistence, asynchronous bridge, recovery records | P0-01 | implemented/unverified | eight Room recovery tests pass; physical lifecycle pending |
-| P1-02 | Independent alarm, receiver, FGS, audio, Stop/Snooze | P1-01 | implemented/unverified | policy tests/lint/build pass; signed-device verification pending |
-| P1-03 | Cutoff, Direct Boot, recovery and lifecycle verification | P1-02 | in progress | physical scenarios in verification.md |
-| G1 | Native alarm reliability gate | P1-01/02/03, G0 | pending | signed physical tests; failures block wider beta |
+| P0-01 | Expo 57 scaffold, pinned Node/JDK and tracked native project | none | verified | [clean CI, signed offline installation](evidence/2026-10-04-native-slice.md) |
+| P0-02 | AI instructions, contracts, backlog, verification scripts/CI | P0-01 | verified | [shared/native commands and clean GitHub verification](evidence/2026-10-04-native-slice.md) |
+| G0 | Foundation release gate | P0-01/02 | verified | [clean checkout and signed bundled UI offline on Pixel](evidence/2026-10-04-native-slice.md) |
+| P1-01 | Native persistence, asynchronous bridge, recovery records | P0-01 | implemented/unverified | [Room recovery tests pass; remaining physical crash boundaries](evidence/2026-10-04-native-slice.md) |
+| P1-02 | Independent alarm, receiver, FGS, audio, Stop/Snooze | P1-01 | implemented/unverified | [cold/locked delivery, cutoff and actions observed; remaining independent/recovery matrix](evidence/2026-10-04-native-slice.md) |
+| P1-03 | Cutoff, Direct Boot, recovery and lifecycle verification | P1-02 | in progress | [reboot fix and owner confirmations; remaining matrix](evidence/2026-10-04-native-slice.md) |
+| P1-04 | Preserve usable notification controls on Snooze re-trigger | P1-02 | verified | [owner confirmed initial/re-triggered buttons; second Snooze registered and final native Stop logged](evidence/2026-10-04-native-slice.md) |
+| P1-05 | Structured native command validation | P1-01 | verified | [invalid fields/generations leave data and registration unchanged; shared/native checks pass](evidence/2026-10-04-native-slice.md) |
+| P1-06 | Persisted interruption tests and installed-build evidence | P1-01, P0-02 | verified | [20 native tests; preflight distinguishes installed APK from local build](evidence/2026-10-04-native-slice.md) |
+| G1 | Native alarm reliability gate | P1-01/02/03/04/05/06, G0 | pending | signed physical tests; failures block wider beta |
 | P2-01 | One-off create/detail/views, readiness and timing controls | G1 | pending | quick creation and clear due/alert separation |
 | P2-02 | Done/Postpone/post-timeout actions and session grouping | G1 | pending | two occurrences, one sound, original deadline |
 | P2-03 | Settings, diagnostics, export/restore, upgrade safety | P2-01/02 | pending | no stale session/handle replay; safe restore preview |
@@ -29,7 +35,36 @@ Verified always links actual evidence. Implementation is not a passed release ga
 | G5 | Android cloud gate | P5 | pending | two Android installations converge |
 | P6 | Optional iOS feasibility and complete port | G5 | pending | final phase only; real iPhone capability evidence |
 
-## Current prerequisites
+## Task verification contracts
+
+- P0-01: shared checks and bundled Android assembly; clean-checkout CI and signed
+  offline installation are separate evidence requirements.
+- P0-02: verify commands work from documented toolchains; CI results identify their
+  commit. Instructions never claim a manual observation from an automated result.
+- P1-01: Room tests exercise create retries, interrupted projections, history replay,
+  stale delivery actions, permission-blocked saves and cold recovery. Physical crash
+  boundaries remain part of G1.
+- P1-02: native policy tests, lint and release assembly; physical cold process,
+  permission flow, Stop/Snooze and independent registrations require device evidence.
+- P1-03: all G1 procedures in verification.md, with durations and human observations.
+  Missing observations remain pending under the owner's deferred acceptance run;
+  known failures must be fixed before claiming reliability.
+- P1-04: publish complete native controls before service promotion; test the actual
+  first and re-triggered notification, old-action rejection and generic pre-unlock
+  text. Verify Stop/Snooze on the signed phone build after a ten-minute Snooze.
+- P1-05: native command errors identify the field without exposing private values;
+  invalid commands leave content, operational generations and OS registration
+  unchanged. Native authority validates independently of JavaScript form checks.
+- P1-06: seed committed storage boundaries, restart the engine and verify recovery
+  without duplicate definitions/history or revived stopped generations. These are
+  host tests, not injected physical crashes. Device preflight records installed APK
+  identity separately from local APK and working-tree revision; mismatch fails
+  preflight without changing the installed app or declaring physical observations.
+- Later task groups are split into bounded work units when activated. Each new row
+  must include purpose/scope, dependencies, behavior, required checks and evidence;
+  place its status only in this backlog.
+
+## Host and device prerequisites
 
 - Host Node 22.11 is unsupported; project-local verified Node 22.23.3 is installed
   under ignored .tooling (host installation remains intact).
