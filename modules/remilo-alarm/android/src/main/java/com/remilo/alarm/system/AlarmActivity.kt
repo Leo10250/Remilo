@@ -41,7 +41,7 @@ class AlarmActivity : ComponentActivity() {
         Surface(modifier = Modifier.fillMaxSize()) {
           Column(Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("Remilo", style = MaterialTheme.typography.headlineLarge)
-            if (members.value.isEmpty()) Text("This alarm session has ended. The reminder remains unfinished.")
+            if (members.value.isEmpty()) Text("This alarm session has ended. Open Remilo to check the reminder.")
             members.value.forEach { (record, title) ->
               Text(title, style = MaterialTheme.typography.titleLarge)
               Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
