@@ -41,13 +41,16 @@ export async function describeDevice(tools, target) {
 export async function targetDevice(tools, requested) {
   return describeDevice(tools, selectDevice(await listDevices(tools), requested, process.env.ANDROID_SERIAL));
 }
+export function parseInstalledPath(output) {
+  const paths = output.split(/\r?\n/).filter((line) => line.startsWith('package:')).map((line) => line.slice(8));
+  if (paths.length !== 1 || !/^\/[A-Za-z0-9/+=_.~-]+\/base\.apk$/.test(paths[0])) throw new WorkflowError('INSTALLED_INSPECTION', 'Expected one readable installed Remilo base APK path for user 0; received a missing or unsupported path.');
+  return paths[0];
+}
 export async function installedPath(tools, serial) {
   const list = (await adb(tools, serial, ['shell', 'pm', 'list', 'packages', '--user', '0', APP_ID])).stdout;
   if (!list.split(/\r?\n/).includes(`package:${APP_ID}`)) return null;
   const output = (await adb(tools, serial, ['shell', 'pm', 'path', '--user', '0', APP_ID])).stdout;
-  const paths = output.split(/\r?\n/).filter((line) => line.startsWith('package:')).map((line) => line.slice(8));
-  if (paths.length !== 1 || !/^\/[A-Za-z0-9/+=_.-]+\/base\.apk$/.test(paths[0])) throw new WorkflowError('INSTALLED_INSPECTION', 'Could not inspect a single installed Remilo APK for user 0. Unlock the device and retry.');
-  return paths[0];
+  return parseInstalledPath(output);
 }
 export async function installedHash(tools, serial) {
   const path = await installedPath(tools, serial);

@@ -73,6 +73,11 @@ have host fixture coverage; that is distinct from device execution. The owner ca
 connect/authorize the intended device and run `npm run deploy`, adding `--device`
 when several transports are listed. Default deployment leaves Remilo closed.
 
+Subsequent [owner-requested phone deployment](2026-10-05-phone-deployment.md)
+records successful installation and installed-hash matching, including a correction
+to inspection of Android's randomized APK directories. The preceding observations
+describe the original workflow-kit run.
+
 The [consolidated acceptance checklist](../device-acceptance.md) and G1/G2/G3 remain
 pending. A successful future installation does not establish alarm reliability or
 authorize distribution. Signing keys, raw logs, screenshots and serials were not

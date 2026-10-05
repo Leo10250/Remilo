@@ -5,7 +5,7 @@ import { join, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { root, execute, WorkflowError } from '../tools.mjs';
-import { selectDevice, parseDevices, deviceAbi } from '../lib/devices.mjs';
+import { selectDevice, parseDevices, deviceAbi, parseInstalledPath } from '../lib/devices.mjs';
 import { parseBadging, validateApk, validateUpdate, checkSigning } from '../lib/android-tools.mjs';
 import { deployWorkflow, installArguments, launchArguments, logArguments, confirmInstallation, confirmLaunch } from '../lib/deployment.mjs';
 import { assertStable, validateReceipt, buildEnvironment, sourceSnapshot } from '../lib/build.mjs';
@@ -34,6 +34,21 @@ const temporary = (work) => {
 test('discovery keeps unauthorized/offline transports and ignores ADB headings', () => {
   assert.deepEqual(parseDevices('List of devices attached\nphone\tunauthorized usb:1\nemulator-5554 device model:test\nremote:5555 offline\n'), [
     { serial: 'phone', state: 'unauthorized', description: 'usb:1' }, { serial: 'emulator-5554', state: 'device', description: 'model:test' }, { serial: 'remote:5555', state: 'offline', description: '' }]);
+});
+
+test('installed APK inspection accepts Android randomized directories and CRLF output', () => {
+  const path = '/data/app/~~fixture_123==/com.remilo.app-fixture-456==/base.apk';
+  assert.equal(parseInstalledPath(`package:${path}\r\n`), path);
+  assert.equal(parseInstalledPath('package:/data/app/com.remilo.app-123/base.apk\n'), '/data/app/com.remilo.app-123/base.apk');
+});
+
+test('installed APK inspection rejects absent, split and unsafe paths', () => {
+  for (const output of ['', 'package:/data/app/app/base.apk\npackage:/data/app/app/split.apk\n',
+    'package:data/app/app/base.apk\n', 'package:/data/app/app/split.apk\n',
+    'package:/data/app/app;echo/base.apk\n', 'package:/data/app/app$(echo)/base.apk\n',
+    'package:/data/app/app with spaces/base.apk\n']) {
+    assert.throws(() => parseInstalledPath(output), { code: 'INSTALLED_INSPECTION' });
+  }
 });
 test('selection rejects no target and ambiguous targets, including unauthorized companions', () => {
   assert.throws(() => selectDevice([]), { code: 'NO_DEVICE' });
