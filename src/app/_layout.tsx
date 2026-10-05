@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import RemiloAlarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
 import { ThemeProvider, useTheme } from '../ui/theme';
@@ -21,11 +22,11 @@ export default function RootLayout() {
     return () => { app.remove(); native?.remove(); clearInterval(dateRefresh); };
   }, []);
   return (
-    <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider>
       <QueryClientProvider client={client}>
         <ThemeProvider><Navigation /></ThemeProvider>
       </QueryClientProvider>
-    </SafeAreaProvider>
+    </SafeAreaProvider></GestureHandlerRootView>
   );
 }
 function Navigation() {

@@ -1,15 +1,20 @@
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
-import { useEffect, useState, type PropsWithChildren, type ReactNode } from 'react';
-import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ImageSourcePropType, type TextInputProps } from 'react-native';
+import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { AccessibilityInfo, ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ImageSourcePropType, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from './theme';
+import { typography, space, shape } from './tokens';
+import { civilAt, deviceZone, mergeCivil, pickerCivil } from '../domain/time';
+import { engine } from './native';
+import type { Tone } from '../domain/actions';
+import { useReducedMotion } from './motion';
 
 export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'add' | 'repeat' | 'more_vert' | 'close' |
   'check' | 'check_circle' | 'radio_button_unchecked' | 'expand_more' | 'expand_less' | 'chevron_right' |
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
-  'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo';
+  'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
   const colors = useTheme();
   return <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size }}>
@@ -44,22 +49,23 @@ export function IconButton({ icon, label, onPress, disabled = false }: { icon: I
     <Icon name={icon} color={colors.ink} />
   </Pressable>;
 }
-export function Copy({ children, muted = false, size = 16 }: PropsWithChildren<{ muted?: boolean; size?: number }>) {
+export function Copy({ children, muted = false, size = typography.body }: PropsWithChildren<{ muted?: boolean; size?: number }>) {
   const colors = useTheme();
   return <Text style={{ color: muted ? colors.muted : colors.ink, fontSize: size, lineHeight: size * 1.4 }}>{children}</Text>;
 }
 export function Heading({ children }: PropsWithChildren) {
-  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: 19, fontWeight: '600' }}>{children}</Text>;
+  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading, fontWeight: '600' }}>{children}</Text>;
 }
-export function Button({ label, onPress, disabled = false, variant = 'primary' }: {
-  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'danger';
+export function Button({ label, onPress, disabled = false, variant = 'primary', icon }: {
+  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'danger'; icon?: IconName;
 }) {
   const colors = useTheme();
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
     style={({ pressed }) => [styles.button, { backgroundColor: variant === 'primary' ? colors.accent : colors.soft,
-      opacity: disabled ? 0.45 : pressed ? 0.7 : 1 }]}>
+      flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: disabled ? 0.45 : pressed ? 0.7 : 1 }]}>
+    {icon && <Icon name={icon} color={variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink} size={20} />}
     <Text style={{ color: variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink,
-      fontSize: 15, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+      flexShrink: 1, fontSize: typography.supporting, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
   </Pressable>;
 }
 export function Card({ children }: PropsWithChildren) {
@@ -67,7 +73,7 @@ export function Card({ children }: PropsWithChildren) {
 }
 export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
   const colors = useTheme();
-  return <View style={{ gap: 4 }}><Copy muted size={13}>{label}</Copy><TextInput accessibilityLabel={label}
+  return <View style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput accessibilityLabel={label}
     placeholderTextColor={colors.muted} {...props} style={[styles.input, { color: colors.ink,
       backgroundColor: colors.surface, borderColor: error ? colors.danger : colors.muted, minHeight: props.multiline ? 80 : 48 }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}</View>;
@@ -76,10 +82,10 @@ export function SettingRow({ label, value, icon, onPress, children, description,
   label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string;
 }>) {
   const colors = useTheme();
-  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 10, paddingHorizontal: 14 }}>
+  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.md, paddingHorizontal: space.gutter }}>
     {icon && <Icon name={icon} />}
-    <View style={{ flex: 1, gap: 2 }}><Copy>{label}</Copy>{!!description && <Copy muted size={13}>{description}</Copy>}</View>
-    {value && <Text style={{ color: colors.muted, fontSize: 14, maxWidth: '48%', flexShrink: 1, textAlign: 'right' }}>{value}</Text>}
+    <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
+    {value && <Text style={{ color: colors.muted, fontSize: typography.supporting, maxWidth: '48%', flexShrink: 1, textAlign: 'right' }}>{value}</Text>}
     {children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
@@ -88,8 +94,8 @@ export function SettingRow({ label, value, icon, onPress, children, description,
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
   const colors = useTheme();
-  return <View style={{ gap: 6 }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: 13, fontWeight: '600', marginLeft: 14 }}>{title}</Text>}
-    <View style={{ backgroundColor: colors.surface, borderRadius: 12, overflow: 'hidden' }}>{children}</View></View>;
+  return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: typography.label, fontWeight: '600', marginLeft: space.gutter }}>{title}</Text>}
+    <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 export function SectionHeader({ title, count, expanded, onPress, overdue = false }: {
   title: string; count: number; expanded: boolean; onPress: () => void; overdue?: boolean;
@@ -99,7 +105,7 @@ export function SectionHeader({ title, count, expanded, onPress, overdue = false
     accessibilityState={{ expanded }} onPress={onPress} style={{ paddingHorizontal: 16, minHeight: 48, paddingVertical: 8,
       flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.background }}>
     <Text accessibilityRole="header" style={{ color: overdue ? colors.danger : colors.ink, fontSize: 14, fontWeight: '600', flex: 1 }}>{title}</Text>
-    <Text style={{ color: colors.muted, fontSize: 13 }}>{count}</Text><Icon name={expanded ? 'expand_less' : 'expand_more'} size={18} />
+    <Text style={{ color: colors.muted, fontSize: typography.supporting }}>{count}</Text><Icon name={expanded ? 'expand_less' : 'expand_more'} size={18} />
   </Pressable>;
 }
 export function Toggle({ label, value, onChange, icon }: { label: string; value: boolean; onChange: (value: boolean) => void; icon?: IconName }) {
@@ -107,37 +113,50 @@ export function Toggle({ label, value, onChange, icon }: { label: string; value:
   return <SettingRow label={label} icon={icon}><Switch accessibilityLabel={label} value={value} onValueChange={onChange}
     hitSlop={10} thumbColor={value ? colors.accentInk : colors.muted} trackColor={{ true: colors.accent, false: colors.border }} /></SettingRow>;
 }
-export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false }: {
+export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false }: {
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
+  zoneId?: string; onError?: (message: string) => void; disabled?: boolean;
 }) {
-  const pick = (mode: 'date' | 'time') => {
-    if (Platform.OS !== 'android') return;
-    DateTimePickerAndroid.open({ value: new Date(value), mode, onChange: (event, selected) => {
-      if (event.type !== 'set' || !selected) return;
-      const next = new Date(value);
-      if (mode === 'date') next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
-      else next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
-      onChange(next.getTime());
-      if (mode === 'date' && !dateOnly) DateTimePickerAndroid.open({ value: next, mode: 'time', onChange: (e, time) => {
-        if (e.type === 'set' && time) { next.setHours(time.getHours(), time.getMinutes(), 0, 0); onChange(next.getTime()); }
-      } });
-    } });
+  const [message, setMessage] = useState('');
+  const live = useRef(true), ticket = useRef(0);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const pick = () => {
+    if (Platform.OS !== 'android' || disabled) return;
+    const current = ++ticket.current;
+    setMessage('');
+    const fail = () => { if (live.current && current === ticket.current) { const text = 'Could not choose this time. Try again.'; setMessage(text); onError?.(text); } };
+    const open = (mode: 'date' | 'time', instant: number, local: string) => {
+      DateTimePickerAndroid.open({ value: new Date(instant), timeZoneName: zoneId, mode,
+        onError: fail, onValueChange: (event) => {
+          void (async () => {
+            const selected = pickerCivil(event.nativeEvent.timestamp, event.nativeEvent.utcOffset);
+            const resolved = await engine().convertTime({ zoneId, local: mergeCivil(local, selected, mode) });
+            if (!live.current || current !== ticket.current) return;
+            if (mode === 'date' && !dateOnly) open('time', resolved.instantMs, resolved.local);
+            else { onChange(resolved.instantMs); if (resolved.adjustment !== 'none') setMessage(resolved.adjustment === 'gapForward' ? 'Adjusted forward for the clock change.' : 'Uses the earlier time during the clock change.'); }
+          })().catch(fail);
+        } });
+    };
+    try { open(timeOnly ? 'time' : 'date', value, civilAt(value, zoneId)); } catch { fail(); }
   };
-  return <SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label}
-    value={timeOnly ? shortTime(value) : dateOnly ? new Date(value).toLocaleDateString() : shortDateTime(value)}
-    onPress={() => pick(timeOnly ? 'time' : 'date')} />;
+  return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled}
+    value={timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId)} onPress={pick} />
+    {!!message && <ActionFeedback message={message} tone="muted" />}</>;
 }
-export function AppBar({ title, back = true, onBack, actions }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode }) {
+export function AppBar({ title, back = true, onBack, actions, onTitlePress }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; onTitlePress?: () => void }) {
   const colors = useTheme();
   return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: back ? 4 : 16,
     backgroundColor: colors.background }}>
     {back && <IconButton icon="arrow_back" label="Back" onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />}
-    <Text accessibilityRole="header" numberOfLines={2} style={{ color: colors.ink, fontSize: back ? 20 : 24, fontWeight: '600', flex: 1 }}>{title}</Text>
+    {onTitlePress ? <Pressable accessibilityRole="button" accessibilityLabel={'Open collections, ' + title} onPress={onTitlePress}
+      style={{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <Text style={{ color: colors.ink, fontSize: typography.appBar, fontWeight: '600', flexShrink: 1 }}>{title}</Text><Icon name="expand_more" color={colors.ink} size={20} />
+    </Pressable> : <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.appBar, fontWeight: '600', flex: 1 }}>{title}</Text>}
     {actions}
   </View>;
 }
-export function Page({ title, subtitle, children, back = true, actions, onBack }: PropsWithChildren<{
-  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void;
+export function Page({ title, subtitle, children, back = true, actions, onBack, footer }: PropsWithChildren<{
+  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode;
 }>) {
   const colors = useTheme();
   return <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -146,19 +165,21 @@ export function Page({ title, subtitle, children, back = true, actions, onBack }
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
         {subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingView>{footer}
   </SafeAreaView>;
 }
-export function Sheet({ title, visible, onClose, children }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void }>) {
+export function Sheet({ title, visible, onClose, onBack, children }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void }>) {
   const colors = useTheme();
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+  const reduced = useReducedMotion(), heading = useRef<Text>(null);
+  return <Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
+    onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
     <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-end' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Pressable accessibilityLabel="Dismiss" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
         <View style={{ flex: 1, backgroundColor: '#00000066' }} />
       </Pressable>
-      <SafeAreaView edges={['bottom']} accessibilityViewIsModal style={{ maxHeight: '88%', backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+      <SafeAreaView edges={['bottom']} accessibilityViewIsModal style={{ maxHeight: '88%', backgroundColor: colors.surface, borderTopLeftRadius: shape.sheet, borderTopRightRadius: shape.sheet }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 4 }}>
-          <Text accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: 20, fontWeight: '600' }}>{title}</Text>
+          <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar, fontWeight: '600' }}>{title}</Text>
           <IconButton icon="close" label={'Close ' + title} onPress={onClose} />
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, gap: 12 }}>{children}</ScrollView>
@@ -183,40 +204,77 @@ export function SelectRow<T extends string | number>({ label, value, choices, on
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }
 export function Disclosure({ title, children, initial = false, forceOpen = false }: PropsWithChildren<{ title: string; initial?: boolean; forceOpen?: boolean }>) {
+  const colors = useTheme();
   const [selected, setOpen] = useState(initial);
   const open = selected || forceOpen;
-  return <Group><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
-    style={{ minHeight: 48, flexDirection: 'row', paddingHorizontal: 14, alignItems: 'center', gap: 8 }}>
+  return <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
+    style={{ minHeight: 48, flexDirection: 'row', paddingHorizontal: space.xs, alignItems: 'center', gap: space.sm }}>
     <View style={{ flex: 1 }}><Copy>{title}</Copy></View><Icon name={open ? 'expand_less' : 'expand_more'} />
-  </Pressable>{open && <View style={{ paddingHorizontal: 14, paddingBottom: 12, gap: 8 }}>{children}</View>}</Group>;
+  </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
-export function Status({ label, tone = 'muted' }: { label: string; tone?: 'success' | 'warning' | 'danger' | 'muted' }) {
+export function Status({ label, tone = 'muted' }: { label: string; tone?: Tone }) {
   const colors = useTheme();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
     <Icon name={tone === 'success' ? 'check_circle' : tone === 'danger' ? 'error' : tone === 'warning' ? 'warning' : 'info'} color={colors[tone]} size={16} />
-    <Text style={{ color: colors[tone], fontSize: 13, flexShrink: 1 }}>{label}</Text>
+    <Text style={{ color: colors[tone], fontSize: typography.supporting, flexShrink: 1 }}>{label}</Text>
   </View>;
 }
-export function Snackbar({ message, action, onAction, onClose }: { message: string; action?: string; onAction?: () => void; onClose: () => void }) {
+export function Snackbar({ message, action, onAction, onClose, persistent = false }: { message: string; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean }) {
   const colors = useTheme();
-  return <View accessibilityLiveRegion="polite" style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: colors.ink,
+  const close = useRef(onClose);
+  useEffect(() => { close.current = onClose; }, [onClose]);
+  const [interacting, setInteracting] = useState(false);
+  useEffect(() => {
+    if (persistent || interacting) return;
+    let timer: ReturnType<typeof setTimeout> | undefined, live = true;
+    void (async () => {
+      const reader = await AccessibilityInfo.isScreenReaderEnabled();
+      if (reader || !live) return;
+      const duration = Platform.OS === 'android' ? await AccessibilityInfo.getRecommendedTimeoutMillis(action ? 10_000 : 5_000) : action ? 10_000 : 5_000;
+      if (live) timer = setTimeout(() => close.current(), duration);
+    })().catch(() => {});
+    return () => { live = false; if (timer) clearTimeout(timer); };
+  }, [message, action, persistent, interacting]);
+  return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)}
+    style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: colors.ink,
     flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-    <Text style={{ color: colors.surface, flex: 1, paddingVertical: 12 }}>{message}</Text>
+    <Text style={{ color: colors.surface, flex: 1, fontSize: typography.supporting, paddingVertical: space.md }}>{message}</Text>
     {action && <Pressable accessibilityRole="button" onPress={onAction} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center' }}>
       <Text style={{ color: colors.surface, fontWeight: '700' }}>{action}</Text></Pressable>}
     <Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={onClose} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
       <Icon name="close" color={colors.surface} size={20} /></Pressable>
   </View>;
 }
-export function shortTime(value: number) { return new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
-export function shortDateTime(value: number) { return new Date(value).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
-export function formatTime(value: number | null | undefined) {
-  return value == null ? 'No alarm scheduled' : new Date(value).toLocaleString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+export function ActionFeedback({ message, tone = 'muted', loading = false }: { message?: string; tone?: Tone; loading?: boolean }) {
+  const colors = useTheme();
+  if (!message && !loading) return null;
+  return <View accessibilityLiveRegion="polite" style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
+    {loading && <ActivityIndicator color={colors.accent} />}{message && <View style={{ flex: 1 }}><Status label={message} tone={tone} /></View>}
+  </View>;
+}
+export function QueryState({ loading, error, empty = false, emptyMessage = 'Nothing here yet.', onRetry }: {
+  loading: boolean; error?: unknown; empty?: boolean; emptyMessage?: string; onRetry?: () => void;
+}) {
+  if (loading) return <ActionFeedback loading message="Loading…" />;
+  if (error) return <View style={{ gap: 8 }}><ActionFeedback tone="danger" message="Could not load this view." />
+    {onRetry && <Button label="Retry" variant="secondary" onPress={onRetry} />}</View>;
+  return empty ? <View style={{ padding: 16 }}><Copy muted>{emptyMessage}</Copy></View> : null;
+}
+export function BottomActionBar({ children }: PropsWithChildren) {
+  const colors = useTheme();
+  return <View style={{ paddingHorizontal: space.gutter, paddingVertical: space.sm, gap: space.sm,
+    flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface }}>{children}</View>;
+}
+export function shortTime(value: number, zoneId?: string) { return new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zoneId }); }
+export function shortDate(value: number, zoneId?: string) { return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: zoneId }); }
+export function shortDateTime(value: number, zoneId?: string) { return new Date(value).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zoneId }); }
+export function formatTime(value: number | null | undefined, zoneId?: string) {
+  return value == null ? 'No alarm scheduled' : new Date(value).toLocaleString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zoneId });
 }
 export const styles = StyleSheet.create({
-  page: { padding: 16, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center', paddingBottom: 32 },
-  card: { padding: 14, borderRadius: 12, gap: 8 },
-  button: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, minHeight: 48, justifyContent: 'center' },
-  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, textAlignVertical: 'top' },
+  page: { padding: space.gutter, gap: space.gutter, maxWidth: 720, width: '100%', alignSelf: 'center', paddingBottom: space.xl },
+  card: { padding: space.gutter, borderRadius: shape.group, gap: space.sm },
+  button: { paddingHorizontal: space.gutter, paddingVertical: space.md, borderRadius: shape.action, minHeight: 48, justifyContent: 'center' },
+  input: { borderWidth: 1, borderRadius: shape.field, paddingHorizontal: space.md, paddingVertical: 10, fontSize: typography.body, textAlignVertical: 'top' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });
