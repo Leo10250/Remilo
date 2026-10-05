@@ -46,7 +46,7 @@ physical gates stay pending and no broader beta release is declared verified.
   native alarm screen where permitted. No overlay permission or forced takeover.
 - Permissions/capabilities and Test Alarm are visible; scheduling is not proof of audibility.
 
-## Recurrence and management (after the alarm gate)
+## Recurrence and management
 
 - Daily/weekday/selected weekday, every N days/weeks/months, annual;
   numbered monthly day, ordinal weekday, last weekday, date/count endings.
@@ -58,6 +58,8 @@ physical gates stay pending and no broader beta release is declared verified.
 - Today/Upcoming/Attention, search, lists, history, duplicate, delete/undo, Reopen.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
+  Series conflicts are preserved as a whole family unless explicitly restored as
+  a separate copy. Editing a paused series keeps its future ordinary alerts paused.
 
 ## Deferred integrations
 

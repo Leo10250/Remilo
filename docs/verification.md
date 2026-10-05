@@ -8,6 +8,9 @@ start pending; collecting adb output does not prove audible behavior.
 Each report records timestamp, Git commit, build variant, APK hash, device/OS,
 permissions, scenario, result, measured duration and observer. Store private local
 reports in ignored verification/local; commit only explicitly redacted evidence.
+The owner's consolidated offline Android run is in [device-acceptance.md](device-acceptance.md).
+Use it for one batch of manual results; do not resume repeated unlock/test questions
+unless the owner asks. Technical fault/OS coverage remains separate and pending.
 Preflight distinguishes workspace revision, local APK hash and installed APK hash.
 The current workspace commit is not evidence of the installed build's source.
 Associate its hash with the source recorded at build time. A mismatched or unknown

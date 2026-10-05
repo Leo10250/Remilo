@@ -16,7 +16,7 @@ android {
   }
   buildFeatures { compose true }
   testOptions { unitTests.includeAndroidResources = true }
-  sourceSets { test.resources.srcDir('schemas') }
+  sourceSets { test.resources.srcDir('schemas'); test.resources.srcDir('../../../verification/fixtures') }
   lint { abortOnError true }
 }
 

@@ -530,6 +530,205 @@ class AlarmEngineTest {
     val alarm = create("exact-required")
     assertEquals("Blocked", alarm["status"])
   }
+  @Suppress("UNCHECKED_CAST") private fun seriesCommand(operation: String = "series", count: Int = 6): Map<String, Any?> =
+    request { engine.apply(mapOf("kind" to "CreateSeries", "operationId" to operation, "title" to "Private series",
+      "notes" to "Secret notes", "eventStartMs" to now + 60_000, "alarmAtMs" to now + 60_000,
+      "zoneId" to "UTC", "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to count, "zoneMode" to "pinned"))) } as Map<String, Any?>
+  private fun protectedRows(): List<AlertRecord> = request {
+    val db = OperationalDatabase.open(context)
+    try { db.records().all() } finally { db.close() }
+  } as List<AlertRecord>
+  private fun seriesMutation(segment: String, kind: String, revision: Long = 1): Map<*, *> = request {
+    engine.apply(mapOf("kind" to kind, "operationId" to "$kind:$revision", "segmentId" to segment, "expectedRevision" to revision))
+  } as Map<*, *>
+  private fun recoverNow() {
+    val done = CompletableFuture<Unit>(); engine.recover { done.complete(Unit) }; done.get(20, TimeUnit.SECONDS)
+  }
+  @Test fun seriesRegistersTwoIndependentSlotsAndRetryDoesNotDuplicate() {
+    val result = seriesCommand()
+    assertEquals(result["segmentId"], seriesCommand()["segmentId"])
+    val rows = protectedRows()
+    assertEquals(2, rows.size)
+    assertEquals(2, rows.map { it.occurrenceId }.distinct().size)
+    assertTrue(rows.all { it.state == "Scheduled" && it.segmentId == result["segmentId"] })
+    request {
+      val db = OperationalDatabase.open(context)
+      try { assertFalse(db.records().plans().single().rule.contains("Private")); assertFalse(db.records().plans().single().rule.contains("Secret")) }
+      finally { db.close() }
+    }
+  }
+  @Test fun seriesReplenishesBeforeLockedDeliveryWithoutCredentialStore() {
+    seriesCommand()
+    val first = protectedRows().minBy { it.targetMs }
+    engine.close(); shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    engine = AlarmEngine(context, os, { now }, { 10_000L })
+    now = first.targetMs; fire(first.occurrenceId)
+    val rows = protectedRows()
+    assertEquals(2, rows.count { it.targetMs > now && it.state == "Scheduled" })
+    val (_, notification) = deliveryNotification()
+    assertFalse(notification.toString().contains("Private series"))
+    assertEquals(2, notification.actions.size)
+  }
+  @Test fun postponedSeriesOccurrenceSurvivesPauseAndSeriesReplacement() {
+    val result = seriesCommand(); val segment = result["segmentId"] as String
+    val first = protectedRows().minBy { it.targetMs }
+    val postponed = now + 3 * 86_400_000
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "postpone-series", "occurrenceId" to first.occurrenceId,
+      "expectedGeneration" to first.generation, "alarmAtMs" to postponed)) }
+    assertEquals(3, protectedRows().count { it.state == "Scheduled" })
+    seriesMutation(segment, "PauseSeries")
+    assertEquals(1, protectedRows().count { it.state == "Scheduled" })
+    assertEquals(postponed, protectedRows().first { it.occurrenceId == first.occurrenceId }.targetMs)
+    val replaced = request { engine.apply(mapOf("kind" to "EditSeries", "operationId" to "edit-series", "segmentId" to segment,
+      "expectedRevision" to 2, "title" to "New series title", "eventStartMs" to now + 120_000,
+      "alarmAtMs" to now + 120_000, "recurrence" to mapOf("frequency" to "daily", "interval" to 2, "zoneMode" to "pinned"))) } as Map<*, *>
+    assertNotEquals(segment, replaced["segmentId"])
+    val after = request { engine.occurrence(first.occurrenceId) } as Map<*, *>
+    assertEquals(postponed, after["nextAlertMs"])
+    assertEquals("Private series", after["title"])
+    assertEquals(true, after["exception"])
+    fire(first.occurrenceId, 1) // Obsolete pre-postponement callback.
+    assertEquals("Scheduled", (request { engine.occurrence(first.occurrenceId) } as Map<*, *>)["deliveryState"])
+  }
+  @Test fun skipDoesNotConsumeExtraCountAndResumeNeverReplaysElapsed() {
+    val segment = seriesCommand(count = 4)["segmentId"] as String
+    val first = protectedRows().minBy { it.targetMs }
+    request { engine.apply(mapOf("kind" to "Skip", "operationId" to "skip", "occurrenceId" to first.occurrenceId, "expectedRevision" to 1)) }
+    assertEquals("Skipped", (request { engine.occurrence(first.occurrenceId) } as Map<*, *>)["deliveryState"])
+    assertEquals(2, protectedRows().count { it.state == "Scheduled" })
+    seriesMutation(segment, "PauseSeries")
+    now += 2 * 86_400_000
+    seriesMutation(segment, "ResumeSeries", 2)
+    assertTrue(protectedRows().filter { it.targetMs <= now }.all { it.state in setOf("Missed", "Skipped") })
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    val normal = protectedRows().filter { it.state == "Scheduled" }
+    assertEquals(2, normal.size)
+    assertTrue(normal.all { it.targetMs > now })
+  }
+  @Test fun lateSeriesCallbackStillReplenishesIndependentFutureSlots() {
+    seriesCommand()
+    val first = protectedRows().minBy { it.targetMs }
+    now = first.targetMs + 360_000
+    fire(first.occurrenceId)
+    assertEquals(2, protectedRows().count { it.state == "Scheduled" && it.targetMs > now })
+    assertEquals("Missed", protectedRows().first { it.occurrenceId == first.occurrenceId }.state)
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+  }
+  @Test fun seriesChangingBeforeContentCommitRecoversPriorCommittedRule() {
+    val segment = seriesCommand()["segmentId"] as String
+    val before = protectedRows()
+    request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().plan(db.records().plan(segment)!!.copy(state = "Changing"))
+        before.forEach { db.records().put(it.copy(state = "SeriesChanging", previousState = it.state, generation = it.generation + 1)) }
+      } finally { db.close() }
+    }
+    engine.close(); engine = AlarmEngine(context, os, { now }, { 10_000L }); recoverNow()
+    val rows = protectedRows()
+    assertEquals(2, rows.count { it.state == "Scheduled" })
+    assertEquals(before.map { it.targetMs }.sorted(), rows.map { it.targetMs }.sorted())
+    assertTrue(rows.all { it.generation == 2L })
+  }
+  @Test fun backupRestoresWholeSeriesAsRetryStableCopyAndKeepsItsExceptions() {
+    val segment = seriesCommand()["segmentId"] as String
+    val first = protectedRows().minBy { it.targetMs }
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "postpone-copy", "occurrenceId" to first.occurrenceId,
+      "expectedGeneration" to 1, "alarmAtMs" to now + 6 * 86_400_000)) }
+    seriesMutation(segment, "PauseSeries")
+    val backup = request { engine.exportBackup() } as String
+    val bundle = BackupCodec.decode(backup)
+    assertEquals(1, bundle.series.size)
+    assertTrue(bundle.records.any { it.exception })
+    val preview = request { engine.previewImport(backup) } as Map<*, *>
+    assertEquals(1, preview["count"])
+    val skipped = request { engine.importBackup(backup, emptyList(), "keep-series") } as Map<*, *>
+    assertEquals(0, skipped["added"])
+    val copied = request { engine.importBackup(backup, listOf(segment), "copy-series") } as Map<*, *>
+    assertEquals(1, copied["added"])
+    assertEquals(true, (request { engine.importBackup(backup, listOf(segment), "copy-series") } as Map<*, *>)["retry"])
+    val all = request { engine.querySeries() } as List<*>
+    assertEquals(2, all.size)
+    assertEquals(2, protectedRows().count { it.exception && it.state == "Scheduled" })
+    assertTrue(protectedRows().filter { !it.exception }.all { it.state == "Paused" })
+  }
+  @Test fun longOutageRetainsEveryElapsedSlotSilentlyAndRearmsOnlyFuture() {
+    seriesCommand(count = 12)
+    now += 7 * 86_400_000
+    recoverNow()
+    val rows = protectedRows()
+    assertEquals(7, rows.count { it.state == "Missed" })
+    assertEquals(2, rows.count { it.state == "Scheduled" && it.targetMs > now })
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    assertEquals(9, (request { engine.query("all", null) } as Map<*, *>)["items"].let { it as List<*> }.size)
+  }
+  @Test fun followingSplitUsesOriginalSlotAndRemainingCountDespitePostponement() {
+    val segment = seriesCommand(count = 5)["segmentId"] as String
+    val selected = protectedRows().maxBy { it.targetMs }
+    val originalSlot = selected.nominalSlot!!
+    val draft = request { engine.getSeriesDraft(segment, originalSlot) } as Map<*, *>
+    assertEquals(4, draft["remainingCount"])
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "postpone-following", "occurrenceId" to selected.occurrenceId,
+      "expectedGeneration" to 1, "alarmAtMs" to now + 10 * 86_400_000)) }
+    val changed = request { engine.apply(mapOf("kind" to "EditFollowing", "operationId" to "following", "segmentId" to segment,
+      "expectedRevision" to 1, "nominalSlot" to originalSlot, "eventStartMs" to selected.targetMs,
+      "alarmAtMs" to selected.targetMs, "title" to "Following segment", "recurrence" to mapOf("frequency" to "daily",
+        "interval" to 2, "count" to 4, "zoneMode" to "pinned"))) } as Map<*, *>
+    assertEquals("Scheduled", changed["status"])
+    val preserved = request { engine.occurrence(selected.occurrenceId) } as Map<*, *>
+    assertEquals(now + 10 * 86_400_000, preserved["nextAlertMs"])
+    assertEquals(originalSlot, preserved["nominalSlot"])
+    assertEquals(2, (request { engine.querySeries() } as List<*>).size)
+    // Pause affects the complete family, including the later segment.
+    seriesMutation(changed["segmentId"] as String, "PauseSeries", 1)
+    val ordinary = protectedRows().filter { !it.exception && it.targetMs > now }
+    assertEquals(3, ordinary.count { it.state == "Paused" })
+    assertEquals(1, ordinary.count { it.state == "Replaced" })
+    assertTrue(ordinary.none { it.state == "Scheduled" })
+  }
+  @Test fun floatingTravelMovesFutureNormalAlertsButNotPostponedOrElapsedOnes() {
+    val originalZone = java.util.TimeZone.getDefault()
+    try {
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
+      request { engine.apply(mapOf("kind" to "CreateSeries", "operationId" to "floating", "title" to "Travel",
+        "zoneId" to "UTC", "eventStartMs" to now + 60_000, "alarmAtMs" to now + 60_000,
+        "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "zoneMode" to "floating"))) }
+      val initial = protectedRows().sortedBy { it.targetMs }
+      val first = initial.first()
+      now = first.targetMs + 60_000
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
+      recoverNow()
+      val elapsed = protectedRows().first { it.occurrenceId == first.occurrenceId }
+      assertEquals("Missed", elapsed.state) // Its new local-zone instant would be later, but recovery never revives it.
+      assertEquals(first.targetMs, elapsed.targetMs)
+      val next = protectedRows().first { it.occurrenceId == initial[1].occurrenceId }
+      assertEquals(initial[1].targetMs + 5 * 3_600_000, next.targetMs)
+      val postponed = now + 10 * 86_400_000
+      request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "travel-postpone", "occurrenceId" to next.occurrenceId,
+        "expectedGeneration" to next.generation, "alarmAtMs" to postponed)) }
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Tokyo"))
+      recoverNow()
+      assertEquals(postponed, protectedRows().first { it.occurrenceId == next.occurrenceId }.targetMs)
+      assertEquals("Missed", protectedRows().first { it.occurrenceId == first.occurrenceId }.state)
+      assertEquals(2, protectedRows().count { !it.exception && it.state == "Scheduled" && it.targetMs > now })
+      assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    } finally { java.util.TimeZone.setDefault(originalZone) }
+  }
+  @Test fun reusedSeriesOperationCannotMutateAnotherFamily() {
+    val first = seriesCommand("first-family")["segmentId"] as String
+    val second = seriesCommand("second-family")["segmentId"] as String
+    seriesMutation(first, "PauseSeries")
+    val reused = seriesMutation(second, "PauseSeries") // Same operation ID, different source.
+    assertEquals("Rejected", reused["status"])
+    assertEquals("Active", (request { engine.getSeries(second) } as Map<*, *>)["state"])
+    assertEquals(2, protectedRows().count { it.segmentId == second && it.state == "Scheduled" })
+  }
+  @Test fun replayedActionOperationCannotChangeAnotherOccurrenceAfterHistoryAcknowledgement() {
+    val first = id(create("first-action")); val second = id(create("second-action"))
+    action(first, "Snooze", 1, "unique-action")
+    request { engine.query("all", null) } // Journals are acknowledged after CE history insert.
+    assertEquals("Rejected", action(second, "Snooze", 1, "unique-action")["status"])
+    assertEquals(now + 60_000, (request { engine.occurrence(second) } as Map<*, *>)["nextAlertMs"])
+  }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
     var allowed = true

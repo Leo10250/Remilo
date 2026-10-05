@@ -1,0 +1,10 @@
+[
+  {"name":"third Tuesday", "anchor":"2027-01-01T09:00", "frequency":"monthlyOrdinal", "ordinal":3, "weekday":2, "zone":"UTC", "after":"2026-12-31T00:00:00Z", "expected":["2027-01-19T09:00:00Z","2027-02-16T09:00:00Z","2027-03-16T09:00:00Z"]},
+  {"name":"last business weekday", "anchor":"2027-01-01T09:00", "frequency":"lastWeekday", "zone":"UTC", "after":"2026-12-31T00:00:00Z", "expected":["2027-01-29T09:00:00Z","2027-02-26T09:00:00Z","2027-03-31T09:00:00Z"]},
+  {"name":"missing monthly dates do not consume count", "anchor":"2027-01-31T09:00", "frequency":"monthlyDay", "day":31, "count":3, "zone":"UTC", "after":"2027-01-01T00:00:00Z", "expected":["2027-01-31T09:00:00Z","2027-03-31T09:00:00Z","2027-05-31T09:00:00Z"]},
+  {"name":"leap years", "anchor":"2027-01-01T09:00", "frequency":"yearly", "month":2, "day":29, "count":3, "zone":"UTC", "after":"2027-01-01T00:00:00Z", "expected":["2028-02-29T09:00:00Z","2032-02-29T09:00:00Z","2036-02-29T09:00:00Z"]},
+  {"name":"fifth Monday skips missing months", "anchor":"2027-01-01T09:00", "frequency":"monthlyOrdinal", "ordinal":5, "weekday":1, "zone":"UTC", "after":"2026-12-31T00:00:00Z", "expected":["2027-03-29T09:00:00Z","2027-05-31T09:00:00Z","2027-08-30T09:00:00Z"]},
+  {"name":"spring gap", "anchor":"2027-03-13T02:30", "frequency":"daily", "zone":"America/Los_Angeles", "after":"2027-03-13T00:00:00Z", "expected":["2027-03-13T10:30:00Z","2027-03-14T10:30:00Z","2027-03-15T09:30:00Z"]},
+  {"name":"autumn fold earlier offset", "anchor":"2027-11-06T01:30", "frequency":"daily", "zone":"America/Los_Angeles", "after":"2027-11-06T00:00:00Z", "expected":["2027-11-06T08:30:00Z","2027-11-07T08:30:00Z","2027-11-08T09:30:00Z"]},
+  {"name":"alternate weeks Monday Friday", "anchor":"2027-01-05T09:00", "frequency":"weekly", "interval":2, "weekdays":[1,5], "zone":"UTC", "after":"2027-01-01T00:00:00Z", "expected":["2027-01-08T09:00:00Z","2027-01-18T09:00:00Z","2027-01-22T09:00:00Z"]}
+]

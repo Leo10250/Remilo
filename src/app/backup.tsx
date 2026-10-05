@@ -60,8 +60,9 @@ export default function Backup() {
       <Button label="Export backup" disabled={busy} onPress={() => void exportFile()} /></Card>
     <Card><Heading>Restore</Heading><Copy muted>Preview before importing. Existing reminders stay as they are. Elapsed alerts remain silent.</Copy>
       <Button label="Choose backup file" disabled={busy} onPress={() => void choose()} /></Card>
-    {preview && <Card><Heading>Restore preview · {preview.count} reminders</Heading>
+    {preview && <Card><Heading>Restore preview · {preview.count} reminders or series</Heading>
       <Copy muted>New reminders will be added. Conflicts are skipped unless you select them below as new copies.</Copy>
+      <Copy muted>A repeating series is restored as a whole, including saved exceptions and history. Conflicting series keep their existing local data unless you choose a separate copy.</Copy>
       {preview.items.slice(0, previewLimit).map((item) => item.conflict ? <Toggle key={item.id} label={`Restore a copy of “${item.title}”`}
         value={copies.includes(item.id)} onChange={(value) => setCopies((current) => value ? [...current, item.id] : current.filter((id) => id !== item.id))} />
         : <Copy key={item.id}>Add: {item.title}{item.futureAlert ? ' · future alert' : ' · no future alert'}</Copy>)}

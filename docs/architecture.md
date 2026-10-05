@@ -75,7 +75,7 @@ honestly instead of forcing an incompatible Expo/React Native downgrade.
 
 ## Deferred integrations
 
-Add recurrence projections and two future registrations per series only in phase 3.
+Recurrence projections and two future registrations per series belong to phase 3.
 Calendar compatibility uses observed mismatches, not speculative DST repair.
 Supabase is isolated to optional phase 5; auth/sync foreground/manual initially.
 No iOS implementation or database placeholders exist before phase 6.
@@ -114,3 +114,55 @@ project remains owned and tracked; no regeneration or new config plugin is used.
 - [SDK 57 FileSystem](https://docs.expo.dev/versions/v57.0.0/sdk/filesystem/)
 - [SDK 57 DocumentPicker cache-copy behavior](https://docs.expo.dev/versions/v57.0.0/sdk/document-picker/)
 - [SDK 57 Sharing](https://docs.expo.dev/versions/v57.0.0/sdk/sharing/)
+
+## Recurrence authority and series changes
+
+The pure Kotlin kernel uses civil nominal slots and java.time. Each occurrence ID
+derives from its segment plus original nominal slot; its current postponed instant
+is never identity. Timed event duration is elapsed duration; due/alert offsets are
+civil offsets resolved independently. All-day end/due use the next local midnight.
+Gap resolution shifts by the gap size and folds use the earlier offset, matching
+[Java 17 LocalDateTime.atZone](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/LocalDateTime.html#atZone(java.time.ZoneId)).
+
+Credential storage owns private templates, rules, revisions and retained segments.
+Protected series plans have an explicit rule-field allowlist and delivery profiles;
+they contain no templates, titles or notes. SeriesCoordinator executes on the
+existing engine worker and does not introduce another queue or mutation owner.
+Before presentation, native delivery replenishes two independently registered future
+ordinary occurrences; postponed/single-edited exceptions are additional independent
+registrations. Registration failures remain visible as Blocked. Protected rules can
+replenish before unlock; content materializes only after unlock.
+
+Series-changing commands fence future ordinary generations before their credential
+transaction. Narrow pending-series records recover a committed change. A protected
+Changing plan without a committed change recovers from its prior credential rule.
+Whole edits archive old segments; following edits bound the old segment at the
+original slot and create a new one. Earlier unresolved and postponed occurrences
+keep their old content, targets and identities. Pause/resume operates across the
+active family, retaining exceptions. Editing a paused family preserves pause.
+Command receipts record both source and resulting segments to reject operation reuse.
+
+Floating travel updates eligible future ordinary targets and their generations;
+resolved per-occurrence zones preserve old timing. Elapsed alerts never revive even
+when their new local-zone instant would be future. Postponements stay concrete.
+A protected nominal cursor retains silent missed occurrences beyond the two-alert
+window after a long outage. A finite COUNT counts valid nominal slots, including
+ones completed/skipped individually, and excludes invalid dates.
+
+Version 3 migrations preserve both earlier beta schemas. Portable backup version 2
+includes series definitions and saved exceptions; version 1 imports remain supported.
+An existing series family is preserved as a unit by default. Explicit copies get
+new retry-stable family/segment IDs and derived occurrence IDs. Paused normal alerts
+remain paused during restore; independent exceptions remain eligible. No operational
+generation, session or Android handle is restored. Backup bounds are explicit parser
+limits. Recurrence authoring supports years 1970–9999, intervals 1–999, counts
+1–100,000 and timing offsets up to 366 days; these are application validation bounds.
+
+The editor retains an uncertain save's command snapshot and operation ID for retry.
+It holds edits until that save is confirmed or rejected, preventing a disappearing
+bridge response from creating a second reminder on the next Save press.
+
+File-sharing providers remain credential-only in the merged manifest; alarm
+receivers/services/activity are Direct Boot aware. MainApplication still defers
+React/Expo startup until the principal UI is requested after unlock. The new native
+controls follow system dark mode independently of React Native preferences.

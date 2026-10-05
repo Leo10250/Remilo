@@ -74,6 +74,9 @@ real audio, idle timing, lock-screen presentation or Direct Boot. Physical tests
 require the signed APK, with JavaScript/Metro/network absent. Procedures are in
 [docs/verification.md](docs/verification.md). Gates G0/G1 require recorded phone
 results; check the backlog for current evidence and remaining observations.
+The owner's next run uses [one device acceptance checklist](docs/device-acceptance.md).
+New offline Android features are compiled and host-tested; pending physical results
+are not a verified release claim.
 
 ## Repository guide
 
@@ -89,8 +92,10 @@ results; check the backlog for current evidence and remaining observations.
 - `docs/backlog.md`: **only** task/status source.
 - `docs/verification.md`: evidence requirements and manual procedures.
 
-Calendar, cloud and iOS remain later gated milestones. This initial slice provides
-one-off creation, readiness, Test Alarm and native Stop/quick Snooze; the complete
-one-off product follows the physical alarm gate.
+The offline app provides separate event/due/alert timing, native actions and grouped
+ringing, settings, management/search/history, backups, recurrence, series actions
+and protected replenishment. See [offline build evidence](docs/evidence/2026-10-04-offline.md)
+for automated results and the APK identity. Calendar, cloud and iOS remain later
+gated milestones; no integration scaffolding is included.
 
 The Expo scaffold attribution is retained in `docs/licenses/expo-template-MIT.txt`.

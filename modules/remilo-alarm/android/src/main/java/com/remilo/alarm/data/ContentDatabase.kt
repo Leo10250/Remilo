@@ -18,7 +18,16 @@ data class ReminderRecord(@PrimaryKey val id: String, val title: String, val eve
   @ColumnInfo(defaultValue = "1") val alarmLinked: Boolean = true,
   @ColumnInfo(defaultValue = "0") val deleted: Boolean = false,
   @ColumnInfo(defaultValue = "'remilo'") val sound: String = "remilo",
-  @ColumnInfo(defaultValue = "0") val vibration: Boolean = false)
+  @ColumnInfo(defaultValue = "0") val vibration: Boolean = false,
+  @ColumnInfo(defaultValue = "NULL") val segmentId: String? = null,
+  @ColumnInfo(defaultValue = "NULL") val nominalSlot: String? = null,
+  @ColumnInfo(defaultValue = "0") val exception: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val skipped: Boolean = false)
+@Entity(tableName = "series")
+data class SeriesRecord(@PrimaryKey val id: String, val seriesId: String, val template: String,
+  val rule: String, val revision: Long = 1, val state: String = "Active", val createdAtMs: Long)
+@Entity(tableName = "pending_series")
+data class PendingSeries(@PrimaryKey val operationId: String, val segmentId: String)
 @Entity(tableName = "pending_schedules")
 data class PendingSchedule(@PrimaryKey val operationId: String, val occurrenceId: String,
   val targetMs: Long, val generation: Long,
@@ -29,7 +38,8 @@ data class PendingSchedule(@PrimaryKey val operationId: String, val occurrenceId
   @ColumnInfo(defaultValue = "1") val eligible: Boolean = true)
 @Entity(tableName = "creation_receipts")
 data class CreationReceipt(@PrimaryKey val operationId: String, val occurrenceId: String,
-  @ColumnInfo(defaultValue = "'Create'") val kind: String = "Create")
+  @ColumnInfo(defaultValue = "'Create'") val kind: String = "Create",
+  @ColumnInfo(defaultValue = "NULL") val sourceId: String? = null)
 @Entity(tableName = "settings")
 data class SettingsRecord(@PrimaryKey val id: String = "app", val revision: Long = 1,
   val snoozeMinutes: Int = 10, val tomorrowMorning: Int = 600,
@@ -45,6 +55,12 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM reminders WHERE id = :id") fun find(id: String): ReminderRecord?
   @Insert(onConflict = OnConflictStrategy.ABORT) fun insert(record: ReminderRecord)
   @Update fun update(record: ReminderRecord)
+  @Query("SELECT * FROM series ORDER BY createdAtMs") fun series(): List<SeriesRecord>
+  @Query("SELECT * FROM series WHERE id = :id") fun series(id: String): SeriesRecord?
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun series(record: SeriesRecord)
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun pendingSeries(record: PendingSeries)
+  @Query("SELECT * FROM pending_series") fun pendingSeries(): List<PendingSeries>
+  @Query("DELETE FROM pending_series WHERE operationId = :id") fun acknowledgeSeries(id: String)
   @Query("SELECT * FROM settings WHERE id = 'app'") fun settings(): SettingsRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun settings(record: SettingsRecord)
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun pending(record: PendingSchedule)
@@ -54,14 +70,26 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM creation_receipts WHERE operationId = :id") fun receipt(id: String): CreationReceipt?
   @Insert(onConflict = OnConflictStrategy.IGNORE) fun history(record: HistoryRecord)
   @Query("SELECT * FROM history WHERE occurrenceId = :id ORDER BY occurredAtMs") fun history(id: String): List<HistoryRecord>
+  @Query("SELECT * FROM history WHERE operationId = :id") fun historyOperation(id: String): HistoryRecord?
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
-  HistoryRecord::class, SettingsRecord::class], version = 2, exportSchema = true)
+  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class], version = 3, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE reminders ADD COLUMN segmentId TEXT DEFAULT NULL")
+        db.execSQL("ALTER TABLE reminders ADD COLUMN nominalSlot TEXT DEFAULT NULL")
+        db.execSQL("ALTER TABLE reminders ADD COLUMN exception INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE reminders ADD COLUMN skipped INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE creation_receipts ADD COLUMN sourceId TEXT DEFAULT NULL")
+        db.execSQL("CREATE TABLE IF NOT EXISTS series (id TEXT NOT NULL PRIMARY KEY, seriesId TEXT NOT NULL, template TEXT NOT NULL, rule TEXT NOT NULL, revision INTEGER NOT NULL, state TEXT NOT NULL, createdAtMs INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS pending_series (operationId TEXT NOT NULL PRIMARY KEY, segmentId TEXT NOT NULL)")
+      }
+    }
     val MIGRATION_1_2 = object : Migration(1, 2) {
       override fun migrate(db: SupportSQLiteDatabase) {
         val columns = mapOf("notes" to "TEXT NOT NULL DEFAULT ''", "listName" to "TEXT NOT NULL DEFAULT ''",

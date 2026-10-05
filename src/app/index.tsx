@@ -10,7 +10,7 @@ import { useTheme } from '../ui/theme';
 
 const views: { id: ReminderFilter['view']; title: string }[] = [
   { id: 'today', title: 'Today' }, { id: 'upcoming', title: 'Upcoming' }, { id: 'attention', title: 'Attention' },
-  { id: 'all', title: 'All' }, { id: 'history', title: 'Completed' }, { id: 'deleted', title: 'Deleted' },
+  { id: 'all', title: 'All' }, { id: 'history', title: 'History' }, { id: 'deleted', title: 'Deleted' },
 ];
 export default function HomeScreen() {
   const colors = useTheme();
@@ -45,6 +45,7 @@ export default function HomeScreen() {
           disabled={command.isPending} onPress={() => command.mutate({ kind: 'StopAll',
             expectedSessionId: capabilities.data!.activeSessionId, operationId: engine().createOperationId() })} />}
         <Button label="New reminder" disabled={!nativeAvailable} onPress={() => router.push('/edit')} />
+        <Button label="Repeating reminders" variant="secondary" disabled={!nativeAvailable} onPress={() => router.push('/series')} />
         <Field label="Search reminders and notes" value={search} onChangeText={setSearch} placeholder="Find a reminder" />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{views.map((tab) =>
           <Pressable key={tab.id} accessibilityRole="tab" accessibilityState={{ selected: view === tab.id }}
@@ -74,7 +75,7 @@ export default function HomeScreen() {
           <Copy>{item.mode === 'None' ? `Due ${formatTime(item.dueAtMs)}` : `Alert ${formatTime(item.nextAlertMs)}`}</Copy>
           {item.overdue && <Text style={{ color: colors.warning, fontSize: 15 }}>Overdue · unfinished</Text>}
         </Pressable>
-        {!item.completed && !item.deleted && <Button label="Mark Done" variant="secondary" disabled={command.isPending}
+        {!item.completed && !item.deleted && !item.skipped && <Button label="Mark Done" variant="secondary" disabled={command.isPending}
           onPress={() => command.mutate({ kind: 'Done', occurrenceId: item.id, expectedRevision: item.revision,
             operationId: engine().createOperationId() })} />}
       </Card></View>}

@@ -36,6 +36,9 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("scheduleTestAlarm") { promise: Promise -> dispatch(promise) { it.testAlarm() } }
     AsyncFunction("getSettings") { promise: Promise -> dispatch(promise) { it.settings() } }
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
+    AsyncFunction("querySeries") { promise: Promise -> dispatch(promise) { it.querySeries() } }
+    AsyncFunction("getSeries") { id: String, promise: Promise -> dispatch(promise) { it.getSeries(id) } }
+    AsyncFunction("getSeriesDraft") { id: String, nominal: String, promise: Promise -> dispatch(promise) { it.getSeriesDraft(id, nominal) } }
     AsyncFunction("getDiagnostics") { promise: Promise -> dispatch(promise) { it.diagnostics() } }
     AsyncFunction("previewSound") { sound: String, promise: Promise -> dispatch(promise) { it.previewSound(sound) } }
     AsyncFunction("exportBackup") { promise: Promise -> dispatch(promise) { it.exportBackup() } }

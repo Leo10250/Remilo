@@ -37,15 +37,22 @@ export default function ReminderDetails() {
         <Copy muted>Stop ends a delivery. Done completes the reminder.</Copy>
       </Card>
       {!!item.notes && <Card><Heading>Notes</Heading><Copy>{item.notes}</Copy></Card>}
-      {!item.deleted && !item.completed && <Card><Heading>Actions</Heading>
+      {!item.deleted && !item.completed && !item.skipped && <Card><Heading>Actions</Heading>
         <Button label="Mark Done" disabled={command.isPending} onPress={() => content('Done')} />
         {item.deliveryState === 'Alerting' && <Button label="Stop ringing" variant="secondary" disabled={command.isPending} onPress={() => delivery('Stop')} />}
-        {item.mode !== 'None' && <>
+        {item.mode !== 'None' && item.deliveryState !== 'Paused' && <>
           <Button label={`Snooze ${settings.data?.snoozeMinutes ?? 10} minutes`} variant="secondary" disabled={command.isPending}
             onPress={() => delivery('Snooze')} />
           <Button label={postpone ? 'Close postpone options' : 'Postpone alert'} variant="secondary" onPress={() => { setTarget(Date.now() + 900_000); setPostpone(!postpone); }} />
         </>}
         <Button label="Edit reminder" variant="secondary" onPress={() => router.push({ pathname: '/edit', params: { id } })} />
+        {item.segmentId && <Button label="Skip this occurrence" variant="secondary" disabled={command.isPending} onPress={() => content('Skip')} />}
+      </Card>}
+      {item.segmentId && <Card><Heading>Repeating reminder</Heading>
+        <Copy muted>Original nominal slot: {item.nominalSlot}. {item.exception ? 'This occurrence has an individual change.' : 'Follows its series definition.'}</Copy>
+        <Button label="Manage series" variant="secondary" onPress={() => router.push({ pathname: '/series/[id]', params: { id: item.segmentId! } })} />
+        {!item.skipped && <Button label="Edit this and following" variant="secondary" onPress={() => router.push({ pathname: '/edit',
+          params: { segmentId: item.segmentId!, following: item.nominalSlot!, source: id } })} />}
       </Card>}
       {postpone && !item.completed && !item.deleted && <Card><Heading>Postpone this alert</Heading>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{[15, 30, 60].map((minutes) =>

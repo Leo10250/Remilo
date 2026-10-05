@@ -13,7 +13,7 @@ block verified release, rather than development. Known failures still require fi
 | G0 | Foundation release gate | P0-01/02 | verified | [clean checkout and signed bundled UI offline on Pixel](evidence/2026-10-04-native-slice.md) |
 | P1-01 | Native persistence, asynchronous bridge, recovery records | P0-01 | implemented/unverified | [Room recovery tests pass; remaining physical crash boundaries](evidence/2026-10-04-native-slice.md) |
 | P1-02 | Independent alarm, receiver, FGS, audio, Stop/Snooze | P1-01 | implemented/unverified | [cold/locked delivery, cutoff and actions observed; remaining independent/recovery matrix](evidence/2026-10-04-native-slice.md) |
-| P1-03 | Cutoff, Direct Boot, recovery and lifecycle verification | P1-02 | in progress | [reboot fix and owner confirmations; remaining matrix](evidence/2026-10-04-native-slice.md) |
+| P1-03 | Cutoff, Direct Boot, recovery and lifecycle verification | P1-02 | implemented/unverified | [reboot fix and owner confirmations; remaining consolidated matrix](evidence/2026-10-04-native-slice.md) |
 | P1-04 | Preserve usable notification controls on Snooze re-trigger | P1-02 | verified | [owner confirmed initial/re-triggered buttons; second Snooze registered and final native Stop logged](evidence/2026-10-04-native-slice.md) |
 | P1-05 | Structured native command validation | P1-01 | verified | [invalid fields/generations leave data and registration unchanged; shared/native checks pass](evidence/2026-10-04-native-slice.md) |
 | P1-06 | Persisted interruption tests and installed-build evidence | P1-01, P0-02 | verified | [20 native tests; preflight distinguishes installed APK from local build](evidence/2026-10-04-native-slice.md) |
@@ -22,9 +22,9 @@ block verified release, rather than development. Known failures still require fi
 | P2-02 | Done/Postpone/post-timeout actions and session grouping | P1 implementation; physical acceptance deferred | implemented/unverified | [action/generation tests; collisions/audio acceptance deferred](evidence/2026-10-04-one-off.md) |
 | P2-03 | Settings, diagnostics, export/restore, upgrade safety | P2-01/02 | implemented/unverified | [restore conflicts and both v1→v2 migrations pass; physical transfer/file checks deferred](evidence/2026-10-04-one-off.md) |
 | G2 | Complete one-off private beta | P2-01/02/03 | pending | all one-off scenarios pass |
-| P3-01 | Pure Kotlin recurrence kernel and portable fixtures | P2 implementation; physical acceptance deferred | in progress | supported rules, gap/fold/count/travel tests |
-| P3-02 | Exceptions, series edits and protected replenishment | P3-01 | pending | old postponed items preserved; two future registrations |
-| P3-03 | Original accessible polish, management and history | P3-01/02 | pending | everyday Android workflow and accessibility |
+| P3-01 | Pure Kotlin recurrence kernel and portable fixtures | P2 implementation; physical acceptance deferred | implemented/unverified | [fixtures/count/gap/fold/travel checks; physical acceptance pending](evidence/2026-10-04-offline.md) |
+| P3-02 | Exceptions, series edits and protected replenishment | P3-01 | implemented/unverified | [protected replenishment, pause/split/restore and interruption tests](evidence/2026-10-04-offline.md) |
+| P3-03 | Original accessible polish, management and history | P3-01/02 | implemented/unverified | [shared checks; device usability/accessibility deferred](evidence/2026-10-04-offline.md) |
 | G3 | Complete Android reminder product | P3-01/02/03 | pending | physical recurrence and tested OS matrix |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
@@ -71,7 +71,8 @@ block verified release, rather than development. Known failures still require fi
 - Verified portable Temurin JDK 17 and Android SDK/NDK/CMake are installed;
   SDK license acceptance was authorized by the owner. Global installations remain intact.
 - A private beta signing identity exists locally; keys/properties are ignored.
-- Pixel 9 Pro XL is USB-authorized. The owner resumed phone testing after initially
-  deferring it; physical verification is now the next release dependency.
+- Pixel 9 Pro XL is USB-authorized. The owner's latest instruction defers further
+  interactive phone checks to [one consolidated acceptance run](device-acceptance.md).
+  Physical verification remains a release dependency, rather than a development gate.
 - The owner created origin at https://github.com/Leo10250/Remilo.git and authorized
   pushing completed work. No APK distribution/public release is authorized.

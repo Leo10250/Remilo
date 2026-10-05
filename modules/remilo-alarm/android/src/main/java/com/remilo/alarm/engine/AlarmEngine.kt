@@ -7,6 +7,7 @@ import android.os.SystemClock
 import android.os.UserManager
 import android.util.Log
 import com.remilo.alarm.core.AlarmPolicy
+import com.remilo.alarm.core.Recurrence
 import com.remilo.alarm.data.*
 import com.remilo.alarm.system.*
 import java.util.UUID
@@ -27,6 +28,7 @@ class AlarmEngine internal constructor(private val context: Context,
   private var content: ContentDatabase? = null
   private val listeners = CopyOnWriteArrayList<() -> Unit>()
   private var previewAudio: AlarmAudio? = null
+  private val series = SeriesCoordinator(context, ::content, operational, scheduler, now, ::register)
   private class InputError(val field: String, message: String) : IllegalArgumentException(message)
   private fun validate(valid: Boolean, field: String, message: String) {
     if (!valid) throw InputError(field, message)
@@ -88,6 +90,7 @@ class AlarmEngine internal constructor(private val context: Context,
   fun query(filter: String, cursor: String?): Map<String, Any?> = query(mapOf("view" to filter), cursor)
   fun query(filter: Map<String, Any?>, cursor: String?): Map<String, Any?> {
     val db = content()
+    series.materialize()
     replayHistory(db)
     val day = Instant.ofEpochMilli(now()).atZone(ZoneId.systemDefault()).toLocalDate()
     val start = day.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -97,16 +100,17 @@ class AlarmEngine internal constructor(private val context: Context,
       val alert = alerts.find(record.id)
       val selected = when (filter["view"]) {
         "deleted" -> record.deleted
-        "history" -> !record.deleted && record.completed
-        "attention" -> !record.deleted && !record.completed && (record.dueAtMs < now() ||
+        "history" -> !record.deleted && (record.completed || record.skipped)
+        "attention" -> !record.deleted && !record.completed && !record.skipped && (record.dueAtMs < now() ||
           alert?.state in setOf("Missed", "Stopped", "TimedOut", "Interrupted", "Blocked", "Failed", "Notified", "Changing"))
-        "today" -> !record.deleted && !record.completed && (record.dueAtMs in start until end ||
+        "today" -> !record.deleted && !record.completed && !record.skipped && (record.dueAtMs in start until end ||
           alert?.targetMs?.let { it in start until end } == true)
-        "upcoming" -> !record.deleted && !record.completed && (record.dueAtMs >= end ||
+        "upcoming" -> !record.deleted && !record.completed && !record.skipped && (record.dueAtMs >= end ||
           alert?.targetMs?.let { it >= end } == true)
-        else -> !record.deleted && !record.completed
+        else -> !record.deleted && !record.completed && !record.skipped
       }
       selected && (search.isEmpty() || record.title.contains(search, true) || record.notes.contains(search, true)) &&
+        ((filter["segmentId"] as? String).isNullOrEmpty() || record.segmentId == filter["segmentId"]) &&
         ((filter["listName"] as? String).isNullOrEmpty() || record.listName == filter["listName"])
     }
     val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
@@ -116,6 +120,7 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun occurrence(id: String): Map<String, Any?>? {
     val db = content()
+    series.materialize()
     replayHistory(db)
     return db.records().find(id)?.let { view(it) + ("history" to db.records().history(id).map { history ->
       mapOf("kind" to history.kind, "atMs" to history.occurredAtMs, "targetMs" to history.targetMs)
@@ -131,7 +136,8 @@ class AlarmEngine internal constructor(private val context: Context,
       "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs), "allDay" to record.allDay,
       "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id }, "dueLinked" to record.dueLinked,
       "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
-      "vibration" to record.vibration, "overdue" to (!record.completed && record.dueAtMs < now()))
+      "vibration" to record.vibration, "overdue" to (!record.completed && !record.skipped && record.dueAtMs < now()),
+      "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped)
   }
   private fun epoch(value: Any?, field: String): Long {
     val number = (value as? Number)?.toDouble() ?: throw InputError(field, "Choose a valid date and time.")
@@ -141,10 +147,16 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun preview(draft: Map<String, Any?>): Map<String, Any> {
     val record = draft(draft + ("title" to (draft["title"] ?: "Preview")), "preview")
+    val recurrence = draft["recurrence"] as? Map<String, Any?>
+    val upcoming = recurrence?.let { series.preview(record, it) }
     return mapOf("alarmAtMs" to record.definedAlarmAtMs!!, "eventStartMs" to record.eventStartMs,
       "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs,
-      "warnings" to if (record.mode != "None" && record.definedAlarmAtMs <= now())
-        listOf("The alert is in the past. Choose a future time before saving.") else emptyList<String>())
+      "upcoming" to (upcoming ?: emptyList<Map<String, Any?>>()),
+      "warnings" to when {
+        upcoming != null && upcoming.isEmpty() -> listOf("No future occurrences. Change the repeat rule or its ending.")
+        upcoming != null -> if (upcoming.any { it["adjusted"] == true }) listOf("A daylight-saving gap shifts the affected time forward.") else emptyList<String>()
+        record.mode != "None" && record.definedAlarmAtMs <= now() -> listOf("The alert is in the past. Choose a future time before saving.")
+        else -> emptyList<String>() })
   }
   private fun text(command: Map<String, Any?>, field: String, fallback: String, maximum: Int): String {
     val value = if (command.containsKey(field)) command[field] as? String
@@ -194,7 +206,7 @@ class AlarmEngine internal constructor(private val context: Context,
   private fun projection(operation: String, record: ReminderRecord, generation: Long): PendingSchedule =
     PendingSchedule(operation, record.id, record.definedAlarmAtMs ?: record.eventStartMs, generation,
       record.mode, record.sound, record.vibration, (content().records().settings() ?: SettingsRecord()).snoozeMinutes,
-      !record.completed && !record.deleted)
+      !record.completed && !record.deleted && !record.skipped)
   private fun modify(operation: String, command: Map<String, Any?>): Map<String, Any?> {
     val db = content()
     val kind = command["kind"] as String
@@ -208,7 +220,8 @@ class AlarmEngine internal constructor(private val context: Context,
     if (old.revision != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION",
       "errorField" to "expectedRevision", "errorMessage" to "This reminder changed. Refresh before editing.")
     val record = when (kind) {
-      "Edit" -> draft(command, id, old).also {
+      "Edit" -> draft(command, id, old).copy(segmentId = old.segmentId, nominalSlot = old.nominalSlot,
+        exception = old.segmentId != null || old.exception, skipped = old.skipped).also {
         val changedTime = it.definedAlarmAtMs != (old.definedAlarmAtMs ?: old.eventStartMs) || it.mode != old.mode
         validate(!changedTime || it.mode == "None" || it.completed || it.definedAlarmAtMs!! > now(), "alarmAtMs", "Choose an alarm time in the future.")
       }
@@ -216,6 +229,7 @@ class AlarmEngine internal constructor(private val context: Context,
       "Reopen" -> old.copy(completed = false, revision = old.revision + 1)
       "Delete" -> old.copy(deleted = true, revision = old.revision + 1)
       "UndoDelete" -> old.copy(deleted = false, revision = old.revision + 1)
+      "Skip" -> { validate(old.segmentId != null, "occurrenceId", "Only recurring occurrences can be skipped."); old.copy(skipped = true, revision = old.revision + 1) }
       else -> error("Unsupported content command")
     }
     val previous = alerts.find(id)
@@ -228,6 +242,7 @@ class AlarmEngine internal constructor(private val context: Context,
         db.records().history(HistoryRecord(operation, id, kind, now(), previous?.generation ?: 0))
       }
       previous?.sessionId?.let { RingingService.refresh(context, it) }
+      if (record.segmentId != null) { previous?.let { alerts.put(it.copy(exception = record.exception)) }; series.replenish(); series.materialize() }
       changed(); return result(id)
     }
     val generation = maxOf(previous?.generation ?: 0, db.records().pending().filter { it.occurrenceId == id }.maxOfOrNull { it.generation } ?: 0) + 1
@@ -247,7 +262,7 @@ class AlarmEngine internal constructor(private val context: Context,
       db.records().history(HistoryRecord(operation, id, kind, now(), generation, record.definedAlarmAtMs))
     }
     AlarmNotifications(context).clearAttention(id)
-    applyPending(db); changed()
+    applyPending(db); series.replenish(); series.materialize(); changed()
     return result(id)
   }
   fun settings(): Map<String, Any> {
@@ -259,6 +274,9 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun lists(): List<String> = content().records().all().filter { !it.deleted }.map { it.listName }
     .filter { it.isNotEmpty() }.distinct().sorted()
+  fun querySeries(): List<Map<String, Any?>> = series.list()
+  fun getSeries(id: String): Map<String, Any?>? = series.get(id)
+  fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> = series.editDraft(id, nominal)
   private fun updateSettings(operation: String, command: Map<String, Any?>): Map<String, Any?> {
     val db = content()
     val old = db.records().settings() ?: SettingsRecord()
@@ -277,29 +295,38 @@ class AlarmEngine internal constructor(private val context: Context,
       sound = sound, vibration = flag(command, "vibration", old.vibration), theme = theme, lastOperationId = operation)
     db.records().settings(next)
     alerts.all().forEach { alerts.put(it.copy(snoozeMinutes = next.snoozeMinutes)) }
+    alerts.plans().forEach { alerts.plan(it.copy(snoozeMinutes = next.snoozeMinutes)) }
     alerts.activeSession()?.let { RingingService.refresh(context, it.id) }
     changed(); return mapOf("status" to "Applied")
   }
   fun diagnostics(): Map<String, Any> = mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 2, "operationalSchema" to 2,
+    "contentSchema" to 3, "operationalSchema" to 3,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to content().records().pending().size)
   fun exportBackup(): String {
     val db = content()
     replayHistory(db)
-    val records = db.records().all().filter { !it.deleted }
+    series.materialize()
+    val records = db.records().all().filter { !it.deleted || it.segmentId != null }
     val targets = records.associate { record -> record.id to alerts.find(record.id)?.let { alert ->
-      if (!record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked")) alert.targetMs else null
+      if (!record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused")) alert.targetMs else null
     } }
-    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now())
+    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series())
   }
   fun previewImport(json: String): Map<String, Any> {
     val bundle = BackupCodec.decode(json)
     val dao = content().records()
-    return mapOf("count" to bundle.records.size, "items" to bundle.records.map {
+    val families = bundle.series.groupBy { it.seriesId }
+    val localFamilies = dao.series().map { it.seriesId }.toSet()
+    val items = bundle.records.filter { it.segmentId == null }.map {
       mapOf("id" to it.id, "title" to it.title, "conflict" to (dao.find(it.id) != null),
         "futureAlert" to (!it.completed && it.mode != "None" && (bundle.nextAlerts[it.id] ?: it.definedAlarmAtMs!!) > now()))
-    })
+    } + families.map { (id, segments) ->
+      val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
+      mapOf("id" to id, "title" to "${series.template(segment).title} (series)", "conflict" to (id in localFamilies || segments.any { dao.series(it.id) != null }),
+        "futureAlert" to segments.any { it.state == "Active" && Recurrence.future(RuleCodec.decode(it.rule), now(), ZoneId.systemDefault()).any() })
+    }
+    return mapOf("count" to items.size, "items" to items)
   }
   fun importBackup(json: String, copyIds: List<String>, operation: String): Map<String, Any?> {
     validate(operation.isNotBlank() && operation.length <= 200, "operationId", "Try this import again.")
@@ -309,18 +336,34 @@ class AlarmEngine internal constructor(private val context: Context,
       validate(db.records().receipt(operation)!!.kind == "Import", "operationId", "This operation was already used.")
       applyPending(db); return mapOf("status" to "Applied", "retry" to true)
     }
-    validate(copyIds.all { id -> bundle.records.any { it.id == id } }, "copyIds", "Choose conflicts from this backup.")
-    val accepted = bundle.records.filter { db.records().find(it.id) == null || it.id in copyIds }
+    val families = bundle.series.groupBy { it.seriesId }
+    val localFamilies = db.records().series().map { it.seriesId }.toSet()
+    val conflicts = families.filter { (id, segments) -> id in localFamilies || segments.any { db.records().series(it.id) != null } }.keys
+    validate(copyIds.all { id -> bundle.records.any { it.segmentId == null && it.id == id } || id in families }, "copyIds", "Choose conflicts from this backup.")
+    val acceptedFamilies = families.filter { (id, _) -> id !in conflicts || id in copyIds }
+    val segments = acceptedFamilies.values.flatten()
+    val segmentMap = segments.associate { it.id to if (it.seriesId !in conflicts) it.id
+      else UUID.nameUUIDFromBytes("$operation:segment:${it.id}".toByteArray()).toString() }
+    val accepted = bundle.records.filter { if (it.segmentId != null) it.segmentId in segmentMap
+      else db.records().find(it.id) == null || it.id in copyIds }
     val mapped = accepted.associate { record -> record.id to
-      if (db.records().find(record.id) == null) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
+      if (record.segmentId != null) UUID.nameUUIDFromBytes("remilo:${segmentMap.getValue(record.segmentId)}:${record.nominalSlot}".toByteArray()).toString()
+      else if (db.records().find(record.id) == null) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
     db.runInTransaction {
+      segments.forEach { source ->
+        val id = segmentMap.getValue(source.id)
+        val family = if (source.seriesId !in conflicts) source.seriesId else UUID.nameUUIDFromBytes("$operation:family:${source.seriesId}".toByteArray()).toString()
+        db.records().series(source.copy(id = id, seriesId = family))
+        db.records().pendingSeries(PendingSeries("$operation:series:$id", id))
+      }
       accepted.forEach { source ->
         val id = mapped.getValue(source.id)
-        val record = source.copy(id = id, title = if (id == source.id) source.title else "${source.title.take(193)} (copy)")
+        val record = source.copy(id = id, segmentId = source.segmentId?.let { segmentMap.getValue(it) },
+          title = if (id == source.id || source.segmentId != null) source.title else "${source.title.take(193)} (copy)")
         db.records().insert(record)
         db.records().pending(projection("$operation:$id", record, 1).copy(
           targetMs = bundle.nextAlerts[source.id] ?: record.definedAlarmAtMs!!,
-          eligible = !record.completed && (record.mode == "None" || bundle.nextAlerts[source.id] != null)))
+          eligible = !record.completed && !record.deleted && !record.skipped && (record.mode == "None" || bundle.nextAlerts[source.id] != null)))
       }
       bundle.history.filter { it.occurrenceId in mapped }.forEach { history ->
         db.records().history(history.copy(operationId = UUID.nameUUIDFromBytes("$operation:${history.operationId}".toByteArray()).toString(),
@@ -328,10 +371,11 @@ class AlarmEngine internal constructor(private val context: Context,
       }
       db.records().receipt(CreationReceipt(operation, "import", "Import"))
     }
-    applyPending(db); changed()
+    applyPending(db); series.recover(); changed()
     val blocked = mapped.values.count { alerts.find(it)?.state == "Blocked" }
-    return mapOf("status" to if (blocked > 0) "Blocked" else "Applied", "added" to accepted.size,
-      "preserved" to bundle.records.size - accepted.size, "blocked" to blocked)
+    val added = accepted.count { it.segmentId == null } + acceptedFamilies.size
+    return mapOf("status" to if (blocked > 0) "Blocked" else "Applied", "added" to added,
+      "preserved" to bundle.records.count { it.segmentId == null } + families.size - added, "blocked" to blocked)
   }
   fun previewSound(sound: String): Map<String, Any> {
     validate(sound in setOf("remilo", "system"), "sound", "Choose a valid sound.")
@@ -352,7 +396,31 @@ class AlarmEngine internal constructor(private val context: Context,
     validate(operationId.isNotBlank() && operationId.length <= 200, "operationId", "Try this action again.")
     return when (command["kind"]) {
       "Create" -> create(operationId, command)
-      "Edit", "Done", "Reopen", "Delete", "UndoDelete" -> modify(operationId, command)
+      "Edit", "Done", "Reopen", "Delete", "UndoDelete", "Skip" -> modify(operationId, command)
+      "CreateSeries", "EditSeries", "EditFollowing", "PauseSeries", "ResumeSeries" -> {
+        if (command["kind"] != "CreateSeries") {
+          validate(text(command, "segmentId", "", 200).isNotBlank(), "segmentId", "Choose a series.")
+          epoch(command["expectedRevision"], "expectedRevision")
+        }
+        if (command["kind"] in setOf("CreateSeries", "EditSeries", "EditFollowing"))
+          validate(command["recurrence"] is Map<*, *>, "recurrence", "Choose a repeat rule.")
+        if (command["kind"] == "EditFollowing") validate(command["nominalSlot"] is String,
+          "nominalSlot", "Choose an original occurrence.")
+        try {
+          val result = when (command["kind"]) {
+            "CreateSeries" -> series.create(operationId, draft(command, "template"), command["recurrence"] as Map<String, Any?>)
+            "EditSeries", "EditFollowing" -> {
+              val old = series.editTemplate(command["segmentId"] as String,
+                if (command["kind"] == "EditFollowing") command["nominalSlot"] as String else null)
+              series.mutate(operationId, command, draft(command, "template", old))
+            }
+            else -> series.mutate(operationId, command)
+          }
+          changed(); result
+        } catch (error: InputError) { throw error }
+        catch (_: IllegalArgumentException) { mapOf("status" to "Rejected", "errorCode" to "INVALID_RECURRENCE", "errorField" to "recurrence",
+          "errorMessage" to "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.") }
+      }
       "Settings" -> updateSettings(operationId, command)
       "StopAll" -> {
         val session = alerts.activeSession()
@@ -427,15 +495,27 @@ class AlarmEngine internal constructor(private val context: Context,
         db.records().acknowledge(pending.operationId)
         continue
       }
-      val desired = AlertRecord(pending.occurrenceId, pending.targetMs, pending.generation,
-        if (pending.eligible) "Pending" else when {
+      val product = db.records().find(pending.occurrenceId)
+      val segment = product?.segmentId?.let { db.records().series(it) }
+      val resolved = if (segment != null && product.nominalSlot != null && !product.exception && pending.targetMs > now())
+        Recurrence.resolve(RuleCodec.decode(segment.rule), java.time.LocalDateTime.parse(product.nominalSlot), ZoneId.systemDefault()) else null
+      val desired = AlertRecord(pending.occurrenceId, resolved?.alarmAtMs ?: pending.targetMs, pending.generation,
+        when {
           db.records().find(pending.occurrenceId)?.completed == true -> "Completed"
           db.records().find(pending.occurrenceId)?.deleted == true -> "Deleted"
+          db.records().find(pending.occurrenceId)?.skipped == true -> "Skipped"
+          db.records().find(pending.occurrenceId)?.let { it.segmentId != null && !it.exception &&
+            db.records().series(it.segmentId)?.state == "Paused" && pending.targetMs > now() } == true -> "Paused"
+          pending.eligible -> "Pending"
           else -> "Missed"
         },
-        mode = pending.mode, sound = pending.sound, vibration = pending.vibration, snoozeMinutes = pending.snoozeMinutes)
+        mode = pending.mode, sound = pending.sound, vibration = pending.vibration, snoozeMinutes = pending.snoozeMinutes,
+        segmentId = db.records().find(pending.occurrenceId)?.segmentId,
+        nominalSlot = db.records().find(pending.occurrenceId)?.nominalSlot,
+        exception = db.records().find(pending.occurrenceId)?.exception ?: false,
+        resolvedZone = resolved?.zoneId ?: existing?.resolvedZone ?: product?.zoneId.orEmpty())
       alerts.put(desired)
-      if (!pending.eligible || register(desired).state != "Blocked") db.records().acknowledge(pending.operationId)
+      if (desired.state != "Pending" || register(desired).state != "Blocked") db.records().acknowledge(pending.operationId)
     }
   }
   private fun replayHistory(db: ContentDatabase) {
@@ -455,15 +535,16 @@ class AlarmEngine internal constructor(private val context: Context,
       if (receipt.occurrenceId != id || receipt.kind != kind) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       return mapOf("status" to "Applied", "generation" to old.generation)
     }
-    if (unlocked()) content().records().history(id).find { it.operationId == operationId }?.let {
-      return mapOf("status" to if (it.kind == kind) "Applied" else "Rejected", "generation" to old.generation)
+    if (unlocked()) content().records().historyOperation(operationId)?.let {
+      return mapOf("status" to if (it.kind == kind && it.occurrenceId == id) "Applied" else "Rejected", "generation" to old.generation)
     }
     if (old.generation != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_GENERATION",
       "errorField" to "expectedGeneration", "generation" to old.generation)
-    if (old.state in setOf("Completed", "Deleted", "Changing") || old.mode == "None")
+    if (old.state in setOf("Completed", "Deleted", "Changing", "SeriesChanging", "Skipped", "Replaced", "Paused") || old.mode == "None")
       return mapOf("status" to "Rejected", "errorCode" to "NOT_ELIGIBLE", "errorMessage" to "This reminder has no eligible alert. Refresh it first.")
     if (kind == "Stop" && old.state != "Alerting") return mapOf("status" to "Rejected", "errorCode" to "NOT_RINGING")
     val next = old.copy(generation = old.generation + 1, sessionId = null,
+      exception = old.exception || (old.segmentId != null && kind in setOf("Snooze", "Postpone")),
       targetMs = when (kind) { "Snooze" -> now() + old.snoozeMinutes * 60_000L;
         "Postpone" -> requireNotNull(targetMs); else -> old.targetMs },
       state = if (kind in setOf("Snooze", "Postpone")) "Pending" else "Stopped")
@@ -476,6 +557,7 @@ class AlarmEngine internal constructor(private val context: Context,
     old.sessionId?.let { RingingService.refresh(context, it) }
     if (kind == "Stop") AlarmNotifications(context).unresolved(updated)
     else AlarmNotifications(context).clearAttention(id)
+    series.replenish(); series.materialize()
     changed()
     return mapOf("status" to if (updated.state == "Blocked") "Blocked" else "Applied", "generation" to updated.generation)
   }
@@ -495,10 +577,11 @@ class AlarmEngine internal constructor(private val context: Context,
       alert.state in setOf("Scheduled", "Pending"), ready(alert.mode))) {
       AlarmPolicy.Delivery.STALE -> return
       AlarmPolicy.Delivery.EARLY -> { register(alert); return }
-      AlarmPolicy.Delivery.MISSED -> { alerts.put(alert.copy(state = "Missed")); changed(); return }
-      AlarmPolicy.Delivery.BLOCKED -> { alerts.put(alert.copy(state = "Blocked")); changed(); return }
+      AlarmPolicy.Delivery.MISSED -> { alerts.put(alert.copy(state = "Missed")); series.replenish(); series.materialize(); changed(); return }
+      AlarmPolicy.Delivery.BLOCKED -> { alerts.put(alert.copy(state = "Blocked")); series.replenish(); series.materialize(); changed(); return }
       AlarmPolicy.Delivery.RING -> Unit
     }
+    series.replenish(); series.materialize()
     if (alert.mode == "Notification") {
       alerts.put(alert.copy(state = "Notified"))
       val title = if (unlocked()) content().records().find(id)?.title ?: "Reminder" else "Reminder"
@@ -557,10 +640,11 @@ class AlarmEngine internal constructor(private val context: Context,
   fun recover(finished: () -> Unit = {}) = submit(finished) {
     if (unlocked()) {
       val db = content()
+      series.recover()
       applyPending(db)
       alerts.all().filter { it.state == "Changing" }.forEach { alert ->
         db.records().find(alert.occurrenceId)?.let { record ->
-          val eligible = !record.completed && !record.deleted && (alert.previousState == null ||
+          val eligible = !record.completed && !record.deleted && !record.skipped && (alert.previousState == null ||
             alert.previousState in setOf("Scheduled", "Pending", "Blocked", "NoAlert"))
           db.records().pending(projection("recover:${alert.occurrenceId}:${alert.generation}", record, alert.generation)
             .copy(targetMs = alert.targetMs, eligible = eligible))
@@ -571,6 +655,7 @@ class AlarmEngine internal constructor(private val context: Context,
       alerts.all().filter { it.snoozeMinutes != snooze }.forEach { alerts.put(it.copy(snoozeMinutes = snooze)) }
     }
     alerts.all().filter { it.state in setOf("Scheduled", "Pending", "Blocked") }.forEach { register(it) }
+    series.recover()
     val caps = capabilities()
     Log.i("Remilo", "Recovery finished: unlocked=${caps["unlocked"]} exact=${caps["exactAlarms"]} notifications=${caps["notifications"]} channel=${caps["channelEnabled"]}")
     changed()

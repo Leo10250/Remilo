@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, View } from 'react-native';
-import type { Occurrence, ReminderDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { Command, ReminderDraft, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { Button, Card, Copy, DateField, Field, formatTime, Heading, Page, Toggle } from '../ui/components';
-import { engine, nativeAvailable, useCommand, useSettings } from '../ui/native';
+import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../ui/native';
+import { RepeatForm } from '../ui/recurrence';
 
 type EditorDraft = ReminderDraft & { eventStartMs: number; eventEndMs: number; dueAtMs: number; alarmAtMs: number };
 function emptyDraft(): EditorDraft {
@@ -13,54 +14,89 @@ function emptyDraft(): EditorDraft {
     dueAtMs: start, alarmAtMs: start, mode: 'Alarm', allDay: false, dueLinked: true, alarmLinked: true };
 }
 export default function Editor() {
-  const params = useLocalSearchParams<{ id?: string; duplicate?: string }>();
+  const params = useLocalSearchParams<{ id?: string; duplicate?: string; segmentId?: string; following?: string; source?: string }>();
   const id = params.id ?? params.duplicate;
   const existing = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getOccurrence(id!), enabled: !!id && nativeAvailable });
+  const series = useQuery({ queryKey: ['series', params.segmentId], queryFn: () => engine().getSeries(params.segmentId!), enabled: !!params.segmentId && nativeAvailable });
+  const source = useQuery({ queryKey: ['series-draft', params.segmentId, params.following], queryFn: () => engine().getSeriesDraft(params.segmentId!, params.following!), enabled: !!params.following && !!params.segmentId && nativeAvailable });
+  if (params.segmentId && (series.isLoading || (!!params.following && source.isLoading))) return <Page title="Edit series"><Copy>Loading…</Copy></Page>;
+  if (params.segmentId && !series.data) return <Page title="Edit series"><Copy>Could not load this series.</Copy></Page>;
+  if (params.following && !source.data) return <Page title="Edit series"><Copy>Could not resolve the original occurrence. Go back and retry.</Copy></Page>;
   if (id && existing.isLoading) return <Page title="Edit reminder"><Copy>Loading…</Copy></Page>;
   if (id && !existing.data) return <Page title="Edit reminder"><Copy>Could not load this reminder. Go back and retry.</Copy></Page>;
-  return <EditorForm key={id ?? 'new'} record={existing.data ?? undefined} id={params.id} duplicate={!!params.duplicate} />;
+  return <EditorForm key={id ?? params.segmentId ?? 'new'} record={existing.data ?? source.data?.template ?? series.data?.template ?? undefined}
+    id={params.id} duplicate={!!params.duplicate} series={series.data ?? undefined} following={params.following} remainingCount={source.data?.remainingCount} />;
 }
-function EditorForm({ record, id, duplicate }: { record?: Occurrence; id?: string; duplicate: boolean }) {
+function EditorForm({ record, id, duplicate, series, following, remainingCount }: {
+  record?: ReminderDraft & { revision?: number }; id?: string; duplicate: boolean; series?: Series; following?: string; remainingCount?: number | null;
+}) {
   const settings = useSettings();
   const command = useCommand();
   const [draft, setDraft] = useState<EditorDraft>(() => record ? {
     title: duplicate ? `${record.title.slice(0, 193)} (copy)` : record.title,
-    notes: record.notes, listName: record.listName, eventStartMs: record.eventStartMs,
-    eventEndMs: record.eventEndMs, dueAtMs: record.dueAtMs, alarmAtMs: record.alarmAtMs,
+    notes: record.notes, listName: record.listName, eventStartMs: record.eventStartMs!,
+    eventEndMs: record.eventEndMs!, dueAtMs: record.dueAtMs!, alarmAtMs: record.alarmAtMs!,
     mode: record.mode, allDay: record.allDay, dueLinked: record.dueLinked, alarmLinked: record.alarmLinked,
     zoneId: record.zoneId, sound: record.sound, vibration: record.vibration,
   } : emptyDraft());
   const [advanced, setAdvanced] = useState(!!record);
   const [message, setMessage] = useState('');
+  const pendingSave = useRef<Command | null>(null);
+  const [retrySave, setRetrySave] = useState(false);
   const [loadedRevision] = useState(record?.revision ?? null);
-  const patch = (value: Partial<EditorDraft>) => setDraft((current) => ({ ...current, ...value }));
+  const [seriesRevision] = useState(series?.revision);
+  const [recurrence, setRecurrence] = useState<RecurrenceDraft | undefined>(() => series ? {
+    ...series.rule, zoneMode: series.rule.zoneId ? 'pinned' : 'floating',
+    count: following ? remainingCount ?? undefined : series.rule.count ?? undefined, until: series.rule.until ?? undefined,
+  } : undefined);
+  const patch = (value: Partial<EditorDraft>) => { if (!pendingSave.current) setDraft((current) => ({ ...current, ...value })); };
   const moveEvent = (value: number) => setDraft((current) => {
+    if (pendingSave.current) return current;
     const delta = value - current.eventStartMs;
     const due = current.dueLinked ? current.dueAtMs + delta : current.dueAtMs;
     return { ...current, eventStartMs: value, eventEndMs: current.eventEndMs + delta,
       dueAtMs: due, alarmAtMs: current.alarmLinked ? current.alarmAtMs + due - current.dueAtMs : current.alarmAtMs };
   });
   const payload = Object.fromEntries(Object.entries({ ...draft,
+    ...(recurrence ? { recurrence: Object.fromEntries(Object.entries(recurrence).filter(([, value]) => value != null)) } : {}),
     ...(draft.allDay && draft.dueLinked ? { dueAtMs: undefined } : {}),
     ...(draft.allDay && draft.alarmLinked ? { alarmAtMs: undefined } : {}) })
-    .filter(([, value]) => value !== undefined)) as ReminderDraft;
+    .filter(([, value]) => value !== undefined)) as ReminderDraft & { recurrence?: RecurrenceDraft };
   // Native preview is authoritative; local draft arithmetic only assists editing.
   const preview = useQuery({ queryKey: ['schedule-preview', payload],
     queryFn: () => engine().previewSchedule(payload), enabled: nativeAvailable && !!draft.title.trim() });
   const save = async () => {
     setMessage('');
     try {
-      const resolved = await engine().previewSchedule(payload);
-      if (resolved.warnings.length && draft.mode !== 'None') { setMessage(resolved.warnings.join('\n')); return; }
-      const result = await command.mutateAsync(id ? { ...payload, kind: 'Edit',
+      if (!pendingSave.current) {
+        const resolved = await engine().previewSchedule(payload);
+        if (recurrence && !resolved.upcoming.length) { setMessage('Choose a rule with future occurrences.'); return; }
+        if (!recurrence && resolved.warnings.length && draft.mode !== 'None') { setMessage(resolved.warnings.join('\n')); return; }
+        if (series && !recurrence) { setMessage('Keep a repeat rule for series edits. Pause the series to stop future occurrences.'); return; }
+        pendingSave.current = series && recurrence ? { ...payload, recurrence: payload.recurrence!,
+        kind: following ? 'EditFollowing' : 'EditSeries', segmentId: series.id, expectedRevision: seriesRevision!,
+        nominalSlot: following, operationId: engine().createOperationId() }
+        : id ? { ...payload, kind: 'Edit',
         occurrenceId: id, expectedRevision: loadedRevision!, operationId: engine().createOperationId() }
-        : { ...payload, kind: 'Create', operationId: engine().createOperationId() });
+        : recurrence ? { ...payload, recurrence: payload.recurrence!, kind: 'CreateSeries', operationId: engine().createOperationId() }
+        : { ...payload, kind: 'Create', operationId: engine().createOperationId() };
+      }
+      const result = await command.mutateAsync(pendingSave.current);
+      setRetrySave(false);
       if (result.status === 'Blocked') Alert.alert('Saved; alert blocked', 'Review alarm readiness to enable delivery.');
-      if (result.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: result.occurrence.id } });
+      if (result.segmentId) router.replace({ pathname: '/series/[id]', params: { id: result.segmentId } });
+      else if (result.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: result.occurrence.id } });
       else router.replace('/');
-    } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not save. Try again.'); }
+    } catch (error) {
+      if (error instanceof CommandError) { pendingSave.current = null; setRetrySave(false); }
+      else setRetrySave(pendingSave.current !== null);
+      setMessage(error instanceof Error ? error.message : 'Could not save. Try again.');
+    }
   };
-  return <Page title={id ? 'Edit reminder' : 'New reminder'} subtitle="Give the reminder a time. Keep the details as simple as you like.">
+  return <Page title={series ? following ? 'Edit this and following' : 'Edit series' : id ? 'Edit reminder' : 'New reminder'} subtitle="Give the reminder a time. Keep the details as simple as you like.">
+    {series && <Card><Copy>Old unresolved and postponed occurrences are preserved. Future ordinary occurrences are replaced by the preview below.</Copy>
+      {following && <Copy>Starts from original slot {following}. Choose an ending for this new segment.</Copy>}
+      {series.revision !== seriesRevision && <Copy>This series changed. Go back and reload before saving.</Copy>}</Card>}
     {record && record.revision !== loadedRevision && loadedRevision !== null &&
       <Card><Copy>This reminder changed while you were editing. Go back and reload before saving.</Copy></Card>}
     <Card><Field label="Title" value={draft.title} onChangeText={(title) => patch({ title })} maxLength={200}
@@ -97,13 +133,20 @@ function EditorForm({ record, id, duplicate }: { record?: Occurrence; id?: strin
         <Field label="List (optional)" value={draft.listName} onChangeText={(listName) => patch({ listName })} maxLength={60} placeholder="Personal, Work…" />
       </Card>
     </>}
+    {!id && <RepeatForm value={recurrence} onChange={(value) => { if (!pendingSave.current) setRecurrence(value); }} startMs={draft.eventStartMs}
+      zoneId={draft.zoneId} setZone={(zoneId) => patch({ zoneId })} />}
+    {preview.error && <Copy>Check the timing and repeat fields. The native preview could not resolve this rule.</Copy>}
     {preview.data && <Card><Heading>Preview</Heading><Copy>Event: {formatTime(preview.data.eventStartMs)}</Copy>
       <Copy>Due: {formatTime(preview.data.dueAtMs)}{draft.allDay && draft.dueLinked ? ' (exclusive end of day)' : ''}</Copy>
       <Copy>{draft.mode === 'None' ? 'No alert' : `Alert: ${formatTime(preview.data.alarmAtMs)}`}</Copy>
       {preview.data.warnings.map((warning) => <Copy key={warning}>{warning}</Copy>)}
+      {preview.data.upcoming?.map((slot) => <View key={slot.nominalSlot}><Copy>{slot.nominalSlot.replace('T', ' ')} · {slot.zoneId}</Copy>
+        <Copy muted>Alert: {formatTime(slot.alarmAtMs)}{slot.adjusted ? ' · clock gap adjusted' : ''}</Copy></View>)}
+      {recurrence && <Copy muted>{preview.data.upcoming.length < 3 ? 'Fewer than three occurrences remain before the ending.' : 'First three upcoming occurrences.'} Each occurrence is separate.</Copy>}
     </Card>}
     {(message || command.error) && <Copy>{message || command.error?.message}</Copy>}
-    <Button label={command.isPending ? 'Saving…' : 'Save reminder'} onPress={() => void save()}
+    {retrySave && <Copy>The save could not be confirmed. Editing is held until you retry the same save; this avoids creating a duplicate.</Copy>}
+    <Button label={command.isPending ? 'Saving…' : retrySave ? 'Retry previous save' : 'Save reminder'} onPress={() => void save()}
       disabled={!nativeAvailable || command.isPending || !draft.title.trim() || (!!id && loadedRevision === null)} />
   </Page>;
 }
