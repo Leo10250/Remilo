@@ -91,6 +91,35 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       "upcoming" to future.map { mapOf("nominalSlot" to it.nominal.toString(), "eventStartMs" to it.eventStartMs, "alarmAtMs" to it.alarmAtMs) })
   }
   fun list(): List<Map<String, Any?>> = db().records().series().filter { it.state != "Archived" }.mapNotNull { get(it.id) }
+  /** Family identity survives splits and replacement; this projection never registers an alert. */
+  fun families(): List<Map<String, Any?>> {
+    val dao = db().records()
+    val records = dao.all().associateBy { it.id }
+    val deliveries = alerts.all().associateBy { it.occurrenceId }
+    val at = now()
+    return dao.series().groupBy { it.seriesId }.map { (familyId, segments) ->
+      val ordinary = segments.filter { it.state != "Archived" }
+      val representative = (ordinary.ifEmpty { segments }).sortedWith(
+        compareByDescending<SeriesRecord> { it.createdAtMs }.thenBy { it.id }).first()
+      val candidates = ordinary.flatMap { segment ->
+        Recurrence.future(RuleCodec.decode(segment.rule), at, zone()).filter { slot ->
+          val id = occurrenceId(segment.id, slot.nominal.toString())
+          val record = records[id]
+          val delivery = deliveries[id]
+          record?.completed != true && record?.deleted != true && record?.skipped != true &&
+            record?.exception != true && delivery?.exception != true &&
+            delivery?.state !in setOf("Completed", "Deleted", "Skipped", "Replaced")
+        }.take(3).map { slot -> segment to slot }.toList()
+      }.sortedWith(compareBy<Pair<SeriesRecord, ResolvedSlot>> { it.second.eventStartMs }
+        .thenBy { it.first.id }.thenBy { it.second.nominal })
+      val ids = segments.map { it.id }.toSet()
+      mapOf("seriesId" to familyId, "current" to requireNotNull(get(representative.id)),
+        "state" to when { candidates.isEmpty() -> "Ended"; candidates.all { it.first.state == "Paused" } -> "Paused"; else -> "Active" },
+        "upcoming" to candidates.take(3).map { (segment, slot) -> mapOf("segmentId" to segment.id,
+          "nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs, "alarmAtMs" to slot.alarmAtMs) },
+        "unfinishedCount" to records.values.count { it.segmentId in ids && !it.completed && !it.deleted && !it.skipped })
+    }.sortedBy { it["seriesId"] as String }
+  }
   fun editTemplate(id: String, nominal: String?): ReminderRecord {
     val series = requireNotNull(db().records().series(id))
     return if (nominal == null) template(series) else resolveRecord(series, nominal, "editor")

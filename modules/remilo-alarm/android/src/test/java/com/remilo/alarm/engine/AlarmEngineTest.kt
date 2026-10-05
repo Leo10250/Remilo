@@ -829,6 +829,154 @@ class AlarmEngineTest {
     engine.receive(AlarmScheduler.stopAllIntent(context, oldSession)) { done.complete(Unit) }; done.get(20, TimeUnit.SECONDS)
     assertEquals("Alerting", (request { engine.occurrence(third) } as Map<*, *>)["deliveryState"])
   }
+  @Test fun repeatFamiliesMergeSplitDatesAndUseWholeFamilyPauseState() {
+    val firstSegment = seriesCommand(count = 5)["segmentId"] as String
+    val split = protectedRows().maxBy { it.targetMs }
+    now += 1_000
+    val changed = request { engine.apply(mapOf("kind" to "EditFollowing", "operationId" to "family-split",
+      "segmentId" to firstSegment, "expectedRevision" to 1, "nominalSlot" to split.nominalSlot,
+      "title" to "Following family", "eventStartMs" to split.targetMs, "alarmAtMs" to split.targetMs,
+      "zoneId" to "UTC", "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 4, "zoneMode" to "pinned"))) } as Map<*, *>
+    val current = changed["segmentId"] as String
+    fun family() = (request { engine.queryRepeatFamilies() } as List<*>).single() as Map<*, *>
+    val active = family()
+    assertEquals(firstSegment, active["seriesId"])
+    assertEquals(current, (active["current"] as Map<*, *>)["id"])
+    assertEquals("Active", active["state"])
+    val dates = active["upcoming"] as List<*>
+    assertEquals(3, dates.size)
+    assertEquals(firstSegment, (dates[0] as Map<*, *>)["segmentId"])
+    assertEquals(current, (dates[1] as Map<*, *>)["segmentId"])
+    assertEquals(3, active["unfinishedCount"])
+    seriesMutation(current, "PauseSeries")
+    assertEquals("Paused", family()["state"])
+    assertEquals(3, (family()["upcoming"] as List<*>).size)
+    now += 6 * 86_400_000
+    assertEquals("Ended", family()["state"])
+    assertTrue((family()["upcoming"] as List<*>).isEmpty())
+  }
+  @Test fun familyFiltersRetainArchivedExceptionsAndTheirHistoryWithoutOtherFamilies() {
+    val familyId = seriesCommand("history-family")["segmentId"] as String
+    val first = protectedRows().filter { it.segmentId == familyId }.minBy { it.targetMs }
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "retained-exception", "occurrenceId" to first.occurrenceId,
+      "expectedGeneration" to first.generation, "alarmAtMs" to now + 15 * 86_400_000)) }
+    now += 1_000
+    val replacement = request { engine.apply(mapOf("kind" to "EditSeries", "operationId" to "replacement-family",
+      "segmentId" to familyId, "expectedRevision" to 1, "title" to "Current family", "eventStartMs" to now + 120_000,
+      "alarmAtMs" to now + 120_000, "zoneId" to "UTC", "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "zoneMode" to "pinned"))) } as Map<*, *>
+    seriesCommand("unrelated-family")
+    fun page(view: String) = request { engine.query(mapOf("view" to view, "seriesId" to familyId), null) } as Map<*, *>
+    val active = page("all")
+    assertEquals(3, active["total"])
+    assertTrue((active["items"] as List<*>).any { (it as Map<*, *>)["id"] == first.occurrenceId })
+    assertTrue((active["items"] as List<*>).all { (it as Map<*, *>)["segmentId"] in setOf(familyId, replacement["segmentId"]) })
+    request { engine.apply(mapOf("kind" to "Done", "operationId" to "complete-retained", "occurrenceId" to first.occurrenceId, "expectedRevision" to 1)) }
+    val completed = page("completed")
+    assertEquals(1, completed["total"]); assertEquals(1, completed["completedCount"])
+    assertEquals(first.occurrenceId, ((completed["items"] as List<*>).single() as Map<*, *>)["id"])
+    assertEquals(now, ((completed["items"] as List<*>).single() as Map<*, *>)["collectionAtMs"])
+    assertEquals(2, ((request { engine.queryRepeatFamilies() } as List<*>).first { (it as Map<*, *>)["seriesId"] == familyId } as Map<*, *>)["unfinishedCount"])
+    assertEquals(0, (request { engine.query(mapOf("view" to "all", "seriesId" to "missing-family"), null) } as Map<*, *>)["total"])
+  }
+  @Test fun futureExceptionDoesNotKeepAnExhaustedOrdinaryFamilyActive() {
+    val familyId = seriesCommand(count = 1)["segmentId"] as String
+    val first = protectedRows().single()
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "last-exception", "occurrenceId" to first.occurrenceId,
+      "expectedGeneration" to 1, "alarmAtMs" to now + 15 * 86_400_000)) }
+    val family = (request { engine.queryRepeatFamilies() } as List<*>).single() as Map<*, *>
+    assertEquals("Ended", family["state"])
+    assertTrue((family["upcoming"] as List<*>).isEmpty())
+    assertEquals(1, family["unfinishedCount"])
+    assertEquals("Scheduled", protectedRows().single().state)
+    assertEquals(1, (request { engine.query(mapOf("view" to "all", "seriesId" to familyId), null) } as Map<*, *>)["total"])
+  }
+  @Test fun aPausedFamilyKeepsItsIndependentExceptionWithoutBecomingActive() {
+    val familyId = seriesCommand(count = 5)["segmentId"] as String
+    val first = protectedRows().minBy { it.targetMs }
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "paused-exception", "occurrenceId" to first.occurrenceId,
+      "expectedGeneration" to 1, "alarmAtMs" to now + 15 * 86_400_000)) }
+    seriesMutation(familyId, "PauseSeries")
+    val family = (request { engine.queryRepeatFamilies() } as List<*>).single() as Map<*, *>
+    assertEquals("Paused", family["state"])
+    assertEquals(3, (family["upcoming"] as List<*>).size)
+    assertEquals("Scheduled", protectedRows().first { it.occurrenceId == first.occurrenceId }.state)
+    assertEquals(3, family["unfinishedCount"])
+  }
+  @Test fun historyOrdersByCollectionActionBeforePaginationAndKeepsStableFallbacks() {
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        (0 until 55).reversed().forEach { n ->
+          val id = "history-%02d".format(n)
+          db.records().insert(ReminderRecord(id, "Completed $n", now + (55 - n) * 60_000,
+            now + (85 - n) * 60_000, now, now, completed = true, mode = "None"))
+          db.records().history(HistoryRecord("done-$n", id, "Done", now + n * 1_000, 1))
+          db.records().history(HistoryRecord("later-stop-$n", id, "Stop", now + 1_000_000, 1))
+        }
+        db.records().insert(ReminderRecord("skipped", "Skipped", now, now + 1_800_000, now, now, skipped = true))
+        db.records().history(HistoryRecord("skip-history", "skipped", "Skip", now + 55_000, 1))
+        db.records().insert(ReminderRecord("trash", "Trash", now, now + 1_800_000, now, now, deleted = true))
+        db.records().history(HistoryRecord("delete-history", "trash", "Delete", now + 56_000, 1))
+      } finally { db.close() }
+    }
+    val filter = mapOf("view" to "completed", "includeSkipped" to true)
+    val first = request { engine.query(filter, null) } as Map<*, *>
+    val rows = first["items"] as List<*>
+    assertEquals(56, first["total"])
+    assertEquals("skipped", (rows[0] as Map<*, *>)["id"])
+    assertEquals("history-54", (rows[1] as Map<*, *>)["id"])
+    assertEquals(now + 54_000, (rows[1] as Map<*, *>)["collectionAtMs"])
+    val second = request { engine.query(filter, first["nextCursor"] as String) } as Map<*, *>
+    assertEquals(56, (rows + (second["items"] as List<*>)).map { (it as Map<*, *>)["id"] }.distinct().size)
+    assertNull(second["nextCursor"])
+    val deleted = request { engine.query(mapOf("view" to "deleted"), null) } as Map<*, *>
+    assertEquals(now + 56_000, ((deleted["items"] as List<*>).single() as Map<*, *>)["collectionAtMs"])
+  }
+  @Test fun historyUsesLatestMatchingActionAndStableIdsWhenActionEvidenceIsAbsent() {
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        listOf("fallback-b", "fallback-a", "latest").forEach { id -> db.records().insert(
+          ReminderRecord(id, id, now - 10_000, now + 1_790_000, now, now, completed = true, mode = "None")) }
+        db.records().history(HistoryRecord("old-done", "latest", "Done", now - 20_000, 1))
+        db.records().history(HistoryRecord("new-done", "latest", "Done", now - 5_000, 1))
+        db.records().history(HistoryRecord("later-snooze", "latest", "Snooze", now + 10_000, 1))
+      } finally { db.close() }
+    }
+    val page = request { engine.query(mapOf("view" to "completed"), null) } as Map<*, *>
+    val rows = page["items"] as List<*>
+    assertEquals(listOf("latest", "fallback-a", "fallback-b"), rows.map { (it as Map<*, *>)["id"] })
+    assertEquals(now - 5_000, (rows[0] as Map<*, *>)["collectionAtMs"])
+    assertEquals(now - 10_000, (rows[1] as Map<*, *>)["collectionAtMs"])
+  }
+  @Test fun familyAndCivilTimeQueriesLeaveRegistrationsAndGenerationsUnchanged() {
+    seriesCommand()
+    val before = protectedRows()
+    val registered = os.registered.size
+    request {
+      engine.queryRepeatFamilies()
+      engine.convertTime(mapOf("zoneId" to "America/Los_Angeles", "local" to "2027-03-14T02:30:00"))
+      engine.convertTime(mapOf("zoneId" to "US/Pacific", "instantMs" to now))
+      engine.timeZones(now.toDouble())
+    }
+    assertEquals(before, protectedRows())
+    assertEquals(registered, os.registered.size)
+  }
+  @Test fun listCatalogRetainsHistoricalAndDeletedCollections() {
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now, now, listName = "Active"))
+        db.records().insert(ReminderRecord("completed-list", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "History"))
+        db.records().insert(ReminderRecord("deleted-list", "Deleted", now, now + 1_800_000, now, now, deleted = true, listName = "Trash only"))
+        db.records().insert(ReminderRecord("duplicate-list", "Duplicate", now, now + 1_800_000, now, now, deleted = true, listName = "History"))
+        db.records().insert(ReminderRecord("empty-list", "Unlisted", now, now + 1_800_000, now, now))
+      } finally { db.close() }
+    }
+    assertEquals(listOf("Active", "History", "Trash only"), request { engine.lists() })
+    val deleted = request { engine.query(mapOf("view" to "deleted", "listName" to "Trash only"), null) } as Map<*, *>
+    assertEquals(1, deleted["total"])
+  }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
     var allowed = true

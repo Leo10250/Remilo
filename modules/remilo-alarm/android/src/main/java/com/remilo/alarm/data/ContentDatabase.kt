@@ -70,6 +70,7 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM creation_receipts WHERE operationId = :id") fun receipt(id: String): CreationReceipt?
   @Insert(onConflict = OnConflictStrategy.IGNORE) fun history(record: HistoryRecord)
   @Query("SELECT * FROM history WHERE occurrenceId = :id ORDER BY occurredAtMs") fun history(id: String): List<HistoryRecord>
+  @Query("SELECT * FROM history WHERE kind IN ('Done', 'Skip', 'Delete')") fun collectionHistory(): List<HistoryRecord>
   @Query("SELECT * FROM history WHERE operationId = :id") fun historyOperation(id: String): HistoryRecord?
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,

@@ -1,6 +1,6 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
 
-import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series } from './RemiloAlarm.types';
+import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
@@ -9,6 +9,9 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getOccurrence(id: string): Promise<Occurrence | null>;
   previewSchedule(draft: ReminderDraft & { recurrence?: RecurrenceDraft }): Promise<SchedulePreview>;
   querySeries(): Promise<Series[]>;
+  queryRepeatFamilies(): Promise<RepeatFamily[]>;
+  getTimeZones(atMs: number): Promise<TimeZoneOption[]>;
+  convertTime(input: TimeConversionInput): Promise<TimeConversion>;
   getSeries(id: string): Promise<Series | null>;
   getSeriesDraft(id: string, nominal: string): Promise<{ template: Required<ReminderDraft>; remainingCount: number | null }>;
   applyCommand(command: Command): Promise<CommandResult>;

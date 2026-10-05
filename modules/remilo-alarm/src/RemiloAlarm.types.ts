@@ -15,9 +15,11 @@ export type Occurrence = Required<ReminderDraft> & {
   generation: number; deliveryState: string; overdue: boolean; history?: HistoryEntry[];
   segmentId: string | null; nominalSlot: string | null; exception: boolean; skipped: boolean;
   seriesState: string | null; repeatSummary: string | null; agendaGroup: string;
+  repeatRule?: RecurrenceDraft | null;
   alertAdjustment?: 'Snoozed' | 'Postponed' | null;
+  collectionAtMs?: number;
 };
-export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listName?: string; segmentId?: string; includeSkipped?: boolean };
+export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listName?: string; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
 export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
 export type CreateCommand = ReminderDraft & { kind: 'Create'; operationId: string; alarmAtMs?: number };
 export type DeliveryCommand = {
@@ -39,6 +41,15 @@ export type Series = {
   id: string; seriesId: string; revision: number; state: 'Active' | 'Paused' | 'Archived'; exhausted: boolean;
   template: Required<ReminderDraft>; rule: RecurrenceDraft & { anchor: string; zoneId: string | null; endExclusive: string | null };
   registered: number; pending: number; upcoming: { nominalSlot: string; eventStartMs: number; alarmAtMs: number }[];
+};
+export type RepeatFamily = {
+  seriesId: string; current: Series; state: 'Active' | 'Paused' | 'Ended'; unfinishedCount: number;
+  upcoming: { segmentId: string; nominalSlot: string; eventStartMs: number; alarmAtMs: number }[];
+};
+export type TimeZoneOption = { id: string; label: string; region: string; offsetSeconds: number };
+export type TimeConversionInput = { zoneId: string; instantMs: number; local?: never } | { zoneId: string; local: string; instantMs?: never };
+export type TimeConversion = {
+  zoneId: string; instantMs: number; local: string; offsetSeconds: number; adjustment: 'none' | 'gapForward' | 'earlierFold';
 };
 export type SeriesCommand =
   (ReminderDraft & { kind: 'CreateSeries'; recurrence: RecurrenceDraft; operationId: string }) |
