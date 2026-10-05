@@ -14,13 +14,14 @@ those earlier observations do not establish results for this new build.
 1. Install the locally signed **0.4.0 / versionCode 4** APK as an update, without uninstalling or
    clearing data. The build location and evidence are linked from the README.
 2. Open Remilo offline, with no development server running. Your saved reminders
-   should remain present. Open the Settings gear → Permissions and enable required
+   should remain present. Tap Agenda → Collections → Settings → Permissions and enable required
    access through each row. Return: statuses refresh automatically.
 3. Record phone model, Android version, app version, date, and whether exact alarms,
    notifications, the alarm channel and full-screen access are enabled.
-4. Prefix new test titles with **QA**. Tap the blue + → enter a title → tap Event.
+4. Prefix new test titles with **QA**. Tap the blue + → enter a title → tap When.
    Select today's date and a time two or three minutes ahead; keep the default
-   linked timing. Tap Save in the app bar. Inspect details → Timing.
+   linked timing. Tap Save in the app bar. Confirm return to Agenda and the saved
+   alert message; use its View action to inspect details → Timing.
    For a quick native probe, use Settings → Alarms → Test alarm (15 seconds).
 
 ## U. Redesign acceptance (start here)
@@ -38,23 +39,38 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   reminder already overdue, Postpone to tomorrow: it stays Overdue and shows the
   new alarm time. Each occurrence appears once.
 - **U3 — search/filter:** tap Search; type a QA title or note. Results narrow.
-  Close Search. Tap Filter, choose a list and Overdue only, then Show reminders.
+  Open a result, return, and check the query/filter context remains. Press Android
+  Back with the keyboard visible, then repeat with it hidden: search exits without
+  leaving Agenda. Clear query empties text while keeping search open; Exit search
+  closes it. Tap Filter, choose a list and Overdue only, then Show reminders.
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
-- **U4 — completed, skipped and Trash:** complete a QA row using its leading circle,
-  then use Undo. Complete again: it leaves the active agenda. Expand Completed and
-  find it. More → Completed reminders → Include skipped exposes a skipped repeat.
-  Move a different QA reminder to Trash through its detail menu; More → Trash →
-  Restore brings it back. Elapsed alarms remain silent.
+- **U4 — completed, skipped and Trash:** complete a QA row using its trailing check,
+  then use Undo. Complete again: it leaves the active agenda. Find it through
+  Agenda → Collections → Completed. Include skipped exposes a skipped repeat.
+  Move a different QA reminder to Trash through its detail menu; confirm the
+  request, then Collections → Trash → Restore recovers its content.
+  Search/filter both collections, including a list containing only Trash items.
+  Complete/delete QA reminders in a different order from their event dates:
+  the newest completion/deletion appears first. Elapsed alarms remain silent.
 - **U5 — simple creation and draft safety:** tap +, enter a title and choose an
-  event using its row. Save without opening advanced timing. Start another draft,
+  event using When. Save without opening advanced timing: Agenda acknowledges the
+  actual saved alert, with a View action. Start another draft,
   change its title and press Android Back: choose Keep editing, then Back → Discard.
   No live reminder was created. Open Repeat: common rules precede Custom repeat.
-  Custom repeat shows named months/ordinals and at least three preview dates, or
-  explicitly says fewer remain. Back closes the current sheet first.
+  Custom repeat shows named months/ordinals. Apply it and check at least three
+  preview dates, or explicit text saying fewer remain. Reopen Custom, change the
+  interval/weekday/ending, then Cancel changes: the previously applied rule remains.
+  Repeat using Android Back, which closes the current nested sheet first. Close
+  Repeat without applying: neither the draft rule nor the saved reminder changes.
 - **U6 — details and repeat scopes:** open a repeating occurrence. Timing and
-  Activity start collapsed. Open More → Edit: This occurrence, This and following,
+  Activity start collapsed; title, notes and timing take priority over compact
+  bottom actions. Tap Edit: This occurrence, This and following,
   Entire series are available. Cancel the selector, expand Repeat and Pause repeat.
-  Find it through home More → Paused repeats, then Resume. Check scope behavior in D.
+  Find it through Agenda → Collections → Repeats → Paused, then Resume. Inspect
+  Active and Ended filters and verify one entry per family after following/whole
+  edits. Family details retain earlier unfinished and postponed occurrences.
+  Check scope behavior in D. Long-press a one-off row → Edit opens its editor
+  directly. Repeating Edit opens the scope selector on each separate invocation.
 - **U7 — automatic settings:** change vibration and Snooze duration several times
   quickly; choose another theme and leave Settings immediately. Return, close/reopen
   the app and check the latest selections persist. No Save settings button exists.
@@ -63,7 +79,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **U8 — permission return:** tap each Permissions row. Status has an icon and a
   label, not color alone. For one safe test, deny lock-screen/full-screen access,
   return and check Limited plus the home warning; restore access and return.
-  No manual refresh is needed and no success banner persists on home. See C for
+  No manual refresh is needed. Saved-but-blocked/pending feedback remains visible
+  until acknowledged, including after reopening a future completed probe. See C for
   exact/notification restrictions; access never guarantees audibility.
 - **U9 — native auto-close:** use Test alarm. Stop: sound ends and native controls
   close automatically; the reminder stays unfinished. Repeat and Snooze: controls
@@ -76,20 +93,52 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   controls close; both remain unfinished. The notification tap opens native controls.
 - **U11 — appearance/accessibility:** repeat home, search, filters, creation, Custom
   repeat, detail Timing/Activity, scope/Postpone sheets, Settings/selectors, Completed,
-  Trash, paused repeats/repeat details, Restore preview and Diagnostics in Light and
+  Trash, Collections/Repeats and repeat details, Restore preview and Diagnostics in Light and
   Dark. Enable the largest font size (200% where available), then TalkBack. Essential
   actions remain reachable by scrolling, with clear labels/statuses and no clipping.
-  Check keyboard behavior in title/notes and custom numeric fields. Restore font and
+  Check keyboard behavior in title/notes and custom numeric fields, including bottom
+  action reachability. Enable reduced motion and repeat sheet/row transitions. Restore font and
   accessibility preferences. Native controls need their own large-font run.
-- **U12 — identity and loading:** inspect the launcher bell/clock mark, themed icon
+- **U12 — identity and loading:** inspect the launcher R mark, themed icon
   if supported, splash and small notification icon. Long titles remain readable in
   details and native controls. First loading must not claim an ended alarm or a blocked
   permission. Force-stop/reboot limitations remain those in C, rather than UI errors.
+- **U13 — city/zone authoring:** choose a city/region for a pinned QA reminder
+  using its searchable Time zone picker. Check the selected date's offset and the
+  When/due/alert labels. Change between Los Angeles and Tokyo: authored clock times
+  are kept while the resolved instant changes. Cancel either stage of a date/time
+  picker: the old value stays. Repeat with all-day and independent due/alert fields.
+  For a pinned repeat near a clock change, move When and verify linked civil offsets
+  stay the same while event duration remains elapsed; check the gap/fold preview in D15.
+- **U14 — swipe and safe Undo:** swipe a QA row to reveal Done, then release:
+  it remains unfinished until the revealed button is pressed. Swipe back or tap
+  the row to close the reveal. Try vertical scrolling and a cancelled drag: neither
+  completes nor deletes. Complete using the visible button and Undo it. For a safe
+  stale-Undo case, complete again, use Collections to Reopen then complete the same
+  reminder, return to the earlier Agenda Undo and confirm it cannot reverse that
+  newer completion. No swipe deletes a reminder.
+- **U15 — stale editor recovery:** when a QA-only controlled second writer is
+  available, leave a local draft open and change its saved title/notes/timing/repeat
+  externally. Save the old draft: it is kept for Review changes. Inspect Yours and
+  Latest, cancel/close review, and confirm the draft is still kept and cannot bypass
+  review. Accept a reviewed draft, then explicitly Save. If the old series segment
+  was replaced, verify Save as new and confirmed Reload current repeat choices.
+  Leave second-writer cases pending if the controlled setup is unavailable; do not
+  inject database/storage faults into your normal phone data.
+- **U16 — restore and action feedback:** Settings → Restore backup distinguishes
+  Reading backup from Restoring backup. Cancel Android's file picker: an existing
+  preview stays. Cancel a preview: no data is imported. During a restore, selection
+  and Back are guarded. A controlled lost-reply fixture must retain the file, copy
+  selection and operation ID for Retry same restore; leave that fault case pending
+  without the engineering setup. Saved-but-blocked or pending scheduling must show
+  a warning rather than claim delivery. Check Test alarm, sound preview, backup
+  export and diagnostics refresh/share progress and errors; dismissing a share sheet
+  must not claim that a report was sent.
 
 ## A. Everyday reminders and timing
 
 - **A1 — upgrade/offline navigation:** your existing reminders remain. Agenda, editor,
-  Completed, Trash, paused repeats, Settings and detail views open
+  Collections, Completed, Trash, Repeats, Settings and detail views open
   offline. Pull down on the home list to refresh.
 - **A2 — default timing:** create QA Timing. Its due and original alert equal the
   event start; event end is thirty minutes later. Add notes and a list. Search for
@@ -133,6 +182,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   item. Try 15/30/60 minutes, tomorrow presets and a custom future time. Check the
   resolved date/time before applying. Event/due/original alert stay unchanged;
   the next alert changes. Postpone a snoozed item: the old Snooze target is replaced.
+  Close and reopen Postpone: its custom target starts in the future each time.
+  Choose a past custom time: it is rejected without changing the current target.
 - **B6 — preferences:** change quick Snooze to two minutes, edit tomorrow presets,
   preview both tones, and toggle vibration. Test the new Snooze button and target.
   Restore your preferred settings afterward. Changing defaults affects new
@@ -234,6 +285,8 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 - **E5 — diagnostics:** Settings → diagnostics shows aggregate readiness/state
   information without titles, notes or occurrence identities. Sharing is an explicit
   user action. Backups intentionally contain private content; diagnostics do not.
+  Refresh shows progress and an acknowledgement; a failed query has Retry. Sharing
+  shows progress and reports opening/cancellation only as far as Android confirms.
 
 ## Results and remaining engineering checks
 

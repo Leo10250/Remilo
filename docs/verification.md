@@ -196,3 +196,51 @@ cancelled instances, supported recurrence mapping, pagination and 410 recovery.
 G5: disconnected changes/convergence, normal and offline primary handoff, logout,
 Calendar writer separate from ringing role. G6: real-iPhone behavior, documented
 limits, widget/countdown integration and visible coverage. No early iOS testing.
+
+## UX refinement acceptance
+
+Host checks cover native query/conversion/action contracts and focused TypeScript
+domain logic for route selection, revision-safe Undo, civil draft conversion,
+conflict review, recurrence summaries and exact restore retries. The current test
+stack has no React Native render/hook harness. Source review and domain checks do
+not establish Android keyboard/Back ordering, picker behavior, accessibility focus
+or physical alarm delivery. Record actual host results in the task evidence rather
+than treating this contract as a passing report.
+
+Add these observations to the owner's consolidated signed-phone acceptance run;
+they remain pending until observed on the identified bundled build:
+
+- Save one-off and repeating reminders; confirm return to Agenda and contextual
+  acknowledgement, including blocked/pending warnings and the View action. Open
+  one-off Edit directly and confirm repeating Edit asks for scope.
+- Use date/time and city/region pickers with pinned and floating zones. Check
+  independent due/alert times, all-day boundaries, zone changes across dates,
+  daylight-saving gaps/folds, and an untouched existing later-fold instant.
+- Apply and cancel Custom repeat; inspect preview, intervals, weekday selections,
+  ordinal rules and date/count endings. Review stale local text/timing/repeat drafts
+  against external changes and recover a replaced series segment.
+- Exit Agenda search with Android Back both while the keyboard is visible and
+  after it closes. Clear query separately. Exercise Back and close controls in
+  nested sheets; confirm cancellation keeps the previous applied rule.
+- Find all Collections destinations, each repeat family and its earlier unfinished
+  occurrences. Search/filter Completed and Trash, inspect newest history ordering,
+  and restore/reopen without replaying elapsed alerts.
+- Complete from the trailing row action and optional swipe, then Undo. Change the
+  same item before Undo and confirm the newer change is preserved. Confirm Trash
+  requires acknowledgement and native Stop leaves the reminder unfinished.
+- Open Custom Postpone repeatedly and confirm it starts in the future. Reject a
+  past target without mutation; accept a future target and retain other members'
+  actions and targets.
+- Cancel file selection; preview a valid backup; distinguish Reading from Restoring.
+  During a lost import reply, verify copy/file controls and Back are guarded and
+  Retry submits the same operation. Check acknowledged blocked-alert warnings.
+  Refresh/retry diagnostics and dismiss/complete the system share sheet; feedback
+  must describe only the observed share-sheet outcome.
+- Check light/dark appearance, 200% font size, TalkBack and reduced motion. Confirm
+  at least 48 dp targets, wrapping app bars, meaningful state labels, sheet focus,
+  disabled controls during uncertain saves, readable feedback and reachable bottom
+  actions with the keyboard open.
+
+These UI observations supplement [device-acceptance.md](device-acceptance.md) and
+the native G1–G3 gates. They do not replace the pending audibility, pre-unlock,
+recovery, five-minute cutoff or manufacturer coverage evidence.

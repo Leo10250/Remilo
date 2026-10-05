@@ -209,3 +209,42 @@ labels still scale. This beta API remains encapsulated in the Icon component.
 Visual review can opt into synthetic web fixtures through REMILO_UI_PREVIEW. The
 Metro replacement is restricted to platform=web; Android always uses the real
 native bridge. This is a local review surface, not a web product or alarm simulator.
+
+## ADR 005: Collection queries and civil-time editing
+
+Collections are navigation and query views over existing native state. The repeat
+family query groups retained segments by `seriesId`, chooses a current representative
+and derives Active/Paused/Ended state, upcoming slots and unfinished count. A family
+occurrence filter includes its retained earlier segments. Neither aggregation creates
+another mutation owner or changes occurrence identity. Completed/Trash sort by the
+latest relevant native history event before pagination; `collectionAtMs` carries
+that timestamp, with a deterministic event-time fallback for imported records
+without the relevant history.
+Occurrence projections also expose a derived editable rule for the shared complete
+repeat summary. This field is presentation data, not another stored definition.
+
+The timezone catalog and civil-time conversion live in ordinary Kotlin classes using
+`java.time`, reached through the serialized bridge. The catalog returns supported
+zone IDs, human-readable city/region labels and offsets at the requested instant.
+New selectable IDs are canonical ICU system zones also supported by Java time;
+conversion continues accepting valid stored aliases without rewriting them.
+React Native presents city search and gives Android's picker the explicit zone.
+Picker civil fields and authored zone changes resolve through the same native gap
+and earlier-fold policy used by recurrence. JavaScript does not own scheduling.
+Untouched instants remain unchanged, including an existing later-fold instant.
+
+Stale editor recovery compares the original editable snapshot, local draft and latest
+native content. Independent text fields can incorporate unrelated changes; timing
+and recurrence are reviewed as complete groups to avoid combining incompatible
+definitions. Operational state and native revisions are not editable draft fields.
+A replaced segment is recovered through its family representative or saved as a
+separate definition, rather than overwriting an archived segment.
+
+UI Undo captures a completed occurrence revision and verifies it against native state
+before issuing Reopen. Native expected-revision validation remains the final guard.
+An uncertain backup import retains the exact payload, copy choice and operation ID;
+the screen blocks changing or abandoning that job until native acknowledgement or
+explicit rejection. A confirmed restore with blocked alerts is an acknowledged content
+import with delivery warnings, not an uncertain import. This in-memory UI guard does
+not claim recovery of its screen draft across Android process death; native receipts
+and committed content remain the durable authority.

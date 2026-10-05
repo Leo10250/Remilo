@@ -60,10 +60,13 @@ physical gates stay pending and no broader beta release is declared verified.
   alarm. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
   Collapse groups without merging occurrence identities. Stopped/missed/timed-out
   reminders stay visible until resolved.
-- Search and list/overdue filters are secondary controls. Completed records are
-  collapsed and loaded on demand, with an Include skipped option in their view.
-  Trash and paused repeats are secondary destinations. Details retain Activity,
-  duplicate, delete/restore, Reopen and individual/series actions.
+- Search and list/overdue filters are secondary controls. The Agenda title opens
+  Collections: Agenda, Repeats, Completed and Trash, with Settings separate.
+  Repeats shows one entry per family and Active, Paused and Ended filters. Family
+  details retain unfinished occurrences from earlier segments. Completed and Trash
+  load on demand, search titles/notes and filter by list. Their newest relevant
+  completion/skip/deletion comes first; Completed has an Include skipped option.
+  Details retain Activity, duplicate, delete/restore, Reopen and series actions.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
   Series conflicts are preserved as a whole family unless explicitly restored as
@@ -97,13 +100,41 @@ calendar import or visual cloning is in the initial product.
   status accents with text and icons; permissions never imply guaranteed audibility.
 - Familiar icon app bars and one Add floating button. Minimum 48 dp interaction
   targets; content grows/scrolls for large text. No bottom navigation is required.
+- Reminder rows lead with title and event time, supporting due/delivery text and
+  a labeled completion action at the trailing edge. Completion is separate from
+  contextual deletion. Optional swipe completion has a visible equivalent. Undo
+  reopens only the captured completed revision; a later change is not reversed.
+  Moving to Trash requires confirmation and remains recoverable.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only
   on explicit Save. Unsaved drafts require a discard confirmation. Pending saves
   remain retryable, rather than issuing a different uncertain operation.
+- Saving a new reminder returns to Agenda with contextual acknowledgement and an
+  optional View action. Saved-but-blocked and pending scheduling remain visible;
+  acknowledgement never proves audibility. One-off Edit opens the editor directly;
+  repeating Edit asks for scope. A stale editor retains the local draft for review
+  against current native content, including conflicts in timing and recurrence.
+  If its series segment was replaced, offer current-family reload or a separate copy.
+- Time zones are selected by city/region with the offset at the edited date; raw
+  IANA identifiers remain supporting information. Pinned fields display in that
+  zone. Changing the zone preserves authored wall times and resolves through the
+  native gap/fold policy. Merely opening or saving untouched fields preserves their
+  original instants. Linked event/due/alert offsets and independent times stay explicit.
+- Reminder details give title, schedule, notes and status priority, with compact
+  reachable actions. Custom Postpone starts with a future target and rejects past
+  targets without changing state. Stop continues to silence delivery without Done.
+- Android Back exits transient Agenda search; clearing its query is a separate
+  action. Nested sheets handle Back within their draft. Loading, retry, action
+  progress and failures are visible. Reduced motion, large text and screen-reader
+  focus are supported; timed feedback respects accessibility timeout preferences.
 - Settings are categorized Alarms, Permissions, Postpone shortcuts, Appearance,
   Data and Help. Valid preferences save automatically, serially and with rollback
   and Retry on failure. Permissions are directly reachable and refresh on return.
+- Restore distinguishes reading a file from importing its preview. An unconfirmed
+  import freezes its backup, copy selection and operation ID until the same restore
+  is acknowledged or rejected. It cannot be abandoned through ordinary navigation
+  or replaced with another selection during that uncertainty. Diagnostics provide
+  visible refresh/retry/share feedback without claiming a share sheet sent a report.
 - Native controls never start React Native. Stop/Snooze automatically dismiss a
   confirmed ended session, including timeout/external termination. An initial empty
   loading state cannot close the screen; remaining group members retain controls.
@@ -111,5 +142,5 @@ calendar import or visual cloning is in the initial product.
 - Standard notifications retain Stop/Snooze on every single delivery. Grouped
   notifications open native controls and offer session-specific Stop all. Android
   owns popup layout and expansion. Channel identities and audio deadlines remain.
-- The owned bell/clock mark supplies adaptive, monochrome, legacy, notification
+- The owned geometric R and notification cue supply adaptive, monochrome, legacy, notification
   and splash variants. Application ID and signing identity remain unchanged.
