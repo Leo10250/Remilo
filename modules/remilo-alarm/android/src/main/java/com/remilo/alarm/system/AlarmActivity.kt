@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.remilo.alarm.core.SessionRefreshGuard
 import com.remilo.alarm.data.AlertRecord
 import com.remilo.alarm.engine.AlarmEngine
@@ -77,12 +78,21 @@ class AlarmActivity : ComponentActivity() {
         else lightColorScheme(primary = Color(0xFF245CD6), onPrimary = Color.White,
           background = Color(0xFFF7F8FA), surface = Color.White, onSurface = Color(0xFF18212F),
           onSurfaceVariant = Color(0xFF596475), error = Color(0xFFB3261E))
-      MaterialTheme(colorScheme = scheme) {
+      val baseType = Typography()
+      val type = Typography(
+        headlineLarge = baseType.headlineLarge.copy(fontSize = 28.sp, lineHeight = 36.sp),
+        headlineMedium = baseType.headlineMedium.copy(fontSize = 28.sp, lineHeight = 36.sp),
+        titleLarge = baseType.titleLarge.copy(fontSize = 22.sp, lineHeight = 28.sp),
+        bodyLarge = baseType.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
+        bodyMedium = baseType.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+        labelSmall = baseType.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp)
+      )
+      MaterialTheme(colorScheme = scheme, typography = type) {
         Surface(color = scheme.background, modifier = Modifier.fillMaxSize()) {
           BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
           val viewportHeight = maxHeight
-          Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp)
-            .heightIn(min = (viewportHeight - 48.dp).coerceAtLeast(0.dp)), verticalArrangement = Arrangement.SpaceBetween) {
+          Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)
+            .heightIn(min = (viewportHeight - 32.dp).coerceAtLeast(0.dp)), verticalArrangement = Arrangement.SpaceBetween) {
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Text("Remilo", style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
             if (current == null) { CircularProgressIndicator(); Text("Loading alarm…") }

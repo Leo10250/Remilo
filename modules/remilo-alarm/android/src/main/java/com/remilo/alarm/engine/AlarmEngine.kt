@@ -7,6 +7,7 @@ import android.os.SystemClock
 import android.os.UserManager
 import android.util.Log
 import com.remilo.alarm.core.AlarmPolicy
+import com.remilo.alarm.core.CivilTime
 import com.remilo.alarm.core.Recurrence
 import com.remilo.alarm.data.*
 import com.remilo.alarm.system.*
@@ -96,6 +97,14 @@ class AlarmEngine internal constructor(private val context: Context,
     val start = day.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val end = day.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val search = (filter["search"] as? String)?.trim().orEmpty()
+    val familySegments = (filter["seriesId"] as? String)?.takeIf { it.isNotEmpty() }?.let { family ->
+      db.records().series().filter { it.seriesId == family }.map { it.id }.toSet()
+    }
+    fun matches(record: ReminderRecord) =
+      (search.isEmpty() || record.title.contains(search, true) || record.notes.contains(search, true)) &&
+        ((filter["segmentId"] as? String).isNullOrEmpty() || record.segmentId == filter["segmentId"]) &&
+        (familySegments == null || record.segmentId in familySegments) &&
+        ((filter["listName"] as? String).isNullOrEmpty() || record.listName == filter["listName"])
     val queryNow = now()
     val zone = ZoneId.systemDefault()
     val records = db.records().all().filter { record ->
@@ -113,21 +122,25 @@ class AlarmEngine internal constructor(private val context: Context,
           alert?.targetMs?.let { it >= end } == true)
         else -> !record.deleted && !record.completed && !record.skipped
       }
-      selected && (search.isEmpty() || record.title.contains(search, true) || record.notes.contains(search, true)) &&
-        ((filter["segmentId"] as? String).isNullOrEmpty() || record.segmentId == filter["segmentId"]) &&
-        ((filter["listName"] as? String).isNullOrEmpty() || record.listName == filter["listName"])
+      selected && matches(record)
     }
+    val historical = filter["view"] in setOf("completed", "history", "deleted")
+    val collectionTimes = if (historical) {
+      val activity = db.records().collectionHistory().groupBy { it.occurrenceId to it.kind }
+        .mapValues { (_, entries) -> entries.maxOf { it.occurredAtMs } }
+      records.associate { it.id to (activity[it.id to collectionKind(it)] ?: it.eventStartMs) }
+    } else emptyMap()
     val ordered = if (filter["view"] in setOf("agenda", "overdue")) records.sortedWith(
       compareBy<ReminderRecord> { com.remilo.alarm.core.Agenda.rank(com.remilo.alarm.core.Agenda.group(
         it.eventStartMs, it.dueAtMs, it.completed, it.skipped, queryNow, zone)) }.thenBy { it.eventStartMs }.thenBy { it.id })
+      else if (historical) records.sortedWith(
+        compareByDescending<ReminderRecord> { collectionTimes.getValue(it.id) }.thenByDescending { it.eventStartMs }.thenBy { it.id })
       else records.sortedWith(compareBy<ReminderRecord> { it.eventStartMs }.thenBy { it.id })
     val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
     val page = ordered.drop(offset).take(50)
     val groups = ordered.groupingBy { com.remilo.alarm.core.Agenda.group(it.eventStartMs, it.dueAtMs,
       it.completed, it.skipped, queryNow, zone) }.eachCount()
-    val completedCount = db.records().all().count { !it.deleted && it.completed &&
-      (search.isEmpty() || it.title.contains(search, true) || it.notes.contains(search, true)) &&
-      ((filter["listName"] as? String).isNullOrEmpty() || it.listName == filter["listName"]) }
+    val completedCount = db.records().all().count { !it.deleted && it.completed && matches(it) }
     return mapOf("items" to page.map { view(it) },
       "nextCursor" to if (offset + page.size < ordered.size) (offset + page.size).toString() else null,
       "total" to ordered.size, "groups" to groups, "completedCount" to completedCount)
@@ -140,12 +153,22 @@ class AlarmEngine internal constructor(private val context: Context,
       mapOf("kind" to history.kind, "atMs" to history.occurredAtMs, "targetMs" to history.targetMs)
     }) }
   }
+  private fun collectionKind(record: ReminderRecord): String? =
+    when { record.deleted -> "Delete"; record.completed -> "Done"; record.skipped -> "Skip"; else -> null }
+  private fun collectionTime(record: ReminderRecord): Long {
+    val kind = collectionKind(record)
+    return kind?.let { content().records().history(record.id).filter { it.kind == kind }.maxOfOrNull { it.occurredAtMs } }
+      ?: record.eventStartMs
+  }
   private fun view(record: ReminderRecord): Map<String, Any?> {
     val alert = alerts.find(record.id)
     val adjustment = if (alert?.state == "Scheduled") content().records().history(record.id)
       .lastOrNull { it.targetMs == alert.targetMs && it.kind in setOf("Snooze", "Postpone") }?.kind else null
     val segment = record.segmentId?.let { content().records().series(it) }
-    val repeat = segment?.let { com.remilo.alarm.core.Agenda.summary(RuleCodec.decode(it.rule)) }
+    val rule = segment?.let { RuleCodec.decode(it.rule) }
+    val repeat = rule?.let { com.remilo.alarm.core.Agenda.summary(it) }
+    val repeatRule = rule?.let { RuleCodec.map(it).filterKeys { key -> key in setOf("frequency", "interval", "weekdays", "day", "ordinal", "weekday", "month", "count", "until") } +
+      mapOf("zoneMode" to if (it.zoneId == null) "floating" else "pinned") }
     return mapOf("id" to record.id, "title" to record.title, "eventStartMs" to record.eventStartMs,
       "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs, "completed" to record.completed,
       "revision" to record.revision, "nextAlertMs" to alert?.targetMs,
@@ -156,10 +179,11 @@ class AlarmEngine internal constructor(private val context: Context,
       "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
       "vibration" to record.vibration, "overdue" to (!record.completed && !record.deleted && !record.skipped && record.dueAtMs < now()),
       "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
-      "seriesState" to segment?.state, "repeatSummary" to repeat,
+      "seriesState" to segment?.state, "repeatSummary" to repeat, "repeatRule" to repeatRule,
       "alertAdjustment" to when (adjustment) { "Snooze" -> "Snoozed"; "Postpone" -> "Postponed"; else -> null },
       "agendaGroup" to com.remilo.alarm.core.Agenda.group(record.eventStartMs, record.dueAtMs, record.completed,
-        record.skipped, now(), ZoneId.systemDefault()))
+        record.skipped, now(), ZoneId.systemDefault())) +
+      if (record.completed || record.deleted || record.skipped) mapOf("collectionAtMs" to collectionTime(record)) else emptyMap()
   }
   private fun epoch(value: Any?, field: String): Long {
     val number = (value as? Number)?.toDouble() ?: throw InputError(field, "Choose a valid date and time.")
@@ -294,9 +318,21 @@ class AlarmEngine internal constructor(private val context: Context,
       "tomorrowEvening" to settings.tomorrowEvening, "sound" to settings.sound,
       "vibration" to settings.vibration, "theme" to settings.theme)
   }
-  fun lists(): List<String> = content().records().all().filter { !it.deleted }.map { it.listName }
+  fun lists(): List<String> = content().records().all().map { it.listName }
     .filter { it.isNotEmpty() }.distinct().sorted()
   fun querySeries(): List<Map<String, Any?>> = series.list()
+  fun queryRepeatFamilies(): List<Map<String, Any?>> {
+    val db = content()
+    series.materialize(); replayHistory(db)
+    return series.families()
+  }
+  fun timeZones(atMs: Double): List<Map<String, Any>> = TimeZoneCatalog.list(epoch(atMs, "atMs"))
+  fun convertTime(input: Map<String, Any?>): Map<String, Any> {
+    val id = input["zoneId"] as? String ?: throw IllegalArgumentException("Choose a valid time zone.")
+    require(input.containsKey("instantMs") != input.containsKey("local")) { "Choose one time to convert." }
+    return if (input.containsKey("instantMs")) CivilTime.fromInstant(id, epoch(input["instantMs"], "instantMs"))
+      else CivilTime.fromLocal(id, input["local"] as? String ?: throw IllegalArgumentException("Choose a valid local time."))
+  }
   fun getSeries(id: String): Map<String, Any?>? = series.get(id)
   fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> = series.editDraft(id, nominal)
   private fun updateSettings(operation: String, command: Map<String, Any?>): Map<String, Any?> {

@@ -1,4 +1,15 @@
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { Tone } from './actions';
+import { repeatLabel } from './repeat';
+export function repeatSummary(item: Pick<Occurrence, 'repeatRule' | 'repeatSummary'>) {
+  return item.repeatRule ? repeatLabel(item.repeatRule) : item.repeatSummary;
+}
+export function stateTone(item: Pick<Occurrence, 'deliveryState' | 'completed' | 'skipped'>): Tone {
+  if (item.completed) return 'success';
+  if (['Blocked', 'Failed'].includes(item.deliveryState)) return 'danger';
+  if (['Missed', 'TimedOut', 'Interrupted'].includes(item.deliveryState)) return 'warning';
+  return item.deliveryState === 'Alerting' ? 'accent' : 'muted';
+}
 export function nextAlertTime(item: Occurrence) {
   return !item.completed && !item.deleted && !item.skipped && ['Scheduled', 'Pending', 'Changing', 'Blocked'].includes(item.deliveryState)
     ? item.nextAlertMs : null;
