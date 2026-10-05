@@ -338,7 +338,9 @@ class AlarmEngineTest {
     engine = AlarmEngine(context, os, { now }, { 10_000L })
     now += 60_000; fire(id)
     val (_, notification) = deliveryNotification()
-    assertEquals("Reminder", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+    assertEquals("Reminder", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+    assertEquals("Remilo · alarm ringing", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+    assertFalse(notification.extras.toString().contains("Private title"))
     assertEquals(listOf("Stop", "Snooze 10 min"), notification.actions.map { it.title.toString() })
     val done = CompletableFuture<List<Pair<AlertRecord, String>>>()
     val session = request {
@@ -347,6 +349,12 @@ class AlarmEngineTest {
     } as String
     engine.sessionMembers(session) { done.complete(it) }
     assertEquals("Reminder", done.get(20, TimeUnit.SECONDS).single().second)
+    val snapshot = CompletableFuture<AlarmEngine.SessionSnapshot>()
+    engine.sessionSnapshot(session, { snapshot.complete(it) }, { snapshot.completeExceptionally(AssertionError(it)) })
+    val controls = snapshot.get(20, TimeUnit.SECONDS)
+    assertEquals("system", controls.theme)
+    assertEquals("Reminder", controls.members.single().second)
+    assertEquals("Starting", controls.state)
     action(id, "Snooze", 1, "locked-snooze")
     assertEquals(2L, os.registered.last().generation)
   }
@@ -753,6 +761,73 @@ class AlarmEngineTest {
     assertNotEquals(firstIntent.getStringExtra("sessionId"), nextIntent.getStringExtra("sessionId"))
     assertEquals("Alerting", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
     assertEquals("Scheduled", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
+  }
+  @Test fun agendaOrdersBeforePaginationAndCountsAllMatchingRecords() {
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        (0 until 55).reversed().forEach { n ->
+          db.records().insert(ReminderRecord("future-%02d".format(n), "Future $n", now + 86_400_000,
+            now + 88_200_000, now + 86_400_000, now, listName = "Work", mode = "None"))
+        }
+        db.records().insert(ReminderRecord("overdue", "Overdue", now + 172_800_000, now + 174_600_000, now - 1, now, listName = "Work"))
+        db.records().insert(ReminderRecord("earlier", "Earlier", now - 86_400_000, now - 84_600_000, now + 3_600_000, now, listName = "Work"))
+        db.records().insert(ReminderRecord("complete", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "Work"))
+        db.records().insert(ReminderRecord("skip", "Skipped", now, now + 1_800_000, now, now, skipped = true, listName = "Work"))
+        db.records().insert(ReminderRecord("other", "Unrelated", now, now + 1_800_000, now, now, listName = "Personal"))
+      } finally { db.close() }
+    }
+    val first = request { engine.query(mapOf("view" to "agenda", "listName" to "Work"), null) } as Map<*, *>
+    val firstRows = first["items"] as List<*>
+    assertEquals(57, first["total"]); assertEquals(1, first["completedCount"])
+    assertEquals(57, (first["groups"] as Map<*, *>).values.sumOf { it as Int })
+    assertEquals("overdue", (firstRows[0] as Map<*, *>)["id"])
+    assertEquals("earlier", (firstRows[1] as Map<*, *>)["id"])
+    assertEquals("future-00", (firstRows[2] as Map<*, *>)["id"])
+    val next = request { engine.query(mapOf("view" to "agenda", "listName" to "Work"), first["nextCursor"] as String) } as Map<*, *>
+    val combined = firstRows + (next["items"] as List<*>)
+    assertEquals(57, combined.map { (it as Map<*, *>)["id"] }.distinct().size)
+    assertNull(next["nextCursor"])
+    assertEquals(1, (request { engine.query(mapOf("view" to "completed"), null) } as Map<*, *>)["total"])
+    assertEquals(2, (request { engine.query(mapOf("view" to "completed", "includeSkipped" to true), null) } as Map<*, *>)["total"])
+  }
+  @Test fun postponementDoesNotRemoveAnUnfinishedOccurrenceFromOverdue() {
+    val reminderId = id(create())
+    now += 120_000
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "postpone-overdue", "occurrenceId" to reminderId,
+      "expectedGeneration" to 1L, "alarmAtMs" to now + 86_400_000)) }
+    val page = request { engine.query(mapOf("view" to "overdue"), null) } as Map<*, *>
+    val row = (page["items"] as List<*>).single() as Map<*, *>
+    assertEquals(reminderId, row["id"]); assertEquals("overdue", row["agendaGroup"])
+    assertEquals(now + 86_400_000, row["nextAlertMs"])
+    assertEquals("Postponed", row["alertAdjustment"])
+  }
+  @Test fun sessionSnapshotsConfirmPartialMembershipAndFinalTermination() {
+    val first = id(create("first")); val second = id(create("second"))
+    now += 60_000; fire(first); fire(second)
+    val sessionId = (request { engine.capabilities() } as Map<*, *>)["activeSessionId"] as String
+    fun snapshot(): AlarmEngine.SessionSnapshot {
+      val future = CompletableFuture<AlarmEngine.SessionSnapshot>()
+      engine.sessionSnapshot(sessionId, { future.complete(it) }, { future.completeExceptionally(AssertionError(it)) })
+      return future.get(20, TimeUnit.SECONDS)
+    }
+    assertEquals(2, snapshot().members.size)
+    action(first, "Stop", 1L, "stop-first")
+    assertEquals(1, snapshot().members.size); assertEquals("Starting", snapshot().state)
+    action(second, "Snooze", 1L, "snooze-final")
+    assertEquals("Stopped", snapshot().state); assertTrue(snapshot().members.isEmpty())
+  }
+  @Test fun groupedNotificationStopAllCannotStopALaterSession() {
+    val first = id(create("first")); val second = id(create("second"))
+    now += 60_000; fire(first); deliveryNotification(); fire(second)
+    val (intent, notification) = deliveryNotification()
+    val oldSession = intent.getStringExtra("sessionId")!!
+    assertEquals(listOf("Stop all"), notification.actions.map { it.title.toString() })
+    request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "end-old", "expectedSessionId" to oldSession)) }
+    val third = id(create("third")); now += 60_000; fire(third)
+    val done = CompletableFuture<Unit>()
+    engine.receive(AlarmScheduler.stopAllIntent(context, oldSession)) { done.complete(Unit) }; done.get(20, TimeUnit.SECONDS)
+    assertEquals("Alerting", (request { engine.occurrence(third) } as Map<*, *>)["deliveryState"])
   }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false

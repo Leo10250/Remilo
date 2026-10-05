@@ -98,4 +98,20 @@ and protected replenishment. See [offline build evidence](docs/evidence/2026-10-
 for automated results and the APK identity. Calendar, cloud and iOS remain later
 gated milestones; no integration scaffolding is included.
 
+The redesigned **0.4.0 / versionCode 4** build uses one event-date agenda, categorized
+automatic settings, inline permissions and native alarm controls that close only
+after confirmed session termination. [Redesign evidence](docs/evidence/2026-10-04-redesign.md)
+and [the owner checklist](docs/device-acceptance.md) distinguish host checks from
+pending physical acceptance. Install as an update with the existing signing key.
+
+For local visual review only, set `REMILO_UI_PREVIEW=1` and `EXPO_NO_WEB_SETUP=1`,
+then run `npx expo start --web --offline`. This uses synthetic reminders without
+touching phone data. Android always uses the native module. Default configuration
+remains Android-only; this preview does not verify native pickers, audio or OS text
+scaling. Clear both environment variables before ordinary development/builds.
+
+The owned vector master is `assets/brand/remilo.svg`. `node scripts/brand.mjs`
+exports all Android/Expo variants using Sharp (0.34.x); alternatively supply the
+installed Sharp package path as its argument. This does not invoke Prebuild.
+
 The Expo scaffold attribution is retained in `docs/licenses/expo-template-MIT.txt`.

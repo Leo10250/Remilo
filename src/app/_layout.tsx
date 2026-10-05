@@ -16,7 +16,9 @@ export default function RootLayout() {
       if (state === 'active') { void RemiloAlarm?.reconcile(); refresh(); }
     });
     const native = RemiloAlarm?.addListener('onChange', refresh);
-    return () => { app.remove(); native?.remove(); };
+    // Presentation refresh only: due status and date groups change while a screen stays open.
+    const dateRefresh = setInterval(() => { if (AppState.currentState === 'active') refresh(); }, 60_000);
+    return () => { app.remove(); native?.remove(); clearInterval(dateRefresh); };
   }, []);
   return (
     <SafeAreaProvider>
@@ -28,6 +30,6 @@ export default function RootLayout() {
 }
 function Navigation() {
   const colors = useTheme();
-  return <><StatusBar style={colors.background === '#111C18' ? 'light' : 'dark'} />
+  return <><StatusBar style={colors.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} /></>;
 }

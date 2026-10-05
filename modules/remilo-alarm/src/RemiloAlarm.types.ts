@@ -14,8 +14,11 @@ export type Occurrence = Required<ReminderDraft> & {
   id: string; completed: boolean; deleted: boolean; revision: number; nextAlertMs: number | null;
   generation: number; deliveryState: string; overdue: boolean; history?: HistoryEntry[];
   segmentId: string | null; nominalSlot: string | null; exception: boolean; skipped: boolean;
+  seriesState: string | null; repeatSummary: string | null; agendaGroup: string;
+  alertAdjustment?: 'Snoozed' | 'Postponed' | null;
 };
-export type ReminderFilter = { view: 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listName?: string; segmentId?: string };
+export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listName?: string; segmentId?: string; includeSkipped?: boolean };
+export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
 export type CreateCommand = ReminderDraft & { kind: 'Create'; operationId: string; alarmAtMs?: number };
 export type DeliveryCommand = {
   kind: 'Stop' | 'Snooze' | 'Postpone'; operationId: string; occurrenceId: string; expectedGeneration: number; alarmAtMs?: number;

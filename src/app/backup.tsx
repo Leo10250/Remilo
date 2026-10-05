@@ -1,10 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
-import { Directory, File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { File } from 'expo-file-system';
 import { useState } from 'react';
 import type { ImportPreview } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { Button, Card, Copy, Heading, Page, Toggle } from '../ui/components';
+import { Button, Copy, Group, Page, SettingRow, Status, Toggle } from '../ui/components';
 import { engine } from '../ui/native';
 
 export default function Backup() {
@@ -16,21 +15,6 @@ export default function Backup() {
   const [operationId, setOperationId] = useState('');
   const [previewLimit, setPreviewLimit] = useState(25);
   const [message, setMessage] = useState('');
-  const exportFile = async () => {
-    setBusy(true); setMessage('');
-    try {
-      const data = await engine().exportBackup();
-      const directory = new Directory(Paths.cache, 'remilo-exports');
-      directory.create({ idempotent: true, intermediates: true });
-      const file = new File(directory, `remilo-${Date.now()}.json`);
-      file.create(); file.write(data);
-      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Save or share Remilo backup' });
-      setMessage('Backup prepared. Save a copy using the Android share menu.');
-    } catch (error) { setMessage(error instanceof Error && error.message.includes('BACKUP_TOO_LARGE')
-      ? 'This backup exceeds the current 10 MB or 10,000-reminder limit. No incomplete backup was exported.'
-      : 'Could not export the backup. Try again.'); }
-    finally { setBusy(false); }
-  };
   const choose = async () => {
     setBusy(true); setMessage(''); setPreview(null); setCopies([]);
     try {
@@ -54,22 +38,19 @@ export default function Backup() {
     } catch { setMessage('Import did not finish. Retry from this preview; existing reminders are preserved.'); }
     finally { setBusy(false); }
   };
-  return <Page title="Backup & restore" subtitle="Keep a portable copy of your reminders and history.">
-    <Card><Heading>Export</Heading><Copy muted>Backups include reminder text and notes. Choose where to save or share your file.</Copy>
-      <Copy muted>Accounts, device identity, running sessions and Android alarm handles are excluded.</Copy>
-      <Button label="Export backup" disabled={busy} onPress={() => void exportFile()} /></Card>
-    <Card><Heading>Restore</Heading><Copy muted>Preview before importing. Existing reminders stay as they are. Elapsed alerts remain silent.</Copy>
-      <Button label="Choose backup file" disabled={busy} onPress={() => void choose()} /></Card>
-    {preview && <Card><Heading>Restore preview · {preview.count} reminders or series</Heading>
+  return <Page title="Restore backup">
+    <Copy muted size={14}>Preview a backup before restoring. Existing reminders are preserved; elapsed alarms stay silent.</Copy>
+    <Group><SettingRow label={busy ? 'Reading backup…' : 'Choose backup file'} icon="download" disabled={busy} onPress={() => void choose()} /></Group>
+    {preview && <><Copy size={19}>{preview.count} reminders or series</Copy>
       <Copy muted>New reminders will be added. Conflicts are skipped unless you select them below as new copies.</Copy>
-      <Copy muted>A repeating series is restored as a whole, including saved exceptions and history. Conflicting series keep their existing local data unless you choose a separate copy.</Copy>
+      <Copy muted size={13}>A repeating series includes its exceptions and activity.</Copy><Group>
       {preview.items.slice(0, previewLimit).map((item) => item.conflict ? <Toggle key={item.id} label={`Restore a copy of “${item.title}”`}
         value={copies.includes(item.id)} onChange={(value) => setCopies((current) => value ? [...current, item.id] : current.filter((id) => id !== item.id))} />
-        : <Copy key={item.id}>Add: {item.title}{item.futureAlert ? ' · future alert' : ' · no future alert'}</Copy>)}
+        : <SettingRow key={item.id} label={item.title} value={item.futureAlert ? 'Future alarm' : 'No future alarm'} />)}</Group>
       {previewLimit < preview.items.length && <Button label="Show 25 more preview entries" variant="secondary" onPress={() => setPreviewLimit(previewLimit + 25)} />}
       <Button label="Restore selected data" disabled={busy} onPress={() => void restore()} />
       <Button label="Cancel preview" variant="secondary" disabled={busy} onPress={() => { setPreview(null); setJson(''); }} />
-    </Card>}
-    {!!message && <Copy>{message}</Copy>}
+    </>}
+    {!!message && <Status label={message} />}
   </Page>;
 }

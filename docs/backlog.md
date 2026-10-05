@@ -26,6 +26,11 @@ block verified release, rather than development. Known failures still require fi
 | P3-02 | Exceptions, series edits and protected replenishment | P3-01 | implemented/unverified | [protected replenishment, pause/split/restore and interruption tests](evidence/2026-10-04-offline.md) |
 | P3-03 | Original accessible polish, management and history | P3-01/02 | implemented/unverified | [shared checks; device usability/accessibility deferred](evidence/2026-10-04-offline.md) |
 | G3 | Complete Android reminder product | P3-01/02/03 | pending | physical recurrence and tested OS matrix |
+| UX-01 | Tokens/icons, unified agenda queries, search/filter, Completed and Trash | P3-01/02 | implemented/unverified | [host query tests and narrow fixture review; physical usability pending](evidence/2026-10-04-redesign.md) |
+| UX-02 | One-off/repeat editor, details, scope selection and Activity | UX-01 | implemented/unverified | [shared checks and fixture review; native picker/Back/keyboard acceptance pending](evidence/2026-10-04-redesign.md) |
+| UX-03 | Categorized automatic preferences, inline permissions, Test alarm | UX-01 | implemented/unverified | [sequencing/retry/contrast tests; phone persistence and permission-return checks pending](evidence/2026-10-04-redesign.md) |
+| UX-04 | Native controls/snapshot dismissal, notifications, launcher/splash identity | UX-01 | implemented/unverified | [session/Direct Boot/notification tests; signed physical actions and icon masks pending](evidence/2026-10-04-redesign.md) |
+| UX-05 | Signed 0.4.0, consolidated checklist and release evidence | UX-01/02/03/04 | implemented/unverified | [shared/native verification and signing; owner U/A–E observations pending](evidence/2026-10-04-redesign.md) |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -63,6 +68,16 @@ block verified release, rather than development. Known failures still require fi
 - Later task groups are split into bounded work units when activated. Each new row
   must include purpose/scope, dependencies, behavior, required checks and evidence;
   place its status only in this backlog.
+- UX-01: verify grouping before pagination, deterministic ties, full counts and
+  overdue/postponement independence. Inspect 360×800 populated layout and complete U1–U4.
+- UX-02: preserve timing/rules and Save-only mutations; no lost drafts or raw engine
+  wording. Verify native date/time selection, Back/sheets, validation and all scopes (U5/U6).
+- UX-03: test coalescing, refreshed revisions, rollback, lost acknowledgement/read,
+  stale revisions and subscription teardown. Phone checks U7/U8 remain distinct.
+- UX-04: test initial/loading and refresh/session races, final versus partial actions,
+  old Stop all and generic pre-unlock snapshots. U9/U10/U12 recheck real presentation.
+- UX-05: pass shared/native/lint/signed assembly, record source/hash/signer, and keep
+  unobserved physical/200%-font/TalkBack scenarios pending in the single owner checklist.
 
 ## Host and device prerequisites
 

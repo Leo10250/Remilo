@@ -1,64 +1,132 @@
 package com.remilo.alarm.system
 
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.remilo.alarm.core.SessionRefreshGuard
 import com.remilo.alarm.data.AlertRecord
 import com.remilo.alarm.engine.AlarmEngine
+import java.text.DateFormat
+import java.util.Date
 import java.util.UUID
 
-/** Standalone controls; this screen never initializes Expo/React Native. */
+/** Native-only controls. Empty loading state must never dismiss a live session. */
 class AlarmActivity : ComponentActivity() {
-  private val members = mutableStateOf<List<Pair<AlertRecord, String>>>(emptyList())
+  private val snapshot = mutableStateOf<AlarmEngine.SessionSnapshot?>(null)
+  private val error = mutableStateOf<String?>(null)
+  private val busy = mutableStateOf(false)
+  private val guard = SessionRefreshGuard()
   private var observation: AutoCloseable? = null
-  override fun onNewIntent(intent: Intent) {
-    super.onNewIntent(intent)
-    setIntent(intent)
-    val id = intent.getStringExtra("sessionId") ?: return
-    AlarmEngine.get(this).sessionMembers(id) { rows -> runOnUiThread { members.value = rows } }
+  private lateinit var engine: AlarmEngine
+  private fun select(intent: Intent) {
+    val id = intent.getStringExtra("sessionId") ?: run { finish(); return }
+    guard.select(id); snapshot.value = null; error.value = null; busy.value = false
+    refresh()
   }
+  private fun refresh() {
+    val ticket = guard.request()
+    engine.sessionSnapshot(ticket.sessionId, { current -> runOnUiThread {
+      if (!isDestroyed && guard.accepts(ticket) && current.id == ticket.sessionId) {
+        snapshot.value = current
+        if (SessionRefreshGuard.ended(current.state)) finish()
+      }
+    } }, { runOnUiThread { if (!isDestroyed && guard.accepts(ticket)) error.value = "Could not load alarm controls. Retry." } })
+  }
+  private fun act(kind: String, record: AlertRecord? = null) {
+    val current = snapshot.value ?: return
+    if (busy.value) return
+    busy.value = true; error.value = null
+    val sessionId = current.id
+    val command = mapOf("kind" to kind, "operationId" to UUID.randomUUID().toString(),
+      "expectedSessionId" to sessionId, "occurrenceId" to record?.occurrenceId, "expectedGeneration" to record?.generation)
+    engine.request({ engine.apply(command) }, { result -> runOnUiThread {
+      if (!isDestroyed && snapshot.value?.id == sessionId) {
+        busy.value = false
+        val status = result as? Map<*, *>
+        if (status?.get("status") == "Rejected") error.value = status["errorMessage"] as? String ?: "Could not apply this action. Retry."
+        refresh() // Only a confirmed terminated snapshot closes the activity.
+      }
+    } }, { runOnUiThread { if (!isDestroyed && snapshot.value?.id == sessionId) {
+      busy.value = false; error.value = "Could not apply this action. Try again."; refresh()
+    } } })
+  }
+  override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); select(intent) }
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setShowWhenLocked(true); setTurnScreenOn(true)
-    val engine = AlarmEngine.get(this)
-    fun refresh() {
-      val id = intent.getStringExtra("sessionId") ?: return
-      engine.sessionMembers(id) { rows -> runOnUiThread { members.value = rows } }
-    }
-    observation = engine.observe { refresh() }
-    refresh()
+    engine = AlarmEngine.get(this)
+    observation = engine.observe { runOnUiThread { if (!isDestroyed) refresh() } }
+    select(intent)
     setContent {
-      MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-        Surface(modifier = Modifier.fillMaxSize()) {
-          Column(Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Remilo", style = MaterialTheme.typography.headlineLarge)
-            if (members.value.isEmpty()) Text("This alarm session has ended. Open Remilo to check the reminder.")
-            members.value.forEach { (record, title) ->
-              Text(title, style = MaterialTheme.typography.titleLarge)
-              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                listOf("Stop", "Snooze").forEach { kind ->
-                  Button(onClick = {
-                    engine.request({ engine.apply(mapOf("kind" to kind, "operationId" to UUID.randomUUID().toString(),
-                      "occurrenceId" to record.occurrenceId, "expectedGeneration" to record.generation)) }, {}, {})
-                  }, modifier = Modifier.fillMaxWidth()) { Text(if (kind == "Snooze") "Snooze ${record.snoozeMinutes} min" else "Stop") }
+      val current = snapshot.value
+      val dark = when (current?.theme) { "dark" -> true; "light" -> false; else -> isSystemInDarkTheme() }
+      val scheme = if (dark) darkColorScheme(primary = Color(0xFFA9C5FF), onPrimary = Color(0xFF102B59),
+        background = Color(0xFF101318), surface = Color(0xFF1B2028), onSurface = Color(0xFFF1F4F9),
+        onSurfaceVariant = Color(0xFFADB8C8), error = Color(0xFFFFB4AB))
+        else lightColorScheme(primary = Color(0xFF245CD6), onPrimary = Color.White,
+          background = Color(0xFFF7F8FA), surface = Color.White, onSurface = Color(0xFF18212F),
+          onSurfaceVariant = Color(0xFF596475), error = Color(0xFFB3261E))
+      MaterialTheme(colorScheme = scheme) {
+        Surface(color = scheme.background, modifier = Modifier.fillMaxSize()) {
+          BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+          val viewportHeight = maxHeight
+          Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp)
+            .heightIn(min = (viewportHeight - 48.dp).coerceAtLeast(0.dp)), verticalArrangement = Arrangement.SpaceBetween) {
+            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Text("Remilo", style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
+            if (current == null) { CircularProgressIndicator(); Text("Loading alarm…") }
+            else if (current.members.isEmpty()) Text("Updating alarm controls…")
+            else if (current.members.size == 1) {
+              val (record, title) = current.members.first()
+              Text(title, style = MaterialTheme.typography.headlineLarge)
+              Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(record.targetMs)), style = MaterialTheme.typography.titleLarge)
+              Text(if (current.state == "Active") "Alarm ringing" else "Starting alarm…", color = scheme.primary)
+            } else {
+              Text("${current.members.size} alarms ringing", style = MaterialTheme.typography.headlineMedium)
+              current.members.forEach { (record, title) ->
+                Surface(shape = MaterialTheme.shapes.medium) {
+                  Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge)
+                    Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(record.targetMs)), color = scheme.onSurfaceVariant)
+                    // A FlowRow wraps at large font size instead of clipping two actions.
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                      Button(onClick = { act("Stop", record) }, enabled = !busy.value) { Text("Stop") }
+                      OutlinedButton(onClick = { act("Snooze", record) }, enabled = !busy.value) { Text("Snooze · ${record.snoozeMinutes} min") }
+                    }
+                  }
                 }
               }
             }
-            if (members.value.size > 1) Button(onClick = {
-              engine.request({ engine.apply(mapOf("kind" to "StopAll", "operationId" to UUID.randomUUID().toString(),
-                "expectedSessionId" to intent.getStringExtra("sessionId"))) }, {}, {})
-            }, modifier = Modifier.fillMaxWidth()) { Text("Stop all ringing alarms") }
-            Text("Stop silences this delivery. It does not complete the reminder.")
-            TextButton(onClick = { finish() }) { Text("Close") }
+            }
+            Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (current?.members?.size == 1) {
+              val record = current.members.first().first
+              Button(onClick = { act("Stop", record) }, enabled = !busy.value,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp), contentPadding = PaddingValues(20.dp)) {
+                Text("Stop", style = MaterialTheme.typography.titleLarge)
+              }
+              OutlinedButton(onClick = { act("Snooze", record) }, enabled = !busy.value,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp), contentPadding = PaddingValues(20.dp)) {
+                Text("Snooze · ${record.snoozeMinutes} min", style = MaterialTheme.typography.titleMedium)
+              }
+            } else if ((current?.members?.size ?: 0) > 1) {
+              Button(onClick = { act("StopAll") }, enabled = !busy.value, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("Stop all") }
+            }
+            Text("Stop leaves the reminder unfinished.", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            error.value?.let { Text(it, color = scheme.error); TextButton(onClick = { refresh() }, modifier = Modifier.align(Alignment.Start)) { Text("Retry") } }
+            }
+          }
           }
         }
       }

@@ -42,7 +42,7 @@ pending; under the owner's updated instruction it does not block implementation.
 ## Phase 2: complete one-off private beta
 
 Deliver quick creation and advanced independent event/due/alarm timing; Alarm,
-Notification and No alert modes; Today/Upcoming/Attention/detail/readiness; Done
+Notification and No alert modes; unified agenda/details/inline permissions; Done
 separate from Stop; Snooze and Postpone before/after timeout. Postpone replaces
 Snooze without changing due/event timing. Offer 15/30/60 minutes, editable Tomorrow
 10 AM/2 PM/5 PM and custom dates; show the resolved future instant before applying.
@@ -78,6 +78,13 @@ Add search, lists, history, duplicate, delete/undo, Reopen, original visual toke
 themes, accessibility and large-text layouts. No KMP during Android delivery.
 G3 covers fixtures and physical travel/DST/exception collisions plus API 34–37
 behavior. Pixel evidence alone cannot support broad manufacturer claims.
+
+The approved 0.4.0 presentation milestone belongs to Phase 3 and precedes Calendar.
+It delivers unified agenda queries and reusable presentation, one-off/repeat editors
+and details, automatic settings with inline permissions, native session dismissal,
+standard notification controls and the original bell/clock identity. No timing,
+completion, protection or account semantics change. Relevant host tests and signed
+assembly precede the consolidated device/UI/accessibility acceptance run.
 
 ## Phase 4: optional Google Calendar
 

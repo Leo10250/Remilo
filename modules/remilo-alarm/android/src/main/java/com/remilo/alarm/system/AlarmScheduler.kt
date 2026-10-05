@@ -38,6 +38,11 @@ class AlarmScheduler(private val context: Context) : AlarmRegistrar {
     context, 0, intent(context, "fire", alert.occurrenceId, alert.generation),
     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
   companion object {
+    fun stopAllIntent(context: Context, sessionId: String): Intent = Intent(context, AlarmReceiver::class.java)
+      .setAction("com.remilo.alarm.stopall").setData(Uri.Builder().scheme("remilo-alarm").authority("stopall").appendPath(sessionId).build())
+      .putExtra("sessionId", sessionId)
+    fun stopAll(context: Context, sessionId: String): PendingIntent = PendingIntent.getBroadcast(context, 0,
+      stopAllIntent(context, sessionId), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     fun intent(context: Context, purpose: String, id: String, generation: Long): Intent =
       Intent(context, AlarmReceiver::class.java).apply {
         action = "com.remilo.alarm.$purpose"

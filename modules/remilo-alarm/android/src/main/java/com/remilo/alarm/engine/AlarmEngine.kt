@@ -96,11 +96,15 @@ class AlarmEngine internal constructor(private val context: Context,
     val start = day.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val end = day.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val search = (filter["search"] as? String)?.trim().orEmpty()
+    val queryNow = now()
+    val zone = ZoneId.systemDefault()
     val records = db.records().all().filter { record ->
       val alert = alerts.find(record.id)
       val selected = when (filter["view"]) {
         "deleted" -> record.deleted
         "history" -> !record.deleted && (record.completed || record.skipped)
+        "completed" -> !record.deleted && (record.completed || (filter["includeSkipped"] == true && record.skipped))
+        "overdue" -> !record.deleted && !record.completed && !record.skipped && record.dueAtMs < queryNow
         "attention" -> !record.deleted && !record.completed && !record.skipped && (record.dueAtMs < now() ||
           alert?.state in setOf("Missed", "Stopped", "TimedOut", "Interrupted", "Blocked", "Failed", "Notified", "Changing"))
         "today" -> !record.deleted && !record.completed && !record.skipped && (record.dueAtMs in start until end ||
@@ -113,10 +117,20 @@ class AlarmEngine internal constructor(private val context: Context,
         ((filter["segmentId"] as? String).isNullOrEmpty() || record.segmentId == filter["segmentId"]) &&
         ((filter["listName"] as? String).isNullOrEmpty() || record.listName == filter["listName"])
     }
+    val ordered = if (filter["view"] in setOf("agenda", "overdue")) records.sortedWith(
+      compareBy<ReminderRecord> { com.remilo.alarm.core.Agenda.rank(com.remilo.alarm.core.Agenda.group(
+        it.eventStartMs, it.dueAtMs, it.completed, it.skipped, queryNow, zone)) }.thenBy { it.eventStartMs }.thenBy { it.id })
+      else records.sortedWith(compareBy<ReminderRecord> { it.eventStartMs }.thenBy { it.id })
     val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
-    val page = records.drop(offset).take(50)
+    val page = ordered.drop(offset).take(50)
+    val groups = ordered.groupingBy { com.remilo.alarm.core.Agenda.group(it.eventStartMs, it.dueAtMs,
+      it.completed, it.skipped, queryNow, zone) }.eachCount()
+    val completedCount = db.records().all().count { !it.deleted && it.completed &&
+      (search.isEmpty() || it.title.contains(search, true) || it.notes.contains(search, true)) &&
+      ((filter["listName"] as? String).isNullOrEmpty() || it.listName == filter["listName"]) }
     return mapOf("items" to page.map { view(it) },
-      "nextCursor" to if (offset + page.size < records.size) (offset + page.size).toString() else null)
+      "nextCursor" to if (offset + page.size < ordered.size) (offset + page.size).toString() else null,
+      "total" to ordered.size, "groups" to groups, "completedCount" to completedCount)
   }
   fun occurrence(id: String): Map<String, Any?>? {
     val db = content()
@@ -128,6 +142,10 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   private fun view(record: ReminderRecord): Map<String, Any?> {
     val alert = alerts.find(record.id)
+    val adjustment = if (alert?.state == "Scheduled") content().records().history(record.id)
+      .lastOrNull { it.targetMs == alert.targetMs && it.kind in setOf("Snooze", "Postpone") }?.kind else null
+    val segment = record.segmentId?.let { content().records().series(it) }
+    val repeat = segment?.let { com.remilo.alarm.core.Agenda.summary(RuleCodec.decode(it.rule)) }
     return mapOf("id" to record.id, "title" to record.title, "eventStartMs" to record.eventStartMs,
       "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs, "completed" to record.completed,
       "revision" to record.revision, "nextAlertMs" to alert?.targetMs,
@@ -136,8 +154,12 @@ class AlarmEngine internal constructor(private val context: Context,
       "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs), "allDay" to record.allDay,
       "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id }, "dueLinked" to record.dueLinked,
       "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
-      "vibration" to record.vibration, "overdue" to (!record.completed && !record.skipped && record.dueAtMs < now()),
-      "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped)
+      "vibration" to record.vibration, "overdue" to (!record.completed && !record.deleted && !record.skipped && record.dueAtMs < now()),
+      "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
+      "seriesState" to segment?.state, "repeatSummary" to repeat,
+      "alertAdjustment" to when (adjustment) { "Snooze" -> "Snoozed"; "Postpone" -> "Postponed"; else -> null },
+      "agendaGroup" to com.remilo.alarm.core.Agenda.group(record.eventStartMs, record.dueAtMs, record.completed,
+        record.skipped, now(), ZoneId.systemDefault()))
   }
   private fun epoch(value: Any?, field: String): Long {
     val number = (value as? Number)?.toDouble() ?: throw InputError(field, "Choose a valid date and time.")
@@ -563,6 +585,11 @@ class AlarmEngine internal constructor(private val context: Context,
   }
 
   fun receive(intent: Intent, finished: () -> Unit) = submit(finished) {
+    if (intent.action?.substringAfterLast('.') == "stopall") {
+      val sessionId = intent.getStringExtra("sessionId") ?: return@submit
+      apply(mapOf("kind" to "StopAll", "expectedSessionId" to sessionId, "operationId" to "notification-stopall:$sessionId"))
+      return@submit
+    }
     val id = intent.getStringExtra("occurrenceId") ?: return@submit
     val generation = intent.getLongExtra("generation", -1)
     when (intent.action?.substringAfterLast('.')) {
@@ -614,6 +641,7 @@ class AlarmEngine internal constructor(private val context: Context,
       alerts.session(session.copy(state = "Active",
         startedElapsedMs = elapsed, deadlineElapsedMs = elapsed + AlarmPolicy.SESSION_MILLIS))
       Log.i("Remilo", "Session Active: elapsed=$elapsed deadline=${elapsed + AlarmPolicy.SESSION_MILLIS}")
+      changed()
     }
   }
   fun audioEnded(sessionId: String, reason: String) = submit { endSession(sessionId, reason) }
@@ -643,6 +671,11 @@ class AlarmEngine internal constructor(private val context: Context,
   fun sessionMembers(sessionId: String, callback: (List<Pair<AlertRecord, String>>) -> Unit) = submit {
     callback(memberViews(sessionId))
   }
+  data class SessionSnapshot(val id: String, val state: String, val members: List<Pair<AlertRecord, String>>, val theme: String)
+  fun sessionSnapshot(sessionId: String, callback: (SessionSnapshot) -> Unit, failed: (String) -> Unit) = request({
+    SessionSnapshot(sessionId, alerts.session(sessionId)?.state ?: "Ended", memberViews(sessionId),
+      if (unlocked()) settings()["theme"] as String else "system")
+  }, { callback(it as SessionSnapshot) }, failed)
   private fun memberViews(sessionId: String) = alerts.members(sessionId).map { it to
     if (unlocked()) (content().records().find(it.occurrenceId)?.title ?: "Reminder") else "Reminder" }
   fun recover(finished: () -> Unit = {}) = submit(finished) {

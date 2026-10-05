@@ -1,11 +1,11 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
 
-import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series } from './RemiloAlarm.types';
+import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
   getCapabilities(): Promise<Capabilities>;
-  queryReminders(filter: ReminderFilter, cursor: string | null): Promise<{ items: Occurrence[]; nextCursor: string | null }>;
+  queryReminders(filter: ReminderFilter, cursor: string | null): Promise<ReminderPage>;
   getOccurrence(id: string): Promise<Occurrence | null>;
   previewSchedule(draft: ReminderDraft & { recurrence?: RecurrenceDraft }): Promise<SchedulePreview>;
   querySeries(): Promise<Series[]>;

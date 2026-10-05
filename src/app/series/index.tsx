@@ -1,20 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Button, Card, Copy, Heading, Page } from '../../ui/components';
+import { Copy, Group, Page, SettingRow } from '../../ui/components';
 import { engine, nativeAvailable } from '../../ui/native';
-import { repeatNames } from '../../ui/recurrence';
-
-export default function SeriesList() {
+export default function PausedSeries() {
   const query = useQuery({ queryKey: ['series'], queryFn: () => engine().querySeries(), enabled: nativeAvailable });
-  return <Page title="Repeating reminders" subtitle="Each occurrence stays independent.">
-    <Button label="New repeating reminder" onPress={() => router.push('/edit')} />
-    {query.isLoading && <Copy>Loading…</Copy>}
-    {query.error && <Copy>Could not load series. Go back and retry.</Copy>}
-    {query.data?.length === 0 && <Card><Copy>Turn on Repeat when creating a reminder to start a series.</Copy></Card>}
-    {query.data?.map((series) => <Card key={series.id}><Heading>{series.template.title}</Heading>
-      <Copy>{repeatNames[series.rule.frequency]} · {series.state}{series.exhausted ? ' · ending reached' : ''}</Copy>
-      <Copy muted>Segment starts {series.rule.anchor.replace('T', ' ')}. {series.registered} future alerts registered.</Copy>
-      <Button label="Manage series" variant="secondary" onPress={() => router.push({ pathname: '/series/[id]', params: { id: series.id } })} />
-    </Card>)}
+  const items = query.data?.filter((series) => series.state === 'Paused') ?? [];
+  return <Page title="Paused repeats">
+    {query.isLoading && <Copy>Loading…</Copy>}{query.error && <Copy>Could not load paused reminders.</Copy>}
+    {!query.isLoading && !items.length && <Copy muted>No paused repeating reminders.</Copy>}
+    <Group>{items.map((series) => <SettingRow key={series.id} label={series.template.title} value="Paused" icon="repeat"
+      onPress={() => router.push({ pathname: '/series/[id]', params: { id: series.id } })} />)}</Group>
   </Page>;
 }

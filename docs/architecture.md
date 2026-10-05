@@ -170,4 +170,42 @@ bridge response from creating a second reminder on the next Save press.
 File-sharing providers remain credential-only in the merged manifest; alarm
 receivers/services/activity are Direct Boot aware. MainApplication still defers
 React/Expo startup until the principal UI is requested after unlock. The new native
-controls follow system dark mode independently of React Native preferences.
+controls use the saved appearance after unlock, and system appearance before unlock.
+
+## ADR 004: Unified presentation without another state authority
+
+The 0.4.0 redesign adds agenda/overdue/completed query views without a Room schema
+change. Membership derives from completion/due time; grouping derives from event
+time. Group rank, event start and occurrence ID order all matching rows before the
+50-row page is sliced. Aggregate counts cover the full filtered query. Read-only
+series/rule/adjustment information decorates rows; it never schedules an alarm.
+Existing internal views remain available while principal routes use the agenda.
+Foreground return and native changes invalidate queries. A foreground-only minute
+refresh updates due/date presentation; it is not an alarm timer or scheduler.
+
+One module-lifetime Preferences controller coalesces partial UI changes, serializes
+writes, and refreshes the confirmed revision before the next command. Optimistic
+preferences are presentation drafts, not another persisted store. Uncertain jobs
+retain their operation ID through acknowledgement/read failures. Newer pending
+selections are applied afterward; failed values revert to the confirmed snapshot.
+Navigating away does not cancel this controller.
+
+The native alarm activity consumes an explicit session snapshot (ID, durable state,
+members, appearance) from the existing engine worker. Its initial state is loading.
+An intent/refresh ticket rejects callbacks for another session or an earlier
+refresh. Only a confirmed terminal state dismisses the activity, including timeout
+or external termination; a partial action leaves remaining members visible.
+Notification Stop all carries immutable session identity and rejects an old session.
+
+Expo SDK 57 Symbols supplies Android Material icons. Router's SDK 57 public
+`expo-router/react-navigation` export supplies draft removal guards; no separate
+React Navigation package/context is introduced. Compose remains native-only.
+Android resources are edited directly; the SVG master/exporter is owned source.
+SDK 57's SymbolView implementation scales a Text glyph inside a fixed frame.
+Android uses its documented Material image-source API to keep icons independent
+of accessibility font size, with a SymbolView fallback if rendering fails. Text
+labels still scale. This beta API remains encapsulated in the Icon component.
+
+Visual review can opt into synthetic web fixtures through REMILO_UI_PREVIEW. The
+Metro replacement is restricted to platform=web; Android always uses the real
+native bridge. This is a local review surface, not a web product or alarm simulator.

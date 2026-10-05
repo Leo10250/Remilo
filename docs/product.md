@@ -55,7 +55,15 @@ physical gates stay pending and no broader beta release is declared verified.
 - Floating schedules follow device zone; Calendar linkage pins a named zone with preview.
 - DST gaps shift by gap size; folds use earlier offset. Invalid days/fifth weekdays/
   Feb 29 are skipped and do not consume count. Postponements remain concrete instants.
-- Today/Upcoming/Attention, search, lists, history, duplicate, delete/undo, Reopen.
+- One unified agenda contains one-off and repeating occurrences. Event time sets
+  the date group; unfinished overdue status uses due time, regardless of the next
+  alarm. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
+  Collapse groups without merging occurrence identities. Stopped/missed/timed-out
+  reminders stay visible until resolved.
+- Search and list/overdue filters are secondary controls. Completed records are
+  collapsed and loaded on demand, with an Include skipped option in their view.
+  Trash and paused repeats are secondary destinations. Details retain Activity,
+  duplicate, delete/restore, Reopen and individual/series actions.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
   Series conflicts are preserved as a whole family unless explicitly restored as
@@ -82,3 +90,26 @@ device evidence; do not claim universal OEM delivery from Pixel-only results.
 
 No AI chat, collaboration suite, location triggers, watches, attachments, generic
 calendar import or visual cloning is in the initial product.
+
+## Presentation contract (0.4.0)
+
+- Neutral light/charcoal surfaces and blue primary actions. Green/amber/red are
+  status accents with text and icons; permissions never imply guaranteed audibility.
+- Familiar icon app bars and one Add floating button. Minimum 48 dp interaction
+  targets; content grows/scrolls for large text. No bottom navigation is required.
+- One editor supports one-off/repeat creation. Common repeat rules precede Custom
+  repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only
+  on explicit Save. Unsaved drafts require a discard confirmation. Pending saves
+  remain retryable, rather than issuing a different uncertain operation.
+- Settings are categorized Alarms, Permissions, Postpone shortcuts, Appearance,
+  Data and Help. Valid preferences save automatically, serially and with rollback
+  and Retry on failure. Permissions are directly reachable and refresh on return.
+- Native controls never start React Native. Stop/Snooze automatically dismiss a
+  confirmed ended session, including timeout/external termination. An initial empty
+  loading state cannot close the screen; remaining group members retain controls.
+  Failed actions retain controls and an error. Before first unlock, content is generic.
+- Standard notifications retain Stop/Snooze on every single delivery. Grouped
+  notifications open native controls and offer session-specific Stop all. Android
+  owns popup layout and expansion. Channel identities and audio deadlines remain.
+- The owned bell/clock mark supplies adaptive, monochrome, legacy, notification
+  and splash variants. Application ID and signing identity remain unchanged.
