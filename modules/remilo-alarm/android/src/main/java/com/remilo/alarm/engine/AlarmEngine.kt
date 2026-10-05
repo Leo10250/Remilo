@@ -226,9 +226,9 @@ class AlarmEngine internal constructor(private val context: Context,
         validate(!changedTime || it.mode == "None" || it.completed || it.definedAlarmAtMs!! > now(), "alarmAtMs", "Choose an alarm time in the future.")
       }
       "Done" -> old.copy(completed = true, revision = old.revision + 1)
-      "Reopen" -> old.copy(completed = false, revision = old.revision + 1)
+      "Reopen" -> old.copy(completed = false, exception = old.exception || old.segmentId != null, revision = old.revision + 1)
       "Delete" -> old.copy(deleted = true, revision = old.revision + 1)
-      "UndoDelete" -> old.copy(deleted = false, revision = old.revision + 1)
+      "UndoDelete" -> old.copy(deleted = false, exception = old.exception || old.segmentId != null, revision = old.revision + 1)
       "Skip" -> { validate(old.segmentId != null, "occurrenceId", "Only recurring occurrences can be skipped."); old.copy(skipped = true, revision = old.revision + 1) }
       else -> error("Unsupported content command")
     }

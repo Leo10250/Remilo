@@ -124,6 +124,8 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 - **D10 — individual exception:** Postpone an occurrence, then edit its notes.
   The chosen next alert survives. Edit that occurrence's alert definition instead:
   only its next alert changes; other ordinary dates retain the series rule.
+  Mark a future occurrence Done and Reopen it, or Delete/Undo it: the restored
+  occurrence is independent, while two ordinary future registrations remain.
 - **D11 — pause/resume:** postpone one occurrence, then Pause series. Ordinary
   future alerts pause; the independent postponed alert remains. Resume re-arms
   future ordinary alerts, retaining elapsed items silently. Check split segments too.

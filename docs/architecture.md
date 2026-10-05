@@ -132,6 +132,8 @@ Before presentation, native delivery replenishes two independently registered fu
 ordinary occurrences; postponed/single-edited exceptions are additional independent
 registrations. Registration failures remain visible as Blocked. Protected rules can
 replenish before unlock; content materializes only after unlock.
+Reopen and Undo deletion restore recurring occurrences as independent exceptions,
+preserving their original target without enlarging the ordinary coverage window.
 
 Series-changing commands fence future ordinary generations before their credential
 transaction. Narrow pending-series records recover a committed change. A protected

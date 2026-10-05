@@ -729,6 +729,16 @@ class AlarmEngineTest {
     assertEquals("Rejected", action(second, "Snooze", 1, "unique-action")["status"])
     assertEquals(now + 60_000, (request { engine.occurrence(second) } as Map<*, *>)["nextAlertMs"])
   }
+  @Test fun reopenedFutureSeriesOccurrenceIsIndependentOfOrdinaryCoverage() {
+    seriesCommand()
+    val first = protectedRows().minBy { it.targetMs }
+    request { engine.apply(mapOf("kind" to "Done", "operationId" to "done-series", "occurrenceId" to first.occurrenceId, "expectedRevision" to 1)) }
+    assertEquals(2, protectedRows().count { !it.exception && it.state == "Scheduled" })
+    request { engine.apply(mapOf("kind" to "Reopen", "operationId" to "reopen-series", "occurrenceId" to first.occurrenceId, "expectedRevision" to 2)) }
+    assertEquals(2, protectedRows().count { !it.exception && it.state == "Scheduled" })
+    assertEquals(1, protectedRows().count { it.exception && it.state == "Scheduled" })
+    assertEquals(first.targetMs, protectedRows().first { it.occurrenceId == first.occurrenceId }.targetMs)
+  }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
     var allowed = true

@@ -70,7 +70,7 @@ export function Page({ title, subtitle, children, back = true }: PropsWithChildr
 }
 export function formatTime(value: number | null | undefined) {
   return value == null ? 'No alert scheduled' : new Date(value).toLocaleString([], {
-    weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
 }
 export const styles = StyleSheet.create({
