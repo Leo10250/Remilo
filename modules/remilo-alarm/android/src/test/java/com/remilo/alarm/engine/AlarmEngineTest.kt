@@ -195,6 +195,96 @@ class AlarmEngineTest {
       } finally { db.close() }
     }
   }
+  @Test fun committedCreationRecoversBeforeItsOperationalProjectionExists() {
+    val savedId = "committed-reminder"
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        db.runInTransaction {
+          db.records().insert(ReminderRecord(savedId, "Private title", now + 60_000,
+            now + 1_860_000, now + 60_000, now))
+          db.records().pending(PendingSchedule("interrupted-create", savedId, now + 60_000, 1))
+          db.records().receipt(CreationReceipt("interrupted-create", savedId))
+        }
+      } finally { db.close() }
+    }
+    assertTrue(os.registered.isEmpty())
+    engine.close()
+    engine = AlarmEngine(context, os, { now }, { 1L })
+    val recovered = CompletableFuture<Unit>()
+    engine.recover { recovered.complete(Unit) }; recovered.get(20, TimeUnit.SECONDS)
+    assertEquals(savedId, id(create("interrupted-create")))
+    assertEquals(setOf(savedId), os.active.keys)
+    assertEquals("Scheduled", (request { engine.occurrence(savedId) } as Map<*, *>)["deliveryState"])
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        assertEquals(1, db.records().all().size)
+        assertTrue(db.records().pending().isEmpty())
+      } finally { db.close() }
+    }
+  }
+  @Test fun committedStopFencesAnObsoleteCallbackAcrossRecovery() {
+    val id = id(create())
+    now += 60_000; fire(id)
+    deliveryNotification()
+    request {
+      val operational = OperationalDatabase.open(context)
+      val content = ContentDatabase.open(context)
+      try {
+        // Persisted boundary: the native transaction committed, but cancellation
+        // and history copying did not run before process loss.
+        operational.runInTransaction {
+          operational.records().put(AlertRecord(id, now, 2, "Stopped"))
+          operational.records().action(ActionRecord("interrupted-stop", id, "Stop", now, 2))
+        }
+        content.records().pending(PendingSchedule("obsolete-create", id, now, 1))
+      } finally { operational.close(); content.close() }
+    }
+    assertEquals(1L, os.active[id]!!.generation)
+    engine.close()
+    engine = AlarmEngine(context, os, { now }, { 1L })
+    val recovered = CompletableFuture<Unit>()
+    engine.recover { recovered.complete(Unit) }; recovered.get(20, TimeUnit.SECONDS)
+    fire(id, 1)
+    assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals("Stopped", after["deliveryState"])
+    assertEquals(2L, after["generation"])
+    assertEquals(false, after["completed"])
+    assertEquals(1, os.registered.size)
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        assertTrue(db.records().pending().isEmpty())
+        assertEquals("Stop", db.records().history(id).single().kind)
+      } finally { db.close() }
+    }
+  }
+  @Test fun historyCopyCommittedBeforeAcknowledgementIsIdempotent() {
+    val id = id(create())
+    action(id, "Snooze", 1, "copied-snooze")
+    request {
+      val db = ContentDatabase.open(context)
+      try { db.records().history(HistoryRecord("copied-snooze", id, "Snooze", now, 2)) }
+      finally { db.close() }
+    }
+    engine.close()
+    engine = AlarmEngine(context, os, { now }, { 1L })
+    val recovered = CompletableFuture<Unit>()
+    engine.recover { recovered.complete(Unit) }; recovered.get(20, TimeUnit.SECONDS)
+    val after = request { engine.occurrence(id) } as Map<*, *>
+    assertEquals(2L, after["generation"])
+    assertEquals(now + 600_000, after["nextAlertMs"])
+    request {
+      val content = ContentDatabase.open(context)
+      val operational = OperationalDatabase.open(context)
+      try {
+        assertEquals(1, content.records().history(id).size)
+        assertTrue(operational.records().actions().isEmpty())
+      } finally { content.close(); operational.close() }
+    }
+  }
   @Test fun coldProcessInterruptsAnActiveSessionSilently() {
     val id = id(create())
     now += 60_000; fire(id)
@@ -263,8 +353,15 @@ class AlarmEngineTest {
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
     val registered = mutableListOf<AlertRecord>()
+    val active = mutableMapOf<String, AlertRecord>()
     override fun canSchedule() = true
-    override fun register(alert: AlertRecord) { if (fail) throw SecurityException(); registered.add(alert) }
-    override fun cancel(alert: AlertRecord) {}
+    override fun register(alert: AlertRecord) {
+      if (fail) throw SecurityException()
+      registered.add(alert)
+      active[alert.occurrenceId] = alert
+    }
+    override fun cancel(alert: AlertRecord) {
+      if (active[alert.occurrenceId]?.generation == alert.generation) active.remove(alert.occurrenceId)
+    }
   }
 }
