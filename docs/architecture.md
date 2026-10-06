@@ -212,7 +212,8 @@ native bridge. This is a local review surface, not a web product or alarm simula
 
 ## ADR 005: Collection queries and civil-time editing
 
-Collections are navigation and query views over existing native state. The repeat
+Completed/Trash are query views over existing native state. The original Collections
+intermediary is superseded by ADR 006. The repeat
 family query groups retained segments by `seriesId`, chooses a current representative
 and derives Active/Paused/Ended state, upcoming slots and unfinished count. A family
 occurrence filter includes its retained earlier segments. Neither aggregation creates
@@ -248,3 +249,53 @@ explicit rejection. A confirmed restore with blocked alerts is an acknowledged c
 import with delivery warnings, not an uncertain import. This in-memory UI guard does
 not claim recovery of its screen draft across Android process death; native receipts
 and committed content remain the durable authority.
+
+## ADR 006: Explicit roots, presentation and native preview ownership
+
+Browse is a modal control over explicit Agenda, list, Repeats, Completed and Trash
+roots. Root switching replaces the root context; Settings, editor, detail and Activity
+remain secondary pages. Destination state is keyed independently, including the two
+record queries sharing a route. Focus-scoped Back handlers yield to transient UI,
+search, draft and uncertain-operation guards. Navigation introduces no scheduler.
+
+Shared presentation separates work status from delivery outcome. Due controls
+Overdue; Stop/Missed/timeout remain delivery outcomes for unfinished work. Conditional
+schedule detail preserves independent relationships even at coincident timestamps.
+Recorded Done time is separate from collection sorting fallback. Activity renders
+stored history without inventing missing lifecycle events or field differences.
+Alert problems filtering occurs natively before pagination and counts.
+
+SoundPreviewController is an ordinary process-owned native class. Its identified
+requests and callbacks run through the engine executor; AlarmAudio owns focus,
+release and the five-second cutoff. Replacement and real alarm startup wait for
+previous preview release. Late callbacks cannot alter a newer preview. Native
+Application lifecycle observation stops preview on background; module instances
+only observe/query it. Selection and preference/draft mutation remain separate.
+Actual playback callbacks expose tone fallback and failure rather than treating
+an accepted start request as Playing. The ringing session's five-minute policy,
+deadline, first-member sound and independent member actions remain unchanged.
+
+## ADR 007: Credential-protected managed Lists and portable identities
+
+Content schema 4 adds ListRecord (identity, name, revision) and nullable listId on
+reminders and every retained series template. Operational schema remains 3; names
+and list identities are not added to device-protected scheduling storage. Exact
+legacy names, including case variants, migrate to separate stable identities.
+New Create/Rename reject trimmed case-insensitive duplicates on the serialized
+mutation path. Empty lists are retained independently of reminder queries.
+
+Membership queries distinguish omitted listId (all lists) from null (No list).
+Rename changes metadata only. Remove clears memberships across completed, skipped,
+trashed, exceptional and archived content/templates, incrementing affected content
+revisions without EditSeries, generation changes or alarm registration. Native
+validation rejects removed references, including stale editors. Names are resolved
+projection metadata rather than membership authority.
+
+Backup format 3 carries empty lists and membership references; versions 1/2 remain
+readable. Matching local IDs retain local metadata. Distinct imported identities
+with colliding names receive a stable restored suffix visible in preview, rather
+than being merged. Retry uses the same mapping. The shared template codec retains
+membership IDs instead of decoding through the old version-one representation.
+Restore retains whole-family conflict semantics, current operational generations
+and no replay of elapsed targets. One-off Trash stays outside export; recurring
+deletion exclusions remain portable to prevent occurrence regeneration.

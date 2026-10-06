@@ -36,7 +36,7 @@ physical gates stay pending and no broader beta release is declared verified.
 - Postpone replaces Snooze and changes only the current occurrence's next alert.
 - Native audio session ends at five minutes from playback start. Arrivals keep
   the original deadline/sound. One sound; independently actionable members.
-- Timeout leaves unresolved items in Attention with silent Snooze/Postpone actions.
+- Timeout leaves unresolved items unfinished with silent Snooze/Postpone actions.
   Missed is independent of overdue; overdue depends on due/completion.
 - Normal callbacks up to five minutes late may ring; later ones become Missed.
   Reboot, upgrade, restore and recovery never replay past alerts or interrupted sound.
@@ -60,13 +60,29 @@ physical gates stay pending and no broader beta release is declared verified.
   alarm. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
   Collapse groups without merging occurrence identities. Stopped/missed/timed-out
   reminders stay visible until resolved.
-- Search and list/overdue filters are secondary controls. The Agenda title opens
-  Collections: Agenda, Repeats, Completed and Trash, with Settings separate.
+- Search, membership, overdue and Alert problems filters are local dataset controls.
+  Alert problems includes Missed, Timed out, Interrupted, Blocked and Failed delivery;
+  it excludes No alert, Stopped, Notification sent and Updating. Attention stays internal.
+  The title is a heading; the leading Browse Remilo button opens modal navigation to
+  Agenda, Repeats, lists, Completed and Trash. Selecting a root closes Browse without
+  retaining it in Back history. Settings and list management are secondary pages.
   Repeats shows one entry per family and Active, Paused and Ended filters. Family
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
   completion/skip/deletion comes first; Completed has an Include skipped option.
-  Details retain Activity, duplicate, delete/restore, Reopen and series actions.
+  Back from a non-Agenda root returns to Agenda; secondary pages return to their origin.
+  Search/sheets, draft guards and unconfirmed operations take precedence over root Back.
+  Each destination retains its own filters and scroll position, including Completed
+  and Trash. Details provide Activity through More, duplicate, Trash/Restore, Reopen
+  and explicit occurrence/family scope actions.
+- Lists have durable credential-protected identities, names and revisions, with
+  optional single membership and No list as the default. Empty lists are retained.
+  Create/Rename/Remove are explicit. New names are trimmed and case-insensitively
+  unique; distinct legacy names remain intact. Rename changes metadata only; Remove
+  moves all retained reminders and templates to No list without changing alert targets.
+  A removed list reference is rejected. Named lists retain Agenda grouping, with
+  fixed membership and access to their Completed/Trash records. Counts mean overdue
+  occurrences, rather than every future occurrence of an infinite repeat.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
   Series conflicts are preserved as a whole family unless explicitly restored as
@@ -104,12 +120,17 @@ calendar import or visual cloning is in the initial product.
   a labeled completion action at the trailing edge. Completion is separate from
   contextual deletion. Optional swipe completion has a visible equivalent. Undo
   reopens only the captured completed revision; a later change is not reversed.
-  Moving to Trash requires confirmation and remains recoverable.
+  Unfinished Trash requires confirmation explaining alert cancellation. A completed
+  occurrence can be moved to Trash directly through its menu or swipe reveal and tap.
+  Revision-guarded Undo restores only the captured deletion. Restore preserves prior
+  completed/skipped state and never replays elapsed alerts. Trash stays in the local
+  installation until restored; no automatic expiry, permanent purge or bulk cleanup.
+  Backups exclude one-off Trash but retain recurring deletion exclusions.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only
   on explicit Save. Unsaved drafts require a discard confirmation. Pending saves
   remain retryable, rather than issuing a different uncertain operation.
-- Saving a new reminder returns to Agenda with contextual acknowledgement and an
+- Saving a new reminder returns to Agenda, or its originating list, with contextual acknowledgement and an
   optional View action. Saved-but-blocked and pending scheduling remain visible;
   acknowledgement never proves audibility. One-off Edit opens the editor directly;
   repeating Edit asks for scope. A stale editor retains the local draft for review
@@ -120,9 +141,18 @@ calendar import or visual cloning is in the initial product.
   zone. Changing the zone preserves authored wall times and resolves through the
   native gap/fold policy. Merely opening or saving untouched fields preserves their
   original instants. Linked event/due/alert offsets and independent times stay explicit.
-- Reminder details give title, schedule, notes and status priority, with compact
-  reachable actions. Custom Postpone starts with a future target and rejects past
-  targets without changing state. Stop continues to silence delivery without Done.
+- Reminder details show a complete event range and consequential Due, followed by
+  the current delivery outcome and what happens next. Ordinary linked timing is
+  concise; independent relationships, adjustments, consequential zones and occurrence
+  exceptions have Schedule details. All-day linked Due reads By end of day. A stopped,
+  missed, interrupted or timed-out target is never described as a future alert.
+  Overdue means still unfinished; Stop continues to silence delivery without Done.
+  Completed timestamps come from recorded Done events, never sorting fallbacks.
+  Activity renders only recorded events and meaningful targets; empty history says
+  No recorded activity and does not claim a complete audit trail.
+  Done/Reopen/Restore stay persistent for their states. Ringing Stop/Snooze are a
+  distinct alarm area; eligible Postpone stays readily available after delivery ends.
+  Custom Postpone starts with a future target and rejects past targets without mutation.
 - Android Back exits transient Agenda search; clearing its query is a separate
   action. Nested sheets handle Back within their draft. Loading, retry, action
   progress and failures are visible. Reduced motion, large text and screen-reader
@@ -130,6 +160,12 @@ calendar import or visual cloning is in the initial product.
 - Settings are categorized Alarms, Permissions, Postpone shortcuts, Appearance,
   Data and Help. Valid preferences save automatically, serially and with rollback
   and Retry on failure. Permissions are directly reachable and refresh on return.
+- Settings and editor share explicit radio selection and separate Play/Stop controls
+  for Remilo tone and System alarm tone. Preview never selects or saves a tone.
+  Editor sound/vibration are Alarm options, separate from Schedule options. Preview
+  is identified, native-owned, bounded to five seconds and stopped on close, Back,
+  navigation or background. Real alarms take priority. Playback feedback comes from
+  native Starting/Playing/Ended/Interrupted/Failed state and reports packaged fallback.
 - Restore distinguishes reading a file from importing its preview. An unconfirmed
   import freezes its backup, copy selection and operation ID until the same restore
   is acknowledged or rejected. It cannot be abandoned through ordinary navigation

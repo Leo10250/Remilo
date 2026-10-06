@@ -42,6 +42,9 @@ block verified release, rather than development. Known failures still require fi
 | DS-01 | Shared Gradle build/inspection without receipts or release locks | TK-01 | verified | [signed ARM64/x86-64 assembly and full host preparation](evidence/2026-10-05-deployment-simplification.md); no Git or receipt prerequisite |
 | DS-02 | Sequential one-command deployment with target selection | DS-01 | verified | [35 controlled tooling cases, cancellation and optional launch](evidence/2026-10-05-deployment-simplification.md); simplified real-device deployment smoke remains pending |
 | DS-03 | Optional diagnostics, concise skills and current workflow guidance | DS-01/02 | verified | [doctor, discovery/preflight, help, three skill validators and metadata](evidence/2026-10-05-deployment-simplification.md); no new phone mutation |
+| UX-10 | No alert recovery repair and shared schedule/work/delivery presentation | UX-08 | implemented/unverified | [62 domain tests; retained history/overdue recovery; signed-phone comprehension pending](evidence/2026-10-05-second-refinement.md) |
+| UX-11 | Browse roots, recorded Activity, recoverable completed cleanup and sound preview | UX-10 | implemented/unverified | [96 native tests; preview ownership and fixture interactions; Android Back/audio acceptance pending](evidence/2026-10-05-second-refinement.md) |
+| UX-12 | Managed Lists, content schema 4 and backup format 3 | UX-11 | implemented/unverified | [upgrade/legacy/empty/stale/template/import regressions; signed ARM64 build; phone upgrade pending](evidence/2026-10-05-second-refinement.md) |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -120,6 +123,20 @@ block verified release, rather than development. Known failures still require fi
   optional. Preflight diagnoses available APK hashes without source attribution.
   Validate three concise skills and document one release-producing workflow per
   checkout. Preserve historical evidence for TK-01–04 rather than rewriting it.
+- UX-10: repair persisted None/Missed to NoAlert without reviving targets or losing
+  overdue membership. Verify ordinary/independent/coincident timing, linked offsets,
+  all-day/year/zone boundaries, changed/terminal/pending/blocked delivery and state
+  eligibility. Presentation tests do not establish Android accessibility acceptance.
+- UX-11: verify separate root state, origin and modal/search Back ordering, recorded
+  Activity, completed/skipped Trash restoration and stale Undo. Alert problems
+  applies before pagination/counts. Native identified preview tests cover replacement,
+  failure/fallback, release/stop, late callbacks and real-alarm priority. U17–U20
+  remain physical observations, alongside TalkBack/200% text and native pickers.
+- UX-12: verify CE upgrades 1/2/3→4, exact legacy case variants, empty lists,
+  removed references, every retained template, unchanged operational generations
+  and targets, backup v1/v2/v3 readers, matching-ID preservation, distinct-name
+  restored suffixes, family copy decisions and retry stability. Run shared/native
+  verification and record the signed artifact without installing or distributing.
 
 ## Simplified deployment owner smoke (pending)
 

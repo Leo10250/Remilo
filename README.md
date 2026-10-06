@@ -190,6 +190,12 @@ after confirmed session termination. [Redesign evidence](docs/evidence/2026-10-0
 and [the owner checklist](docs/device-acceptance.md) distinguish host checks from
 pending physical acceptance. Install as an update with the existing signing key.
 
+The second refinement adds explicit Browse navigation, concise schedule and delivery
+explanations, recorded Activity, reversible completed cleanup, native sound-preview
+feedback and managed Lists. Content schema 4 and backup format 3 preserve older
+data/readers; operational schema stays 3. See [second-refinement evidence](docs/evidence/2026-10-05-second-refinement.md)
+and the expanded owner checklist for actual checks and pending phone observations.
+
 For local visual review only, run `npm run preview:ui`. This uses synthetic reminders without
 touching phone data. Android always uses the native module. Default configuration
 remains Android-only; this preview does not verify native pickers, audio or OS text

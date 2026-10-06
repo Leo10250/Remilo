@@ -14,14 +14,14 @@ those earlier observations do not establish results for this new build.
 1. Install the locally signed **0.4.0 / versionCode 4** APK as an update, without uninstalling or
    clearing data. The build location and evidence are linked from the README.
 2. Open Remilo offline, with no development server running. Your saved reminders
-   should remain present. Tap Agenda → Collections → Settings → Permissions and enable required
+   should remain present. Tap Browse → Settings → Permissions and enable required
    access through each row. Return: statuses refresh automatically.
 3. Record phone model, Android version, app version, date, and whether exact alarms,
    notifications, the alarm channel and full-screen access are enabled.
 4. Prefix new test titles with **QA**. Tap the blue + → enter a title → tap When.
    Select today's date and a time two or three minutes ahead; keep the default
    linked timing. Tap Save in the app bar. Confirm return to Agenda and the saved
-   alert message; use its View action to inspect details → Timing.
+   alert message; use its View action to inspect details → Schedule details when present.
    For a quick native probe, use Settings → Alarms → Test alarm (15 seconds).
 
 ## U. Redesign acceptance (start here)
@@ -34,7 +34,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   actions. At default text size at least four ordinary rows fit a 360×800-equivalent
   screen. Collapse Today: its count remains. Expand it: records reappear separately.
 - **U2 — event versus alarm:** create a No alert reminder with yesterday's event
-  and a future independent due time (More timing options → disable Due with event).
+  and a future independent due time (Schedule options → disable Due with event).
   It appears in Earlier. Move due into the past: it moves to Overdue. For an Alarm
   reminder already overdue, Postpone to tomorrow: it stays Overdue and shows the
   new alarm time. Each occurrence appears once.
@@ -46,9 +46,9 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
 - **U4 — completed, skipped and Trash:** complete a QA row using its trailing check,
   then use Undo. Complete again: it leaves the active agenda. Find it through
-  Agenda → Collections → Completed. Include skipped exposes a skipped repeat.
+  Browse → Completed. Include skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
-  request, then Collections → Trash → Restore recovers its content.
+  request, then Browse → Trash → Restore recovers its content.
   Search/filter both collections, including a list containing only Trash items.
   Complete/delete QA reminders in a different order from their event dates:
   the newest completion/deletion appears first. Elapsed alarms remain silent.
@@ -66,7 +66,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Activity start collapsed; title, notes and timing take priority over compact
   bottom actions. Tap Edit: This occurrence, This and following,
   Entire series are available. Cancel the selector, expand Repeat and Pause repeat.
-  Find it through Agenda → Collections → Repeats → Paused, then Resume. Inspect
+  Find it through Browse → Repeats → Paused, then Resume. Inspect
   Active and Ended filters and verify one entry per family after following/whole
   edits. Family details retain earlier unfinished and postponed occurrences.
   Check scope behavior in D. Long-press a one-off row → Edit opens its editor
@@ -92,8 +92,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   member: screen closes. Repeat the pair and use notification Stop all: both stop and
   controls close; both remain unfinished. The notification tap opens native controls.
 - **U11 — appearance/accessibility:** repeat home, search, filters, creation, Custom
-  repeat, detail Timing/Activity, scope/Postpone sheets, Settings/selectors, Completed,
-  Trash, Collections/Repeats and repeat details, Restore preview and Diagnostics in Light and
+  repeat, detail Schedule details and More → Activity, scope/Postpone sheets, Settings/selectors, Completed,
+  Trash, Browse/Repeats and repeat details, Restore preview and Diagnostics in Light and
   Dark. Enable the largest font size (200% where available), then TalkBack. Essential
   actions remain reachable by scrolling, with clear labels/statuses and no clipping.
   Check keyboard behavior in title/notes and custom numeric fields, including bottom
@@ -114,9 +114,9 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   it remains unfinished until the revealed button is pressed. Swipe back or tap
   the row to close the reveal. Try vertical scrolling and a cancelled drag: neither
   completes nor deletes. Complete using the visible button and Undo it. For a safe
-  stale-Undo case, complete again, use Collections to Reopen then complete the same
+  stale-Undo case, complete again, use Browse to Reopen then complete the same
   reminder, return to the earlier Agenda Undo and confirm it cannot reverse that
-  newer completion. No swipe deletes a reminder.
+  newer completion. Completed swipe reveals Trash and requires tapping it; a swipe alone never deletes.
 - **U15 — stale editor recovery:** when a QA-only controlled second writer is
   available, leave a local draft open and change its saved title/notes/timing/repeat
   externally. Save the old draft: it is kept for Review changes. Inspect Yours and
@@ -135,10 +135,37 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   export and diagnostics refresh/share progress and errors; dismissing a share sheet
   must not claim that a report was sent.
 
+- **U17 — Browse and origin:** open Browse from Agenda, each list, Repeats,
+  Completed and Trash. The current destination is selected; tapping it closes
+  Browse. Switch roots, then Back: non-Agenda roots return to Agenda. Detail,
+  Activity, Settings and editor return to their origin. Keep different searches,
+  filters and scroll positions in Completed and Trash; switching restores each.
+  Sheets and search close before navigation; uncertain saves/restores remain guarded.
+- **U18 — managed lists:** create an empty QA list from Browse; it remains after
+  leaving/reopening. Create a reminder inside it: Save returns to that list with
+  acknowledgement and View. Choose No list, rename the QA list, and check alerts
+  keep their times. Remove the list: reminders move to No list with completion,
+  Trash and repeat exceptions preserved. A stale draft referencing that removed
+  list is rejected. Inspect list-scoped Completed/Trash and backup restored names.
+- **U19 — state and cleanup:** inspect an overdue stopped reminder: Still
+  unfinished and no next alert are explicit; Done and Postpone remain distinct.
+  Inspect adjusted, blocked, No alert and paused/ended repeat exceptions. Alert
+  problems filters failed delivery without including Stopped or Notification sent.
+  Activity shows recorded actions, with empty history labeled No recorded activity.
+  Move a completed QA occurrence to Trash without a modal; Undo restores completion.
+  Restore from Trash returns it to Completed. Check a newer change prevents stale
+  Undo. Trash explains indefinite local retention and the one-off backup exclusion.
+- **U20 — truthful sound preview:** in Settings and the editor, select and preview
+  both tones separately. Play does not select/save; Stop ends playback. Switch
+  previews, close/Back, navigate and background: the old preview ends. Observe
+  Starting then Playing, five-second cutoff and actual fallback if the system tone
+  is unavailable. Let a QA real alarm arrive during preview: it takes priority.
+  Repeat with TalkBack/large text; leave unavailable failure cases pending.
+
 ## A. Everyday reminders and timing
 
 - **A1 — upgrade/offline navigation:** your existing reminders remain. Agenda, editor,
-  Collections, Completed, Trash, Repeats, Settings and detail views open
+  Browse, Completed, Trash, Repeats, Settings and detail views open
   offline. Pull down on the home list to refresh.
 - **A2 — default timing:** create QA Timing. Its due and original alert equal the
   event start; event end is thirty minutes later. Add notes and a list. Search for
@@ -158,7 +185,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   elapsed reminder: it stays silent. Reopen one with a future target: check scheduling.
 - **A7 — management:** duplicate a reminder, choose a new future time, and save.
   Delete it and find it in Trash; Restore returns its content. Elapsed
-  alerts remain silent. Verify recorded actions in detail → Activity.
+  alerts remain silent. Verify recorded actions in detail → More → Activity.
 
 ## B. Native ringing, Snooze and Postpone
 
