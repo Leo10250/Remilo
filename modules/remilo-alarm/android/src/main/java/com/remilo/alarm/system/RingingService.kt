@@ -14,6 +14,7 @@ class RingingService : Service() {
   private val main = Handler(Looper.getMainLooper())
   private var sessionId: String? = null
   private var audio: AlarmAudio? = null
+  private var audioStarting = false
   private var sound = "remilo"
   private var vibration = false
   private lateinit var notifications: AlarmNotifications
@@ -31,7 +32,7 @@ class RingingService : Service() {
       stopSelf(); return START_NOT_STICKY
     }
     if (sessionId != id) {
-      audio?.stop("TimedOut"); audio = null; sessionId = id
+      audio?.stop("TimedOut"); audio = null; audioStarting = false; sessionId = id
       sound = intent.getStringExtra("sound") ?: "remilo"
       vibration = intent.getBooleanExtra("vibration", false)
     }
@@ -42,21 +43,29 @@ class RingingService : Service() {
     AlarmEngine.get(this).sessionMembers(id) { members -> main.post {
       if (sessionId != id) return@post
       if (members.isEmpty()) {
-        audio?.stop(); audio = null
+        audio?.stop(); audio = null; audioStarting = false
         stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
       } else {
         notifications.update(id, members)
-        if (audio == null) {
+        if (audio == null && !audioStarting) {
+          audioStarting = true
+          // Foreground promotion already happened. Wait only for native preview
+          // release, so real alarm playback cannot overlap a replaced preview.
+          AlarmEngine.get(this).beforeAlarmPlayback { main.post {
+          if (sessionId != id || !audioStarting || audio != null) return@post
+          audioStarting = false
           audio = AlarmAudio(this, { elapsed -> AlarmEngine.get(this).audioStarted(id, elapsed) }, { reason ->
             AlarmEngine.get(this).audioEnded(id, reason)
             main.post { if (sessionId == id) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() } }
           }, sound = sound, vibration = vibration).also { it.start() }
+          } }
         }
       }
     } }
   }
   override fun onDestroy() {
     if (active === this) active = null
+    audioStarting = false
     audio?.stop("Interrupted")
     super.onDestroy()
   }
@@ -71,7 +80,7 @@ class RingingService : Service() {
     fun stopSession(sessionId: String) {
       active?.let { service -> service.main.post {
         if (service.sessionId != sessionId) return@post
-        service.audio?.stop(); service.audio = null
+        service.audio?.stop(); service.audio = null; service.audioStarting = false
         service.stopForeground(STOP_FOREGROUND_REMOVE); service.stopSelf()
       } }
     }

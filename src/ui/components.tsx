@@ -10,11 +10,13 @@ import { civilAt, deviceZone, mergeCivil, pickerCivil } from '../domain/time';
 import { engine } from './native';
 import type { Tone } from '../domain/actions';
 import { useReducedMotion } from './motion';
+import { readRootSnapshot, writeRootSnapshot } from '../domain/navigation';
 
 export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'add' | 'repeat' | 'more_vert' | 'close' |
   'check' | 'check_circle' | 'radio_button_unchecked' | 'expand_more' | 'expand_less' | 'chevron_right' |
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
-  'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop';
+  'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop' |
+  'menu' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
   const colors = useTheme();
   return <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size }}>
@@ -49,9 +51,9 @@ export function IconButton({ icon, label, onPress, disabled = false }: { icon: I
     <Icon name={icon} color={colors.ink} />
   </Pressable>;
 }
-export function Copy({ children, muted = false, size = typography.body }: PropsWithChildren<{ muted?: boolean; size?: number }>) {
+export function Copy({ children, muted = false, size = typography.body, heading = false }: PropsWithChildren<{ muted?: boolean; size?: number; heading?: boolean }>) {
   const colors = useTheme();
-  return <Text style={{ color: muted ? colors.muted : colors.ink, fontSize: size, lineHeight: size * 1.4 }}>{children}</Text>;
+  return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size, lineHeight: size * 1.4, fontWeight: heading ? '600' : undefined }}>{children}</Text>;
 }
 export function Heading({ children }: PropsWithChildren) {
   return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading, fontWeight: '600' }}>{children}</Text>;
@@ -143,27 +145,45 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     value={timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId)} onPress={pick} />
     {!!message && <ActionFeedback message={message} tone="muted" />}</>;
 }
-export function AppBar({ title, back = true, onBack, actions, onTitlePress }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; onTitlePress?: () => void }) {
+export function AppBar({ title, back = true, onBack, actions, leading }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; leading?: ReactNode }) {
   const colors = useTheme();
   return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: back ? 4 : 16,
     backgroundColor: colors.background }}>
-    {back && <IconButton icon="arrow_back" label="Back" onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />}
-    {onTitlePress ? <Pressable accessibilityRole="button" accessibilityLabel={'Open collections, ' + title} onPress={onTitlePress}
-      style={{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <Text style={{ color: colors.ink, fontSize: typography.appBar, fontWeight: '600', flexShrink: 1 }}>{title}</Text><Icon name="expand_more" color={colors.ink} size={20} />
-    </Pressable> : <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.appBar, fontWeight: '600', flex: 1 }}>{title}</Text>}
+    {leading ?? (back && <IconButton icon="arrow_back" label="Back" onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />)}
+    <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.appBar, fontWeight: '600', flex: 1 }}>{title}</Text>
     {actions}
   </View>;
 }
-export function Page({ title, subtitle, children, back = true, actions, onBack, footer }: PropsWithChildren<{
-  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode;
+export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true }: PropsWithChildren<{
+  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean;
 }>) {
   const colors = useTheme();
+  const scroll = useRef<ScrollView>(null), restored = useRef(false);
+  const contentHeight = useRef(0), viewportHeight = useRef(0);
+  const restore = () => {
+    if (!scrollKey || !scrollReady || restored.current || !contentHeight.current || !viewportHeight.current) return;
+    const saved = readRootSnapshot(scrollKey + ':scroll', 0), available = Math.max(0, contentHeight.current - viewportHeight.current);
+    restored.current = true; scroll.current?.scrollTo({ y: Math.min(saved, available), animated: false });
+  };
+  useEffect(() => {
+    if (!scrollKey || !scrollReady || restored.current) return;
+    const frame = requestAnimationFrame(() => {
+      if (!contentHeight.current || !viewportHeight.current) return;
+      const available = Math.max(0, contentHeight.current - viewportHeight.current);
+      restored.current = true; scroll.current?.scrollTo({ y: Math.min(readRootSnapshot(scrollKey + ':scroll', 0), available), animated: false });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [scrollKey, scrollReady]);
   return <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-    <AppBar title={title} back={back} actions={actions} onBack={onBack} />
+    <AppBar title={title} back={back} actions={actions} onBack={onBack} leading={leading} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
-        {subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}
+      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}
+        onLayout={(event) => { viewportHeight.current = event.nativeEvent.layout.height; restore(); }}
+        onContentSizeChange={(_, height) => { if (scrollReady) { contentHeight.current = height; restore(); } }}
+        onScroll={scrollKey ? (event) => { if (restored.current && scrollReady) writeRootSnapshot(scrollKey + ':scroll', event.nativeEvent.contentOffset.y); } : undefined} scrollEventThrottle={32}>
+        <View key={scrollReady ? 'ready' : 'loading'} style={{ gap: space.gutter }} onLayout={(event) => {
+          if (scrollReady) { contentHeight.current = event.nativeEvent.layout.height + space.gutter + space.xl; restore(); }
+        }}>{subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}</View>
       </ScrollView>
     </KeyboardAvoidingView>{footer}
   </SafeAreaView>;
@@ -212,10 +232,10 @@ export function Disclosure({ title, children, initial = false, forceOpen = false
     <View style={{ flex: 1 }}><Copy>{title}</Copy></View><Icon name={open ? 'expand_less' : 'expand_more'} />
   </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
-export function Status({ label, tone = 'muted' }: { label: string; tone?: Tone }) {
+export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {
   const colors = useTheme();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
-    <Icon name={tone === 'success' ? 'check_circle' : tone === 'danger' ? 'error' : tone === 'warning' ? 'warning' : 'info'} color={colors[tone]} size={16} />
+    <Icon name={icon ?? (tone === 'success' ? 'check_circle' : tone === 'danger' ? 'error' : tone === 'warning' ? 'warning' : 'info')} color={colors[tone]} size={16} />
     <Text style={{ color: colors[tone], fontSize: typography.supporting, flexShrink: 1 }}>{label}</Text>
   </View>;
 }

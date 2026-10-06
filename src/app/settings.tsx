@@ -2,13 +2,14 @@ import { router } from 'expo-router';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
-import { PermissionsAndroid, View } from 'react-native';
+import { PermissionsAndroid } from 'react-native';
 import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { commandFeedback, type Tone } from '../domain/actions';
-import { ActionFeedback, Button, Choice, Copy, DateField, Field, Group, IconButton, Page, QueryState, SettingRow, Sheet, shortDateTime, Status, Toggle } from '../ui/components';
+import { ActionFeedback, Button, Choice, Copy, DateField, Field, Group, Page, QueryState, SettingRow, Sheet, shortDateTime, Status, Toggle } from '../ui/components';
 import { engine, nativeAvailable, preferences, useCapabilities, useSettings } from '../ui/native';
-type Picker = 'sound' | 'snooze' | 'theme' | null;
-type Action = 'test' | 'sound' | 'permissions' | 'export';
+import { SoundPicker } from '../ui/sound-picker';
+type Picker = 'snooze' | 'theme' | null;
+type Action = 'test' | 'permissions' | 'export';
 type Feedback = { message: string; tone: Tone };
 function timeValue(minutes: number) { const date = new Date(); date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0); return date.getTime(); }
 export default function Settings() {
@@ -46,8 +47,7 @@ export default function Settings() {
     <QueryState loading={!settings && query.isLoading && nativeAvailable} error={query.error} empty={!settings && !query.isLoading} emptyMessage="Settings are unavailable." onRetry={() => void query.refetch()} />
     {!!settings && <>
       <Group title="Alarms">
-        <SettingRow icon="volume_up" label="Sound" value={settings.sound === 'system' ? 'System alarm' : 'Remilo'}
-          onPress={() => setPicker('sound')} />
+        <SoundPicker value={settings.sound} onChange={(sound) => save({ sound })} disabled={busy} />
         <Toggle icon="vibration" label="Vibration" value={settings.vibration} onChange={(vibration) => save({ vibration })} />
         <SettingRow icon="snooze" label="Snooze duration" value={settings.snoozeMinutes + ' minutes'}
           onPress={() => { setMinutes(String(settings.snoozeMinutes)); setPicker('snooze'); }} />
@@ -86,17 +86,10 @@ export default function Settings() {
       {(pending === 'export' || feedback.export) && <ActionFeedback loading={pending === 'export'} message={pending === 'export' ? 'Preparing backup…' : feedback.export?.message} tone={feedback.export?.tone} />}
       <SettingRow icon="download" label="Restore backup" onPress={() => router.push('/backup')} />
     </Group>
+    <Copy muted size={13}>Backups include lists and reminders, except one-off reminders in Trash. Repeating deletion exclusions are kept.</Copy>
     <Group title="Help"><SettingRow icon="info" label="Diagnostics" onPress={() => router.push('/diagnostics')} />
       <SettingRow label="Remilo" value="0.4.0 · Android" /></Group>
-    <Sheet title={picker === 'sound' ? 'Alarm sound' : picker === 'theme' ? 'Theme' : 'Snooze duration'} visible={picker !== null} onClose={() => setPicker(null)}>
-      {picker === 'sound' && (['remilo', 'system'] as const).map((sound) => <View key={sound} style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <View style={{ flex: 1 }}><Choice label={sound === 'remilo' ? 'Remilo' : 'System alarm'} selected={settings?.sound === sound}
-          onPress={() => { save({ sound }); setPicker(null); }} /></View>
-        <IconButton icon="play_arrow" label={'Preview ' + sound + ' sound'} disabled={busy} onPress={() => void run('sound', async () => {
-          const result = await engine().previewSound(sound); return commandFeedback(result, 'Sound preview started.');
-        })} />
-      </View>)}
-      {picker === 'sound' && (pending === 'sound' || feedback.sound) && <ActionFeedback loading={pending === 'sound'} message={pending === 'sound' ? 'Starting sound preview…' : feedback.sound?.message} tone={feedback.sound?.tone} />}
+    <Sheet title={picker === 'theme' ? 'Theme' : 'Snooze duration'} visible={picker !== null} onClose={() => setPicker(null)}>
       {picker === 'theme' && (['system', 'light', 'dark'] as const).map((theme) => <Choice key={theme} label={theme === 'system' ? 'Follow device' : theme === 'light' ? 'Light' : 'Dark'}
         selected={settings?.theme === theme} onPress={() => { save({ theme }); setPicker(null); }} />)}
       {picker === 'snooze' && <>

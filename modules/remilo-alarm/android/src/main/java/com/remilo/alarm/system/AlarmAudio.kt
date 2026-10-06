@@ -19,7 +19,8 @@ import com.remilo.alarm.core.AlarmPolicy
 /** Shutdown never waits for Room, JavaScript, or a wall-clock alarm. */
 internal class AlarmAudio(context: Context, private val started: (Long) -> Unit,
   private val ended: (String) -> Unit, private val sound: String = "remilo",
-  private val vibration: Boolean = false, private val durationMillis: Long = AlarmPolicy.SESSION_MILLIS) {
+  private val vibration: Boolean = false, private val durationMillis: Long = AlarmPolicy.SESSION_MILLIS,
+  private val actualStarted: (String) -> Unit = {}, private val interruptOnFocusLoss: Boolean = false) {
   private val context = context.applicationContext
   private val thread = HandlerThread("Remilo-audio").apply { start() }
   private val handler = Handler(thread.looper)
@@ -31,6 +32,9 @@ internal class AlarmAudio(context: Context, private val started: (Long) -> Unit,
   private var player: MediaPlayer? = null
   private var deadline = 0L
   private var finished = false
+  private val stopLock = Any()
+  private var released = false
+  private val stoppedCallbacks = mutableListOf<() -> Unit>()
   private val vibrator = context.getSystemService(VibratorManager::class.java).defaultVibrator
   private fun vibrate() {
     if (vibration) try { vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 1000), 0)) }
@@ -41,7 +45,7 @@ internal class AlarmAudio(context: Context, private val started: (Long) -> Unit,
       if (!finished) when (change) {
         AudioManager.AUDIOFOCUS_LOSS -> finish("Interrupted")
         AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-          player?.pause(); vibrator.cancel()
+          if (interruptOnFocusLoss) finish("Interrupted") else { player?.pause(); vibrator.cancel() }
         }
         AudioManager.AUDIOFOCUS_GAIN -> if (deadline > SystemClock.elapsedRealtime()) {
           try { player?.start(); vibrate() } catch (_: Exception) { finish("Failed") }
@@ -61,6 +65,7 @@ internal class AlarmAudio(context: Context, private val started: (Long) -> Unit,
       var systemSource = false
       if (sound == "system") try {
         media.setDataSource(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+        media.prepare()
         systemSource = true
       } catch (_: Exception) {
         media.reset(); media.setAudioAttributes(attributes)
@@ -68,29 +73,42 @@ internal class AlarmAudio(context: Context, private val started: (Long) -> Unit,
       }
       if (!systemSource) context.resources.openRawResourceFd(R.raw.remilo_alarm).use { source ->
         media.setDataSource(source.fileDescriptor, source.startOffset, source.length)
+        media.prepare()
       }
       media.isLooping = true
       media.setOnErrorListener { _, _, _ -> finish("Failed"); true }
-      media.prepare()
       media.start()
       vibrate()
       val elapsed = SystemClock.elapsedRealtime()
       deadline = elapsed + durationMillis
       started(elapsed)
+      actualStarted(if (systemSource) "system" else "remilo")
       handler.postDelayed({ finish("TimedOut") }, durationMillis)
     } catch (_: Exception) { finish("Failed") }
   } }
-  fun stop(reason: String = "Stopped") { handler.post { finish(reason) } }
+  /** The callback runs only after audio and focus have been released. */
+  fun stop(reason: String = "Stopped", afterStopped: () -> Unit = {}) {
+    val alreadyReleased = synchronized(stopLock) {
+      if (released) true else { stoppedCallbacks.add(afterStopped); false }
+    }
+    if (alreadyReleased) afterStopped() else handler.post { finish(reason) }
+  }
   private fun finish(reason: String) {
     if (finished) return
     finished = true
     Log.i("Remilo", "Playback stopped: reason=$reason elapsed=${SystemClock.elapsedRealtime()} deadline=$deadline")
     handler.removeCallbacksAndMessages(null)
-    try { player?.release() } finally { player = null }
-    manager.abandonAudioFocusRequest(focus)
-    vibrator.cancel()
-    if (wake.isHeld) wake.release()
-    ended(reason)
-    thread.quitSafely()
+    try { player?.release() } catch (_: Exception) { /* release remaining resources */ } finally { player = null }
+    try { manager.abandonAudioFocusRequest(focus) } catch (_: Exception) { /* already detached */ }
+    try { vibrator.cancel() } catch (_: Exception) { /* unavailable device */ }
+    try { if (wake.isHeld) wake.release() } catch (_: Exception) { /* already released */ }
+    try { ended(reason) } finally {
+      val callbacks = synchronized(stopLock) {
+        released = true
+        stoppedCallbacks.toList().also { stoppedCallbacks.clear() }
+      }
+      callbacks.forEach { try { it() } catch (_: Exception) { /* detached consumer */ } }
+      thread.quitSafely()
+    }
   }
 }

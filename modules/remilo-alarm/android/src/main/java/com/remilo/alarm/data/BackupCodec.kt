@@ -8,9 +8,9 @@ class BackupLimitException : IllegalArgumentException()
 /** Portable data only. No generations, sessions, handles, credentials or device IDs. */
 object BackupCodec {
   data class Bundle(val records: List<ReminderRecord>, val nextAlerts: Map<String, Long?>,
-    val history: List<HistoryRecord>, val series: List<SeriesRecord> = emptyList())
+    val history: List<HistoryRecord>, val series: List<SeriesRecord> = emptyList(), val lists: List<ListRecord> = emptyList())
   fun record(record: ReminderRecord): Map<String, Any?> = mapOf(
-    "id" to record.id, "title" to record.title, "notes" to record.notes, "listName" to record.listName,
+    "id" to record.id, "title" to record.title, "notes" to record.notes, "listName" to record.listName, "listId" to record.listId,
     "eventStartMs" to record.eventStartMs, "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs,
     "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs), "createdAtMs" to record.createdAtMs,
     "completed" to record.completed, "mode" to record.mode, "allDay" to record.allDay,
@@ -19,9 +19,10 @@ object BackupCodec {
     "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot,
     "exception" to record.exception, "skipped" to record.skipped, "deleted" to record.deleted)
   fun encode(records: List<ReminderRecord>, nextAlerts: Map<String, Long?>, history: List<HistoryRecord>, now: Long,
-    series: List<SeriesRecord> = emptyList()): String {
-    if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000) throw BackupLimitException()
-    val json = JSONObject(mapOf("format" to "Remilo", "version" to 2, "exportedAtMs" to now,
+    series: List<SeriesRecord> = emptyList(), lists: List<ListRecord> = emptyList()): String {
+    if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000) throw BackupLimitException()
+    val json = JSONObject(mapOf("format" to "Remilo", "version" to 3, "exportedAtMs" to now,
+      "lists" to lists.map { mapOf("id" to it.id, "name" to it.name, "createdAtMs" to it.createdAtMs) },
       "series" to series.map { mapOf("id" to it.id, "seriesId" to it.seriesId, "template" to JSONObject(it.template),
         "rule" to JSONObject(it.rule), "state" to it.state, "createdAtMs" to it.createdAtMs) },
       "reminders" to records.map { record(it) + ("nextAlertMs" to nextAlerts[it.id]) },
@@ -47,11 +48,54 @@ object BackupCodec {
     require(value is Boolean) { "Invalid backup option: $key" }
     return value
   }
+  /** Also reads owned series templates without routing them through a legacy backup version. */
+  fun decodeRecord(obj: JSONObject, version: Int = 3): ReminderRecord {
+    val id = text(obj, "id", 200)
+    require(id.isNotBlank()) { "Empty reminder identity." }
+    val title = text(obj, "title", 200)
+    require(title.isNotBlank()) { "Empty reminder title." }
+    val mode = text(obj, "mode", 20)
+    require(mode in setOf("Alarm", "Notification", "None")) { "Unsupported alert mode." }
+    val sound = text(obj, "sound", 20)
+    require(sound in setOf("remilo", "system")) { "Unsupported sound." }
+    val zone = ZoneId.of(text(obj, "zoneId", 100)).id
+    val start = time(obj, "eventStartMs"); val end = time(obj, "eventEndMs")
+    require(end > start) { "Event end must follow its start." }
+    val listId = if (version < 3 || !obj.has("listId") || obj.isNull("listId")) null else text(obj, "listId", 200).also { require(it.isNotBlank()) }
+    return ReminderRecord(id, title, start, end, time(obj, "dueAtMs"), time(obj, "createdAtMs"),
+      boolean(obj, "completed"), 1, text(obj, "notes", 10_000, true), text(obj, "listName", 60, true),
+      mode, time(obj, "alarmAtMs"), boolean(obj, "allDay"), zone,
+      boolean(obj, "dueLinked"), boolean(obj, "alarmLinked"), version >= 2 && obj.has("deleted") && boolean(obj, "deleted"),
+      sound, boolean(obj, "vibration"),
+      if (version == 1 || !obj.has("segmentId") || obj.isNull("segmentId")) null else text(obj, "segmentId", 200),
+      if (version == 1 || !obj.has("nominalSlot") || obj.isNull("nominalSlot")) null else text(obj, "nominalSlot", 100),
+      version >= 2 && obj.has("exception") && boolean(obj, "exception"), version >= 2 && obj.has("skipped") && boolean(obj, "skipped"), listId)
+  }
   fun decode(json: String): Bundle {
     require(json.toByteArray(Charsets.UTF_8).size <= 10_000_000) { "Backup exceeds 10 MB." }
     val root = JSONObject(json)
-    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2)) { "Unsupported backup format/version." }
+    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3)) { "Unsupported backup format/version." }
     val version = root.getInt("version")
+    val listItems = if (version >= 3) root.getJSONArray("lists") else JSONArray()
+    require(listItems.length() <= 10_000) { "Backup contains too many lists." }
+    val listIds = mutableSetOf<String>(); val listNames = mutableSetOf<String>()
+    val lists = (0 until listItems.length()).map { index ->
+      val obj = listItems.getJSONObject(index)
+      val id = text(obj, "id", 200); val name = text(obj, "name", 60); val key = ListNames.key(name)
+      require(id.isNotBlank() && name.isNotEmpty() && listIds.add(id) && listNames.add(name)) { "Invalid or duplicate list." }
+      ListRecord(id, name, key, createdAtMs = time(obj, "createdAtMs"))
+    }.toMutableList()
+    fun membership(record: ReminderRecord): ReminderRecord {
+      if (version >= 3) {
+        val list = record.listId?.let { id -> lists.find { it.id == id } ?: throw IllegalArgumentException("Unknown backup list.") }
+        return record.copy(listName = list?.name.orEmpty())
+      }
+      val name = record.listName
+      if (name.isEmpty()) return record.copy(listId = null, listName = "")
+      val key = ListNames.key(name)
+      val list = lists.find { it.name == name } ?: ListRecord(ListNames.legacyId(name), name, key, createdAtMs = record.createdAtMs).also { lists.add(it) }
+      return record.copy(listId = list.id, listName = list.name)
+    }
     val segments = root.optJSONArray("series") ?: JSONArray()
     require(segments.length() <= 10_000)
     val segmentIds = mutableSetOf<String>()
@@ -63,8 +107,7 @@ object BackupCodec {
       require(state in setOf("Active", "Paused", "Archived"))
       val rule = RuleCodec.decode(obj.getJSONObject("rule").toString())
       // Decode templates through the same strict one-off field validation.
-      val template = decode(JSONObject(mapOf("format" to "Remilo", "version" to 1,
-        "reminders" to JSONArray().put(obj.getJSONObject("template")))).toString()).records.single()
+      val template = membership(decodeRecord(obj.getJSONObject("template"), version))
       require(template.segmentId == null)
       SeriesRecord(id, seriesId, JSONObject(record(template)).toString(), RuleCodec.encode(rule), state = state,
         createdAtMs = time(obj, "createdAtMs"))
@@ -76,25 +119,8 @@ object BackupCodec {
       val obj = items.getJSONObject(index)
       val id = text(obj, "id", 200)
       require(id.isNotBlank() && !nextAlerts.containsKey(id)) { "Duplicate or empty reminder identity." }
-      val title = text(obj, "title", 200)
-      require(title.isNotBlank()) { "Empty reminder title." }
-      val mode = text(obj, "mode", 20)
-      require(mode in setOf("Alarm", "Notification", "None")) { "Unsupported alert mode." }
-      val sound = text(obj, "sound", 20)
-      require(sound in setOf("remilo", "system")) { "Unsupported sound." }
-      val zone = ZoneId.of(text(obj, "zoneId", 100)).id
-      val start = time(obj, "eventStartMs")
-      val end = time(obj, "eventEndMs")
-      require(end > start) { "Event end must follow its start." }
       nextAlerts[id] = if (!obj.has("nextAlertMs") || obj.isNull("nextAlertMs")) null else time(obj, "nextAlertMs")
-      ReminderRecord(id, title, start, end, time(obj, "dueAtMs"), time(obj, "createdAtMs"),
-        boolean(obj, "completed"), 1, text(obj, "notes", 10_000, true), text(obj, "listName", 60, true),
-        mode, time(obj, "alarmAtMs"), boolean(obj, "allDay"), zone,
-        boolean(obj, "dueLinked"), boolean(obj, "alarmLinked"), if (version == 2) boolean(obj, "deleted") else false,
-        sound, boolean(obj, "vibration"),
-        if (version == 1 || obj.isNull("segmentId")) null else text(obj, "segmentId", 200),
-        if (version == 1 || obj.isNull("nominalSlot")) null else text(obj, "nominalSlot", 100),
-        version == 2 && boolean(obj, "exception"), version == 2 && boolean(obj, "skipped"))
+      membership(decodeRecord(obj, version))
     }
     records.filter { it.segmentId != null }.forEach { record ->
       require(record.segmentId in segmentIds && record.nominalSlot != null)
@@ -119,6 +145,6 @@ object BackupCodec {
       HistoryRecord(id, reminderId, kind, time(obj, "atMs"), 0,
         if (!obj.has("targetMs") || obj.isNull("targetMs")) null else time(obj, "targetMs"))
     }
-    return Bundle(records, nextAlerts, history, series)
+    return Bundle(records, nextAlerts, history, series, lists)
   }
 }

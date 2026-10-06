@@ -3,19 +3,19 @@ import { civilAt, deviceZone } from './time';
 
 export type EditorDraft = ReminderDraft & { eventStartMs: number; eventEndMs: number; dueAtMs: number; alarmAtMs: number };
 export type EditorState = { draft: EditorDraft; recurrence?: RecurrenceDraft };
-export const contentFields = ['title', 'notes', 'listName', 'sound', 'vibration'] as const;
+export const contentFields = ['title', 'notes', 'listId', 'sound', 'vibration'] as const;
 const timingFields = ['eventStartMs', 'eventEndMs', 'dueAtMs', 'alarmAtMs', 'mode', 'allDay', 'zoneId', 'dueLinked', 'alarmLinked'] as const;
 export type DraftConflict = { key: typeof contentFields[number] | 'schedule'; label: string; yours: unknown; latest: unknown };
 export function reviewChoicesComplete(conflicts: DraftConflict[], choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>>) {
   return conflicts.every((conflict) => choices[conflict.key] === 'yours' || choices[conflict.key] === 'latest');
 }
-const labels: Record<DraftConflict['key'], string> = { title: 'Title', notes: 'Notes', listName: 'List', sound: 'Sound', vibration: 'Vibration', schedule: 'Timing and repeat' };
+const labels: Record<DraftConflict['key'], string> = { title: 'Title', notes: 'Notes', listId: 'List', sound: 'Sound', vibration: 'Vibration', schedule: 'Schedule and repeat' };
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Only editable content enters a draft; operational occurrence fields stay native. */
 export function editorDraft(record?: ReminderDraft, now = Date.now()): EditorDraft {
   const start = record?.eventStartMs ?? now + 600_000;
-  return { title: record?.title ?? '', notes: record?.notes ?? '', listName: record?.listName ?? '',
+  return { title: record?.title ?? '', notes: record?.notes ?? '', listId: record?.listId ?? null, listName: record?.listName ?? '',
     eventStartMs: start, eventEndMs: record?.eventEndMs ?? start + 1_800_000, dueAtMs: record?.dueAtMs ?? start,
     alarmAtMs: record?.alarmAtMs ?? start, mode: record?.mode ?? 'Alarm', allDay: record?.allDay ?? false,
     zoneId: record?.zoneId ?? deviceZone(), dueLinked: record?.dueLinked ?? true, alarmLinked: record?.alarmLinked ?? true,

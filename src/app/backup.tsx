@@ -68,6 +68,7 @@ export default function Backup() {
         onPress={() => { setPreview(null); setJson(''); setCopies([]); setFeedback(undefined); }} />
     </View></BottomActionBar> : undefined}>
     <Copy muted>Preview a backup before restoring. Existing reminders are preserved; elapsed alarms stay silent.</Copy>
+    <Copy muted size={14}>Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.</Copy>
     {!nativeAvailable && <Copy muted>Use the Android app to restore a backup.</Copy>}
     <Group><SettingRow label={phase === 'reading' ? 'Reading backup…' : preview ? 'Choose another backup' : 'Choose backup file'}
       icon="download" disabled={!nativeAvailable || busy || uncertain} onPress={() => void choose()} /></Group>
@@ -77,6 +78,11 @@ export default function Backup() {
       <Copy size={20}>{preview.count} reminders or series</Copy>
       <Copy muted>New reminders will be added. Existing reminders and series are preserved unless you select a separate copy below.</Copy>
       <Copy muted size={14}>A repeating series includes its exceptions and activity.</Copy>
+      {!!preview.lists?.length && <Group title={`Lists · ${preview.lists.length}`}>
+        <Copy muted size={14}>Empty lists are included. Matching list identities keep local names; other name conflicts use the restored names below.</Copy>
+        {preview.lists.map((list) => <SettingRow key={list.id} label={list.name}
+          value={list.restoredName !== list.name ? `Restored as ${list.restoredName}` : list.conflict ? 'Keep local list' : 'Add list'} />)}
+      </Group>}
       <Group>
         {preview.items.slice(0, previewLimit).map((item) => item.conflict ? busy || uncertain ?
           <SettingRow key={item.id} label={item.title} value={copies.includes(item.id) ? 'Restore a copy' : 'Keep existing'} /> :

@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { RepeatFamily } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { Copy, Group, Page, QueryState, SettingRow, shortDateTime } from '../../ui/components';
@@ -8,13 +7,16 @@ import { engine, nativeAvailable } from '../../ui/native';
 import { repeatLabel } from '../../ui/recurrence';
 import { useTheme } from '../../ui/theme';
 import { typography } from '../../ui/tokens';
+import { RootNotice, useBrowseNavigation } from '../../ui/navigation';
+import { useRootState } from '../../ui/root-state';
 
 export default function Repeats() {
   const colors = useTheme();
-  const [state, setState] = useState<RepeatFamily['state']>('Active');
+  const [state, setState] = useRootState<RepeatFamily['state']>('repeats:state', 'Active');
+  const navigation = useBrowseNavigation({ kind: 'repeats' });
   const query = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable });
   const items = query.data?.filter((family) => family.state === state) ?? [];
-  return <Page title="Repeats">
+  return <Page title="Repeats" back={false} leading={navigation.leading} scrollKey="repeats" scrollReady={!query.isLoading} footer={<>{navigation.overlay}<RootNotice /></>}>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {(['Active', 'Paused', 'Ended'] as const).map((value) => <Pressable key={value} accessibilityRole="tab"
         accessibilityState={{ selected: state === value }} onPress={() => setState(value)}
@@ -32,6 +34,6 @@ export default function Repeats() {
           : state === 'Ended' ? 'No future dates' : '', family.unfinishedCount ? `${family.unfinishedCount} unfinished` : ''].filter(Boolean).join(' · ')}
         onPress={() => router.push({ pathname: '/series/[id]', params: { id: series.id, seriesId: family.seriesId } })} />;
     })}</Group>}
-    {state === 'Paused' && <Copy muted size={14}>Pausing a repeat keeps its unfinished occurrences and independently postponed alarms.</Copy>}
+    {state !== 'Active' && <Copy muted size={14}>{state === 'Paused' ? 'Planned dates have no ordinary alerts while this repeat is paused.' : 'This repeat has no ordinary future dates.'} Unfinished occurrences and independently scheduled exceptions remain actionable in Agenda.</Copy>}
   </Page>;
 }

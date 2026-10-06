@@ -7,6 +7,8 @@ import type { Command, CommandResult, RecurrenceDraft, Series } from '../../modu
 import { changeDraftZone, chooseConflict, editorDraft, moveDraftDue, moveDraftEvent, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState } from '../domain/editor-draft';
 import { commandFeedback } from '../domain/actions';
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
+import { creationOrigin } from '../domain/navigation';
+import { modeLabel, scheduleDateTime } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
 import { ActionFeedback, Button, Choice, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, SelectRow, Sheet, Status, Toggle } from '../ui/components';
 import { notify } from '../ui/feedback';
@@ -15,6 +17,9 @@ import { RepeatForm } from '../ui/recurrence';
 import { useTheme } from '../ui/theme';
 import { TimeZoneField } from '../ui/time-zone';
 import { typography } from '../ui/tokens';
+import { ListPicker, returnToOrigin } from '../ui/navigation';
+import { Schedule } from '../ui/schedule';
+import { SoundPicker } from '../ui/sound-picker';
 
 type Seed = { state: EditorState; revision?: number; series?: Series };
 async function readSeed(id?: string, segmentId?: string, following?: string): Promise<Seed> {
@@ -35,19 +40,22 @@ async function readSeed(id?: string, segmentId?: string, following?: string): Pr
   return { state: { draft, recurrence }, revision, series };
 }
 export default function Editor() {
-  const params = useLocalSearchParams<{ id?: string; duplicate?: string; segmentId?: string; following?: string }>();
+  const params = useLocalSearchParams<{ id?: string; duplicate?: string; segmentId?: string; following?: string; originListId?: string; originNoList?: string }>();
   const id = params.id ?? params.duplicate, editing = !!id || !!params.segmentId;
   const source = useQuery({ queryKey: ['editor-source', id, params.segmentId, params.following], enabled: nativeAvailable && editing,
     queryFn: () => readSeed(id, params.segmentId, params.following) });
   if (!nativeAvailable) return <Page title="Reminder"><Copy>Install the Android build to create and edit reminders.</Copy></Page>;
   if (editing && !source.data) return <Page title="Edit reminder"><QueryState loading={source.isLoading} error={source.error}
     empty={false} onRetry={() => void source.refetch()} /></Page>;
-  const seed = source.data ?? { state: { draft: editorDraft() } };
-  return <EditorForm key={id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={!!params.duplicate} following={params.following} />;
+  const origin = creationOrigin(params);
+  const seed = source.data ?? { state: { draft: editorDraft({ title: '', listId: origin.kind === 'list' ? origin.listId : null }) } };
+  return <EditorForm key={id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={!!params.duplicate} following={params.following} originListId={params.originListId} originNoList={params.originNoList} />;
 }
 type Review = { latest: Seed; merged: EditorState; conflicts: DraftConflict[]; choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>> };
-function EditorForm({ seed, id, duplicate, following }: { seed: Seed; id?: string; duplicate: boolean; following?: string }) {
+function EditorForm({ seed, id, duplicate, following, originListId, originNoList }: { seed: Seed; id?: string; duplicate: boolean; following?: string; originListId?: string; originNoList?: string }) {
   const settings = useSettings(), command = useCommand(), navigation = useNavigation(), colors = useTheme();
+  const [origin] = useState(() => creationOrigin({ originListId, originNoList }));
+  const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().getLists(), enabled: nativeAvailable });
   const [state, setState] = useState<EditorState>(() => ({ ...seed.state, draft: { ...seed.state.draft,
     title: duplicate ? seed.state.draft.title.slice(0, 193) + ' (copy)' : seed.state.draft.title } }));
   const { draft, recurrence } = state, zone = draft.zoneId ?? deviceZone();
@@ -74,16 +82,21 @@ function EditorForm({ seed, id, duplicate, following }: { seed: Seed; id?: strin
     if (!saved) return;
     const blocked = saved.status === 'Blocked', pending = saved.status === 'Pending';
     if (creation || blocked || pending) {
-      const feedback = commandFeedback(saved, draft.mode === 'None' ? 'Reminder created without an alert' : 'Reminder created');
+      const occurrence = saved.occurrence;
+      const success = draft.mode === 'None' ? 'Reminder created without an alert' :
+        saved.status === 'Scheduled' && occurrence?.nextAlertMs != null ?
+          `${modeLabel(occurrence.mode)} scheduled for ${scheduleDateTime(occurrence.nextAlertMs, occurrence.zoneId || deviceZone())}` :
+          saved.segmentId ? 'Repeating reminder created' : 'Reminder created';
+      const feedback = commandFeedback(saved, success);
       notify({ message: feedback.message, tone: feedback.tone === 'accent' ? 'muted' : feedback.tone, persistent: blocked || pending,
         action: { label: 'View', occurrenceId: saved.occurrence?.id, segmentId: saved.segmentId } });
     }
-    if (creation) router.dismissTo('/');
+    if (creation) returnToOrigin(origin);
     else if (router.canGoBack()) router.back();
     else if (saved.segmentId) router.replace({ pathname: '/series/[id]', params: { id: saved.segmentId } });
     else if (saved.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: saved.occurrence.id } });
     else router.replace('/');
-  }, [saved, creation, draft.mode]);
+  }, [saved, creation, draft.mode, origin]);
   const patch = (value: Partial<EditorDraft>) => { if (!pendingSave.current && !timingWork.current) setState((current) => ({ ...current, draft: { ...current.draft, ...value } })); };
   const updateTiming = async (resolve: () => Promise<{ draft: EditorDraft; warnings: string[] }>, field: string, nextRepeat?: { value?: RecurrenceDraft }) => {
     if (pendingSave.current || timingWork.current || busy || review) throw new Error('Wait for the current update before changing timing.');
@@ -106,7 +119,7 @@ function EditorForm({ seed, id, duplicate, following }: { seed: Seed; id?: strin
   const payload = Object.fromEntries(Object.entries({ ...draft,
     ...(recurrence ? { recurrence: cleanRepeat(recurrence) } : {}),
     ...(draft.allDay && draft.dueLinked ? { dueAtMs: undefined } : {}), ...(draft.allDay && draft.alarmLinked ? { alarmAtMs: undefined } : {}) })
-    .filter(([, value]) => value !== undefined));
+    .filter(([key, value]) => key !== 'listName' && value !== undefined));
   const preview = useQuery({ queryKey: ['schedule-preview', payload], queryFn: () => engine().previewSchedule(payload as EditorDraft & { recurrence?: RecurrenceDraft }),
     enabled: nativeAvailable && !!draft.title.trim() && !busy });
   const loadReview = async () => {
@@ -180,6 +193,7 @@ function EditorForm({ seed, id, duplicate, following }: { seed: Seed; id?: strin
         ' · ' + repeatLabel(timing.recurrence) + ' · ' + timing.zoneId;
     }
     if (conflict.key === 'vibration') return value ? 'On' : 'Off';
+    if (conflict.key === 'listId') return value == null ? 'No list' : lists.data?.find((list) => list.id === value)?.name ?? 'Unavailable list';
     return typeof value === 'string' && value.length ? value : 'None';
   };
   const disabled = !nativeAvailable || busy || !!review || scopeChanged || !draft.title.trim();
@@ -210,41 +224,41 @@ function EditorForm({ seed, id, duplicate, following }: { seed: Seed; id?: strin
         <DateField label="When" value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} onError={dateError} onChange={moveEvent} dateOnly={draft.allDay} />
         <SelectRow label="Alert" icon="alarm" value={draft.mode ?? 'Alarm'} choices={[{ value: 'Alarm', label: 'Alarm' }, { value: 'Notification', label: 'Notification' }, { value: 'None', label: 'No alert' }]}
           onChange={(mode) => patch({ mode })} />
-        {draft.mode !== 'None' && !draft.alarmLinked && <DateField label="Alarm time" value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
+        {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
           zoneId={zone} onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} />}
         {invalid(['eventStartMs', 'alarmAtMs']) && <Status label={message} tone="danger" />}
         {!editingId && <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} />}
         {invalid(['recurrence']) && <Status label={message} tone="danger" />}
       </Group>
-      <View style={{ gap: 12 }}><Field label="List (optional)" value={draft.listName} onChangeText={(listName) => patch({ listName })} maxLength={60} error={invalid(['listName'])} />
+      <View style={{ gap: 12 }}><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
+        {invalid(['listId']) && <Status label={message} tone="danger" />}
         <Field label="Notes (optional)" value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} /></View>
-      <Disclosure title="More timing options" forceOpen={!!invalid(['dueAtMs', 'zoneId', 'eventEndMs'])}>
+      <Disclosure title="Schedule options" forceOpen={!!invalid(['dueAtMs', 'zoneId', 'eventEndMs'])}>
         <Toggle label="All day" value={draft.allDay ?? false} onChange={(allDay) => patch({ allDay, dueLinked: true, alarmLinked: true })} />
-        {!draft.allDay && <DateField label="Event ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => patch({ eventEndMs })} />}
-        <Toggle label="Due with the event" value={draft.dueLinked ?? true} onChange={(dueLinked) => {
+        {!draft.allDay && <DateField label="Ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => patch({ eventEndMs })} />}
+        <Toggle label="Due follows When" value={draft.dueLinked ?? true} onChange={(dueLinked) => {
           const dueAtMs = dueLinked ? draft.allDay ? preview.data?.eventEndMs ?? draft.eventEndMs : draft.eventStartMs : preview.data?.dueAtMs ?? draft.dueAtMs;
           patch({ dueLinked, dueAtMs, ...(dueLinked && draft.alarmLinked && !draft.allDay ? { alarmAtMs: dueAtMs } : {}) });
         }} />
         {!draft.dueLinked && <DateField label="Due" value={draft.dueAtMs} zoneId={zone} onError={dateError} onChange={changeDue} />}
-        {draft.mode !== 'None' && <><Toggle label={draft.allDay ? 'Alarm at 9 AM' : 'Alarm follows due time'} value={draft.alarmLinked ?? true} onChange={(alarmLinked) => patch({ alarmLinked,
+        {draft.mode !== 'None' && <><Toggle label={draft.allDay ? modeLabel(draft.mode) + ' at 9 AM' : modeLabel(draft.mode) + ' follows due time'} value={draft.alarmLinked ?? true} onChange={(alarmLinked) => patch({ alarmLinked,
           alarmAtMs: alarmLinked && !draft.allDay ? preview.data?.dueAtMs ?? draft.dueAtMs : preview.data?.alarmAtMs ?? draft.alarmAtMs })} />
-          {draft.alarmLinked && <DateField label="Alarm time" value={preview.data?.alarmAtMs ?? draft.alarmAtMs} zoneId={zone}
+          {draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs} zoneId={zone}
             onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} />}</>}
         {!recurrence && <><TimeZoneField value={zone} atMs={draft.eventStartMs} disabled={busy} onChange={(next) => { void changeZone(next, undefined).catch(() => {}); }} error={invalid(['zoneId'])} />
           <Copy muted size={13}>Changing the zone keeps your clock times. This reminder stays at its saved instant when you travel.</Copy></>}
-        {draft.mode === 'Alarm' && <><SelectRow label="Sound" value={draft.sound ?? settings.data?.sound ?? 'remilo'} choices={[{ value: 'remilo', label: 'Remilo' }, { value: 'system', label: 'System alarm' }]} onChange={(sound) => patch({ sound })} />
-          <Toggle label="Vibration" value={draft.vibration ?? settings.data?.vibration ?? true} onChange={(vibration) => patch({ vibration })} /></>}
         {invalid(['dueAtMs', 'eventEndMs']) && <Status label={message} tone="danger" />}
       </Disclosure>
+      {draft.mode === 'Alarm' && <Disclosure title="Alarm options" forceOpen={!!invalid(['sound', 'vibration'])}>
+        <SoundPicker value={draft.sound ?? settings.data?.sound ?? 'remilo'} onChange={(sound) => patch({ sound })} disabled={frozen} />
+        <Toggle label="Vibration" value={draft.vibration ?? settings.data?.vibration ?? true} onChange={(vibration) => patch({ vibration })} />
+      </Disclosure>}
       {preview.data && <>
-        <Copy muted size={14}>{draft.mode === 'None' ? 'No alarm' : 'Alarm ' + formatTime(preview.data.alarmAtMs, zone)}</Copy>
+        <Schedule item={{ ...draft, ...preview.data, repeatRule: recurrence }} draft />
         {recurrence && <Group title="Next dates">{preview.data.upcoming.map((slot) => <View key={slot.nominalSlot} style={{ padding: 12, gap: 3 }}>
-          <Copy size={14}>{formatTime(slot.eventStartMs, slot.zoneId)}</Copy><Copy muted size={13}>{slot.adjusted ? 'Clock-change adjustment · ' : ''}{draft.mode === 'None' ? 'No alert' : 'Alarm ' + formatTime(slot.alarmAtMs, slot.zoneId)}</Copy>
+          <Copy size={14}>{formatTime(slot.eventStartMs, slot.zoneId)}</Copy><Copy muted size={13}>{slot.adjusted ? 'Clock-change adjustment · ' : ''}{draft.mode === 'None' ? 'No alert' : modeLabel(draft.mode) + ' ' + formatTime(slot.alarmAtMs, slot.zoneId)}</Copy>
         </View>)}{preview.data.upcoming.length < 3 && <Copy muted size={13}>Fewer than three occurrences remain.</Copy>}</Group>}
-        <Disclosure title="Timing summary"><Copy size={14}>Event: {formatTime(preview.data.eventStartMs, zone)}</Copy>
-          <Copy size={14}>Due: {formatTime(preview.data.dueAtMs, zone)}</Copy><Copy size={14}>Alarm: {draft.mode === 'None' ? 'None' : formatTime(preview.data.alarmAtMs, zone)}</Copy>
-          <Copy muted size={13}>Time zone: {zone}</Copy>
-          {preview.data.warnings.map((warning) => <Copy muted size={13} key={warning}>{warning}</Copy>)}</Disclosure>
+        {preview.data.warnings.map((warning) => <ActionFeedback tone="warning" message={warning} key={warning} />)}
       </>}
       {editingSeries && <Copy muted size={13}>Earlier unfinished and postponed occurrences are retained. {editingSeries.state === 'Paused' ? 'The repeat remains paused.' : ''}</Copy>}
       {preview.error && <Status label="Check the timing and repeat fields." tone="warning" />}
@@ -267,7 +281,7 @@ function EditorForm({ seed, id, duplicate, following }: { seed: Seed; id?: strin
         <Copy size={14}>Due: {formatTime(reviewed.draft.dueAtMs, reviewed.draft.zoneId)}</Copy>
         <Copy size={14}>{reviewed.draft.mode === 'None' ? 'No alert' : reviewed.draft.mode + ': ' + formatTime(reviewed.draft.alarmAtMs, reviewed.draft.zoneId)}</Copy>
         <Copy size={14}>{repeatLabel(reviewed.recurrence)}</Copy>
-        <Copy muted size={13}>{reviewed.draft.zoneId}{reviewed.draft.listName ? ' · List: ' + reviewed.draft.listName : ''}</Copy>
+        <Copy muted size={13}>{reviewed.draft.zoneId} · {reviewed.draft.listId == null ? 'No list' : lists.data?.find((list) => list.id === reviewed.draft.listId)?.name ?? 'Unavailable list'}</Copy>
         {!!reviewed.draft.notes && <Disclosure title="Notes"><Copy>{reviewed.draft.notes}</Copy></Disclosure>}
       </View></Group>}
       <Button label="Use reviewed draft" disabled={!!review && !reviewChoicesComplete(review.conflicts, review.choices)} onPress={() => applyReview()} />

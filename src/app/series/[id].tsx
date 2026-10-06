@@ -2,11 +2,14 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { commandFeedback, type Tone } from '../../domain/actions';
+import { modeLabel } from '../../domain/presentation';
 import { ActionFeedback, Button, Copy, Disclosure, Group, Page, QueryState, SettingRow, shortDateTime, Status } from '../../ui/components';
 import { engine, nativeAvailable, useCommand } from '../../ui/native';
 import { repeatLabel } from '../../ui/recurrence';
 import { ReminderRow } from '../../ui/reminder-row';
 import { typography } from '../../ui/tokens';
+import { ZoneSummary } from '../../ui/schedule';
+import { deviceZone } from '../../domain/time';
 
 export default function SeriesDetails() {
   const { id, seriesId: requestedFamily } = useLocalSearchParams<{ id: string; seriesId?: string }>();
@@ -23,7 +26,8 @@ export default function SeriesDetails() {
   const command = useCommand();
   const state = family?.state ?? (series?.exhausted || series?.state === 'Archived' ? 'Ended' : series?.state);
   const items = occurrences.data?.pages.flatMap((page) => page.items) ?? [];
-  const upcoming = family?.upcoming ?? series?.upcoming ?? [];
+  // Only the family projection excludes completed, skipped and exceptional slots.
+  const upcoming = family?.upcoming ?? [];
   const changeState = async () => {
     if (!series || command.isPending) return;
     setFeedback(undefined);
@@ -38,9 +42,10 @@ export default function SeriesDetails() {
       empty={!series} emptyMessage={!nativeAvailable ? 'Use the Android app to manage repeats.' : 'This repeat is no longer available.'}
       onRetry={() => { void query.refetch(); void families.refetch(); }} />
     {series && <>
-      <Copy size={typography.title}>{series.template.title}</Copy>
+      <Copy heading size={typography.title}>{series.template.title}</Copy>
       <Copy>{repeatLabel(series.rule)}</Copy>
       <Status label={state === 'Ended' ? 'Repeat has ended' : state ?? 'Active'} tone={state === 'Active' ? 'success' : 'muted'} />
+      {state !== 'Active' && <Copy muted size={typography.supporting}>{state === 'Paused' ? 'Ordinary repeat alerts are paused.' : 'There are no ordinary future occurrences.'} Individually changed occurrences can still have their own alerts.</Copy>}
       <QueryState loading={families.isLoading} error={families.error} onRetry={() => void families.refetch()} />
       <Group title="Schedule">
         <SettingRow label="Time zone" value={series.rule.zoneId ?? 'Follows your device'} />
@@ -54,11 +59,16 @@ export default function SeriesDetails() {
           onPress={() => router.push({ pathname: '/edit', params: { segmentId: series.id } })} />
       </Group>}
       <ActionFeedback message={command.isPending ? 'Updating repeat…' : feedback?.message} tone={feedback?.tone} loading={command.isPending} />
-      <Group title={state === 'Paused' ? 'Planned dates' : 'Next dates'}>{upcoming.slice(0, 3).map((slot) => <SettingRow key={slot.nominalSlot}
-        label={shortDateTime(slot.eventStartMs, series.rule.zoneId ?? undefined)}
-        description={series.template.mode === 'None' ? 'No alert' : slot.alarmAtMs !== slot.eventStartMs ?
-          (state === 'Paused' ? 'Planned alert ' : 'Alert ') + shortDateTime(slot.alarmAtMs, series.rule.zoneId ?? undefined) : state === 'Paused' ? 'Planned · alarms paused' : undefined} />)}
-        {!upcoming.length && <SettingRow label="No future dates" />}</Group>
+      <Group title={state === 'Paused' ? 'Planned dates' : 'Next dates'}>{upcoming.slice(0, 3).map((slot) => {
+        const paused = (slot.state ?? state) === 'Paused', mode = slot.mode ?? series.template.mode;
+        return <SettingRow key={slot.segmentId + ':' + slot.nominalSlot}
+        label={shortDateTime(slot.eventStartMs, slot.zoneId ?? series.rule.zoneId ?? undefined)}
+        description={mode === 'None' ? 'No alert' : (paused ? 'Planned ' : '') + modeLabel(mode) + ' · ' +
+          shortDateTime(slot.alarmAtMs, slot.zoneId ?? series.rule.zoneId ?? undefined) + (paused ? ' · Paused' : '')}>
+          {(slot.zoneId ?? series.rule.zoneId) && (slot.zoneId ?? series.rule.zoneId) !== deviceZone() && <ZoneSummary zoneId={(slot.zoneId ?? series.rule.zoneId)!} atMs={slot.eventStartMs} />}
+        </SettingRow>;
+      })}
+        {!upcoming.length && !families.isLoading && !families.error && <SettingRow label="No ordinary future dates" />}</Group>
       <Disclosure title="Unfinished occurrences" initial>
         <QueryState loading={occurrences.isLoading} error={occurrences.error} empty={!items.length}
           emptyMessage="No unfinished occurrences." onRetry={() => void occurrences.refetch()} />
