@@ -38,6 +38,18 @@ describe('editor conflict review', () => {
     expect(reviewChoicesComplete(review.conflicts, { title: 'yours', schedule: 'latest' })).toBe(true);
     expect(reviewChoicesComplete([], {})).toBe(true);
   });
+  it('preserves list identity and reviews competing membership changes independently of renamed display text', () => {
+    const base = { draft: editorDraft({ title: 'Original', listId: 'work', listName: 'Work' }) };
+    const yours = { draft: { ...base.draft, listId: null } };
+    const latest = { draft: { ...base.draft, listId: 'home', listName: 'Household' } };
+    const review = reviewEditorDraft(base, yours, latest);
+    expect(review.conflicts.map((conflict) => conflict.key)).toEqual(['listId']);
+    expect(chooseConflict(review.merged, review.conflicts[0], 'latest').draft.listId).toBe('home');
+    const renamed = { draft: { ...base.draft, listName: 'Office' } };
+    expect(reviewEditorDraft(base, base, renamed).conflicts).toEqual([]);
+    expect(reviewEditorDraft(base, base, renamed).merged.draft.listId).toBe('work');
+    expect(editorDraft(base.draft).listId).toBe('work');
+  });
 });
 describe('linked civil offsets across clock changes', () => {
   const la = 'America/Los_Angeles';

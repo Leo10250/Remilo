@@ -1,6 +1,6 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
 
-import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput } from './RemiloAlarm.types';
+import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput, ListRecord, SoundPreviewSnapshot, ResolvedReminderDraft } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
@@ -13,13 +13,16 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getTimeZones(atMs: number): Promise<TimeZoneOption[]>;
   convertTime(input: TimeConversionInput): Promise<TimeConversion>;
   getSeries(id: string): Promise<Series | null>;
-  getSeriesDraft(id: string, nominal: string): Promise<{ template: Required<ReminderDraft>; remainingCount: number | null }>;
+  getSeriesDraft(id: string, nominal: string): Promise<{ template: ResolvedReminderDraft; remainingCount: number | null }>;
   applyCommand(command: Command): Promise<CommandResult>;
   scheduleTestAlarm(): Promise<CommandResult>;
   getSettings(): Promise<AppSettings>;
-  getLists(): Promise<string[]>;
+  getLists(): Promise<ListRecord[]>;
+  queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;
-  previewSound(sound: string): Promise<CommandResult>;
+  previewSound(sound: string, requestId: string): Promise<SoundPreviewSnapshot>;
+  stopSoundPreview(requestId: string): Promise<SoundPreviewSnapshot | null>;
+  getSoundPreview(): Promise<SoundPreviewSnapshot | null>;
   exportBackup(): Promise<string>;
   previewImport(json: string): Promise<ImportPreview>;
   importBackup(json: string, copyIds: string[], operationId: string): Promise<CommandResult>;

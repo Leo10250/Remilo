@@ -16,8 +16,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   private val alerts get() = operational.records()
   private fun unlocked() = context.getSystemService(UserManager::class.java).isUserUnlocked
   private fun zone() = ZoneId.systemDefault()
-  fun template(series: SeriesRecord): ReminderRecord = BackupCodec.decode(JSONObject(mapOf("format" to "Remilo", "version" to 1,
-    "reminders" to listOf(JSONObject(series.template).toMap()))).toString()).records.single()
+  fun template(series: SeriesRecord): ReminderRecord = BackupCodec.decodeRecord(JSONObject(series.template)).let { record ->
+    record.copy(listName = record.listId?.let { db().records().list(it)?.name }.orEmpty())
+  }
   private fun encodeTemplate(record: ReminderRecord) = JSONObject(BackupCodec.record(record)).toString()
   private fun JSONObject.toMap(): Map<String, Any?> = keys().asSequence().associateWith { key ->
     val value = get(key); if (value == JSONObject.NULL) null else value
@@ -116,7 +117,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       mapOf("seriesId" to familyId, "current" to requireNotNull(get(representative.id)),
         "state" to when { candidates.isEmpty() -> "Ended"; candidates.all { it.first.state == "Paused" } -> "Paused"; else -> "Active" },
         "upcoming" to candidates.take(3).map { (segment, slot) -> mapOf("segmentId" to segment.id,
-          "nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs, "alarmAtMs" to slot.alarmAtMs) },
+          "nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs, "alarmAtMs" to slot.alarmAtMs,
+          "zoneId" to slot.zoneId, "mode" to template(segment).mode, "state" to segment.state) },
         "unfinishedCount" to records.values.count { it.segmentId in ids && !it.completed && !it.deleted && !it.skipped })
     }.sortedBy { it["seriesId"] as String }
   }
@@ -234,7 +236,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
           .takeWhile { it.alarmAtMs <= now() }.toList()
         operational.runInTransaction { elapsedSlots.forEach { slot ->
           val id = occurrenceId(plan.id, slot.nominal.toString())
-          if (alerts.find(id) == null) alerts.put(AlertRecord(id, slot.alarmAtMs, 1, "Missed", mode = plan.mode,
+          if (alerts.find(id) == null) alerts.put(AlertRecord(id, slot.alarmAtMs, 1, if (plan.mode == "None") "NoAlert" else "Missed", mode = plan.mode,
             sound = plan.sound, vibration = plan.vibration, snoozeMinutes = plan.snoozeMinutes,
             segmentId = plan.id, nominalSlot = slot.nominal.toString(), resolvedZone = slot.zoneId))
         } }
@@ -243,7 +245,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       // Elapsed delivery is never revived by travel/recovery. The receiver itself
       // may still handle its ordinary callback within the lateness window.
       rows.filter { !it.exception && it.targetMs <= now() && it.state in setOf("Paused") }.forEach {
-        alerts.put(it.copy(state = "Missed", generation = it.generation + 1))
+        alerts.put(it.copy(state = if (it.mode == "None") "NoAlert" else "Missed", generation = it.generation + 1))
       }
       if (plan.resolvedZone != resolvedZone) {
         rows.filter { !it.exception && it.targetMs > now() && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->

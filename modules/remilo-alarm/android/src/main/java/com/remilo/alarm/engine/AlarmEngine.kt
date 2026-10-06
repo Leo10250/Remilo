@@ -14,6 +14,7 @@ import com.remilo.alarm.system.*
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.time.Instant
 import java.time.ZoneId
@@ -28,7 +29,10 @@ class AlarmEngine internal constructor(private val context: Context,
   private val alerts = operational.records()
   private var content: ContentDatabase? = null
   private val listeners = CopyOnWriteArrayList<() -> Unit>()
-  private var previewAudio: AlarmAudio? = null
+  private val previewListeners = CopyOnWriteArrayList<(Map<String, Any>) -> Unit>()
+  private val preview = SoundPreviewController(context, { task -> submit(task = task) }, { snapshot ->
+    previewListeners.forEach { try { it(snapshot) } catch (_: Exception) { /* detached bridge */ } }
+  })
   private val series = SeriesCoordinator(context, ::content, operational, scheduler, now, ::register)
   private class InputError(val field: String, message: String) : IllegalArgumentException(message)
   private fun validate(valid: Boolean, field: String, message: String) {
@@ -50,16 +54,22 @@ class AlarmEngine internal constructor(private val context: Context,
     return content ?: ContentDatabase.open(context).also { content = it }
   }
   private fun submit(finished: () -> Unit = {}, task: () -> Unit) {
-    worker.execute {
-      try { task() } catch (error: Exception) {
-        Log.e("Remilo", "Native operation failed: ${error.javaClass.simpleName}")
-      } finally { finished() }
-    }
+    try {
+      worker.execute {
+        try { task() } catch (error: Exception) {
+          Log.e("Remilo", "Native operation failed: ${error.javaClass.simpleName}")
+        } finally { finished() }
+      }
+    } catch (_: RejectedExecutionException) { finished() /* detached native callback after close */ }
   }
   private fun changed() { listeners.forEach { try { it() } catch (_: Exception) { /* detached bridge */ } } }
   fun observe(listener: () -> Unit): AutoCloseable {
     listeners.add(listener)
     return AutoCloseable { listeners.remove(listener) }
+  }
+  fun observeSoundPreview(listener: (Map<String, Any>) -> Unit): AutoCloseable {
+    previewListeners.add(listener)
+    return AutoCloseable { previewListeners.remove(listener) }
   }
   fun request(block: () -> Any?, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
     submit {
@@ -104,7 +114,11 @@ class AlarmEngine internal constructor(private val context: Context,
       (search.isEmpty() || record.title.contains(search, true) || record.notes.contains(search, true)) &&
         ((filter["segmentId"] as? String).isNullOrEmpty() || record.segmentId == filter["segmentId"]) &&
         (familySegments == null || record.segmentId in familySegments) &&
-        ((filter["listName"] as? String).isNullOrEmpty() || record.listName == filter["listName"])
+        (if (filter.containsKey("listId")) record.listId == filter["listId"]
+          else (filter["listName"] as? String).isNullOrEmpty() ||
+            (record.listId?.let { db.records().list(it)?.name } ?: record.listName) == filter["listName"]) &&
+        (filter["deliveryIssuesOnly"] != true || (record.mode != "None" && alerts.find(record.id)?.state in
+          setOf("Missed", "TimedOut", "Interrupted", "Blocked", "Failed")))
     val queryNow = now()
     val zone = ZoneId.systemDefault()
     val records = db.records().all().filter { record ->
@@ -173,7 +187,8 @@ class AlarmEngine internal constructor(private val context: Context,
       "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs, "completed" to record.completed,
       "revision" to record.revision, "nextAlertMs" to alert?.targetMs,
       "generation" to (alert?.generation ?: 0L), "deliveryState" to (alert?.state ?: "Pending"),
-      "notes" to record.notes, "listName" to record.listName, "mode" to record.mode,
+      "notes" to record.notes, "listId" to record.listId,
+      "listName" to record.listId?.let { content().records().list(it)?.name }.orEmpty(), "mode" to record.mode,
       "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs), "allDay" to record.allDay,
       "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id }, "dueLinked" to record.dueLinked,
       "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
@@ -244,10 +259,16 @@ class AlarmEngine internal constructor(private val context: Context,
     val alarm = explicitAlarm ?: epoch(defaultAlarm, "alarmAtMs")
     val sound = text(command, "sound", old?.sound ?: settings.sound, 20)
     validate(sound in setOf("remilo", "system"), "sound", "Choose Remilo tone or the system alarm tone.")
+    val listId = if (!command.containsKey("listId")) old?.listId else command["listId"]?.let {
+      validate(it is String && it.isNotBlank() && it.length <= 200, "listId", "Choose an existing list or No list.")
+      it as String
+    }
+    val list = listId?.let { content().records().list(it) }
+    validate(listId == null || list != null, "listId", "This list was removed. Choose an existing list or No list.")
     return ReminderRecord(id, title, start, end, due, old?.createdAtMs ?: now(), old?.completed ?: false,
       (old?.revision ?: 0) + 1, text(command, "notes", old?.notes ?: "", 10_000),
-      text(command, "listName", old?.listName ?: "", 60).trim(), mode, alarm, allDay, zone.id,
-      dueLinked, alarmLinked, old?.deleted ?: false, sound, flag(command, "vibration", old?.vibration ?: settings.vibration))
+      list?.name.orEmpty(), mode, alarm, allDay, zone.id,
+      dueLinked, alarmLinked, old?.deleted ?: false, sound, flag(command, "vibration", old?.vibration ?: settings.vibration), listId = listId)
   }
   private fun projection(operation: String, record: ReminderRecord, generation: Long): PendingSchedule =
     PendingSchedule(operation, record.id, record.definedAlarmAtMs ?: record.eventStartMs, generation,
@@ -318,8 +339,51 @@ class AlarmEngine internal constructor(private val context: Context,
       "tomorrowEvening" to settings.tomorrowEvening, "sound" to settings.sound,
       "vibration" to settings.vibration, "theme" to settings.theme)
   }
-  fun lists(): List<String> = content().records().all().map { it.listName }
-    .filter { it.isNotEmpty() }.distinct().sorted()
+  private fun listView(list: ListRecord): Map<String, Any> = mapOf("id" to list.id, "name" to list.name,
+    "revision" to list.revision, "overdueCount" to content().records().all().count {
+      it.listId == list.id && !it.completed && !it.deleted && !it.skipped && it.dueAtMs < now()
+    })
+  fun lists(): List<Map<String, Any>> {
+    series.materialize()
+    return content().records().lists().map(::listView)
+  }
+  private fun mutateList(operation: String, command: Map<String, Any?>): Map<String, Any?> {
+    val dao = content().records(); val kind = command["kind"] as String
+    val id = if (kind == "CreateList") UUID.nameUUIDFromBytes("remilo:list-create:$operation".toByteArray()).toString()
+      else text(command, "listId", "", 200).also { validate(it.isNotBlank(), "listId", "Choose an existing list.") }
+    dao.receipt(operation)?.let {
+      validate(it.kind == kind && it.occurrenceId == id, "operationId", "This operation was already used. Try again.")
+      return mapOf("status" to "Applied", "list" to dao.list(id)?.let(::listView))
+    }
+    val old = dao.list(id)
+    if (kind != "CreateList") {
+      if (old == null) return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND", "errorField" to "listId", "errorMessage" to "This list was removed.")
+      if (epoch(command["expectedRevision"], "expectedRevision") != old.revision)
+        return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION", "errorMessage" to "This list changed. Refresh before updating it.")
+    }
+    val name = if (kind == "RemoveList") null else ListNames.display(text(command, "name", "", 60)).also { value ->
+      validate(value.isNotEmpty(), "name", "Enter a list name.")
+      validate(dao.lists().none { it.id != id && it.normalizedName == ListNames.key(value) }, "name", "A list with this name already exists.")
+    }
+    val next = name?.let { ListRecord(id, it, ListNames.key(it), (old?.revision ?: 0) + 1, old?.createdAtMs ?: now()) }
+    content().runInTransaction {
+      when (kind) {
+        "CreateList" -> dao.insertList(requireNotNull(next))
+        "RenameList" -> dao.updateList(requireNotNull(next))
+        "RemoveList" -> {
+          dao.all().filter { it.listId == id }.forEach { dao.update(it.copy(listId = null, listName = "", revision = it.revision + 1)) }
+          dao.series().forEach { segment ->
+            val template = BackupCodec.decodeRecord(org.json.JSONObject(segment.template))
+            if (template.listId == id) dao.series(segment.copy(template = org.json.JSONObject(BackupCodec.record(template.copy(listId = null, listName = ""))).toString(), revision = segment.revision + 1))
+          }
+          dao.removeList(id)
+        }
+      }
+      dao.receipt(CreationReceipt(operation, id, kind))
+    }
+    changed()
+    return mapOf("status" to "Applied", "list" to next?.let(::listView))
+  }
   fun querySeries(): List<Map<String, Any?>> = series.list()
   fun queryRepeatFamilies(): List<Map<String, Any?>> {
     val db = content()
@@ -358,7 +422,7 @@ class AlarmEngine internal constructor(private val context: Context,
     changed(); return mapOf("status" to "Applied")
   }
   fun diagnostics(): Map<String, Any> = mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 3, "operationalSchema" to 3,
+    "contentSchema" to 4, "operationalSchema" to 3,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to content().records().pending().size)
   fun exportBackup(): String {
@@ -369,7 +433,7 @@ class AlarmEngine internal constructor(private val context: Context,
     val targets = records.associate { record -> record.id to alerts.find(record.id)?.let { alert ->
       if (!record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused")) alert.targetMs else null
     } }
-    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series())
+    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series(), db.records().lists())
   }
   fun previewImport(json: String): Map<String, Any> {
     val bundle = BackupCodec.decode(json)
@@ -384,7 +448,32 @@ class AlarmEngine internal constructor(private val context: Context,
       mapOf("id" to id, "title" to "${series.template(segment).title} (series)", "conflict" to (id in localFamilies || segments.any { dao.series(it.id) != null }),
         "futureAlert" to segments.any { it.state == "Active" && Recurrence.future(RuleCodec.decode(it.rule), now(), ZoneId.systemDefault()).any() })
     }
-    return mapOf("count" to items.size, "items" to items)
+    val restored = restoredLists(bundle).first
+    return mapOf("count" to items.size, "items" to items, "lists" to bundle.lists.map { source ->
+      val target = restored.getValue(source.id)
+      mapOf("id" to source.id, "name" to source.name, "restoredName" to target.name,
+        "conflict" to (dao.list(source.id) != null || target.name != source.name))
+    })
+  }
+  /** Preserve matching identities; distinct imported lists never merge by name. */
+  private fun restoredLists(bundle: BackupCodec.Bundle): Pair<Map<String, ListRecord>, List<ListRecord>> {
+    val local = content().records().lists().associateBy { it.id }
+    val reserved = local.values.map { it.normalizedName }.toMutableSet()
+    val rows = mutableListOf<ListRecord>()
+    val mapping = bundle.lists.sortedBy { it.id }.associate { source ->
+      val target = local[source.id] ?: run {
+        var name = source.name; var number = 1
+        while (ListNames.key(name) in reserved) {
+          val suffix = if (number == 1) " (restored)" else " (restored $number)"
+          name = source.name.take(60 - suffix.length).trimEnd() + suffix
+          number++
+        }
+        source.copy(name = name, normalizedName = ListNames.key(name), revision = 1).also { rows.add(it) }
+      }
+      reserved.add(target.normalizedName)
+      source.id to target
+    }
+    return mapping to rows
   }
   fun importBackup(json: String, copyIds: List<String>, operation: String): Map<String, Any?> {
     validate(operation.isNotBlank() && operation.length <= 200, "operationId", "Try this import again.")
@@ -407,16 +496,22 @@ class AlarmEngine internal constructor(private val context: Context,
     val mapped = accepted.associate { record -> record.id to
       if (record.segmentId != null) UUID.nameUUIDFromBytes("remilo:${segmentMap.getValue(record.segmentId)}:${record.nominalSlot}".toByteArray()).toString()
       else if (db.records().find(record.id) == null) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
+    val (listMap, newLists) = restoredLists(bundle)
     db.runInTransaction {
+      newLists.forEach(db.records()::insertList)
       segments.forEach { source ->
         val id = segmentMap.getValue(source.id)
         val family = if (source.seriesId !in conflicts) source.seriesId else UUID.nameUUIDFromBytes("$operation:family:${source.seriesId}".toByteArray()).toString()
-        db.records().series(source.copy(id = id, seriesId = family))
+        val template = BackupCodec.decodeRecord(org.json.JSONObject(source.template))
+        val list = template.listId?.let { listMap.getValue(it) }
+        db.records().series(source.copy(id = id, seriesId = family,
+          template = org.json.JSONObject(BackupCodec.record(template.copy(listId = list?.id, listName = list?.name.orEmpty()))).toString()))
         db.records().pendingSeries(PendingSeries("$operation:series:$id", id))
       }
       accepted.forEach { source ->
         val id = mapped.getValue(source.id)
         val record = source.copy(id = id, segmentId = source.segmentId?.let { segmentMap.getValue(it) },
+          listId = source.listId?.let { listMap.getValue(it).id }, listName = source.listId?.let { listMap.getValue(it).name }.orEmpty(),
           title = if (id == source.id || source.segmentId != null) source.title else "${source.title.take(193)} (copy)")
         db.records().insert(record)
         db.records().pending(projection("$operation:$id", record, 1).copy(
@@ -435,13 +530,14 @@ class AlarmEngine internal constructor(private val context: Context,
     return mapOf("status" to if (blocked > 0) "Blocked" else "Applied", "added" to added,
       "preserved" to bundle.records.count { it.segmentId == null } + families.size - added, "blocked" to blocked)
   }
-  fun previewSound(sound: String): Map<String, Any> {
+  fun previewSound(sound: String, requestId: String): Map<String, Any> {
     validate(sound in setOf("remilo", "system"), "sound", "Choose a valid sound.")
-    if (alerts.activeSession() != null) return mapOf("status" to "Rejected", "errorMessage" to "An alarm is already ringing.")
-    previewAudio?.stop()
-    previewAudio = AlarmAudio(context, {}, {}, sound = sound, durationMillis = 5_000).also { it.start() }
-    return mapOf("status" to "Applied")
+    validate(requestId.isNotBlank() && requestId.length <= 200, "requestId", "Try this preview again.")
+    return preview.start(sound, requestId, alerts.activeSession() == null)
   }
+  fun stopSoundPreview(requestId: String): Map<String, Any>? = preview.stop(requestId)
+  fun soundPreview(): Map<String, Any>? = preview.snapshot()
+  fun beforeAlarmPlayback(ready: () -> Unit) = submit { preview.stop(reason = "AlarmActive", afterStopped = ready) }
   fun apply(command: Map<String, Any?>): Map<String, Any?> {
     return try { applyValidated(command) } catch (error: InputError) {
       mapOf("status" to "Rejected", "errorCode" to "INVALID_INPUT", "errorField" to error.field,
@@ -480,6 +576,7 @@ class AlarmEngine internal constructor(private val context: Context,
           "errorMessage" to "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.") }
       }
       "Settings" -> updateSettings(operationId, command)
+      "CreateList", "RenameList", "RemoveList" -> mutateList(operationId, command)
       "StopAll" -> {
         val session = alerts.activeSession()
         if (session == null || session.id != command["expectedSessionId"])
@@ -651,7 +748,7 @@ class AlarmEngine internal constructor(private val context: Context,
       AlarmNotifications(context).regular(alert, title)
       changed(); return
     }
-    previewAudio?.stop(); previewAudio = null
+    preview.stop(reason = "AlarmActive")
     var session = alerts.activeSession()
     if (session != null && session.deadlineElapsedMs > 0 && session.deadlineElapsedMs <= elapsed()) {
       endSession(session.id, "TimedOut")
@@ -715,6 +812,9 @@ class AlarmEngine internal constructor(private val context: Context,
   private fun memberViews(sessionId: String) = alerts.members(sessionId).map { it to
     if (unlocked()) (content().records().find(it.occurrenceId)?.title ?: "Reminder") else "Reminder" }
   fun recover(finished: () -> Unit = {}) = submit(finished) {
+    // Older catch-up rows labeled a reminder with no alert as Missed. Repair only
+    // this impossible delivery state, without moving targets or registering alarms.
+    alerts.all().filter { it.mode == "None" && it.state == "Missed" }.forEach { alerts.put(it.copy(state = "NoAlert")) }
     if (unlocked()) {
       val db = content()
       series.recover()
@@ -739,8 +839,7 @@ class AlarmEngine internal constructor(private val context: Context,
   }
 
   internal fun close() {
-    previewAudio?.stop(); previewAudio = null
-    worker.submit { content?.close(); operational.close() }.get(10, TimeUnit.SECONDS)
+    worker.submit { preview.close(); content?.close(); operational.close() }.get(10, TimeUnit.SECONDS)
     worker.shutdown()
   }
 

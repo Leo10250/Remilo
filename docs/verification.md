@@ -222,12 +222,14 @@ they remain pending until observed on the identified bundled build:
 - Exit Agenda search with Android Back both while the keyboard is visible and
   after it closes. Clear query separately. Exercise Back and close controls in
   nested sheets; confirm cancellation keeps the previous applied rule.
-- Find all Collections destinations, each repeat family and its earlier unfinished
+- Find all Browse destinations, each repeat family and its earlier unfinished
   occurrences. Search/filter Completed and Trash, inspect newest history ordering,
   and restore/reopen without replaying elapsed alerts.
 - Complete from the trailing row action and optional swipe, then Undo. Change the
   same item before Undo and confirm the newer change is preserved. Confirm Trash
-  requires acknowledgement and native Stop leaves the reminder unfinished.
+  requires acknowledgement for unfinished work; completed Trash is recoverable
+  without a modal. Check revision-specific Trash Undo, Restore destinations and
+  native Stop leaving the reminder unfinished.
 - Open Custom Postpone repeatedly and confirm it starts in the future. Reject a
   past target without mutation; accept a future target and retain other members'
   actions and targets.
@@ -244,3 +246,24 @@ they remain pending until observed on the identified bundled build:
 These UI observations supplement [device-acceptance.md](device-acceptance.md) and
 the native G1–G3 gates. They do not replace the pending audibility, pre-unlock,
 recovery, five-minute cutoff or manufacturer coverage evidence.
+
+## Second refinement consolidated observations
+
+The second refinement adds content schema 4 and backup format 3; operational schema
+stays 3. Native upgrade, retained-template membership, restore retry, No alert
+recovery, filtered pagination and identified preview tests are host evidence.
+They do not establish phone audio, navigation or migration acceptance.
+
+On the identified signed bundled build, check Browse from every destination,
+current-item dismissal, independent destination state, origin return and Android
+Back ordering with sheets/search/drafts/uncertain operations. Create and manage
+empty lists; rename/remove without changing alert times, save from a list and
+inspect its Completed/Trash. Review restored names in backup preview.
+
+Check stopped-overdue, adjusted, blocked, No alert and paused/ended exception
+wording, conditional Schedule details, recorded Activity and persistent state
+actions. Preview both sounds without changing selection, switch/stop, close/Back,
+leave/background, and let a real alarm interrupt preview. Record actual tone,
+fallback and playback failures separately from accepted start requests. Include
+light/dark, 200% text, TalkBack, reduced motion and keyboard reachability alongside
+the existing native time-zone/DST and alarm reliability matrix.

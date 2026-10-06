@@ -836,7 +836,7 @@ class AlarmEngineTest {
     val changed = request { engine.apply(mapOf("kind" to "EditFollowing", "operationId" to "family-split",
       "segmentId" to firstSegment, "expectedRevision" to 1, "nominalSlot" to split.nominalSlot,
       "title" to "Following family", "eventStartMs" to split.targetMs, "alarmAtMs" to split.targetMs,
-      "zoneId" to "UTC", "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 4, "zoneMode" to "pinned"))) } as Map<*, *>
+      "zoneId" to "America/Los_Angeles", "mode" to "Notification", "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 4, "zoneMode" to "pinned"))) } as Map<*, *>
     val current = changed["segmentId"] as String
     fun family() = (request { engine.queryRepeatFamilies() } as List<*>).single() as Map<*, *>
     val active = family()
@@ -847,10 +847,16 @@ class AlarmEngineTest {
     assertEquals(3, dates.size)
     assertEquals(firstSegment, (dates[0] as Map<*, *>)["segmentId"])
     assertEquals(current, (dates[1] as Map<*, *>)["segmentId"])
+    assertEquals("UTC", (dates[0] as Map<*, *>)["zoneId"])
+    assertEquals("America/Los_Angeles", (dates[1] as Map<*, *>)["zoneId"])
+    assertEquals("Alarm", (dates[0] as Map<*, *>)["mode"])
+    assertEquals("Notification", (dates[1] as Map<*, *>)["mode"])
+    assertTrue(dates.all { (it as Map<*, *>)["state"] == "Active" })
     assertEquals(3, active["unfinishedCount"])
     seriesMutation(current, "PauseSeries")
     assertEquals("Paused", family()["state"])
     assertEquals(3, (family()["upcoming"] as List<*>).size)
+    assertTrue((family()["upcoming"] as List<*>).all { (it as Map<*, *>)["state"] == "Paused" })
     now += 6 * 86_400_000
     assertEquals("Ended", family()["state"])
     assertTrue((family()["upcoming"] as List<*>).isEmpty())
@@ -966,16 +972,209 @@ class AlarmEngineTest {
     request {
       val db = ContentDatabase.open(context)
       try {
-        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now, now, listName = "Active"))
-        db.records().insert(ReminderRecord("completed-list", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "History"))
-        db.records().insert(ReminderRecord("deleted-list", "Deleted", now, now + 1_800_000, now, now, deleted = true, listName = "Trash only"))
-        db.records().insert(ReminderRecord("duplicate-list", "Duplicate", now, now + 1_800_000, now, now, deleted = true, listName = "History"))
+        listOf("Active", "History", "Trash only").forEach { db.records().insertList(ListRecord(it, it, ListNames.key(it), createdAtMs = now)) }
+        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now - 1, now, listName = "Active", listId = "Active"))
+        db.records().insert(ReminderRecord("completed-list", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "History", listId = "History"))
+        db.records().insert(ReminderRecord("deleted-list", "Deleted", now, now + 1_800_000, now, now, deleted = true, listName = "Trash only", listId = "Trash only"))
+        db.records().insert(ReminderRecord("duplicate-list", "Duplicate", now, now + 1_800_000, now, now, deleted = true, listName = "History", listId = "History"))
         db.records().insert(ReminderRecord("empty-list", "Unlisted", now, now + 1_800_000, now, now))
       } finally { db.close() }
     }
-    assertEquals(listOf("Active", "History", "Trash only"), request { engine.lists() })
-    val deleted = request { engine.query(mapOf("view" to "deleted", "listName" to "Trash only"), null) } as Map<*, *>
+    val lists = request { engine.lists() } as List<*>
+    assertEquals(listOf("Active", "History", "Trash only"), lists.map { (it as Map<*, *>)["name"] })
+    assertEquals(listOf(1, 0, 0), lists.map { (it as Map<*, *>)["overdueCount"] })
+    val deleted = request { engine.query(mapOf("view" to "deleted", "listId" to "Trash only"), null) } as Map<*, *>
     assertEquals(1, deleted["total"])
+  }
+  private fun createList(name: String, operation: String = "list:$name"): String {
+    val result = request { engine.apply(mapOf("kind" to "CreateList", "name" to name, "operationId" to operation)) } as Map<*, *>
+    assertEquals("Applied", result["status"])
+    return (result["list"] as Map<*, *>)["id"] as String
+  }
+  @Test fun noAlertRecurrenceCatchupAndLegacyRepairNeverInventMissedDelivery() {
+    val created = request { engine.apply(mapOf("kind" to "CreateSeries", "operationId" to "silent-series", "title" to "Quiet task",
+      "mode" to "None", "eventStartMs" to now + 60_000, "alarmAtMs" to now + 60_000, "zoneId" to "UTC",
+      "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 12, "zoneMode" to "pinned"))) } as Map<*, *>
+    val segment = created["segmentId"] as String
+    seriesMutation(segment, "PauseSeries")
+    now += 7 * 86_400_000
+    seriesMutation(segment, "ResumeSeries", 2)
+    val rows = protectedRows()
+    assertTrue(rows.size >= 9); assertTrue(rows.all { it.state == "NoAlert" })
+    val legacy = rows.minBy { it.targetMs }
+    val contentBefore = request {
+      val db = ContentDatabase.open(context)
+      try {
+        db.records().history(HistoryRecord("legacy-stop-note", legacy.occurrenceId, "Edit", now - 1, legacy.generation))
+        db.records().all() to db.records().history(legacy.occurrenceId)
+      } finally { db.close() }
+    }
+    request { val db = OperationalDatabase.open(context); try { db.records().put(legacy.copy(state = "Missed")) } finally { db.close() } }
+    recoverNow(); recoverNow()
+    assertEquals(legacy, protectedRows().single { it.occurrenceId == legacy.occurrenceId })
+    assertEquals(contentBefore, request {
+      val db = ContentDatabase.open(context)
+      try { db.records().all() to db.records().history(legacy.occurrenceId) } finally { db.close() }
+    })
+    val overdue = request { engine.query(mapOf("view" to "overdue"), null) } as Map<*, *>
+    assertEquals(7, overdue["total"])
+    val issues = request { engine.query(mapOf("view" to "agenda", "deliveryIssuesOnly" to true), null) } as Map<*, *>
+    assertEquals(0, issues["total"])
+    assertTrue(os.registered.isEmpty()); assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
+  }
+  @Test fun deliveryIssuesFilterRunsBeforePaginationAndExcludesStoppedNotifiedAndNoAlert() {
+    request {
+      val db = ContentDatabase.open(context); val protected = OperationalDatabase.open(context)
+      try {
+        repeat(60) { index ->
+          val id = "ordinary-$index"
+          db.records().insert(ReminderRecord(id, id, now - 60_000 + index, now + 1_800_000, now + 86_400_000, now))
+          protected.records().put(AlertRecord(id, now - 1, 1, if (index % 2 == 0) "Stopped" else "Notified"))
+        }
+        repeat(55) { index ->
+          val id = "issue-%02d".format(index)
+          db.records().insert(ReminderRecord(id, id, now + index * 60_000, now + 5_400_000, now + 86_400_000, now))
+          protected.records().put(AlertRecord(id, now + 60_000, 1, listOf("Missed", "TimedOut", "Interrupted", "Blocked", "Failed")[index % 5]))
+        }
+        db.records().insert(ReminderRecord("silent", "Silent", now, now + 1_800_000, now + 86_400_000, now, mode = "None"))
+        protected.records().put(AlertRecord("silent", now - 1, 1, "Missed", mode = "None"))
+      } finally { db.close(); protected.close() }
+    }
+    val filter = mapOf("view" to "agenda", "deliveryIssuesOnly" to true)
+    val first = request { engine.query(filter, null) } as Map<*, *>
+    assertEquals(55, first["total"]); assertEquals(50, (first["items"] as List<*>).size)
+    assertTrue((first["items"] as List<*>).all { (it as Map<*, *>)["id"].toString().startsWith("issue-") })
+    val second = request { engine.query(filter, first["nextCursor"] as String) } as Map<*, *>
+    assertEquals(5, (second["items"] as List<*>).size); assertNull(second["nextCursor"])
+  }
+  @Test fun listRenameIsMetadataOnlyAndCommandsRejectDuplicateAndStaleIdentity() {
+    val list = createList(" Work ")
+    val first = request { engine.apply(mapOf("kind" to "Create", "operationId" to "listed", "title" to "Listed",
+      "alarmAtMs" to now + 60_000, "listId" to list)) } as Map<String, Any?>
+    val before = protectedRows(); val registered = os.registered.size
+    val renamed = request { engine.apply(mapOf("kind" to "RenameList", "operationId" to "rename", "listId" to list,
+      "expectedRevision" to 1, "name" to "Errands")) } as Map<*, *>
+    assertEquals("Applied", renamed["status"])
+    assertEquals(before, protectedRows()); assertEquals(registered, os.registered.size)
+    val record = request { engine.occurrence(id(first)) } as Map<*, *>
+    assertEquals("Errands", record["listName"]); assertEquals(1L, record["revision"])
+    assertEquals(1, (request { engine.query(mapOf("view" to "agenda", "listName" to "Errands"), null) } as Map<*, *>)["total"])
+    assertEquals(0, (request { engine.query(mapOf("view" to "agenda", "listName" to "Work"), null) } as Map<*, *>)["total"])
+    val duplicate = request { engine.apply(mapOf("kind" to "CreateList", "operationId" to "duplicate", "name" to " errands ")) } as Map<*, *>
+    assertEquals("Rejected", duplicate["status"])
+    val stale = request { engine.apply(mapOf("kind" to "RemoveList", "operationId" to "stale-remove", "listId" to list, "expectedRevision" to 1)) } as Map<*, *>
+    assertEquals("STALE_REVISION", stale["errorCode"])
+    val retry = request { engine.apply(mapOf("kind" to "RenameList", "operationId" to "rename", "listId" to list, "expectedRevision" to 1, "name" to "Errands")) } as Map<*, *>
+    assertEquals("Applied", retry["status"])
+    val noList = request { engine.query(mapOf("view" to "agenda", "listId" to null), null) } as Map<*, *>
+    assertEquals(0, noList["total"])
+    assertEquals(1, (request { engine.query(mapOf("view" to "agenda", "listId" to list), null) } as Map<*, *>)["total"])
+  }
+  @Test fun removingListClearsRetainedTemplatesAndContentWithoutChangingAlertTargets() {
+    val list = createList("Projects")
+    val initial = request { engine.apply(mapOf("kind" to "CreateSeries", "operationId" to "listed-series", "title" to "Recurring",
+      "eventStartMs" to now + 60_000, "alarmAtMs" to now + 60_000, "zoneId" to "UTC", "listId" to list,
+      "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 8, "zoneMode" to "pinned"))) } as Map<*, *>
+    val firstSegment = initial["segmentId"] as String
+    val exception = protectedRows().minBy { it.targetMs }
+    request { engine.apply(mapOf("kind" to "Postpone", "operationId" to "listed-exception", "occurrenceId" to exception.occurrenceId,
+      "expectedGeneration" to exception.generation, "alarmAtMs" to now + 10 * 86_400_000)) }
+    val replacement = request { engine.apply(mapOf("kind" to "EditSeries", "operationId" to "listed-replacement", "segmentId" to firstSegment,
+      "expectedRevision" to 1, "title" to "Current", "eventStartMs" to now + 120_000, "alarmAtMs" to now + 120_000,
+      "zoneId" to "UTC", "listId" to list,
+      "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 8, "zoneMode" to "pinned"))) } as Map<*, *>
+    val currentSegment = replacement["segmentId"] as String
+    seriesMutation(currentSegment, "PauseSeries")
+    val completed = request { engine.apply(mapOf("kind" to "Create", "operationId" to "completed-listed", "title" to "Completed",
+      "alarmAtMs" to now + 60_000, "listId" to list)) } as Map<String, Any?>
+    val completedId = id(completed)
+    request { engine.apply(mapOf("kind" to "Done", "operationId" to "done-listed", "occurrenceId" to completedId, "expectedRevision" to 1)) }
+    request { engine.apply(mapOf("kind" to "Delete", "operationId" to "trash-listed", "occurrenceId" to completedId, "expectedRevision" to 2)) }
+    val before = protectedRows(); val registrations = os.registered.size
+    val contentBefore = request { val db = ContentDatabase.open(context); try { db.records().all() } finally { db.close() } } as List<ReminderRecord>
+    val seriesBefore = request { val db = ContentDatabase.open(context); try { db.records().series() } finally { db.close() } } as List<SeriesRecord>
+    val historyBefore = request { val db = ContentDatabase.open(context); try { db.records().all().associate { it.id to db.records().history(it.id) } } finally { db.close() } }
+    val result = request { engine.apply(mapOf("kind" to "RemoveList", "operationId" to "remove-projects", "listId" to list, "expectedRevision" to 1)) } as Map<*, *>
+    assertEquals("Applied", result["status"]); assertEquals(before, protectedRows()); assertEquals(registrations, os.registered.size)
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        assertTrue(db.records().lists().isEmpty())
+        db.records().all().forEach { after ->
+          val previous = contentBefore.single { it.id == after.id }
+          assertNull(after.listId); assertEquals("", after.listName); assertEquals(previous.revision + 1, after.revision)
+          assertEquals(previous.completed, after.completed); assertEquals(previous.deleted, after.deleted); assertEquals(previous.skipped, after.skipped)
+          assertEquals(previous.dueAtMs, after.dueAtMs); assertEquals(previous.definedAlarmAtMs, after.definedAlarmAtMs)
+        }
+        assertEquals(setOf("Archived", "Paused"), db.records().series().map { it.state }.toSet())
+        db.records().series().forEach { after ->
+          val previous = seriesBefore.single { it.id == after.id }
+          assertNull(BackupCodec.decodeRecord(org.json.JSONObject(after.template)).listId)
+          assertEquals(previous.revision + 1, after.revision)
+          assertEquals(previous.rule, after.rule); assertEquals(previous.state, after.state)
+        }
+        assertEquals(historyBefore, db.records().all().associate { it.id to db.records().history(it.id) })
+      } finally { db.close() }
+    }
+    val invalid = request { engine.apply(mapOf("kind" to "Create", "operationId" to "removed-id", "title" to "Stale",
+      "alarmAtMs" to now + 60_000, "listId" to list)) } as Map<*, *>
+    assertEquals("Rejected", invalid["status"]); assertEquals("listId", invalid["errorField"])
+    val staleEdit = request { engine.apply(mapOf("kind" to "Edit", "operationId" to "removed-list-editor", "occurrenceId" to completedId,
+      "expectedRevision" to 3, "title" to "Stale content")) } as Map<*, *>
+    assertEquals("STALE_REVISION", staleEdit["errorCode"])
+    val staleSeries = request { engine.apply(mapOf("kind" to "EditSeries", "operationId" to "removed-list-series-editor", "segmentId" to currentSegment,
+      "expectedRevision" to 2, "title" to "Stale repeat", "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 8, "zoneMode" to "pinned"))) } as Map<*, *>
+    assertEquals("STALE_REVISION", staleSeries["errorCode"])
+    assertEquals(before, protectedRows())
+  }
+  @Test fun backupListsPreserveIdentitiesSuffixCollisionsAndRetryWithoutDuplicates() {
+    val local = createList("Work")
+    val sourceList = ListRecord("imported-work", "work", "work", createdAtMs = now)
+    val reminder = ReminderRecord("imported-reminder", "Imported", now + 60_000, now + 1_860_000, now + 60_000, now,
+      definedAlarmAtMs = now + 60_000, zoneId = "UTC", listName = "work", listId = sourceList.id)
+    val backup = BackupCodec.encode(listOf(reminder), mapOf(reminder.id to reminder.definedAlarmAtMs), emptyList(), now, lists = listOf(sourceList))
+    val preview = request { engine.previewImport(backup) } as Map<*, *>
+    val listPreview = (preview["lists"] as List<*>).single() as Map<*, *>
+    assertEquals("work (restored)", listPreview["restoredName"]); assertEquals(true, listPreview["conflict"])
+    request { engine.importBackup(backup, emptyList(), "list-import") }
+    request { engine.importBackup(backup, emptyList(), "list-import") }
+    val restored = request { engine.occurrence(reminder.id) } as Map<*, *>
+    assertEquals(sourceList.id, restored["listId"]); assertEquals("work (restored)", restored["listName"])
+    assertEquals(2, (request { engine.lists() } as List<*>).size)
+    val exported = BackupCodec.decode(request { engine.exportBackup() } as String)
+    assertEquals(setOf(local, sourceList.id), exported.lists.map { it.id }.toSet())
+    assertEquals(sourceList.id, exported.records.single().listId)
+    val conflicting = sourceList.copy(id = local, name = "Old name", normalizedName = "old name")
+    val sameIdBackup = BackupCodec.encode(emptyList(), emptyMap(), emptyList(), now, lists = listOf(conflicting))
+    val sameIdPreview = request { engine.previewImport(sameIdBackup) } as Map<*, *>
+    assertEquals("Work", ((sameIdPreview["lists"] as List<*>).single() as Map<*, *>)["restoredName"])
+    request { engine.importBackup(sameIdBackup, emptyList(), "same-list-import") }
+    assertEquals(2, (request { engine.lists() } as List<*>).size)
+  }
+  @Test fun trashUndoPreservesCompletedAndSkippedStatesAndRejectsStaleDeletionRevision() {
+    val completedId = id(create("historical-trash"))
+    request { engine.apply(mapOf("kind" to "Done", "operationId" to "historical-done", "occurrenceId" to completedId, "expectedRevision" to 1)) }
+    request { engine.apply(mapOf("kind" to "Delete", "operationId" to "historical-delete", "occurrenceId" to completedId, "expectedRevision" to 2)) }
+    val stale = request { engine.apply(mapOf("kind" to "UndoDelete", "operationId" to "historical-stale-undo", "occurrenceId" to completedId, "expectedRevision" to 2)) } as Map<*, *>
+    assertEquals("STALE_REVISION", stale["errorCode"])
+    request { engine.apply(mapOf("kind" to "UndoDelete", "operationId" to "historical-undo", "occurrenceId" to completedId, "expectedRevision" to 3)) }
+    val completed = request { engine.occurrence(completedId) } as Map<*, *>
+    assertEquals(true, completed["completed"]); assertEquals(false, completed["deleted"])
+    assertFalse(os.active.containsKey(completedId))
+
+    request { engine.apply(mapOf("kind" to "CreateSeries", "operationId" to "skipped-trash-series", "title" to "Skipped occurrence",
+      "eventStartMs" to now + 120_000, "alarmAtMs" to now + 120_000, "zoneId" to "UTC",
+      "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 3, "zoneMode" to "pinned"))) }
+    val skippedId = protectedRows().filter { it.segmentId != null }.minBy { it.targetMs }.occurrenceId
+    request { engine.apply(mapOf("kind" to "Skip", "operationId" to "historical-skip", "occurrenceId" to skippedId, "expectedRevision" to 1)) }
+    request { engine.apply(mapOf("kind" to "Delete", "operationId" to "skipped-delete", "occurrenceId" to skippedId, "expectedRevision" to 2)) }
+    request { engine.apply(mapOf("kind" to "UndoDelete", "operationId" to "skipped-undo", "occurrenceId" to skippedId, "expectedRevision" to 3)) }
+    val skipped = request { engine.occurrence(skippedId) } as Map<*, *>
+    assertEquals(false, skipped["completed"]); assertEquals(true, skipped["skipped"]); assertEquals(false, skipped["deleted"])
+    assertEquals(true, skipped["exception"]); assertFalse(os.active.containsKey(skippedId))
+    assertEquals(1, (request { engine.query(mapOf("view" to "completed"), null) } as Map<*, *>)["total"])
+    assertEquals(2, (request { engine.query(mapOf("view" to "completed", "includeSkipped" to true), null) } as Map<*, *>)["total"])
+    assertEquals(0, (request { engine.query(mapOf("view" to "deleted"), null) } as Map<*, *>)["total"])
   }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false

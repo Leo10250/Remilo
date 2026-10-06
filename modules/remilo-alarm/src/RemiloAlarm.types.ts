@@ -1,16 +1,19 @@
-export type RemiloAlarmModuleEvents = { onChange: (params: Record<string, never>) => void };
+export type SoundPreviewSnapshot = { requestId: string; sound: 'remilo' | 'system'; state: 'Starting' | 'Playing' | 'Ended' | 'Interrupted' | 'Failed'; actualSound?: 'remilo' | 'system'; reason?: string };
+export type RemiloAlarmModuleEvents = { onChange: (params: Record<string, never>) => void; onSoundPreviewState: (snapshot: SoundPreviewSnapshot) => void };
+export type ListRecord = { id: string; name: string; revision: number; overdueCount: number };
 export type Capabilities = {
   exactAlarms: boolean; notifications: boolean; channelEnabled: boolean;
   fullScreen: boolean; unlocked: boolean; observedAtMs: number; activeSessionId: string; notificationChannelEnabled: boolean;
 };
 export type ReminderDraft = {
   title: string; alarmAtMs?: number; eventStartMs?: number; eventEndMs?: number; dueAtMs?: number;
-  notes?: string; listName?: string; mode?: 'Alarm' | 'Notification' | 'None';
+  notes?: string; listName?: string; listId?: string | null; mode?: 'Alarm' | 'Notification' | 'None';
   allDay?: boolean; zoneId?: string; dueLinked?: boolean; alarmLinked?: boolean;
   sound?: 'remilo' | 'system'; vibration?: boolean;
 };
 export type HistoryEntry = { kind: string; atMs: number; targetMs: number | null };
-export type Occurrence = Required<ReminderDraft> & {
+export type ResolvedReminderDraft = Omit<Required<ReminderDraft>, 'listId'> & Pick<ReminderDraft, 'listId'>;
+export type Occurrence = ResolvedReminderDraft & {
   id: string; completed: boolean; deleted: boolean; revision: number; nextAlertMs: number | null;
   generation: number; deliveryState: string; overdue: boolean; history?: HistoryEntry[];
   segmentId: string | null; nominalSlot: string | null; exception: boolean; skipped: boolean;
@@ -19,7 +22,7 @@ export type Occurrence = Required<ReminderDraft> & {
   alertAdjustment?: 'Snoozed' | 'Postponed' | null;
   collectionAtMs?: number;
 };
-export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listName?: string; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
+export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listId?: string | null; listName?: string; deliveryIssuesOnly?: boolean; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
 export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
 export type CreateCommand = ReminderDraft & { kind: 'Create'; operationId: string; alarmAtMs?: number };
 export type DeliveryCommand = {
@@ -39,12 +42,13 @@ export type RecurrenceDraft = {
 };
 export type Series = {
   id: string; seriesId: string; revision: number; state: 'Active' | 'Paused' | 'Archived'; exhausted: boolean;
-  template: Required<ReminderDraft>; rule: RecurrenceDraft & { anchor: string; zoneId: string | null; endExclusive: string | null };
+  template: ResolvedReminderDraft; rule: RecurrenceDraft & { anchor: string; zoneId: string | null; endExclusive: string | null };
   registered: number; pending: number; upcoming: { nominalSlot: string; eventStartMs: number; alarmAtMs: number }[];
 };
 export type RepeatFamily = {
   seriesId: string; current: Series; state: 'Active' | 'Paused' | 'Ended'; unfinishedCount: number;
-  upcoming: { segmentId: string; nominalSlot: string; eventStartMs: number; alarmAtMs: number }[];
+  upcoming: { segmentId: string; nominalSlot: string; eventStartMs: number; alarmAtMs: number; zoneId?: string;
+    mode?: 'Alarm' | 'Notification' | 'None'; state?: 'Active' | 'Paused' }[];
 };
 export type TimeZoneOption = { id: string; label: string; region: string; offsetSeconds: number };
 export type TimeConversionInput = { zoneId: string; instantMs: number; local?: never } | { zoneId: string; local: string; instantMs?: never };
@@ -55,14 +59,18 @@ export type SeriesCommand =
   (ReminderDraft & { kind: 'CreateSeries'; recurrence: RecurrenceDraft; operationId: string }) |
   (ReminderDraft & { kind: 'EditSeries' | 'EditFollowing'; recurrence: RecurrenceDraft; operationId: string; segmentId: string; expectedRevision: number; nominalSlot?: string }) |
   { kind: 'PauseSeries' | 'ResumeSeries'; operationId: string; segmentId: string; expectedRevision: number };
-export type Command = CreateCommand | DeliveryCommand | ContentCommand | SeriesCommand |
+export type ListCommand = { kind: 'CreateList'; name: string; operationId: string } |
+  { kind: 'RenameList'; listId: string; name: string; expectedRevision: number; operationId: string } |
+  { kind: 'RemoveList'; listId: string; expectedRevision: number; operationId: string };
+export type Command = CreateCommand | DeliveryCommand | ContentCommand | SeriesCommand | ListCommand |
   (Partial<AppSettings> & { kind: 'Settings'; operationId: string; expectedRevision: number }) |
   { kind: 'StopAll'; operationId: string; expectedSessionId: string };
 export type CommandResult = {
   status: 'Scheduled' | 'Blocked' | 'Pending' | 'Applied' | 'Rejected';
   occurrence?: Occurrence; segmentId?: string; generation?: number; errorCode?: string;
-  errorField?: string; errorMessage?: string; count?: number; added?: number; preserved?: number; blocked?: number; retry?: boolean;
+  errorField?: string; errorMessage?: string; count?: number; added?: number; preserved?: number; blocked?: number; retry?: boolean; list?: ListRecord | null;
 };
 export type SchedulePreview = { eventStartMs: number; eventEndMs: number; dueAtMs: number; alarmAtMs: number; warnings: string[];
   upcoming: { nominalSlot: string; eventStartMs: number; dueAtMs: number; alarmAtMs: number; adjusted: boolean; zoneId: string }[] };
-export type ImportPreview = { count: number; items: { id: string; title: string; conflict: boolean; futureAlert: boolean }[] };
+export type ImportPreview = { count: number; items: { id: string; title: string; conflict: boolean; futureAlert: boolean }[];
+  lists?: { id: string; name: string; restoredName: string; conflict: boolean }[] };

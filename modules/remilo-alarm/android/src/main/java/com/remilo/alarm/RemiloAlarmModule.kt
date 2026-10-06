@@ -11,6 +11,7 @@ import java.util.UUID
 
 class RemiloAlarmModule : Module() {
   private var observation: AutoCloseable? = null
+  private var previewObservation: AutoCloseable? = null
   private fun engine() = AlarmEngine.get(requireNotNull(appContext.reactContext).applicationContext)
   private fun dispatch(promise: Promise, body: (AlarmEngine) -> Any?) {
     val owner = engine()
@@ -18,13 +19,14 @@ class RemiloAlarmModule : Module() {
   }
   override fun definition() = ModuleDefinition {
     Name("RemiloAlarm")
-    Events("onChange")
+    Events("onChange", "onSoundPreviewState")
     OnCreate {
       val owner = engine()
       observation = owner.observe { sendEvent("onChange", emptyMap<String, Any>()) }
+      previewObservation = owner.observeSoundPreview { sendEvent("onSoundPreviewState", it) }
       owner.recover()
     }
-    OnDestroy { observation?.close(); observation = null }
+    OnDestroy { observation?.close(); observation = null; previewObservation?.close(); previewObservation = null }
     Function("createOperationId") { UUID.randomUUID().toString() }
     AsyncFunction("getCapabilities") { promise: Promise -> dispatch(promise) { it.capabilities() } }
     AsyncFunction("queryReminders") { filter: Map<String, Any?>, cursor: String?, promise: Promise ->
@@ -36,6 +38,7 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("scheduleTestAlarm") { promise: Promise -> dispatch(promise) { it.testAlarm() } }
     AsyncFunction("getSettings") { promise: Promise -> dispatch(promise) { it.settings() } }
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
+    AsyncFunction("queryLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("querySeries") { promise: Promise -> dispatch(promise) { it.querySeries() } }
     AsyncFunction("queryRepeatFamilies") { promise: Promise -> dispatch(promise) { it.queryRepeatFamilies() } }
     AsyncFunction("getTimeZones") { atMs: Double, promise: Promise -> dispatch(promise) { it.timeZones(atMs) } }
@@ -43,7 +46,9 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("getSeries") { id: String, promise: Promise -> dispatch(promise) { it.getSeries(id) } }
     AsyncFunction("getSeriesDraft") { id: String, nominal: String, promise: Promise -> dispatch(promise) { it.getSeriesDraft(id, nominal) } }
     AsyncFunction("getDiagnostics") { promise: Promise -> dispatch(promise) { it.diagnostics() } }
-    AsyncFunction("previewSound") { sound: String, promise: Promise -> dispatch(promise) { it.previewSound(sound) } }
+    AsyncFunction("previewSound") { sound: String, requestId: String, promise: Promise -> dispatch(promise) { it.previewSound(sound, requestId) } }
+    AsyncFunction("stopSoundPreview") { requestId: String, promise: Promise -> dispatch(promise) { it.stopSoundPreview(requestId) } }
+    AsyncFunction("getSoundPreview") { promise: Promise -> dispatch(promise) { it.soundPreview() } }
     AsyncFunction("exportBackup") { promise: Promise -> dispatch(promise) { it.exportBackup() } }
     AsyncFunction("previewImport") { json: String, promise: Promise -> dispatch(promise) { it.previewImport(json) } }
     AsyncFunction("importBackup") { json: String, copyIds: List<String>, operation: String, promise: Promise ->

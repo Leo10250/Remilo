@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { Tone } from '../domain/actions';
 export type Notice = { message: string; tone?: Tone; persistent?: boolean;
-  action?: { label: string; occurrenceId?: string; segmentId?: string }; id: number };
+  action?: { label: string; occurrenceId?: string; segmentId?: string; undoDelete?: { id: string; revision: number; operationId: string } }; id: number };
 let notice: Notice | null = null;
 let sequence = 0;
 const listeners = new Set<() => void>();
