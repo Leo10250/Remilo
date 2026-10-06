@@ -2,6 +2,23 @@
 
 ## ADR 001: Shared UI, autonomous Android implementation
 
+The [appearance redesign](appearance-redesign.md) adds an isolated design-review
+boundary before production migration. Metro substitutes the review entry/fixture
+bridge only for opt-in web previews; normal entries redirect and Android uses the
+real bridge. Debug-only Compose snapshots use immutable fake records with no
+engine/storage/audio acquisition. Production AlarmActivity retains its lifecycle,
+observation and actions, delegating the unchanged default rendering to
+AlarmControlsScreen. Review-only color/art slots default empty/identity.
+
+These are preserved review boundaries, not accepted art or a production appearance
+system. The [P01-P12 plans](plans/redesign/README.md) supersede the provisional broad
+comparison sequence. P01 first establishes approved environmental compositions;
+P04 owns the durable cosmetic/settings/migration contract, P08 native presentation,
+P09/P10 automatic resolution and P11 stable activity/alias/worker integration.
+Their proposed storage/interface details require refinement and explicit approval;
+none is implied implemented by this ADR. Current credential/operational/backup
+versions remain 4/3/3 until their authorized migrations.
+
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
 No Prebuild after bootstrap, no OTA, no iOS until the last optional phase.
@@ -48,6 +65,11 @@ Direct Boot match flags. Default launcher lookup hides the credential-protected
 product activity before unlock; it cannot be a prerequisite for alarm registration.
 Creating a handle does not start that activity. The UI remains unavailable until
 unlock; actual pre-unlock controls belong to the Direct Boot aware native activity.
+
+This is the current baseline. P11 requires a stable explicit MainActivity show
+handle and deployment launch target before aliases, retaining pre-unlock-safe
+handle construction and never disabling native alarm components. That planned
+replacement is not yet an implemented entry-point change.
 
 One native audio session with an elapsed-time deadline. New members do not extend
 it. Audio termination is independent of persistence. FGS is systemExempted while

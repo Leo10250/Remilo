@@ -45,6 +45,20 @@ block verified release, rather than development. Known failures still require fi
 | UX-10 | No alert recovery repair and shared schedule/work/delivery presentation | UX-08 | implemented/unverified | [62 domain tests; retained history/overdue recovery; signed-phone comprehension pending](evidence/2026-10-05-second-refinement.md) |
 | UX-11 | Browse roots, recorded Activity, recoverable completed cleanup and sound preview | UX-10 | implemented/unverified | [96 native tests; preview ownership and fixture interactions; Android Back/audio acceptance pending](evidence/2026-10-05-second-refinement.md) |
 | UX-12 | Managed Lists, content schema 4 and backup format 3 | UX-11 | implemented/unverified | [upgrade/legacy/empty/stale/template/import regressions; signed ARM64 build; phone upgrade pending](evidence/2026-10-05-second-refinement.md) |
+| AR-00 | Preserved isolated review groundwork (not approved art direction) | UX-12 | implemented/unverified | [reassessment](evidence/2026-10-06-redesign-reassessment.md); representative style approval absent and latest full shared run failed; P01 supersedes expansion |
+| RD-DOC | Twelve separate redesign plans, index, approvals/references and handoff protocol | owner documentation-only instruction | implemented/unverified | [planning validation](evidence/2026-10-06-redesign-planning.md); owner document review/next-session authorization pending |
+| RD-P01 | Art Direction: reference audit, actual representative Agenda/Meadow alarm and owner-approved style | explicit owner execution authorization | pending | [P01](plans/redesign/p01-art-direction.md); brief then both rendered compositions approved before expansion |
+| RD-P02 | Visual Foundations: reviewed shared/native primitives and eight light/dark environments | RD-P01 accepted | pending | [P02](plans/redesign/p02-visual-foundations.md); sample then catalog approval, composite contrast/parity |
+| RD-P03 | Branding: exact supplied Classic production identity and reviewed variants | RD-P02 accepted | pending | [P03](plans/redesign/p03-branding.md); fidelity/masks/export approval; no aliases |
+| RD-P04 | Fixed Appearance: native settings/policies, cosmetic operations, CE upgrades/backup4 | RD-P02 accepted | pending | [P04](plans/redesign/p04-fixed-appearance.md); approved durable contract, old readers, unchanged targets/generations |
+| RD-P05 | Agenda and Navigation: three roots, compact rows, Lists and secondary collections | RD-P02, RD-P04 accepted | pending | [P05](plans/redesign/p05-agenda-and-navigation.md); guarded Back, independent state/origins, approved workflows |
+| RD-P06 | Reminder Editor: compact common form and guarded advanced controls | RD-P04, RD-P05 accepted | pending | [P06](plans/redesign/p06-reminder-editor.md); keyboard-reachable Save, drafts/stale/uncertain retry, transition guards |
+| RD-P07 | Details and Repeats: clear timing/state actions and family/occurrence context | RD-P04, RD-P05 accepted | pending | [P07](plans/redesign/p07-details-and-repeats.md); recorded Activity, scopes, old unfinished work and transition guards |
+| RD-P08 | Native Presentation: frozen environmental session canvas and supported notifications | RD-P01, RD-P02, RD-P03, RD-P04 accepted | pending | [P08](plans/redesign/p08-native-presentation.md); actual Compose/privacy/race/reliability checks and owner render approval |
+| RD-P09 | Time Appearance: five bands, zone/lifecycle/transition policy | RD-P04, RD-P05, RD-P06, RD-P07, RD-P08 accepted | pending | [P09](plans/redesign/p09-time-appearance.md); no lost drafts/targets; fresh defaults wait P10 |
+| RD-P10 | Smart Colors: reviewed English/emoji/Chinese rules, stable cache and combined defaults | RD-P04, RD-P09 accepted | pending | [P10](plans/redesign/p10-smart-colors.md); ambiguity/manual/Auto/privacy/legacy tests and owner behavior approval |
+| RD-P11 | Launcher Personalization: stable entry points, aliases and optional delayed work | RD-P03, RD-P04, RD-P08, RD-P09 accepted | pending | [P11](plans/redesign/p11-launcher-personalization.md); atomic one-alias/session/stale-worker/upgrade checks |
+| RD-P12 | Consolidated Acceptance: integrated checks, signed artifact and one owner phone run | RD-P02 through RD-P11 accepted and integrated | pending | [P12](plans/redesign/p12-consolidated-acceptance.md); actual physical evidence required; no distribution permission |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -55,6 +69,12 @@ block verified release, rather than development. Known failures still require fi
 | P6 | Optional iOS feasibility and complete port | G5 | pending | final phase only; real iPhone capability evidence |
 
 ## Task verification contracts
+
+- RD-P01-P12 replace provisional AR-01-06 planning; AR-00 remains historical review
+  groundwork, not a completed visual approval. Scope/dependencies/checkpoints are
+  in the [single plan index](plans/redesign/README.md) and individual documents.
+  No milestone runs until separately authorized; current instruction is documentation
+  only. Plans and handoffs are not alternative task-status sources.
 
 - P0-01: shared checks and bundled Android assembly; clean-checkout CI and signed
   offline installation are separate evidence requirements.

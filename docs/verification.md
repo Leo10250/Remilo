@@ -70,6 +70,47 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ## G0: foundation
 
+### Appearance design review
+
+The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
+currently authorizes documentation only. P01 first audits reference/current output
+and requires actual representative Agenda/full-Meadow Water plants alarm renders,
+side-by-side original/current/corrected comparisons, composited accessibility checks
+and explicit style/screen approval before any theme expansion. Existing A/B/C
+facilities below are preserved tooling, not a passed gate or required broad expansion.
+See [baseline limitations](evidence/2026-10-06-redesign-reassessment.md) and
+[approval ledger](design/approvals.md). P12 extends the existing single owner phone
+checklist rather than creating another physical-status source.
+
+`npm run preview:ui` exposes the non-shipping `/design-review` workspace. Compare
+A/B/C with the same scenario/brightness/period/content; actions are memory-only.
+`?inspect=1&screen=agenda&approach=hybrid&scale=2&brightness=dark&scenario=long-titles`
+provides a clean phone-sized inspection view. Real shared controls and draft
+helpers are exercised, but picker/keyboard/Back/TalkBack acceptance remains native.
+Browser alarm/notification examples are explicitly representations, not Android
+notification layout or delivery evidence.
+
+`npm run verify` includes opt-in web/normal Android resolver isolation and palette
+role/fixture checks. `node --experimental-strip-types
+scripts/verify-design-review-assets.mjs [sharp-package-path]` checks exact Classic
+source pixels and native artwork/token parity without writing files.
+
+The debug native `AlarmDesignReviewTest` renders actual `AlarmControlsScreen`
+through Robolectric native graphics. `verify:android` runs it with the module's
+debug unit tests. Artifacts are under
+`modules/remilo-alarm/android/build/outputs/design-review/native`: `index.json`,
+`gallery.html` and native PNGs. The gallery opens directly with relative assets.
+Assert nonblank pixels, distinct A/B/C treatments, generic content and reachable
+captured-member/session actions at 100%/200% text. Confirm the review activity is
+non-exported in debug and absent from release. No engine, database or alarm service
+is instantiated by those fixtures.
+
+Review the actual rendered text/controls over artwork, all palette choices,
+long English/Chinese and desktop/mobile layouts. Check scanning, simple creation,
+destination discovery and event/Due/alert versus Stop/Done comprehension. Owner
+layout/artwork/token approval precedes broad production changes; host results alone
+do not pass that design gate or any physical reliability gate.
+
 - Clean checkout builds with pinned tools and lockfile.
 - Locally signed release APK installs, opens offline, and has bundled JS/no Metro.
 

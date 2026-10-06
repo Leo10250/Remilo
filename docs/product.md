@@ -11,6 +11,13 @@ physical gates stay pending and no broader beta release is declared verified.
 
 ## Release priorities
 
+The owner-specified [appearance/workflow redesign](appearance-redesign.md) precedes
+optional integrations. Its [P01-P12 plans](plans/redesign/README.md) separate review
+fixtures from production changes; existing scheduling/privacy contracts remain fixed.
+The 6 October follow-up authorizes documentation only, not milestone execution.
+P01 first requires accepted environmental Agenda/Water plants compositions before
+theme expansion. Approval records and execution authorization are separate.
+
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.
 2. Useful one-off private beta, then polished management and recurrence.
 3. Optional scoped Google Calendar integration.
@@ -111,6 +118,12 @@ No AI chat, collaboration suite, location triggers, watches, attachments, generi
 calendar import or visual cloning is in the initial product.
 
 ## Presentation contract (0.4.0)
+
+This section describes the implemented baseline, including Browse and the geometric
+R. The [redesign specification](appearance-redesign.md) defines approved replacement
+requirements (bottom navigation and exact supplied Classic identity); individual
+plans/owner approvals govern when those changes may be implemented. Do not describe
+planned presentation as already shipped or discard baseline behavioral guarantees.
 
 - Neutral light/charcoal surfaces and blue primary actions. Green/amber/red are
   status accents with text and icons; permissions never imply guaranteed audibility.
