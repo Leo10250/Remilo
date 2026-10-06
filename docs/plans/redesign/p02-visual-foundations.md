@@ -54,6 +54,11 @@ and current review tokens are proposals, not approved final values.
 
 ## 8. Required design decisions
 
+Consume the owner-accepted P01 [UI language](../../design/ui-composition.md) alongside
+[illustration language](../../design/art-direction.md): type/spacing, rounded surfaces,
+headers, controls, state and responsive hierarchy. The linked r2 proposal is not accepted
+by inference. Finalize tokens from actual renders; do not generalize r1's existing geometry.
+
 **Approved:** eight names, dual brightness, typography/spacing/target requirements
 and one shared static catalog across RN/native.
 

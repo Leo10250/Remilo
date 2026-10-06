@@ -84,6 +84,11 @@ as inspiration. References showing Daily Mix/weather are not approved functional
 
 ## 8. Required design decisions
 
+Apply the accepted P01 [settings/component language](../../design/ui-composition.md)
+and [pattern adaptations](../../design/p01-pattern-evaluation.md): named swatches,
+non-color selection, concise policy descriptions, independent brightness and honest
+saving/error feedback. Reference weather/Daily mix options remain excluded.
+
 **Approved:** brightness/color separation, native authority, scopes/Auto/nominal
 boundaries, cosmetic invariants, backup4/old readers and legacy opt-in requirements.
 

@@ -2,11 +2,13 @@
 
 ## 1. Objective and user-visible outcome
 
-Establish an owner-approved environmental illustration and composition contract
+Establish owner-approved environmental illustration and UI composition/component language
 through two representative screens: actual React Native Agenda and actual native
 Compose Water plants alarm. The corrected experience should visibly belong to
 the supplied soft illustrated references, with readable content and usable actions.
-This is a non-shipping design milestone, not permission to redesign the entire app.
+The specification guides the wider UI (including editor, notifications and settings),
+while implementation remains exactly these two non-shipping representatives. It is
+not permission to implement other workflows or redesign the entire app under P01.
 
 ## 2. Current relevant repository state
 
@@ -20,13 +22,15 @@ debug native review fixtures/tests around actual `AlarmControlsScreen`.
 These are useful, unapproved groundwork. The isolated glossy plant and faint
 footer retain old sparse geometry and do not satisfy the environmental reference.
 Production settings remain brightness-only; no shipping classifier/appearance
-policies exist. The last recorded full shared run failed; those historical results
-do not verify current HEAD, and native host results are not
-owner approval. No earlier AR-00 gate may be assumed complete.
+policies exist. The [P01 intake](../../evidence/2026-10-06-p01-intake.md) records passing
+shared/native checks and preserved attributed captures, now committed by `4d1059c`;
+they do not approve visual quality or prove device behavior. Recheck HEAD/dirty inputs.
+The owner's [critical correction](../../design/references/p01-owner-correction-2026-10-06.md)
+requires r2 refinement; r1 was not accepted. No earlier AR-00 gate is complete by inference.
 
 ## 3. Scope
 
-Execute in five bounded stages, stopping at the stated owner gates:
+Execute in six bounded stages, stopping at the stated owner gates:
 
 1. **Intake and attribution.** Read contracts, approvals, references and actual
    Git state and any new dirty diff. Inventory preserved work; identify safe
@@ -35,21 +39,26 @@ Execute in five bounded stages, stopping at the stated owner gates:
    Re-render the current two screens before evaluating them; retain the owner's
    rejected screenshot separately because it may represent an earlier revision.
 2. **Visual audit and brief.** Compare reference and current at equal display size.
-   Record composition, scene coverage, palette hierarchy, illustration vocabulary,
-   negative space, text hierarchy, action geometry and large-text behavior. Create
-   `docs/design/art-direction.md` as a proposed contract with concrete diagrams or
-   reference crops, not adjectives alone. Obtain brief approval before corrected art.
-3. **Two corrected prototypes only.** Implement a representative Sunrise Agenda
+   Record illustration plus whole-UI hierarchy, typography, card geometry, spacing,
+   alignment, density, navigation/filter/action placement and large-text behavior.
+   Maintain complementary `docs/design/art-direction.md` and `ui-composition.md`,
+   with Adopt/Adapt/Reject/Investigate decisions, diagrams and primary research.
+   Obtain refined specification approval before corrected art. Preserve historical r1.
+3. **Artwork-only checkpoint.** Generate a small representative Meadow/Sunrise
+   candidate set only after specification approval. Present standalone sources,
+   reference comparisons and quiet/crop regions; obtain acceptance of candidate
+   hashes/conditions before corrected asset/layout integration. No generated UI.
+4. **Two corrected prototypes only.** Implement a representative Sunrise Agenda
    at 08:00 and a full Meadow Water plants alarm, using existing actual components
    and review-only fixtures. If assets are needed in this later authorized session,
    generate/prepare only those two compositions under the approved brief; preserve
    originals/provenance. Do not expand eight palettes or all thirteen review scenes.
-4. **Render and evaluate.** Produce attributed actual screenshots and side-by-side
+5. **Render and evaluate.** Produce attributed actual screenshots and side-by-side
    original/current/corrected comparisons. Inspect light/dark, 100%/200% text,
    long English/Chinese titles, larger/expanded layouts and reachable actions.
    Evaluate actual composite contrast, not palette values alone. Iterate narrowly.
-5. **Owner acceptance and handoff.** Present both screen comparisons plus the style
-   contract and evidence. Await explicit acceptance of the identified revision.
+6. **Owner acceptance and handoff.** Present both screen comparisons plus the
+   complementary specifications and evidence. Await explicit acceptance of the revision.
    Record conditions and resolve them; hand off only accepted material to P02.
 
 Use one coherent art-direction contract across RN and Compose. If work is later
@@ -63,14 +72,18 @@ automation, alias switching, audio/scheduling changes or installation. No full
 theme catalog, brand reinterpretation, all-app comparison expansion or permanent
 replacement of existing assets. No claim of native keyboard/TalkBack/phone proof.
 Do not execute P02 simply because the prototypes pass tests.
+Editor/notification/settings patterns guide later milestones; P01 does not implement
+them. A separate editor layout study is recommended at P06 intake. Moving a bounded
+extra prototype into P01 requires an explicit scope decision.
 
 ## 5. Prerequisites and dependencies
 
 Hard prerequisites: None.
 Integration dependencies: None.
 
-The owner has reviewed/preserved the planning structure (A06), but P01 execution
-still requires explicit authorization in a new session. Read
+The owner authorized bounded P01 execution (A10), then instructed specification-only
+refinement and added an artwork gate (A11). Honor that latest boundary; neither record
+accepts r1/r2 or generated art. Read
 [approval records](../../design/approvals.md), [product](../../product.md),
 [appearance](../../appearance-redesign.md), [architecture](../../architecture.md)
 and [verification](../../verification.md). Verify the immutable reference inventory
@@ -105,8 +118,11 @@ is the negative comparison. The supplied Classic board is exact identity input.
 Sunrise Agenda/current-time policy, full Meadow Water plants and frozen session
 canvas. No existing candidate composition or palette is approved.
 
-**Proposed, requiring owner approval:** art-style contract and each corrected
-composition. The brief must specify silhouette language, layered depth without
+**Proposed, requiring owner approval:** complementary art/UI contract, a small
+artwork-only selection before integration, and each corrected composition. The UI
+brief specifies card/header/form/button/state/navigation language and reference-pattern
+adaptations; broader specification does not expand P01 implementation. The art brief
+specifies silhouette language, layered depth without
 glossy object rendering, leaf/hill/cloud vocabulary, palette relationships, scene
 coverage and text-safe regions. Describe cropping, anchoring and scalable scene
 zones with visual examples; do not hard-code all later screens' dimensions.
@@ -121,7 +137,9 @@ If the brief needs a product change, stop for explicit approval.
 ## 9. Expected deliverables
 
 - Reference/current audit with annotated differences and root causes.
-- One proposed, then explicitly approved `docs/design/art-direction.md` contract.
+- Complementary proposed, then approved `docs/design/art-direction.md` and
+  `ui-composition.md`, with pattern evaluation and an exact revision manifest.
+- Small artwork-only candidate review with explicit acceptance before integration.
 - Exactly the two representative corrected review compositions, with source/asset
   provenance and actual RN/Compose captures, not image-generated UI screenshots.
 - Side-by-side original/current/corrected sheets at common scale. Mark reference
@@ -156,6 +174,9 @@ If the brief needs a product change, stop for explicit approval.
   UI-in-image, frame/card around the primary scene, or new logo interpretation.
 - Title, event/delivery time, state and actions have clear hierarchy at 360x800.
   No overlap, clipped words or artwork behind essential content that breaks contrast.
+- Cards, typography, spacing, alignment, header/context/navigation and action placement
+  visibly express the reference UI language. Evaluate scanning, discoverability, density,
+  error recovery and responsive behavior alongside illustration quality.
 - Test at 360x800 and at least one larger phone and one expanded viewport, light/dark,
   100%/200% text and long English/Chinese. Record exact sizes rather than guessed ones.
 - Actual composited normal text >=4.5:1, large text >=3:1, essential controls/selected/
@@ -171,7 +192,8 @@ Use `npm run preview:ui` and the opt-in actual RN fixture, plus existing debug n
 graphics tests/gallery around `AlarmControlsScreen`. Reuse source isolation and
 read-only asset checks; inspect test runner options before selecting focused tests.
 Run `npm run verify` and relevant `npm run verify:android` after review code changes;
-diagnose the existing shared ENOENT failure without weakening tests. Run release
+Use the documented process-local TEMP/TMP workaround if the shared ENOENT recurs;
+do not weaken tests or change pinned dependencies. Run release
 producing commands serially; no install. Record actual exit results and limitations.
 
 Capture the render matrix and representative interactions; check component bounds,
@@ -191,8 +213,9 @@ frozen canvas derived from mutable member order; expanding scope before approval
 ## 14. User approval checkpoints
 
 1. Explicit authorization to execute this plan, separate from documentation review.
-2. Reference audit/style brief approval before corrected asset/composition work.
-3. Explicit approval of both attributed corrected screens and responsive/dark
+2. Refined illustration/UI specification approval before artwork generation.
+3. Artwork-only candidate approval before corrected RN/Compose asset/layout integration.
+4. Explicit approval of both attributed corrected screens and responsive/dark
    behavior before P02/theme expansion. Record artifact IDs and conditions in
    [the ledger](../../design/approvals.md). If rejected, revise only P01.
 
@@ -218,12 +241,15 @@ and docs/evidence/2026-10-06-redesign-reassessment.md. Inspect actual Git state 
 preserve all existing valid dirty work. Confirm my explicit P01 authorization;
 do not treat the planning baseline as execution permission. Stop on missing inputs.
 Audit reference/current actual RN Agenda and native Compose Water plants renders.
-Propose the style contract and await my brief approval before corrected artwork.
-Then implement only the two isolated representative prototypes, capture attributed
+Propose complementary illustration/UI language and pattern evaluations; await my
+refined specification approval. Then present a small artwork-only Meadow/Sunrise
+candidate set and await acceptance before integration. Implement only the two
+isolated representative prototypes, capture attributed
 original/current/corrected comparisons and verify composite contrast, 200% text,
 responsive behavior, fixture interactions and web/debug isolation. Agenda follows
 current-time atmosphere; the Water plants alarm is full Meadow with a frozen initial
 canvas. Do not change production behavior, generate the full catalog, deploy or
-start P02. Await my explicit approval of both actual renders and style contract.
+start P02. Editor/settings/notification patterns guide later plans, not P01 production
+work. Await my explicit approval of both actual renders and complementary specifications.
 Record real test results, approval artifacts, evidence, backlog and P01 handoff.
 ```

@@ -58,6 +58,12 @@ Reference forms omit advanced semantics; do not remove required controls to matc
 
 ## 8. Required design decisions
 
+Consume accepted P01 [editor/component language](../../design/ui-composition.md) and
+[pattern evaluation](../../design/p01-pattern-evaluation.md). Recommend a bounded actual-editor
+layout study at this milestone's intake before production conversion: direct date/time
+affordances, three-mode Alert, optional Notes, and header versus keyboard-safe Save.
+The study and final flow require this plan's authorization/approval, not inferred P01 scope.
+
 **Approved:** common form order, collapsed unused Notes, separate advanced groups,
 explicit Alert modes and prominent keyboard-reachable Save.
 

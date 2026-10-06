@@ -84,6 +84,10 @@ Actual launcher behavior is device evidence, not a reference-mask screenshot.
 
 ## 8. Required design decisions
 
+Use accepted P01 [settings/selection language](../../design/ui-composition.md) for
+named icon/palette choices, non-color selection and pending/failure feedback; preserve
+the separate manual icon and matching concepts. The exact Classic identity remains A01.
+
 **Approved:** stable MainActivity, atomic one-alias policy, independent icon controls,
 on-open/resume atmosphere matching and session guard. The owner explicitly made
 closed-app updates optional/nonblocking for P12; that is scope approval, not code approval.

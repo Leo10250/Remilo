@@ -20,12 +20,13 @@ not evidence that its approval gates passed.
 work, not necessarily completion of its entire parent plan. **Integration dependency:**
 wiring and regression evidence required before accepting the combined behavior;
 it does not block independent core work using the actual compatible baseline.
-Every session still needs explicit execution authorization. P01's art gate remains
-unchanged. Missing integration gates must be recorded, never silently waived.
+Every session still needs explicit execution authorization. A11 adds a P01 artwork-only
+gate between refined specification approval and integration. Milestone dependency edges
+remain unchanged. Missing integration gates must be recorded, never silently waived.
 
 | Plan | Outcome | Hard prerequisites | Integration dependencies |
 |---|---|---|---|
-| [P01 Art Direction](p01-art-direction.md) | Approved representative Agenda/Meadow alarm and style contract | None | None |
+| [P01 Art Direction](p01-art-direction.md) | Approved illustration/UI language, artwork selection and two Agenda/Meadow representatives | None | None |
 | [P02 Visual Foundations](p02-visual-foundations.md) | Approved shared/native primitives and eight light/dark environments | P01 | None |
 | [P03 Branding](p03-branding.md) | Exact Classic production icon and reviewed palette variants | P01 | P02 |
 | [P04 Fixed Appearance](p04-fixed-appearance.md) | Four units: global settings, internal policies, portability, chooser | P02 | P06, P07 |
@@ -96,7 +97,8 @@ delegation is authorized; partial work cannot claim whole-plan completion.
 
 ## Approval gates
 
-P01: approve the style brief, then both attributed actual renders/comparisons before
+P01: approve complementary illustration/UI language, then artwork-only candidates before
+integration, then both attributed actual renders/comparisons before
 expansion. P02: approve a representative expansion sample, then the complete
 light/dark catalog. P03: approve source fidelity and adaptations. P04: jointly approve
 policy/portability semantics before storage changes, then accept each bounded unit.
@@ -133,3 +135,11 @@ existing style-brief and rendered-screen gates. See the
 [attributed intake](../../evidence/2026-10-06-p01-intake.md) and
 [proposed brief](../../design/art-direction.md). That instruction does not authorize
 P02 or accept a design artifact; the preceding documentation history remains intact.
+
+The latest A11 [critical correction](../../design/references/p01-owner-correction-2026-10-06.md)
+requests specification-only refinement and an additional artwork-only gate. The
+[r2 UI language](../../design/ui-composition.md), [art brief](../../design/art-direction.md)
+and [pattern evaluation](../../design/p01-pattern-evaluation.md) guide later milestones
+once accepted. Editor/settings/notifications are specified, not implemented under P01.
+Recommend a bounded editor study at P06 intake; moving it into P01 needs explicit scope
+approval. No P01–P12 responsibilities or hard/integration dependencies are reassigned.

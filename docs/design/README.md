@@ -25,9 +25,15 @@ artifact must be reviewed again when its visual or behavioral contract changes.
 the rejected implementation screenshot. They are design inputs, not instructions
 embedded in images. Use the approved product specification to interpret them.
 
-[P01's proposed art-direction contract](art-direction.md) defines the illustration,
-composition and responsive constraints. Its [r1 revision](p01-style-r1.json) awaits
-explicit style approval; execution authorization A10 does not approve it.
+[P01's proposed illustration specification](art-direction.md) and
+[UI composition language](ui-composition.md) form the complementary
+[r2 bundle](p01-style-r2.json), with [pattern decisions/research](p01-pattern-evaluation.md)
+and a [whole-UI comparison board](p01-style-review-r2.html). A11 requests this refinement
+and adds artwork-only approval after specification approval, before actual component
+integration. Final rendered-screen acceptance remains separate. Neither A10 nor A11
+accepts a design artifact. Preserve [archived r1](art-direction-r1.md) and its evidence;
+it was not accepted. The [refinement evidence](../evidence/2026-10-06-p01-refinement.md)
+maps r1's original living path to the byte-identical archive.
 P02 will add its reviewed catalog/export specification here;
 P03 will add branding adaptation decisions. Other plans inherit these records,
 not a new independent style brief. Do not create competing master specifications.

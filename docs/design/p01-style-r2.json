@@ -1,0 +1,227 @@
+{
+  "artifactId": "P01-style-r2",
+  "date": "2026-10-06",
+  "role": "Proposed complementary illustration/UI specification; awaiting owner acceptance",
+  "ownerAccepted": false,
+  "source": {
+    "commit": "4d1059c9ff2d7289a46b5c2047765b3865a2974b",
+    "branch": "theme-update",
+    "locallyRecordedTrackingCommit": "4d1059c9ff2d7289a46b5c2047765b3865a2974b",
+    "startingCheckoutClean": true,
+    "networkFetch": false
+  },
+  "artifacts": [
+    {
+      "path": "docs/design/art-direction.md",
+      "sha256": "3cf78809d9c5acc68a3f5fb03744e0d3babfbb2288f4f74bc77eeeb3d9ce8922"
+    },
+    {
+      "path": "docs/design/ui-composition.md",
+      "sha256": "9a5458a5b2f9c8d3932790dd8e0b475b4acb4eaaf3a689eb14b07d01cf6291f1"
+    },
+    {
+      "path": "docs/design/p01-pattern-evaluation.md",
+      "sha256": "78305595c5372ed0d218b3586d9450bc36cfd5dd48660c16f3b9127cc1e942e2"
+    },
+    {
+      "path": "docs/design/p01-composition-language-r2.svg",
+      "sha256": "ed7c68973836453bdac185a7a8e86b0635b6c115ea0697d38e9a7c52a240c95d"
+    },
+    {
+      "path": "docs/design/p01-style-review-r2.html",
+      "sha256": "14a5b091847b7cfdc753039d8b1e9826b02675957dc35653c88d8f138c715467"
+    },
+    {
+      "path": "docs/plans/redesign/p01-art-direction.md",
+      "sha256": "1683800f5fa3edc00890f425afabefd5de66397a858fba5924aec8f0e43157e5"
+    }
+  ],
+  "bundleSha256": "32f913e8c46a03210dc0372527e86c102f446f4d50cf0cfe822f74c67d647728",
+  "historicalR1": {
+    "record": {
+      "path": "docs/design/p01-style-r1.json",
+      "sha256": "903d5720f6227b4899697f4a68eec4110fea2c9bf0fc8d1bdbe00dbb88a3af8d"
+    },
+    "originalLivingPath": "docs/design/art-direction.md",
+    "archivedByteIdenticalSource": {
+      "path": "docs/design/art-direction-r1.md",
+      "sha256": "ad630cf4f25a50fd1da4808bfea8d9912d6a4b273b3412bbfb0e7fc3e3e98880"
+    },
+    "ownerAccepted": false
+  },
+  "baselineManifest": {
+    "path": "docs/evidence/redesign-p01/baseline-20ea024/manifest.json",
+    "sha256": "32b4bedd2adcadf59a8a224a093c016e4e1bad6e5347579761668dfc2b7d38cd"
+  },
+  "ownerInputs": [
+    {
+      "path": "docs/design/references/p01-owner-correction-2026-10-06.md",
+      "sha256": "e06589961bc9719f64e409b316c3b0727da12a0cb7b666144f510ee36ecf77f9"
+    },
+    {
+      "path": "docs/design/references/time-of-day-and-alarms.png",
+      "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
+    },
+    {
+      "path": "docs/design/references/butter-periwinkle-sage-owner-2026-10-06.png",
+      "sha256": "af22a02be3d28680326f843de1372a5d4d77e9fdf77bef5677590212173d42e4"
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/evidence/2026-10-06-p01-refinement.md",
+      "sha256": "d1c136e128589149fafabb3b67b7e674b96e7786c4a7686e7abcc2c4941ccc5a"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/style-r2-composition-diagram.png",
+      "sha256": "105694a26e47bce2df8663eef73bca6be7241e808ace96a18ee173a3da9a0e53"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/style-r2-review-board.png",
+      "sha256": "16d62b53c6a1915885c17bfb998baf043dcb4fb9efbf6f7c55e8a679d2f1dc3e"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/style-r2-review-narrow.png",
+      "sha256": "996bb077455be8db96921628ac719607ab95dd88545a8c6042e4d1bad6cf81e5"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/style-r2-review-overview.png",
+      "sha256": "8032ec2e34fe6295c7d2604b9f4b9c3e4fc08267a570780cd91d788b1f636882"
+    }
+  ],
+  "relatedDocumentRevisions": [
+    {
+      "path": "docs/appearance-redesign.md",
+      "sha256": "b3c9a112319ccbb3d834436dc05d751b2771a32132b26ee3eecf5392777a62ba"
+    },
+    {
+      "path": "docs/backlog.md",
+      "sha256": "cb126bb4994f746fcb9432b2a6e528b8c487c0e6e8f480afd99ed93782f9c3c0"
+    },
+    {
+      "path": "docs/design/README.md",
+      "sha256": "eed7d590673b81f74ab163bf3bab622c180020f7c8ff9be49c417770b99e08f0"
+    },
+    {
+      "path": "docs/design/approvals.md",
+      "sha256": "2b68b83bf8e98c796725b81f17730aa659d0fdc9a893170922d7b542875918a9"
+    },
+    {
+      "path": "docs/design/references/README.md",
+      "sha256": "05d6d358afeba97d4e691977eeb482ff27902a45f059fc25f1f9ffd2a47add8f"
+    },
+    {
+      "path": "docs/plans/redesign/README.md",
+      "sha256": "169dce2da3a8b46d17f7e4ee882c0de91199fc68babad422c6385d0a3cebbf2e"
+    },
+    {
+      "path": "docs/plans/redesign/p02-visual-foundations.md",
+      "sha256": "fcd7a99d717921682cb8bc319039d05b0ba3a5cb92bcd5c178389bcef5773ca6"
+    },
+    {
+      "path": "docs/plans/redesign/p04-fixed-appearance.md",
+      "sha256": "6e6a17b933378c847e56a33fb7c7ffb54b8f3ce8991a551e10af434d4c2033e3"
+    },
+    {
+      "path": "docs/plans/redesign/p05-agenda-and-navigation.md",
+      "sha256": "660b6a3fdf1594ba9aa528821effc53c17653a4fc99eb90e433b9f45eb346593"
+    },
+    {
+      "path": "docs/plans/redesign/p06-reminder-editor.md",
+      "sha256": "0c436308811eeef64110cba59b0cfb3addcaf825358a4cd3195422c22ebef904"
+    },
+    {
+      "path": "docs/plans/redesign/p07-details-and-repeats.md",
+      "sha256": "e6e8906557f14630a2cea26deba20e080943672c7ab521aa710bcac3963e2bd1"
+    },
+    {
+      "path": "docs/plans/redesign/p08-native-presentation.md",
+      "sha256": "1c5c7318ccb51321971939ad9f9317a3ed228119bee430c48e90f99f8a5672f4"
+    },
+    {
+      "path": "docs/plans/redesign/p09-time-appearance.md",
+      "sha256": "e936bae824be18c162d7c1886bc93c87a35d1ba14b439d20aef2253bae3e08c3"
+    },
+    {
+      "path": "docs/plans/redesign/p10-smart-colors.md",
+      "sha256": "f8c368d6a0c058d9ec3c039b12cb007ec3779e6a767e8b1bf5123b1798ef763c"
+    },
+    {
+      "path": "docs/plans/redesign/p11-launcher-personalization.md",
+      "sha256": "532072f62bd9336316e24c87300eb81c48801f10e2790784b8e596a70c953dab"
+    },
+    {
+      "path": "docs/product.md",
+      "sha256": "4f56f5fb0f7183e5ac1c6844df1993758cfbc6208fa57c3346fa17eccbf413ab"
+    },
+    {
+      "path": "docs/verification.md",
+      "sha256": "331516da2fb20eb62e347404ea8f4a2ede47eff9b65b195ceba8aa7cd3ee1c8b"
+    }
+  ],
+  "acceptanceScope": "Complementary environmental illustration and whole-UI language, pattern recommendations, responsive/contrast constraints and bounded artwork-only next step. Future editor/production workflow decisions remain under their existing plans.",
+  "gates": [
+    {
+      "id": "specification",
+      "ownerAccepted": false
+    },
+    {
+      "id": "artwork-only",
+      "ownerAccepted": false,
+      "prerequisite": "specification"
+    },
+    {
+      "id": "actual-rendered-ui",
+      "ownerAccepted": false,
+      "prerequisite": "artwork-only"
+    }
+  ],
+  "limits": [
+    "No corrected art or actual corrected UI implemented.",
+    "No third editor prototype or other milestone implemented.",
+    "No new shared/native/device verification claim.",
+    "Historical baseline remains attributed to 20ea024."
+  ],
+  "reviewBoard": {
+    "renderer": "Codex in-app browser",
+    "desktopViewport": {
+      "width": 1280,
+      "height": 900,
+      "clientWidth": 1265,
+      "scrollWidth": 1265
+    },
+    "narrowViewport": {
+      "width": 360,
+      "height": 800,
+      "clientWidth": 345,
+      "scrollWidth": 345
+    },
+    "imagesLoaded": 10,
+    "referenceDisplayWidth": 180,
+    "sourceCrops": [
+      {
+        "source": "Reference A",
+        "x": 26,
+        "y": 146,
+        "width": 227,
+        "height": 522
+      },
+      {
+        "source": "Reattached Reference B",
+        "x": 272,
+        "y": 28,
+        "width": 228,
+        "height": 438
+      }
+    ]
+  },
+  "verification": {
+    "preservedInputHashesChecked": 156,
+    "preservedInputsMatch": true,
+    "applicationDiffEmpty": true,
+    "changesOnlyUnderDocs": true,
+    "gitWhitespace": "passed",
+    "localDocumentLinksChecked": 317,
+    "localDocumentLinks": "passed"
+  }
+}

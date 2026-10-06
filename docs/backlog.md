@@ -48,7 +48,7 @@ block verified release, rather than development. Known failures still require fi
 | AR-00 | Preserved isolated review groundwork (not approved art direction) | UX-12 | implemented/unverified | [reassessment](evidence/2026-10-06-redesign-reassessment.md); tracked at 9195784, representative style approval absent; last recorded shared run failed, not a current-HEAD result |
 | RD-DOC | Twelve separate redesign plans, index, approvals/references and handoff protocol | owner documentation-only instruction | verified | [planning validation](evidence/2026-10-06-redesign-planning.md); owner reviewed/preserved structure (A06); feature execution remains separately authorized |
 | RD-REF | Focused P04/dependency/P11/approval/state documentation refinement | owner Focused Documentation Refinement instruction (A09) | verified | [refinement checks](evidence/2026-10-06-redesign-planning.md); 192 sections, hard/integration parity, preserved P01/reference/source hashes; no feature execution |
-| RD-P01 | Art Direction: reference audit, actual representative Agenda/Meadow alarm and owner-approved style | Hard: none; integration: none; owner execution authorization A10 | in progress | [intake/capture checks](evidence/2026-10-06-p01-intake.md); [proposed style r1](design/art-direction.md) awaits brief approval before corrected art; both actual renders still require approval |
+| RD-P01 | Art Direction: illustration + whole-UI language, two actual Agenda/Meadow representatives and owner approvals | Hard: none; integration: none; A10 execution, latest A11 specification-only correction | in progress | [preserved intake](evidence/2026-10-06-p01-intake.md); [proposed r2](design/p01-style-review-r2.html) awaits specification approval; artwork-only approval then actual-render approval remain; [refinement evidence](evidence/2026-10-06-p01-refinement.md) |
 | RD-P02 | Visual Foundations: reviewed shared/native primitives and eight light/dark environments | Hard: RD-P01; integration: none | pending | [P02](plans/redesign/p02-visual-foundations.md); sample then catalog approval, composite contrast/parity |
 | RD-P03 | Branding: exact supplied Classic production identity and reviewed variants | Hard: RD-P01; integration: RD-P02 | pending | [P03](plans/redesign/p03-branding.md); Classic can start after P01, variants need P02 colors; fidelity/export approval |
 | RD-P04 | Fixed Appearance parent: four accepted units and combined integration | Hard: RD-P02; integration: RD-P06, RD-P07 | pending | [P04](plans/redesign/p04-fixed-appearance.md); aggregate A-D, policy/portability designed together, route integration before whole-scope acceptance |
@@ -79,8 +79,9 @@ block verified release, rather than development. Known failures still require fi
 - RD-P01-P12 replace provisional AR-01-06 planning; AR-00 remains historical review
   groundwork, not a completed visual approval. Scope/dependencies/checkpoints are
   in the [single plan index](plans/redesign/README.md) and individual documents.
-  No milestone runs until separately authorized. A10 authorizes P01 only and
-  preserves its style/render checkpoints. Plans and handoffs are not alternative
+  No milestone runs until separately authorized. A10 authorizes P01 only; A11 requires
+  specification refinement now and preserves specification/artwork/render checkpoints.
+  Plans and handoffs are not alternative
   task-status sources.
 
 - RD dependency cells distinguish accepted hard artifacts from integration gates;

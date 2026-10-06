@@ -58,6 +58,11 @@ Printed reference labels do not override the approved five-band policy or bright
 
 ## 8. Required design decisions
 
+Apply accepted P01 [settings/selection language](../../design/ui-composition.md)
+alongside P02 primitives: concise radio explanations, visible non-color selection,
+independent brightness and honest applied/pending/failure states. Reference labels do
+not introduce weather/Daily mix behavior.
+
 **Approved:** exact five bands, brightness independence, event identity/zone rules,
 transition deferral and reduced-motion behavior; no scheduling effect.
 

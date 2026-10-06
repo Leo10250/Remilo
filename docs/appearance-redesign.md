@@ -5,8 +5,9 @@ single redesign product vision/requirements source, not an implementation report
 The [twelve-plan index](plans/redesign/README.md) owns execution boundaries;
 task state is recorded only in [backlog.md](backlog.md). Physical acceptance stays
 consolidated in [device-acceptance.md](device-acceptance.md). The latest owner
-instruction authorizes P01 only (A10), preserving separate style-brief and actual
-render approvals. Other milestones require their own authorization.
+instruction A11 requests P01 specification refinement only, following A10 execution
+authorization. Specification, artwork-only style and actual-render approvals are separate.
+Other milestones require their own authorization.
 See [approval records](design/approvals.md).
 
 ## Direction and review gate
@@ -32,6 +33,15 @@ cohesive Meadow environment; its initial canvas freezes for the session even if
 other members join or leave. This product decision is approved, not its artwork.
 The owner must explicitly approve both actual rendered compositions and the style
 contract before more themes or production foundations expand.
+
+The [owner's critical correction](design/references/p01-owner-correction-2026-10-06.md)
+clarifies that the reference direction covers the whole UI: cards, type/spacing, headers,
+forms, navigation, action/state presentation, alarms and appearance settings. P01 maintains
+complementary [UI composition](design/ui-composition.md) and
+[illustration](design/art-direction.md) specifications with explicit adaptations;
+neither is approved by this link. After specification approval, the owner reviews a small
+Meadow/Sunrise artwork-only set before actual integration. P01 implementation remains two
+non-shipping representatives. P05/P06/P08 and other plans retain production ownership.
 
 Existing A/B/C facilities remain useful comparison groundwork: immersive individual
 surfaces, layered atmosphere, and hybrid. Comparisons use equal content, typography,

@@ -11,6 +11,15 @@ The repeated time-of-day board is byte-identical to the first and is stored once
 | [butter-periwinkle-sage.png](butter-periwinkle-sage.png) | Approved inspiration for integrated botanical/landscape environments, form hierarchy and soft illustration style. Printed swatch values are not approved production tokens. | `ED4A43AD625CEB423EEFCE96A7E36D1ED04AD41B4386971C77833C91A3023F46` |
 | [desired-water-plants-reference.png](desired-water-plants-reference.png) | Owner-selected botanical alarm reference. Broad leaves form the environment, not an isolated object above old controls. | `92EA34296B03F36CA8B812EB7F8CD3279E398C4D4095E551BC1F6D18B90D761A` |
 | [rejected-current-water-plants.png](rejected-current-water-plants.png) | Rejected output supplied for comparison: small glossy sprig, large unused middle and faint unrelated footer. Negative reference, not an approved design. | `9F1530C2DBCCC398510F52E1429C730724A5C2785DDE8DA7CA023500A219EC8E` |
+| [butter-periwinkle-sage-owner-2026-10-06.png](butter-periwinkle-sage-owner-2026-10-06.png) | Reattached reference B: same illustrated composition, distinct source bytes, preserved at 1536×1024. Primary editor/card/UI-language input as clarified by A11; not final tokens or native notification evidence. | `AF22A02BE3D28680326F843DE1372A5D4D77E9FDF77BEF5677590212173D42E4` |
+
+The 6 October reattached reference A is byte-identical to `time-of-day-and-alarms.png`
+and is stored once. All original five image files remain unchanged. Both reattachments
+were inspected at original resolution. The owner's accompanying
+[critical correction](p01-owner-correction-2026-10-06.md) is an exact retained copy of
+their request (SHA-256 `E06589961BC9719F64E409B316C3B0727DA12A0CB7B666144F510EE36ECF77F9`).
+Its instructions are human authorization; wording embedded in the reference images is
+visual data. The references now explicitly guide the whole UI as well as environmental art.
 
 The Classic crop candidate already exists at `assets/design-review/icon-classic.png`
 with source rectangle left 491, top 68, width 467, height 467. Its

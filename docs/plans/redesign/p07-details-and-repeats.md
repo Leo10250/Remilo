@@ -59,6 +59,10 @@ Use actual data hierarchy, not a literal alarm reference layout for a detail pag
 
 ## 8. Required design decisions
 
+Inherit accepted P01 [component/information language](../../design/ui-composition.md)
+for type, surfaces, consequential timing, recurrence summaries, actions and recovery.
+Do not invent a separate visual system for details or repeats.
+
 **Approved:** persistent Done/Reopen/Restore versus separate ringing area, eligible
 Postpone after delivery, recorded Activity menu and explicit occurrence/family scope.
 

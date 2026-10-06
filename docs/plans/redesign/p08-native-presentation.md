@@ -63,6 +63,11 @@ examples, not claims that Android allows reference-board layouts.
 
 ## 8. Required design decisions
 
+Consume accepted P01 [alarm/component language](../../design/ui-composition.md) and
+[notification research/adaptations](../../design/p01-pattern-evaluation.md). Use standard
+native templates and actual native actions; reference pastel notification mockups are
+not a promise of OEM/lock-screen/heads-up layout. No unexplained close/menu affordances.
+
 **Approved:** full Meadow/single identity policy, frozen initial canvas, independent
 member actions, generic pre-unlock/public privacy and supported standard notifications.
 

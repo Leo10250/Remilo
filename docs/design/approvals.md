@@ -17,6 +17,7 @@ This ledger records human decisions, not task status. Live status belongs only i
 | A08 | 6 October 2026 | The owner selected manual/on-open icon switching first. Closed-app matching is a separately authorized optional extension and does not block P12. | Selection of WorkManager/version/worker design or authorization to implement background automation. |
 | A09 | 6 October 2026 | The owner explicitly requested implementation of the Focused Documentation Refinement plan, including hard versus integration dependencies and current-state corrections. | Application feature implementation, P01 execution, asset generation, builds, deployment or physical acceptance. |
 | A10 | 6 October 2026 | The repository owner explicitly instructed “PLEASE IMPLEMENT THIS PLAN” for the detailed P01 implementation plan in this chat. Execute P01 only, preserving intake, style approval, two actual review prototypes, verification and final render approval. | Acceptance of the proposed style brief, generated artwork, corrected renders, P01 completion, P02, production changes or installation. |
+| A11 | 6 October 2026 | The owner rejects the current UI as a final design and says r1 is not fully approved. Refine the specification only: complementary illustration and whole-UI language, explicit pattern evaluation, stronger comparison, preserved evidence and unchanged P01–P12 responsibilities. After refined specification approval, add a small artwork-only approval before actual UI integration. | Approval of r1/r2, corrected art or screens; immediate artwork generation; production implementation; a third P01 editor prototype or another milestone. |
 
 A03 is the owner's answer to the Meadow-alarm versus time-atmosphere question.
 The original documentation request supplies A04/A05; the later review supplies A06.
@@ -34,6 +35,16 @@ plan”; it preserves both mandatory design checkpoints. Intake evidence:
 [6 October P01 intake](../evidence/2026-10-06-p01-intake.md). The exact proposed
 brief revision is [P01-style-r1](p01-style-r1.json); it is submitted for approval,
 not accepted by A10. No accepted P01 handoff exists yet.
+
+A11 is the latest direct instruction in this chat. The exact request is preserved as
+[Critical Visual Direction Correction](references/p01-owner-correction-2026-10-06.md),
+SHA-256 `e06589961bc9719f64e409b316c3b0727da12a0cb7b666144f510ee36ecf77f9`.
+Its section 13 states: “This artwork generation occurs only after the refined
+specification has been approved.” It also requires artwork acceptance before actual
+screen integration. This narrows the immediate A10 execution to specification refinement;
+it does not cancel preserved intake or alter native requirements. The proposed successor
+is [P01-style-r2](p01-style-r2.json). Its three design gates are specification, artwork-only
+style and actual rendered UI. Record future explicit responses against exact hashes.
 
 ## Specification constraints versus recommendations
 

@@ -63,6 +63,10 @@ the category names and conservative behavior are approved requirements.
 
 ## 8. Required design decisions
 
+Use accepted P01 [component/settings language](../../design/ui-composition.md) for
+explanations, glyphs and selected/error states. Authored P01 fixture categories do not
+constitute an approved production classifier or taxonomy.
+
 **Approved:** deterministic title-only languages/categories, conservative conflicts,
 manual precedence, CE-only cache, stable existing decisions and fresh/legacy policy.
 

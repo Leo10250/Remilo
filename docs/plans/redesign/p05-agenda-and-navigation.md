@@ -58,6 +58,11 @@ scannability, not new filter semantics. Colors supplement labeled states.
 
 ## 8. Required design decisions
 
+Consume accepted P01 [Agenda/card/navigation language](../../design/ui-composition.md)
+and [pattern evaluation](../../design/p01-pattern-evaluation.md). Leading completion
+feedback remains a workflow proposal requiring failure/uncertain/Undo validation here;
+P01's memory-only demonstration does not approve optimistic persistence behavior.
+
 **Approved:** three labeled roots, overflow destinations, origin/state/Back rules,
 one Add control, leading unchecked completion and restrained category glyph/accent.
 

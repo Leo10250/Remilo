@@ -1,19 +1,15 @@
-# P01 environmental art direction — proposed r2
+# P01 environmental art direction — proposed r1
 
-Artifact ID: `P01-style-r2`, 6 October 2026. The exact SHA-256 is in
-[the revision record](p01-style-r2.json). This illustration specification and
-[UI composition language](ui-composition.md) form one complementary proposed brief.
-The owner's correction requires whole-UI refinement and an additional artwork-only gate;
-it does not accept this brief. The exact [r1 source](art-direction-r1.md), r1 board,
-diagram, manifest and baseline evidence remain preserved as historical proposals.
+Artifact ID: `P01-style-r1`, 6 October 2026. The exact SHA-256 is in
+[the revision record](p01-style-r1.json). This document and its linked diagrams
+are the proposed illustration contract submitted at P01's first design checkpoint.
+The owner's execution instruction authorizes intake; it does not accept this brief.
 
-Read the [visual review board](p01-style-review-r2.html),
-[reference-pattern evaluation](p01-pattern-evaluation.md),
-[refinement evidence](../evidence/2026-10-06-p01-refinement.md),
+Read the [visual review board](p01-style-review-r1.html),
 [intake evidence](../evidence/2026-10-06-p01-intake.md) and
 [immutable baseline manifest](../evidence/redesign-p01/baseline-20ea024/manifest.json).
-The board distinguishes supplied mockups, preserved attributed host renders, the historical
-rejected screenshot and proposed composition diagrams. There is no corrected artwork
+The board distinguishes supplied mockups, fresh host renders, the historical
+rejected screenshot and proposed region diagrams. There is no corrected artwork
 or corrected UI render in this revision.
 
 ## 1. Authority and boundary
@@ -21,7 +17,7 @@ or corrected UI render in this revision.
 [P01](../plans/redesign/p01-art-direction.md), the
 [product contract](../product.md), [appearance requirements](../appearance-redesign.md),
 [architecture](../architecture.md), [verification](../verification.md) and
-[A01–A03/A10/A11](approvals.md) govern this work. The two review compositions are:
+[A01–A03/A10](approvals.md) govern this work. The two review compositions are:
 
 - Sunrise Agenda at 08:00 on 6 October 2026 in America/Los_Angeles.
 - A single Water plants alarm in a full Meadow environment, with a review-only
@@ -33,12 +29,6 @@ launcher behavior remain outside it. P02's catalog and production generalization
 are separate work. Existing candidate assets and the exact Classic source identity
 are preserved. The Classic icon's dimensional finish is not an environmental
 illustration requirement.
-
-The immediate authorized work is documentation refinement only. After explicit r2
-specification approval, produce a small artwork-only candidate set and obtain style
-approval **before integrating assets or corrected layouts into RN/Compose**. Final
-actual-screen approval remains separate. The UI brief covers editor/settings/notifications
-for later milestones without implementing them or generating their theme variants.
 
 ## 2. Reference interpretation and audit
 
@@ -60,11 +50,7 @@ not reproduce the other periods or the board's printed time-policy suggestions.
 ![Soft palette and environmental forms](references/butter-periwinkle-sage.png)
 
 **Butter/Periwinkle/Sage:** soft tonal transitions, overlapping hills, round foliage
-and readable light foreground surfaces are useful. Its compact editor, aligned value
-rows, separated date/time affordances and Save header are primary UI-language inputs;
-see the [whole-UI evaluation](p01-pattern-evaluation.md). The reattached
-[B source](references/butter-periwinkle-sage-owner-2026-10-06.png) is preserved separately
-because its file hash differs. The desired Water plants
+and readable light foreground surfaces are useful. The desired Water plants
 reference has stronger authority for botanical coverage than isolated object
 examples elsewhere on this board. Printed swatches are not production tokens.
 
@@ -73,17 +59,12 @@ identity input. The [historical rejected alarm](references/rejected-current-wate
 remains a negative reference with unknown source revision; it is not a current
 HEAD capture. All five reference hashes match their preserved inventory.
 
-### Preserved actual current renders and root causes
+### Fresh current renders and root causes
 
-The clean intake starting commit is now `4d1059c`; runtime sources/assets remain
-unchanged from `20ea024`/`9195784`. The preserved baseline images are actual
+Current runtime sources/assets match `20ea024` and `9195784`. These are actual
 RN components through the opt-in web preview and actual `AlarmControlsScreen`
 through Robolectric native graphics, using authored synthetic reminders. They are
 not Android system UI or physical-device evidence.
-
-The [UI audit](ui-composition.md#2-whole-screen-audit-against-the-references) adds
-card shape/edges, type hierarchy, header/filter/Add/navigation height, editor interaction
-steps and component styling. Larger artwork alone will not correct the rejected UI.
 
 | Aspect | Current observation | Required correction after brief approval |
 |---|---|---|
@@ -122,10 +103,10 @@ has no pointer handling. No decorative animation or appearance transition is add
 
 ## 4. Scene regions, anchors and hierarchy
 
-![Proposed composition relationships, not artwork or product screens](p01-composition-language-r2.svg)
+![Proposed scene and reading regions, not artwork](p01-composition-regions-r1.svg)
 
-The diagrams show schematic layout relationships and annotated component roles only.
-Their blocks and outlines are documentary, not corrected illustrations or final UI.
+The diagrams show schematic regions only. Their colored rectangles and dashed
+bounds are explanatory annotations, not corrected illustrations or final UI.
 Coordinates below refer to the available canvas after real safe-area insets,
 with normalized origin at top left. They are P01 prototype starting constraints,
 not a dimension catalog for later screens. Content reflow takes precedence over
@@ -133,18 +114,13 @@ fractional scene positions.
 
 ### Sunrise Agenda
 
-- Atmosphere covers the canvas. As a source-art coverage target, the main landscape
-  may extend through the lower **25–33%** at 100% text, **behind/around content**, not
-  as a reserved empty list block. Its normalized crop anchor is **(0.5, 1.0)**, preserving a horizontal
+- Atmosphere covers the canvas. The main landscape occupies the lower **25–33%**
+  at 100% text. Its normalized crop anchor is **(0.5, 1.0)**, preserving a horizontal
   horizon and foreground at the bottom. The integrated sun's source focal region
   is around **x 0.55–0.75**, within the landscape's sky band.
 - Sparse restrained forms may extend along exposed edges. Keep meaningful scenery
   visible around the Add region and beside rows, without reserving a large empty
   section between reminders. Do not put the primary scene in a card.
-- Use the [UI-language tile/header/action hierarchy](ui-composition.md): separated
-  rounded tiles, tonal edges, compact spacing, leading completion circle and meaningful
-  secondary information. Remove the current review category stripe; reduce hard outlines.
-  Header, context, Add and navigation must be assessed as one space budget.
 - Reminder surfaces stay near-white and opaque in light mode, opaque dark surfaces
   in dark mode. Text-safe regions are the actual row surfaces and header/control
   bounds, with at least **8 dp** clear space from high-detail edges.
@@ -156,10 +132,9 @@ fractional scene positions.
   **16 sp**, supporting information **14 sp** at 100%. These scale with text settings;
   do not reduce font size to protect a scene. Rows wrap and grow without essential
   title truncation. Done, More and Add targets remain at least **48×48 dp**.
-- At 200%, reduce exposed decorative coverage toward **12–18%** where content permits,
-  keep a recognizable horizon/edge motif and scroll reminders. These are exploration
-  targets, not fixed-height allocations. The Add action and existing review navigation
-  remain reachable. Header/navigation grow naturally without clipping or hit-area overlap.
+- At 200%, reduce the landscape region toward **12–18%**, keep a recognizable
+  horizon/edge motif and scroll reminders. The Add action and existing review
+  navigation remain reachable, with no artwork stealing hit areas.
 - At 412×915 and 800×1024, use a maximum **560 dp** readable content column, centered
   inside safe bounds. The environment fills the wider canvas; source shapes keep
   their aspect ratio. Inspection height comes from the measured viewport.
@@ -175,8 +150,7 @@ fractional scene positions.
   On a 360 dp canvas, the actual title/time/action blocks may occupy wider padded
   bounds; mask/crop/reposition decoration away from those measured bounds. The
   nominal quiet source zone alone does not establish safe contrast.
-- Center the single-member information within its readable column and treat
-  title → current ringing delivery label → target time → ringing status →
+- Treat title → current ringing delivery label → target time → ringing status →
   Stop/Snooze → unfinished explanation/feedback as one sequence. Start with
   **8–12 dp** information gaps, **20–28 dp** before actions, and **12 dp** between
   actions. Avoid pushing controls to the bottom by a large expanding middle gap.
@@ -198,8 +172,6 @@ fractional scene positions.
   Joining medicine, reordering members and removing Water plants in that same
   session must leave Meadow unchanged. A new session initializes anew. This is a
   review demonstration, not P08's durable production mechanism.
-- Omit the reference's X/overflow until a useful action and its meaning are explicitly
-  defined. Hiding the activity is distinct from Stop. Do not add ornamental navigation.
 
 ### Crop and overlap rules shared by both renderers
 
@@ -246,30 +218,25 @@ SVG/Skia/animation dependency. Uniform scaling/crop placement must be explicit.
 This is an agent technical choice within the approved scope; it does not accept
 the generated source or resulting render.
 
-After this exact complementary brief is accepted, perform the artwork-only checkpoint:
+After this exact brief is accepted:
 
-1. Use the built-in imagegen workflow for **two Meadow and two Sunrise artwork-only
-   candidates initially** (four sources total), not four themes. Variation is limited
-   to environmental composition under the same vocabulary. Prompts use region coverage and quiet
+1. Use the built-in imagegen workflow for only the Sunrise landscape and Meadow
+   botanical composition. Prompts use this vocabulary, region coverage and quiet
    zones, explicitly exclude UI/text/logo, and specify transparency for decorative
    layers. Supplied references are inspiration. Generate no complete UI screenshot.
 2. Inspect environmental coverage, leaf/hill silhouette quality, transparency,
    glossy artifacts and consistency before integration. Reject a source that
    repeats the isolated sprig even if its colors look attractive.
-   Present unmodified sources and crop/quiet-region diagrams beside original references.
-   No RN/Compose integration or complete UI generation at this stage. Obtain explicit
-   owner acceptance of identified candidate hashes and conditions. If rejected, revise
-   the small set; do not expand variants. Approval of r2 alone is not artwork acceptance.
 3. Preserve originals, prompts, source reference IDs and SHA-256 hashes. Add versioned
    sibling assets; do not overwrite `landscape.png`, `botanical.png` or icon candidates.
-4. After candidate acceptance, make light/dark treatments of the **two selected** compositions with common geometry
+4. Make light/dark treatments of these same two compositions with common geometry
    and anchors. Export bounded PNGs at up to **1440 px** width, without enlarging
    smaller sources. Copy matching pixels to the debug Android source set.
 5. Add a P01-specific export/check path. Never invoke the broad exporter that
    regenerates every palette/icon variant. A review-only composition descriptor
    contains scene ID, asset revision, brightness, crop and decorative/content-safe
    regions; it contains no persisted policy or classifier result.
-6. After artwork approval, add current/corrected inspection to the existing RN workspace while retaining
+6. Add current/corrected inspection to the existing RN workspace while retaining
    the existing A/B/C screens and real `ReminderRow`/buttons/status components.
 7. Add only the narrow optional single-member presentation slot needed by Compose:
    it receives actual information, action and feedback blocks, while its default
@@ -281,7 +248,7 @@ extend `AlertRecord`, `SessionSnapshot`, credential/operational schemas or backu
 Native serialized mutations, stale-generation rejection, Stop ≠ Done, 10-minute
 Snooze and the five-minute audio deadline remain unchanged.
 
-## 7. Render verification
+## 7. Render verification and acceptance
 
 After integration, render both actual screens at **360×800, 412×915, 800×1024**,
 light/dark, 100%/200% text, standard/long English/long Simplified Chinese content.
@@ -290,12 +257,6 @@ same-session membership changes, generic content, action errors and art/token
 fallback. Preserve baseline originals and place supplied/current/corrected images
 at equal display width with intact aspect ratio, labels outside and content/time
 differences identified. Host evidence stays labeled synthetic.
-
-Evaluate the whole UI across illustration, layout, UX and technical correctness using
-[the UI verification criteria](ui-composition.md#8-whole-ui-verification-and-acceptance).
-Include type/spacing/alignment/card geometry, header/action placement, density, scanning,
-discoverability, common interactions, failure recovery and responsive behavior. Do not
-claim success from palette similarity, increased art coverage or green tests alone.
 
 Verify actual composites: normal text **≥4.5:1**, large text **≥3:1**, essential
 control/selection/focus indicators **≥3:1**. A paired background-only sampling
@@ -326,16 +287,13 @@ rendering and physical reliability remain P12/device acceptance work.
 | Evidence has ambiguous origin | Commit plus dirty-input hashes, fixture/content/art hashes and exact renderer/layout settings. |
 | Tooling/renderer limitations | Record actual failures and resolve them or obtain an explicit bounded deferral. |
 
-**Gate 1 — refined specification:** accept/revise `P01-style-r2`, including this
-brief, UI language, pattern decisions, diagram and review board. Approval accepts
-the proposed visual direction and bounded next artwork review, not unbuilt artwork,
-future UX decisions or production behavior. Record exact revision/hash and conditions.
+**Checkpoint 1 submission:** accept/revise `P01-style-r1` (this brief plus the
+region diagram). Approval accepts the vocabulary, hierarchy, scene regions,
+responsive/dark constraints and bounded asset/component approach. It does not
+accept unbuilt artwork or renders. Record the exact revision/hash and conditions
+in the ledger before corrected asset/composition work.
 
-**Gate 2 — artwork-only style:** after Gate 1, present the small Meadow/Sunrise set.
-Record accepted candidate IDs/hashes, source prompts/references and conditions before
-integration. Material style/composition changes require renewed artwork acceptance.
-
-**Gate 3 — actual rendered UI remains mandatory:** the owner must explicitly accept both actual
+**Checkpoint 2 remains mandatory:** the owner must explicitly accept both actual
 corrected screen revisions, responsive/dark behavior and accessibility evidence
 before P01 completion or an accepted handoff. Material changes require renewed
 acceptance. Update live task status only in backlog; stop after P01.
