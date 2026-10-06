@@ -13,9 +13,9 @@ The repeated time-of-day board is byte-identical to the first and is stored once
 | [rejected-current-water-plants.png](rejected-current-water-plants.png) | Rejected output supplied for comparison: small glossy sprig, large unused middle and faint unrelated footer. Negative reference, not an approved design. | `9F1530C2DBCCC398510F52E1429C730724A5C2785DDE8DA7CA023500A219EC8E` |
 
 The Classic crop candidate already exists at `assets/design-review/icon-classic.png`
-with source rectangle left 491, top 68, width 467, height 467. Existing working-tree
-provenance is in `assets/design-review/README.md`; that review folder is not yet
-committed at this planning baseline. The immutable identity board is preserved here
+with source rectangle left 491, top 68, width 467, height 467. Its
+[provenance](../../../assets/design-review/README.md) and review folder are now
+tracked by commit `9195784`. The immutable identity board is preserved here
 so the necessary source reference is repository-tracked. The crop is not yet an
 approved adaptive layer/export. Preserve original source pixels and compare
 adaptations beside this board in P03.

@@ -146,6 +146,12 @@ specific policies take precedence; following boundaries use stable nominal slots
 Retain policies through templates, materialization, archived segments, exceptions
 and copied-family identity remapping.
 
+P04 is planned as four units, each requiring separate execution authorization:
+global configuration, internal manual policies, backup portability, then chooser
+integration. Design policy and portability semantics together; manual mutations
+remain internal/test-only until
+the backup-v4 portability gate passes. Partial delivery is not whole-scope approval.
+
 Version credential upgrades and portable backup format 4, retaining formats 1-3
 readers. Operational schema 3/privacy is unchanged. Content-derived decisions
 stay credential-protected. Export manual policies, not classifier cache, session
@@ -158,22 +164,26 @@ without destroying choices; classifier updates do not silently recolor cached de
 ## Launcher personalization
 
 Ship Classic in the foundation iteration. Runtime variants follow later. Classic
-is default; users may choose a stable variant or Match app theme (the atmosphere,
-never an individual item), plus best-effort closed-app matching or opening/resume
-only. Explain Android/launcher cache delays. Android system-themed icons follow
-system colors independently.
+is default; users may choose a stable variant or Match app theme on opening/resuming
+(the atmosphere, never an individual item). Explain the on-open behavior and Android/
+launcher cache delays. Android system-themed icons follow system colors independently.
+The owner now makes closed-app matching an optional, separately authorized P11B
+extension, excluded from the first P12 gate; retain it as future scope, not a core promise.
 
 Before aliases, move alarm-clock show handles and deploy launch targeting to stable
 MainActivity. Do not disable MainActivity or alarm components. Atomically switch
 exactly one launcher alias using PackageManager's supported batch API; defer during
 Starting/Active native sessions and recover failure without hiding the app.
 
-Add pinned WorkManager only in that iteration. Lazily initialize after unlock,
-without React, removing only its initializer metadata. Use one unique delayed
-boundary continuation, resolve current preferences/time when run and skip missed
-boundaries. Reconcile on open/resume and unlocked boot/upgrade/time/zone changes.
-Cancel superseded work; a running worker appends its successor instead of replacing
-itself. No exact alarm, foreground service or polling for cosmetic changes.
+The earlier specification selected WorkManager for background matching. It is now
+a candidate mechanism for optional P11B, not a required/pinned core dependency;
+selection/version/compatibility need that extension's explicit approval. If selected,
+initialize after unlock without React, remove only its initializer metadata, use a
+unique delayed boundary continuation with current preferences/time and skip missed
+boundaries. Reconcile unlocked boot/upgrade/time/zone events, cancel superseded work
+and append a successor safely instead of replacing a running worker. Background
+execution remains best effort. Core adds no worker/Startup changes or closed-app
+triggers. No exact alarm, foreground service or polling for cosmetic changes.
 
 ## Execution authority
 
@@ -205,7 +215,8 @@ state cues. Token math alone does not establish rendered accessibility.
 Automate classifier ambiguity/languages/emoji/precedence, credential upgrades and
 old readers, policy portability, generation/target preservation, unavailable
 credential storage, frozen sessions, preference retry races and late/cancelled
-workers. Run `npm run verify` and relevant `npm run verify:android`; never substitute
+workers only if optional P11B is authorized/implemented. Run `npm run verify` and
+relevant `npm run verify:android`; never substitute
 browser or emulator results for physical evidence.
 
 Daily Mix, more palettes, list themes and offline ML are deferred. Weather,

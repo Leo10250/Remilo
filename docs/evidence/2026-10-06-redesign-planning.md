@@ -55,3 +55,33 @@ not rerun for documentation changes. Earlier shared-run failure and native evide
 are explicitly limited in [the reassessment](2026-10-06-redesign-reassessment.md).
 Task state remains solely in [backlog](../backlog.md); document/handoff creation is
 not evidence of completed milestones.
+
+## Focused refinement after owner review
+
+The original creation/results above remain historical. Refinement intake is clean
+HEAD `9195784`, which now tracks the review code/assets. The owner preserved the
+twelve-plan structure, selected four P04 units and on-open-first P11, then authorized
+the Focused Documentation Refinement plan. Ledger A06-A09 records those bounded
+decisions; no visual/native contract or feature execution is inferred.
+
+Targeted changes retain the master/P01 criteria/references/handoff system: P04A-D
+get separate prompts/checks/handoffs with portability before manual exposure;
+hard artifacts and integration gates replace whole-plan start blockers; core P11
+excludes background automation and optional P11B does not gate P12; WorkManager
+remains a candidate. Current-state descriptions are corrected and historical
+uncommitted-state/test accounts are preserved with an appended baseline update.
+
+Read-only refinement validation exited 0: twelve plans, all 192 required sections,
+four P04 unit prompts plus the optional P11B boundary, 30 expanded hard-graph edges,
+24 parent-plan integration relations and 215 local Markdown links with tracked
+targets. Plans/index/graph/backlog agree; hard prerequisites have no cycle or unknown
+IDs. Mutual integration relations are not start-order edges. No optional P11B edge
+blocks P12. All implementation/optional-unit backlog rows remain pending.
+
+P01 sections 10-15 remain byte-identical, SHA-256
+`4d85edafb033338306f3e16964e7fc449fa66a5d999e90bfc09187b5f0be0f0e`.
+Before/after hashes of 262 non-documentation files and all five supplied reference
+PNGs match. `git diff --check` exited 0. No application tests, builds, deployment,
+P01 execution, artwork generation or native/device acceptance occurred. Concrete
+schemas/interfaces, rendered designs and optional background mechanism remain open
+at their original checkpoints; the next session still needs P01 authorization.

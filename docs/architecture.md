@@ -14,7 +14,10 @@ These are preserved review boundaries, not accepted art or a production appearan
 system. The [P01-P12 plans](plans/redesign/README.md) supersede the provisional broad
 comparison sequence. P01 first establishes approved environmental compositions;
 P04 owns the durable cosmetic/settings/migration contract, P08 native presentation,
-P09/P10 automatic resolution and P11 stable activity/alias/worker integration.
+P09/P10 automatic resolution and P11 stable activity/alias integration. P04 is split
+into global configuration, internal policies, portability and chooser units; no
+manual mutations are exposed before portability passes. P11 background workers are
+optional P11B, with mechanism selection open, and do not gate first P12 acceptance.
 Their proposed storage/interface details require refinement and explicit approval;
 none is implied implemented by this ADR. Current credential/operational/backup
 versions remain 4/3/3 until their authorized migrations.

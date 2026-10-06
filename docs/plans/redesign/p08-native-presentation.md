@@ -33,10 +33,13 @@ implemented in React and no second session/action authority.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P01, P02, P03, P04.
+Hard prerequisites: P02, P04A.
+Integration dependencies: P03, P04B, P09, P10.
 
-Require P01's owner-approved Meadow render/style, P02 native catalog, P03 supported
-brand silhouette and P04 descriptor/privacy/fallback contract. Refine snapshot
+Require P02 native catalog (including the P01 approved Meadow style) and P04A
+descriptor/privacy/fallback contract. P03 branding, P04B manual identities and
+P09/P10 automatic resolution are combined integration gates, not blockers for
+core capture/rendering with actual compatible fixed descriptors. Refine snapshot
 ownership/lifetime and mixed-member composition after inspecting actual engine.
 Read [architecture](../../architecture.md), [verification](../../verification.md),
 [approvals](../../design/approvals.md) and dependency [handoffs](../../handoffs/README.md).
@@ -116,25 +119,29 @@ large-text multi-member content hiding Stop. Never weaken reliability tests.
 
 ## 14. User approval checkpoints
 
-Authorize/refine after all direct dependencies; approve frozen-canvas/fallback
+Authorize/refine core after accepted hard artifacts; approve frozen-canvas/fallback
 contract, then actual single/multiple/generic render matrix and action layout.
 Record exact render/snapshot revision. Physical outcome approval remains P12.
 
 ## 15. Completion and handoff requirements
 
-Hand P09 stable descriptor/session capture boundaries and P11 Starting/Active guard
-contract. Record supported notification roles, actual tests, privacy/fallback behavior,
+Hand P09 stable descriptor/session capture boundaries. Retain the existing native
+Starting/Active guard used by P11; P11 does not await this visual redesign.
+Record section 5 branding/identity integration gates before combined acceptance.
+Record supported notification roles, actual tests, privacy/fallback behavior,
 accepted renders and deferred phone evidence. Update contracts/backlog and standard
 handoff, then stop without installation or appearance work in audio startup.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute P08 Native Presentation only after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p08-native-presentation.md, approval ledger and accepted
-P01/P02/P03/P04 handoffs. Inspect actual session/Activity/Compose/notification state;
-stop on missing approvals. Refine and obtain my approval of the capture/fallback contract.
+P02/P04A capabilities and P01 style approval, plus available P03/P04B/P09/P10
+integrations. Inspect actual session/Activity/Compose/notification state; stop on
+missing hard approvals, not unfinished unrelated integrations. Record gates and
+obtain my approval of the capture/fallback contract.
 Integrate approved environmental art and native descriptors; full Meadow Water plants
 uses a canvas captured once per session and unchanged by arrivals/removals/refresh.
 Preserve independent Stop/Snooze, stale guards, initial notifications, immediate

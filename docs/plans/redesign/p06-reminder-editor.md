@@ -31,10 +31,13 @@ full localization, list management redesign or detail/family management work.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P04, P05.
+Hard prerequisites: P02, P05.
+Integration dependencies: P04D, P09.
 
-Require accepted chooser/preview and root/origin/guard contracts plus approved P02
-primitives. Refine keyboard/sheet/layout decisions against actual editor behavior.
+Require P02 primitives and P05's accepted root/origin contract, not automatically
+whole-plan completion. P04D chooser and P09 transition deferral are integration
+gates, not blockers for common-form/draft core work on the real existing editor.
+Refine keyboard/sheet/layout decisions against actual editor behavior.
 Read [appearance](../../appearance-redesign.md), [product](../../product.md),
 [approvals](../../design/approvals.md) and dependency [handoffs](../../handoffs/README.md).
 
@@ -107,24 +110,28 @@ mutate saved state; transient state resets at appearance boundaries.
 
 ## 14. User approval checkpoints
 
-Authorize/refine after P04/P05 accepted. Approve common and advanced create/edit
+Authorize/refine after P02 primitives/P05 routing capability accepted. Approve common and advanced create/edit
 flows including keyboard, large text, stale review and uncertain Retry. Any changed
-timing or cancellation semantics requires separate explicit product approval.
+timing or cancellation semantics requires separate explicit product approval. Accept
+P04D/P09 combined chooser/transition behavior when integrated, not as a core start gate.
 
 ## 15. Completion and handoff requirements
 
 Hand P09 a tested edit/sheet transition-deferral boundary that retains drafts, plus
 P07 editor entry/return contracts. Record accepted flow artifacts, real tests and
-unobserved device behavior in standard evidence/handoff and backlog; stop at P06.
+unobserved device behavior in standard evidence/handoff and backlog. Accepted core
+capabilities may hand off separately; record and close section 5 integration gates
+before whole combined acceptance. Stop at P06.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Work only on P06 Reminder Editor after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p06-reminder-editor.md, approval ledger and accepted
-P04/P05 handoffs, plus P02 primitives. Inspect actual editor/draft/picker/preview
-code and dirty work; stop on missing prerequisites. Refine and obtain my flow approval.
+P02 primitives/P05 routing capability, plus available P04D/P09 integration handoffs.
+Inspect actual editor/draft/picker/preview/Git state; stop on missing hard approvals,
+not merely outstanding integrations. Record those gates and obtain my flow approval.
 Implement the compact ordered form, optional Notes, Schedule/Alarm options and
 keyboard-reachable Save, preserving native timing, recurrence scopes, cancellation,
 stale drafts, exact uncertain retries and preview ownership. Appearance is optional.

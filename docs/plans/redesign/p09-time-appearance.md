@@ -29,10 +29,13 @@ No reinterpretation of event times, independent targets or all-day midnight band
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P04, P05, P06, P07, P08.
+Hard prerequisites: P04A.
+Integration dependencies: P04B, P05, P06, P07, P08, P10.
 
-Require accepted resolver/settings/legacy contract, actual navigation/editor/detail
-guard interfaces and frozen native session behavior. Refine lifecycle/transition
+Require P04A's accepted resolver/settings/legacy contract for core period work.
+P04B manual precedence, P05-P07 redesigned transient guards, P08 frozen presentation
+and P10 combined defaults are integration gates. Core can use actual baseline guards;
+do not enable a combined path until its corresponding gate passes. Refine lifecycle/transition
 ownership against dependency handoffs; do not assume a general route flag is enough.
 Read [appearance](../../appearance-redesign.md), [architecture](../../architecture.md),
 [approvals](../../design/approvals.md) and [handoff protocol](../../handoffs/README.md).
@@ -106,24 +109,28 @@ changing the native canvas on unlock/brightness refresh.
 
 ## 14. User approval checkpoints
 
-Authorize/refine after prerequisites. Approve boundary/zone/deferral examples and
+Authorize/refine core after P04A hard contract. Approve boundary/zone/deferral examples and
 actual atmosphere transitions. Do not activate fresh-install time+Smart defaults
-until P10 completes its combined approval and regression gate.
+until P10 completes its combined approval and regression gate. Accept manual,
+redesigned-screen and frozen-native integration before enabling those combined paths.
 
 ## 15. Completion and handoff requirements
 
 Publish tested period/next-boundary API and lifecycle reconciliation rules to P10/P11,
 legacy/default activation contract and accepted transitions. Record actual checks,
-unchanged-operation evidence, approvals and device gaps in handoff/backlog. Stop at P09.
+unchanged-operation evidence, approvals and device gaps in handoff/backlog. Accepted
+core period capabilities may hand off before redesigned screens; record section 5
+gates and close them before whole combined acceptance. Stop at P09.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Work only on P09 Time Appearance after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p09-time-appearance.md, approval ledger and accepted
-P04/P05/P06/P07/P08 handoffs. Inspect native resolver/settings and actual lifecycle/
-draft/sheet guards; stop on missing prerequisites. Refine and obtain my approval of transition
+P04A capability plus available P04B/P05/P06/P07/P08/P10 integrations. Inspect native
+resolver/settings and actual lifecycle/draft/sheet guards; stop on missing hard
+approvals, record integration gates and obtain my approval of transition
 policy, then implement five exact local bands, native event-band identity and
 foreground boundary/resume/clock/zone reconciliation without draft/scroll resets.
 Preserve brightness independence, manual/Auto precedence, all-day and zone policy,

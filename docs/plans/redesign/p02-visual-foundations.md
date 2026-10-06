@@ -30,7 +30,8 @@ Do not reinterpret P01 or independently commission a different native art style.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P01.
+Hard prerequisites: P01.
+Integration dependencies: None.
 
 Require accepted P01 handoff and explicit owner approvals for both representative
 renders and `docs/design/art-direction.md`. Refine this plan against that contract
@@ -117,7 +118,7 @@ start branding, persistence or navigation work without their separate authorizat
 ## 16. Fresh-chat execution prompt
 
 ```text
-Confirm explicit execution authorization and all prerequisite completion/approvals.
+Confirm explicit execution authorization and accepted hard prerequisite artifacts/approvals.
 Work on P02 Visual Foundations only. Read AGENTS.md, the four core docs,
 docs/appearance-redesign.md, docs/plans/redesign/README.md and
 docs/plans/redesign/p02-visual-foundations.md,

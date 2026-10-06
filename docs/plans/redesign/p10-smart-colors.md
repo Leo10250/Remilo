@@ -30,10 +30,14 @@ classification, extra palettes, Daily Mix or weather/location rules.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P04, P09.
+Hard prerequisites: P04A.
+Integration dependencies: P04B, P04C, P04D, P09.
 
-Require accepted policy/cache privacy extension points, legacy-marker contract and
-time/event resolver. Refine rules, ambiguity/caching/edit semantics and any CE upgrade
+Require P04A's accepted appearance/descriptor/legacy contract for classifier core.
+P04B manual precedence, P04C restore/cache exclusions, P04D chooser and P09 time/
+combined defaults are integration gates, not a block on deterministic rules/cache
+work. No mock production resolver or independent storage owner. Refine rules,
+ambiguity/caching/edit semantics and any CE upgrade
 against actual source before coding. Read [appearance](../../appearance-redesign.md),
 [architecture](../../architecture.md), [approvals](../../design/approvals.md) and
 dependency [handoffs](../../handoffs/README.md). P09 is required for final combined activation.
@@ -119,25 +123,29 @@ actions, or new-install defaults applied to legacy rows without settings.
 
 ## 14. User approval checkpoints
 
-Authorize/refine after dependencies. Approve reviewed rules/mappings and conflict/
+Authorize/refine core after P04A hard contract. Approve reviewed rules/mappings and conflict/
 edit/cache examples before broad backfill; approve explanations and combined fresh/
-legacy defaults before activation. Record rule/catalog/settings versions and conditions.
+legacy defaults before activation. Accept manual/restore/chooser/time integrations
+before whole combined acceptance. Record rule/catalog/settings versions and conditions.
 
 ## 15. Completion and handoff requirements
 
 Publish versioned rules/cache/precedence/default matrices, bounded backfill behavior,
 accepted mappings/explanations and actual migration/operational-invariant evidence.
 Update contracts/backlog and standard handoff; keep physical checks pending. No ML
-or additional automatic modes are implicitly authorized by completion.
+or additional automatic modes are implicitly authorized by completion. Accepted
+classifier core can hand off independently; record section 5 gates and close them
+before combined acceptance or fresh time-plus-Smart default activation.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute P10 Smart Colors only after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p10-smart-colors.md, approval ledger and accepted
-P04/P09 handoffs. Inspect actual CE cache/resolver/settings/restore integration;
-stop on missing prerequisites. Refine and obtain my reviewed language/rule/mapping,
+P04A capability and available P04B/P04C/P04D/P09 integration handoffs. Inspect actual
+CE cache/resolver/settings/restore state; stop on missing hard approvals, record
+outstanding integration gates and obtain my reviewed language/rule/mapping,
 cache-invalidation and fresh/legacy default approvals. Implement pure native
 title-only English/emoji/Simplified-Chinese conservative classification, versioned
 stable CE cache, bounded unlocked processing and chooser explanation. Preserve

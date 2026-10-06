@@ -31,10 +31,13 @@ automatic Trash expiry, additional palettes or classifier implementation.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P04, P05.
+Hard prerequisites: P02, P05.
+Integration dependencies: P04D, P09.
 
-Require accepted policy/descriptor/scopes and root/origin/guard contracts plus P02
-foundations. Coordinate editor entry contracts with P06 if it runs separately;
+Require accepted P02 primitives and P05 root/origin capability, not automatically
+whole-plan completion. P04D optional chooser/scopes and P09 transitions are combined
+integration gates, not blockers for detail/family core work using existing native
+actions. Coordinate editor entry contracts with P06 if it runs separately;
 P07 does not depend on unmerged P06 internals. Read [appearance](../../appearance-redesign.md),
 [product](../../product.md), [approvals](../../design/approvals.md) and [handoff protocol](../../handoffs/README.md).
 Refine actual detail/family action layout before implementation.
@@ -110,25 +113,30 @@ calling scheduling edits. New imagery may crowd persistent actions at large text
 
 ## 14. User approval checkpoints
 
-Authorize/refine after dependencies. Approve stopped-overdue/ringing/family flows,
+Authorize/refine after hard artifacts. Approve stopped-overdue/ringing/family flows,
 state-action comprehension, Schedule details and actual responsive render samples.
 Any semantic change requires explicit product approval, not merely visual acceptance.
+
+Accept P04D/P09 chooser/transition integration before whole combined acceptance.
 
 ## 15. Completion and handoff requirements
 
 Publish detail/family action/layout contracts and transient transition guard usage
 for P09; coordinate stable editor entry/return with P06. Record real evidence,
 accepted artifacts, focused commits and pending phone observations in handoff/backlog.
+Partial capabilities must identify outstanding section 5 integration gates; close
+them before whole combined acceptance, without claiming a complete parent early.
 Stop before automatic appearance or recurrence engine work.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute only P07 Details and Repeats after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p07-details-and-repeats.md, approval ledger and accepted
-P04/P05 handoffs plus P02 foundations. Inspect actual detail/family/query/action
-state and preserve dirty work; stop on missing prerequisites. Refine and obtain my approval of
+P02/P05 capability handoffs plus available P04D/P09 integrations. Inspect actual
+detail/family/query/action state and preserve dirty work; stop on missing hard
+approvals, record outstanding integration gates and obtain my approval of
 representative detail/Repeats workflows. Implement clear event/Due/delivery hierarchy,
 persistent Done/Reopen/Restore, separate ringing Stop/Snooze, post-delivery Postpone,
 recorded Activity and explicit occurrence/family/scoped appearance management.

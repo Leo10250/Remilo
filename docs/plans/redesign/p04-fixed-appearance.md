@@ -16,13 +16,24 @@ The review catalog/resolver is not a durable production implementation. See
 
 ## 3. Scope
 
-Design and approve a versioned appearance configuration/descriptor contract, then
-implement native settings, fixed/global resolution, bounded draft preview and manual
-occurrence/following/family policies. Add a dedicated Appearance page near Settings'
-top and an optional reminder chooser. Own the identified cosmetic command, credential
-migration, recurrence metadata portability and backup-v4 changes as one integration
-boundary. Refresh presentation without scheduling changes. Add a legacy-install
-marker usable by P09/P10 without enabling automation in this milestone.
+Keep P04 as one top-level plan, implemented in four separately authorized sessions.
+Its original settings/policies/portability/chooser scope is retained, not reduced.
+Design the manual-policy and backup semantics together before storage changes, but
+deliver the code through these bounded units:
+
+| Unit | Scope and deliverable | Required checks and exit gate |
+|---|---|---|
+| P04A | Approved native config/descriptor contract; fixed/global settings and Appearance page; legacy-install marker and credential upgrade; preserve existing `theme` | Preference revisions/rollback/retry, all legacy/missing-settings paths, fixed preview/fallback/contrast; accepted settings/descriptor capability handoff |
+| P04B | Internal manual policies, cosmetic operation and occurrence/following/family inheritance through templates/materialization/archives/exceptions | Stale/retry/Auto/nominal-slot tests and unchanged segments/generations/targets; policy implementation accepted, mutations internal/test-only |
+| P04C | Backup-v4 codecs, readers 1-3, restore preview and family-copy remapping of manual policies | Round trips, old readers, conflicts/copies/unknown IDs/privacy/retry; portability passes before manual mutations can be exposed |
+| P04D | Optional reminder chooser, bounded native draft previews and production UI integration | Draft cancellation/stale/uncertain operations, scope selection, preference races, actual light/dark/200% renders; accepted chooser and aggregate handoff |
+
+Use the hard sequence P04A -> P04B -> P04C -> P04D, with one integrator for shared
+engine/schema/backup edits. P04B must not expose manual-policy mutations in production
+UI or public bridge commands before P04C passes. P04A needs no backup-v4 export of
+global settings; retain the existing backup format until P04C. No automation defaults
+activate here. P04D can first integrate with existing editor/detail routes; later
+P06/P07 layouts must carry that contract forward and close the integration gate.
 
 ## 4. Explicit non-goals
 
@@ -33,9 +44,13 @@ Native environmental rendering remains P08; publish consumable descriptors now.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P02.
+Hard prerequisites: P02.
+Integration dependencies: P06, P07.
 
-Require approved P02 catalog/export/fallback contract and P01 style handoff. Read
+P04A requires P02's approved catalog/export/fallback contract and the P01 style gate.
+Unit hard prerequisites: P04A: P02; P04B: P04A; P04C: P04B; P04D: P04C.
+P06/P07 chooser placement is an integration gate for their redesigned routes, not
+a start blocker or a reason to invent new routes here. Read
 [product](../../product.md), [architecture](../../architecture.md),
 [appearance](../../appearance-redesign.md), [approval ledger](../../design/approvals.md)
 and the [handoff protocol](../../handoffs/README.md). Obtain owner acceptance of
@@ -75,7 +90,9 @@ boundaries, cosmetic invariants, backup4/old readers and legacy opt-in requireme
 **Proposed:** exact descriptor/config versioning, policy representation and ordering,
 revision effects, preview response, legacy detection for every old database/settings
 state, unknown-ID handling, restore preview/copy mappings and chooser interactions.
-Prepare a truth table for occurrence/following/family/Auto before owner approval.
+Prepare a truth table for occurrence/following/family/Auto and its portable
+representation together before owner approval. The four execution units are an
+approved planning boundary, not approval of concrete schema or API details.
 
 **Agent choices:** exact schema increment, entities/codecs and native/TS interfaces
 following repository patterns. One integrator owns engine/schema/backup changes;
@@ -86,7 +103,9 @@ do not prematurely lock storage design in this planning document.
 Approved durable contract/ADR; versioned native models and RN bridge rendering;
 Appearance/chooser UI; cosmetic operation and all upgrade paths; backup4 exporter
 and 1-3 readers; migration/portability/invariant fixtures; actual UI captures;
-evidence, approval records and `docs/handoffs/redesign-p04.md`.
+evidence and approval records. Each unit produces `docs/handoffs/redesign-p04a.md`,
+`redesign-p04b.md`, `redesign-p04c.md` or `redesign-p04d.md`; the aggregate
+`docs/handoffs/redesign-p04.md` links all four and outstanding route integrations.
 
 ## 10. Functional acceptance criteria
 
@@ -107,6 +126,9 @@ evidence, approval records and `docs/handoffs/redesign-p04.md`.
   settings, active session or launcher transfer. Unknown identifiers are retained.
 - Locked/unavailable credential storage and missing assets give generic usable
   fallback; no synchronous credential/classifier work on audio startup.
+- P04B remains internal/test-only until P04C's portability gate passes. P04D requires
+  that accepted gate before exposing choices. Unit acceptance does not imply that
+  all P04 or its later P06/P07 route integrations are complete.
 
 ## 11. Visual acceptance criteria
 
@@ -118,11 +140,15 @@ unimplemented time/launcher behavior as enabled.
 
 ## 12. Verification requirements
 
-Run `npm run verify` and `npm run verify:android` serially. Add native migration,
+Run `npm run verify` and `npm run verify:android` serially for changed behavior in
+each selected unit, not all four units in one session. Add native migration,
 cosmetic-operation, nominal inheritance, archived-template, restore-copy and retry
 tests; compare operational snapshots before/after all cosmetic commands. Test
 preference lost acknowledgements and late responses; fixture chooser/preview behavior.
-Update contracts/evidence; phone migration/persistence remains P12 observation.
+Use section 3's unit-specific checks and record actual results in that unit's
+handoff. P04C additionally verifies that no backup omits accessible manual policy;
+P04D verifies it only consumes the accepted portable command. Update contracts/
+evidence; phone migration/persistence remains P12 observation.
 
 ## 13. Regression risks
 
@@ -132,33 +158,76 @@ copy mappings; schema/privacy leakage; preference retries overwriting newer choi
 
 ## 14. User approval checkpoints
 
-Authorize/refine P04 after P02. Approve the durable policy/migration/backup contract
-and precedence examples before persistence implementation; approve resulting
-Appearance/chooser renders and semantics before handoff. Document exact accepted
-versions and conditions, not assumed architecture approval from the broad plan.
+Authorize/refine the selected unit only after its hard prerequisites. Approve the
+joint policy/migration/backup contract and precedence examples before storage edits;
+accept P04A settings/Appearance, P04B internal policy behavior, P04C portability,
+then P04D chooser separately. No mutation exposure before the P04C gate. Document
+exact accepted versions/conditions; authorization for one unit does not run the rest.
 
 ## 15. Completion and handoff requirements
 
 Publish stable descriptor/preview/operation contracts for P05-P10, inheritance tables,
 legacy marker/default gating, catalog version and backup portability rules. Identify
 all schema paths and actual regression results. Keep unresolved phone tests pending,
-record focused commits/evidence/approvals and backlog status, then stop at this boundary.
+record focused commits/evidence/approvals and status only in backlog, then stop at
+the selected unit boundary. Partial capability handoffs identify accepted outputs
+and remaining integration gates; they cannot mark the parent complete. Aggregate
+P04 after all four units and close P06/P07 placement against actual redesigned routes.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
-Work only on P04 Fixed Appearance after my authorization. Read AGENTS.md, core docs,
-redesign specification/index, docs/plans/redesign/p04-fixed-appearance.md, approval ledger and P01/P02
-handoffs. Inspect actual CE/DP schemas, backup readers, engine, preference controller
-and dirty work. Require accepted P02 catalog; stop on missing approvals. Refine and
-obtain my policy/Auto/inheritance/migration/backup contract approval before schema
-changes. Implement native fixed settings/descriptors, bounded previews, optional
-chooser and identified revision-safe cosmetic scopes, plus credential upgrades and
-backup4 with readers1-3. Never alter segments, generations or delivery targets; keep
-DP3/private data boundary. Preserve legacy brightness/Classic/fixed automation-off,
-including missing settings rows. Do not add time, classifier, launcher or navigation.
-Verify migrations, retry races, recurrence portability and unchanged operational
-snapshots with shared/native checks. Record evidence, owner approvals, backlog and
-P04 handoff, preserving deferred physical observations. Stop before other plans.
+Execute P04A only after my explicit authorization. Read AGENTS.md, core docs,
+docs/appearance-redesign.md, the redesign index, docs/plans/redesign/p04-fixed-appearance.md,
+approval ledger and accepted P01/P02 handoffs. Verify hard prerequisites and inspect
+actual CE/DP/backup/preferences state; stop on missing approval. Obtain approval of
+the joint policy/portability contract before storage changes, then implement only
+global fixed settings/descriptors, legacy handling and Appearance page. Preserve
+brightness, DP3, scheduling and legacy automation-off, including missing settings.
+Do not implement/expose manual policies, bump backup to4 or add automation. Run P04A
+checks and relevant shared/native verification serially. Record accepted capability,
+evidence, approvals, backlog and docs/handoffs/redesign-p04a.md; stop before P04B.
+```
+
+```text
+Execute P04B only after my explicit authorization. Read AGENTS.md, core docs,
+docs/appearance-redesign.md, the redesign index, docs/plans/redesign/p04-fixed-appearance.md,
+approval ledger and accepted P04A handoff/joint policy-portability contract. Verify
+hard prerequisites against actual source; stop if missing. Implement only internal
+native manual policies, revision/operation-safe cosmetic scopes and nominal
+inheritance through templates, exceptions, archives and materialization. Keep
+mutations internal/test-only: no public bridge dispatch or UI exposure before P04C
+passes. Preserve segments, generations, registrations and Snooze/Postpone targets.
+Run P04B migration/precedence/retry/invariant checks and shared/native verification
+serially. Record exact accepted internal capability, evidence, approvals, backlog
+and docs/handoffs/redesign-p04b.md; stop before P04C or chooser work.
+```
+
+```text
+Execute P04C only after my explicit authorization. Read AGENTS.md, core docs,
+docs/appearance-redesign.md, the redesign index, docs/plans/redesign/p04-fixed-appearance.md,
+approval ledger and accepted P04A/P04B handoffs/joint contract. Verify prerequisites
+and actual backup/restore/copy state; stop on missing approval. Implement backup4
+manual-policy portability, readers1-3, previews, retry-stable copied-family mappings
+and exclusions. Do not export global settings/cache/session/launcher state or alter
+DP3, generations or targets. Keep manual mutations internal until portability tests
+and owner acceptance pass; only then enable their portable native command contract.
+Run P04C round-trip/old-reader/privacy/restore/retry checks plus shared/native checks
+serially. Record evidence, approval gate, backlog and docs/handoffs/redesign-p04c.md.
+Stop before P04D; no chooser, classifier or time mode.
+```
+
+```text
+Execute P04D only after my explicit authorization. Read AGENTS.md, core docs,
+docs/appearance-redesign.md, the redesign index, docs/plans/redesign/p04-fixed-appearance.md,
+approval ledger and accepted P04A/P04B/P04C handoffs. Verify the portability/exposure
+gate and actual UI/preview contract; stop if missing. Implement only optional
+reminder/series chooser, bounded native draft previews and production UI wiring.
+Reuse existing editor/detail routes or accepted redesigned routes; outstanding
+P06/P07 placement is an integration gate, not permission to redesign those plans.
+Preserve cancellation, stale/uncertain retries, manual/Auto scopes and scheduling.
+Obtain chooser approval, verify actual large-text/light/dark flows and relevant
+shared/native checks serially. Record evidence, approvals, backlog and
+docs/handoffs/redesign-p04d.md; aggregate docs/handoffs/redesign-p04.md without
+claiming unfinished route integrations complete. Stop; no automation or deployment.
 ```

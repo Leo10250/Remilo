@@ -71,3 +71,17 @@ and authorizes documents only. Five supplied images are preserved unchanged as
 documentation references; the duplicate board is omitted. No UI asset generation
 or runtime edits are authorized. P01 awaits explicit execution authorization.
 Documentation validation results will be recorded separately after creation.
+
+## Refinement intake after tracking review work
+
+The earlier uncommitted-state account above is historical and remains unchanged.
+At focused-refinement intake, HEAD is `9195784` (`Added spec docs`) and Git status
+is clean. That commit tracks the review code, candidate assets, debug native fixtures
+and tests previously outside `60c95bb`. It does not establish new design acceptance
+or verification results. Current production remains brightness-only with schemas/
+backup 4/3/3 and no appearance policies, classifier or icon-switching implementation.
+
+The results above are the last recorded results, not proof for current HEAD; no
+application checks or builds were rerun for this documentation refinement. The
+owner reviewed the planning structure and requested targeted P04/dependency/P11/
+ledger/state refinements, still without P01 execution or asset-generation permission.

@@ -9,8 +9,9 @@ claim of verified beta. Distribution is not authorized by this milestone.
 ## 2. Current relevant repository state
 
 Earlier host/signed-build evidence exists, but the redesigned product is not
-implemented/accepted. Latest shared verification failed; existing native review
-captures are host fixtures. G1/G2/G3 physical gates and UI refinements still have
+implemented/accepted. Last recorded shared verification failed; existing native review
+captures are host fixtures, not verification of HEAD `9195784`. G1/G2/G3 physical
+gates and UI refinements still have
 pending observations. Read [reassessment](../../evidence/2026-10-06-redesign-reassessment.md),
 [verification](../../verification.md), [owner checklist](../../device-acceptance.md)
 and all actual milestone handoffs; never attribute old APK evidence to new source.
@@ -33,7 +34,13 @@ uncoordinated phone requests outside the consolidated owner run.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P02, P03, P04, P05, P06, P07, P08, P09, P10, P11.
+Hard prerequisites: P02, P03, P04, P05, P06, P07, P08, P09, P10, P11.
+Integration dependencies: None.
+
+Here hard prerequisites mean all mandatory accepted deliverables, not merely early
+capability handoffs: P04 includes A-D, P11 means manual/on-open core, and every
+applicable cross-plan integration gate must be closed. Optional P11B background
+matching is excluded unless separately authorized into a later acceptance scope.
 
 Require integrated accepted handoffs, P01 approval still valid, no unresolved known
 failures hidden by status, available original signing identity and explicit owner
@@ -93,7 +100,9 @@ owner observation report/failure fixes and `docs/handoffs/redesign-p12.md`.
   recurring scopes/old unfinished work, recoverable Trash and sound-preview ownership.
 - Owner observes legacy/fresh defaults/migration, old backup readers, manual/Auto/
   Smart/Chinese/emoji, boundary/zone deferral, frozen multiple alarms, launcher opt-
-  out/background delay/session deferral and upgrade recovery as applicable.
+  out/on-open matching/session deferral and upgrade recovery. Closed-app workers/
+  background delay are optional P11B checks only when separately authorized, not
+  requirements for this first consolidated run.
 - Missing observation is pending, not pass. Fix failures and identify re-tested build;
   complete only the bounded verified claim supported by evidence.
 
@@ -144,7 +153,9 @@ Verify all listed prerequisite completion, accepted handoffs and owner approvals
 Execute only P12 Consolidated Acceptance after explicit authorization. Read AGENTS.md,
 core docs, redesign specification/index, docs/plans/redesign/p12-consolidated-acceptance.md,
 approval
-ledger, every accepted P02-P11 handoff and the existing single owner phone checklist.
+ledger, every mandatory accepted P02-P11 handoff (P04A-D, P11 core) and the single
+owner phone checklist. Require all applicable integration gates closed; optional
+P11B background work cannot block this run and must not be claimed tested.
 Inspect actual integrated source; verify P01 approval still applies and stop on
 missing implementation/approvals or known unresolved failures. Refine the consolidated
 matrix with me. Run shared/native verification and signed preparation serially using

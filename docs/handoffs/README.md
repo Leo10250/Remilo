@@ -21,11 +21,27 @@ status list. Use these fields:
 9. Stable contracts/assets the next plan must consume; next bounded task and risks.
 10. Links to updated contracts, redacted evidence and the live backlog row.
 
-An executing agent must stop at a missing prerequisite/approval, report the exact
-gap and ask the owner for the necessary decision. It may do read-only inspection
-but must not silently execute an earlier milestone or treat a partial handoff as
-accepted. Refine P02-P12 against actual dependency results before coding; record
-that refinement in the same plan rather than inventing another master plan.
+An executing agent must stop at a missing hard prerequisite/approval and report the
+exact gap. Hard prerequisites refer to the accepted artifact required by the bounded
+work, not automatically its entire parent plan. A partial capability handoff may be
+consumed only when that exact capability and revision are explicitly accepted.
+Missing integration dependencies do not block independent compatible core work;
+record the combined behaviors/tests still owed. Do not claim whole-plan completion
+or enable gated behavior until its required integration gates pass. Integration
+relations are not start-order edges; resolve them before final combined acceptance.
+Refine P02-P12 against actual results in the same plan, not a competing master.
+
+P04A-D have separate `docs/handoffs/redesign-p04a.md` through `redesign-p04d.md`
+records and unit-specific authorization. Their aggregate `redesign-p04.md` links all
+four accepted outputs. Design manual-policy and backup contracts together; P04B
+mutations stay internal/test-only until P04C passes. Keep one integrator for shared
+engine/schema/backup edits even where other core work can proceed independently.
+
+For an early capability handoff, use the eventual plan handoff path and identify
+accepted outputs versus outstanding integrations; append the full completion record
+later without rewriting history. P11's core `redesign-p11.md` excludes background
+automation. A later, separately authorized P11B uses `redesign-p11b.md`; neither its
+absence nor its undecided mechanism blocks P12. Never pre-create passing handoffs.
 
 Use focused commits. Preserve unrelated work and do not stage it accidentally.
 One release-producing workflow per checkout; no installation or distribution

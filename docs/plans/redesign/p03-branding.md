@@ -29,11 +29,14 @@ No Prebuild. Color variants are not a new illustration direction.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P02.
+Hard prerequisites: P01.
+Integration dependencies: P02.
 
-Require accepted P02 catalog and P01 style handoff, plus direct identity approval A01
-in [the ledger](../../design/approvals.md). Refine export/layer strategy after
-inspecting source resolution and Android requirements; final adaptations need approval.
+Classic source adaptation can start after the P01 gate and identity approval A01
+in [the ledger](../../design/approvals.md), without waiting for all P02 colors.
+The seven variants require P02's accepted palette catalog before color export and
+whole-P03 acceptance. Refine export/layer strategy against actual source/Android
+requirements; final adaptations and each partial capability still need approval.
 
 ## 6. Relevant product requirements
 
@@ -99,7 +102,8 @@ changes interfering with alarm show handles. Stable entry-point changes belong P
 
 ## 14. User approval checkpoints
 
-Refine and authorize P03 after P02. Obtain explicit source/adaptation fidelity and
+Refine and authorize Classic work after the P01 gate; variants await P02 colors.
+Obtain explicit source/adaptation fidelity and
 mask/silhouette/variant approval before final resource replacement; record accepted
 hashes. Approval of the original icon is not approval of every derived export.
 
@@ -112,12 +116,13 @@ checks and pending launcher/device evidence; update backlog only. Stop before al
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute only P03 Branding after explicit authorization. Read AGENTS.md, core docs,
 the redesign specification/index, docs/plans/redesign/p03-branding.md, approval ledger,
-P01/P02 handoffs
-and preserved Classic board/provenance. Inspect actual source; require accepted P02
-catalog and stop on missing approvals. Refine adaptations and obtain my fidelity/
+P01 handoff and any available P02 integration handoff, plus preserved Classic board/
+provenance. Inspect actual source; require accepted P01 gate/identity approval, not
+whole P02 completion for Classic. Variants and whole-scope acceptance require P02
+colors; record missing integration without claiming all P03 complete. Obtain my fidelity/
 mask approval. Preserve exact Classic source identity; prepare reproducible bitmap
 adaptive, legacy/round, splash, monochrome/notification and color-only variant assets.
 Replace production R resources without Prebuild, ID/signing changes, aliases or

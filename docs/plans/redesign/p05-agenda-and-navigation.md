@@ -30,9 +30,12 @@ Repeats content redesign; retain its current functional view inside the new root
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: P02, P04.
+Hard prerequisites: P02.
+Integration dependencies: P04A, P04B.
 
-Require accepted catalog and fixed-appearance descriptor/UI contracts. Refine route
+Require accepted P02 primitives; P04A global and P04B reminder descriptors are
+integration gates, not blockers for navigation/query/row core work on the actual
+compatible baseline. No production mock replaces native authority. Refine route
 ownership and state migration against actual production Router before coding. Read
 [product](../../product.md), [appearance](../../appearance-redesign.md),
 [approval ledger](../../design/approvals.md) and dependency handoffs via [protocol](../../handoffs/README.md).
@@ -108,25 +111,29 @@ row-open actions, or menus bypassing uncertain-operation guards.
 
 ## 14. User approval checkpoints
 
-Authorize/refine production routing after prerequisites. Approve populated and
+Authorize/refine production routing after hard artifacts. Approve populated and
 filtered navigation/Agenda/List/collection flows with errors and origin return.
-Record exact renders and interaction scope; device acceptance remains separate.
+Record exact renders and interaction scope; appearance integration needs separate
+closure before combined acceptance. Device acceptance remains separate.
 
 ## 15. Completion and handoff requirements
 
 Publish stable root/origin/state and foreground transition-guard interfaces for
 P06/P07/P09. Record tests/captures, approved workflows, focused commits and explicit
-device gaps in evidence/handoff; update status only in backlog. Do not redesign P07.
+device gaps in evidence/handoff; update status only in backlog. Publish an accepted
+root/origin capability for P06/P07 without claiming unfinished appearance integration
+complete. Close section 5 gates before combined acceptance. Do not redesign P07.
 
 ## 16. Fresh-chat execution prompt
 
 ```text
-Verify all listed prerequisite completion, accepted handoffs and owner approvals.
+Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute P05 Agenda and Navigation only after authorization. Read AGENTS.md, core
 docs, redesign specification/index, docs/plans/redesign/p05-agenda-and-navigation.md,
 approval ledger
-and accepted P02/P04 handoffs. Inspect actual Router/queries/state/dirty diff and
-verify dependencies; stop if missing. Refine and obtain my route/workflow approval.
+and accepted P02 handoff plus available P04A/P04B integration handoffs. Inspect actual
+Router/queries/Git state; stop on missing hard approvals. Appearance integrations
+need not block core work; record missing gates. Obtain my route/workflow approval.
 Implement Agenda/Lists/Repeats bottom roots, secondary origin-return collections,
 compact rows and list access/management using approved appearance. Preserve filters,
 scroll, search/Back/draft/uncertain guards, event/Due/alert semantics and revision-

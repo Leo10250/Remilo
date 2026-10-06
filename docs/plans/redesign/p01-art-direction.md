@@ -11,15 +11,17 @@ This is a non-shipping design milestone, not permission to redesign the entire a
 ## 2. Current relevant repository state
 
 Read [the reassessment](../../evidence/2026-10-06-redesign-reassessment.md) and inspect
-the checkout. Existing working-tree work includes `src/ui/design-review.tsx`,
-`src/ui/review-appearance.ts`, `verification/ui/design-review-fixtures.ts`, the
+the checkout. Review groundwork tracked by commit `9195784` includes
+`src/ui/design-review.tsx`, `src/ui/review-appearance.ts`,
+`verification/ui/design-review-fixtures.ts`, the
 opt-in Metro resolver, source-icon/candidate art in `assets/design-review`, and
 debug native review fixtures/tests around actual `AlarmControlsScreen`.
 
 These are useful, unapproved groundwork. The isolated glossy plant and faint
 footer retain old sparse geometry and do not satisfy the environmental reference.
 Production settings remain brightness-only; no shipping classifier/appearance
-policies exist. The latest full shared run failed; native host results are not
+policies exist. The last recorded full shared run failed; those historical results
+do not verify current HEAD, and native host results are not
 owner approval. No earlier AR-00 gate may be assumed complete.
 
 ## 3. Scope
@@ -27,7 +29,8 @@ owner approval. No earlier AR-00 gate may be assumed complete.
 Execute in five bounded stages, stopping at the stated owner gates:
 
 1. **Intake and attribution.** Read contracts, approvals, references and actual
-   dirty diff. Inventory preserved work; identify safe review-only edit boundaries.
+   Git state and any new dirty diff. Inventory preserved work; identify safe
+   review-only edit boundaries.
    Fix the controlled fixture clock/zone, content, viewport, font scale and brightness.
    Re-render the current two screens before evaluating them; retain the owner's
    rejected screenshot separately because it may represent an earlier revision.
@@ -63,10 +66,12 @@ Do not execute P02 simply because the prototypes pass tests.
 
 ## 5. Prerequisites and dependencies
 
-Dependencies: None.
+Hard prerequisites: None.
+Integration dependencies: None.
 
-The owner must review this document and explicitly authorize P01 execution in a
-new session. Read [approval records](../../design/approvals.md), [product](../../product.md),
+The owner has reviewed/preserved the planning structure (A06), but P01 execution
+still requires explicit authorization in a new session. Read
+[approval records](../../design/approvals.md), [product](../../product.md),
 [appearance](../../appearance-redesign.md), [architecture](../../architecture.md)
 and [verification](../../verification.md). Verify the immutable reference inventory
 and baseline review isolation before editing. Missing prior visual approval is
