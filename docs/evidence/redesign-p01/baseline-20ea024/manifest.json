@@ -1,0 +1,1320 @@
+{
+  "id": "P01-intake-baseline-20ea024",
+  "capturedDate": "2026-10-06",
+  "sourceCommit": "20ea024eb68c1c939b55173a35cc80b0aaaea540",
+  "branch": "theme-update",
+  "locallyRecordedTrackingCommit": "20ea024eb68c1c939b55173a35cc80b0aaaea540",
+  "productionMergedBaseline": "60c95bb215ed7bbc75a2497e54bec18b0cf89d46",
+  "runtimeInputsMatchHead": true,
+  "dirtyCaptureHarness": {
+    "path": "modules/remilo-alarm/android/src/testDebug/java/com/remilo/alarm/review/P01IntakeCaptureTest.kt",
+    "sha256": "2d614f9a776d5a10122ac9148cafed1f9e8c169ec323dd2b430a68b5beead4fa"
+  },
+  "runtimeSourcesAndAssets": [
+    {
+      "path": "android/gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "a180163249c7252412ddaee1c7adcf59f6494b1183136f690fbd9a3b8aaed00e"
+    },
+    {
+      "path": "assets/design-review/README.md",
+      "sha256": "4650c2bd2eb1dce8320a7e5724464b1398644fdb90a9304250f485d41a2e7a90"
+    },
+    {
+      "path": "assets/design-review/botanical.png",
+      "sha256": "aeed21952a071d471f73569e436fca9be7245c8beb4bc9fb0271ba6a68a04a50"
+    },
+    {
+      "path": "assets/design-review/icon-adaptive-foreground.png",
+      "sha256": "910776a6f9b76e7af26919b27071189516d220b983a1cfaa859ee776b2746da2"
+    },
+    {
+      "path": "assets/design-review/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/design-review/icon-lavender.png",
+      "sha256": "fa554c62088e6911c3cb8d7b217ef8aa7dc31e269fe5aac9d096711628c2a3c6"
+    },
+    {
+      "path": "assets/design-review/icon-mask-circle.png",
+      "sha256": "b9fb01bb1ac326e0ba36baee6e41582ebb9b6693d70b3b44d836a1261c568ca7"
+    },
+    {
+      "path": "assets/design-review/icon-mask-rounded.png",
+      "sha256": "70239502348bb2d008b21374b730e906d327c13a43edc7025bbe543504dbf299"
+    },
+    {
+      "path": "assets/design-review/icon-mask-squircle.png",
+      "sha256": "492f8370e7aea2e6a3ddd51494b9450309c64cee9d350298702128ff43f37d7f"
+    },
+    {
+      "path": "assets/design-review/icon-meadow.png",
+      "sha256": "49a0cdb52a5aa23ddd8b8f10eaac64d2f66c167aa0e50c2dd67d2090d3051f1d"
+    },
+    {
+      "path": "assets/design-review/icon-mist.png",
+      "sha256": "8b4f22a836ea2a94dbda06dc53ffd5d3a26db55ee48d0eb7cabe1b1f4467489e"
+    },
+    {
+      "path": "assets/design-review/icon-monochrome.png",
+      "sha256": "c4db6bd068c4370d9fccd08b9bde8d7a1cc62b45d29302ead6436dd81a38a023"
+    },
+    {
+      "path": "assets/design-review/icon-peach.png",
+      "sha256": "3d5ef9f58194ef36af8c54e59cd16410b11a9585fa8aeba9f407be9dfb6160e1"
+    },
+    {
+      "path": "assets/design-review/icon-review.png",
+      "sha256": "e7558b6cbdfe8ec74e45c8f329448c4a31bf3b8a11464848498c4aa69ee3d5f7"
+    },
+    {
+      "path": "assets/design-review/icon-rose.png",
+      "sha256": "a2023c28de2638ceb08c3f98ad53814fbd84dd401abfe09340d3c17bb615cb3f"
+    },
+    {
+      "path": "assets/design-review/icon-sky.png",
+      "sha256": "315f8dfe5563f2c3c80b780f95fd1ceb9b1ad71e932fff5f746fac92db451642"
+    },
+    {
+      "path": "assets/design-review/icon-sunrise.png",
+      "sha256": "e43ef46ac52deea8623f1907b65681a294e130abede1f44a67627409ea72daf6"
+    },
+    {
+      "path": "assets/design-review/landscape.png",
+      "sha256": "16a60443ab6c9a458bce457f1cebd253e0188b287cefc6e1f7a8c1436ef2fd46"
+    },
+    {
+      "path": "assets/design-review/manifest.json",
+      "sha256": "5187434bd65131215f5366a47db1153a3987598934042c7eed9495599c67bd18"
+    },
+    {
+      "path": "assets/design-review/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    },
+    {
+      "path": "metro.config.js",
+      "sha256": "80810b46e6f8fd61793ff7f37ce1d0fb7b5eea9c50c69062c9efda39bf995e96"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/debug/AndroidManifest.xml",
+      "sha256": "f148d9a62d0f2b7c552268abfa50e41bf34c544af0dd2a677ff6b8f59fd09a79"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/debug/java/com/remilo/alarm/review/AlarmDesignReviewActivity.kt",
+      "sha256": "65d41a3dccc113c4966bd69699a357b5b4e1fa9e8e57ec4d952b36c88e9243f4"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/debug/res/drawable-nodpi/review_botanical.png",
+      "sha256": "8eedcc56795f4165e3124f10b76538eff3b7b2f45aac15b3f3255a9fdc4b6679"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/debug/res/drawable-nodpi/review_landscape.png",
+      "sha256": "44e3f8a3a578f417b42b6b9be9a5a762fbff951947bd890e87913f22387c1139"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/debug/res/raw/review_palette_tokens.json",
+      "sha256": "e63588b867710ddf58c60ef8f038984850dd835dc3e4af94f2450e2402489fe8"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/AndroidManifest.xml",
+      "sha256": "c500ce6a579606b28ec89a9d20a552b63a0544cbea375f37fe82eae9cf58b0f4"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/RemiloAlarmModule.kt",
+      "sha256": "65aa60ba54c2ada3b91c7d81e9e7ca9a8cbb913d4840ebf5f58d2208ac0a7c8b"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/Agenda.kt",
+      "sha256": "23944b91183dc84cbf42396b72eb1fa53a8eb22049a4f459ac0cf39c9f6ac2cc"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/AlarmPolicy.kt",
+      "sha256": "1ee1023eacb0004003ce26cc9839db10e0d97ad4d6572e409699e231791b4ae7"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/CivilTime.kt",
+      "sha256": "38ca6748aaf1c51657ec1ed3edf69afc26593b72bdf1967d067ed2c932fe0513"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/Recurrence.kt",
+      "sha256": "fb59255f61496af3fe70fbe55abefc337f7845d5d6176ab8f362936df6d54524"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt",
+      "sha256": "3f65296bec29b1549625511a2396f32aeeede09d5f84a212441c3f678fb8c567"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/BackupCodec.kt",
+      "sha256": "6685a7ad7d7dd23c5ba18238531576ab10e865e884a0f9f504b77bd62ce62c2a"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/ContentDatabase.kt",
+      "sha256": "d0653f44b12decae9ce759e3ca6b8743d81b00726a5f8866a59078dd9633da45"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/ListNames.kt",
+      "sha256": "4d88b26efcc227a4ce66250be2a86808a7207a3941faa7ad94b0682e0cd7f293"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/OperationalDatabase.kt",
+      "sha256": "b9edec3817570dbdc4354a7aa542228375e02f0e39926ee6ace6304ab86f37e3"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/RuleCodec.kt",
+      "sha256": "271ecf873fe5f7f09f872be033eadff1a8e88746dfb5da2f112d4f374029ab74"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/AlarmEngine.kt",
+      "sha256": "5b4720dee451e64736984355dfe8215861cc2240f2ca58e72af03397f53d11f6"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/SeriesCoordinator.kt",
+      "sha256": "a1dc0b6fd0505d9c73c20fba48d1a5cffb07c39c0e09a78ce431100ef9c5f37c"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/TimeZoneCatalog.kt",
+      "sha256": "0c892986348d354b5fcaf62a8f98462f60e57e15c29cc734ebde95136a52e6eb"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt",
+      "sha256": "c2d86ecc7b47b8d57cde2467369f21b5eb6af5d79ab5ba4ba3dc3226718483e6"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmAudio.kt",
+      "sha256": "a8d05439c994358b4526220be5c378966565722d7e89494deb149a8cf092eca3"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt",
+      "sha256": "ccd02fb05a8952d3bd63bbcf5ba0d7c85a30674e177502e324da20969751ce7d"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmNotifications.kt",
+      "sha256": "2906f94a5cdc1091bf8f96c223e285b151d1e0e2cdec0ffc76874b732b3a93cc"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmReceiver.kt",
+      "sha256": "9b224f74fdc8ef3c9c779c072a8582a588b72dea78caa233af99deb621403519"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmRegistrar.kt",
+      "sha256": "884385c35119a1d50db36da9b456cd2440d7ed9791a7f5129d743a3290d6439f"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmScheduler.kt",
+      "sha256": "574534eb6b58cc163f77e10962bea7444f9134929f69d45880ffddadf4593ce3"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/RecoveryReceiver.kt",
+      "sha256": "e12eeb7493a19dc8ff4231dd4889e7fc176fb58b6e233091e323fcaacad2ce4d"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/RingingService.kt",
+      "sha256": "f1ff7ed363728b387751bd26e4c94105578773b35f320da6d2e5d965f015fb70"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/SoundPreviewController.kt",
+      "sha256": "2734452960fcc105877b3e748881182061064c44a42460dfa58a35a2326b23ee"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable/ic_remilo_notification.xml",
+      "sha256": "c6ef5d4b50f322654313c529ed1e0a3154f8f8143f97f04764ea039a50a0c222"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/res/raw/remilo_alarm.wav",
+      "sha256": "eb0c15790e0004f46686a4180b5bd2b0805af2be42525a8c3fd7560cabdf8452"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "ee16f5ec3df2ee41f04441bea51d1d2b68bcafafbcd69f184c12384b42da26d6"
+    },
+    {
+      "path": "package.json",
+      "sha256": "101e68cc071c6e4b54e4195e5022f9434ec1e4c877f68acc373b5cf6eb3f0781"
+    },
+    {
+      "path": "scripts/design-review-assets.mjs",
+      "sha256": "b13ab1b7366744098be11669280aa729c17c57c087e3565183f766d7e74a7cb4"
+    },
+    {
+      "path": "scripts/preview-ui.mjs",
+      "sha256": "fae92eb2b1042a12516db6c61a29145942a935c886893296dbc2187e67c24e48"
+    },
+    {
+      "path": "scripts/verify-design-review-assets.mjs",
+      "sha256": "9466fa4f6a4ee4c1773fdfd1010dcc6910aa0c03fdb8f9265f2ec92c0f126f2a"
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "sha256": "28cc58155a03b6c0a59baf00ffb033732d73cd5c5ec14651303e7868ebee2c4c"
+    },
+    {
+      "path": "src/app/activity.tsx",
+      "sha256": "accc78b1c76564cbad30662295a4d9ee60e403a473f6d83b43a9fdb79d51c906"
+    },
+    {
+      "path": "src/app/backup.tsx",
+      "sha256": "e424df4881866a554ff3353a121dbd87b69184b0c5909647c666b24044b2d49e"
+    },
+    {
+      "path": "src/app/collections.tsx",
+      "sha256": "19f2257859a2c300ea4462da6b86e6d8d5aef1c4df8b3f67cc2062d9778b3bae"
+    },
+    {
+      "path": "src/app/design-review.tsx",
+      "sha256": "f95e1b63e086ba42d9a33028f5da06c1955abca8b1b9ff7ccbcf894a105815e5"
+    },
+    {
+      "path": "src/app/diagnostics.tsx",
+      "sha256": "58a5fa36900706c9c96bf5d76090323e1778fa1ecfbf3efc5310b367c9a7ca59"
+    },
+    {
+      "path": "src/app/edit.tsx",
+      "sha256": "773fab432fad36b5a07bd2b7daadf06b176f3c007f9513819d3cd91af4193303"
+    },
+    {
+      "path": "src/app/index.tsx",
+      "sha256": "e016434b803b32216c8b89e137bdc045b4efe9b34a0ad564d0d5f5a3bfdbdce9"
+    },
+    {
+      "path": "src/app/lists/[id].tsx",
+      "sha256": "58799752e3f182c0ac658142a90fd8e9ffed7570d086c24e495fe546946b9e17"
+    },
+    {
+      "path": "src/app/lists/index.tsx",
+      "sha256": "958e04195d563c1c1997308d56b416b42ae7ef3524263149b5a04e88caed3d69"
+    },
+    {
+      "path": "src/app/readiness.tsx",
+      "sha256": "52daab3e8477e82cea3c46b89012aa0a0ab78e5b87278663bac610c0416f8582"
+    },
+    {
+      "path": "src/app/records.tsx",
+      "sha256": "45ce02c530b1c2a08217f6a77b94cc3b1df94b4eaaa2608455f5315ff39f4caf"
+    },
+    {
+      "path": "src/app/reminder/[id].tsx",
+      "sha256": "f9c0bf503f7e81be06f3dd1d2c2132beacacc0bd3115fc9f27912934576e7e02"
+    },
+    {
+      "path": "src/app/series/[id].tsx",
+      "sha256": "9ee049b54a2c772efc588d234c37bcdb08fef92756724d63002288aef148aad6"
+    },
+    {
+      "path": "src/app/series/index.tsx",
+      "sha256": "305b889501b24ac2757e7d9a8822904d40012bc360ead57daa4ee53119d5ccda"
+    },
+    {
+      "path": "src/app/settings.tsx",
+      "sha256": "c5fc2c8642ff2ac809f338f85f1e7cdeccf9ce5fb8755ba9c6fb37efda8856d3"
+    },
+    {
+      "path": "src/domain/actions.test.ts",
+      "sha256": "297bfb3bdb71a39da8560b98e814d69468ad219013aad72d2c27d9312937e2b8"
+    },
+    {
+      "path": "src/domain/actions.ts",
+      "sha256": "0a7fe15a707f7a66ad94571d9772ea76828187adc7551b82c514dc5a0e240507"
+    },
+    {
+      "path": "src/domain/contrast.test.ts",
+      "sha256": "f3e7667909e17c016d270b538aaa181f907cf7be983a2956d95a19eeb6ba9202"
+    },
+    {
+      "path": "src/domain/editor-draft.test.ts",
+      "sha256": "5b0ef6fed20c2d011beffc00c02c5754e3a60f16d201410bc7c9cbab43893134"
+    },
+    {
+      "path": "src/domain/editor-draft.ts",
+      "sha256": "4106450a6ea2021c8486976c00d53225b7f4df3fc987c83106f2f6b6d50838f2"
+    },
+    {
+      "path": "src/domain/navigation.test.ts",
+      "sha256": "cc0f1899869bdd85b39e84a390e02cd47a28b2b7f69f0f19c0b773ea82e69b28"
+    },
+    {
+      "path": "src/domain/navigation.ts",
+      "sha256": "c5806dcca3278dc7530ec755bafb00d52df253f0f4047d8f9720df89341c0470"
+    },
+    {
+      "path": "src/domain/preferences.test.ts",
+      "sha256": "03e7aec502d260a4014379f9b1ce9a340bf532a5b6bda77581831ceebd5090e1"
+    },
+    {
+      "path": "src/domain/preferences.ts",
+      "sha256": "9eb33d606bc7ea40edd72a3f7f8b778d1bbdc0fc1fd73ae8a35697ed89382baf"
+    },
+    {
+      "path": "src/domain/presentation.test.ts",
+      "sha256": "c079c04c4ce52c334c7809c88e468632a123cb9749953d247375b0f64f2356b7"
+    },
+    {
+      "path": "src/domain/presentation.ts",
+      "sha256": "fb138f654fde05bed3cca5e7cea741d8fc2b2a4ed041670684cf7c45cad7a5c5"
+    },
+    {
+      "path": "src/domain/quick-reminder.test.ts",
+      "sha256": "cf8256bbb0403750d58061afcafd3c358846823246bcf1fd4170f9d281f96d26"
+    },
+    {
+      "path": "src/domain/quick-reminder.ts",
+      "sha256": "49cd5707b843476ceefed1d303a531d7f175f327ec64d646456f2c59cc7b99b2"
+    },
+    {
+      "path": "src/domain/repeat.test.ts",
+      "sha256": "a8ef0c23f34d827f2843587079f3ef3988aba20faea26ddac93940382151086d"
+    },
+    {
+      "path": "src/domain/repeat.ts",
+      "sha256": "d98ace19ec4ce8ccc3dbab7d142934fc671e5836b34f799bf86ba410d7017e1f"
+    },
+    {
+      "path": "src/domain/restore.test.ts",
+      "sha256": "d8569cb6a54d030808fb506827e4bd7711f590d4d83d412d998c9736e735495c"
+    },
+    {
+      "path": "src/domain/restore.ts",
+      "sha256": "6e20f2469965bdd2b9a936508c25014988ab2cf52ec82b6eda22891d1d79ef2a"
+    },
+    {
+      "path": "src/domain/review-appearance.test.ts",
+      "sha256": "714e28ece02975be4befbc9784e8a3485e003b708e47ef2b4af941d818317807"
+    },
+    {
+      "path": "src/domain/router-decoding.test.ts",
+      "sha256": "b149e080437abb49fe1d3ef3042fe7c6e058ea5840f079dd3149f0e8dddec298"
+    },
+    {
+      "path": "src/domain/time.test.ts",
+      "sha256": "750ba18b7bed34cbc748381af9818034328a44de9f38d099ba968ee42a7047f6"
+    },
+    {
+      "path": "src/domain/time.ts",
+      "sha256": "d95ec1fd894a35062b4e2f530cfc9204e44065d2ff2e6a496625cc489f24a99f"
+    },
+    {
+      "path": "src/ui/colors.ts",
+      "sha256": "82186c05dcd6870a60d3f00eddc003986350573f737d6e592641141a937d3615"
+    },
+    {
+      "path": "src/ui/components.tsx",
+      "sha256": "1d9d773ea619714e2624637f697d3286e0a11e62cdd391f394247eef4fdc89d7"
+    },
+    {
+      "path": "src/ui/design-review-entry.tsx",
+      "sha256": "1e497782cba5508e6be9e485ca19c7bc4264d0ac49b5307975debe0b7d41702a"
+    },
+    {
+      "path": "src/ui/design-review.tsx",
+      "sha256": "85d4a5139b3e413a5950b47f6c6fa1101167183f4549eef7ec95c760c3a59291"
+    },
+    {
+      "path": "src/ui/feedback.ts",
+      "sha256": "fa8ebb156c0c14fca233497f2bd1f11ddd48f4c5068917b65f5b1cf41d96b608"
+    },
+    {
+      "path": "src/ui/motion.ts",
+      "sha256": "bd36723ae2737763cbb5fbe73634f78c899b5e600170025d1a89de963ef1624d"
+    },
+    {
+      "path": "src/ui/native.ts",
+      "sha256": "ef095f34526f2f0b77d38182391cbaa4478dc7dd2a7679d87503497ae68a3bf4"
+    },
+    {
+      "path": "src/ui/navigation.tsx",
+      "sha256": "fe749ee24f2e24f6ee95d522477ca20e81df2b16a7896714594b7b266855e080"
+    },
+    {
+      "path": "src/ui/recurrence.tsx",
+      "sha256": "ade695d322d497ead4201ca832fdf0304074f3c04510c4690aa75eea1ddd34e9"
+    },
+    {
+      "path": "src/ui/reminder-row.tsx",
+      "sha256": "620e4a197b2a91fc780a4beb7f56281d2ca4a62f5bd5ee5b506f56b325036430"
+    },
+    {
+      "path": "src/ui/review-appearance.ts",
+      "sha256": "a653d7995e20b8f9878948c4f69d14a6da19a62ed249113efb9185f616f64496"
+    },
+    {
+      "path": "src/ui/root-state.ts",
+      "sha256": "9f7e8022c0323e99f185b8ba85373be269e937ce95ee669adc0434d1eeeae28b"
+    },
+    {
+      "path": "src/ui/schedule.tsx",
+      "sha256": "2bf568c4aba1d2e1de64a910ea9015ebc65b120d73539f4af976534a27fb1c37"
+    },
+    {
+      "path": "src/ui/sound-picker.tsx",
+      "sha256": "9ff4e75452a17d18e52a37c2ad4df0232d80f9c7d9eef20ab9165b8f26fc88f1"
+    },
+    {
+      "path": "src/ui/theme.tsx",
+      "sha256": "4d6bc6aa9fd53ee6c30f83df17c2c399209eb83a1b8a831e6713562b6a3a0851"
+    },
+    {
+      "path": "src/ui/time-zone.tsx",
+      "sha256": "2a13fb480d9a10b7ab84fc2fcbec8c2148862233b9f2647f9048a3d2b7ff830c"
+    },
+    {
+      "path": "src/ui/tokens.ts",
+      "sha256": "8802d9f7a083447fdb2b1a36fd2802d9b55b740a8e5ce68fd568c190c60f7569"
+    },
+    {
+      "path": "verification/ui/design-review-entry.tsx",
+      "sha256": "2c5a5511cb7cd4559334410d391e2c8d3c5c29aa2c44b1303a92fda0fc464719"
+    },
+    {
+      "path": "verification/ui/design-review-fixtures.ts",
+      "sha256": "7468cca181435b5e8b32570aeff918b0ce946484debe690fc7cc673adcb68de3"
+    },
+    {
+      "path": "verification/ui/preview-engine.ts",
+      "sha256": "fad432058c7f77e38232a18486e66ac4ccd1f41742988816ded4d6e001dbdd3f"
+    },
+    {
+      "path": "verification/ui/review-actions.test.ts",
+      "sha256": "0a21d924bb010d93ec498560942ca7b59362a887b88bdf954cb464237e483f58"
+    },
+    {
+      "path": "verification/ui/review-actions.ts",
+      "sha256": "9a20531f70f6d630710a8fa552307fc5137d81919243f2e91abd50c02055e311"
+    }
+  ],
+  "references": [
+    {
+      "path": "docs/design/references/butter-periwinkle-sage.png",
+      "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "docs/design/references/desired-water-plants-reference.png",
+      "sha256": "92ea34296b03f36ca8b812eb7f8cd3279e398c4d4095e551bc1f6d18b90d761a",
+      "width": 165,
+      "height": 310
+    },
+    {
+      "path": "docs/design/references/rejected-current-water-plants.png",
+      "sha256": "9f1530c2dbccc398510f52e1429c730724a5c2785dde8da7ca023500a219ec8e",
+      "width": 485,
+      "height": 1082
+    },
+    {
+      "path": "docs/design/references/supplied-classic-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849",
+      "width": 1448,
+      "height": 1086
+    },
+    {
+      "path": "docs/design/references/time-of-day-and-alarms.png",
+      "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0",
+      "width": 1312,
+      "height": 1199
+    }
+  ],
+  "rendererVersions": {
+    "expo": "57.0.26",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "0.21.3",
+    "expo-symbols": "57.0.3",
+    "expo-font": "57.0.4",
+    "vitest": "5.0.3",
+    "node": "v22.23.3",
+    "gradle": "9.3.1",
+    "jdk": "17.0.20.1+1",
+    "composeBom": "2025.04.01",
+    "composeUi": "1.8.0",
+    "material3": "1.3.2",
+    "robolectric": "4.17",
+    "androidHostApi": 35,
+    "browserEngineVersion": "not exposed by browser capture API"
+  },
+  "fixtureTime": "2026-10-06T08:00:00-07:00",
+  "zone": "America/Los_Angeles",
+  "locale": "en-US; explicitly authored Simplified Chinese stress content",
+  "clockScope": "RN reviewNowMs and native targetMs are fixed; no rendered value uses wall-clock time",
+  "captures": [
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-chinesetitle-light-2x-controls.png",
+      "sha256": "ff8c64a95bbf014622d36d36ee63f3eb669ad2c8a82be291e8edcaec766567a6",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "ChineseTitle",
+      "fixtureContentHash": "eedc60fdcc7b9193ad5c2b5ecc082ec97f79a22fd6acf868ca6e91abe7188b41",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "controls",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-chinesetitle-light-2x-controls.png",
+        "scenario": "ChineseTitle",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "controls",
+        "configurationKeyResetsScroll": true,
+        "actionBoundsBeforeFootnoteScroll": [
+          {
+            "label": "Stop",
+            "left": 16,
+            "top": 621,
+            "width": 328,
+            "height": 85
+          },
+          {
+            "label": "Snooze · 10 min",
+            "left": 16,
+            "top": 718,
+            "width": 328,
+            "height": 82
+          }
+        ]
+      },
+      "standardContent": false
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-chinesetitle-light-2x-top.png",
+      "sha256": "32618f854dc26db56d4f5cbedb29f2ae8d9be49b229f1c83b6d79ce469880adc",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "ChineseTitle",
+      "fixtureContentHash": "eedc60fdcc7b9193ad5c2b5ecc082ec97f79a22fd6acf868ca6e91abe7188b41",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-chinesetitle-light-2x-top.png",
+        "scenario": "ChineseTitle",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "top",
+        "configurationKeyResetsScroll": true
+      },
+      "standardContent": false
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-longtitle-light-2x-controls.png",
+      "sha256": "85482aef0b9c39500251bb6ae6efca87f0f6c98d4a2643afdd896145a79b97a3",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "LongTitle",
+      "fixtureContentHash": "e4d722d34235050fe304d7311ab5ca5c14276a3e2e8d94a85d44e84ec469f748",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "controls",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-longtitle-light-2x-controls.png",
+        "scenario": "LongTitle",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "controls",
+        "configurationKeyResetsScroll": true,
+        "actionBoundsBeforeFootnoteScroll": [
+          {
+            "label": "Stop",
+            "left": 16,
+            "top": 621,
+            "width": 328,
+            "height": 85
+          },
+          {
+            "label": "Snooze · 10 min",
+            "left": 16,
+            "top": 718,
+            "width": 328,
+            "height": 82
+          }
+        ]
+      },
+      "standardContent": false
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-longtitle-light-2x-top.png",
+      "sha256": "6cc2b239a2c7f1409de145c558ddd425d89b7c614da81d631f8942f77013f3c8",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "LongTitle",
+      "fixtureContentHash": "e4d722d34235050fe304d7311ab5ca5c14276a3e2e8d94a85d44e84ec469f748",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-longtitle-light-2x-top.png",
+        "scenario": "LongTitle",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "top",
+        "configurationKeyResetsScroll": true
+      },
+      "standardContent": false
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-dark-1x-controls.png",
+      "sha256": "f5129901045b09d7156302b33d57baa3d1ded86152f7d6fddc5aa69097491275",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "dark",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "controls",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-dark-1x-controls.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": true,
+        "fontScale": 1,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "controls",
+        "configurationKeyResetsScroll": true,
+        "actionBoundsBeforeFootnoteScroll": [
+          {
+            "label": "Stop",
+            "left": 16,
+            "top": 608,
+            "width": 328,
+            "height": 68
+          },
+          {
+            "label": "Snooze · 10 min",
+            "left": 16,
+            "top": 688,
+            "width": 328,
+            "height": 64
+          }
+        ]
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-dark-1x-top.png",
+      "sha256": "f5129901045b09d7156302b33d57baa3d1ded86152f7d6fddc5aa69097491275",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "dark",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-dark-1x-top.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": true,
+        "fontScale": 1,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "top",
+        "configurationKeyResetsScroll": true
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-dark-2x-controls.png",
+      "sha256": "8b0846385490d28539b5bd5907248b45573f2ab34c4088a41bda3dd4086baa8b",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "dark",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "controls",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-dark-2x-controls.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": true,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "controls",
+        "configurationKeyResetsScroll": true,
+        "actionBoundsBeforeFootnoteScroll": [
+          {
+            "label": "Stop",
+            "left": 16,
+            "top": 536,
+            "width": 328,
+            "height": 85
+          },
+          {
+            "label": "Snooze · 10 min",
+            "left": 16,
+            "top": 633,
+            "width": 328,
+            "height": 82
+          }
+        ]
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-dark-2x-top.png",
+      "sha256": "47265eb0f18fa8f7bf2a2aa8ee9054f1ce02ac7012d107f768e212188196ff65",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "dark",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-dark-2x-top.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": true,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "top",
+        "configurationKeyResetsScroll": true
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-light-1x-controls.png",
+      "sha256": "22ffeeb20271d4ce332642b9994303ba2217f069820fe150fae9bb05c9957baa",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "controls",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-light-1x-controls.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 1,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "controls",
+        "configurationKeyResetsScroll": true,
+        "actionBoundsBeforeFootnoteScroll": [
+          {
+            "label": "Stop",
+            "left": 16,
+            "top": 608,
+            "width": 328,
+            "height": 68
+          },
+          {
+            "label": "Snooze · 10 min",
+            "left": 16,
+            "top": 688,
+            "width": 328,
+            "height": 64
+          }
+        ]
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-light-1x-top.png",
+      "sha256": "22ffeeb20271d4ce332642b9994303ba2217f069820fe150fae9bb05c9957baa",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-light-1x-top.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 1,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "top",
+        "configurationKeyResetsScroll": true
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-light-2x-controls.png",
+      "sha256": "66b08c023d0a369ea311913eea425c4180f4a864a0fc220722356ded6a4ce7b0",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "controls",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-light-2x-controls.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "controls",
+        "configurationKeyResetsScroll": true,
+        "actionBoundsBeforeFootnoteScroll": [
+          {
+            "label": "Stop",
+            "left": 16,
+            "top": 536,
+            "width": 328,
+            "height": 85
+          },
+          {
+            "label": "Snooze · 10 min",
+            "left": 16,
+            "top": 633,
+            "width": 328,
+            "height": 82
+          }
+        ]
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/compose-single-light-2x-top.png",
+      "sha256": "d1d609400ff061014250791de811166cc293aa0cc610e92005771a2ce71eb4bc",
+      "format": "png",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "Compose / Robolectric native graphics",
+      "fixtureId": "Single",
+      "fixtureContentHash": "acbff5be3937ae708d4fc89acd4f3c2e5cf31e7004732612dba4f719c77c7155",
+      "fixtureContentHashBasis": "Authored native fixture semantic values",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "memberScene": "Meadow accent on ambient canvas",
+      "configuration": {
+        "file": "compose-single-light-2x-top.png",
+        "scenario": "Single",
+        "approach": "Hybrid",
+        "ambientPalette": "Sunrise",
+        "memberPalette": "Meadow",
+        "dark": false,
+        "fontScale": 2,
+        "width": 360,
+        "height": 800,
+        "density": 1,
+        "scroll": "top",
+        "configurationKeyResetsScroll": true
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-dark-1x.jpg",
+      "sha256": "236e356fce3870d1887512d962048d4badb948efa523560f4bcb77fed2c942ae",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "populated",
+      "fixtureContentHash": "73a616616b7346f640bb1a357397d105d0d5cc013ad27144d3f13588e57c4b05",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "dark",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=1&brightness=dark&scenario=populated",
+        "domRecord": "rn-agenda-dark-1x-dom.json"
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-dark-2x.jpg",
+      "sha256": "58389e6c82bf679bd807a1b5f3f4f865ab4063f99c294cb7a34e9ee9c61f82b2",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "populated",
+      "fixtureContentHash": "73a616616b7346f640bb1a357397d105d0d5cc013ad27144d3f13588e57c4b05",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "dark",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=2&brightness=dark&scenario=populated",
+        "domRecord": "rn-agenda-dark-2x-dom.json"
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-light-1x.jpg",
+      "sha256": "4d3ea0b4a702f07b2ccf885e963611962889021f80839aaf27d874cd4766a206",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "populated",
+      "fixtureContentHash": "73a616616b7346f640bb1a357397d105d0d5cc013ad27144d3f13588e57c4b05",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=1&brightness=light&scenario=populated",
+        "domRecord": "rn-agenda-light-1x-dom.json"
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-light-2x-controls.jpg",
+      "sha256": "9a309477d1ee19d25934713583c1a1dae7cc101c9b20f1fc619e2603dc7d0e3c",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "populated",
+      "fixtureContentHash": "3b682d8fed5abd122fe4a30cd0c1191944dc00582bd5db93d70fa34c5dacdd61",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "879.2000122070312 CSS px in inner ScrollView",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "domRecord": "rn-agenda-light-2x-controls-dom.json"
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-light-2x.jpg",
+      "sha256": "f59da4f552e24674043488ce29cf3971437625d82446f6224e9d0317bbfc3d58",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "populated",
+      "fixtureContentHash": "73a616616b7346f640bb1a357397d105d0d5cc013ad27144d3f13588e57c4b05",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=2&brightness=light&scenario=populated",
+        "domRecord": "rn-agenda-light-2x-dom.json"
+      },
+      "standardContent": true
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-long-titles-light-2x.jpg",
+      "sha256": "295629ddc44dfe1484d85d5d1c777d4cdb860ae71e9f9956bb9d5f625bd11e48",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "long-titles",
+      "fixtureContentHash": "f00c0dcb03bd22ec97873f8f06ea78cb1a018ef58bf94b481e3615e3a09909f3",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 2,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=2&brightness=light&scenario=long-titles",
+        "domRecord": "rn-agenda-long-titles-light-2x-dom.json"
+      },
+      "standardContent": false
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-overdue-light-1x.jpg",
+      "sha256": "16d261bbdb4b57dc4b93da61e473d011028c54c9ca0e83a8bdaf18b8ec248be7",
+      "format": "jpeg",
+      "width": 360,
+      "height": 800,
+      "deviceEvidence": false,
+      "renderer": "React Native components / react-native-web / Codex in-app browser",
+      "fixtureId": "overdue",
+      "fixtureContentHash": "231eabbd13b309bd195d0a9c55910b44052a310bd3ae3f791f637a9a09ecd4d9",
+      "fixtureContentHashBasis": "Captured DOM semantics; controls view uses captured action DOM",
+      "sceneRevision": "preserved candidate inputs at 20ea024",
+      "brightness": "light",
+      "fontScale": 1,
+      "canvas": {
+        "width": 360,
+        "height": 800
+      },
+      "density": 1.0000000149011612,
+      "scroll": "top",
+      "ambientScene": "Sunrise",
+      "configuration": {
+        "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=1&brightness=light&scenario=overdue",
+        "domRecord": "rn-agenda-overdue-light-1x-dom.json"
+      },
+      "standardContent": false
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/index.json",
+      "sha256": "46da99dd889c15eda8d492e992af164a81cbfc1d5c8ee8fe7be6a2aeadb88640"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-dark-1x-dom.json",
+      "sha256": "14dd4f7c8e4dd40707b3b58ddb7a3276fe1fb981af4836617e0740e5e61c8096"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-dark-2x-dom.json",
+      "sha256": "764f93e0f646acdd5f71d125c547658e75124e1ff573dda1d25d6465b6df1fc5"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-light-1x-dom.json",
+      "sha256": "60700fb4ebe28317caa4550b6fcdae58d21d4f8b1da9050c937e9df4cd9fbece"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-light-2x-controls-dom.json",
+      "sha256": "3a6db1e6ed2da2b8bc291257ee2003a4c429623a835576033b83002a2b5c4e8d"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-light-2x-dom.json",
+      "sha256": "624603c9cc7178449c1d8abe2c069132dff5b793c8819f76dd27205620f95e81"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-long-titles-light-2x-dom.json",
+      "sha256": "5b59bfb97513238f0dc2fd7a418fc495bbfd08b20cb37a68c350a8bfc73de75c"
+    },
+    {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/rn-agenda-overdue-light-1x-dom.json",
+      "sha256": "8c4604d53a806e31486068469cf5fad3934ed4c227ba3c2b81882c3eb5d85e63"
+    }
+  ],
+  "limitations": [
+    "Synthetic host evidence; not a phone or Android system notification capture.",
+    "Robolectric/API35 and web font/density overrides do not establish physical TalkBack, keyboard, alarm or system font behavior.",
+    "Current artwork/token candidates are unapproved.",
+    "Composite contrast and corrected render matrix remain required after style approval."
+  ],
+  "immutability": "Do not overwrite these originals. New current/corrected revisions belong in sibling evidence directories."
+}

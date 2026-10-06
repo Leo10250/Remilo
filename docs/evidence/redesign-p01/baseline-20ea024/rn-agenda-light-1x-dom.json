@@ -1,0 +1,465 @@
+{
+  "url": "http://localhost:8092/design-review?inspect=1&screen=agenda&approach=hybrid&scale=1&brightness=light&scenario=populated",
+  "metrics": {
+    "buttons": [
+      {
+        "label": "Search reminders",
+        "rect": {
+          "bottom": 82.79999923706055,
+          "height": 48,
+          "left": 259.20001220703125,
+          "right": 307.20001220703125,
+          "top": 34.79999923706055,
+          "width": 48,
+          "x": 259.20001220703125,
+          "y": 34.79999923706055
+        },
+        "text": ""
+      },
+      {
+        "label": "More destinations",
+        "rect": {
+          "bottom": 82.79999923706055,
+          "height": 48,
+          "left": 307.20001220703125,
+          "right": 355.20001220703125,
+          "top": 34.79999923706055,
+          "width": 48,
+          "x": 307.20001220703125,
+          "y": 34.79999923706055
+        },
+        "text": ""
+      },
+      {
+        "label": "Filter reminders",
+        "rect": {
+          "bottom": 136.8000030517578,
+          "height": 48,
+          "left": 280,
+          "right": 328,
+          "top": 88.80000305175781,
+          "width": 48,
+          "x": 280,
+          "y": 88.80000305175781
+        },
+        "text": ""
+      },
+      {
+        "label": "Done: Take medicine. Today · 8:00 AM–8:30 AM. Health. Alarm at Today · 8:00 AM",
+        "rect": {
+          "bottom": 253.1999969482422,
+          "height": 72,
+          "left": 243.1999969482422,
+          "right": 331.1999969482422,
+          "top": 181.1999969482422,
+          "width": 88,
+          "x": 243.1999969482422,
+          "y": 181.1999969482422
+        },
+        "text": "Done"
+      },
+      {
+        "label": "Done: Take medicine. Today · 8:00 AM–8:30 AM. Health. Alarm at Today · 8:00 AM",
+        "rect": {
+          "bottom": 241.1999969482422,
+          "height": 48,
+          "left": 20,
+          "right": 68,
+          "top": 193.1999969482422,
+          "width": 48,
+          "x": 20,
+          "y": 193.1999969482422
+        },
+        "text": ""
+      },
+      {
+        "label": "Open Take medicine. Today · 8:00 AM–8:30 AM. Health. Alarm at Today · 8:00 AM",
+        "rect": {
+          "bottom": 241.1999969482422,
+          "height": 48,
+          "left": 72,
+          "right": 275.1999969482422,
+          "top": 193.1999969482422,
+          "width": 203.1999969482422,
+          "x": 72,
+          "y": 193.1999969482422
+        },
+        "text": "Take medicine8:00 AM–8:30 AM"
+      },
+      {
+        "label": "More actions for Take medicine",
+        "rect": {
+          "bottom": 241.1999969482422,
+          "height": 48,
+          "left": 279.20001220703125,
+          "right": 327.20001220703125,
+          "top": 193.1999969482422,
+          "width": 48,
+          "x": 279.20001220703125,
+          "y": 193.1999969482422
+        },
+        "text": ""
+      },
+      {
+        "label": "Done: Water plants. Today · 8:00 AM–8:30 AM. Personal. Alarm at Today · 8:00 AM",
+        "rect": {
+          "bottom": 334.8000183105469,
+          "height": 72,
+          "left": 243.1999969482422,
+          "right": 331.1999969482422,
+          "top": 262.8000183105469,
+          "width": 88,
+          "x": 243.1999969482422,
+          "y": 262.8000183105469
+        },
+        "text": "Done"
+      },
+      {
+        "label": "Done: Water plants. Today · 8:00 AM–8:30 AM. Personal. Alarm at Today · 8:00 AM",
+        "rect": {
+          "bottom": 322.8000183105469,
+          "height": 48,
+          "left": 20,
+          "right": 68,
+          "top": 274.8000183105469,
+          "width": 48,
+          "x": 20,
+          "y": 274.8000183105469
+        },
+        "text": ""
+      },
+      {
+        "label": "Open Water plants. Today · 8:00 AM–8:30 AM. Personal. Alarm at Today · 8:00 AM",
+        "rect": {
+          "bottom": 322.8000183105469,
+          "height": 48,
+          "left": 72,
+          "right": 275.1999969482422,
+          "top": 274.8000183105469,
+          "width": 203.1999969482422,
+          "x": 72,
+          "y": 274.8000183105469
+        },
+        "text": "Water plants8:00 AM–8:30 AM"
+      },
+      {
+        "label": "More actions for Water plants",
+        "rect": {
+          "bottom": 322.8000183105469,
+          "height": 48,
+          "left": 279.20001220703125,
+          "right": 327.20001220703125,
+          "top": 274.8000183105469,
+          "width": 48,
+          "x": 279.20001220703125,
+          "y": 274.8000183105469
+        },
+        "text": ""
+      },
+      {
+        "label": "Done: Lunch with Alex. Today · 1:00 PM–1:30 PM. Personal. Notification at Today · 1:00 PM",
+        "rect": {
+          "bottom": 416.3999938964844,
+          "height": 72,
+          "left": 243.1999969482422,
+          "right": 331.1999969482422,
+          "top": 344.3999938964844,
+          "width": 88,
+          "x": 243.1999969482422,
+          "y": 344.3999938964844
+        },
+        "text": "Done"
+      },
+      {
+        "label": "Done: Lunch with Alex. Today · 1:00 PM–1:30 PM. Personal. Notification at Today · 1:00 PM",
+        "rect": {
+          "bottom": 404.3999938964844,
+          "height": 48,
+          "left": 20,
+          "right": 68,
+          "top": 356.3999938964844,
+          "width": 48,
+          "x": 20,
+          "y": 356.3999938964844
+        },
+        "text": ""
+      },
+      {
+        "label": "Open Lunch with Alex. Today · 1:00 PM–1:30 PM. Personal. Notification at Today · 1:00 PM",
+        "rect": {
+          "bottom": 404.3999938964844,
+          "height": 48,
+          "left": 72,
+          "right": 275.1999969482422,
+          "top": 356.3999938964844,
+          "width": 203.1999969482422,
+          "x": 72,
+          "y": 356.3999938964844
+        },
+        "text": "Lunch with Alex1:00 PM–1:30 PM"
+      },
+      {
+        "label": "More actions for Lunch with Alex",
+        "rect": {
+          "bottom": 404.3999938964844,
+          "height": 48,
+          "left": 279.20001220703125,
+          "right": 327.20001220703125,
+          "top": 356.3999938964844,
+          "width": 48,
+          "x": 279.20001220703125,
+          "y": 356.3999938964844
+        },
+        "text": ""
+      },
+      {
+        "label": "Done: Review the project proposal. Today · 4:00 PM–4:30 PM. Work. Alarm at Today · 4:00 PM",
+        "rect": {
+          "bottom": 507.5999984741211,
+          "height": 81.5999984741211,
+          "left": 243.1999969482422,
+          "right": 331.1999969482422,
+          "top": 426,
+          "width": 88,
+          "x": 243.1999969482422,
+          "y": 426
+        },
+        "text": "Done"
+      },
+      {
+        "label": "Done: Review the project proposal. Today · 4:00 PM–4:30 PM. Work. Alarm at Today · 4:00 PM",
+        "rect": {
+          "bottom": 490.8000183105469,
+          "height": 48,
+          "left": 20,
+          "right": 68,
+          "top": 442.8000183105469,
+          "width": 48,
+          "x": 20,
+          "y": 442.8000183105469
+        },
+        "text": ""
+      },
+      {
+        "label": "Open Review the project proposal. Today · 4:00 PM–4:30 PM. Work. Alarm at Today · 4:00 PM",
+        "rect": {
+          "bottom": 499.5999984741211,
+          "height": 65.5999984741211,
+          "left": 72,
+          "right": 275.1999969482422,
+          "top": 434,
+          "width": 203.1999969482422,
+          "x": 72,
+          "y": 434
+        },
+        "text": "Review the project proposal4:00 PM–4:30 PM"
+      },
+      {
+        "label": "More actions for Review the project proposal",
+        "rect": {
+          "bottom": 490.8000183105469,
+          "height": 48,
+          "left": 279.20001220703125,
+          "right": 327.20001220703125,
+          "top": 442.8000183105469,
+          "width": 48,
+          "x": 279.20001220703125,
+          "y": 442.8000183105469
+        },
+        "text": ""
+      },
+      {
+        "label": "Done: Read. Today · 11:00 PM–11:30 PM. Personal. Alarm at Today · 11:00 PM",
+        "rect": {
+          "bottom": 589.2000122070312,
+          "height": 72,
+          "left": 243.1999969482422,
+          "right": 331.1999969482422,
+          "top": 517.2000122070312,
+          "width": 88,
+          "x": 243.1999969482422,
+          "y": 517.2000122070312
+        },
+        "text": "Done"
+      },
+      {
+        "label": "Done: Read. Today · 11:00 PM–11:30 PM. Personal. Alarm at Today · 11:00 PM",
+        "rect": {
+          "bottom": 577.2000122070312,
+          "height": 48,
+          "left": 20,
+          "right": 68,
+          "top": 529.2000122070312,
+          "width": 48,
+          "x": 20,
+          "y": 529.2000122070312
+        },
+        "text": ""
+      },
+      {
+        "label": "Open Read. Today · 11:00 PM–11:30 PM. Personal. Alarm at Today · 11:00 PM",
+        "rect": {
+          "bottom": 577.2000122070312,
+          "height": 48,
+          "left": 72,
+          "right": 275.1999969482422,
+          "top": 529.2000122070312,
+          "width": 203.1999969482422,
+          "x": 72,
+          "y": 529.2000122070312
+        },
+        "text": "Read11:00 PM–11:30 PM"
+      },
+      {
+        "label": "More actions for Read",
+        "rect": {
+          "bottom": 577.2000122070312,
+          "height": 48,
+          "left": 279.20001220703125,
+          "right": 327.20001220703125,
+          "top": 529.2000122070312,
+          "width": 48,
+          "x": 279.20001220703125,
+          "y": 529.2000122070312
+        },
+        "text": ""
+      },
+      {
+        "label": "Done: Grocery shopping. Tomorrow · 10:00 AM–10:30 AM. Personal. Alarm at Tomorrow · 10:00 AM",
+        "rect": {
+          "bottom": 706.4000244140625,
+          "height": 72,
+          "left": 243.1999969482422,
+          "right": 331.1999969482422,
+          "top": 634.4000244140625,
+          "width": 88,
+          "x": 243.1999969482422,
+          "y": 634.4000244140625
+        },
+        "text": "Done"
+      },
+      {
+        "label": "Done: Grocery shopping. Tomorrow · 10:00 AM–10:30 AM. Personal. Alarm at Tomorrow · 10:00 AM",
+        "rect": {
+          "bottom": 694.4000244140625,
+          "height": 48,
+          "left": 20,
+          "right": 68,
+          "top": 646.4000244140625,
+          "width": 48,
+          "x": 20,
+          "y": 646.4000244140625
+        },
+        "text": ""
+      },
+      {
+        "label": "Open Grocery shopping. Tomorrow · 10:00 AM–10:30 AM. Personal. Alarm at Tomorrow · 10:00 AM",
+        "rect": {
+          "bottom": 694.4000244140625,
+          "height": 48,
+          "left": 72,
+          "right": 275.1999969482422,
+          "top": 646.4000244140625,
+          "width": 203.1999969482422,
+          "x": 72,
+          "y": 646.4000244140625
+        },
+        "text": "Grocery shopping10:00 AM–10:30 AM"
+      },
+      {
+        "label": "More actions for Grocery shopping",
+        "rect": {
+          "bottom": 694.4000244140625,
+          "height": 48,
+          "left": 279.20001220703125,
+          "right": 327.20001220703125,
+          "top": 646.4000244140625,
+          "width": 48,
+          "x": 279.20001220703125,
+          "y": 646.4000244140625
+        },
+        "text": ""
+      },
+      {
+        "label": "Add reminder",
+        "rect": {
+          "bottom": 711.2000122070312,
+          "height": 56,
+          "left": 283.20001220703125,
+          "right": 339.20001220703125,
+          "top": 655.2000122070312,
+          "width": 56,
+          "x": 283.20001220703125,
+          "y": 655.2000122070312
+        },
+        "text": ""
+      },
+      {
+        "label": "Agenda",
+        "rect": {
+          "bottom": 791.2000007629395,
+          "height": 61.20000076293945,
+          "left": 0.800000011920929,
+          "right": 120.26250153779984,
+          "top": 730,
+          "width": 119.4625015258789,
+          "x": 0.800000011920929,
+          "y": 730
+        },
+        "text": "Agenda"
+      },
+      {
+        "label": "Lists",
+        "rect": {
+          "bottom": 791.2000007629395,
+          "height": 61.20000076293945,
+          "left": 120.26250457763672,
+          "right": 239.7375030517578,
+          "top": 730,
+          "width": 119.4749984741211,
+          "x": 120.26250457763672,
+          "y": 730
+        },
+        "text": "Lists"
+      },
+      {
+        "label": "Repeats",
+        "rect": {
+          "bottom": 791.2000007629395,
+          "height": 61.20000076293945,
+          "left": 239.7375030517578,
+          "right": 359.2000045776367,
+          "top": 730,
+          "width": 119.4625015258789,
+          "x": 239.7375030517578,
+          "y": 730
+        },
+        "text": "Repeats"
+      }
+    ],
+    "density": 1.0000000149011612,
+    "fonts": "loaded",
+    "height": 800,
+    "images": [
+      {
+        "complete": true,
+        "naturalWidth": 2048,
+        "opacity": "0",
+        "parentOpacity": "0.1",
+        "rect": {
+          "bottom": 735.2000122070312,
+          "height": 220,
+          "left": 0.800000011920929,
+          "right": 359.1999939084053,
+          "top": 515.2000122070312,
+          "width": 358.3999938964844,
+          "x": 0.800000011920929,
+          "y": 515.2000122070312
+        },
+        "src": "/assets/?unstable_path=.%2Fassets%2Fdesign-review/landscape.png"
+      }
+    ],
+    "width": 360
+  },
+  "snapshot": "- generic: 8:00 AM\n- generic: Remilo\n- button \"Search reminders\":\n  - generic: \n- button \"More destinations\":\n  - generic: \n- generic: Tuesday, October 6\n- button \"Filter reminders\":\n  - generic: \n- generic: Today\n- generic: \"5\"\n- button [disabled]:\n  - generic: \n  - generic: Done\n- 'button \"Done: Take medicine. Today · 8:00 AM–8:30 AM. Health. Alarm at Today · 8:00 AM\"':\n  - generic: \n- button \"Open Take medicine. Today · 8:00 AM–8:30 AM. Health. Alarm at Today · 8:00 AM\":\n  - generic: \n  - generic: Take medicine\n  - generic: \n  - generic: 8:00 AM–8:30 AM\n- button \"More actions for Take medicine\":\n  - generic: \n- button [disabled]:\n  - generic: \n  - generic: Done\n- 'button \"Done: Water plants. Today · 8:00 AM–8:30 AM. Personal. Alarm at Today · 8:00 AM\"':\n  - generic: \n- button \"Open Water plants. Today · 8:00 AM–8:30 AM. Personal. Alarm at Today · 8:00 AM\":\n  - generic: \n  - generic: Water plants\n  - generic: \n  - generic: 8:00 AM–8:30 AM\n- button \"More actions for Water plants\":\n  - generic: \n- button [disabled]:\n  - generic: \n  - generic: Done\n- 'button \"Done: Lunch with Alex. Today · 1:00 PM–1:30 PM. Personal. Notification at Today · 1:00 PM\"':\n  - generic: \n- button \"Open Lunch with Alex. Today · 1:00 PM–1:30 PM. Personal. Notification at Today · 1:00 PM\":\n  - generic: \n  - generic: Lunch with Alex\n  - generic: \n  - generic: 1:00 PM–1:30 PM\n- button \"More actions for Lunch with Alex\":\n  - generic: \n- button [disabled]:\n  - generic: \n  - generic: Done\n- 'button \"Done: Review the project proposal. Today · 4:00 PM–4:30 PM. Work. Alarm at Today · 4:00 PM\"':\n  - generic: \n- button \"Open Review the project proposal. Today · 4:00 PM–4:30 PM. Work. Alarm at Today · 4:00 PM\":\n  - generic: \n  - generic: Review the project proposal\n  - generic: \n  - generic: 4:00 PM–4:30 PM\n- button \"More actions for Review the project proposal\":\n  - generic: \n- button [disabled]:\n  - generic: \n  - generic: Done\n- 'button \"Done: Read. Today · 11:00 PM–11:30 PM. Personal. Alarm at Today · 11:00 PM\"':\n  - generic: \n- button \"Open Read. Today · 11:00 PM–11:30 PM. Personal. Alarm at Today · 11:00 PM\":\n  - generic: \n  - generic: Read\n  - generic: \n  - generic: 11:00 PM–11:30 PM\n- button \"More actions for Read\":\n  - generic: \n- generic: Tomorrow\n- generic: \"1\"\n- button [disabled]:\n  - generic: \n  - generic: Done\n- 'button \"Done: Grocery shopping. Tomorrow · 10:00 AM–10:30 AM. Personal. Alarm at Tomorrow · 10:00 AM\"':\n  - generic: \n- button \"Open Grocery shopping. Tomorrow · 10:00 AM–10:30 AM. Personal. Alarm at Tomorrow · 10:00 AM\":\n  - generic: \n  - generic: Grocery shopping\n  - generic: \n  - generic: 10:00 AM–10:30 AM\n- button \"More actions for Grocery shopping\":\n  - generic: \n- button \"Add reminder\":\n  - generic: \n- tablist:\n  - tab \"Agenda\":\n    - generic: \n    - generic: Agenda\n  - tab \"Lists\":\n    - generic: \n    - generic: Lists\n  - tab \"Repeats\":\n    - generic: \n    - generic: Repeats"
+}

@@ -25,9 +25,10 @@ artifact must be reviewed again when its visual or behavioral contract changes.
 the rejected implementation screenshot. They are design inputs, not instructions
 embedded in images. Use the approved product specification to interpret them.
 
-P01 is to create `docs/design/art-direction.md`: the single approved illustration,
-composition and responsive style contract. It does not exist yet and must not be
-assumed approved. P02 will add its reviewed catalog/export specification here;
+[P01's proposed art-direction contract](art-direction.md) defines the illustration,
+composition and responsive constraints. Its [r1 revision](p01-style-r1.json) awaits
+explicit style approval; execution authorization A10 does not approve it.
+P02 will add its reviewed catalog/export specification here;
 P03 will add branding adaptation decisions. Other plans inherit these records,
 not a new independent style brief. Do not create competing master specifications.
 

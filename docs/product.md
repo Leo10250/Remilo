@@ -14,9 +14,10 @@ physical gates stay pending and no broader beta release is declared verified.
 The owner-specified [appearance/workflow redesign](appearance-redesign.md) precedes
 optional integrations. Its [P01-P12 plans](plans/redesign/README.md) separate review
 fixtures from production changes; existing scheduling/privacy contracts remain fixed.
-The 6 October follow-up authorizes documentation only, not milestone execution.
-P01 first requires accepted environmental Agenda/Water plants compositions before
-theme expansion. Approval records and execution authorization are separate.
+The later 6 October instruction explicitly authorizes P01 execution (A10).
+P01 requires style-brief approval before corrected artwork, then accepted actual
+Agenda/Water plants renders before completion or theme expansion. Approval records
+and execution authorization are separate.
 
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.
 2. Useful one-off private beta, then polished management and recurrence.

@@ -16,6 +16,7 @@ This ledger records human decisions, not task status. Live status belongs only i
 | A07 | 6 October 2026 | The owner selected four P04 units: global settings, native manual policies, backup portability and chooser integration, with manual exposure gated on portability. | Approval of exact fields, migration versions or command implementation; permission to execute all four in one session. |
 | A08 | 6 October 2026 | The owner selected manual/on-open icon switching first. Closed-app matching is a separately authorized optional extension and does not block P12. | Selection of WorkManager/version/worker design or authorization to implement background automation. |
 | A09 | 6 October 2026 | The owner explicitly requested implementation of the Focused Documentation Refinement plan, including hard versus integration dependencies and current-state corrections. | Application feature implementation, P01 execution, asset generation, builds, deployment or physical acceptance. |
+| A10 | 6 October 2026 | The repository owner explicitly instructed “PLEASE IMPLEMENT THIS PLAN” for the detailed P01 implementation plan in this chat. Execute P01 only, preserving intake, style approval, two actual review prototypes, verification and final render approval. | Acceptance of the proposed style brief, generated artwork, corrected renders, P01 completion, P02, production changes or installation. |
 
 A03 is the owner's answer to the Meadow-alarm versus time-atmosphere question.
 The original documentation request supplies A04/A05; the later review supplies A06.
@@ -24,6 +25,15 @@ A09 is the direct request to implement the documentation-refinement plan. These
 records summarize human decisions and bounded planning approvals, not approval
 of yet-unbuilt artifacts. A09 accepts dependency classifications at planning level;
 individual contracts/partial handoffs still require their specified acceptance.
+
+A10 supersedes A05's documentation-only execution boundary for P01, without
+changing its historical meaning or authorizing another milestone. Approving owner:
+repository owner in this chat. Plan ID: P01. Authorized artifact: the owner's
+complete pasted implementation plan, beginning “P01 — Art Direction implementation
+plan”; it preserves both mandatory design checkpoints. Intake evidence:
+[6 October P01 intake](../evidence/2026-10-06-p01-intake.md). The exact proposed
+brief revision is [P01-style-r1](p01-style-r1.json); it is submitted for approval,
+not accepted by A10. No accepted P01 handoff exists yet.
 
 ## Specification constraints versus recommendations
 

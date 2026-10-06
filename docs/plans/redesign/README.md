@@ -127,3 +127,9 @@ but require prerequisite acceptance and their own refinement/approval before
 implementation. No milestone execution is authorized by this documentation task.
 See [documentation validation](../../evidence/2026-10-06-redesign-planning.md) for
 checks of this planning system, not application verification.
+
+The later owner instruction A10 separately authorizes P01 execution under its
+existing style-brief and rendered-screen gates. See the
+[attributed intake](../../evidence/2026-10-06-p01-intake.md) and
+[proposed brief](../../design/art-direction.md). That instruction does not authorize
+P02 or accept a design artifact; the preceding documentation history remains intact.

@@ -73,8 +73,8 @@ pending work; earlier deployment evidence retains its historical scope.
 ### Appearance design review
 
 The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
-currently authorizes documentation only. P01 first audits reference/current output
-and requires actual representative Agenda/full-Meadow Water plants alarm renders,
+authorizes P01 execution through A10. P01 first audits reference/current output,
+obtains style-brief approval, and requires actual representative Agenda/full-Meadow Water plants alarm renders,
 side-by-side original/current/corrected comparisons, composited accessibility checks
 and explicit style/screen approval before any theme expansion. Existing A/B/C
 facilities below are preserved tooling, not a passed gate or required broad expansion.

@@ -5,8 +5,9 @@ single redesign product vision/requirements source, not an implementation report
 The [twelve-plan index](plans/redesign/README.md) owns execution boundaries;
 task state is recorded only in [backlog.md](backlog.md). Physical acceptance stays
 consolidated in [device-acceptance.md](device-acceptance.md). The latest owner
-instruction authorizes documentation only; implementation requires a new explicit
-authorization. See [approval records](design/approvals.md).
+instruction authorizes P01 only (A10), preserving separate style-brief and actual
+render approvals. Other milestones require their own authorization.
+See [approval records](design/approvals.md).
 
 ## Direction and review gate
 

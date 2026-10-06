@@ -1,0 +1,275 @@
+{
+  "renderer": "Robolectric 4.17 native graphics \/ AlarmControlsScreen",
+  "deviceEvidence": false,
+  "qualifiers": "w360dp-h800dp-mdpi",
+  "api": 35,
+  "fixtureTime": "2026-10-06T08:00:00-07:00",
+  "zone": "America\/Los_Angeles",
+  "locale": "en-US; separately authored Simplified Chinese title",
+  "snapshots": [
+    {
+      "file": "compose-single-light-1x-top.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 1,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "top",
+      "configurationKeyResetsScroll": true
+    },
+    {
+      "file": "compose-single-light-1x-controls.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 1,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "controls",
+      "configurationKeyResetsScroll": true,
+      "actionBoundsBeforeFootnoteScroll": [
+        {
+          "label": "Stop",
+          "left": 16,
+          "top": 608,
+          "width": 328,
+          "height": 68
+        },
+        {
+          "label": "Snooze · 10 min",
+          "left": 16,
+          "top": 688,
+          "width": 328,
+          "height": 64
+        }
+      ]
+    },
+    {
+      "file": "compose-single-light-2x-top.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "top",
+      "configurationKeyResetsScroll": true
+    },
+    {
+      "file": "compose-single-light-2x-controls.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "controls",
+      "configurationKeyResetsScroll": true,
+      "actionBoundsBeforeFootnoteScroll": [
+        {
+          "label": "Stop",
+          "left": 16,
+          "top": 536,
+          "width": 328,
+          "height": 85
+        },
+        {
+          "label": "Snooze · 10 min",
+          "left": 16,
+          "top": 633,
+          "width": 328,
+          "height": 82
+        }
+      ]
+    },
+    {
+      "file": "compose-single-dark-1x-top.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": true,
+      "fontScale": 1,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "top",
+      "configurationKeyResetsScroll": true
+    },
+    {
+      "file": "compose-single-dark-1x-controls.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": true,
+      "fontScale": 1,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "controls",
+      "configurationKeyResetsScroll": true,
+      "actionBoundsBeforeFootnoteScroll": [
+        {
+          "label": "Stop",
+          "left": 16,
+          "top": 608,
+          "width": 328,
+          "height": 68
+        },
+        {
+          "label": "Snooze · 10 min",
+          "left": 16,
+          "top": 688,
+          "width": 328,
+          "height": 64
+        }
+      ]
+    },
+    {
+      "file": "compose-single-dark-2x-top.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": true,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "top",
+      "configurationKeyResetsScroll": true
+    },
+    {
+      "file": "compose-single-dark-2x-controls.png",
+      "scenario": "Single",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": true,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "controls",
+      "configurationKeyResetsScroll": true,
+      "actionBoundsBeforeFootnoteScroll": [
+        {
+          "label": "Stop",
+          "left": 16,
+          "top": 536,
+          "width": 328,
+          "height": 85
+        },
+        {
+          "label": "Snooze · 10 min",
+          "left": 16,
+          "top": 633,
+          "width": 328,
+          "height": 82
+        }
+      ]
+    },
+    {
+      "file": "compose-longtitle-light-2x-top.png",
+      "scenario": "LongTitle",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "top",
+      "configurationKeyResetsScroll": true
+    },
+    {
+      "file": "compose-longtitle-light-2x-controls.png",
+      "scenario": "LongTitle",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "controls",
+      "configurationKeyResetsScroll": true,
+      "actionBoundsBeforeFootnoteScroll": [
+        {
+          "label": "Stop",
+          "left": 16,
+          "top": 621,
+          "width": 328,
+          "height": 85
+        },
+        {
+          "label": "Snooze · 10 min",
+          "left": 16,
+          "top": 718,
+          "width": 328,
+          "height": 82
+        }
+      ]
+    },
+    {
+      "file": "compose-chinesetitle-light-2x-top.png",
+      "scenario": "ChineseTitle",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "top",
+      "configurationKeyResetsScroll": true
+    },
+    {
+      "file": "compose-chinesetitle-light-2x-controls.png",
+      "scenario": "ChineseTitle",
+      "approach": "Hybrid",
+      "ambientPalette": "Sunrise",
+      "memberPalette": "Meadow",
+      "dark": false,
+      "fontScale": 2,
+      "width": 360,
+      "height": 800,
+      "density": 1,
+      "scroll": "controls",
+      "configurationKeyResetsScroll": true,
+      "actionBoundsBeforeFootnoteScroll": [
+        {
+          "label": "Stop",
+          "left": 16,
+          "top": 621,
+          "width": 328,
+          "height": 85
+        },
+        {
+          "label": "Snooze · 10 min",
+          "left": 16,
+          "top": 718,
+          "width": 328,
+          "height": 82
+        }
+      ]
+    }
+  ]
+}
