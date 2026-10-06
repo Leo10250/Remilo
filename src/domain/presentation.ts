@@ -99,12 +99,12 @@ export function calendarDate(value: number, zoneId = deviceZone(), now = Date.no
 export function scheduleDateTime(value: number, zoneId = deviceZone(), now = Date.now()) {
   return calendarDate(value, zoneId, now) + ' · ' + new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zoneId });
 }
-export function eventRange(item: ScheduleItem, now = Date.now()) {
+export function eventRange(item: ScheduleItem, now = Date.now(), omitDate = false) {
   const zone = item.zoneId || deviceZone();
-  if (item.allDay) return calendarDate(item.eventStartMs, zone, now) + ' · All day';
+  if (item.allDay) return (omitDate ? '' : calendarDate(item.eventStartMs, zone, now) + ' · ') + 'All day';
   const time = (value: number) => new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zone });
   return civilAt(item.eventStartMs, zone).slice(0, 10) === civilAt(item.eventEndMs, zone).slice(0, 10)
-    ? calendarDate(item.eventStartMs, zone, now) + ' · ' + time(item.eventStartMs) + '–' + time(item.eventEndMs)
+    ? (omitDate ? '' : calendarDate(item.eventStartMs, zone, now) + ' · ') + time(item.eventStartMs) + '–' + time(item.eventEndMs)
     : scheduleDateTime(item.eventStartMs, zone, now) + ' – ' + scheduleDateTime(item.eventEndMs, zone, now);
 }
 export function groupTitle(group: string, now = new Date()) {

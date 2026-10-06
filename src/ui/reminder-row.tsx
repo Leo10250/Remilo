@@ -2,17 +2,18 @@ import { useCallback, useRef, useState } from 'react';
 import { Animated, I18nManager, Pressable, Text, View } from 'react-native';
 import { Gesture, GestureDetector, type GestureUpdateEvent, type PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { alertPresentation, eventRange, ordinaryDue, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../domain/presentation';
+import { alertPresentation, calendarDate, eventRange, ordinaryDue, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { Icon, IconButton, Status } from './components';
+import { Icon, IconButton, Status, type IconName } from './components';
 import { useReducedMotion } from './motion';
-import { useTheme } from './theme';
+import { useReviewFontScale, useTheme } from './theme';
 import { typography } from './tokens';
 
-export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false }: {
+export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, reviewCompact = false, reviewGlyph = 'event', reviewNow }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
+  reviewCompact?: boolean; reviewGlyph?: IconName; reviewNow?: number;
 }) {
-  const colors = useTheme(), reducedMotion = useReducedMotion();
+  const colors = useTheme(), scale = useReviewFontScale(), reducedMotion = useReducedMotion();
   const [revealed, setRevealed] = useState(false);
   const [shift] = useState(() => new Animated.Value(0));
   const current = useRef(0), origin = useRef(0), eligible = useRef(false), width = useRef(0);
@@ -34,9 +35,12 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     // eslint-disable-next-line react-hooks/refs
     .onBegin(begin).onUpdate(update).onEnd(end).onFinalize(finalize);
   const zone = item.zoneId || deviceZone();
-  const status = stateLabel(item), delivery = alertPresentation(item), repeat = repeatSummary(item);
-  const event = eventRange(item);
-  const consequence = item.overdue ? 'Overdue — still unfinished' : !ordinaryDue(item) && item.dueAtMs !== item.eventStartMs ? 'Due ' + scheduleDateTime(item.dueAtMs, zone) : '';
+  const status = stateLabel(item), delivery = alertPresentation(item, false, reviewNow), repeat = repeatSummary(item);
+  const event = eventRange(item, reviewNow);
+  const compactEvent = eventRange(item, reviewNow, ['Today', 'Tomorrow'].includes(calendarDate(item.eventStartMs, zone, reviewNow)));
+  const consequence = item.overdue ? 'Overdue — still unfinished' : !ordinaryDue(item) && item.dueAtMs !== item.eventStartMs ? 'Due ' + scheduleDateTime(item.dueAtMs, zone, reviewNow) : '';
+  const routineDelivery = item.deliveryState === 'Scheduled' && !delivery.changed && item.alarmAtMs === item.eventStartMs;
+  const compactDelivery = routineDelivery ? item.mode === 'Notification' ? 'Notification' : item.mode === 'None' ? 'No alert' : 'Alarm' : delivery.label;
   const recordedAt = item.deleted ? item.history?.filter((entry) => entry.kind === 'Delete').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) :
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
   const summary = [item.title, event, item.listName, consequence, repeat, item.exception ? 'Changed occurrence' : '', status,
@@ -44,33 +48,41 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const actionLabel = restore ? 'Restore' : item.completed || item.skipped ? 'Reopen' : 'Done';
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
-  return <View style={{ backgroundColor: swipeTrash ? colors.danger : colors.accent, overflow: 'hidden' }}>
+  const doneControl = onDone && <Pressable accessibilityRole="button" accessibilityLabel={actionLabel + ': ' + summary} accessibilityState={{ disabled: busy }} disabled={busy} onPress={act}
+    style={{ minWidth: 48, ...(reviewCompact ? { width: 48 } : {}), minHeight: 48, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.4 : 1 }}>
+    <Icon name={restore || item.completed || item.skipped ? 'undo' : reviewCompact ? 'radio_button_unchecked' : 'check'} color={colors.accent} />
+    {(restore || item.completed || item.skipped) && <Text style={{ color: colors.accent, fontSize: typography.label * scale }}>{actionLabel}</Text>}
+  </Pressable>;
+  return <View style={{ backgroundColor: swipeTrash ? colors.danger : colors.accent, overflow: 'hidden', borderRadius: reviewCompact ? 8 : 0 }}>
     {canSwipe && <Pressable aria-hidden={!revealed} accessibilityRole="button" accessibilityLabel={(swipeTrash ? 'Move to Trash: ' : 'Done: ') + summary} accessible={revealed} accessibilityElementsHidden={!revealed}
       importantForAccessibility={revealed ? 'yes' : 'no-hide-descendants'} disabled={busy || !revealed} onPress={swipeAct}
       style={{ position: 'absolute', [I18nManager.isRTL ? 'left' : 'right']: 0, top: 0, bottom: 0, width: 88, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-      <Icon name={swipeTrash ? 'delete' : 'check'} color={colors.accentInk} /><Text style={{ color: colors.accentInk, fontSize: typography.supporting }}>{swipeTrash ? 'Trash' : 'Done'}</Text>
+      <Icon name={swipeTrash ? 'delete' : 'check'} color={colors.accentInk} /><Text style={{ color: colors.accentInk, fontSize: typography.supporting * scale }}>{swipeTrash ? 'Trash' : 'Done'}</Text>
     </Pressable>}
     <GestureDetector gesture={pan}><Animated.View onLayout={(event) => { width.current = event.nativeEvent.layout.width; }} style={{ transform: [{ translateX: shift }], flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
-      minHeight: 80, paddingVertical: 8, paddingHorizontal: 16, gap: 8, borderBottomWidth: 0.5, borderBottomColor: colors.border }}>
+      minHeight: reviewCompact ? 72 : 80, paddingVertical: 8, paddingHorizontal: reviewCompact ? 4 : 16, gap: reviewCompact ? 4 : 8, borderBottomWidth: reviewCompact ? 0 : 0.5, borderBottomColor: colors.border }}>
+      {reviewCompact && doneControl}
       <Pressable accessibilityRole="button" accessibilityLabel={'Open ' + summary} accessibilityHint={onMore ? 'Long press for reminder actions' : undefined}
         accessibilityActions={[...(onMore ? [{ name: 'longpress', label: 'Reminder actions' }] : []), ...(onDone ? [{ name: 'complete', label: actionLabel }] : [])]}
         onAccessibilityAction={(event) => { if (event.nativeEvent.actionName === 'complete' && !busy) act(); else if (event.nativeEvent.actionName === 'longpress') onMore?.(); }}
         onPress={() => { if (revealed) settle(false); else onOpen(); }} onLongPress={busy ? undefined : onMore}
         style={{ flex: 1, gap: 4, minHeight: 48, justifyContent: 'center' }}>
-        <Text style={{ color: colors.ink, fontSize: typography.body, fontWeight: '500' }}>{item.title}</Text>
-        <Text style={{ color: colors.muted, fontSize: typography.supporting }}>{event}{item.listName ? ' · ' + item.listName : ''}</Text>
-        {!!consequence && <Text style={{ color: item.overdue ? colors.danger : colors.muted, fontSize: typography.supporting }}>{consequence}</Text>}
-        <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting }}>{delivery.label}</Text>
+        {reviewCompact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+          <Icon name={reviewGlyph} size={18} color={colors.accent} />
+          <Text style={{ color: colors.ink, fontSize: typography.body * scale, fontWeight: '500', flexShrink: 1 }}>{item.title}</Text>
+        </View> : <Text style={{ color: colors.ink, fontSize: typography.body * scale, fontWeight: '500' }}>{item.title}</Text>}
+        {reviewCompact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
+          <Icon name={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} color={colors.muted} size={16} />
+          <Text style={{ color: colors.muted, fontSize: typography.supporting * scale, flexShrink: 1 }}>{compactEvent}</Text>
+        </View> : <Text style={{ color: colors.muted, fontSize: typography.supporting * scale }}>{event}{item.listName ? ' · ' + item.listName : ''}</Text>}
+        {!!consequence && <Text style={{ color: item.overdue ? colors.danger : colors.muted, fontSize: typography.supporting * scale }}>{consequence}</Text>}
+        {(!reviewCompact || !routineDelivery || item.mode === 'None') && <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting * scale }}>{reviewCompact ? compactDelivery : delivery.label}</Text>}
         {!!repeat && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Icon name="repeat" size={14} />
-          <Text style={{ color: colors.muted, fontSize: typography.label, flexShrink: 1 }}>{repeat}{item.exception ? ' · changed occurrence' : ''}</Text></View>}
-        {(item.completed || item.skipped || item.deleted) && <Text style={{ color: colors.muted, fontSize: typography.label }}>{item.deleted ? 'Moved to Trash' : item.skipped ? 'Skipped' : 'Completed'}{recordedAt != null ? ' ' + scheduleDateTime(recordedAt) : ''}</Text>}
+          <Text style={{ color: colors.muted, fontSize: typography.label * scale, flexShrink: 1 }}>{repeat}{item.exception ? ' · changed occurrence' : ''}</Text></View>}
+        {(item.completed || item.skipped || item.deleted) && <Text style={{ color: colors.muted, fontSize: typography.label * scale }}>{item.deleted ? 'Moved to Trash' : item.skipped ? 'Skipped' : 'Completed'}{recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, reviewNow) : ''}</Text>}
         {!!status && status !== 'No alert' && !item.completed && !item.deleted && <Status label={status} tone={stateTone(item)} icon={stateIcon(item)} />}
       </Pressable>
-      {onDone && <Pressable accessibilityRole="button" accessibilityLabel={actionLabel + ': ' + summary} accessibilityState={{ disabled: busy }} disabled={busy} onPress={act}
-        style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.4 : 1 }}>
-        <Icon name={restore || item.completed || item.skipped ? 'undo' : 'check'} color={colors.accent} />
-        {(restore || item.completed || item.skipped) && <Text style={{ color: colors.accent, fontSize: typography.label }}>{actionLabel}</Text>}
-      </Pressable>}
+      {!reviewCompact && doneControl}
       {onMore && <IconButton icon="more_vert" label={'More actions for ' + item.title} onPress={onMore} disabled={busy} />}
     </Animated.View></GestureDetector>
   </View>;

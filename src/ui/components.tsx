@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ImageSourcePropType, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from './theme';
+import { useReviewFontScale, useTheme } from './theme';
 import { typography, space, shape } from './tokens';
 import { civilAt, deviceZone, mergeCivil, pickerCivil } from '../domain/time';
 import { engine } from './native';
@@ -16,7 +16,8 @@ export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'a
   'check' | 'check_circle' | 'radio_button_unchecked' | 'expand_more' | 'expand_less' | 'chevron_right' |
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
   'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop' |
-  'menu' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important';
+  'menu' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important' |
+  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
   const colors = useTheme();
   return <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size }}>
@@ -52,42 +53,44 @@ export function IconButton({ icon, label, onPress, disabled = false }: { icon: I
   </Pressable>;
 }
 export function Copy({ children, muted = false, size = typography.body, heading = false }: PropsWithChildren<{ muted?: boolean; size?: number; heading?: boolean }>) {
-  const colors = useTheme();
-  return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size, lineHeight: size * 1.4, fontWeight: heading ? '600' : undefined }}>{children}</Text>;
+  const colors = useTheme(), scale = useReviewFontScale();
+  return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size * scale, lineHeight: size * scale * 1.4, fontWeight: heading ? '600' : undefined }}>{children}</Text>;
 }
 export function Heading({ children }: PropsWithChildren) {
-  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading, fontWeight: '600' }}>{children}</Text>;
+  const scale = useReviewFontScale();
+  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, fontWeight: '600' }}>{children}</Text>;
 }
 export function Button({ label, onPress, disabled = false, variant = 'primary', icon }: {
   label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'danger'; icon?: IconName;
 }) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
     style={({ pressed }) => [styles.button, { backgroundColor: variant === 'primary' ? colors.accent : colors.soft,
       flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: disabled ? 0.45 : pressed ? 0.7 : 1 }]}>
     {icon && <Icon name={icon} color={variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink} size={20} />}
     <Text style={{ color: variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink,
-      flexShrink: 1, fontSize: typography.supporting, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+      flexShrink: 1, fontSize: typography.supporting * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
   </Pressable>;
 }
 export function Card({ children }: PropsWithChildren) {
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
 export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   return <View style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput accessibilityLabel={label}
     placeholderTextColor={colors.muted} {...props} style={[styles.input, { color: colors.ink,
-      backgroundColor: colors.surface, borderColor: error ? colors.danger : colors.muted, minHeight: props.multiline ? 80 : 48 }, props.style]} />
+      backgroundColor: colors.surface, borderColor: error ? colors.danger : colors.muted, minHeight: props.multiline ? 80 : 48,
+      fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}</View>;
 }
 export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel }: PropsWithChildren<{
   label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string;
 }>) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.md, paddingHorizontal: space.gutter }}>
     {icon && <Icon name={icon} />}
     <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
-    {value && <Text style={{ color: colors.muted, fontSize: typography.supporting, maxWidth: '48%', flexShrink: 1, textAlign: 'right' }}>{value}</Text>}
+    {value && <Text style={{ color: colors.muted, fontSize: typography.supporting * scale, maxWidth: '48%', flexShrink: 1, textAlign: 'right' }}>{value}</Text>}
     {children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
@@ -95,19 +98,19 @@ export function SettingRow({ label, value, icon, onPress, children, description,
     style={({ pressed }) => ({ backgroundColor: pressed ? colors.soft : 'transparent', opacity: disabled ? 0.5 : 1 })}>{body}</Pressable> : body;
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
-  const colors = useTheme();
-  return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: typography.label, fontWeight: '600', marginLeft: space.gutter }}>{title}</Text>}
+  const colors = useTheme(), scale = useReviewFontScale();
+  return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: typography.label * scale, fontWeight: '600', marginLeft: space.gutter }}>{title}</Text>}
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 export function SectionHeader({ title, count, expanded, onPress, overdue = false }: {
   title: string; count: number; expanded: boolean; onPress: () => void; overdue?: boolean;
 }) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   return <Pressable accessibilityRole="button" accessibilityLabel={title + ', ' + count}
     accessibilityState={{ expanded }} onPress={onPress} style={{ paddingHorizontal: 16, minHeight: 48, paddingVertical: 8,
       flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.background }}>
-    <Text accessibilityRole="header" style={{ color: overdue ? colors.danger : colors.ink, fontSize: 14, fontWeight: '600', flex: 1 }}>{title}</Text>
-    <Text style={{ color: colors.muted, fontSize: typography.supporting }}>{count}</Text><Icon name={expanded ? 'expand_less' : 'expand_more'} size={18} />
+    <Text accessibilityRole="header" style={{ color: overdue ? colors.danger : colors.ink, fontSize: 14 * scale, fontWeight: '600', flex: 1 }}>{title}</Text>
+    <Text style={{ color: colors.muted, fontSize: typography.supporting * scale }}>{count}</Text><Icon name={expanded ? 'expand_less' : 'expand_more'} size={18} />
   </Pressable>;
 }
 export function Toggle({ label, value, onChange, icon }: { label: string; value: boolean; onChange: (value: boolean) => void; icon?: IconName }) {
@@ -146,11 +149,11 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     {!!message && <ActionFeedback message={message} tone="muted" />}</>;
 }
 export function AppBar({ title, back = true, onBack, actions, leading }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; leading?: ReactNode }) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: back ? 4 : 16,
     backgroundColor: colors.background }}>
     {leading ?? (back && <IconButton icon="arrow_back" label="Back" onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />)}
-    <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.appBar, fontWeight: '600', flex: 1 }}>{title}</Text>
+    <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.appBar * scale, fontWeight: '600', flex: 1 }}>{title}</Text>
     {actions}
   </View>;
 }
@@ -189,7 +192,7 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
   </SafeAreaView>;
 }
 export function Sheet({ title, visible, onClose, onBack, children }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void }>) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
   return <Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
@@ -199,7 +202,7 @@ export function Sheet({ title, visible, onClose, onBack, children }: PropsWithCh
       </Pressable>
       <SafeAreaView edges={['bottom']} accessibilityViewIsModal style={{ maxHeight: '88%', backgroundColor: colors.surface, borderTopLeftRadius: shape.sheet, borderTopRightRadius: shape.sheet }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 4 }}>
-          <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar, fontWeight: '600' }}>{title}</Text>
+          <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar * scale, fontWeight: '600' }}>{title}</Text>
           <IconButton icon="close" label={'Close ' + title} onPress={onClose} />
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, gap: 12 }}>{children}</ScrollView>
@@ -233,14 +236,14 @@ export function Disclosure({ title, children, initial = false, forceOpen = false
   </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
 export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
     <Icon name={icon ?? (tone === 'success' ? 'check_circle' : tone === 'danger' ? 'error' : tone === 'warning' ? 'warning' : 'info')} color={colors[tone]} size={16} />
-    <Text style={{ color: colors[tone], fontSize: typography.supporting, flexShrink: 1 }}>{label}</Text>
+    <Text style={{ color: colors[tone], fontSize: typography.supporting * scale, flexShrink: 1 }}>{label}</Text>
   </View>;
 }
 export function Snackbar({ message, action, onAction, onClose, persistent = false }: { message: string; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean }) {
-  const colors = useTheme();
+  const colors = useTheme(), scale = useReviewFontScale();
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
   const [interacting, setInteracting] = useState(false);
@@ -258,7 +261,7 @@ export function Snackbar({ message, action, onAction, onClose, persistent = fals
   return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)}
     style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: colors.ink,
     flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-    <Text style={{ color: colors.surface, flex: 1, fontSize: typography.supporting, paddingVertical: space.md }}>{message}</Text>
+    <Text style={{ color: colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md }}>{message}</Text>
     {action && <Pressable accessibilityRole="button" onPress={onAction} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center' }}>
       <Text style={{ color: colors.surface, fontWeight: '700' }}>{action}</Text></Pressable>}
     <Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={onClose} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>

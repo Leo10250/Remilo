@@ -29,6 +29,14 @@ describe('user-facing schedule', () => {
     expect(eventRange(crossing, start)).toContain('Today');
     expect(eventRange(crossing, start)).toContain('Tomorrow');
   });
+  it('can omit a redundant group date without dropping cross-day timing', () => {
+    expect(eventRange(normal, start, true)).not.toContain('Today');
+    expect(eventRange(normal, start, true)).toContain('–');
+    expect(eventRange({ ...normal, allDay: true }, start, true)).toBe('All day');
+    const crossing = { ...normal, eventStartMs: Date.UTC(2027, 0, 5, 23, 30), eventEndMs: Date.UTC(2027, 0, 6, 0, 30) };
+    expect(eventRange(crossing, start, true)).toContain('Today');
+    expect(eventRange(crossing, start, true)).toContain('Tomorrow');
+  });
   it('preserves nonzero linked offsets and consequential zones and exceptions', () => {
     expect(ordinaryDue({ ...normal, dueAtMs: start + 600_000 })).toBe(false);
     expect(scheduleNeedsDetails({ ...normal, dueAtMs: start + 600_000 }, 'UTC')).toBe(true);

@@ -5,21 +5,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.remilo.alarm.core.SessionRefreshGuard
 import com.remilo.alarm.data.AlertRecord
 import com.remilo.alarm.engine.AlarmEngine
-import java.text.DateFormat
-import java.util.Date
 import java.util.UUID
 
 /** Native-only controls. Empty loading state must never dismiss a live session. */
@@ -88,57 +80,7 @@ class AlarmActivity : ComponentActivity() {
         labelSmall = baseType.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp)
       )
       MaterialTheme(colorScheme = scheme, typography = type) {
-        Surface(color = scheme.background, modifier = Modifier.fillMaxSize()) {
-          BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
-          val viewportHeight = maxHeight
-          Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)
-            .heightIn(min = (viewportHeight - 32.dp).coerceAtLeast(0.dp)), verticalArrangement = Arrangement.SpaceBetween) {
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            Text("Remilo", style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
-            if (current == null) { CircularProgressIndicator(); Text("Loading alarm…") }
-            else if (current.members.isEmpty()) Text("Updating alarm controls…")
-            else if (current.members.size == 1) {
-              val (record, title) = current.members.first()
-              Text(title, style = MaterialTheme.typography.headlineLarge)
-              Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(record.targetMs)), style = MaterialTheme.typography.titleLarge)
-              Text(if (current.state == "Active") "Alarm ringing" else "Starting alarm…", color = scheme.primary)
-            } else {
-              Text("${current.members.size} alarms ringing", style = MaterialTheme.typography.headlineMedium)
-              current.members.forEach { (record, title) ->
-                Surface(shape = MaterialTheme.shapes.medium) {
-                  Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(title, style = MaterialTheme.typography.titleLarge)
-                    Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(record.targetMs)), color = scheme.onSurfaceVariant)
-                    // A FlowRow wraps at large font size instead of clipping two actions.
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                      Button(onClick = { act("Stop", record) }, enabled = !busy.value) { Text("Stop") }
-                      OutlinedButton(onClick = { act("Snooze", record) }, enabled = !busy.value) { Text("Snooze · ${record.snoozeMinutes} min") }
-                    }
-                  }
-                }
-              }
-            }
-            }
-            Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (current?.members?.size == 1) {
-              val record = current.members.first().first
-              Button(onClick = { act("Stop", record) }, enabled = !busy.value,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp), contentPadding = PaddingValues(20.dp)) {
-                Text("Stop", style = MaterialTheme.typography.titleLarge)
-              }
-              OutlinedButton(onClick = { act("Snooze", record) }, enabled = !busy.value,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp), contentPadding = PaddingValues(20.dp)) {
-                Text("Snooze · ${record.snoozeMinutes} min", style = MaterialTheme.typography.titleMedium)
-              }
-            } else if ((current?.members?.size ?: 0) > 1) {
-              Button(onClick = { act("StopAll") }, enabled = !busy.value, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("Stop all") }
-            }
-            Text("Stop leaves the reminder unfinished.", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
-            error.value?.let { Text(it, color = scheme.error); TextButton(onClick = { refresh() }, modifier = Modifier.align(Alignment.Start)) { Text("Retry") } }
-            }
-          }
-          }
-        }
+        AlarmControlsScreen(current, busy.value, error.value, ::act, ::refresh)
       }
     }
   }

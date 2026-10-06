@@ -5,14 +5,14 @@ import { cleanRepeat, dayNames, repeatErrors, repeatLabel, repeatNames } from '.
 import { civilAt, deviceZone } from '../domain/time';
 import { ActionFeedback, Button, Choice, Copy, DateField, Field, SelectRow, SettingRow, Sheet, Toggle } from './components';
 import { engine } from './native';
-import { useTheme } from './theme';
+import { useReviewFontScale, useTheme } from './theme';
 import { TimeZoneField } from './time-zone';
 export { repeatLabel, repeatNames } from '../domain/repeat';
 
 export function RepeatForm({ value, onChange, startMs, zoneId }: {
   value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string;
 }) {
-  const colors = useTheme(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
+  const colors = useTheme(), scale = useReviewFontScale(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
   const zone = zoneId ?? deviceZone();
   const start = new Date(civilAt(startMs, zone) + 'Z'), weekday = (start.getUTCDay() + 6) % 7 + 1;
   const base: RecurrenceDraft = { frequency: 'daily', interval: 1, weekdays: [weekday], day: start.getUTCDate(),
@@ -83,7 +83,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId }: {
             accessibilityRole="checkbox" accessibilityLabel={name} accessibilityState={{ checked: selected }}
             onPress={() => patch({ weekdays: selected ? rule.weekdays?.filter((day) => day !== index + 1) : [...(rule.weekdays ?? []), index + 1].sort() })}
             style={{ minWidth: 48, minHeight: 48, borderRadius: 24, padding: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? colors.accent : colors.soft }}>
-            <Text style={{ color: selected ? colors.accentInk : colors.ink }}>{name.slice(0, 2)}</Text></Pressable>; })}
+            <Text style={{ color: selected ? colors.accentInk : colors.ink, fontSize: 14 * scale }}>{name.slice(0, 2)}</Text></Pressable>; })}
         </View>{errors.weekdays && <ActionFeedback message={errors.weekdays} tone="danger" />}</>}
         {['monthlyDay', 'yearly'].includes(rule.frequency) && <Field label="Day of month" keyboardType="number-pad" value={numbers.day} error={errors.day}
           onChangeText={(day) => setNumbers((current) => ({ ...current, day }))} />}
