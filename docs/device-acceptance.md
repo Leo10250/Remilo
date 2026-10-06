@@ -62,10 +62,11 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   interval/weekday/ending, then Cancel changes: the previously applied rule remains.
   Repeat using Android Back, which closes the current nested sheet first. Close
   Repeat without applying: neither the draft rule nor the saved reminder changes.
-- **U6 — details and repeat scopes:** open a repeating occurrence. Timing and
-  Activity start collapsed; title, notes and timing take priority over compact
+- **U6 — details and repeat scopes:** open a repeating occurrence. Its normal
+  schedule is shown once; Schedule details appears only when useful. Activity
+  opens through More. Title, schedule, delivery and notes take priority over compact
   bottom actions. Tap Edit: This occurrence, This and following,
-  Entire series are available. Cancel the selector, expand Repeat and Pause repeat.
+  Entire series are available. Cancel the selector, open Repeat details and Pause repeat.
   Find it through Browse → Repeats → Paused, then Resume. Inspect
   Active and Ended filters and verify one entry per family after following/whole
   edits. Family details retain earlier unfinished and postponed occurrences.
@@ -114,9 +115,10 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   it remains unfinished until the revealed button is pressed. Swipe back or tap
   the row to close the reveal. Try vertical scrolling and a cancelled drag: neither
   completes nor deletes. Complete using the visible button and Undo it. For a safe
-  stale-Undo case, complete again, use Browse to Reopen then complete the same
-  reminder, return to the earlier Agenda Undo and confirm it cannot reverse that
-  newer completion. Completed swipe reveals Trash and requires tapping it; a swipe alone never deletes.
+  stale-Undo case when a controlled QA-only second writer is available, complete
+  again and change the same reminder before pressing the captured Undo. Confirm
+  it cannot reverse the newer revision. Leave this case pending without that setup.
+  Completed swipe reveals Trash and requires tapping it; a swipe alone never deletes.
 - **U15 — stale editor recovery:** when a QA-only controlled second writer is
   available, leave a local draft open and change its saved title/notes/timing/repeat
   externally. Save the old draft: it is kept for Review changes. Inspect Yours and
@@ -173,8 +175,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **A3 — independent timing:** edit QA Timing. Turn off the due and alert links and
   choose separate times. Move the event and save. The independent due/alert remain
   unchanged. Turn links on again and verify the native preview before saving.
-- **A4 — all day:** create QA All day with All-day enabled. Preview shows the due
-  boundary at the next local midnight, and default alert at 9 AM on the event day.
+- **A4 — all day:** create QA All day with All-day enabled. Preview says Due by end
+  of day, with the default alert at 9 AM on the event day.
   Use No alert if that day's 9 AM has already elapsed. Overdue depends on due time,
   rather than the alert state.
 - **A5 — modes:** create separate Alarm, Notification and No alert probes. Alarm
