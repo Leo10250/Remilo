@@ -2,7 +2,9 @@
 
 **7 October 2026 visual intake:** read
 [the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
-The overall R4 creation/edit template is accepted with its correction conditions,
+A20 adds the approved R5 Sky/Evening creation/edit variants, with per-image
+notes in the combined Details/Editor gallery. Read those notes before components.
+The overall R4/R5 creation/edit template is accepted with its correction conditions,
 not every generated pixel. One global atmosphere with independent brightness and
 neutral structural icons replaces conflicting old appearance assumptions below.
 Per-reminder appearance/choosers are deferred; earlier references to their P04D
@@ -178,7 +180,8 @@ Verify accepted hard prerequisite artifacts/owner approvals and record integrati
 Work only on P06 Reminder Editor after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p06-reminder-editor.md,
 docs/design/approved-ui-r3-r4.md and its per-image correction conditions, approval
-ledger and accepted P02 primitives/P05 routing capability, plus available P09
+ledger, docs/design/remilo-r5-sky-evening-details-editor/review-notes.json and
+accepted P02 primitives/P05 routing capability, plus available P09
 integration handoffs. Record the deferred P04D chooser scope rather than executing it.
 Inspect actual editor/draft/picker/preview/Git state; stop on missing hard approvals,
 not merely outstanding integrations. Record those gates and obtain my flow approval.

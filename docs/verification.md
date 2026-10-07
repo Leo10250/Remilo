@@ -74,7 +74,8 @@ pending work; earlier deployment evidence retains its historical scope.
 
 The [7 October accepted R3/R4 templates and discrepancy corrections](design/approved-ui-r3-r4.md)
 are reference/requirements evidence, not actual component or phone verification.
-Their exact images are preserved in the design galleries. Verify shared neutral
+Their exact images, including the eight A20-approved R5 Sky/Evening variants,
+are preserved in the annotated design galleries. Verify shared neutral
 field/navigation icon roles, intentional action/category/status colors, consistent
 Light/Dark component geometry, and actual target/type/contrast measurements when
 implementing P02/P06/P07. Do not copy incidental generated tints or omissions.

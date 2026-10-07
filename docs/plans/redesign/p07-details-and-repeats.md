@@ -2,7 +2,9 @@
 
 **7 October 2026 visual intake:** read
 [the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
-The overall R4 details template is accepted with corrections, not every generated
+A20 adds the approved R5 Sky/Evening details variants, with per-image notes in
+the combined Details/Editor gallery. Read those notes before components.
+The overall R4/R5 details template is accepted with corrections, not every generated
 pixel. Use one global atmosphere with independent brightness and defer manual
 reminder/series appearance and its chooser. Conflicting earlier contextual-theme
 and P04D integration assumptions below remain planning requiring refinement.
@@ -164,7 +166,8 @@ Verify accepted hard prerequisite artifacts/owner approvals and record integrati
 Execute only P07 Details and Repeats after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p07-details-and-repeats.md,
 docs/design/approved-ui-r3-r4.md and its per-image correction conditions, approval
-ledger and accepted P02/P05 capability handoffs plus available P09 integrations.
+ledger, docs/design/remilo-r5-sky-evening-details-editor/review-notes.json and
+accepted P02/P05 capability handoffs plus available P09 integrations.
 Record the deferred P04D chooser scope rather than executing it. Inspect actual
 detail/family/query/action state and preserve dirty work; stop on missing hard
 approvals, record outstanding integration gates and obtain my approval of

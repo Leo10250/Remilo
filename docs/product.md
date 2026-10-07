@@ -9,7 +9,9 @@ The owner's **7 October 2026 presentation direction** is recorded in
 It supersedes conflicting earlier visual requirements: the R3 homepage and R4
 details/editor templates use one global atmosphere with independent brightness;
 task-specific alarm environments and manual reminder appearance are deferred.
-The R4 template is accepted with the documented corrections, including consistent
+A20 extends the same template to the eight R5 Sky/Evening references, with
+[recorded approval and exact identities](design/approved-ui-r5-acceptance.json).
+The R4/R5 template is accepted with the documented corrections, including consistent
 icon roles and keyboard-safe editing. Generated pixels are not exact production
 tokens or accessibility evidence. Four preview atmospheres do not establish new
 automatic period boundaries, migration rules or fresh-install defaults.

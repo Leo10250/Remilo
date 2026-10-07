@@ -1,15 +1,16 @@
-# Approved Remilo UI direction and R4 implementation corrections
+# Approved Remilo UI direction and R4/R5 implementation corrections
 
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18/A19 in the [approval ledger](approvals.md). Live task status remains solely
+as A18/A19/A20 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
 
 The owner accepts the R3 homepage direction and the overall R4 Details/Editor
-template, with the corrections below. Generated images communicate composition,
+template plus the approved R5 Sky/Evening variants, with the corrections below.
+Generated images communicate composition,
 identity and information hierarchy; arbitrary tint, spacing and shape differences
 are not requirements. Use this text to resolve those discrepancies during actual
 component work. Do not copy individual image pixels into unrelated components.
@@ -18,10 +19,14 @@ component work. Do not copy individual image pixels into unrelated components.
   and Night, each in Light and Dark. This supersedes the old homepage visual
   direction. Final scenery should become somewhat more abstract later; the current
   images remain layout/identity references rather than final artwork exports.
-- [R4 annotated gallery](remilo-r4-details-editor/gallery.html): ordinary details,
+- [Combined R4/R5 annotated gallery](remilo-r4-details-editor/gallery.html): ordinary details,
   overdue details with a postponed alert, creation with the keyboard open, and
   editing with notes and independent timing. The owner accepts this template
   while requiring explicit discrepancy and keyboard guidance.
+- [R5 Sky/Evening variants](remilo-r5-sky-evening-details-editor/gallery.html): eight approved extensions
+  of the same four Details/Editor states, with per-image discrepancy notes. The
+  [combined gallery](remilo-r4-details-editor/gallery.html) contains all twelve
+  R4/R5 representatives. Approval is recorded separately as A20.
 - One global atmosphere, combined with independent System/Light/Dark appearance,
   should apply across app pages, details/editor/settings and unlocked native alarm
   presentation. Task-specific alarm environments and per-reminder appearance
@@ -51,6 +56,10 @@ provenance and image hashes:
   [provenance](remilo-r3-atmospheres/manifest.json).
 - [R4 image hashes](remilo-r4-details-editor/images.json) and
   [provenance](remilo-r4-details-editor/manifest.json).
+- [R5 image hashes](remilo-r5-sky-evening-details-editor/images.json),
+  [generation provenance](remilo-r5-sky-evening-details-editor/manifest.json),
+  [per-image corrections](remilo-r5-sky-evening-details-editor/review-notes.json) and
+  [A20 acceptance](approved-ui-r5-acceptance.json). A18/A19 evidence stays unchanged.
 - [Acceptance scope](approved-ui-r3-r4-acceptance.json) records the owner statements
   and the exact preserved screenshot identities.
 - [Per-image review data](remilo-r4-details-editor/review-notes.json) mirrors the
@@ -77,7 +86,10 @@ role values and artwork, not which role an otherwise identical icon receives.
 | Overdue / delivery warning / error | Stable semantic roles with explicit labels/icons. R4's amber overdue cue is deliberate; genuine failures/errors/destructive actions use their documented error role. The future postponed alert never clears overdue work. |
 | Independent timing badge | Neutral relationship text/container/outline. It communicates a relationship, not a selected chip, warning or primary action. |
 
-Sunrise and Night use different action accents deliberately. Within one atmosphere
+Sunrise, Sky, Evening and Night use different action accents deliberately.
+Sky uses blue in Light and a pale blue paired with dark content in Dark; Evening
+uses muted plum in Light and pale rose paired with dark content in Dark. These
+are role directions, not sampled final production hex values. Within one atmosphere
 and appearance, the same role comes from the same token on all pages. Do not sample
 slightly different orange/blue values from individual PNGs or hardcode per-screen
 hex overrides. Keep icon family, stroke, size and container treatment consistent.
@@ -160,6 +172,132 @@ do not mix in iOS Liquid Glass keyboard or control behavior.
   edited in Schedule options but its consequential summary remains visible.
 - Use the same keyboard behavior when Title or Notes gains focus. Omit editable
   Repeat for an individual reminder; create/family editing follows actual scope.
+
+## R5 — approved Sky and Evening extensions (A20)
+
+The owner approved these eight variants on 7 October 2026 and requested discrepancy documentation like R4. They extend the same four-state template, rather than introduce a new redesign. [Approval and exact image identities](approved-ui-r5-acceptance.json); [combined twelve-screen gallery](remilo-r4-details-editor/gallery.html); [Sky/Evening comparison with per-image notes](remilo-r5-sky-evening-details-editor/gallery.html).
+
+Generic icon coloring is already corrected in R5. The remaining variations below are incidental generation drift. Keep the shared roles, timing and keyboard requirements in this contract. Sky Dark retains daytime clouds/lake; Evening Dark retains sunset/sun. Light/Dark is independent of atmosphere. Fixture clocks stay constant for comparison and do not define automatic switching boundaries. Ordinary details and creation are Light; overdue details and editing are Dark. These representatives do not claim every state in both appearances.
+
+### 01 — Sky Light · Ordinary details
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/01-sky-ordinary-details.png)
+
+- **Observed:** The ordinary-details scenic opening is taller than the other secondary samples; crop, toolbar spacing and title weight also vary.
+  **Resolution:** Use one compact secondary opening, about 96 dp below the status inset including a 56 dp toolbar. Crop the shared atmosphere asset; reduce decoration first when height is constrained, preserving readable navigation and focused content.
+- **Observed:** Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.
+  **Resolution:** Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout.
+- **Observed:** Postpone blue appears brighter than the filled Done blue.
+  **Resolution:** Resolve both through the same Sky Light primary token, with outlined/filled styles and paired onPrimary. Do not sample separate per-screen PNG hex values.
+- **Intentional:** Neutral structural icons are already corrected from R4; green plant category and labeled confirmed Scheduled state remain distinct intentional roles.
+- **Intentional:** Linked Due remains concise: Due at event start. Done completes work; Postpone alert changes only the next alert.
+- **Intentional:** List has a navigation chevron. Read-only Schedule details uses circled information; editable Schedule options may use a gear.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Preserve Water plants, Home, full Event range and existing Notes; Scheduled represents confirmed scheduling, not guaranteed sound.
+
+### 02 — Sky Dark · Overdue + postponed alert
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/02-sky-overdue-details.png)
+
+- **Observed:** Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.
+  **Resolution:** Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout.
+- **Observed:** Done is rounder than Light Done/Edit Save, and its fill appears more periwinkle than Sky Dark Edit Save.
+  **Resolution:** Use shared 16 dp primary-button corners and one Sky Dark primary/onPrimary pair across Done, Save and Postpone; do not create per-page theme accents.
+- **Intentional:** Amber Overdue and Due refer to unfinished work; neutral Alarm identifies the mode. Future postponement does not clear overdue.
+- **Intentional:** Event Today 4:00–4:30 PM, independent Due Today 5:00 PM, and postponed Next alert Tomorrow 9:00 AM remain separate; Event and Due are unchanged.
+- **Intentional:** Category document badge is indigo; actual actions use the atmosphere accent. This is not active ringing: Stop/Snooze do not replace Done/Postpone.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Preserve the overdue Due despite a future next alert. Next alert Tomorrow 9 AM is an edited postponement, not a new default shortcut.
+
+### 03 — Sky Light · Creation + keyboard
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/03-sky-create-keyboard.png)
+
+- **Observed:** Calendar glyph/date mark and scenic crop/row padding differ from other Sky pages.
+  **Resolution:** Use the shared calendar glyph family, compact header and form row geometry; no theme-specific date icons or fixed pixel heights.
+- **Observed:** The raster demonstrates Title focus only; it cannot show lower Notes, caret tracking or changing keyboard heights.
+  **Resolution:** Implement the canonical IME-aware Save/footer and focus/caret contract for every input. Keep the scroll viewport above the footer; do not hardcode this keyboard height.
+- **Intentional:** Date, Time, Repeat and Alarm icons are neutral. Focused Title outline/caret and Save use the atmosphere primary role.
+- **Intentional:** One Save is above the keyboard. Wrapped Title is visible; lower List/Notes can require scrolling rather than smaller controls.
+- **Intentional:** Keyboard suggestions, layout, blue Enter and navigation controls belong to Android/the selected IME, including in Evening.
+- **Intentional:** At fixture clock 7:30, Event defaults to 7:40–8:10 AM; Due follows Event start and Alarm follows Due. Repeat belongs to creation.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once. Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error. Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the static raster does not demonstrate these behaviors.
+
+### 04 — Sky Dark · Editing + independent timing
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/04-sky-edit-independent.png)
+
+- **Observed:** List uses a briefcase instead of the generic list glyph in details; the calendar inner date mark also changes.
+  **Resolution:** Use one generic List glyph and shared calendar icon family. Work membership does not turn the List control into a work-category icon; category imagery remains separate.
+- **Observed:** Save hue/corners differ from Sky Dark overdue Done.
+  **Resolution:** Use the same Sky Dark primary/onPrimary tokens and 16 dp button radius. Appearance changes role values, not component anatomy.
+- **Intentional:** Neutral structural icons and Independent relationship badges are intentional; the badges do not imply selected controls.
+- **Intentional:** Event Tomorrow 9:00–9:30 AM, independent Due 11:00 AM and independent alert 8:45 AM remain visible separately. Existing Notes remain expanded.
+- **Intentional:** No editable Repeat or per-reminder appearance chooser belongs to this individual-reminder edit. Save is the single persistent primary action.
+- **Intentional:** Editable Schedule options uses a gear; read-only Schedule details uses circled information. This difference communicates different destinations.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Keep the independent alert in the common Alert area, and the consequential Due summary visible even when Due editing lives in Schedule options. Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once. Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error. Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the static raster does not demonstrate these behaviors.
+
+### 05 — Evening Light · Ordinary details
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/05-evening-ordinary-details.png)
+
+- **Observed:** Postpone outline/label is brighter magenta than muted-plum Done.
+  **Resolution:** Use one Evening Light primary token for Postpone and Done. It is not error red or a separate urgency accent.
+- **Observed:** The ordinary-details scenic opening is taller than the other secondary samples; crop, toolbar spacing and title weight also vary.
+  **Resolution:** Use one compact secondary opening, about 96 dp below the status inset including a 56 dp toolbar. Crop the shared atmosphere asset; reduce decoration first when height is constrained, preserving readable navigation and focused content.
+- **Observed:** Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.
+  **Resolution:** Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout.
+- **Intentional:** Neutral structural icons are already corrected from R4; green plant category and labeled confirmed Scheduled state remain distinct intentional roles.
+- **Intentional:** Linked Due remains concise: Due at event start. Done completes work; Postpone alert changes only the next alert.
+- **Intentional:** List has a navigation chevron. Read-only Schedule details uses circled information; editable Schedule options may use a gear.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Preserve linked Due, green category/Scheduled roles and muted-plum actual actions. Final artwork refinement remains separate.
+
+### 06 — Evening Dark · Overdue + postponed alert
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/06-evening-overdue-details.png)
+
+- **Observed:** Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.
+  **Resolution:** Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout.
+- **Observed:** Done corners are visibly rounder than ordinary Done and Edit Save.
+  **Resolution:** Use the same 16 dp primary-button radius and shared footer geometry in every appearance. Light plum versus Dark pink action role values are intentional; pill-versus-rounded-rectangle geometry is not.
+- **Intentional:** Amber Overdue and Due refer to unfinished work; neutral Alarm identifies the mode. Future postponement does not clear overdue.
+- **Intentional:** Event Today 4:00–4:30 PM, independent Due Today 5:00 PM, and postponed Next alert Tomorrow 9:00 AM remain separate; Event and Due are unchanged.
+- **Intentional:** Category document badge is indigo; actual actions use the atmosphere accent. This is not active ringing: Stop/Snooze do not replace Done/Postpone.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Keep amber unfinished Due independent of pink actions and future postponement; no theme-driven timing or completion changes.
+
+### 07 — Evening Light · Creation + keyboard
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/07-evening-create-keyboard.png)
+
+- **Observed:** Focused Title outline/caret appears brighter magenta than muted-plum Save.
+  **Resolution:** Use the same Evening Light primary token for focus and Save; use appropriate outline/fill styles rather than independent per-control sampled hues.
+- **Observed:** Header/crop differs from ordinary details; only Title focus is demonstrated.
+  **Resolution:** Use the shared compact secondary opening and reduce decoration when constrained. Apply the keyboard/caret contract to lower Notes and validation too; one visible Title is insufficient evidence.
+- **Intentional:** Date, Time, Repeat and Alarm icons are neutral. Focused Title outline/caret and Save use the atmosphere primary role.
+- **Intentional:** One Save is above the keyboard. Wrapped Title is visible; lower List/Notes can require scrolling rather than smaller controls.
+- **Intentional:** Keyboard suggestions, layout, blue Enter and navigation controls belong to Android/the selected IME, including in Evening.
+- **Intentional:** At fixture clock 7:30, Event defaults to 7:40–8:10 AM; Due follows Event start and Alarm follows Due. Repeat belongs to creation.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once. Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error. Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the static raster does not demonstrate these behaviors.
+
+### 08 — Evening Dark · Editing + independent timing
+
+[Reference PNG](remilo-r5-sky-evening-details-editor/08-evening-edit-independent.png)
+
+- **Observed:** List uses a briefcase while details uses a bulleted-list glyph.
+  **Resolution:** Use the shared generic List glyph; Work is its value, not a reason for a different form-control icon.
+- **Observed:** The sun shifts farther right than other Evening samples; header and field sizing also differ.
+  **Resolution:** Use one selected Evening source asset and a shared crop/header policy. Do not author page-specific scenery or form geometry to reproduce incidental generated composition.
+- **Intentional:** Neutral structural icons and Independent relationship badges are intentional; the badges do not imply selected controls.
+- **Intentional:** Event Tomorrow 9:00–9:30 AM, independent Due 11:00 AM and independent alert 8:45 AM remain visible separately. Existing Notes remain expanded.
+- **Intentional:** No editable Repeat or per-reminder appearance chooser belongs to this individual-reminder edit. Save is the single persistent primary action.
+- **Intentional:** Editable Schedule options uses a gear; read-only Schedule details uses circled information. This difference communicates different destinations.
+
+Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Keep opaque raised reading surfaces; raster glow/shading is not a new translucency or Liquid Glass requirement. Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once. Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error. Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the static raster does not demonstrate these behaviors.
 
 ## Shared geometry and accessibility corrections
 

@@ -5,7 +5,12 @@ define the approved requirements. The [plan index](../plans/redesign/README.md)
 defines execution boundaries. Only [backlog.md](../backlog.md) records live task status.
 
 The current 7 October presentation intake is
-[the approved R3/R4 template and corrections](approved-ui-r3-r4.md). It identifies
+[the approved R3/R4/R5 templates and corrections](approved-ui-r3-r4.md).
+A20 adds the eight accepted Sky/Evening Details/Editor variants,
+[their exact identities](approved-ui-r5-acceptance.json) and
+[per-image comparison notes](remilo-r5-sky-evening-details-editor/gallery.html).
+The [combined Details/Editor gallery](remilo-r4-details-editor/gallery.html)
+contains all twelve approved representatives. The contract identifies
 the accepted homepage and details/editor previews, correction conditions, icon
 roles and keyboard requirements. It takes precedence over conflicting older
 task-specific environments/manual chooser direction below. Historical submitted

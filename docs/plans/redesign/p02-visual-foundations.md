@@ -2,7 +2,9 @@
 
 **7 October 2026 intake override:** read
 [the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md)
-before continuing foundations. The accepted R3 homepage/R4 secondary-page template
+before continuing foundations. A20 adds the accepted R5 Sky/Evening variants;
+read their per-image notes in the combined twelve-screen Details/Editor gallery.
+The accepted R3 homepage/R4/R5 secondary-page template
 and corrections supersede conflicting old visual assumptions below. One global
 atmosphere with independent brightness applies across screens; task-specific
 environments/manual reminder appearance are deferred. The earlier eight-palette,

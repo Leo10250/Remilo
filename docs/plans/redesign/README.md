@@ -1,7 +1,7 @@
 # Remilo redesign roadmap
 
 **7 October 2026 precedence:** consume
-[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md)
+[the approved R3/R4/R5 templates and corrections](../../design/approved-ui-r3-r4.md)
 before executing or refining any visual plan. R3 homepage and the overall R4
 details/editor template are accepted with correction conditions. One global
 atmosphere and independent brightness replace task-specific environments and

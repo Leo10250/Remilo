@@ -1,0 +1,204 @@
+{
+  "date": "2026-10-07",
+  "approvalRecord": "A20",
+  "authority": "R5 Sky/Evening variants approved with generation-discrepancy documentation. The canonical docs/design/approved-ui-r3-r4.md contract overrides incidental raster differences.",
+  "shared": {
+    "icons": "Neutral structural/navigation roles; theme primary for actions/focus/selection; independent category and labeled status roles. The R4 arbitrary structural tint is corrected here.",
+    "geometry": "One shared header, field/card/icon-column and primary-button definition across atmosphere/appearance. Pixel dimensions, shaded fills and line wraps are illustrative; reading surfaces remain opaque.",
+    "keyboard": "Retain the canonical footer-aware focus/caret and single-inset-owner contract for every input, not just the pictured Title.",
+    "atmosphere": "Sky remains daytime clouds/lake in Dark; Evening remains sunset with sun in Dark. Fixture clocks are held constant; no automatic period boundaries/defaults/migration are approved.",
+    "evidence": "These twelve R4/R5 representatives are not every state in every appearance. Shared components must support all four atmospheres in Light/Dark; no extra screenshots or device passes are implied."
+  },
+  "screens": {
+    "01-sky-ordinary-details": {
+      "intentional": [
+        "Neutral structural icons are already corrected from R4; green plant category and labeled confirmed Scheduled state remain distinct intentional roles.",
+        "Linked Due remains concise: Due at event start. Done completes work; Postpone alert changes only the next alert.",
+        "List has a navigation chevron. Read-only Schedule details uses circled information; editable Schedule options may use a gear."
+      ],
+      "corrections": [
+        {
+          "observed": "The ordinary-details scenic opening is taller than the other secondary samples; crop, toolbar spacing and title weight also vary.",
+          "resolve": "Use one compact secondary opening, about 96 dp below the status inset including a 56 dp toolbar. Crop the shared atmosphere asset; reduce decoration first when height is constrained, preserving readable navigation and focused content."
+        },
+        {
+          "observed": "Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.",
+          "resolve": "Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout."
+        },
+        {
+          "observed": "Postpone blue appears brighter than the filled Done blue.",
+          "resolve": "Resolve both through the same Sky Light primary token, with outlined/filled styles and paired onPrimary. Do not sample separate per-screen PNG hex values."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Preserve Water plants, Home, full Event range and existing Notes; Scheduled represents confirmed scheduling, not guaranteed sound."
+      ]
+    },
+    "02-sky-overdue-details": {
+      "intentional": [
+        "Amber Overdue and Due refer to unfinished work; neutral Alarm identifies the mode. Future postponement does not clear overdue.",
+        "Event Today 4:00–4:30 PM, independent Due Today 5:00 PM, and postponed Next alert Tomorrow 9:00 AM remain separate; Event and Due are unchanged.",
+        "Category document badge is indigo; actual actions use the atmosphere accent. This is not active ringing: Stop/Snooze do not replace Done/Postpone."
+      ],
+      "corrections": [
+        {
+          "observed": "Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.",
+          "resolve": "Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout."
+        },
+        {
+          "observed": "Done is rounder than Light Done/Edit Save, and its fill appears more periwinkle than Sky Dark Edit Save.",
+          "resolve": "Use shared 16 dp primary-button corners and one Sky Dark primary/onPrimary pair across Done, Save and Postpone; do not create per-page theme accents."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Preserve the overdue Due despite a future next alert. Next alert Tomorrow 9 AM is an edited postponement, not a new default shortcut."
+      ]
+    },
+    "03-sky-create-keyboard": {
+      "intentional": [
+        "Date, Time, Repeat and Alarm icons are neutral. Focused Title outline/caret and Save use the atmosphere primary role.",
+        "One Save is above the keyboard. Wrapped Title is visible; lower List/Notes can require scrolling rather than smaller controls.",
+        "Keyboard suggestions, layout, blue Enter and navigation controls belong to Android/the selected IME, including in Evening.",
+        "At fixture clock 7:30, Event defaults to 7:40–8:10 AM; Due follows Event start and Alarm follows Due. Repeat belongs to creation."
+      ],
+      "corrections": [
+        {
+          "observed": "Calendar glyph/date mark and scenic crop/row padding differ from other Sky pages.",
+          "resolve": "Use the shared calendar glyph family, compact header and form row geometry; no theme-specific date icons or fixed pixel heights."
+        },
+        {
+          "observed": "The raster demonstrates Title focus only; it cannot show lower Notes, caret tracking or changing keyboard heights.",
+          "resolve": "Implement the canonical IME-aware Save/footer and focus/caret contract for every input. Keep the scroll viewport above the footer; do not hardcode this keyboard height."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once.",
+        "Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error.",
+        "Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the Title-only raster does not demonstrate these behaviors."
+      ]
+    },
+    "04-sky-edit-independent": {
+      "intentional": [
+        "Neutral structural icons and Independent relationship badges are intentional; the badges do not imply selected controls.",
+        "Event Tomorrow 9:00–9:30 AM, independent Due 11:00 AM and independent alert 8:45 AM remain visible separately. Existing Notes remain expanded.",
+        "No editable Repeat or per-reminder appearance chooser belongs to this individual-reminder edit. Save is the single persistent primary action.",
+        "Editable Schedule options uses a gear; read-only Schedule details uses circled information. This difference communicates different destinations."
+      ],
+      "corrections": [
+        {
+          "observed": "List uses a briefcase instead of the generic list glyph in details; the calendar inner date mark also changes.",
+          "resolve": "Use one generic List glyph and shared calendar icon family. Work membership does not turn the List control into a work-category icon; category imagery remains separate."
+        },
+        {
+          "observed": "Save hue/corners differ from Sky Dark overdue Done.",
+          "resolve": "Use the same Sky Dark primary/onPrimary tokens and 16 dp button radius. Appearance changes role values, not component anatomy."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Keep the independent alert in the common Alert area, and the consequential Due summary visible even when Due editing lives in Schedule options.",
+        "Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once.",
+        "Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error.",
+        "Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the keyboard-closed raster does not demonstrate these behaviors."
+      ]
+    },
+    "05-evening-ordinary-details": {
+      "intentional": [
+        "Neutral structural icons are already corrected from R4; green plant category and labeled confirmed Scheduled state remain distinct intentional roles.",
+        "Linked Due remains concise: Due at event start. Done completes work; Postpone alert changes only the next alert.",
+        "List has a navigation chevron. Read-only Schedule details uses circled information; editable Schedule options may use a gear."
+      ],
+      "corrections": [
+        {
+          "observed": "Postpone outline/label is brighter magenta than muted-plum Done.",
+          "resolve": "Use one Evening Light primary token for Postpone and Done. It is not error red or a separate urgency accent."
+        },
+        {
+          "observed": "The ordinary-details scenic opening is taller than the other secondary samples; crop, toolbar spacing and title weight also vary.",
+          "resolve": "Use one compact secondary opening, about 96 dp below the status inset including a 56 dp toolbar. Crop the shared atmosphere asset; reduce decoration first when height is constrained, preserving readable navigation and focused content."
+        },
+        {
+          "observed": "Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.",
+          "resolve": "Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Preserve linked Due, green category/Scheduled roles and muted-plum actual actions. Final artwork refinement remains separate."
+      ]
+    },
+    "06-evening-overdue-details": {
+      "intentional": [
+        "Amber Overdue and Due refer to unfinished work; neutral Alarm identifies the mode. Future postponement does not clear overdue.",
+        "Event Today 4:00–4:30 PM, independent Due Today 5:00 PM, and postponed Next alert Tomorrow 9:00 AM remain separate; Event and Due are unchanged.",
+        "Category document badge is indigo; actual actions use the atmosphere accent. This is not active ringing: Stop/Snooze do not replace Done/Postpone."
+      ],
+      "corrections": [
+        {
+          "observed": "Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.",
+          "resolve": "Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout."
+        },
+        {
+          "observed": "Done corners are visibly rounder than ordinary Done and Edit Save.",
+          "resolve": "Use the same 16 dp primary-button radius and shared footer geometry in every appearance. Light plum versus Dark pink action role values are intentional; pill-versus-rounded-rectangle geometry is not."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Keep amber unfinished Due independent of pink actions and future postponement; no theme-driven timing or completion changes."
+      ]
+    },
+    "07-evening-create-keyboard": {
+      "intentional": [
+        "Date, Time, Repeat and Alarm icons are neutral. Focused Title outline/caret and Save use the atmosphere primary role.",
+        "One Save is above the keyboard. Wrapped Title is visible; lower List/Notes can require scrolling rather than smaller controls.",
+        "Keyboard suggestions, layout, blue Enter and navigation controls belong to Android/the selected IME, including in Evening.",
+        "At fixture clock 7:30, Event defaults to 7:40–8:10 AM; Due follows Event start and Alarm follows Due. Repeat belongs to creation."
+      ],
+      "corrections": [
+        {
+          "observed": "Focused Title outline/caret appears brighter magenta than muted-plum Save.",
+          "resolve": "Use the same Evening Light primary token for focus and Save; use appropriate outline/fill styles rather than independent per-control sampled hues."
+        },
+        {
+          "observed": "Header/crop differs from ordinary details; only Title focus is demonstrated.",
+          "resolve": "Use the shared compact secondary opening and reduce decoration when constrained. Apply the keyboard/caret contract to lower Notes and validation too; one visible Title is insufficient evidence."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once.",
+        "Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error.",
+        "Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the Title-only raster does not demonstrate these behaviors."
+      ]
+    },
+    "08-evening-edit-independent": {
+      "intentional": [
+        "Neutral structural icons and Independent relationship badges are intentional; the badges do not imply selected controls.",
+        "Event Tomorrow 9:00–9:30 AM, independent Due 11:00 AM and independent alert 8:45 AM remain visible separately. Existing Notes remain expanded.",
+        "No editable Repeat or per-reminder appearance chooser belongs to this individual-reminder edit. Save is the single persistent primary action.",
+        "Editable Schedule options uses a gear; read-only Schedule details uses circled information. This difference communicates different destinations."
+      ],
+      "corrections": [
+        {
+          "observed": "List uses a briefcase while details uses a bulleted-list glyph.",
+          "resolve": "Use the shared generic List glyph; Work is its value, not a reason for a different form-control icon."
+        },
+        {
+          "observed": "The sun shifts farther right than other Evening samples; header and field sizing also differ.",
+          "resolve": "Use one selected Evening source asset and a shared crop/header policy. Do not author page-specific scenery or form geometry to reproduce incidental generated composition."
+        }
+      ],
+      "checks": [
+        "Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence.",
+        "Keep opaque raised reading surfaces; raster glow/shading is not a new translucency or Liquid Glass requirement.",
+        "Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once.",
+        "Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error.",
+        "Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the keyboard-closed raster does not demonstrate these behaviors."
+      ]
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-07",
+  "record": "A20",
+  "type": "atmosphere-variant-acceptance-with-discrepancy-corrections",
+  "owner": "Repository owner in this chat",
+  "statement": "Ok I approve these designs. Please  doument them down like before and document any unexpected UI discrency caused by image generation like you did before",
+  "attributedScope": "Accept the eight R5 Sky/Evening variants of the previously accepted four Details/Editor states; document and annotate residual image-generation discrepancies like R4.",
+  "authorizedWork": "Preserve reference PNGs, add repository design documentation/approval record and annotate the existing Details/Editor gallery. No app implementation in this task.",
+  "contract": "approved-ui-r3-r4.md",
+  "gallery": "remilo-r4-details-editor/gallery.html",
+  "variantGallery": "remilo-r5-sky-evening-details-editor/gallery.html",
+  "reviewNotes": "remilo-r5-sky-evening-details-editor/review-notes.json",
+  "conditions": [
+    "Apply canonical shared color roles, header/card/icon/button geometry and keyboard-safe editor behavior instead of incidental raster differences.",
+    "Preserve independent Event/Due/alert semantics and global atmosphere/independent brightness."
+  ],
+  "limits": [
+    "Not exact production tokens/final artwork or actual RN/Compose render acceptance.",
+    "Not every screen-state/brightness combination; shared components still support all four atmospheres in Light/Dark.",
+    "No automatic period/default/migration decisions, P01/P02 status changes or task-specific theme chooser.",
+    "No accessibility, keyboard, native alarm or physical-device verification implied."
+  ],
+  "priorAcceptance": "approved-ui-r3-r4-acceptance.json",
+  "artifacts": [
+    {
+      "file": "remilo-r5-sky-evening-details-editor/01-sky-ordinary-details.png",
+      "width": 853,
+      "height": 1844,
+      "ratio": 2.162,
+      "sha256": "064147380c9c09d29948107982c978ca7f9049a72c52f7fb4286f50c49bb3658"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/02-sky-overdue-details.png",
+      "width": 852,
+      "height": 1846,
+      "ratio": 2.167,
+      "sha256": "e6a3a947f9812e1c15587af178ae1428326049ad3e7145ea4bbba153ead11c3d"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/03-sky-create-keyboard.png",
+      "width": 840,
+      "height": 1871,
+      "ratio": 2.227,
+      "sha256": "dc1caab6b95815c4e0f64938ea96073e682d7aaf98f183da072b3cc9cbe1cee0"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/04-sky-edit-independent.png",
+      "width": 841,
+      "height": 1870,
+      "ratio": 2.224,
+      "sha256": "e8303f4a9e76addb473cec84135a58955f1ef31442cf5041ffd3e4dabf240095"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/05-evening-ordinary-details.png",
+      "width": 841,
+      "height": 1870,
+      "ratio": 2.224,
+      "sha256": "85116c5d763056e9bdbe22a521b3b992d55ee0d59319666d352454fd859991c8"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/06-evening-overdue-details.png",
+      "width": 852,
+      "height": 1846,
+      "ratio": 2.167,
+      "sha256": "d4f25780cc99de234ed7c91f2ec2dd2bdf3dc471112b91f65ba997febfd32004"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/07-evening-create-keyboard.png",
+      "width": 841,
+      "height": 1870,
+      "ratio": 2.224,
+      "sha256": "aeb646f2923c62e6dce055d8764ea83bec225e9237c9c11142da5071f5285c0b"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/08-evening-edit-independent.png",
+      "width": 837,
+      "height": 1880,
+      "ratio": 2.246,
+      "sha256": "77c787f571321ca2f2c290916b778c05f749052d62ff4f1ae476ad55fb128b76"
+    }
+  ],
+  "documentationIdentities": [
+    {
+      "file": "remilo-r5-sky-evening-details-editor/manifest.json",
+      "sha256": "74ed7d17da0f9ef0943b98c0dbb4dbe5de30a216dc74eb6df68d5238a9dce1c2"
+    },
+    {
+      "file": "remilo-r5-sky-evening-details-editor/review-notes.json",
+      "sha256": "88eabbb19c4424c1156eead3fbd1ea4f3486c215be47e0c4fba0974fa3d4ee00"
+    }
+  ]
+}

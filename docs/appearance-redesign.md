@@ -2,6 +2,8 @@
 
 **Current direction, 7 October 2026:** read
 [the approved R3/R4 template and corrections](design/approved-ui-r3-r4.md) first.
+A20 adds the approved R5 Sky/Evening Details/Editor variants and their generation
+discrepancy corrections; use the combined twelve-screen gallery in that contract.
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System
 brightness apply across app pages and the native alarm experience; Android still
