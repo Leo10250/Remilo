@@ -136,10 +136,26 @@ existing style-brief and rendered-screen gates. See the
 [proposed brief](../../design/art-direction.md). That instruction does not authorize
 P02 or accept a design artifact; the preceding documentation history remains intact.
 
-The latest A11 [critical correction](../../design/references/p01-owner-correction-2026-10-06.md)
+The A11 [critical correction](../../design/references/p01-owner-correction-2026-10-06.md)
 requests specification-only refinement and an additional artwork-only gate. The
 [r2 UI language](../../design/ui-composition.md), [art brief](../../design/art-direction.md)
 and [pattern evaluation](../../design/p01-pattern-evaluation.md) guide later milestones
 once accepted. Editor/settings/notifications are specified, not implemented under P01.
 Recommend a bounded editor study at P06 intake; moving it into P01 needs explicit scope
 approval. No P01–P12 responsibilities or hard/integration dependencies are reassigned.
+
+A12 [accepts bounded r2 visual direction](../../design/p01-style-r2-acceptance.json) and
+authorizes two Meadow/two Sunrise standalone artwork candidates. The owner must approve
+selected source hashes before actual RN/Compose integration; exact tokens, detailed UX,
+final layouts and completed prototypes are excluded from this acceptance. Original
+references remain the primary quality targets. No P02 or production changes are authorized.
+
+A14 [accepts S1/M1 source artwork](../../design/p01-artwork-r1-acceptance.json) for
+the two non-shipping review prototypes. [P01-render-r1](../../design/p01-render-review-r1.html)
+and its [host evidence](../../evidence/2026-10-06-p01-prototypes.md) are the concrete
+rendered checkpoint; acceptance, completed handoff and P02 authorization remain separate.
+
+A15 [accepts the identified P01-render-r1 compositions](../../design/p01-render-r1-acceptance.json).
+The [P01 handoff](../../handoffs/redesign-p01.md) supplies the bounded accepted
+contract for later plans. P02 requires separate execution authorization; physical
+acceptance remains part of the existing consolidated device/P12 gates.

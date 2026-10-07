@@ -14,8 +14,13 @@ physical gates stay pending and no broader beta release is declared verified.
 The owner-specified [appearance/workflow redesign](appearance-redesign.md) precedes
 optional integrations. Its [P01-P12 plans](plans/redesign/README.md) separate review
 fixtures from production changes; existing scheduling/privacy contracts remain fixed.
-The 6 October instruction authorizes P01 execution (A10); the latest correction (A11)
-requires specification-only refinement now. P01 establishes complementary illustration
+The 6 October instruction authorizes P01 execution (A10); A11 refines the specification
+and adds artwork-only review. A12 accepts bounded r2 visual direction and authorizes
+two Meadow/two Sunrise standalone candidates. A14 accepts S1/M1 for the two review
+prototypes. A15 accepts the [actual P01 renders](design/p01-render-r1-acceptance.json);
+the [handoff](handoffs/redesign-p01.md) carries their bounded composition contract.
+Final production layouts/tokens/UX and other milestones require separate approvals.
+P01 establishes complementary illustration
 and whole-UI language: specification approval, then artwork-only style approval before
 integration, then accepted actual Agenda/Water plants renders before completion or theme
 expansion. Approval records and execution authorization remain separate.

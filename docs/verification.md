@@ -73,7 +73,15 @@ pending work; earlier deployment evidence retains its historical scope.
 ### Appearance design review
 
 The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
-authorizes bounded P01 through A10; A11 requires specification refinement now.
+authorizes bounded P01 through A10; A11 adds the artwork gate. A12 accepts r2 visual
+direction and four-candidate exploration; A14 accepts S1/M1 for actual review integration.
+The [P01-render-r1 evidence](evidence/2026-10-06-p01-prototypes.md) identifies the
+synthetic renderers, complete matrix, pixel measurements and remaining device limits.
+The [subsequent A15 acceptance](design/p01-render-r1-acceptance.json) accepts the
+two P01 compositions; [the handoff](handoffs/redesign-p01.md) retains pending
+physical gates. It does not convert synthetic host checks into device verification.
+Artwork approval precedes integration;
+standalone source/alpha checks do not prove actual UI accessibility or alarm reliability.
 P01 audits the whole UI, obtains complementary specification approval, then artwork-only
 approval before integration, and requires actual representative Agenda/full-Meadow Water plants alarm renders,
 side-by-side original/current/corrected comparisons, composited accessibility checks

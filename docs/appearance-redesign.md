@@ -5,8 +5,10 @@ single redesign product vision/requirements source, not an implementation report
 The [twelve-plan index](plans/redesign/README.md) owns execution boundaries;
 task state is recorded only in [backlog.md](backlog.md). Physical acceptance stays
 consolidated in [device-acceptance.md](device-acceptance.md). The latest owner
-instruction A11 requests P01 specification refinement only, following A10 execution
-authorization. Specification, artwork-only style and actual-render approvals are separate.
+instruction A15 accepts the two non-shipping P01 rendered compositions, following
+A14's S1/M1 acceptance, A12's bounded r2 direction, A11 refinement and A10 execution.
+The [P01 handoff](handoffs/redesign-p01.md) binds the accepted contract and evidence.
+Exact production tokens, detailed UX and final production layouts remain open.
 Other milestones require their own authorization.
 See [approval records](design/approvals.md).
 
@@ -22,17 +24,19 @@ Environmental artwork must be broad, layered and integrated into screen regions,
 in a consistent soft cartoon/editorial style. Restrained daily artwork means calm
 hierarchy and readable negative space, not an almost invisible footer. The isolated
 glossy sprig is not the approved illustration strategy. The supplied references
-are [preserved here](design/references/README.md); final compositions and values
-remain unapproved.
+are [preserved here](design/references/README.md). A15 accepts the two P01
+representative compositions; broader production compositions/values remain open.
 
 The first gate is now [P01](plans/redesign/p01-art-direction.md): audit
 reference/current output, define an explicit style contract, and compare original,
 current and corrected representative Agenda and Water plants alarm renders.
 Agenda follows the time-of-day atmosphere. A single Water plants alarm uses a
 cohesive Meadow environment; its initial canvas freezes for the session even if
-other members join or leave. This product decision is approved, not its artwork.
-The owner must explicitly approve both actual rendered compositions and the style
-contract before more themes or production foundations expand.
+other members join or leave. S1/M1 source artwork is accepted for P01 review integration;
+the [actual rendered revision](design/p01-render-review-r1.html) is separately
+accepted by [A15](design/p01-render-r1-acceptance.json). A12/A14/A15 satisfy the
+P01 design checkpoints. More themes and production foundations require their own
+milestone authorization and approvals.
 
 The [owner's critical correction](design/references/p01-owner-correction-2026-10-06.md)
 clarifies that the reference direction covers the whole UI: cards, type/spacing, headers,

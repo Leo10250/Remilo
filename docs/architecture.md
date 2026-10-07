@@ -10,8 +10,11 @@ engine/storage/audio acquisition. Production AlarmActivity retains its lifecycle
 observation and actions, delegating the unchanged default rendering to
 AlarmControlsScreen. Review-only color/art slots default empty/identity.
 
-These are preserved review boundaries, not accepted art or a production appearance
-system. The [P01-P12 plans](plans/redesign/README.md) supersede the provisional broad
+These are preserved review boundaries. The [P01 handoff](handoffs/redesign-p01.md)
+records A15's accepted Sunrise/Meadow representatives; no production appearance
+system is introduced. P01's optional internal single-member presentation slot
+passes actual information/actions/feedback blocks to debug composition, with a
+null production default and unchanged callbacks. The [P01-P12 plans](plans/redesign/README.md) supersede the provisional broad
 comparison sequence. P01 first establishes approved environmental compositions;
 P04 owns the durable cosmetic/settings/migration contract, P08 native presentation,
 P09/P10 automatic resolution and P11 stable activity/alias integration. P04 is split
