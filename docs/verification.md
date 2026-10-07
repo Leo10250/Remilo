@@ -91,6 +91,16 @@ the initial viewport is valid; hiding a focused input behind footer/IME is not.
 Host fixtures do not establish these physical observations; include them in the
 existing consolidated owner run, with [E6](device-acceptance.md#e-data-and-accessibility).
 
+A22's [seven R6 templates and corrections](design/remilo-r6-alarm-postpone/gallery.html)
+are visual evidence only. Verify measured 64 dp single/Stop all and 56 dp member
+controls, reserved scrolling/footer space, neutral glyphs, A23 softer shared Dark
+surfaces, and all four atmospheres in both appearances during P07/P08 implementation.
+Direct Boot must show generic content with bundled themed presentation from a
+reviewed minimal safe descriptor, never CE reads, category/content mirrors or
+React startup. Missing/invalid safe state and asset failures must retain native
+actions without delaying audio. Exact descriptor/default contracts and real
+pre-first-unlock behavior remain pending technical/device evidence, not image proof.
+
 The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
 authorizes bounded P01 through A10; A11 adds the artwork gate. A12 accepts r2 visual
 direction and four-candidate exploration; A14 accepts S1/M1 for actual review integration.

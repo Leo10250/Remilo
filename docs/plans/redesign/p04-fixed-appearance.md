@@ -139,8 +139,11 @@ evidence and approval records. Each unit produces `docs/handoffs/redesign-p04a.m
 - Read formats 1/2/3 and write/read4; retain existing whole-family conflicts, retry
   mappings, one-off Trash exclusion and recurring deletion exclusions. No cache,
   settings, active session or launcher transfer. Unknown identifiers are retained.
-- Locked/unavailable credential storage and missing assets give generic usable
-  fallback; no synchronous credential/classifier work on audio startup.
+- Before first unlock, generic content uses the global theme through a reviewed
+  minimal non-private native appearance source (A22). Refine its mirror/update/
+  compatibility contract with P08 without changing operational schema here.
+  Missing assets retain usable emergency controls; no synchronous credential/
+  classifier work on audio startup. See [R6](../../design/r6-alarm-postpone-specification.md).
 - P04B remains internal/test-only until P04C's portability gate passes. P04D requires
   that accepted gate before exposing choices. Unit acceptance does not imply that
   all P04 or its later P06/P07 route integrations are complete.

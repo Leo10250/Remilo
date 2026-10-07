@@ -1,0 +1,208 @@
+"use strict";
+const screens = [
+  {
+    "id": "R6-01",
+    "file": "01-single-alarm-sky-light.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "68FB8DD1832F7FFA12CB84D4886241D430D9815E8BFDF284B0D5C77E13DFB048",
+    "effectiveHeightAt360": 800.5,
+    "title": "Single native alarm · Sky / Light",
+    "intent": "One unlocked native alarm with the global Sky atmosphere, explicit delivery time and independent Event/Due information.",
+    "review": [
+      "Stop silences this occurrence without completing the reminder. Snooze is the quick 10-minute native action.",
+      "The single-alarm footer uses stacked urgent controls; no app navigation, edit menu, Done action or custom Postpone form."
+    ],
+    "discrepancies": [
+      "The raster shows a continuous pale reading area and separate white timing tiles. Build the specified opaque reading container with consistent 16 dp corners; do not infer a new nested-card hierarchy from the bitmap.",
+      "The enlarged buttons still approximate, rather than guarantee, the specified 64 dp height and 12 dp gap. Enforce measured layout values in the native component.",
+      "Wordmark and scenic detail remain illustrative; the owner’s later abstraction pass is still deferred."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  },
+  {
+    "id": "R6-02",
+    "file": "02-multiple-alarms-night-dark.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "C886415D46ED98DF33BAF91CF7E19AD4AEA77299505FDDA138F715F42F56E21D",
+    "effectiveHeightAt360": 800.5,
+    "title": "Multiple native alarms · Night / Dark",
+    "intent": "Three simultaneously ringing alarms in Night / Dark, with member-specific Stop/Snooze and a separate Stop all footer.",
+    "review": [
+      "The first two members have independent actions. The third long title remains readable while its timing/actions are below the scroll viewport.",
+      "Stop all leaves every reminder unfinished. The global atmosphere stays stable for the active session."
+    ],
+    "discrepancies": [
+      "The third card looks like a short title-only card in this static viewport. Its complete Alarm time/Event/Due/Stop/Snooze content must exist in the scrolling list; never implement the cropped bitmap as a reduced card.",
+      "Passive metadata glyphs and labels retain a slight periwinkle cast. Use the neutral onSurfaceVariant token; reserve primary for actual actions and selection.",
+      "The scene is somewhat taller and action sizes somewhat smaller than the written minimums. Enforce the 96 dp opening budget, 56 dp member actions and 64 dp Stop all; allow fewer visible cards instead of compressing controls.",
+      "Use the approved theme's softer elevated Dark surfaces, as clarified by A23; avoid substituting a harsher near-black canvas. Layout and color roles come from shared components, not an alarm-specific palette."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  },
+  {
+    "id": "R6-03",
+    "file": "03-refresh-failure-evening-dark.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "8F67F429F2B57DA189D751345C1840B0F4BD51CCED849512EB11FD8E28EBE6D7",
+    "effectiveHeightAt360": 800.5,
+    "title": "Refresh failure · Evening / Dark",
+    "intent": "A retained three-member Evening / Dark alarm view whose controls refresh failed, with the known actions still available.",
+    "review": [
+      "Refresh controls refreshes the projection; it does not reissue a previous Stop or Snooze command.",
+      "The third member continues below the scroll edge. The error never replaces the known member controls or Stop all."
+    ],
+    "discrepancies": [
+      "The earlier malformed segmented-looking Refresh control was repaired; the final image shows one normal outlined action.",
+      "Refresh and Stop all still look shorter than their specified 48 dp and 64 dp minimums. Enforce those sizes, even if the second/third cards move further below the fold.",
+      "The third overdue line is clipped at the viewport edge. It must be readable after scrolling, and the fixed footer must reserve layout space rather than overlay card actions.",
+      "Use neutral metadata tokens and the shared Evening palette; do not reproduce incidental saturation or spacing differences between this image and the approved references.",
+      "Use the approved theme's softer elevated Dark surfaces, as clarified by A23; avoid substituting a harsher near-black canvas. Layout and color roles come from shared components, not an alarm-specific palette."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  },
+  {
+    "id": "R6-05",
+    "file": "05-postpone-shortcuts-sky-light.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "D65E31315D87940C90B014F297671DDFAD431479079C51F8A005AA6637FBAE92",
+    "effectiveHeightAt360": 800.5,
+    "title": "Postpone shortcuts · Sky / Light",
+    "intent": "A not-yet-applied 30-minute Postpone selection for an overdue reminder in Sky / Light.",
+    "review": [
+      "At the held 9:30 PM clock, the captured selection resolves to Today, Wed, 7 Oct at 10:00 PM.",
+      "The due time stays today at 5:00 PM, and the reminder stays Overdue · Not done. Tomorrow shortcuts remain 10:00 AM, 2:00 PM and 5:00 PM."
+    ],
+    "discrepancies": [
+      "The underlying toolbar varies from the approved details reference, and the dim scrim is too weak. Reuse the existing Reminder details toolbar and apply the standard modal scrim; no new toolbar design is implied.",
+      "The Save-equivalent Postpone footer must be pinned above safe-area/IME insets and reserve scroll-body space; its behavior cannot be proven by a raster.",
+      "Light-mode amber overdue text and secondary gray text need measured contrast on their actual surfaces. Use semantic tokens with text/icon contrast, not sampled image colors.",
+      "The selected 30 min control must expose selected state to accessibility services; the check and tint shown here are only the visual portion."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  },
+  {
+    "id": "R6-06",
+    "file": "06-postpone-custom-evening-dark.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "F6ABD7724CD4E8B3776A7B5CB11372472271CDEB7EDCDAE72663B0ED5E226297",
+    "effectiveHeightAt360": 800.5,
+    "title": "Custom Postpone · Evening / Dark",
+    "intent": "Custom Postpone for Tomorrow, Thu, 8 Oct at 9:00 AM in Evening / Dark, before submission.",
+    "review": [
+      "Date and Time are independent editable picker fields within the selected custom group.",
+      "9:00 AM is a deliberate custom time, not a change to the 10:00 AM tomorrow shortcut default. Event/Due stay unchanged."
+    ],
+    "discrepancies": [
+      "The underlying page incorrectly resembles a Remilo homepage toolbar with search. Use the approved Reminder details toolbar under the standard dim scrim.",
+      "Tomorrow shortcuts are not pictured in this scrolled custom view; they must still exist in the sheet, not be deleted from the flow.",
+      "The expanded custom grouping, input insets and footer geometry must use the same component as the invalid Sky example; exact radii/spacing remain approximate.",
+      "No keyboard/picker dialog is shown. Reuse the established focused-field visibility and pinned-footer contract when those controls open."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  },
+  {
+    "id": "R6-07",
+    "file": "07-postpone-past-time-sky-light.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "0913708AC71F3636EAAFCB759827D251AD313CF0153B45FAC3760D59666EB0A4",
+    "effectiveHeightAt360": 800.5,
+    "title": "Past-time validation · Sky / Light",
+    "intent": "An invalid same-day custom target, Today, Wed, 7 Oct at 8:00 PM, while the held clock is 9:30 PM.",
+    "review": [
+      "Choose a future time is explicit; the form does not silently move the selected target to tomorrow.",
+      "The confirm is disabled. The preview is labeled Selected time to avoid implying the rejected value became the actual next alert."
+    ],
+    "discrepancies": [
+      "The selected expanded custom group was aligned with the valid custom screen; its date/time row insets still differ slightly. Implement one shared component, with validation as a state.",
+      "The generator omits the underlying Reminder toolbar. That background should remain the approved Details screen beneath a standard scrim, rather than a bare scenic wallpaper.",
+      "Use a contrast-tested semantic error token and readable disabled label; raw bright red/gray samples are not implementation tokens.",
+      "Native validation must still reject expired targets at mutation time; this visual error is not a timing or scheduling test."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  },
+  {
+    "id": "R6-08",
+    "file": "08-postpone-saved-blocked-night-dark.png",
+    "width": 841,
+    "height": 1870,
+    "sha256": "5BCABB2FE7A08C7E58F08DF779E8459BD8E9095251C45BE974C05B9926725E89",
+    "effectiveHeightAt360": 800.5,
+    "title": "Saved, scheduling blocked · Night / Dark",
+    "intent": "The Postpone change is acknowledged and saved, but scheduling the requested Night / Dark alert is blocked.",
+    "review": [
+      "The retained target is Tomorrow, Thu, 8 Oct at 9:00 AM. The sheet truthfully says Saved; alert blocked.",
+      "Check permissions is a recovery action. Return to reminder replaces the submit footer; Close is allowed because the acknowledgment is known."
+    ],
+    "discrepancies": [
+      "The underlying Reminder toolbar is omitted and the scrim is weak. Reuse the approved Details backdrop and modal treatment rather than treating this as a standalone scenic result page.",
+      "Keep Next alert paired with the blocked status so it is understood as the saved requested target, not a promise of delivery. Do not add a Scheduled chip or a second ready Postpone submit.",
+      "Check permissions and Return to reminder still need measured 48 dp and 56 dp minimums. The large blank area is flexible layout space, not a fixed spacer requirement.",
+      "This is a known acknowledged-blocked result, not an uncertain operation retry. The separate uncertain-ack protocol remains defined by the specification."
+    ],
+    "status": "Approved with documented corrections (A22)"
+  }
+];
+const byId = id => document.getElementById(id);
+let selected = 0;
+const select = byId("screen-select");
+for (const screen of screens) {
+  const option = document.createElement("option");
+  option.value = screen.file.replace(/\.png$/, "");
+  option.textContent = screen.id + " · " + screen.title;
+  select.appendChild(option);
+}
+function renderList(id, lines) {
+  const list = byId(id);
+  list.replaceChildren();
+  for (const line of lines) {
+    const item = document.createElement("li");
+    item.textContent = line;
+    list.appendChild(item);
+  }
+}
+function render(index, updateHash = true) {
+  selected = Math.max(0, Math.min(screens.length - 1, index));
+  const screen = screens[selected];
+  const slug = screen.file.replace(/\.png$/, "");
+  select.value = slug;
+  const img = byId("screen-image");
+  img.src = screen.file;
+  img.alt = screen.title + ". " + screen.intent;
+  img.width = screen.width;
+  img.height = screen.height;
+  byId("original-link").href = screen.file;
+  byId("screen-caption").textContent = screen.width + " × " + screen.height + " px · " + screen.effectiveHeightAt360 + " px high at 360 px width.";
+  byId("screen-id").textContent = screen.id + " · " + (screen.status || "CANDIDATE");
+  byId("screen-title").textContent = screen.title;
+  byId("intent").textContent = screen.intent;
+  byId("position").textContent = (selected + 1) + " / " + screens.length;
+  byId("previous").disabled = selected === 0;
+  byId("next").disabled = selected === screens.length - 1;
+  renderList("review-list", screen.review);
+  renderList("discrepancy-list", screen.discrepancies);
+  if (updateHash && location.hash !== "#" + slug) history.replaceState(null, "", "#" + slug);
+}
+function fromHash() {
+  const slug = decodeURIComponent(location.hash.slice(1));
+  const index = screens.findIndex(screen => screen.file.replace(/\.png$/, "") === slug);
+  render(index < 0 ? 0 : index, false);
+}
+select.addEventListener("change", () => render(screens.findIndex(screen => screen.file.replace(/\.png$/, "") === select.value)));
+byId("scale-select").addEventListener("change", event => {
+  document.documentElement.style.setProperty("--preview-width", event.target.value + "px");
+});
+byId("previous").addEventListener("click", () => render(selected - 1));
+byId("next").addEventListener("click", () => render(selected + 1));
+window.addEventListener("hashchange", fromHash);
+window.addEventListener("keydown", event => {
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName)) return;
+  if (event.key === "ArrowLeft") render(selected - 1);
+  if (event.key === "ArrowRight") render(selected + 1);
+});
+fromHash();

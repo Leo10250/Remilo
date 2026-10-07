@@ -1,16 +1,20 @@
-# R6 — Native alarm and Postpone design draft
+# R6 — Native alarm and Postpone visual specification
 
-Revision 1, 7 October 2026. The owner authorized this refinement after approving
-R3/R4/R5. This is a concrete proposal for review, not acceptance of new screenshots
-or authorization to implement P08. The [approval ledger](approvals.md) records
-the refinement request as A21. Task status remains in [backlog.md](../backlog.md).
+Revision 2, 7 October 2026. A22 accepts seven R6 visual templates and rejects the
+plain R6-04 alarm. A23 requires softer Dark surfaces matching the existing themes.
+[Acceptance and exact identities](approved-ui-r6-acceptance.json) and
+[the annotated approved gallery](remilo-r6-alarm-postpone/gallery.html) preserve
+that scope. Themed R6-04 replacement pixels await review. Exact native
+capture/storage implementation and actual rendered acceptance remain separate;
+this is not authorization to execute P07/P08. Task status remains in
+[backlog.md](../backlog.md); decisions are in [the ledger](approvals.md).
 
 Read [the accepted visual contract](approved-ui-r3-r4.md) first. It owns atmosphere,
 color roles, shared component geometry and keyboard requirements. This draft
 extends those rules to alarm controls and Postpone; it does not replace the
 [product contract](../product.md) or native scheduling/action authority.
 
-## Scope and decisions for review
+## Accepted visual direction and implementation boundaries
 
 1. A single native alarm receives a larger scenic opening than Details/Editor,
    with a quiet information surface and two large, immediately reachable actions.
@@ -25,7 +29,8 @@ extends those rules to alarm controls and Postpone; it does not replace the
 5. Genuine warnings/errors receive labeled semantic roles. Alarm-mode glyphs,
    calendar/time glyphs and ordinary navigation stay neutral.
 
-These are proposed presentation choices. Existing Stop/Snooze/Postpone semantics,
+These presentation templates are accepted with the documented corrections and
+R6-04 exception. Existing Stop/Snooze/Postpone semantics,
 privacy, native ownership, stale-action rejection and five-minute audio deadline
 are preserved. More abstract final artwork remains a later review.
 
@@ -43,17 +48,43 @@ as well as the existing audio deadline and first sound. A new session resolves
 again. Exact capture owner, recreation strategy and compatibility with P04A/P09
 must be reviewed before implementation; no new persistence schema is chosen here.
 
-Before first unlock, use a generic Classic/system presentation with operational
-alarm time and native actions only. No reminder title, notes, list, category or
-credential-derived artwork/preferences are read into this fallback. If the
-session was first presented generically, retain that canvas while newly available
-private member content refreshes under existing unlock rules. The runtime must
-distinguish credential availability from lock-screen notification disclosure;
-being past first unlock does not make private notification content public.
+Before first unlock, keep generic Reminder text, operational alarm time and native
+actions, but use the same global themed visual family. Generic content does not
+require a plain canvas. No reminder title, notes, list, category, classifier result
+or content-derived artwork may enter this presentation.
+
+**Native implementation proposal:** mirror only a minimal allowlisted non-private
+global appearance descriptor while credential storage is available; resolve bundled
+scene/token assets without React, network or credential reads during Direct Boot.
+The descriptor may identify the selected atmosphere and brightness policy, not
+reminders, categories, user image paths or arbitrary preference/content blobs.
+Exact fields, update ordering, compatibility, migration and automatic-resolution
+behavior require P04A/P08 review before implementation. Do not copy the credential
+database or silently assume a cached scene follows an unimplemented time policy.
+[Android Direct Boot guidance](https://developer.android.com/privacy-and-security/direct-boot)
+allows required data in device-protected storage while keeping private data
+credential-protected; this appearance-only mirror is our proposed application of it.
+
+If no valid safe appearance record exists, use the eventual reviewed bundled
+themed default without changing the saved choice. Selection of that default is
+still open. Asset/token failure must retain usable native controls; a plain
+emergency rendering is a failure path, not the normal approved pre-unlock design.
+Capture the eligible scene once per session and retain it across unlock/content
+refresh. The runtime must distinguish credential availability from lock-screen
+notification disclosure; post-first-unlock availability does not make private
+notification content public.
 
 Sky remains a daytime cloud/lake scene in Dark; Evening remains a sunset with a
 sun. These previews do not decide automatic time boundaries, migration or defaults.
-Appearance failure falls back to usable generic controls and never blocks native
+Use the existing softer elevated Dark surface roles: Sunrise charcoal, Sky slate,
+Evening plum and Night navy. Do not substitute a harsher near-black alarm palette.
+Scene assets and role values change with theme; component anatomy, icon roles,
+typography, information hierarchy and actions remain shared. Single, multiple,
+loading, refresh-error and privacy-safe native alarm states support all four
+atmospheres in both Light and Dark, without needing a separate generated image of
+every combination.
+
+Appearance failure falls back to usable privacy-safe controls and never blocks native
 foreground promotion, audio startup or Stop/Snooze.
 
 ## A. Single native alarm
@@ -243,20 +274,21 @@ long titles, narrow/landscape layout, TalkBack and keyboard/inset behavior.
 and [Compose accessibility defaults](https://developer.android.com/develop/ui/compose/accessibility/api-defaults)
 support contrast and minimum target practices. Raster approval does not verify them.
 
-## H. Proposed first image review
+## H. Reviewed images and requested replacement
 
 Use separate full portrait images, one readable screen each, initially approximately
-360 x 800 dp proportions. These eight representatives test different structures;
-they are not an eight-theme marketing board. Render additional atmosphere/brightness
-variants only after the action/layout family is understood. All components must
-ultimately support all four global atmospheres in Light and Dark.
+360 x 800 dp proportions. A22 accepts R6-01/02/03/05/06/07/08 with discrepancy
+corrections and rejects R6-04's plain visual treatment. Four Dark replacement
+candidates demonstrate Sunrise/Sky/Evening/Night using the same privacy-safe layout
+and softer surfaces; their pixels await owner review. Every component must support
+the four global atmospheres in Light and Dark.
 
 | ID | Screen | Fixture and treatment |
 |---|---|---|
 | R6-01 | Single native alarm — Sky Light | Water plants; alarm 10:00 AM; Event 10:00–10:15 AM, linked Due; known Active state; Stop and Snooze 10 min. Larger scenic opening with opaque information/actions. |
 | R6-02 | Multiple native alarms — Night Dark | Clock 9 PM; Take medicine, Call dentist and long proposal title all alerting. Call dentist Event 9:30–9:45 PM/Due 10 PM independent of alert 9 PM; proposal Event 4–4:30 PM/Due 5 PM overdue. Member actions plus Stop all; no countdown or per-member environments. |
 | R6-03 | Multiple alarms with refresh failure — Evening Dark | Same known members, long title and retained actions; inline refresh error and Refresh controls; partial lower card scroll is acceptable, covered actions are not. |
-| R6-04 | Generic alarm before first unlock — neutral Dark | Generic Reminder/Alarm ringing, operational alarm time, Stop/Snooze 10 min. No category/private title/global credential-derived scene. |
+| R6-04 | Privacy-safe themed alarm before first unlock — four atmospheres | Plain submission rejected. Replacement uses generic Reminder/Alarm ringing, operational alarm time and Stop/Snooze 10 min, with Sunrise/Sky/Evening/Night bundled scenery and shared tokens from a safe appearance source; no category/private content/credential read. Four Dark pixels remain candidates; Light is required component support. |
 | R6-05 | Postpone shortcuts — Sky Light | Fixed review clock 9:30 PM, unfinished proposal Event 4–4:30 PM/Due 5 PM, stopped alert. Select 30 min: preview Today, Wed 7 Oct, 10 PM. Show actual Tomorrow 10 AM/2 PM/5 PM preferences and Custom option. |
 | R6-06 | Custom Postpone — Evening Dark | Same reminder/clock; custom Tomorrow, Thu 8 Oct, 9 AM selected. Event/Due still overdue; this 9 AM is a custom choice, not the default morning shortcut. |
 | R6-07 | Invalid custom Postpone — Sky Light | Same 9:30 PM clock; Today 8 PM selected, future-time validation visible and confirmation disabled. Preserve draft/underlying Overdue rather than hiding difficult content. |
@@ -280,7 +312,8 @@ canonical roles; annotate any generation drift rather than treating it as policy
   app Postpone retry. Appearance/capture changes need reviewed lifecycle contracts.
 - [SessionSnapshot](../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/AlarmEngine.kt)
   currently carries operational records/title pairs and brightness, without the
-  proposed global atmosphere descriptor or full Event/Due/category projection.
+  proposed global atmosphere descriptor or full Event/Due/category projection,
+  including the proposed minimal non-private Direct Boot appearance mirror.
   Add any required private projection through authorized native boundaries after
   unlock, not JS, device-protected storage or inference from `targetMs`.
 - [AlarmNotifications](../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmNotifications.kt)
@@ -295,11 +328,13 @@ canonical roles; annotate any generation drift rather than treating it as policy
   the uncertain result context; the proposed uncertain-state dismissal guard and
   acknowledged Blocked/Pending result footer require explicit refinement too.
 
-No app/native code, storage migration, artwork generation, build or installation
-is performed by this draft. P07 owns the app Postpone flow; P08 owns native controls
+R6 images have been generated; seven are accepted with corrections, and the
+plain eighth is rejected. No app/native code, storage migration, build or installation
+is performed by this visual review. P07 owns the app Postpone flow; P08 owns native controls
 and notifications, with P02/P04A/P09 appearance integration. This cross-screen
 refinement does not move those responsibilities or change backlog status.
-Before implementation, approve the proposed layout/capture/fallback contract and
-record actual component renders separately from synthetic image review. Native
+Before implementation, refine and review the exact native capture/storage/failure
+contract; preserve the already accepted visual layout. Record actual component
+renders separately from synthetic image review. Native
 action/race/privacy regression evidence and signed phone observations remain in
 the existing consolidated verification process.

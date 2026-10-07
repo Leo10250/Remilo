@@ -56,6 +56,14 @@ There is no actionless placeholder. Subsequent member refreshes update the same
 notification; actions retain the delivery generation from their snapshot and stale
 ones are rejected. Before unlock, the snapshot contains generic text only.
 
+A22's [R6 visual correction](design/r6-alarm-postpone-specification.md) requires
+global theming even for that generic content. A proposed minimal allowlisted
+non-private appearance mirror can identify bundled atmosphere/brightness without
+reading credential storage or copying content during Direct Boot. Exact storage,
+update ordering, migration and automatic resolution need P04A/P08 review; none is
+implemented or versioned by this documentation change. Titles, notes, categories,
+list identities, credentials and content-derived appearance stay excluded from DP.
+
 Native commands return field/error metadata for rejected input; JavaScript form
 validation is presentation assistance. Dates and generations must be finite
 integers in their supported range. A rejected command cannot leave a partial

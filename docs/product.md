@@ -16,6 +16,13 @@ icon roles and keyboard-safe editing. Generated pixels are not exact production
 tokens or accessibility evidence. Four preview atmospheres do not establish new
 automatic period boundaries, migration rules or fresh-install defaults.
 
+A22 [accepts seven R6 alarm/Postpone templates](design/approved-ui-r6-acceptance.json)
+and rejects the plain R6-04. The four global atmospheres apply to every native
+full-screen alarm state, including privacy-safe text before first unlock; A23
+requires the existing softer Dark surfaces. [The R6 specification](design/r6-alarm-postpone-specification.md)
+separates this visual requirement from proposed native appearance storage/capture.
+Replacement pixels and actual implementation verification remain separate.
+
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks
 for one owner-operated acceptance run. Automated checks continue; unobserved
@@ -76,7 +83,8 @@ expansion. Approval records and execution authorization remain separate.
 - Normal callbacks up to five minutes late may ring; later ones become Missed.
   Reboot, upgrade, restore and recovery never replay past alerts or interrupted sound.
 - Before first unlock: generic text, native Stop/quick Snooze, protected scheduling
-  data only. Private reminder content and credentials remain credential-protected.
+  data only, plus reviewed minimal non-private appearance data for bundled global
+  theming. Private reminder content and credentials remain credential-protected.
 - Unlocked: actionable heads-up/ongoing notification where permitted. Locked:
   native alarm screen where permitted. No overlay permission or forced takeover.
 - Permissions/capabilities and Test Alarm are visible; scheduling is not proof of audibility.

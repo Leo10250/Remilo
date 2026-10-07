@@ -287,8 +287,11 @@ semantics, focus/error/retry and feedback timing; no new action lifecycle.
 
 Unknown IDs/invalid token sets resolve Classic at the existing brightness.
 Failure of requested scenery resolves solid Classic; an intentionally undecorated
-surface is not failure. Before unlock retain generic Classic/system without
-content-derived art. Emergency baseline controls survive catalog failure.
+surface is not failure. A22 supersedes the normal plain pre-unlock presentation:
+generic reminder content still uses bundled global-theme art/tokens through the
+reviewed native-safe appearance source in [R6](../../design/r6-alarm-postpone-specification.md).
+A23 requires the existing softer elevated Dark surfaces. No content-derived
+appearance enters DP. Emergency baseline controls survive catalog failure.
 Fallbacks never mutate requested choices or preferences/content/scheduling.
 
 ## 19. Concrete render verification and handoff

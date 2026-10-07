@@ -17,11 +17,16 @@ task-specific environments/manual chooser direction below. Historical submitted
 bundles, acceptance hashes and handoffs remain unchanged; previews do not establish
 production tokens, implementation completion or accessibility/device acceptance.
 
-The next refinement is the [R6 native alarm/Postpone draft](r6-alarm-postpone-specification.md),
-with an [eight-screen fixture brief](r6-alarm-postpone-fixtures.json). A21 authorizes
-drafting this workflow family; the proposal and future images still need review.
-P07 owns app Postpone and P08 owns native controls/notifications. See
-[the attributed refinement intake](r6-alarm-postpone-intake.json).
+The [R6 native alarm/Postpone specification](r6-alarm-postpone-specification.md)
+now has [seven accepted templates with annotations](remilo-r6-alarm-postpone/gallery.html).
+[A22](approved-ui-r6-acceptance.json) accepts R6-01/02/03/05/06/07/08 and rejects
+the plain R6-04. All native alarm states use the four global atmospheres, including
+a privacy-safe themed presentation before first unlock. A23 requires softer Dark
+surfaces matching the existing themes. Four replacement Dark pixels await review;
+the [updated fixture brief](r6-alarm-postpone-fixtures.json) preserves the state
+identities. P07 owns Postpone and P08 owns native controls/notifications. Technical
+storage/capture decisions, implementation and actual rendered acceptance remain
+separate from this visual approval.
 
 ## Approval language
 

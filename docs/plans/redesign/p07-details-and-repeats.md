@@ -67,9 +67,12 @@ Inherit P01 isolated-screen composition rules and P02 catalog with
 Use actual data hierarchy, not a literal alarm reference layout for a detail page.
 The R4/R5 ordinary and overdue/postponed templates are the current visual references;
 apply their recorded corrections when building actual components. The
-[R6 alarm/Postpone draft](../../design/r6-alarm-postpone-specification.md) proposes
-the app Postpone sheet/validation/result flow for review under A21; it is not yet
-an accepted new render or P07 execution authorization.
+[R6 visual specification](../../design/r6-alarm-postpone-specification.md) and
+[A22 acceptance](../../design/approved-ui-r6-acceptance.json) accept the four app
+Postpone selection/validation/result templates alongside three native alarm
+templates. R6-05/06/07/08 are the four Postpone images;
+apply their per-image corrections and A23 shared softer Dark surfaces. This does
+not authorize P07 implementation or accept actual component renders.
 
 ## 8. Required design decisions
 

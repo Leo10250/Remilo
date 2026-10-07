@@ -1,7 +1,7 @@
 {
-  "revision": "R6-specification-r2",
+  "revision": "R6-specification-r1",
   "date": "2026-10-07",
-  "status": "Seven R6 templates accepted as A22; plain R6-04 rejected; four themed Dark replacement pixels await review under A22/A23",
+  "status": "Proposed image brief; no images generated or accepted",
   "authority": "r6-alarm-postpone-specification.md plus accepted approved-ui-r3-r4.md color/geometry/keyboard rules",
   "viewportDp": {
     "width": 360,
@@ -17,7 +17,7 @@
     "Opaque reading surfaces, neutral structural glyphs, theme-colored real actions/focus",
     "Do not shrink controls/text to show every row; lower cards/rows may scroll",
     "Held fixture clocks are not automatic switching policy",
-    "Pre-first-unlock reminder content is generic; global scenery/colors come only from a reviewed minimal non-private native-safe appearance source"
+    "Generic pre-unlock screen contains no private content or credential-derived scene"
   ],
   "multiMembers": [
     {
@@ -84,8 +84,7 @@
         "Stop",
         "Snooze · 10 min"
       ],
-      "helper": "Stop leaves the reminder unfinished.",
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "helper": "Stop leaves the reminder unfinished."
     },
     {
       "id": "R6-02",
@@ -100,8 +99,7 @@
         "Snooze · 10 min"
       ],
       "footerAction": "Stop all",
-      "helper": "Leaves all reminders unfinished.",
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "helper": "Leaves all reminders unfinished."
     },
     {
       "id": "R6-03",
@@ -114,14 +112,13 @@
       "error": "Could not refresh alarm controls.",
       "retry": "Refresh controls",
       "footerAction": "Stop all",
-      "note": "Keep each known member Stop/Snooze pair; error does not replace controls or reissue an action.",
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "note": "Keep each known member Stop/Snooze pair; error does not replace controls or reissue an action."
     },
     {
       "id": "R6-04",
-      "screen": "Privacy-safe themed native alarm before first unlock",
-      "atmosphere": "Selected global Sunrise/Sky/Evening/Night",
-      "appearance": "Dark review variants; Light also required",
+      "screen": "Generic native alarm before first unlock",
+      "atmosphere": "Generic Classic/system",
+      "appearance": "Dark",
       "clock": "10:00 AM",
       "title": "Reminder",
       "alertTime": "10:00 AM",
@@ -131,15 +128,7 @@
         "Snooze · 10 min"
       ],
       "helper": "Stop leaves the reminder unfinished.",
-      "privateContent": false,
-      "visualDecision": "Plain submission rejected; replacement pixel review pending",
-      "requestedReplacementVariants": [
-        "Sunrise Dark",
-        "Sky Dark",
-        "Evening Dark",
-        "Night Dark"
-      ],
-      "presentationSource": "Bundled scene/token catalog through proposed minimal allowlisted safe appearance descriptor; never private reminder content or synchronous CE reads"
+      "privateContent": false
     },
     {
       "id": "R6-05",
@@ -150,8 +139,7 @@
       "selected": "30 min",
       "nextAlert": "Today, Wed, 7 Oct at 10:00 PM",
       "confirm": "Postpone alert",
-      "confirmed": false,
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "confirmed": false
     },
     {
       "id": "R6-06",
@@ -164,8 +152,7 @@
       "time": "9:00 AM",
       "nextAlert": "Tomorrow, Thu, 8 Oct at 9:00 AM",
       "confirm": "Postpone alert",
-      "confirmed": false,
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "confirmed": false
     },
     {
       "id": "R6-07",
@@ -179,8 +166,7 @@
       "error": "Choose a future time.",
       "confirm": "Postpone alert",
       "confirmEnabled": false,
-      "confirmed": false,
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "confirmed": false
     },
     {
       "id": "R6-08",
@@ -194,29 +180,7 @@
       "footerAction": "Return to reminder",
       "confirmed": true,
       "schedulingState": "Blocked",
-      "placement": "Retained sheet feedback with acknowledged next target; not an uncertain retry, another ready submit or Scheduled chip.",
-      "visualDecision": "Accepted with documented generation corrections (A22)"
+      "placement": "Retained sheet feedback with acknowledged next target; not an uncertain retry, another ready submit or Scheduled chip."
     }
-  ],
-  "requiredNativeThemeSupport": {
-    "states": [
-      "Single",
-      "Multiple",
-      "Loading",
-      "Refresh failure",
-      "Privacy-safe before first unlock"
-    ],
-    "atmospheres": [
-      "Sunrise",
-      "Sky",
-      "Evening",
-      "Night"
-    ],
-    "appearances": [
-      "Light",
-      "Dark"
-    ],
-    "geometry": "Shared component anatomy; scene and color role values vary",
-    "darkSurface": "Existing softer elevated surfaces; no independently harsher near-black alarm palette"
-  }
+  ]
 }

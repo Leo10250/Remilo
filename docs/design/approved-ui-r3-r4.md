@@ -1,9 +1,9 @@
-# Approved Remilo UI direction and R4/R5 implementation corrections
+# Approved Remilo UI direction and R4/R5/R6 implementation corrections
 
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18/A19/A20 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A23 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -28,8 +28,9 @@ component work. Do not copy individual image pixels into unrelated components.
   [combined gallery](remilo-r4-details-editor/gallery.html) contains all twelve
   R4/R5 representatives. Approval is recorded separately as A20.
 - One global atmosphere, combined with independent System/Light/Dark appearance,
-  should apply across app pages, details/editor/settings and unlocked native alarm
-  presentation. Task-specific alarm environments and per-reminder appearance
+  should apply across app pages, details/editor/settings and all native full-screen
+  alarm states, including privacy-safe pre-first-unlock presentation. Task-specific
+  alarm environments and per-reminder appearance
   selection are deferred. Do not add a theme chooser to these forms.
 - Android owns notification layout, expansion and many colors. Use supported
   branding/accent/content treatment where possible; do not promise the illustrated
@@ -68,10 +69,27 @@ provenance and image hashes:
 
 These are synthetic raster previews, not actual RN/Compose render evidence.
 
-The [R6 alarm/Postpone draft](r6-alarm-postpone-specification.md) is the next
-workflow refinement under A21. It proposes native action layout and the app
-Postpone sheet while inheriting this accepted contract. It is awaiting review;
-it does not replace these accepted references or approve new rendered pixels.
+The [R6 visual specification](r6-alarm-postpone-specification.md) and
+[seven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
+direction to native alarms and app Postpone. [A22](approved-ui-r6-acceptance.json)
+accepts R6-01/02/03/05/06/07/08 with the documented corrections, while rejecting
+the plain R6-04. Generic reminder text before first unlock remains required;
+the visual canvas still uses the global theme through a reviewed non-private,
+native-safe appearance source. New R6-04 theme pixels remain candidates.
+
+A23 requires softer Dark surfaces matching the existing themes: charcoal,
+slate, plum and navy, rather than a harsher near-black alarm palette. The same
+scene assets and role tokens apply across pages. Single/multiple/loading/error/
+privacy-safe native alarm anatomy and action semantics stay shared while the
+global atmosphere changes. Components support all four atmospheres in Light and
+Dark; every variation need not receive its own synthetic preview.
+
+[R6 per-image corrections](remilo-r6-alarm-postpone/review-notes.json) resolve
+remaining raster differences, including smaller-looking urgent controls,
+incidental metadata tint, clipped scrolling cards and inconsistent modal
+backdrops. Enforce the R6 measured footer/target rules and this document's shared
+color roles instead of copying those differences. P07/P08 implementation,
+technical capture/storage decisions and actual component acceptance remain separate.
 
 ## Color roles shared by every screen
 

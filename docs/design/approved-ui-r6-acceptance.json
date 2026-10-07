@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-07",
+  "record": "A22",
+  "type": "partial-r6-visual-acceptance-with-themed-alarm-correction",
+  "owner": "Repository owner in this chat",
+  "statement": "I approve all these designs, with the exception of this one that I attached.",
+  "attributedScope": "Accept seven of the eight R6 alarm/Postpone visual templates. Reject the undecorated generic R6-04. All native full-screen alarm states must support the four global Sunrise/Sky/Evening/Night atmospheres with shared layout and independent brightness, including the privacy-safe before-first-unlock view.",
+  "acceptedIds": [
+    "R6-01",
+    "R6-02",
+    "R6-03",
+    "R6-05",
+    "R6-06",
+    "R6-07",
+    "R6-08"
+  ],
+  "rejectedIds": [
+    "R6-04"
+  ],
+  "contract": "approved-ui-r3-r4.md",
+  "specification": "r6-alarm-postpone-specification.md",
+  "gallery": "remilo-r6-alarm-postpone/gallery.html",
+  "reviewNotes": "remilo-r6-alarm-postpone/review-notes.json",
+  "conditions": [
+    "Apply documented neutral icon roles, shared theme surfaces/type/component geometry and measured footer/target/scroll rules rather than incidental raster differences.",
+    "Pre-first-unlock reminder text remains generic. Theme scenery/colors must use bundled content-independent assets and a reviewed native-safe appearance source, without private reminder data or credential-storage reads.",
+    "Support all four atmospheres in Light/Dark for single, multiple, loading and retained-error native alarm states; a full image matrix of every variation is not required by this approval."
+  ],
+  "limits": [
+    "Newly generated themed R6-04 replacement pixels have not been approved.",
+    "No final artwork/production-token or actual RN/Compose render acceptance.",
+    "No authorization to execute P04/P07/P08 production work, choose storage schema/migration/period defaults, install/distribute or change milestone status.",
+    "No accessibility, scheduling, Direct Boot or physical-device verification implied."
+  ],
+  "subsequentRefinement": {
+    "record": "A23",
+    "statement": "The black color you are using it too contrasty. Refer to the previous styles where a softer black is used. Make sure to match the color and style of the existing themes!",
+    "scope": "Use the existing atmosphere's softer charcoal/slate/plum/navy surface roles. Revise four new Dark replacement candidates; no independently redesigned alarm palette.",
+    "replacementPixelStatus": "Awaiting owner review"
+  },
+  "artifacts": [
+    {
+      "id": "R6-01",
+      "file": "remilo-r6-alarm-postpone/01-single-alarm-sky-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "68fb8dd1832f7ffa12cb84d4886241d430d9815e8bfdf284b0d5c77e13dfb048"
+    },
+    {
+      "id": "R6-02",
+      "file": "remilo-r6-alarm-postpone/02-multiple-alarms-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "c886415d46ed98df33baf91cf7e19ad4aea77299505fdda138f715f42f56e21d"
+    },
+    {
+      "id": "R6-03",
+      "file": "remilo-r6-alarm-postpone/03-refresh-failure-evening-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "8f67f429f2b57da189d751345c1840b0f4bd51cced849512eb11fd8e28ebe6d7"
+    },
+    {
+      "id": "R6-05",
+      "file": "remilo-r6-alarm-postpone/05-postpone-shortcuts-sky-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "d65e31315d87940c90b014f297671ddfad431479079c51f8a005aa6637fbae92"
+    },
+    {
+      "id": "R6-06",
+      "file": "remilo-r6-alarm-postpone/06-postpone-custom-evening-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "f6abd7724cd4e8b3776a7b5cb11372472271cdeb7edcdae72663b0ed5e226297"
+    },
+    {
+      "id": "R6-07",
+      "file": "remilo-r6-alarm-postpone/07-postpone-past-time-sky-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "0913708ac71f3636eaafcb759827d251ad313cf0153b45fac3760d59666eb0a4"
+    },
+    {
+      "id": "R6-08",
+      "file": "remilo-r6-alarm-postpone/08-postpone-saved-blocked-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "5bcabb2fe7a08c7e58f08df779e8459bd8e9095251c45be974c05b9926725e89"
+    }
+  ],
+  "rejectedArtifact": {
+    "id": "R6-04",
+    "file": "remilo-r6-alarm-postpone/rejected/04-generic-pre-unlock-dark.png",
+    "sha256": "4a7d4a12e6648d9706f23f4650ea37f5112e3e8ab2a95dfc2b85ef28d0e0a411",
+    "reason": "Plain generic visual treatment rejected; generic private-text protection remains required."
+  }
+}

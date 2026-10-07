@@ -2,9 +2,11 @@
 
 **7 October 2026 refinement:** read
 [the approved R3/R4/R5 contract](../../design/approved-ui-r3-r4.md) and
-[the proposed R6 alarm/Postpone specification](../../design/r6-alarm-postpone-specification.md).
-A21 authorizes this design refinement, not P08 implementation or acceptance of
-the new draft. Use the same global atmosphere and independent brightness as the
+[the R6 alarm/Postpone specification](../../design/r6-alarm-postpone-specification.md).
+A22 accepts seven R6 templates and rejects the plain R6-04; A23 requires softer
+Dark surfaces matching the existing themes. New themed R6-04 pixels remain
+candidates. This is not P08 implementation authorization. Use the same global
+atmosphere and independent brightness as the
 app. Task-specific Meadow and richer per-member environments are deferred.
 The current plan supersedes those older P08 visual assumptions while preserving
 historical P01 approvals and all native action/session/privacy guarantees.
@@ -33,13 +35,15 @@ proposed session-stable captured canvas. Category badges may identify members wh
 private data is available; do not add per-member scenic themes. Preserve action ownership/loading/refresh behavior
 and show current ringing delivery versus consequential event timing. Apply supported
 standard notification accent/monochrome identity with generic public presentation.
-Retain generic Classic/system pre-unlock and error fallback without React startup.
+Before first unlock, retain generic text while using the selected global theme
+through a reviewed minimal non-private native-safe appearance source. Asset failure
+keeps usable emergency controls without React startup.
 
 ## 4. Explicit non-goals
 
 No audio/channel/permission/cutoff/lateness/scheduling redesign, notification layout
 replacement, custom remote-view marketing mockup, classifier work on delivery,
-credential-derived data in DP, icon aliases or installation. No native controls
+private reminder/content-derived data in DP, icon aliases or installation. No native controls
 implemented in React and no second session/action authority.
 
 ## 5. Prerequisites and dependencies
@@ -53,7 +57,7 @@ P09/P10 automatic resolution are recorded integration gates, not blockers for
 core capture/rendering with actual compatible global descriptors. Reconcile the
 deferred P04B/P10 task-specific scope during intake; historical dependency entries
 do not authorize it. Refine snapshot ownership/lifetime and multi-member
-composition after inspecting the actual engine and reviewing the R6 proposal.
+composition after inspecting the actual engine and refining R6's technical proposals.
 Read [architecture](../../architecture.md), [verification](../../verification.md),
 [approvals](../../design/approvals.md) and dependency [handoffs](../../handoffs/README.md).
 
@@ -63,15 +67,18 @@ Use the selected global atmosphere, including for Water plants. The proposed R6
 policy captures it once per session rather than deriving it from the first member.
 New arrivals/removals/unlock refresh never recolor that canvas. Each member retains
 Stop/Snooze; Stop all carries immutable session identity. Audio deadline/sound and
-initial notification actions stay unchanged. Before first unlock, generic Classic/
-system without content-derived art. A session first presented generically retains
-its generic canvas while unlocked member content may refresh safely.
+initial notification actions stay unchanged. Before first unlock, generic content
+uses bundled global-theme art/tokens through a safe appearance source, never
+content-derived art. Preserve the captured canvas while unlocked member content
+may refresh safely; do not perform synchronous credential access during Direct Boot.
 
 ## 7. Approved visual references
 
 Use the accepted R3 global scenes, R4/R5 component roles and current P02 catalog.
 The [R6 fixture brief](../../design/r6-alarm-postpone-fixtures.json) identifies the
-proposed single/multiple/generic/error review states. Historical P01 Meadow renders
+single/multiple/privacy-safe/error states; [A22 exact acceptance](../../design/approved-ui-r6-acceptance.json)
+and [per-image corrections](../../design/remilo-r6-alarm-postpone/review-notes.json)
+identify the accepted representatives and rejected plain screen. Historical P01 Meadow renders
 remain evidence of their bounded earlier prototype, not current task-specific
 visual authority. Platform notification examples must be identified as host/system
 examples, not claims that Android allows reference-board layouts.
@@ -79,7 +86,7 @@ examples, not claims that Android allows reference-board layouts.
 ## 8. Required design decisions
 
 Consume the accepted current [component/role contract](../../design/approved-ui-r3-r4.md),
-the R6 draft and compatible [notification research/adaptations](../../design/p01-pattern-evaluation.md). Use standard
+the R6 visual specification and compatible [notification research/adaptations](../../design/p01-pattern-evaluation.md). Use standard
 native templates and actual native actions; reference pastel notification mockups are
 not a promise of OEM/lock-screen/heads-up layout. No unexplained close/menu affordances.
 
@@ -87,10 +94,16 @@ not a promise of OEM/lock-screen/heads-up layout. No unexplained close/menu affo
 member actions, stable presentation across member changes, generic pre-unlock/public
 privacy and supported standard notifications. Native Stop is separate from Done.
 
-**Proposed in R6:** exact global initial-capture owner/lifetime, generic fallback,
-larger single/compact multi-member openings, measured action footers, 64 dp urgent
-controls, current alert versus Event/Due labels and retained-content error feedback.
-Approve contract before integration and actual single/multiple renders afterward.
+**Accepted R6 visual intent:** larger single/compact multi-member openings,
+measured persistent footers, 64 dp single/Stop all controls, 56 dp member controls,
+explicit alert versus Event/Due labels and retained-content error feedback.
+All native states support four atmospheres in Light/Dark with shared geometry and
+softer elevated surfaces; generic private-text protection does not remove theming.
+
+**Technical proposals still to refine:** exact capture owner/lifetime, minimal
+safe appearance mirror and its update/compatibility/automatic-resolution policy,
+plus asset-failure rendering. Approve that technical contract before integration
+and actual component renders afterward; the accepted template need not be reapproved.
 
 **Agent choices:** minimal snapshot/Compose implementation using existing session
 tickets/serialized worker. Keep appearance failure unable to block promotion/audio.
@@ -111,7 +124,9 @@ actual Compose capture matrix, privacy/manifest review, evidence and
 - Initial loading cannot dismiss; confirmed terminal state does. Partial action
   retains remaining controls; refresh/action error retains known content with Retry.
 - Native startup does not instantiate React/classifier or query credential storage
-  before unlock. Appearance absence/failure falls back to usable generic controls.
+  before unlock. A valid safe descriptor supplies bundled global scenery/tokens
+  while reminder content remains generic. Missing safe state uses the reviewed
+  themed default; asset failure retains usable emergency controls without blocking audio.
 - Single notification has Stop/Snooze from first post and re-trigger; grouped
   controls and session-specific Stop all remain. Promotion never waits for artwork.
 - No titles, categories or content-derived assets enter DP/public presentation;
@@ -121,7 +136,8 @@ actual Compose capture matrix, privacy/manifest review, evidence and
 
 Match the approved R3 environmental family and R4/R5 role/component policy. Review
 single/multiple/generic/loading/error, light/dark and 200% long English/Chinese at
-360x800/larger/expanded. Actions are >=48 dp, scroll-reachable and distinguish
+360x800/larger/expanded across all four atmospheres. Other targets are >=48 dp;
+R6 single/Stop all are >=64 dp, member Stop/Snooze >=56 dp, scroll-reachable and distinguish
 silencing from completion. Measure composited contrast using P02 thresholds.
 Host snapshots do not approve OEM notification layout or phone accessibility.
 
@@ -160,7 +176,7 @@ handoff, then stop without installation or appearance work in audio startup.
 Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute P08 Native Presentation only after authorization. Read AGENTS.md, core docs,
 redesign specification/index, docs/plans/redesign/p08-native-presentation.md,
-docs/design/approved-ui-r3-r4.md, the R6 alarm/Postpone draft and fixture brief,
+docs/design/approved-ui-r3-r4.md, the R6 alarm/Postpone specification and fixture brief,
 approval ledger and accepted P02/P04A capabilities, plus available P03/P04B/P09/P10
 integrations. Inspect actual session/Activity/Compose/notification state; stop on
 missing hard approvals, not unfinished unrelated integrations. Record gates and
