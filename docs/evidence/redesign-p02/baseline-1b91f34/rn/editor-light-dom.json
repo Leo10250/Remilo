@@ -1,0 +1,99 @@
+{
+  "actions": [
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Back",
+      "left": 4,
+      "role": "button",
+      "top": 4,
+      "width": 48
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Save reminder",
+      "left": 290.4375,
+      "role": "button",
+      "top": 4,
+      "width": 65.5625
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Title",
+      "left": 16,
+      "role": null,
+      "top": 95.5999984741211,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 56,
+      "label": "When, Oct 6, 2:00 PM",
+      "left": 16,
+      "role": "button",
+      "top": 159.60000610351562,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 56,
+      "label": "Alert, Alarm",
+      "left": 16,
+      "role": "button",
+      "top": 215.6000061035156,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 56,
+      "label": "List, Work",
+      "left": 16,
+      "role": "button",
+      "top": 287.6000061035156,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 80,
+      "label": "Notes (optional)",
+      "left": 16,
+      "role": null,
+      "top": 379.2000122070313,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Schedule options",
+      "left": 16,
+      "role": "button",
+      "top": 475.2000122070313,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Alarm options",
+      "left": 16,
+      "role": "button",
+      "top": 540,
+      "width": 328
+    }
+  ],
+  "bodyText": "\nEdit reminder\nSave\nTitle\n\nWhen\nOct 6, 2:00 PM\n\n\nAlert\nAlarm\n\n\nList\nWork\n\nNotes (optional)\nSchedule options\n\nAlarm options\n\nSchedule\nToday · 2:00 PM–2:30 PM\nAlarm at Today · 2:00 PM",
+  "density": 1.0000000149011612,
+  "height": 800,
+  "url": "http://127.0.0.1:8094/edit?id=review",
+  "width": 360
+}

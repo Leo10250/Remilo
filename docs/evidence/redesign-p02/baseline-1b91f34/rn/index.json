@@ -1,0 +1,113 @@
+{
+  "artifactId": "P02-rn-baseline-1b91f34",
+  "deviceEvidence": false,
+  "clock": "2026-10-06T08:00:00-07:00",
+  "clockMechanism": "Server inserts a private frozen Date before the unchanged opt-in app bundle; no production code modification",
+  "fixture": "Existing memory-only preview-engine",
+  "snapshots": [
+    {
+      "file": "agenda-light.jpg",
+      "dom": "agenda-light-dom.json",
+      "route": "Agenda",
+      "brightness": "light",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "settings-light.jpg",
+      "dom": "settings-light-dom.json",
+      "route": "Settings",
+      "brightness": "light",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "settings-dark.jpg",
+      "dom": "settings-dark-dom.json",
+      "route": "Settings",
+      "brightness": "dark",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "agenda-dark.jpg",
+      "dom": "agenda-dark-dom.json",
+      "route": "Agenda",
+      "brightness": "dark",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "detail-dark.jpg",
+      "dom": "detail-dark-dom.json",
+      "route": "Reminder details",
+      "brightness": "dark",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "editor-dark.jpg",
+      "dom": "editor-dark-dom.json",
+      "route": "Reminder editor",
+      "brightness": "dark",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "editor-light.jpg",
+      "dom": "editor-light-dom.json",
+      "route": "Reminder editor",
+      "brightness": "light",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    },
+    {
+      "file": "detail-light.jpg",
+      "dom": "detail-light-dom.json",
+      "route": "Reminder details",
+      "brightness": "light",
+      "width": 360,
+      "height": 800,
+      "density": 1.0000000149011612,
+      "fontScale": 1,
+      "scroll": "top",
+      "renderer": "Actual production route / react-native-web / Codex in-app browser",
+      "deviceEvidence": false
+    }
+  ]
+}

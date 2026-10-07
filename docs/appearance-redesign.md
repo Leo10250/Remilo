@@ -5,11 +5,16 @@ single redesign product vision/requirements source, not an implementation report
 The [twelve-plan index](plans/redesign/README.md) owns execution boundaries;
 task state is recorded only in [backlog.md](backlog.md). Physical acceptance stays
 consolidated in [device-acceptance.md](device-acceptance.md). The latest owner
-instruction A15 accepts the two non-shipping P01 rendered compositions, following
+instruction A16 authorizes the refined P02 execution after A15 accepted the two
+non-shipping P01 rendered compositions, following
 A14's S1/M1 acceptance, A12's bounded r2 direction, A11 refinement and A10 execution.
 The [P01 handoff](handoffs/redesign-p01.md) binds the accepted contract and evidence.
 Exact production tokens, detailed UX and final production layouts remain open.
 Other milestones require their own authorization.
+A16 confirms 16 dp reminder tiles, Sky/Rose as the sample, artwork-only approval
+before integration and shared Classic activation after complete-catalog approval.
+Existing production layouts remain during P02; no artwork/sample/catalog is
+accepted by execution authorization. See [P02](plans/redesign/p02-visual-foundations.md).
 See [approval records](design/approvals.md).
 
 ## Direction and review gate
@@ -68,7 +73,7 @@ are labeled representations; they are not Android notification or phone evidence
   origin. Root switching never accumulates history; Back from Lists/Repeats returns
   to Agenda after sheet/search/draft/uncertain-operation guards. Retain independent
   destination filters and scroll. Hide bottom navigation in editors/details.
-- Agenda uses event-based sections, one Add control, near-white 8dp items,
+- Agenda uses event-based sections, one Add control, near-white 16dp tiles,
   leading completion, a category glyph, clear title/event time and concise delivery
   cue. Keep consequential Due/Overdue, delivery failures/missed outcomes, changed
   targets and recurrence visible. Color never replaces a state label. Keep visible
@@ -99,7 +104,7 @@ unapproved sRGB candidates. Develop/review production tokens using Material HCT 
 then export reviewed static roles rather than introduce runtime generation.
 
 Use system typography (16sp body, 14sp supporting), a 4dp spacing rhythm,
-restrained elevation, 8dp reminder corners and larger sheet corners. Reuse the
+restrained elevation, 16dp reminder tile corners and larger sheet corners. Reuse the
 encapsulated Material icons. Bundle static scenery outside essential text; it
 yields to content and large text. No arbitrary photos or list-specific themes.
 

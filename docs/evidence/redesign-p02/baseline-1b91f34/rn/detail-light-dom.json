@@ -1,0 +1,429 @@
+{
+  "actions": [
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Browse Remilo",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Search reminders",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Filter reminders",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Overdue, 2",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Book the dentist. Oct 4 · 9:00 AM–9:30 AM. Overdue — still unfinished. Postponed. Alarm postponed to Tomorrow · 9:00 AM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Book the dentist. Oct 4 · 9:00 AM–9:30 AM. Overdue — still unfinished. Postponed. Alarm postponed to Tomorrow · 9:00 AM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Book the dentist. Oct 4 · 9:00 AM–9:30 AM. Overdue — still unfinished. Postponed. Alarm postponed to Tomorrow · 9:00 AM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Book the dentist",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Pick up the parcel. Oct 5 · 9:00 AM–9:30 AM. Personal. Overdue — still unfinished. Alarm stopped. No next alert scheduled",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Pick up the parcel. Oct 5 · 9:00 AM–9:30 AM. Personal. Overdue — still unfinished. Alarm stopped. No next alert scheduled",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Pick up the parcel. Oct 5 · 9:00 AM–9:30 AM. Personal. Overdue — still unfinished. Alarm stopped. No next alert scheduled",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Pick up the parcel",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Today, 2",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Review the proposal. Today · 2:00 PM–2:30 PM. Work. Alarm at Today · 2:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Review the proposal. Today · 2:00 PM–2:30 PM. Work. Alarm at Today · 2:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Review the proposal. Today · 2:00 PM–2:30 PM. Work. Alarm at Today · 2:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Review the proposal",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Evening walk. Today · 6:00 PM–6:30 PM. Every day. Alarm at Today · 6:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Evening walk. Today · 6:00 PM–6:30 PM. Every day. Alarm at Today · 6:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Evening walk. Today · 6:00 PM–6:30 PM. Every day. Alarm at Today · 6:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Evening walk",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Tomorrow, 2",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Stretch and take a break. Tomorrow · 9:00 AM–9:30 AM. Every day. Paused. No next alert scheduled",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Stretch and take a break. Tomorrow · 9:00 AM–9:30 AM. Every day. Paused. No next alert scheduled",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Stretch and take a break. Tomorrow · 9:00 AM–9:30 AM. Every day. Paused. No next alert scheduled",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Stretch and take a break",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Groceries for the weekend. Tomorrow · 12:00 PM–12:30 PM. Alarm at Tomorrow · 12:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Groceries for the weekend. Tomorrow · 12:00 PM–12:30 PM. Alarm at Tomorrow · 12:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Groceries for the weekend. Tomorrow · 12:00 PM–12:30 PM. Alarm at Tomorrow · 12:00 PM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Groceries for the weekend",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Thu, Oct 8, 1",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": "true",
+      "height": 0,
+      "label": "Done: Prepare the complete presentation and supporting notes for the upcoming project review. Oct 8 · 9:00 AM–9:30 AM. Work. Alarm at Oct 8 · 9:00 AM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Open Prepare the complete presentation and supporting notes for the upcoming project review. Oct 8 · 9:00 AM–9:30 AM. Work. Alarm at Oct 8 · 9:00 AM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Done: Prepare the complete presentation and supporting notes for the upcoming project review. Oct 8 · 9:00 AM–9:30 AM. Work. Alarm at Oct 8 · 9:00 AM",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "More actions for Prepare the complete presentation and supporting notes for the upcoming project review",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 0,
+      "label": "Add reminder",
+      "left": 0,
+      "role": "button",
+      "top": 0,
+      "width": 0
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Back",
+      "left": 4,
+      "role": "button",
+      "top": 4,
+      "width": 48
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Edit reminder",
+      "left": 260,
+      "role": "button",
+      "top": 4,
+      "width": 48
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Reminder actions",
+      "left": 308,
+      "role": "button",
+      "top": 4,
+      "width": 48
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 56,
+      "label": "List, Work",
+      "left": 16,
+      "role": "button",
+      "top": 350.8000183105469,
+      "width": 328
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Done",
+      "left": 16,
+      "role": "button",
+      "top": 744,
+      "width": 160
+    },
+    {
+      "checked": null,
+      "disabled": null,
+      "height": 48,
+      "label": "Postpone",
+      "left": 184,
+      "role": "button",
+      "top": 744,
+      "width": 160
+    }
+  ],
+  "bodyText": "\nReminder\n\n\nReview the proposal\nSchedule\nToday · 2:00 PM–2:30 PM\nAlarm at Today · 2:00 PM\nNOTES\nReview the summary and send your comments.\n\nList\nWork\n\n\nDone\n\nPostpone",
+  "density": 1.0000000149011612,
+  "height": 800,
+  "url": "http://127.0.0.1:8094/reminder/review",
+  "width": 360
+}

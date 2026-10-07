@@ -19,6 +19,11 @@ and adds artwork-only review. A12 accepts bounded r2 visual direction and author
 two Meadow/two Sunrise standalone candidates. A14 accepts S1/M1 for the two review
 prototypes. A15 accepts the [actual P01 renders](design/p01-render-r1-acceptance.json);
 the [handoff](handoffs/redesign-p01.md) carries their bounded composition contract.
+A16 separately authorizes refined P02 execution: 16 dp tiles, a Sky/Rose expansion
+sample, source approval before integration, sample before further expansion and
+catalog approval before shared Classic activation. Existing production layouts and
+all behavioral contracts remain. The [P02 plan](plans/redesign/p02-visual-foundations.md)
+owns that staged scope; unbuilt artwork/tokens/renders remain unapproved.
 Final production layouts/tokens/UX and other milestones require separate approvals.
 P01 establishes complementary illustration
 and whole-UI language: specification approval, then artwork-only style approval before

@@ -157,5 +157,6 @@ rendered checkpoint; acceptance, completed handoff and P02 authorization remain 
 
 A15 [accepts the identified P01-render-r1 compositions](../../design/p01-render-r1-acceptance.json).
 The [P01 handoff](../../handoffs/redesign-p01.md) supplies the bounded accepted
-contract for later plans. P02 requires separate execution authorization; physical
+contract for later plans. A16 subsequently authorizes the refined P02 execution
+with source-artwork, sample and catalog gates; physical
 acceptance remains part of the existing consolidated device/P12 gates.

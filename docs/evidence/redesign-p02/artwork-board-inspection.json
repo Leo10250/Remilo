@@ -1,0 +1,85 @@
+{
+  "horizontalOverflow": false,
+  "images": [
+    {
+      "complete": true,
+      "height": 1024,
+      "source": "artwork-r1/sky-sk1-open-horizon.png",
+      "width": 1536
+    },
+    {
+      "complete": true,
+      "height": 1024,
+      "source": "artwork-r1/sky-sk1-open-horizon-regions.svg",
+      "width": 1536
+    },
+    {
+      "complete": true,
+      "height": 1024,
+      "source": "artwork-r1/sky-sk2-layered-clouds.png",
+      "width": 1536
+    },
+    {
+      "complete": true,
+      "height": 1024,
+      "source": "artwork-r1/sky-sk2-layered-clouds-regions.svg",
+      "width": 1536
+    },
+    {
+      "complete": true,
+      "height": 1536,
+      "source": "artwork-r1/rose-ro1-petal-canopy.png",
+      "width": 1024
+    },
+    {
+      "complete": true,
+      "height": 1536,
+      "source": "artwork-r1/rose-ro1-petal-canopy-regions.svg",
+      "width": 1024
+    },
+    {
+      "complete": true,
+      "height": 1536,
+      "source": "artwork-r1/rose-ro2-garden-edges.png",
+      "width": 1024
+    },
+    {
+      "complete": true,
+      "height": 1536,
+      "source": "artwork-r1/rose-ro2-garden-edges-regions.svg",
+      "width": 1024
+    },
+    {
+      "complete": true,
+      "height": 1199,
+      "source": "../../design/references/time-of-day-and-alarms.png",
+      "width": 1312
+    },
+    {
+      "complete": true,
+      "height": 1024,
+      "source": "../../design/references/butter-periwinkle-sage-owner-2026-10-06.png",
+      "width": 1536
+    },
+    {
+      "complete": true,
+      "height": 310,
+      "source": "../../design/references/desired-water-plants-reference.png",
+      "width": 165
+    },
+    {
+      "complete": true,
+      "height": 1024,
+      "source": "../../design/artwork/p01-artwork-r1/sunrise-s1-horizon.png",
+      "width": 1536
+    },
+    {
+      "complete": true,
+      "height": 1536,
+      "source": "../../design/artwork/p01-artwork-r1/meadow-m1-canopy.png",
+      "width": 1024
+    }
+  ],
+  "title": "P02 artwork-only review r1",
+  "url": "http://127.0.0.1:8095/design/p02/artwork-review-r1.html"
+}
