@@ -1,0 +1,134 @@
+{
+  "revision": "R6-04-themed-replacements-r1",
+  "date": "2026-10-07",
+  "submissionStatus": "Four corrected Dark replacement candidates; not yet accepted",
+  "subsequentAcceptance": "A24: accepted as starting direction with shared-theme background/color condition; later detailed coloring and visual polish remain open.",
+  "generationMode": "Built-in image_gen.imagegen",
+  "requestedViewportDp": {
+    "width": 360,
+    "height": 800
+  },
+  "ownerRefinements": [
+    "A22: Reject the plain generic alarm; all full-screen native alarms use the four global atmospheres.",
+    "A23: Use softer Dark surfaces matching the existing themes, not harsher black."
+  ],
+  "brightnessScope": "Dark preview for direct comparison; shared components must also support Light",
+  "originalSubmission": {
+    "commit": "86b030ae0a5102723a74728964a1907e06a2f8ac",
+    "specificationSha256": "88F98C41C22848A13045BD414B38ECB7D7FCA4CC15E1FBB336B80AF19141D7B1",
+    "fixturesSha256": "671D2504ECD1CD2E570FC71BA4716BAD5277EDE0DA8506B14B271D9288206840"
+  },
+  "prompts": [
+    {
+      "id": "R6-04-Sunrise-Dark",
+      "title": "Sunrise · Dark",
+      "theme": "sunrise",
+      "prompt": "Use case: ui-mockup.\nGenerate a narrowly revised Remilo native full-screen alarm screenshot, one flat edge-to-edge portrait screen at 360 x 800 dp proportions, about 841 x 1870 px. No phone hardware, comparison board, outside headline, marketing composition or annotations. Crisp production Android typography, consistent measured spacing and genuine mobile density.\nINPUT ROLES: First image is the approved R6 single native alarm COMPOSITION reference (Sky Light); translate it to Dark. Second image is the rejected generic alarm's exact privacy-safe CONTENT reference; its plain visual treatment is REJECTED, not a style reference. Third image is the approved named atmosphere DARK homepage, used ONLY for artwork/color tokens.\nPreserve one shared native alarm layout in every atmosphere: integrated top mountain/lake/conifer illustration, small Remilo wordmark, roughly 200 dp opening below status bar; then opaque dark reading surface with16dp gutters/radius and calm generic information, and bottom fixed opaque urgent-action footer.\nEXACT CONTENT: held status clock \"10:00\"; \"Alarm ringing\" with a NEUTRAL light-gray bell glyph; generic title \"Reminder\" in28sp; \"Alarm time\" neutral-gray label and \"10:00 AM\" prominent32sp. This screen is before first unlock. There is NO category icon/badge, NO Water plants, no Event/Due, notes, list, private task title or unlock prompt. The theme is global, never selected from reminder content. Leave calm flexible space after alarm time, do not invent data to fill it.\nBOTTOM ACTIONS: one full-width FILLED theme-primary \"Stop\" with matching dark onPrimary label; one full-width OUTLINED theme-primary \"Snooze · 10 min\" underneath, both64dp high (about150px on841px-wide canvas),16dp radius,12dp gap. Readable neutral helper \"Stop leaves the reminder unfinished.\" and Android gesture inset. No Done/checkmark/success, no app navbar/FAB, no back/search/edit/overflow/close controls. Do not shrink buttons, extend the canvas, or redesign geometry between themes. Structural icons remain neutral; only actual Stop/Snooze use primary.\nALL READING SURFACES ARE OPAQUE; text never sits over complex scenery. Use accepted landscape style, not generic gradients/waves or an independent redesign. Final artwork abstraction is deferred. This is a held review clock, not an automatic period rule.\nATMOSPHERE AND PALETTE: Match approved Sunrise Dark: glowing warm amber/orange sunrise sun over layered muted mountains and lake, conifers, dark charcoal/warm-black opaque body. Stop fill soft amber/apricot with near-black label; Snooze amber outline/label. Warm art does not change passive gray glyphs. This is sunrise, not mauve sunset, moon or night stars.",
+      "references": [
+        "submitted-r6:01-single-alarm-sky-light.png",
+        "owner-attached-rejected-generic-alarm",
+        "remilo-r3-atmospheres/02-sunrise-dark.png"
+      ],
+      "refinements": [
+        {
+          "prompt": "Edit the SECOND image to correct its overly black reading canvas, matching the THIRD approved homepage's softer elevated CARD surfaces. FIRST image is the required 841 x 1870 px (360x800dp) canvas/overall mobile geometry reference only. This is a COLOR/SURFACE correction, not a new layout or independent redesign.\nThe user explicitly rejects the harsh black contrast. In the entire opaque reading area and bottom footer, use the softer SUNRISE DARK surface matching the approved reminder cards, visually close to #262629. This is a reference color cue, not a new production hex contract. Do NOT use pure black, near-black black-gradient panels, black vignettes, glass, or transparency. Keep the body a uniform softly lifted charcoal/warm-gray surface. Title/time are soft off-white, support/bell/glyphs are neutral light gray. Theme primary fill/outline is the SAME muted pale apricot from approved THIRD image, with dark onPrimary text. No new neon hue or contrast treatment.\nPreserve SECOND illustration family and all privacy-safe content exactly: Remilo, held clock10:00, Alarm ringing, Reminder, Alarm time10:00 AM, Stop, Snooze ·10min, Stop leaves the reminder unfinished. No category/Event/Due/private title or extra controls.\nAll four variants MUST share same silhouette, screen proportions, title/time hierarchy and footer position. Use the FIRST reference's tall portrait dimensions, about841x1870px; don't crop or shorten the canvas to1695px. Art ~200dp belowstatus, information panel below. Stop and Snooze stacked bottom, each64dp high, 12dp gap,16dp corners,16dp gutters. Flexible quiet space grows between information and footer; not below buttons. Native gesture inset at bottom. No phone frame, annotations, board or added header widgets.",
+          "references": [
+            "submitted-r6:01-single-alarm-sky-light.png",
+            "generation-output:exec-8935fd5b-62c1-4744-86d2-c19becbaed3e.png",
+            "remilo-r3-atmospheres/02-sunrise-dark.png"
+          ],
+          "supersededImage": "generation-output:exec-8935fd5b-62c1-4744-86d2-c19becbaed3e.png"
+        }
+      ],
+      "selectedSource": "generation-output:exec-0097c944-9139-4775-8bda-05304ccab913.png",
+      "file": "01-sunrise-dark.png"
+    },
+    {
+      "id": "R6-04-Sky-Dark",
+      "title": "Sky · Dark",
+      "theme": "sky",
+      "prompt": "Use case: ui-mockup.\nGenerate a narrowly revised Remilo native full-screen alarm screenshot, one flat edge-to-edge portrait screen at 360 x 800 dp proportions, about 841 x 1870 px. No phone hardware, comparison board, outside headline, marketing composition or annotations. Crisp production Android typography, consistent measured spacing and genuine mobile density.\nINPUT ROLES: First image is the approved R6 single native alarm COMPOSITION reference (Sky Light); translate it to Dark. Second image is the rejected generic alarm's exact privacy-safe CONTENT reference; its plain visual treatment is REJECTED, not a style reference. Third image is the approved named atmosphere DARK homepage, used ONLY for artwork/color tokens.\nPreserve one shared native alarm layout in every atmosphere: integrated top mountain/lake/conifer illustration, small Remilo wordmark, roughly 200 dp opening below status bar; then opaque dark reading surface with16dp gutters/radius and calm generic information, and bottom fixed opaque urgent-action footer.\nEXACT CONTENT: held status clock \"10:00\"; \"Alarm ringing\" with a NEUTRAL light-gray bell glyph; generic title \"Reminder\" in28sp; \"Alarm time\" neutral-gray label and \"10:00 AM\" prominent32sp. This screen is before first unlock. There is NO category icon/badge, NO Water plants, no Event/Due, notes, list, private task title or unlock prompt. The theme is global, never selected from reminder content. Leave calm flexible space after alarm time, do not invent data to fill it.\nBOTTOM ACTIONS: one full-width FILLED theme-primary \"Stop\" with matching dark onPrimary label; one full-width OUTLINED theme-primary \"Snooze · 10 min\" underneath, both64dp high (about150px on841px-wide canvas),16dp radius,12dp gap. Readable neutral helper \"Stop leaves the reminder unfinished.\" and Android gesture inset. No Done/checkmark/success, no app navbar/FAB, no back/search/edit/overflow/close controls. Do not shrink buttons, extend the canvas, or redesign geometry between themes. Structural icons remain neutral; only actual Stop/Snooze use primary.\nALL READING SURFACES ARE OPAQUE; text never sits over complex scenery. Use accepted landscape style, not generic gradients/waves or an independent redesign. Final artwork abstraction is deferred. This is a held review clock, not an automatic period rule.\nATMOSPHERE AND PALETTE: Match approved Sky Dark: clear DAYTIME blue clouds, blue mountains, reflective lake, green conifers. Dark navy/blue-charcoal opaque body. Stop fill pale blue with dark navy label; Snooze pale blue outline/label. Dark appearance does NOT transform the Sky theme into a night scene: NO moon or stars, no orange sun/sunset.",
+      "references": [
+        "submitted-r6:01-single-alarm-sky-light.png",
+        "owner-attached-rejected-generic-alarm",
+        "remilo-r3-atmospheres/04-sky-dark.png"
+      ],
+      "refinements": [
+        {
+          "prompt": "Edit the SECOND image to correct its overly black reading canvas, matching the THIRD approved homepage's softer elevated CARD surfaces. FIRST image is the required 841 x 1870 px (360x800dp) canvas/overall mobile geometry reference only. This is a COLOR/SURFACE correction, not a new layout or independent redesign.\nThe user explicitly rejects the harsh black contrast. In the entire opaque reading area and bottom footer, use the softer SKY DARK surface matching the approved reminder cards, visually close to #212F3B. This is a reference color cue, not a new production hex contract. Do NOT use pure black, near-black black-gradient panels, black vignettes, glass, or transparency. Keep the body a uniform softly lifted charcoal/slate surface. Title/time are soft off-white, support/bell/glyphs are neutral light gray. Theme primary fill/outline is the SAME muted pale blue from approved THIRD image, with dark onPrimary text. No new neon hue or contrast treatment.\nPreserve SECOND illustration family and all privacy-safe content exactly: Remilo, held clock10:00, Alarm ringing, Reminder, Alarm time10:00 AM, Stop, Snooze ·10min, Stop leaves the reminder unfinished. No category/Event/Due/private title or extra controls.\nAll four variants MUST share same silhouette, screen proportions, title/time hierarchy and footer position. Use the FIRST reference's tall portrait dimensions, about841x1870px; don't crop or shorten the canvas to1695px. Art ~200dp belowstatus, information panel below. Stop and Snooze stacked bottom, each64dp high, 12dp gap,16dp corners,16dp gutters. Flexible quiet space grows between information and footer; not below buttons. Native gesture inset at bottom. No phone frame, annotations, board or added header widgets.",
+          "references": [
+            "submitted-r6:01-single-alarm-sky-light.png",
+            "generation-output:exec-6aeef1f0-09f8-482c-b7b7-a3b2a9969c40.png",
+            "remilo-r3-atmospheres/04-sky-dark.png"
+          ],
+          "supersededImage": "generation-output:exec-6aeef1f0-09f8-482c-b7b7-a3b2a9969c40.png"
+        },
+        {
+          "prompt": "Edit this screenshot with ONE precise wordmark correction. Remilo at top left must use one uniform soft-white text color, without mixed navy/white letters, gradient, outline, shadow or logo effects. Slightly darken ONLY the quiet upper sky immediately behind the status bar and wordmark enough for legibility, matching the approved Sky Dark header. Preserve daytime clouds/lake, softly lifted slate opaque content, pale blue actions, exact privacy-safe text, geometry, screen dimensions and footer. No added controls or other redesign.",
+          "references": [
+            "generation-output:exec-be515cbf-8d5f-465b-b1f6-f0965b42e508.png",
+            "remilo-r3-atmospheres/04-sky-dark.png"
+          ],
+          "supersededImage": "generation-output:exec-be515cbf-8d5f-465b-b1f6-f0965b42e508.png"
+        }
+      ],
+      "selectedSource": "generation-output:exec-8c942010-7eda-4145-b8bb-aa798c960ac9.png",
+      "file": "02-sky-dark.png"
+    },
+    {
+      "id": "R6-04-Evening-Dark",
+      "title": "Evening · Dark",
+      "theme": "evening",
+      "prompt": "Use case: ui-mockup.\nGenerate a narrowly revised Remilo native full-screen alarm screenshot, one flat edge-to-edge portrait screen at 360 x 800 dp proportions, about 841 x 1870 px. No phone hardware, comparison board, outside headline, marketing composition or annotations. Crisp production Android typography, consistent measured spacing and genuine mobile density.\nINPUT ROLES: First image is the approved R6 single native alarm COMPOSITION reference (Sky Light); translate it to Dark. Second image is the rejected generic alarm's exact privacy-safe CONTENT reference; its plain visual treatment is REJECTED, not a style reference. Third image is the approved named atmosphere DARK homepage, used ONLY for artwork/color tokens.\nPreserve one shared native alarm layout in every atmosphere: integrated top mountain/lake/conifer illustration, small Remilo wordmark, roughly 200 dp opening below status bar; then opaque dark reading surface with16dp gutters/radius and calm generic information, and bottom fixed opaque urgent-action footer.\nEXACT CONTENT: held status clock \"10:00\"; \"Alarm ringing\" with a NEUTRAL light-gray bell glyph; generic title \"Reminder\" in28sp; \"Alarm time\" neutral-gray label and \"10:00 AM\" prominent32sp. This screen is before first unlock. There is NO category icon/badge, NO Water plants, no Event/Due, notes, list, private task title or unlock prompt. The theme is global, never selected from reminder content. Leave calm flexible space after alarm time, do not invent data to fill it.\nBOTTOM ACTIONS: one full-width FILLED theme-primary \"Stop\" with matching dark onPrimary label; one full-width OUTLINED theme-primary \"Snooze · 10 min\" underneath, both64dp high (about150px on841px-wide canvas),16dp radius,12dp gap. Readable neutral helper \"Stop leaves the reminder unfinished.\" and Android gesture inset. No Done/checkmark/success, no app navbar/FAB, no back/search/edit/overflow/close controls. Do not shrink buttons, extend the canvas, or redesign geometry between themes. Structural icons remain neutral; only actual Stop/Snooze use primary.\nALL READING SURFACES ARE OPAQUE; text never sits over complex scenery. Use accepted landscape style, not generic gradients/waves or an independent redesign. Final artwork abstraction is deferred. This is a held review clock, not an automatic period rule.\nATMOSPHERE AND PALETTE: Match approved Evening Dark: coral/rose SUNSET sky, a setting sun, plum/purple mountains, reflective lake and conifers. Opaque dark plum/charcoal body. Stop fill pale rose with deep-plum label; Snooze pale rose outline/label. NO moon/stars or daylight blue landscape.",
+      "references": [
+        "submitted-r6:01-single-alarm-sky-light.png",
+        "owner-attached-rejected-generic-alarm",
+        "remilo-r3-atmospheres/06-evening-dark.png"
+      ],
+      "refinements": [
+        {
+          "prompt": "Edit the SECOND image to correct its overly black reading canvas, matching the THIRD approved homepage's softer elevated CARD surfaces. FIRST image is the required 841 x 1870 px (360x800dp) canvas/overall mobile geometry reference only. This is a COLOR/SURFACE correction, not a new layout or independent redesign.\nThe user explicitly rejects the harsh black contrast. In the entire opaque reading area and bottom footer, use the softer EVENING DARK surface matching the approved reminder cards, visually close to #2B2532. This is a reference color cue, not a new production hex contract. Do NOT use pure black, near-black black-gradient panels, black vignettes, glass, or transparency. Keep the body a uniform softly lifted charcoal/plum surface. Title/time are soft off-white, support/bell/glyphs are neutral light gray. Theme primary fill/outline is the SAME muted pale rose from approved THIRD image, with dark onPrimary text. No new neon hue or contrast treatment.\nPreserve SECOND illustration family and all privacy-safe content exactly: Remilo, held clock10:00, Alarm ringing, Reminder, Alarm time10:00 AM, Stop, Snooze ·10min, Stop leaves the reminder unfinished. No category/Event/Due/private title or extra controls.\nAll four variants MUST share same silhouette, screen proportions, title/time hierarchy and footer position. Use the FIRST reference's tall portrait dimensions, about841x1870px; don't crop or shorten the canvas to1695px. Art ~200dp belowstatus, information panel below. Stop and Snooze stacked bottom, each64dp high, 12dp gap,16dp corners,16dp gutters. Flexible quiet space grows between information and footer; not below buttons. Native gesture inset at bottom. No phone frame, annotations, board or added header widgets.",
+          "references": [
+            "submitted-r6:01-single-alarm-sky-light.png",
+            "generation-output:exec-8383608e-545e-4196-bf8c-0eef237d001c.png",
+            "remilo-r3-atmospheres/06-evening-dark.png"
+          ],
+          "supersededImage": "generation-output:exec-8383608e-545e-4196-bf8c-0eef237d001c.png"
+        },
+        {
+          "prompt": "Edit this screenshot with ONE precise correction. REMOVE the green leaf/category tile beside Reminder: this is the privacy-safe alarm and must contain no task category. Shift Reminder left to the same 16dp content gutter as Alarm time, matching the other three variants. Preserve the exact same soft plum Dark surface, rose controls, sunset artwork, neutral bell, text, screen dimensions and footer. No other changes or new glyphs.",
+          "references": [
+            "generation-output:exec-8a553f33-d245-4a5d-8d32-7bc8da0f9efb.png"
+          ],
+          "supersededImage": "generation-output:exec-8a553f33-d245-4a5d-8d32-7bc8da0f9efb.png"
+        }
+      ],
+      "selectedSource": "generation-output:exec-7531fdcb-85a4-4535-89a9-dbfb5fb79e74.png",
+      "file": "03-evening-dark.png"
+    },
+    {
+      "id": "R6-04-Night-Dark",
+      "title": "Night · Dark",
+      "theme": "night",
+      "prompt": "Use case: ui-mockup.\nGenerate a narrowly revised Remilo native full-screen alarm screenshot, one flat edge-to-edge portrait screen at 360 x 800 dp proportions, about 841 x 1870 px. No phone hardware, comparison board, outside headline, marketing composition or annotations. Crisp production Android typography, consistent measured spacing and genuine mobile density.\nINPUT ROLES: First image is the approved R6 single native alarm COMPOSITION reference (Sky Light); translate it to Dark. Second image is the rejected generic alarm's exact privacy-safe CONTENT reference; its plain visual treatment is REJECTED, not a style reference. Third image is the approved named atmosphere DARK homepage, used ONLY for artwork/color tokens.\nPreserve one shared native alarm layout in every atmosphere: integrated top mountain/lake/conifer illustration, small Remilo wordmark, roughly 200 dp opening below status bar; then opaque dark reading surface with16dp gutters/radius and calm generic information, and bottom fixed opaque urgent-action footer.\nEXACT CONTENT: held status clock \"10:00\"; \"Alarm ringing\" with a NEUTRAL light-gray bell glyph; generic title \"Reminder\" in28sp; \"Alarm time\" neutral-gray label and \"10:00 AM\" prominent32sp. This screen is before first unlock. There is NO category icon/badge, NO Water plants, no Event/Due, notes, list, private task title or unlock prompt. The theme is global, never selected from reminder content. Leave calm flexible space after alarm time, do not invent data to fill it.\nBOTTOM ACTIONS: one full-width FILLED theme-primary \"Stop\" with matching dark onPrimary label; one full-width OUTLINED theme-primary \"Snooze · 10 min\" underneath, both64dp high (about150px on841px-wide canvas),16dp radius,12dp gap. Readable neutral helper \"Stop leaves the reminder unfinished.\" and Android gesture inset. No Done/checkmark/success, no app navbar/FAB, no back/search/edit/overflow/close controls. Do not shrink buttons, extend the canvas, or redesign geometry between themes. Structural icons remain neutral; only actual Stop/Snooze use primary.\nALL READING SURFACES ARE OPAQUE; text never sits over complex scenery. Use accepted landscape style, not generic gradients/waves or an independent redesign. Final artwork abstraction is deferred. This is a held review clock, not an automatic period rule.\nATMOSPHERE AND PALETTE: Match approved Night Dark: moonlit indigo/blue mountain lake, crescent moon, subtle stars and dark conifers. Opaque deep navy body. Stop fill pale periwinkle with dark navy label; Snooze periwinkle outline/label. Neutral text/glyphs remain light gray, not every label periwinkle. NO sun.",
+      "references": [
+        "submitted-r6:01-single-alarm-sky-light.png",
+        "owner-attached-rejected-generic-alarm",
+        "remilo-r3-atmospheres/08-night-dark.png"
+      ],
+      "refinements": [
+        {
+          "prompt": "Edit the SECOND image to correct its overly black reading canvas, matching the THIRD approved homepage's softer elevated CARD surfaces. FIRST image is the required 841 x 1870 px (360x800dp) canvas/overall mobile geometry reference only. This is a COLOR/SURFACE correction, not a new layout or independent redesign.\nThe user explicitly rejects the harsh black contrast. In the entire opaque reading area and bottom footer, use the softer NIGHT DARK surface matching the approved reminder cards, visually close to #222B3E. This is a reference color cue, not a new production hex contract. Do NOT use pure black, near-black black-gradient panels, black vignettes, glass, or transparency. Keep the body a uniform softly lifted charcoal/slate surface. Title/time are soft off-white, support/bell/glyphs are neutral light gray. Theme primary fill/outline is the SAME muted pale periwinkle from approved THIRD image, with dark onPrimary text. No new neon hue or contrast treatment.\nPreserve SECOND illustration family and all privacy-safe content exactly: Remilo, held clock10:00, Alarm ringing, Reminder, Alarm time10:00 AM, Stop, Snooze ·10min, Stop leaves the reminder unfinished. No category/Event/Due/private title or extra controls.\nAll four variants MUST share same silhouette, screen proportions, title/time hierarchy and footer position. Use the FIRST reference's tall portrait dimensions, about841x1870px; don't crop or shorten the canvas to1695px. Art ~200dp belowstatus, information panel below. Stop and Snooze stacked bottom, each64dp high, 12dp gap,16dp corners,16dp gutters. Flexible quiet space grows between information and footer; not below buttons. Native gesture inset at bottom. No phone frame, annotations, board or added header widgets.",
+          "references": [
+            "submitted-r6:01-single-alarm-sky-light.png",
+            "generation-output:exec-ba5ebb16-ca38-4c5a-8762-24773340c4dd.png",
+            "remilo-r3-atmospheres/08-night-dark.png"
+          ],
+          "supersededImage": "generation-output:exec-ba5ebb16-ca38-4c5a-8762-24773340c4dd.png"
+        }
+      ],
+      "selectedSource": "generation-output:exec-16cba937-3510-42c9-9bee-48f0ee5f2b65.png",
+      "file": "04-night-dark.png"
+    }
+  ]
+}

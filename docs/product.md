@@ -21,7 +21,11 @@ and rejects the plain R6-04. The four global atmospheres apply to every native
 full-screen alarm state, including privacy-safe text before first unlock; A23
 requires the existing softer Dark surfaces. [The R6 specification](design/r6-alarm-postpone-specification.md)
 separates this visual requirement from proposed native appearance storage/capture.
-Replacement pixels and actual implementation verification remain separate.
+[A24](design/approved-ui-r6-themed-alarm-acceptance.json) accepts the four corrected
+Dark themed replacements as starting templates. Their background and elevated
+surfaces must match the corresponding existing theme's color roles; exact detailed
+coloring and overall visual polish may be refined later. Actual implementation
+verification remains separate.
 
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks

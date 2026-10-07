@@ -4,8 +4,10 @@
 [the approved R3/R4/R5 contract](../../design/approved-ui-r3-r4.md) and
 [the R6 alarm/Postpone specification](../../design/r6-alarm-postpone-specification.md).
 A22 accepts seven R6 templates and rejects the plain R6-04; A23 requires softer
-Dark surfaces matching the existing themes. New themed R6-04 pixels remain
-candidates. This is not P08 implementation authorization. Use the same global
+Dark surfaces matching the existing themes. [A24](../../design/approved-ui-r6-themed-alarm-acceptance.json)
+accepts the four corrected R6-04 Dark variants as starting templates, with
+background/color matching to the corresponding existing theme and later
+coloring/visual-polish flexibility. This is not P08 implementation authorization. Use the same global
 atmosphere and independent brightness as the
 app. Task-specific Meadow and richer per-member environments are deferred.
 The current plan supersedes those older P08 visual assumptions while preserving
@@ -78,8 +80,10 @@ Use the accepted R3 global scenes, R4/R5 component roles and current P02 catalog
 The [R6 fixture brief](../../design/r6-alarm-postpone-fixtures.json) identifies the
 single/multiple/privacy-safe/error states; [A22 exact acceptance](../../design/approved-ui-r6-acceptance.json)
 and [per-image corrections](../../design/remilo-r6-alarm-postpone/review-notes.json)
-identify the accepted representatives and rejected plain screen. Historical P01 Meadow renders
-remain evidence of their bounded earlier prototype, not current task-specific
+identify the accepted representatives and rejected plain screen.
+[A24's four themed variants](../../design/remilo-r6-alarm-postpone/themed-alarms/gallery.html)
+retain exact image identities with per-image background/color conditions.
+Historical P01 Meadow renders remain evidence of their bounded earlier prototype, not current task-specific
 visual authority. Platform notification examples must be identified as host/system
 examples, not claims that Android allows reference-board layouts.
 
@@ -99,6 +103,9 @@ measured persistent footers, 64 dp single/Stop all controls, 56 dp member contro
 explicit alert versus Event/Due labels and retained-content error feedback.
 All native states support four atmospheres in Light/Dark with shared geometry and
 softer elevated surfaces; generic private-text protection does not remove theming.
+Under A24, full-page base backgrounds and elevated surfaces use the existing
+theme's shared semantic roles. Do not adopt generated black/gradient samples as
+exact production values. Detailed coloring and overall visual polish may be refined.
 
 **Technical proposals still to refine:** exact capture owner/lifetime, minimal
 safe appearance mirror and its update/compatibility/automatic-resolution policy,

@@ -1,16 +1,19 @@
 # R6 — Native alarm and Postpone visual specification
 
-Revision 2, 7 October 2026. A22 accepts seven R6 visual templates and rejects the
+Revision 3, 7 October 2026. A22 accepts seven R6 visual templates and rejects the
 plain R6-04 alarm. A23 requires softer Dark surfaces matching the existing themes.
 [Acceptance and exact identities](approved-ui-r6-acceptance.json) and
 [the annotated approved gallery](remilo-r6-alarm-postpone/gallery.html) preserve
-that scope. Themed R6-04 replacement pixels await review. Exact native
+that scope. [A24](approved-ui-r6-themed-alarm-acceptance.json) accepts the four
+corrected R6-04 Dark atmosphere templates as a starting point, with the condition
+that background colors match their corresponding existing themes; detailed
+coloring and overall visual polish may change later. Exact native
 capture/storage implementation and actual rendered acceptance remain separate;
 this is not authorization to execute P07/P08. Task status remains in
 [backlog.md](../backlog.md); decisions are in [the ledger](approvals.md).
 
 Read [the accepted visual contract](approved-ui-r3-r4.md) first. It owns atmosphere,
-color roles, shared component geometry and keyboard requirements. This draft
+color roles, shared component geometry and keyboard requirements. This specification
 extends those rules to alarm controls and Postpone; it does not replace the
 [product contract](../product.md) or native scheduling/action authority.
 
@@ -30,7 +33,8 @@ extends those rules to alarm controls and Postpone; it does not replace the
    calendar/time glyphs and ordinary navigation stay neutral.
 
 These presentation templates are accepted with the documented corrections and
-R6-04 exception. Existing Stop/Snooze/Postpone semantics,
+A24 background/color condition. The original plain R6-04 remains rejected;
+the four corrected themed starting templates are accepted. Existing Stop/Snooze/Postpone semantics,
 privacy, native ownership, stale-action rejection and five-minute audio deadline
 are preserved. More abstract final artwork remains a later review.
 
@@ -78,6 +82,10 @@ Sky remains a daytime cloud/lake scene in Dark; Evening remains a sunset with a
 sun. These previews do not decide automatic time boundaries, migration or defaults.
 Use the existing softer elevated Dark surface roles: Sunrise charcoal, Sky slate,
 Evening plum and Night navy. Do not substitute a harsher near-black alarm palette.
+Under A24, both the full-page base/canvas and elevated reading surfaces must consume
+the corresponding existing theme's shared semantic roles, rather than guessed
+black shades or sampled raster hex values. The owner approves the design approach,
+while exact detailed coloring and overall visual polish remain open to refinement.
 Scene assets and role values change with theme; component anatomy, icon roles,
 typography, information hierarchy and actions remain shared. Single, multiple,
 loading, refresh-error and privacy-safe native alarm states support all four
@@ -274,13 +282,14 @@ long titles, narrow/landscape layout, TalkBack and keyboard/inset behavior.
 and [Compose accessibility defaults](https://developer.android.com/develop/ui/compose/accessibility/api-defaults)
 support contrast and minimum target practices. Raster approval does not verify them.
 
-## H. Reviewed images and requested replacement
+## H. Reviewed images and accepted themed replacements
 
 Use separate full portrait images, one readable screen each, initially approximately
 360 x 800 dp proportions. A22 accepts R6-01/02/03/05/06/07/08 with discrepancy
-corrections and rejects R6-04's plain visual treatment. Four Dark replacement
-candidates demonstrate Sunrise/Sky/Evening/Night using the same privacy-safe layout
-and softer surfaces; their pixels await owner review. Every component must support
+corrections and rejects R6-04's plain visual treatment. A24 accepts four corrected
+Dark starting templates for Sunrise/Sky/Evening/Night using the same privacy-safe
+layout, subject to matching their existing theme's background/color roles and
+later detailed coloring/visual polish. Every component must support
 the four global atmospheres in Light and Dark.
 
 | ID | Screen | Fixture and treatment |
@@ -288,7 +297,7 @@ the four global atmospheres in Light and Dark.
 | R6-01 | Single native alarm — Sky Light | Water plants; alarm 10:00 AM; Event 10:00–10:15 AM, linked Due; known Active state; Stop and Snooze 10 min. Larger scenic opening with opaque information/actions. |
 | R6-02 | Multiple native alarms — Night Dark | Clock 9 PM; Take medicine, Call dentist and long proposal title all alerting. Call dentist Event 9:30–9:45 PM/Due 10 PM independent of alert 9 PM; proposal Event 4–4:30 PM/Due 5 PM overdue. Member actions plus Stop all; no countdown or per-member environments. |
 | R6-03 | Multiple alarms with refresh failure — Evening Dark | Same known members, long title and retained actions; inline refresh error and Refresh controls; partial lower card scroll is acceptable, covered actions are not. |
-| R6-04 | Privacy-safe themed alarm before first unlock — four atmospheres | Plain submission rejected. Replacement uses generic Reminder/Alarm ringing, operational alarm time and Stop/Snooze 10 min, with Sunrise/Sky/Evening/Night bundled scenery and shared tokens from a safe appearance source; no category/private content/credential read. Four Dark pixels remain candidates; Light is required component support. |
+| R6-04 | Privacy-safe themed alarm before first unlock — four atmospheres | Plain submission rejected. A24 accepts the four corrected Dark starting templates, with matching corresponding-theme background/color roles and later visual polish. Generic Reminder/Alarm ringing, operational alarm time and Stop/Snooze 10 min use bundled global scenery/shared tokens from a safe source; no category/private content/credential read. Light remains required component support. |
 | R6-05 | Postpone shortcuts — Sky Light | Fixed review clock 9:30 PM, unfinished proposal Event 4–4:30 PM/Due 5 PM, stopped alert. Select 30 min: preview Today, Wed 7 Oct, 10 PM. Show actual Tomorrow 10 AM/2 PM/5 PM preferences and Custom option. |
 | R6-06 | Custom Postpone — Evening Dark | Same reminder/clock; custom Tomorrow, Thu 8 Oct, 9 AM selected. Event/Due still overdue; this 9 AM is a custom choice, not the default morning shortcut. |
 | R6-07 | Invalid custom Postpone — Sky Light | Same 9:30 PM clock; Today 8 PM selected, future-time validation visible and confirmation disabled. Preserve draft/underlying Overdue rather than hiding difficult content. |
@@ -328,8 +337,9 @@ canonical roles; annotate any generation drift rather than treating it as policy
   the uncertain result context; the proposed uncertain-state dismissal guard and
   acknowledged Blocked/Pending result footer require explicit refinement too.
 
-R6 images have been generated; seven are accepted with corrections, and the
-plain eighth is rejected. No app/native code, storage migration, build or installation
+Eleven R6 reference images are accepted with corrections: seven A22 workflow
+templates plus four A24 themed alarm starting templates. The original plain
+alarm remains rejected. No app/native code, storage migration, build or installation
 is performed by this visual review. P07 owns the app Postpone flow; P08 owns native controls
 and notifications, with P02/P04A/P09 appearance integration. This cross-screen
 refinement does not move those responsibilities or change backlog status.

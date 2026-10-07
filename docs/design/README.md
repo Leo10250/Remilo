@@ -18,11 +18,14 @@ bundles, acceptance hashes and handoffs remain unchanged; previews do not establ
 production tokens, implementation completion or accessibility/device acceptance.
 
 The [R6 native alarm/Postpone specification](r6-alarm-postpone-specification.md)
-now has [seven accepted templates with annotations](remilo-r6-alarm-postpone/gallery.html).
+now has [eleven accepted reference images with annotations](remilo-r6-alarm-postpone/gallery.html).
 [A22](approved-ui-r6-acceptance.json) accepts R6-01/02/03/05/06/07/08 and rejects
 the plain R6-04. All native alarm states use the four global atmospheres, including
 a privacy-safe themed presentation before first unlock. A23 requires softer Dark
-surfaces matching the existing themes. Four replacement Dark pixels await review;
+surfaces matching the existing themes. [A24](approved-ui-r6-themed-alarm-acceptance.json)
+accepts the four corrected Dark replacements as starting templates: backgrounds
+must use the corresponding existing theme's shared color roles, with exact detailed
+coloring and overall visual polish open for later refinement;
 the [updated fixture brief](r6-alarm-postpone-fixtures.json) preserves the state
 identities. P07 owns Postpone and P08 owns native controls/notifications. Technical
 storage/capture decisions, implementation and actual rendered acceptance remain

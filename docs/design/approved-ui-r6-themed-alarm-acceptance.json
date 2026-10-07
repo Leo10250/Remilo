@@ -1,0 +1,65 @@
+{
+  "record": "A24",
+  "date": "2026-10-07",
+  "owner": "Repository owner in this chat",
+  "type": "r6-themed-alarm-starting-template-acceptance-with-color-condition",
+  "statement": "Well, I am not too convinced on the shade of kind of black in the background of these, but I think in general it works, and I think I would just add a note saying that, you know, I want the background black to match the color of the corresponding theme. I know due to the image gen, the color may not be the most accurate, but, you know, generally I think this is a pretty good approach, a good start, and I will approve them with the note that the detail coloring and the overall design later may need to be changed, but it's approved.",
+  "attributedScope": "Accept the four corrected R6-04 Sunrise/Sky/Evening/Night Dark alarm templates as the design starting point; require matching corresponding existing theme background/color roles and retain later detailed coloring/visual polish flexibility.",
+  "acceptedIds": [
+    "R6-04-Sunrise-Dark",
+    "R6-04-Sky-Dark",
+    "R6-04-Evening-Dark",
+    "R6-04-Night-Dark"
+  ],
+  "priorAcceptance": "approved-ui-r6-acceptance.json",
+  "priorRecords": [
+    "A22",
+    "A23"
+  ],
+  "supersedes": "Pending replacement-pixel review in living documents only. The original plain R6-04 remains rejected; historical A22/A23 evidence and scope stay unchanged.",
+  "gallery": "remilo-r6-alarm-postpone/themed-alarms/gallery.html",
+  "combinedGallery": "remilo-r6-alarm-postpone/gallery.html",
+  "contract": "approved-ui-r3-r4.md",
+  "specification": "r6-alarm-postpone-specification.md",
+  "reviewNotes": "remilo-r6-alarm-postpone/themed-alarms/review-notes.json",
+  "conditions": [
+    "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+    "Retain one shared component hierarchy/geometry and native Stop/Snooze semantics; generic pre-first-unlock content remains private-safe.",
+    "These are accepted direction/layout references, not immutable final production artwork, exact sampled shades or final visual polish."
+  ],
+  "limits": [
+    "Four Dark replacement templates only; all four-atmosphere Light/Dark component support remains an inherited requirement, not approval of unrendered pixel combinations.",
+    "No P04/P07/P08 feature execution, exact persistence/capture/migration/default/time policy decision or milestone completion.",
+    "No actual RN/Compose, accessibility, Direct Boot, scheduling or physical-device verification implied."
+  ],
+  "artifacts": [
+    {
+      "id": "R6-04-Sunrise-Dark",
+      "file": "remilo-r6-alarm-postpone/themed-alarms/01-sunrise-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "ef283858acdba743163344993997a381d4e46a2992f5158fffda92fd0693673c"
+    },
+    {
+      "id": "R6-04-Sky-Dark",
+      "file": "remilo-r6-alarm-postpone/themed-alarms/02-sky-dark.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "a33061c1ca6c6187ae3a0e09115b479dc297874ca4d99b6479fb3a2e540052bc"
+    },
+    {
+      "id": "R6-04-Evening-Dark",
+      "file": "remilo-r6-alarm-postpone/themed-alarms/03-evening-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "aff2e9f80e6e008da5a11a750f3609fae5079786954458a2e4b820d628b7f6c8"
+    },
+    {
+      "id": "R6-04-Night-Dark",
+      "file": "remilo-r6-alarm-postpone/themed-alarms/04-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "5ac388158f27e4d4f7d30dc758f17c947ec988e8cda5343d1d3e00020471eafa"
+    }
+  ]
+}

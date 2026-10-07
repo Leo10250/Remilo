@@ -7,8 +7,10 @@ discrepancy corrections; use the combined twelve-screen gallery in that contract
 A22 accepts seven [R6 alarm/Postpone templates](design/remilo-r6-alarm-postpone/gallery.html)
 and rejects the plain pre-unlock alarm. All native full-screen states support the
 four global atmospheres with generic text before first unlock. A23 requires the
-existing softer Dark surface roles. New themed replacement pixels remain pending;
-safe native appearance storage/capture still needs technical refinement.
+existing softer Dark surface roles. A24 accepts the four corrected Dark replacements
+as starting templates with corresponding-theme background/color matching and
+later detailed coloring/visual polish flexibility. Safe native appearance
+storage/capture still needs technical refinement.
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System
 brightness apply across app pages and the native alarm experience; Android still

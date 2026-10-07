@@ -1,7 +1,7 @@
 {
-  "revision": "R6-specification-r2",
+  "revision": "R6-specification-r3",
   "date": "2026-10-07",
-  "status": "Seven R6 templates accepted as A22; plain R6-04 rejected; four themed Dark replacement pixels await review under A22/A23",
+  "status": "Eleven references accepted with corrections: seven A22 workflow templates plus four A24 themed Dark starting templates; original plain R6-04 rejected",
   "authority": "r6-alarm-postpone-specification.md plus accepted approved-ui-r3-r4.md color/geometry/keyboard rules",
   "viewportDp": {
     "width": 360,
@@ -17,7 +17,8 @@
     "Opaque reading surfaces, neutral structural glyphs, theme-colored real actions/focus",
     "Do not shrink controls/text to show every row; lower cards/rows may scroll",
     "Held fixture clocks are not automatic switching policy",
-    "Pre-first-unlock reminder content is generic; global scenery/colors come only from a reviewed minimal non-private native-safe appearance source"
+    "Pre-first-unlock reminder content is generic; global scenery/colors come only from a reviewed minimal non-private native-safe appearance source",
+    "A24: full-page base/canvas and elevated surfaces use corresponding existing theme semantic color roles; generated shades are approximate and later detailed coloring/visual polish remain open"
   ],
   "multiMembers": [
     {
@@ -132,14 +133,14 @@
       ],
       "helper": "Stop leaves the reminder unfinished.",
       "privateContent": false,
-      "visualDecision": "Plain submission rejected; replacement pixel review pending",
-      "requestedReplacementVariants": [
+      "visualDecision": "Four corrected Dark starting templates accepted as A24 with corresponding-theme background/color condition; original plain submission remains rejected",
+      "presentationSource": "Bundled scene/token catalog through proposed minimal allowlisted safe appearance descriptor; never private reminder content or synchronous CE reads",
+      "approvedDarkVariants": [
         "Sunrise Dark",
         "Sky Dark",
         "Evening Dark",
         "Night Dark"
-      ],
-      "presentationSource": "Bundled scene/token catalog through proposed minimal allowlisted safe appearance descriptor; never private reminder content or synchronous CE reads"
+      ]
     },
     {
       "id": "R6-05",
@@ -217,6 +218,6 @@
       "Dark"
     ],
     "geometry": "Shared component anatomy; scene and color role values vary",
-    "darkSurface": "Existing softer elevated surfaces; no independently harsher near-black alarm palette"
+    "darkSurface": "Shared existing theme base/background and elevated surface roles; exact generated black shades are not final tokens"
   }
 }

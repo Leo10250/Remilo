@@ -3,7 +3,7 @@
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18-A23 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A24 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -70,12 +70,14 @@ provenance and image hashes:
 These are synthetic raster previews, not actual RN/Compose render evidence.
 
 The [R6 visual specification](r6-alarm-postpone-specification.md) and
-[seven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
+[eleven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
 direction to native alarms and app Postpone. [A22](approved-ui-r6-acceptance.json)
 accepts R6-01/02/03/05/06/07/08 with the documented corrections, while rejecting
 the plain R6-04. Generic reminder text before first unlock remains required;
 the visual canvas still uses the global theme through a reviewed non-private,
-native-safe appearance source. New R6-04 theme pixels remain candidates.
+native-safe appearance source. [A24](approved-ui-r6-themed-alarm-acceptance.json)
+now accepts the four corrected R6-04 Dark atmosphere variants as starting templates,
+with a background/color condition and later visual-polish flexibility.
 
 A23 requires softer Dark surfaces matching the existing themes: charcoal,
 slate, plum and navy, rather than a harsher near-black alarm palette. The same
@@ -83,6 +85,15 @@ scene assets and role tokens apply across pages. Single/multiple/loading/error/
 privacy-safe native alarm anatomy and action semantics stay shared while the
 global atmosphere changes. Components support all four atmospheres in Light and
 Dark; every variation need not receive its own synthetic preview.
+
+**A24 background condition:** the full-page canvas and elevated reading surfaces
+must use the corresponding existing atmosphere/appearance's semantic color roles.
+Reuse shared background/surface/container values and intentional elevation levels;
+do not introduce an alarm-specific black or treat sampled generated shades as
+production tokens. The owner remains unconvinced by the exact illustrated black
+shades. Approval accepts the approach, with detailed coloring and overall visual
+polish open to later refinement. Apply this condition beside each accepted
+[themed alarm reference](remilo-r6-alarm-postpone/themed-alarms/gallery.html).
 
 [R6 per-image corrections](remilo-r6-alarm-postpone/review-notes.json) resolve
 remaining raster differences, including smaller-looking urgent controls,
