@@ -1,0 +1,47 @@
+{
+  "revision": "R6-specification-r1",
+  "date": "2026-10-07",
+  "status": "Proposed image brief; no images generated or accepted",
+  "authority": "r6-alarm-postpone-specification.md plus accepted approved-ui-r3-r4.md color/geometry/keyboard rules",
+  "viewportDp": { "width": 360, "height": 800 },
+  "locale": "en-US",
+  "deviceZone": "America/Los_Angeles",
+  "reviewDate": "2026-10-07",
+  "constraints": [
+    "One readable flat portrait screen per image; no device frame or comparison board",
+    "Global selected atmosphere; independent Light/Dark; no task-specific environment",
+    "Native alarm actions Stop/Snooze are separate from app Done/Postpone",
+    "Opaque reading surfaces, neutral structural glyphs, theme-colored real actions/focus",
+    "Do not shrink controls/text to show every row; lower cards/rows may scroll",
+    "Held fixture clocks are not automatic switching policy",
+    "Generic pre-unlock screen contains no private content or credential-derived scene"
+  ],
+  "multiMembers": [
+    { "id": "medicine", "title": "Take medicine", "alertTime": "9:00 PM", "event": "Today, 9:00–9:05 PM", "due": "At event start", "snoozeMinutes": 10 },
+    { "id": "dentist", "title": "Call dentist", "alertTime": "9:00 PM", "event": "Today, 9:30–9:45 PM", "due": "Today at 10:00 PM", "relationship": "Independent of event and alert", "snoozeMinutes": 10 },
+    { "id": "proposal", "title": "Send the revised proposal and confirm delivery dates", "alertTime": "9:00 PM", "event": "Today, 4:00–4:30 PM", "due": "Today at 5:00 PM", "workState": "Overdue · Not done", "snoozeMinutes": 10 }
+  ],
+  "postponeReminder": {
+    "title": "Send the revised proposal and confirm delivery dates",
+    "clock": "9:30 PM",
+    "event": "Today, Wed, 7 Oct · 4:00–4:30 PM",
+    "due": "Today at 5:00 PM",
+    "relationship": "Independent of event",
+    "workState": "Overdue · Not done",
+    "deliveryBeforeSelection": "Alarm stopped. Still unfinished.",
+    "list": "Work",
+    "helper": "Changes the next alert only. Event and due time stay unchanged.",
+    "relativeMinutes": [15, 30, 60],
+    "tomorrowShortcutTimes": ["10:00 AM", "2:00 PM", "5:00 PM"]
+  },
+  "screens": [
+    { "id": "R6-01", "screen": "Single native alarm", "atmosphere": "Sky", "appearance": "Light", "clock": "10:00 AM", "title": "Water plants", "alertTime": "10:00 AM", "event": "Today, 10:00–10:15 AM", "due": "At event start", "state": "Alarm ringing", "actions": ["Stop", "Snooze · 10 min"], "helper": "Stop leaves the reminder unfinished." },
+    { "id": "R6-02", "screen": "Multiple native alarms", "atmosphere": "Night", "appearance": "Dark", "clock": "9:00 PM", "membersFrom": "multiMembers", "state": "3 alarms ringing", "memberActions": ["Stop", "Snooze · 10 min"], "footerAction": "Stop all", "helper": "Leaves all reminders unfinished." },
+    { "id": "R6-03", "screen": "Multiple alarms with retained snapshot and refresh error", "atmosphere": "Evening", "appearance": "Dark", "clock": "9:00 PM", "membersFrom": "multiMembers", "state": "3 alarms ringing", "error": "Could not refresh alarm controls.", "retry": "Refresh controls", "footerAction": "Stop all", "note": "Keep each known member Stop/Snooze pair; error does not replace controls or reissue an action." },
+    { "id": "R6-04", "screen": "Generic native alarm before first unlock", "atmosphere": "Generic Classic/system", "appearance": "Dark", "clock": "10:00 AM", "title": "Reminder", "alertTime": "10:00 AM", "state": "Alarm ringing", "actions": ["Stop", "Snooze · 10 min"], "helper": "Stop leaves the reminder unfinished.", "privateContent": false },
+    { "id": "R6-05", "screen": "Postpone shortcuts", "atmosphere": "Sky", "appearance": "Light", "reminderFrom": "postponeReminder", "selected": "30 min", "nextAlert": "Today, Wed, 7 Oct at 10:00 PM", "confirm": "Postpone alert", "confirmed": false },
+    { "id": "R6-06", "screen": "Custom Postpone", "atmosphere": "Evening", "appearance": "Dark", "reminderFrom": "postponeReminder", "selected": "Custom", "date": "Tomorrow, Thu, 8 Oct", "time": "9:00 AM", "nextAlert": "Tomorrow, Thu, 8 Oct at 9:00 AM", "confirm": "Postpone alert", "confirmed": false },
+    { "id": "R6-07", "screen": "Invalid custom Postpone", "atmosphere": "Sky", "appearance": "Light", "reminderFrom": "postponeReminder", "selected": "Custom", "date": "Today, Wed, 7 Oct", "time": "8:00 PM", "error": "Choose a future time.", "confirm": "Postpone alert", "confirmEnabled": false, "confirmed": false },
+    { "id": "R6-08", "screen": "Acknowledged Postpone with blocked scheduling", "atmosphere": "Night", "appearance": "Dark", "reminderFrom": "postponeReminder", "nextAlert": "Tomorrow, Thu, 8 Oct at 9:00 AM", "outcome": "Saved; alert blocked. Check alarm permissions in Settings.", "action": "Check permissions", "footerAction": "Return to reminder", "confirmed": true, "schedulingState": "Blocked", "placement": "Retained sheet feedback with acknowledged next target; not an uncertain retry, another ready submit or Scheduled chip." }
+  ]
+}

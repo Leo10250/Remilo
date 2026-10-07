@@ -1,0 +1,33 @@
+{
+  "record": "A21",
+  "date": "2026-10-07",
+  "type": "design-refinement-authorization",
+  "owner": "Repository owner in this chat",
+  "statement": "Let's do it",
+  "context": "Response to the recommendation to refine native alarm and Postpone next, followed later by Lists/Repeats and Settings/Appearance.",
+  "authorizedWork": "Draft and document the native alarm/Postpone visual and UX specification using accepted R3/R4/R5, identify representative states and implementation gaps, and prepare a concrete image-review brief.",
+  "resultingDraftAccepted": false,
+  "imagesGenerated": false,
+  "implementationPerformed": false,
+  "limits": [
+    "No acceptance of newly drafted layouts, capture/fallback technical contract or future screenshots",
+    "No P07/P08 production execution, timing/action-policy change, schema/migration choice, build or installation",
+    "Task-specific scenery remains deferred; exact automatic scene boundaries/defaults remain unresolved",
+    "No actual component/accessibility/native/physical verification"
+  ],
+  "sourceOfTruth": "approved-ui-r3-r4.md",
+  "priorAcceptance": [
+    "approved-ui-r3-r4-acceptance.json",
+    "approved-ui-r5-acceptance.json"
+  ],
+  "proposedArtifacts": [
+    {
+      "file": "r6-alarm-postpone-specification.md",
+      "sha256": "88f98c41c22848a13045bd414b38ecb7d7fca4cc15e1fbb336b80af19141d7b1"
+    },
+    {
+      "file": "r6-alarm-postpone-fixtures.json",
+      "sha256": "671d2504ecd1cd2e570fc71ba4716bad5277ede0da8506b14b271d9288206840"
+    }
+  ]
+}

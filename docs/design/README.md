@@ -17,6 +17,12 @@ task-specific environments/manual chooser direction below. Historical submitted
 bundles, acceptance hashes and handoffs remain unchanged; previews do not establish
 production tokens, implementation completion or accessibility/device acceptance.
 
+The next refinement is the [R6 native alarm/Postpone draft](r6-alarm-postpone-specification.md),
+with an [eight-screen fixture brief](r6-alarm-postpone-fixtures.json). A21 authorizes
+drafting this workflow family; the proposal and future images still need review.
+P07 owns app Postpone and P08 owns native controls/notifications. See
+[the attributed refinement intake](r6-alarm-postpone-intake.json).
+
 ## Approval language
 
 - **Approved requirement:** a decision explicitly made by the owner and recorded

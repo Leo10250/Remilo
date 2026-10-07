@@ -1,19 +1,18 @@
 # P08 Native Presentation
 
-**7 October 2026 scope override:** read
-[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
-Use the same global atmosphere and independent brightness as the app for native
-alarm presentation. Task-specific Meadow and richer per-member environments are
-deferred; the conflicting policy and execution prompt below are retained earlier
-planning requiring refinement before implementation. Preserve native ownership,
-session/action/privacy guarantees and usable generic pre-unlock fallbacks. Android
-owns notification backgrounds, layout and expansion: use supported accent/icon
-roles, not an app-painted scenic heads-up banner or floating bubble. This visual
-direction does not approve actual native renders or any new capture/migration code.
+**7 October 2026 refinement:** read
+[the approved R3/R4/R5 contract](../../design/approved-ui-r3-r4.md) and
+[the proposed R6 alarm/Postpone specification](../../design/r6-alarm-postpone-specification.md).
+A21 authorizes this design refinement, not P08 implementation or acceptance of
+the new draft. Use the same global atmosphere and independent brightness as the
+app. Task-specific Meadow and richer per-member environments are deferred.
+The current plan supersedes those older P08 visual assumptions while preserving
+historical P01 approvals and all native action/session/privacy guarantees.
+Android owns notification layout and expansion; retain supported templates.
 
 ## 1. Objective and user-visible outcome
 
-Real native alarm controls use approved full environments, stay independently
+Real native alarm controls use the shared global atmosphere, stay independently
 actionable during collisions and refresh errors, and retain private generic fallbacks.
 
 ## 2. Current relevant repository state
@@ -28,9 +27,10 @@ See [baseline](../../evidence/2026-10-06-redesign-reassessment.md).
 
 ## 3. Scope
 
-Integrate P04 descriptors with P02 native tokens/assets and P03 notification icon.
-Render single and multiple alarms with an initially captured immutable ambient
-canvas and richer per-member art. Preserve action ownership/loading/refresh behavior
+Integrate global P04A descriptors with P02 native tokens/assets and P03 notification icon.
+Render single and multiple alarms using the selected global atmosphere, with a
+proposed session-stable captured canvas. Category badges may identify members when
+private data is available; do not add per-member scenic themes. Preserve action ownership/loading/refresh behavior
 and show current ringing delivery versus consequential event timing. Apply supported
 standard notification accent/monochrome identity with generic public presentation.
 Retain generic Classic/system pre-unlock and error fallback without React startup.
@@ -47,18 +47,20 @@ implemented in React and no second session/action authority.
 Hard prerequisites: P02, P04A.
 Integration dependencies: P03, P04B, P09, P10.
 
-Require P02 native catalog (including the P01 approved Meadow style) and P04A
+Require the accepted current P02 native/global visual catalog and P04A
 descriptor/privacy/fallback contract. P03 branding, P04B manual identities and
-P09/P10 automatic resolution are combined integration gates, not blockers for
-core capture/rendering with actual compatible fixed descriptors. Refine snapshot
-ownership/lifetime and mixed-member composition after inspecting actual engine.
+P09/P10 automatic resolution are recorded integration gates, not blockers for
+core capture/rendering with actual compatible global descriptors. Reconcile the
+deferred P04B/P10 task-specific scope during intake; historical dependency entries
+do not authorize it. Refine snapshot ownership/lifetime and multi-member
+composition after inspecting the actual engine and reviewing the R6 proposal.
 Read [architecture](../../architecture.md), [verification](../../verification.md),
 [approvals](../../design/approvals.md) and dependency [handoffs](../../handoffs/README.md).
 
 ## 6. Relevant product requirements
 
-The initial presented member determines ambient identity; a single Water plants
-alarm is full Meadow. Capture once per session, not on current-first-member refresh.
+Use the selected global atmosphere, including for Water plants. The proposed R6
+policy captures it once per session rather than deriving it from the first member.
 New arrivals/removals/unlock refresh never recolor that canvas. Each member retains
 Stop/Snooze; Stop all carries immutable session identity. Audio deadline/sound and
 initial notification actions stay unchanged. Before first unlock, generic Classic/
@@ -67,23 +69,27 @@ its generic canvas while unlocked member content may refresh safely.
 
 ## 7. Approved visual references
 
-Use accepted P01 actual native Water plants capture/style and P02 catalog.
-[Desired botanical reference](../../design/references/desired-water-plants-reference.png)
-guides composition. Platform notification examples must be identified as host/system
+Use the accepted R3 global scenes, R4/R5 component roles and current P02 catalog.
+The [R6 fixture brief](../../design/r6-alarm-postpone-fixtures.json) identifies the
+proposed single/multiple/generic/error review states. Historical P01 Meadow renders
+remain evidence of their bounded earlier prototype, not current task-specific
+visual authority. Platform notification examples must be identified as host/system
 examples, not claims that Android allows reference-board layouts.
 
 ## 8. Required design decisions
 
-Consume accepted P01 [alarm/component language](../../design/ui-composition.md) and
-[notification research/adaptations](../../design/p01-pattern-evaluation.md). Use standard
+Consume the accepted current [component/role contract](../../design/approved-ui-r3-r4.md),
+the R6 draft and compatible [notification research/adaptations](../../design/p01-pattern-evaluation.md). Use standard
 native templates and actual native actions; reference pastel notification mockups are
 not a promise of OEM/lock-screen/heads-up layout. No unexplained close/menu affordances.
 
-**Approved:** full Meadow/single identity policy, frozen initial canvas, independent
-member actions, generic pre-unlock/public privacy and supported standard notifications.
+**Approved:** one global atmosphere, independent brightness, independent native
+member actions, stable presentation across member changes, generic pre-unlock/public
+privacy and supported standard notifications. Native Stop is separate from Done.
 
-**Proposed:** exact initial-capture owner/lifetime, fallback when CE is unavailable,
-mixed-member art grouping, scroll/action placement and current/event labels.
+**Proposed in R6:** exact global initial-capture owner/lifetime, generic fallback,
+larger single/compact multi-member openings, measured action footers, 64 dp urgent
+controls, current alert versus Event/Due labels and retained-content error feedback.
 Approve contract before integration and actual single/multiple renders afterward.
 
 **Agent choices:** minimal snapshot/Compose implementation using existing session
@@ -113,7 +119,7 @@ actual Compose capture matrix, privacy/manifest review, evidence and
 
 ## 11. Visual acceptance criteria
 
-Match P01 environmental quality, not a standalone sprig on old geometry. Review
+Match the approved R3 environmental family and R4/R5 role/component policy. Review
 single/multiple/generic/loading/error, light/dark and 200% long English/Chinese at
 360x800/larger/expanded. Actions are >=48 dp, scroll-reachable and distinguish
 silencing from completion. Measure composited contrast using P02 thresholds.
@@ -153,13 +159,16 @@ handoff, then stop without installation or appearance work in audio startup.
 ```text
 Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute P08 Native Presentation only after authorization. Read AGENTS.md, core docs,
-redesign specification/index, docs/plans/redesign/p08-native-presentation.md, approval ledger and accepted
-P02/P04A capabilities and P01 style approval, plus available P03/P04B/P09/P10
+redesign specification/index, docs/plans/redesign/p08-native-presentation.md,
+docs/design/approved-ui-r3-r4.md, the R6 alarm/Postpone draft and fixture brief,
+approval ledger and accepted P02/P04A capabilities, plus available P03/P04B/P09/P10
 integrations. Inspect actual session/Activity/Compose/notification state; stop on
 missing hard approvals, not unfinished unrelated integrations. Record gates and
 obtain my approval of the capture/fallback contract.
-Integrate approved environmental art and native descriptors; full Meadow Water plants
-uses a canvas captured once per session and unchanged by arrivals/removals/refresh.
+Integrate the approved global environmental art and reviewed native descriptor/capture
+contract. Water plants uses the same selected scene as the app, not Meadow.
+Preserve the session canvas across arrivals/removals/refresh; do not implement
+deferred per-reminder scenery or infer new automatic period/default policies.
 Preserve independent Stop/Snooze, stale guards, initial notifications, immediate
 promotion, five-minute audio deadline and generic pre-unlock/public privacy.
 Never initialize React/classifier on delivery. Verify actual Compose single/multiple/

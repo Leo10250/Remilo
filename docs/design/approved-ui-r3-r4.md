@@ -68,6 +68,11 @@ provenance and image hashes:
 
 These are synthetic raster previews, not actual RN/Compose render evidence.
 
+The [R6 alarm/Postpone draft](r6-alarm-postpone-specification.md) is the next
+workflow refinement under A21. It proposes native action layout and the app
+Postpone sheet while inheriting this accepted contract. It is awaiting review;
+it does not replace these accepted references or approve new rendered pixels.
+
 ## Color roles shared by every screen
 
 Use one shared role mapping in RN and native components. Appearance changes the

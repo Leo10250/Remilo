@@ -65,8 +65,11 @@ distinct. Reopen/Restore cannot replay elapsed alerts; stale actions stay fenced
 Inherit P01 isolated-screen composition rules and P02 catalog with
 [alarm/detail atmosphere references](../../design/references/time-of-day-and-alarms.png).
 Use actual data hierarchy, not a literal alarm reference layout for a detail page.
-The R4 ordinary and overdue/postponed templates are the current visual references;
-apply their recorded corrections when building actual components.
+The R4/R5 ordinary and overdue/postponed templates are the current visual references;
+apply their recorded corrections when building actual components. The
+[R6 alarm/Postpone draft](../../design/r6-alarm-postpone-specification.md) proposes
+the app Postpone sheet/validation/result flow for review under A21; it is not yet
+an accepted new render or P07 execution authorization.
 
 ## 8. Required design decisions
 
