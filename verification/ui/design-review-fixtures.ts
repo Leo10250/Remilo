@@ -5,12 +5,13 @@ import { civilAt } from '../../src/domain/time';
 
 export const reviewNowMs = Date.parse('2026-10-06T08:00:00-07:00');
 export const reviewZone = 'America/Los_Angeles';
-export type ReviewScenario = 'populated' | 'overdue' | 'completed' | 'empty' | 'loading' | 'error' | 'long-titles' | 'all-day' | 'independent' | 'multilingual';
+export type ReviewScenario = 'populated' | 'overdue' | 'completed' | 'empty' | 'loading' | 'error' | 'long-titles' | 'all-day' | 'independent' | 'multilingual' | 'p01-long-english' | 'p01-long-chinese';
 export const reviewScenarios: readonly { id: ReviewScenario; name: string }[] = [
   { id: 'populated', name: 'Everyday' }, { id: 'overdue', name: 'Delivery outcomes' }, { id: 'completed', name: 'Completed' },
   { id: 'long-titles', name: 'Long titles' }, { id: 'multilingual', name: 'English and Chinese' },
   { id: 'all-day', name: 'All-day' }, { id: 'independent', name: 'Independent timing' },
   { id: 'empty', name: 'Empty' }, { id: 'loading', name: 'Loading' }, { id: 'error', name: 'Refresh error' },
+  { id: 'p01-long-english', name: 'P01 · Long English' }, { id: 'p01-long-chinese', name: 'P01 · Long Chinese' },
 ];
 
 const minuteMs = 60_000;
@@ -112,6 +113,8 @@ const descriptors: Readonly<Record<string, ReviewDescriptor>> = {
 const everyday = [water, medicine, lunch, focus, read, groceries];
 const scenarios: Readonly<Record<ReviewScenario, readonly Occurrence[]>> = {
   populated: everyday,
+  'p01-long-english': everyday.map((item) => item.id === 'focus' ? { ...item, title: longEnglish.title } : item),
+  'p01-long-chinese': everyday.map((item) => item.id === 'focus' ? { ...item, title: longChinese.title } : item),
   overdue: [stopped, postponed, timedOut, ended, blocked],
   completed: [completed, skipped],
   empty: [], loading: [], error: everyday,

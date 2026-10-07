@@ -1,0 +1,391 @@
+{
+  "artifactId": "P01-artwork-r1",
+  "date": "2026-10-06",
+  "role": "Four standalone sources submitted at the artwork-only checkpoint",
+  "ownerAccepted": false,
+  "source": {
+    "commit": "10cb67c8e5cd251bb071a5b020b659e870a0eed7",
+    "branch": "theme-update",
+    "locallyRecordedTrackingCommit": "10cb67c8e5cd251bb071a5b020b659e870a0eed7",
+    "startingCheckoutClean": true,
+    "networkFetch": false
+  },
+  "approvedDirection": {
+    "submission": {
+      "path": "docs/design/p01-style-r2.json",
+      "sha256": "cbc80739c4f01530db6e519b824a8432a26197acd236ea384cd407b1707e61e9"
+    },
+    "bundleSha256": "32f913e8c46a03210dc0372527e86c102f446f4d50cf0cfe822f74c67d647728",
+    "acceptance": {
+      "path": "docs/design/p01-style-r2-acceptance.json",
+      "sha256": "de18c675c53b1d1bd93e54971faec0f20d8aea4552001f1c8f9989c97de060da"
+    },
+    "approvalRecord": "A12",
+    "scope": "Visual direction and bounded artwork exploration only; no final layouts/tokens/UX/art/prototypes"
+  },
+  "generationRequests": {
+    "path": "docs/design/artwork/p01-artwork-r1/generation-requests.json",
+    "sha256": "634f5e9988bd7fea31fc3606c00a16a1e04dbbeb4923b6abe41ba55d7cf8f2a5"
+  },
+  "candidates": [
+    {
+      "id": "M1",
+      "source": {
+        "path": "docs/design/artwork/p01-artwork-r1/meadow-m1-canopy.png",
+        "sha256": "300467ae10d40efcf7e7a61c5e53660b424d4e1c7814facea7d02f073d9021eb"
+      },
+      "generatedOriginal": {
+        "path": "C:/Users/Leo/.codex/generated_images/01a1124e-e68d-7b01-828d-041e49bbef96/exec-797d34fe-2899-4251-8061-81b13c8f4002.png",
+        "sha256": "300467ae10d40efcf7e7a61c5e53660b424d4e1c7814facea7d02f073d9021eb",
+        "copyByteIdentical": true
+      },
+      "prompt": {
+        "path": "docs/design/artwork/p01-artwork-r1/meadow-m1-canopy-prompt.txt",
+        "sha256": "bfa62908d1277f29767320f2732925753e20b0252f2df54477ed22e4a563d419"
+      },
+      "exactToolPromptSha256": "a3f45d333a1cec696b7a6a722fd760f314868aae08a7c852eacb25f1ea452009",
+      "tool": "image_gen.imagegen",
+      "toolMode": "built-in",
+      "modelVersion": "Not exposed by built-in tool",
+      "transparentBackgroundRequested": true,
+      "referenceInputs": [
+        {
+          "path": "docs/design/references/desired-water-plants-reference.png",
+          "sha256": "92ea34296b03f36ca8b812eb7f8cd3279e398c4d4095e551bc1f6d18b90d761a"
+        },
+        {
+          "path": "docs/design/references/time-of-day-and-alarms.png",
+          "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
+        },
+        {
+          "path": "docs/design/references/butter-periwinkle-sage.png",
+          "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46"
+        }
+      ],
+      "format": "png",
+      "width": 1024,
+      "height": 1536,
+      "channels": 4,
+      "hasAlpha": true,
+      "alpha": {
+        "transparentFraction": 0.5847873687744141,
+        "partialFraction": 0.41521263122558594,
+        "opaqueFraction": 0,
+        "upperHalf": {
+          "normalizedRegion": [
+            0,
+            0,
+            1,
+            0.5
+          ],
+          "meanAlpha": 0.726609,
+          "nonzeroFraction": 0.7662
+        },
+        "centralLowerThird": {
+          "normalizedRegion": [
+            0.16,
+            0.6666666666666666,
+            0.84,
+            1
+          ],
+          "meanAlpha": 0.000001,
+          "nonzeroFraction": 0.000129
+        }
+      },
+      "cropAnchor": [
+        0.5,
+        0
+      ],
+      "ownerAccepted": false
+    },
+    {
+      "id": "M2",
+      "source": {
+        "path": "docs/design/artwork/p01-artwork-r1/meadow-m2-garden.png",
+        "sha256": "b7c50d557e6f74cf51e813d57c8ffdf17bb10138e5fe94e3240eb6f26f2499c5"
+      },
+      "generatedOriginal": {
+        "path": "C:/Users/Leo/.codex/generated_images/01a1124e-e68d-7b01-828d-041e49bbef96/exec-b49e6cc3-873a-4339-a14b-2daca0b7eb6e.png",
+        "sha256": "b7c50d557e6f74cf51e813d57c8ffdf17bb10138e5fe94e3240eb6f26f2499c5",
+        "copyByteIdentical": true
+      },
+      "prompt": {
+        "path": "docs/design/artwork/p01-artwork-r1/meadow-m2-garden-prompt.txt",
+        "sha256": "0e18943bd6f92f091fe7c230ba28c53fbcb40a5384896abf15b7c95bd10c52af"
+      },
+      "exactToolPromptSha256": "0cddde28acc5f28fdc2c6c830f9979cbf5685115da25632183bc62aedf35f7bd",
+      "tool": "image_gen.imagegen",
+      "toolMode": "built-in",
+      "modelVersion": "Not exposed by built-in tool",
+      "transparentBackgroundRequested": true,
+      "referenceInputs": [
+        {
+          "path": "docs/design/references/desired-water-plants-reference.png",
+          "sha256": "92ea34296b03f36ca8b812eb7f8cd3279e398c4d4095e551bc1f6d18b90d761a"
+        },
+        {
+          "path": "docs/design/references/time-of-day-and-alarms.png",
+          "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
+        },
+        {
+          "path": "docs/design/references/butter-periwinkle-sage.png",
+          "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46"
+        }
+      ],
+      "format": "png",
+      "width": 1024,
+      "height": 1536,
+      "channels": 4,
+      "hasAlpha": true,
+      "alpha": {
+        "transparentFraction": 0.6106885274251302,
+        "partialFraction": 0.3893114725748698,
+        "opaqueFraction": 0,
+        "upperHalf": {
+          "normalizedRegion": [
+            0,
+            0,
+            1,
+            0.5
+          ],
+          "meanAlpha": 0.690468,
+          "nonzeroFraction": 0.728195
+        },
+        "centralLowerThird": {
+          "normalizedRegion": [
+            0.16,
+            0.6666666666666666,
+            0.84,
+            1
+          ],
+          "meanAlpha": 0,
+          "nonzeroFraction": 0.00009
+        }
+      },
+      "cropAnchor": [
+        0.5,
+        0
+      ],
+      "ownerAccepted": false
+    },
+    {
+      "id": "S1",
+      "source": {
+        "path": "docs/design/artwork/p01-artwork-r1/sunrise-s1-horizon.png",
+        "sha256": "bc91beb4bc6f1bf78285d1fe08ad495fa8cfe60f0b4a848755a5b757adc26e3b"
+      },
+      "generatedOriginal": {
+        "path": "C:/Users/Leo/.codex/generated_images/01a1124e-e68d-7b01-828d-041e49bbef96/exec-14617d1c-e5a9-4da6-905f-19fb02b52c4e.png",
+        "sha256": "bc91beb4bc6f1bf78285d1fe08ad495fa8cfe60f0b4a848755a5b757adc26e3b",
+        "copyByteIdentical": true
+      },
+      "prompt": {
+        "path": "docs/design/artwork/p01-artwork-r1/sunrise-s1-horizon-prompt.txt",
+        "sha256": "61ee51fc05ff00acb40a0341cb32c02d896673555a3d9bf955c3f5492bc17d74"
+      },
+      "exactToolPromptSha256": "879f39ba9560f96a73a3738c9c6c5fae4ce9dac2d8a11e7b9cd23df9708188ac",
+      "tool": "image_gen.imagegen",
+      "toolMode": "built-in",
+      "modelVersion": "Not exposed by built-in tool",
+      "transparentBackgroundRequested": true,
+      "referenceInputs": [
+        {
+          "path": "docs/design/references/time-of-day-and-alarms.png",
+          "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
+        },
+        {
+          "path": "docs/design/references/butter-periwinkle-sage.png",
+          "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46"
+        }
+      ],
+      "format": "png",
+      "width": 1536,
+      "height": 1024,
+      "channels": 4,
+      "hasAlpha": true,
+      "alpha": {
+        "transparentFraction": 0.5385532379150391,
+        "partialFraction": 0.46144676208496094,
+        "opaqueFraction": 0,
+        "upperHalf": {
+          "normalizedRegion": [
+            0,
+            0,
+            1,
+            0.5
+          ],
+          "meanAlpha": 0.006129,
+          "nonzeroFraction": 0.023057
+        },
+        "centralLowerThird": {
+          "normalizedRegion": [
+            0.16,
+            0.6666666666666666,
+            0.84,
+            1
+          ],
+          "meanAlpha": 0.983004,
+          "nonzeroFraction": 1
+        }
+      },
+      "cropAnchor": [
+        0.5,
+        1
+      ],
+      "ownerAccepted": false
+    },
+    {
+      "id": "S2",
+      "source": {
+        "path": "docs/design/artwork/p01-artwork-r1/sunrise-s2-edge-garden.png",
+        "sha256": "3c08b88eb60c685306c01d32b3da759ee11be6b91fdff03015fdebf6d68dee65"
+      },
+      "generatedOriginal": {
+        "path": "C:/Users/Leo/.codex/generated_images/01a1124e-e68d-7b01-828d-041e49bbef96/exec-51156bd6-792c-4beb-b021-9c803c299ac9.png",
+        "sha256": "3c08b88eb60c685306c01d32b3da759ee11be6b91fdff03015fdebf6d68dee65",
+        "copyByteIdentical": true
+      },
+      "prompt": {
+        "path": "docs/design/artwork/p01-artwork-r1/sunrise-s2-edge-garden-prompt.txt",
+        "sha256": "af0fffe82c060fc6a1102545b85bd568474ffe189ba3ef0432a28e7f07e56369"
+      },
+      "exactToolPromptSha256": "8f3cb4abd550cf162fd4a0e6dd6bd9a1c72625ba35f824ef5f5e1785714b57aa",
+      "tool": "image_gen.imagegen",
+      "toolMode": "built-in",
+      "modelVersion": "Not exposed by built-in tool",
+      "transparentBackgroundRequested": true,
+      "referenceInputs": [
+        {
+          "path": "docs/design/references/time-of-day-and-alarms.png",
+          "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
+        },
+        {
+          "path": "docs/design/references/butter-periwinkle-sage.png",
+          "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46"
+        }
+      ],
+      "format": "png",
+      "width": 1536,
+      "height": 1024,
+      "channels": 4,
+      "hasAlpha": true,
+      "alpha": {
+        "transparentFraction": 0.6199690500895182,
+        "partialFraction": 0.38003094991048175,
+        "opaqueFraction": 0,
+        "upperHalf": {
+          "normalizedRegion": [
+            0,
+            0,
+            1,
+            0.5
+          ],
+          "meanAlpha": 0,
+          "nonzeroFraction": 0.000086
+        },
+        "centralLowerThird": {
+          "normalizedRegion": [
+            0.16,
+            0.6666666666666666,
+            0.84,
+            1
+          ],
+          "meanAlpha": 0.981006,
+          "nonzeroFraction": 0.993598
+        }
+      },
+      "cropAnchor": [
+        0.5,
+        1
+      ],
+      "ownerAccepted": false
+    }
+  ],
+  "candidateSetSha256": "e78944b775e1615aeb93af5b993d43db6ffb451cda09a27e96ddea79f71483ec",
+  "reviewBoard": {
+    "path": "docs/design/p01-artwork-review-r1.html",
+    "sha256": "86a0c3713c6a4b44c3cec94e508f36a1879477c02bc817f5a562b468d9ef534b"
+  },
+  "assessment": {
+    "path": "docs/design/artwork/p01-artwork-r1/README.md",
+    "sha256": "1d9f332c1e0a2d1fa1b28b5bae17a7019496f54bc42daed1758b7f2748ce98be"
+  },
+  "evidence": {
+    "path": "docs/evidence/2026-10-06-p01-artwork.md",
+    "sha256": "a9554cc68b93f0d0118900c203aaae2cae60afa2acac27f55706f8584cf90f14"
+  },
+  "screenshots": [
+    {
+      "path": "docs/evidence/redesign-p01/artwork-r1-full-board.png",
+      "sha256": "ce36a7fc3af4c42a9f5c8a35b26bab520aa92b7f1c5982f1a5ed83017bf64e1a",
+      "width": 1264,
+      "height": 3830
+    },
+    {
+      "path": "docs/evidence/redesign-p01/artwork-r1-meadow-comparison.png",
+      "sha256": "05e688a3a7e1e668fb8da2b4898466f9bf9dc2111fd06653d9aa88d15f51a25f",
+      "width": 1265,
+      "height": 988
+    },
+    {
+      "path": "docs/evidence/redesign-p01/artwork-r1-sunrise-comparison.png",
+      "sha256": "1f331d73e0db9812c0c8b228ca112d98ad76199c74a91985efbc0c85f6cc7dad",
+      "width": 1265,
+      "height": 988
+    }
+  ],
+  "boardRenderer": "Codex in-app browser",
+  "presentationCanvases": {
+    "Meadow": "#F5FAF6",
+    "Sunrise": "#FFFBF2",
+    "approvedTokens": false
+  },
+  "boardChecks": {
+    "desktop": {
+      "viewportWidth": 1280,
+      "viewportHeight": 1000,
+      "clientWidth": 1265,
+      "scrollWidth": 1265,
+      "loadedImageElements": 9
+    },
+    "narrow": {
+      "viewportWidth": 360,
+      "viewportHeight": 800,
+      "clientWidth": 345,
+      "scrollWidth": 345,
+      "loadedImageElements": 9
+    }
+  },
+  "visualAssessment": "Qualitative reference/source/canvas inspection; no pixel similarity score, actual UI capture or owner artwork acceptance",
+  "recommendation": {
+    "Meadow": "M1",
+    "Sunrise": "S1",
+    "ownerSelection": false
+  },
+  "remainingGates": [
+    "Explicit selected-artwork IDs/hashes/conditions approval before RN/Compose integration",
+    "Actual responsive/dark/large-text/accessibility UI comparison and owner acceptance before P01 completion"
+  ],
+  "scope": {
+    "candidateCount": 4,
+    "extraCandidates": 0,
+    "darkVariants": 0,
+    "runtimeExports": 0,
+    "applicationCodeChanged": false,
+    "nativeResourcesChanged": false,
+    "productionChanges": false,
+    "p02Started": false,
+    "installed": false
+  },
+  "verification": {
+    "r2ArtifactHashesMatched": 6,
+    "preservedHistoricalAndRuntimeHashesMatched": 166,
+    "copiesByteIdentical": 4,
+    "distinctSourceHashes": 4,
+    "pngAlphaChecks": "passed",
+    "gitWhitespace": "passed",
+    "applicationDiffEmpty": true,
+    "localLinksChecked": 183,
+    "localLinks": "passed"
+  }
+}

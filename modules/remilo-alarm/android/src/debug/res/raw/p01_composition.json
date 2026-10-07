@@ -1,0 +1,20 @@
+{
+  "revision": "P01-render-r1",
+  "clock": "2026-10-06T08:00:00-07:00",
+  "zone": "America/Los_Angeles",
+  "locale": "en-US",
+  "scenes": {
+    "sunrise": { "candidate": "S1", "anchor": [0.5, 1], "asset": "sunrise-s1.png", "maxContentWidth": 560 },
+    "meadow": { "candidate": "M1", "anchor": [0.5, 0], "asset": "meadow-m1.png", "maxContentWidth": 480 }
+  },
+  "colors": {
+    "sunrise": {
+      "light": { "background": "#FFFBF2", "surface": "#FFFFFF", "soft": "#FFF0CF", "ink": "#19223B", "muted": "#555B66", "accent": "#985600", "accentInk": "#FFFFFF", "border": "#E9DFC9", "outline": "#79715E", "danger": "#AC2D25", "warning": "#805000", "success": "#256442" },
+      "dark": { "background": "#1C1913", "surface": "#2B261D", "soft": "#3C3220", "ink": "#FFF7E8", "muted": "#D0C5AE", "accent": "#F3C16A", "accentInk": "#302000", "border": "#554A36", "outline": "#B8A888", "danger": "#FFB4AB", "warning": "#F3CC83", "success": "#98DBAF" }
+    },
+    "meadow": {
+      "light": { "background": "#F2FAF1", "surface": "#FFFFFF", "soft": "#E5F1E4", "ink": "#192D27", "muted": "#4C6055", "accent": "#28674A", "accentInk": "#FFFFFF", "border": "#CFDECF", "outline": "#577260", "danger": "#AC2D25", "warning": "#805000", "success": "#28674A" },
+      "dark": { "background": "#14231C", "surface": "#20342A", "soft": "#2D4637", "ink": "#F1FAF1", "muted": "#BFD1C2", "accent": "#A4DCB8", "accentInk": "#123021", "border": "#4E6A55", "outline": "#95B79E", "danger": "#FFB4AB", "warning": "#F3CC83", "success": "#A4DCB8" }
+    }
+  }
+}

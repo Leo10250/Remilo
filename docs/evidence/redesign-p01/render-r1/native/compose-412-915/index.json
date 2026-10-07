@@ -1,0 +1,2072 @@
+{
+  "renderer": "Robolectric 4.17 \/ actual AlarmControlsScreen",
+  "api": 35,
+  "density": 1,
+  "deviceEvidence": false,
+  "snapshots": [
+    {
+      "file": "single-light-1x-top.png",
+      "background": "single-light-1x-top-background.png",
+      "scenario": "Single",
+      "dark": false,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 127,
+          "top": 373,
+          "width": 158,
+          "height": 36,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 417,
+          "width": 149,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 445,
+          "width": 119,
+          "height": 40,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 493,
+          "width": 102,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 565,
+          "width": 37,
+          "height": 26,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 639,
+          "width": 120,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 703,
+          "width": 232,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-light-1x-controls.png",
+      "background": "single-light-1x-controls-background.png",
+      "scenario": "Single",
+      "dark": false,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 127,
+          "top": 373,
+          "width": 158,
+          "height": 36,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 417,
+          "width": 149,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 445,
+          "width": 119,
+          "height": 40,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 493,
+          "width": 102,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 565,
+          "width": 37,
+          "height": 26,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 639,
+          "width": 120,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 703,
+          "width": 232,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-light-1x-top.png",
+      "background": "longtitle-light-1x-top-background.png",
+      "scenario": "LongTitle",
+      "dark": false,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 144,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 525,
+          "width": 149,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 553,
+          "width": 119,
+          "height": 40,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 601,
+          "width": 102,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 673,
+          "width": 37,
+          "height": 26,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 747,
+          "width": 120,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 811,
+          "width": 232,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-light-1x-controls.png",
+      "background": "longtitle-light-1x-controls-background.png",
+      "scenario": "LongTitle",
+      "dark": false,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 144,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 525,
+          "width": 149,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 553,
+          "width": 119,
+          "height": 40,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 601,
+          "width": 102,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 673,
+          "width": 37,
+          "height": 26,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 747,
+          "width": 120,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 811,
+          "width": 232,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-light-1x-top.png",
+      "background": "chinesetitle-light-1x-top-background.png",
+      "scenario": "ChineseTitle",
+      "dark": false,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 114,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 495,
+          "width": 149,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 523,
+          "width": 119,
+          "height": 40,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 571,
+          "width": 102,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 643,
+          "width": 37,
+          "height": 26,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 717,
+          "width": 120,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 781,
+          "width": 232,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-light-1x-controls.png",
+      "background": "chinesetitle-light-1x-controls-background.png",
+      "scenario": "ChineseTitle",
+      "dark": false,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 114,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 495,
+          "width": 149,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 523,
+          "width": 119,
+          "height": 40,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 571,
+          "width": 102,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 643,
+          "width": 37,
+          "height": 26,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 717,
+          "width": 120,
+          "height": 24,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 781,
+          "width": 232,
+          "height": 20,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-light-2x-top.png",
+      "background": "single-light-2x-top-background.png",
+      "scenario": "Single",
+      "dark": false,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 102,
+          "top": 208,
+          "width": 209,
+          "height": 49,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 265,
+          "width": 277,
+          "height": 38,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 311,
+          "width": 144,
+          "height": 50,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 369,
+          "width": 179,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 459,
+          "width": 62,
+          "height": 44,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 551,
+          "width": 209,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 633,
+          "width": 364,
+          "height": 76,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-light-2x-controls.png",
+      "background": "single-light-2x-controls-background.png",
+      "scenario": "Single",
+      "dark": false,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 102,
+          "top": 208,
+          "width": 209,
+          "height": 49,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 265,
+          "width": 277,
+          "height": 38,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 311,
+          "width": 144,
+          "height": 50,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 369,
+          "width": 179,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 459,
+          "width": 62,
+          "height": 44,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 551,
+          "width": 209,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 633,
+          "width": 364,
+          "height": 76,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-light-2x-top.png",
+      "background": "longtitle-light-2x-top-background.png",
+      "scenario": "LongTitle",
+      "dark": false,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 245,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 461,
+          "width": 277,
+          "height": 38,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 507,
+          "width": 144,
+          "height": 50,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 565,
+          "width": 179,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 655,
+          "width": 62,
+          "height": 44,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 747,
+          "width": 209,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 829,
+          "width": 364,
+          "height": 76,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-light-2x-controls.png",
+      "background": "longtitle-light-2x-controls-background.png",
+      "scenario": "LongTitle",
+      "dark": false,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 245,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 461,
+          "width": 277,
+          "height": 38,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 507,
+          "width": 144,
+          "height": 50,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 565,
+          "width": 179,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 655,
+          "width": 62,
+          "height": 44,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 747,
+          "width": 209,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 829,
+          "width": 364,
+          "height": 76,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-light-2x-top.png",
+      "background": "chinesetitle-light-2x-top-background.png",
+      "scenario": "ChineseTitle",
+      "dark": false,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 202,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 418,
+          "width": 277,
+          "height": 38,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 464,
+          "width": 144,
+          "height": 50,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 522,
+          "width": 179,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 612,
+          "width": 62,
+          "height": 44,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 704,
+          "width": 209,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 786,
+          "width": 364,
+          "height": 76,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-light-2x-controls.png",
+      "background": "chinesetitle-light-2x-controls-background.png",
+      "scenario": "ChineseTitle",
+      "dark": false,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -15127257,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 202,
+          "ink": -15127257,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 418,
+          "width": 277,
+          "height": 38,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 464,
+          "width": 144,
+          "height": 50,
+          "ink": -14129334,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 522,
+          "width": 179,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 612,
+          "width": 62,
+          "height": 44,
+          "ink": -1,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 704,
+          "width": 209,
+          "height": 42,
+          "ink": -14129334,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 786,
+          "width": 364,
+          "height": 76,
+          "ink": -11771819,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-dark-1x-top.png",
+      "background": "single-dark-1x-top-background.png",
+      "scenario": "Single",
+      "dark": true,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 127,
+          "top": 373,
+          "width": 158,
+          "height": 36,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 417,
+          "width": 149,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 445,
+          "width": 119,
+          "height": 40,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 493,
+          "width": 102,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 565,
+          "width": 37,
+          "height": 26,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 639,
+          "width": 120,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 703,
+          "width": 232,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-dark-1x-controls.png",
+      "background": "single-dark-1x-controls-background.png",
+      "scenario": "Single",
+      "dark": true,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 127,
+          "top": 373,
+          "width": 158,
+          "height": 36,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 417,
+          "width": 149,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 445,
+          "width": 119,
+          "height": 40,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 493,
+          "width": 102,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 565,
+          "width": 37,
+          "height": 26,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 639,
+          "width": 120,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 703,
+          "width": 232,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-dark-1x-top.png",
+      "background": "longtitle-dark-1x-top-background.png",
+      "scenario": "LongTitle",
+      "dark": true,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 144,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 525,
+          "width": 149,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 553,
+          "width": 119,
+          "height": 40,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 601,
+          "width": 102,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 673,
+          "width": 37,
+          "height": 26,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 747,
+          "width": 120,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 811,
+          "width": 232,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-dark-1x-controls.png",
+      "background": "longtitle-dark-1x-controls-background.png",
+      "scenario": "LongTitle",
+      "dark": true,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 144,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 525,
+          "width": 149,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 553,
+          "width": 119,
+          "height": 40,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 601,
+          "width": 102,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 673,
+          "width": 37,
+          "height": 26,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 747,
+          "width": 120,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 811,
+          "width": 232,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-dark-1x-top.png",
+      "background": "chinesetitle-dark-1x-top-background.png",
+      "scenario": "ChineseTitle",
+      "dark": true,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 114,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 495,
+          "width": 149,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 523,
+          "width": 119,
+          "height": 40,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 571,
+          "width": 102,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 643,
+          "width": 37,
+          "height": 26,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 717,
+          "width": 120,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 781,
+          "width": 232,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-dark-1x-controls.png",
+      "background": "chinesetitle-dark-1x-controls-background.png",
+      "scenario": "ChineseTitle",
+      "dark": true,
+      "fontScale": 1,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 24,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 373,
+          "width": 364,
+          "height": 114,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 132,
+          "top": 495,
+          "width": 149,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 147,
+          "top": 523,
+          "width": 119,
+          "height": 40,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 155,
+          "top": 571,
+          "width": 102,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 188,
+          "top": 643,
+          "width": 37,
+          "height": 26,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 146,
+          "top": 717,
+          "width": 120,
+          "height": 24,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 90,
+          "top": 781,
+          "width": 232,
+          "height": 20,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-dark-2x-top.png",
+      "background": "single-dark-2x-top-background.png",
+      "scenario": "Single",
+      "dark": true,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 102,
+          "top": 208,
+          "width": 209,
+          "height": 49,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 265,
+          "width": 277,
+          "height": 38,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 311,
+          "width": 144,
+          "height": 50,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 369,
+          "width": 179,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 459,
+          "width": 62,
+          "height": 44,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 551,
+          "width": 209,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 633,
+          "width": 364,
+          "height": 76,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "single-dark-2x-controls.png",
+      "background": "single-dark-2x-controls-background.png",
+      "scenario": "Single",
+      "dark": true,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water plants",
+          "left": 102,
+          "top": 208,
+          "width": 209,
+          "height": 49,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 265,
+          "width": 277,
+          "height": 38,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 311,
+          "width": 144,
+          "height": 50,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 369,
+          "width": 179,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 459,
+          "width": 62,
+          "height": 44,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 551,
+          "width": 209,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 633,
+          "width": 364,
+          "height": 76,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-dark-2x-top.png",
+      "background": "longtitle-dark-2x-top-background.png",
+      "scenario": "LongTitle",
+      "dark": true,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 245,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 461,
+          "width": 277,
+          "height": 38,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 507,
+          "width": 144,
+          "height": 50,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 565,
+          "width": 179,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 655,
+          "width": 62,
+          "height": 44,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 747,
+          "width": 209,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 829,
+          "width": 364,
+          "height": 76,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "longtitle-dark-2x-controls.png",
+      "background": "longtitle-dark-2x-controls-background.png",
+      "scenario": "LongTitle",
+      "dark": true,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Water the balcony plants and check the new seedlings before leaving for the afternoon",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 245,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 461,
+          "width": 277,
+          "height": 38,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 507,
+          "width": 144,
+          "height": 50,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 565,
+          "width": 179,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 655,
+          "width": 62,
+          "height": 44,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 747,
+          "width": 209,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 829,
+          "width": 364,
+          "height": 76,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-dark-2x-top.png",
+      "background": "chinesetitle-dark-2x-top-background.png",
+      "scenario": "ChineseTitle",
+      "dark": true,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "top",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 202,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 418,
+          "width": 277,
+          "height": 38,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 464,
+          "width": 144,
+          "height": 50,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 522,
+          "width": 179,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 612,
+          "width": 62,
+          "height": 44,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 704,
+          "width": 209,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 786,
+          "width": 364,
+          "height": 76,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    },
+    {
+      "file": "chinesetitle-dark-2x-controls.png",
+      "background": "chinesetitle-dark-2x-controls-background.png",
+      "scenario": "ChineseTitle",
+      "dark": true,
+      "fontScale": 2,
+      "missingArt": false,
+      "invalidTokens": false,
+      "width": 412,
+      "height": 915,
+      "scroll": "controls",
+      "textBounds": [
+        {
+          "text": "Remilo",
+          "left": 24,
+          "top": 20,
+          "width": 364,
+          "height": 42,
+          "ink": -918799,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "给阳台的植物浇水，并检查新的幼苗。下午出门前记得把窗户关好。",
+          "left": 24,
+          "top": 208,
+          "width": 364,
+          "height": 202,
+          "ink": -918799,
+          "fontSizeSp": 28
+        },
+        {
+          "text": "Current ringing delivery",
+          "left": 68,
+          "top": 418,
+          "width": 277,
+          "height": 38,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        },
+        {
+          "text": "8:00 AM",
+          "left": 134,
+          "top": 464,
+          "width": 144,
+          "height": 50,
+          "ink": -5972808,
+          "fontSizeSp": 32
+        },
+        {
+          "text": "Alarm ringing",
+          "left": 117,
+          "top": 522,
+          "width": 179,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop",
+          "left": 175,
+          "top": 612,
+          "width": 62,
+          "height": 44,
+          "ink": -15585247,
+          "fontSizeSp": 18
+        },
+        {
+          "text": "Snooze · 10 min",
+          "left": 102,
+          "top": 704,
+          "width": 209,
+          "height": 42,
+          "ink": -5972808,
+          "fontSizeSp": 16
+        },
+        {
+          "text": "Stop leaves the reminder unfinished.",
+          "left": 24,
+          "top": 786,
+          "width": 364,
+          "height": 76,
+          "ink": -4206142,
+          "fontSizeSp": 14
+        }
+      ]
+    }
+  ]
+}

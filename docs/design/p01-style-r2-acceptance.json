@@ -1,0 +1,17 @@
+{
+  "artifactId": "P01-style-r2-direction-acceptance",
+  "approvalRecord": "A12",
+  "date": "2026-10-06",
+  "owner": "Repository owner in this chat",
+  "planId": "P01",
+  "submittedRevision": "docs/design/p01-style-r2.json",
+  "acceptedBundleSha256": "32f913e8c46a03210dc0372527e86c102f446f4d50cf0cfe822f74c67d647728",
+  "directionAccepted": true,
+  "ownerWords": "I approve P01-style-r2 as the visual design direction for the next P01 checkpoint.",
+  "acceptedScope": ["Illustration vocabulary", "Overall UI composition principles", "Visual hierarchy", "Reference interpretation", "Bounded artwork exploration: two Meadow and two Sunrise candidates"],
+  "notAccepted": ["Final production layouts", "Exact design tokens", "Detailed UX interactions", "Artwork candidates", "Completed P01 prototypes"],
+  "conditions": ["Original references remain the primary visual quality targets", "Current implementation is not acceptable as final design", "Present four standalone candidates beside relevant references", "Stop for explicit artwork selection/approval before RN/Compose integration", "No P02, full catalog or production UI changes"],
+  "artworkAccepted": false,
+  "renderedUiAccepted": false,
+  "submissionPreservation": "The submitted r2 JSON and its six hashed artifacts remain unchanged. Its ownerAccepted=false is the historical submission state; this separate record supplies the later bounded owner decision."
+}

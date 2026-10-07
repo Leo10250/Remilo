@@ -9,9 +9,9 @@ import { useReducedMotion } from './motion';
 import { useReviewFontScale, useTheme } from './theme';
 import { typography } from './tokens';
 
-export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, reviewCompact = false, reviewGlyph = 'event', reviewNow }: {
+export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, reviewCompact = false, reviewEditorial = false, reviewGlyph = 'event', reviewNow }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
-  reviewCompact?: boolean; reviewGlyph?: IconName; reviewNow?: number;
+  reviewCompact?: boolean; reviewEditorial?: boolean; reviewGlyph?: IconName; reviewNow?: number;
 }) {
   const colors = useTheme(), scale = useReviewFontScale(), reducedMotion = useReducedMotion();
   const [revealed, setRevealed] = useState(false);
@@ -53,7 +53,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     <Icon name={restore || item.completed || item.skipped ? 'undo' : reviewCompact ? 'radio_button_unchecked' : 'check'} color={colors.accent} />
     {(restore || item.completed || item.skipped) && <Text style={{ color: colors.accent, fontSize: typography.label * scale }}>{actionLabel}</Text>}
   </Pressable>;
-  return <View style={{ backgroundColor: swipeTrash ? colors.danger : colors.accent, overflow: 'hidden', borderRadius: reviewCompact ? 8 : 0 }}>
+  return <View style={{ backgroundColor: swipeTrash ? colors.danger : colors.accent, overflow: 'hidden', borderRadius: reviewEditorial ? 16 : reviewCompact ? 8 : 0 }}>
     {canSwipe && <Pressable aria-hidden={!revealed} accessibilityRole="button" accessibilityLabel={(swipeTrash ? 'Move to Trash: ' : 'Done: ') + summary} accessible={revealed} accessibilityElementsHidden={!revealed}
       importantForAccessibility={revealed ? 'yes' : 'no-hide-descendants'} disabled={busy || !revealed} onPress={swipeAct}
       style={{ position: 'absolute', [I18nManager.isRTL ? 'left' : 'right']: 0, top: 0, bottom: 0, width: 88, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
@@ -69,7 +69,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
         style={{ flex: 1, gap: 4, minHeight: 48, justifyContent: 'center' }}>
         {reviewCompact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
           <Icon name={reviewGlyph} size={18} color={colors.accent} />
-          <Text style={{ color: colors.ink, fontSize: typography.body * scale, fontWeight: '500', flexShrink: 1 }}>{item.title}</Text>
+          <Text style={{ color: colors.ink, fontSize: typography.body * scale, lineHeight: reviewEditorial ? typography.body * scale * 1.4 : undefined, fontWeight: '500', flexShrink: 1 }}>{item.title}</Text>
         </View> : <Text style={{ color: colors.ink, fontSize: typography.body * scale, fontWeight: '500' }}>{item.title}</Text>}
         {reviewCompact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
           <Icon name={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} color={colors.muted} size={16} />

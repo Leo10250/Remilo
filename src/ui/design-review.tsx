@@ -17,6 +17,7 @@ import { ScheduleDetails } from './schedule';
 import { ReviewThemeProvider, useReviewFontScale, useTheme } from './theme';
 import { engine } from './native';
 import { TimeZoneField } from './time-zone';
+import { p01Colors, p01LandscapeBounds } from './p01-review';
 
 type Approach = 'immersive' | 'layered' | 'hybrid';
 type Screen = 'agenda' | 'lists' | 'completed' | 'trash' | 'create' | 'edit' | 'detail' | 'repeats' | 'settings' | 'appearance' | 'alarm' | 'notification' | 'branding';
@@ -53,6 +54,7 @@ const screens: { id: Screen; name: string }[] = [
 ];
 const landscape = require('../../assets/design-review/landscape.png') as ImageSourcePropType;
 const botanical = require('../../assets/design-review/botanical.png') as ImageSourcePropType;
+const sunriseS1 = require('../../assets/design-review/p01/sunrise-s1.png') as ImageSourcePropType;
 const iconAssets: Record<ReviewPaletteId, ImageSourcePropType> = {
   classic: require('../../assets/design-review/icon-classic.png'), sunrise: require('../../assets/design-review/icon-sunrise.png'),
   sky: require('../../assets/design-review/icon-sky.png'), meadow: require('../../assets/design-review/icon-meadow.png'),
@@ -120,13 +122,16 @@ function reviewTime(model: ReviewModel) {
 
 /** Fixture-only workspace. Its entry is resolved only by the isolated preview command. */
 export default function DesignReview() {
-  const params = useLocalSearchParams<{ screen?: string; inspect?: string; approach?: string; brightness?: string; scenario?: string; scale?: string }>();
+  const params = useLocalSearchParams<{ screen?: string; inspect?: string; approach?: string; brightness?: string; scenario?: string; scale?: string; p01?: string; art?: string; tokens?: string; sample?: string; motion?: string; height?: string; width?: string; scroll?: string }>();
+  const [p01Variant, setP01Variant] = useState(params.p01 === 'corrected' ? 'corrected' : 'current');
+  const p01 = !!params.p01 && modelScreenIsAgenda(params.screen), corrected = p01 && p01Variant === 'corrected';
   const [model, setModel] = useState<ReviewModel>(() => {
     const initial = initialModel();
     const next: ReviewModel = { ...initial,
       ...(screens.some((entry) => entry.id === params.screen) ? { screen: params.screen as Screen } : {}),
       ...(params.brightness === 'dark' || params.brightness === 'light' ? { brightness: params.brightness as ReviewBrightness, brightnessMode: params.brightness as ReviewBrightness } : {}),
       ...(params.scale && [1, 1.25, 1.5, 1.75, 2].includes(Number(params.scale)) ? { fontScale: Number(params.scale) } : {}),
+      reducedMotion: params.motion === 'reduced',
       ...(reviewScenarios.some((entry) => entry.id === params.scenario) ? { scenario: params.scenario as ReviewScenario,
         items: scenarioItems(params.scenario as ReviewScenario), selectedId: reviewItems(params.scenario as ReviewScenario)[0]?.id ?? initial.selectedId } : {}),
     };
@@ -185,8 +190,10 @@ export default function DesignReview() {
     const items = scenarioItems(scenario);
     update({ scenario, items, selectedId: items[0]?.id ?? selected.id, message: '', overlay: null, alarmEnded: [], alarmSnoozed: [], manual: {}, dirty: false });
   };
-  if (params.inspect === '1') return <ReviewThemeProvider colors={canvasColors(model, approach)} fontScale={model.fontScale} reducedMotion={model.reducedMotion}>
-    <ReviewPhone approach={approach} model={model} update={update} narrow />
+  if (params.inspect === '1') return <ReviewThemeProvider colors={corrected ? p01Colors(model.brightness === 'dark', params.tokens === 'invalid') : canvasColors(model, approach)} fontScale={model.fontScale} reducedMotion={model.reducedMotion}>
+    {corrected && <style>{`#review-canvas-hybrid [role="button"]:focus-visible, #review-canvas-hybrid [role="tab"]:focus-visible {outline: 3px solid ${p01Colors(model.brightness === 'dark', params.tokens === 'invalid').accent}; outline-offset: -3px} #review-canvas-hybrid [aria-label="Add reminder"]:focus-visible {outline-color: ${p01Colors(model.brightness === 'dark', params.tokens === 'invalid').accentInk}}`}</style>}
+    {params.sample === '1' && <style>{'#review-canvas-hybrid [dir="auto"], #review-canvas-hybrid svg { color: transparent !important; fill: transparent !important; stroke: transparent !important; }'}</style>}
+    <ReviewPhone approach={approach} model={model} update={update} narrow corrected={corrected} inspectHeight={p01 ? params.height && Number(params.height) >= 600 && Number(params.height) <= 2000 ? Number(params.height) : dimensions.height : undefined} inspectWidth={p01 && params.width && Number(params.width) >= 300 && Number(params.width) <= 2000 ? Number(params.width) : undefined} missingArt={params.art === 'missing'} captureControls={p01 && params.scroll === 'controls'} />
   </ReviewThemeProvider>;
   return <View style={styles.workspace}>
     <View style={styles.reviewHeader}>
@@ -199,6 +206,7 @@ export default function DesignReview() {
       </View>
     </View>
     {(!narrow || controlsOpen) && <View style={styles.toolbar}>
+      {p01 && <ReviewSelect label="P01 composition" value={p01Variant} choices={[{ id: 'current', name: 'Current hybrid' }, { id: 'corrected', name: 'Corrected · S1' }]} onChange={setP01Variant} />}
       <ReviewSelect label="Screen" value={model.screen} choices={screens} onChange={(value) => openScreen(value as Screen, model, update)} />
       <ReviewSelect label="Scenario" value={model.scenario} choices={reviewScenarios} onChange={(value) => selectScenario(value as ReviewScenario)} />
       <ReviewSelect label="Brightness" value={model.brightness} choices={[{ id: 'light', name: 'Light' }, { id: 'dark', name: 'Dark' }]} onChange={(value) => update({ brightness: value as ReviewBrightness, brightnessMode: value as ReviewBrightness })} />
@@ -231,8 +239,8 @@ export default function DesignReview() {
       { minWidth: narrow ? undefined : mode === 'compare' ? 1184 : undefined, justifyContent: narrow ? 'flex-start' : 'center', paddingHorizontal: narrow ? 0 : 24 }]}>
       {visible.map((entry) => <View key={entry.id} style={{ width: narrow ? Math.min(dimensions.width, 360) : 360, alignSelf: 'center' }}>
         <View style={styles.approachHeading}><Text style={styles.approachTitle}>{entry.name}</Text><Text style={styles.approachSummary}>{entry.summary}</Text></View>
-        <ReviewThemeProvider colors={canvasColors(model, entry.id)} fontScale={model.fontScale} reducedMotion={model.reducedMotion}>
-          <ReviewPhone approach={entry.id} model={model} update={update} narrow={narrow} />
+        <ReviewThemeProvider colors={corrected ? p01Colors(model.brightness === 'dark') : canvasColors(model, entry.id)} fontScale={model.fontScale} reducedMotion={model.reducedMotion}>
+          <ReviewPhone approach={entry.id} model={model} update={update} narrow={narrow} corrected={corrected} />
         </ReviewThemeProvider>
         <Text style={styles.canvasCaption}>360 × 800 dp · {model.brightness} · {Math.round(model.fontScale * 100)}% text</Text>
       </View>)}
@@ -240,6 +248,7 @@ export default function DesignReview() {
   </View>;
 }
 
+function modelScreenIsAgenda(screen?: string) { return !screen || screen === 'agenda'; }
 function ReviewSelect({ label, value, choices, onChange }: { label: string; value: string; choices: readonly { id: string; name: string }[]; onChange: (value: string) => void }) {
   return <View style={styles.selectControl}><Text style={styles.controlLabel}>{label}</Text>
     <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} style={{ minHeight: 36, padding: '6px 28px 6px 8px',
@@ -251,12 +260,16 @@ function ReviewSelect({ label, value, choices, onChange }: { label: string; valu
 function ReviewTool({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return <ReviewThemeProvider colors={reviewPalette('classic', 'light')}><IconButton icon={icon} label={label} onPress={onPress} /></ReviewThemeProvider>;
 }
-function PreviewText({ children, size = 16, muted = false, weight, align }: { children: ReactNode; size?: number; muted?: boolean; weight?: '500' | '600' | '700'; align?: 'center' }) {
+function PreviewText({ children, size = 16, muted = false, weight, align, heading = false }: { children: ReactNode; size?: number; muted?: boolean; weight?: '500' | '600' | '700'; align?: 'center'; heading?: boolean }) {
   const colors = useTheme(), scale = useReviewFontScale();
-  return <Text style={{ color: muted ? colors.muted : colors.ink, fontSize: size * scale, lineHeight: size * scale * 1.4,
+  return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size * scale, lineHeight: size * scale * 1.4,
     fontWeight: weight, textAlign: align, flexShrink: 1 }}>{children}</Text>;
 }
-function ReviewPhone({ approach, model, update, narrow }: { approach: Approach; model: ReviewModel; update: Update; narrow: boolean }) {
+function ReviewPhone({ approach, model, update, narrow, corrected = false, inspectHeight, inspectWidth, missingArt = false, captureControls = false }: { approach: Approach; model: ReviewModel; update: Update; narrow: boolean; corrected?: boolean; inspectHeight?: number; inspectWidth?: number; missingArt?: boolean; captureControls?: boolean }) {
+  const [canvasWidth, setCanvasWidth] = useState(360);
+  const [navigationHeight, setNavigationHeight] = useState(76);
+  const [artUnavailable, setArtUnavailable] = useState(false);
+  const [controlsReady, setControlsReady] = useState(!captureControls);
   const scroll = useRef<ScrollView>(null), positions = useRef<Record<string, number>>({}), restored = useRef('');
   const destinationKey = viewKey(model.screen, model.listId);
   const colors = useTheme(), root = ['agenda', 'lists', 'repeats'].includes(model.screen), item = selectedItem(model);
@@ -269,14 +282,19 @@ function ReviewPhone({ approach, model, update, narrow }: { approach: Approach; 
     if ((model.screen === 'create' || model.screen === 'edit') && model.dirty) { update({ overlay: 'discard' }); return; }
     update({ screen: model.listId ? model.origin : root ? 'agenda' : model.screen === 'appearance' ? 'settings' : model.origin, listId: null, overlay: null, error: '' });
   };
-  return <View nativeID={'review-canvas-' + approach} style={[styles.phone, { backgroundColor: colors.background, borderRadius: narrow ? 0 : 20, borderColor: colors.border }]}>
+  const correctedAgenda = corrected && model.screen === 'agenda';
+  const landscapeBounds = p01LandscapeBounds(canvasWidth, inspectHeight ?? 800, model.fontScale);
+  return <View nativeID={'review-canvas-' + approach} testID={captureControls && controlsReady ? 'p01-controls-ready' : undefined} onLayout={(event) => setCanvasWidth(event.nativeEvent.layout.width)} style={[styles.phone, { width: inspectWidth ?? '100%', height: inspectHeight ?? 800, backgroundColor: colors.background, borderRadius: narrow ? 0 : 20, borderColor: correctedAgenda ? colors.background : colors.border }]}>
     <View aria-hidden={model.overlay ? true : undefined} accessibilityElementsHidden={!!model.overlay} importantForAccessibility={model.overlay ? 'no-hide-descendants' : 'auto'} style={{ flex: 1 }}>
-    <Image accessible={false} source={art} resizeMode="contain" style={[styles.artwork, { opacity: artOpacity }]} />
+    {correctedAgenda ? !missingArt && !artUnavailable && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      style={{ position: 'absolute', bottom: navigationHeight, left: landscapeBounds.left, width: landscapeBounds.width, height: landscapeBounds.height, overflow: 'hidden', filter: model.brightness === 'dark' ? 'brightness(0.4) saturate(0.85)' : undefined }}>
+      <Image accessible={false} source={sunriseS1} onError={() => setArtUnavailable(true)} resizeMode="contain" style={{ position: 'absolute', bottom: landscapeBounds.bottom, width: landscapeBounds.width, height: landscapeBounds.imageHeight }} />
+    </View> : <Image accessible={false} source={art} resizeMode="contain" style={[styles.artwork, { opacity: artOpacity }]} />}
     <View style={styles.statusBar}><PreviewText size={12} weight="600">{reviewTime(model)}</PreviewText><View style={{ flexDirection: 'row', gap: 5 }}>
       <View style={{ width: 12, height: 8, borderColor: colors.ink, borderWidth: 2, borderRadius: 2 }} /><View style={{ width: 6, height: 10, backgroundColor: colors.ink, borderRadius: 1 }} /></View></View>
-    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 60, paddingLeft: root && !model.listId ? 16 : 4, paddingRight: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: correctedAgenda ? 56 : 60, paddingLeft: root && !model.listId ? 16 : 4, paddingRight: 4, width: '100%', maxWidth: correctedAgenda ? 560 : undefined, alignSelf: 'center' }}>
       {(!root || !!model.listId) && <IconButton icon="arrow_back" label="Back" onPress={back} />}
-      <View style={{ flex: 1 }}><PreviewText size={model.screen === 'agenda' ? 24 : 20} weight="700">{title === 'Create' ? 'Add Reminder' : title === 'Edit' ? 'Edit Reminder' : title}</PreviewText></View>
+      <View style={{ flex: 1 }}><PreviewText heading={correctedAgenda} size={model.screen === 'agenda' ? 24 : 20} weight="700">{title === 'Create' ? 'Add Reminder' : title === 'Edit' ? 'Edit Reminder' : title}</PreviewText></View>
       {model.screen === 'agenda' && <IconButton icon="search" label="Search reminders" onPress={() => update({ overlay: 'filter' })} />}
       {(model.screen === 'create' || model.screen === 'edit') ? <Pressable accessibilityRole="button" accessibilityLabel="Save reminder draft"
         accessibilityState={{ disabled: !model.draft.title.trim() }} disabled={!model.draft.title.trim()} onPress={() => saveDraft(model, update)}
@@ -286,9 +304,10 @@ function ReviewPhone({ approach, model, update, narrow }: { approach: Approach; 
           <IconButton icon="more_vert" label="Reminder actions" onPress={() => update({ overlay: 'actions', menuItemId: item.id })} /></>
           : <IconButton icon="more_vert" label="More destinations" onPress={() => update({ overlay: model.listId ? 'list-menu' : 'menu' })} />}
     </View>
-    <ScrollView key={destinationKey} ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 112, gap: 16 }}
-      onContentSizeChange={() => { if (restored.current !== destinationKey) { restored.current = destinationKey; scroll.current?.scrollTo({ y: positions.current[destinationKey] ?? 0, animated: false }); } }}
-      onScroll={(event) => { positions.current[destinationKey] = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={32}>
+    <ScrollView key={destinationKey} ref={scroll} testID="review-content-scroll" style={{ flex: 1, width: '100%', marginBottom: correctedAgenda ? 68 : 0 }} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: correctedAgenda ? 16 : 112, gap: correctedAgenda ? 12 : 16, width: '100%', maxWidth: correctedAgenda ? 560 : undefined, alignSelf: 'center' }}
+      onContentSizeChange={() => { if (captureControls) scroll.current?.scrollToEnd({ animated: false }); else if (restored.current !== destinationKey) { restored.current = destinationKey; scroll.current?.scrollTo({ y: positions.current[destinationKey] ?? 0, animated: false }); } }}
+      onScroll={(event) => { const value = event.nativeEvent; positions.current[destinationKey] = value.contentOffset.y;
+        if (captureControls) setControlsReady(value.contentOffset.y + value.layoutMeasurement.height >= value.contentSize.height - 1); }} scrollEventThrottle={32}>
       {!!model.message && <View accessibilityLiveRegion="polite" style={{ paddingHorizontal: 16, gap: 8 }}><Status label={model.message} tone="success" />
         {!!model.undo && <Button label="Undo" icon="undo" variant="secondary" onPress={() => {
           const captured = model.undo!, latest = model.items.find((entry) => entry.id === captured.itemId) ?? null;
@@ -296,7 +315,7 @@ function ReviewPhone({ approach, model, update, narrow }: { approach: Approach; 
           if (!valid) { update({ message: 'Reminder changed. This action can no longer be undone.', undo: null }); return; }
           updateOccurrence(captured.itemId, captured.action === 'done' ? 'reopen' : 'restore', model, update);
         }} />}</View>}
-      {model.screen === 'agenda' || model.screen === 'completed' || model.screen === 'trash' ? <AgendaPreview approach={approach} model={model} update={update} />
+      {model.screen === 'agenda' || model.screen === 'completed' || model.screen === 'trash' ? <AgendaPreview approach={approach} model={model} update={update} corrected={correctedAgenda} />
         : model.screen === 'lists' ? <ListsPreview model={model} update={update} />
         : model.screen === 'create' || model.screen === 'edit' ? <EditorPreview model={model} update={update} />
         : model.screen === 'detail' ? <DetailPreview approach={approach} model={model} update={update} />
@@ -307,12 +326,12 @@ function ReviewPhone({ approach, model, update, narrow }: { approach: Approach; 
         : model.screen === 'notification' ? <NotificationPreview model={model} update={update} />
         : <BrandingPreview model={model} update={update} />}
     </ScrollView>
-    {(root && !model.listId || model.screen === 'agenda' && !!model.listId) && <View style={{ minHeight: 80 }}>
+    {(root && !model.listId || model.screen === 'agenda' && !!model.listId) && <View pointerEvents="box-none" style={correctedAgenda ? { position: 'absolute', bottom: navigationHeight + 12, right: Math.max(20, (canvasWidth - 560) / 2 + 20), height: 56, width: 56 } : { minHeight: 80 }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Add reminder" onPress={() => openScreen('create', model, update)}
-        style={({ pressed }) => ({ position: 'absolute', right: 20, bottom: 12, minWidth: 56, minHeight: 56, borderRadius: 28,
+        style={({ pressed }) => ({ position: 'absolute', right: correctedAgenda ? 0 : 20, bottom: correctedAgenda ? 0 : 12, minWidth: 56, minHeight: 56, borderRadius: 28,
           backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}><Icon name="add" color={colors.accentInk} size={28} /></Pressable>
     </View>}
-    {root && !model.listId && <BottomNavigation model={model} update={update} />}
+    {root && !model.listId && <View onLayout={(event) => setNavigationHeight(event.nativeEvent.layout.height)}><BottomNavigation model={model} update={update} corrected={correctedAgenda} /></View>}
     {model.screen === 'detail' && <View style={{ padding: 12, gap: 8, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
       {item.deliveryState === 'Alerting' && <View style={{ gap: 8 }}><Copy muted size={14}>Alarm ringing</Copy><DeliveryButtons item={item} model={model} update={update} /></View>}
       <Button label={item.deleted ? 'Restore reminder' : item.completed ? 'Reopen reminder' : 'Done'} icon={item.deleted ? 'restore' : item.completed ? 'undo' : 'check'}
@@ -323,19 +342,19 @@ function ReviewPhone({ approach, model, update, narrow }: { approach: Approach; 
   </View>;
 }
 
-function BottomNavigation({ model, update }: { model: ReviewModel; update: Update }) {
+function BottomNavigation({ model, update, corrected = false }: { model: ReviewModel; update: Update; corrected?: boolean }) {
   const colors = useTheme();
   return <View accessibilityRole="tablist" style={{ minHeight: 76, flexDirection: 'row', paddingTop: 6, paddingBottom: 8, borderTopWidth: 1,
     borderColor: colors.border, backgroundColor: colors.surface }}>{([{ screen: 'agenda', icon: 'event', name: 'Agenda' },
       { screen: 'lists', icon: 'checklist', name: 'Lists' }, { screen: 'repeats', icon: 'repeat', name: 'Repeats' }] as const).map((tab) =>
-    <Pressable key={tab.screen} accessibilityRole="tab" accessibilityLabel={tab.name} accessibilityState={{ selected: model.screen === tab.screen }}
+    <Pressable key={tab.screen} accessibilityRole="tab" accessibilityLabel={tab.name} accessibilityState={{ selected: model.screen === tab.screen }} aria-selected={corrected ? model.screen === tab.screen : undefined}
       onPress={() => update({ screen: tab.screen, overlay: null, message: '', listId: null })} style={{ flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-      <View style={{ minWidth: 56, alignItems: 'center', paddingVertical: 4, borderRadius: 8, backgroundColor: model.screen === tab.screen ? colors.soft : 'transparent' }}>
+      <View style={{ minWidth: 56, alignItems: 'center', paddingVertical: 4, borderRadius: corrected ? 16 : 8, borderBottomWidth: corrected ? 2 : 0, borderBottomColor: corrected && model.screen === tab.screen ? colors.accent : 'transparent', backgroundColor: model.screen === tab.screen ? colors.soft : 'transparent' }}>
         <Icon name={tab.icon} color={model.screen === tab.screen ? colors.accent : colors.muted} /></View>
       <Text style={{ color: model.screen === tab.screen ? colors.accent : colors.muted, fontSize: 12 * model.fontScale, fontWeight: '600' }}>{tab.name}</Text>
     </Pressable>)}</View>;
 }
-function AgendaPreview({ approach, model, update }: { approach: Approach; model: ReviewModel; update: Update }) {
+function AgendaPreview({ approach, model, update, corrected = false }: { approach: Approach; model: ReviewModel; update: Update; corrected?: boolean }) {
   const colors = useTheme();
   const all = model.items.filter((item) => model.screen === 'completed' ? !item.deleted && (item.completed || model.includeSkipped && item.skipped) : model.screen === 'trash' ? item.deleted : !item.completed && !item.skipped && !item.deleted);
   const rank = (item: Occurrence) => item.overdue ? 0 : civilAt(item.eventStartMs, reviewZone).slice(0, 10) < '2026-10-06' ? 1 : 2;
@@ -358,10 +377,10 @@ function AgendaPreview({ approach, model, update }: { approach: Approach; model:
     return [...groups];
   }, [items, model.screen]);
   return <>
-    <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    {(!corrected || !grouped.length) && <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1 }}><PreviewText size={14} muted>{model.query ? 'Search: ' + model.query : model.filter === 'all' ? 'Tuesday, October 6' : model.filter === 'overdue' ? 'Overdue' : 'Alert problems'}</PreviewText></View>
       <IconButton icon="filter_list" label="Filter reminders" onPress={() => update({ overlay: 'filter' })} />
-    </View>
+    </View>}
     {model.screen === 'completed' && <View style={{ paddingHorizontal: 16 }}><SettingRow label="Include skipped"><Switch accessibilityLabel="Include skipped occurrences" value={model.includeSkipped} onValueChange={(includeSkipped) => update({ includeSkipped })} /></SettingRow></View>}
     {model.scenario === 'loading' ? <View style={{ padding: 16 }}><QueryState loading error={null} empty={false} onRetry={() => {}} />{[0, 1, 2, 3].map((key) => <View key={key}
       style={{ height: 88, backgroundColor: colors.soft, borderRadius: 8, marginTop: 8, padding: 16 }}><View style={{ height: 14, width: '64%', backgroundColor: colors.border, borderRadius: 4 }} />
@@ -374,19 +393,23 @@ function AgendaPreview({ approach, model, update }: { approach: Approach; model:
           <PreviewText size={14} muted align="center">{model.query || model.filter !== 'all' ? 'Try another search or filter.' : 'Your reminders will appear here.'}</PreviewText>
           {(model.query || model.filter !== 'all') && <Button label="Clear filters" variant="secondary" onPress={() => update({ query: '', filter: 'all' })} />}
           {model.screen === 'agenda' && <Button label="Add reminder" icon="add" onPress={() => openScreen('create', model, update)} />}</View>}
-        {grouped.map(([group, entries]) => <View key={group} style={{ gap: 8 }}><View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}><PreviewText size={14} weight="600">{group}</PreviewText></View><PreviewText size={14} muted>{entries.length}</PreviewText></View>
-          {entries.map((item) => <ReviewReminder key={item.id} item={item} approach={approach} model={model} update={update} />)}</View>)}
+        {grouped.map(([group, entries], index) => <View key={group} style={{ gap: 8 }}><View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', minHeight: corrected && index === 0 ? 48 : undefined, backgroundColor: corrected ? colors.background : undefined }}>
+          <View style={{ flex: 1 }}><PreviewText heading={corrected} size={14} weight="600">{group}</PreviewText>
+            {corrected && index === 0 && <PreviewText size={12} muted>{model.query ? 'Search: ' + model.query : model.filter === 'all' ? 'Tuesday, October 6' : model.filter === 'overdue' ? 'Overdue filter' : 'Alert problems filter'}</PreviewText>}
+          </View><PreviewText size={14} muted>{entries.length}</PreviewText>
+          {corrected && index === 0 && <IconButton icon="filter_list" label="Filter reminders" onPress={() => update({ overlay: 'filter' })} />}</View>
+          {entries.map((item) => <ReviewReminder key={item.id} item={item} approach={approach} model={model} update={update} corrected={corrected} />)}</View>)}
       </>}
   </>;
 }
-function ReviewReminder({ item, approach, model, update }: { item: Occurrence; approach: Approach; model: ReviewModel; update: Update }) {
+function ReviewReminder({ item, approach, model, update, corrected = false }: { item: Occurrence; approach: Approach; model: ReviewModel; update: Update; corrected?: boolean }) {
   const appearance = itemAppearance(item, model), itemColors = reviewPalette(appearance.palette, model.brightness), ambient = reviewPalette(ambientPalette(model), model.brightness);
-  const colors = approach === 'immersive' ? { ...itemColors, surface: itemColors.soft } : { ...ambient, accent: itemColors.accent, accentInk: itemColors.accentInk };
-  return <View style={{ marginHorizontal: 12, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: ambient.border }}>
+  const base = useTheme();
+  const colors = corrected ? { ...base, accent: itemColors.accent, accentInk: itemColors.accentInk } : approach === 'immersive' ? { ...itemColors, surface: itemColors.soft } : { ...ambient, accent: itemColors.accent, accentInk: itemColors.accentInk };
+  return <View testID={'review-row-' + item.id} style={{ marginHorizontal: corrected ? 16 : 12, borderRadius: corrected ? 16 : 8, overflow: 'hidden', borderWidth: corrected ? 0 : 1, borderColor: ambient.border }}>
     <ReviewThemeProvider colors={colors} fontScale={model.fontScale}>
-      <View style={{ borderLeftWidth: 3, borderLeftColor: itemColors.accent }}>
-        <ReminderRow item={item} reviewCompact reviewGlyph={appearance.glyph} reviewNow={reviewNowMs} onOpen={() => update({ selectedId: item.id, screen: 'detail', origin: model.screen, message: '' })}
+      <View style={{ borderLeftWidth: corrected ? 0 : 3, borderLeftColor: itemColors.accent }}>
+        <ReminderRow item={item} reviewCompact reviewEditorial={corrected} reviewGlyph={appearance.glyph} reviewNow={reviewNowMs} onOpen={() => update({ selectedId: item.id, screen: 'detail', origin: model.screen, message: '' })}
           onDone={() => updateOccurrence(item.id, item.deleted ? 'restore' : item.completed || item.skipped ? 'reopen' : 'done', model, update)}
           onMore={() => update({ menuItemId: item.id, overlay: 'actions' })} restore={item.deleted} />
       </View>

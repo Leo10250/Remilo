@@ -1,0 +1,12 @@
+{
+  "memoryOnly": true,
+  "completion": "Water plants removed from active Agenda after Done",
+  "undo": "Water plants restored with the same event interval; existing reopen policy reports the already-past ringing target as Alarm missed / No next alert scheduled",
+  "focus": {
+    "label": "More destinations",
+    "offset": "-2.66667px",
+    "outline": "rgb(152, 86, 0) solid 2.66667px",
+    "role": "button"
+  },
+  "decoration": "Scenery uses aria-hidden/inaccessible decorative Image without interactive role"
+}

@@ -1,0 +1,2235 @@
+{
+  "artifactId": "P01-render-r1",
+  "date": "2026-10-06",
+  "ownerAccepted": false,
+  "role": "Submitted actual non-shipping Sunrise Agenda and Meadow alarm compositions; final owner UI approval required",
+  "approvals": {
+    "style": "A12 / P01-style-r2",
+    "artwork": "A14 / S1 and M1",
+    "artworkAcceptance": {
+      "path": "docs/design/p01-artwork-r1-acceptance.json",
+      "sha256": "4e6e45d4c3ac903a647761b6588ff337eb84ec0e7fedeb165c8cb77f3925fb22"
+    },
+    "finalRenderedUI": null
+  },
+  "source": {
+    "commit": "10cb67c8e5cd251bb071a5b020b659e870a0eed7",
+    "branch": "theme-update",
+    "locallyRecordedTrackingCommit": "10cb67c8e5cd251bb071a5b020b659e870a0eed7",
+    "dirty": true,
+    "networkFetch": false,
+    "initialExistingDirtyWorkPreserved": true,
+    "runtimeInputs": [
+      {
+        "path": "modules/remilo-alarm/android/src/debug/java/com/remilo/alarm/review/AlarmDesignReviewActivity.kt",
+        "sha256": "8be7db51e4e3b66c877450fcc777d7588ba78ef734d644e453101a9d86a4f65f"
+      },
+      {
+        "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt",
+        "sha256": "106295191fd06151b2a143e7c17d180f94b8221ad9b1e6c291a5c346c4f6394b"
+      },
+      {
+        "path": "scripts/tests/design-review-isolation.test.node.mjs",
+        "sha256": "60b1c16089ef7b4b7282ba7557585ba43b9f563e433064159a14af25e7fdafb8"
+      },
+      {
+        "path": "src/ui/design-review.tsx",
+        "sha256": "0097e608245a81e5f828d6a40522cb2c92d8c61d7ee77b71a1f23e3491653521"
+      },
+      {
+        "path": "src/ui/reminder-row.tsx",
+        "sha256": "c424d195cb1d2955c161126f22304d69c3842ad8dfec04a75580f6824d0a21f2"
+      },
+      {
+        "path": "verification/ui/design-review-fixtures.ts",
+        "sha256": "09d1869112c88aaff2b54d167af18231b6e2536427142e1fa783add228eba3f5"
+      },
+      {
+        "path": "src/ui/p01-review.ts",
+        "sha256": "a340c6aa3d21facb71151a9f96ea203449556f2196f77f1ad2220e8ed3a3aebe"
+      },
+      {
+        "path": "src/domain/p01-review.test.ts",
+        "sha256": "771252beff6ecef21784d9cb7f05a899f2f6521e4402e8d561bea83a5e3af3da"
+      },
+      {
+        "path": "scripts/p01-review-assets.mjs",
+        "sha256": "6f866fa69c20a2c6769077a4258dc7a0c0c85b9a32a33668248eefe835fd1eaa"
+      },
+      {
+        "path": "scripts/verify-p01-renders.mjs",
+        "sha256": "a14a496decfe05c3b94cb968cbf9a9982afe0bce1954550ecf714146668317d4"
+      },
+      {
+        "path": "modules/remilo-alarm/android/src/debug/java/com/remilo/alarm/review/P01AlarmReview.kt",
+        "sha256": "8b9dbe0575ab648a70e8d07dfedf018f7518f658071376c686badb357fd2fe34"
+      },
+      {
+        "path": "modules/remilo-alarm/android/src/testDebug/java/com/remilo/alarm/review/P01PrototypeTest.kt",
+        "sha256": "4fd35d4abee4700dcb0801aa16a37cdb36d0a95e95fbd2bf2553f6d459182bd7"
+      },
+      {
+        "path": "assets/design-review/p01/composition.json",
+        "sha256": "1de285fc89d015255bad69e2f361921a2963863dfbedd3cb4f147ca177849466"
+      },
+      {
+        "path": "assets/design-review/p01/sunrise-s1.png",
+        "sha256": "7851e2c7ff0e617644f09e9bfe601e32ee19ad6f6094f2cb62229176747d7300"
+      },
+      {
+        "path": "assets/design-review/p01/meadow-m1.png",
+        "sha256": "da25a9bfd284bc267805a323e8eed9c51a4673efea4646a24900a01f455f3ee5"
+      },
+      {
+        "path": "modules/remilo-alarm/android/src/debug/res/raw/p01_composition.json",
+        "sha256": "1de285fc89d015255bad69e2f361921a2963863dfbedd3cb4f147ca177849466"
+      },
+      {
+        "path": "modules/remilo-alarm/android/src/debug/res/drawable-nodpi/p01_sunrise_s1.png",
+        "sha256": "7851e2c7ff0e617644f09e9bfe601e32ee19ad6f6094f2cb62229176747d7300"
+      },
+      {
+        "path": "modules/remilo-alarm/android/src/debug/res/drawable-nodpi/p01_meadow_m1.png",
+        "sha256": "da25a9bfd284bc267805a323e8eed9c51a4673efea4646a24900a01f455f3ee5"
+      },
+      {
+        "path": "verification/ui/review-actions.ts",
+        "sha256": "9a20531f70f6d630710a8fa552307fc5137d81919243f2e91abd50c02055e311"
+      },
+      {
+        "path": "verification/ui/preview-engine.ts",
+        "sha256": "fad432058c7f77e38232a18486e66ac4ccd1f41742988816ded4d6e001dbdd3f"
+      },
+      {
+        "path": "src/ui/components.tsx",
+        "sha256": "1d9d773ea619714e2624637f697d3286e0a11e62cdd391f394247eef4fdc89d7"
+      },
+      {
+        "path": "src/ui/theme.tsx",
+        "sha256": "4d6bc6aa9fd53ee6c30f83df17c2c399209eb83a1b8a831e6713562b6a3a0851"
+      },
+      {
+        "path": "src/domain/presentation.ts",
+        "sha256": "fb138f654fde05bed3cca5e7cea741d8fc2b2a4ed041670684cf7c45cad7a5c5"
+      },
+      {
+        "path": "metro.config.js",
+        "sha256": "80810b46e6f8fd61793ff7f37ce1d0fb7b5eea9c50c69062c9efda39bf995e96"
+      },
+      {
+        "path": "package.json",
+        "sha256": "101e68cc071c6e4b54e4195e5022f9434ec1e4c877f68acc373b5cf6eb3f0781"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "ee16f5ec3df2ee41f04441bea51d1d2b68bcafafbcd69f184c12384b42da26d6"
+      },
+      {
+        "path": "modules/remilo-alarm/android/build.gradle",
+        "sha256": "2e1b008b1937258f16f08c28ffe0d24a87cd5d302428ba751600dd04924f8d88"
+      },
+      {
+        "path": "android/gradle/wrapper/gradle-wrapper.properties",
+        "sha256": "a180163249c7252412ddaee1c7adcf59f6494b1183136f690fbd9a3b8aaed00e"
+      }
+    ],
+    "optInWebBundle": {
+      "path": ".tooling/p01-web/_expo/static/js/web/entry-35bcfee57cb37b470ddf6ce21241ef2e.js",
+      "sha256": "96871dad32864b3a7f0d904800531efc2fb18c431ca96be925a3453f54356f52"
+    },
+    "protectedInputs": "docs/evidence/redesign-p01/render-r1/verification.json"
+  },
+  "baseline": {
+    "manifest": {
+      "path": "docs/evidence/redesign-p01/baseline-20ea024/manifest.json",
+      "sha256": "32b4bedd2adcadf59a8a224a093c016e4e1bad6e5347579761668dfc2b7d38cd"
+    },
+    "defaultNativeCapturesUnchanged": 12,
+    "historicalRejectedReference": "docs/design/references/rejected-current-water-plants.png",
+    "rejectedSourceRevision": "unknown"
+  },
+  "clock": {
+    "instant": "2026-10-06T08:00:00-07:00",
+    "zone": "America/Los_Angeles",
+    "locale": "en-US",
+    "content": "Authored synthetic English and Simplified Chinese fixtures"
+  },
+  "renderers": {
+    "rn": {
+      "packages": {
+        "react": "19.2.3",
+        "react-native": "0.86.3",
+        "react-native-web": "0.21.3",
+        "expo": "57.0.26",
+        "expo-router": "57.0.24",
+        "vitest": "5.0.3",
+        "typescript": "6.0.3"
+      },
+      "entry": "opt-in REMILO_UI_PREVIEW=1 static Expo export",
+      "host": "Codex in-app browser",
+      "hostDensity": 1.2000000178813934,
+      "paintPixelScale": "inverse host density",
+      "captures": 97,
+      "pairedActionBoundsToleranceCssPx": 1.01,
+      "indices": "docs/evidence/redesign-p01/render-r1/rn/index.json"
+    },
+    "native": {
+      "composeBom": "2025.04.01",
+      "kotlin": "2.1.20",
+      "robolectric": "4.17",
+      "api": 35,
+      "density": 1,
+      "systemInsets": "synthetic zero",
+      "captures": 100,
+      "sessionSequenceCaptures": 5,
+      "indices": [
+        {
+          "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/index.json",
+          "sha256": "4c0a863bffe5139ba05a9f46cc2c49dfc620745e24077487f67b87006371115c"
+        },
+        {
+          "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/index.json",
+          "sha256": "6152efc8c99b3553bd9680920362db544dc6c17fbf644e3078895d7b515d973b"
+        },
+        {
+          "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/index.json",
+          "sha256": "ebd52f763817218165cb8d05906e82b2ce4a1ad831e7759e5369c0ed2c91bbbd"
+        }
+      ]
+    }
+  },
+  "matrix": {
+    "viewports": [
+      [
+        360,
+        800
+      ],
+      [
+        412,
+        915
+      ],
+      [
+        800,
+        1024
+      ]
+    ],
+    "brightness": [
+      "light",
+      "dark"
+    ],
+    "fontScale": [
+      1,
+      2
+    ],
+    "content": [
+      "standard",
+      "long English",
+      "long Simplified Chinese"
+    ],
+    "additionalCases": [
+      "overdue",
+      "independent/changed delivery",
+      "consequential timing",
+      "action error",
+      "generic",
+      "missing art",
+      "invalid tokens",
+      "reduced motion",
+      "session membership"
+    ],
+    "scroll": "initial and controls where required"
+  },
+  "composition": {
+    "reviewContract": {
+      "path": "assets/design-review/p01/composition.json",
+      "sha256": "1de285fc89d015255bad69e2f361921a2963863dfbedd3cb4f147ca177849466"
+    },
+    "notes": {
+      "path": "docs/design/p01-render-r1-notes.md",
+      "sha256": "7d329340843d4f9d5d05c4324f93c62c0cbf658c97ffb0456428baec8d1bc45d"
+    },
+    "sunrise": {
+      "source": "S1",
+      "sourceAspect": 1.5,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "focalY": 0.64,
+      "focalDistanceAboveNavigationDp": 34,
+      "maxReadingWidthDp": 560,
+      "decorativeHeight": "min(h * (large ? .32 : .50), w * 1.2)",
+      "listClearanceDp": 68
+    },
+    "meadow": {
+      "source": "M1",
+      "anchor": [
+        0.5,
+        0
+      ],
+      "maxReadingWidthDp": 480,
+      "decorativeHeight": "min(h * (large ? .40 : .68), w * 1.5)",
+      "decorativeSpacer": "min(h * (large ? .16 : .36), 340dp)",
+      "localReadingTransitionDp": 48,
+      "session": "Memory-only initialization keyed by session ID"
+    }
+  },
+  "acceptedSourceArtwork": [
+    {
+      "path": "docs/design/artwork/p01-artwork-r1/sunrise-s1-horizon.png",
+      "sha256": "bc91beb4bc6f1bf78285d1fe08ad495fa8cfe60f0b4a848755a5b757adc26e3b"
+    },
+    {
+      "path": "docs/design/artwork/p01-artwork-r1/meadow-m1-canopy.png",
+      "sha256": "300467ae10d40efcf7e7a61c5e53660b424d4e1c7814facea7d02f073d9021eb"
+    }
+  ],
+  "evidence": {
+    "artifacts": [
+      {
+        "path": "docs/design/p01-render-review-r1.html",
+        "sha256": "f92dab9b3bcc47a54e271ca1896f176bd5d632a865ca30cc0b05b20656b211a4"
+      },
+      {
+        "path": "docs/design/p01-render-r1-notes.md",
+        "sha256": "7d329340843d4f9d5d05c4324f93c62c0cbf658c97ffb0456428baec8d1bc45d"
+      },
+      {
+        "path": "docs/evidence/2026-10-06-p01-prototypes.md",
+        "sha256": "a61e3a504ce7f9bdc6f47090c12f1bc5178083457c95e202be7e25a083eeafb4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/sunrise-comparison.png",
+        "sha256": "ef96ac1d529a6ad153573162208c337686a453404319ca50454f3e467d1bc007"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/meadow-comparison.png",
+        "sha256": "f52cfcb81576b158843e67a9c5c2e1dc976d1eecd80473087ad67f386bb56b4c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/contrast.json",
+        "sha256": "c3205dd5636ee72f684f40c46c3315a43db67f4b7610d51d92c5693de25146b1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/semantics-and-controls.json",
+        "sha256": "bd23b3b07af2e5f6d63ad204b377f53c2e41ab5b1eeed107503f5e95ffc9b17d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/derivatives.json",
+        "sha256": "6a126ab0c6867c26ef2f090f390721c97b10374c564c4414a50efd64cb4a1e89"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/index.json",
+        "sha256": "d7d7c664a2c7c41b26a53e59b483c42095a16d53b4f8e0b123bc13456905880a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/interaction.json",
+        "sha256": "2c9d6f585df33eb0bd937bc9d5950b539e547085ac4679c89f4b388dd8d0cb02"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/verification.json",
+        "sha256": "8b0ef173281cc0300f8f1526ac1ff836a4ea7a457cbdea351eada68380772019"
+      }
+    ],
+    "renders": [
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-1x-controls-background.png",
+        "sha256": "a91706fa29d2b5b2ff9374005adf9c1ea24247853d33814380d19f35c44dd40d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-1x-controls.png",
+        "sha256": "d67abdca9cbea64aa1701270106546d76efa74475e53b9bb21e2ad424c39e452"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-1x-top-background.png",
+        "sha256": "a91706fa29d2b5b2ff9374005adf9c1ea24247853d33814380d19f35c44dd40d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-1x-top.png",
+        "sha256": "d67abdca9cbea64aa1701270106546d76efa74475e53b9bb21e2ad424c39e452"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-2x-controls-background.png",
+        "sha256": "adf7124067662c08dbfb6882d67ad80dd6865b1e5752f290ab282d504bcc97d0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-2x-controls.png",
+        "sha256": "57358a6d74da94e33525b2abbbd1b7fb52318765b2ddf7ff6864c31dd4f29e0f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-2x-top-background.png",
+        "sha256": "957747b2ba8c3da247124d76ddeb2c14150224c872289fda0207f594138314e0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-dark-2x-top.png",
+        "sha256": "bcaa3b3ff7a8aba0a658cfc2cf57ae5dd87e9c5a26f5bd2e4cfd459813ddc7a4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-1x-controls-background.png",
+        "sha256": "1d9f199051ce65f9fb70bbab5d353df4daf6c98694710eeaffcb596aa18c880f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-1x-controls.png",
+        "sha256": "bfb48eac402c6716c679e9821ddaacc44acfdf2e1a41b6c009a1843d863ab8d2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-1x-top-background.png",
+        "sha256": "1d9f199051ce65f9fb70bbab5d353df4daf6c98694710eeaffcb596aa18c880f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-1x-top.png",
+        "sha256": "bfb48eac402c6716c679e9821ddaacc44acfdf2e1a41b6c009a1843d863ab8d2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-2x-controls-background.png",
+        "sha256": "447ba992a93769d9fb5e5a5af10cb9ddf299ad46b2e5ee6fa8e240a1a2f6c45a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-2x-controls.png",
+        "sha256": "072c81fe5e8513551b136d0362082f8c3519d3cb646152f32c93aabe11a94208"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-2x-top-background.png",
+        "sha256": "720c6d66cb32c872092d4c3f94ebbc228e0ddd6a97cd65ee9f3b976dedc007aa"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/chinesetitle-light-2x-top.png",
+        "sha256": "0cd2a2a2583df6c8db45cde29bb83562119bcf08b2304780a8672b427ec2686f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-1x-controls-background.png",
+        "sha256": "5bf79bb3a39ed78fdd2afae4354c8b6a98ebec3c1d306f7aaefd970fb3a02ba5"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-1x-controls.png",
+        "sha256": "815ac6211d7e625c8bb90c43f70edcc99d3e7179b24e424caf5d952ed2b10ccd"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-1x-top-background.png",
+        "sha256": "5bf79bb3a39ed78fdd2afae4354c8b6a98ebec3c1d306f7aaefd970fb3a02ba5"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-1x-top.png",
+        "sha256": "815ac6211d7e625c8bb90c43f70edcc99d3e7179b24e424caf5d952ed2b10ccd"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-2x-controls-background.png",
+        "sha256": "a199aa7bcdd9ccff0fe5a500cff03e0730b410dd5b1ddd81bf2922d8f09389af"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-2x-controls.png",
+        "sha256": "c70b989479b769ccb37fa97e413935fb8f9e7b73284f7370234a6ef99a6c44db"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-2x-top-background.png",
+        "sha256": "a199aa7bcdd9ccff0fe5a500cff03e0730b410dd5b1ddd81bf2922d8f09389af"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-dark-2x-top.png",
+        "sha256": "c70b989479b769ccb37fa97e413935fb8f9e7b73284f7370234a6ef99a6c44db"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-1x-controls-background.png",
+        "sha256": "4495f720e65ef7cba979a6fb4a83a0128ffcfff0491b290a3fdc5e83a4820768"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-1x-controls.png",
+        "sha256": "8164624e0c00f311fffddfc78423a806c7e946c48c6c416e9d3998682f3b13da"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-1x-top-background.png",
+        "sha256": "4495f720e65ef7cba979a6fb4a83a0128ffcfff0491b290a3fdc5e83a4820768"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-1x-top.png",
+        "sha256": "8164624e0c00f311fffddfc78423a806c7e946c48c6c416e9d3998682f3b13da"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-2x-controls-background.png",
+        "sha256": "9bb514ccf4f5591a84289c0507c5866978e58030edd8e65d23a61393704ccdd1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-2x-controls.png",
+        "sha256": "c772f3b9349995b232e1a68f4a484d06faed8b5a9ea8934c4e1a5c93f1163916"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-2x-top-background.png",
+        "sha256": "9bb514ccf4f5591a84289c0507c5866978e58030edd8e65d23a61393704ccdd1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/consequential-light-2x-top.png",
+        "sha256": "c772f3b9349995b232e1a68f4a484d06faed8b5a9ea8934c4e1a5c93f1163916"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-1x-controls-background.png",
+        "sha256": "ca32697b8a93025d89d048d6c77ecd27d996fe5a3546b102d7bf07e1f4925d43"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-1x-controls.png",
+        "sha256": "c365240df9565d3bc77666170acc3f7a21a2cac39ca9dbb0d555e6455a53c314"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-1x-top-background.png",
+        "sha256": "ca32697b8a93025d89d048d6c77ecd27d996fe5a3546b102d7bf07e1f4925d43"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-1x-top.png",
+        "sha256": "c365240df9565d3bc77666170acc3f7a21a2cac39ca9dbb0d555e6455a53c314"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-2x-controls-background.png",
+        "sha256": "47c18bb334867874fd46c301a5fcd0eafd2043a4de7d4cc1c072795a6ca43e06"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-2x-controls.png",
+        "sha256": "b6ce3e440dbc31be505c1b5a8c6d8032ac1d1ff57940757d28667c9e27aa668c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-2x-top-background.png",
+        "sha256": "47c18bb334867874fd46c301a5fcd0eafd2043a4de7d4cc1c072795a6ca43e06"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-dark-2x-top.png",
+        "sha256": "b6ce3e440dbc31be505c1b5a8c6d8032ac1d1ff57940757d28667c9e27aa668c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-1x-controls-background.png",
+        "sha256": "fe025ec9e2532cf7f19cc9f06e7f1302868b0f6ccc150567d0f168f0f030b316"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-1x-controls.png",
+        "sha256": "7ec2987f2d471c34e94aa25fb158922f0906cd90e69b4c451925f6e6c1d6f5c9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-1x-top-background.png",
+        "sha256": "fe025ec9e2532cf7f19cc9f06e7f1302868b0f6ccc150567d0f168f0f030b316"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-1x-top.png",
+        "sha256": "7ec2987f2d471c34e94aa25fb158922f0906cd90e69b4c451925f6e6c1d6f5c9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-2x-controls-background.png",
+        "sha256": "b772816db3f2f8acfdbac9b598c14dbb18504371c649448d01d76f548ce1c23d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-2x-controls.png",
+        "sha256": "f58d2748cd9991ff483826dcaf621290d8cd8f75ecc9cec374a835035f10c43d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-2x-top-background.png",
+        "sha256": "b772816db3f2f8acfdbac9b598c14dbb18504371c649448d01d76f548ce1c23d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/error-light-2x-top.png",
+        "sha256": "f58d2748cd9991ff483826dcaf621290d8cd8f75ecc9cec374a835035f10c43d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-1x-controls-background.png",
+        "sha256": "c2405bf0bdb2b21a816b675a4e75291888203c16f2bf288d79f9467ec7140d41"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-1x-controls.png",
+        "sha256": "46bc50a8e4feac0f439bf0ff63fe8e0a848671f5b3701480616112b67ae432ed"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-1x-top-background.png",
+        "sha256": "c2405bf0bdb2b21a816b675a4e75291888203c16f2bf288d79f9467ec7140d41"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-1x-top.png",
+        "sha256": "46bc50a8e4feac0f439bf0ff63fe8e0a848671f5b3701480616112b67ae432ed"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-2x-controls-background.png",
+        "sha256": "d491df98786d69724da0dd01081d1c8438052c734ee1896d6e63c2f10d490054"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-2x-controls.png",
+        "sha256": "bf62761ea9f2cd3c4b3d83b14ac135f9ec9fb9177d27fb235aafcc2eac980dc1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-2x-top-background.png",
+        "sha256": "d491df98786d69724da0dd01081d1c8438052c734ee1896d6e63c2f10d490054"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-dark-2x-top.png",
+        "sha256": "bf62761ea9f2cd3c4b3d83b14ac135f9ec9fb9177d27fb235aafcc2eac980dc1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-1x-controls-background.png",
+        "sha256": "0aab13fad7046f7bce045a66d1adb0435dfcbd4a262016ad21e3fc2d49354c08"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-1x-controls.png",
+        "sha256": "20d23662d5a89750aeb30846eda86d883690989957880678506300cd5555f664"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-1x-top-background.png",
+        "sha256": "0aab13fad7046f7bce045a66d1adb0435dfcbd4a262016ad21e3fc2d49354c08"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-1x-top.png",
+        "sha256": "20d23662d5a89750aeb30846eda86d883690989957880678506300cd5555f664"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-2x-controls-background.png",
+        "sha256": "6fa53f2df7bceeaf35051061db70113b46027687f7cdb64401d83efcddaa9342"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-2x-controls.png",
+        "sha256": "6b9e04a40f43e287d84cfa9bb9a8a64a58da78bcd9cedb176202d93c986040a6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-2x-top-background.png",
+        "sha256": "6fa53f2df7bceeaf35051061db70113b46027687f7cdb64401d83efcddaa9342"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/generic-light-2x-top.png",
+        "sha256": "6b9e04a40f43e287d84cfa9bb9a8a64a58da78bcd9cedb176202d93c986040a6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-1x-controls-background.png",
+        "sha256": "f6e4e9089a674869a94c6d043a4ecabd65801818d8d5e8e5228f051593a58f4b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-1x-controls.png",
+        "sha256": "6ebca81f4f6d1d9e9f1444ffdad6dcd8a2513cabe3a8ad4a95eb175fc1ef6e92"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-1x-top-background.png",
+        "sha256": "f6e4e9089a674869a94c6d043a4ecabd65801818d8d5e8e5228f051593a58f4b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-1x-top.png",
+        "sha256": "6ebca81f4f6d1d9e9f1444ffdad6dcd8a2513cabe3a8ad4a95eb175fc1ef6e92"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-2x-controls-background.png",
+        "sha256": "adf7124067662c08dbfb6882d67ad80dd6865b1e5752f290ab282d504bcc97d0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-2x-controls.png",
+        "sha256": "a95c9767ce5c9711226c188ea23bffc72e54bb48c66132b0f07f9b0bbba624bf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-2x-top-background.png",
+        "sha256": "e37dd78723f5b43682a68f8ac015910481ff3b824882f1957a47d353b9c4c6c0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-dark-2x-top.png",
+        "sha256": "f317fd1a2d5159f813f9c6e3ae9ef742e8e265c2c8446853f51fc01b135c29f4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-1x-controls-background.png",
+        "sha256": "d0b36d429c7bff280ad0cd27670a51b6f99775921bc7bb8685cc4b76409f949b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-1x-controls.png",
+        "sha256": "78277616a8ce644ed09ea4fa8572081d32d1bd994698b16e5014cda589258f37"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-1x-top-background.png",
+        "sha256": "d0b36d429c7bff280ad0cd27670a51b6f99775921bc7bb8685cc4b76409f949b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-1x-top.png",
+        "sha256": "78277616a8ce644ed09ea4fa8572081d32d1bd994698b16e5014cda589258f37"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-2x-controls-background.png",
+        "sha256": "447ba992a93769d9fb5e5a5af10cb9ddf299ad46b2e5ee6fa8e240a1a2f6c45a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-2x-controls.png",
+        "sha256": "f373afcb4abdb855a8ba9b1990367bc9ca2b09d078c79bcc4c57291cba915e2a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-2x-top-background.png",
+        "sha256": "f7f433563d1d76e87180e948873c0b505a53613189d4f0fa76634f2e91921864"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/longtitle-light-2x-top.png",
+        "sha256": "7fd7904673386ff6ef28c88340d2dbf6598b2c58935d102581a70d4026d53a1d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-1x-controls-background.png",
+        "sha256": "550e9b62a1d729258033f6f12aa4dfcefdbf0338d842202edcb9fabe6a48690b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-1x-controls.png",
+        "sha256": "26e32867b1bc6a62add0058aad6b5ea0d5ce0e1b62391a394bcfa7e84fb033c1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-1x-top-background.png",
+        "sha256": "550e9b62a1d729258033f6f12aa4dfcefdbf0338d842202edcb9fabe6a48690b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-1x-top.png",
+        "sha256": "26e32867b1bc6a62add0058aad6b5ea0d5ce0e1b62391a394bcfa7e84fb033c1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-2x-controls-background.png",
+        "sha256": "47c18bb334867874fd46c301a5fcd0eafd2043a4de7d4cc1c072795a6ca43e06"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-2x-controls.png",
+        "sha256": "86828773e5673f2d82391fc9be6a5197a2501c349bf4d3e5991acee4e88c320e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-2x-top-background.png",
+        "sha256": "47c18bb334867874fd46c301a5fcd0eafd2043a4de7d4cc1c072795a6ca43e06"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-dark-2x-top.png",
+        "sha256": "86828773e5673f2d82391fc9be6a5197a2501c349bf4d3e5991acee4e88c320e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-controls-background.png",
+        "sha256": "fa5a38a7b203567ea86fd158a71f20e2cea29d05dd25f0ffc51c8228ded63a59"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-controls.png",
+        "sha256": "beba2765c293d3642caf513119355f5c9b8abc1c5b519338fa3caa040e514dfc"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-invalid-tokens-controls-background.png",
+        "sha256": "e84f30db660bdfb1ec0a9d1bcdf6adafe05f45134dbbc9fdd7465c0e7999b9d8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-invalid-tokens-controls.png",
+        "sha256": "187c77ff27ae91cbf53f3b520b3823f81e833552b6f271e91e0116efd9550a49"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-invalid-tokens-top-background.png",
+        "sha256": "e84f30db660bdfb1ec0a9d1bcdf6adafe05f45134dbbc9fdd7465c0e7999b9d8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-invalid-tokens-top.png",
+        "sha256": "187c77ff27ae91cbf53f3b520b3823f81e833552b6f271e91e0116efd9550a49"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-missing-art-controls-background.png",
+        "sha256": "5b353e0f6377be4edcd0e10058c9dcf7d1dcd01da740b5e70254eb571966f0fb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-missing-art-controls.png",
+        "sha256": "82a33eef929c8f461cb57de410136f8535c2157b35f061b9488e65296177ce8d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-missing-art-top-background.png",
+        "sha256": "5b353e0f6377be4edcd0e10058c9dcf7d1dcd01da740b5e70254eb571966f0fb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-missing-art-top.png",
+        "sha256": "82a33eef929c8f461cb57de410136f8535c2157b35f061b9488e65296177ce8d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-top-background.png",
+        "sha256": "fa5a38a7b203567ea86fd158a71f20e2cea29d05dd25f0ffc51c8228ded63a59"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-1x-top.png",
+        "sha256": "beba2765c293d3642caf513119355f5c9b8abc1c5b519338fa3caa040e514dfc"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-2x-controls-background.png",
+        "sha256": "b772816db3f2f8acfdbac9b598c14dbb18504371c649448d01d76f548ce1c23d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-2x-controls.png",
+        "sha256": "368b338108b4289af26fda938eb5f93e177159edbb1e79e0548b655c9db09bcf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-2x-top-background.png",
+        "sha256": "b772816db3f2f8acfdbac9b598c14dbb18504371c649448d01d76f548ce1c23d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-360-800/single-light-2x-top.png",
+        "sha256": "368b338108b4289af26fda938eb5f93e177159edbb1e79e0548b655c9db09bcf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-1x-controls-background.png",
+        "sha256": "be8a869cddfb45d132959137cd7d3510b367be7313ab8570ded2e5a4629776fb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-1x-controls.png",
+        "sha256": "c1cf9b6c132a2b1d92ebb88d01b4eba1e70a3afc8588dae53ceedf3d53d147d1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-1x-top-background.png",
+        "sha256": "be8a869cddfb45d132959137cd7d3510b367be7313ab8570ded2e5a4629776fb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-1x-top.png",
+        "sha256": "c1cf9b6c132a2b1d92ebb88d01b4eba1e70a3afc8588dae53ceedf3d53d147d1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-2x-controls-background.png",
+        "sha256": "f73c9c354655e830960e65dbb409fa9052f8026696738f76ae382ea8025135b0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-2x-controls.png",
+        "sha256": "0fc73ec76b30c0fea426d32d55107ef3df0e0a3daa178394325216bfa2d26479"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-2x-top-background.png",
+        "sha256": "f73c9c354655e830960e65dbb409fa9052f8026696738f76ae382ea8025135b0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-dark-2x-top.png",
+        "sha256": "0fc73ec76b30c0fea426d32d55107ef3df0e0a3daa178394325216bfa2d26479"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-1x-controls-background.png",
+        "sha256": "816f371e928feaa70a76f9dee983b60e159536002d64b6d37ad97743849a1b45"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-1x-controls.png",
+        "sha256": "84fb387ec2703412ac81578ea52030fbfda5b47f769636243b6a94eaa26a8756"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-1x-top-background.png",
+        "sha256": "816f371e928feaa70a76f9dee983b60e159536002d64b6d37ad97743849a1b45"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-1x-top.png",
+        "sha256": "84fb387ec2703412ac81578ea52030fbfda5b47f769636243b6a94eaa26a8756"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-2x-controls-background.png",
+        "sha256": "54e9a9010aef2289b0a170afe1d11b1f5fee263371a73b803cf1c8f196b0546d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-2x-controls.png",
+        "sha256": "6045258e04c9171c2c6df33bfff45121f5213cd3f361db51d3d8b4de0c675d59"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-2x-top-background.png",
+        "sha256": "54e9a9010aef2289b0a170afe1d11b1f5fee263371a73b803cf1c8f196b0546d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/chinesetitle-light-2x-top.png",
+        "sha256": "6045258e04c9171c2c6df33bfff45121f5213cd3f361db51d3d8b4de0c675d59"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-1x-controls-background.png",
+        "sha256": "d94ffca26b6d1271f8e4a221d4d4af1aa320245ed6161990747ea52e4e015003"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-1x-controls.png",
+        "sha256": "15f4bc6b5f75dd21f70b507421094761431ce08d2fd22254717b32750b02af65"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-1x-top-background.png",
+        "sha256": "d94ffca26b6d1271f8e4a221d4d4af1aa320245ed6161990747ea52e4e015003"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-1x-top.png",
+        "sha256": "15f4bc6b5f75dd21f70b507421094761431ce08d2fd22254717b32750b02af65"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-2x-controls-background.png",
+        "sha256": "8119365e6c3967f8a8a31a5c21517a60b4a252467b4ef1fb7957c9b0352d7d69"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-2x-controls.png",
+        "sha256": "bfa70daa1b451da23a790c03cbea52143e7218b374e347fdd9832b73413a08d9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-2x-top-background.png",
+        "sha256": "8119365e6c3967f8a8a31a5c21517a60b4a252467b4ef1fb7957c9b0352d7d69"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-dark-2x-top.png",
+        "sha256": "bfa70daa1b451da23a790c03cbea52143e7218b374e347fdd9832b73413a08d9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-1x-controls-background.png",
+        "sha256": "8c1dd616fbf02051de49db0c0aa73a9fd1a9ac374770bb66715b1d4e5e2bb6b4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-1x-controls.png",
+        "sha256": "69dbcd1bf5d888e1d592b836066e3288337e2371430a91a5855b1812fd7254eb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-1x-top-background.png",
+        "sha256": "8c1dd616fbf02051de49db0c0aa73a9fd1a9ac374770bb66715b1d4e5e2bb6b4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-1x-top.png",
+        "sha256": "69dbcd1bf5d888e1d592b836066e3288337e2371430a91a5855b1812fd7254eb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-2x-controls-background.png",
+        "sha256": "2a88eaa8bd4f83fc4288bae9d3ef6a930e83aa6537d2c683990716b8ae8231a9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-2x-controls.png",
+        "sha256": "e33a365a8459e5fd1d42cbf035ada543dbcd2ed0c517eda26c340380513de596"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-2x-top-background.png",
+        "sha256": "2a88eaa8bd4f83fc4288bae9d3ef6a930e83aa6537d2c683990716b8ae8231a9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/longtitle-light-2x-top.png",
+        "sha256": "e33a365a8459e5fd1d42cbf035ada543dbcd2ed0c517eda26c340380513de596"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-1x-controls-background.png",
+        "sha256": "23876935b3ba338ab515a08d1e60ad1f321c2594e6f97fd62d8f25a72a7e52c9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-1x-controls.png",
+        "sha256": "7e5a0e7d17adea441195ea1120a736f0793c03d9a21761e74a2ea69ab620f8d0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-1x-top-background.png",
+        "sha256": "23876935b3ba338ab515a08d1e60ad1f321c2594e6f97fd62d8f25a72a7e52c9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-1x-top.png",
+        "sha256": "7e5a0e7d17adea441195ea1120a736f0793c03d9a21761e74a2ea69ab620f8d0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-2x-controls-background.png",
+        "sha256": "731a714758dc8c69a1c6f47b99851f98cf8f9de8887c04beadee99d0b14b2798"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-2x-controls.png",
+        "sha256": "44c9d2fa91329071b38925a11f7a6f0f3dfb898398403c9b1b217f045c0c3d4f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-2x-top-background.png",
+        "sha256": "731a714758dc8c69a1c6f47b99851f98cf8f9de8887c04beadee99d0b14b2798"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-dark-2x-top.png",
+        "sha256": "44c9d2fa91329071b38925a11f7a6f0f3dfb898398403c9b1b217f045c0c3d4f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-1x-controls-background.png",
+        "sha256": "811db55be9ddada38e275060823329a18f620a523cdb8014e755dbcb616b3c30"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-1x-controls.png",
+        "sha256": "bfd866af07889fbba03601251d838f965ddba2f8e1fdaaaa6cdde119d1a5233c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-1x-top-background.png",
+        "sha256": "811db55be9ddada38e275060823329a18f620a523cdb8014e755dbcb616b3c30"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-1x-top.png",
+        "sha256": "bfd866af07889fbba03601251d838f965ddba2f8e1fdaaaa6cdde119d1a5233c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-2x-controls-background.png",
+        "sha256": "d5f26bf07ddcb6698f9a8a92be190f3eb015579cd16eb69d3ac1d5b0028ebccc"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-2x-controls.png",
+        "sha256": "02e9d0618618e4fac349f13ff63ca66275b222ef41db52a8e649d2488de97738"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-2x-top-background.png",
+        "sha256": "d5f26bf07ddcb6698f9a8a92be190f3eb015579cd16eb69d3ac1d5b0028ebccc"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-412-915/single-light-2x-top.png",
+        "sha256": "02e9d0618618e4fac349f13ff63ca66275b222ef41db52a8e649d2488de97738"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-1x-controls-background.png",
+        "sha256": "364c197fa0edc7cb690b42cdfe7ac75f639e62c9198dfb6d644dd86190c67093"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-1x-controls.png",
+        "sha256": "85cf75fa778ad7c840c7e528989bd960836d8aef22264aa019d0e4020638ea11"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-1x-top-background.png",
+        "sha256": "364c197fa0edc7cb690b42cdfe7ac75f639e62c9198dfb6d644dd86190c67093"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-1x-top.png",
+        "sha256": "85cf75fa778ad7c840c7e528989bd960836d8aef22264aa019d0e4020638ea11"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-2x-controls-background.png",
+        "sha256": "2c79643252c27e34fad54d755159e52b118202b105c09119d5db2317cd53ddda"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-2x-controls.png",
+        "sha256": "48d83c309b7ac16f527ec3d6902b86f5a7e04d5d0d46a39ff1c63647bf70e494"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-2x-top-background.png",
+        "sha256": "2c79643252c27e34fad54d755159e52b118202b105c09119d5db2317cd53ddda"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-dark-2x-top.png",
+        "sha256": "48d83c309b7ac16f527ec3d6902b86f5a7e04d5d0d46a39ff1c63647bf70e494"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-1x-controls-background.png",
+        "sha256": "b5f2d482d5ee8bb88ddb7a727357e83e7cd42bf9986cbf58ebd89ac42071fe7c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-1x-controls.png",
+        "sha256": "5b9de92eccb052e8f57a9dc0405c49630ac35c8c568d80e8577a0ffac550a51c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-1x-top-background.png",
+        "sha256": "b5f2d482d5ee8bb88ddb7a727357e83e7cd42bf9986cbf58ebd89ac42071fe7c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-1x-top.png",
+        "sha256": "5b9de92eccb052e8f57a9dc0405c49630ac35c8c568d80e8577a0ffac550a51c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-2x-controls-background.png",
+        "sha256": "9c467222e0c1b0381c5fd5e289bb4a64a681c266e66a722cff215c5acf521a2a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-2x-controls.png",
+        "sha256": "a5291e919173d4d4e364dff93528207bc025fbe5adad33687bcedee0bfe97990"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-2x-top-background.png",
+        "sha256": "9c467222e0c1b0381c5fd5e289bb4a64a681c266e66a722cff215c5acf521a2a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/chinesetitle-light-2x-top.png",
+        "sha256": "a5291e919173d4d4e364dff93528207bc025fbe5adad33687bcedee0bfe97990"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-1x-controls-background.png",
+        "sha256": "833f72137476d22cd2212b0a96c28f5245d663e944c2ac53ae39c03b2c0a3e73"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-1x-controls.png",
+        "sha256": "4cbbadbc839fc6812400ffa44f06a859468526bd7f6ecdbd43ed34375ff6d281"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-1x-top-background.png",
+        "sha256": "833f72137476d22cd2212b0a96c28f5245d663e944c2ac53ae39c03b2c0a3e73"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-1x-top.png",
+        "sha256": "4cbbadbc839fc6812400ffa44f06a859468526bd7f6ecdbd43ed34375ff6d281"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-2x-controls-background.png",
+        "sha256": "5f8f4db469c5aa3ec452e2ff6a941eff755465b8530bc9349986f9ffbb894e0c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-2x-controls.png",
+        "sha256": "bbd203a3f909a1dbf4629d20bc6bffa5129ff1c2d62231a1484ce1addcbee52c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-2x-top-background.png",
+        "sha256": "5f8f4db469c5aa3ec452e2ff6a941eff755465b8530bc9349986f9ffbb894e0c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-dark-2x-top.png",
+        "sha256": "bbd203a3f909a1dbf4629d20bc6bffa5129ff1c2d62231a1484ce1addcbee52c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-1x-controls-background.png",
+        "sha256": "9cd47bbf18a018c4ce782bfa52c743efe9ce83434b1ee6a6317411d049215527"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-1x-controls.png",
+        "sha256": "a32de9af3e52af3691d297ae3a0fe33d5e36ce8096eb229bb1b8b0e8f2cb64e3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-1x-top-background.png",
+        "sha256": "9cd47bbf18a018c4ce782bfa52c743efe9ce83434b1ee6a6317411d049215527"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-1x-top.png",
+        "sha256": "a32de9af3e52af3691d297ae3a0fe33d5e36ce8096eb229bb1b8b0e8f2cb64e3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-2x-controls-background.png",
+        "sha256": "0fb3bc845fbe1e7cad0e9c8fd2b4584ddd510830df2a437da07e0fd95ba3ebc8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-2x-controls.png",
+        "sha256": "e33cdcc6d31262e5b4ccda7914b3c13c2ebc7afa4063aecc4977c28487727564"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-2x-top-background.png",
+        "sha256": "0fb3bc845fbe1e7cad0e9c8fd2b4584ddd510830df2a437da07e0fd95ba3ebc8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/longtitle-light-2x-top.png",
+        "sha256": "e33cdcc6d31262e5b4ccda7914b3c13c2ebc7afa4063aecc4977c28487727564"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-1x-controls-background.png",
+        "sha256": "870c27c13a4c81d5fa73a14de6c05095d75175fd71c1f7f9b3b57f1972329dc2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-1x-controls.png",
+        "sha256": "b450b79da3bd034cbf53204759bb23292f580c4f8d4c2e2abae6215386002102"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-1x-top-background.png",
+        "sha256": "870c27c13a4c81d5fa73a14de6c05095d75175fd71c1f7f9b3b57f1972329dc2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-1x-top.png",
+        "sha256": "b450b79da3bd034cbf53204759bb23292f580c4f8d4c2e2abae6215386002102"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-2x-controls-background.png",
+        "sha256": "58a844599694f8e2af68ce32bd977310926783e04b41ac19a0796bc605bdaa73"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-2x-controls.png",
+        "sha256": "ba5274a8ad0fa680c88fe10e292498c36a9c9655c85de090e790ac4b717dabf3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-2x-top-background.png",
+        "sha256": "58a844599694f8e2af68ce32bd977310926783e04b41ac19a0796bc605bdaa73"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-dark-2x-top.png",
+        "sha256": "ba5274a8ad0fa680c88fe10e292498c36a9c9655c85de090e790ac4b717dabf3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-1x-controls-background.png",
+        "sha256": "9e89ef164ac1ec78ed93db4a2992d186a8eee52231d014ec3a5d5acab37f50b9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-1x-controls.png",
+        "sha256": "4216e69bd244ceef47496808278072ade9fa5b14bd61f0101c32c20fa62f0bf9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-1x-top-background.png",
+        "sha256": "9e89ef164ac1ec78ed93db4a2992d186a8eee52231d014ec3a5d5acab37f50b9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-1x-top.png",
+        "sha256": "4216e69bd244ceef47496808278072ade9fa5b14bd61f0101c32c20fa62f0bf9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-2x-controls-background.png",
+        "sha256": "af6811ac86fad0637bde3a9e42ada708b399a6d27c6ebf67d24ac1038228cb91"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-2x-controls.png",
+        "sha256": "9685d60b2b94c2801c77b6ed95c2417df716e115d839669bd30868971f5776a0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-2x-top-background.png",
+        "sha256": "af6811ac86fad0637bde3a9e42ada708b399a6d27c6ebf67d24ac1038228cb91"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/compose-800-1024/single-light-2x-top.png",
+        "sha256": "9685d60b2b94c2801c77b6ed95c2417df716e115d839669bd30868971f5776a0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/session-sequence/01-water-plants.png",
+        "sha256": "22ffeeb20271d4ce332642b9994303ba2217f069820fe150fae9bb05c9957baa"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/session-sequence/02-same-session.png",
+        "sha256": "81db463443a76cbb6ce595817476a1d9818624b38c451548f1b0668b692caebe"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/session-sequence/03-same-session.png",
+        "sha256": "f16fa2e29eafdc818a9edde0c7d2ebe41c350b55ed9edab67527d89c602eeab6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/session-sequence/04-same-session.png",
+        "sha256": "dcc0543ff6bcf314e83d6414d7c0e44f56076c72bba9cc36e0981a534b8e8975"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/native/session-sequence/05-new-session.png",
+        "sha256": "20fed035b306a610b8b0f8e62eb27ee091698467db026af40d71af60fb7adf2b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/grayscale/agenda-status.png",
+        "sha256": "0c3535a1b3b54e4941f38c01a887756944b16d69f75c617df7f79bf6b5fc5260"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/grayscale/agenda.png",
+        "sha256": "1068af0c815d367db8d40932c4b83f5a989fe6538b7f0de606bddde6f33f74b1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/grayscale/alarm-error.png",
+        "sha256": "4f5d0c4184e2dfd952999864de97e570c3620f9cbe198b9eb6871577f251b84b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/grayscale/alarm.png",
+        "sha256": "8435fe71e05e42a3883d2ae5cd17d12396de5e98c92118a401e2a55b23758934"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-independent-light-1x-corrected.png",
+        "sha256": "d9dc1c9354563de5836af815ddf3a8a2d981be9a0922f6c1507986a8c0a54d1c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-independent-light-1x-current.png",
+        "sha256": "5f5c31075ae05cd25378140881cd358b0e1b446b145670c71a7ae3e9856c4f24"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-overdue-light-1x-corrected.png",
+        "sha256": "d45e840596ff6898cb4f2d9e95a51cacd519ddf21abf7b248153154041a85420"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-overdue-light-1x-current.png",
+        "sha256": "db3d545a4119c2665eb57c3148716f70553e669bd8be66222f04f40a9f181d5e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-dark-1x-corrected.png",
+        "sha256": "568ad4eeee9c57a0207ea7b59b4e8dca949080906aa35a6ede24fde905910180"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-dark-1x-current.png",
+        "sha256": "7d845fab30a53819eec782dd60ebdff834cfc2a1635bded076e102539d2b3ee9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-dark-2x-corrected-controls.png",
+        "sha256": "f0551d63e8c91fab23327c4b35e711e4a23eff986f3209cf2e54a1e4deacfd27"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-dark-2x-corrected.png",
+        "sha256": "4e4275ca438ec14b500e680b983b3756f47b15ed012192a391c1e358970ed742"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-dark-2x-current.png",
+        "sha256": "bfc211b9db5765e424f7b7adcc3324fa1c243df4029ab8a31e421c70bf30c982"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-light-1x-corrected.png",
+        "sha256": "94c31272431986f34f2bf5db69da76866b4a9b2a5c8650192c7e520e5a85af09"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-light-1x-current.png",
+        "sha256": "d865aaaa01d6b037096f7d8fdbfcb84b3c9b41912388e445875a3a601c56da65"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-light-2x-corrected-controls.png",
+        "sha256": "26050e02915c6ec9c82aac864abdb4fd1a299f17aa7a361fbb294319a4462cd2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-light-2x-corrected.png",
+        "sha256": "cb53f433fcacd4e9b38180b004ab10561d39014d9429ab05565f9176463c371e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-chinese-light-2x-current.png",
+        "sha256": "93714cae4afb27ffec8ca6d8c018cab963f2b767ee780b8e5e804c1e7fb87002"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-dark-1x-corrected.png",
+        "sha256": "7ab0ae0545a7f9890915de82997b8a945b4f4f2cd65161868d254a6dfb9bd621"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-dark-1x-current.png",
+        "sha256": "18888b16c96d49aafca7e3cf9d99ed7887a46101142e7023cf55793ac940f1fa"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-dark-2x-corrected-controls.png",
+        "sha256": "9cf20e0eb4a66e1b25794fc43384129dba4183d19767b7e5b27f8d46a6bb273b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-dark-2x-corrected.png",
+        "sha256": "704a6baffbebc0aa354df4b5816ce6f1bfba64be070a59e6dc6eec6bc82b2bd4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-dark-2x-current.png",
+        "sha256": "4d6b5bbcabf2d4392b4e440d4119419e04115cbc53b27269ab82aa754f5c8a2d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-light-1x-corrected.png",
+        "sha256": "dd6afc7ff3addb832e9e23a8cafb203a717ebeb4b6d09ce0f6d1de2a043ab4b0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-light-1x-current.png",
+        "sha256": "afa5b4bfc60496949f178ae1d69acfb69a908e7e3581651c05c2b21068bf7d06"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-light-2x-corrected-controls.png",
+        "sha256": "83578b097fd0a06ef82c28609409b1552e5617a233795b6aac3102475374d194"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-light-2x-corrected.png",
+        "sha256": "ef0170946d8cab0e21a4b07eac97bfaa2e08a61c7b186d657aa37e86f170de63"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-p01-long-english-light-2x-current.png",
+        "sha256": "80cbfc7ef7fb2b1dfd42a498426bb154632eae8f6585673a3b977cc5fb7963ee"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-dark-1x-corrected.png",
+        "sha256": "4f563149fb38d5a0a5318bba083c096f0b3e8a4d40ccd0d10ad27f331a8537ac"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-dark-1x-current.png",
+        "sha256": "3922ecdfbca58eb0cbb891995891ab070ab232ab7bd3080fc42a9fb248f65d67"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-dark-2x-corrected-controls.png",
+        "sha256": "5282591882a1c1c079006a1a45777ebc69b06b7c15e1706771e1bdbf1ab0bc14"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-dark-2x-corrected.png",
+        "sha256": "9d9a02d56c2e0d26256795d66698fbc8c64dc58e95b8b6630968543c09d211b9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-dark-2x-current.png",
+        "sha256": "b546f7308849fbf7e9d64895e97a78cadaca4e4e91afe42fd84020aa7bfd94fc"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-1x-corrected-art-missing.png",
+        "sha256": "99aeb3a9808edb766e7f4d21be0283042e06b0fa13df64c7b412802f4f8e7c2f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-1x-corrected-motion-reduced.png",
+        "sha256": "3cf87509fea2ffa93c955a4374642dc050b45cd8c79bd47893c206c17165a33c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-1x-corrected-tokens-invalid.png",
+        "sha256": "ae43ec18ba402d0d0b183ddfc4e036d725aeea35821e291423ac79ea3b6844e5"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-1x-corrected.png",
+        "sha256": "3cf87509fea2ffa93c955a4374642dc050b45cd8c79bd47893c206c17165a33c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-1x-current.png",
+        "sha256": "73fb429519d33f62148d1b415f01c71d478ec0b239dd4c49da2a0bd376c4c337"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-2x-corrected-controls.png",
+        "sha256": "b22936e4ae4d04d62393ae7060772eae2de0d637acbf50ae78fc64d599b8f8b2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-2x-corrected.png",
+        "sha256": "378c1f3c60e69c5a7cf49b86d3838eb77e866b9ad83e3bb0ff957a623c10e927"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-360-800-populated-light-2x-current.png",
+        "sha256": "50b68061f53e23ed76bce53c1501be7c40b29c39a72f5dfb99442366e72ddbd0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-dark-1x-corrected.png",
+        "sha256": "18029ee9356b806b403b256850dedded4cf33158710a79ed47d6df1a581076e3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-dark-1x-current.png",
+        "sha256": "e8f10e82b6fa2ae391dddfdfa3912e4353b264f8bcbadc3e99a2a4c196c9dad2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-dark-2x-corrected-controls.png",
+        "sha256": "fba9d957d2f4b490b75ec683817137eac60ee2c62f77dab77bcbb93b1b545392"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-dark-2x-corrected.png",
+        "sha256": "a694ef99dcc0d107d32efa7de03d7bd38d8a205370f6110548419cc5432ef6e7"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-dark-2x-current.png",
+        "sha256": "56828dbd1f516f1741018338bc991d3127e54dacb7f1de8da0f3f79fbbb52c8e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-light-1x-corrected.png",
+        "sha256": "290299dce5b3bfa2951e985c27222fa5cc5050548095f602fe3fd6118837b262"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-light-1x-current.png",
+        "sha256": "528c9f427f23d819fbb1d7c9b89e49ea5d08e9197a01ab96ecf7dd8ff8962d7b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-light-2x-corrected-controls.png",
+        "sha256": "071a74c86c80956d96f875178e37b1112a5325750fe4708574414090ad82e3cf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-light-2x-corrected.png",
+        "sha256": "b8db9970a9aba8d57c7cdc9ee64e8f348d96c668d5cb813810b234a3c53df5cc"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-chinese-light-2x-current.png",
+        "sha256": "cf64f1dac554cd9ac52abf8ba47aeb174fa3bb21b61c5d452c1e63316b143edf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-dark-1x-corrected.png",
+        "sha256": "b1eb0bd0b2dd5a6333c534b67bc4960eaa668518036b9abc6523ad310bfc9852"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-dark-1x-current.png",
+        "sha256": "09f20ff95694194dad5561c90d0f3a161630de3caeeeaa7e1f20ee2a77d24f5f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-dark-2x-corrected-controls.png",
+        "sha256": "56f44c461d7a8a2007b525ec0e008c23a9a27846c6477cc95a07ee24ac4c15f4"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-dark-2x-corrected.png",
+        "sha256": "14bafbc6292ff28b76d7b8aa7d7c8d4fdc172c430fa108aac7b684773da88300"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-dark-2x-current.png",
+        "sha256": "cecbfda27f1201f67a7afea2753b08c69738fecc1197bd8c20caae72c3ab9428"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-light-1x-corrected.png",
+        "sha256": "d33a0276288bcd015876c8370966c4bc5cc07d74d842326c822dfb25dd4ff653"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-light-1x-current.png",
+        "sha256": "afd5321284c6f4660e17617844b55058129777e20f3f3fa5a51220959f78ffa6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-light-2x-corrected-controls.png",
+        "sha256": "acc83b40e3f91c55d773654311934ec2743d0f46d420ac251591172165942ade"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-light-2x-corrected.png",
+        "sha256": "f47068ef512d2d277f68d26f5b18c5c2e52af765817fecd6a1f7e0224d6cef70"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-p01-long-english-light-2x-current.png",
+        "sha256": "52eaf55593e6e4512b8a420b99b7e01a149b77caf46fea6e64e899200d2f9217"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-dark-1x-corrected.png",
+        "sha256": "87797a7006f5e2aeaf8aa241f8a01d8f6b35d76e1eb2b60f9fcb9a17acceffd9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-dark-1x-current.png",
+        "sha256": "43cec88137fca923fadc33dd1c7096894e87aa471c367e0c95d1d1033c56de44"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-dark-2x-corrected-controls.png",
+        "sha256": "ee4243b42cc7eda44e5833cb9c1fd0aba9ea45929fe5144bb6ca41ce155a34f5"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-dark-2x-corrected.png",
+        "sha256": "df312ad66a67403bcaf645443574972bc1fbe4ef9a24a172fe18b1cdcd628796"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-dark-2x-current.png",
+        "sha256": "3f1628284f0ae4582cd44a42b157138f9b694f2826d61066a809395fcde7f827"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-light-1x-corrected.png",
+        "sha256": "0777aa262d96e32e7b6fc36e63bfd6cb080e98de5e31d8358fa118eab94087bb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-light-1x-current.png",
+        "sha256": "6cc58eb6c3a95b299649b5e8778a955319108f43ee8d204f2021e9e189833c89"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-light-2x-corrected-controls.png",
+        "sha256": "c3d6c22b37b5aed273a977aefab7048dfb98b2ce442d15f7d448f9b6cdae9f77"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-light-2x-corrected.png",
+        "sha256": "8bd9591949fcb5658d2d70f5185bc999bb1f7593c39990988c01003c9888769c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-412-915-populated-light-2x-current.png",
+        "sha256": "edc61afbe550044494431ee1deb1e5fe9a9333066f38a6c1e5d7a53edd223841"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-dark-1x-corrected.png",
+        "sha256": "71b78a7f761eeccfe89e79327c269eb848425fe3a1f9bfa45d8506c58164687c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-dark-1x-current.png",
+        "sha256": "48d7fa1679fe8450611ee39a45e1ece8cee69b80a209e53b9a975520135d0b0a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-dark-2x-corrected-controls.png",
+        "sha256": "a8f1d5e86f703b7377ef4ee5d0daaf0471479e6ff559517ebaf70443cc3a4e11"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-dark-2x-corrected.png",
+        "sha256": "340154a79a94264c1b8d5fdeb31271a819a27ad0a08f9e152620748aa398bb23"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-dark-2x-current.png",
+        "sha256": "1c26660ca5e22b70adf375938a3ef41feba9a9304ba06d3ee47971dce8154695"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-light-1x-corrected.png",
+        "sha256": "d930272b2f27b075ec768bf096bf46f2e3ab6852ba954a5291a41da805bd2f2b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-light-1x-current.png",
+        "sha256": "bf5131af5d5e3218276e4a79d192d5a54cfc9dee6e7a54d3260a9e86b0371d02"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-light-2x-corrected-controls.png",
+        "sha256": "e8afb3c6b7b7a9ee107fb1b5e510f2f411d433ae9f072cc5df0a3b52d98cc6ad"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-light-2x-corrected.png",
+        "sha256": "e13f81d59b312c4b77f4a27aebd7706110f5a938d3658bec6dc74145d1174d3d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-chinese-light-2x-current.png",
+        "sha256": "91806913842d04a0262f27cded815be2c5dfabff8c7f957111f029d908bec74f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-dark-1x-corrected.png",
+        "sha256": "6caebce197c54280d6aa3caaceda081caf24290765c70196561045c600622846"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-dark-1x-current.png",
+        "sha256": "ccc007a9f54b589f1fe0c024cb5999b185407cd5557d0683921876de6ea985be"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-dark-2x-corrected-controls.png",
+        "sha256": "f43486026ba23209cbfe7d15ba9bdfa0f39b7ee13fd450d17ae4542f593d4471"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-dark-2x-corrected.png",
+        "sha256": "ffbee5b892848983a731832b193fe926b379d06a07d2eacf44203c3291b6635e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-dark-2x-current.png",
+        "sha256": "fa1035ce8a29e6f9cd1ea916728d4685448c3d4e2942bd080b5e8c1998f54464"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-light-1x-corrected.png",
+        "sha256": "8b533504eed9e281926ab7287b8ad23a2433bedf8b7546c559b34f8698d4af1d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-light-1x-current.png",
+        "sha256": "5f28cb91b896d02a327ae37bed55198147f1c5fb5f49b5b9fe03c3ce79068a75"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-light-2x-corrected-controls.png",
+        "sha256": "fc24d0dbc4a78eb053f91012660ba99318093a1719b12b920ff4afffd3a02953"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-light-2x-corrected.png",
+        "sha256": "2bf48caee32dceba4a4946c05f201e249e2802786b272e195c8d1c9d59ba8e46"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-p01-long-english-light-2x-current.png",
+        "sha256": "81c785a42ed4975bd1f556deed051c911eb49562cb84438d6401504bdcefbd96"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-dark-1x-corrected.png",
+        "sha256": "62e18dbe3dc1a05fa17922022da4d6a0607c3085a953499f8042342101bc732f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-dark-1x-current.png",
+        "sha256": "2a2cd7e1432c03f0245402f5d0c8559e7d724f3ffa18fa3b19db70aa704ca7ad"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-dark-2x-corrected-controls.png",
+        "sha256": "2ece626cccaaff6f7156f4a6dd02e8da98ca4c77ebe8ecb11e66d9da04bcb8fd"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-dark-2x-corrected.png",
+        "sha256": "759586050135d8f588a66f81bb2020c452dcb0269661c5d9f4f07a78565f28e8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-dark-2x-current.png",
+        "sha256": "e5b7d04284732a09e93df16b5da7e4e46e71e590d58f69c443f414b7089c425b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-light-1x-corrected.png",
+        "sha256": "6ff2bc3fa3839625175ba8a896eb2d0d45081616db683ab21613d4f57475ee73"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-light-1x-current.png",
+        "sha256": "2639aee4d5e853d7bdd4907dfc662cbe7a120bfab248fe15ee7b50d30d84b408"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-light-2x-corrected-controls.png",
+        "sha256": "41aa08a55ec6a92ea055126dfa32d09df36d82c71bc2fcdb61ce597822a5b418"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-light-2x-corrected.png",
+        "sha256": "26de3dc331d93f4bc431144b5b816f5b81e0da48fb52fe28ce3ea23d02b4b9ca"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/normalized/rn/rn-800-1024-populated-light-2x-current.png",
+        "sha256": "e1958db93586c5f60792f27220a1b980799f2d362a86506289f6e27558156a5d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-independent-light-1x-corrected-background.jpg",
+        "sha256": "2a765c1483199abdeb4c07e80038da6664d562e7dbeb76c063a95c72c554d800"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-independent-light-1x-corrected.jpg",
+        "sha256": "7087600c2e7aab106bddcc38593ac1b9ee915f593bc3da15d64896fd0f5eadb6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-independent-light-1x-current.jpg",
+        "sha256": "24f31f955914fe4e5ea7899e07d803ba68cdfeee63f9381ef918cfb21147b656"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-overdue-light-1x-corrected-background.jpg",
+        "sha256": "5e0ea76ff3d9ed9e84dfe2f13c0a7dbd2cd2d3f834ef86f6b1c92518f98e5999"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-overdue-light-1x-corrected.jpg",
+        "sha256": "510b572d836aeadcde22d1636e6527c63a1688b7d55562bf0d3e0a514fa65bba"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-overdue-light-1x-current.jpg",
+        "sha256": "ebdc363a3f2d2fcc84e03613a551d47a2dffb67c8021151f20f47461c0a5826f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-1x-corrected-background.jpg",
+        "sha256": "dc935eea2880281a0a765e1b7948f2d7bae9bb024b94a574e82227eecf088215"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-1x-corrected.jpg",
+        "sha256": "6249a319b30736e01182c0a41f4b5c60b772acd2427ffce6c36229bd5e90bcf1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-1x-current.jpg",
+        "sha256": "0dd75bbb7c0657936bc80600227df1ba1c7bd795a5e7200af3cb948ba8a40c8e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-2x-corrected-background.jpg",
+        "sha256": "ebf43eaf978a215a969d4f5cfeb8d205ebdba515b6c0330ad4c44977e2bb908a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-2x-corrected-controls-background.jpg",
+        "sha256": "d39fcfec8eaa3197d9fc711187c685cfc59accee5a453129d124cf611120f361"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-2x-corrected-controls.jpg",
+        "sha256": "9a18c5f4379060c73630dc8ab9f5b519cf110bcc2da7ad52f66b1915cf27c5d9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-2x-corrected.jpg",
+        "sha256": "adc9bde8e1ff44dfb2da3e2a5badae59d59672062fb611c0b9806a1f4abca518"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-dark-2x-current.jpg",
+        "sha256": "0b657d9d9beba08cf54aabc7e345b72a5245f6aa0233c76a912875af13d7029d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-1x-corrected-background.jpg",
+        "sha256": "eb998fc0b753da7b84bdfa0b15fa39a058327047b19aa6e0bb75178a4aea2956"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-1x-corrected.jpg",
+        "sha256": "3f3d3fa01faca246ae88b64b52d3476967ab4d91f9cf7276ba4819c8490f887b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-1x-current.jpg",
+        "sha256": "5fc1db5601f0b5acd36b2f5ec5eef8d9e670ca78897cb96c95b6de763df9341a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-2x-corrected-background.jpg",
+        "sha256": "2b239499e418458e8ae31e6c0d1aaf7648b4b3b3719471105ea38b90b9449f59"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-2x-corrected-controls-background.jpg",
+        "sha256": "b8f92abe66bbd6b9c39720b08490939f82099918de89c85f38be5a8f4fb6449f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-2x-corrected-controls.jpg",
+        "sha256": "321d9c619eab3c4daffabd281e4d685dde4b8bdd375a90cbde48129630315441"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-2x-corrected.jpg",
+        "sha256": "1ada634f55d1e1ae37cfc78fc5afb8b6f2e68cfaa17a08df6f75aa77a085e437"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-chinese-light-2x-current.jpg",
+        "sha256": "cda82747a1724bf4979e54e9ce45aba6c4b7837b2ae579b3aaab7ef6fc5cc3d8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-1x-corrected-background.jpg",
+        "sha256": "a1729020ee8153ba1bd15b8e6fd8f1dfbe35929ad8e26e274e3b6299d2982971"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-1x-corrected.jpg",
+        "sha256": "1052d18f35b8b52bcc56d43a7d6b5b0f7f97188fc46f31e90040021d4e81b223"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-1x-current.jpg",
+        "sha256": "f9a18d61bafc21df367bf09792d9445a8499638dd95ca725254511d70bd518ec"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-2x-corrected-background.jpg",
+        "sha256": "4460031cc44651b05250cfc56c7554255cabb78ebb6df803c7df5a31b206252f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-2x-corrected-controls-background.jpg",
+        "sha256": "62212a6abbc28ad5c0907f9cb9f2022a49b7b118c9ea757bc7e0cb2963e18fc7"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-2x-corrected-controls.jpg",
+        "sha256": "467c2ae73a2dd9c20500681f2975b287af1aa5073c2884f8f5cfa3a762131668"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-2x-corrected.jpg",
+        "sha256": "4127c676f28e8254fc14268b1b055bcd177a8227fc2978aff4858078be506911"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-dark-2x-current.jpg",
+        "sha256": "a04212b8216c30ca509fc4c125ab4402d3ec9f1ec908de5b54a79376fa0fa804"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-1x-corrected-background.jpg",
+        "sha256": "2f84425c6c86ca0aa146373ddbbf7ea6988df6d36fd7318875292cfae5f98f21"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-1x-corrected.jpg",
+        "sha256": "575135aa07e3b38b39688cc08edba8cb60cb73da10038418d2b7a60a460f0327"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-1x-current.jpg",
+        "sha256": "ffcd6e5296eed284d4febc1e5028bd1f9c7eab54a205793171a70c3ca224df42"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-2x-corrected-background.jpg",
+        "sha256": "90512c2ea9b71d206b0c246d180f2bb23c3eb2f643118e54669be61d1e076415"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-2x-corrected-controls-background.jpg",
+        "sha256": "91bdc70e08e8793bc623d5350066f60a6b5e2cb84a427fedc6fa010b3ecf7c51"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-2x-corrected-controls.jpg",
+        "sha256": "d4df7fce30d5f98504149efe2a23b5e8b9cf37ccee994c5a655f7a0685fb2e90"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-2x-corrected.jpg",
+        "sha256": "54df4a95ba43a7e72ab577dcc4222920af014465354c3f48d6ed3ffc3292bfa9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-p01-long-english-light-2x-current.jpg",
+        "sha256": "5ce6032290086eb5651ceb9c36b7b0e0e929034c924722e78c306fd536889100"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-1x-corrected-background.jpg",
+        "sha256": "ef04a2e2776d4385443388471165752ccbf8ce2a2e1bc5ebdbb6b84be892ed71"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-1x-corrected.jpg",
+        "sha256": "75ff110c91fe71159e90aae5be73bd87552630e8f440f70fc365680c0db51806"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-1x-current.jpg",
+        "sha256": "81b6c4ed4b73b65a6f949b53cae4243905d97c28a13491d748ff0e0f979210f9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-2x-corrected-background.jpg",
+        "sha256": "edfdcc5ca548e4ac1a2da7323cd0ca07289b495a6990564b2d7cac5cd0539c40"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-2x-corrected-controls-background.jpg",
+        "sha256": "7b6611ccef6412dd031654f4f08f49fdf209b706d591f7ed1475be3cbb27f0f8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-2x-corrected-controls.jpg",
+        "sha256": "247a970d0ebf555daeb8f5efd06951fae85083a9266fe13046f6c39a81329d25"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-2x-corrected.jpg",
+        "sha256": "71d1df83e7504856e355d47992f3258809106c7c14509f87fbb310d12ad9fe74"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-dark-2x-current.jpg",
+        "sha256": "3a30ae0383924687be8b15bd91f968b0120af8f962891c8257c02846f5a65a69"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-art-missing-background.jpg",
+        "sha256": "011d648caf78dedd758042e7c13a4e193f50721aed0ae3c8d6f602c60afc8567"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-art-missing.jpg",
+        "sha256": "699ad6313ab49d2cea65e5dd64aa0a90aca62e71727a85f114b716881d0c5446"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-background.jpg",
+        "sha256": "4ab32d6a25bbd4e924e785a59a90d1220ea29e78f20b88ee75e2f1aaf0b4e8ee"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-motion-reduced-background.jpg",
+        "sha256": "36fdd84683fa9e32814d94651b6612c34e8bf2ccc1f7c73a47e60ba1ef5087ef"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-motion-reduced.jpg",
+        "sha256": "db65faa1391d47fb129aa28df8dc6c5d93a0302c025b46544da1950bd44cf7e1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-tokens-invalid-background.jpg",
+        "sha256": "f58c616d454c68ee88c97efdd447d2313d2f07c3ef86a3eae69dd149498743c1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected-tokens-invalid.jpg",
+        "sha256": "e05c5e30acdc4be4f3dd7c8b869d236388cbbd265e266a7c50158fbe953ef9f1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-corrected.jpg",
+        "sha256": "db65faa1391d47fb129aa28df8dc6c5d93a0302c025b46544da1950bd44cf7e1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-1x-current.jpg",
+        "sha256": "4eed2157875588c78c0cf06d72ad80e2160e84f3d9e8cd71aa4f0323d6c22b8d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-2x-corrected-background.jpg",
+        "sha256": "0c8e5c82fbfbad709f99ed6c189f73b69c7117835aad004b9f930f2ea7f0e38e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-2x-corrected-controls-background.jpg",
+        "sha256": "9e8dae555b8db193a04e187b3d7c492c0bbc47854af02e9a64b8d3f8bed96dab"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-2x-corrected-controls.jpg",
+        "sha256": "f416e63564537e542c515106888959315fbf7a33c4b22504b993d69d36606ec6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-2x-corrected.jpg",
+        "sha256": "4398b034ea2db69ce57af522d89869bb7f23d7fc3a16b536da255a34b14e0c9a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-360-800-populated-light-2x-current.jpg",
+        "sha256": "a36c911b7218124fc956c96aeee1fa4a01d98fcdb79b6bf84c318bebab327e58"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-1x-corrected-background.jpg",
+        "sha256": "b3c4ecb14a513f827fcd74582102828f4df6c3e32609ea2b8a1073edba980e05"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-1x-corrected.jpg",
+        "sha256": "945ef2192010a74bd432c3f75a95fc0a36104b7039e36a929c11104c46643309"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-1x-current.jpg",
+        "sha256": "39d9090c6c51411638cf271da21d099b98eabad69174cb873b426e12fbba8cae"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-2x-corrected-background.jpg",
+        "sha256": "e11b11c98130a49e21f572307d9a5dffb73a6b4efb0bf2d1c4ee752d032b5c50"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-2x-corrected-controls-background.jpg",
+        "sha256": "04b2dd2443c8e474510c8c904bce32ba8d5d116a4c3b69b4b187d411cbca59e0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-2x-corrected-controls.jpg",
+        "sha256": "f37b880baf6c6f86b0f1227064d198ac45dbf978189c1a51067100128c1a7b36"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-2x-corrected.jpg",
+        "sha256": "c32f758dc7bf32491dbac81f9141cc5e408ee88b31c3d506e96487d18b356b60"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-dark-2x-current.jpg",
+        "sha256": "95bf71a17a61893933b62a1acc5f40eba819963cf46207121265730a9274bbf8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-1x-corrected-background.jpg",
+        "sha256": "e5ed338166d55ee8b691d15396e35cb179c341be7f8ef1288f2bb4e1869a8638"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-1x-corrected.jpg",
+        "sha256": "df94061a1d159c3c096d38ea6cb7b326c7458e521ee54d94ae08a1faff800b4c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-1x-current.jpg",
+        "sha256": "95f2b607c0fbc29457a78740a66ecafba4c532829783038930bc9518bd23a0dd"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-2x-corrected-background.jpg",
+        "sha256": "4e9a0aa2fd69ee61137cdeba30642293c8bfed5f8dc7e5342d6ed5c57058d741"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-2x-corrected-controls-background.jpg",
+        "sha256": "95b933ad796968815a8c615a15515778610e9b8b05bb6b8b54099df69eb61b4c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-2x-corrected-controls.jpg",
+        "sha256": "855c6f5bab820fe726b89d13ebd05c4ca88b4dba9e2fd8c7a45361015c1cc27d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-2x-corrected.jpg",
+        "sha256": "d2e858b039c9d7ef5827af493ff447a23af0b0b14ba020bde547dcc9f9449043"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-chinese-light-2x-current.jpg",
+        "sha256": "5eadd1e802c53263bebf95302db8771896f262d51fc48235404ccac221f80c8e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-1x-corrected-background.jpg",
+        "sha256": "074777e7d17b167e618a8cddffd8f28bf4e154021752e118114a12db3e8c3a66"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-1x-corrected.jpg",
+        "sha256": "b01963acb9b2fd874fd111c110c146ff8e1973834dab0ef81c434fabf225e6c3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-1x-current.jpg",
+        "sha256": "bc25d2d80ef0c217a9b80132b9a5bdb276ae6d499356eee86a48be12c4e09ce7"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-2x-corrected-background.jpg",
+        "sha256": "3b24ea7ee6aa6d9a689efe2d755443cf10b30afe06e7b0ae362dea1d0e5429b0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-2x-corrected-controls-background.jpg",
+        "sha256": "7275f1e30e3113f40ea5c9dc9b3573be02cb95d5f4694f747bc31a2a9cb3ff2e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-2x-corrected-controls.jpg",
+        "sha256": "365709cd3fc1646023da40b74e60649eba1d993da6b32a3f24853b18034cffb6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-2x-corrected.jpg",
+        "sha256": "98ac7018d29275b8c978430d4e67b0d4aefa2fc20c38caaae27544a5155ec47e"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-dark-2x-current.jpg",
+        "sha256": "97d5a6471ae82a24496236b4a4b615a1c566a59c80e3ccf7ad065584240b99d7"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-1x-corrected-background.jpg",
+        "sha256": "7684a7a37d6d6fa596fe2029365446b9016789a2eb663e0267da29e225a8d0b3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-1x-corrected.jpg",
+        "sha256": "b3535097ba0d4cdfec6c11643e0ae6d96fef7b66574618d637f2beafd20cde85"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-1x-current.jpg",
+        "sha256": "a92df23f72b2830ca8bb25a1bdc0f3a1eca309f20a033d529ecffa204a25584f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-2x-corrected-background.jpg",
+        "sha256": "87432b948d9e9b38e926e994da69991d86095c4976382c2a9ee3179d86a0a94f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-2x-corrected-controls-background.jpg",
+        "sha256": "88db546ba3bd97eff38f0d58b290bb4042f21ce993d455683b7cd4a5cb2e42b6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-2x-corrected-controls.jpg",
+        "sha256": "67ff4a269ba011bdc759896fbca3cf55546d38fc699cc37f0fe80042821882d9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-2x-corrected.jpg",
+        "sha256": "2ebe43aba356d63c9d7141b9f9fffb0c7750be5c8c2ff0c7af86ef4e669c78db"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-p01-long-english-light-2x-current.jpg",
+        "sha256": "94d37c501e1c4c632ba1d8acfe4c4fc1feaa35ea52e6d969a9ad124bf6a00c3d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-1x-corrected-background.jpg",
+        "sha256": "8eadeae1ea8d6e18839b312664c1dfc87a720c5e5a9a06587e320de6693fb811"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-1x-corrected.jpg",
+        "sha256": "09bd1c46bdf12a189a450624233102255e34bcf176dd48be6fe0e5e6fde9c454"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-1x-current.jpg",
+        "sha256": "254e5106423d7fafe8b3a2963fe65a561488225fe61cd6de4d828cdcadab4dbb"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-2x-corrected-background.jpg",
+        "sha256": "9f0dd2b198a70b1b286190483958756dc3920fe2c35cfc46c0c4b92ef3158ecf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-2x-corrected-controls-background.jpg",
+        "sha256": "69f662b3260632c0bc6e1fb18ca175a28b87bd5565ae846312ca69d0554c6cec"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-2x-corrected-controls.jpg",
+        "sha256": "8689c70f9b1d7e483d1487a285c48b4314ed3c61c3abae96c3964391dd82e0b8"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-2x-corrected.jpg",
+        "sha256": "30837ced8659dbcf68128a5779b993c9599502b666cecf096a0ed714081b6a48"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-dark-2x-current.jpg",
+        "sha256": "f381f936d9a5ed67aca52fd8bad7bec8e7bd40c722cc25a9b79b76f619a9ba6b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-1x-corrected-background.jpg",
+        "sha256": "93e78b6a2fc5e53de025179717420a2b1a9f320fe76009d46d57ac574a3d817d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-1x-corrected.jpg",
+        "sha256": "a7c12e1c0053c10db97a5caeedc4d63a2ef869dfbbd48a1f95625006681bdf9c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-1x-current.jpg",
+        "sha256": "95f273d2247e5f5f0c1635ed9e9c0e159372c52ffb9c87e071183efd5ce85627"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-2x-corrected-background.jpg",
+        "sha256": "0f3b0259e2189a4de081640fb8c0ac28e329ed8ad5b4d9a542e6c873753a78d0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-2x-corrected-controls-background.jpg",
+        "sha256": "ec8074e3981a035b2fa77011fc838d2bd2a8277d15c0d99433977f7994caf262"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-2x-corrected-controls.jpg",
+        "sha256": "7fbf10303a5c47c7af7c392afe972cebe8aa1759d236010bb287f2ed5461c01a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-2x-corrected.jpg",
+        "sha256": "016516b812d8ae49e0ab8dde46f72093bcfca4efc9fbcfb8ef9553950db8176d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-412-915-populated-light-2x-current.jpg",
+        "sha256": "0644e1bb78773f80f6149651a463265f138816c7f1b9dba3ce40fd16a2edce3a"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-1x-corrected-background.jpg",
+        "sha256": "8dc6609ad9163e5aef0f4b4255ff6a4388b5689af8ed94a4ab973158859101f2"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-1x-corrected.jpg",
+        "sha256": "f1c88dfd399744ff6627b31fc4bafb2456d1e6bec8ae93f72c97594a9fdf5731"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-1x-current.jpg",
+        "sha256": "ab22edc22e482488d0b7cb9a5f684046823c278d3363583ec5ea519539a958d0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-2x-corrected-background.jpg",
+        "sha256": "71b6985ca138e999aaced9e19311a4300b665e7fd56854c6001eed56b5431091"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-2x-corrected-controls-background.jpg",
+        "sha256": "10396091b35f0eccb5476bb96fcf80630db8c12880685ac82b79a61fccb5d34d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-2x-corrected-controls.jpg",
+        "sha256": "7e0c94f34e921d2b4ffa01a8a7c81ee9a89a7031dd93b441fcd6c10db6488fe3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-2x-corrected.jpg",
+        "sha256": "dd52d3a44feca690a93fe790eb387de43326a77472a3179f06bb0b2272d5b0df"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-dark-2x-current.jpg",
+        "sha256": "595dc110eab2e5844e32aa7ca900c8c29fd11e4fd6b3bb0377492a34dfaf94d5"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-1x-corrected-background.jpg",
+        "sha256": "992328faa881d6bb30115f482b5e083e1dbe73c9c63163603b498c35dfad15ea"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-1x-corrected.jpg",
+        "sha256": "a255fd7ac96b044e689fa61905b0170a6eb8f159cd50a57e1b767258f6a985a3"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-1x-current.jpg",
+        "sha256": "2ec6c5b1d3f7dbf162478b98e4c18b653bed337aa56515fe82131eef6c559095"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-2x-corrected-background.jpg",
+        "sha256": "fdc18903737614d0849df9669ddde63f7678d33ff771cf43d4f2d1d154b9e347"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-2x-corrected-controls-background.jpg",
+        "sha256": "e32eb3afd77044a78557872ce69ec7d8c2a6f9fce5e5ff9f4d918419ce2c17fd"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-2x-corrected-controls.jpg",
+        "sha256": "3469d663af258cdda6447c34503c4ee1d36b631d9ea0fd808a106ab701cfa0d9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-2x-corrected.jpg",
+        "sha256": "967c31a1edc7e3fcafbc6a62d62d9339d90598a270ff8d0f2ffd147398399102"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-chinese-light-2x-current.jpg",
+        "sha256": "cadfd0c0702f2e4129e8a1084a6f15c4d5d2b6a5f7832def76713f9be4352a7b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-1x-corrected-background.jpg",
+        "sha256": "130313a61cd9a25155efeb2692160025af8ff390a5185b8f14113e75d45ce326"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-1x-corrected.jpg",
+        "sha256": "8aaaee4e752d51da3695a8ce082afba33f1b68408fe1bfadf8863daa4e403186"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-1x-current.jpg",
+        "sha256": "ce12dfaa58d8b7bf0daa36b6a1753eb5ae3484476d5bb351a3de5f6d959bba99"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-2x-corrected-background.jpg",
+        "sha256": "b404f7c60e09942145f60a8a981c3bdc09cb74fe1f597d1dad044524e53dca44"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-2x-corrected-controls-background.jpg",
+        "sha256": "2bc694027ee733fcd876415749076968c35d81ac2fc9e8031c022ae8e110da89"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-2x-corrected-controls.jpg",
+        "sha256": "9c228e8147de1a62b43e9473d56ec6b3eb670d0d63a3a6c9dd62c5490db346b1"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-2x-corrected.jpg",
+        "sha256": "41764ae69108f2d6b2d9438ed467775248ea48c88c35dddd4cdcc31f8134c3b5"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-dark-2x-current.jpg",
+        "sha256": "4143f2d0a5d648fb8d1ee18064791967cb1c33c99c0a4bcbb80576ad026b010b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-1x-corrected-background.jpg",
+        "sha256": "4fe1c751c64e2acbdfd763ba80adbd37c16c0487cfc0ef44e7a124ef19b6ad78"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-1x-corrected.jpg",
+        "sha256": "7f9aa6d5420ba707f67e2762f2b9b8872f19be96f12ae3fcea4e586649eae004"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-1x-current.jpg",
+        "sha256": "364c068de0113275e837131e8609dc5592c2cecaab01c8c8d6f7cbc71eb2af3c"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-2x-corrected-background.jpg",
+        "sha256": "9edb03d1fd8b919eae2fac2fdaf0971c288fca53f32a480c5e5ed38638552c25"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-2x-corrected-controls-background.jpg",
+        "sha256": "8b03fbdda33c36ccb792978a533ac99217107bd2cb34ba574585d804be652880"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-2x-corrected-controls.jpg",
+        "sha256": "afa68c4e2f9c1ba4e178ae8bb400fe446a64ece0f2f4e162378e26a009c88ca7"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-2x-corrected.jpg",
+        "sha256": "d395863045301776e6bd34b16b2bdc77b2b2089d717c28742c5d11940b74cde0"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-p01-long-english-light-2x-current.jpg",
+        "sha256": "fdceaf2d3026af8037ff819360e148cc5a77de3361f1fe18083963f09b080594"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-1x-corrected-background.jpg",
+        "sha256": "83e7e31fecee7f7ddccbaeabad64c7bd677c7b876dd71f99e1f556428d47e580"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-1x-corrected.jpg",
+        "sha256": "61ee3c199433653163268e145aa225fc2c624127c499f0f8df326537c3e7e1cf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-1x-current.jpg",
+        "sha256": "0b48c996ce5d3906fedd234122610ec7b798971a2a50e875ddda82f379f9a777"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-2x-corrected-background.jpg",
+        "sha256": "b64a125bd8c1e29b07ddf0e27425f84b58b024379cd402bd5018fe34940cdfc9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-2x-corrected-controls-background.jpg",
+        "sha256": "2a0480d0e8d0528e13c91dbeadb21ade4d072238b30da73ac615d8228c7f2d2b"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-2x-corrected-controls.jpg",
+        "sha256": "551412f0941d96ed508255247691e40dd78c3fa5783a48670710a50c5ee19478"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-2x-corrected.jpg",
+        "sha256": "32314760b96c2a7b840db93178d28f3195926280088d7b849a2644c2f442bfdf"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-dark-2x-current.jpg",
+        "sha256": "1c24c1fe496845db15711261e86256f13f15917e66ddd3cb384dcfe29ff27892"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-1x-corrected-background.jpg",
+        "sha256": "9e4c6e4287687d44e578ea4811acda7c5cba41b6f97226c425cb7a9d0d9a9e95"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-1x-corrected.jpg",
+        "sha256": "e11fd7e33c72bebc22b71600b639db13edfdf76533e084b65fc5d48c41f32aab"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-1x-current.jpg",
+        "sha256": "5881e9f3594ff42550bc7579736dc133f0a8bf7b067724d3edb11cf2eddfd2a9"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-2x-corrected-background.jpg",
+        "sha256": "d425bfa78d9d72fc031eae4723f1284a96feb75a432d39dc90abf0b13c1f7217"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-2x-corrected-controls-background.jpg",
+        "sha256": "9010feee0ef7030417532ae3014b2b403968ee814a379606bf2c1f49ad06d74f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-2x-corrected-controls.jpg",
+        "sha256": "11deb0d725eda220b22594bcc83196e4778a6c57aad749c2ed0a131b4a923e6f"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-2x-corrected.jpg",
+        "sha256": "227c63e610c4417ebda6813327eaa8231f1653e8635a95a9ac7cb0c383e2bbde"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-800-1024-populated-light-2x-current.jpg",
+        "sha256": "0c4c77eac51fe54c428b9aa1367e5a6b47d84ad935b5c46e98ec315df1b3007d"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-keyboard-focus.jpg",
+        "sha256": "9c8b8ee10f5e90c6b325dcb67deea834e9e09c21149e2b254265559d0187b8e6"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-memory-done.jpg",
+        "sha256": "b814d97dbcc7d42cc4c9238e1381cc2557c5789a569ea6f00bb22e8544ee7426"
+      },
+      {
+        "path": "docs/evidence/redesign-p01/render-r1/rn/rn-memory-undo.jpg",
+        "sha256": "ca31350ddcaba400e12e85a712129b4daac1388e6a53b4a906e2c06f3bdbab56"
+      }
+    ],
+    "contrastElements": 3190,
+    "normalTextMinimum": 5.566138886415388,
+    "largeTextMinimum": 3.566736381825731,
+    "essentialIndicatorMinimum": 4.949002523424589,
+    "nativeControlBoundaryMinimum": 3.9770576110109115,
+    "comparisonNormalization": "docs/evidence/redesign-p01/render-r1/derivatives.json"
+  },
+  "build": {
+    "applicationId": "com.remilo.app",
+    "versionName": "0.4.0",
+    "versionCode": 4,
+    "abi": "arm64-v8a",
+    "signed": true,
+    "apk": {
+      "path": "android/app/build/outputs/apk/release/app-release.apk",
+      "sha256": "641ad14cb962db09af01239d02e7a675dc0a1590cbcdb1d638ca51eeaafa221d"
+    },
+    "installed": false,
+    "distributed": false
+  },
+  "requiredAcceptance": "Both actual corrected compositions, dark/responsive/large-text matrix, composited accessibility evidence and derived composition notes; record exact revision/hash and conditions. Material changes require renewed acceptance.",
+  "pendingDeviceGates": [
+    "TalkBack",
+    "Android keyboard/Back",
+    "real system insets",
+    "system notification UI",
+    "physical alarm/audio/recovery",
+    "performance/manufacturer coverage"
+  ],
+  "exclusions": [
+    "P02",
+    "full theme catalog",
+    "production appearance/navigation/persistence/classifier",
+    "engine/scheduling/audio/notification/launcher changes",
+    "schema/backup/bridge changes",
+    "installation/distribution"
+  ],
+  "bundleHashMethod": "SHA-256 of JSON.stringify(this manifest before adding bundleSha256); binds sources, approvals, all render hashes, metadata and artifact records.",
+  "bundleSha256": "6616bc8f98aee19982f132d9635ccc6e73d719fcf425040017d52fc4e0ba0053"
+}

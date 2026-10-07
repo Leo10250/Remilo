@@ -1,0 +1,20 @@
+{
+  "artifactId": "P01-artwork-r1-selected-acceptance",
+  "approvalRecord": "A14",
+  "date": "2026-10-06",
+  "owner": "Repository owner in this chat",
+  "planId": "P01",
+  "ownerWords": "I approve. Proceed",
+  "approvalContext": "Direct response to the request to approve S1 and M1 for integration into the two P01 review prototypes.",
+  "preferenceRecord": "docs/design/p01-artwork-r1-preference.json",
+  "acceptedCandidates": [
+    { "id": "S1", "path": "docs/design/artwork/p01-artwork-r1/sunrise-s1-horizon.png", "sha256": "bc91beb4bc6f1bf78285d1fe08ad495fa8cfe60f0b4a848755a5b757adc26e3b" },
+    { "id": "M1", "path": "docs/design/artwork/p01-artwork-r1/meadow-m1-canopy.png", "sha256": "300467ae10d40efcf7e7a61c5e53660b424d4e1c7814facea7d02f073d9021eb" }
+  ],
+  "artworkAccepted": true,
+  "integrationAuthorized": true,
+  "acceptedScope": "Use the identified artwork in the non-shipping actual Sunrise Agenda and Meadow alarm P01 prototypes, including bounded export and renderer treatments.",
+  "renderedUiAccepted": false,
+  "conditions": ["Final rendered UI approval remains required before P01 completion.", "No P02, full theme catalog, production appearance policy, scheduling, audio, notification, storage or installation changes."],
+  "submissionPreservation": "A13 and the four-candidate submission remain historical records. This record supplies the subsequent explicit acceptance of S1 and M1."
+}

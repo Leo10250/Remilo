@@ -28,7 +28,7 @@ import java.util.Locale
 import org.json.JSONObject
 
 enum class AlarmReviewApproach { Immersive, Layered, Hybrid }
-enum class AlarmReviewScenario { Single, Multiple, Generic, LongTitle, ChineseTitle, Loading, Error }
+enum class AlarmReviewScenario { Single, Multiple, Generic, LongTitle, ChineseTitle, Loading, Error, Consequential }
 
 data class AlarmReviewConfiguration(
   val approach: AlarmReviewApproach = AlarmReviewApproach.Hybrid,
@@ -36,7 +36,11 @@ data class AlarmReviewConfiguration(
   val palette: String = "Sunrise",
   val dark: Boolean = false,
   val fontScale: Float = 1f,
-  val baseline: Boolean = false
+  val baseline: Boolean = false,
+  val p01: Boolean = false,
+  val missingArt: Boolean = false,
+  val invalidTokens: Boolean = false,
+  val sampleBackground: Boolean = false
 )
 
 /** Debug-only immutable content. This activity never obtains an engine or starts a service. */
@@ -46,12 +50,16 @@ class AlarmDesignReviewActivity : ComponentActivity() {
   var lastAction: Pair<String, String?>? = null
     private set
   private var feedback by mutableStateOf<String?>(null)
+  private var reviewSession by mutableStateOf<AlarmEngine.SessionSnapshot?>(null)
 
   fun showReview(configuration: AlarmReviewConfiguration) {
     this.configuration = configuration
     feedback = null
     lastAction = null
+    reviewSession = AlarmReviewFixtures.snapshot(configuration.scenario)
   }
+
+  fun showSession(snapshot: AlarmEngine.SessionSnapshot) { reviewSession = snapshot }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -63,14 +71,15 @@ class AlarmDesignReviewActivity : ComponentActivity() {
       palette = intent.getStringExtra("palette") ?: "Sunrise",
       dark = intent.getBooleanExtra("dark", false),
       fontScale = intent.getFloatExtra("fontScale", 1f).coerceIn(1f, 2f),
-      baseline = intent.getBooleanExtra("baseline", false)
+      baseline = intent.getBooleanExtra("baseline", false),
+      p01 = intent.getBooleanExtra("p01", false)
     ))
     setContent {
       key(configuration) {
         AlarmDesignReviewScreen(configuration, feedback, { kind, record ->
           lastAction = kind to record?.occurrenceId
           feedback = "Review action: ${if (kind == "StopAll") "Stop all" else kind}. No alarm is running."
-        }, { feedback = null })
+        }, { feedback = null }, reviewSession)
       }
     }
   }
@@ -112,8 +121,13 @@ internal fun AlarmDesignReviewScreen(
   configuration: AlarmReviewConfiguration,
   feedback: String?,
   onAction: (String, AlertRecord?) -> Unit,
-  onRetry: () -> Unit
+  onRetry: () -> Unit,
+  fixtureSession: AlarmEngine.SessionSnapshot? = AlarmReviewFixtures.snapshot(configuration.scenario)
 ) {
+  if (configuration.p01) {
+    P01AlarmReview(configuration, fixtureSession, feedback, onAction, onRetry)
+    return
+  }
   val generic = configuration.scenario == AlarmReviewScenario.Generic
   val decorated = !generic && !configuration.baseline
   val snapshot = remember(configuration.scenario) { AlarmReviewFixtures.snapshot(configuration.scenario) }

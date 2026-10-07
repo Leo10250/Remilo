@@ -60,6 +60,8 @@ test('compact row styling remains an explicit review opt-in in existing producti
   const binding = component.parameters[0].name;
   const compact = binding.elements.find((element) => element.name.getText(rowSource) === 'reviewCompact');
   assert.equal(compact?.initializer?.kind, ts.SyntaxKind.FalseKeyword);
+  const editorial = binding.elements.find((element) => element.name.getText(rowSource) === 'reviewEditorial');
+  assert.equal(editorial?.initializer?.kind, ts.SyntaxKind.FalseKeyword);
   for (const file of ['src/app/index.tsx', 'src/app/records.tsx', 'src/app/series/[id].tsx']) {
     const source = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
     const attributes = [];
@@ -72,5 +74,15 @@ test('compact row styling remains an explicit review opt-in in existing producti
     walk(source);
     assert.ok(!attributes.includes('reviewCompact'), file);
     assert.ok(!attributes.includes('reviewNow'), file);
+    assert.ok(!attributes.includes('reviewEditorial'), file);
   }
+});
+
+test('P01 native presentation is optional and all review assets remain debug-only', () => {
+  assert.match(read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt'), /singlePresentation:[\s\S]*?= null/);
+  assert.ok(!read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt').includes('singlePresentation'));
+  const review = read('modules/remilo-alarm/android/src/debug/java/com/remilo/alarm/review/P01AlarmReview.kt');
+  assert.ok(!/AlarmEngine\.get|\.database|startService|RingingService/.test(review));
+  assert.match(read('modules/remilo-alarm/android/src/debug/AndroidManifest.xml'), /android:exported="false"/);
+  assert.ok(!read('modules/remilo-alarm/android/src/main/AndroidManifest.xml').includes('AlarmDesignReviewActivity'));
 });
