@@ -24,6 +24,8 @@ sample, source approval before integration, sample before further expansion and
 catalog approval before shared Classic activation. Existing production layouts and
 all behavioral contracts remain. The [P02 plan](plans/redesign/p02-visual-foundations.md)
 owns that staged scope; unbuilt artwork/tokens/renders remain unapproved.
+A17 accepts SK1/RO1 source artwork for the actual RN/Compose expansion sample.
+Rendered treatments and foundations still require sample and catalog acceptance.
 Final production layouts/tokens/UX and other milestones require separate approvals.
 P01 establishes complementary illustration
 and whole-UI language: specification approval, then artwork-only style approval before

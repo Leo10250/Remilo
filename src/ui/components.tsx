@@ -1,10 +1,10 @@
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ImageSourcePropType, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useReviewFontScale, useTheme } from './theme';
+import { useFoundationStyle, usePresentationState, useReviewFontScale, useTheme } from './theme';
 import { typography, space, shape } from './tokens';
 import { civilAt, deviceZone, mergeCivil, pickerCivil } from '../domain/time';
 import { engine } from './native';
@@ -46,10 +46,14 @@ function AndroidSymbol({ name, color, size }: { name: IconName; color: string; s
 }
 export function IconButton({ icon, label, onPress, disabled = false }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean }) {
   const colors = useTheme();
+  const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
+  const c = foundation?.colors;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} accessibilityState={{ disabled }}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     onPress={onPress} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
-      borderRadius: 24, backgroundColor: pressed ? colors.soft : 'transparent', opacity: disabled ? 0.4 : 1 })}>
-    <Icon name={icon} color={colors.ink} />
+      borderRadius: 24, backgroundColor: c ? disabled ? c.disabledSurface : pressed || state === 'pressed' ? c.secondaryPressed : 'transparent' : pressed ? colors.soft : 'transparent',
+      borderWidth: c ? 2 : 0, borderColor: c && (focused || state === 'focused') ? c.focus : 'transparent', opacity: c ? 1 : disabled ? 0.4 : 1 })}>
+    <Icon name={icon} color={c && disabled ? c.disabledInk : colors.ink} />
   </Pressable>;
 }
 export function Copy({ children, muted = false, size = typography.body, heading = false }: PropsWithChildren<{ muted?: boolean; size?: number; heading?: boolean }>) {
@@ -58,35 +62,54 @@ export function Copy({ children, muted = false, size = typography.body, heading 
 }
 export function Heading({ children }: PropsWithChildren) {
   const scale = useReviewFontScale();
-  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, fontWeight: '600' }}>{children}</Text>;
+  const foundation = useFoundationStyle();
+  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? typography.heading * scale * 1.4 : undefined, fontWeight: '600' }}>{children}</Text>;
 }
-export function Button({ label, onPress, disabled = false, variant = 'primary', icon }: {
-  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'danger'; icon?: IconName;
+export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false }: {
+  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'danger'; icon?: IconName; busy?: boolean;
 }) {
   const colors = useTheme(), scale = useReviewFontScale();
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => [styles.button, { backgroundColor: variant === 'primary' ? colors.accent : colors.soft,
-      flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: disabled ? 0.45 : pressed ? 0.7 : 1 }]}>
-    {icon && <Icon name={icon} color={variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink} size={20} />}
-    <Text style={{ color: variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink,
+  const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
+  const c = foundation?.colors, blocked = disabled || busy;
+  const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink;
+  const button = <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => [styles.button, { backgroundColor: c ? blocked ? c.disabledSurface : variant === 'primary' ? pressed || state === 'pressed' ? c.primaryPressed : c.accent : variant === 'danger' ? c.dangerSurface : pressed || state === 'pressed' ? c.secondaryPressed : c.soft : variant === 'primary' ? colors.accent : colors.soft,
+      borderRadius: foundation?.tokens.shape.action ?? shape.action,
+      borderWidth: c ? 2 : 0, borderColor: c && variant === 'secondary' ? c.outline : 'transparent',
+      flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed ? 0.7 : 1 }]}>
+    {(c || icon || busy) && <View style={{ width: 20, height: 20 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
+    <Text style={{ color: foreground, lineHeight: c ? typography.supporting * scale * 1.4 : undefined,
       flexShrink: 1, fontSize: typography.supporting * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
   </Pressable>;
+  return c ? <View style={{padding:4,borderWidth:2,borderColor:focused || state === 'focused' ? c.focus : 'transparent',borderRadius:18}}>{button}</View> : button;
 }
 export function Card({ children }: PropsWithChildren) {
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
 export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
   const colors = useTheme(), scale = useReviewFontScale();
+  const foundation = useFoundationStyle(), [focused, setFocused] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const onContentSizeChange = props.onContentSizeChange;
+  const resize = useCallback<NonNullable<TextInputProps['onContentSizeChange']>>(event => {
+    setContentHeight(Math.ceil(event.nativeEvent.contentSize.height) + 2);
+    onContentSizeChange?.(event);
+  }, [onContentSizeChange]);
   return <View style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput accessibilityLabel={label}
-    placeholderTextColor={colors.muted} {...props} style={[styles.input, { color: colors.ink,
-      backgroundColor: colors.surface, borderColor: error ? colors.danger : colors.muted, minHeight: props.multiline ? 80 : 48,
+    placeholderTextColor={colors.muted} {...props}
+    onContentSizeChange={foundation && props.multiline ? resize : props.onContentSizeChange}
+    onFocus={event => { setFocused(true); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
+      borderRadius: foundation?.tokens.shape.field ?? shape.field,
+      backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
       fontSize: typography.body * scale }, props.style]} />
-    {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}</View>;
+    {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
 export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel }: PropsWithChildren<{
   label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string;
 }>) {
   const colors = useTheme(), scale = useReviewFontScale();
+  const foundation = useFoundationStyle();
   const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.md, paddingHorizontal: space.gutter }}>
     {icon && <Icon name={icon} />}
     <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
@@ -95,11 +118,12 @@ export function SettingRow({ label, value, icon, onPress, children, description,
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
     accessibilityLabel={[label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={onPress}
-    style={({ pressed }) => ({ backgroundColor: pressed ? colors.soft : 'transparent', opacity: disabled ? 0.5 : 1 })}>{body}</Pressable> : body;
+    style={({ pressed }) => ({ backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>{body}</Pressable> : body;
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
   const colors = useTheme(), scale = useReviewFontScale();
-  return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: typography.label * scale, fontWeight: '600', marginLeft: space.gutter }}>{title}</Text>}
+  const foundation = useFoundationStyle();
+  return <View style={{ gap: space.sm, backgroundColor: foundation ? colors.surface : undefined, borderRadius: foundation ? shape.group : undefined, paddingTop: foundation && title ? space.sm : undefined }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: (foundation ? typography.supporting : typography.label) * scale, fontWeight: '600', marginLeft: space.gutter }}>{title}</Text>}
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 export function SectionHeader({ title, count, expanded, onPress, overdue = false }: {
@@ -115,6 +139,12 @@ export function SectionHeader({ title, count, expanded, onPress, overdue = false
 }
 export function Toggle({ label, value, onChange, icon }: { label: string; value: boolean; onChange: (value: boolean) => void; icon?: IconName }) {
   const colors = useTheme();
+  const foundation = useFoundationStyle();
+  if (foundation) return <SettingRow label={label} icon={icon}><Pressable accessibilityRole="switch" accessibilityLabel={label} accessibilityState={{checked:value}}
+    onPress={() => onChange(!value)} style={{minWidth:56,minHeight:48,alignItems:'center',justifyContent:'center'}}>
+    <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><Switch accessible={false} value={value}
+      thumbColor={value ? colors.accentInk : colors.muted} trackColor={{true:colors.accent,false:colors.border}} /></View>
+  </Pressable></SettingRow>;
   return <SettingRow label={label} icon={icon}><Switch accessibilityLabel={label} value={value} onValueChange={onChange}
     hitSlop={10} thumbColor={value ? colors.accentInk : colors.muted} trackColor={{ true: colors.accent, false: colors.border }} /></SettingRow>;
 }

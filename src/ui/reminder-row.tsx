@@ -6,14 +6,16 @@ import { alertPresentation, calendarDate, eventRange, ordinaryDue, recordedCompl
 import { deviceZone } from '../domain/time';
 import { Icon, IconButton, Status, type IconName } from './components';
 import { useReducedMotion } from './motion';
-import { useReviewFontScale, useTheme } from './theme';
+import { useFoundationStyle, useReviewFontScale, useTheme } from './theme';
 import { typography } from './tokens';
 
-export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, reviewCompact = false, reviewEditorial = false, reviewGlyph = 'event', reviewNow }: {
+export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, reviewCompact = false, reviewEditorial = false, reviewGlyph = 'event', reviewNow, presentation = 'row' }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
   reviewCompact?: boolean; reviewEditorial?: boolean; reviewGlyph?: IconName; reviewNow?: number;
+  presentation?: 'row' | 'tile';
 }) {
   const colors = useTheme(), scale = useReviewFontScale(), reducedMotion = useReducedMotion();
+  const foundation = useFoundationStyle();
   const [revealed, setRevealed] = useState(false);
   const [shift] = useState(() => new Animated.Value(0));
   const current = useRef(0), origin = useRef(0), eligible = useRef(false), width = useRef(0);
@@ -49,11 +51,11 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
   const doneControl = onDone && <Pressable accessibilityRole="button" accessibilityLabel={actionLabel + ': ' + summary} accessibilityState={{ disabled: busy }} disabled={busy} onPress={act}
-    style={{ minWidth: 48, ...(reviewCompact ? { width: 48 } : {}), minHeight: 48, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.4 : 1 }}>
-    <Icon name={restore || item.completed || item.skipped ? 'undo' : reviewCompact ? 'radio_button_unchecked' : 'check'} color={colors.accent} />
+    style={{ minWidth: 48, ...(reviewCompact ? { width: 48 } : {}), minHeight: 48, alignItems: 'center', justifyContent: 'center', backgroundColor: foundation && busy ? foundation.colors.disabledSurface : undefined, opacity: foundation ? 1 : busy ? 0.4 : 1 }}>
+    <Icon name={restore || item.completed || item.skipped ? 'undo' : reviewCompact ? 'radio_button_unchecked' : 'check'} color={foundation && busy ? foundation.colors.disabledInk : colors.accent} />
     {(restore || item.completed || item.skipped) && <Text style={{ color: colors.accent, fontSize: typography.label * scale }}>{actionLabel}</Text>}
   </Pressable>;
-  return <View style={{ backgroundColor: swipeTrash ? colors.danger : colors.accent, overflow: 'hidden', borderRadius: reviewEditorial ? 16 : reviewCompact ? 8 : 0 }}>
+  return <View style={{ backgroundColor: swipeTrash ? colors.danger : colors.accent, overflow: 'hidden', borderRadius: presentation === 'tile' ? 16 : reviewEditorial ? 16 : reviewCompact ? 8 : 0 }}>
     {canSwipe && <Pressable aria-hidden={!revealed} accessibilityRole="button" accessibilityLabel={(swipeTrash ? 'Move to Trash: ' : 'Done: ') + summary} accessible={revealed} accessibilityElementsHidden={!revealed}
       importantForAccessibility={revealed ? 'yes' : 'no-hide-descendants'} disabled={busy || !revealed} onPress={swipeAct}
       style={{ position: 'absolute', [I18nManager.isRTL ? 'left' : 'right']: 0, top: 0, bottom: 0, width: 88, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 4 }}>

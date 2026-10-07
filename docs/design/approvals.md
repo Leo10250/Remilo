@@ -23,6 +23,7 @@ This ledger records human decisions, not task status. Live status belongs only i
 | A14 | 6 October 2026 | “I approve. Proceed” explicitly accepts the identified S1 and M1 sources for integration into the two non-shipping P01 review prototypes. [Acceptance and source hashes](p01-artwork-r1-acceptance.json). | Final rendered UI approval, P01 completion, production layouts/tokens/workflows, P02, full theme catalog or installation. |
 | A15 | 6 October 2026 | “Approve” explicitly accepts P01-render-r1's actual Sunrise Agenda and Meadow alarm compositions in response to their final rendered UI checkpoint. [Acceptance and exact revision/hash](p01-render-r1-acceptance.json); [P01 handoff](../handoffs/redesign-p01.md). | Final production layouts, reusable production tokens, detailed production UX, other artwork candidates, P02 execution, physical/device acceptance, installation or distribution. |
 | A16 | 6 October 2026 | “PLEASE IMPLEMENT THIS PLAN” authorizes the detailed P02 implementation plan: 16 dp tiles, Sky/Rose sample, artwork-only acceptance before integration, sample acceptance before remaining environments, complete catalog acceptance before activating shared Classic styling. [Execution record](p02/execution-authorization.json); [refined P02 plan](../plans/redesign/p02-visual-foundations.md). | Acceptance of unbuilt artwork, sample, catalog or production render revisions; workflow/persistence/notification/launcher changes; P03/P04, installation, distribution or physical acceptance. |
+| A17 | 6 October 2026 | “I like SK1 + RO1. I approve this combination P02-artwork-r1.” accepts the identified Sky SK1 and Rose RO1 source hashes for actual RN/Compose sample integration. [Acceptance record](p02/artwork-r1-acceptance.json). | Sample/token/treatment acceptance, remaining artwork generation, complete catalog acceptance, production activation or physical verification. |
 
 A03 is the owner's answer to the Meadow-alarm versus time-atmosphere question.
 The original documentation request supplies A04/A05; the later review supplies A06.
@@ -122,6 +123,11 @@ The two corrected P01 representative compositions are accepted by A15. Productio
 palettes, the wider illustration catalog, icon adaptations, persistence contracts,
 production workflow renders and launcher behavior remain subject to later gates.
 Add records only after an explicit owner response.
+
+A17 accepts SK1/RO1 from P02-artwork-r1, superseding the submission's SK2
+recommendation. Preserve the original board, sources and manifest. The next
+checkpoint is the actual RN/Compose sample, including export treatments and
+foundation roles; its acceptance is required before further environment generation.
 
 [P01-render-r1](p01-render-review-r1.html) is the subsequent submitted actual
 RN/Compose comparison package. Its [revision/hash record](p01-render-r1.json)

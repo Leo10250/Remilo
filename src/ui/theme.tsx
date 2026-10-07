@@ -3,9 +3,22 @@ import { useColorScheme } from 'react-native';
 import { useSettings } from './native';
 
 import { palettes, type Colors } from './colors';
+import type { Foundation } from './foundations/foundation';
 const Theme = createContext<Colors>(palettes.light);
 const ReviewFontScale = createContext(1);
 const ReviewMotion = createContext<boolean | undefined>(undefined);
+const FoundationStyle = createContext<Foundation | null>(null);
+// Opt-in presentation only. The production provider stays on its approved baseline
+// until the complete P02 catalog gate; existing P01 review inputs stay compatible.
+const PresentationState = createContext<'default' | 'pressed' | 'focused'>('default');
+export const useFoundationStyle = () => useContext(FoundationStyle);
+export const usePresentationState = () => useContext(PresentationState);
+export function FoundationStyleProvider({ foundation, children }: PropsWithChildren<{ foundation: Foundation }>) {
+  return <FoundationStyle.Provider value={foundation}><ReviewThemeProvider colors={foundation.colors}>{children}</ReviewThemeProvider></FoundationStyle.Provider>;
+}
+export function PresentationStateProvider({ state, children }: PropsWithChildren<{ state: 'default' | 'pressed' | 'focused' }>) {
+  return <PresentationState.Provider value={state}>{children}</PresentationState.Provider>;
+}
 export function ThemeProvider({ children }: PropsWithChildren) {
   const system = useColorScheme();
   const setting = useSettings().data?.theme ?? 'system';

@@ -38,6 +38,9 @@ data class AlarmReviewConfiguration(
   val fontScale: Float = 1f,
   val baseline: Boolean = false,
   val p01: Boolean = false,
+  val p02: Boolean = false,
+  val p02Primitives: Boolean = false,
+  val p02Busy: Boolean = false,
   val missingArt: Boolean = false,
   val invalidTokens: Boolean = false,
   val sampleBackground: Boolean = false
@@ -124,6 +127,10 @@ internal fun AlarmDesignReviewScreen(
   onRetry: () -> Unit,
   fixtureSession: AlarmEngine.SessionSnapshot? = AlarmReviewFixtures.snapshot(configuration.scenario)
 ) {
+  if (configuration.p02) {
+    P02FoundationReview(configuration, fixtureSession, feedback, onAction, onRetry)
+    return
+  }
   if (configuration.p01) {
     P01AlarmReview(configuration, fixtureSession, feedback, onAction, onRetry)
     return

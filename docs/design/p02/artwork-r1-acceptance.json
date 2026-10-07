@@ -1,0 +1,25 @@
+{
+  "artifactId": "P02-artwork-r1-selected-acceptance",
+  "approvalRecord": "A17",
+  "date": "2026-10-06",
+  "owner": "Repository owner in this chat",
+  "planId": "P02",
+  "ownerWords": "I like SK1 + RO1. I approve this combination P02-artwork-r1.",
+  "submittedManifest": "docs/design/p02/artwork-r1/manifest.json",
+  "submittedBundleSha256": "6d1c4b57716378c4afe557896afc83a60d8e5ad4b77caeb44d90bf792d745c0d",
+  "acceptedCandidates": [
+    { "id": "SK1", "path": "docs/design/p02/artwork-r1/sky-sk1-open-horizon.png", "sha256": "4a3133a2d7cd1857addf78baf59289edfe6f903e0eda1c4305b525e9bf090d07" },
+    { "id": "RO1", "path": "docs/design/p02/artwork-r1/rose-ro1-petal-canopy.png", "sha256": "102f5207a2d9150ffb30f6f7f3332ec91125df33798fd690942510a954e51084" }
+  ],
+  "artworkAccepted": true,
+  "integrationAuthorized": true,
+  "acceptedScope": "Use SK1 and RO1 in the actual RN/Compose expansion sample alongside the accepted S1/M1 anchors, with separately identified light/dark export treatments.",
+  "sampleAccepted": false,
+  "catalogAccepted": false,
+  "conditions": [
+    "Actual rendered sample acceptance precedes generation of the remaining environments.",
+    "Remaining source acceptance and complete catalog acceptance precede production Classic activation.",
+    "Existing production layout, actions, storage and scheduling contracts remain unchanged."
+  ],
+  "submissionPreservation": "The submitted manifest and board remain unchanged. This explicit owner selection supersedes the author's SK2 recommendation; SK2 and RO2 remain unselected."
+}
