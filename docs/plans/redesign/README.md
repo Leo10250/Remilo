@@ -1,9 +1,21 @@
 # Remilo redesign roadmap
 
+**7 October 2026 precedence:** consume
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md)
+before executing or refining any visual plan. R3 homepage and the overall R4
+details/editor template are accepted with correction conditions. One global
+atmosphere and independent brightness replace task-specific environments and
+manual reminder appearance, which are deferred. Earlier conflicting catalog,
+chooser, classification and period assumptions below need refinement; they are
+retained planning, not new execution authorization. Four preview atmospheres do
+not define automatic switching times, migrations or defaults. Historical approvals,
+dependency records and live backlog statuses are preserved.
+
 ## Vision and authority
 
-A coherent, softly illustrated Remilo atmosphere supports clear everyday scanning;
-individual details/alarms receive richer contextual environments. The exact supplied
+A coherent, softly illustrated global Remilo atmosphere supports clear everyday
+scanning across pages; compact details/editor headers use the same atmosphere.
+The exact supplied
 Classic icon is the identity. Workflows improve without changing offline native
 alarm ownership, recurrence, timing, privacy or backup guarantees.
 

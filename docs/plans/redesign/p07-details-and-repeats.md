@@ -1,5 +1,12 @@
 # P07 Details and Repeats
 
+**7 October 2026 visual intake:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
+The overall R4 details template is accepted with corrections, not every generated
+pixel. Use one global atmosphere with independent brightness and defer manual
+reminder/series appearance and its chooser. Conflicting earlier contextual-theme
+and P04D integration assumptions below remain planning requiring refinement.
+
 ## 1. Objective and user-visible outcome
 
 Opening a reminder explains its event, unfinished/completed status and delivery
@@ -20,7 +27,7 @@ Recompose details around title/event range/consequential Due, one delivery/next-
 area and persistent state actions. Separate ringing Stop/Snooze from Done. Retain
 post-delivery Postpone, Schedule details, menu Activity/duplicate/destructive actions,
 recoverable Trash and scope choices. Refine Repeats family rows/details, complete
-rules/upcoming dates/earlier unfinished occurrences and optional scoped appearance.
+rules/upcoming dates/earlier unfinished occurrences. Scoped appearance is deferred.
 Use P04 descriptors and P02 environmental art without generating a new style.
 
 ## 4. Explicit non-goals
@@ -56,12 +63,26 @@ distinct. Reopen/Restore cannot replay elapsed alerts; stale actions stay fenced
 Inherit P01 isolated-screen composition rules and P02 catalog with
 [alarm/detail atmosphere references](../../design/references/time-of-day-and-alarms.png).
 Use actual data hierarchy, not a literal alarm reference layout for a detail page.
+The R4 ordinary and overdue/postponed templates are the current visual references;
+apply their recorded corrections when building actual components.
 
 ## 8. Required design decisions
 
 Inherit accepted P01 [component/information language](../../design/ui-composition.md)
 for type, surfaces, consequential timing, recurrence summaries, actions and recovery.
 Do not invent a separate visual system for details or repeats.
+
+Passive Alarm, event, Due, list, repeat and Notes glyphs share the neutral
+`onSurfaceVariant` role across pages; toolbar glyphs share the canonical neutral
+contrast-protected toolbar role. Intentional Postpone/primary actions
+use the atmosphere primary role. A labeled Scheduled success state may use green;
+that is delivery-status meaning, not a reason to tint the ordinary Alarm glyph.
+Independent relationships use a neutral badge; overdue/error accents require text.
+Category badge identity remains separate from structural icon color. Keep the same
+component anatomy, shapes and padding across Light/Dark rather than copying the
+R4 editor's all-blue glyphs or details' inconsistent generated corners literally.
+An overdue reminder stays overdue after postponement: its future alert changes,
+while its original event and Due remain visible and unchanged.
 
 **Approved:** persistent Done/Reopen/Restore versus separate ringing area, eligible
 Postpone after delivery, recorded Activity menu and explicit occurrence/family scope.
@@ -102,6 +123,10 @@ English/Chinese and 200% text. Test both brightness modes and multiple data stat
 at 360x800/larger/expanded; actions never overlap art/content and meet P02 contrast/
 target requirements. Root navigation stays hidden on details.
 
+Compare icon roles and component anatomy across ordinary Light and postponed Dark;
+apply the canonical discrepancy corrections and do not treat screenshot pixels as
+exact tokens. Persistent Done remains distinct from delivery/Postpone actions.
+
 ## 12. Verification requirements
 
 Run shared tests and relevant native checks serially; extend presentation/eligibility,
@@ -137,13 +162,18 @@ Stop before automatic appearance or recurrence engine work.
 ```text
 Verify accepted hard prerequisite artifacts/owner approvals and record integration gates.
 Execute only P07 Details and Repeats after authorization. Read AGENTS.md, core docs,
-redesign specification/index, docs/plans/redesign/p07-details-and-repeats.md, approval ledger and accepted
-P02/P05 capability handoffs plus available P04D/P09 integrations. Inspect actual
+redesign specification/index, docs/plans/redesign/p07-details-and-repeats.md,
+docs/design/approved-ui-r3-r4.md and its per-image correction conditions, approval
+ledger and accepted P02/P05 capability handoffs plus available P09 integrations.
+Record the deferred P04D chooser scope rather than executing it. Inspect actual
 detail/family/query/action state and preserve dirty work; stop on missing hard
 approvals, record outstanding integration gates and obtain my approval of
 representative detail/Repeats workflows. Implement clear event/Due/delivery hierarchy,
 persistent Done/Reopen/Restore, separate ringing Stop/Snooze, post-delivery Postpone,
-recorded Activity and explicit occurrence/family/scoped appearance management.
+recorded Activity and explicit occurrence/family management. Apply the approved R4
+template corrections, neutral structural icons, intentional action/status roles and
+matching Light/Dark component anatomy. Keep original event/Due unchanged and overdue
+visible for a postponed alert. Defer per-reminder appearance and its chooser.
 Preserve native recurrence identity, targets, guards and backup semantics. Coordinate
 editor entry with P06 and publish transient guard usage for P09. Verify actual
 responsive/state fixtures and relevant shared/native checks. Record exact approvals,

@@ -1,0 +1,34 @@
+[
+  {
+    "file": "01-sunrise-light.png",
+    "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+  },
+  {
+    "file": "02-sunrise-dark.png",
+    "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+  },
+  {
+    "file": "03-sky-light.png",
+    "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+  },
+  {
+    "file": "04-sky-dark.png",
+    "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+  },
+  {
+    "file": "05-evening-light.png",
+    "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+  },
+  {
+    "file": "06-evening-dark.png",
+    "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+  },
+  {
+    "file": "07-night-light.png",
+    "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+  },
+  {
+    "file": "08-night-dark.png",
+    "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+  }
+]

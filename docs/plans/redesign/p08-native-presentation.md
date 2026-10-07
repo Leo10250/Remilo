@@ -1,5 +1,16 @@
 # P08 Native Presentation
 
+**7 October 2026 scope override:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
+Use the same global atmosphere and independent brightness as the app for native
+alarm presentation. Task-specific Meadow and richer per-member environments are
+deferred; the conflicting policy and execution prompt below are retained earlier
+planning requiring refinement before implementation. Preserve native ownership,
+session/action/privacy guarantees and usable generic pre-unlock fallbacks. Android
+owns notification backgrounds, layout and expansion: use supported accent/icon
+roles, not an app-painted scenic heads-up banner or floating bubble. This visual
+direction does not approve actual native renders or any new capture/migration code.
+
 ## 1. Objective and user-visible outcome
 
 Real native alarm controls use approved full environments, stay independently

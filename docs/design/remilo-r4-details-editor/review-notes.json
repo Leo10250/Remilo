@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-07",
+  "authority": "Overall template accepted with corrections. Implementation rules in docs/design/approved-ui-r3-r4.md take precedence over generated pixels.",
+  "shared": {
+    "icons": "Structural field/disclosure glyphs and chevrons: neutral onSurfaceVariant. Ordinary toolbar glyphs: one shared contrast-protected neutral onSurface/onSurfaceVariant content role across matching screens. Actions/focus/explicit selection: theme primary. Category/status: documented independent role with text.",
+    "keyboard": "One Save footer above the IME; scrollable form excludes footer height; focused Title/Notes/caret stays visible; apply keyboard/safe-area insets exactly once."
+  },
+  "screens": {
+    "01-details-ordinary-light": {
+      "intentional": [
+        "Green plant badge identifies the reminder category.",
+        "Green Scheduled chip represents confirmed scheduling, not guaranteed sound.",
+        "Done is the primary action; Postpone alert is a separate secondary action."
+      ],
+      "corrections": [
+        {
+          "observed": "Alarm icon is orange while When, List and Notes are gray.",
+          "resolve": "Use neutral onSurfaceVariant for every structural information icon, including Alarm."
+        },
+        {
+          "observed": "Postpone alert appears bright red; Done is burnt orange.",
+          "resolve": "Use the same Sunrise primary token for Postpone text/outline and the filled Done action. Reserve error/destructive red for those roles."
+        },
+        {
+          "observed": "Header is taller than the other secondary screenshots; Schedule details uses a list glyph.",
+          "resolve": "Use the shared compact header and one Schedule details disclosure glyph/component. Artwork crops instead of changing form geometry."
+        }
+      ],
+      "checks": [
+        "Keep linked Due concise; do not recreate redundant deadline rows.",
+        "Use shared 56dp primary and >=48dp action targets, with actual type and contrast checks."
+      ]
+    },
+    "02-details-overdue-dark": {
+      "intentional": [
+        "Warning-colored Overdue and Due refer to unfinished work; the future postponed alert does not clear them.",
+        "Periwinkle Postpone alert and Done represent the Night action accent.",
+        "Event and Due remain unchanged after postponement."
+      ],
+      "corrections": [
+        {
+          "observed": "Alarm icon is blue while other structural icons are muted.",
+          "resolve": "Make Alarm neutral like When, Due, List and Notes. Tint the Postpone action, not the mode-identification icon."
+        },
+        {
+          "observed": "List lacks the chevron used in ordinary details; Done is more pill-shaped.",
+          "resolve": "Use the same List navigation row and 16dp primary-button radius in both appearances; show a chevron only when the row opens a destination."
+        },
+        {
+          "observed": "Field alignment/icon tiles and Schedule details glyph differ from Light.",
+          "resolve": "Share component anatomy and disclosure glyph across appearances; add a consequential Due row based on data, not theme."
+        }
+      ],
+      "checks": [
+        "Show original Event Today 4–4:30 PM, overdue Due Today 5 PM, and postponed Next alert Tomorrow 9 AM distinctly.",
+        "Do not infer missing timing/status text or active ringing from the illustration."
+      ]
+    },
+    "03-create-keyboard-light": {
+      "intentional": [
+        "Focused Title outline/caret and Save use the Sunrise action accent.",
+        "Save moves above the keyboard; List and Notes can be below the scroll viewport.",
+        "The user's keyboard controls its own key colors, suggestions and layout."
+      ],
+      "corrections": [
+        {
+          "observed": "Date, Time and Alarm icons are orange, but Repeat is gray.",
+          "resolve": "Make all generic form icons and chevrons neutral. Use primary only for focus, selection and actions."
+        },
+        {
+          "observed": "A single screenshot shows Title focused; it does not demonstrate lower-field visibility.",
+          "resolve": "Keep Save outside the form scroll, inside the IME-aware region. Reduce the scroll viewport by the measured footer and bring any focused input/caret above it."
+        }
+      ],
+      "checks": [
+        "Focus Notes near the bottom with keyboard open; type, select and move the caret through long text without overlap.",
+        "Save remains tappable on the first deliberate tap; no duplicate toolbar Save or double keyboard padding.",
+        "Test 200% text, larger keyboards/emoji panel, validation errors and keyboard show/hide."
+      ]
+    },
+    "04-edit-independent-dark": {
+      "intentional": [
+        "Independent Due and alert values remain visible separately from Event.",
+        "Existing Notes remain expanded; Save is the primary action.",
+        "Independent describes timing relationships, not a selected control."
+      ],
+      "corrections": [
+        {
+          "observed": "Nearly all field icons, chevrons, labels and relationship summaries are blue; Back differs from Night details.",
+          "resolve": "Use neutral navigation/field glyphs and supporting text consistently. Reserve Night primary for Save, actual focus and explicit selections."
+        },
+        {
+          "observed": "Independent badges look like accent-colored selection pills.",
+          "resolve": "Use the shared neutral relationship-badge style. Color cannot imply that independent timing is an active selected control."
+        }
+      ],
+      "checks": [
+        "Preserve Event Tomorrow 9–9:30 AM, independent Due 11 AM, independent alert 8:45 AM.",
+        "Apply the same keyboard/caret/Notes requirements when this editing screen receives focus.",
+        "Use shared card, field, icon-tile and button geometry; typography grows and scrolls."
+      ]
+    }
+  }
+}

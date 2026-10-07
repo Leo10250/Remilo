@@ -1,11 +1,24 @@
 # Remilo appearance and workflow design
 
+**Current direction, 7 October 2026:** read
+[the approved R3/R4 template and corrections](design/approved-ui-r3-r4.md) first.
+The owner accepts the R3 homepage and overall R4 details/editor template with the
+documented corrections. One global atmosphere and independent Light/Dark/System
+brightness apply across app pages and the native alarm experience; Android still
+owns notification layout and allowable styling. Task-specific Meadow environments,
+manual reminder/series appearance and the associated chooser are deferred.
+Earlier conflicting visual scope below is retained planning/history requiring
+refinement, not authority to implement those deferred features. The four preview
+atmospheres do not define replacement automatic times, migrations or defaults.
+The layout direction is accepted; final artwork should become more abstract in
+later artwork review, and image pixels do not define final component tokens.
+
 The owner's specification takes precedence over earlier UI choices. This is the
 single redesign product vision/requirements source, not an implementation report.
 The [twelve-plan index](plans/redesign/README.md) owns execution boundaries;
 task state is recorded only in [backlog.md](backlog.md). Physical acceptance stays
-consolidated in [device-acceptance.md](device-acceptance.md). The latest owner
-instruction A16 authorizes the refined P02 execution after A15 accepted the two
+consolidated in [device-acceptance.md](device-acceptance.md). The earlier owner
+instruction A16 authorized the refined P02 execution after A15 accepted the two
 non-shipping P01 rendered compositions, following
 A14's S1/M1 acceptance, A12's bounded r2 direction, A11 refinement and A10 execution.
 The [P01 handoff](handoffs/redesign-p01.md) binds the accepted contract and evidence.
@@ -85,9 +98,15 @@ are labeled representations; they are not Android notification or phone evidence
   search/membership, recorded timestamps and recoverable actions.
 - The common editor order is Title, event date/time, Repeat, explicit
   Alarm/Notification/No alert, List, optional Notes. Unused Notes is collapsed;
-  existing notes remain visible. Independent Due/end/all-day/zone controls live
-  under Schedule options; sound/vibration under Alarm options. Save stays reachable
-  above the keyboard. Appearance is optional. Preserve cancellation, stale-draft
+  existing notes remain visible. Repeat is editable for creation/family scopes;
+  an individual occurrence retains family context without an editable Repeat row.
+  Independent Due/end/all-day/zone controls live under Schedule options, with a
+  consequential independent Due summary in the common form. An independent alert
+  time stays visible in the common Alert area. Sound/vibration stay under Alarm
+  options. One persistent Save footer stays above the keyboard, and focused Title,
+  Notes, caret and field errors scroll clear of both footer and keyboard. No
+  per-reminder appearance chooser is included in the current template.
+  Preserve cancellation, stale-draft
   review, validation and same-operation retry.
 - Details lead with title, event range and consequential Due, then one delivery
   outcome/next-alert area. Persistent Done/Reopen/Restore stays separate from

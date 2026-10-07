@@ -1,5 +1,15 @@
 # P04 Fixed Appearance
 
+**7 October 2026 scope override:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
+The current direction is one global selected atmosphere with independent
+brightness across app pages and native alarm surfaces, within Android notification
+limits. Manual reminder/series themes, task-specific environments and the chooser
+are deferred. The conflicting P04B-D scope and portability/dependency assumptions
+below remain earlier planning requiring refinement before execution; this note
+does not implement policies, authorize schemas or claim any unit completed.
+Four preview atmospheres do not establish switching, migration or default rules.
+
 ## 1. Objective and user-visible outcome
 
 Users can select a fixed app palette independently of brightness and make durable

@@ -72,6 +72,24 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ### Appearance design review
 
+The [7 October accepted R3/R4 templates and discrepancy corrections](design/approved-ui-r3-r4.md)
+are reference/requirements evidence, not actual component or phone verification.
+Their exact images are preserved in the design galleries. Verify shared neutral
+field/navigation icon roles, intentional action/category/status colors, consistent
+Light/Dark component geometry, and actual target/type/contrast measurements when
+implementing P02/P06/P07. Do not copy incidental generated tints or omissions.
+
+For P06/P12, capture Title creation and lower Notes editing with the real Android
+keyboard: one Save footer above IME, scroll viewport above the measured footer,
+and visible focused caret/selection plus reachable helper/error. Cover multiline
+growth, caret movement, 200% English/Chinese text, taller IME/emoji panel, repeated
+show/hide, picker return and Android Back. Ensure first-tap Save issues one guarded
+operation and retries retain the original command. Verify IME/safe-area handling
+does not add keyboard or navigation padding twice. Scrolling lower fields out of
+the initial viewport is valid; hiding a focused input behind footer/IME is not.
+Host fixtures do not establish these physical observations; include them in the
+existing consolidated owner run, with [E6](device-acceptance.md#e-data-and-accessibility).
+
 The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
 authorizes bounded P01 through A10; A11 adds the artwork gate. A12 accepts r2 visual
 direction and four-candidate exploration; A14 accepts S1/M1 for actual review integration.

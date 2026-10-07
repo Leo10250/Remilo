@@ -1,5 +1,15 @@
 # P09 Time Appearance
 
+**7 October 2026 policy intake override:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
+The accepted preview scenes are Sunrise, Sky, Evening and Night, each with
+independent brightness and one global atmosphere across screens. They do not
+approve replacement automatic switching boundaries, migrations or defaults.
+The old five-period table and authored-event/manual item-identity assumptions
+below remain earlier planning requiring refinement; do not silently convert them
+to a four-period policy or implement deferred task-specific appearance. Preserve
+timing, draft/scroll and native privacy/action contracts while refining this plan.
+
 ## 1. Objective and user-visible outcome
 
 Opted-in Remilo atmosphere follows five predictable local periods independently of

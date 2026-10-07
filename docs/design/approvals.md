@@ -25,6 +25,14 @@ This ledger records human decisions, not task status. Live status belongs only i
 | A16 | 6 October 2026 | “PLEASE IMPLEMENT THIS PLAN” authorizes the detailed P02 implementation plan: 16 dp tiles, Sky/Rose sample, artwork-only acceptance before integration, sample acceptance before remaining environments, complete catalog acceptance before activating shared Classic styling. [Execution record](p02/execution-authorization.json); [refined P02 plan](../plans/redesign/p02-visual-foundations.md). | Acceptance of unbuilt artwork, sample, catalog or production render revisions; workflow/persistence/notification/launcher changes; P03/P04, installation, distribution or physical acceptance. |
 | A17 | 6 October 2026 | “I like SK1 + RO1. I approve this combination P02-artwork-r1.” accepts the identified Sky SK1 and Rose RO1 source hashes for actual RN/Compose sample integration. [Acceptance record](p02/artwork-r1-acceptance.json). | Sample/token/treatment acceptance, remaining artwork generation, complete catalog acceptance, production activation or physical verification. |
 
+The later 7 October records below supersede conflicting visual requirements;
+earlier records and accepted source/evidence hashes retain their historical scope.
+
+| Record | Date | Accepted scope | Not implied |
+|---|---|---|---|
+| A18 | 7 October 2026 | The owner adopts the R3 homepage as the new visual direction, requests more abstract final art later, and defers task-specific alarm styling in favor of one global theme across screens. [Exact reference identities and scope](approved-ui-r3-r4-acceptance.json); [current direction](approved-ui-r3-r4.md). | Approval of automatic switching boundaries/migrations, exact production tokens, actual component accessibility, native notification takeover, or new milestone completion. |
+| A19 | 7 October 2026 | The owner accepts the overall R4 Details/Editor template with corrections, and requests per-image discrepancy notes plus Save/focused-input visibility above the keyboard in the documentation. [Acceptance with correction conditions](approved-ui-r3-r4-acceptance.json); [annotated gallery](remilo-r4-details-editor/gallery.html). | Approval of arbitrary generated icon/button colors or shapes, omission of required controls, app implementation in this documentation task, or keyboard/physical verification. |
+
 A03 is the owner's answer to the Meadow-alarm versus time-atmosphere question.
 The original documentation request supplies A04/A05; the later review supplies A06.
 A07/A08 are the owner's selected answers to the execution-unit/background questions.

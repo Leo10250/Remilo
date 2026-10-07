@@ -1,5 +1,15 @@
 # P02 Visual Foundations
 
+**7 October 2026 intake override:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md)
+before continuing foundations. The accepted R3 homepage/R4 secondary-page template
+and corrections supersede conflicting old visual assumptions below. One global
+atmosphere with independent brightness applies across screens; task-specific
+environments/manual reminder appearance are deferred. The earlier eight-palette,
+Sky/Rose and Classic rollout sequence remains recorded history/planning requiring
+refinement against this direction, not acceptance of additional production work.
+Four preview atmospheres do not define replacement switching/migration policies.
+
 ## 1. Objective and user-visible outcome
 
 Turn P01's accepted direction into reusable, accessible RN/native primitives and
@@ -65,6 +75,16 @@ independent of palette. Explicit labels distinguish status from decorative ident
 Artwork is integrated but outside essential text; content and large text win.
 Use existing icon encapsulation, not a competing icon framework.
 
+Passive field/disclosure icons and chevrons use neutral `onSurfaceVariant`.
+Toolbar glyphs share one contrast-protected neutral content role across matching
+screens, as specified in the canonical correction table. The atmosphere primary
+role is for intentional actions, focus and explicitly
+selected controls, not all icons in an accented screen. Category badges retain
+separate semantic identity. Warning/error/success colors require meaningful text
+and state; an Independent relationship badge stays neutral. A labeled Scheduled
+success state may use the success role, while its ordinary Alarm glyph remains a
+structural neutral icon. Do not infer exact token values from generated pixels.
+
 ## 7. Approved visual references
 
 Inherit P01's approved style contract and captures, checked against
@@ -85,6 +105,10 @@ catalog approval. Starting values: display 28 sp, app bar/time 22 sp, heading
 line height; spacing 4/8/12/16/24/32 dp; 16 dp phone gutter; tile/group 16 dp,
 field/action 12 dp, sheet 24 dp; >=48x48 dp targets and existing 64 dp native
 single-alarm controls. Natural wrapping/growth wins over fixed heights.
+
+Use the same component anatomy, radii, padding and control geometry in Light and
+Dark; brightness changes token roles rather than inventing another component.
+Apply the per-image R4 corrections when rendering actual shared/native primitives.
 
 **Proposed:** exact roles/values, dark scene treatment, per-theme compositions,
 responsive asset placement. Obtain owner approval before

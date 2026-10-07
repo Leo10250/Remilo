@@ -317,6 +317,22 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   Refresh shows progress and an acknowledgement; a failed query has Retry. Sharing
   shows progress and reports opening/cancellation only as far as Android confirms.
 
+- **E6 — editor keyboard and visual consistency:** part of the same consolidated
+  acceptance run; no separate phone run is requested by this documentation update.
+  Create with Title focused: Save stays above the real Android keyboard and the
+  caret remains visible. Scroll to List/Notes without dismissing IME. Focus Notes
+  near the bottom, grow it over many lines, select text and move the caret to
+  earlier/later lines. Repeat at 200% English/Chinese text and with a taller
+  keyboard/emoji panel. No focused text is behind Save/IME; draft and composing
+  text survive. Lower validation errors/inputs remain reachable. Show/hide IME,
+  switch Title/Notes and return from a picker. First Back dismisses IME; later
+  navigation retains draft guards. First deliberate Save tap creates one guarded
+  operation, with no double inset gap or duplicate toolbar Save. Compare the same
+  controls in Light/Dark and the four atmospheres: neutral ordinary icons,
+  intentional action/focus/category/status colors, shared geometry. Record actual
+  results/build/device; [references and corrections](design/approved-ui-r3-r4.md)
+  are not passing observations.
+
 ## Results and remaining engineering checks
 
 Send one report with `A1 pass; B4 fail — expected…, observed…; C2 unavailable…`.

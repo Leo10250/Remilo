@@ -4,6 +4,14 @@ The [product contract](../product.md) and [appearance specification](../appearan
 define the approved requirements. The [plan index](../plans/redesign/README.md)
 defines execution boundaries. Only [backlog.md](../backlog.md) records live task status.
 
+The current 7 October presentation intake is
+[the approved R3/R4 template and corrections](approved-ui-r3-r4.md). It identifies
+the accepted homepage and details/editor previews, correction conditions, icon
+roles and keyboard requirements. It takes precedence over conflicting older
+task-specific environments/manual chooser direction below. Historical submitted
+bundles, acceptance hashes and handoffs remain unchanged; previews do not establish
+production tokens, implementation completion or accessibility/device acceptance.
+
 ## Approval language
 
 - **Approved requirement:** a decision explicitly made by the owner and recorded

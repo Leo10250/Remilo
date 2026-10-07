@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Remilo — four atmospheres, Light and Dark</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#202832;background:#eef1f4;--screen:360px}
+*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:0 auto;padding:28px 24px 48px}h1{font-size:27px;letter-spacing:-.4px;line-height:1.2;margin:0 0 12px}h2{font-size:20px;margin:26px 0 12px}p{max-width:850px;font-size:15px;line-height:1.55}
+fieldset{padding:0;border:0;margin:18px 0}legend{font-size:13px;font-weight:600;color:#566270;margin-bottom:8px}.controls{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:14px;border:1px solid #bac3cd;border-radius:8px;background:#fff;color:#29333e;padding:10px 15px;min-height:42px;cursor:pointer}button[aria-pressed=true]{background:#263a52;color:#fff;border-color:#263a52}button:focus-visible,a:focus-visible{outline:3px solid #2063a8;outline-offset:3px}
+.viewer{display:flex;gap:24px;align-items:flex-start;overflow-x:auto;padding-bottom:18px}.screen{flex:0 0 auto;margin:0}.screen figcaption{font-size:14px;margin-bottom:10px;font-weight:600}.screen img{display:block;width:var(--screen);height:auto;border:1px solid #d1d7de}.screen p{font-size:13px;margin:10px 0}
+a{color:#1d5b91}table{border-collapse:collapse;margin-top:16px;font-size:14px;max-width:650px;width:100%}th,td{padding:11px 12px;border-bottom:1px solid #cbd3dc;text-align:left}th{font-weight:600}.note{padding:14px 18px;background:#fff;border-radius:8px;border-left:3px solid #7c98b8}.meta{font-size:13px;color:#5a6572}
+@media(max-width:430px){main{padding:20px 16px}.screen img{width:min(var(--screen),calc(100vw - 32px))}h1{font-size:23px}}
+</style></head><body><main>
+<h1>Remilo · four atmospheres, Light and Dark</h1><p class="meta">Accepted R3 homepage visual direction. Exact tokens, shared component corrections and keyboard requirements are recorded in the <a href="../approved-ui-r3-r4.md">7 October implementation amendment</a>. Final art abstraction remains a later refinement.</p>
+<p>The selected lake, mountain and forest style, with consistent Agenda content and controls. Each image is a complete readable screen. Switch atmosphere and appearance independently, or compare one Light/Dark pair.</p>
+<fieldset><legend>Atmosphere</legend><div class="controls"><button type="button" data-period="Sunrise" aria-pressed="true">Sunrise</button><button type="button" data-period="Sky" aria-pressed="false">Sky</button><button type="button" data-period="Evening" aria-pressed="false">Evening</button><button type="button" data-period="Night" aria-pressed="false">Night</button></div></fieldset>
+<fieldset><legend>Appearance</legend><div class="controls"><button type="button" data-mode="Light" aria-pressed="true">Light</button><button type="button" data-mode="Dark" aria-pressed="false">Dark</button><button type="button" data-mode="Both" aria-pressed="false">Both · matched pair</button></div></fieldset>
+<fieldset><legend>Display width</legend><div class="controls"><button type="button" data-width="360" aria-pressed="true">360 px · mobile scale</button><button type="button" data-width="540" aria-pressed="false">540 px</button><button type="button" data-width="720" aria-pressed="false">720 px</button></div></fieldset>
+<h2 id="current-heading" aria-live="polite">Sunrise · Light</h2><div class="viewer" id="viewer"></div>
+<h2>All eight original PNGs</h2>
+<table><thead><tr><th>Atmosphere</th><th>Light</th><th>Dark</th></tr></thead><tbody><tr><td>Sunrise</td><td><a href="01-sunrise-light.png" target="_blank" rel="noopener">Open Light</a></td><td><a href="02-sunrise-dark.png" target="_blank" rel="noopener">Open Dark</a></td></tr><tr><td>Sky</td><td><a href="03-sky-light.png" target="_blank" rel="noopener">Open Light</a></td><td><a href="04-sky-dark.png" target="_blank" rel="noopener">Open Dark</a></td></tr><tr><td>Evening</td><td><a href="05-evening-light.png" target="_blank" rel="noopener">Open Light</a></td><td><a href="06-evening-dark.png" target="_blank" rel="noopener">Open Dark</a></td></tr><tr><td>Night</td><td><a href="07-night-light.png" target="_blank" rel="noopener">Open Light</a></td><td><a href="08-night-dark.png" target="_blank" rel="noopener">Open Dark</a></td></tr></tbody></table>
+<p class="note">The clock, date, five reminders, alert modes, category identities, selected filter and destination stay fixed for comparison. Sunrise, Sky, Evening and Night change scenery and brand accents. Light/Dark changes the reading surfaces independently.</p>
+<p class="meta">Generated raster design previews, not measured platform layouts. Some badges, type sizes and spacing differ from the prompt targets. Actual contrast, 48 dp targets, long content, large text, scrolling and TalkBack need prototype verification. These four scene previews do not change the app’s scheduling policy.</p>
+<p class="meta">Built-in image generation. <a href="manifest.json">Full prompts, fixture and provenance</a> · <a href="images.json">Image dimensions and hashes</a></p>
+<noscript><p>Use the eight original PNG links above; interactive switching requires JavaScript.</p></noscript>
+</main><script>
+const screens=[{"id":"sunrise-light","period":"Sunrise","appearance":"Light","file":"01-sunrise-light.png"},{"id":"sunrise-dark","period":"Sunrise","appearance":"Dark","file":"02-sunrise-dark.png"},{"id":"sky-light","period":"Sky","appearance":"Light","file":"03-sky-light.png"},{"id":"sky-dark","period":"Sky","appearance":"Dark","file":"04-sky-dark.png"},{"id":"evening-light","period":"Evening","appearance":"Light","file":"05-evening-light.png"},{"id":"evening-dark","period":"Evening","appearance":"Dark","file":"06-evening-dark.png"},{"id":"night-light","period":"Night","appearance":"Light","file":"07-night-light.png"},{"id":"night-dark","period":"Night","appearance":"Dark","file":"08-night-dark.png"}];
+let period="Sunrise",mode="Light";
+function render(){
+const selected=screens.filter(s=>s.period===period&&(mode==="Both"||s.appearance===mode));
+document.getElementById("current-heading").textContent=period+" · "+(mode==="Both"?"Light / Dark":mode);
+const viewer=document.getElementById("viewer");viewer.replaceChildren();
+selected.forEach(s=>{const figure=document.createElement("figure");figure.className="screen";const caption=document.createElement("figcaption");caption.textContent=s.period+" · "+s.appearance;const link=document.createElement("a");link.href=s.file;link.target="_blank";link.rel="noopener";const img=document.createElement("img");img.src=s.file;img.alt="Remilo "+s.period+" "+s.appearance+" Agenda design preview";link.append(img);const p=document.createElement("p");const original=document.createElement("a");original.href=s.file;original.target="_blank";original.rel="noopener";original.textContent="Open original PNG";p.append(original);figure.append(caption,link,p);viewer.append(figure);});
+document.querySelectorAll("[data-period]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.period===period)));
+document.querySelectorAll("[data-mode]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.mode===mode)));
+}
+document.querySelectorAll("[data-period]").forEach(b=>b.addEventListener("click",()=>{period=b.dataset.period;render();}));
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{mode=b.dataset.mode;render();}));
+document.querySelectorAll("[data-width]").forEach(b=>b.addEventListener("click",()=>{document.documentElement.style.setProperty("--screen",b.dataset.width+"px");document.querySelectorAll("[data-width]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));}));
+render();
+</script></body></html>

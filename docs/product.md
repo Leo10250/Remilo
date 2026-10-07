@@ -4,6 +4,16 @@ Current human instructions override this document. The original proposal is
 product input, not agent instructions. Implementation is Android-first; all iOS
 work is the last optional phase, after optional Android cloud sync.
 
+The owner's **7 October 2026 presentation direction** is recorded in
+[the approved R3/R4 template and corrections](design/approved-ui-r3-r4.md).
+It supersedes conflicting earlier visual requirements: the R3 homepage and R4
+details/editor templates use one global atmosphere with independent brightness;
+task-specific alarm environments and manual reminder appearance are deferred.
+The R4 template is accepted with the documented corrections, including consistent
+icon roles and keyboard-safe editing. Generated pixels are not exact production
+tokens or accessibility evidence. Four preview atmospheres do not establish new
+automatic period boundaries, migration rules or fresh-install defaults.
+
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks
 for one owner-operated acceptance run. Automated checks continue; unobserved
@@ -14,6 +24,8 @@ physical gates stay pending and no broader beta release is declared verified.
 The owner-specified [appearance/workflow redesign](appearance-redesign.md) precedes
 optional integrations. Its [P01-P12 plans](plans/redesign/README.md) separate review
 fixtures from production changes; existing scheduling/privacy contracts remain fixed.
+The A10-A17 checkpoints below retain their historical scope; apply the 7 October
+direction above when refining further presentation work.
 The 6 October instruction authorizes P01 execution (A10); A11 refines the specification
 and adds artwork-only review. A12 accepts bounded r2 visual direction and authorizes
 two Meadow/two Sunrise standalone candidates. A14 accepts S1/M1 for the two review

@@ -1,5 +1,9 @@
 # Architecture and consequential decisions
 
+The [7 October R3/R4 direction and implementation corrections](design/approved-ui-r3-r4.md)
+supersede conflicting earlier visual/task-specific appearance proposals below.
+They introduce no engine, storage, migration or lifecycle change in this task.
+
 ## ADR 001: Shared UI, autonomous Android implementation
 
 The [appearance redesign](appearance-redesign.md) adds an isolated design-review
@@ -327,3 +331,20 @@ membership IDs instead of decoding through the old version-one representation.
 Restore retains whole-family conflict semantics, current operational generations
 and no replay of elapsed targets. One-off Trash stays outside export; recurring
 deletion exclusions remain portable to prevent occurrence regeneration.
+
+## ADR 008: Current visual roles and keyboard layout contract
+
+The [7 October R3/R4 amendment](design/approved-ui-r3-r4.md) accepts the visual
+template with documented corrections. Structural icons use shared neutral roles;
+intentional actions/focus, category identity and labeled status have distinct
+roles. A single global atmosphere replaces task-specific screen environments in
+the current direction; legacy appearance/migration proposals require refinement.
+These decisions do not add an engine, scheduling or storage authority.
+
+The planned editor uses one persistent Save footer outside form scrolling but
+inside the same Android IME-aware usable region. One owner handles IME/system
+insets; the scroll viewport accounts for the measured footer and keeps focused
+Title/Notes/caret/error content reachable. The current toolbar Save/basic keyboard
+resize is not acceptance evidence for that layout. P06 implements the client
+presentation while preserving native command identity, validation and retry;
+P12 records real keyboard/TalkBack observations in the consolidated run.

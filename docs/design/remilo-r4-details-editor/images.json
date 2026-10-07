@@ -1,0 +1,18 @@
+[
+  {
+    "file": "01-details-ordinary-light.png",
+    "sha256": "2a2f00a57230cb736d32521b51113b1d4e508d89459ed969b49a4bf4f84d5552"
+  },
+  {
+    "file": "02-details-overdue-dark.png",
+    "sha256": "32a1c37ebacedc4f771dd2308bd6b5d998de1a3c66ac4ae9e6e887ea450421d5"
+  },
+  {
+    "file": "03-create-keyboard-light.png",
+    "sha256": "97904ab3f399e0a4f77b2f8cf7064e6e1bfa89797073bc15f5ce15b5cc87da76"
+  },
+  {
+    "file": "04-edit-independent-dark.png",
+    "sha256": "6f0eb078fd4f94742ef57364a046403dfafe4b25a565c0192963dc1e7cc57c29"
+  }
+]

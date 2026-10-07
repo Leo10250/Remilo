@@ -1,5 +1,15 @@
 # P10 Smart Colors
 
+**7 October 2026 scope override:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
+The current template uses one global atmosphere with independent brightness;
+task-specific environments/manual reminder appearance and the chooser are
+deferred. Category badges may retain meaningful separate glyph/color identity,
+but do not infer a shipping classifier or task-environment recoloring from their
+preview pixels. Earlier manual/chooser/default-activation and palette-precedence
+scope below remains planning requiring refinement before execution. Four preview
+atmospheres do not approve automatic boundaries, storage changes or fresh defaults.
+
 ## 1. Objective and user-visible outcome
 
 Reviewed deterministic title rules suggest stable, explainable reminder identities

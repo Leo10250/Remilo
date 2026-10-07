@@ -1,5 +1,14 @@
 # P05 Agenda and Navigation
 
+**7 October 2026 visual intake:** read
+[the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md)
+and use the accepted R3 homepage as the composition reference. It supersedes
+conflicting older P01 visual assumptions below. One global atmosphere with
+independent brightness carries across roots and secondary pages; manual reminder
+appearance is deferred. Passive navigation/structural icons stay neutral, with
+primary reserved for actions and explicit selection. Preserve route and timing
+contracts; this design acceptance is not production or device acceptance.
+
 ## 1. Objective and user-visible outcome
 
 Make Agenda, Lists and Repeats directly discoverable, with compact readable reminders
