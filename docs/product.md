@@ -14,8 +14,10 @@ physical gates stay pending and no broader beta release is declared verified.
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.
 2. Useful one-off private beta, then polished management and recurrence.
 3. Optional scoped Google Calendar integration.
-4. Optional Android cloud data/primary-device coordination.
-5. Optional iOS 26+ port with honest capability differences.
+4. Android daily-workflow extension: reusable workouts, Today view/widget and digest.
+5. Android external assistant actions, capability-gated; AI is not a core dependency.
+6. Optional Android cloud data/primary-device coordination.
+7. Optional iOS 26+ port with honest capability differences.
 
 ## Required behavior
 
@@ -88,6 +90,33 @@ physical gates stay pending and no broader beta release is declared verified.
   Series conflicts are preserved as a whole family unless explicitly restored as
   a separate copy. Editing a paused series keeps its future ordinary alerts paused.
 
+## Planned Android daily workflows (after the reminder core, before iOS)
+
+- Workout plans are reusable weekly templates, with a different ordered exercise
+  checklist for each selected day. Per-exercise completion, Undo/skip and history
+  belong to a dated occurrence; checking an exercise never deletes the plan or
+  changes the next week's exercises. Reuse the existing recurrence/identity kernel
+  if suitable instead of creating a competing scheduler.
+- A calm, date-aware Today presentation shows that day's workout and relevant
+  reminders; a compact Android home-screen widget can show today's checklist
+  and safe quick actions. A new permanent tab is optional, not required.
+  Device-local day changes, time zones and process death must not show stale dates.
+- An optional configurable daily agenda notification summarizes what is due
+  today and any planned workout, without becoming a second alarm. Calendar items
+  may be included only after optional scoped Calendar authorization; this is
+  presentation, not an additional Calendar sync implementation.
+- External Android assistant commands may request a reminder or alarm via tested
+  platform entry points, with a readable preview and user confirmation before
+  durable creation. Gemini/Pixel, Samsung/Gemini and Bixby are independently
+  supported only where their documented and tested app action surfaces permit.
+  Android does not guarantee that every assistant routes to any one API.
+  Unavailable assistants never block manual creation or local alarms.
+- Optional natural-language drafting may start with deterministic local parsing;
+  device AI, if available, can improve the draft with explicit opt-in and fallback.
+  No assistant, network, inference engine or cloud account is needed for normal
+  reminder operation. All external writes use the existing native validation,
+  serialized mutations, stable operation identities and permission feedback.
+
 ## Deferred integrations
 
 - Google is optional and scoped to app-managed or explicitly selected imports,
@@ -99,7 +128,7 @@ physical gates stay pending and no broader beta release is declared verified.
 - Cloud is optional, foreground/manual initially. One primary ringing device;
   normal handoff needs cancellation acknowledgement, offline override discloses duplicates.
   Calendar writer is separate from ringing primary.
-- iOS comes last. No early Swift, Xcode, AlarmKit or unused platform scaffolding.
+- iOS comes last, after the Android daily-workflow acceptance gate and cloud phase. No early Swift, Xcode, AlarmKit or unused platform scaffolding.
 
 ## Confirmed boundaries
 

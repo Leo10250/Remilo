@@ -50,9 +50,18 @@ block verified release, rather than development. Known failures still require fi
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
 | P4-D | Incremental/native background opportunities | P4-C | pending | allowlist, pagination, retries, 410 recovery |
 | G4 | Calendar release gate | P4-A/B/C/D | pending | both directions after documented sync opportunity |
+| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | pending | different days have different checklists; plan survives daily completion |
+| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | pending | per-exercise Done/Undo tracked by local date; yesterday/tomorrow do not leak into today |
+| RW-03 | Readable Android home-screen Today widget | RW-02 | pending | today's plan/reminders update across midnight, edits, reboot and completion without opening React Native |
+| RW-04 | Optional daily Today/agenda digest notification | RW-02 | pending | configurable local time, opt-in and quiet dismissal; no duplicate or alarm-channel behavior |
+| AI-01 | Android assistant/intent compatibility research and action contract | G3 | pending | current official support matrix for Android intents, Gemini/AppFunctions, Samsung/Bixby, versions and limits |
+| AI-02 | Safe external create-reminder/alarm actions and supported Android entry points | AI-01 | pending | voice/deep-link/shortcut intent drafts previewed, explicitly confirmed and saved once through native engine |
+| AI-03 | Optional assistant-specific discovery/registration where actually supported | AI-01/02 | pending | test real Pixel and Samsung providers; unsupported assistants degrade gracefully; no universal-routing claim |
+| AI-04 | Optional local natural-language drafting enhancement | AI-02 | pending | deterministic/offline parser remains usable; AI is opt-in, capability-gated and never bypasses confirmation |
+| G-AND-EXT | Android daily-workflow and external-action acceptance gate | RW-01/02/03/04, AI-02 | pending | signed-phone date/permission/restart/widget/digest/intent checks; AI-03/04 optional and non-blocking |
 | P5 | Optional Android cloud/primary-device coordination | G4 | pending | foreground/manual Supabase sync and honest handoff |
 | G5 | Android cloud gate | P5 | pending | two Android installations converge |
-| P6 | Optional iOS feasibility and complete port | G5 | pending | final phase only; real iPhone capability evidence |
+| P6 | Optional iOS feasibility and complete port | G5, G-AND-EXT | pending | final phase only, after Android expansion; real iPhone capability evidence |
 
 ## Task verification contracts
 
@@ -80,6 +89,38 @@ block verified release, rather than development. Known failures still require fi
   local and installed APK hashes separately without source attribution. Missing
   or mismatched artifacts are diagnostics; transport/inspection errors fail.
   Preflight never changes the installed app or declares physical observations.
+- RW-01/02: reuse the existing recurrence and occurrence identity where possible;
+  audit the native schema before adding workout step templates, per-date completion
+  and history. Each exercise check has stable identity, cannot delete its weekly
+  template, and is independent of Stop/Snooze/alert delivery. Today respects the
+  device's local date/time zone and calendar-day rollover, even across process
+  death and travel. Design a focused Today presentation, not a general task manager
+  or mandatory bottom-navigation redesign.
+- RW-03: use a supported Android widget mechanism and native read/action path;
+  React Native/Metro/network must not be required for refresh or completion.
+  Show no private content before unlock without permission, and test stale widgets,
+  size variants, midnight/time-zone transitions and device restart.
+- RW-04: digest is explicitly opt-in with editable delivery time and off switch.
+  Show only authorized local data (plus opted-in linked Calendar events when
+  P4 permits); no silent alarm-mode downgrade, duplicate notifications, or
+  promises of exact delivery under OS restrictions. Never use this informational
+  notification to ring or modify reminder completion.
+- AI-01: validate official APIs and actual provider behavior first. Android
+  interfaces offer possible entry points, not a universal Gemini/Bixby contract;
+  document supported OS/app/version prerequisites and graceful fallbacks.
+- AI-02: external utterances/intents may propose titles, times, recurrence and
+  alert mode but must resolve ambiguity and obtain explicit user confirmation.
+  Strict native validation, idempotent command identity, permissions and existing
+  Stop-versus-Done semantics remain authoritative. Do not intercept a generic
+  Android clock alarm without a tested, user-visible handler/selection contract.
+- AI-03/04: vendor-specific registration and optional on-device ML are deferred
+  capability improvements. Neither is required for baseline external creation;
+  no cloud inference, always-on assistant, AI chat, credential upload or AI service
+  dependency is introduced by default. Keep the non-AI manual flow intact.
+- G-AND-EXT: run relevant host/native tests and then signed-device checks for
+  day rollover, per-step history, native widget privacy/actions, digest settings,
+  external intents and repeated/stale request behavior. Inaccessible third-party
+  assistant APIs are recorded as unsupported, not falsely verified.
 - Later task groups are split into bounded work units when activated. Each new row
   must include purpose/scope, dependencies, behavior, required checks and evidence;
   place its status only in this backlog.
