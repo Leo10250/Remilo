@@ -21,6 +21,23 @@ choice, with omission preferred; do not introduce an icon picker. This does not
 execute P07 production changes. P05 owns Lists/routing and P06 owns custom
 recurrence controls; R7 does not merge those implementation responsibilities.
 
+**Collection/Activity refinement (A31):** the proposed
+[R9 specification](../../design/r9-completed-trash-activity-specification.md) and
+[fourteen review states](../../design/r9-completed-trash-activity-fixtures.json)
+reuse all eight R3 appearance pairs and the established details action contracts.
+Read [the intake](../../design/r9-completed-trash-activity-intake.json) and
+[refinement evidence](../../evidence/2026-10-07-r9-records-refinement.md).
+Collection rows use state labels; exact recorded completion/skip/deletion times
+remain in details and Activity. Do not convert native `collectionAtMs` sorting
+fallback into an action timestamp. Activity remains read-only history for one
+occurrence, newest actual entries first, with recorded Snooze/Postpone targets,
+honest empty/unknown-action states and no invented whole-repeat or field history.
+Secondary pages return through their invoking origin; P05 owns collection routing.
+Skipped Reopen retains the skipped flag, and Restore preserves prior completion/
+skip state without replaying elapsed alerts. Baseline uncertain collection-command
+retry/navigation guards remain implementation gaps. R9 is not an accepted render,
+generation request, production change or milestone-status update.
+
 ## 1. Objective and user-visible outcome
 
 Opening a reminder explains its event, unfinished/completed status and delivery

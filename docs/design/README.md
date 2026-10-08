@@ -59,6 +59,21 @@ decisions. [Refinement evidence](../evidence/2026-10-07-r8-settings-refinement.m
 [generation evidence](../evidence/2026-10-07-r8-images-and-approval.md) record actual
 checks and runtime limits, not component or physical verification.
 
+[A31](r9-completed-trash-activity-intake.json) continues with the proposed
+[R9 Completed, Trash and Activity specification](r9-completed-trash-activity-specification.md).
+Its [fourteen representative review states](r9-completed-trash-activity-fixtures.json)
+use all eight R3 Light/Dark references; the first eight cover every pair.
+Collections remain secondary to their invoking origin, and Activity remains
+read-only recorded history for one occurrence. Collection rows show current
+state without treating native sort fallback values as action timestamps; exact
+recorded times remain in details and Activity. Skipped Reopen retains the skipped
+state. Baseline Browse-root routing and collection uncertain-command retry guards
+remain implementation gaps, not changes completed by this refinement.
+[The refinement evidence](../evidence/2026-10-07-r9-records-refinement.md) records
+actual checks and their limits. R9 is proposed: no images or new acceptance,
+production implementation, task-status change or device verification are implied.
+Data/Help is the next unrefined family, followed by the remaining exceptional states.
+
 ## Approval language
 
 - **Approved requirement:** a decision explicitly made by the owner and recorded

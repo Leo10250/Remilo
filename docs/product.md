@@ -45,6 +45,14 @@ persistence, automatic policy and safe Test retry retain separate technical
 checkpoints. Template acceptance does not implement those contracts or verify
 actual components, permissions, audio or device behavior.
 
+[A31](design/r9-completed-trash-activity-intake.json) continues refinement into
+[Completed, Trash and Activity](design/r9-completed-trash-activity-specification.md),
+with every R3 style pair and [fourteen proposed review states](design/r9-completed-trash-activity-fixtures.json).
+The draft preserves recoverable Trash, recorded occurrence history and independent
+collection context. It records baseline routing, skipped Reopen and uncertain
+collection-command gaps without changing the native behavior contract. New images,
+draft acceptance and production execution remain separate.
+
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks
 for one owner-operated acceptance run. Automated checks continue; unobserved

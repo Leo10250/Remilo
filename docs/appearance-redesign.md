@@ -28,6 +28,15 @@ and a later R8-08 supplement. Apply their discrepancy corrections; no storage
 change, four-scene automatic policy, safe Test API or actual render/device pass
 is implied by that visual acceptance.
 
+A31 starts [R9 Completed/Trash/Activity refinement](design/r9-completed-trash-activity-specification.md)
+with [fourteen prospective captures](design/r9-completed-trash-activity-fixtures.json).
+All eight R3 references govern color/style; native history, query filtering/order
+and guarded recovery govern UX. Terminal text stays readable, collection rows
+omit unproven action dates, and Activity contains only actual occurrence events.
+Secondary-origin routing, skipped Reopen and uncertain collection retry are
+explicit implementation gaps. The draft is proposed; no R9 images or new
+acceptance/implementation result is recorded by this continuation.
+
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System
 brightness apply across app pages and the native alarm experience; Android still

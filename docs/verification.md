@@ -72,6 +72,19 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ### Appearance design review
 
+The [R9 Completed/Trash/Activity draft](design/r9-completed-trash-activity-specification.md)
+and [fourteen prospective captures](design/r9-completed-trash-activity-fixtures.json)
+are refinement inputs under A31, not generated/accepted references. Verify native
+filtering before pagination, latest relevant event order, status-only collection
+rows versus recorded detail dates, Include skipped, fixed membership/search/Back
+and origin return. Cover Restore's retained completion/skip and future/past target
+outcomes, paused-family independent exception recovery, revision-safe stale Undo
+and the exact-command guard after an unconfirmed collection reply. Current native
+Reopen retains skipped; resolve that contract/action before claiming an unskip.
+Activity must render only recorded entries/targets in the device zone and retain
+known data on refresh failure. [Draft evidence](evidence/2026-10-07-r9-records-refinement.md)
+records source/reference/static checks only. No runtime or physical pass is implied.
+
 The [R8 Settings/Appearance/permissions/Test alarm draft](design/r8-settings-appearance-specification.md)
 and [review states](design/r8-settings-appearance-fixtures.json) have thirteen
 [associated references/corrections](design/remilo-r8-settings-appearance/gallery.html)

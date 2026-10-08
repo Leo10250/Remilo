@@ -30,6 +30,21 @@ their UX. A30 accepts the R8 direction/templates shown so far, with
 and a subsequent R8-08 supplement. Exact technical contracts, actual renders and
 execution remain separate; no milestone status or dependency changed.
 
+[A31](../../design/r9-completed-trash-activity-intake.json) now refines
+[R9 Completed, Trash and Activity](../../design/r9-completed-trash-activity-specification.md)
+within the existing P05/P07 ownership. The
+[fourteen-screen review brief](../../design/r9-completed-trash-activity-fixtures.json)
+uses all eight R3 pairs, with the first eight covering each pair. Proposed
+collection rows use state labels; native ordering fallback is not displayed as a
+completion/skip/deletion timestamp. Exact recorded times remain in details and
+Activity. Preserve secondary origin-return navigation, retained skipped state
+after Reopen, and the established mutation guards. Baseline Browse-root routing
+and uncertain collection-command retries still require implementation work.
+[Evidence](../../evidence/2026-10-07-r9-records-refinement.md) distinguishes this
+draft review from generated images, acceptance, implementation and runtime checks.
+Data/Help follows, then remaining Agenda/detail/editor exceptions. R9 changes no
+milestone dependency or backlog status.
+
 ## Vision and authority
 
 A coherent, softly illustrated global Remilo atmosphere supports clear everyday

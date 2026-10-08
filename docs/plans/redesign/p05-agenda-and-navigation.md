@@ -22,6 +22,24 @@ routing or implementation. P07 owns its family content;
 P06 owns the connected recurrence controls. Older P01 reference assumptions below
 do not override the current R3 direction.
 
+**Collection refinement (A31):** read the proposed
+[R9 Completed/Trash/Activity specification](../../design/r9-completed-trash-activity-specification.md),
+[fourteen-state brief](../../design/r9-completed-trash-activity-fixtures.json) and
+[recorded intake](../../design/r9-completed-trash-activity-intake.json).
+All eight R3 appearance pairs apply. Completed/Trash are secondary overflow pages
+returning to the invoking root or fixed list, with independent retained search,
+membership, Include skipped and scroll state; Activity returns through details.
+Collection rows show state labels, with exact recorded timestamps in details and
+Activity. Native `collectionAtMs` includes an Event-time sorting fallback and
+must not be rendered as a recorded completion/skip/deletion time.
+The current Browse implementation still makes global collections roots, and
+collection commands do not yet retain an uncertain operation for identical retry
+or guard navigation. Record those gaps during implementation; R9 does not fix them.
+Reopen of a skipped occurrence retains `skipped`; do not present it as newly active.
+This is a proposed design brief, with no generated images or owner acceptance.
+[Refinement evidence](../../evidence/2026-10-07-r9-records-refinement.md) is separate
+from production route/action/keyboard verification.
+
 ## 1. Objective and user-visible outcome
 
 Make Agenda, Lists and Repeats directly discoverable, with compact readable reminders

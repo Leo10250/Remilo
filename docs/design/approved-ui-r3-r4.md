@@ -3,7 +3,7 @@
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18-A30 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A31 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -91,6 +91,15 @@ templates shown before its response, with R8-08 a later supplement. Apply the
 [thirteen-reference gallery's corrections](remilo-r8-settings-appearance/gallery.html)
 and this shared contract. Exact pixels, actual implementation/accessibility,
 storage/automatic policy and retry-safe Test commands remain separate.
+
+[A31](r9-completed-trash-activity-intake.json) now continues with the proposed
+[R9 Completed/Trash/Activity specification](r9-completed-trash-activity-specification.md)
+and [fourteen review states](r9-completed-trash-activity-fixtures.json), using
+every R3 pair and established history/recovery UX. Retain readable terminal text,
+neutral structural glyphs, distinct Reopen/Restore and secondary origin returns.
+Collection rows show status without invented action dates; details/Activity use
+actual recorded events. Skipped Reopen and unconfirmed collection retry remain
+documented implementation gaps. No new R9 images or template acceptance are claimed.
 
 The [R6 visual specification](r6-alarm-postpone-specification.md) and
 [eleven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
