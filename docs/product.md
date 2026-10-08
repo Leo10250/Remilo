@@ -36,10 +36,14 @@ global theme. Exact raster tokens and actual component/native/device acceptance
 remain separate.
 
 The owner's A28 continuation starts [R8 Settings/Appearance/permissions/Test alarm](design/r8-settings-appearance-specification.md)
-refinement with every R3 Light/Dark reference. This is a proposed layout/state
-brief, not new implementation or acceptance. Existing automatic preference saving,
+refinement with every R3 Light/Dark reference. [A30](design/approved-ui-r8-outline-acceptance.json)
+accepts the R8 direction/templates available before its response; thirteen
+[associated references/corrections](design/remilo-r8-settings-appearance/gallery.html)
+include a later R8-08 supplement. Existing automatic preference saving,
 inline permissions and native sound/test actions govern UX; four-atmosphere
-persistence and automatic policy retain their separate technical checkpoints.
+persistence, automatic policy and safe Test retry retain separate technical
+checkpoints. Template acceptance does not implement those contracts or verify
+actual components, permissions, audio or device behavior.
 
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks

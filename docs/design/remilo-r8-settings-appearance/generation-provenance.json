@@ -1,0 +1,614 @@
+{
+  "revision": "R8-generation-r1",
+  "date": "2026-10-07",
+  "tool": "Built-in image_gen.imagegen",
+  "callCount": 25,
+  "sourceSpecification": "submission-specification-r1.md",
+  "sourceFixtures": "submission-fixtures-r1.json",
+  "referenceAuthority": "../remilo-r3-atmospheres/images.json",
+  "policy": "Selected PNGs copied unchanged; targeted bitmap repairs used ImageGen only. Full local paths are normalized for portable provenance.",
+  "screens": [
+    {
+      "id": "R8-01",
+      "selectedFile": "01-settings-overview-sunrise-light.png",
+      "selectedSha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings, ordinary top scroll. Scenic Sunrise Light as reference. Alarms heading, grouped card four rows: neutral speaker Sound with value Remilo + chevron; Vibration switch ON; Snooze duration value10 minutes + chevron; Test alarm row with helper Schedule a test in15 seconds. Directly under relevant rows readable helpers \"Sound and vibration defaults apply to new reminders.\" and \"Snooze duration is used the next time you Snooze.\" Helpers may wrap. Permissions heading follows, show On-time alarms Allowed, Notifications Allowed, Lock-screen alarms Allowed, neutral glyphs and trailing chevrons plus small labeled status. If height requires, show only beginning Permissions and let rest scroll. No footer action.\nSpecified fixture intent and notes: Permissions may enter the lower viewport; remaining categories scroll. No page Save, root bar or FAB.",
+          "referencedImages": [
+            {
+              "path": "../remilo-r3-atmospheres/01-sunrise-light.png",
+              "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-0fafedfb-5aa2-4a48-a905-78a142623592.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "2951c59441a02ab3f1053a7ec3966a4aad92ce65bc8125aae1fadde6f64061aa"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup. Edit this ONE Remilo Settings screenshot, preserving exact841x1870 portrait size, SunriseLight shared color/art identity, neutral icons, wording and current preference/permission states. This is a precise layout correction to match the established spec.\nThe scenic header is TOO TALL. Its boundary currently sits around image y450. Move that boundary to y280 (equivalent total120dp including24dpstatus+96dpsecondaryopening). Keep statusbar and Back/Settings toolbar normal size. Crop the same lake/mountains/conifers into a SHALLOW40dp scenic aperture below the toolbar; do NOT shrink typography or full UI, do NOT create new landscape. Compact total header to120dp, then move Alarms, its card, helper and Permissions content up170px retaining their existing readable text sizes, row/card sizes, gutters, neutral roles, switchON and threeAllowedstates. Use freed lower area for beginning of existing next section \"Postpone shortcuts\" and first \"Tomorrow morning\" / \"10:00 AM\" clock row if fits; rest scrolls. Neverstretchgapsto refillspace. Retain normalAndroidgesturebarbottominset. No new Save/FAB/navigation. Only correct excessive scenicheaderheight and consequent content vertical positions.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-0fafedfb-5aa2-4a48-a905-78a142623592.png",
+              "sha256": "2951c59441a02ab3f1053a7ec3966a4aad92ce65bc8125aae1fadde6f64061aa"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-5b8a143b-a385-4cfb-a267-ac5c2d9e6c39.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-02",
+      "selectedFile": "02-preference-save-unconfirmed-sunrise-dark.png",
+      "selectedSha256": "640d44533023fc9edcfedcc4b5a4fb691ab4a808299a51b5f85039fd62eb6d72",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings, Sunrise Dark. Same Alarms anatomy as ordinary. Sound Remilo, Vibration ON, Snooze duration10 minutes (last confirmed), Test alarm. Below Snooze row a restrained semantic error panel and secondary atmosphere action \"Retry saving changes\". Exact error: \"Could not confirm the change to 15 minutes.\" / \"Last confirmed: 10 minutes.\" Last confirmed10 remains rowvalue; do not show15 as saved. Test row is unrelated. Permissions may start lower viewport. No page Save, no generic Retry test. Secondary error action uses shared paleapricot primary label/container, not brightredactionfill.\nSpecified fixture intent and notes: Retry retains the captured preference job; a stale revision follows existing rebase rules. Do not claim native write failed or pending patch was discarded.\nInput roles: Image1 is matching SunriseDark COLOR/SCENE reference only; Image2 is the compact Settings GEOMETRY master. Match Image2's opening height and row type/geometry but apply Image1's Dark roles and specified error-state insertion. Do not copy Image2's partial bottomrowgestureoverlap.",
+          "referencedImages": [
+            {
+              "path": "../remilo-r3-atmospheres/02-sunrise-dark.png",
+              "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+            },
+            {
+              "path": "01-settings-overview-sunrise-light.png",
+              "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-1eead729-78e9-4ae1-999c-5776d4a397d0.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "a81425e8f535efc4e11ef0ee1f9de6c6958f5c79e2520927513cbd0858e05fbc"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup. Precisely edit this Remilo SunriseDark Settings screenshot, retaining its portrait size, compact Sunrise header, soft charcoal/raised surfaces, exact words, confirmedSnooze10 and uncertaintyerrorstate. Fix ONLY inconsistent functional color roles and retry control:\nAll four static Alarms glyphs Sound/Vibration/Snooze/Test AND their square icon-tile backgrounds must use the SAME NEUTRAL sharedgraywhite content and neutralsurface, like the neutral Permissions glyphs below. No peachSound/purpleVibration/greenSnooze/blueTest: those categorycolors do not belong to settings. All ordinary metadata/chevrons neutralgraywhite, not blue.\nON Vibration switch uses SunriseDark PALEAPRICOT track with darkpairedthumb/content, not Lightburntorange. Retry saving changes is a SECONDARY outlined56dp-tall full-width roundedrectangle, label/outline paleapricot, matchingdarkraisedbackground ratherthanorangegradientfill. Height130px in841widthrender. Enlarge its slot withoutshrinkingtext; lower Permissions may scrolloutsideviewport. Keep inlineerrorwording unchanged, no newSave/FAB/Done/Retrytest. Normalgesturesafearea. Othergeometry/contentunchanged.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-1eead729-78e9-4ae1-999c-5776d4a397d0.png",
+              "sha256": "a81425e8f535efc4e11ef0ee1f9de6c6958f5c79e2520927513cbd0858e05fbc"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-f98c2cdc-ce03-4e67-bd57-02f1dd982982.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "640d44533023fc9edcfedcc4b5a4fb691ab4a808299a51b5f85039fd62eb6d72"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-03",
+      "selectedFile": "03-appearance-fixed-sky-light-sky-light.png",
+      "selectedSha256": "203630988c61edb6c42a440e73a51dc52a15746aa3b42ae5813786bb6a3d26f8",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Appearance, Sky Light. Back + Appearance compact shared scenic opening. Brightness heading, opaque grouped RADIO rows System / Light / Dark vertically, Light selected. Helper \"Uses your device's light or dark appearance.\" Atmosphere heading and helper \"Used across Remilo, including full-screen alarms.\" Four scenic choice tiles in tidy2-columngrid, named opaque bands Sunrise / Sky / Evening / Night; each previews corresponding R3 scene identity, no tiny phone screenshots. Sky selected with visible checked/radio badge plus accent outline. All four names readable. Surrounding page/action/selection Sky Light, not independently themed settings blocks. No Save, no Automatic. No Android permission warning inUI. Native gesture area.\nSpecified fixture intent and notes: Four scene tiles are previews; surrounding page remains Sky Light. Light and Sky each have explicit radio/check semantics; no Automatic control.\nImage roles: Image1 SkyLight whole-page style; Images2/3/4 ONLY Sunrise/Evening/Night scenic tiles respectively; Image5 compact secondary header/component scale. DO NOT copy multiple phones/Agenda cards. Four preview tiles use those source scenes, while the page remains SkyLight. Compactheader120dp total as Image5.",
+          "referencedImages": [
+            {
+              "path": "../remilo-r3-atmospheres/03-sky-light.png",
+              "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/01-sunrise-light.png",
+              "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/05-evening-light.png",
+              "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/07-night-light.png",
+              "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+            },
+            {
+              "path": "01-settings-overview-sunrise-light.png",
+              "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-f19da2d0-8d8c-44d6-98a2-e649e0429df4.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "203630988c61edb6c42a440e73a51dc52a15746aa3b42ae5813786bb6a3d26f8"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-04",
+      "selectedFile": "04-appearance-system-saving-sky-dark.png",
+      "selectedSha256": "4298ae2eabe5a553cfd51347e2950d00a316c57dca2e40b1ee8d7fa3013c8f57",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Appearance, Sky Dark. Match prior Appearance layout. Brightness RADIO System selected (device is Dark), Light/Dark not selected. Fixed Sky selected in all four named atmosphere tiles. Saving footer/status text \"Saving changes…\" with modestprogressindicator below selections, not Apply button. Daytime clouds still in header and Sky preview. Dark blue-slate canvas/cards with clear white/neutral text; pale skyblue intentional selection with dark content. All four named tiles readable. No automatic/newdefaultindication. Preserve normal gestureinset.\nSpecified fixture intent and notes: System selected and device Dark yields Sky Dark; preserve daytime scene. Saving is brightness preference progress, not proof of four-atmosphere persistence.\nImage1 is the MASTER Appearance composition, exact bodygeometry/wording/4tiles. Image2 is matchingSkyDark whole-pagecolor/header;Images3/4/5 only matchingSunrise/Evening/NightDarktilepreviews. ChangeLighttoDark intentionally withoutredesign. BrightnessRADIO selection movesLighttoSystem; currentdeviceDark. Skyremainsselected. Savingchangesbelowtiles. MainDarklabels/glyphsNEUTRALwhitegray, ONLY selectedradios/outlineprimarypaleskyblue. No Nightblue tinting ofordinarytext. All4tilebandsopaqueDarkmatchingpage. Nochangeofsceneidentity.",
+          "referencedImages": [
+            {
+              "path": "03-appearance-fixed-sky-light-sky-light.png",
+              "sha256": "203630988c61edb6c42a440e73a51dc52a15746aa3b42ae5813786bb6a3d26f8"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/04-sky-dark.png",
+              "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/02-sunrise-dark.png",
+              "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/06-evening-dark.png",
+              "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/08-night-dark.png",
+              "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-c303da9e-76e8-40c9-9ab8-2e5921796219.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "595cd8cfaa09bea711c176284bb6ce150ef51f7e962ff5e86033344a8d2ca866"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup. Edit Image1, preserving exactportraitsize, Appearancebodylayout, Systemradioselected, Skyselected4tiles, Savingchangesstate, softblue-slatereadingplanes. Image2 is approvedSkyDarkheaderreference.\nFix ONLY the HEADER readability/crop. ReplaceImage1'sbrightLightblueupperSky behindAppearance with Image2'sdeeperquietblueSkyDarkupperSky, clouds/daytime/lake/conifers stillpresent; do NOT turntoNight oraddmoon. UseWHITEsharedBackarrow ANDWHITEAppearancetitle uniformly, protectedagainstquietdarkbluesky. Bodyandallselection/savingstateunchanged. Headerboundaryshouldbecompact abouty280instead340 at841width ifpossible, movingbodyupsmallamount withoutresize orfontshrink. Noindependentsceneasset/gradientformcards ornewaction.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-c303da9e-76e8-40c9-9ab8-2e5921796219.png",
+              "sha256": "595cd8cfaa09bea711c176284bb6ce150ef51f7e962ff5e86033344a8d2ca866"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/04-sky-dark.png",
+              "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-4afd002d-2f3c-4eff-a877-6971f2c48b5e.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "4298ae2eabe5a553cfd51347e2950d00a316c57dca2e40b1ee8d7fa3013c8f57"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-05",
+      "selectedFile": "05-sound-preview-fallback-evening-light.png",
+      "selectedSha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nSETTINGS + Alarm sound SHEET, Evening Light. Compact Back Settings sunset opening visible behind dimscrim; no other competingmodal. Sheet title Alarm sound; helper \"Choose a sound, or use Play to listen before choosing.\" Exactly2 distinctsoundrows: Remilo with SELECTED radio and separate Play icon/action; System alarm with UNSELECTED radio and separate Stop icon/action because current System request is playing fallback. Preserve explicitneutralordinarysoundglyphs. Nativefeedback exact \"Remilo preview playing · System tone unavailable; using Remilo.\" then \"Preview ends after five seconds. A ringing alarm takes priority.\" Full names/copy wrap at14sp. Neutral Close/X top sheet; no Savesound or Checkhearbutton. Stop is preview action with Eveningmutedplumaccent; no radio switch caused by preview.\nSpecified fixture intent and notes: System request has Stop; Remilo remains the selected radio. Play does not save/select or create a test.",
+          "referencedImages": [
+            {
+              "path": "../remilo-r3-atmospheres/05-evening-light.png",
+              "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-15a20c0a-ad5c-4989-b9d2-740940a23b4b.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "b9b458084270281a0af3ec957748c13144a72179c6aa8c3b59b6fede4c3cc5ae"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup edit. Input image1 is the edit target. Correct this exact screenshot without changing the Evening Light color style, sunset/lake/conifer artwork identity, sheet layout, selected Remilo radio, unselected System alarm radio, System-request Stop action, or existing fallback explanation.\nOnly make these specification corrections:\n1. Crop background secondary scenic opening to total120dp equivalent including Android24dp status and Back Settings56dp toolbar and40dp shallow landscape strip. Reclaim excess artwork height; do NOT enlarge header.\n2. Under dim scrim, background Settings shows Alarms group (not invented Appearance/Theme/Reminders/Default time). Only these ordinary rows: Sound value Remilo, Vibration ON, Snooze duration10 minutes, Test alarm helper Schedule a test in15 seconds. All static icons neutral gray. Delete invented Default time and9:00AM.\n3. Delete invented sound descriptors \"A calm, gentle alarm\" and \"Pixel Alarm\"; there are just two sound names Remilo/System alarm. Both ordinary soundglyphs NEUTRAL gray, including currently purple Remilo bell. Keep selectedradio and actual Play/Stop actions the existing Eveningplum primary.\n4. Add tiny but legible text Play alongside/under the first row's separate triangle action and Stop alongside/under the second row's separate square action; preserve separate48dp targets. No Save, no extra tone, no new selection.\nRetain all fallback/helper text exactly, CloseX neutral, opaque lightrose sheet, usual safearea. Outputone841x1870portrait screenshot only.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-15a20c0a-ad5c-4989-b9d2-740940a23b4b.png",
+              "sha256": "b9b458084270281a0af3ec957748c13144a72179c6aa8c3b59b6fede4c3cc5ae"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-cd7dd714-dd4b-4c98-a92c-b7f0e52e0127.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-06",
+      "selectedFile": "06-sound-preview-failure-evening-dark.png",
+      "selectedSha256": "ea38038529662a24c5d81763d30853049c9767e3f4a3dbc5bdeaa31127ba4475",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nSETTINGS + Alarm sound SHEET, Evening Dark. Same2soundrowstructure. System alarm SELECTED radio, Remilo unselected. Failed System request has returned to separate Play controls (no activeStop). Errorfeedback exact \"Could not play this sound. Check alarm volume and tap Play to retry.\" Footerhelper \"Preview ends after five seconds. A ringing alarm takes priority.\" Neutral static icons/metadata; selectedradio and Playactions use sharedpalerose/darkcontentintentionalroles. No newselect/save/volumevalue. Close neutral. Softplumcharcoal and opaque raisedplum, no harshblack.\nSpecified fixture intent and notes: System remains selected despite failure. No invented volume reading; actions are preview Play, not retry preference saving.\nADDITIONAL SUPPORTING INPUT: Image1 is the R3 Evening Dark COLOR/ART style authority. Image2 is the selected R8-05 COMPOSITION/CONTROL anatomy reference only. Preserve its 120dp compact secondary opening and sound sheet anatomy, change to the requested Evening Dark states. Behind sheet render Vibration ON as an actual switch, not a disclosure row. Remilo is UNSELECTED and System alarm is SELECTED; both labeled preview actions Play. No Stop remains. Use neutral static sound icons. This is a sibling capture of the same product.",
+          "referencedImages": [
+            {
+              "path": "../remilo-r3-atmospheres/06-evening-dark.png",
+              "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+            },
+            {
+              "path": "generated-output/exec-cd7dd714-dd4b-4c98-a92c-b7f0e52e0127.png",
+              "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-9f7f86a3-a6a7-4ee6-b62c-8d7ae03606b9.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "51c1f07b0360c1f0bf1edd8359a540b504de0ae4db86b67d016ca84d2c88afe0"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup targeted edit. The supplied image is the exact edit target. Preserve the entire Evening Dark sound sheet, all geometry, artwork, soft plumcharcoal planes, selection, both separate Play controls, exact failure message, helpers and gesturebar. Make only two background corrections: in the dimmed Settings Sound row above sheet, replace value Remilo with System alarm, matching the already selected System alarm in this failed-preview fixture. Apply a normal subtlemodal scrim ONLY to background Settings from top through the exposed Test alarm row, so it is clear the bottom sheet is modal; do not darken or re-color the foreground sheet. No new rows/actions and no text changes elsewhere. Output one same841x1870portrait screenshot.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-9f7f86a3-a6a7-4ee6-b62c-8d7ae03606b9.png",
+              "sha256": "51c1f07b0360c1f0bf1edd8359a540b504de0ae4db86b67d016ca84d2c88afe0"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-faa511fd-e9ec-4f10-b9f1-2299b782695b.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "ea38038529662a24c5d81763d30853049c9767e3f4a3dbc5bdeaa31127ba4475"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-07",
+      "selectedFile": "07-permissions-with-mixed-channels-night-light.png",
+      "selectedSha256": "ae99be3e0503778e392cb2e777faac6e020486d68b94a3b8cfd1f0a025531562",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings, Night LIGHT, scrolled to Permissions. Compactmoon/starsheader, LIGHT icybluecanvas/whitecards. Permissions heading. On-time alarms Allowed withneutralclock; Notifications Blocked withneutralnotificationglyph and explicitsub-lines \"Alarm channel: Allowed\" / \"Reminder channel: Blocked\"; app notification access itself isAllowed. Lock-screen alarms Limited withneutral lock and helper \"Full-screen access is off.\" EachrowAndroidsettinghandoffchevron. ExplicitsemanticAllowed/Blocked/Limitedlabels, notallgreen. Reminderchannelblockeddoes NOT produce \"Alarms blocked\" banner, fullScreenLimitednotSchedulingBlocked. Show normalfollowingPostpone shortcuts heading ifspace. No Enable toggles, fakepermissiongrantdialog or rootbar.\nSpecified fixture intent and notes: Rows hand off to Android; no Enable toggle or custom permission screen. Mixed channels do not block Alarm scheduling; full-screen Limited is presentation only.\nADDITIONAL SUPPORTING INPUT: Image1 is R3 Night Light color and scene authority. Image2 is the root selected Settings composition reference only; use its compact120dp opening and neutral structural glyphs, not its Sunrise colors or top Alarms content. Depict specified scrolled Permissions capture in Night Light. Header crescent/stars with neutral white toolbar content over dark sky; readingplanes icyblue/white. Notifications explicitly shows appaccessAllowed plus Alarm channelAllowed and Reminder channelBlocked. Allhand-offchevrons separate from labeled status. No status toggles.",
+          "referencedImages": [
+            {
+              "path": "../remilo-r3-atmospheres/07-night-light.png",
+              "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+            },
+            {
+              "path": "01-settings-overview-sunrise-light.png",
+              "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-2e04aead-afb2-406a-a521-70aaeec709c3.png",
+            "width": 835,
+            "height": 1883,
+            "sha256": "11d3b6c2b0eb0600f2162a02337cef842b453147084060391c502b7087c43483"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup targeted repair. Inputimage is edit target. KeepNightLIGHT moon/star lake identity, LIGHT icyblue/white opaque readingplanes, neutralicons, title BackSettings and threepermissionhandoffrows. Correct these material spec errors:\n1. Crop the secondary artwork opening to total120dp equivalent of24status+56toolbar+40landscapecrop. At841x1870 image the opaque readingplane beginsaroundy280px. Header can show crescent/stars, not enlarged artwork.\n2. ExactlyTHREE actionable Permissions rows, notfour. On-time alarms: Allowed. Notifications MAIN overallstatus: Blocked (NOTAllowed). Its inline support: \"App access: Allowed\", \"Alarm channel: Allowed\", \"Reminder channel: Blocked\". These sublines are informational, not separateactionrows. Lock-screenalarms: Limited with\"Full-screen access is off.\" No invented fourth App notification accessrow.\n3. Restore correct settingsPostponeshortcutrows ifvisible: Tomorrow morning10:00AM, Tomorrow afternoon2:00PM, Tomorrow evening5:00PM. Delete inventedLatertoday3PM andCustomtime. ThesearepreferencesnotPostponeflowactions.\n4. Group the threePermissionsrows inONE16dpcorner opaque cardwithsubtle separators, matchingSettingsmaster. Sameforshortcutrows. Do not inventstatusswitches orpermissiondialog.\nOutputone841x1870portrait screenshot, nativegestureclearance. Fulltextwraps, rowsgrow, no bottomrootnavigation, noFAB.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-2e04aead-afb2-406a-a521-70aaeec709c3.png",
+              "sha256": "11d3b6c2b0eb0600f2162a02337cef842b453147084060391c502b7087c43483"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-2ddd594f-834f-4c38-b262-2ad792021560.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "ae99be3e0503778e392cb2e777faac6e020486d68b94a3b8cfd1f0a025531562"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-08",
+      "selectedFile": "08-permissions-refresh-failure-night-dark.png",
+      "selectedSha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings, Night Dark, scrolled Permissions. Keep samepermissionrowanatomy, ALL THREE lastsnapshotAllowed. Small neutralnotice \"Last checked Today, 1:55 PM.\" semanticrefresherror \"Could not refresh permissions.\" and secondaryprimaryaction Retry. These are retainedlastobservations, notfreshAllowed result. No spinner/Checkingwhilefailed. Softnavyslatecanvas/raisednavycards, neutralwhitegrayordinarytext and neutralicons; intentionalperiwinkleRetry. Postpone shortcuts canbeginbelow. No alarmtestRetry and noallaccessguaranteebanner.\nSpecified fixture intent and notes: Retain last snapshot with explicit staleness; no freshly checked success. Initial Checking and initial failure are additional component states, not this snapshot.\nInputroles: Image1 compactSettingsgeometry/neutralglyphmaster only. Image2 matchingNightDarkwholepageScene/Color. Retainedcapabilityrefreshfailurecapture. HeaderNightmoon/stars, noSunrise; allordinaryglyphsandlabelsneutralwhitegray. Retryisoutlinedperiwinkle56dpfullwidth, notfilledgradient. Do notaddBrightness, Healthornewpermissions. ExactthreeAllowedlastsnapshotrowsandclearLastchecked1:55PMplusCouldnotrefresh status.",
+          "referencedImages": [
+            {
+              "path": "01-settings-overview-sunrise-light.png",
+              "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/08-night-dark.png",
+              "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-d6870ce0-fdd4-468f-9598-5a005fe5059d.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "813da2f8bcea7db8b7336a97c55f94a021e7413c38d2f42762d40c113f2edfaf"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Edit this ONE Remilo Night Dark screenshot, keeping841x1870portrait, compactmoon/lakeheader, titleSettings, softnavyslateandopaqueraisednavy, exactthreeAllowedpermissionlaststates, lastchecked1:55PM, failure andRetry.\nCorrect the SCROLL CAPTURE: remove the entire Alarms heading/card/twohelpers from the visible viewport because that content has scrolled ABOVE the viewport. Settings toolbar/scenery remains fixed. Permissions must be the FIRST visible body section directly below the scene boundary atabouty300, withthethreeexistingrows andneutralicons unchangedinfontsize/size. Then show \"Last checked Today, 1:55 PM.\" / \"Could not refresh permissions.\" and full-widthoutlinedRetry atreal56dp/130px height. Afterthat show existingPostpone shortcuts heading andclockrowsTomorrow morning10:00AM, Tomorrow afternoon2:00PM, Tomorrow evening5:00PM iftheyfitnormalspace; actualremainingcontentscrolls. Preserve bottomgesturesafeinset; nocontentbehindgesturebar. NOothercategories, settingsPageSave, rootbarorAddFAB. NoChecking/progressonfailedrefresh, nofreshAllowedclaim. Ordinarysupporttext/glyphneutralgraywhite; onlyRetrylabeloutline paleperiwinkleprimary.",
+          "referencedImages": [
+            {
+              "path": "generated-output/exec-d6870ce0-fdd4-468f-9598-5a005fe5059d.png",
+              "sha256": "813da2f8bcea7db8b7336a97c55f94a021e7413c38d2f42762d40c113f2edfaf"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-06ce9445-a1b2-45c7-933d-ffc16b6a9f68.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-09",
+      "selectedFile": "09-test-scheduled-sunrise-light.png",
+      "selectedSha256": "216941536c239391284eb5d84c1dbfe9dc67e79ac29bf98c07792668f029de9f",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings Alarms, Sunrise Light. Sound Remilo; VibrationON; Snooze duration10minutes; Test alarm row. Contextualtestresult card immediately afterTest row: explicitsemanticScheduled label plus \"Test alarm scheduled for Today, 2:00:15 PM.\" and atmosphereprimarytextlink \"View test reminder\". Helper \"Check that you hear the alarm.\" ratherthanclaimheard. Otherexistinghelpers canwrap; Permissions section follows. NotaseparateTestpage. ExacttesttitleRemilo testalarmcanbecontextifneeded, nolargeheading. No countdownwidget, verificationpassedbadge, cleanup/Canceltest or casualRetry.\nSpecified fixture intent and notes: Time/occurrence identity come from native result; View is proposed contextual navigation. Do not imply test auto-deletes, Stop completes, or device acceptance passed.\nImage2 is exact shared Settings body and COMPACT opening composition master. Match its compactopening and commonAlarmsrowstyle. Add the specified Scheduled result after Test, shifting lowerPermissionsdown naturally; truncatewholelowersectionsoutofviewport, no tinyfont. Neutralestablishedschedule/alarmglyphs, notmasterPlay. No gestureoverlap.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-585c556a-d624-4258-b199-0ce9e7bb6c31.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "216941536c239391284eb5d84c1dbfe9dc67e79ac29bf98c07792668f029de9f"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-10",
+      "selectedFile": "10-test-saved-but-blocked-sky-dark.png",
+      "selectedSha256": "25253de8aa77eeb024f96ba2c52dbbc83dcf47c0952e2f91d3b73e88729d9591",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings Alarms, Sky Dark. ExistingAlarmspreferences rows, Test alarm row. Result \"Test reminder saved; alert blocked.\" / \"On-time alarm access is blocked.\" withsemanticwarning/errorlabel; \"View test reminder\" contextualprimarylink. Belowa reachablePermissionssectionincludingOn-timealarmsBlockedchevron forAndroidhandoff (otherrowsallowed ifshown). NoNotificationdowngrade, fakeEnable toggle or Retrytest. Blue daytimecloudscene and softblue-slateR3darkplanes, notnightscene. Test remainsrealretainedreminder.\nSpecified fixture intent and notes: Use existing On-time alarms row for Android handoff; no silent Notification downgrade. This particular fixture has a known permission cause; other Blocked results may be registration failure.\nImage2 is exact shared Settings body and COMPACT opening composition master ONLY. Restyle wholepagecanvas/cards to Image1 SkyDarksoftblue-slate; don'tleavewhitereadingplanes. Keep fourAlarmsrows and commonneutralalarm/scheduleicons, replacingTesthelperarea withspecifiedBlockedresult. Permissionsmustincludeon-timeBlockedrow and itsAndroidhandoffchevron. Ordinaryvalues/iconsneutralgray, explicitBlockedsemantictextcanwarning. Lowerrowscanwholeoutsideviewportnotclippedgesture. No inventedDestination.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-f8108f39-19a6-413c-84d1-90b3a669d4f7.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "e276465ce569d878779e9e88b99777f8eacec592a360f2c0f29ef89d38c1f021"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup targeted UI component correction. Image1 is SkyDarkSettingsBlockedtestedit target. Preserveexact2:00status,compactdaytimecloud/lakeopening,softblue-slatecanvasandraisedcards,SoundRemilo,VibrationON,Snooze10, blockedcauseandallPermissionsstates. Change ONLY Test row and related feedback structure: standard Testalarmrow withneutral alarm-clock(schedule)glyph NOT Playtriangle; support'Schedule a test in 15 seconds.' withitsnormalchevron. ImmediatelybelowthatrowbutasitsOWN non-clickableopaquecontextualpanel put explicitwarninglabel'Blocked',body'Test reminder saved; alert blocked.', reason'On-time alarm access is blocked.', separatelytappablepaleskyblue'View test reminder'link. Do not putlinkinsidelargetestcreationtarget; preventaccidentalnewtest. ShiftsectionhelperandPermissionsdownnaturally, wholelowerLock-screenrowcanoutsidescreenshotinstead ofcrowding. Use sharedsemanticBlockedwarningcolorconsistentlybetween resultandPermissionsBlockedstatus, nottwoarbitraryorange/redvariations. VibrationselectedtrackpaleskybluewithDARK onPrimarythumb, notwhitethumb. On-timealarmglyphneutralalarm-clock; otherformglyphsneutral. Preserve16dpgutters/corners,16spvalues14support,48targets, no pageSave/Retry/Canceltest. Outputsame841x1870tallportrait,gesturebarprotected.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-23da7693-e878-49bd-b157-5a96e169a2d9.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "25253de8aa77eeb024f96ba2c52dbbc83dcf47c0952e2f91d3b73e88729d9591"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-11",
+      "selectedFile": "11-invalid-custom-snooze-with-keyboard-evening-light.png",
+      "selectedSha256": "6f01161e1bc5151ad13776098aa59564046f9b6a4080214667f5353d29ad533c",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nSETTINGS + Snooze duration expanded SHEET/modal, Evening LIGHT. Above realAndroidnumericIME, compactSettingssunsetbackgroundandopaquesheet. HeadingSnoozeduration, neutralClose/X. Presetrows5minutes/10minutes/15minutes/30minutes;10iscurrentlyselected. These canpartlyscrollaboveactivefield; priorityactivefield/errorreadability. FocusoutlinedCustom minutes (1–1440) fieldhasexact \"0\" caret. Inlineerror \"Enter a whole number from 1 to 1440.\" ONE persistentfull-widthdisabled \"Use custom duration\"56dp action abovekeyboard, readablemutedlabel. Close/Cancel affordancepreservessaved10, nosecondSave/nofooterbehindIME. Validatinglocaldraftnotsettingupdate; no \"Savingchanges\". LowernumerickeyboardusesactualAndroiddigitslayout/normalplatformkeycolor. Contentviewportendsabovebutton; keepfield/errorvisible.\nSpecified fixture intent and notes: One disabled 56dp action above real IME, error and caret visible; Close/Cancel preserves 10. Use custom duration is picker submission, not Settings-wide Save.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-2d400c29-2a60-4bbd-b669-b4a249529d5b.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "1d3c5f04d575acb47155ab81be5e536a936c69d696247d4fdd0bfb42f9d18980"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup precise geometry edit. This is the existing approved-state candidate; preserve EveningLight shared color roles, sunset lake/conifers identity, every exact word, invalid0 caret,10minutes selected radio, neutralCloseX, real Android-style numeric keyboard and single disabled footer. Change ONLY vertical geometry to respect real360x800dp scale: crop atmospheric Settings background opening so total status+toolbar+landscape ends at logical y120dp, approximately280px of the841x1870 image. The artwork is a shallow crop and yields to sheet content. Bring top of Snooze duration sheet up to approximatelyy150dp so all controls maintain their ordinary heights. Every preset row minimum48dp, sheettitle22sp, labels16sp. Make the ONE disabled 'Use custom duration' button exactly56dp tall, approximately131px, immediately above the unchanged numerickeyboard. Preserve16dp outergutters. Do not shrink font, don't add Save, no second action. Custom field0/caret/error fully visible ABOVE that footer. Keep total image841x1870, fullstatus2:00 and Androidgesturebar. Image1 is edit target. No change in semantics, no alternative design.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-81604901-7aee-4121-bdf1-4a67c077fc5c.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "6f01161e1bc5151ad13776098aa59564046f9b6a4080214667f5353d29ad533c"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-12",
+      "selectedFile": "12-edit-tomorrow-shortcut-time-night-dark.png",
+      "selectedSha256": "73f6899e598313fffceaea1a68250f0ddf2b9382145edd662a85008f97a5e84d",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings, NightDark scrolledtolowerPostpone shortcuts, behindactualANDROID TIME PICKERdialog. Background3clockrowsTomorrow morning10:00AM, Tomorrow afternoon2:00PM, Tomorrow evening5:00PM. AndroiddeviceDarkdialognoweditingafternoonlocaldraft3:00PM, AM/PM with PMselected; clearCancel andOK. Underlyingconfirmedafternoonstill2:00PMuntilOK. Nativeclockpickerproductionstyle; noRemilo-specificscenicpickeror customkeyboard. Dialogcanhaveplatformaccentindependentofappperiwinkle; thisisnotgeneratedroleinconsistency. Nofakecommitmessage/Automaticboundaries. HeaderNightmoon/scenerystillcompactbehinddim. Backgroundreadingplanesmustnavyslate, notpureblack.\nSpecified fixture intent and notes: Underlying saved afternoon stays 2PM until picker OK; Cancel does not mutate. OS-owned picker styling may differ from app; shortcuts are not atmosphere time bands.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-bb71cff2-73fe-49a2-9d9a-ce35fa418185.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "e7a798df716f62659fcec3b74009c8e96249453a61626ddd442b0619cc0fd7d4"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 2,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup targeted corrective edit. Image1 is the existing NightDark Settings+Android timepicker screenshot. Preserve the FOREGROUND AndroidSelecttime dialog absolutely: draft3:00 PM,PMselected, hourclock3selected,CancelandOK, platformaccent, exactsize/position. Preserve topNightcrescent/star lakeidentity,2:00status,gesturebar,softnavyslatecanvasandraisedsurfaces. CorrectONLY the background Settings content: keep Postpone shortcuts three rowsTomorrow morning10:00AM / Tomorrow afternoon2:00PM / Tomorrow evening5:00PM, with all ordinaryclockglyphs,valuesandchevrons NEUTRALgray/lavender onSurfaceVariant, notcoloredorange or blue. Helper exact 'Used for future Postpone selections. Existing alerts stay unchanged.' Below those3rows, removeALL invented General/About/notification/vibration/colour/brightness/cloudExport/helpfeedback contents. Instead below3clockrows is normal 'Appearance' section withone disclosure row'Appearance' value'Night · Dark'; then 'Data' withonly'Export'and'Restore'rows; then'Help'with'Diagnostics'and'Version' rows if viewport shows them. No account, cloud or new features. This is fixedcategoryorder once upperAlarms/Permissionsare scrolledaway. Keep foregrounddialogunchanged so it obscures some backgroundrowsnaturally. The underlying Tomorrow afternoonconfirmedtime MUST remain2:00PM, NOT3PM. No automaticbands, no savepage. Target topopeningtotal120dp approximately280pxof1870, shallowcrop. No physicalframeorposter.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-2e6f2c17-fd8c-4b6f-bede-e0d5d676a5b3.png",
+            "width": 1024,
+            "height": 1536,
+            "sha256": "4232742bdf31bb6e8614c3b8a0e59a9781aa6b19ee8cca1f9dd5805e0d668032"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 3,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup. Correct only screenshot aspect ratio and production spacing of Image2. Image1 is THE REQUIRED OUTPUT ASPECT ratio exemplar:841wide1870tall,360x800dp, tallfullAndroidscreenshot includingstatusANDbottomgesturebar. Image2 is correct UI semantic edit target but wrong shorttablet ratio; recompose to same tall ratio of Image1 without stretching. NO 1024x1536 portrait, that is wrong. ONE tallphone SCREEN841x1870 about2.22heightto1width, noframe. Preserve exact Settings content ofImage2: Postpone shortcuts threeconfirmedtimes10AM/2PM/5PM,AppearanceNightDark,DataExportRestore,HelpDiagnosticsVersion. Foreground actualAndroidtimepicker controls3:00PMhour3andPMselected,CancelandOK mustremainunchanged. Underlying afternoon remains2PM. Darksoftnavyslatecolorroles,mountlakecrescent/starsidentity exactlyImage1. Compactbackgroundopening total120dptoopaquecontent; alllabels16spandhelper14sp, nooversizedtext. Recompose the foreground Android picker as native dialog centered in availabletall screen, cancoverlowerAppearancedatahelpnaturally. Keep Androidnormalgesturebaratthebottomwith24dpsafearea. Backgrounddimmermakesforegroundclear. No newfeature/account/cloud/genericGeneral/About. No fullphonepreview/marketinglayout. Do notshrinkallcontrolsto cram. Required exactlyone360x800dp proportiontallscreenshot.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-21c9c156-785d-4308-abd1-4a2a5366e246.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "ef288d23f5e1c6e72575795f1f42bc202bf2d012a83f9af80d7055297414a132"
+          },
+          "selected": false,
+          "transparentBackground": false
+        },
+        {
+          "index": 4,
+          "type": "edit",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup targeted geometry/status edit. Image1 is edit target, all established NightDark colorroles, crescent-starslakeartidentity, SettingsPostponeshortcutcontent10AM/2PM/5PMandforegroundactualAndroid3:00PMCancelOKclockpickersemantics MUST be preserved. Image2 is sharedcompacttoolbar proportionONLY: match totalopeningheightstatus24dp+96dptoolbar/scenecrop =120dp, around280pxof841x1870. CROP the existingNightlandscapeverticallyandmoveopaquecontentup~140px withoutshrinkingfontsorbuttons, artworkyieldsfirst. Preserve completeenoughtop crescentlake scene; no newlandscape. Also changeONLY statusclock7:30 to exact2:00. Keepcorrectfullportrait841x1870sameaspectcurrentImage1, no 1024x1536. Restof UI allsame,foregroundAndroidpicker3:00PMand underlyingafternoon2PM unchanged; no inventedfeatures. MaintainneutralsupportandNightDarknavyslateplanes, no pureblack. Bottomnormalgesturebarpresent. No pageSave/bottomnav.",
+          "referencedImages": [],
+          "output": {
+            "identity": "generated-output/exec-cf7f75e3-9fba-444f-a1ec-a25f5abbdbd3.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "73f6899e598313fffceaea1a68250f0ddf2b9382145edd662a85008f97a5e84d"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    },
+    {
+      "id": "R8-13",
+      "selectedFile": "13-test-saved-with-pending-scheduling-evening-dark.png",
+      "selectedSha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68",
+      "calls": [
+        {
+          "index": 1,
+          "type": "generate",
+          "tool": "image_gen.imagegen",
+          "prompt": "Use case: ui-mockup.\nAsset type: ONE realistic portrait Android Remilo screenshot for design evaluation.\nFollow the existing R8 specification exactly; this is not an independent redesign. The supplied R3 image is the approved reference for ONLY atmospheric artwork, shared color roles, soft opaque reading surfaces, action style and component character. Do not reproduce its Agenda content, its oversized homepage opening or bottom navigation.\nOutput ONE full rectangular screenshot, approximately841x1870 pixels, exact 360x800dp equivalent aspect ratio. No physical phone, frame, punch-hole, surrounding background, comparison board, exterior heading, poster or design labels. Crisp system sans text at production UI scale. Full Android status time 2:00 and normal gesture inset/bar. One screen only.\n\nSHARED ANATOMY: Android status24dp; compact secondary atmospheric opening96dp BELOW status, INCLUDING56dp Back + page-title toolbar and40dp shallow landscape crop, total opening120dp. Page title22sp semibold. Back20dp visible in48dp target. No large repeated Remilo wordmark, slogans or oversized scenic splash. Crop the same lake/conifer/mountain artwork identity from the matching R3 scene. Quiet contrast-protected toolbar. Do not author a different landscape. The scenic boundary meets opaque reading canvas around logicaly120, not y200+. Art yields to workflow content. For sheets, background Settings shares that opening and dim scrim; the foreground sheet is opaque corresponding raised surface.\nEvery reading plane matches the selected theme, including canvas, grouped cards, sheet surfaces and bottom area. Soft charcoal/blue-slate/plum-charcoal/navy-slate in Dark, matching R3's raised surfaces; NO arbitrary absolute black, harsh black contrast, translucent/glass cards or page-specific palette. Light surface tints match R3. Theme primary is paired with light text in Light and dark content in Dark. Never invent sampled per-screen hexes.\n16dp outergutters,16dp card/field/button corners,12dp gaps. Opaque grouped Settings cards with subtle separators and no heavy shadow. Row mainlabel/value16sp; support14sp; headings14sp semibold. 56dp prominent actions; >=48dp all targets. Rows grow and wrap; normal scrolling instead of shrinking. Neutral icons20dp and chevrons16dp. Title/value onSurface and ordinary helper/onSurfaceVariant; NO arbitrary blue/orange/purple on static labels or glyphs. Primary only actions, focus and explicit selected controls. Semantic labeled status is purposeful independent of atmosphere. Visible selected radio/check/switch states, not color alone.\nSettings and Appearance are secondary pages with Back. NO Agenda/Lists/Repeats bottom navigation, NO Add FAB, NO page-level Save/Apply. Settings preferences auto-save; picker submission is different. Preserve Android bottom safe/gesture area and normal scroll clearance. Useful data must be fully readable; lower categories can be outside current viewport.\n\nSCENES: Sunrise warm peach/gold sunrise lake; Sky blue daytime clouds, lake/green banks even in Dark; Evening coral/rose setting SUN and purple mountains even in Dark; Night crescent/stars moonlit blue lake even in Light. Brightness changes reading roles, not scene identity. Four atmospheres apply globally, no per-reminder selector. No Automatic toggle, invented boundary/default or weather feature.\n\nPLATFORM: Actual Android-looking IME/time picker where requested, following device styling rather than a Remilo-designed keyboard. Numeric editing uses ONE footer immediately above keyboard with measured scroll clearance; focused value/caret/helper/error remain above it. Do not duplicate Save or force all controls into reduced height.\nFunctional components/text should be consistent across all 13 screenshots; depict the specified exact state and plausible scrolled capture. Never turn Scheduled/Allowed into proof that sound was heard. Sound preview never selects/saves a sound. Do not add unimplemented Retry test, Cancel test, cleanup, permission Enable switch or separate readiness/test destination.\n\nEXACT CAPTURE:\nPAGE Settings Alarms, EveningDark. ExistingSoundRemilo/VibrationON/Snooze10/Testalarmrows. ContextualresultbelowTest \"Test reminder saved; scheduling pending.\" / \"Check its next alert status.\" semanticPendingwarninglabeland \"View test reminder\" intentionalprimarylink. ContentisacknowledgedsavedbutregistrationPending; noScheduledsuccesscheck/spinnerafterresult, noRetrytestorCanceltest. Softplumcharcoal/raisedplumandpaleroseactions,darkpairedcontent. Compactsettingssunset, nopagetestdestination. Permissionsstartsbelowifspace.\nSpecified fixture intent and notes: Native result acknowledges content; Pending registration is not lost acknowledgement. No Scheduled success chip, Retry test, invented Cancel test or physical-pass claim.\nInputroles: Image1 is compact Settings MASTER anatomy/geometry only. Image2 matchingEveningDark wholepageSCENE/COLORroles. PreserveImage1'sneutralglyphs andnormalrows whileapplyDark. Do NOT color eachstaticsettingglyphbyR3categoryhues. VibrationONtrackpalerose/darkthumb, notplumLight. Usecompacty280header. NativePendingresultseparatecontextblockafterTest, allwordsfaithful.",
+          "referencedImages": [
+            {
+              "path": "01-settings-overview-sunrise-light.png",
+              "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+            },
+            {
+              "path": "../remilo-r3-atmospheres/06-evening-dark.png",
+              "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+            }
+          ],
+          "output": {
+            "identity": "generated-output/exec-50422717-0cbd-4dd0-8ff8-f2720f559a09.png",
+            "width": 841,
+            "height": 1870,
+            "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68"
+          },
+          "selected": true,
+          "transparentBackground": false
+        }
+      ]
+    }
+  ]
+}

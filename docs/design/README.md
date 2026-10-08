@@ -50,10 +50,14 @@ P05/P06/P07 and actual component/physical acceptance remain separate.
 The [thirteen-screen fixture brief](r8-settings-appearance-fixtures.json) uses
 all eight R3 style references, separate brightness/global atmosphere selection,
 auto-saving preferences, inline Android permission handoffs and native sound/test
-feedback. It is a design proposal, with no R8 images or acceptance yet. Automatic
-boundaries/defaults/migrations and identified Test-alarm retry remain separate
-implementation decisions. [Evidence](../evidence/2026-10-07-r8-settings-refinement.md)
-records reference/source/document checks, not runtime verification.
+feedback. A29 authorizes generation; [A30](approved-ui-r8-outline-acceptance.json)
+accepts the R8 direction/templates shown before its response. The
+[thirteen associated references](remilo-r8-settings-appearance/gallery.html) have
+per-image corrections; R8-08 is a subsequent supplement. Automatic boundaries/
+defaults/migrations and identified Test-alarm retry remain separate technical
+decisions. [Refinement evidence](../evidence/2026-10-07-r8-settings-refinement.md) and
+[generation evidence](../evidence/2026-10-07-r8-images-and-approval.md) record actual
+checks and runtime limits, not component or physical verification.
 
 ## Approval language
 

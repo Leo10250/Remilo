@@ -22,8 +22,11 @@ shared color/geometry/keyboard/native UX rules resolve raster drift.
 A28 continues with [R8 Settings/Appearance/permissions/Test alarm](design/r8-settings-appearance-specification.md).
 Its proposed layouts retain auto-saving preferences, independent brightness and
 one global atmosphere, inline Android permissions, native sound preview and honest
-Test results. All eight R3 images govern style. No R8 image/layout acceptance,
-storage change or four-scene automatic policy is implied by this refinement.
+Test results. All eight R3 images govern style. A30 accepts the direction/templates
+shown before its response, with [thirteen associated references](design/remilo-r8-settings-appearance/gallery.html)
+and a later R8-08 supplement. Apply their discrepancy corrections; no storage
+change, four-scene automatic policy, safe Test API or actual render/device pass
+is implied by that visual acceptance.
 
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System

@@ -3,7 +3,7 @@
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18-A28 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A30 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -85,9 +85,12 @@ canvas/elevated-surface condition rather than reproducing incidental raster drif
 
 [A28](r8-settings-appearance-intake.json) continues refinement into
 [R8 Settings/Appearance/permissions/Test alarm](r8-settings-appearance-specification.md),
-with every R3 image as style authority and the established UX. That new draft and
-its [prospective captures](r8-settings-appearance-fixtures.json) remain proposed,
-not another accepted template or implemented settings/storage/automatic policy.
+with every R3 image as style authority and the established UX. A29 authorizes
+generation; [A30](approved-ui-r8-outline-acceptance.json) accepts the direction/
+templates shown before its response, with R8-08 a later supplement. Apply the
+[thirteen-reference gallery's corrections](remilo-r8-settings-appearance/gallery.html)
+and this shared contract. Exact pixels, actual implementation/accessibility,
+storage/automatic policy and retry-safe Test commands remain separate.
 
 The [R6 visual specification](r6-alarm-postpone-specification.md) and
 [eleven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this

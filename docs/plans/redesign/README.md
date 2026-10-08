@@ -22,11 +22,13 @@ implementation. R7 is a review batch within P05/P06/P07, not a new implementatio
 milestone or accepted production render. Plan ownership/dependencies stay intact.
 
 A28 continues with [the R8 Settings/Appearance/permissions/Test alarm draft](../../design/r8-settings-appearance-specification.md)
-and [thirteen proposed captures](../../design/r8-settings-appearance-fixtures.json).
+and [thirteen review states](../../design/r8-settings-appearance-fixtures.json).
 P04A owns global Appearance configuration/page; P09 owns later automatic policy.
 Existing auto-save, inline permission, native sound-preview and Test actions keep
-their UX. New draft acceptance, exact technical contracts and execution remain
-separate; no milestone status or dependency changed.
+their UX. A30 accepts the R8 direction/templates shown so far, with
+[associated images/corrections](../../design/remilo-r8-settings-appearance/gallery.html)
+and a subsequent R8-08 supplement. Exact technical contracts, actual renders and
+execution remain separate; no milestone status or dependency changed.
 
 ## Vision and authority
 

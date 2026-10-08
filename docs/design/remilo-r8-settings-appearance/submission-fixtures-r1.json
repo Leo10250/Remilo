@@ -1,11 +1,8 @@
 {
-  "revision": "R8-specification-r2",
+  "revision": "R8-specification-r1",
   "date": "2026-10-07",
   "sourceCommit": "78815751391dcf13d0661fc24f857a0930ae4e01",
-  "status": "R8 direction/templates shown before response accepted (A30); thirteen associated synthetic references, with R8-08 subsequently completed under the accepted direction",
-  "referenceBundle": "remilo-r8-settings-appearance/gallery.html",
-  "acceptance": "approved-ui-r8-outline-acceptance.json",
-  "discrepancyNotes": "remilo-r8-settings-appearance/review-notes.json",
+  "status": "Proposed design-review specification; no images generated or owner acceptance of this new draft",
   "authority": [
     "r8-settings-appearance-specification.md",
     "approved-ui-r3-r4.md",
@@ -606,9 +603,8 @@
     }
   ],
   "verification": {
-    "imagesGenerated": true,
-    "ownerAcceptedUiUxDirection": true,
-    "individualPixelReviewClaimed": false,
+    "imagesGenerated": false,
+    "ownerAcceptedNewSpecification": false,
     "productionImplemented": false,
     "actualRender": false,
     "contrastMeasured": false,

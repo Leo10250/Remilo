@@ -1,18 +1,12 @@
 # R8 — Settings, Appearance, permissions and Test alarm
 
-Revision 2 · 7 October 2026 · **R8 design direction/templates accepted; associated pixels approximate.**
+Revision 1 · 7 October 2026 · **Design-review proposal; images not generated.**
 
 [A28 intake](r8-settings-appearance-intake.json) records the owner's continuation
 request and explicit requirement to use every R3 image for style while preserving
 established UX. This review batch follows the accepted R7 outline; it is not a
 new implementation milestone. [Fixtures](r8-settings-appearance-fixtures.json)
-define thirteen readable states. [A29](r8-settings-appearance-image-intake.json)
-authorizes their generation; [A30](approved-ui-r8-outline-acceptance.json) records
-the owner's “Approved” response during that work. It accepts the R8 direction and
-templates shown so far. [The thirteen-screen gallery](remilo-r8-settings-appearance/gallery.html)
-preserves associated references and per-image corrections. R8-08 was completed
-after that response as a supplementary state under the accepted direction; no
-separate owner review or immutable-pixel acceptance of every raster is asserted.
+define thirteen readable candidates for a later image review.
 
 ## Authority and boundaries
 
@@ -22,7 +16,7 @@ secondary-screen, color-role and keyboard rules. [Product](../product.md),
 [architecture](../architecture.md) and existing native actions govern UX.
 The owner's latest global-theme direction overrides old task-specific appearance.
 
-This specification refines composition and feedback. It does not implement routes,
+This draft refines composition and feedback. It does not implement routes,
 settings storage, native commands, automatic switching or migrations. Existing
 Settings already supports automatic preference saving, inline permissions,
 sound preview, Snooze duration, tomorrow shortcuts and Test alarm. The proposed
@@ -252,14 +246,10 @@ implementation guidance. Native storage/command changes need their own approved
 contract and checks. A new deliberate test after an acknowledged result is distinct
 from retrying an uncertain command and must be clearly labeled as a new test.
 
-## Associated image review
+## Next image review
 
-These thirteen synthetic references are preserved in the
-[readable gallery](remilo-r8-settings-appearance/gallery.html), with
-[exact identities](remilo-r8-settings-appearance/images.json) and
-[actual discrepancy notes](remilo-r8-settings-appearance/review-notes.json).
-A30 accepts the direction/templates available at its response, with R8-08 a later
-supplement. Use one realistic readable screenshot per image. At fixed 2 PM, atmospheres are
+These are proposed captures, with no generated PNGs or owner acceptance yet.
+Use one realistic readable screenshot per image. At fixed 2 PM, atmospheres are
 manually selected review variants; this is not an automatic-switching demonstration.
 
 | ID | Theme / appearance | Capture |
@@ -285,8 +275,8 @@ content with scheduling Pending. They must not be collapsed into a generic error
 
 ## Discrepancy guidance and implementation review
 
-The gallery now places inspected discrepancies next to each selected image.
-This shared checklist continues to govern those resolutions:
+After generation, inspect each selected image and put actual discrepancies next
+to it. Until then this is a checklist, **not** claimed observation:
 
 - Equivalent actions use one matching primary/onPrimary pair; ordinary Alarm,
   Sound, permission and time glyphs remain neutral across every page.
@@ -302,24 +292,6 @@ This shared checklist continues to govern those resolutions:
   Invalid/custom controls/footer remain reachable; root navigation/FAB is absent.
 - A27's provisional decorative list icons do not authorize a list-icon picker or
   turn neutral settings glyphs into decorative identity badges.
-
-Observed R8 drift includes different Test/Snooze/shortcut glyphs, neutral icons
-accidentally inheriting category hues, taller scenic openings, smaller-looking
-Retry/custom-action targets, ordinary support tints and different grouped-row
-anatomy behind sound sheets. Targeted image edits corrected consequential state,
-layout and color errors; remaining details are recorded in the
-[per-image notes](remilo-r8-settings-appearance/review-notes.json). In particular,
-R8-05's dimmed Vibration disclosure must be the existing boolean switch; R8-13's
-rose Pending illustration must use the shared semantic warning role; R8-01's
-partial bottom row must clear actual system insets when fully scrolled into view.
-
-The [frozen submission specification](remilo-r8-settings-appearance/submission-specification-r1.md)
-and [fixtures](remilo-r8-settings-appearance/submission-fixtures-r1.json) preserve
-the exact pre-generation brief. Their original relative links are archival, not
-current source navigation. [Generation evidence](../evidence/2026-10-07-r8-images-and-approval.md)
-records actual preservation/validation and limits. Automatic policy, storage,
-pre-unlock descriptors and retry-safe Test commands remain their own technical
-checkpoints; UI acceptance does not implement or approve those concrete contracts.
 
 Actual component review must measure normal-text contrast ≥4.5:1, qualifying large
 text and required control graphics ≥3:1, non-color selection/state, TalkBack order,

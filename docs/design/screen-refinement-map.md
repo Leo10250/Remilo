@@ -50,8 +50,11 @@ outline, with the owner-requested list-icon implementation decision still open.
 the reference bundle. [R8 Settings/Appearance/permissions/Test alarm](r8-settings-appearance-specification.md)
 now refines the next family under [A28](r8-settings-appearance-intake.json), using
 all eight R3 references and the established UX. Its
-[thirteen-screen image brief](r8-settings-appearance-fixtures.json) remains proposed;
-no R8 images or new owner acceptance exist yet. Completed/Trash/Activity follow.
+[thirteen-screen image brief](r8-settings-appearance-fixtures.json) now has
+[associated references and corrections](remilo-r8-settings-appearance/gallery.html).
+[A30](approved-ui-r8-outline-acceptance.json) accepts the R8 direction/templates
+shown so far, with R8-08 a subsequent supplement and exact pixels approximate.
+Completed/Trash/Activity follow.
 Production implementation and actual accessibility/device evidence remain separate.
 
 The sequence retains Agenda / Lists / Repeats as the three labeled bottom roots.

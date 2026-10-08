@@ -73,8 +73,10 @@ pending work; earlier deployment evidence retains its historical scope.
 ### Appearance design review
 
 The [R8 Settings/Appearance/permissions/Test alarm draft](design/r8-settings-appearance-specification.md)
-and [prospective captures](design/r8-settings-appearance-fixtures.json) are design
-inputs under A28. Actual components must cover independent brightness/global scene,
+and [review states](design/r8-settings-appearance-fixtures.json) have thirteen
+[associated references/corrections](design/remilo-r8-settings-appearance/gallery.html)
+under A29/A30. A30 accepts the direction/templates shown before its response;
+R8-08 is a later supplement. Actual components must cover independent brightness/global scene,
 preference acknowledgement/read failure and stale retry, distinct sound selection/
 playback/fallback, capability staleness/mixed channels, keyboard-safe custom Snooze,
 native shortcut confirmation and Scheduled/Blocked/Pending Test outcomes.
