@@ -13,8 +13,12 @@ contracts; this design acceptance is not production or device acceptance.
 and [R7 Lists/Repeats specification](../../design/r7-lists-repeats-specification.md)
 make the next proposed Lists root, named-list Agenda, metadata forms and removal
 flow concrete. Use every R3 Light/Dark pair for style; keep overdue counts,
-membership, origin/state and guarded commands. R7 is a draft review batch, not
-accepted P05 production routing or implementation. P07 owns its family content;
+membership, origin/state and guarded commands. A27 now accepts the overall outline
+with [per-image corrections](../../design/remilo-r7-lists-repeats/review-notes.json).
+Decorative list icons are provisional: the owner favors omission, wants the choice
+raised during implementation, and has not requested an icon picker. Prepare an
+icon-free row candidate for that review. This does not execute P05 production
+routing or implementation. P07 owns its family content;
 P06 owns the connected recurrence controls. Older P01 reference assumptions below
 do not override the current R3 direction.
 

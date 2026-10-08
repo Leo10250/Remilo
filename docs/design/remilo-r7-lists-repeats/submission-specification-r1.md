@@ -1,6 +1,6 @@
 # R7 — Lists, Repeats and recurrence controls
 
-Revision 2 · 7 October 2026 · **Overall UI/UX outline accepted; list-icon choice open.**
+Revision 1 · 7 October 2026 · **Proposed presentation; not owner-accepted renders.**
 
 The owner asked to identify the remaining screens and start refinement, using all
 images in `docs/design/remilo-r3-atmospheres` for color/style and preserving the
@@ -8,13 +8,6 @@ established UX. [A25 intake](r7-lists-repeats-intake.json) records that request.
 [The coverage map](screen-refinement-map.md) identifies the remaining families;
 [the fixture brief](r7-lists-repeats-fixtures.json) defines the next image review.
 R7 is a review-batch name, **not** a replacement for implementation plans P05–P07.
-
-A26 authorizes the images; [A27](approved-ui-r7-outline-acceptance.json) accepts
-the overall outline as a sufficient starting template with provisional list icons.
-[Twelve associated references](remilo-r7-lists-repeats/gallery.html) preserve exact
-PNG identities and per-image discrepancy guidance. This records template approval,
-not a claim of separate owner review of every raster or immutable pixel acceptance.
-The owner allows missing Night/state permutations to inherit the existing theme.
 
 ## Authority and scope
 
@@ -24,20 +17,11 @@ screen/keyboard anatomy. Existing [product](../product.md), [architecture](../ar
 and [workflow](../appearance-redesign.md) contracts govern behavior. P05 owns
 Lists/navigation; P07 owns Repeats/family presentation; P06 owns recurrence controls.
 
-**A27 list-icon decision to raise at implementation:** generated list identity
-icons vary in presence/style, with no matching authoring control. They are a visual
-discrepancy, not an approved personalization feature. The owner currently favors
-no decorative list icons. Show an icon-free list-row candidate at implementation
-review and settle the treatment there. Ordinary navigation/form glyphs and
-reminder category badges have their existing separate purposes; do not turn this
-note into an undocumented custom-icon picker or name-based icon classifier.
-
 This refinement makes concrete layout choices; it does not implement app routes,
 new scheduling/persistence, automatic appearance boundaries or migrations.
 Bottom roots/origin return, durable Lists, family aggregation and guarded edits
-are established UX. The overall new layout/state direction is accepted; exact
-production rendering, listed corrections and the decorative list-icon choice remain
-open. Production currently uses Browse and basic management/family pages.
+are established UX. The exact new layout, menu placement and review fixtures are
+proposals. Production currently uses Browse and basic management/family pages.
 
 ## All eight visual references
 
@@ -89,12 +73,8 @@ Category/status roles remain purposeful and independent of atmosphere.
 ## A. Lists root and named-list Agenda
 
 **Lists root:** show a fixed No list entry first, then the existing durable named
-list query order. Each opaque row has a wrapped name and navigation chevron.
-Decorative list identity glyphs are provisional under A27, rather than a required
-feature. The owner currently favors omitting them; make an icon-free component
-candidate and raise the choice at implementation review. If retained after that
-decision, use one neutral generic glyph rather than name-inferred colored badges.
-Named lists may also have a separately targeted More menu.
+list query order. Each opaque row has one neutral list glyph, wrapped name and
+navigation chevron. Named lists may also have a separately targeted More menu.
 Show a nonzero badge as `2 overdue`, with the complete accessible phrase
 `2 overdue occurrences`. Zero may omit the badge; it does not establish that a
 list is empty. Do not add total/future/progress counts or completion checkboxes.
@@ -253,8 +233,7 @@ The preview uses the existing native draft projection for at least three dates
 when available, with Event and alert separated and honest finite-end/invalid/error
 messages. It must correspond to the current form revision and cannot present
 stale dates as valid after an invalid change. Preview placement inside Custom is
-part of the accepted outline; the existing editor already shows native Next dates.
-Actual component placement still needs implementation and verification.
+a presentation proposal; the existing editor already shows native Next dates.
 Do not calculate new recurrence dates in JavaScript or label preview dates Scheduled.
 
 Use one persistent **Apply repeat** footer above IME, with Cancel changes secondary.
@@ -265,9 +244,9 @@ with the active modal footer. Numeric/ending errors and focused input scroll cle
 of footer/IME. Native projection/conversion failure retains the rule draft and Retry;
 invalid Apply never mutates the saved series. Editing a paused series stays paused.
 
-## Associated image references
+## Concrete next image review
 
-The twelve reference briefs below prioritize normal management plus difficult
+The twelve candidate briefs below prioritize normal management plus difficult
 states. They are single readable screenshots, not a small-screen comparison board.
 All eight R3 appearance references are represented in the first eight candidates;
 the supplemental four demonstrate family/scope/recurrence behavior. Fixture clocks
@@ -278,7 +257,7 @@ Lists/Work and family-management examples use separate synthetic dataset snapsho
 not one merged installation: do not add the family examples' overdue records to
 the Lists review badges. Actual components always display native-query counts.
 Family-detail captures may hold a readable scroll position at Next dates or
-Unfinished occurrences, with that position explained beside the image.
+Unfinished occurrences, with that position explained beside the future image.
 Blocks outside the viewport remain scrollable; do not compress the whole family
 page into one screenshot or hide the consequential postponed item in R7-08.
 
@@ -313,28 +292,8 @@ not each receive a synthetic image to define this shared template.
 | Add approaches the final row's reading area. | Reserve measured FAB/footer/feedback clearance; rows and their targets scroll fully into view. |
 | Short sample titles and fixed raster spacing conceal difficult content. | Wrap/grow/scroll real names, rule summaries and status copy; do not shrink type/targets or hide consequential timing. |
 
-[Per-image notes](remilo-r7-lists-repeats/review-notes.json) and
-[the readable gallery](remilo-r7-lists-repeats/gallery.html) record the actual
-generation differences. In addition to A27's provisional list icons, resolve:
-
-| Reference | Implementation correction |
-|---|---|
-| R7-01 Lists | Decorative row icons are provisional; prefer an icon-free component candidate. Use shared compact geometry and semantic overdue badges, not the bright generated red/gradient. |
-| R7-02 Create + IME | Provisional underlying list glyphs; one measured primary footer and separate Cancel above real IME, with error/caret visible. Platform keyboard colors are not an app requirement. |
-| R7-03 Work Agenda | Keep exact authored Event/Due/next-alert values; the repaired client time is 6:00–6:15 PM. Use shared semantic overdue/delivery roles and measured FAB clearance. |
-| R7-04 Remove list | Provisional background glyphs; neutral secondary Cancel, semantic destructive Remove, shared modal/scrim/target geometry. Removal still preserves schedules and completion. |
-| R7-05 Empty list | Empty-state glyph is provisional and may be omitted with the list-icon decision. Use ordinary 16/14 sp text and compact header rather than enlarged generated empty-state typography. |
-| R7-06 Repeats library | Neutral ordinary metadata/glyphs and the shared bottom-bar role pairing; approximate violet tint/capsule spacing is not a separate Evening implementation. |
-| R7-07 Active family | Informational date slots remain open-action-free. The partially visible bottom row's generated Wed 7 Oct label is not the fixture's Tue 6 Oct stopped item; use actual native content and real bottom inset. |
-| R7-08 Paused family | Use explicit Resume repeat / Edit entire series labels; native query ordering and full occurrence identification. Add real gesture inset despite the missing generated glyph. Overdue and postponed Scheduled remain independent. |
-| R7-09 Ended family | Trailing row menus are generated additions to an open-only family view; don't introduce new inline callbacks. Use existing overdue role rather than saturated red. |
-| R7-10 Edit scope | Neutral structural/support roles and common Close treatment. Selecting scope opens the draft directly; Close is not a new commit/Continue action. |
-| R7-11 Valid custom repeat | Numeric interval is a text field, not a dropdown. Keep >=48 dp weekday targets and 56 dp Apply, native preview, parent-modal relationship and natural scrolling rather than shrinking to show all dates. |
-| R7-12 Invalid custom + IME | Readable disabled roles, neutral helper glyph/text, real IME/56 dp reserved footer and focused error/caret. No stale preview or invalid saved mutation. |
-
-Night/state permutations not separately rendered inherit the same established
-theme and component rules, as the owner allowed. Approval of the overall outline
-does not freeze incidental generated colors, sizes, added icons or omitted controls.
+Any generated R7 images must get per-image observed-discrepancy notes before
+implementation. Do not predeclare ungenerated screenshots consistent or accepted.
 
 ## Verification and handoff boundary
 

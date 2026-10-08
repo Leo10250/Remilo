@@ -35,10 +35,15 @@ The owner now requests identifying the remaining screens and starting refinement
 with **all eight R3 images** as color/style references and the established UX (A25).
 [The coverage map](screen-refinement-map.md) lists the remaining families.
 [R7 Lists/Repeats and recurrence controls](r7-lists-repeats-specification.md) is the
-next concrete proposed layout/state specification, with an
+next concrete layout/state specification, with an
 [all-four-theme Light/Dark fixture brief](r7-lists-repeats-fixtures.json).
-This is refinement authorization, not acceptance of the new presentation or
-execution of production P05/P06/P07; existing approved images remain unchanged.
+A26 authorizes generation; [A27](approved-ui-r7-outline-acceptance.json) now accepts
+the overall UI/UX outline with a provisional decorative-list-icon decision.
+[The twelve-reference gallery](remilo-r7-lists-repeats/gallery.html) has per-image
+discrepancy notes. The owner favors omitting decorative list icons and wants the
+choice raised during implementation; no custom list-icon picker is authorized.
+Unrendered Night/state permutations may inherit established themes. Production
+P05/P06/P07 and actual component/physical acceptance remain separate.
 
 ## Approval language
 

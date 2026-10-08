@@ -1,0 +1,15 @@
+{
+  "record": "A26",
+  "date": "2026-10-07",
+  "source": "Repository owner in the current chat",
+  "ownerStatement": "Now generate the UI images based on the above established specs.",
+  "authorizedScope": "Generate the twelve readable R7 candidate screens from revision1 with matching R3 references, without another independent redesign.",
+  "sourceSpecification": "r7-lists-repeats-specification.md revision1",
+  "frozenBrief": "remilo-r7-lists-repeats/submission-fixtures-r1.json",
+  "notImplied": [
+    "Production implementation",
+    "Owner acceptance of ungenerated outputs",
+    "New UX/appearance policy"
+  ],
+  "subsequentApproval": "A27 in approved-ui-r7-outline-acceptance.json"
+}

@@ -27,6 +27,14 @@ surfaces must match the corresponding existing theme's color roles; exact detail
 coloring and overall visual polish may be refined later. Actual implementation
 verification remains separate.
 
+[A27's R7 acceptance](design/approved-ui-r7-outline-acceptance.json) adopts the
+Lists/Repeats/recurrence UI/UX outline with [per-image corrections](design/remilo-r7-lists-repeats/gallery.html).
+Decorative list icons are provisional; the owner currently favors omission and
+requires raising the choice during implementation. There is no custom list-icon
+authoring feature in this scope. Night/state permutations inherit the existing
+global theme. Exact raster tokens and actual component/native/device acceptance
+remain separate.
+
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks
 for one owner-operated acceptance run. Automated checks continue; unobserved

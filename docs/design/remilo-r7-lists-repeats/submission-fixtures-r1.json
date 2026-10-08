@@ -1,8 +1,8 @@
 {
-  "revision": "R7-specification-r2",
+  "revision": "R7-specification-r1",
   "date": "2026-10-07",
   "sourceCommit": "1231da45da53d5799fe9e2b1e2aaa628171e2ee7",
-  "status": "Overall UI/UX outline accepted (A27), with provisional decorative list icons and per-image implementation corrections; twelve associated synthetic references",
+  "status": "Proposed presentation/image brief; no R7 images generated or owner acceptance",
   "authority": [
     "r7-lists-repeats-specification.md",
     "approved-ui-r3-r4.md",
@@ -98,8 +98,7 @@
     "Root bar Agenda/Lists/Repeats only on roots; secondary origin return; existing transient/draft/uncertain guards",
     "One measured footer/inset owner above IME; focused caret/error visible; no duplicate primary action",
     "Native projection/mutations remain authority; Stop is not Done; Event/Due/alert independent",
-    "Exact tokens, source art/crops and RN/Compose/device verification remain future work",
-    "A27: decorative list icons are provisional; prefer an icon-free implementation candidate and raise the choice during review; no custom list-icon picker."
+    "Exact tokens, source art/crops and RN/Compose/device verification remain future work"
   ],
   "dataNote": "Independent synthetic page snapshots, not one merged installation dataset or a new stored schema. R7-01 through R7-05 share the Lists/Work snapshot; R7-06 through R7-10 share the separate family-management snapshot. Do not sum family records into the Lists snapshot badges. Counts in actual components always come from each native query. R7-11/12 are separate editor drafts. No native execution is claimed.",
   "lists": [
@@ -452,9 +451,7 @@
         "Wrapped long list name",
         "One Add-style action; explicit per-list More"
       ],
-      "noCompletionCheckbox": true,
-      "associatedReference": "remilo-r7-lists-repeats/01-lists-sunrise-light.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "noCompletionCheckbox": true
     },
     {
       "id": "R7-02",
@@ -470,9 +467,7 @@
       "secondary": "Cancel",
       "footerPosition": "Above actual keyboard; error/caret visible",
       "rejectedOperation": true,
-      "notes": "Use error only after explicit rejection; form is editable. Rename and unconfirmed Save are additional component fixtures.",
-      "associatedReference": "remilo-r7-lists-repeats/02-create-list-error-sunrise-dark.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "notes": "Use error only after explicit rejection; form is editable. Rename and unconfirmed Save are additional component fixtures."
     },
     {
       "id": "R7-03",
@@ -496,9 +491,7 @@
         "Future postponed alert remains separate",
         "List membership cannot be cleared by filters",
         "Lower rows may scroll; never shrink text/targets"
-      ],
-      "associatedReference": "remilo-r7-lists-repeats/03-work-agenda-sky-light.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      ]
     },
     {
       "id": "R7-04",
@@ -515,9 +508,7 @@
         "Remove list"
       ],
       "destructiveMeaning": "Remove metadata identity/membership, not reminders or alerts",
-      "surface": "Opaque shared Sky Dark dialog over normal shared scrim",
-      "associatedReference": "remilo-r7-lists-repeats/04-remove-list-sky-dark.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "surface": "Opaque shared Sky Dark dialog over normal shared scrim"
     },
     {
       "id": "R7-05",
@@ -532,9 +523,7 @@
       "primaryAction": "Add reminder",
       "backOrigin": "Lists",
       "bottomNavigation": false,
-      "noNewScenery": true,
-      "associatedReference": "remilo-r7-lists-repeats/05-empty-list-evening-light.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "noNewScenery": true
     },
     {
       "id": "R7-06",
@@ -553,9 +542,7 @@
         "Paused/Ended choices"
       ],
       "noCompletionCheckbox": true,
-      "noNewAddAction": true,
-      "associatedReference": "remilo-r7-lists-repeats/06-repeats-evening-dark.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "noNewAddAction": true
     },
     {
       "id": "R7-07",
@@ -579,9 +566,7 @@
         "Actual retained occurrence area below previews"
       ],
       "noFamilyDone": true,
-      "capture": "Readable scroll position around Next dates; surrounding rule/schedule may extend above or below viewport. Do not compress all blocks into one screenshot.",
-      "associatedReference": "remilo-r7-lists-repeats/07-active-family-night-light.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "capture": "Readable scroll position around Next dates; surrounding rule/schedule may extend above or below viewport. Do not compress all blocks into one screenshot."
     },
     {
       "id": "R7-08",
@@ -606,9 +591,7 @@
         "Older previous-segment occurrence retained"
       ],
       "noFamilyDone": true,
-      "capture": "Scroll to the expanded Unfinished occurrences section so the postponed overdue item is readable; Planned dates may be above viewport. Normal shared toolbar/art remain. Explain captured scroll beside the future image.",
-      "associatedReference": "remilo-r7-lists-repeats/08-paused-family-night-dark.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "capture": "Scroll to the expanded Unfinished occurrences section so the postponed overdue item is readable; Planned dates may be above viewport. Normal shared toolbar/art remain. Explain captured scroll beside the future image."
     },
     {
       "id": "R7-09",
@@ -626,9 +609,7 @@
         "No Resume or family Done"
       ],
       "notes": "Edit entire series only if current native segment eligibility allows it.",
-      "capture": "Scroll position showing ended state and actual unresolved work; normal shared toolbar/art. No fabricated family completion footer.",
-      "associatedReference": "remilo-r7-lists-repeats/09-ended-family-sunrise-light.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "capture": "Scroll position showing ended state and actual unresolved work; normal shared toolbar/art. No fabricated family completion footer."
     },
     {
       "id": "R7-10",
@@ -645,9 +626,7 @@
         "Entire series"
       ],
       "followingBoundary": "Original nominal slot Wed 7 Oct at 10:00 AM, never Thu 8 Oct 2:00 PM",
-      "notes": "Show a non-archived eligible series context for all three choices. Archived variant allows individual edit/current-family access only.",
-      "associatedReference": "remilo-r7-lists-repeats/10-edit-scope-sky-dark.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "notes": "Show a non-archived eligible series context for all three choices. Archived variant allows individual edit/current-family access only."
     },
     {
       "id": "R7-11",
@@ -666,9 +645,7 @@
         "Three native-projection preview dates",
         "Apply is draft only; Save commits"
       ],
-      "bottomNavigation": false,
-      "associatedReference": "remilo-r7-lists-repeats/11-custom-repeat-evening-light.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "bottomNavigation": false
     },
     {
       "id": "R7-12",
@@ -686,9 +663,7 @@
         "No valid-looking stale preview",
         "No saved-series mutation"
       ],
-      "bottomNavigation": false,
-      "associatedReference": "remilo-r7-lists-repeats/12-repeat-error-keyboard-night-dark.png",
-      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+      "bottomNavigation": false
     }
   ],
   "additionalComponentStates": [
@@ -703,18 +678,11 @@
     "Large English/Chinese and 200% font scale; actual IME/caret/error/Back/TalkBack"
   ],
   "verificationBoundary": {
-    "imagesGenerated": true,
-    "ownerAcceptedNewPresentation": true,
+    "imagesGenerated": false,
+    "ownerAcceptedNewPresentation": false,
     "productionChanged": false,
     "nativeFixturesExecuted": false,
     "actualContrastMeasured": false,
     "physicalObserved": false
-  },
-  "approval": {
-    "record": "A27",
-    "scope": "Overall UI/UX outline",
-    "individualRasterReviewClaimed": false,
-    "exactTokensApproved": false,
-    "decorativeListIcons": "Open implementation decision; owner currently favors omission; no custom icon picker"
   }
 }

@@ -103,6 +103,15 @@ React startup. Missing/invalid safe state and asset failures must retain native
 actions without delaying audio. Exact descriptor/default contracts and real
 pre-first-unlock behavior remain pending technical/device evidence, not image proof.
 
+The owner has also accepted the [R7 Lists/Repeats/recurrence outline](design/approved-ui-r7-outline-acceptance.json)
+with [per-image corrections](design/remilo-r7-lists-repeats/review-notes.json).
+P05 implementation review must raise the provisional decorative list-icon choice,
+with omission currently preferred and no custom-icon picker. Actual P05/P06/P07
+components must demonstrate native counts/order/scopes, paused/ended exceptions,
+readable disabled roles, shared theme colors/geometry and real IME/safe-area
+clearance. [R7 reference checks](evidence/2026-10-07-r7-images-and-approval.md)
+are synthetic/documentation evidence, not those runtime observations.
+
 The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
 authorizes bounded P01 through A10; A11 adds the artwork gate. A12 accepts r2 visual
 direction and four-candidate exploration; A14 accepts S1/M1 for actual review integration.

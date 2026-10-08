@@ -17,6 +17,7 @@ for behavior. Image compositions do not override query, action or privacy rules.
 | R3 homepage / Agenda | Eight atmosphere/appearance compositions, tile/category/action/navigation language. | Search with keyboard, applied filters, dense/long content, no-match, refresh failure and action feedback. |
 | R4/R5 Reminder details and editor | Twelve ordinary/overdue/postponed, common creation with keyboard, and independent-timing edit references, with icon/IME corrections. | Completed/skipped/Trash details, Schedule details/options, recurrence authoring, date/zone/sound pickers, stale draft/replaced series, discard and unconfirmed Save. |
 | R6 native alarm and Postpone | Seven workflow templates plus four corrected themed Dark privacy-safe alarm references; full-screen states support all four themes in both appearances. | Actual shared-token matching, rendered layout/accessibility and native/device evidence; loading/action-error/timeout states need implementation review. No need to regenerate every theme/state permutation to define the shared template. |
+| R7 Lists / Repeats / recurrence | Overall UI/UX outline accepted as A27; twelve associated references cover management, family states, scope and custom-repeat validation. | Decorative list-icon decision and per-image corrections; remaining component/state coverage and actual verification. Night/state permutations may inherit prior references. |
 
 These are accepted **synthetic reference templates**, not proof that production
 routes/components have been converted or that every exceptional state was reviewed.
@@ -43,8 +44,11 @@ Existing acceptance records and reference pixels stay unchanged.
 next layouts, flow consequences, all-eight-image appearance matrix and non-ideal
 states. [The fixture brief](r7-lists-repeats-fixtures.json) gives twelve readable
 screen candidates, including a paused family with an independently scheduled
-exception. Their proposed presentation has **not** been accepted by the owner yet.
-No new images or app implementation are produced by this refinement.
+exception. [A27](approved-ui-r7-outline-acceptance.json) now accepts the overall
+outline, with the owner-requested list-icon implementation decision still open.
+[Twelve associated images and notes](remilo-r7-lists-repeats/gallery.html) preserve
+the reference bundle. Settings/Appearance/permissions are the next unrefined family.
+Production implementation and actual accessibility/device evidence remain separate.
 
 The sequence retains Agenda / Lists / Repeats as the three labeled bottom roots.
 Named lists, Settings, collections and details return to their invoking origin;

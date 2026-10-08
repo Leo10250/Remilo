@@ -14,9 +14,12 @@ dependency records and live backlog statuses are preserved.
 A25 now starts the [remaining-screen refinement](../../design/screen-refinement-map.md):
 Lists/Repeats and connected recurrence controls first, using every R3 atmosphere
 Light/Dark pair for style and preserving established UX. Their
-[R7 specification](../../design/r7-lists-repeats-specification.md) is a proposed
-review batch within P05/P06/P07, not a new implementation milestone or accepted
-production artifact. The existing plan ownership/dependency structure stays intact.
+[R7 specification](../../design/r7-lists-repeats-specification.md) now has A27's
+overall-outline acceptance with provisional decorative list icons and
+[annotated references](../../design/remilo-r7-lists-repeats/gallery.html).
+The owner favors omitting list icons and requests raising the choice during
+implementation. R7 is a review batch within P05/P06/P07, not a new implementation
+milestone or accepted production render. Plan ownership/dependencies stay intact.
 
 ## Vision and authority
 

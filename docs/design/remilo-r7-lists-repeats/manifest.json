@@ -1,0 +1,140 @@
+{
+  "revision": "R7-reference-bundle-r1",
+  "date": "2026-10-07",
+  "sourceCommit": "0b80c66f49f9235b8372f9b7b815fdcd8ddd50ea",
+  "status": "Overall R7 UI/UX outline approved with provisional list icons (A27); associated synthetic references, not immutable pixel acceptance",
+  "sourceBrief": {
+    "specificationSha256": "32dbdbf458c5676d5b860de5e43d99a46f59f2dec46258443f19bedd5de8da3d",
+    "fixtureSha256": "26c37b090c808dbb88eb09fb3c45f4e14017d1e5c1f991e51477fb30143f536e"
+  },
+  "images": [
+    {
+      "id": "R7-01",
+      "file": "01-lists-sunrise-light.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "10c7b5ac94ebe3fc3b290dc7bb4de8aee042651460fc9bb3c6abdf22fc7bce97",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "referenceId": "R3-01"
+    },
+    {
+      "id": "R7-02",
+      "file": "02-create-list-error-sunrise-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "d0e5cc922dcf629eff173089d97bf37e588a97cc8931d72078086844f15f121d",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "referenceId": "R3-02"
+    },
+    {
+      "id": "R7-03",
+      "file": "03-work-agenda-sky-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "177669fce02cc79720e64820ecb4c848bf728fb49bf987e4720fdd269216a708",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "referenceId": "R3-03"
+    },
+    {
+      "id": "R7-04",
+      "file": "04-remove-list-sky-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "fef07fc9d4225d7ae2a13c8f5bb733ea3fa2d78b5fbd0d3f93bac7587824a7d9",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "referenceId": "R3-04"
+    },
+    {
+      "id": "R7-05",
+      "file": "05-empty-list-evening-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "c0116cab69351e28d79c9d02a22c3ffbf5282f132fb7375109cd0c457b67ffca",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "referenceId": "R3-05"
+    },
+    {
+      "id": "R7-06",
+      "file": "06-repeats-evening-dark.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "c47ef57271cf56b1b87148ac152d4ef087c8ac216497d2bb05bd1a29513368a8",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "referenceId": "R3-06"
+    },
+    {
+      "id": "R7-07",
+      "file": "07-active-family-night-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "8910a93ddf1a628eeff3e944a233d5f6942d9cc4d56bb4212b7ec13c4868b701",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "referenceId": "R3-07"
+    },
+    {
+      "id": "R7-08",
+      "file": "08-paused-family-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "8f7519b8ceb170c9b84f386f7a49148a60e7ba640e39f4cfbd4f1f6a3d4cba0e",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "referenceId": "R3-08"
+    },
+    {
+      "id": "R7-09",
+      "file": "09-ended-family-sunrise-light.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "934aec27b4e6f0ab3f0eb6d3eaf11a84d0b6cb567de081014efb9bd3af89770e",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "referenceId": "R3-01"
+    },
+    {
+      "id": "R7-10",
+      "file": "10-edit-scope-sky-dark.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "5cec96e81334c601b3ca77432aa4208d42f231234f42e7818a214e332819cb0d",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "referenceId": "R3-04"
+    },
+    {
+      "id": "R7-11",
+      "file": "11-custom-repeat-evening-light.png",
+      "width": 842,
+      "height": 1869,
+      "sha256": "9b64b9432da969df561c74084d412f6c79aefbb193d1ccc5d987eda60d55ff47",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "referenceId": "R3-05"
+    },
+    {
+      "id": "R7-12",
+      "file": "12-repeat-error-keyboard-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "68ddf27bc340896fb06d464220e33413098ab0da45ef8a9c1e090825499bbc18",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "referenceId": "R3-08"
+    }
+  ],
+  "limits": {
+    "individualRasterReviewClaimed": false,
+    "exactTokensApproved": false,
+    "productionChanged": false,
+    "actualContrastMeasured": false,
+    "keyboardTalkBackObserved": false,
+    "nativePhysicalVerified": false
+  }
+}

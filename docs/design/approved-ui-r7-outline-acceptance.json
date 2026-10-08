@@ -1,0 +1,158 @@
+{
+  "record": "A27",
+  "date": "2026-10-07",
+  "approvingOwner": "Repository owner in this chat",
+  "source": "Direct owner response during the R7 image-generation turn",
+  "ownerStatement": "There seems to be some discrepancy with the list icons. Some lists have icons, some lists don't have icons. And I don't see an option to actually create an icon for lists. But, you know, that's okay. Just note that on the side that there is a visual discrepancy with the icons, and please bring that up during implementation, and we'll decide on what to do. Likely just not gonna add any icons for now, but yeah, that's something to bring up. But overall, I approve all these designs, and, you know, they have—we have, what is it? We have morning, we have evening, we have midday, and one last thing is that we don't have the night variant, right? So I approve everything, but we need some sort of, uh— well, you know, actually, I just, I digress, because for now, we could just slap the—we could just infer from the previous images. I think these are good enough, just as like a UX UI outline, but yeah, good enough. Approved.",
+  "acceptedScope": [
+    "Overall R7 Lists/Repeats/recurrence UI/UX outline as a sufficient design starting template",
+    "Carry established Sunrise/Sky/Evening/Night atmosphere across all screens with independent Light/Dark",
+    "Unrendered Night/state permutations may be inferred from existing approved references; another exhaustive image set is not required"
+  ],
+  "conditions": [
+    "Decorative list icon presence/style differs across generated screens and must be recorded beside the images and raised during implementation.",
+    "Owner currently favors omitting decorative list icons; the exact list-icon treatment remains open rather than frozen by these images.",
+    "No custom list-icon creation/selection control is included or authorized by this approval.",
+    "Apply documented color/geometry/IME/data discrepancies using the established specification, shared components and corresponding R3 semantic roles."
+  ],
+  "rasterIdentityScope": "The twelve associated synthetic reference hashes identify the saved bundle. Approval is of the overall UI/UX outline; no separate owner review of every individual raster or immutable-pixel approval is asserted.",
+  "gallery": "remilo-r7-lists-repeats/gallery.html",
+  "specification": "r7-lists-repeats-specification.md",
+  "reviewNotes": "remilo-r7-lists-repeats/review-notes.json",
+  "associatedReferences": [
+    {
+      "id": "R7-01",
+      "file": "remilo-r7-lists-repeats/01-lists-sunrise-light.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "10c7b5ac94ebe3fc3b290dc7bb4de8aee042651460fc9bb3c6abdf22fc7bce97",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "referenceId": "R3-01"
+    },
+    {
+      "id": "R7-02",
+      "file": "remilo-r7-lists-repeats/02-create-list-error-sunrise-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "d0e5cc922dcf629eff173089d97bf37e588a97cc8931d72078086844f15f121d",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "referenceId": "R3-02"
+    },
+    {
+      "id": "R7-03",
+      "file": "remilo-r7-lists-repeats/03-work-agenda-sky-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "177669fce02cc79720e64820ecb4c848bf728fb49bf987e4720fdd269216a708",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "referenceId": "R3-03"
+    },
+    {
+      "id": "R7-04",
+      "file": "remilo-r7-lists-repeats/04-remove-list-sky-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "fef07fc9d4225d7ae2a13c8f5bb733ea3fa2d78b5fbd0d3f93bac7587824a7d9",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "referenceId": "R3-04"
+    },
+    {
+      "id": "R7-05",
+      "file": "remilo-r7-lists-repeats/05-empty-list-evening-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "c0116cab69351e28d79c9d02a22c3ffbf5282f132fb7375109cd0c457b67ffca",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "referenceId": "R3-05"
+    },
+    {
+      "id": "R7-06",
+      "file": "remilo-r7-lists-repeats/06-repeats-evening-dark.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "c47ef57271cf56b1b87148ac152d4ef087c8ac216497d2bb05bd1a29513368a8",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "referenceId": "R3-06"
+    },
+    {
+      "id": "R7-07",
+      "file": "remilo-r7-lists-repeats/07-active-family-night-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "8910a93ddf1a628eeff3e944a233d5f6942d9cc4d56bb4212b7ec13c4868b701",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "referenceId": "R3-07"
+    },
+    {
+      "id": "R7-08",
+      "file": "remilo-r7-lists-repeats/08-paused-family-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "8f7519b8ceb170c9b84f386f7a49148a60e7ba640e39f4cfbd4f1f6a3d4cba0e",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "referenceId": "R3-08"
+    },
+    {
+      "id": "R7-09",
+      "file": "remilo-r7-lists-repeats/09-ended-family-sunrise-light.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "934aec27b4e6f0ab3f0eb6d3eaf11a84d0b6cb567de081014efb9bd3af89770e",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "referenceId": "R3-01"
+    },
+    {
+      "id": "R7-10",
+      "file": "remilo-r7-lists-repeats/10-edit-scope-sky-dark.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "5cec96e81334c601b3ca77432aa4208d42f231234f42e7818a214e332819cb0d",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "referenceId": "R3-04"
+    },
+    {
+      "id": "R7-11",
+      "file": "remilo-r7-lists-repeats/11-custom-repeat-evening-light.png",
+      "width": 842,
+      "height": 1869,
+      "sha256": "9b64b9432da969df561c74084d412f6c79aefbb193d1ccc5d987eda60d55ff47",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "referenceId": "R3-05"
+    },
+    {
+      "id": "R7-12",
+      "file": "remilo-r7-lists-repeats/12-repeat-error-keyboard-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "68ddf27bc340896fb06d464220e33413098ab0da45ef8a9c1e090825499bbc18",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "referenceId": "R3-08"
+    }
+  ],
+  "notImplied": [
+    "Final list icon selection or a list-icon personalization feature",
+    "Exact generated color/geometry/font/control/keyboard pixels",
+    "New scheduling/recurrence/storage/default/migration/automatic-period behavior",
+    "P05/P06/P07 production execution or milestone completion",
+    "Actual component contrast/large-text/IME/TalkBack/native/physical acceptance"
+  ],
+  "verification": {
+    "generatedUsing": "Built-in image_gen",
+    "selectedImages": 12,
+    "callsIncludingRepairs": 25,
+    "selectedPngsCopiedUnchanged": true,
+    "individualPixelReviewClaimed": false
+  }
+}

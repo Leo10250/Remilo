@@ -3,7 +3,7 @@
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18-A24 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A27 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -72,8 +72,14 @@ These are synthetic raster previews, not actual RN/Compose render evidence.
 For subsequent screen refinement, A25 explicitly makes **all eight R3 images**
 the color/style reference set while retaining the established UX. The
 [remaining-screen map](screen-refinement-map.md) and
-[R7 Lists/Repeats draft](r7-lists-repeats-specification.md) apply this accepted
-style to the next proposed layouts; A25 does not accept those new layouts yet.
+[R7 Lists/Repeats specification](r7-lists-repeats-specification.md) apply this accepted
+style to the next layouts. A26 authorizes their generation and
+[A27](approved-ui-r7-outline-acceptance.json) accepts the overall UI/UX outline,
+with decorative list icons provisional. The owner favors omission and requests
+raising the choice during implementation; no custom list-icon authoring feature
+is included. Associated raster hashes identify references, not immutable tokens
+or separately reviewed pixels for every screen. Missing Night/state permutations
+inherit the existing theme. Apply [the per-image corrections](remilo-r7-lists-repeats/review-notes.json).
 Preserve this document's role/geometry/keyboard corrections and A24's matching
 canvas/elevated-surface condition rather than reproducing incidental raster drift.
 

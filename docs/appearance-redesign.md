@@ -11,6 +11,13 @@ existing softer Dark surface roles. A24 accepts the four corrected Dark replacem
 as starting templates with corresponding-theme background/color matching and
 later detailed coloring/visual polish flexibility. Safe native appearance
 storage/capture still needs technical refinement.
+
+A27 accepts the [R7 Lists/Repeats/recurrence outline](design/r7-lists-repeats-specification.md)
+as a sufficient UI/UX starting template with [annotated references](design/remilo-r7-lists-repeats/gallery.html).
+Decorative list-icon presence/style is a generated discrepancy, not an approved
+custom-icon feature. The owner favors omission and wants the decision raised
+during implementation. Unrendered Night/state permutations inherit prior themes;
+shared color/geometry/keyboard/native UX rules resolve raster drift.
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System
 brightness apply across app pages and the native alarm experience; Android still

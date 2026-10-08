@@ -13,8 +13,12 @@ and P04D integration assumptions below remain planning requiring refinement.
 defines proposed library/family/occurrence-scope anatomy against all eight R3
 color/style references and the existing UX. Family counts mean materialized
 unfinished records, not overdue; preview slots are informational, and paused/ended
-families retain old work and independent exception alerts. The draft is not owner
-acceptance or production execution. P05 owns Lists/routing and P06 owns custom
+families retain old work and independent exception alerts. A27 now accepts the
+overall outline with [per-image corrections](../../design/remilo-r7-lists-repeats/review-notes.json);
+use exact native data/order, explicit Resume repeat / Edit entire series labels and
+real safe insets. Decorative list identity icons remain an open implementation
+choice, with omission preferred; do not introduce an icon picker. This does not
+execute P07 production changes. P05 owns Lists/routing and P06 owns custom
 recurrence controls; R7 does not merge those implementation responsibilities.
 
 ## 1. Objective and user-visible outcome
