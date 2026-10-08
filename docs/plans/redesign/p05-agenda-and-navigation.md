@@ -9,6 +9,15 @@ appearance is deferred. Passive navigation/structural icons stay neutral, with
 primary reserved for actions and explicit selection. Preserve route and timing
 contracts; this design acceptance is not production or device acceptance.
 
+**Current refinement (A25):** the [remaining-screen map](../../design/screen-refinement-map.md)
+and [R7 Lists/Repeats specification](../../design/r7-lists-repeats-specification.md)
+make the next proposed Lists root, named-list Agenda, metadata forms and removal
+flow concrete. Use every R3 Light/Dark pair for style; keep overdue counts,
+membership, origin/state and guarded commands. R7 is a draft review batch, not
+accepted P05 production routing or implementation. P07 owns its family content;
+P06 owns the connected recurrence controls. Older P01 reference assumptions below
+do not override the current R3 direction.
+
 ## 1. Objective and user-visible outcome
 
 Make Agenda, Lists and Repeats directly discoverable, with compact readable reminders

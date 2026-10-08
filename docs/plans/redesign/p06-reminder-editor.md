@@ -1,5 +1,13 @@
 # P06 Reminder Editor
 
+**Current recurrence refinement (A25):** the
+[R7 Lists/Repeats and recurrence-control draft](../../design/r7-lists-repeats-specification.md)
+adds concrete common/custom Repeat, validation/preview and Apply/Cancel layouts
+using all eight R3 color/style references and existing native draft semantics.
+Apply edits only the parent draft; Save commits. Reuse the canonical keyboard-safe
+footer/caret/error rules. This proposed presentation is not acceptance of new
+renders or authorization to execute P06 production changes.
+
 **7 October 2026 visual intake:** read
 [the approved R3/R4 template and corrections](../../design/approved-ui-r3-r4.md).
 A20 adds the approved R5 Sky/Evening creation/edit variants, with per-image

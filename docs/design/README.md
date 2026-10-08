@@ -31,6 +31,15 @@ identities. P07 owns Postpone and P08 owns native controls/notifications. Techni
 storage/capture decisions, implementation and actual rendered acceptance remain
 separate from this visual approval.
 
+The owner now requests identifying the remaining screens and starting refinement
+with **all eight R3 images** as color/style references and the established UX (A25).
+[The coverage map](screen-refinement-map.md) lists the remaining families.
+[R7 Lists/Repeats and recurrence controls](r7-lists-repeats-specification.md) is the
+next concrete proposed layout/state specification, with an
+[all-four-theme Light/Dark fixture brief](r7-lists-repeats-fixtures.json).
+This is refinement authorization, not acceptance of the new presentation or
+execution of production P05/P06/P07; existing approved images remain unchanged.
+
 ## Approval language
 
 - **Approved requirement:** a decision explicitly made by the owner and recorded

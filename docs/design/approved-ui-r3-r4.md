@@ -69,6 +69,14 @@ provenance and image hashes:
 
 These are synthetic raster previews, not actual RN/Compose render evidence.
 
+For subsequent screen refinement, A25 explicitly makes **all eight R3 images**
+the color/style reference set while retaining the established UX. The
+[remaining-screen map](screen-refinement-map.md) and
+[R7 Lists/Repeats draft](r7-lists-repeats-specification.md) apply this accepted
+style to the next proposed layouts; A25 does not accept those new layouts yet.
+Preserve this document's role/geometry/keyboard corrections and A24's matching
+canvas/elevated-surface condition rather than reproducing incidental raster drift.
+
 The [R6 visual specification](r6-alarm-postpone-specification.md) and
 [eleven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
 direction to native alarms and app Postpone. [A22](approved-ui-r6-acceptance.json)

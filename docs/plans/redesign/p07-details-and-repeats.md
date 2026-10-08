@@ -9,6 +9,14 @@ pixel. Use one global atmosphere with independent brightness and defer manual
 reminder/series appearance and its chooser. Conflicting earlier contextual-theme
 and P04D integration assumptions below remain planning requiring refinement.
 
+**Current refinement (A25):** [R7 Lists/Repeats](../../design/r7-lists-repeats-specification.md)
+defines proposed library/family/occurrence-scope anatomy against all eight R3
+color/style references and the existing UX. Family counts mean materialized
+unfinished records, not overdue; preview slots are informational, and paused/ended
+families retain old work and independent exception alerts. The draft is not owner
+acceptance or production execution. P05 owns Lists/routing and P06 owns custom
+recurrence controls; R7 does not merge those implementation responsibilities.
+
 ## 1. Objective and user-visible outcome
 
 Opening a reminder explains its event, unfinished/completed status and delivery
