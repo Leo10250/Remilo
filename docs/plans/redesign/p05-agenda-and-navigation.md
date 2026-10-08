@@ -42,6 +42,16 @@ from production route/action/keyboard verification.
 
 ## 1. Objective and user-visible outcome
 
+**Data/Help origin refinement (A32):** the proposed
+[R10 specification](../../design/r10-data-help-specification.md) and
+[fourteen-state brief](../../design/r10-data-help-fixtures.json) preserve inline
+Settings Export and secondary Restore/Diagnostics return to Settings, then its
+invoking root. Retain Settings scroll; no Data/Help root or standalone Export page.
+Native picker/share handoffs stay OS-owned; request lifetime must prevent stale
+share launches/feedback after navigation. Restore's applying/unconfirmed job guard
+precedes ordinary Back. This documents integration requirements, not production
+route completion or image acceptance.
+
 Make Agenda, Lists and Repeats directly discoverable, with compact readable reminders
 and secondary collections that retain context, filters and recovery actions.
 

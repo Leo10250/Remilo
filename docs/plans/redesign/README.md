@@ -42,8 +42,24 @@ after Reopen, and the established mutation guards. Baseline Browse-root routing
 and uncertain collection-command retries still require implementation work.
 [Evidence](../../evidence/2026-10-07-r9-records-refinement.md) distinguishes this
 draft review from generated images, acceptance, implementation and runtime checks.
-Data/Help follows, then remaining Agenda/detail/editor exceptions. R9 changes no
-milestone dependency or backlog status.
+R9 changes no milestone dependency or backlog status and remains drafted without
+generated images or acceptance.
+
+[A32](../../design/r10-data-help-intake.json), dated 8 October 2026, continues with
+the proposed [R10 Data/Help specification](../../design/r10-data-help-specification.md)
+and [fourteen review states](../../design/r10-data-help-fixtures.json). The first
+eight cover every R3 Light/Dark pair. Export is an inline Settings action; Restore
+backup and Diagnostics are secondary to Settings. R10 is a review batch for
+existing product/restore workflows, not the P10 Smart Colors milestone or a new
+navigation root. Preserve identity-conflict copy choices and captured same-operation
+Restore retry; preview timing does not establish Scheduled status, and a retry-only
+acknowledgement does not supply counts. Share feedback describes an Android handoff,
+not verified destination delivery. Diagnostic snapshots retain real report metadata,
+refresh/error state and native pending-reminder count scope.
+[Evidence](../../evidence/2026-10-08-r10-data-help-refinement.md) distinguishes this
+draft from images, new acceptance, production implementation and runtime/device
+checks. Next refinement covers remaining Agenda/detail/editor exceptions. No plan
+ownership, dependency or backlog status changes.
 
 ## Vision and authority
 

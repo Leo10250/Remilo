@@ -72,6 +72,22 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ### Appearance design review
 
+The [R10 Data/Help draft](design/r10-data-help-specification.md) and
+[fourteen prospective states](design/r10-data-help-fixtures.json) are refinement
+inputs under A32, not generated or accepted references. Check Export's prepared-
+share outcome versus external save, native chooser cancellation/read failure,
+reminder/series count scope, list identity/suffix preservation, whole-family copy,
+25-entry preview paging, frozen same-job retry and real bridge INVALID_INPUT
+versus structured Rejected recovery. A receipt retry lacks totals/blocked and is
+not full delivery-recovery evidence. Verify future/past/paused/independent target
+outcomes without interpreting the preview boolean as Scheduled. Diagnostics
+must show actual observation/stale data, operational count scope, pending-reminder
+projection count and technical privacy disclosure; Android Share does not confirm
+recipient delivery. Cover request lifetime, Settings origin/scroll and measured
+footer/accessibility/OS handoffs in the owning acceptance scope.
+[Draft evidence](evidence/2026-10-08-r10-data-help-refinement.md) records source,
+reference and static checks only; no runtime/file-transfer/device pass is implied.
+
 The [R9 Completed/Trash/Activity draft](design/r9-completed-trash-activity-specification.md)
 and [fourteen prospective captures](design/r9-completed-trash-activity-fixtures.json)
 are refinement inputs under A31, not generated/accepted references. Verify native

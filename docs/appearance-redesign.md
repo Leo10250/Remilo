@@ -37,6 +37,15 @@ Secondary-origin routing, skipped Reopen and uncertain collection retry are
 explicit implementation gaps. The draft is proposed; no R9 images or new
 acceptance/implementation result is recorded by this continuation.
 
+A32, recorded 8 October, refines [Data/Help Export, Restore and Diagnostics](design/r10-data-help-specification.md)
+with [fourteen proposed review states](design/r10-data-help-fixtures.json).
+Use all eight R3 pairs and established native backup/retry/share/snapshot UX.
+Export stays inline in Settings; Restore and Diagnostics return there. Preview
+timing is informational, counts distinguish reminder/series units from lists,
+and share handoff never proves destination delivery. Real import rejection,
+request lifetime and diagnostic scope corrections remain implementation work.
+R10 is proposed, with no generated images, acceptance or production status change.
+
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System
 brightness apply across app pages and the native alarm experience; Android still

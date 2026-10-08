@@ -1,0 +1,31 @@
+{
+  "record": "A32",
+  "date": "2026-10-08",
+  "source": "Repository owner in current chat",
+  "ownerAnnotation": {
+    "index": 1,
+    "selectedText": "Next: Data/Help—Export, Restore and Diagnostics.",
+    "comment": "continue"
+  },
+  "ownerStatement": "Make sure to reference all four themes.Use all the images in docs\\design\\remilo-r3-atmospheres as the point of reference when deciding on the color and style. (UX is a different story). Follow what we have been using for UX.",
+  "followup": "continue",
+  "authorizedScope": [
+    "Continue Data/Help Export/Restore/Diagnostics visual and UX refinement",
+    "Use all eight R3 Light/Dark references for color and style",
+    "Preserve existing backup conflicts/copy/no-replay/retry and honest share/diagnostic UX",
+    "Document source gaps and prospective image states"
+  ],
+  "artifacts": [
+    "r10-data-help-specification.md",
+    "r10-data-help-fixtures.json"
+  ],
+  "notImplied": [
+    "Owner acceptance of resulting draft or ungenerated images",
+    "Image generation in this refinement request",
+    "Production implementation, file sharing/import or device actions",
+    "New backup format/encryption/provider/global-theme portability",
+    "A definitive rejection/recovery API or process-death-safe frozen job",
+    "New screen roots/help/cloud/support destinations",
+    "Milestone completion or runtime/accessibility/device verification"
+  ]
+}

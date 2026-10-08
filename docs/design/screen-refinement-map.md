@@ -1,7 +1,7 @@
 # Remaining screen refinement map
 
-Recorded 7 October 2026, following the owner's request to identify remaining
-screens and start refining them. This is design-review coverage, not another task
+Recorded 7 October 2026; updated 8 October 2026, following the owner's request to
+identify remaining screens and start refining them. This is design-review coverage, not another task
 status source; implementation status remains in [backlog.md](../backlog.md).
 
 The [approved direction and corrections](approved-ui-r3-r4.md) govern style.
@@ -27,7 +27,7 @@ Existing acceptance records and reference pixels stay unchanged.
 ## Refinement sequence and remaining screen families
 
 R7 and R8 retain their earlier place in this sequence as accepted outline batches.
-R9 now refines collections and Activity; Data/Help is the next unrefined family,
+R9 retains its proposed collections/Activity brief. R10 now refines Data/Help,
 followed by remaining Agenda/detail/editor exceptions. This sequence is design
 coverage, not live implementation status or authorization to generate images.
 
@@ -38,9 +38,9 @@ coverage, not live implementation status or authorization to generate images.
 | 1 | Repeat controls | Common choices, Custom repeat intervals/selected weekdays/monthly/annual/endings, three-date preview, Apply/Cancel and invalid rule. | [P06](../plans/redesign/p06-reminder-editor.md); [Repeat form](../../src/ui/recurrence.tsx). Refined with Lists/Repeats because it authors the same families. |
 | 2 | Settings / Appearance | Categorized Settings; sound preview, vibration, Snooze duration, editable tomorrow Postpone shortcuts; independent brightness/global atmosphere selection and preview; saving/error/retry. | [Settings](../../src/app/settings.tsx), [P04A](../plans/redesign/p04-fixed-appearance.md), [P09](../plans/redesign/p09-time-appearance.md). Automatic boundaries/defaults/migrations need separate policy refinement. |
 | 2 | Permissions / Test alarm | Checking/Allowed/Blocked/Limited, Android Settings handoff and return, Test alarm scheduled/blocked/pending result. | Existing Settings UX. [Readiness](../../src/app/readiness.tsx) redirects to Settings; do not invent another destination. Android owns its permission screens. |
-| 3 — current proposed R9 | Completed / Trash | Native completion/skip/deletion ordering, state-only collection rows, list/search filters, Include skipped, no-match/empty, Reopen/Restore, recoverable Trash and revision-safe Undo. Exact recorded times stay in details/Activity; sort fallback is not an action timestamp. | [P05/P07](../plans/redesign/p05-agenda-and-navigation.md), [records](../../src/app/records.tsx), [R9 brief](r9-completed-trash-activity-specification.md). |
-| 3 — current proposed R9 | Activity | Read-only occurrence timeline, actual Snooze/Postpone targets, honest empty/unknown history, long content and retained-content refresh failure. | [Activity](../../src/app/activity.tsx); P07; [R9 review states](r9-completed-trash-activity-fixtures.json). |
-| 4 — next unrefined | Data / Help | Export preparation and honest share outcome; backup selection/preview/conflicts/copy choices; restoring/unconfirmed retry/blocked result; diagnostics refresh/share. | [Backup](../../src/app/backup.tsx), [diagnostics](../../src/app/diagnostics.tsx), existing product/restore contracts. |
+| 3 — proposed R9 | Completed / Trash | Native completion/skip/deletion ordering, state-only collection rows, list/search filters, Include skipped, no-match/empty, Reopen/Restore, recoverable Trash and revision-safe Undo. Exact recorded times stay in details/Activity; sort fallback is not an action timestamp. | [P05/P07](../plans/redesign/p05-agenda-and-navigation.md), [records](../../src/app/records.tsx), [R9 brief](r9-completed-trash-activity-specification.md). |
+| 3 — proposed R9 | Activity | Read-only occurrence timeline, actual Snooze/Postpone targets, honest empty/unknown history, long content and retained-content refresh failure. | [Activity](../../src/app/activity.tsx); P07; [R9 review states](r9-completed-trash-activity-fixtures.json). |
+| 4 — current proposed R10 | Data / Help | Inline Settings Export preparation and honest native share handoff; secondary Restore backup selection/preview/conflicts/copy choices, restoring/frozen unconfirmed retry and truthful result; secondary Diagnostics snapshot/refresh/share. | [Settings](../../src/app/settings.tsx), [Backup](../../src/app/backup.tsx), [diagnostics](../../src/app/diagnostics.tsx), existing product/restore contracts; [R10 brief](r10-data-help-specification.md). |
 | 5 | Remaining Agenda/detail/editor exceptions | Search+IME, filter sheet, dense long titles, no-match/loading/retained errors; Schedule details/options, all-day and independent times; zone/date/time/sound sheets; stale/conflicting draft, replaced-series recovery, discard/unconfirmed Save. | P05/P06/P07; extend approved shared components rather than designing another visual system. |
 | Alongside each family | Shared interaction states | Long English/Chinese, 200% text, keyboard, focus, loading/error/uncertain operations, disabled/busy/selected states, origin return and reduced motion. | [Canonical corrections](approved-ui-r3-r4.md), P02/P12 and existing consolidated acceptance. These are state coverage, not new destinations. |
 
@@ -70,7 +70,24 @@ timestamps appear in details/Activity. Skipped Reopen retains the skipped flag.
 Current Browse collection roots and collection uncertain-command retention/retry
 remain explicit implementation gaps. No R9 images or new template acceptance are
 claimed. [R9 evidence](../evidence/2026-10-07-r9-records-refinement.md) records the
-draft checks and their limits. Data/Help follows this batch.
+draft checks and their limits.
+
+[A32](r10-data-help-intake.json), dated 8 October, now starts the proposed
+[R10 Data/Help specification](r10-data-help-specification.md). Its
+[fourteen-state image brief](r10-data-help-fixtures.json) begins with all eight R3
+pairs. Export stays in Settings; Restore backup and Diagnostics return to Settings.
+Preserve identity-based conflicts, explicit copy choices, preview pagination and
+frozen same-operation retry after an unconfirmed Restore. Future-alert preview
+metadata is not confirmed scheduling, and retry-only acknowledgements cannot
+produce invented added/preserved counts. Export/share feedback does not prove a
+destination saved or sent the data. Diagnostics uses actual snapshot metadata,
+retained refresh errors and native pending-reminder count scope. Android owns
+document selection and sharing. No R10 images or new template acceptance are
+claimed; [R10 evidence](../evidence/2026-10-08-r10-data-help-refinement.md) records
+the documentation checks and their limits. Next is remaining Agenda/detail/editor
+exception coverage, not a new root or screen family. R9 likewise remains drafted
+without generated images or acceptance.
+
 Production implementation and actual accessibility/device evidence remain separate.
 
 The sequence retains Agenda / Lists / Repeats as the three labeled bottom roots.

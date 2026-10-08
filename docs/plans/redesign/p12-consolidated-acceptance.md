@@ -1,5 +1,16 @@
 # P12 Consolidated Acceptance
 
+**8 October refinement inputs:** [R10 Data/Help](../../design/r10-data-help-specification.md)
+and [fourteen prospective captures](../../design/r10-data-help-fixtures.json)
+under [A32](../../design/r10-data-help-intake.json) are proposed documentation,
+not new implementation dependencies or accepted renders. During the integrated
+acceptance, verify the actual backup/share/restore and diagnostic workflow against
+all four global themes in Light/Dark, including frozen retry, real bridge rejection,
+retained report errors, native OS handoffs and readable footer/accessibility.
+Use [the canonical corrections](../../design/approved-ui-r3-r4.md) over conflicting
+historical visual assumptions. Keep pending phone/file observations separate from
+[draft evidence](../../evidence/2026-10-08-r10-data-help-refinement.md).
+
 ## 1. Objective and user-visible outcome
 
 Verify the integrated redesign on an identified signed bundled artifact with host

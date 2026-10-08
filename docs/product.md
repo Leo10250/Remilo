@@ -53,6 +53,15 @@ collection context. It records baseline routing, skipped Reopen and uncertain
 collection-command gaps without changing the native behavior contract. New images,
 draft acceptance and production execution remain separate.
 
+[A32](design/r10-data-help-intake.json), recorded 8 October, continues with
+[Data/Help Export, Restore and Diagnostics](design/r10-data-help-specification.md)
+and [fourteen prospective review states](design/r10-data-help-fixtures.json).
+The draft uses every R3 appearance pair and existing native conflict/copy/no-replay/
+frozen-retry behavior, with honest sharing, timing and diagnostic snapshot labels.
+It records real bridge-rejection and UI-lifetime gaps. It does not change backup
+format/global-theme portability, implement the proposed presentation, generate
+images or establish new visual/native/device acceptance.
+
 On 4 October 2026 the owner authorized completing offline Android development
 before further interactive phone testing. Consolidate remaining physical checks
 for one owner-operated acceptance run. Automated checks continue; unobserved

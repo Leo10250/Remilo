@@ -4,7 +4,7 @@ The [product contract](../product.md) and [appearance specification](../appearan
 define the approved requirements. The [plan index](../plans/redesign/README.md)
 defines execution boundaries. Only [backlog.md](../backlog.md) records live task status.
 
-The current 7 October presentation intake is
+The current presentation direction, established 7 October, is
 [the approved R3/R4/R5 templates and corrections](approved-ui-r3-r4.md).
 A20 adds the eight accepted Sky/Evening Details/Editor variants,
 [their exact identities](approved-ui-r5-acceptance.json) and
@@ -72,7 +72,23 @@ remain implementation gaps, not changes completed by this refinement.
 [The refinement evidence](../evidence/2026-10-07-r9-records-refinement.md) records
 actual checks and their limits. R9 is proposed: no images or new acceptance,
 production implementation, task-status change or device verification are implied.
-Data/Help is the next unrefined family, followed by the remaining exceptional states.
+
+[A32](r10-data-help-intake.json), dated 8 October 2026, continues with the proposed
+[R10 Data/Help specification](r10-data-help-specification.md) and
+[fourteen readable review states](r10-data-help-fixtures.json). The first eight
+cover every R3 atmosphere/appearance pair. Export remains an inline Settings
+action; Restore backup and Diagnostics are secondary pages returning to Settings,
+not new roots or a separate Data/Help destination. Preserve native backup preview,
+identity-conflict copy choices and frozen same-operation Restore retry. A preview's
+future-alert indication is not confirmed Scheduled status, and a retry-only
+acknowledgement does not supply restore counts. Export feedback describes preparing
+and opening a native share handoff, not proof of destination delivery. Diagnostics
+retains honest snapshot/refresh/share states, report metadata and the actual native
+pending-reminder count scope. Android owns its document chooser and share sheet.
+[R10 evidence](../evidence/2026-10-08-r10-data-help-refinement.md) records the draft
+checks and limitations. No R10 images, new design acceptance, production behavior,
+milestone status or device verification are claimed. Next refinement covers the
+remaining Agenda/detail/editor exceptions, rather than adding another screen family.
 
 ## Approval language
 

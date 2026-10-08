@@ -1,9 +1,9 @@
 # Approved Remilo UI direction and R4/R5/R6 implementation corrections
 
-Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
+Recorded 7 October 2026; continuation added 8 October. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18-A31 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A32 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -100,6 +100,16 @@ neutral structural glyphs, distinct Reopen/Restore and secondary origin returns.
 Collection rows show status without invented action dates; details/Activity use
 actual recorded events. Skipped Reopen and unconfirmed collection retry remain
 documented implementation gaps. No new R9 images or template acceptance are claimed.
+
+[A32](r10-data-help-intake.json), recorded 8 October, continues with proposed
+[R10 Data/Help](r10-data-help-specification.md) and
+[fourteen prospective captures](r10-data-help-fixtures.json). Every R3 pair applies
+to Settings Export feedback, Restore and Diagnostics. Keep neutral utility glyphs,
+compact art, soft matching canvas/raised surfaces and honest share/snapshot copy.
+Backup conflicts/copies and frozen same-job retry follow native UX; preview timing
+is not Scheduled, receipt-only confirmation has no totals, and diagnostics is no
+audibility proof. Real bridge-rejection/lifetime gaps are documented separately.
+This continuation generates no images or new template acceptance.
 
 The [R6 visual specification](r6-alarm-postpone-specification.md) and
 [eleven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
