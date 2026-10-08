@@ -76,3 +76,16 @@ No runtime tests, builds, installations, phone interactions, measured accessibil
 or new image generation were performed. TD implementation and G1/G2/G3 physical
 observations remain future work. Documentation verification does not approve R9
 compositions, settle list icons or establish final production colors/artwork.
+
+## Follow-up: prevent stale instructions being consumed
+
+The owner asked whether legacy instructions were removed and said they did not
+want an agent reading stale specifications and becoming confused. The historical
+bytes remain preserved; they are not all physically deleted. The root agent
+read-first sequence now requires the current design before UI/UX/theme work.
+Scoped AGENTS.md files in design, history, P02 and the roadmap explicitly exclude
+legacy/frozen instructions from routine implementation and requirements searches.
+Historical material is consulted only for an explicitly requested provenance audit.
+Current design/TD contracts take precedence; an unresolved conflict requires the
+owner's clarification, not fallback to an older specification. Hash, link and
+whitespace checks were rerun; no frozen artifact or production source changed.

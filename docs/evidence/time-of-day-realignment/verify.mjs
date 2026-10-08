@@ -43,7 +43,7 @@ const captures=JSON.parse(read(gallery+'/capture-index.json'));
 for(const row of captures){for(const key of ['file','image','imagePath','path'])if(typeof row[key]==='string'&&row[key].endsWith('.png')){resources++;if(!fs.existsSync(path.join(root,gallery,row[key])))findings.push({check:'r10-capture',id:row.id,target:row[key]});}}
 checks.r10LocalResources=resources;
 const tracked=cp.execFileSync('git',['diff','--name-only','HEAD'],{cwd:root,encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
-const bad=tracked.filter(p=>!p.startsWith('docs/')&&!p.endsWith('README.md')&&p!=='.gitattributes');
+const bad=tracked.filter(p=>!p.startsWith('docs/')&&!p.endsWith('README.md')&&p!=='AGENTS.md'&&p!=='.gitattributes');
 for(const p of bad)findings.push({check:'non-doc-diff',path:p});checks.trackedChangedFiles=tracked.length;
 const result={date:'2026-10-08',checks,findings};
 console.log(JSON.stringify(result,null,2));if(findings.length)process.exitCode=1;
