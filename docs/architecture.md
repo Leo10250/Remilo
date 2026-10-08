@@ -2,26 +2,24 @@
 
 The [current four-atmosphere design](design/current/README.md) and
 [appearance policy](design/current/appearance-policy.md) govern planned presentation.
-This documentation PR changes no runtime storage, lifecycle or native authority.
+The documentation and review-tooling cleanup changes no runtime storage, lifecycle
+or native authority.
 
 ## ADR 001: Shared UI, autonomous Android implementation
 
-The [appearance redesign](appearance-redesign.md) adds an isolated design-review
-boundary before production migration. Metro substitutes the review entry/fixture
-bridge only for opt-in web previews; normal entries redirect and Android uses the
-real bridge. Debug-only Compose snapshots use immutable fake records with no
-engine/storage/audio acquisition. Production AlarmActivity retains its lifecycle,
-observation and actions, delegating the unchanged default rendering to
-AlarmControlsScreen. Review-only color/art slots default empty/identity.
+The ordinary fixture preview remains opt-in and web-only. Metro substitutes its
+synthetic native bridge only for that preview; Android resolves the real bridge.
+Preview state is memory-only and cannot schedule alarms or access durable storage.
+Obsolete review entrypoints, catalogs and Compose snapshot demos were removed
+under A37. Production AlarmActivity retains its lifecycle, observation and actions,
+delegating default rendering to AlarmControlsScreen. Reusable presentation slots
+default empty/identity; shared component defaults remain unchanged.
 
-These are preserved historical review boundaries. The P01 handoff records its
-accepted non-shipping prototypes; P02 remains opt-in catalog review groundwork.
-Neither implements the R3 four-atmosphere system. The [current roadmap](plans/redesign/README.md)
-owns future scope: TD-01 shared roles, TD-02 preferences/native-safe mirror,
-TD-03 pages, TD-04 native presentation, TD-05 static Classic, TD-06 acceptance.
-There are no manual per-reminder policy/backup-v4/chooser/classifier/alias gates.
-Current credential/operational/backup versions remain 4/3/3; this documentation
-introduces no migration, descriptor wire shape or production API.
+The [current roadmap](plans/redesign/README.md) owns future scope: TD-01 shared
+roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
+TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
+versions remain 4/3/3; cleanup introduces no migration, descriptor wire shape or
+production API.
 
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.

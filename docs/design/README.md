@@ -18,15 +18,17 @@ language, global appearance policy, individual page contracts and review coverag
 | R9 Completed/Trash/Activity | [Draft contract](current/screens/completed-trash-activity.md), no images/acceptance. |
 | [R10 Data/Help](remilo-r10-data-help/gallery.html) | Fourteen accepted r2 templates; [repository provenance](remilo-r10-data-help/REPOSITORY-LOCATION.md). |
 
-## Records and history
+## Current records and provenance
 
-[The approval ledger](approvals.md) is append-only decision history. Individual
-acceptance JSON and frozen submission files preserve exact artifact identities.
-[The historical archive](history/pre-r3-realignment/README.md) distinguishes superseded
-planning from the current contract. The [preservation registry](history/preservation-registry.json)
-identifies unchanged hashed legacy documents, including P01 art/UI prose and plan,
-and the P02 foundation sample specification. Read those only for their recorded
-submission scope; their old palettes/gates do not govern the new release.
+[The approval ledger](approvals.md) records the relevant Classic and R3–R10
+decisions, current policy and [A37 cleanup authorization](approved-design-cleanup.json).
+Associated acceptance, fixture and intake JSON preserves exact identities and scope.
+Superseded specifications, prototype demos and their evidence are removed from
+the checkout; Git history preserves their revisions. The seven accepted reference
+bundles remain intact, including their generation records and earlier drafts.
+Those frozen records are provenance; maintained current contracts resolve all
+later corrections. [Classic source references](references/README.md) are separate
+from the four-atmosphere visual authority.
 
 Keep private device captures in ignored verification/local; commit redacted
 outcomes with actual revision, renderer, fixture, viewport and limitations. Synthetic

@@ -5,14 +5,14 @@ import { cleanRepeat, dayNames, repeatErrors, repeatLabel, repeatNames } from '.
 import { civilAt, deviceZone } from '../domain/time';
 import { ActionFeedback, Button, Choice, Copy, DateField, Field, SelectRow, SettingRow, Sheet, Toggle } from './components';
 import { engine } from './native';
-import { useReviewFontScale, useTheme } from './theme';
+import { useFontScaleOverride, useTheme } from './theme';
 import { TimeZoneField } from './time-zone';
 export { repeatLabel, repeatNames } from '../domain/repeat';
 
 export function RepeatForm({ value, onChange, startMs, zoneId }: {
   value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string;
 }) {
-  const colors = useTheme(), scale = useReviewFontScale(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
+  const colors = useTheme(), scale = useFontScaleOverride(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
   const zone = zoneId ?? deviceZone();
   const start = new Date(civilAt(startMs, zone) + 'Z'), weekday = (start.getUTCDay() + 6) % 7 + 1;
   const base: RecurrenceDraft = { frequency: 'daily', interval: 1, weekdays: [weekday], day: start.getUTCDate(),

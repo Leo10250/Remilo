@@ -10,6 +10,7 @@ color/art/style; approved page UX and recorded corrections govern workflow.
 their historical scope. [A36](approved-time-of-day-realignment.json) establishes
 this consolidation, automatic/manual policy and static Classic identity.
 
-[The previous combined amendment](history/pre-r3-realignment/docs/design/approved-ui-r3-r4.md)
-is a byte-preserved historical snapshot, not another current master.
+Superseded living specifications were removed under A37. Accepted reference
+bundles and their correction records remain intact; this path routes to the
+maintained contracts rather than duplicating requirements.
 [Backlog](../backlog.md) alone records task status.

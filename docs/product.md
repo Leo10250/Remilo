@@ -22,8 +22,9 @@ preferred. Synthetic approval does not establish runtime/accessibility/device
 acceptance. Production still has brightness-only settings and the geometric R.
 
 The [six-unit roadmap](plans/redesign/README.md) precedes optional integrations;
-[backlog](backlog.md) alone records status. Prior P01/P02 submissions/approvals remain
-historical. The owner's 4 October instruction allows offline Android development
+[backlog](backlog.md) alone records status. Superseded design specifications and
+review demos are removed under A37; accepted reference bundles remain intact.
+The owner's 4 October instruction allows offline Android development
 before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
 
 ## Required behavior

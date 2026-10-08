@@ -5,16 +5,15 @@ import { useSettings } from './native';
 import { palettes, type Colors } from './colors';
 import type { Foundation } from './foundations/foundation';
 const Theme = createContext<Colors>(palettes.light);
-const ReviewFontScale = createContext(1);
-const ReviewMotion = createContext<boolean | undefined>(undefined);
+const FontScaleOverride = createContext(1);
+const ReducedMotionOverride = createContext<boolean | undefined>(undefined);
 const FoundationStyle = createContext<Foundation | null>(null);
-// Opt-in presentation only. The production provider stays on its approved baseline
-// until the complete P02 catalog gate; existing P01 review inputs stay compatible.
+// Optional presentation overrides do not change the ordinary settings-backed theme.
 const PresentationState = createContext<'default' | 'pressed' | 'focused'>('default');
 export const useFoundationStyle = () => useContext(FoundationStyle);
 export const usePresentationState = () => useContext(PresentationState);
 export function FoundationStyleProvider({ foundation, children }: PropsWithChildren<{ foundation: Foundation }>) {
-  return <FoundationStyle.Provider value={foundation}><ReviewThemeProvider colors={foundation.colors}>{children}</ReviewThemeProvider></FoundationStyle.Provider>;
+  return <FoundationStyle.Provider value={foundation}><PresentationProvider colors={foundation.colors}>{children}</PresentationProvider></FoundationStyle.Provider>;
 }
 export function PresentationStateProvider({ state, children }: PropsWithChildren<{ state: 'default' | 'pressed' | 'focused' }>) {
   return <PresentationState.Provider value={state}>{children}</PresentationState.Provider>;
@@ -25,9 +24,9 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   return <Theme.Provider value={(setting === 'system' ? system : setting) === 'dark' ? palettes.dark : palettes.light}>{children}</Theme.Provider>;
 }
 export const useTheme = () => useContext(Theme);
-export const useReviewFontScale = () => useContext(ReviewFontScale);
-export const useReviewMotion = () => useContext(ReviewMotion);
-export function ReviewThemeProvider({ colors, fontScale, reducedMotion, children }: PropsWithChildren<{ colors: Colors; fontScale?: number; reducedMotion?: boolean }>) {
-  const inheritedScale = useReviewFontScale(), inheritedMotion = useReviewMotion();
-  return <Theme.Provider value={colors}><ReviewFontScale.Provider value={fontScale ?? inheritedScale}><ReviewMotion.Provider value={reducedMotion ?? inheritedMotion}>{children}</ReviewMotion.Provider></ReviewFontScale.Provider></Theme.Provider>;
+export const useFontScaleOverride = () => useContext(FontScaleOverride);
+export const useReducedMotionOverride = () => useContext(ReducedMotionOverride);
+export function PresentationProvider({ colors, fontScale, reducedMotion, children }: PropsWithChildren<{ colors: Colors; fontScale?: number; reducedMotion?: boolean }>) {
+  const inheritedScale = useFontScaleOverride(), inheritedMotion = useReducedMotionOverride();
+  return <Theme.Provider value={colors}><FontScaleOverride.Provider value={fontScale ?? inheritedScale}><ReducedMotionOverride.Provider value={reducedMotion ?? inheritedMotion}>{children}</ReducedMotionOverride.Provider></FontScaleOverride.Provider></Theme.Provider>;
 }

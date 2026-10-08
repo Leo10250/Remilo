@@ -1,6 +1,7 @@
 # Current Remilo design
 
-Updated 8 October 2026 under [A36](../approved-time-of-day-realignment.json).
+Updated 8 October 2026 under [A36](../approved-time-of-day-realignment.json), with
+repository cleanup authorized by [A37](../approved-design-cleanup.json).
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
@@ -32,7 +33,7 @@ implementation units; approval of a synthetic image does not complete one.
 | [Completed, Trash and Activity](screens/completed-trash-activity.md) | R9 draft only: no generated images or template approval. |
 | [Data and Help](screens/data-help.md) | R10 r2 fourteen templates accepted, including whole-backup Restore. |
 
-## Current scope and history
+## Current scope and implementation baseline
 
 One global Sunrise, Sky, Evening or Night atmosphere applies across app-owned
 pages and native full-screen alarms. System/Light/Dark brightness is independent.
@@ -45,12 +46,14 @@ eight-palette catalog are retired from the active implementation sequence.
 Dynamic launcher icons are optional future backlog work. Final art abstraction
 is deferred; current R3 scene identity remains the reference.
 
-The [historical archive](../history/pre-r3-realignment/README.md) preserves earlier
-living prose. Original submissions, approvals, evidence and reference PNGs retain
-their identities. Historical acceptance remains valid for its recorded scope;
-it does not make the superseded P01/P02 design the current implementation target.
+A37 removes superseded specifications, review demos and prototype evidence from
+the checkout. The seven accepted R3–R10 reference bundles and associated current
+records remain intact. Frozen submissions inside those bundles are provenance;
+use these current contracts and correction notes for implementation. Git history
+preserves removed material without a second design archive in the checkout.
 
 Production currently has brightness preferences and the geometric R icon; the
 four-atmosphere resolver and static Classic export are planned implementation.
-This documentation realignment changes no runtime API, database, backup format,
-alarm authority, build configuration or shipped image asset.
+Documentation realignment and cleanup preserve runtime APIs, databases, backup
+formats, alarm authority and shipped image assets. Cleanup removes obsolete review
+tooling and its build-only dependencies; the production redesign is future work.

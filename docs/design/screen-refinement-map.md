@@ -5,5 +5,5 @@ remaining Agenda/details/editor exceptions. [Current page contracts](current/REA
 use all eight R3 references for color/style and preserve established native UX.
 Implementation status belongs in [backlog](../backlog.md).
 
-[Previous coverage narrative](history/pre-r3-realignment/docs/design/screen-refinement-map.md)
-remains history; it does not add alternate roots, palettes or milestone dependencies.
+This compatibility entrypoint keeps existing references usable; the maintained
+coverage contract is the sole source for review gaps and accepted templates.

@@ -15,9 +15,9 @@ images for UIs”**, and the frozen r1 specification/fixture hashes.
 The fourteen generated examples are saved in the current projectless review
 bundle, outside this repository:
 
-- [R10 gallery](C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/gallery.html)
-- [Original submitted specification](C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/submission-specification-r1.md)
-- [Original submitted fixtures](C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/submission-fixtures-r1.json)
+- [R10 gallery](../design/remilo-r10-data-help/gallery.html)
+- [Original submitted specification](../design/remilo-r10-data-help/submission-specification-r1.md)
+- [Original submitted fixtures](../design/remilo-r10-data-help/submission-fixtures-r1.json)
 
 These absolute links locate this owner's local artifacts; a separate checkout
 does not acquire those files by cloning the repository. Original generation
@@ -34,7 +34,7 @@ the owner selected the intended behavior:
 [A34](../design/r10-restore-whole-backup-intake.json) records that exact request.
 It accepts whole-backup behavior and authorizes related clarity corrections;
 it does not approve every generated pixel, unrelated R10 proposal, production
-implementation or native/device acceptance. The revised examples await review.
+implementation or native/device acceptance. At the A34 checkpoint the revised examples awaited review; A35 subsequently accepted the r2 templates.
 
 ## Clarified presentation
 

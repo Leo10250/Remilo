@@ -17,6 +17,7 @@ units. Preserve draft R9 and the list-icon implementation decision. Separate bui
 physical observations/distribution from documentation checks. Keep unrelated work
 out of commits and one integrator for any later shared native/storage change.
 
-[The original P01 handoff](redesign-p01.md) retains exact historical acceptance.
-[The previous protocol](../design/history/pre-r3-realignment/docs/handoffs/README.md)
-and P04A-D/P11 dependencies are historical, not gates for the current roadmap.
+A37 removes obsolete handoffs and plans from the checkout. Accepted reference
+bundles retain their original identities; current TD handoffs must cite the
+maintained contracts and actual implementation evidence. Use plain descriptive
+branch names without the codex/ prefix.

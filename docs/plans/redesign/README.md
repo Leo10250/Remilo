@@ -22,24 +22,9 @@ The owner authorized this documentation/reference PR; runtime execution occurs
 when requested. No cancelled classifier, per-reminder chooser, backup-v4 or dynamic
 launcher gate is part of the current dependency graph.
 
-## Historical plan map
+## Implementation boundaries
 
-| Earlier planning | Current disposition |
-|---|---|
-| P01 accepted non-shipping prototypes | Historical acceptance; TD-01 targets R3, not Meadow. |
-| P02 old eight-environment sample/catalog | Superseded active scope; reusable isolation/role boundaries inform TD-01. |
-| P03 branding | TD-05 Classic-only. |
-| P04A global appearance and P09 periods | TD-02, with approved four periods/defaults. |
-| P04B/C/D per-reminder policy/portability/chooser | Retired; no new manual-theme backup gate. |
-| P05/P06/P07 pages/workflows | TD-03. |
-| P08 native presentation | TD-04. |
-| P10 Smart Colors/task-derived scenes | Retired from active scope. |
-| P11/P11B launcher variants/matching | Optional future backlog idea, outside TD acceptance. |
-| P12 acceptance | TD-06 plus retained G1/G2/G3 observations. |
-
-[Pre-realignment plan snapshots](../../design/history/pre-r3-realignment/README.md)
-retain original prose. P01's plan is also an unchanged hashed submission at its
-original path; it is historical, not a current entry point. Other old plan paths
-redirect here and to their archive. R9 remains a draft and the decorative list-icon
-choice is still to be raised during implementation. Exact storage field/export
-design is implementation work; this roadmap introduces no deployed interface/schema.
+R9 remains a draft and the decorative list-icon choice must be raised during
+implementation. Exact storage field/export design is implementation work; this
+roadmap introduces no deployed interface/schema. A37 removes superseded plans and
+prototype evidence from the checkout; recovery is available through Git history.

@@ -1,16 +1,171 @@
 {
   "date": "2026-10-08",
+  "baselineRevision": "3014cd8fcf5539d8881201aee05d82045b5ed150",
   "checks": {
-    "preexistingImmutable": 89,
-    "archivedSnapshots": 32,
-    "frozenSubmissions": 7,
-    "relocatedR10Files": 113,
-    "acceptedR10Pngs": 14,
-    "retainedBacklogRows": 66,
-    "jsonFilesParsed": 117,
-    "currentLocalLinks": 586,
-    "r10LocalResources": 29,
-    "trackedChangedFiles": 3
+    "immutableFiles": 411,
+    "protectedIndexBlobs": 411,
+    "referenceBundleFiles": 223,
+    "currentDecisionAndFixtureFiles": 22,
+    "implementedBaselineFiles": 166,
+    "allowedRefactors": 1,
+    "currentContracts": 11,
+    "approvedRemovals": 1905,
+    "retainedBrandingMoves": 2,
+    "retainedBacklogRows": 45,
+    "trackedChangedFiles": 1972,
+    "untrackedFiles": 0,
+    "jsonFilesParsed": 95,
+    "localMarkdownReferences": 897,
+    "galleryLocalResources": 196,
+    "jsonResourceEntries": 809,
+    "referenceBundlesChecked": 7,
+    "frozenHistoricalCitations": 5,
+    "originalHostSourceCitations": 21,
+    "executableDependenciesChecked": 387
   },
-  "findings": []
+  "findings": [],
+  "provenanceReferences": [
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/submission-specification-r1.md",
+      "target": "../plans/redesign/p04-fixed-appearance.md",
+      "originalPath": "docs/plans/redesign/p04-fixed-appearance.md",
+      "originalGitUrl": "https://github.com/Leo10250/Remilo/blob/3014cd8fcf5539d8881201aee05d82045b5ed150/docs/plans/redesign/p04-fixed-appearance.md",
+      "kind": "frozen-historical-citation"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/submission-specification-r1.md",
+      "target": "../plans/redesign/p04-fixed-appearance.md",
+      "originalPath": "docs/plans/redesign/p04-fixed-appearance.md",
+      "originalGitUrl": "https://github.com/Leo10250/Remilo/blob/3014cd8fcf5539d8881201aee05d82045b5ed150/docs/plans/redesign/p04-fixed-appearance.md",
+      "kind": "frozen-historical-citation"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/submission-specification-r2.md",
+      "target": "../plans/redesign/p04-fixed-appearance.md",
+      "originalPath": "docs/plans/redesign/p04-fixed-appearance.md",
+      "originalGitUrl": "https://github.com/Leo10250/Remilo/blob/3014cd8fcf5539d8881201aee05d82045b5ed150/docs/plans/redesign/p04-fixed-appearance.md",
+      "kind": "frozen-historical-citation"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/submission-specification-r1.md",
+      "target": "../plans/redesign/p04-fixed-appearance.md",
+      "originalPath": "docs/plans/redesign/p04-fixed-appearance.md",
+      "originalGitUrl": "https://github.com/Leo10250/Remilo/blob/3014cd8fcf5539d8881201aee05d82045b5ed150/docs/plans/redesign/p04-fixed-appearance.md",
+      "kind": "frozen-historical-citation"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/submission-specification-r1.md",
+      "target": "../plans/redesign/p09-time-appearance.md",
+      "originalPath": "docs/plans/redesign/p09-time-appearance.md",
+      "originalGitUrl": "https://github.com/Leo10250/Remilo/blob/3014cd8fcf5539d8881201aee05d82045b5ed150/docs/plans/redesign/p09-time-appearance.md",
+      "kind": "frozen-historical-citation"
+    }
+  ],
+  "externalProvenance": [
+    {
+      "path": "docs/design/approved-ui-r10-outline-acceptance.json",
+      "target": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/gallery.html",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/approval-record.json",
+      "target": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/gallery.html",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/documentation-revision-evidence.md",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/gallery.html",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/documentation-revision-evidence.md",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/submission-specification-r1.md",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/documentation-revision-evidence.md",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/submission-fixtures-r1.json",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/05-evening-light.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-3b92f8e6-1db1-44cf-9bcd-6f1e1c5a4fff.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/06-restore-reply-unconfirmed-evening-dark.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/06-evening-dark.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-cb7df157-2dd3-4bcf-afea-41727a19c02f.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "target": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/08-night-dark.png",
+      "kind": "original-host-source"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-0fafedfb-5aa2-4a48-a905-78a142623592.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-1eead729-78e9-4ae1-999c-5776d4a397d0.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-c303da9e-76e8-40c9-9ab8-2e5921796219.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-15a20c0a-ad5c-4989-b9d2-740940a23b4b.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-cd7dd714-dd4b-4c98-a92c-b7f0e52e0127.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-9f7f86a3-a6a7-4ee6-b62c-8d7ae03606b9.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-2e04aead-afb2-406a-a521-70aaeec709c3.png",
+      "kind": "original-generation-intermediate"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "target": "generated-output/exec-d6870ce0-fdd4-468f-9598-5a005fe5059d.png",
+      "kind": "original-generation-intermediate"
+    }
+  ]
 }

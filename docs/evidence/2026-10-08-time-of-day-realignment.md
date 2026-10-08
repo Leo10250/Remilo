@@ -1,6 +1,13 @@
 # Four-atmosphere documentation realignment
 
-8 October 2026 · baseline c128fd1 · branch codex/realign-time-of-day-docs.
+8 October 2026 · baseline c128fd1 · recorded realignment revision 3014cd8.
+
+> This report records the earlier documentation-only realignment and its actual
+> checks. A37 supersedes its archive-preservation strategy: obsolete files and
+> prototype demos are now removed from the checkout. Current protected records
+> and accepted bundles remain intact. Use [the current design](../design/current/README.md)
+> for requirements and the cleanup verifier/results for the cleaned checkout.
+
 [A36](../design/approved-time-of-day-realignment.json) records the owner's scope,
 planning choices and direct implementation authorization. Existing pending A33–A35
 R10 documentation is preserved in this consolidation.
@@ -14,30 +21,28 @@ retain correction conditions; R9 remains draft. Old conflicting execution prose
 leaves the current queue; six TD units replace it. One static Classic identity
 supersedes palette variants, and dynamic icons remain optional future scope.
 
-Thirty-two historical living-document snapshots preserve their exact bytes and
-logical link bases. P01's six hashed submission artifacts and the P02 foundation
-sample specification remain unchanged at their original paths. This exception
-preserves original approval verification; the registry/index classifies them as
-historical, not current instructions. No old acceptance record was rewritten.
+At that recorded revision, thirty-two living-document snapshots preserved their
+exact bytes and logical link bases. Six P01 hashed submission artifacts and the
+P02 foundation sample specification remained at their original paths. A37 later
+authorizes deleting those obsolete snapshots and artifacts. They remain
+recoverable from Git history; no replacement archive or legacy redirect is required.
 
-The entire 113-file R10 bundle is now repository-local, copied byte-for-byte with
+The entire 113-file R10 bundle became repository-local, copied byte-for-byte with
 its r1/r2 history, fourteen selected PNGs and provenance. Frozen submission links
 resolve through their original logical docs/design base; active gallery resources
 are local. Scoped .gitattributes rules prevent line-ending normalization of the
-copied submissions and snapshots. Product source/build/exported icons are unchanged.
+imported bundle. Product source/build/exported icons were unchanged in that
+documentation-only revision.
 Frozen bundles retain original CRLF/EOF whitespace; scoped attributes recognize
 those historical bytes instead of altering the submission to satisfy formatting.
 Current living documentation keeps normal whitespace checks.
 
-## Checks actually performed
+## Checks performed at the recorded realignment revision
 
-Run the non-mutating checker from the repository root:
-
-```text
-node docs/evidence/time-of-day-realignment/verify.mjs
-git diff --check
-git diff --cached --check
-```
+The following are the actual results recorded for the earlier realignment, not
+new assertions about the cleanup. The retained verifier is updated under A37 to
+check current protected files, removal inventory, active links and retained
+behavior; its latest validation file records the cleanup results.
 
 - 89 preexisting immutable reference/submission identities unchanged.
 - 32 archived snapshot hashes and seven frozen P01/P02 artifacts match.
@@ -48,7 +53,9 @@ git diff --cached --check
 - All 45 unrelated task rows and all 20 historical AR/RD rows are preserved verbatim.
   The checker also compares the original table header (66 matching lines total).
 - Current local Markdown links, JSON syntax and gallery resources were checked.
-  The [checkpoint result](time-of-day-realignment/validation.json) records counts.
+  The original checkpoint counts are recorded here;
+  [validation.json](time-of-day-realignment/validation.json) now records the latest
+  cleanup verification.
 - Active contracts/plans were searched for contradictory automatic defaults,
   five-band schedules, per-reminder/classifier gates and mandatory dynamic icons.
   Historical/frozen submissions and deliberately labeled shipped-baseline facts
@@ -77,15 +84,14 @@ or new image generation were performed. TD implementation and G1/G2/G3 physical
 observations remain future work. Documentation verification does not approve R9
 compositions, settle list icons or establish final production colors/artwork.
 
-## Follow-up: prevent stale instructions being consumed
+## Subsequent cleanup decision
 
-The owner asked whether legacy instructions were removed and said they did not
-want an agent reading stale specifications and becoming confused. The historical
-bytes remain preserved; they are not all physically deleted. The root agent
-read-first sequence now requires the current design before UI/UX/theme work.
-Scoped AGENTS.md files in design, history, P02 and the roadmap explicitly exclude
-legacy/frozen instructions from routine implementation and requirements searches.
-Historical material is consulted only for an explicitly requested provenance audit.
-Current design/TD contracts take precedence; an unresolved conflict requires the
-owner's clarification, not fallback to an older specification. Hash, link and
-whitespace checks were rerun; no frozen artifact or production source changed.
+The owner rejected keeping misleading legacy files in the checkout and explicitly
+authorized the detailed removal/restructure plan under A37. Superseded design
+specifications, evidence, artwork, catalogs, demos and their dedicated tests are
+removed together. The current contracts, associated records, seven accepted
+bundles, Classic sources and implemented product behavior remain protected.
+Accepted bundles keep their frozen generation/draft history as the explicit owner
+exception; that text is provenance rather than current implementation guidance.
+Root/scoped agent instructions and the six TD plans route to maintained contracts.
+Use plain branch names without codex/ for new implementation work.

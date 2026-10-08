@@ -1,5 +1,12 @@
 # Development workflow kit evidence — 5 October 2026
 
+> Implementation evidence at the revision/build recorded below. This report
+> preserves observed checks, counts, hashes and limitations; it is not the target
+> visual specification. Use [the current design](../design/current/README.md) and
+> [TD roadmap](../plans/redesign/README.md) for new UI/theme work. Physical checks
+> remain pending unless this report records an actual observation.
+
+
 ## Scope and source
 
 Tooling and repository skills only. No application behavior, migrations, integrations

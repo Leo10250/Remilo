@@ -27,8 +27,10 @@ The [six-unit roadmap](plans/redesign/README.md) owns execution boundaries;
 [backlog](backlog.md) owns status; [verification](verification.md) and
 [device acceptance](device-acceptance.md) distinguish real checks from synthetic images.
 
-[Earlier living specification](design/history/pre-r3-realignment/docs/appearance-redesign.md)
-and approval records retain historical meaning. P01 prototype acceptance does not
-complete the new foundations. Production remains brightness-only with the geometric
-R icon until separately implemented. This PR updates documentation/reference assets
-only; it changes no runtime interfaces, persistence format, build or exported icon.
+A37 removes superseded design specifications, prototype demos and evidence from
+the checkout. Accepted reference bundles and current approval records remain
+intact; their frozen submissions are provenance, with current contracts authoritative.
+Production remains brightness-only with the geometric R icon until separately
+implemented. The documentation and cleanup work does not implement the production redesign.
+Cleanup removes obsolete review tooling; runtime interfaces, persistence formats
+and shipped icon exports remain unchanged.

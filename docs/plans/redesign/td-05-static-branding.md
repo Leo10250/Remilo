@@ -14,15 +14,15 @@ Replace the shipped geometric R with faithful exports of the supplied Classic ri
 
 ## Implementation
 
-- Use assets/design-review/icon-classic.png and its source board for fidelity. Preserve ring/check/sun proportions and finish; no generative redraw.
+- Use [the Classic crop](../../../assets/brand/reference/icon-classic.png) and [original source board](../../../assets/brand/reference/source-icon-board.png) for fidelity. Preserve ring/check/sun proportions and finish; no generative redraw.
 - Produce launcher/adaptive/monochrome/splash/notification exports with clean isolation, correct padding, masks and small-size readability.
 - Keep app ID, signing, stable native notification/activity targets and build ownership unchanged. No palette variant catalog, launcher aliases or matching workers.
 
 ## Acceptance and handoff
 
-Compare exports to the exact source, inspect circle/squircle/adaptive masks, notification alpha and actual small sizes, then verify signed-device launcher/splash/notification appearance. Do not confuse the existing coarse review masks with final export acceptance.
+Compare exports to the exact source, inspect circle/squircle/adaptive masks, notification alpha and actual small sizes, then verify signed-device launcher/splash/notification appearance. Export acceptance requires the faithful Classic production outputs.
 
 Record actual revision, delivered contracts, render/command evidence, unresolved
 review conditions and pending physical observations using [the handoff protocol](../../handoffs/README.md).
-Only backlog records live status. Historical P01/P02 approvals remain historical
-and are not prerequisites for generating an unrelated eight-palette catalog.
+Only backlog records live status. Template approval does not establish production
+implementation or actual accessibility/device acceptance.

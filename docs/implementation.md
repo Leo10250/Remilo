@@ -95,7 +95,7 @@ Automatic plus four manual atmospheres, all app-owned pages/native alarms and
 one static Classic ring/check/sun identity. Preserve independent brightness,
 keyboard-safe forms, native privacy/action ownership and whole-backup behavior.
 Current documentation approval does not implement a runtime preference/migration.
-Old P01/P02 prototypes remain historical; no eight-palette/classifier/manual-task
+Obsolete P01/P02 prototypes were removed under A37; no eight-palette/classifier/manual-task
 chooser/backup-v4/dynamic-icon requirement precedes this release.
 
 ## Phase 4: optional Google Calendar

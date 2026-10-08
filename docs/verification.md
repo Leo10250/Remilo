@@ -78,12 +78,20 @@ R3 all eight images govern style. Approved templates/corrections govern R4/R5/R6
 R8/R10; R9 remains draft with no images/approval. Final artwork abstraction and
 actual production tokens/measurement are separate from raster approval.
 
-This documentation PR checks local links, JSON, artifact hashes, frozen archive
-identities, gallery resources, retained backlog rows and the docs-only diff. It
-does not assert runtime tests, builds or physical observations. Historical P01/P02
-commands/evidence remain historical scope, not the current catalog acceptance gate.
-Existing npm/shared/native review-isolation tests remain available for later code
-changes; old eight-environment fixture tests do not define the new product policy.
+Documentation and cleanup verification checks active links, JSON, all protected
+reference-bundle hashes, gallery resources, retained backlog rows and the exact
+removal manifest. Superseded catalog/demo tests are removed with their subjects.
+`npm run verify:design` runs the protection/removal/link audit; `npm run verify`
+includes that audit before shared checks. CI fetches the recorded baseline history
+so the deletion audit also covers committed changes.
+For later authorized runtime work, explicitly revise the implemented-source
+baseline for that unit while retaining reference protection and behavioral tests.
+Do not regenerate accepted artifact identities to conceal unintended changes.
+Production behavior tests and ordinary web-preview/Android bridge isolation remain
+required. Run the shared and Android checks for cleanup code/tooling changes;
+record actual results separately from pending physical observations.
+Frozen submissions can cite removed specifications as provenance. Resolve those
+citations through the recorded Git revision, without recreating obsolete specs.
 
 For TD-01/03, validate matching canvas/elevated roles and consistent neutral form
 icons, atmosphere actions and labeled category/status colors in all eight pairs.

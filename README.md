@@ -172,7 +172,9 @@ page contracts/corrections govern UX. [The roadmap](docs/plans/redesign/README.m
 and [backlog](docs/backlog.md) distinguish future work from the shipped 0.4.0 baseline.
 Current production still has brightness-only settings and the geometric R; the
 new Automatic/manual atmospheres and static Classic identity are not implemented
-by the documentation realignment.
+by the documentation realignment or review-tooling cleanup. Superseded specs,
+demos and prototype evidence are removed under [A37](docs/design/approved-design-cleanup.json);
+Git history preserves them. Accepted R3–R10 reference bundles remain intact.
 
 ## Repository guide
 
@@ -182,6 +184,9 @@ by the documentation realignment.
   tests and generated Room schema history.
 - `android/`: startup, permissions, backup exclusions and build setup.
 - `scripts/`: cross-platform verification, signing and evidence collection.
+- `docs/design/current/`: maintained design contracts; all eight R3 references
+  govern atmosphere/style and approved page corrections govern UX.
+- `docs/plans/redesign/`: six TD implementation units.
 - `docs/product.md`: authoritative behavioral requirements.
 - `docs/architecture.md`: ownership and consequential decisions.
 - `docs/implementation.md`: phased delivery and acceptance contracts.
@@ -212,7 +217,9 @@ remains Android-only; this preview does not verify native pickers, audio or OS t
 scaling. Preview variables are confined to its child process. An occupied port
 produces an error; the command never terminates the process using it.
 
-The owned vector master is `assets/brand/remilo.svg`. `node scripts/brand.mjs`
+The shipped R vector master is `assets/brand/remilo.svg`. The approved future
+Classic sources live in [assets/brand/reference](assets/brand/reference/manifest.json);
+[TD-05](docs/plans/redesign/td-05-static-branding.md) owns faithful production exports. `node scripts/brand.mjs`
 exports all Android/Expo variants using Sharp (0.34.x); alternatively supply the
 installed Sharp package path as its argument. This does not invoke Prebuild.
 

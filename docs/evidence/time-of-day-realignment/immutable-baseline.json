@@ -1,358 +1,2595 @@
-[
-  {
-    "path": "docs/design/approved-ui-r10-outline-acceptance.json",
-    "sha256": "dbd2c20b8e89b16d0a0b3f436c97622ca934988363645bd7f182b785b87d79dd"
-  },
-  {
-    "path": "docs/design/approved-ui-r3-r4-acceptance.json",
-    "sha256": "743e4c6c13c5aa90cfc9b45107a18bff9b11705705367572bdd47c0326e86b75"
-  },
-  {
-    "path": "docs/design/approved-ui-r5-acceptance.json",
-    "sha256": "509ec6938a0015b4cd8c03c85a67233c2c14b4ab505d5de04652c8ea62b9ddad"
-  },
-  {
-    "path": "docs/design/approved-ui-r6-acceptance.json",
-    "sha256": "2cbdec3e261fa76a2206412faea9195318df39d3ca94f1cc59bb393366b1f32e"
-  },
-  {
-    "path": "docs/design/approved-ui-r6-themed-alarm-acceptance.json",
-    "sha256": "c54fe23680c0238e5ede00c4501f8c7501d7dffd3d72f85dad69f63f071a8b05"
-  },
-  {
-    "path": "docs/design/approved-ui-r7-outline-acceptance.json",
-    "sha256": "5658158cd45b70e0af3d7b15a9ffb9ec830e5fdaf35812a116e3ccd9bdc09d71"
-  },
-  {
-    "path": "docs/design/approved-ui-r8-outline-acceptance.json",
-    "sha256": "ba561053b0ec07b503db084dff3bd76e0a802ae3c334eaa612f98393f3887a3e"
-  },
-  {
-    "path": "docs/design/artwork/p01-artwork-r1/meadow-m1-canopy.png",
-    "sha256": "300467ae10d40efcf7e7a61c5e53660b424d4e1c7814facea7d02f073d9021eb"
-  },
-  {
-    "path": "docs/design/artwork/p01-artwork-r1/meadow-m2-garden.png",
-    "sha256": "b7c50d557e6f74cf51e813d57c8ffdf17bb10138e5fe94e3240eb6f26f2499c5"
-  },
-  {
-    "path": "docs/design/artwork/p01-artwork-r1/sunrise-s1-horizon.png",
-    "sha256": "bc91beb4bc6f1bf78285d1fe08ad495fa8cfe60f0b4a848755a5b757adc26e3b"
-  },
-  {
-    "path": "docs/design/artwork/p01-artwork-r1/sunrise-s2-edge-garden.png",
-    "sha256": "3c08b88eb60c685306c01d32b3da759ee11be6b91fdff03015fdebf6d68dee65"
-  },
-  {
-    "path": "docs/design/p01-artwork-r1-acceptance.json",
-    "sha256": "4e6e45d4c3ac903a647761b6588ff337eb84ec0e7fedeb165c8cb77f3925fb22"
-  },
-  {
-    "path": "docs/design/p01-render-r1-acceptance.json",
-    "sha256": "4de83d17f1b66a67cc469cfd41bfbc3f39588c1c59c418351f839c3d3c7b9c37"
-  },
-  {
-    "path": "docs/design/p01-style-r2-acceptance.json",
-    "sha256": "de18c675c53b1d1bd93e54971faec0f20d8aea4552001f1c8f9989c97de060da"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1/rose-candidates.png",
-    "sha256": "46569a9c1198433093f48eba70075e411d9654d2b461559d791259b46b111619"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1/rose-ro1-petal-canopy.png",
-    "sha256": "102f5207a2d9150ffb30f6f7f3332ec91125df33798fd690942510a954e51084"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1/rose-ro2-garden-edges.png",
-    "sha256": "3f80d583e675be469b85de116ee51c6367c94b817f7bc725d9024ac36fa3e156"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1/sky-candidates.png",
-    "sha256": "5aab9dfe4b42b19228494de7edeb3ed48fbca85ccfb2e23c0c30638b47bc2e0a"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1/sky-sk1-open-horizon.png",
-    "sha256": "4a3133a2d7cd1857addf78baf59289edfe6f903e0eda1c4305b525e9bf090d07"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1/sky-sk2-layered-clouds.png",
-    "sha256": "9f2489fe6b61079f9ad0c661c40e781f038249b856357a940c691d77cccbf421"
-  },
-  {
-    "path": "docs/design/p02/artwork-r1-acceptance.json",
-    "sha256": "f6e22c09feeaba9799c8713bf177192a6765d3c58cf9e705f3221b3020e0261b"
-  },
-  {
-    "path": "docs/design/references/butter-periwinkle-sage-owner-2026-10-06.png",
-    "sha256": "af22a02be3d28680326f843de1372a5d4d77e9fdf77bef5677590212173d42e4"
-  },
-  {
-    "path": "docs/design/references/butter-periwinkle-sage.png",
-    "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46"
-  },
-  {
-    "path": "docs/design/references/desired-water-plants-reference.png",
-    "sha256": "92ea34296b03f36ca8b812eb7f8cd3279e398c4d4095e551bc1f6d18b90d761a"
-  },
-  {
-    "path": "docs/design/references/rejected-current-water-plants.png",
-    "sha256": "9f1530c2dbccc398510f52e1429c730724a5c2785dde8da7ca023500a219ec8e"
-  },
-  {
-    "path": "docs/design/references/supplied-classic-icon-board.png",
-    "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
-  },
-  {
-    "path": "docs/design/references/time-of-day-and-alarms.png",
-    "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/01-sunrise-light.png",
-    "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/02-sunrise-dark.png",
-    "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/03-sky-light.png",
-    "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/04-sky-dark.png",
-    "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/05-evening-light.png",
-    "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/06-evening-dark.png",
-    "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
-    "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
-  },
-  {
-    "path": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
-    "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
-  },
-  {
-    "path": "docs/design/remilo-r4-details-editor/01-details-ordinary-light.png",
-    "sha256": "2a2f00a57230cb736d32521b51113b1d4e508d89459ed969b49a4bf4f84d5552"
-  },
-  {
-    "path": "docs/design/remilo-r4-details-editor/02-details-overdue-dark.png",
-    "sha256": "32a1c37ebacedc4f771dd2308bd6b5d998de1a3c66ac4ae9e6e887ea450421d5"
-  },
-  {
-    "path": "docs/design/remilo-r4-details-editor/03-create-keyboard-light.png",
-    "sha256": "97904ab3f399e0a4f77b2f8cf7064e6e1bfa89797073bc15f5ce15b5cc87da76"
-  },
-  {
-    "path": "docs/design/remilo-r4-details-editor/04-edit-independent-dark.png",
-    "sha256": "6f0eb078fd4f94742ef57364a046403dfafe4b25a565c0192963dc1e7cc57c29"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/01-sky-ordinary-details.png",
-    "sha256": "064147380c9c09d29948107982c978ca7f9049a72c52f7fb4286f50c49bb3658"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/02-sky-overdue-details.png",
-    "sha256": "e6a3a947f9812e1c15587af178ae1428326049ad3e7145ea4bbba153ead11c3d"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/03-sky-create-keyboard.png",
-    "sha256": "dc1caab6b95815c4e0f64938ea96073e682d7aaf98f183da072b3cc9cbe1cee0"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/04-sky-edit-independent.png",
-    "sha256": "e8303f4a9e76addb473cec84135a58955f1ef31442cf5041ffd3e4dabf240095"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/05-evening-ordinary-details.png",
-    "sha256": "85116c5d763056e9bdbe22a521b3b992d55ee0d59319666d352454fd859991c8"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/06-evening-overdue-details.png",
-    "sha256": "d4f25780cc99de234ed7c91f2ec2dd2bdf3dc471112b91f65ba997febfd32004"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/07-evening-create-keyboard.png",
-    "sha256": "aeb646f2923c62e6dce055d8764ea83bec225e9237c9c11142da5071f5285c0b"
-  },
-  {
-    "path": "docs/design/remilo-r5-sky-evening-details-editor/08-evening-edit-independent.png",
-    "sha256": "77c787f571321ca2f2c290916b778c05f749052d62ff4f1ae476ad55fb128b76"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/01-single-alarm-sky-light.png",
-    "sha256": "68fb8dd1832f7ffa12cb84d4886241d430d9815e8bfdf284b0d5c77e13dfb048"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/02-multiple-alarms-night-dark.png",
-    "sha256": "c886415d46ed98df33baf91cf7e19ad4aea77299505fdda138f715f42f56e21d"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/03-refresh-failure-evening-dark.png",
-    "sha256": "8f67f429f2b57da189d751345c1840b0f4bd51cced849512eb11fd8e28ebe6d7"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/05-postpone-shortcuts-sky-light.png",
-    "sha256": "d65e31315d87940c90b014f297671ddfad431479079c51f8a005aa6637fbae92"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/06-postpone-custom-evening-dark.png",
-    "sha256": "f6abd7724cd4e8b3776a7b5cb11372472271cdeb7edcdae72663b0ed5e226297"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/07-postpone-past-time-sky-light.png",
-    "sha256": "0913708ac71f3636eaafcb759827d251ad313cf0153b45fac3760d59666eb0a4"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/08-postpone-saved-blocked-night-dark.png",
-    "sha256": "5bcabb2fe7a08c7e58f08df779e8459bd8e9095251c45be974c05b9926725e89"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/rejected/04-generic-pre-unlock-dark.png",
-    "sha256": "4a7d4a12e6648d9706f23f4650ea37f5112e3e8ab2a95dfc2b85ef28d0e0a411"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/submission-fixtures-r1.json",
-    "sha256": "77b8abc565693f615bf9426b83598e184706954841a4cdea9e27fd53f889bf1b"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/01-sunrise-dark.png",
-    "sha256": "ef283858acdba743163344993997a381d4e46a2992f5158fffda92fd0693673c"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/02-sky-dark.png",
-    "sha256": "a33061c1ca6c6187ae3a0e09115b479dc297874ca4d99b6479fb3a2e540052bc"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/03-evening-dark.png",
-    "sha256": "aff2e9f80e6e008da5a11a750f3609fae5079786954458a2e4b820d628b7f6c8"
-  },
-  {
-    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/04-night-dark.png",
-    "sha256": "5ac388158f27e4d4f7d30dc758f17c947ec988e8cda5343d1d3e00020471eafa"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/01-lists-sunrise-light.png",
-    "sha256": "10c7b5ac94ebe3fc3b290dc7bb4de8aee042651460fc9bb3c6abdf22fc7bce97"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/02-create-list-error-sunrise-dark.png",
-    "sha256": "d0e5cc922dcf629eff173089d97bf37e588a97cc8931d72078086844f15f121d"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/03-work-agenda-sky-light.png",
-    "sha256": "177669fce02cc79720e64820ecb4c848bf728fb49bf987e4720fdd269216a708"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/04-remove-list-sky-dark.png",
-    "sha256": "fef07fc9d4225d7ae2a13c8f5bb733ea3fa2d78b5fbd0d3f93bac7587824a7d9"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/05-empty-list-evening-light.png",
-    "sha256": "c0116cab69351e28d79c9d02a22c3ffbf5282f132fb7375109cd0c457b67ffca"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/06-repeats-evening-dark.png",
-    "sha256": "c47ef57271cf56b1b87148ac152d4ef087c8ac216497d2bb05bd1a29513368a8"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/07-active-family-night-light.png",
-    "sha256": "8910a93ddf1a628eeff3e944a233d5f6942d9cc4d56bb4212b7ec13c4868b701"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/08-paused-family-night-dark.png",
-    "sha256": "8f7519b8ceb170c9b84f386f7a49148a60e7ba640e39f4cfbd4f1f6a3d4cba0e"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/09-ended-family-sunrise-light.png",
-    "sha256": "934aec27b4e6f0ab3f0eb6d3eaf11a84d0b6cb567de081014efb9bd3af89770e"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/10-edit-scope-sky-dark.png",
-    "sha256": "5cec96e81334c601b3ca77432aa4208d42f231234f42e7818a214e332819cb0d"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/11-custom-repeat-evening-light.png",
-    "sha256": "9b64b9432da969df561c74084d412f6c79aefbb193d1ccc5d987eda60d55ff47"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/12-repeat-error-keyboard-night-dark.png",
-    "sha256": "68ddf27bc340896fb06d464220e33413098ab0da45ef8a9c1e090825499bbc18"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/submission-fixtures-r1.json",
-    "sha256": "26c37b090c808dbb88eb09fb3c45f4e14017d1e5c1f991e51477fb30143f536e"
-  },
-  {
-    "path": "docs/design/remilo-r7-lists-repeats/submission-specification-r1.md",
-    "sha256": "32dbdbf458c5676d5b860de5e43d99a46f59f2dec46258443f19bedd5de8da3d"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png",
-    "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/02-preference-save-unconfirmed-sunrise-dark.png",
-    "sha256": "640d44533023fc9edcfedcc4b5a4fb691ab4a808299a51b5f85039fd62eb6d72"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/03-appearance-fixed-sky-light-sky-light.png",
-    "sha256": "203630988c61edb6c42a440e73a51dc52a15746aa3b42ae5813786bb6a3d26f8"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/04-appearance-system-saving-sky-dark.png",
-    "sha256": "4298ae2eabe5a553cfd51347e2950d00a316c57dca2e40b1ee8d7fa3013c8f57"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/05-sound-preview-fallback-evening-light.png",
-    "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/06-sound-preview-failure-evening-dark.png",
-    "sha256": "ea38038529662a24c5d81763d30853049c9767e3f4a3dbc5bdeaa31127ba4475"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/07-permissions-with-mixed-channels-night-light.png",
-    "sha256": "ae99be3e0503778e392cb2e777faac6e020486d68b94a3b8cfd1f0a025531562"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/08-permissions-refresh-failure-night-dark.png",
-    "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/09-test-scheduled-sunrise-light.png",
-    "sha256": "216941536c239391284eb5d84c1dbfe9dc67e79ac29bf98c07792668f029de9f"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/10-test-saved-but-blocked-sky-dark.png",
-    "sha256": "25253de8aa77eeb024f96ba2c52dbbc83dcf47c0952e2f91d3b73e88729d9591"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/11-invalid-custom-snooze-with-keyboard-evening-light.png",
-    "sha256": "6f01161e1bc5151ad13776098aa59564046f9b6a4080214667f5353d29ad533c"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/12-edit-tomorrow-shortcut-time-night-dark.png",
-    "sha256": "73f6899e598313fffceaea1a68250f0ddf2b9382145edd662a85008f97a5e84d"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/13-test-saved-with-pending-scheduling-evening-dark.png",
-    "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/submission-fixtures-r1.json",
-    "sha256": "bc38e829089fe8b0928e736c7890f33541954640022d78d33283637906954891"
-  },
-  {
-    "path": "docs/design/remilo-r8-settings-appearance/submission-specification-r1.md",
-    "sha256": "8d6146d1b8a5626cb3c5d79ce0bab3c8e64a2c01934e6ace7f50bac241feb91b"
-  }
-]
+{
+  "schemaVersion": 2,
+  "date": "2026-10-08",
+  "baselineRevision": "3014cd8fcf5539d8881201aee05d82045b5ed150",
+  "referenceBundles": [
+    "docs/design/remilo-r3-atmospheres/",
+    "docs/design/remilo-r4-details-editor/",
+    "docs/design/remilo-r5-sky-evening-details-editor/",
+    "docs/design/remilo-r6-alarm-postpone/",
+    "docs/design/remilo-r7-lists-repeats/",
+    "docs/design/remilo-r8-settings-appearance/",
+    "docs/design/remilo-r10-data-help/"
+  ],
+  "currentContracts": [
+    {
+      "path": "docs/design/current/README.md",
+      "sha256": "bdc3a4065cd76cbbf24bd825eedb439f01fd35c658e834a308894dbc7781dc58",
+      "gitBlob": "48cf7c0a390f54ff37fe7fa1de61358d122ce9ba"
+    },
+    {
+      "path": "docs/design/current/appearance-policy.md",
+      "sha256": "6ed5d1ccfc7c95fc17151226a9ac6be42dc7a78ecbe3443ec81d62dd92b718c4",
+      "gitBlob": "28f66c9b3491601ff2c103a4adbc82a46546b4ba"
+    },
+    {
+      "path": "docs/design/current/coverage.md",
+      "sha256": "579df282201b72ab5df8648923326375266905f9798b3b1773625d6b896ee5f7",
+      "gitBlob": "9bc9a1ad990f2ca018ec896844e8a271e8107f7a"
+    },
+    {
+      "path": "docs/design/current/screens/agenda.md",
+      "sha256": "f868960fb2dcf3ca1627263afebe19e0105ab96f3cbd38bfbd984847affa035c",
+      "gitBlob": "54822fb7c1d86646f227a6f915b61e0dacc96d4f"
+    },
+    {
+      "path": "docs/design/current/screens/alarm-postpone.md",
+      "sha256": "25fee89fbec3858ed2d238521ef92f7cde6852532ff3027ad32765d574f7e70f",
+      "gitBlob": "52812416d5ec07a3ba3510dea6bf36c3ea37a7ec"
+    },
+    {
+      "path": "docs/design/current/screens/completed-trash-activity.md",
+      "sha256": "c7623b43d8e88cf0c5d64a4f4a28884af60529cb377da4800531bd559bbda772",
+      "gitBlob": "16fb1b96d43f37d1f72c53b6bebe4d674e876b64"
+    },
+    {
+      "path": "docs/design/current/screens/data-help.md",
+      "sha256": "f8bc8b71eda49cbbaac9f924c7e24e283e54c4e6035dc71be4655d3e4f12ffb0",
+      "gitBlob": "5e416423bfbdabebe578ca9d5d4b02bd423d648f"
+    },
+    {
+      "path": "docs/design/current/screens/details-editor.md",
+      "sha256": "3e293f0dde42d496ac83573f81b37f73ddc02e7cd955c198f02e2508c80a2090",
+      "gitBlob": "150e01d9705465bc75297b3284945fdcc0641058"
+    },
+    {
+      "path": "docs/design/current/screens/lists-repeats.md",
+      "sha256": "7e361ac1df0883c089e17806865f1f9a48820c99d2de6435586ef1f785bf3a85",
+      "gitBlob": "6cf1b174ff56e850128b8273d719a57a32b18b1b"
+    },
+    {
+      "path": "docs/design/current/screens/settings.md",
+      "sha256": "d5eeff5685a2a92d2203565bb287d2996523d4b092053f9246a1bdff4f588db7",
+      "gitBlob": "df9ce8e51b6e3b7ec4c1402a38f0c20e8faf57f3"
+    },
+    {
+      "path": "docs/design/current/visual-language.md",
+      "sha256": "2e448a68e93069557eec74cb2b9b1f1cc571a7eea663e1dec7855fcfff1aca9d",
+      "gitBlob": "819952fd2a983e802b5223a93fc3af923a7236fc"
+    }
+  ],
+  "files": [
+    {
+      "path": "android/app/src/debug/AndroidManifest.xml",
+      "sha256": "fb1795032c764d975376e1612ab7022058eca2268a45efbe731a47a5d3ac0f60",
+      "kind": "implemented-baseline",
+      "gitBlob": "3ec2507bab7c58dda1f8467f9137b02bdbd87b50"
+    },
+    {
+      "path": "android/app/src/debugOptimized/AndroidManifest.xml",
+      "sha256": "fb1795032c764d975376e1612ab7022058eca2268a45efbe731a47a5d3ac0f60",
+      "kind": "implemented-baseline",
+      "gitBlob": "3ec2507bab7c58dda1f8467f9137b02bdbd87b50"
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "sha256": "7aeaebd21df15dc0532e5f81c0209b1fad7470548a7a389346e3823944089838",
+      "kind": "implemented-baseline",
+      "gitBlob": "782396466c360cb81cb033ab112f52566ede5f88"
+    },
+    {
+      "path": "android/app/src/main/java/com/remilo/app/MainActivity.kt",
+      "sha256": "80d59a63f19025c6ec8b7a50d932021da2361756171a27390f7e8ed4a0d56fc8",
+      "kind": "implemented-baseline",
+      "gitBlob": "efbcfa08ab02b74ad9646a56befac41190af1b8d"
+    },
+    {
+      "path": "android/app/src/main/java/com/remilo/app/MainApplication.kt",
+      "sha256": "dd7bdb5197e678a3d11d795ff60b984c575de049bbfdcea5a3d3ecac5c4daa64",
+      "kind": "implemented-baseline",
+      "gitBlob": "232d6786e155503cf5551d653465b70efb4410fb"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-hdpi/splashscreen_logo.png",
+      "sha256": "d2294e8b6e26d5c9c025dfe4462d2dd8615359d0a168f5812afcc72387c7d1cd",
+      "kind": "implemented-baseline",
+      "gitBlob": "a2ecb59ba4d63ea705e384031d4d945d0c9f817b"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-mdpi/splashscreen_logo.png",
+      "sha256": "c5ae4dd93a8ec6e5b0303d037dab8bcca179af0ff59b74d8f5edfec11c9f24f5",
+      "kind": "implemented-baseline",
+      "gitBlob": "e84355cc8b355c83c1e8d3dee84c77225baae5d6"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xhdpi/splashscreen_logo.png",
+      "sha256": "21eea3c94cf701b5d3803b8ea29faedbad94ee942c1900d1e50b8ef9dd44e39a",
+      "kind": "implemented-baseline",
+      "gitBlob": "dba31f6280659257f3f1f36452ef8fb3a3fc513d"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xxhdpi/splashscreen_logo.png",
+      "sha256": "80cb3176509bd0513082760e7b670ded6606e76c0eb7823e56da7786c5dad96b",
+      "kind": "implemented-baseline",
+      "gitBlob": "71cce1a0894d99465a532c9adb812efe6501381d"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xxxhdpi/splashscreen_logo.png",
+      "sha256": "78dae9cab163b8dbd9e51ce4cf84e577e0ee5d5e3adff6743c3c4d663f860c2c",
+      "kind": "implemented-baseline",
+      "gitBlob": "183f5670cf1f1bc5786f85d09eaeb83e4b57186f"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_launcher_background.xml",
+      "sha256": "51fca95679d075ddbe2b9fe7ad2efb5ef545c5770a9ad6cafe8bf610c18c67be",
+      "kind": "implemented-baseline",
+      "gitBlob": "883b2a080f3a9981ce0fdc780f34f24ede704236"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_remilo_foreground.xml",
+      "sha256": "c303fd3a45b8f5249b300ba6304930b4acb7611b210243a24f1a77c94ed0728e",
+      "kind": "implemented-baseline",
+      "gitBlob": "d85319961bdc1a85699e93cda968e65ef09d9d3e"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/rn_edit_text_material.xml",
+      "sha256": "738e3aaad53180caba1419a6d5db8465a0742662fe59a4bbaf05f1061cbc3390",
+      "kind": "implemented-baseline",
+      "gitBlob": "5c25e728ea2ce7724bd9ef08c87ce7ee89c77103"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "adc54a10000850fe45539d35dac4da371b824ccca167192802f8d532f4e05a4a",
+      "kind": "implemented-baseline",
+      "gitBlob": "7b2aabb3ab684c232ec6adc9b6153cf8fa983942"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "sha256": "adc54a10000850fe45539d35dac4da371b824ccca167192802f8d532f4e05a4a",
+      "kind": "implemented-baseline",
+      "gitBlob": "7b2aabb3ab684c232ec6adc9b6153cf8fa983942"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.webp",
+      "sha256": "eb0e6dfba59c187235bffbe023e5297f52e19974a74e3aec1cab833b8bdc58d4",
+      "kind": "implemented-baseline",
+      "gitBlob": "f8dc27031f294095562833f5370c2ffe5c74b6de"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_background.webp",
+      "sha256": "6038896c2e1d4e8d1f0628d9d620932d73e9db3fb1bf04ea8c3e67d598925019",
+      "kind": "implemented-baseline",
+      "gitBlob": "29659a20fcfc70e129023704f238b029b0cb5e4c"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.webp",
+      "sha256": "c81c2c3b96417fe3bdee167a2be65193673ba800c70e526162a89582bf56dca5",
+      "kind": "implemented-baseline",
+      "gitBlob": "4ceb984341104589055f5a3c40afed31dbc5a74e"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_monochrome.webp",
+      "sha256": "c81c2c3b96417fe3bdee167a2be65193673ba800c70e526162a89582bf56dca5",
+      "kind": "implemented-baseline",
+      "gitBlob": "4ceb984341104589055f5a3c40afed31dbc5a74e"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp",
+      "sha256": "9ad89e803d848cf745d7f7f75d7d7eb4d962177df4b3a07a739fe6a8d035a85d",
+      "kind": "implemented-baseline",
+      "gitBlob": "2e052d57fa8ca24a3ba828f4836b7d3a66910cd9"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.webp",
+      "sha256": "e084c3dcb17fa5f405f8c4b7285e416fa35da6436d5b3265d1cd3402cf94452a",
+      "kind": "implemented-baseline",
+      "gitBlob": "965e866037d53092c2f3dd715baba00fdad16b62"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_background.webp",
+      "sha256": "f0eb654a4c1f11caaf1003cc4bd31bbca25581c3fc98b2a2a05ebfdb47f7e19b",
+      "kind": "implemented-baseline",
+      "gitBlob": "eb5d0cc52d9183190ffe02258e4f7529bfaa28e8"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.webp",
+      "sha256": "bae7d306165fdc96c1dc42e99d72a98ce8ea1820a5086b256efc7980661ea146",
+      "kind": "implemented-baseline",
+      "gitBlob": "8b067a660cc97ee924d58c05e9b5e039874a59d1"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_monochrome.webp",
+      "sha256": "bae7d306165fdc96c1dc42e99d72a98ce8ea1820a5086b256efc7980661ea146",
+      "kind": "implemented-baseline",
+      "gitBlob": "8b067a660cc97ee924d58c05e9b5e039874a59d1"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp",
+      "sha256": "8439876fa323f5cd99c5e6b135bc4f6a4247d69ed341198088dc13236b313568",
+      "kind": "implemented-baseline",
+      "gitBlob": "433fe0d6b33b75dbc4a98ca38d5e732340d5065a"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.webp",
+      "sha256": "73c62a4f303da55302432edfc133a5b65094bf20a4ba2debfcdffecb0d32bec3",
+      "kind": "implemented-baseline",
+      "gitBlob": "1ecd321126ba967091ca4667d1608c297c6838c6"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_background.webp",
+      "sha256": "9fab5cb7f8242edd510d05a63c785442f1d592283758a2d403016c3fee6ee8b7",
+      "kind": "implemented-baseline",
+      "gitBlob": "0f4ce3a6f98ab2f78649baa29f22507c8e80729f"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.webp",
+      "sha256": "4146ec8d53d7b089eed63669082181b61dc6061799fa8874a150d57692b48153",
+      "kind": "implemented-baseline",
+      "gitBlob": "558cc40406356c040849173db6a663f062a3dde1"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_monochrome.webp",
+      "sha256": "4146ec8d53d7b089eed63669082181b61dc6061799fa8874a150d57692b48153",
+      "kind": "implemented-baseline",
+      "gitBlob": "558cc40406356c040849173db6a663f062a3dde1"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp",
+      "sha256": "30517128b2273799cddd54ef7afe0af0aacc907cd6958068e2053cbc3dc7ede5",
+      "kind": "implemented-baseline",
+      "gitBlob": "09546f0e7a20f6443d73c70d4bd584051603af3b"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp",
+      "sha256": "0dd367aecf4f0ac8681a0245961c906a9d0b6c3d8e4c4402fe54152f49d51a9c",
+      "kind": "implemented-baseline",
+      "gitBlob": "c4963a276e0ec1409061687c8c234da989e9cbdd"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_background.webp",
+      "sha256": "006a59cd7053fc4ee01e2dea6c5dc317a83470cbd19096ad1d42b2a4eb374df0",
+      "kind": "implemented-baseline",
+      "gitBlob": "8688ef983b206a829339a93142a97cb68d0df1b6"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.webp",
+      "sha256": "d6afa6027b493e5e6701c95204c6bbc72f0e6ed41e413b76a29b60f60c672466",
+      "kind": "implemented-baseline",
+      "gitBlob": "fc4d0b3e5555ede5a67d495c811cea25b03d4b38"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_monochrome.webp",
+      "sha256": "d6afa6027b493e5e6701c95204c6bbc72f0e6ed41e413b76a29b60f60c672466",
+      "kind": "implemented-baseline",
+      "gitBlob": "fc4d0b3e5555ede5a67d495c811cea25b03d4b38"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp",
+      "sha256": "5d8e3c2db2b4d670278d6539e20ae44173b55d0a37e3aa647162f118de64631f",
+      "kind": "implemented-baseline",
+      "gitBlob": "cfe917ee812b2790e139a386605418515ec488e0"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp",
+      "sha256": "231d8fd4d6f262fdee7c036f5b54123faf2046513463651850e84ef867a739e8",
+      "kind": "implemented-baseline",
+      "gitBlob": "739c0b779575f9b75fedf40f794276c13a7eaa14"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.webp",
+      "sha256": "0bbdc7df34675620fbfc75239b7773b925faac1f915e6782873e7228cd4b1d54",
+      "kind": "implemented-baseline",
+      "gitBlob": "e2b3a0efef9dcc26cbc8275dcea45d2270c783bd"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp",
+      "sha256": "5ce01a7544531188b7cd954da7c23bce37ff4c9d365aaa00e0ca7afa85f08786",
+      "kind": "implemented-baseline",
+      "gitBlob": "54175bc2ee51c115cd90bef132fd1005beff6676"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_monochrome.webp",
+      "sha256": "5ce01a7544531188b7cd954da7c23bce37ff4c9d365aaa00e0ca7afa85f08786",
+      "kind": "implemented-baseline",
+      "gitBlob": "54175bc2ee51c115cd90bef132fd1005beff6676"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp",
+      "sha256": "17307e6c7dc1f76519c8e6a6fa4e226953530bcaf861a5aff6db95913094051c",
+      "kind": "implemented-baseline",
+      "gitBlob": "5fbaff74ab42cdea56989e6575e8a1233043294a"
+    },
+    {
+      "path": "android/app/src/main/res/values-night/colors.xml",
+      "sha256": "48621946d9750cc0b1c53e02f3a82e6847d9c6df509e25ed519d12e2de64a55e",
+      "kind": "implemented-baseline",
+      "gitBlob": "1ff2ca84e641d520de0d2eb2acc4e466d19d16ac"
+    },
+    {
+      "path": "android/app/src/main/res/values/colors.xml",
+      "sha256": "36a5431a2ce74031852447de86125b98fb22980dcab5b02e4cde2d0b9ee5b488",
+      "kind": "implemented-baseline",
+      "gitBlob": "20601a80cdc091b7404452c2cf921abb64b8702b"
+    },
+    {
+      "path": "android/app/src/main/res/values/strings.xml",
+      "sha256": "e65d1ace122db228fc9e38122ce4a5880bdc13e79bee25dcb3528c3cb395bf85",
+      "kind": "implemented-baseline",
+      "gitBlob": "d5b01991b17374427669da483502054053d0d97a"
+    },
+    {
+      "path": "android/app/src/main/res/values/styles.xml",
+      "sha256": "2f5d90f4abc184af9a5ead8e5bf943244daf4e42e8747977266ccb351cd2a537",
+      "kind": "implemented-baseline",
+      "gitBlob": "1a134df18b8ccf06747d3481b510a0079e1025e2"
+    },
+    {
+      "path": "android/app/src/main/res/xml/backup_rules.xml",
+      "sha256": "f6d969aa0a80920cef533c77a54eac1fe16e7655f544dd8dd18533daebe4bd94",
+      "kind": "implemented-baseline",
+      "gitBlob": "633072e2eab854a3d4a260f58ae032601b0b14e7"
+    },
+    {
+      "path": "android/app/src/main/res/xml/data_extraction_rules.xml",
+      "sha256": "c94123fe10a8cd9769420fffa6afb7167ab5fe5e984fd38f9c2c5b09e4400dfe",
+      "kind": "implemented-baseline",
+      "gitBlob": "69f5b9ec4d7d806d2cb223ed42d6bc87eb434902"
+    },
+    {
+      "path": "app.json",
+      "sha256": "a57e293a1557a3634c350aa1b4a251a51470f4cb349b6744f2fd3c5701ab6cd0",
+      "kind": "implemented-baseline",
+      "gitBlob": "2415ce39cd500c1dc1e8d3b36f13c5d771af253e"
+    },
+    {
+      "path": "assets/brand/remilo-mark.svg",
+      "sha256": "e4f3e009a68f4ebe7166e8b4a36696aad551cf9fda7159370241a60f51683431",
+      "kind": "implemented-baseline",
+      "gitBlob": "687e232b75e320e1e754f66105d626d0cb8ad299"
+    },
+    {
+      "path": "assets/brand/remilo-notification.svg",
+      "sha256": "1154c9278c71814c4ab052dcdaf6b35a9034dad821ccd848b0923cd9a0df1fed",
+      "kind": "implemented-baseline",
+      "gitBlob": "e4b7f6512af854cb9008560951afc18c264c9812"
+    },
+    {
+      "path": "assets/brand/remilo.svg",
+      "sha256": "dac42bcfd06e29989dc766616d9238e38865b02dec842e9750d492280b61feca",
+      "kind": "implemented-baseline",
+      "gitBlob": "4446eda3bb5b9b7ee3c47caab5e3e81bf7922df2"
+    },
+    {
+      "path": "assets/images/android-icon-background.png",
+      "sha256": "995a3ce1e855e1ba45c6dd529ca11aaf3f347a7be15bd94ae7dc3b58ce8cfe0d",
+      "kind": "implemented-baseline",
+      "gitBlob": "98b3b6a24b12b25f6dfd7e741bc297d8eca0d698"
+    },
+    {
+      "path": "assets/images/android-icon-foreground.png",
+      "sha256": "2fd94c84a6e2c8ab624ce924c17a1b07ae6f27751879bcf0e7746dac53219837",
+      "kind": "implemented-baseline",
+      "gitBlob": "48ffc5ee4cfd09afa9d15de9cb4e2b88b57b658d"
+    },
+    {
+      "path": "assets/images/android-icon-monochrome.png",
+      "sha256": "2fd94c84a6e2c8ab624ce924c17a1b07ae6f27751879bcf0e7746dac53219837",
+      "kind": "implemented-baseline",
+      "gitBlob": "48ffc5ee4cfd09afa9d15de9cb4e2b88b57b658d"
+    },
+    {
+      "path": "assets/images/expo-badge-white.png",
+      "sha256": "d9ba28c5e93aea3c2dabd901ee96fea3bb296ad8e648f6f64706dae11a1a62bd",
+      "kind": "implemented-baseline",
+      "gitBlob": "28630679fd5be26be3eace15c9e3b53dd413617b"
+    },
+    {
+      "path": "assets/images/expo-badge.png",
+      "sha256": "ff353c7efadbd379903923cb604fca11c908cba0d4658cc2bd1f147d98317249",
+      "kind": "implemented-baseline",
+      "gitBlob": "5d5c5bb5cc2d77ec9ce18547d330d5f30540e1a1"
+    },
+    {
+      "path": "assets/images/expo-logo.png",
+      "sha256": "27b060a757a29038c9618586baa0ba3894dbe60d084c6059df497ff429c2d92f",
+      "kind": "implemented-baseline",
+      "gitBlob": "6b1642a0b70cd2c80d81f959ec130e5bad33489b"
+    },
+    {
+      "path": "assets/images/favicon.png",
+      "sha256": "8c53eefda488eae33f3cdc8431225dd3d9836dfda02c027c5915a462fba7a76f",
+      "kind": "implemented-baseline",
+      "gitBlob": "55f2fa2c7d284102c2e51a70b0c10579d01432da"
+    },
+    {
+      "path": "assets/images/icon.png",
+      "sha256": "e2b9e73ecaadd87ab78412b836b9e43b6d2baf3f3d7c4f60f1f22ad22b7c3a3b",
+      "kind": "implemented-baseline",
+      "gitBlob": "51f87cd701a2b2687b3e194bc0a4584f15143648"
+    },
+    {
+      "path": "assets/images/logo-glow.png",
+      "sha256": "bbd98a3f3c12d090f4df6065b7462fcdf6bc266209d002b4ef5fe554c245f66c",
+      "kind": "implemented-baseline",
+      "gitBlob": "edc99be1b65ef9ce1bbc04b88d9c2994d74246fc"
+    },
+    {
+      "path": "assets/images/react-logo.png",
+      "sha256": "224b7636b15e672801579b5b418077cbc2ca42f0146389062364356b0ecb5c5c",
+      "kind": "implemented-baseline",
+      "gitBlob": "9d72a9ffcbb39d89709073e1a7edd8ba414932c1"
+    },
+    {
+      "path": "assets/images/react-logo@2x.png",
+      "sha256": "fa600be9ad2f869c7a8dbaffc78bb15af741123e1319c948f0be51753a153cde",
+      "kind": "implemented-baseline",
+      "gitBlob": "2229b130ad5b73fdef7d59ff544abd4cb2377bef"
+    },
+    {
+      "path": "assets/images/react-logo@3x.png",
+      "sha256": "cd84e02a5d542a3e71b7fa10a685c1b9fb51db4aff92aca6c0da6461ce17be16",
+      "kind": "implemented-baseline",
+      "gitBlob": "a99b2032221d57c88b6c44e7e22d93ddda78e008"
+    },
+    {
+      "path": "assets/images/splash-icon.png",
+      "sha256": "990e73c2814e9f9d932ff0c3ca5c6815ea8a43b2b8a3899850813408fe26def7",
+      "kind": "implemented-baseline",
+      "gitBlob": "dd20948c7608e711aeb9dfcdcea97445d125646d"
+    },
+    {
+      "path": "assets/images/tabIcons/explore.png",
+      "sha256": "e2dea1c2d20929d83e8eebd74818e808b1b72e376d3a1f3a03679fff0255d073",
+      "kind": "implemented-baseline",
+      "gitBlob": "73d8258344a7105d0f371a4eeb25017e9a6d48f3"
+    },
+    {
+      "path": "assets/images/tabIcons/explore@2x.png",
+      "sha256": "1b54913b3a0acc3e1fb72d3b9b79ad04814304b35bbb9d03a533e6130ad6c26a",
+      "kind": "implemented-baseline",
+      "gitBlob": "21b9bd26634ab84d284f737916b14294d4f267b9"
+    },
+    {
+      "path": "assets/images/tabIcons/explore@3x.png",
+      "sha256": "2f3e43801df70ebe83273b90a7d170bacf5ca74a8a8dc5c154a020c2c8b06609",
+      "kind": "implemented-baseline",
+      "gitBlob": "422202d5e195f089679236b712492f760dd7b2a0"
+    },
+    {
+      "path": "assets/images/tabIcons/home.png",
+      "sha256": "3829632ec7d495225395f5da3d0942935d7d055979b174613d1ade82fe420e76",
+      "kind": "implemented-baseline",
+      "gitBlob": "ad5699c4295db84c342833358bbc47c159882f45"
+    },
+    {
+      "path": "assets/images/tabIcons/home@2x.png",
+      "sha256": "21c5a07df9017d97464a0a8256e265288f2fca0741ca651de05e12b32f32f5ab",
+      "kind": "implemented-baseline",
+      "gitBlob": "22a1f2c7442f3ee07b8af0bb511652c7931e4888"
+    },
+    {
+      "path": "assets/images/tabIcons/home@3x.png",
+      "sha256": "fe5b397975e7cb70ae7a122472d174ed12ec2ae106f7b49c968225ad37f8b3b8",
+      "kind": "implemented-baseline",
+      "gitBlob": "f5d1f9a41eef3a1a3581d3c8a9d4b2a2116e6c00"
+    },
+    {
+      "path": "assets/images/tutorial-web.png",
+      "sha256": "e372ec23ad6262e2e0dc2799ce416b495a631a565bcd24f0615d4afc04dac3bd",
+      "kind": "implemented-baseline",
+      "gitBlob": "e4a8c58f7c433af31a0549fbb3f53eb0d528e682"
+    },
+    {
+      "path": "docs/design/approved-time-of-day-realignment.json",
+      "sha256": "265f9d46ab815e25dede4ea896617cda222ed6fde020fd17033a6fcfadb9f662",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "6c9011eab84ddc73065b4678c92ebfea28a04c8c"
+    },
+    {
+      "path": "docs/design/approved-ui-r10-outline-acceptance.json",
+      "sha256": "dbd2c20b8e89b16d0a0b3f436c97622ca934988363645bd7f182b785b87d79dd",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "7baa16156eb11f5d6d99b3486ed5e9a11a1e86fd"
+    },
+    {
+      "path": "docs/design/approved-ui-r3-r4-acceptance.json",
+      "sha256": "743e4c6c13c5aa90cfc9b45107a18bff9b11705705367572bdd47c0326e86b75",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "064feb7e799a044883dd9ade07783a84e284db8a"
+    },
+    {
+      "path": "docs/design/approved-ui-r5-acceptance.json",
+      "sha256": "509ec6938a0015b4cd8c03c85a67233c2c14b4ab505d5de04652c8ea62b9ddad",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "9fd144aa9b5b4b030f7df9d33540ed6bc41d9df6"
+    },
+    {
+      "path": "docs/design/approved-ui-r6-acceptance.json",
+      "sha256": "2cbdec3e261fa76a2206412faea9195318df39d3ca94f1cc59bb393366b1f32e",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "f97f8b1b5116ea619b847ee5dee855942af1b437"
+    },
+    {
+      "path": "docs/design/approved-ui-r6-themed-alarm-acceptance.json",
+      "sha256": "c54fe23680c0238e5ede00c4501f8c7501d7dffd3d72f85dad69f63f071a8b05",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "4ec78c40cd8d19760992ca8e850b94314bc8609a"
+    },
+    {
+      "path": "docs/design/approved-ui-r7-outline-acceptance.json",
+      "sha256": "5658158cd45b70e0af3d7b15a9ffb9ec830e5fdaf35812a116e3ccd9bdc09d71",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "d4216e1bd858a4b52a3e1ca43dbc03958fe2e2cb"
+    },
+    {
+      "path": "docs/design/approved-ui-r8-outline-acceptance.json",
+      "sha256": "ba561053b0ec07b503db084dff3bd76e0a802ae3c334eaa612f98393f3887a3e",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "942698af4b8d36f696aca7dd30c80d0a36a49891"
+    },
+    {
+      "path": "docs/design/r10-data-help-fixtures.json",
+      "sha256": "41411faf8742dd65a94edd38e9571b768304d43c7f40601efbe70f1afdaaedfe",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "4d37497153f95d6d2675de54483c052842bd990b"
+    },
+    {
+      "path": "docs/design/r10-data-help-image-intake.json",
+      "sha256": "bd231ad4601361ce93917c163adb2ea65c2cf82170029a681525f69ab2351e83",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "5a8d21bfeab21bdcf20031feaa679103a9d84148"
+    },
+    {
+      "path": "docs/design/r10-data-help-intake.json",
+      "sha256": "4c1a1f47bb65bb2a202d955cca2004693358baaa57e330fb4eaabd6197eb3cad",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "c8dde2c9af6028fb1121d6f47197bff8f8328805"
+    },
+    {
+      "path": "docs/design/r10-restore-whole-backup-intake.json",
+      "sha256": "14196df6938352e1f0f6a9146c2079ac176b8f3f5234689610c2359f8f580f01",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "68a94f0a73d4d6fd5e129145f64372f2cfc227fe"
+    },
+    {
+      "path": "docs/design/r6-alarm-postpone-fixtures.json",
+      "sha256": "18a2c58e8f74a01c305adca34aac601ef8571ce0e429c529ba3de5fc5bff7d45",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "2bd9d42b1e8309a3e1ad289159046acb1076d60d"
+    },
+    {
+      "path": "docs/design/r6-alarm-postpone-intake.json",
+      "sha256": "1157088573837dd88fb71cc561773d1169db90e6775804d127b4c27a31f05bfa",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "909f2a0bcf5e648218ee0c6ec0546cbeb6ee1cf7"
+    },
+    {
+      "path": "docs/design/r7-lists-repeats-fixtures.json",
+      "sha256": "51a93e5420be23153703938d0c5b9babe6e88663a8560531fa7844bf928e2278",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "f70d7d3ce0411ee6f5d9fbbeec802661f593bf38"
+    },
+    {
+      "path": "docs/design/r7-lists-repeats-image-intake.json",
+      "sha256": "d7b101ef32131528bf1bf1cc12e5ae3575fe86aec667f7cfd0b678f84e0ef55b",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "f1dcdaaffad684d11749a65cfd4c7cf9c1880974"
+    },
+    {
+      "path": "docs/design/r7-lists-repeats-intake.json",
+      "sha256": "37c3d5ff8d4273facd8f31cfa36eb4a7d3e8cb26cf479ca30a12dea3308280a6",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "90434488c5b4fa510ec57078cae17d2ba8498a38"
+    },
+    {
+      "path": "docs/design/r8-settings-appearance-fixtures.json",
+      "sha256": "299a43807f71cbf5e794aea3c9f9213a8f4ef04ab965bad85bacf33d17b2cc22",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "fbfa23448e184736913eb08dd39bee60b974efa9"
+    },
+    {
+      "path": "docs/design/r8-settings-appearance-image-intake.json",
+      "sha256": "6feb8ff4357cf91478087855aa590b635a15791e1973b508bd8535ed61104ab0",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "b62169744966588d8fb47c84164f6dcd312e82ec"
+    },
+    {
+      "path": "docs/design/r8-settings-appearance-intake.json",
+      "sha256": "3d1d296b09c5d97ea44ef65fdb694988fcd7dabb5f99fae722d87182fa9a3c39",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "2bf42fa37074c0bc9d4832aead265e6247aea190"
+    },
+    {
+      "path": "docs/design/r9-completed-trash-activity-fixtures.json",
+      "sha256": "8bfd5caf61a5e52a6aff112e997d857c01ed8909f1d285a9e8e0a535d96c0bfd",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "473ecc27af58601572ca127fd237e592181ffe23"
+    },
+    {
+      "path": "docs/design/r9-completed-trash-activity-intake.json",
+      "sha256": "c74f8b6eaf48f3b290ce94cadb3adad54e4a7e3648d4fea8a42b6d8c460ce504",
+      "kind": "current-decision-or-fixture",
+      "gitBlob": "5640959e1ec79d0a476fdb6e8f6e7c6b6371f8a0"
+    },
+    {
+      "path": "docs/design/references/supplied-classic-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849",
+      "kind": "implemented-baseline",
+      "gitBlob": "6f8f72c32dc960d7025c4439cf628b1e961f6ad1"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/01-settings-data-and-help-sunrise-light.png",
+      "sha256": "9226f827b9e963c99941d92cd7333856d18f2e912f2b521a5a1b6c9a9fac2b43",
+      "kind": "accepted-reference",
+      "gitBlob": "61a7968a6e5634e66e5f7999c440d3322151162f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+      "sha256": "04b86a5ba5ca2b86de5cfd9fbca6f858a509a7ab3b0d15f25640822930509a39",
+      "kind": "accepted-reference",
+      "gitBlob": "32670988fd823500656a6d31f5fa8fd13ace6dbb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/03-restore-before-choosing-a-file-sky-light.png",
+      "sha256": "2fc5e14e291aa2ec7f4993d1fd829ede0126fedc3664406e726cd53dceba24b3",
+      "kind": "accepted-reference",
+      "gitBlob": "65e504a60781c05c7d87bea2f08664f20144b782"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+      "sha256": "be9210fcca626c2147821fde6d25d3d431195a340b72ebc75ec9e75fc212ca44",
+      "kind": "accepted-reference",
+      "gitBlob": "a65a8ba312820711378a81f3bee4669d20ef8e48"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "sha256": "349f5adb3030bb9b4588fcf64f3898ba322c634792f5b275449623b0eb73cdba",
+      "kind": "accepted-reference",
+      "gitBlob": "bf4517b37af46de13648f1739da9eb61232d3758"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/06-restore-reply-unconfirmed-evening-dark.png",
+      "sha256": "b0d0898200b8051d66910fe581f3ab3d242ecd7204f30caa2de616f718dd7ec3",
+      "kind": "accepted-reference",
+      "gitBlob": "407c6d1d102bd0650f924726ff4d12ee996135d1"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/07-diagnostics-operational-snapshot-night-light.png",
+      "sha256": "fced764b64028faa81cf4b3aa0209c961fb96f2f24d585a765d78a2a55ef2ad8",
+      "kind": "accepted-reference",
+      "gitBlob": "d5ad81f9849f0212d4cff0fc721b1bbe6087c332"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+      "sha256": "d11134072f5048063038a12ef4e290a6811730ff5da1ac0ca5516ba54adfe0b8",
+      "kind": "accepted-reference",
+      "gitBlob": "07eebee9205b0f6aa718d65e14401289eb132ebb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/09-invalid-backup-before-an-import-sunrise-light.png",
+      "sha256": "6cbd223a8ae4568c98265963dcad36e53b3f619193682872445eefe93287ffce",
+      "kind": "accepted-reference",
+      "gitBlob": "b579e4b8fc07fc321fb8c99516d8262409f61505"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc",
+      "kind": "accepted-reference",
+      "gitBlob": "b9a498fe63faa0f523ee040b4b9fe64c31bd6ac1"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+      "sha256": "262028a7ac8d68139118c3ad467b038c08a8abe9e0ad2c35166b4c20084e55c4",
+      "kind": "accepted-reference",
+      "gitBlob": "d8a25941e32411ba0dc93016943fac8f0db89889"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/12-export-share-unavailable-evening-dark.png",
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685",
+      "kind": "accepted-reference",
+      "gitBlob": "8da64f58d9c86060c79d93ae08587c257cebe1c2"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454",
+      "kind": "accepted-reference",
+      "gitBlob": "d0bdcd68cb260c18562453d5c0188aca21602c0b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "sha256": "9d9968416d5d72ad949c687d9d7e6755784754783da21e67e7b9abd39b7a686d",
+      "kind": "accepted-reference",
+      "gitBlob": "ac8c8157de9688d9ca13abb50bdeeaff1490cdde"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/README.md",
+      "sha256": "8238ee8145ea1a1bf293b3cda8c403baecdde5bdefb380557ca1e3a5ccc5efa8",
+      "kind": "accepted-reference",
+      "gitBlob": "ae97fd00e28c7c5bedd86e914a31f80436af2563"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/REPOSITORY-LOCATION.md",
+      "sha256": "ae808a4d606498cc3e13c91ee69f6fc5fd6b7cf304c6aa343d3acac532789b0a",
+      "kind": "accepted-reference",
+      "gitBlob": "86de841a16101ecd52b2d73cc8c03b96d77aa634"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/approval-record.json",
+      "sha256": "dbd2c20b8e89b16d0a0b3f436c97622ca934988363645bd7f182b785b87d79dd",
+      "kind": "accepted-reference",
+      "gitBlob": "7baa16156eb11f5d6d99b3486ed5e9a11a1e86fd"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/capture-index.json",
+      "sha256": "0ee6f452cd353e8c620d81809adb229affaa48e61c302186baf2faf8521a2427",
+      "kind": "accepted-reference",
+      "gitBlob": "467fcc6436548cfed84de18cc9273d3dc67e0a0f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/documentation-revision-evidence.md",
+      "sha256": "5dfe071d52ace4130c50e56c8b15e5ae34e674803288dc54da9deb11507c9671",
+      "kind": "accepted-reference",
+      "gitBlob": "2b1ae2116cef404038183e61d53d2463eafd0b5c"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/gallery.css",
+      "sha256": "5d414fa879b19c186ccfc3e505389bcd87bb5948a8fb9f9c2e399044465b7185",
+      "kind": "accepted-reference",
+      "gitBlob": "9562d1a36aa62a209329d82f3697dda29edf93cc"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/gallery.html",
+      "sha256": "92db02349623f36ae85855b9c834f1ae2b65d40897615a62e640ec3c315a43b8",
+      "kind": "accepted-reference",
+      "gitBlob": "a63c7aac20d921df3e26107350c007257629e649"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/gallery.js",
+      "sha256": "a47a5410dd64efa2da364a2dc42322affe8f63e485b4e7af8f8d600b8514e21c",
+      "kind": "accepted-reference",
+      "gitBlob": "6327dee3c32ea8ac3d40f3f20978065a617721b6"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation-intake.json",
+      "sha256": "781c913f8e6facc56ced88f98047ced61585645d6e7453d52536a773206ca3e7",
+      "kind": "accepted-reference",
+      "gitBlob": "e61a91b9ea62ed4a1280b2464f852c09c19da0a8"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation-prompts.md",
+      "sha256": "6b3898fa6264b55f17185cca7c66bf87faaab41fbff271297c69bb6f307dc4ff",
+      "kind": "accepted-reference",
+      "gitBlob": "52e9f5b566b5f7a2507d419594a0582753a6e04f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation-provenance.json",
+      "sha256": "ef36d137d72a378d85010340654bf14cfbffc358b5458ede25a87c287aaa8e68",
+      "kind": "accepted-reference",
+      "gitBlob": "f3220306661c91fbf3cc598d4c6ce3b1cad38204"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/README.md",
+      "sha256": "955ed234a26a6d9cca4498d7fdccdb275f7874f65b68d875fac7b3e96ef5e58a",
+      "kind": "accepted-reference",
+      "gitBlob": "518aaa36839dba0c69ee0b453f9de2c6ac9c8eba"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-05-08.json",
+      "sha256": "f46410fbf3e62425148c6a0427048b685c7e0936ba0c15fb6fe0c1e37142df11",
+      "kind": "accepted-reference",
+      "gitBlob": "26a66e15417852c9dbf0ed201df9cd2f34f83ccd"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-09-14.json",
+      "sha256": "d916e0b8f4b4d56aabc547e931eaeca2bb20272ef37f05c7fd3fd27e5315f509",
+      "kind": "accepted-reference",
+      "gitBlob": "ccdf7a35a365f068d69f0c7674e9f3fbe3964c9e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-05-06-14.json",
+      "sha256": "06e2836230b0c041724ec64798ceea972ae808562c1f05f1c3e4223db5aae7aa",
+      "kind": "accepted-reference",
+      "gitBlob": "9f7ae9768661900285e42e9c98c37c57549f5efb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-r2-root.json",
+      "sha256": "e1ba6f6b86e83acdf36a5a0e2d7789cc87fe80caa2e58378a7332454fa93bc96",
+      "kind": "accepted-reference",
+      "gitBlob": "8817ecc82a8c1ef485ad2c62d00ddc1272d24c48"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/calls-root.json",
+      "sha256": "eaa608ff541649041331e34049b3586ba4766cfc4061a3ebbcab848c15f7f392",
+      "kind": "accepted-reference",
+      "gitBlob": "111f7c6390cd1d17eebdca5644724fb4a301a13f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/candidates/R10-05-call-01.png",
+      "sha256": "d074f5f39640cd25b54cca860c047f7b953baf357257aaef998179a5387b5803",
+      "kind": "accepted-reference",
+      "gitBlob": "5423d9b6dbd04e781861acf318c47d1c5e4f05d8"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/candidates/R10-06-call-01.png",
+      "sha256": "42a60c80fd192a7d87686dd3301a2c3daffdd21b7bab4e6ac3004b8e279af8f3",
+      "kind": "accepted-reference",
+      "gitBlob": "ae94e107a0fd76de78998c4ff085341fce8c95c2"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/candidates/R10-07-call-01.png",
+      "sha256": "de8111e877a2ad6b3f72e2205b1a0af1ab7123be6c12e553aa825fd8adb8a14f",
+      "kind": "accepted-reference",
+      "gitBlob": "da13aad2d2788309da7bd4605f0cbf9de6b2a55f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/candidates/R10-10-call-01.png",
+      "sha256": "d86d63962b528dc06bb6d0ae7a5fc3eae5bf25f119b195ef3ae5cab6df39703e",
+      "kind": "accepted-reference",
+      "gitBlob": "e573f5fe64d556351c6b3bd271d9574d1c79b2a1"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/candidates/R10-12-call-01.png",
+      "sha256": "45af7b083afac56a57b44a46e225a6264ea99f405587b54e159cbc380a579c0c",
+      "kind": "accepted-reference",
+      "gitBlob": "8951981139f54c3555ce31f3de00b8c2b0f96dab"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/candidates/R10-14-call-01.png",
+      "sha256": "a3d76c8d1eb514f28c384232f57a376895920fc68348113f26dd26098bc3bfe4",
+      "kind": "accepted-reference",
+      "gitBlob": "6adcdc845086012d104ec6dee4924f1e5835d87f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/inspect-r2-05-06-14.mjs",
+      "sha256": "8b14c9f62ae2e7f85859c3cbc0bc78fb1cf85818df60ad1683bcb153333c2e26",
+      "kind": "accepted-reference",
+      "gitBlob": "f6303aebb29015d70872f8169ca7ac8888b93efc"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/pending-08.json",
+      "sha256": "1c89d80db14f460e9ae5b36a9892811632089a5257234cd5ca84748db0c66cf2",
+      "kind": "accepted-reference",
+      "gitBlob": "6bd9e569bb10e73813025831e314e9f5f8b63017"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/r2-candidates/R10-05-r2-call-01.png",
+      "sha256": "e023fc1d231e3af63c65476e95326e50d96d80f34d3c13006051f3cb5e8e4f0a",
+      "kind": "accepted-reference",
+      "gitBlob": "347801b37a63be2632ddf3ffe3c550a236e53f0e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/r2-candidates/R10-06-r2-call-01.png",
+      "sha256": "7870afcc720001567993584838a65be97b05e911e32f3a951f06e4d08ef49e0a",
+      "kind": "accepted-reference",
+      "gitBlob": "c79f1b8728f05e6cb21abdeea4e827cbe0ef830e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/generation/shared-style-brief.txt",
+      "sha256": "ad02aff0df232ce7bd16d52cfe503fa8f5772d288b656ad0ffd78b71360726bb",
+      "kind": "accepted-reference",
+      "gitBlob": "189cc2501bb6562f51ad35d9f7af0f7347ecb04e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/01-settings-data-and-help-sunrise-light.png",
+      "sha256": "9226f827b9e963c99941d92cd7333856d18f2e912f2b521a5a1b6c9a9fac2b43",
+      "kind": "accepted-reference",
+      "gitBlob": "61a7968a6e5634e66e5f7999c440d3322151162f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+      "sha256": "04b86a5ba5ca2b86de5cfd9fbca6f858a509a7ab3b0d15f25640822930509a39",
+      "kind": "accepted-reference",
+      "gitBlob": "32670988fd823500656a6d31f5fa8fd13ace6dbb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/03-restore-before-choosing-a-file-sky-light.png",
+      "sha256": "aa305479b7cd7e06fe72f06350e8d8e088ebc1753f66f5463cde1cc85a47347b",
+      "kind": "accepted-reference",
+      "gitBlob": "a4494c19d8d93772a894d9b6d8d5da8c2d001b3f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+      "sha256": "42535939903794636e78ece205ad1c097dc73d08e2e8e9f2502adfcc50eaa117",
+      "kind": "accepted-reference",
+      "gitBlob": "2dabec1be8ec82087dae0bf44115ba5bd9778921"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "sha256": "5ba059bdda490eb1d4c9273ff4095953eef225a9c32cea3203b5a92a8acf2407",
+      "kind": "accepted-reference",
+      "gitBlob": "600142053c8c98984193f0f0e9db31ae171d01de"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/06-restore-reply-unconfirmed-evening-dark.png",
+      "sha256": "d76d86c646f4c00cf7cdc84f46c476fe76ec886aa5313288e7ebeabc0777a1d4",
+      "kind": "accepted-reference",
+      "gitBlob": "726c0164f0f5050aa6225f1f2162ea12ec5a0e77"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/07-diagnostics-operational-snapshot-night-light.png",
+      "sha256": "fced764b64028faa81cf4b3aa0209c961fb96f2f24d585a765d78a2a55ef2ad8",
+      "kind": "accepted-reference",
+      "gitBlob": "d5ad81f9849f0212d4cff0fc721b1bbe6087c332"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+      "sha256": "d11134072f5048063038a12ef4e290a6811730ff5da1ac0ca5516ba54adfe0b8",
+      "kind": "accepted-reference",
+      "gitBlob": "07eebee9205b0f6aa718d65e14401289eb132ebb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/09-invalid-backup-before-an-import-sunrise-light.png",
+      "sha256": "d779b1a6ef14d6a762a84310941971dbd530ec6fff694c6db341c06086cb0edd",
+      "kind": "accepted-reference",
+      "gitBlob": "b249aad389e4149044186561054b6d8f713fa56b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc",
+      "kind": "accepted-reference",
+      "gitBlob": "b9a498fe63faa0f523ee040b4b9fe64c31bd6ac1"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+      "sha256": "6a88732fb07e74e32807f47a3d130c9dfcb924c8434975283889e90b33cfb37a",
+      "kind": "accepted-reference",
+      "gitBlob": "7484edefe1b475e109e3f6b0ddfee02cc51723e0"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/12-export-share-unavailable-evening-dark.png",
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685",
+      "kind": "accepted-reference",
+      "gitBlob": "8da64f58d9c86060c79d93ae08587c257cebe1c2"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454",
+      "kind": "accepted-reference",
+      "gitBlob": "d0bdcd68cb260c18562453d5c0188aca21602c0b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "sha256": "71a7a89938b92b77e3d202a917ba09e9a5d1b6bc50aa809b6151ce34deeffa13",
+      "kind": "accepted-reference",
+      "gitBlob": "b2f118744e770fcc0d03d600d176a3540672d6d6"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/README.md",
+      "sha256": "653ef3e33ec6d89d9639fa568a9d04b687868188ea4b6317b8150c25af1d0762",
+      "kind": "accepted-reference",
+      "gitBlob": "b5f6f0cbff36673419efa0631d88939ad42f2e37"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/capture-index.json",
+      "sha256": "973733c0bdb245a1e0f41eab246dee7726a646899539f80bf78217b1896d243c",
+      "kind": "accepted-reference",
+      "gitBlob": "1ed0825d46c2c15349a49d812ebb2838ba239aec"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/gallery.css",
+      "sha256": "5d414fa879b19c186ccfc3e505389bcd87bb5948a8fb9f9c2e399044465b7185",
+      "kind": "accepted-reference",
+      "gitBlob": "9562d1a36aa62a209329d82f3697dda29edf93cc"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/gallery.html",
+      "sha256": "ad09423660b8aeee2da069dca8d2c59760bd9d3be966655adfad99c5af7f4cbc",
+      "kind": "accepted-reference",
+      "gitBlob": "8ffe7410eec858b5b3c98fba78fbcfdb85c14c42"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/gallery.js",
+      "sha256": "121c20e7b0d3571cd93da27c41b93542b6f1819c8b49bd8f468d50e617e1242d",
+      "kind": "accepted-reference",
+      "gitBlob": "1cf25909ff6d3c93424bf2b1b9fae83d27f2450c"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation-intake.json",
+      "sha256": "e4e901ab1760761cb182f436f1a050eb942ccaeb68c81dc4faf718b6b3baddc3",
+      "kind": "accepted-reference",
+      "gitBlob": "eed841643c2c13dbf99505bad4109efc5091e080"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation-prompts.md",
+      "sha256": "c5b0444eaae07a0f3c028252bcfe3594289546f3bbc3b3b31666ee972fad14a2",
+      "kind": "accepted-reference",
+      "gitBlob": "380aba26f2a211f8e1d6387a5d8e3f397c99d4be"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation-provenance.json",
+      "sha256": "cf699fc51cd957325d5e48adba564ea0a92ced9ac779dd65aa928ecb2127fef0",
+      "kind": "accepted-reference",
+      "gitBlob": "2e146c2a9ba03ea21392911b405967afc1c58136"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/calls-05-08.json",
+      "sha256": "f46410fbf3e62425148c6a0427048b685c7e0936ba0c15fb6fe0c1e37142df11",
+      "kind": "accepted-reference",
+      "gitBlob": "26a66e15417852c9dbf0ed201df9cd2f34f83ccd"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/calls-09-14.json",
+      "sha256": "d916e0b8f4b4d56aabc547e931eaeca2bb20272ef37f05c7fd3fd27e5315f509",
+      "kind": "accepted-reference",
+      "gitBlob": "ccdf7a35a365f068d69f0c7674e9f3fbe3964c9e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/calls-root.json",
+      "sha256": "eaa608ff541649041331e34049b3586ba4766cfc4061a3ebbcab848c15f7f392",
+      "kind": "accepted-reference",
+      "gitBlob": "111f7c6390cd1d17eebdca5644724fb4a301a13f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/candidates/R10-05-call-01.png",
+      "sha256": "d074f5f39640cd25b54cca860c047f7b953baf357257aaef998179a5387b5803",
+      "kind": "accepted-reference",
+      "gitBlob": "5423d9b6dbd04e781861acf318c47d1c5e4f05d8"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/candidates/R10-06-call-01.png",
+      "sha256": "42a60c80fd192a7d87686dd3301a2c3daffdd21b7bab4e6ac3004b8e279af8f3",
+      "kind": "accepted-reference",
+      "gitBlob": "ae94e107a0fd76de78998c4ff085341fce8c95c2"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/candidates/R10-07-call-01.png",
+      "sha256": "de8111e877a2ad6b3f72e2205b1a0af1ab7123be6c12e553aa825fd8adb8a14f",
+      "kind": "accepted-reference",
+      "gitBlob": "da13aad2d2788309da7bd4605f0cbf9de6b2a55f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/candidates/R10-10-call-01.png",
+      "sha256": "d86d63962b528dc06bb6d0ae7a5fc3eae5bf25f119b195ef3ae5cab6df39703e",
+      "kind": "accepted-reference",
+      "gitBlob": "e573f5fe64d556351c6b3bd271d9574d1c79b2a1"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/candidates/R10-12-call-01.png",
+      "sha256": "45af7b083afac56a57b44a46e225a6264ea99f405587b54e159cbc380a579c0c",
+      "kind": "accepted-reference",
+      "gitBlob": "8951981139f54c3555ce31f3de00b8c2b0f96dab"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/candidates/R10-14-call-01.png",
+      "sha256": "a3d76c8d1eb514f28c384232f57a376895920fc68348113f26dd26098bc3bfe4",
+      "kind": "accepted-reference",
+      "gitBlob": "6adcdc845086012d104ec6dee4924f1e5835d87f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/pending-08.json",
+      "sha256": "1c89d80db14f460e9ae5b36a9892811632089a5257234cd5ca84748db0c66cf2",
+      "kind": "accepted-reference",
+      "gitBlob": "6bd9e569bb10e73813025831e314e9f5f8b63017"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/generation/shared-style-brief.txt",
+      "sha256": "ad02aff0df232ce7bd16d52cfe503fa8f5772d288b656ad0ffd78b71360726bb",
+      "kind": "accepted-reference",
+      "gitBlob": "189cc2501bb6562f51ad35d9f7af0f7347ecb04e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/images.json",
+      "sha256": "fb3603390f7f99ddeba89ea9586fe297b39d98505023c2a3ebbb9a390af9867b",
+      "kind": "accepted-reference",
+      "gitBlob": "3215000ebdf04c05664ffb55e3bbb119410f5927"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/01-settings-overview-sunrise-light.png",
+      "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710",
+      "kind": "accepted-reference",
+      "gitBlob": "7832a9476aa668efd2329bbfc4caca363fa11d21"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129",
+      "kind": "accepted-reference",
+      "gitBlob": "13705e308be983a8877f79ad05534ea2255d8eab"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a",
+      "kind": "accepted-reference",
+      "gitBlob": "f581ba4ce08c1d13a60985013fddd793dde36609"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03",
+      "kind": "accepted-reference",
+      "gitBlob": "6db76864ac3aa1f482d0ff752d7ac4151bdd8ecb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5",
+      "kind": "accepted-reference",
+      "gitBlob": "16fd6d4d3d1814c4d944d57836d6a5375e32b9cf"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae",
+      "kind": "accepted-reference",
+      "gitBlob": "57b5d61b7d5e10d22d3acedb2ade1a5eaf709479"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/05-sound-preview-fallback-evening-light.png",
+      "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e",
+      "kind": "accepted-reference",
+      "gitBlob": "b8bac3ad1899328a7e8041327feacafadba25d5b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765",
+      "kind": "accepted-reference",
+      "gitBlob": "f5f6bce3a1aff3f58ab84e697fab448391271982"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad",
+      "kind": "accepted-reference",
+      "gitBlob": "2319aa3259854633019eb3dc6e2d66d4c61a6e7a"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055",
+      "kind": "accepted-reference",
+      "gitBlob": "229ea31926e274f6e0efb99fd9cc03e67473b99b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/08-permissions-refresh-failure-night-dark.png",
+      "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a",
+      "kind": "accepted-reference",
+      "gitBlob": "8b1f3f460a88654053988485189514fdcdb70402"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/references/13-test-saved-with-pending-scheduling-evening-dark.png",
+      "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68",
+      "kind": "accepted-reference",
+      "gitBlob": "7bb81aecf948bbe58ac3a7446e4ea9b981bb5e9a"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/review-notes.json",
+      "sha256": "d548bb5721c299d0c716edfb34f8af3e1867770483a10507a48713a2048b17b0",
+      "kind": "accepted-reference",
+      "gitBlob": "5c4afd9957109b66500485a98bab86df99d8fa3b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/review-notes.md",
+      "sha256": "72f6c50ffcc2654005219a0dc813a1827cff0ebe6fd9484062dd0cbd6a374582",
+      "kind": "accepted-reference",
+      "gitBlob": "6978da6beb384fb8c4c0ef38df30736ecb37ba2e"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/submission-fixtures-r1.json",
+      "sha256": "739b87240c546796ec899a597a0f43b5e6d1731f5c82fb66f8c11a3adb52ccdc",
+      "kind": "accepted-reference",
+      "gitBlob": "e98aae21fb9a1a4e1228e8346a26519205b8f20f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/submission-specification-r1.md",
+      "sha256": "e0767e594ed67d548471d0490107299bc6c43e25ecd8102a98f89b8814469ac9",
+      "kind": "accepted-reference",
+      "gitBlob": "7c92fabba5f17f333a548c51bbc1bcfe4992729f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/history/r1/validation-report.json",
+      "sha256": "096d1d19a5036bf707bdb6fd07f4b93983fcd01317ce820a9a5550c5d55a89b1",
+      "kind": "accepted-reference",
+      "gitBlob": "cbd9bc0bed29db2ae493e38a028740f12e86db93"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/images.json",
+      "sha256": "b22ef0eebebffd7e7b747e31b038d987622ed35563256a2346e7b62d3c85e10c",
+      "kind": "accepted-reference",
+      "gitBlob": "0c73561b3357f11fc390c9a901c979c46ac9201f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/01-settings-overview-sunrise-light.png",
+      "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710",
+      "kind": "accepted-reference",
+      "gitBlob": "7832a9476aa668efd2329bbfc4caca363fa11d21"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129",
+      "kind": "accepted-reference",
+      "gitBlob": "13705e308be983a8877f79ad05534ea2255d8eab"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a",
+      "kind": "accepted-reference",
+      "gitBlob": "f581ba4ce08c1d13a60985013fddd793dde36609"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03",
+      "kind": "accepted-reference",
+      "gitBlob": "6db76864ac3aa1f482d0ff752d7ac4151bdd8ecb"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5",
+      "kind": "accepted-reference",
+      "gitBlob": "16fd6d4d3d1814c4d944d57836d6a5375e32b9cf"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae",
+      "kind": "accepted-reference",
+      "gitBlob": "57b5d61b7d5e10d22d3acedb2ade1a5eaf709479"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/05-sound-preview-fallback-evening-light.png",
+      "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e",
+      "kind": "accepted-reference",
+      "gitBlob": "b8bac3ad1899328a7e8041327feacafadba25d5b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765",
+      "kind": "accepted-reference",
+      "gitBlob": "f5f6bce3a1aff3f58ab84e697fab448391271982"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad",
+      "kind": "accepted-reference",
+      "gitBlob": "2319aa3259854633019eb3dc6e2d66d4c61a6e7a"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055",
+      "kind": "accepted-reference",
+      "gitBlob": "229ea31926e274f6e0efb99fd9cc03e67473b99b"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/08-permissions-refresh-failure-night-dark.png",
+      "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a",
+      "kind": "accepted-reference",
+      "gitBlob": "8b1f3f460a88654053988485189514fdcdb70402"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/references/13-test-saved-with-pending-scheduling-evening-dark.png",
+      "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68",
+      "kind": "accepted-reference",
+      "gitBlob": "7bb81aecf948bbe58ac3a7446e4ea9b981bb5e9a"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/relocation-manifest.json",
+      "sha256": "3ae85bad74bdbf956fa8d954c0682ca34cdc4328941c4ace11e7eb80f128884e",
+      "kind": "accepted-reference",
+      "gitBlob": "028543a2a6e69615ab6aedd92ca8e7bfdfddc405"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/restore-whole-backup-agreement.json",
+      "sha256": "14196df6938352e1f0f6a9146c2079ac176b8f3f5234689610c2359f8f580f01",
+      "kind": "accepted-reference",
+      "gitBlob": "68a94f0a73d4d6fd5e129145f64372f2cfc227fe"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/review-notes.json",
+      "sha256": "7183ea0c107ada359f66ddb68ce0bf34f424cd0356e6e0e3b8373d03ec7b90ec",
+      "kind": "accepted-reference",
+      "gitBlob": "c97f62b6eb90b911c795d8067a1ffe44b5feb5a2"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/review-notes.md",
+      "sha256": "a1b309406dc1bf27e4702decd2d36fa5d61dfc7f8fbfdaa9fa48ce0c7c586575",
+      "kind": "accepted-reference",
+      "gitBlob": "4bac85bb92cf4bb34097c06f0e59b1e762ab9f04"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/submission-fixtures-r1.json",
+      "sha256": "739b87240c546796ec899a597a0f43b5e6d1731f5c82fb66f8c11a3adb52ccdc",
+      "kind": "accepted-reference",
+      "gitBlob": "e98aae21fb9a1a4e1228e8346a26519205b8f20f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/submission-fixtures-r2.json",
+      "sha256": "4d276bbce66441f025a410e5ba138eb71b6fd39174ebc179421a65772eed7c49",
+      "kind": "accepted-reference",
+      "gitBlob": "8ed752a84bfbb77b446d780f5ce0976482c48212"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/submission-specification-r1.md",
+      "sha256": "e0767e594ed67d548471d0490107299bc6c43e25ecd8102a98f89b8814469ac9",
+      "kind": "accepted-reference",
+      "gitBlob": "7c92fabba5f17f333a548c51bbc1bcfe4992729f"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/submission-specification-r2.md",
+      "sha256": "d31e19a6facb73a0922fc3373c2707aa0017d0e993a9e4d0ea73360202ee8c4f",
+      "kind": "accepted-reference",
+      "gitBlob": "2c12bdb3e9ffad9e277cfd44a95f5b38c240cdc2"
+    },
+    {
+      "path": "docs/design/remilo-r10-data-help/validation-report.json",
+      "sha256": "27a3e377669f9334e0022932c365c60c02a4a0f898d60cb9e10528ffc8b9545a",
+      "kind": "accepted-reference",
+      "gitBlob": "4556072b361c2513d0114b1c24847e574850b757"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129",
+      "kind": "accepted-reference",
+      "gitBlob": "13705e308be983a8877f79ad05534ea2255d8eab"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a",
+      "kind": "accepted-reference",
+      "gitBlob": "f581ba4ce08c1d13a60985013fddd793dde36609"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03",
+      "kind": "accepted-reference",
+      "gitBlob": "6db76864ac3aa1f482d0ff752d7ac4151bdd8ecb"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5",
+      "kind": "accepted-reference",
+      "gitBlob": "16fd6d4d3d1814c4d944d57836d6a5375e32b9cf"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae",
+      "kind": "accepted-reference",
+      "gitBlob": "57b5d61b7d5e10d22d3acedb2ade1a5eaf709479"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765",
+      "kind": "accepted-reference",
+      "gitBlob": "f5f6bce3a1aff3f58ab84e697fab448391271982"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad",
+      "kind": "accepted-reference",
+      "gitBlob": "2319aa3259854633019eb3dc6e2d66d4c61a6e7a"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055",
+      "kind": "accepted-reference",
+      "gitBlob": "229ea31926e274f6e0efb99fd9cc03e67473b99b"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/README.md",
+      "sha256": "01dcd94de9270b24e043419821ed1b456120f18a03f5afc9ccd8010d657a3a22",
+      "kind": "accepted-reference",
+      "gitBlob": "a478d642418269a0360bad50b5c3f09fddbff491"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/gallery.html",
+      "sha256": "9c22055be33f9dec280b1320acf520a62cae3d0eeba719417c32e3d7e2a16cab",
+      "kind": "accepted-reference",
+      "gitBlob": "02147f1f4c3481d8be1b35bbffc7d0e102873c8e"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/images.json",
+      "sha256": "99a1b9c43d2e598cebe1bd643106727bc8a44d8fb5be3d6cf234b475c13f0e3e",
+      "kind": "accepted-reference",
+      "gitBlob": "f1cdadd5caf38783ac38129f8482c4e0793fb803"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/manifest.json",
+      "sha256": "04e9b4d034d5a907bd4bb78233d76e446c9409c593a647705b96c1e96bfb5626",
+      "kind": "accepted-reference",
+      "gitBlob": "6af8f8e8c1f44884dcfd95da2cf0da950c069123"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/01-details-ordinary-light.png",
+      "sha256": "2a2f00a57230cb736d32521b51113b1d4e508d89459ed969b49a4bf4f84d5552",
+      "kind": "accepted-reference",
+      "gitBlob": "647193df372d3348a8e41ea8d455d1c0f9a28aef"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/02-details-overdue-dark.png",
+      "sha256": "32a1c37ebacedc4f771dd2308bd6b5d998de1a3c66ac4ae9e6e887ea450421d5",
+      "kind": "accepted-reference",
+      "gitBlob": "ea18a6543f81b343e43e7a5bee4d55abb951b39b"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/03-create-keyboard-light.png",
+      "sha256": "97904ab3f399e0a4f77b2f8cf7064e6e1bfa89797073bc15f5ce15b5cc87da76",
+      "kind": "accepted-reference",
+      "gitBlob": "76fd29aa73b921f8394428e775b6bf0059f2cd04"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/04-edit-independent-dark.png",
+      "sha256": "6f0eb078fd4f94742ef57364a046403dfafe4b25a565c0192963dc1e7cc57c29",
+      "kind": "accepted-reference",
+      "gitBlob": "84247a8007df06ed415e7a3a241dd4fdbaa29dab"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/README.md",
+      "sha256": "d83b502b36dee489d94eb7174f4976002c54e1c14d631d8deb7dee7459dd0575",
+      "kind": "accepted-reference",
+      "gitBlob": "4bda64a889acee7a6a8ec843f16d06feb0740bea"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/gallery.html",
+      "sha256": "a8afa395956a32070fb898f961d56e94c3679a62a357d2eb9d986111f4c89128",
+      "kind": "accepted-reference",
+      "gitBlob": "829309f2652cca5510b822c7c6c9fb53193fe544"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/images.json",
+      "sha256": "7a65d3c8b4d329b05cab12f12fba2b6a3a86024dc367aad6f3b338259211556e",
+      "kind": "accepted-reference",
+      "gitBlob": "d54b59cf657d2eaa4579554954acbf635a34ba94"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/manifest.json",
+      "sha256": "8f583a70626043a7abd7aaf1a50a76b69441ff7978b6d3680c7aa82f06d0ecc7",
+      "kind": "accepted-reference",
+      "gitBlob": "c9b3888c46709cb5d123b39a8cfe773084a86074"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/review-notes.json",
+      "sha256": "c0783ef25cf4fe3c9392234a6c4316844c6ea08adba7344602f7cd86357e34f6",
+      "kind": "accepted-reference",
+      "gitBlob": "f9c1ce2d2e6abcc1ef2624fe62b95f98092b0248"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/01-sky-ordinary-details.png",
+      "sha256": "064147380c9c09d29948107982c978ca7f9049a72c52f7fb4286f50c49bb3658",
+      "kind": "accepted-reference",
+      "gitBlob": "bdca4917791f8e5cd7fbdc8114830812167820fa"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/02-sky-overdue-details.png",
+      "sha256": "e6a3a947f9812e1c15587af178ae1428326049ad3e7145ea4bbba153ead11c3d",
+      "kind": "accepted-reference",
+      "gitBlob": "a71beba2e5e66a2c2036128393fb4721a65c93f1"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/03-sky-create-keyboard.png",
+      "sha256": "dc1caab6b95815c4e0f64938ea96073e682d7aaf98f183da072b3cc9cbe1cee0",
+      "kind": "accepted-reference",
+      "gitBlob": "a03a3cec9fe2bf2dec63a81caa630a67c45f1aa2"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/04-sky-edit-independent.png",
+      "sha256": "e8303f4a9e76addb473cec84135a58955f1ef31442cf5041ffd3e4dabf240095",
+      "kind": "accepted-reference",
+      "gitBlob": "fddd841e33314e43c82e14be173be4cc8cb39fbf"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/05-evening-ordinary-details.png",
+      "sha256": "85116c5d763056e9bdbe22a521b3b992d55ee0d59319666d352454fd859991c8",
+      "kind": "accepted-reference",
+      "gitBlob": "0eceb258121f1071987f8da7d36c648d60b3961a"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/06-evening-overdue-details.png",
+      "sha256": "d4f25780cc99de234ed7c91f2ec2dd2bdf3dc471112b91f65ba997febfd32004",
+      "kind": "accepted-reference",
+      "gitBlob": "a1978c69de4bc2bdf4ea32c566b4d76c890fdb44"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/07-evening-create-keyboard.png",
+      "sha256": "aeb646f2923c62e6dce055d8764ea83bec225e9237c9c11142da5071f5285c0b",
+      "kind": "accepted-reference",
+      "gitBlob": "114ddf029fb3d4080a47753d6300afb5583f600a"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/08-evening-edit-independent.png",
+      "sha256": "77c787f571321ca2f2c290916b778c05f749052d62ff4f1ae476ad55fb128b76",
+      "kind": "accepted-reference",
+      "gitBlob": "20e930ba10760f35ad6ba3ed8462c218b559f7b7"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/README.md",
+      "sha256": "5a6a6e1e43ac58d8a1b6167f9d7f464611814e67441246534c21630cf576af21",
+      "kind": "accepted-reference",
+      "gitBlob": "b37c5a6e9fcf85042dcc877c4bad30cc36a4628b"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/gallery.html",
+      "sha256": "b9b1ead54a2b9ba973de0b1cd53ee9d1bc48cd3e779ad9a11504d01242910fc8",
+      "kind": "accepted-reference",
+      "gitBlob": "df62adac97a67690d072276836d598c476d4840a"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/images.json",
+      "sha256": "e89823e22f114c9a054e2e9ccc7d3ea42e3449b517f0b9d469955006a64d3e33",
+      "kind": "accepted-reference",
+      "gitBlob": "a3ca75b1fed90c56837368c3cd6a8f46f0215c1b"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/manifest.json",
+      "sha256": "74ed7d17da0f9ef0943b98c0dbb4dbe5de30a216dc74eb6df68d5238a9dce1c2",
+      "kind": "accepted-reference",
+      "gitBlob": "717529f7c8f169cfb0d1b75088cd4d53fed5085b"
+    },
+    {
+      "path": "docs/design/remilo-r5-sky-evening-details-editor/review-notes.json",
+      "sha256": "88eabbb19c4424c1156eead3fbd1ea4f3486c215be47e0c4fba0974fa3d4ee00",
+      "kind": "accepted-reference",
+      "gitBlob": "c869293df376d65804a25f24a2122cd7ba6f1d79"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/01-single-alarm-sky-light.png",
+      "sha256": "68fb8dd1832f7ffa12cb84d4886241d430d9815e8bfdf284b0d5c77e13dfb048",
+      "kind": "accepted-reference",
+      "gitBlob": "e9d554775413982386e15379ae1aac98207297ff"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/02-multiple-alarms-night-dark.png",
+      "sha256": "c886415d46ed98df33baf91cf7e19ad4aea77299505fdda138f715f42f56e21d",
+      "kind": "accepted-reference",
+      "gitBlob": "9f55db1f6f0a563e0026504e376c13b739e2a77a"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/03-refresh-failure-evening-dark.png",
+      "sha256": "8f67f429f2b57da189d751345c1840b0f4bd51cced849512eb11fd8e28ebe6d7",
+      "kind": "accepted-reference",
+      "gitBlob": "e67537b8c2205d98dcddf3851d1daf5e22e80b7f"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/05-postpone-shortcuts-sky-light.png",
+      "sha256": "d65e31315d87940c90b014f297671ddfad431479079c51f8a005aa6637fbae92",
+      "kind": "accepted-reference",
+      "gitBlob": "053b8d2423c32fbd8a7c24ef4cfc0dc197d8dec1"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/06-postpone-custom-evening-dark.png",
+      "sha256": "f6abd7724cd4e8b3776a7b5cb11372472271cdeb7edcdae72663b0ed5e226297",
+      "kind": "accepted-reference",
+      "gitBlob": "fab2c326151f770a5c128f7e62a41bb8d4ac075d"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/07-postpone-past-time-sky-light.png",
+      "sha256": "0913708ac71f3636eaafcb759827d251ad313cf0153b45fac3760d59666eb0a4",
+      "kind": "accepted-reference",
+      "gitBlob": "f9468134010d3d1b61d42aec3b75ebfc0afa60d4"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/08-postpone-saved-blocked-night-dark.png",
+      "sha256": "5bcabb2fe7a08c7e58f08df779e8459bd8e9095251c45be974c05b9926725e89",
+      "kind": "accepted-reference",
+      "gitBlob": "5f8896a0089a2f7f6fc94c991f709bb7ae39caa6"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/README.md",
+      "sha256": "7e223adb21fadcac8170b650200140b84e6ca17617447b1fa848bb7bc80378e6",
+      "kind": "accepted-reference",
+      "gitBlob": "0269bea3c7ffc201cd72e8d12d02b3160201950f"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/gallery.css",
+      "sha256": "2deae12c2a89be45e2ef455403e9d76ffc63343db5078e5f00695f6ec1f3a745",
+      "kind": "accepted-reference",
+      "gitBlob": "29973653878c0edb0f6d739bfdf30e6d6d5a95fa"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/gallery.html",
+      "sha256": "7ea8d3494ec5baebcb2c6511578d4ad44c421c29db2f16028d6048329db4f95d",
+      "kind": "accepted-reference",
+      "gitBlob": "95020934f4b0cd581022b11c26efdca03cd43229"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/gallery.js",
+      "sha256": "a0b9026cb2e003beac4e6fa7a0d7549eb6a48b10dca1d19df97ab698e4628255",
+      "kind": "accepted-reference",
+      "gitBlob": "5b248b6f43511fdab38e5d4d86b1bacc8a8f0555"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/images.json",
+      "sha256": "88bdbb2181cbd452bea693acfc7b0f654b4c0f531375615c473774b77649fa70",
+      "kind": "accepted-reference",
+      "gitBlob": "99e4f9eeb2785c221612cd33d05b45bf53443f9d"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/manifest.json",
+      "sha256": "11c678ff14cb78d718fb50d06b5ad1f296423f96d68fb20f1baabefb73fabe19",
+      "kind": "accepted-reference",
+      "gitBlob": "d2e94555a1e7e146e9e22c9f421773741b98bd88"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/rejected/04-generic-pre-unlock-dark.png",
+      "sha256": "4a7d4a12e6648d9706f23f4650ea37f5112e3e8ab2a95dfc2b85ef28d0e0a411",
+      "kind": "accepted-reference",
+      "gitBlob": "82365b43b97b9f0df260cacb9d670ed62c99b9b3"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/review-notes.json",
+      "sha256": "3bb1e8bc16e741a137053c9f74781194cc19e32ca2323268efbfac785c5b4bbd",
+      "kind": "accepted-reference",
+      "gitBlob": "54761659754f222d091247c5be57cfc6b2df5b26"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/submission-fixtures-r1.json",
+      "sha256": "77b8abc565693f615bf9426b83598e184706954841a4cdea9e27fd53f889bf1b",
+      "kind": "accepted-reference",
+      "gitBlob": "07d284081ee4810b643730a37b91346f53189f48"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/01-sunrise-dark.png",
+      "sha256": "ef283858acdba743163344993997a381d4e46a2992f5158fffda92fd0693673c",
+      "kind": "accepted-reference",
+      "gitBlob": "a696d7c2e6d8d814b0b6d5b3a8b819a8d5fb2dd2"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/02-sky-dark.png",
+      "sha256": "a33061c1ca6c6187ae3a0e09115b479dc297874ca4d99b6479fb3a2e540052bc",
+      "kind": "accepted-reference",
+      "gitBlob": "9cefffd93d415cde8dac0a72a775b9641f9485bf"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/03-evening-dark.png",
+      "sha256": "aff2e9f80e6e008da5a11a750f3609fae5079786954458a2e4b820d628b7f6c8",
+      "kind": "accepted-reference",
+      "gitBlob": "0d8439bc4dd8ba0a5724c53b8b28d03dfb7cea10"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/04-night-dark.png",
+      "sha256": "5ac388158f27e4d4f7d30dc758f17c947ec988e8cda5343d1d3e00020471eafa",
+      "kind": "accepted-reference",
+      "gitBlob": "7776495dd73cb785910f41b2e3e0f3df7cfc052e"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/README.md",
+      "sha256": "5c0e9a3b14cfa1f443e08165e982d75e152b948e7169ccced6e566c24c1c1146",
+      "kind": "accepted-reference",
+      "gitBlob": "d6153c0631f1318259e282948258e5772ef3bae1"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/gallery.css",
+      "sha256": "4d7574fd1def4380f1f54a7e8399684b423c5070ee65cac76c045a9d7f26cb8d",
+      "kind": "accepted-reference",
+      "gitBlob": "29973653878c0edb0f6d739bfdf30e6d6d5a95fa"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/gallery.html",
+      "sha256": "1bacb0e3e126bc903494a8448f3f37e7da67ac97474cb7dd274693af7a395d38",
+      "kind": "accepted-reference",
+      "gitBlob": "55abeae43e2d27f02945e7cd58b6d822303e6384"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/gallery.js",
+      "sha256": "75f35d88e5637c4872890c35d7963c0427ef36567a9f12486e1452adccaeed52",
+      "kind": "accepted-reference",
+      "gitBlob": "3cb991f9b82693bc28e52ce29939fc813bd97b00"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/images.json",
+      "sha256": "9b5db1c5b76919837b16d663bd0e0654cc10274f8c74e3ecdcc88f87504f53d7",
+      "kind": "accepted-reference",
+      "gitBlob": "6a97569228ea7fde7744552098319c5c2b99b5e2"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/manifest.json",
+      "sha256": "8a77d99fdab0ea9099a40ed836a5d4032a13b8385af8a9c11124d18ff40d33f9",
+      "kind": "accepted-reference",
+      "gitBlob": "fc98b25b06f8f35004689fe83fb65d0cb6dd0701"
+    },
+    {
+      "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/review-notes.json",
+      "sha256": "c5dd7ab7a2f95071c714cdda56ac2657e241f04ff6a8fadc9b06c29a69b9b7d2",
+      "kind": "accepted-reference",
+      "gitBlob": "a596cf8aa755815965cf32348620c4fd3d7e7a46"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/01-lists-sunrise-light.png",
+      "sha256": "10c7b5ac94ebe3fc3b290dc7bb4de8aee042651460fc9bb3c6abdf22fc7bce97",
+      "kind": "accepted-reference",
+      "gitBlob": "0c17545c26dec6948a005e6653691ed03f0c75be"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/02-create-list-error-sunrise-dark.png",
+      "sha256": "d0e5cc922dcf629eff173089d97bf37e588a97cc8931d72078086844f15f121d",
+      "kind": "accepted-reference",
+      "gitBlob": "46143390d821277f90d2ed4ea5202c1f796e140e"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/03-work-agenda-sky-light.png",
+      "sha256": "177669fce02cc79720e64820ecb4c848bf728fb49bf987e4720fdd269216a708",
+      "kind": "accepted-reference",
+      "gitBlob": "c1ef19be8f0ada496cfc142b75fa2675634aa134"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/04-remove-list-sky-dark.png",
+      "sha256": "fef07fc9d4225d7ae2a13c8f5bb733ea3fa2d78b5fbd0d3f93bac7587824a7d9",
+      "kind": "accepted-reference",
+      "gitBlob": "0acbccd054d9facfa71228f02c2bf6bcd93586d5"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/05-empty-list-evening-light.png",
+      "sha256": "c0116cab69351e28d79c9d02a22c3ffbf5282f132fb7375109cd0c457b67ffca",
+      "kind": "accepted-reference",
+      "gitBlob": "2ce52938242f9001fb7f6fbc87d0d6ed35b144cf"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/06-repeats-evening-dark.png",
+      "sha256": "c47ef57271cf56b1b87148ac152d4ef087c8ac216497d2bb05bd1a29513368a8",
+      "kind": "accepted-reference",
+      "gitBlob": "6a9f2f1d688959a96cc6c054133ebcf666d1cac8"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/07-active-family-night-light.png",
+      "sha256": "8910a93ddf1a628eeff3e944a233d5f6942d9cc4d56bb4212b7ec13c4868b701",
+      "kind": "accepted-reference",
+      "gitBlob": "126a7ea5691c8f71cbb69abbb0853df236c66411"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/08-paused-family-night-dark.png",
+      "sha256": "8f7519b8ceb170c9b84f386f7a49148a60e7ba640e39f4cfbd4f1f6a3d4cba0e",
+      "kind": "accepted-reference",
+      "gitBlob": "5c225dc02ac56a79583d0d80fa8ed7f236c12123"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/09-ended-family-sunrise-light.png",
+      "sha256": "934aec27b4e6f0ab3f0eb6d3eaf11a84d0b6cb567de081014efb9bd3af89770e",
+      "kind": "accepted-reference",
+      "gitBlob": "5017cb635b14929c34fdada82a0627d9dfd47417"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/10-edit-scope-sky-dark.png",
+      "sha256": "5cec96e81334c601b3ca77432aa4208d42f231234f42e7818a214e332819cb0d",
+      "kind": "accepted-reference",
+      "gitBlob": "782c5d4975d91d5737b956da33a4019a8bd5c165"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/11-custom-repeat-evening-light.png",
+      "sha256": "9b64b9432da969df561c74084d412f6c79aefbb193d1ccc5d987eda60d55ff47",
+      "kind": "accepted-reference",
+      "gitBlob": "b4fb4a74c7a53d1845fa621a09a968bd27780bb9"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/12-repeat-error-keyboard-night-dark.png",
+      "sha256": "68ddf27bc340896fb06d464220e33413098ab0da45ef8a9c1e090825499bbc18",
+      "kind": "accepted-reference",
+      "gitBlob": "fa9d18b3cf4cc56e95139bafb2fbd3b8fd3e8cb3"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/README.md",
+      "sha256": "046555442fad8ec3abdd2bddbe2b5eadaa5351a1d3c60e6a32e1cddda1d49b32",
+      "kind": "accepted-reference",
+      "gitBlob": "ab195456b2a8fe51869d8252f44da5be38814fef"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/gallery.css",
+      "sha256": "401e941bb780e9330ff062a013e90d80f48797e12fa98b2a51b88a48c1affb7c",
+      "kind": "accepted-reference",
+      "gitBlob": "a4275af6c9e5564b0c6b24e92d672852be4d7482"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/gallery.html",
+      "sha256": "9f77481372a967330e008085f7be9080aecbbe69c22e2bf12d91e9a0749e7bd5",
+      "kind": "accepted-reference",
+      "gitBlob": "1121b6761834f3f2f952a0399698f5b08aaa4df2"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/gallery.js",
+      "sha256": "0b3ebcb93e8a24c6860ed66f0d0ac900214ca1070674f41c374bffe3df324fa3",
+      "kind": "accepted-reference",
+      "gitBlob": "4c3fac4521c2e562355040adb3a93c64e25726ca"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/generation-provenance.json",
+      "sha256": "b8833162bb22be20b8cb996e5f741b5da7ad4c63dedbcdc0c8a4f8e7b27ea9c9",
+      "kind": "accepted-reference",
+      "gitBlob": "18ae90d51e92610324874e2aa48fd5f1f3230cfc"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/images.json",
+      "sha256": "1a02cf243b1020ffcff28e31d738e12a93794ff76728f4367d2c2dc64d26f7d0",
+      "kind": "accepted-reference",
+      "gitBlob": "f59ce815fc52066d5320cb58d5e29647a6f770c9"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/manifest.json",
+      "sha256": "555277463a1b699c5c4387d35a09f2bb84913662cb5bbe29b06e5712ed0847d7",
+      "kind": "accepted-reference",
+      "gitBlob": "c1fcdd8f095c0cc2e965ad79132fe119e455d00a"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/review-notes.json",
+      "sha256": "dd436a1bc1a7e8f9f4676a72637200988d1148b33e1f257242ad0eac743eb841",
+      "kind": "accepted-reference",
+      "gitBlob": "52fe464de1dcacd4f41a961c4b8962ecca2e5f46"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/submission-fixtures-r1.json",
+      "sha256": "26c37b090c808dbb88eb09fb3c45f4e14017d1e5c1f991e51477fb30143f536e",
+      "kind": "accepted-reference",
+      "gitBlob": "85aaf6cbabc7c83ea5b9074975acda07b59306e7"
+    },
+    {
+      "path": "docs/design/remilo-r7-lists-repeats/submission-specification-r1.md",
+      "sha256": "32dbdbf458c5676d5b860de5e43d99a46f59f2dec46258443f19bedd5de8da3d",
+      "kind": "accepted-reference",
+      "gitBlob": "74368f62abcbe1a85066f728236b147da43cfaf2"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png",
+      "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710",
+      "kind": "accepted-reference",
+      "gitBlob": "7832a9476aa668efd2329bbfc4caca363fa11d21"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/02-preference-save-unconfirmed-sunrise-dark.png",
+      "sha256": "640d44533023fc9edcfedcc4b5a4fb691ab4a808299a51b5f85039fd62eb6d72",
+      "kind": "accepted-reference",
+      "gitBlob": "3e4b9bc40628835ae0197651c13cb048613c7196"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/03-appearance-fixed-sky-light-sky-light.png",
+      "sha256": "203630988c61edb6c42a440e73a51dc52a15746aa3b42ae5813786bb6a3d26f8",
+      "kind": "accepted-reference",
+      "gitBlob": "9ea9fdc75c76b433d6e952f36d38c7bb77a55f86"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/04-appearance-system-saving-sky-dark.png",
+      "sha256": "4298ae2eabe5a553cfd51347e2950d00a316c57dca2e40b1ee8d7fa3013c8f57",
+      "kind": "accepted-reference",
+      "gitBlob": "027ea6bad259c3cdce56f0caecee534949aa2bda"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/05-sound-preview-fallback-evening-light.png",
+      "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e",
+      "kind": "accepted-reference",
+      "gitBlob": "b8bac3ad1899328a7e8041327feacafadba25d5b"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/06-sound-preview-failure-evening-dark.png",
+      "sha256": "ea38038529662a24c5d81763d30853049c9767e3f4a3dbc5bdeaa31127ba4475",
+      "kind": "accepted-reference",
+      "gitBlob": "bd1a3b8a6d13ee60d63a0053de98c1d2142baf0e"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/07-permissions-with-mixed-channels-night-light.png",
+      "sha256": "ae99be3e0503778e392cb2e777faac6e020486d68b94a3b8cfd1f0a025531562",
+      "kind": "accepted-reference",
+      "gitBlob": "f7e11abc92d5a43d582697a7d1702545fb0010c8"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/08-permissions-refresh-failure-night-dark.png",
+      "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a",
+      "kind": "accepted-reference",
+      "gitBlob": "8b1f3f460a88654053988485189514fdcdb70402"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/09-test-scheduled-sunrise-light.png",
+      "sha256": "216941536c239391284eb5d84c1dbfe9dc67e79ac29bf98c07792668f029de9f",
+      "kind": "accepted-reference",
+      "gitBlob": "a86467500a2759b85c14e5b1f5950929c6a04444"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/10-test-saved-but-blocked-sky-dark.png",
+      "sha256": "25253de8aa77eeb024f96ba2c52dbbc83dcf47c0952e2f91d3b73e88729d9591",
+      "kind": "accepted-reference",
+      "gitBlob": "b27045059f76bcb97429dca462ca05136627fa26"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/11-invalid-custom-snooze-with-keyboard-evening-light.png",
+      "sha256": "6f01161e1bc5151ad13776098aa59564046f9b6a4080214667f5353d29ad533c",
+      "kind": "accepted-reference",
+      "gitBlob": "dab504307c1ad943b47c229cbb03bc856a0f0a76"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/12-edit-tomorrow-shortcut-time-night-dark.png",
+      "sha256": "73f6899e598313fffceaea1a68250f0ddf2b9382145edd662a85008f97a5e84d",
+      "kind": "accepted-reference",
+      "gitBlob": "10c91b86e78676530235bbde187e1b8605afa03c"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/13-test-saved-with-pending-scheduling-evening-dark.png",
+      "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68",
+      "kind": "accepted-reference",
+      "gitBlob": "7bb81aecf948bbe58ac3a7446e4ea9b981bb5e9a"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/README.md",
+      "sha256": "a9a0f7d4660826a6aed1a47125e897efa5a1b53e8ef900de176a79a6bd07fc57",
+      "kind": "accepted-reference",
+      "gitBlob": "dc5bd91fa08e97ad9b0ffddb6fd5f48a9bda73dd"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/current-policy.md",
+      "sha256": "c2b7619f96edf8c68660693a3810bbc582ece66792e916679a5e4760dfc03bd0",
+      "kind": "accepted-reference",
+      "gitBlob": "febf02aaf2a9c97e08632264ba7248270cdd9474"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/gallery-current.html",
+      "sha256": "75c8d7bf09fc2818fd54faea6b4b4b31efd648b00594c1c4e336213b16d7e617",
+      "kind": "accepted-reference",
+      "gitBlob": "ddd175bd16695a8018b3295c8b84a0ab71d67c51"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/gallery.css",
+      "sha256": "d2275f5602540a8bb98b78a234977467b9dc4e2f712ad9015620701bc5e08ed2",
+      "kind": "accepted-reference",
+      "gitBlob": "ce481fde995188acc2140e35820ce0fd9e05e3cd"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/gallery.html",
+      "sha256": "80e2619ba14824128c52c1a160f4a72ddb71d1471efb900e7a6a6e25cc45b9f8",
+      "kind": "accepted-reference",
+      "gitBlob": "3fb7468b20939565e6a8a3d2490bf7c31c386976"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/gallery.js",
+      "sha256": "768ab0a3c2aea0ba03d3c72add6f313e9835b64aad3f13d3d3517dd22e8f3ee0",
+      "kind": "accepted-reference",
+      "gitBlob": "704ed6d26c0e10135bdca4f40fffb8c828015541"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/generation-provenance.json",
+      "sha256": "f0b6fb8eb8ac937295014b2ef840490b24e8a0635d97f0e72c9476868955b3a3",
+      "kind": "accepted-reference",
+      "gitBlob": "fef76fdb4943eeefad196dd35b9724df60ebe5e5"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/images.json",
+      "sha256": "682af6ffb90f18c9dccf945bb90b5efe4d64872d593a4a150788432c84167be8",
+      "kind": "accepted-reference",
+      "gitBlob": "1155e064bf831cac78c8833757e6c4291167e6f5"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/manifest.json",
+      "sha256": "0f52d964edfd69da641640c92cc02f0cd5537e1aac2f7c700dcb86fd1284f856",
+      "kind": "accepted-reference",
+      "gitBlob": "0aef895143c7378390664293d43a56eceeb82564"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/review-notes.json",
+      "sha256": "3857fdd7ef737ed89f804f0eb21b5aa7964f184013f64167030068684f34098f",
+      "kind": "accepted-reference",
+      "gitBlob": "53a91d58dab8c97327cb7ac92b7b34b9636a6c02"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/submission-fixtures-r1.json",
+      "sha256": "bc38e829089fe8b0928e736c7890f33541954640022d78d33283637906954891",
+      "kind": "accepted-reference",
+      "gitBlob": "4569601a1b4a82d4032376ad547e9cfe26e586a6"
+    },
+    {
+      "path": "docs/design/remilo-r8-settings-appearance/submission-specification-r1.md",
+      "sha256": "8d6146d1b8a5626cb3c5d79ce0bab3c8e64a2c01934e6ace7f50bac241feb91b",
+      "kind": "accepted-reference",
+      "gitBlob": "b46f447acf4d88be7e058f9e80d244df9d96badd"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.ContentDatabase/1.json",
+      "sha256": "334beb724b65c1113df36eac595d8bd9b42be8b3e6af65fdc839c089b8dbcaa2",
+      "kind": "implemented-baseline",
+      "gitBlob": "1d961fb4bdd6a0f9d9edd93d4b39a318f8fab356"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.ContentDatabase/2.json",
+      "sha256": "94a20147cfde094c7c724e1ec452e0f931a0a4fa6f0952f9bd49c2224af6c6ef",
+      "kind": "implemented-baseline",
+      "gitBlob": "9b9b937d47bfc67febcef42c6176639987446689"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.ContentDatabase/3.json",
+      "sha256": "027efb1e78293f5592887d7607f6f7322a5db14366372c89d99b0003827cce9d",
+      "kind": "implemented-baseline",
+      "gitBlob": "0904a5aa1d256b076b8c0e2b26e3c0249b046b17"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.ContentDatabase/4.json",
+      "sha256": "feae3a566f99980867600854ff325bae067a3da62004a63fb2eb0d95dd0c91f3",
+      "kind": "implemented-baseline",
+      "gitBlob": "e71518a2f007a7fbc2f475b8484ebf9aaa050d20"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.OperationalDatabase/1.json",
+      "sha256": "86fc29ece67c0e27752b07a829aaf5ddab8f583cd61a409f04d7e401503d56bb",
+      "kind": "implemented-baseline",
+      "gitBlob": "3c613afcecf5048662d48474b0f8331d180397b1"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.OperationalDatabase/2.json",
+      "sha256": "1b8fdd3fc771e19ab6bbf3f42decf848dd880b9878497453b1469886f81c7100",
+      "kind": "implemented-baseline",
+      "gitBlob": "fca11c29700eb0e9ddd0d404afc8c5e4f5f67e2e"
+    },
+    {
+      "path": "modules/remilo-alarm/android/schemas/com.remilo.alarm.data.OperationalDatabase/3.json",
+      "sha256": "629fe10743bdc80ee14981ffbdefc12cb9c7fa522b8081645eb12ee9170b0fbd",
+      "kind": "implemented-baseline",
+      "gitBlob": "0d76743fd15e7803cabdaead4a70196d9481bda2"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/AndroidManifest.xml",
+      "sha256": "c500ce6a579606b28ec89a9d20a552b63a0544cbea375f37fe82eae9cf58b0f4",
+      "kind": "implemented-baseline",
+      "gitBlob": "1acc906b150c91737b6eda7f866c7059928a4885"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/RemiloAlarmModule.kt",
+      "sha256": "65aa60ba54c2ada3b91c7d81e9e7ca9a8cbb913d4840ebf5f58d2208ac0a7c8b",
+      "kind": "implemented-baseline",
+      "gitBlob": "c35541ec37311bf736cbbb6de8217335d01139ce"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/Agenda.kt",
+      "sha256": "23944b91183dc84cbf42396b72eb1fa53a8eb22049a4f459ac0cf39c9f6ac2cc",
+      "kind": "implemented-baseline",
+      "gitBlob": "9a8a2c8e7e62875b4f53fbe711e5fad59b9c64ce"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/AlarmPolicy.kt",
+      "sha256": "1ee1023eacb0004003ce26cc9839db10e0d97ad4d6572e409699e231791b4ae7",
+      "kind": "implemented-baseline",
+      "gitBlob": "43c7b8f4c62543b6b5a7537d65bf3dc77e848e34"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/CivilTime.kt",
+      "sha256": "38ca6748aaf1c51657ec1ed3edf69afc26593b72bdf1967d067ed2c932fe0513",
+      "kind": "implemented-baseline",
+      "gitBlob": "79e8e7fad4df0dd4bd735d3e5185fcfbcf13a758"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/Recurrence.kt",
+      "sha256": "fb59255f61496af3fe70fbe55abefc337f7845d5d6176ab8f362936df6d54524",
+      "kind": "implemented-baseline",
+      "gitBlob": "8e6490f79f4a95b1a6a962a543ea84efc4f48d91"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt",
+      "sha256": "3f65296bec29b1549625511a2396f32aeeede09d5f84a212441c3f678fb8c567",
+      "kind": "implemented-baseline",
+      "gitBlob": "19b86cb5b725cbbbbc451deb1af39432c7c0c7c8"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/BackupCodec.kt",
+      "sha256": "6685a7ad7d7dd23c5ba18238531576ab10e865e884a0f9f504b77bd62ce62c2a",
+      "kind": "implemented-baseline",
+      "gitBlob": "65fd995b2e8a6c3f7a86760dad35412fe4de4a82"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/ContentDatabase.kt",
+      "sha256": "d0653f44b12decae9ce759e3ca6b8743d81b00726a5f8866a59078dd9633da45",
+      "kind": "implemented-baseline",
+      "gitBlob": "ab96d3547de461e11d850ac97fdf7e6799fa4d8e"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/ListNames.kt",
+      "sha256": "4d88b26efcc227a4ce66250be2a86808a7207a3941faa7ad94b0682e0cd7f293",
+      "kind": "implemented-baseline",
+      "gitBlob": "c3e04164c11b94b8d47b98632597e74829e0dfb7"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/OperationalDatabase.kt",
+      "sha256": "b9edec3817570dbdc4354a7aa542228375e02f0e39926ee6ace6304ab86f37e3",
+      "kind": "implemented-baseline",
+      "gitBlob": "f3e2539a08083f49a5212a1cb6b4de4fb4c09afa"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/RuleCodec.kt",
+      "sha256": "271ecf873fe5f7f09f872be033eadff1a8e88746dfb5da2f112d4f374029ab74",
+      "kind": "implemented-baseline",
+      "gitBlob": "630435caa10c9d1ca85cf2860607866798c923fe"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/AlarmEngine.kt",
+      "sha256": "5b4720dee451e64736984355dfe8215861cc2240f2ca58e72af03397f53d11f6",
+      "kind": "implemented-baseline",
+      "gitBlob": "a5e7e45c772275cd7fa76b4c2f839adc149638ed"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/SeriesCoordinator.kt",
+      "sha256": "a1dc0b6fd0505d9c73c20fba48d1a5cffb07c39c0e09a78ce431100ef9c5f37c",
+      "kind": "implemented-baseline",
+      "gitBlob": "88420dbbb0e2b42e4f793dae53845e1ddf79feb8"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/TimeZoneCatalog.kt",
+      "sha256": "0c892986348d354b5fcaf62a8f98462f60e57e15c29cc734ebde95136a52e6eb",
+      "kind": "implemented-baseline",
+      "gitBlob": "a69e6ca772d93491e37e1af99023423dc7201d39"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt",
+      "sha256": "c2d86ecc7b47b8d57cde2467369f21b5eb6af5d79ab5ba4ba3dc3226718483e6",
+      "kind": "implemented-baseline",
+      "gitBlob": "52d90bbf721797e159e8714062dc9d53f3bcd80a"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmAudio.kt",
+      "sha256": "a8d05439c994358b4526220be5c378966565722d7e89494deb149a8cf092eca3",
+      "kind": "implemented-baseline",
+      "gitBlob": "638979f7a766bd745954c51924f15201d38df98b"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt",
+      "sha256": "4b7d4a2f7a1db8ff8e5a7773e1e2a8a58114945589013d2ae756a906f1458f78",
+      "kind": "implemented-baseline",
+      "gitBlob": "b13644adccda778c3676bf5c142e4041a7f752fc"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmNotifications.kt",
+      "sha256": "2906f94a5cdc1091bf8f96c223e285b151d1e0e2cdec0ffc76874b732b3a93cc",
+      "kind": "implemented-baseline",
+      "gitBlob": "4f50e8da69f9e63112ea2fe2670f3e7f46807fe0"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmReceiver.kt",
+      "sha256": "9b224f74fdc8ef3c9c779c072a8582a588b72dea78caa233af99deb621403519",
+      "kind": "implemented-baseline",
+      "gitBlob": "3f1b9575812efaa4d9dde0cb13e4747f0dc5721e"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmRegistrar.kt",
+      "sha256": "884385c35119a1d50db36da9b456cd2440d7ed9791a7f5129d743a3290d6439f",
+      "kind": "implemented-baseline",
+      "gitBlob": "3ce073750be231548648fc2fe9203995c5f6d619"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmScheduler.kt",
+      "sha256": "574534eb6b58cc163f77e10962bea7444f9134929f69d45880ffddadf4593ce3",
+      "kind": "implemented-baseline",
+      "gitBlob": "575ca9099d8c8deb3036df69c11422463b2075ad"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/RecoveryReceiver.kt",
+      "sha256": "e12eeb7493a19dc8ff4231dd4889e7fc176fb58b6e233091e323fcaacad2ce4d",
+      "kind": "implemented-baseline",
+      "gitBlob": "1b5f76de1fccc2af776dfa3db03a76bcf75356d4"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/RingingService.kt",
+      "sha256": "f1ff7ed363728b387751bd26e4c94105578773b35f320da6d2e5d965f015fb70",
+      "kind": "implemented-baseline",
+      "gitBlob": "09ea056e75a0701be8d405965cc29bd03cf369ee"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/SoundPreviewController.kt",
+      "sha256": "2734452960fcc105877b3e748881182061064c44a42460dfa58a35a2326b23ee",
+      "kind": "implemented-baseline",
+      "gitBlob": "0e85c9a0fd276483d361bcce307481d5fda5a35f"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable/ic_remilo_notification.xml",
+      "sha256": "c6ef5d4b50f322654313c529ed1e0a3154f8f8143f97f04764ea039a50a0c222",
+      "kind": "implemented-baseline",
+      "gitBlob": "c8afbd8a5be7f607bad35dd6596412da4fba1c3f"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/main/res/raw/remilo_alarm.wav",
+      "sha256": "eb0c15790e0004f46686a4180b5bd2b0805af2be42525a8c3fd7560cabdf8452",
+      "kind": "implemented-baseline",
+      "gitBlob": "5c67b069e8d5c3ec747e347e30da87b3f0a69e69"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/core/AgendaTest.kt",
+      "sha256": "42fb09a648ce83bf0a7c3780fec223943d084276f21212d4a555840e0b0195f7",
+      "kind": "implemented-baseline",
+      "gitBlob": "c6aa631867dc1a1b78d461779f866bcf0a96e236"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/core/AlarmPolicyTest.kt",
+      "sha256": "071e865f85a830459651f1eb399e2c2bc3d93210308ae43da337fac675036d2d",
+      "kind": "implemented-baseline",
+      "gitBlob": "22aa9af3a97be5536888a629e12b1b0f668b4a9a"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/core/CivilTimeTest.kt",
+      "sha256": "997d358776cd62efbf6cfd1e44946e7e1557989a9538a5227405ff851a2b659b",
+      "kind": "implemented-baseline",
+      "gitBlob": "e37cde0c5af053d95bb2a38c33636c4f9eaa3bdc"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/core/RecurrenceTest.kt",
+      "sha256": "227cfc8fd25430359b8231e8eff3b21af23fc4564010fdca9cc2c299ddb4ce8d",
+      "kind": "implemented-baseline",
+      "gitBlob": "5f81a75521b24a4cd54df047d086cb8736efb9ba"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/core/SessionPresentationTest.kt",
+      "sha256": "8d6c46c3d4315faeee07c4ccf9de71d7982faf4bf562955042069028d4d88e51",
+      "kind": "implemented-baseline",
+      "gitBlob": "2d7bd9d5479af78cccd83dc49e0376351660ce2a"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/data/BackupCodecTest.kt",
+      "sha256": "61e93d5d669a90260c813d6acbb6658065bbb3160fd04b7870f0f7c53b2bf0ce",
+      "kind": "implemented-baseline",
+      "gitBlob": "91cb48bb2d4e10f3b7d145cd8ab810a6cd4e773f"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/data/MigrationTest.kt",
+      "sha256": "3d2305077a3d30d8fab535c313932a90973b9964348ea1301dea7ac72dfc7bd6",
+      "kind": "implemented-baseline",
+      "gitBlob": "d13881640ef8f55b9211e5cb62b56182557a77a3"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/engine/AlarmEngineTest.kt",
+      "sha256": "698b7e771756018913dd4e9e6ea430ae23b46a04496b5460a49307e804575aef",
+      "kind": "implemented-baseline",
+      "gitBlob": "a877e9e9cd1a1c56f58665b195455e0826057169"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/engine/TimeZoneCatalogTest.kt",
+      "sha256": "ff82bd200bab19becf55ca73fd1b497f10794dd32ec9620aed3efe8b635337d3",
+      "kind": "implemented-baseline",
+      "gitBlob": "b99d478dea69eb697c940db5b4e736e4465e0a9a"
+    },
+    {
+      "path": "modules/remilo-alarm/android/src/test/java/com/remilo/alarm/system/SoundPreviewControllerTest.kt",
+      "sha256": "54705faa2994ed895e26fbc604f09f346fd78b81a4e04e771ff6491b7d5f580b",
+      "kind": "implemented-baseline",
+      "gitBlob": "4088c07d8294e57496c7555af019a513e4f92a6f"
+    },
+    {
+      "path": "modules/remilo-alarm/expo-module.config.json",
+      "sha256": "ade7ad4833c17d75d286288079d8c54e489db1e9e0d574e09db9a2ca7e254cde",
+      "kind": "implemented-baseline",
+      "gitBlob": "0615e30a0873b7f0c5350faa211a9d7ad979b810"
+    },
+    {
+      "path": "modules/remilo-alarm/src/RemiloAlarm.types.ts",
+      "sha256": "4353a77167206687c28b34e6af6bdf691402ee29ef147ffff363ca51374377f8",
+      "kind": "implemented-baseline",
+      "gitBlob": "66c79c4f4755eda01651d013ee7ec0068498ef9c"
+    },
+    {
+      "path": "modules/remilo-alarm/src/RemiloAlarmModule.ts",
+      "sha256": "0c8a6018766381c6efce5192a861489f5a1b11d176431818c0e1421975cd9594",
+      "kind": "implemented-baseline",
+      "gitBlob": "484a12c7fc969d9c5b1c68b0f8ea697f6de301c1"
+    },
+    {
+      "path": "scripts/brand.mjs",
+      "sha256": "36fbea90608e346b271ab20f03cc00442a4105d38a6517f89923dc763ce572cc",
+      "kind": "implemented-baseline",
+      "gitBlob": "f6b7125c21e8ed89073f1ed846a9181f324a4569"
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "sha256": "28cc58155a03b6c0a59baf00ffb033732d73cd5c5ec14651303e7868ebee2c4c",
+      "kind": "implemented-baseline",
+      "gitBlob": "98fdf34393275442a0b18df1e24ac7a3b2b53956"
+    },
+    {
+      "path": "src/app/activity.tsx",
+      "sha256": "accc78b1c76564cbad30662295a4d9ee60e403a473f6d83b43a9fdb79d51c906",
+      "kind": "implemented-baseline",
+      "gitBlob": "5d95d5e6af9f8475c1d81d6134af9c902b29e9f3"
+    },
+    {
+      "path": "src/app/backup.tsx",
+      "sha256": "e424df4881866a554ff3353a121dbd87b69184b0c5909647c666b24044b2d49e",
+      "kind": "implemented-baseline",
+      "gitBlob": "a7ce4d37901161df27ef9c90cc5380138037548a"
+    },
+    {
+      "path": "src/app/collections.tsx",
+      "sha256": "19f2257859a2c300ea4462da6b86e6d8d5aef1c4df8b3f67cc2062d9778b3bae",
+      "kind": "implemented-baseline",
+      "gitBlob": "2d3df1c16335f6f2e5a72f8a2203072ef8d0ad9d"
+    },
+    {
+      "path": "src/app/diagnostics.tsx",
+      "sha256": "58a5fa36900706c9c96bf5d76090323e1778fa1ecfbf3efc5310b367c9a7ca59",
+      "kind": "implemented-baseline",
+      "gitBlob": "54a57f140a14f2ef087adda195159567cbac5099"
+    },
+    {
+      "path": "src/app/edit.tsx",
+      "sha256": "773fab432fad36b5a07bd2b7daadf06b176f3c007f9513819d3cd91af4193303",
+      "kind": "implemented-baseline",
+      "gitBlob": "76fb350153d68b99ba1164beb862b411a71e0c5c"
+    },
+    {
+      "path": "src/app/index.tsx",
+      "sha256": "e016434b803b32216c8b89e137bdc045b4efe9b34a0ad564d0d5f5a3bfdbdce9",
+      "kind": "implemented-baseline",
+      "gitBlob": "42506e02f1a71671e76b3f6314ca9db082383140"
+    },
+    {
+      "path": "src/app/lists/[id].tsx",
+      "sha256": "58799752e3f182c0ac658142a90fd8e9ffed7570d086c24e495fe546946b9e17",
+      "kind": "implemented-baseline",
+      "gitBlob": "2d3910dc19a207839a76fcd53921c1ea55fd073a"
+    },
+    {
+      "path": "src/app/lists/index.tsx",
+      "sha256": "958e04195d563c1c1997308d56b416b42ae7ef3524263149b5a04e88caed3d69",
+      "kind": "implemented-baseline",
+      "gitBlob": "807f78fc4e0a54972afa9bd730f2db8537e06145"
+    },
+    {
+      "path": "src/app/readiness.tsx",
+      "sha256": "52daab3e8477e82cea3c46b89012aa0a0ab78e5b87278663bac610c0416f8582",
+      "kind": "implemented-baseline",
+      "gitBlob": "0e62e5b975458192181d13a6d7ea6d841ff6de9b"
+    },
+    {
+      "path": "src/app/records.tsx",
+      "sha256": "45ce02c530b1c2a08217f6a77b94cc3b1df94b4eaaa2608455f5315ff39f4caf",
+      "kind": "implemented-baseline",
+      "gitBlob": "a89b9f16ec084bbe3d79a60a0623da72d52aab0d"
+    },
+    {
+      "path": "src/app/reminder/[id].tsx",
+      "sha256": "f9c0bf503f7e81be06f3dd1d2c2132beacacc0bd3115fc9f27912934576e7e02",
+      "kind": "implemented-baseline",
+      "gitBlob": "87c978bd82704e70473989aca844790f2d69152b"
+    },
+    {
+      "path": "src/app/series/[id].tsx",
+      "sha256": "9ee049b54a2c772efc588d234c37bcdb08fef92756724d63002288aef148aad6",
+      "kind": "implemented-baseline",
+      "gitBlob": "87e67de3312ef6030f248e9d1853fe9ed6720b60"
+    },
+    {
+      "path": "src/app/series/index.tsx",
+      "sha256": "305b889501b24ac2757e7d9a8822904d40012bc360ead57daa4ee53119d5ccda",
+      "kind": "implemented-baseline",
+      "gitBlob": "5e371db1f60ce71e1051ddcdb9ed1f46ca3128a7"
+    },
+    {
+      "path": "src/app/settings.tsx",
+      "sha256": "c5fc2c8642ff2ac809f338f85f1e7cdeccf9ce5fb8755ba9c6fb37efda8856d3",
+      "kind": "implemented-baseline",
+      "gitBlob": "7895cedaa9cc3a4776d140ebf0e551f423fed3a4"
+    },
+    {
+      "path": "src/domain/actions.test.ts",
+      "sha256": "297bfb3bdb71a39da8560b98e814d69468ad219013aad72d2c27d9312937e2b8",
+      "kind": "implemented-baseline",
+      "gitBlob": "39b6530ec28e118cefbdefe80cb2e29c9bb57673"
+    },
+    {
+      "path": "src/domain/actions.ts",
+      "sha256": "0a7fe15a707f7a66ad94571d9772ea76828187adc7551b82c514dc5a0e240507",
+      "kind": "implemented-baseline",
+      "gitBlob": "a8d36f214207016e72bf76dc777700ad5ba413c4"
+    },
+    {
+      "path": "src/domain/contrast.test.ts",
+      "sha256": "f3e7667909e17c016d270b538aaa181f907cf7be983a2956d95a19eeb6ba9202",
+      "kind": "implemented-baseline",
+      "gitBlob": "7959cb67b95285b3f95cc698e7dffc756ac1b96d"
+    },
+    {
+      "path": "src/domain/editor-draft.test.ts",
+      "sha256": "5b0ef6fed20c2d011beffc00c02c5754e3a60f16d201410bc7c9cbab43893134",
+      "kind": "implemented-baseline",
+      "gitBlob": "54ef962d7b6414089d32ac5400da5dca6a7be47f"
+    },
+    {
+      "path": "src/domain/editor-draft.ts",
+      "sha256": "4106450a6ea2021c8486976c00d53225b7f4df3fc987c83106f2f6b6d50838f2",
+      "kind": "implemented-baseline",
+      "gitBlob": "8e56c2aad34b33182c3567ea6fb32067fd85f593"
+    },
+    {
+      "path": "src/domain/navigation.test.ts",
+      "sha256": "cc0f1899869bdd85b39e84a390e02cd47a28b2b7f69f0f19c0b773ea82e69b28",
+      "kind": "implemented-baseline",
+      "gitBlob": "b2abb0ddb812af70599a44f1150ad4880060dd02"
+    },
+    {
+      "path": "src/domain/navigation.ts",
+      "sha256": "c5806dcca3278dc7530ec755bafb00d52df253f0f4047d8f9720df89341c0470",
+      "kind": "implemented-baseline",
+      "gitBlob": "9ee5905dc78096f1f041ab700ae0cc9a6c5d9fcd"
+    },
+    {
+      "path": "src/domain/preferences.test.ts",
+      "sha256": "03e7aec502d260a4014379f9b1ce9a340bf532a5b6bda77581831ceebd5090e1",
+      "kind": "implemented-baseline",
+      "gitBlob": "79a3725fd8db0eb488fc3467c96cce915d3d7339"
+    },
+    {
+      "path": "src/domain/preferences.ts",
+      "sha256": "9eb33d606bc7ea40edd72a3f7f8b778d1bbdc0fc1fd73ae8a35697ed89382baf",
+      "kind": "implemented-baseline",
+      "gitBlob": "d75eb05e8f005936376b711d935f422e9ad7f919"
+    },
+    {
+      "path": "src/domain/presentation.test.ts",
+      "sha256": "c079c04c4ce52c334c7809c88e468632a123cb9749953d247375b0f64f2356b7",
+      "kind": "implemented-baseline",
+      "gitBlob": "48cb4fee25fa0c81fe3a770b32450c3e2d2c7b98"
+    },
+    {
+      "path": "src/domain/presentation.ts",
+      "sha256": "fb138f654fde05bed3cca5e7cea741d8fc2b2a4ed041670684cf7c45cad7a5c5",
+      "kind": "implemented-baseline",
+      "gitBlob": "4c1bea729d42f2bfc20f914b3e4060b1ec2e2c53"
+    },
+    {
+      "path": "src/domain/quick-reminder.test.ts",
+      "sha256": "cf8256bbb0403750d58061afcafd3c358846823246bcf1fd4170f9d281f96d26",
+      "kind": "implemented-baseline",
+      "gitBlob": "0354d73c3cce5c3c5613915440a5315801e095ba"
+    },
+    {
+      "path": "src/domain/quick-reminder.ts",
+      "sha256": "49cd5707b843476ceefed1d303a531d7f175f327ec64d646456f2c59cc7b99b2",
+      "kind": "implemented-baseline",
+      "gitBlob": "8f7621d25e45823c5775fb30a9047f3868d4221f"
+    },
+    {
+      "path": "src/domain/repeat.test.ts",
+      "sha256": "a8ef0c23f34d827f2843587079f3ef3988aba20faea26ddac93940382151086d",
+      "kind": "implemented-baseline",
+      "gitBlob": "7c7ab63e8b948357e554f4c7a76c4b660aeab2e0"
+    },
+    {
+      "path": "src/domain/repeat.ts",
+      "sha256": "d98ace19ec4ce8ccc3dbab7d142934fc671e5836b34f799bf86ba410d7017e1f",
+      "kind": "implemented-baseline",
+      "gitBlob": "823df5bb80bf53df695a860c191490e5d428e918"
+    },
+    {
+      "path": "src/domain/restore.test.ts",
+      "sha256": "d8569cb6a54d030808fb506827e4bd7711f590d4d83d412d998c9736e735495c",
+      "kind": "implemented-baseline",
+      "gitBlob": "c303c804baa9379c304fb1901906be5bd855e424"
+    },
+    {
+      "path": "src/domain/restore.ts",
+      "sha256": "6e20f2469965bdd2b9a936508c25014988ab2cf52ec82b6eda22891d1d79ef2a",
+      "kind": "implemented-baseline",
+      "gitBlob": "cc7b8f80e24f5062d987542954d23e23d30776ec"
+    },
+    {
+      "path": "src/domain/router-decoding.test.ts",
+      "sha256": "b149e080437abb49fe1d3ef3042fe7c6e058ea5840f079dd3149f0e8dddec298",
+      "kind": "implemented-baseline",
+      "gitBlob": "c2100f95108bf4b087b59d4421a913ee6e99fdd8"
+    },
+    {
+      "path": "src/domain/time.test.ts",
+      "sha256": "750ba18b7bed34cbc748381af9818034328a44de9f38d099ba968ee42a7047f6",
+      "kind": "implemented-baseline",
+      "gitBlob": "a961f447e251f7928642076fa6cf64e9b209b808"
+    },
+    {
+      "path": "src/domain/time.ts",
+      "sha256": "d95ec1fd894a35062b4e2f530cfc9204e44065d2ff2e6a496625cc489f24a99f",
+      "kind": "implemented-baseline",
+      "gitBlob": "f34a25d98ccb502d82efed980c49533a38441186"
+    },
+    {
+      "path": "src/ui/colors.ts",
+      "sha256": "82186c05dcd6870a60d3f00eddc003986350573f737d6e592641141a937d3615",
+      "kind": "implemented-baseline",
+      "gitBlob": "3b6b1f30cb1e64f33c3939e730da08416b9750a6"
+    },
+    {
+      "path": "src/ui/feedback.ts",
+      "sha256": "fa8ebb156c0c14fca233497f2bd1f11ddd48f4c5068917b65f5b1cf41d96b608",
+      "kind": "implemented-baseline",
+      "gitBlob": "672c76ce1317879defaa36b6f964018772a8eb0f"
+    },
+    {
+      "path": "src/ui/native.ts",
+      "sha256": "ef095f34526f2f0b77d38182391cbaa4478dc7dd2a7679d87503497ae68a3bf4",
+      "kind": "implemented-baseline",
+      "gitBlob": "3fc99c2a18182048527e7c2b566a69652ba653e5"
+    },
+    {
+      "path": "src/ui/navigation.tsx",
+      "sha256": "fe749ee24f2e24f6ee95d522477ca20e81df2b16a7896714594b7b266855e080",
+      "kind": "implemented-baseline",
+      "gitBlob": "e75ae6ea891c930c4b8742b426eac74394c4bb9e"
+    },
+    {
+      "path": "src/ui/recurrence.tsx",
+      "sha256": "ade695d322d497ead4201ca832fdf0304074f3c04510c4690aa75eea1ddd34e9",
+      "kind": "implemented-baseline",
+      "gitBlob": "f7fd3b8fa9b4017575515502f7a5f8c0a53b9ec1"
+    },
+    {
+      "path": "src/ui/root-state.ts",
+      "sha256": "9f7e8022c0323e99f185b8ba85373be269e937ce95ee669adc0434d1eeeae28b",
+      "kind": "implemented-baseline",
+      "gitBlob": "4ac3e149ab98bb571c13b98f271673e45a4cdf11"
+    },
+    {
+      "path": "src/ui/schedule.tsx",
+      "sha256": "2bf568c4aba1d2e1de64a910ea9015ebc65b120d73539f4af976534a27fb1c37",
+      "kind": "implemented-baseline",
+      "gitBlob": "9add55615ee0b89fb8ba935585eaad44c479e567"
+    },
+    {
+      "path": "src/ui/sound-picker.tsx",
+      "sha256": "9ff4e75452a17d18e52a37c2ad4df0232d80f9c7d9eef20ab9165b8f26fc88f1",
+      "kind": "implemented-baseline",
+      "gitBlob": "d33decc0b5fdb50b5447fc214154c9c3f4a1cdac"
+    },
+    {
+      "path": "src/ui/time-zone.tsx",
+      "sha256": "2a13fb480d9a10b7ab84fc2fcbec8c2148862233b9f2647f9048a3d2b7ff830c",
+      "kind": "implemented-baseline",
+      "gitBlob": "a0857adc4872fd64d904544fc0a013f77e9601b1"
+    },
+    {
+      "path": "src/ui/tokens.ts",
+      "sha256": "8802d9f7a083447fdb2b1a36fd2802d9b55b740a8e5ce68fd568c190c60f7569",
+      "kind": "implemented-baseline",
+      "gitBlob": "e58cd72a4048f3922f3ca9ddf05af0ff8aa105de"
+    },
+    {
+      "path": "verification/fixtures/recurrence.json",
+      "sha256": "b84c253c755b565f442406116acedebbc114af7b66237c5cb6eb4fc6dd00e0d3",
+      "kind": "implemented-baseline",
+      "gitBlob": "b1b678932b2c598ad9ac7843a7294531c55e1fba"
+    },
+    {
+      "path": "verification/ui/preview-engine.ts",
+      "sha256": "fad432058c7f77e38232a18486e66ac4ccd1f41742988816ded4d6e001dbdd3f",
+      "kind": "implemented-baseline",
+      "gitBlob": "41fefcd1b4744aa9e482085d4cc564525d38de9e"
+    }
+  ],
+  "retainedBacklogRows": [
+    "| P0-01 | Expo 57 scaffold, pinned Node/JDK and tracked native project | none | verified | [clean CI, signed offline installation](evidence/2026-10-04-native-slice.md) |",
+    "| P0-02 | AI instructions, contracts, backlog, verification scripts/CI | P0-01 | verified | [shared/native commands and clean GitHub verification](evidence/2026-10-04-native-slice.md) |",
+    "| G0 | Foundation release gate | P0-01/02 | verified | [clean checkout and signed bundled UI offline on Pixel](evidence/2026-10-04-native-slice.md) |",
+    "| P1-01 | Native persistence, asynchronous bridge, recovery records | P0-01 | implemented/unverified | [Room recovery tests pass; remaining physical crash boundaries](evidence/2026-10-04-native-slice.md) |",
+    "| P1-02 | Independent alarm, receiver, FGS, audio, Stop/Snooze | P1-01 | implemented/unverified | [cold/locked delivery, cutoff and actions observed; remaining independent/recovery matrix](evidence/2026-10-04-native-slice.md) |",
+    "| P1-03 | Cutoff, Direct Boot, recovery and lifecycle verification | P1-02 | implemented/unverified | [reboot fix and owner confirmations; remaining consolidated matrix](evidence/2026-10-04-native-slice.md) |",
+    "| P1-04 | Preserve usable notification controls on Snooze re-trigger | P1-02 | verified | [owner confirmed initial/re-triggered buttons; second Snooze registered and final native Stop logged](evidence/2026-10-04-native-slice.md) |",
+    "| P1-05 | Structured native command validation | P1-01 | verified | [invalid fields/generations leave data and registration unchanged; shared/native checks pass](evidence/2026-10-04-native-slice.md) |",
+    "| P1-06 | Persisted interruption tests and installed-build evidence | P1-01, P0-02 | verified | [20 native tests; preflight distinguishes installed APK from local build](evidence/2026-10-04-native-slice.md) |",
+    "| G1 | Native alarm reliability gate | P1-01/02/03/04/05/06, G0 | pending | signed physical tests; failures block wider beta |",
+    "| P2-01 | One-off create/detail/views, readiness and timing controls | P1 implementation; physical acceptance deferred | implemented/unverified | [shared/native checks; signed UI acceptance deferred](evidence/2026-10-04-one-off.md) |",
+    "| P2-02 | Done/Postpone/post-timeout actions and session grouping | P1 implementation; physical acceptance deferred | implemented/unverified | [action/generation tests; collisions/audio acceptance deferred](evidence/2026-10-04-one-off.md) |",
+    "| P2-03 | Settings, diagnostics, export/restore, upgrade safety | P2-01/02 | implemented/unverified | [restore conflicts and both v1→v2 migrations pass; physical transfer/file checks deferred](evidence/2026-10-04-one-off.md) |",
+    "| G2 | Complete one-off private beta | P2-01/02/03 | pending | all one-off scenarios pass |",
+    "| P3-01 | Pure Kotlin recurrence kernel and portable fixtures | P2 implementation; physical acceptance deferred | implemented/unverified | [fixtures/count/gap/fold/travel checks; physical acceptance pending](evidence/2026-10-04-offline.md) |",
+    "| P3-02 | Exceptions, series edits and protected replenishment | P3-01 | implemented/unverified | [protected replenishment, pause/split/restore and interruption tests](evidence/2026-10-04-offline.md) |",
+    "| P3-03 | Original accessible polish, management and history | P3-01/02 | implemented/unverified | [shared checks; device usability/accessibility deferred](evidence/2026-10-04-offline.md) |",
+    "| G3 | Complete Android reminder product | P3-01/02/03 | pending | physical recurrence and tested OS matrix |",
+    "| UX-01 | Tokens/icons, unified agenda queries, search/filter, Completed and Trash | P3-01/02 | implemented/unverified | [host query tests and narrow fixture review; physical usability pending](evidence/2026-10-04-redesign.md) |",
+    "| UX-02 | One-off/repeat editor, details, scope selection and Activity | UX-01 | implemented/unverified | [shared checks and fixture review; native picker/Back/keyboard acceptance pending](evidence/2026-10-04-redesign.md) |",
+    "| UX-03 | Categorized automatic preferences, inline permissions, Test alarm | UX-01 | implemented/unverified | [sequencing/retry/contrast tests; phone persistence and permission-return checks pending](evidence/2026-10-04-redesign.md) |",
+    "| UX-04 | Native controls/snapshot dismissal, notifications, launcher/splash identity | UX-01 | implemented/unverified | [session/Direct Boot/notification tests; signed physical actions and icon masks pending](evidence/2026-10-04-redesign.md) |",
+    "| UX-05 | Signed 0.4.0, consolidated checklist and release evidence | UX-01/02/03/04 | implemented/unverified | [shared/native verification and signing; owner U/A–E observations pending](evidence/2026-10-04-redesign.md) |",
+    "| UX-06 | Explicit Undo, stale draft review, search Back and uncertain restore recovery | UX-01/02/03 | implemented/unverified | [revision/civil/conflict/restore regressions; signed-phone interactions pending](evidence/2026-10-05-ui-refinement.md) |",
+    "| UX-07 | Shared presentation, Collections, rows, family Repeats and recent history | UX-06 | implemented/unverified | [host native queries and fixture interaction review; TalkBack/large-text acceptance pending](evidence/2026-10-05-ui-refinement.md) |",
+    "| UX-08 | Transactional repeats, zone-aware editor/details and contextual Settings feedback | UX-06/07 | implemented/unverified | [48 shared tests, 78 native tests, DST conversion and fixture review; native pickers pending](evidence/2026-10-05-ui-refinement.md) |",
+    "| UX-09 | Geometric R exports, aligned native tokens and consolidated refinement evidence | UX-07/08 | implemented/unverified | [deterministic icon exports and signed ARM64 assembly; owner acceptance pending](evidence/2026-10-05-ui-refinement.md) |",
+    "| TK-01 | Shared tool selection, stable build receipts and release serialization | P0-02 | verified | [host fixtures, doctor and signed ARM64/x86-64 assembly](evidence/2026-10-05-workflow-kit.md); no application/version changes |",
+    "| TK-02 | Safe ABI-aware deployment and reusable device preflight | TK-01 | verified | [host fixtures, blocked/successful dry-run and mismatch preflight](evidence/2026-10-05-workflow-kit.md); [owner deployment and installed hash confirmed after randomized-path fix](evidence/2026-10-05-phone-deployment.md) |",
+    "| TK-03 | Scoped logs/capture, isolated preview and combined release preparation | TK-01 | verified | [help, scoped process/environment fixtures, HTTP preview and full host preparation](evidence/2026-10-05-workflow-kit.md); real device captures pending |",
+    "| TK-04 | Discoverable repo skills and workflow documentation | TK-02/03 | verified | [bundled skill/metadata validation and workflow evidence](evidence/2026-10-05-workflow-kit.md); scripts are the shared procedure |",
+    "| DS-01 | Shared Gradle build/inspection without receipts or release locks | TK-01 | verified | [signed ARM64/x86-64 assembly and full host preparation](evidence/2026-10-05-deployment-simplification.md); no Git or receipt prerequisite |",
+    "| DS-02 | Sequential one-command deployment with target selection | DS-01 | verified | [35 controlled tooling cases, cancellation and optional launch](evidence/2026-10-05-deployment-simplification.md); simplified real-device deployment smoke remains pending |",
+    "| DS-03 | Optional diagnostics, concise skills and current workflow guidance | DS-01/02 | verified | [doctor, discovery/preflight, help, three skill validators and metadata](evidence/2026-10-05-deployment-simplification.md); no new phone mutation |",
+    "| UX-10 | No alert recovery repair and shared schedule/work/delivery presentation | UX-08 | implemented/unverified | [62 domain tests; retained history/overdue recovery; signed-phone comprehension pending](evidence/2026-10-05-second-refinement.md) |",
+    "| UX-11 | Browse roots, recorded Activity, recoverable completed cleanup and sound preview | UX-10 | implemented/unverified | [96 native tests; preview ownership and fixture interactions; Android Back/audio acceptance pending](evidence/2026-10-05-second-refinement.md) |",
+    "| UX-12 | Managed Lists, content schema 4 and backup format 3 | UX-11 | implemented/unverified | [upgrade/legacy/empty/stale/template/import regressions; signed ARM64 build; phone upgrade pending](evidence/2026-10-05-second-refinement.md) |",
+    "| P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |",
+    "| P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |",
+    "| P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |",
+    "| P4-D | Incremental/native background opportunities | P4-C | pending | allowlist, pagination, retries, 410 recovery |",
+    "| G4 | Calendar release gate | P4-A/B/C/D | pending | both directions after documented sync opportunity |",
+    "| P5 | Optional Android cloud/primary-device coordination | G4 | pending | foreground/manual Supabase sync and honest handoff |",
+    "| G5 | Android cloud gate | P5 | pending | two Android installations converge |",
+    "| P6 | Optional iOS feasibility and complete port | G5 | pending | final phase only; real iPhone capability evidence |"
+  ],
+  "allowedRefactors": [
+    {
+      "path": "src/ui/recurrence.tsx",
+      "from": "useReviewFontScale",
+      "to": "useFontScaleOverride",
+      "reason": "Neutral hook import and call rename only; original implementation is otherwise byte-identical"
+    }
+  ],
+  "checkoutEncoding": "SHA-256 identifies original Windows working bytes; gitBlob identifies unchanged repository bytes when Git performs platform line-ending checkout conversion. No content normalization is permitted."
+}

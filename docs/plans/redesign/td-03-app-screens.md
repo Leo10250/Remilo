@@ -26,5 +26,5 @@ Review actual screens in all four atmospheres and both appearances; exercise den
 
 Record actual revision, delivered contracts, render/command evidence, unresolved
 review conditions and pending physical observations using [the handoff protocol](../../handoffs/README.md).
-Only backlog records live status. Historical P01/P02 approvals remain historical
-and are not prerequisites for generating an unrelated eight-palette catalog.
+Only backlog records live status. Template approval does not establish production
+implementation or actual accessibility/device acceptance.
