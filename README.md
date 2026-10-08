@@ -164,6 +164,16 @@ The owner's next run uses [one device acceptance checklist](docs/device-acceptan
 New offline Android features are compiled and host-tested; pending physical results
 are not a verified release claim.
 
+## Current design direction
+
+The [four-atmosphere design](docs/design/current/README.md) is the approved target
+for the next presentation update. All eight R3 references govern style; approved
+page contracts/corrections govern UX. [The roadmap](docs/plans/redesign/README.md)
+and [backlog](docs/backlog.md) distinguish future work from the shipped 0.4.0 baseline.
+Current production still has brightness-only settings and the geometric R; the
+new Automatic/manual atmospheres and static Classic identity are not implemented
+by the documentation realignment.
+
 ## Repository guide
 
 - `src/app/`: React Native principal UI and refresh hints.

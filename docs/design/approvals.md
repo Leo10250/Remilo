@@ -1,5 +1,9 @@
 # Redesign approval ledger
 
+This is decision history. [A36 current design](current/README.md) supersedes contradictory
+older palettes, period/default policies and execution dependencies without rewriting
+what earlier approvals meant. Only backlog records live implementation status.
+
 This ledger records human decisions, not task status. Live status belongs only in
 [backlog.md](../backlog.md). See [approval rules](README.md).
 
@@ -45,6 +49,10 @@ earlier records and accepted source/evidence hashes retain their historical scop
 | A30 | 7 October 2026 | “Approved” accepts the R8 direction/templates shown so far during generation. [Exact scope and associated hashes](approved-ui-r8-outline-acceptance.json); [thirteen-reference gallery and corrections](remilo-r8-settings-appearance/gallery.html). R8-08 was completed afterward as a supplement under that direction. | Separate owner review/immutable pixel acceptance of every raster; exact tokens/final art, four-scene automatic policy/defaults/migrations/storage, implemented safe Test retry or native appearance mirror, production execution, milestone or accessibility/IME/native/device acceptance. |
 | A31 | 7 October 2026 | The owner annotates “Next: Completed, Trash and Activity.” with “continue” and repeats the requirement to use all four themes/all eight R3 images for color/style, preserving established UX. [Exact intake](r9-completed-trash-activity-intake.json); [R9 draft](r9-completed-trash-activity-specification.md); [fourteen prospective captures](r9-completed-trash-activity-fixtures.json). | Acceptance of the resulting draft, image generation, production P05/P07 execution, skipped clear-state semantics/new query projection, milestone or accessibility/runtime/device verification. |
 | A32 | 8 October 2026 | The owner annotates “Next: Data/Help—Export, Restore and Diagnostics.” with “continue,” repeats all four themes/all eight R3 images for style and preserves established UX, then reiterates “continue.” [Exact intake](r10-data-help-intake.json); [R10 draft](r10-data-help-specification.md); [fourteen prospective captures](r10-data-help-fixtures.json). | Acceptance of the draft or new images, image generation, production execution/file transfer/import, new backup format/encryption/provider or global-theme portability, definitive bridge-rejection/process-restart recovery, milestone or runtime/accessibility/device verification. |
+| A33 | 8 October 2026 | “Based on these specs, generate images for UIs” authorizes the fourteen R10 Data/Help examples from r1 with matching R3 style, saved in the external projectless review bundle. [Generation intake and frozen source hashes](r10-data-help-image-intake.json). | Acceptance of resulting screenshots, independent redesign, production implementation, actual backup/share/import/device actions or runtime/accessibility/milestone verification. |
+| A34 | 8 October 2026 | “Restore the whole backup with clear handling of existing reminders would be the expected behavior.” confirms whole-backup Restore; “Adjust all the related documentation and UI examples accordingly.” authorizes the related clarity revisions. All new reminders/lists are automatic; existing local reminders stay unchanged, with optional separate copies. [Exact request and scope](r10-restore-whole-backup-intake.json); [r2 specification](r10-data-help-specification.md); [r2 evidence](../evidence/2026-10-08-r10-whole-backup-clarification.md). | Blanket approval of original/revised image pixels or every R10 template, selective restore or overwrite/merge, production/runtime/schema changes, actual import/share/device actions, resolved recovery gaps, milestone or accessibility/native/device acceptance. |
+| A35 | 8 October 2026 | “Looks good. I approve” accepts the current R10 r2 Data/Help design direction and fourteen-state UI gallery as templates, including whole-backup Restore, automatic new data, explicitly labeled existing-reminder **Keep existing** / **Add a separate copy** choices and unchanged local originals. [Exact approval scope and current artifact hashes](approved-ui-r10-outline-acceptance.json). Existing per-image discrepancy corrections remain authoritative; historical A32/A33/A34 and frozen r1/r2 submissions stay intact. | Exact raster colors/final artwork or immutable pixel approval, measured contrast/targets/accessibility, production execution or file transfer/import, new schema/appearance/recovery policy, milestone completion or runtime/native/device acceptance. |
+| A36 | 8 October 2026 | Owner requests repo-wide time-of-day realignment and confirms the docs-first plan; selects Automatic plus four manual atmospheres, Evening at 17:00, Automatic missing/new defaults with preserved brightness, static Classic ring/check/sun identity and a PR targeting theme-update. “Yes, implement this plan.” [Attributed decisions](approved-time-of-day-realignment.json); [current contract](current/README.md). | Production UI/schema/build/icon changes, new generation, changing accepted hashes, R9 image approval, settling decorative list icons, or claiming runtime/accessibility/device completion. |
 
 A03 is the owner's answer to the Meadow-alarm versus time-atmosphere question.
 The original documentation request supplies A04/A05; the later review supplies A06.
@@ -107,7 +115,7 @@ satisfies P01's three design checkpoints. The separate acceptance record preserv
 the exact submitted files and their historical proposal labels. P02 authorization
 and consolidated physical acceptance remain separate.
 
-## Specification constraints versus recommendations
+## Historical specification constraints versus recommendations
 
 The original owner-supplied implementation specification is product input, with
 adopted constraints recorded in [the master](../appearance-redesign.md): native
@@ -128,7 +136,7 @@ classifier mappings/cache invalidation/backfill design and production tokens/art
 remain subject to their plan checkpoints. Do not relabel them approved solely
 because a top-level plan or execution-unit structure was accepted.
 
-## Subsequent approvals
+## Historical P01/P02 follow-up approvals
 
 A16 supplies P02 execution authorization after A15's accepted P01 handoff. The
 owner confirmed 16 dp reminder tiles, Sky/Rose as the expansion sample, shared
@@ -160,3 +168,12 @@ For each future record include: record ID, date, approving owner, plan ID,
 artifact path and revision/hash, accepted scope, conditions, and superseded record
 when applicable. Link the milestone handoff and redacted evidence. Execution
 authorization and acceptance of the resulting artifact are separate decisions.
+
+## Current consolidation
+
+A36 supersedes contradictory earlier design/planning requirements for the current
+release. The Classic source remains exact; standard Android adaptive/monochrome
+exports do not imply dynamic launcher switching. R8 Automatic availability and
+selector geometry follow the current policy. A35 whole-backup Restore and all
+other established native UX remain. Historical A01–A35 records and frozen artifact
+identities retain their original scope.

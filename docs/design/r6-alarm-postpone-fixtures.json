@@ -219,5 +219,8 @@
     ],
     "geometry": "Shared component anatomy; scene and color role values vary",
     "darkSurface": "Shared existing theme base/background and elevated surface roles; exact generated black shades are not final tokens"
-  }
+  },
+  "currentContract": "current/screens/alarm-postpone.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
 }

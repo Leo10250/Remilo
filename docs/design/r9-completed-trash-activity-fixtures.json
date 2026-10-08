@@ -1038,5 +1038,8 @@
       ]
     }
   ],
-  "datasetPolicy": "Each capture uses only its datasetIds plus its explicitly listed returnedRecord/latestRecord/recordOverride. These are independent synthetic snapshots, not one combined global store. Entries in the reusable records pool do not join a query implicitly."
+  "datasetPolicy": "Each capture uses only its datasetIds plus its explicitly listed returnedRecord/latestRecord/recordOverride. These are independent synthetic snapshots, not one combined global store. Entries in the reusable records pool do not join a query implicitly.",
+  "currentContract": "current/screens/completed-trash-activity.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
 }

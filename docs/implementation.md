@@ -50,7 +50,8 @@ Snooze without changing due/event timing. Offer 15/30/60 minutes, editable Tomor
 Support independent session members, Stop All, one sound and the first member's
 deadline. Add editable presets, sound preview, vibration, Test Alarm and redacted
 local diagnostics. Add versioned export/restore and non-destructive upgrade tests
-before regular beta use. Restore previews conflicts, preserves existing records
+before regular beta use. Restore applies the whole selected backup, includes all
+new reminders/lists automatically, previews identity conflicts and preserves existing records
 by default and makes copies only by explicit selection. Exclude credentials,
 device identity, OS handles and active sessions; future registrations are rebuilt,
 elapsed ones stay silent. Explicit platform backup/transfer exclusions protect
@@ -82,9 +83,20 @@ behavior. Pixel evidence alone cannot support broad manufacturer claims.
 The approved 0.4.0 presentation milestone belongs to Phase 3 and precedes Calendar.
 It delivers unified agenda queries and reusable presentation, one-off/repeat editors
 and details, automatic settings with inline permissions, native session dismissal,
-standard notification controls and the original bell/clock identity. No timing,
+standard notification controls and its historically recorded identity. No timing,
 completion, protection or account semantics change. Relevant host tests and signed
 assembly precede the consolidated device/UI/accessibility acceptance run.
+
+## Current time-of-day presentation release
+
+After the shipped 0.4.0 baseline, [TD-01–TD-06](plans/redesign/README.md) implement
+[the approved current design](design/current/README.md): shared R3 roles/scenes,
+Automatic plus four manual atmospheres, all app-owned pages/native alarms and
+one static Classic ring/check/sun identity. Preserve independent brightness,
+keyboard-safe forms, native privacy/action ownership and whole-backup behavior.
+Current documentation approval does not implement a runtime preference/migration.
+Old P01/P02 prototypes remain historical; no eight-palette/classifier/manual-task
+chooser/backup-v4/dynamic-icon requirement precedes this release.
 
 ## Phase 4: optional Google Calendar
 

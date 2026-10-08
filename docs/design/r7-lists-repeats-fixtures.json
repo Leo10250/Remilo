@@ -716,5 +716,8 @@
     "individualRasterReviewClaimed": false,
     "exactTokensApproved": false,
     "decorativeListIcons": "Open implementation decision; owner currently favors omission; no custom icon picker"
-  }
+  },
+  "currentContract": "current/screens/lists-repeats.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
 }

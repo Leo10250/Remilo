@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-08",
+  "classification": "Historical immutable submissions, not active requirements",
+  "reason": "Preserve original recorded paths and hashes for P01/P02 submission verification; current authority is docs/design/current/README.md.",
+  "files": [
+    {
+      "path": "docs/design/art-direction.md",
+      "sha256": "3cf78809d9c5acc68a3f5fb03744e0d3babfbb2288f4f74bc77eeeb3d9ce8922"
+    },
+    {
+      "path": "docs/design/ui-composition.md",
+      "sha256": "9a5458a5b2f9c8d3932790dd8e0b475b4acb4eaaf3a689eb14b07d01cf6291f1"
+    },
+    {
+      "path": "docs/design/p01-pattern-evaluation.md",
+      "sha256": "78305595c5372ed0d218b3586d9450bc36cfd5dd48660c16f3b9127cc1e942e2"
+    },
+    {
+      "path": "docs/design/p01-composition-language-r2.svg",
+      "sha256": "ed7c68973836453bdac185a7a8e86b0635b6c115ea0697d38e9a7c52a240c95d"
+    },
+    {
+      "path": "docs/design/p01-style-review-r2.html",
+      "sha256": "14a5b091847b7cfdc753039d8b1e9826b02675957dc35653c88d8f138c715467"
+    },
+    {
+      "path": "docs/plans/redesign/p01-art-direction.md",
+      "sha256": "1683800f5fa3edc00890f425afabefd5de66397a858fba5924aec8f0e43157e5"
+    },
+    {
+      "path": "docs/design/p02/foundation-specification.md",
+      "sha256": "f590bbaaf5121a6ae5295ced8e008a79c4805399014201ff0163b2725a84fbc7"
+    }
+  ]
+}

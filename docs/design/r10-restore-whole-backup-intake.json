@@ -1,0 +1,41 @@
+{
+  "record": "A34",
+  "date": "2026-10-08",
+  "source": "Repository owner in current chat",
+  "ownerStatement": "Restore the whole backup with clear handling of existing reminders would be the expected behavior.\n\nAdjust all the related documentation and UI examples accordingly.",
+  "acceptedScope": [
+    "Restore one selected backup as a whole, with new reminders and lists added automatically",
+    "Keep existing local reminders unchanged; optional separate copies add the backup version under a new identity",
+    "Clarify preview entries are reminders/repeating families from the selected file, not different backup files or per-task export/inclusion choices",
+    "Clarify how existing reminders are preserved and how optional separate copies differ from inclusion/exclusion controls",
+    "Update related documentation and UI examples; preserve four-theme Light/Dark styling and established native retry/timing/result semantics"
+  ],
+  "artifacts": [
+    "r10-data-help-specification.md revision 2",
+    "r10-data-help-fixtures.json revision R10-specification-r2",
+    "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help (revised examples awaiting owner review)"
+  ],
+  "historicalIntakesPreserved": [
+    "r10-data-help-intake.json (A32)",
+    "r10-data-help-image-intake.json (A33)"
+  ],
+  "notImplied": [
+    "Blanket acceptance of original or revised image pixels or every R10 template",
+    "Selective restore, overwrite/merge, new backup formats or global preference portability",
+    "Production implementation, runtime/schema changes, real backup/import/share or device actions",
+    "Resolution of bridge-rejection/process-death recovery gaps",
+    "Milestone completion, accessibility or native/device acceptance"
+  ],
+  "presentationResolution": {
+    "status": "R2 UI clarification for owner review; not separately approved final pixels",
+    "existingLabel": "Already on this device",
+    "newEntryLabel": "New entry · Included automatically",
+    "existingControl": "title-associated radio group",
+    "choices": [
+      "Keep existing",
+      "Add a separate copy"
+    ],
+    "initialDefault": "Keep existing",
+    "frozenState": "readable selected result label, no editable group"
+  }
+}

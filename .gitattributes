@@ -4,3 +4,8 @@
 *.wav binary
 *.png binary
 *.webp binary
+
+# Preserve historical CRLF/EOF whitespace along with exact submitted bytes.
+docs/design/remilo-r10-data-help/** -text whitespace=cr-at-eol,-blank-at-eof
+docs/design/history/pre-r3-realignment/** -text whitespace=cr-at-eol,-blank-at-eof
+docs/design/approved-ui-r10-outline-acceptance.json -text

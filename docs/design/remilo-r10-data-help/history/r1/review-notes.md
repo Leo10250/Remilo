@@ -1,0 +1,229 @@
+# Remilo R10 generation review
+
+Implement from the frozen specification and shared tokens; these synthetic references remain awaiting owner review.
+
+## R10-01
+
+Observed:
+
+- The content, neutral glyphs and backup disclosure match the requested Settings Data/Help state.
+- The scenic opening is taller and the lower blank space more generous than the compact layout target.
+
+Implementation corrections:
+
+- Implement the shared 96 dp opening below status and 16/14 sp type, rather than copying raster heights or blank spacing.
+- Remilo/version is informational; no action or chevron is required. All ordinary glyphs share neutral roles.
+- Use shared corresponding Sunrise Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-02
+
+Observed:
+
+- Prepared-for-sharing copy distinguishes handoff from destination save; neutral structure is retained in Dark.
+- The semantic confirmation icon is saturated green and scenery remains taller than the prescribed compact opening.
+
+Implementation corrections:
+
+- Use the shared theme success role for the labeled preparation result; it must never mean external save/send.
+- Reuse Sunrise Dark canvas/elevated tokens and the same compact opening/component spacing as Light; generated black shades are approximate.
+- Use shared corresponding Sunrise Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-03
+
+Observed:
+
+- Idle state correctly has Choose backup file only, with no premature Restore footer or file metadata.
+- Scenic crop and introductory type are larger than the shared compact/body specification.
+- Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling.
+
+Implementation corrections:
+
+- Use the shared 96 dp opening below status and 16 sp body/14 sp support; shrink decoration before content.
+- Choose backup file opens the Android-owned chooser; a disclosure chevron does not imply an app-owned file browser.
+- Use shared corresponding Sky Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-04
+
+Observed:
+
+- Both conflict copy choices and their labels are correct; the new series entry has no copy control.
+- Long titles wrap without shrinking. The blue-slate Dark plane retains daytime Sky artwork.
+- The scenic opening and action heights differ from the requested shared metrics.
+- Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling.
+
+Implementation corrections:
+
+- Use the shared 96 dp opening below status, not the generated larger scene crop.
+- Implement a measured scroll viewport above the fixed footer, 56 dp primary and at least 48 dp secondary actions, and consistent secondary foreground/border roles.
+- Preserve separate whole-family copy semantics; never add selection controls to new entries.
+- Use shared corresponding Sky Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-05
+
+Observed:
+
+- Artwork opening is a little taller than 96dp below status; button raster heights remain approximate and visually below canonical 56/48dp despite repair.
+- Busy ellipses are rendered as three dots rather than a single typographic ellipsis.
+- Fourth preview card is clipped at footer scroll boundary; static image cannot prove it scrolls clear of footer or that controls/navigation are disabled.
+- Cancel preview has a relatively saturated outline despite its disabled contract.
+
+Implementation corrections:
+
+- Use shared inset-aware 56dp toolbar + about40dp scene below status. Use measured 56dp primary and >=48dp secondary controls, not raster dimensions.
+- Render canonical Restoring… and Restoring backup… strings. Keep neutral progress indicator.
+- Frozen choices are informational only, no switches or competing job; applying Back and Cancel preview guarded. Reserve measured feedback/footer space outside scroll; all rows must be reachable.
+- Use a consistent neutral disabled outline/content role so Cancel cannot be mistaken for an enabled action.
+- Use shared corresponding Evening Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-06
+
+Observed:
+
+- Retry and Cancel button raster heights remain approximate and visually below canonical56/48dp.
+- Disabled Cancel preview label is quite low contrast; its state is inactive but final token/label clarity needs review.
+- Warning icon uses coral while the action uses pale rose; this is a semantic role difference, not arbitrary per-icon tint.
+
+Implementation corrections:
+
+- Use measured56dp enabled Retry same restore and >=48dp disabled Cancel preview; neutral disabled role must remain legible.
+- Reuse the exact captured backup, copy IDs and operation ID on Retry; preserve guarded navigation/new-file/copy choices until reconciliation.
+- Use stable semantic warning/error tokens independent of atmosphere; all ordinary informational support neutral.
+- Use shared corresponding Evening Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-07
+
+Observed:
+
+- Artwork remains somewhat taller than canonical shallow secondary crop.
+- Static raster presents all7 retained operational states and pending1 but does not establish refresh/share/accessibility behavior.
+- Native ImageGen output is 841 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling.
+
+Implementation corrections:
+
+- Use same96dp secondary opening below status as other pages; keep Night Light icy canvas/white opaque cards.
+- Counts Scheduled4, Stopped3, Blocked2, NoAlert1, Completed5, Deleted2, Skipped1 and pendingReminderUpdates1 must come from observed report; missing states omitted, no health grade.
+- Observation is Oct8 1:58PM report time, not2:00 device/page time; capabilities/technical/share follow in same scroll.
+- Use shared corresponding Night Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-08
+
+Observed:
+
+- Observed timestamp is tinted periwinkle in generated image; ordinary metadata should be neutral onSurfaceVariant.
+- Artwork and row/action heights remain approximate rather than canonical dp measurements.
+- Warm semantic refresh-error surface/glyph differs from cool navy report cards and neutral toolbar refresh glyph; final semantic role mapping needs consistent component tokens.
+- First introduction is above this captured scroll position; screenshot is scoped to old observation, refresh error and retained rows.
+
+Implementation corrections:
+
+- Use neutral metadata text; primary only on actual Retry and stable semantic error/warning role for feedback, not random icon colors.
+- Retain Oct8 1:50PM old report and exact7state counts/pending1 on refresh failure; no fabricated zeros or freshly checked time.
+- Use >=48dp Retry target and shared shallow secondary crop, opaque soft navy planes; no independent near-black utility page.
+- Introduction remains present in page scroll. Capabilities/schema/share follow below capture; read-only refresh failure must not adopt import uncertainty guard.
+- Use shared corresponding Night Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-09
+
+Observed:
+
+- Exact invalid-backup copy; Nothing was imported; only Choose backup file, with no preview/footer or uncertainty guard.
+- Sunrise Light warm canvas, white/raised error plane and burnt-orange action fit references.
+- Opening crop and error glyph are slightly larger than planned; no content overlap.
+- Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling.
+- Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling.
+
+Implementation corrections:
+
+- Use shared 56dp toolbar + 40dp secondary art crop below status, and 24dp standard error glyph in a 48dp accessible action-free information region.
+- Use shared surface/primary/error tokens rather than sampling image pixels; enforce actual 56dp prominent action sizing.
+- Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster.
+- Use shared corresponding Sunrise Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-10
+
+Observed:
+
+- Correct confirmed content counts 5 restored/1 preserved and separate blocked-delivery warning, with no all-Scheduled or audibility claim.
+- Preview and footer cleared; Choose backup file remains normal flow.
+- Targeted repair reduced oversized scenery; residual crop and action-height variance remain approximate.
+- Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling.
+- Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling.
+
+Implementation corrections:
+
+- Use shared fixed compact secondary opening and 56dp Choose backup file action; result/warning surfaces wrap at font scale.
+- Bind counts to returned native import result; never infer delivery readiness from content acknowledgement.
+- Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster.
+- Use shared corresponding Sky Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-11
+
+Observed:
+
+- Receipt confirmation is correctly limited to the prior import identity; there are no invented result totals or delivery assurances.
+- The old preview and its action footer are absent. A fresh file can be chosen.
+- The generated scene crop and introductory type are larger than the shared secondary-page metrics; confirmation glyph carries a pale blue tint.
+- Native ImageGen output is 841 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling.
+
+Implementation corrections:
+
+- Implement the shared 96 dp opening below status and 16/14 sp body/helper sizes, using shared Sky Dark canvas/elevation roles.
+- Use a quiet neutral confirmation glyph or a consistent semantic role with its label; do not invent per-page accent assignments.
+- Keep receipt-only confirmation distinct from a fresh result that supplies added/preserved/blocked totals.
+- Use shared corresponding Sky Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-12
+
+Observed:
+
+- Inline Settings Data export failure wording correct; structural icons neutral; other Data/Help actions retained.
+- ImageGen first invented a Remilo support route; targeted repair removed it, leaving passive Remilo/version copy.
+- Supporting text remains subtly lavender-tinted and error appearance is close to Evening primary; exact palette remains a generated approximation.
+
+Implementation corrections:
+
+- Use neutral onSurfaceVariant for backup/version helper copy and dedicated stable semantic error/onErrorContainer roles distinct from primary.
+- Keep Remilo/version passive; no support route or unsupported backup-prepared claim.
+- Use shared corresponding Evening Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-13
+
+Observed:
+
+- Report remains visible with observed timestamp and actual Content schema 4/Delivery schema 3 metadata.
+- Exact diagnostic privacy disclosure and share-sheet failure text; no sent/cancelled/uploaded claim.
+- Share diagnostic report appears as a section heading plus action; header crop slightly taller and main action slightly shorter than exact metrics.
+
+Implementation corrections:
+
+- Keep one actionable Share diagnostic report; section title is informational and can be omitted if hierarchy becomes repetitive.
+- Use standard compact header, measured 56dp action and neutral metadata/semantic error tokens; retain captured report on share failure.
+- Use shared corresponding Evening Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.
+
+## R10-14
+
+Observed:
+
+- Long title fully wraps, singular 1 reminder or series, informational Future time indicated and timing disclaimer accurate.
+- No checkbox/switch, exact target/date/mode or Scheduled promise; stacked Restore backup/Cancel preview stays clear of content.
+- Targeted repair reduced original oversized scenery; residual header height and periwinkle tint in ordinary supporting copy remain approximate.
+
+Implementation corrections:
+
+- Use shared compact opening and onSurfaceVariant gray for timing/intro/helper, retaining primary only for actual Choose another backup/Restore action.
+- Use shared navy canvas/raised navy surfaces and measured footer safe-area/scroll clearance with 56dp actions; never infer portable eligibility from preview futureAlert.
+- Use shared corresponding Night Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.
+- Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.

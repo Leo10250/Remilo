@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-08",
+  "selectedImages": 14,
+  "builtInImageGenCalls": 20,
+  "matchingR3Pairs": 8,
+  "embeddedNotesMatch": true,
+  "selectedPngsMatchSources": true,
+  "referenceAndCandidateHashesMatch": true,
+  "localLinkTargetsExist": true,
+  "galleryJsSyntax": "passed",
+  "galleryLogic": "mock DOM navigation, 14 selections, 56 scale checks, boundary states, hash links, form keyboard guard, load/error states passed",
+  "visualInspection": "All 14 selected images inspected locally; nine also independently audited against fixtures and matching R3 references. No material content/state errors requiring regeneration found. Cosmetic and token/metric discrepancies recorded.",
+  "browserRendering": "Not verified: browser inspection tool rejected file protocol under its URL policy. No browser workaround attempted.",
+  "nativeOrAccessibilityAcceptance": "Not performed; images are synthetic evaluation references.",
+  "ownerApproval": "Awaiting review"
+}

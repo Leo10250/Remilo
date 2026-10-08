@@ -1,0 +1,256 @@
+{
+  "record": "A35",
+  "date": "2026-10-08",
+  "approvingOwner": "Repository owner in this chat",
+  "source": "Direct owner response after the revised R10 r2 documentation and UI examples were presented",
+  "ownerStatement": "Looks good. I approve",
+  "context": "The owner approved the current R10 r2 design submission after the whole-backup Restore clarification, seven revised Restore examples and synchronized documentation/gallery were completed.",
+  "acceptedScope": [
+    "R10 revision2 Data/Help design direction and UI templates in the current fourteen-state gallery, including seven revised Restore examples",
+    "Whole-backup Restore, automatically included new entries/lists, explicit existing-reminder Keep existing / Add a separate copy choices with Keep existing initial default",
+    "Existing-reminder preservation, whole repeating-family copy scope, readable frozen choices and existing retry/timing/result distinctions",
+    "Matching established four global themes with independent Light/Dark appearance and shared secondary-page component language"
+  ],
+  "correctionBasis": "The existing per-image generation discrepancies and canonical component corrections remain part of the approved implementation reference. The approval adds no new owner condition and does not turn approximate image pixels into measured tokens/geometry or runtime evidence.",
+  "rasterIdentityScope": "All fourteen associated selected references were available in the current submitted gallery. Their hashes identify the accepted outline/template package; separate inspection or immutable-pixel acceptance of each individual raster is not asserted.",
+  "gallery": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/gallery.html",
+  "canonicalSpecification": "r10-data-help-specification.md",
+  "canonicalFixtures": "r10-data-help-fixtures.json",
+  "externalArtifactRoot": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help",
+  "submittedSpecification": {
+    "file": "submission-specification-r2.md",
+    "sha256": "d31e19a6facb73a0922fc3373c2707aa0017d0e993a9e4d0ea73360202ee8c4f"
+  },
+  "submittedFixtures": {
+    "file": "submission-fixtures-r2.json",
+    "sha256": "4d276bbce66441f025a410e5ba138eb71b6fd39174ebc179421a65772eed7c49"
+  },
+  "reviewNotes": {
+    "file": "review-notes.json",
+    "sha256": "7183ea0c107ada359f66ddb68ce0bf34f424cd0356e6e0e3b8373d03ec7b90ec"
+  },
+  "associatedReferences": [
+    {
+      "id": "R10-01",
+      "file": "01-settings-data-and-help-sunrise-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/01-settings-data-and-help-sunrise-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "9226f827b9e963c99941d92cd7333856d18f2e912f2b521a5a1b6c9a9fac2b43",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-02",
+      "file": "02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "04b86a5ba5ca2b86de5cfd9fbca6f858a509a7ab3b0d15f25640822930509a39",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-03",
+      "file": "03-restore-before-choosing-a-file-sky-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/03-restore-before-choosing-a-file-sky-light.png",
+      "width": 840,
+      "height": 1871,
+      "sha256": "2fc5e14e291aa2ec7f4993d1fd829ede0126fedc3664406e726cd53dceba24b3",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-04",
+      "file": "04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+      "width": 840,
+      "height": 1871,
+      "sha256": "be9210fcca626c2147821fde6d25d3d431195a340b72ebc75ec9e75fc212ca44",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-05",
+      "file": "05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "349f5adb3030bb9b4588fcf64f3898ba322c634792f5b275449623b0eb73cdba",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-06",
+      "file": "06-restore-reply-unconfirmed-evening-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/06-restore-reply-unconfirmed-evening-dark.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "b0d0898200b8051d66910fe581f3ab3d242ecd7204f30caa2de616f718dd7ec3",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-07",
+      "file": "07-diagnostics-operational-snapshot-night-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/07-diagnostics-operational-snapshot-night-light.png",
+      "width": 841,
+      "height": 1871,
+      "sha256": "fced764b64028faa81cf4b3aa0209c961fb96f2f24d585a765d78a2a55ef2ad8",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-08",
+      "file": "08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "d11134072f5048063038a12ef4e290a6811730ff5da1ac0ca5516ba54adfe0b8",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-09",
+      "file": "09-invalid-backup-before-an-import-sunrise-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/09-invalid-backup-before-an-import-sunrise-light.png",
+      "width": 840,
+      "height": 1871,
+      "sha256": "6cbd223a8ae4568c98265963dcad36e53b3f619193682872445eefe93287ffce",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-10",
+      "file": "10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "width": 840,
+      "height": 1871,
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-11",
+      "file": "11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "262028a7ac8d68139118c3ad467b038c08a8abe9e0ad2c35166b4c20084e55c4",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-12",
+      "file": "12-export-share-unavailable-evening-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/12-export-share-unavailable-evening-dark.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-13",
+      "file": "13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "width": 841,
+      "height": 1870,
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "imageRevision": "r1-carried-forward",
+      "availableAtApprovalResponse": true
+    },
+    {
+      "id": "R10-14",
+      "file": "14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "absolutePath": "C:\\Users\\Leo\\Documents\\Codex\\2026-10-08\\based-on-these-specs-generate-images\\remilo-r10-data-help/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "width": 842,
+      "height": 1869,
+      "sha256": "9d9968416d5d72ad949c687d9d7e6755784754783da21e67e7b9abd39b7a686d",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "imageRevision": "r2",
+      "availableAtApprovalResponse": true
+    }
+  ],
+  "themeReferences": [
+    {
+      "id": "sunrise-light",
+      "file": "references/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+    },
+    {
+      "id": "sunrise-dark",
+      "file": "references/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+    },
+    {
+      "id": "sky-light",
+      "file": "references/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+    },
+    {
+      "id": "sky-dark",
+      "file": "references/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+    },
+    {
+      "id": "evening-light",
+      "file": "references/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+    },
+    {
+      "id": "evening-dark",
+      "file": "references/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+    },
+    {
+      "id": "night-light",
+      "file": "references/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "id": "night-dark",
+      "file": "references/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    }
+  ],
+  "historicalRecords": [
+    "A32 refinement intake",
+    "A33 r1 generation intake",
+    "A34 whole-backup behavior/documentation/UI revision authorization"
+  ],
+  "supersedes": "R10 r2 pending-review status. Original r1 examples remain superseded for revised Restore states; earlier intakes/evidence retain their chronological scope.",
+  "notImplied": [
+    "Final artwork abstraction or exact generated colors, tokens, typography and component measurements",
+    "Production implementation, native/schema changes or real backup/import/share/device actions",
+    "Measured contrast/targets/large-text/TalkBack, native/physical alarm verification or process-recovery guarantees",
+    "Milestone completion, production execution or acceptance of unrelated screen families"
+  ]
+}

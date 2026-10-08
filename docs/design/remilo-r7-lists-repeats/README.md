@@ -6,6 +6,7 @@ Use [the gallery](gallery.html) one readable mobile screenshot at a time (360/42
 
 The twelve selected PNGs were generated using built-in image_gen in 25 calls including targeted repairs, and copied unchanged. [Image identities](images.json), [bundle manifest](manifest.json) and [exact prompt set](generation-provenance.json) retain provenance. Submission specification/fixtures preserve the pre-generation revision; their original relative links are archival, not the current source navigation.
 
-All four atmospheres use corresponding R3 Light/Dark references. Shared semantic backgrounds/elevated surfaces/actions govern implementation; no sampled PNG blacks, new list/family palettes or automatic boundaries are authorized. Opaque reading surfaces, neutral structural roles, existing query/mutation semantics and IME-safe focused actions stay required.
+All four atmospheres use corresponding R3 Light/Dark references. Shared semantic backgrounds/elevated surfaces/actions govern implementation; no sampled PNG blacks or new list/family palettes are authorized. A36 separately fixes
+Automatic/manual policy in [the current contract](../current/appearance-policy.md). Opaque reading surfaces, neutral structural roles, existing query/mutation semantics and IME-safe focused actions stay required.
 
 No production UI, native/IME/TalkBack, measured contrast or phone verification is established by these synthetic screenshots.

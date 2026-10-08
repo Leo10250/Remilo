@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-10-08",
+  "revision": "r2",
+  "subset": "R10-05, R10-06, R10-14",
+  "behaviorAgreement": "Whole backup restore. All new reminders/lists included; existing records preserved; only explicit separate-copy handling of existing entries.",
+  "calls": [
+    {
+      "callIndex": 1,
+      "id": "R10-05",
+      "kind": "edit",
+      "prompt": "Use case: ui-mockup edit.\nAsset type: revised Remilo Android Restore-in-progress screenshot, one full flat portrait screenshot at 841x1870 proportions, logical360x800dp.\nInput image1 is the edit target. Input image2 is the approved Evening Light STYLE AND COLOR reference only.\nEdit the first image's Restore preview text so it unmistakably describes reminders inside ONE selected backup, not selectable files or selective restore. Preserve its palette, white raised cards over softly rose-white canvas, sunset SUN lake/mountains/conifers scene, neutral text/icon family, Android2:00 status and gesture bar, guarded dim Back, toolbar \"Restore backup\". Match the same approved Evening Light style from image2. No redesign, new icons, rootbar or FAB.\nOpening should stay compact:24dpstatus+56dptoolbar+40dp shallow scene (about280px total). Realistic16dp gutters,16spbody14spsupport, long text wraps. Compress excess vertical gaps, do not shrink text to force all inventory visible. This capture is scrolled past the Lists group, which stays above the viewport.\n\nBody content in order:\nSection heading exactly \"Reminders from the selected backup\".\nFirst rounded card:\n\"Call dentist about the revised treatment estimate\"\n\"Already on this device\"\n\"Add a separate copy\"\n\"Future time indicated\"\nSecond rounded card:\n\"Water balcony plants (series)\"\n\"New reminder · Added automatically\"\n\"Future time indicated\"\nThird rounded card:\n\"Team standup — review launch checklist and unresolved issues (series)\"\n\"Already on this device\"\n\"Keep existing\"\n\"Future time indicated\"\nFourth card, only if some of it is actually inside the scroll viewport:\n\"Prepare the weekly handover notes (series)\"\n\"New reminder · Added automatically\"\n\"No future time indicated\"\nAll choices FROZEN plain informational text while applying, no toggles, no radios, no checkboxes, no include/exclude controls. Existing records remain unchanged even when adding a separate copy. Never show \"Restore a copy\" or \"Restore selected data\". Copy exactly as above.\n\nAt bottom keep a measured persistent footer outside scroll with neutral indeterminate spinner and feedback exactly \"Restoring backup…\" ABOVE full-width DISABLED filled muted-plum button \"Restoring…\" (56dp tall) and DISABLED outlined \"Cancel preview\" (48dp tall),8dp gap and bottom safe gesture inset. Disabled labels remain readable. No enabled cancel or Back, no success, no counts or percentage. Reserve actual footerheight; body ends above it. If extra new labels mean fourth card is clipped, true viewport clipping above footer is appropriate; footer must never overlay titles or helper text. Preserve exact busy behavior and shared theme.\nAvoid: backup-file list, selective restore, editable selection, independent black, generic unthemed controls, huge hero illustration, marketing frame.",
+      "referenced_image_paths": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/05-restore-in-progress-with-frozen-choices-evening-light.png",
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/05-evening-light.png"
+      ],
+      "transparent_background": false,
+      "returnedSourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-3b92f8e6-1db1-44cf-9bcd-6f1e1c5a4fff.png",
+      "returnedOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c as C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-3b92f8e6-1db1-44cf-9bcd-6f1e1c5a4fff.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "resultStatus": "success",
+      "selected": false,
+      "outputSha256": "e023fc1d231e3af63c65476e95326e50d96d80f34d3c13006051f3cb5e8e4f0a",
+      "raster": {
+        "width": 841,
+        "height": 1870
+      },
+      "references": [
+        {
+          "path": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/05-restore-in-progress-with-frozen-choices-evening-light.png",
+          "sha256": "5ba059bdda490eb1d4c9273ff4095953eef225a9c32cea3203b5a92a8acf2407"
+        },
+        {
+          "path": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/05-evening-light.png",
+          "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+        }
+      ]
+    },
+    {
+      "callIndex": 2,
+      "id": "R10-05",
+      "kind": "repair",
+      "prompt": "Use case: ui-mockup edit. Preserve the supplied Evening Light Restore-in-progress screenshot, its exact first/third card text, title/heading, sunset sun/canvas/cards/theme/status/gesturebar and FROZEN informational choices. Make exactly these corrections:\n1. Replace BOTH occurrences of \"New reminder · Added automatically\" with exact neutral text \"New entry · Included automatically\". This is preview inclusion, not completed import. Keep future-time metadata where visible.\n2. Footer must reserve approximately200dp at bottom, starting around y1400 of1870px. Filled DISABLED \"Restoring…\" button must be56dp tall (~131px); outlined DISABLED \"Cancel preview\" must be48dp tall (~112px),8dp gap. Keep neutral spinner and exact \"Restoring backup…\" feedback above buttons. Buttons are not thin pills. Labels remain readable.\nThe body scroll viewport ends at the footer top. The fourth card may show only its title because remainder is below viewport; do NOT squeeze the four cards to fit and do NOT place footer over text. Keep16spbody14spsupport. No editable radio/toggle, no counts, no success, no enabledCancel orBack.\nKeep all other content as-is. Opening should remain compact and unchanged. Output one841x1870 portrait screen.",
+      "referenced_image_paths": [
+        "C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-3b92f8e6-1db1-44cf-9bcd-6f1e1c5a4fff.png"
+      ],
+      "transparent_background": false,
+      "returnedSourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-7b71b660-16bb-4c05-9ec8-bf6e410c9d0d.png",
+      "returnedOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c as C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-7b71b660-16bb-4c05-9ec8-bf6e410c9d0d.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "resultStatus": "success",
+      "selected": true,
+      "outputSha256": "349f5adb3030bb9b4588fcf64f3898ba322c634792f5b275449623b0eb73cdba",
+      "raster": {
+        "width": 841,
+        "height": 1871
+      },
+      "references": [
+        {
+          "path": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-3b92f8e6-1db1-44cf-9bcd-6f1e1c5a4fff.png",
+          "sha256": "e023fc1d231e3af63c65476e95326e50d96d80f34d3c13006051f3cb5e8e4f0a"
+        }
+      ]
+    },
+    {
+      "callIndex": 3,
+      "id": "R10-06",
+      "kind": "edit",
+      "prompt": "Use case: ui-mockup edit.\nAsset type: revised Remilo Android Restore-reply-unconfirmed screenshot, one flat portrait841x1870 screen/logical360x800dp.\nImage1 EDIT TARGET. Image2 approved R3 Evening Dark STYLE/COLOR ONLY.\nPreserve image1's same product type/icons, SOFT plum-charcoal canvas and raised plum opaque cards, neutral offwhite/gray text, pale-rose enabled Retry with dark text and readable disabled Cancel, sunset SUN/mountains/lake/conifer crop,2:00 Android status/gesturebar, guarded dim Back, toolbar \"Restore backup\". No new independent black/different scene or redesign. Compact opening24dpstatus+56toolbar+40shallow art(about280px). Body scrolled past the Lists group earlier above viewport.\n\nRevise body to make reminder rows inside one selected backup unmistakable. Section heading EXACT:\n\"Reminders from the selected backup\"\nThen frozen plain informational cards in this order:\n\"Call dentist about the revised treatment estimate\"\n\"Already on this device\"\n\"Add a separate copy\"\n\"Future time indicated\"\n\n\"Water balcony plants (series)\"\n\"New entry · Included automatically\"\n\"Future time indicated\"\n\n\"Team standup — review launch checklist and unresolved issues (series)\"\n\"Already on this device\"\n\"Keep existing\"\n\"Future time indicated\"\n\nIf room in true scroll viewport, next card:\n\"Prepare the weekly handover notes (series)\"\n\"New entry · Included automatically\"\n\"No future time indicated\"\nAll choices frozen, NO switches/radios/checkboxes; existing records untouched and all new entries included. Never \"Restore a copy\", \"New reminder · Added automatically\" or \"Restore selected data\". Long titles/support wrap naturally16spbody14spsupport at16dpgutters. Fourth card may be out of frame, it continues by scrolling; do not shrink type to force it in.\n\nOne bottom persistent footer OUTSIDE scroll reserves measured space. Stable semantic warning icon and EXACT single feedback:\n\"Restore not confirmed. Retry the same restore; your backup and copy choices are kept.\"\nFeedback is readable and directly above enabled filled pale-rose \"Retry same restore\"56dp tall (~131px), then8dp gap and outlined DISABLED \"Cancel preview\"48dp(~112px), with readable muted neutral label. Insets safe gesture bar. Body ends above footer with true clipping, never text beneath buttons. Back guarded, Cancel disabled. Same backup/copy choices retained, no editable selectors/newfilebuttons, no success, no counts/percent, no Nothing imported. This uncertainty state is not confirmed import.\nPreserve all other content/style. Image2 fixes exact corresponding shared Evening Dark softness if edit drifts. One portrait screenshot, not marketing, no phonehardware/rootbar/FAB.",
+      "referenced_image_paths": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/06-restore-reply-unconfirmed-evening-dark.png",
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/06-evening-dark.png"
+      ],
+      "transparent_background": false,
+      "returnedSourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-cb7df157-2dd3-4bcf-afea-41727a19c02f.png",
+      "returnedOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c as C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-cb7df157-2dd3-4bcf-afea-41727a19c02f.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "resultStatus": "success",
+      "selected": false,
+      "outputSha256": "7870afcc720001567993584838a65be97b05e911e32f3a951f06e4d08ef49e0a",
+      "raster": {
+        "width": 841,
+        "height": 1870
+      },
+      "references": [
+        {
+          "path": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/06-restore-reply-unconfirmed-evening-dark.png",
+          "sha256": "d76d86c646f4c00cf7cdc84f46c476fe76ec886aa5313288e7ebeabc0777a1d4"
+        },
+        {
+          "path": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/06-evening-dark.png",
+          "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+        }
+      ]
+    },
+    {
+      "callIndex": 4,
+      "id": "R10-06",
+      "kind": "repair",
+      "prompt": "Use case: ui-mockup edit. Keep exact content and color/style of supplied Evening Dark Restore backup screenshot. Change only footer layout/readability:\nMove footer TOP upward to around y1350px of1870px and reserve full footer outside scroll. Feedback remains exact \"Restore not confirmed. Retry the same restore; your backup and copy choices are kept.\" with semantic warning glyph directly above controls.\nEnabled filled pale-rose \"Retry same restore\" must be56dp(~131px) tall and outlined DISABLED \"Cancel preview\"48dp(~112px) tall with8dp(~19px) gap and bottom safe inset. Make disabledCancel label neutral lightgray sufficiently readable, not very low contrast purple. Preserve visibly disabled state. Do not reduce buttons to thin pills.\nBody scroll ends at footer boundary. The fourth handovercard MAY ONLY SHOW ITS TITLE because support continues below viewport; true clipping at body-end is correct, no overlay by footer, no squishing all4cards. Keep heading and dentist/newbalcony/standup labels exact. Do not change any words, no toggle/radio, no counts/success, no new file selection. Entire frozen restore context and sunset soft plum theme unchanged. One841x1870 screenshot.",
+      "referenced_image_paths": [
+        "C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-cb7df157-2dd3-4bcf-afea-41727a19c02f.png"
+      ],
+      "transparent_background": false,
+      "returnedSourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-c5f038ba-6e86-4bf6-ab80-f5064a362602.png",
+      "returnedOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c as C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-c5f038ba-6e86-4bf6-ab80-f5064a362602.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "resultStatus": "success",
+      "selected": true,
+      "outputSha256": "b0d0898200b8051d66910fe581f3ab3d242ecd7204f30caa2de616f718dd7ec3",
+      "raster": {
+        "width": 841,
+        "height": 1871
+      },
+      "references": [
+        {
+          "path": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-cb7df157-2dd3-4bcf-afea-41727a19c02f.png",
+          "sha256": "7870afcc720001567993584838a65be97b05e911e32f3a951f06e4d08ef49e0a"
+        }
+      ]
+    },
+    {
+      "callIndex": 5,
+      "id": "R10-14",
+      "kind": "edit",
+      "prompt": "Use case: ui-mockup edit.\nAsset type: revised Remilo Android legacy backup preview screenshot, one full flat portrait841x1870screen/logical360x800dp.\nImage1 EDIT TARGET. Image2 approved R3 Night Dark STYLE AND COLOR reference only.\nKeep edit target page anatomy, exact long archived-note title, Choose another backup,1 reminder or series, Future time indicated and timing qualification, stacked Restore backup / Cancel preview footer, Back,2:00 Android status and gesturebar. Match approved shared Night Dark SOFT navy-slate canvas/raised navy cards with periwinkle primary/dark text, white neutral titles/muted neutral support, crescent/stars same mountain lake coniferart. No pureblack/newtheme/redesign, no rootbar/FAB/phonehardware.\n\nReplace old introductory paragraph with EXACT:\n\"Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.\"\nThen optional second paragraph exactly:\n\"You can add separate copies of existing reminders.\"\nKeep \"Choose another backup\" as one enabled action underneath, same blue/periwinkle intentional action color.\nKeep section count \"1 reminder or series\".\nAdd a distinct visible context heading \"Reminders from the selected backup\" before card; it may be above count or next to count.\nOne opaque raised rounded card with wrapped title exactly:\n\"Review the archived project notes before tomorrow's meeting\"\nAdd exact neutral support:\n\"New entry · Included automatically\"\nThen keep:\n\"Future time indicated\"\nThis row is new, so NO radio/switch/checkbox/icon/entry-selection control. It is part of restoring the whole selected file, not filechoice. Do not say \"Added automatically\" on a preview row. Existing reminders stay unchanged even if duplicates chosen elsewhere. Legacy row future definition indicates future original timing but not a portable target; do not invent Scheduled or alarmdate.\n\nKeep below card exact qualification:\n\"Preview timing does not confirm delivery. Alerts are checked after restore.\"\nMaintain compact secondary opening24status+56toolbar+40shallow sceneabout280px.16dpgutters16spbody14spsupport, naturally wrapped long text, exact neutral metadata. Main action56dp tall filled \"Restore backup\"; outlined48dp \"Cancel preview\" below8dpgap, persistent inset-safe footer outside measured scroll. Body scroll ends ABOVE footer, no overlay. Never \"Restore selected data\", no selectall/overwrite controls, no cloud/filemetadata, no screenshotposter.\nMake only these clarifying content corrections while keeping shared Night Dark color/style and screen hierarchy.",
+      "referenced_image_paths": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/08-night-dark.png"
+      ],
+      "transparent_background": false,
+      "returnedSourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-0100e8ad-068f-443b-b44a-7be187f392b3.png",
+      "returnedOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c as C:\\Users\\Leo\\.codex\\generated_images\\01a11c89-10e3-7360-857d-a0dd949f9c9c\\exec-0100e8ad-068f-443b-b44a-7be187f392b3.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "resultStatus": "success",
+      "selected": true,
+      "outputSha256": "9d9968416d5d72ad949c687d9d7e6755784754783da21e67e7b9abd39b7a686d",
+      "raster": {
+        "width": 842,
+        "height": 1869
+      },
+      "references": [
+        {
+          "path": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+          "sha256": "71a7a89938b92b77e3d202a917ba09e9a5d1b6bc50aa809b6151ce34deeffa13"
+        },
+        {
+          "path": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/references/08-night-dark.png",
+          "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+        }
+      ]
+    }
+  ],
+  "selected": [
+    {
+      "id": "R10-05",
+      "sourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-7b71b660-16bb-4c05-9ec8-bf6e410c9d0d.png",
+      "outputPath": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "file": "05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "copyPolicy": "Unchanged PNG bytes; copied from built-in ImageGen output.",
+      "observedDiscrepancies": [
+        "Busy ellipses are rendered as three dots instead of one typographic ellipsis.",
+        "Secondary header remains slightly taller than96dp below status, primary/secondary raster heights visually below canonical56/48dp.",
+        "Fourth card shows only its title at the reserved footer boundary; its new-entry and timing metadata continue below this captured scroll viewport."
+      ],
+      "requiredImplementationResolutions": [
+        "Render exact canonical Restoring backup… and Restoring… strings and measured56dp primary/>=48dp secondary controls with inset-aware measured footer outside scroll.",
+        "Keep Already on this device and Add a separate copy/Keep existing frozen; use neutral New entry · Included automatically for all new preview rows, never completed-import wording.",
+        "All new reminders/lists remain part of the whole restore. Existing records are untouched. Applying state guards Back/Cancel/new-file choice; no radio/toggle/checkbox.",
+        "Use same96dp opening and Evening Light shared canvas/elevated/token roles; do not sample approximate generated raster colors."
+      ],
+      "reviewStatus": "Revised evaluation example reflecting confirmed whole-backup behavior; pixels not owner-approved or runtime verified.",
+      "raster": {
+        "width": 841,
+        "height": 1871,
+        "sha256": "349f5adb3030bb9b4588fcf64f3898ba322c634792f5b275449623b0eb73cdba",
+        "sourceSha256": "349f5adb3030bb9b4588fcf64f3898ba322c634792f5b275449623b0eb73cdba",
+        "unchangedCopy": true
+      }
+    },
+    {
+      "id": "R10-06",
+      "sourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-c5f038ba-6e86-4bf6-ab80-f5064a362602.png",
+      "outputPath": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/06-restore-reply-unconfirmed-evening-dark.png",
+      "file": "06-restore-reply-unconfirmed-evening-dark.png",
+      "copyPolicy": "Unchanged PNG bytes; copied from built-in ImageGen output.",
+      "observedDiscrepancies": [
+        "Section heading appears on a raised area adjoining the first card; canonical heading belongs outside the entry card group.",
+        "Primary/secondary raster heights remain visually below canonical56/48dp even after repair; disabled Cancel label is readable but static image cannot prove inactivity.",
+        "Fourth handover card shows its title only at body viewport boundary; new-entry and timing metadata continue below this captured scroll position."
+      ],
+      "requiredImplementationResolutions": [
+        "Place Reminders from the selected backup as a distinct section heading and use shared same96dp secondary opening/card anatomy across themes.",
+        "Freeze exact Already on this device + Add a separate copy/Keep existing choices while unconfirmed; all new rows use New entry · Included automatically with no controls.",
+        "Render exact uncertainty feedback and reuse captured backup/copyIDs/operationID on Retry; navigation/new-file choices/Cancel remain guarded; no completed-import claim.",
+        "Use measured56dp enabled Retry/>=48dp readable disabled Cancel and measured footer outside scroll, with all rows reachable; semantic warning role stays stable."
+      ],
+      "reviewStatus": "Revised evaluation example reflecting confirmed whole-backup behavior; pixels not owner-approved or runtime verified.",
+      "raster": {
+        "width": 841,
+        "height": 1871,
+        "sha256": "b0d0898200b8051d66910fe581f3ab3d242ecd7204f30caa2de616f718dd7ec3",
+        "sourceSha256": "b0d0898200b8051d66910fe581f3ab3d242ecd7204f30caa2de616f718dd7ec3",
+        "unchangedCopy": true
+      }
+    },
+    {
+      "id": "R10-14",
+      "sourcePath": "C:/Users/Leo/.codex/generated_images/01a11c89-10e3-7360-857d-a0dd949f9c9c/exec-0100e8ad-068f-443b-b44a-7be187f392b3.png",
+      "outputPath": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "file": "14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "copyPolicy": "Unchanged PNG bytes; copied from built-in ImageGen output.",
+      "observedDiscrepancies": [
+        "Introductory and new-entry/timing metadata are somewhat tinted blue/periwinkle in generated image, while ordinary support should use neutral onSurfaceVariant.",
+        "Header and action raster dimensions remain approximate; primary is visually somewhat below canonical56dp.",
+        "The long section heading and nearby count both render prominently; final component hierarchy should retain clear separation without duplicated oversized emphasis."
+      ],
+      "requiredImplementationResolutions": [
+        "Render exact whole-backup introduction, Reminders from the selected backup and New entry · Included automatically. No selection controls on this new row.",
+        "Use neutral metadata support roles; periwinkle belongs to actionable Choose another backup/primary button, never arbitrary ordinary metadata tint.",
+        "Use shared Night Dark soft navy canvas/elevated surfaces and96dp secondary opening, canonical16/14sp typography, measured56dp primary/>=48dp secondary outside scroll.",
+        "Future time indicated is weak preview original-timing context for legacy data, not a claim of Scheduled/portabletarget; retain timing qualification."
+      ],
+      "reviewStatus": "Revised evaluation example reflecting confirmed whole-backup behavior; pixels not owner-approved or runtime verified.",
+      "raster": {
+        "width": 842,
+        "height": 1869,
+        "sha256": "9d9968416d5d72ad949c687d9d7e6755784754783da21e67e7b9abd39b7a686d",
+        "sourceSha256": "9d9968416d5d72ad949c687d9d7e6755784754783da21e67e7b9abd39b7a686d",
+        "unchangedCopy": true
+      }
+    }
+  ],
+  "limitations": [
+    "Generated raster examples do not verify native behavior, contrast, accessibility or owner approval."
+  ]
+}

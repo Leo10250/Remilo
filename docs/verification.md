@@ -70,140 +70,51 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ## G0: foundation
 
-### Appearance design review
+### Current design verification
 
-The [R10 Data/Help draft](design/r10-data-help-specification.md) and
-[fourteen prospective states](design/r10-data-help-fixtures.json) are refinement
-inputs under A32, not generated or accepted references. Check Export's prepared-
-share outcome versus external save, native chooser cancellation/read failure,
-reminder/series count scope, list identity/suffix preservation, whole-family copy,
-25-entry preview paging, frozen same-job retry and real bridge INVALID_INPUT
-versus structured Rejected recovery. A receipt retry lacks totals/blocked and is
-not full delivery-recovery evidence. Verify future/past/paused/independent target
-outcomes without interpreting the preview boolean as Scheduled. Diagnostics
-must show actual observation/stale data, operational count scope, pending-reminder
-projection count and technical privacy disclosure; Android Share does not confirm
-recipient delivery. Cover request lifetime, Settings origin/scroll and measured
-footer/accessibility/OS handoffs in the owning acceptance scope.
-[Draft evidence](evidence/2026-10-08-r10-data-help-refinement.md) records source,
-reference and static checks only; no runtime/file-transfer/device pass is implied.
+Read [the current design](design/current/README.md), [coverage](design/current/coverage.md),
+[appearance policy](design/current/appearance-policy.md) and [TD roadmap](plans/redesign/README.md).
+R3 all eight images govern style. Approved templates/corrections govern R4/R5/R6/R7/
+R8/R10; R9 remains draft with no images/approval. Final artwork abstraction and
+actual production tokens/measurement are separate from raster approval.
 
-The [R9 Completed/Trash/Activity draft](design/r9-completed-trash-activity-specification.md)
-and [fourteen prospective captures](design/r9-completed-trash-activity-fixtures.json)
-are refinement inputs under A31, not generated/accepted references. Verify native
-filtering before pagination, latest relevant event order, status-only collection
-rows versus recorded detail dates, Include skipped, fixed membership/search/Back
-and origin return. Cover Restore's retained completion/skip and future/past target
-outcomes, paused-family independent exception recovery, revision-safe stale Undo
-and the exact-command guard after an unconfirmed collection reply. Current native
-Reopen retains skipped; resolve that contract/action before claiming an unskip.
-Activity must render only recorded entries/targets in the device zone and retain
-known data on refresh failure. [Draft evidence](evidence/2026-10-07-r9-records-refinement.md)
-records source/reference/static checks only. No runtime or physical pass is implied.
+This documentation PR checks local links, JSON, artifact hashes, frozen archive
+identities, gallery resources, retained backlog rows and the docs-only diff. It
+does not assert runtime tests, builds or physical observations. Historical P01/P02
+commands/evidence remain historical scope, not the current catalog acceptance gate.
+Existing npm/shared/native review-isolation tests remain available for later code
+changes; old eight-environment fixture tests do not define the new product policy.
 
-The [R8 Settings/Appearance/permissions/Test alarm draft](design/r8-settings-appearance-specification.md)
-and [review states](design/r8-settings-appearance-fixtures.json) have thirteen
-[associated references/corrections](design/remilo-r8-settings-appearance/gallery.html)
-under A29/A30. A30 accepts the direction/templates shown before its response;
-R8-08 is a later supplement. Actual components must cover independent brightness/global scene,
-preference acknowledgement/read failure and stale retry, distinct sound selection/
-playback/fallback, capability staleness/mixed channels, keyboard-safe custom Snooze,
-native shortcut confirmation and Scheduled/Blocked/Pending Test outcomes.
-The current Test API has no client-captured retry identity; refine and verify that
-contract before offering Retry after a lost reply. Draft/reference checks do not
-prove safe retries, audibility, permission-return, IME or pre-unlock appearance.
-R8 changes no live backlog status or physical acceptance result.
+For TD-01/03, validate matching canvas/elevated roles and consistent neutral form
+icons, atmosphere actions and labeled category/status colors in all eight pairs.
+Use shared 16 dp gutters/corners, 16 sp values/14 sp support, >=48dp ordinary targets
+and >=56dp app prominent actions. R6 native single/Stop-all actions remain >=64dp
+and member actions >=56dp. Measure actual contrast: normal text 4.5:1, qualifying
+large text 3:1 and required control/state graphics 3:1.
 
-The [7 October accepted R3/R4 templates and discrepancy corrections](design/approved-ui-r3-r4.md)
-are reference/requirements evidence, not actual component or phone verification.
-Their exact images, including the eight A20-approved R5 Sky/Evening variants,
-are preserved in the annotated design galleries. Verify shared neutral
-field/navigation icon roles, intentional action/category/status colors, consistent
-Light/Dark component geometry, and actual target/type/contrast measurements when
-implementing P02/P06/P07. Do not copy incidental generated tints or omissions.
+Capture real Android Title creation and lower Notes/caret/validation editing at
+360x800 and 200% English/Chinese text. One Save sits above actual IME, outside form
+scrolling, with measured footer clearance and one inset owner. Test emoji/taller
+keyboards, multiline selection/composition, first-tap Save, Back, rotation and
+uncertain/stale draft preservation. Static screenshots prove none of these behaviors.
 
-For P06/P12, capture Title creation and lower Notes editing with the real Android
-keyboard: one Save footer above IME, scroll viewport above the measured footer,
-and visible focused caret/selection plus reachable helper/error. Cover multiline
-growth, caret movement, 200% English/Chinese text, taller IME/emoji panel, repeated
-show/hide, picker return and Android Back. Ensure first-tap Save issues one guarded
-operation and retries retain the original command. Verify IME/safe-area handling
-does not add keyboard or navigation padding twice. Scrolling lower fields out of
-the initial viewport is valid; hiding a focused input behind footer/IME is not.
-Host fixtures do not establish these physical observations; include them in the
-existing consolidated owner run, with [E6](device-acceptance.md#e-data-and-accessibility).
+TD-02 tests local 06/10/17/21 edges, midnight/DST/clock/zone changes, manual overrides,
+Automatic missing/new defaults, preserved brightness, long foreground absence and
+coalesced transient updates. Never change reminder target/generation/history as a
+cosmetic side effect. TD-04 freezes native session appearance through member and
+unlock changes; use privacy-safe native resolution without CE/React/network reads.
+Retain direct Stop/Snooze/Stop-all, deadline/race checks and OS notification limits.
 
-A22/A24's [eleven R6 references and corrections](design/remilo-r6-alarm-postpone/gallery.html)
-are visual evidence only. Verify measured 64 dp single/Stop all and 56 dp member
-controls, reserved scrolling/footer space, neutral glyphs, A23 softer shared Dark
-surfaces, and all four atmospheres in both appearances during P07/P08 implementation.
-Check A24's full-page background and elevated surface roles against the actual
-corresponding shared theme tokens; generated black shades are not exact values.
-Direct Boot must show generic content with bundled themed presentation from a
-reviewed minimal safe descriptor, never CE reads, category/content mirrors or
-React startup. Missing/invalid safe state and asset failures must retain native
-actions without delaying audio. Exact descriptor/default contracts and real
-pre-first-unlock behavior remain pending technical/device evidence, not image proof.
+TD-03 retains whole-backup inclusion/identity conflicts, no-overwrite separate-copy
+choices, frozen same-operation Restore retry and truthful Scheduled/Pending/Blocked,
+share handoff, receipts and diagnostics. R9 and icon-free list candidates require
+remaining layout review, not invented image acceptance. TD-05 validates faithful
+static Classic exports/masks/small sizes without app-controlled aliases.
 
-The owner has also accepted the [R7 Lists/Repeats/recurrence outline](design/approved-ui-r7-outline-acceptance.json)
-with [per-image corrections](design/remilo-r7-lists-repeats/review-notes.json).
-P05 implementation review must raise the provisional decorative list-icon choice,
-with omission currently preferred and no custom-icon picker. Actual P05/P06/P07
-components must demonstrate native counts/order/scopes, paused/ended exceptions,
-readable disabled roles, shared theme colors/geometry and real IME/safe-area
-clearance. [R7 reference checks](evidence/2026-10-07-r7-images-and-approval.md)
-are synthetic/documentation evidence, not those runtime observations.
-
-The [P01-P12 plans](plans/redesign/README.md) define the staged gates. The owner
-authorizes bounded P01 through A10; A11 adds the artwork gate. A12 accepts r2 visual
-direction and four-candidate exploration; A14 accepts S1/M1 for actual review integration.
-The [P01-render-r1 evidence](evidence/2026-10-06-p01-prototypes.md) identifies the
-synthetic renderers, complete matrix, pixel measurements and remaining device limits.
-The [subsequent A15 acceptance](design/p01-render-r1-acceptance.json) accepts the
-two P01 compositions; [the handoff](handoffs/redesign-p01.md) retains pending
-physical gates. It does not convert synthetic host checks into device verification.
-Artwork approval precedes integration;
-standalone source/alpha checks do not prove actual UI accessibility or alarm reliability.
-P01 audits the whole UI, obtains complementary specification approval, then artwork-only
-approval before integration, and requires actual representative Agenda/full-Meadow Water plants alarm renders,
-side-by-side original/current/corrected comparisons, composited accessibility checks
-and explicit style/screen approval before any theme expansion. Existing A/B/C
-facilities below are preserved tooling, not a passed gate or required broad expansion.
-See [baseline limitations](evidence/2026-10-06-redesign-reassessment.md) and
-[approval ledger](design/approvals.md). P12 extends the existing single owner phone
-checklist rather than creating another physical-status source.
-
-`npm run preview:ui` exposes the non-shipping `/design-review` workspace. Compare
-A/B/C with the same scenario/brightness/period/content; actions are memory-only.
-`?inspect=1&screen=agenda&approach=hybrid&scale=2&brightness=dark&scenario=long-titles`
-provides a clean phone-sized inspection view. Real shared controls and draft
-helpers are exercised, but picker/keyboard/Back/TalkBack acceptance remains native.
-Browser alarm/notification examples are explicitly representations, not Android
-notification layout or delivery evidence.
-
-`npm run verify` includes opt-in web/normal Android resolver isolation and palette
-role/fixture checks. `node --experimental-strip-types
-scripts/verify-design-review-assets.mjs [sharp-package-path]` checks exact Classic
-source pixels and native artwork/token parity without writing files.
-
-The debug native `AlarmDesignReviewTest` renders actual `AlarmControlsScreen`
-through Robolectric native graphics. `verify:android` runs it with the module's
-debug unit tests. Artifacts are under
-`modules/remilo-alarm/android/build/outputs/design-review/native`: `index.json`,
-`gallery.html` and native PNGs. The gallery opens directly with relative assets.
-Assert nonblank pixels, distinct A/B/C treatments, generic content and reachable
-captured-member/session actions at 100%/200% text. Confirm the review activity is
-non-exported in debug and absent from release. No engine, database or alarm service
-is instantiated by those fixtures.
-
-Review the actual rendered text/controls over artwork, all palette choices,
-long English/Chinese and desktop/mobile layouts. Check scanning, simple creation,
-destination discovery and event/Due/alert versus Stop/Done comprehension. Owner
-layout/artwork/token approval precedes broad production changes; host results alone
-do not pass that design gate or any physical reliability gate.
-
-- Clean checkout builds with pinned tools and lockfile.
-- Locally signed release APK installs, opens offline, and has bundled JS/no Metro.
+TD-06 integrates code-appropriate shared/native checks and a signed artifact with
+[the consolidated owner run](device-acceptance.md). Preserve existing G1/G2/G3 tests
+and observed limitations. Record failures/unobserved cases; host checks and image
+approval never imply physical release verification.
 
 ## G1: physical native alarm proof
 
@@ -329,7 +240,12 @@ G5: disconnected changes/convergence, normal and offline primary handoff, logout
 Calendar writer separate from ringing role. G6: real-iPhone behavior, documented
 limits, widget/countdown integration and visible coverage. No early iOS testing.
 
-## UX refinement acceptance
+## Shipped 0.4.0 UX refinement observations
+
+The layout references in this section describe earlier pending baseline checks.
+For TD-06, use the current Agenda / Lists / Repeats roots, secondary origins and
+leading completion target while retaining the underlying behavior/recovery tests.
+Browse and trailing completion below are historical layout, not new requirements.
 
 Host checks cover native query/conversion/action contracts and focused TypeScript
 domain logic for route selection, revision-safe Undo, civil draft conversion,
@@ -379,7 +295,11 @@ These UI observations supplement [device-acceptance.md](device-acceptance.md) an
 the native G1–G3 gates. They do not replace the pending audibility, pre-unlock,
 recovery, five-minute cutoff or manufacturer coverage evidence.
 
-## Second refinement consolidated observations
+## Shipped second-refinement consolidated observations
+
+This retains the earlier build's pending observations. Its Browse references are
+baseline history; current TD-06 applies the same behavioral checks through the
+approved roots and invoking-origin navigation.
 
 The second refinement adds content schema 4 and backup format 3; operational schema
 stays 3. Native upgrade, retained-template membership, restore retry, No alert

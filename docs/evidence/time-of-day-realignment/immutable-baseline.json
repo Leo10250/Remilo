@@ -1,0 +1,358 @@
+[
+  {
+    "path": "docs/design/approved-ui-r10-outline-acceptance.json",
+    "sha256": "dbd2c20b8e89b16d0a0b3f436c97622ca934988363645bd7f182b785b87d79dd"
+  },
+  {
+    "path": "docs/design/approved-ui-r3-r4-acceptance.json",
+    "sha256": "743e4c6c13c5aa90cfc9b45107a18bff9b11705705367572bdd47c0326e86b75"
+  },
+  {
+    "path": "docs/design/approved-ui-r5-acceptance.json",
+    "sha256": "509ec6938a0015b4cd8c03c85a67233c2c14b4ab505d5de04652c8ea62b9ddad"
+  },
+  {
+    "path": "docs/design/approved-ui-r6-acceptance.json",
+    "sha256": "2cbdec3e261fa76a2206412faea9195318df39d3ca94f1cc59bb393366b1f32e"
+  },
+  {
+    "path": "docs/design/approved-ui-r6-themed-alarm-acceptance.json",
+    "sha256": "c54fe23680c0238e5ede00c4501f8c7501d7dffd3d72f85dad69f63f071a8b05"
+  },
+  {
+    "path": "docs/design/approved-ui-r7-outline-acceptance.json",
+    "sha256": "5658158cd45b70e0af3d7b15a9ffb9ec830e5fdaf35812a116e3ccd9bdc09d71"
+  },
+  {
+    "path": "docs/design/approved-ui-r8-outline-acceptance.json",
+    "sha256": "ba561053b0ec07b503db084dff3bd76e0a802ae3c334eaa612f98393f3887a3e"
+  },
+  {
+    "path": "docs/design/artwork/p01-artwork-r1/meadow-m1-canopy.png",
+    "sha256": "300467ae10d40efcf7e7a61c5e53660b424d4e1c7814facea7d02f073d9021eb"
+  },
+  {
+    "path": "docs/design/artwork/p01-artwork-r1/meadow-m2-garden.png",
+    "sha256": "b7c50d557e6f74cf51e813d57c8ffdf17bb10138e5fe94e3240eb6f26f2499c5"
+  },
+  {
+    "path": "docs/design/artwork/p01-artwork-r1/sunrise-s1-horizon.png",
+    "sha256": "bc91beb4bc6f1bf78285d1fe08ad495fa8cfe60f0b4a848755a5b757adc26e3b"
+  },
+  {
+    "path": "docs/design/artwork/p01-artwork-r1/sunrise-s2-edge-garden.png",
+    "sha256": "3c08b88eb60c685306c01d32b3da759ee11be6b91fdff03015fdebf6d68dee65"
+  },
+  {
+    "path": "docs/design/p01-artwork-r1-acceptance.json",
+    "sha256": "4e6e45d4c3ac903a647761b6588ff337eb84ec0e7fedeb165c8cb77f3925fb22"
+  },
+  {
+    "path": "docs/design/p01-render-r1-acceptance.json",
+    "sha256": "4de83d17f1b66a67cc469cfd41bfbc3f39588c1c59c418351f839c3d3c7b9c37"
+  },
+  {
+    "path": "docs/design/p01-style-r2-acceptance.json",
+    "sha256": "de18c675c53b1d1bd93e54971faec0f20d8aea4552001f1c8f9989c97de060da"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1/rose-candidates.png",
+    "sha256": "46569a9c1198433093f48eba70075e411d9654d2b461559d791259b46b111619"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1/rose-ro1-petal-canopy.png",
+    "sha256": "102f5207a2d9150ffb30f6f7f3332ec91125df33798fd690942510a954e51084"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1/rose-ro2-garden-edges.png",
+    "sha256": "3f80d583e675be469b85de116ee51c6367c94b817f7bc725d9024ac36fa3e156"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1/sky-candidates.png",
+    "sha256": "5aab9dfe4b42b19228494de7edeb3ed48fbca85ccfb2e23c0c30638b47bc2e0a"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1/sky-sk1-open-horizon.png",
+    "sha256": "4a3133a2d7cd1857addf78baf59289edfe6f903e0eda1c4305b525e9bf090d07"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1/sky-sk2-layered-clouds.png",
+    "sha256": "9f2489fe6b61079f9ad0c661c40e781f038249b856357a940c691d77cccbf421"
+  },
+  {
+    "path": "docs/design/p02/artwork-r1-acceptance.json",
+    "sha256": "f6e22c09feeaba9799c8713bf177192a6765d3c58cf9e705f3221b3020e0261b"
+  },
+  {
+    "path": "docs/design/references/butter-periwinkle-sage-owner-2026-10-06.png",
+    "sha256": "af22a02be3d28680326f843de1372a5d4d77e9fdf77bef5677590212173d42e4"
+  },
+  {
+    "path": "docs/design/references/butter-periwinkle-sage.png",
+    "sha256": "ed4a43ad625ceb423eefce96a7e36d1ed04ad41b4386971c77833c91a3023f46"
+  },
+  {
+    "path": "docs/design/references/desired-water-plants-reference.png",
+    "sha256": "92ea34296b03f36ca8b812eb7f8cd3279e398c4d4095e551bc1f6d18b90d761a"
+  },
+  {
+    "path": "docs/design/references/rejected-current-water-plants.png",
+    "sha256": "9f1530c2dbccc398510f52e1429c730724a5c2785dde8da7ca023500a219ec8e"
+  },
+  {
+    "path": "docs/design/references/supplied-classic-icon-board.png",
+    "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+  },
+  {
+    "path": "docs/design/references/time-of-day-and-alarms.png",
+    "sha256": "d23d5ac07a6d7fd81a56fa9af4b185ed833115b03d691fe63216f1c9f77962e0"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/01-sunrise-light.png",
+    "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/02-sunrise-dark.png",
+    "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/03-sky-light.png",
+    "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/04-sky-dark.png",
+    "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/05-evening-light.png",
+    "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/06-evening-dark.png",
+    "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+    "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+  },
+  {
+    "path": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
+    "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+  },
+  {
+    "path": "docs/design/remilo-r4-details-editor/01-details-ordinary-light.png",
+    "sha256": "2a2f00a57230cb736d32521b51113b1d4e508d89459ed969b49a4bf4f84d5552"
+  },
+  {
+    "path": "docs/design/remilo-r4-details-editor/02-details-overdue-dark.png",
+    "sha256": "32a1c37ebacedc4f771dd2308bd6b5d998de1a3c66ac4ae9e6e887ea450421d5"
+  },
+  {
+    "path": "docs/design/remilo-r4-details-editor/03-create-keyboard-light.png",
+    "sha256": "97904ab3f399e0a4f77b2f8cf7064e6e1bfa89797073bc15f5ce15b5cc87da76"
+  },
+  {
+    "path": "docs/design/remilo-r4-details-editor/04-edit-independent-dark.png",
+    "sha256": "6f0eb078fd4f94742ef57364a046403dfafe4b25a565c0192963dc1e7cc57c29"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/01-sky-ordinary-details.png",
+    "sha256": "064147380c9c09d29948107982c978ca7f9049a72c52f7fb4286f50c49bb3658"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/02-sky-overdue-details.png",
+    "sha256": "e6a3a947f9812e1c15587af178ae1428326049ad3e7145ea4bbba153ead11c3d"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/03-sky-create-keyboard.png",
+    "sha256": "dc1caab6b95815c4e0f64938ea96073e682d7aaf98f183da072b3cc9cbe1cee0"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/04-sky-edit-independent.png",
+    "sha256": "e8303f4a9e76addb473cec84135a58955f1ef31442cf5041ffd3e4dabf240095"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/05-evening-ordinary-details.png",
+    "sha256": "85116c5d763056e9bdbe22a521b3b992d55ee0d59319666d352454fd859991c8"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/06-evening-overdue-details.png",
+    "sha256": "d4f25780cc99de234ed7c91f2ec2dd2bdf3dc471112b91f65ba997febfd32004"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/07-evening-create-keyboard.png",
+    "sha256": "aeb646f2923c62e6dce055d8764ea83bec225e9237c9c11142da5071f5285c0b"
+  },
+  {
+    "path": "docs/design/remilo-r5-sky-evening-details-editor/08-evening-edit-independent.png",
+    "sha256": "77c787f571321ca2f2c290916b778c05f749052d62ff4f1ae476ad55fb128b76"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/01-single-alarm-sky-light.png",
+    "sha256": "68fb8dd1832f7ffa12cb84d4886241d430d9815e8bfdf284b0d5c77e13dfb048"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/02-multiple-alarms-night-dark.png",
+    "sha256": "c886415d46ed98df33baf91cf7e19ad4aea77299505fdda138f715f42f56e21d"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/03-refresh-failure-evening-dark.png",
+    "sha256": "8f67f429f2b57da189d751345c1840b0f4bd51cced849512eb11fd8e28ebe6d7"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/05-postpone-shortcuts-sky-light.png",
+    "sha256": "d65e31315d87940c90b014f297671ddfad431479079c51f8a005aa6637fbae92"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/06-postpone-custom-evening-dark.png",
+    "sha256": "f6abd7724cd4e8b3776a7b5cb11372472271cdeb7edcdae72663b0ed5e226297"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/07-postpone-past-time-sky-light.png",
+    "sha256": "0913708ac71f3636eaafcb759827d251ad313cf0153b45fac3760d59666eb0a4"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/08-postpone-saved-blocked-night-dark.png",
+    "sha256": "5bcabb2fe7a08c7e58f08df779e8459bd8e9095251c45be974c05b9926725e89"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/rejected/04-generic-pre-unlock-dark.png",
+    "sha256": "4a7d4a12e6648d9706f23f4650ea37f5112e3e8ab2a95dfc2b85ef28d0e0a411"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/submission-fixtures-r1.json",
+    "sha256": "77b8abc565693f615bf9426b83598e184706954841a4cdea9e27fd53f889bf1b"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/01-sunrise-dark.png",
+    "sha256": "ef283858acdba743163344993997a381d4e46a2992f5158fffda92fd0693673c"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/02-sky-dark.png",
+    "sha256": "a33061c1ca6c6187ae3a0e09115b479dc297874ca4d99b6479fb3a2e540052bc"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/03-evening-dark.png",
+    "sha256": "aff2e9f80e6e008da5a11a750f3609fae5079786954458a2e4b820d628b7f6c8"
+  },
+  {
+    "path": "docs/design/remilo-r6-alarm-postpone/themed-alarms/04-night-dark.png",
+    "sha256": "5ac388158f27e4d4f7d30dc758f17c947ec988e8cda5343d1d3e00020471eafa"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/01-lists-sunrise-light.png",
+    "sha256": "10c7b5ac94ebe3fc3b290dc7bb4de8aee042651460fc9bb3c6abdf22fc7bce97"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/02-create-list-error-sunrise-dark.png",
+    "sha256": "d0e5cc922dcf629eff173089d97bf37e588a97cc8931d72078086844f15f121d"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/03-work-agenda-sky-light.png",
+    "sha256": "177669fce02cc79720e64820ecb4c848bf728fb49bf987e4720fdd269216a708"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/04-remove-list-sky-dark.png",
+    "sha256": "fef07fc9d4225d7ae2a13c8f5bb733ea3fa2d78b5fbd0d3f93bac7587824a7d9"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/05-empty-list-evening-light.png",
+    "sha256": "c0116cab69351e28d79c9d02a22c3ffbf5282f132fb7375109cd0c457b67ffca"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/06-repeats-evening-dark.png",
+    "sha256": "c47ef57271cf56b1b87148ac152d4ef087c8ac216497d2bb05bd1a29513368a8"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/07-active-family-night-light.png",
+    "sha256": "8910a93ddf1a628eeff3e944a233d5f6942d9cc4d56bb4212b7ec13c4868b701"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/08-paused-family-night-dark.png",
+    "sha256": "8f7519b8ceb170c9b84f386f7a49148a60e7ba640e39f4cfbd4f1f6a3d4cba0e"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/09-ended-family-sunrise-light.png",
+    "sha256": "934aec27b4e6f0ab3f0eb6d3eaf11a84d0b6cb567de081014efb9bd3af89770e"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/10-edit-scope-sky-dark.png",
+    "sha256": "5cec96e81334c601b3ca77432aa4208d42f231234f42e7818a214e332819cb0d"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/11-custom-repeat-evening-light.png",
+    "sha256": "9b64b9432da969df561c74084d412f6c79aefbb193d1ccc5d987eda60d55ff47"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/12-repeat-error-keyboard-night-dark.png",
+    "sha256": "68ddf27bc340896fb06d464220e33413098ab0da45ef8a9c1e090825499bbc18"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/submission-fixtures-r1.json",
+    "sha256": "26c37b090c808dbb88eb09fb3c45f4e14017d1e5c1f991e51477fb30143f536e"
+  },
+  {
+    "path": "docs/design/remilo-r7-lists-repeats/submission-specification-r1.md",
+    "sha256": "32dbdbf458c5676d5b860de5e43d99a46f59f2dec46258443f19bedd5de8da3d"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png",
+    "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/02-preference-save-unconfirmed-sunrise-dark.png",
+    "sha256": "640d44533023fc9edcfedcc4b5a4fb691ab4a808299a51b5f85039fd62eb6d72"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/03-appearance-fixed-sky-light-sky-light.png",
+    "sha256": "203630988c61edb6c42a440e73a51dc52a15746aa3b42ae5813786bb6a3d26f8"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/04-appearance-system-saving-sky-dark.png",
+    "sha256": "4298ae2eabe5a553cfd51347e2950d00a316c57dca2e40b1ee8d7fa3013c8f57"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/05-sound-preview-fallback-evening-light.png",
+    "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/06-sound-preview-failure-evening-dark.png",
+    "sha256": "ea38038529662a24c5d81763d30853049c9767e3f4a3dbc5bdeaa31127ba4475"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/07-permissions-with-mixed-channels-night-light.png",
+    "sha256": "ae99be3e0503778e392cb2e777faac6e020486d68b94a3b8cfd1f0a025531562"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/08-permissions-refresh-failure-night-dark.png",
+    "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/09-test-scheduled-sunrise-light.png",
+    "sha256": "216941536c239391284eb5d84c1dbfe9dc67e79ac29bf98c07792668f029de9f"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/10-test-saved-but-blocked-sky-dark.png",
+    "sha256": "25253de8aa77eeb024f96ba2c52dbbc83dcf47c0952e2f91d3b73e88729d9591"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/11-invalid-custom-snooze-with-keyboard-evening-light.png",
+    "sha256": "6f01161e1bc5151ad13776098aa59564046f9b6a4080214667f5353d29ad533c"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/12-edit-tomorrow-shortcut-time-night-dark.png",
+    "sha256": "73f6899e598313fffceaea1a68250f0ddf2b9382145edd662a85008f97a5e84d"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/13-test-saved-with-pending-scheduling-evening-dark.png",
+    "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/submission-fixtures-r1.json",
+    "sha256": "bc38e829089fe8b0928e736c7890f33541954640022d78d33283637906954891"
+  },
+  {
+    "path": "docs/design/remilo-r8-settings-appearance/submission-specification-r1.md",
+    "sha256": "8d6146d1b8a5626cb3c5d79ce0bab3c8e64a2c01934e6ace7f50bac241feb91b"
+  }
+]

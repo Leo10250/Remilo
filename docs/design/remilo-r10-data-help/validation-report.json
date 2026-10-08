@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-08",
+  "revision": "r2",
+  "selectedImages": 14,
+  "revisedImages": 7,
+  "builtInImageGenCalls": 29,
+  "revisionImageGenCalls": 9,
+  "matchingR3Pairs": 8,
+  "embeddedNotesMatch": true,
+  "wholeBackupAgreementChecks": "passed: default keep, automatic new/unseen/empty-list inclusion, explicit existing-only choices, original unchanged, draft-only edits, matching job, default4/2 vs example5/1",
+  "r1HistoryPreserved": true,
+  "selectedPngsMatchSources": true,
+  "referenceAndCandidateHashesMatch": true,
+  "localLinkTargetsExist": true,
+  "galleryJsSyntax": "passed",
+  "galleryLogic": "mock DOM navigation, 14 selections, 56 scale checks, boundary states, hash links, form keyboard guard, load/error states passed",
+  "visualInspection": "Seven revised images inspected locally; critical04/05/06/14 also independently audited. Seven unchanged r1 examples carry forward their prior inspection. No material content/state errors requiring regeneration found. Missing visible helper sentences and cosmetic/token/metric discrepancies are recorded.",
+  "browserRendering": "Not verified: browser inspection tool rejected file protocol under its URL policy. No browser workaround attempted.",
+  "nativeOrAccessibilityAcceptance": "Not performed; images are synthetic evaluation references.",
+  "ownerApproval": "A35 accepts current R10 r2 design direction/templates with component corrections",
+  "approvalRecordVerified": "A35"
+}

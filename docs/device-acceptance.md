@@ -9,7 +9,13 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Preparation
+## Preparation for the shipped 0.4.0 baseline
+
+This preparation records the earlier build and its toolbar/Browse layout. For
+the time-of-day redesign, install the specifically identified signed TD-06 build
+as an update without clearing data, record its source/version, open Settings from
+its invoking origin, and create QA reminders through the atmosphere-colored Add
+action and persistent Save footer. Do not infer a new version from this document.
 
 1. Install the locally signed **0.4.0 / versionCode 4** APK as an update, without uninstalling or
    clearing data. The build location and evidence are linked from the README.
@@ -24,9 +30,13 @@ those earlier observations do not establish results for this new build.
    alert message; use its View action to inspect details → Schedule details when present.
    For a quick native probe, use Settings → Alarms → Test alarm (15 seconds).
 
-## U. Redesign acceptance (start here)
+## U. Current time-of-day redesign acceptance (after implementation)
 
-These are the priority 0.4.0 checks. Record each as pass/fail/pending. No production
+Use [the current design](design/current/README.md) and [appearance policy](design/current/appearance-policy.md).
+This is a future observation checklist, not a claim that the documentation PR
+changed the installed app. Preserve the A–E native/recovery/recurrence/data scenarios.
+
+These are the current redesign checks. Record each as pass/fail/pending. No production
 data needs deletion. Keep alarm-volume conditions separate from appearance checks.
 
 - **U1 — agenda and density:** create four ordinary QA reminders today and one
@@ -44,11 +54,11 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   leaving Agenda. Clear query empties text while keeping search open; Exit search
   closes it. Tap Filter, choose a list and Overdue only, then Show reminders.
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
-- **U4 — completed, skipped and Trash:** complete a QA row using its trailing check,
+- **U4 — completed, skipped and Trash:** complete a QA row using its leading completion target,
   then use Undo. Complete again: it leaves the active agenda. Find it through
-  Browse → Completed. Include skipped exposes a skipped repeat.
+  the secondary Completed destination. Include skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
-  request, then Browse → Trash → Restore recovers its content.
+  request, then the secondary Trash destination → Restore recovers its content.
   Search/filter both collections, including a list containing only Trash items.
   Complete/delete QA reminders in a different order from their event dates:
   the newest completion/deletion appears first. Elapsed alarms remain silent.
@@ -67,7 +77,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   opens through More. Title, schedule, delivery and notes take priority over compact
   bottom actions. Tap Edit: This occurrence, This and following,
   Entire series are available. Cancel the selector, open Repeat details and Pause repeat.
-  Find it through Browse → Repeats → Paused, then Resume. Inspect
+  Find it through Repeats → Paused, then Resume. Inspect
   Active and Ended filters and verify one entry per family after following/whole
   edits. Family details retain earlier unfinished and postponed occurrences.
   Check scope behavior in D. Long-press a one-off row → Edit opens its editor
@@ -94,14 +104,15 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   controls close; both remain unfinished. The notification tap opens native controls.
 - **U11 — appearance/accessibility:** repeat home, search, filters, creation, Custom
   repeat, detail Schedule details and More → Activity, scope/Postpone sheets, Settings/selectors, Completed,
-  Trash, Browse/Repeats and repeat details, Restore preview and Diagnostics in Light and
+  Trash, Lists/Repeats and repeat details, Restore preview and Diagnostics in Light and
   Dark. Enable the largest font size (200% where available), then TalkBack. Essential
   actions remain reachable by scrolling, with clear labels/statuses and no clipping.
   Check keyboard behavior in title/notes and custom numeric fields, including bottom
   action reachability. Enable reduced motion and repeat sheet/row transitions. Restore font and
   accessibility preferences. Native controls need their own large-font run.
-- **U12 — identity and loading:** inspect the launcher R mark, themed icon
-  if supported, splash and small notification icon. Long titles remain readable in
+- **U12 — identity and loading:** inspect the static Classic ring/check/sun launcher,
+  adaptive/monochrome system treatment, splash and small notification icon. There
+  is no app-controlled theme/alias switching. Long titles remain readable in
   details and native controls. First loading must not claim an ended alarm or a blocked
   permission. Force-stop/reboot limitations remain those in C, rather than UI errors.
 - **U13 — city/zone authoring:** choose a city/region for a pinned QA reminder
@@ -137,13 +148,12 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   export and diagnostics refresh/share progress and errors; dismissing a share sheet
   must not claim that a report was sent.
 
-- **U17 — Browse and origin:** open Browse from Agenda, each list, Repeats,
-  Completed and Trash. The current destination is selected; tapping it closes
-  Browse. Switch roots, then Back: non-Agenda roots return to Agenda. Detail,
-  Activity, Settings and editor return to their origin. Keep different searches,
-  filters and scroll positions in Completed and Trash; switching restores each.
-  Sheets and search close before navigation; uncertain saves/restores remain guarded.
-- **U18 — managed lists:** create an empty QA list from Browse; it remains after
+- **U17 — roots and origin:** switch Agenda / Lists / Repeats using the labeled
+  bottom roots. Open named lists, Completed/Trash, Settings, details and Activity
+  from their invoking origins; return with their independent queries, filters and
+  scroll retained. Hide root navigation inside editor/details/modal workflows.
+  Sheets and search/IME close before navigation; uncertain saves/restores remain guarded.
+- **U18 — managed lists:** create an empty QA list from Lists; it remains after
   leaving/reopening. Create a reminder inside it: Save returns to that list with
   acknowledgement and View. Choose No list, rename the QA list, and check alerts
   keep their times. Remove the list: reminders move to No list with completion,
@@ -163,6 +173,16 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Starting then Playing, five-second cutoff and actual fallback if the system tone
   is unavailable. Let a QA real alarm arrive during preview: it takes priority.
   Repeat with TalkBack/large text; leave unavailable failure cases pending.
+
+- **U21 — four atmospheres and Automatic:** select each manual scene and verify
+  matching app pages/sheets/native alarms in Light and Dark, including Sky Dark
+  daytime clouds and Night Light reading surfaces. Check System brightness separately.
+  Select Automatic and test local 06:00/10:00/17:00/21:00 using a controlled QA clock;
+  preserve system time on a personal device. Verify missing/new atmosphere preference
+  uses Automatic while upgrade brightness remains. Manual selection survives reopen.
+  Retain edits/caret/scroll through clock/zone changes; reduced motion is immediate.
+  A ringing session keeps its captured scene; the next session resolves anew.
+  Leave unavailable controlled-clock/upgrade cases pending instead of changing normal data.
 
 ## A. Everyday reminders and timing
 

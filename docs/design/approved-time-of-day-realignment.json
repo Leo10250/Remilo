@@ -1,0 +1,31 @@
+{
+  "record": "A36",
+  "date": "2026-10-08",
+  "owner": "Repository owner in this chat",
+  "source": "Direct documentation-realignment request, planning answers and explicit implementation instruction",
+  "ownerImplementationStatement": "Yes, implement this plan. Please stop and prompt me for clarification for anything that you are uncertain or wants to push back on.",
+  "attributedPlanningDecisions": {
+    "scope": "Documentation-first PR targeting theme-update; preserve existing history and unrelated backlog work",
+    "visualAuthority": "All eight docs/design/remilo-r3-atmospheres images; approved page UX and documented corrections",
+    "atmosphereSelection": ["automatic", "sunrise", "sky", "evening", "night"],
+    "brightness": ["system", "light", "dark"],
+    "automaticClock": "Current device-local time and timezone",
+    "periods": [
+      { "atmosphere": "sunrise", "startInclusive": "06:00", "endExclusive": "10:00" },
+      { "atmosphere": "sky", "startInclusive": "10:00", "endExclusive": "17:00" },
+      { "atmosphere": "evening", "startInclusive": "17:00", "endExclusive": "21:00" },
+      { "atmosphere": "night", "startInclusive": "21:00", "endExclusive": "06:00" }
+    ],
+    "missingAtmosphereDefault": "automatic",
+    "upgradeBrightness": "Preserve existing System/Light/Dark preference",
+    "staticIdentity": "Classic ring/check/sun mark; standard adaptive and monochrome exports, no app-controlled theme/alias switching"
+  },
+  "scopeLimits": [
+    "No production UI, storage, scheduling, build configuration or exported app-icon change in this PR",
+    "No new image generation or alteration of approved images/frozen submissions",
+    "R9 remains draft without image acceptance; list icons remain an implementation decision with omission preferred",
+    "Exact production color tokens, final abstract artwork and measured runtime/device acceptance are not supplied by generated PNGs"
+  ],
+  "supersession": "Earlier contradictory eight-palette, five-band, Smart Colors, per-reminder appearance, task-specific alarm and dynamic-icon requirements leave the active roadmap; original records retain their historical scope.",
+  "currentEntryPoint": "current/README.md"
+}

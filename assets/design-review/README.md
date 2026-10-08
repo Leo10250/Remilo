@@ -1,4 +1,10 @@
-# Appearance review assets
+# Historical appearance review assets
+
+[The current R3-based design](../../docs/design/current/README.md) supersedes these
+iteration-0 scenery/palette candidates. The exact Classic source remains the
+approved static branding input; old color variants/coarse masks are historical
+review artifacts, not mandatory production exports. The original generation
+prompts below retain provenance and do not instruct a new task-specific design.
 
 These assets belong to the non-shipping iteration-0 comparison. The Android
 production launcher/splash/notification exports are not replaced by this folder.
