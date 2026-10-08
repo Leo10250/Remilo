@@ -72,6 +72,17 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ### Appearance design review
 
+The [R8 Settings/Appearance/permissions/Test alarm draft](design/r8-settings-appearance-specification.md)
+and [prospective captures](design/r8-settings-appearance-fixtures.json) are design
+inputs under A28. Actual components must cover independent brightness/global scene,
+preference acknowledgement/read failure and stale retry, distinct sound selection/
+playback/fallback, capability staleness/mixed channels, keyboard-safe custom Snooze,
+native shortcut confirmation and Scheduled/Blocked/Pending Test outcomes.
+The current Test API has no client-captured retry identity; refine and verify that
+contract before offering Retry after a lost reply. Draft/reference checks do not
+prove safe retries, audibility, permission-return, IME or pre-unlock appearance.
+R8 changes no live backlog status or physical acceptance result.
+
 The [7 October accepted R3/R4 templates and discrepancy corrections](design/approved-ui-r3-r4.md)
 are reference/requirements evidence, not actual component or phone verification.
 Their exact images, including the eight A20-approved R5 Sky/Evening variants,

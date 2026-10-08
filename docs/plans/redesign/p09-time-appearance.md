@@ -10,6 +10,14 @@ below remain earlier planning requiring refinement; do not silently convert them
 to a four-period policy or implement deferred task-specific appearance. Preserve
 timing, draft/scroll and native privacy/action contracts while refining this plan.
 
+**R8 review input (A28):** [the proposed Appearance page](../../design/r8-settings-appearance-specification.md)
+separates four fixed scene choices from System/Light/Dark. It intentionally shows
+no enabled Automatic toggle or invented next-switch time. This does not remove
+the planned time-of-day feature or accept a replacement policy: reconcile the old
+five bands against four global scenes, defaults/opt-in/legacy paths, clock/zone
+and transient/session behavior at the P09 policy checkpoint. R8's held review
+clock and chosen scenes are not new automatic boundary evidence.
+
 ## 1. Objective and user-visible outcome
 
 Opted-in Remilo atmosphere follows five predictable local periods independently of

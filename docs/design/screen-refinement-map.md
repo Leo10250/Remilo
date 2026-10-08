@@ -38,7 +38,7 @@ Existing acceptance records and reference pixels stay unchanged.
 | 5 | Remaining Agenda/detail/editor exceptions | Search+IME, filter sheet, dense long titles, no-match/loading/retained errors; Schedule details/options, all-day and independent times; zone/date/time/sound sheets; stale/conflicting draft, replaced-series recovery, discard/unconfirmed Save. | P05/P06/P07; extend approved shared components rather than designing another visual system. |
 | Alongside each family | Shared interaction states | Long English/Chinese, 200% text, keyboard, focus, loading/error/uncertain operations, disabled/busy/selected states, origin return and reduced motion. | [Canonical corrections](approved-ui-r3-r4.md), P02/P12 and existing consolidated acceptance. These are state coverage, not new destinations. |
 
-## Refinement started now
+## Current refinement coverage
 
 [R7 Lists/Repeats specification](r7-lists-repeats-specification.md) defines the
 next layouts, flow consequences, all-eight-image appearance matrix and non-ideal
@@ -47,7 +47,11 @@ screen candidates, including a paused family with an independently scheduled
 exception. [A27](approved-ui-r7-outline-acceptance.json) now accepts the overall
 outline, with the owner-requested list-icon implementation decision still open.
 [Twelve associated images and notes](remilo-r7-lists-repeats/gallery.html) preserve
-the reference bundle. Settings/Appearance/permissions are the next unrefined family.
+the reference bundle. [R8 Settings/Appearance/permissions/Test alarm](r8-settings-appearance-specification.md)
+now refines the next family under [A28](r8-settings-appearance-intake.json), using
+all eight R3 references and the established UX. Its
+[thirteen-screen image brief](r8-settings-appearance-fixtures.json) remains proposed;
+no R8 images or new owner acceptance exist yet. Completed/Trash/Activity follow.
 Production implementation and actual accessibility/device evidence remain separate.
 
 The sequence retains Agenda / Lists / Repeats as the three labeled bottom roots.

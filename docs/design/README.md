@@ -45,6 +45,16 @@ choice raised during implementation; no custom list-icon picker is authorized.
 Unrendered Night/state permutations may inherit established themes. Production
 P05/P06/P07 and actual component/physical acceptance remain separate.
 
+[A28](r8-settings-appearance-intake.json) continues with
+[R8 Settings, Appearance, permissions and Test alarm](r8-settings-appearance-specification.md).
+The [thirteen-screen fixture brief](r8-settings-appearance-fixtures.json) uses
+all eight R3 style references, separate brightness/global atmosphere selection,
+auto-saving preferences, inline Android permission handoffs and native sound/test
+feedback. It is a design proposal, with no R8 images or acceptance yet. Automatic
+boundaries/defaults/migrations and identified Test-alarm retry remain separate
+implementation decisions. [Evidence](../evidence/2026-10-07-r8-settings-refinement.md)
+records reference/source/document checks, not runtime verification.
+
 ## Approval language
 
 - **Approved requirement:** a decision explicitly made by the owner and recorded

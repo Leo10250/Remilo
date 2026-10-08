@@ -18,6 +18,13 @@ Decorative list-icon presence/style is a generated discrepancy, not an approved
 custom-icon feature. The owner favors omission and wants the decision raised
 during implementation. Unrendered Night/state permutations inherit prior themes;
 shared color/geometry/keyboard/native UX rules resolve raster drift.
+
+A28 continues with [R8 Settings/Appearance/permissions/Test alarm](design/r8-settings-appearance-specification.md).
+Its proposed layouts retain auto-saving preferences, independent brightness and
+one global atmosphere, inline Android permissions, native sound preview and honest
+Test results. All eight R3 images govern style. No R8 image/layout acceptance,
+storage change or four-scene automatic policy is implied by this refinement.
+
 The owner accepts the R3 homepage and overall R4 details/editor template with the
 documented corrections. One global atmosphere and independent Light/Dark/System
 brightness apply across app pages and the native alarm experience; Android still

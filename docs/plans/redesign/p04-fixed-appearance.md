@@ -10,6 +10,14 @@ below remain earlier planning requiring refinement before execution; this note
 does not implement policies, authorize schemas or claim any unit completed.
 Four preview atmospheres do not establish switching, migration or default rules.
 
+**R8 review input (A28):** [Settings/Appearance specification](../../design/r8-settings-appearance-specification.md)
+and [fixture brief](../../design/r8-settings-appearance-fixtures.json) propose a
+global four-scene selection page with independent brightness, automatic saving
+and honest progress/rollback/retry. They use all eight R3 references. No R8 image
+or new layout acceptance is recorded; this is not P04A execution. Refine IDs,
+descriptors, legacy/default handling and native-safe pre-unlock appearance before
+storage changes. Deferred per-reminder/manual scope below remains historical.
+
 ## 1. Objective and user-visible outcome
 
 Users can select a fixed app palette independently of brightness and make durable

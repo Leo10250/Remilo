@@ -3,7 +3,7 @@
 Recorded 7 October 2026. Read this before changing visual foundations, Agenda,
 Reminder details, the editor or native presentation. This is a dated amendment to
 [appearance-redesign.md](../appearance-redesign.md), with human decisions recorded
-as A18-A27 in the [approval ledger](approvals.md). Live task status remains solely
+as A18-A28 in the [approval ledger](approvals.md). Live task status remains solely
 in [backlog.md](../backlog.md).
 
 ## Authority and scope
@@ -82,6 +82,12 @@ or separately reviewed pixels for every screen. Missing Night/state permutations
 inherit the existing theme. Apply [the per-image corrections](remilo-r7-lists-repeats/review-notes.json).
 Preserve this document's role/geometry/keyboard corrections and A24's matching
 canvas/elevated-surface condition rather than reproducing incidental raster drift.
+
+[A28](r8-settings-appearance-intake.json) continues refinement into
+[R8 Settings/Appearance/permissions/Test alarm](r8-settings-appearance-specification.md),
+with every R3 image as style authority and the established UX. That new draft and
+its [prospective captures](r8-settings-appearance-fixtures.json) remain proposed,
+not another accepted template or implemented settings/storage/automatic policy.
 
 The [R6 visual specification](r6-alarm-postpone-specification.md) and
 [eleven-screen annotated gallery](remilo-r6-alarm-postpone/gallery.html) extend this
