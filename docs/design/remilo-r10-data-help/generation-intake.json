@@ -1,0 +1,17 @@
+{
+  "revision": "r2",
+  "date": "2026-10-08",
+  "source": "Owner in current chat",
+  "request": "Restore the whole backup with clear handling of existing reminders would be the expected behavior.\n\nAdjust all the related documentation and UI examples accordingly.",
+  "scope": "Whole-backup agreement; seven revised Restore examples and synchronized current documentation/gallery. Fourteen selected UI examples retained.",
+  "behaviorApproval": "Whole-backup Restore with clear handling of existing reminders",
+  "imageAcceptance": "Revised pixels awaiting owner review",
+  "tool": "built-in image_gen.imagegen",
+  "specification": "submission-specification-r2.md",
+  "specificationSha256": "d31e19a6facb73a0922fc3373c2707aa0017d0e993a9e4d0ea73360202ee8c4f",
+  "fixtures": "submission-fixtures-r2.json",
+  "fixturesSha256": "4d276bbce66441f025a410e5ba138eb71b6fd39174ebc179421a65772eed7c49",
+  "originalGeneration": "history/r1/generation-intake.json",
+  "originalBundle": "history/r1/gallery.html",
+  "sourceRepo": "C:/Users/Leo/Documents/GitHub/Remilo"
+}

@@ -1,0 +1,28 @@
+{
+  "record": "A37",
+  "date": "2026-10-08",
+  "owner": "Repository owner in this chat",
+  "source": "Direct request to remove misleading obsolete design material, planning selections, and explicit implementation of the cleanup plan",
+  "ownerImplementationStatement": "PLEASE IMPLEMENT THIS PLAN: Remove obsolete design material and consolidate the repository",
+  "decisions": {
+    "currentAuthority": "docs/design/current/ with all eight R3 references for visual style and approved page contracts/corrections for UX",
+    "removeObsoleteMaterial": "Remove exactly the obsolete specifications, captures, review demos, catalogs, exporters and dedicated tests listed in the cleanup manifest; recover removed material from Git history instead of retaining a checkout archive",
+    "preserveReferenceBundles": "All 223 files in the seven accepted R3-R10 bundles remain at their original paths with unchanged bytes, including internal drafts and generation records",
+    "preserveCurrentContracts": "Retain all 11 current contract files; only obsolete references and cleanup routing wording may change",
+    "preserveImplementedWork": "Keep implemented app/native behavior, meaningful tests, schemas, backup readers, preview/deployment tooling, unrelated backlog tasks and supporting evidence",
+    "staticBranding": "Preserve the exact Classic source crop and icon board under assets/brand/reference/; keep the associated supplied source board; no production icon replacement in this cleanup",
+    "branch": "design-docs-cleanup",
+    "base": "theme-update",
+    "replacementPullRequest": "Create and attach the replacement before closing and unlinking PR #5; no force push or history rewrite",
+    "branchNaming": "Do not create or continue implementation on codex-prefixed branches"
+  },
+  "supersedes": "A36's archive and obsolete submission preservation policy only; A36's current appearance, scope and design decisions remain in force",
+  "limits": [
+    "No new UI implementation, artwork generation, production icon export, device installation or physical alarm verification",
+    "No runtime API, persistence, scheduling, backup format or preference migration",
+    "R9 remains draft; the list-icon treatment remains an explicit implementation review question",
+    "Preserve any newly discovered ambiguous file and ask the owner before expanding the authorized removal manifest"
+  ],
+  "cleanupManifest": "../evidence/time-of-day-realignment/cleanup-manifest.json",
+  "currentEntryPoint": "current/README.md"
+}

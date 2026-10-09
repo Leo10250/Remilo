@@ -45,26 +45,15 @@ block verified release, rather than development. Known failures still require fi
 | UX-10 | No alert recovery repair and shared schedule/work/delivery presentation | UX-08 | implemented/unverified | [62 domain tests; retained history/overdue recovery; signed-phone comprehension pending](evidence/2026-10-05-second-refinement.md) |
 | UX-11 | Browse roots, recorded Activity, recoverable completed cleanup and sound preview | UX-10 | implemented/unverified | [96 native tests; preview ownership and fixture interactions; Android Back/audio acceptance pending](evidence/2026-10-05-second-refinement.md) |
 | UX-12 | Managed Lists, content schema 4 and backup format 3 | UX-11 | implemented/unverified | [upgrade/legacy/empty/stale/template/import regressions; signed ARM64 build; phone upgrade pending](evidence/2026-10-05-second-refinement.md) |
-| AR-00 | Preserved isolated review groundwork (not approved art direction) | UX-12 | implemented/unverified | [reassessment](evidence/2026-10-06-redesign-reassessment.md); tracked at 9195784, representative style approval absent; last recorded shared run failed, not a current-HEAD result |
-| RD-DOC | Twelve separate redesign plans, index, approvals/references and handoff protocol | owner documentation-only instruction | verified | [planning validation](evidence/2026-10-06-redesign-planning.md); owner reviewed/preserved structure (A06); feature execution remains separately authorized |
-| RD-REF | Focused P04/dependency/P11/approval/state documentation refinement | owner Focused Documentation Refinement instruction (A09) | verified | [refinement checks](evidence/2026-10-06-redesign-planning.md); 192 sections, hard/integration parity, preserved P01/reference/source hashes; no feature execution |
-| RD-P01 | Art Direction: illustration + whole-UI language, two actual Agenda/Meadow representatives and owner approvals | Hard: none; integration: none; A12 direction, A14 S1/M1 and A15 actual renders accepted | verified | [render acceptance](design/p01-render-r1-acceptance.json); [accepted handoff](handoffs/redesign-p01.md); [host evidence](evidence/2026-10-06-p01-prototypes.md): shared/native/lint/assembly and composite accessibility passed; non-shipping P01 only, physical acceptance remains pending |
-| RD-P02 | Visual Foundations: reviewed shared/native primitives and eight light/dark environments | Hard: RD-P01; integration: none; A16 execution authorized | in progress | [P02](plans/redesign/p02-visual-foundations.md); [A17 accepts SK1/RO1](design/p02/artwork-r1-acceptance.json); [P02-sample-r1](design/p02/sample-review-r1.html) submitted for sample acceptance; [host evidence](evidence/2026-10-06-p02-sample.md); remaining sources/catalog and production Classic activation follow their separate gates |
-| RD-P03 | Branding: exact supplied Classic production identity and reviewed variants | Hard: RD-P01; integration: RD-P02 | pending | [P03](plans/redesign/p03-branding.md); Classic can start after P01, variants need P02 colors; fidelity/export approval |
-| RD-P04 | Fixed Appearance parent: four accepted units and combined integration | Hard: RD-P02; integration: RD-P06, RD-P07 | pending | [P04](plans/redesign/p04-fixed-appearance.md); aggregate A-D, policy/portability designed together, route integration before whole-scope acceptance |
-| RD-P04A | Global fixed settings/descriptors, legacy handling and Appearance page | Hard: RD-P02; integration: none | pending | [P04A](plans/redesign/p04-fixed-appearance.md); accepted catalog contract, upgrades/preferences/fallback, no manual policies |
-| RD-P04B | Internal manual policies and cosmetic occurrence/following/family operations | Hard: RD-P04A; integration: none | pending | [P04B](plans/redesign/p04-fixed-appearance.md); nominal inheritance/retries/unchanged targets; internal/test-only until P04C passes |
-| RD-P04C | Backup-v4 portability, old readers, previews and copied-family mappings | Hard: RD-P04B; integration: none | pending | [P04C](plans/redesign/p04-fixed-appearance.md); portability gate before mutation exposure; privacy/conflicts/retry coverage |
-| RD-P04D | Optional chooser, draft previews and production UI integration | Hard: RD-P04C; integration: RD-P06, RD-P07 | pending | [P04D](plans/redesign/p04-fixed-appearance.md); accepted portability, optional creation step, existing routes then redesigned-route integration |
-| RD-P05 | Agenda and Navigation: three roots, compact rows, Lists and secondary collections | Hard: RD-P02; integration: RD-P04A, RD-P04B | pending | [P05](plans/redesign/p05-agenda-and-navigation.md); accepted route capability may precede appearance integration |
-| RD-P06 | Reminder Editor: compact common form and guarded advanced controls | Hard: RD-P02, RD-P05; integration: RD-P04D, RD-P09 | pending | [P06](plans/redesign/p06-reminder-editor.md); P05 routing capability, keyboard/draft/retry core, chooser/transition integration |
-| RD-P07 | Details and Repeats: clear timing/state actions and family/occurrence context | Hard: RD-P02, RD-P05; integration: RD-P04D, RD-P09 | pending | [P07](plans/redesign/p07-details-and-repeats.md); P05 routing capability, recorded Activity/scopes and chooser/transition integration |
-| RD-P08 | Native Presentation: frozen environmental session canvas and supported notifications | Hard: RD-P02, RD-P04A; integration: RD-P03, RD-P04B, RD-P09, RD-P10 | pending | [P08](plans/redesign/p08-native-presentation.md); native catalog/descriptor core, later branding/manual/automatic identity joins |
-| RD-P09 | Time Appearance: five bands, zone/lifecycle/transition policy | Hard: RD-P04A; integration: RD-P04B, RD-P05, RD-P06, RD-P07, RD-P08, RD-P10 | pending | [P09](plans/redesign/p09-time-appearance.md); core can precede screen redesign; combined guards/precedence/defaults remain gated |
-| RD-P10 | Smart Colors: reviewed English/emoji/Chinese rules, stable cache and combined defaults | Hard: RD-P04A; integration: RD-P04B, RD-P04C, RD-P04D, RD-P09 | pending | [P10](plans/redesign/p10-smart-colors.md); independent classifier core, manual/restore/chooser/time integration before combined defaults |
-| RD-P11 | Launcher core: stable entry points, manual variants and matching on open/resume | Hard: RD-P03, RD-P04A; integration: RD-P09 | pending | [P11](plans/redesign/p11-launcher-personalization.md); existing active-session guard, atomic aliases/recovery; no WorkManager or closed-app automation |
-| RD-P11B | Optional closed-app icon matching extension (not a P12 gate) | Hard: RD-P11, RD-P09; integration: none; separate authorization | pending | [P11B](plans/redesign/p11-launcher-personalization.md); mechanism/compatibility/recovery open; conditional delayed-worker tests only if implemented |
-| RD-P12 | Consolidated Acceptance: integrated checks, signed artifact and one owner phone run | Hard: RD-P02, RD-P03, RD-P04, RD-P05, RD-P06, RD-P07, RD-P08, RD-P09, RD-P10, RD-P11; integration: none | pending | [P12](plans/redesign/p12-consolidated-acceptance.md); all mandatory outputs and integration gates closed; P11B excluded; actual physical evidence required |
+| TD-DOC | Four-atmosphere documentation/reference realignment | owner A36 documentation instruction | verified | [documentation/hash/link checks](evidence/2026-10-08-time-of-day-realignment.md); documentation/reference scope only, production TD units remain pending |
+| TD-CLEANUP | Remove obsolete design material and review tooling; consolidate current guidance | owner A37 cleanup instruction | verified | [exact removals, protected references and shared/native/preview checks](evidence/2026-10-08-design-cleanup.md); production redesign and physical acceptance remain pending |
+| TD-01 | Shared foundations | approved R3 and native/product baseline | pending | [TD-01](plans/redesign/td-01-shared-foundations.md); implementation and actual acceptance remain future work |
+| TD-02 | Global Appearance | TD-01 | pending | [TD-02](plans/redesign/td-02-global-appearance.md); implementation and actual acceptance remain future work |
+| TD-03 | App screens and remaining review | TD-01, TD-02 | pending | [TD-03](plans/redesign/td-03-app-screens.md); implementation and actual acceptance remain future work |
+| TD-04 | Native presentation | TD-01, TD-02 | pending | [TD-04](plans/redesign/td-04-native-presentation.md); implementation and actual acceptance remain future work |
+| TD-05 | Static Classic branding | approved Classic source/A01 | pending | [TD-05](plans/redesign/td-05-static-branding.md); implementation and actual acceptance remain future work |
+| TD-06 | Consolidated acceptance | TD-03, TD-04, TD-05; TD-01/02 integrated | pending | [TD-06](plans/redesign/td-06-consolidated-acceptance.md); implementation and actual acceptance remain future work |
+| FUT-ICON | Optional dynamic/themed launcher icons | separate future scope decision | pending | One static Classic identity ships first; no alias/worker feature or current acceptance dependency |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -76,25 +65,12 @@ block verified release, rather than development. Known failures still require fi
 
 ## Task verification contracts
 
-- RD-P01-P12 replace provisional AR-01-06 planning; AR-00 remains historical review
-  groundwork, not a completed visual approval. Scope/dependencies/checkpoints are
-  in the [single plan index](plans/redesign/README.md) and individual documents.
-  No milestone runs until separately authorized. A10 authorizes P01 only; A11 adds
-  specification/artwork/render checkpoints. A12 accepts bounded r2 direction and
-  authorizes four standalone candidates. A14 accepts S1/M1 integration and A15
-  accepts the two actual P01 representatives. A16 separately authorizes P02 execution
-  with artwork/sample/catalog gates; it does not accept unbuilt artifacts;
-  the design acceptance does not waive consolidated physical gates.
-  Plans and handoffs are not alternative
-  task-status sources.
-
-- RD dependency cells distinguish accepted hard artifacts from integration gates;
-  a whole parent need not finish to hand off an explicitly accepted capability.
-  Partial capabilities never imply whole-plan completion. P04A-D run sequentially
-  with independent authorization and handoffs; manual mutations stay internal until
-  P04C passes. P12 requires all mandatory deliverables and closed integration gates,
-  including P04A-D and P11 core, not optional P11B. Shared native/storage edits still
-  have one integrator. This distinction does not waive owner art/contract approvals.
+- TD-01–TD-06 are the active theme roadmap under A36. Image/template acceptance
+  is not implementation completion. TD-DOC records this documentation/reference
+  PR only. Keep R9 draft review, list-icon choice and actual token/render/device
+  evidence explicit. Existing native reliability and unrelated feature gates remain.
+- A37 removes superseded design tasks and prototype evidence from the checkout.
+  Current TD requirements and unrelated native/product gates remain unchanged.
 
 - P0-01: shared checks and bundled Android assembly; clean-checkout CI and signed
   offline installation are separate evidence requirements.

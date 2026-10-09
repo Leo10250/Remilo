@@ -1,0 +1,161 @@
+# Shared visual language
+
+All eight R3 references govern color relationships, atmosphere and artwork treatment.
+[The current index](README.md) defines precedence; [appearance policy](appearance-policy.md)
+defines Automatic/manual resolution. Implement one component anatomy in RN and native
+UI, not independent designs for each theme. Use opaque reading surfaces and protect
+text/controls from busy artwork. Exact colors are implementation tokens to validate,
+not arbitrary sampled pixels. Final scenery abstraction remains a later review.
+
+## Atmosphere roles
+
+| Atmosphere | Light | Dark |
+|---|---|---|
+| Sunrise | Warm off-white canvas, white surfaces, burnt-orange actions | Soft charcoal/raised charcoal, pale-apricot actions with dark content |
+| Sky | Cool-blue canvas, white surfaces, saturated-blue actions | Blue-slate/raised slate, pale-sky-blue actions with dark content; daytime clouds |
+| Evening | Pale-rose canvas, white surfaces, muted-plum actions | Plum-charcoal/raised plum, pale-rose actions with dark content; sunset sun |
+| Night | Icy-blue canvas, white surfaces, deep-blue actions; moon/stars | Navy-slate/raised navy, pale-periwinkle actions with dark content |
+
+Canvas and elevated surface roles are shared across every page, including native
+alarms. No per-page black or independent accent. Standard Android keyboard/permission/
+notification surfaces remain platform-owned. The explicit R6 alarm action minimum
+is 64 dp for prominent single/Stop-all controls and 56 dp for member actions;
+ordinary app prominent actions use the 56 dp minimum below.
+
+## Color roles shared by every screen
+
+Use one shared role mapping in RN and native components. Appearance changes the
+role values and artwork, not which role an otherwise identical icon receives.
+
+| Element | Required role and reason |
+|---|---|
+| Ordinary information/form icons: When, Date, Time, Due, Repeat, Alarm mode, Alert time, List, Notes and schedule disclosure; their chevrons | Neutral `onSurfaceVariant`. Being tappable or depicting an alarm does not make a row selected, urgent or a primary action. Optional icon-tile surfaces use one neutral container role. |
+| Back, More and ordinary toolbar glyphs | Shared toolbar content role, neutral `onSurface`/`onSurfaceVariant` on a contrast-protected toolbar. Night details and Night edit must use the same mapping. |
+| Main field values and titles | `onSurface`; supporting labels, descriptions and ordinary timing summaries use `onSurfaceVariant`. Do not make every label blue in Night. |
+| Filled Done/Save | Atmosphere `primary` with its paired `onPrimary`. Same component geometry in Light/Dark. |
+| Postpone alert action | Secondary outlined action using the same atmosphere `primary` for label/outline. It is intentionally distinct from completion but not an error/destructive action. |
+| Focused input outline/caret and explicitly selected controls | Atmosphere `primary`. Selected states also need a visible/accessible state indicator. |
+| Reminder category badge | Stable category role, independent of atmosphere. The green plant badge is intentional identity. Category color belongs to the category, not generic editor controls. |
+| Explicit scheduling state | Documented semantic role with text/icon. A green Scheduled chip is permissible only for confirmed scheduling; it does not mean guaranteed audibility and does not color the static Alarm-mode icon. |
+| Overdue / delivery warning / error | Stable semantic roles with explicit labels/icons. R4's amber overdue cue is deliberate; genuine failures/errors/destructive actions use their documented error role. The future postponed alert never clears overdue work. |
+| Independent timing badge | Neutral relationship text/container/outline. It communicates a relationship, not a selected chip, warning or primary action. |
+
+Sunrise, Sky, Evening and Night use different action accents deliberately.
+Sky uses blue in Light and a pale blue paired with dark content in Dark; Evening
+uses muted plum in Light and pale rose paired with dark content in Dark. These
+are role directions, not sampled final production hex values. Within one atmosphere
+and appearance, the same role comes from the same token on all pages. Do not sample
+slightly different orange/blue values from individual PNGs or hardcode per-screen
+hex overrides. Keep icon family, stroke, size and container treatment consistent.
+Remilo's expressive identity remains in its atmosphere, artwork, category badges
+and intentional actions.
+
+This is Remilo's chosen role policy, informed by
+[Material's color-role system](https://github.com/material-components/material-components-android/blob/master/docs/theming/Color.md).
+Material guidance does not mandate coloring every form icon alike in every app;
+our neutral structural mapping resolves this set's inconsistent hierarchy.
+Use Android/Material interaction conventions for this Android-first product;
+do not mix in iOS Liquid Glass keyboard or control behavior.
+
+## Shared geometry and accessibility corrections
+
+Retain the approved secondary template: compact atmospheric opening, solid reading
+surfaces, clear title/timing/delivery hierarchy and persistent action. Use one
+component definition rather than theme-specific copies of its structure.
+
+- Secondary opening target: approximately 96 dp below the status inset, including
+  the toolbar (56 dp) and short art crop. When usable height is constrained, reduce/
+  scroll the decorative crop first; keep navigation and focused content usable.
+- Use 16 dp gutters, 16 dp card/field corners, and a shared 16 dp radius for the
+  filled primary button. Primary Done/Save height is at least 56 dp; Postpone and
+  other interactive targets are at least 48 dp and do not overlap.
+- Baseline body/value text is 16 sp and supporting text 14 sp; details title is
+  approximately 24 sp. Text wraps/grows with system scaling. A bigger title, long
+  notes or keyboard can require scrolling. Do not copy tiny raster labels or fixed
+  pixel card heights.
+- Preserve the same icon-column and label/value alignment in Light/Dark. Add or
+  remove a consequential Due row based on state/linkage, not appearance.
+- Do not copy component omissions from a sample (e.g. missing navigation chevron)
+  or infer action availability from icon tint.
+- Measure contrast on actual surfaces: normal text at least 4.5:1, qualifying
+  large text at least 3:1, and required control/state graphics at least 3:1.
+  Labels, state, focus, selection and errors also have non-color cues and TalkBack
+  semantics. Capture actual large-text renders, not rescaled PNGs.
+
+These values are implementation targets carried from the draft; actual components
+must demonstrate them. Raster approval is not a measured accessibility pass.
+
+## Required keyboard and focused-input behavior (TD-03)
+
+These are requirements for creation, editing, expanded Notes, sheets with text
+input, and lower fields revealed by validation.
+
+1. **One persistent Save:** put the action footer outside the form's scroll content
+   but inside the same IME-resized/inset-aware usable region. With the keyboard
+   open, Save sits immediately above it, with its normal footer padding. With the
+   keyboard closed, it returns above the bottom safe area. Remove duplicate
+   toolbar Save when adopting this template.
+2. **No form overlap:** the scroll viewport ends above the measured footer. A
+   floating footer must reserve equivalent clearance; it cannot cover an input,
+   helper/error or final row. Lower fields remain reachable by scrolling.
+3. **One inset owner:** coordinate Android IME, navigation/system-bar and safe-area
+   insets once. Do not add a full keyboard offset on top of native resize, or
+   duplicate keyboard/nav padding. Handle actual inset/keyboard height changes,
+   including keyboard suggestions and emoji panels, without hardcoded heights.
+4. **Follow focus and caret:** after focus, keyboard/layout changes, multiline
+   growth, caret/selection movement or validation, ensure the active insertion
+   point and useful editing context are visible above both footer and IME. Bring
+   the relevant label/helper/error into view when feasible. Do not merely scroll
+   the top edge of a growing Notes field into view.
+5. **Long Notes:** the entire field need not fit at once. Its text remains editable
+   and scrollable, preserving draft, selection and composing text. Long Title and
+   Notes must not lose content or reset when the keyboard/appearance changes.
+6. **Usable Save:** the first deliberate tap with keyboard open activates the
+   existing guarded Save operation, rather than just dismissing the keyboard.
+   Retain busy/disabled/validation and exact same-operation retry behavior.
+7. **Back and reduced space:** Android Back dismisses the IME first; navigation
+   Back then follows the existing dirty/stale/uncertain guards. A smaller viewport
+   and large text use scrolling and less decoration, not smaller controls or a
+   second Save.
+8. **Platform scope:** use the actual Android keyboard and SDK 57/RN 0.86 APIs.
+   No iOS implementation, custom keyboard or overlay permission is introduced.
+
+[Android keyboard visibility guidance](https://developer.android.com/develop/ui/views/touch-and-input/keyboard-input/visibility)
+supports resizing available space and retaining an action bar above the IME.
+[Android IME/insets guidance](https://developer.android.com/develop/ui/views/layout/sw-keyboard)
+covers actual visibility/height and transition handling.
+[RN 0.86 KeyboardAvoidingView](https://reactnative.dev/docs/0.86/keyboardavoidingview)
+provides layout adjustments but does not by itself prove footer-aware caret or
+validation visibility. Choose one version-matched layout strategy after inspecting
+the actual edge-to-edge setup; do not blindly stack avoidance wrappers.
+
+### Current code versus the requirement
+
+At this documentation review, [the editor](../../../src/app/edit.tsx) still places Save
+in the toolbar. [Page/Field](../../../src/ui/components.tsx) provide basic scrolling,
+footer/focus and multiline sizing, but no demonstrated editor-wide caret/error
+coordination for this template. MainActivity already declares `adjustResize` in
+[AndroidManifest.xml](../../../android/app/src/main/AndroidManifest.xml); that alone
+does not establish correctness under edge-to-edge, a persistent footer, growing
+Notes or changing keyboard height. This is a future component requirement, not a
+claim that the current implementation was fixed in this documentation task.
+
+## Implementation acceptance and evidence
+
+TD-01/TD-03 actual components must resolve the listed discrepancies and demonstrate
+consistent role tokens and geometry. TD-03/TD-06 must additionally cover:
+
+| Case | Required observation |
+|---|---|
+| 360 x 800, Title creation, keyboard open | Save is above the IME; focused text/caret is visible; lower fields are scrollable. |
+| Focus Notes near the bottom; grow, select and move the caret through many lines | Insertion point/selection stays visible above footer and IME; draft/composition survives. |
+| 200% English/Chinese text, taller keyboard and emoji panel | No blocked input, overlapping targets, double inset gap or forced font shrink; scrolling remains usable. |
+| Validation on a lower/advanced field | Error and its editable control can be reached while keyboard remains open. |
+| Show/hide IME repeatedly; switch Title/Notes; open/close picker; Android Back | Footer, focus and scroll remain stable; existing draft/uncertain guards apply. |
+| Save once while IME is open; saving/retry cases | First tap starts one guarded operation; uncertain retries reuse the captured command. |
+| Light/Dark and all four atmospheres | Same component anatomy/role assignment; differences carry documented meaning. |
+| Overdue plus postponed alert | Due stays overdue while the next alert stays future; Done and Postpone remain distinct. |
+
+Host layout/state checks and synthetic captures are useful evidence, but actual
+Android keyboard, TalkBack and inset behavior remain observations in the existing
+consolidated owner acceptance run. Do not mark them passed from these images.

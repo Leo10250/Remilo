@@ -1,0 +1,252 @@
+{
+  "batch": "R10",
+  "tool": "built-in image_gen",
+  "agent": "r10_images_09_14",
+  "mode": "generate with style references; targeted edit repairs",
+  "cases": [
+    {
+      "id": "R10-09",
+      "file": "09-invalid-backup-before-an-import-sunrise-light.png",
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-7895635c-74ca-4c61-9496-0ada98a39248.png",
+      "destination": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/09-invalid-backup-before-an-import-sunrise-light.png",
+      "selectedCallIndex": 1,
+      "observedDiscrepancies": [
+        "Exact invalid-backup copy; Nothing was imported; only Choose backup file, with no preview/footer or uncertainty guard.",
+        "Sunrise Light warm canvas, white/raised error plane and burnt-orange action fit references.",
+        "Opening crop and error glyph are slightly larger than planned; no content overlap.",
+        "Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling."
+      ],
+      "implementationFixes": [
+        "Use shared 56dp toolbar + 40dp secondary art crop below status, and 24dp standard error glyph in a 48dp accessible action-free information region.",
+        "Use shared surface/primary/error tokens rather than sampling image pixels; enforce actual 56dp prominent action sizing.",
+        "Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster."
+      ],
+      "status": "generated-awaiting-review",
+      "approvalClaimed": false,
+      "runtimeClaimed": false,
+      "sha256": "d779b1a6ef14d6a762a84310941971dbd530ec6fff694c6db341c06086cb0edd",
+      "width": 840,
+      "height": 1871,
+      "sourceCopyIdentityVerified": true
+    },
+    {
+      "id": "R10-10",
+      "file": "10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-66fa8fd5-cfdc-4cad-8f03-e86291ccdd77.png",
+      "destination": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "selectedCallIndex": 2,
+      "observedDiscrepancies": [
+        "Correct confirmed content counts 5 restored/1 preserved and separate blocked-delivery warning, with no all-Scheduled or audibility claim.",
+        "Preview and footer cleared; Choose backup file remains normal flow.",
+        "Targeted repair reduced oversized scenery; residual crop and action-height variance remain approximate.",
+        "Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling."
+      ],
+      "implementationFixes": [
+        "Use shared fixed compact secondary opening and 56dp Choose backup file action; result/warning surfaces wrap at font scale.",
+        "Bind counts to returned native import result; never infer delivery readiness from content acknowledgement.",
+        "Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster."
+      ],
+      "status": "generated-awaiting-review",
+      "approvalClaimed": false,
+      "runtimeClaimed": false,
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc",
+      "width": 840,
+      "height": 1871,
+      "sourceCopyIdentityVerified": true
+    },
+    {
+      "id": "R10-12",
+      "file": "12-export-share-unavailable-evening-dark.png",
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-abdfa7c3-c865-4efe-8a9c-b08baa2c238f.png",
+      "destination": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/12-export-share-unavailable-evening-dark.png",
+      "selectedCallIndex": 2,
+      "observedDiscrepancies": [
+        "Inline Settings Data export failure wording correct; structural icons neutral; other Data/Help actions retained.",
+        "ImageGen first invented a Remilo support route; targeted repair removed it, leaving passive Remilo/version copy.",
+        "Supporting text remains subtly lavender-tinted and error appearance is close to Evening primary; exact palette remains a generated approximation."
+      ],
+      "implementationFixes": [
+        "Use neutral onSurfaceVariant for backup/version helper copy and dedicated stable semantic error/onErrorContainer roles distinct from primary.",
+        "Keep Remilo/version passive; no support route or unsupported backup-prepared claim."
+      ],
+      "status": "generated-awaiting-review",
+      "approvalClaimed": false,
+      "runtimeClaimed": false,
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685",
+      "width": 841,
+      "height": 1870,
+      "sourceCopyIdentityVerified": true
+    },
+    {
+      "id": "R10-13",
+      "file": "13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-3b6f5c7a-016e-499d-a596-97fd88acd741.png",
+      "destination": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "selectedCallIndex": 1,
+      "observedDiscrepancies": [
+        "Report remains visible with observed timestamp and actual Content schema 4/Delivery schema 3 metadata.",
+        "Exact diagnostic privacy disclosure and share-sheet failure text; no sent/cancelled/uploaded claim.",
+        "Share diagnostic report appears as a section heading plus action; header crop slightly taller and main action slightly shorter than exact metrics."
+      ],
+      "implementationFixes": [
+        "Keep one actionable Share diagnostic report; section title is informational and can be omitted if hierarchy becomes repetitive.",
+        "Use standard compact header, measured 56dp action and neutral metadata/semantic error tokens; retain captured report on share failure."
+      ],
+      "status": "generated-awaiting-review",
+      "approvalClaimed": false,
+      "runtimeClaimed": false,
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454",
+      "width": 841,
+      "height": 1870,
+      "sourceCopyIdentityVerified": true
+    },
+    {
+      "id": "R10-14",
+      "file": "14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-dd01872c-251c-4d69-87a8-205388963308.png",
+      "destination": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "selectedCallIndex": 2,
+      "observedDiscrepancies": [
+        "Long title fully wraps, singular 1 reminder or series, informational Future time indicated and timing disclaimer accurate.",
+        "No checkbox/switch, exact target/date/mode or Scheduled promise; stacked Restore backup/Cancel preview stays clear of content.",
+        "Targeted repair reduced original oversized scenery; residual header height and periwinkle tint in ordinary supporting copy remain approximate."
+      ],
+      "implementationFixes": [
+        "Use shared compact opening and onSurfaceVariant gray for timing/intro/helper, retaining primary only for actual Choose another backup/Restore action.",
+        "Use shared navy canvas/raised navy surfaces and measured footer safe-area/scroll clearance with 56dp actions; never infer portable eligibility from preview futureAlert."
+      ],
+      "status": "generated-awaiting-review",
+      "approvalClaimed": false,
+      "runtimeClaimed": false,
+      "sha256": "71a7a89938b92b77e3d202a917ba09e9a5d1b6bc50aa809b6151ce34deeffa13",
+      "width": 841,
+      "height": 1870,
+      "sourceCopyIdentityVerified": true
+    }
+  ],
+  "calls": [
+    {
+      "caseId": "R10-09",
+      "callIndex": 1,
+      "purpose": "initial generation",
+      "prompt": "Use case: ui-mockup.\nAsset type: one high-fidelity Remilo Android UI design-evaluation screenshot, derived from supplied approved references.\nDo not redesign the app. The frozen R10 specification is source of truth. Image 1 is the matching R3 atmosphere/appearance STYLE AND COLOR reference; image 2 if provided is the accepted secondary-screen component style reference only. Replace the homepage/reference content with the requested R10 UI.\nFraming: one flat full-screen Android app screenshot, portrait 9:20 ratio, preferably same 841x1870 raster as the reference; logical viewport 360x800 dp. No phone frame, perspective, comparison board, labels outside UI, marketing title, shadows around a phone, or poster. All screens share the same product typography (Roboto-like), metrics, icon stroke/family and component anatomy.\nAndroid system status 2:00 and standard system icons at top; gesture bar at bottom. Below status use compact approximately 96dp opening total: 56dp toolbar with neutral Back + page title, then ~40dp shallow matching lake/mountains/conifer illustration crop. Scene and title must not consume one quarter of screen. Keep scene identity faithful to R3, but reduce it to the same shared secondary crop. No repeated oversized Remilo branding or invented slogan.\nUse exactly the corresponding scene/color family: Sunrise Light warm off-white/white/burnt-orange action; Sunrise Dark SOFT charcoal/raised charcoal/pale-apricot action with dark text. Sky Light pale cool-blue/white/blue; Sky Dark SOFT blue-slate/raised blue-slate/pale-sky-blue action with dark text and DAYTIME CLOUDS. Evening Light pale rose/white/muted plum; Evening Dark SOFT plum-charcoal/raised plum/pale-rose action with dark text and SUNSET SUN. Night Light icy-blue/white/deep-blue action, crescent/stars artwork; Night Dark SOFT navy-slate/raised navy/periwinkle action with dark text. Never independent pure black. Match shared canvas AND elevated surfaces.\nReading planes opaque. Main titles/values neutral on-surface; labels/helper text neutral muted high contrast, never tint all metadata by atmosphere. Ordinary upload/download/Back/info/chevrons/refresh glyphs neutral, consistent line icon family. Color only actual primary/selected controls or labeled semantic feedback; no decorative colored list icons.\nMetrics: 16dp horizontal gutters and rounded corners, 16sp body, 14sp supporting text, >=48dp targets, 56dp prominent action. No inflated title typography, no tiny helper text, no forced font shrinking. Long titles/notes wrap and grow. Realistic layout with content continuing below the viewport; do not squeeze entire page inventory into one screen.\nNo root tab bar or FAB on these secondary pages. No app keyboard/input unless specified (none in R10). OS chooser/share sheet is not shown in these captures; draw requested app state before/after handoff. No cloud, overwrite, fake filename, exact timing absent from preview, new Settings categories, safety badge/health grade or unsupported buttons.\nIf a Restore preview exists, one fixed bottom footer: stacked full-width filled primary action, then outlined secondary Cancel preview; both readable and inset-safe. Scroll ends above the measured footer; zero overlap with body. Busy/unconfirmed feedback immediately above action buttons in the same reserved footer area, readable choices frozen in body. No Save or toolbar Restore duplicate.\nCopy must be verbatim as supplied. Treat requested content as realistic product data. Specification corrections take priority over incidental reference-image coloring.\nSTATE: R10-09, Sunrise Light, invalid backup before any import. This is a secondary Restore backup page; shallow landscape header faithfully uses Image1. Image2 is component reference only. Main body below crop begins at y~135dp with ordinary explanatory paragraph, then contextual opaque error card with a neutral-sized error outline glyph and stable muted-red error meaning. Copy exactly:\nToolbar: \"Restore backup\".\nIntro: \"Preview a backup before restoring. Existing reminders are preserved; elapsed alarms stay silent.\"\nQualification: \"Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.\"\nError: \"This file could not be read as a valid Remilo backup. Nothing was imported.\"\nA full-width burnt-orange button with white label \"Choose backup file\" at normal flow below error (~56dp tall). It is the only action. The remainder below may be empty warm off-white. NO fixed footer, Restore action, Cancel preview, preview entries, fabricated filename, backup counts or uncertain action. No other text. Everything legible at standard mobile size. Structural back/file glyphs neutral. Error card could use very pale warm neutral surface with muted red outline/error symbol, never large decorative red illustration. Screenshot y~120dp header bottom, match Image2 compact type hierarchy.",
+      "references": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/references/01-sunrise-light.png",
+        "C:/Users/Leo/Documents/GitHub/Remilo/docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-7895635c-74ca-4c61-9496-0ada98a39248.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-7895635c-74ca-4c61-9496-0ada98a39248.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 840,
+      "height": 1871,
+      "sha256": "d779b1a6ef14d6a762a84310941971dbd530ec6fff694c6db341c06086cb0edd"
+    },
+    {
+      "caseId": "R10-10",
+      "callIndex": 1,
+      "purpose": "initial generation",
+      "prompt": "Use case: ui-mockup.\nAsset type: one high-fidelity Remilo Android UI design-evaluation screenshot, derived from supplied approved references.\nDo not redesign the app. The frozen R10 specification is source of truth. Image 1 is the matching R3 atmosphere/appearance STYLE AND COLOR reference; image 2 if provided is the accepted secondary-screen component style reference only. Replace the homepage/reference content with the requested R10 UI.\nFraming: one flat full-screen Android app screenshot, portrait 9:20 ratio, preferably same 841x1870 raster as the reference; logical viewport 360x800 dp. No phone frame, perspective, comparison board, labels outside UI, marketing title, shadows around a phone, or poster. All screens share the same product typography (Roboto-like), metrics, icon stroke/family and component anatomy.\nAndroid system status 2:00 and standard system icons at top; gesture bar at bottom. Below status use compact approximately 96dp opening total: 56dp toolbar with neutral Back + page title, then ~40dp shallow matching lake/mountains/conifer illustration crop. Scene and title must not consume one quarter of screen. Keep scene identity faithful to R3, but reduce it to the same shared secondary crop. No repeated oversized Remilo branding or invented slogan.\nUse exactly the corresponding scene/color family: Sunrise Light warm off-white/white/burnt-orange action; Sunrise Dark SOFT charcoal/raised charcoal/pale-apricot action with dark text. Sky Light pale cool-blue/white/blue; Sky Dark SOFT blue-slate/raised blue-slate/pale-sky-blue action with dark text and DAYTIME CLOUDS. Evening Light pale rose/white/muted plum; Evening Dark SOFT plum-charcoal/raised plum/pale-rose action with dark text and SUNSET SUN. Night Light icy-blue/white/deep-blue action, crescent/stars artwork; Night Dark SOFT navy-slate/raised navy/periwinkle action with dark text. Never independent pure black. Match shared canvas AND elevated surfaces.\nReading planes opaque. Main titles/values neutral on-surface; labels/helper text neutral muted high contrast, never tint all metadata by atmosphere. Ordinary upload/download/Back/info/chevrons/refresh glyphs neutral, consistent line icon family. Color only actual primary/selected controls or labeled semantic feedback; no decorative colored list icons.\nMetrics: 16dp horizontal gutters and rounded corners, 16sp body, 14sp supporting text, >=48dp targets, 56dp prominent action. No inflated title typography, no tiny helper text, no forced font shrinking. Long titles/notes wrap and grow. Realistic layout with content continuing below the viewport; do not squeeze entire page inventory into one screen.\nNo root tab bar or FAB on these secondary pages. No app keyboard/input unless specified (none in R10). OS chooser/share sheet is not shown in these captures; draw requested app state before/after handoff. No cloud, overwrite, fake filename, exact timing absent from preview, new Settings categories, safety badge/health grade or unsupported buttons.\nIf a Restore preview exists, one fixed bottom footer: stacked full-width filled primary action, then outlined secondary Cancel preview; both readable and inset-safe. Scroll ends above the measured footer; zero overlap with body. Busy/unconfirmed feedback immediately above action buttons in the same reserved footer area, readable choices frozen in body. No Save or toolbar Restore duplicate.\nCopy must be verbatim as supplied. Treat requested content as realistic product data. Specification corrections take priority over incidental reference-image coloring.\nSTATE R10-10: Confirmed fresh restore, content stored, some delivery blocked. Sky Light. Image1 is Sky Light color/art reference ONLY; Image2 Sunrise component geometry reference ONLY, its colors must be replaced by Sky roles. Match compact secondary header from Image2, bottom of crop around y=280px on 841x1870. Do not enlarge. Toolbar Back and \"Restore backup\". A readable result card below the shallow sky/lake/conifer crop with neutral dark text, EXACT \"Restored 5; preserved 1 existing reminder or series entry.\" No giant success hero or readiness badge. Follow with a separate contextual muted amber warning card, normal 24dp warning glyph, copy EXACT \"Some alerts could not be scheduled. Review Alert problems in Agenda.\" Below in normal scroll flow a 56dp full-width saturated-blue button with white text EXACT \"Choose backup file\". Keep bottom empty pale-blue canvas and Android gesture bar. No footer or preview rows; preview and copy choices cleared. No Restore/Cancel/Retry button, no 5 tasks/count tile dashboard, no checkmark saying all Scheduled, no permissions-only cause. The toolbar header label appears only once and all body/result/warning/action text verbatim. This is a realistic production UI screenshot with gentle depth and opaque white result reading plane.",
+      "references": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/references/03-sky-light.png",
+        "C:/Users/Leo/Documents/GitHub/Remilo/docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-55ff4d09-25ef-4d3c-b700-d49095101e2a.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-55ff4d09-25ef-4d3c-b700-d49095101e2a.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 840,
+      "height": 1871,
+      "sha256": "d86d63962b528dc06bb6d0ae7a5fc3eae5bf25f119b195ef3ae5cab6df39703e"
+    },
+    {
+      "caseId": "R10-10",
+      "callIndex": 2,
+      "purpose": "targeted shallow-header repair",
+      "prompt": "Use case: precise-object-edit UI screenshot correction. Image1 is the edit target R10-10, preserve its exact viewport, body typography, content, cards, colors, button text and system bars. Make one targeted change: shrink the shared secondary opening so bottom of landscape is at y=280 pixels on the 841x1870 screenshot, not y=420. Status remains y0-56, toolbar y56-187, then only a ~93px shallow landscape crop y187-280. This is a CROPPED PANORAMIC landscape strip, not vertically squeezed entire art. Keep daytime blue Sky clouds/lake/conifers and no branding; title and Back remain at existing position/font. Move body result card, warning card and Choose backup file upward by 140px; maintain gaps/heights. Preserve all exact text including \"Restored 5; preserved 1 existing reminder or series entry.\", \"Some alerts could not be scheduled. Review Alert problems in Agenda.\", \"Choose backup file\". The rest is empty pale-blue reading plane down to gesture bar. Preserve one flat full app screenshot. No new button, footer, duplicate title, dark theme, checkbox or success readiness assertion.",
+      "references": [
+        "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-55ff4d09-25ef-4d3c-b700-d49095101e2a.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-66fa8fd5-cfdc-4cad-8f03-e86291ccdd77.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-66fa8fd5-cfdc-4cad-8f03-e86291ccdd77.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 840,
+      "height": 1871,
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc"
+    },
+    {
+      "caseId": "R10-12",
+      "callIndex": 1,
+      "purpose": "initial generation",
+      "prompt": "Use case: ui-mockup.\nAsset type: one high-fidelity Remilo Android UI design-evaluation screenshot, derived from supplied approved references.\nDo not redesign the app. The frozen R10 specification is source of truth. Image 1 is the matching R3 atmosphere/appearance STYLE AND COLOR reference; image 2 if provided is the accepted secondary-screen component style reference only. Replace the homepage/reference content with the requested R10 UI.\nFraming: one flat full-screen Android app screenshot, portrait 9:20 ratio, preferably same 841x1870 raster as the reference; logical viewport 360x800 dp. No phone frame, perspective, comparison board, labels outside UI, marketing title, shadows around a phone, or poster. All screens share the same product typography (Roboto-like), metrics, icon stroke/family and component anatomy.\nAndroid system status 2:00 and standard system icons at top; gesture bar at bottom. Below status use compact approximately 96dp opening total: 56dp toolbar with neutral Back + page title, then ~40dp shallow matching lake/mountains/conifer illustration crop. Scene and title must not consume one quarter of screen. Keep scene identity faithful to R3, but reduce it to the same shared secondary crop. No repeated oversized Remilo branding or invented slogan.\nUse exactly the corresponding scene/color family: Sunrise Light warm off-white/white/burnt-orange action; Sunrise Dark SOFT charcoal/raised charcoal/pale-apricot action with dark text. Sky Light pale cool-blue/white/blue; Sky Dark SOFT blue-slate/raised blue-slate/pale-sky-blue action with dark text and DAYTIME CLOUDS. Evening Light pale rose/white/muted plum; Evening Dark SOFT plum-charcoal/raised plum/pale-rose action with dark text and SUNSET SUN. Night Light icy-blue/white/deep-blue action, crescent/stars artwork; Night Dark SOFT navy-slate/raised navy/periwinkle action with dark text. Never independent pure black. Match shared canvas AND elevated surfaces.\nReading planes opaque. Main titles/values neutral on-surface; labels/helper text neutral muted high contrast, never tint all metadata by atmosphere. Ordinary upload/download/Back/info/chevrons/refresh glyphs neutral, consistent line icon family. Color only actual primary/selected controls or labeled semantic feedback; no decorative colored list icons.\nMetrics: 16dp horizontal gutters and rounded corners, 16sp body, 14sp supporting text, >=48dp targets, 56dp prominent action. No inflated title typography, no tiny helper text, no forced font shrinking. Long titles/notes wrap and grow. Realistic layout with content continuing below the viewport; do not squeeze entire page inventory into one screen.\nNo root tab bar or FAB on these secondary pages. No app keyboard/input unless specified (none in R10). OS chooser/share sheet is not shown in these captures; draw requested app state before/after handoff. No cloud, overwrite, fake filename, exact timing absent from preview, new Settings categories, safety badge/health grade or unsupported buttons.\nIf a Restore preview exists, one fixed bottom footer: stacked full-width filled primary action, then outlined secondary Cancel preview; both readable and inset-safe. Scroll ends above the measured footer; zero overlap with body. Busy/unconfirmed feedback immediately above action buttons in the same reserved footer area, readable choices frozen in body. No Save or toolbar Restore duplicate.\nCopy must be verbatim as supplied. Treat requested content as realistic product data. Specification corrections take priority over incidental reference-image coloring.\nSTATE R10-12, Settings scrolled to Data and Help, Evening Dark. Image1 matching R3 controls EXACT canvas and raised surfaces, sunset SUN. Image2 secondary component geometry only; no reuse test-alarm content.\nDraw one flat screenshot. Small neutral Back and 22sp \"Settings\" in compact toolbar. A shallow sunset/conifer/lake crop; body begins by y280px, not y450px. Use soft plum-charcoal canvas with clearly raised plum group surfaces, NOT black. No scrim or modal dimming.\nSection \"Data\" below header. One raised grouped panel contains ordinary structural neutral upload outline icon + row \"Export backup\". Under the row INSIDE Data panel an inline muted-red error card, with 24dp error-outline glyph and exact wrapped text \"Sharing is unavailable on this device. Try again when a share destination is available.\" No red heading or cloud icon. Then a neutral separator and neutral download outline icon + \"Restore backup\" with neutral right chevron. Below Data group supporting text EXACT \"Backups include lists and reminders, except one-off reminders in Trash. Repeating deletion exclusions are kept.\" and \"Backups include reminder titles and notes.\" They wrap in neutral muted gray, not pink.\nNext \"Help\" section with grouped neutral info icon + \"Diagnostics\" and chevron; next row \"Remilo\" support \"0.4.0 · Android\" (plain factual copy). This is normal page scrolled down; earlier sections above, not deleted. End with normal gesture bar. No bottom navigation, FAB, Save, Retry sharing, cloud picker, success indicator, backup filename, file-ready/saved assertion, card toggle or progress. Export remains available through the same labeled row. Structural glyphs neutral uniformly, no randomly colored orange/blue/pink icons. All text readable and exact; realistic body16sp/support14sp.",
+      "references": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/references/06-evening-dark.png",
+        "C:/Users/Leo/Documents/GitHub/Remilo/docs/design/remilo-r8-settings-appearance/13-test-saved-with-pending-scheduling-evening-dark.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-1ba0d608-5ba7-4d9f-8036-07cdec5983cd.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-1ba0d608-5ba7-4d9f-8036-07cdec5983cd.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 841,
+      "height": 1870,
+      "sha256": "45af7b083afac56a57b44a46e225a6264ea99f405587b54e159cbc380a579c0c"
+    },
+    {
+      "caseId": "R10-13",
+      "callIndex": 1,
+      "purpose": "initial generation",
+      "prompt": "Use case: ui-mockup.\nAsset type: one high-fidelity Remilo Android UI design-evaluation screenshot, derived from supplied approved references.\nDo not redesign the app. The frozen R10 specification is source of truth. Image 1 is the matching R3 atmosphere/appearance STYLE AND COLOR reference; image 2 if provided is the accepted secondary-screen component style reference only. Replace the homepage/reference content with the requested R10 UI.\nFraming: one flat full-screen Android app screenshot, portrait 9:20 ratio, preferably same 841x1870 raster as the reference; logical viewport 360x800 dp. No phone frame, perspective, comparison board, labels outside UI, marketing title, shadows around a phone, or poster. All screens share the same product typography (Roboto-like), metrics, icon stroke/family and component anatomy.\nAndroid system status 2:00 and standard system icons at top; gesture bar at bottom. Below status use compact approximately 96dp opening total: 56dp toolbar with neutral Back + page title, then ~40dp shallow matching lake/mountains/conifer illustration crop. Scene and title must not consume one quarter of screen. Keep scene identity faithful to R3, but reduce it to the same shared secondary crop. No repeated oversized Remilo branding or invented slogan.\nUse exactly the corresponding scene/color family: Sunrise Light warm off-white/white/burnt-orange action; Sunrise Dark SOFT charcoal/raised charcoal/pale-apricot action with dark text. Sky Light pale cool-blue/white/blue; Sky Dark SOFT blue-slate/raised blue-slate/pale-sky-blue action with dark text and DAYTIME CLOUDS. Evening Light pale rose/white/muted plum; Evening Dark SOFT plum-charcoal/raised plum/pale-rose action with dark text and SUNSET SUN. Night Light icy-blue/white/deep-blue action, crescent/stars artwork; Night Dark SOFT navy-slate/raised navy/periwinkle action with dark text. Never independent pure black. Match shared canvas AND elevated surfaces.\nReading planes opaque. Main titles/values neutral on-surface; labels/helper text neutral muted high contrast, never tint all metadata by atmosphere. Ordinary upload/download/Back/info/chevrons/refresh glyphs neutral, consistent line icon family. Color only actual primary/selected controls or labeled semantic feedback; no decorative colored list icons.\nMetrics: 16dp horizontal gutters and rounded corners, 16sp body, 14sp supporting text, >=48dp targets, 56dp prominent action. No inflated title typography, no tiny helper text, no forced font shrinking. Long titles/notes wrap and grow. Realistic layout with content continuing below the viewport; do not squeeze entire page inventory into one screen.\nNo root tab bar or FAB on these secondary pages. No app keyboard/input unless specified (none in R10). OS chooser/share sheet is not shown in these captures; draw requested app state before/after handoff. No cloud, overwrite, fake filename, exact timing absent from preview, new Settings categories, safety badge/health grade or unsupported buttons.\nIf a Restore preview exists, one fixed bottom footer: stacked full-width filled primary action, then outlined secondary Cancel preview; both readable and inset-safe. Scroll ends above the measured footer; zero overlap with body. Busy/unconfirmed feedback immediately above action buttons in the same reserved footer area, readable choices frozen in body. No Save or toolbar Restore duplicate.\nCopy must be verbatim as supplied. Treat requested content as realistic product data. Specification corrections take priority over incidental reference-image coloring.\nSTATE R10-13: Diagnostics share sheet could not open. Evening Light. Image1 sunset art/color reference, image2 secondary layout/component style only (replace all Sunrise colors).\nNeutral Back, toolbar \"Diagnostics\" and neutral circular refresh glyph on right (accessible meaning Refresh report). Keep shallow sunset strip compact body beginning around y280px. Body is already scrolled near share group. Show small neutral line \"Observed Oct 8 · 1:58 PM\" from retained report. An opaque white \"Technical metadata\" group with simple readable rows: \"Content schema\" paired \"4\"; \"Delivery schema\" paired \"3\". No app/build/OS version inferred. Then a sharing group/section with verbatim disclosure \"Delivery permissions, state counts and technical metadata. Reminder titles and notes are excluded.\" Main action is full-width 56dp muted-plum filled button, white label \"Share diagnostic report\". Beneath it an inline opaque contextual pale semantic error card with 24dp muted-red outline symbol and exact text \"Could not open the share sheet. Try again.\" Keep prior report present and usable, no overlay, no send success/checkmark, cancellation sentence, upload/email action or rootbar/FAB. \"This snapshot helps investigate delivery. It does not verify that an alarm was heard.\" and Alarm snapshot count groups remain above current scroll position; do not delete report. Current screenshot can prioritize technical metadata and share disclosure/error. Maintain realistic size and consistency, no oversized title or sparse marketing composition. Ordinary info/chevron/Back/refresh glyphs uniform neutral gray/dark; shared error semantic separate from primaryplum. No backup title/notes privacy conflate.",
+      "references": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/references/05-evening-light.png",
+        "C:/Users/Leo/Documents/GitHub/Remilo/docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-3b6f5c7a-016e-499d-a596-97fd88acd741.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-3b6f5c7a-016e-499d-a596-97fd88acd741.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 841,
+      "height": 1870,
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454"
+    },
+    {
+      "caseId": "R10-12",
+      "callIndex": 2,
+      "purpose": "remove invented support route; neutral metadata and semantic error correction",
+      "prompt": "Use case: precise-object-edit. Image1 is edit target. Preserve full screenshot geometry, compact sunset header, Settings title, Data/Help grouping, all Export/Restore/Diagnostics rows, error wording, soft plum surfaces, system bars. Targeted correction in Help: replace the invented actionable \"Remilo support\" row with a passive factual footer: exact \"Remilo\" and exact \"0.4.0 · Android\" underneath in neutral supporting gray. Remove its question-mark icon and remove its right chevron; no support link or button. Diagnostics row above keeps its neutral info icon and chevron. Additionally ordinary helper copy and version text must use neutral gray, never tint them lavender/pink. Error message is a semantic error and its outline/error glyph uses muted salmon-red, not the theme's primary pink; body neutral white. Change nothing else, preserve all exact backup error/disclosure copy. One flat portrait 9:20 screenshot, no new content or footer actions.",
+      "references": [
+        "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-1ba0d608-5ba7-4d9f-8036-07cdec5983cd.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-abdfa7c3-c865-4efe-8a9c-b08baa2c238f.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-abdfa7c3-c865-4efe-8a9c-b08baa2c238f.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 841,
+      "height": 1870,
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685"
+    },
+    {
+      "caseId": "R10-14",
+      "callIndex": 1,
+      "purpose": "initial generation",
+      "prompt": "Use case: ui-mockup.\nAsset type: one high-fidelity Remilo Android UI design-evaluation screenshot, derived from supplied approved references.\nDo not redesign the app. The frozen R10 specification is source of truth. Image 1 is the matching R3 atmosphere/appearance STYLE AND COLOR reference; image 2 if provided is the accepted secondary-screen component style reference only. Replace the homepage/reference content with the requested R10 UI.\nFraming: one flat full-screen Android app screenshot, portrait 9:20 ratio, preferably same 841x1870 raster as the reference; logical viewport 360x800 dp. No phone frame, perspective, comparison board, labels outside UI, marketing title, shadows around a phone, or poster. All screens share the same product typography (Roboto-like), metrics, icon stroke/family and component anatomy.\nAndroid system status 2:00 and standard system icons at top; gesture bar at bottom. Below status use compact approximately 96dp opening total: 56dp toolbar with neutral Back + page title, then ~40dp shallow matching lake/mountains/conifer illustration crop. Scene and title must not consume one quarter of screen. Keep scene identity faithful to R3, but reduce it to the same shared secondary crop. No repeated oversized Remilo branding or invented slogan.\nUse exactly the corresponding scene/color family: Sunrise Light warm off-white/white/burnt-orange action; Sunrise Dark SOFT charcoal/raised charcoal/pale-apricot action with dark text. Sky Light pale cool-blue/white/blue; Sky Dark SOFT blue-slate/raised blue-slate/pale-sky-blue action with dark text and DAYTIME CLOUDS. Evening Light pale rose/white/muted plum; Evening Dark SOFT plum-charcoal/raised plum/pale-rose action with dark text and SUNSET SUN. Night Light icy-blue/white/deep-blue action, crescent/stars artwork; Night Dark SOFT navy-slate/raised navy/periwinkle action with dark text. Never independent pure black. Match shared canvas AND elevated surfaces.\nReading planes opaque. Main titles/values neutral on-surface; labels/helper text neutral muted high contrast, never tint all metadata by atmosphere. Ordinary upload/download/Back/info/chevrons/refresh glyphs neutral, consistent line icon family. Color only actual primary/selected controls or labeled semantic feedback; no decorative colored list icons.\nMetrics: 16dp horizontal gutters and rounded corners, 16sp body, 14sp supporting text, >=48dp targets, 56dp prominent action. No inflated title typography, no tiny helper text, no forced font shrinking. Long titles/notes wrap and grow. Realistic layout with content continuing below the viewport; do not squeeze entire page inventory into one screen.\nNo root tab bar or FAB on these secondary pages. No app keyboard/input unless specified (none in R10). OS chooser/share sheet is not shown in these captures; draw requested app state before/after handoff. No cloud, overwrite, fake filename, exact timing absent from preview, new Settings categories, safety badge/health grade or unsupported buttons.\nIf a Restore preview exists, one fixed bottom footer: stacked full-width filled primary action, then outlined secondary Cancel preview; both readable and inset-safe. Scroll ends above the measured footer; zero overlap with body. Busy/unconfirmed feedback immediately above action buttons in the same reserved footer area, readable choices frozen in body. No Save or toolbar Restore duplicate.\nCopy must be verbatim as supplied. Treat requested content as realistic product data. Specification corrections take priority over incidental reference-image coloring.\nSTATE R10-14: Restore weak legacy preview, Night Dark. Image1 ONLY matching R3 color/scene source. Use moon/stars, soft navy-slate canvas and raised navy reading surface. No independent black. Image2 secondary card/type scale reference ONLY, replace its sunrise colors and content.\nToolbar neutral Back and exact \"Restore backup\". Compact ~96dp secondary opening below status, shallow night lake/mountain/conifer crop, bottom around y280px not y450px. Body uses realistic readable information architecture. Exact introductory copy \"Preview a backup before restoring. Existing reminders are preserved; elapsed alarms stay silent.\" Normal subtle action \"Choose another backup\" at top of scroll content (no invented filename). Summary bold \"1 reminder or series\". Under it one opaque raised-navy preview card; NO icon badge or checkbox/switch because this new entry will be restored automatically. Exact full long title wraps to 2-3 lines: \"Review the archived project notes before tomorrow's meeting\". Below in neutral readable metadata \"Future time indicated\". Under card exact helper \"Preview timing does not confirm delivery. Alerts are checked after restore.\" Keep no actual alert time/mode/date, no Scheduled or guaranteedfuture assertion. Entire body scrolls above a persistent footer.\nFooter fixed at bottom inside safearea is opaque shared navy plane with two stacked 56dp fullwidth rounded buttons: upper filled PALE PERIWINKLE (matching Image1 primary), dark navy text \"Restore backup\"; lower outline using neutral lightgray border and light text \"Cancel preview\". Footer begins around y1470px, protects scroll; gesturebar below. Do not turn this into separate page actions plus duplicate toolbar Restore or generic black alarm page. Main title neutralwhite and ordinary metadata muted neutralgray not periwinkle. Space for full copy and notes without shrinking. No action on individual new preview entry, no overwrite, cloud, allready badge or preview selection checkbox. Copy exact. This legacy preview is informational and weak, not a scheduling outcome.",
+      "references": [
+        "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/references/08-night-dark.png",
+        "C:/Users/Leo/Documents/GitHub/Remilo/docs/design/remilo-r8-settings-appearance/01-settings-overview-sunrise-light.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-d34b7e07-035d-45a6-ac5b-94129e0cec4f.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-d34b7e07-035d-45a6-ac5b-94129e0cec4f.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 841,
+      "height": 1870,
+      "sha256": "a3d76c8d1eb514f28c384232f57a376895920fc68348113f26dd26098bc3bfe4"
+    },
+    {
+      "caseId": "R10-14",
+      "callIndex": 2,
+      "purpose": "compact secondary-header and neutral metadata repair",
+      "prompt": "Use case: precise-object-edit. Image1 is edit target. Preserve the same 841x1870 flat portrait screenshot, all exact text, soft navy canvas/raised card, periwinkle primary/dark label, footer action geometry, no checkbox/toggle, gesture/status bars. One targeted compact-header correction: the entire scene + toolbar opening must end at y280px maximum; currently ends y400px. Status at top unchanged, toolbar \"Restore backup\" at y100-160 unchanged. Under toolbar show a SINGLE shallow night panorama crop y185-280; crop the lake/conifers/mountains scene rather than squeezing the entire original illustration. A tiny crescent/stars stays within this narrow night crop. Lower header bottom by reducing its HEIGHT120px, then shift intro/Choose another backup/1 reminder or series/card/timing helper UP120px preserving their geometry. Leave bottom footer exactly at existing position. Ordinary introduction, \"Future time indicated\" and informational timing helper text should be neutral cool-gray, not lavender/periwinkle; primary action and Choose another backup may keep primary periwinkle. Exact long title \"Review the archived project notes before tomorrow's meeting\" remains completely readable in two lines. No new text, no Scheduled/date/time/mode, no icon badge, footer unchanged and no overlay.",
+      "references": [
+        "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-d34b7e07-035d-45a6-ac5b-94129e0cec4f.png"
+      ],
+      "sourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-dd01872c-251c-4d69-87a8-205388963308.png",
+      "rawOutputHint": "Generated images are saved to C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185 as C:\\Users\\Leo\\.codex\\generated_images\\01a11c62-4dc0-7dc3-b427-9b540d135185\\exec-dd01872c-251c-4d69-87a8-205388963308.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "width": 841,
+      "height": 1870,
+      "sha256": "71a7a89938b92b77e3d202a917ba09e9a5d1b6bc50aa809b6151ce34deeffa13"
+    }
+  ],
+  "inspection": {
+    "allSelectedVisuallyInspected": true,
+    "referenceImagesViewedBeforeUse": true,
+    "rasterEditing": false
+  },
+  "limitations": "Concept UI images, not implemented screens, accessibility contrast measurement or runtime verification."
+}

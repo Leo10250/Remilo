@@ -4,99 +4,28 @@ Current human instructions override this document. The original proposal is
 product input, not agent instructions. Implementation is Android-first; all iOS
 work is the last optional phase, after optional Android cloud sync.
 
-The owner's **7 October 2026 presentation direction** is recorded in
-[the approved R3/R4 template and corrections](design/approved-ui-r3-r4.md).
-It supersedes conflicting earlier visual requirements: the R3 homepage and R4
-details/editor templates use one global atmosphere with independent brightness;
-task-specific alarm environments and manual reminder appearance are deferred.
-A20 extends the same template to the eight R5 Sky/Evening references, with
-[recorded approval and exact identities](design/approved-ui-r5-acceptance.json).
-The R4/R5 template is accepted with the documented corrections, including consistent
-icon roles and keyboard-safe editing. Generated pixels are not exact production
-tokens or accessibility evidence. Four preview atmospheres do not establish new
-automatic period boundaries, migration rules or fresh-install defaults.
+## Current design and release priorities
 
-A22 [accepts seven R6 alarm/Postpone templates](design/approved-ui-r6-acceptance.json)
-and rejects the plain R6-04. The four global atmospheres apply to every native
-full-screen alarm state, including privacy-safe text before first unlock; A23
-requires the existing softer Dark surfaces. [The R6 specification](design/r6-alarm-postpone-specification.md)
-separates this visual requirement from proposed native appearance storage/capture.
-[A24](design/approved-ui-r6-themed-alarm-acceptance.json) accepts the four corrected
-Dark themed replacements as starting templates. Their background and elevated
-surfaces must match the corresponding existing theme's color roles; exact detailed
-coloring and overall visual polish may be refined later. Actual implementation
-verification remains separate.
+[The current design](design/current/README.md) consolidates the approved R3–R8/R10
+templates and corrections under A36. R3 all eight images govern color/art/style;
+R9 Completed/Trash/Activity is still draft. Global Automatic or manual Sunrise/Sky/
+Evening/Night selection is independent of System/Light/Dark brightness.
+[The appearance policy](design/current/appearance-policy.md) fixes local bands
+06–10, 10–17, 17–21, 21–06; missing/new preferences use Automatic with preserved
+brightness. Every app-owned page and native full-screen alarm uses matching shared
+roles; standard Android notifications retain platform-owned layout.
 
-[A27's R7 acceptance](design/approved-ui-r7-outline-acceptance.json) adopts the
-Lists/Repeats/recurrence UI/UX outline with [per-image corrections](design/remilo-r7-lists-repeats/gallery.html).
-Decorative list icons are provisional; the owner currently favors omission and
-requires raising the choice during implementation. There is no custom list-icon
-authoring feature in this scope. Night/state permutations inherit the existing
-global theme. Exact raster tokens and actual component/native/device acceptance
-remain separate.
+The exact Classic ring/check/sun mark is one static identity. Smart Colors,
+per-reminder palettes and task-specific alarm scenes leave active scope. Final
+abstract artwork remains later work; list icons remain provisional with omission
+preferred. Synthetic approval does not establish runtime/accessibility/device
+acceptance. Production still has brightness-only settings and the geometric R.
 
-The owner's A28 continuation starts [R8 Settings/Appearance/permissions/Test alarm](design/r8-settings-appearance-specification.md)
-refinement with every R3 Light/Dark reference. [A30](design/approved-ui-r8-outline-acceptance.json)
-accepts the R8 direction/templates available before its response; thirteen
-[associated references/corrections](design/remilo-r8-settings-appearance/gallery.html)
-include a later R8-08 supplement. Existing automatic preference saving,
-inline permissions and native sound/test actions govern UX; four-atmosphere
-persistence, automatic policy and safe Test retry retain separate technical
-checkpoints. Template acceptance does not implement those contracts or verify
-actual components, permissions, audio or device behavior.
-
-[A31](design/r9-completed-trash-activity-intake.json) continues refinement into
-[Completed, Trash and Activity](design/r9-completed-trash-activity-specification.md),
-with every R3 style pair and [fourteen proposed review states](design/r9-completed-trash-activity-fixtures.json).
-The draft preserves recoverable Trash, recorded occurrence history and independent
-collection context. It records baseline routing, skipped Reopen and uncertain
-collection-command gaps without changing the native behavior contract. New images,
-draft acceptance and production execution remain separate.
-
-[A32](design/r10-data-help-intake.json), recorded 8 October, continues with
-[Data/Help Export, Restore and Diagnostics](design/r10-data-help-specification.md)
-and [fourteen prospective review states](design/r10-data-help-fixtures.json).
-The draft uses every R3 appearance pair and existing native conflict/copy/no-replay/
-frozen-retry behavior, with honest sharing, timing and diagnostic snapshot labels.
-It records real bridge-rejection and UI-lifetime gaps. It does not change backup
-format/global-theme portability, implement the proposed presentation, generate
-images or establish new visual/native/device acceptance.
-
-On 4 October 2026 the owner authorized completing offline Android development
-before further interactive phone testing. Consolidate remaining physical checks
-for one owner-operated acceptance run. Automated checks continue; unobserved
-physical gates stay pending and no broader beta release is declared verified.
-
-## Release priorities
-
-The owner-specified [appearance/workflow redesign](appearance-redesign.md) precedes
-optional integrations. Its [P01-P12 plans](plans/redesign/README.md) separate review
-fixtures from production changes; existing scheduling/privacy contracts remain fixed.
-The A10-A17 checkpoints below retain their historical scope; apply the 7 October
-direction above when refining further presentation work.
-The 6 October instruction authorizes P01 execution (A10); A11 refines the specification
-and adds artwork-only review. A12 accepts bounded r2 visual direction and authorizes
-two Meadow/two Sunrise standalone candidates. A14 accepts S1/M1 for the two review
-prototypes. A15 accepts the [actual P01 renders](design/p01-render-r1-acceptance.json);
-the [handoff](handoffs/redesign-p01.md) carries their bounded composition contract.
-A16 separately authorizes refined P02 execution: 16 dp tiles, a Sky/Rose expansion
-sample, source approval before integration, sample before further expansion and
-catalog approval before shared Classic activation. Existing production layouts and
-all behavioral contracts remain. The [P02 plan](plans/redesign/p02-visual-foundations.md)
-owns that staged scope; unbuilt artwork/tokens/renders remain unapproved.
-A17 accepts SK1/RO1 source artwork for the actual RN/Compose expansion sample.
-Rendered treatments and foundations still require sample and catalog acceptance.
-Final production layouts/tokens/UX and other milestones require separate approvals.
-P01 establishes complementary illustration
-and whole-UI language: specification approval, then artwork-only style approval before
-integration, then accepted actual Agenda/Water plants renders before completion or theme
-expansion. Approval records and execution authorization remain separate.
-
-1. Offline Android alarm reliability on a signed bundled APK, Android 14+.
-2. Useful one-off private beta, then polished management and recurrence.
-3. Optional scoped Google Calendar integration.
-4. Optional Android cloud data/primary-device coordination.
-5. Optional iOS 26+ port with honest capability differences.
+The [six-unit roadmap](plans/redesign/README.md) precedes optional integrations;
+[backlog](backlog.md) alone records status. Superseded design specifications and
+review demos are removed under A37; accepted reference bundles remain intact.
+The owner's 4 October instruction allows offline Android development
+before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
 
 ## Required behavior
 
@@ -145,9 +74,9 @@ expansion. Approval records and execution authorization remain separate.
 - Search, membership, overdue and Alert problems filters are local dataset controls.
   Alert problems includes Missed, Timed out, Interrupted, Blocked and Failed delivery;
   it excludes No alert, Stopped, Notification sent and Updating. Attention stays internal.
-  The title is a heading; the leading Browse Remilo button opens modal navigation to
-  Agenda, Repeats, lists, Completed and Trash. Selecting a root closes Browse without
-  retaining it in Back history. Settings and list management are secondary pages.
+  Agenda / Lists / Repeats are the three labeled roots. Named lists, Settings,
+  Completed/Trash and details are secondary to their invoking origin and retain
+  queries/filters/scroll; sheets and IME close before navigation.
   Repeats shows one entry per family and Active, Paused and Ended filters. Family
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
@@ -254,7 +183,13 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   is identified, native-owned, bounded to five seconds and stopped on close, Back,
   navigation or background. Real alarms take priority. Playback feedback comes from
   native Starting/Playing/Ended/Interrupted/Failed state and reports packaged fallback.
-- Restore distinguishes reading a file from importing its preview. An unconfirmed
+- Restore applies one selected backup as a whole. New reminders and lists,
+  including empty lists and entries outside the visible preview page, are included
+  automatically. Existing identities stay unchanged; explicit **Keep existing** /
+  **Add a separate copy** choices only decide whether to add the backup version
+  under a new identity. Conflict detection uses stored identity, not title matching.
+  These controls edit the draft preview and perform no import until Restore is
+  confirmed. The app distinguishes reading a file from importing its preview. An unconfirmed
   import freezes its backup, copy selection and operation ID until the same restore
   is acknowledged or rejected. It cannot be abandoned through ordinary navigation
   or replaced with another selection during that uncertainty. Diagnostics provide

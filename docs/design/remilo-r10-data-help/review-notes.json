@@ -1,0 +1,234 @@
+[
+  {
+    "id": "R10-01",
+    "observations": [
+      "The content, neutral glyphs and backup disclosure match the requested Settings Data/Help state.",
+      "The scenic opening is taller and the lower blank space more generous than the compact layout target."
+    ],
+    "corrections": [
+      "Implement the shared 96 dp opening below status and 16/14 sp type, rather than copying raster heights or blank spacing.",
+      "Remilo/version is informational; no action or chevron is required. All ordinary glyphs share neutral roles.",
+      "Use shared corresponding Sunrise Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-02",
+    "observations": [
+      "Prepared-for-sharing copy distinguishes handoff from destination save; neutral structure is retained in Dark.",
+      "The semantic confirmation icon is saturated green and scenery remains taller than the prescribed compact opening."
+    ],
+    "corrections": [
+      "Use the shared theme success role for the labeled preparation result; it must never mean external save/send.",
+      "Reuse Sunrise Dark canvas/elevated tokens and the same compact opening/component spacing as Light; generated black shades are approximate.",
+      "Use shared corresponding Sunrise Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-03",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "Idle Restore now states one backup file, all new reminders/lists added automatically, and existing reminders unchanged.",
+      "The only action remains Choose backup file; there is no preview/import footer before a valid file.",
+      "Generated introductory type and scene height remain larger than the compact secondary-page metrics.",
+      "Native generated raster 840 × 1871 is retained without resampling; implement actual360 × 800dp layout."
+    ],
+    "corrections": [
+      "Use canonical16/14sp body/helper sizes and shared96dp opening; keep both copy helper and elapsed-alarm qualification.",
+      "Idle copy describes what happens after deliberate Restore, not a claim that choosing a file has imported anything.",
+      "Use neutral supporting text rather than incidental lavender tint.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Sky Light opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  },
+  {
+    "id": "R10-04",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "The screen identifies the entries as reminders from one selected backup, with all new entries automatically included.",
+      "Both existing reminders show Already on this device; explicit mutually exclusive radio choices replace ambiguous switches. Dentist adds a separate copy and standup keeps existing.",
+      "The new series entry has no selection control. Timing warning and both footer actions remain.",
+      "Opening height, footer sizing, metadata tints and radio spacing remain approximate generated metrics.",
+      "Native generated raster 840 × 1871 is retained without resampling; implement actual360 × 800dp layout."
+    ],
+    "corrections": [
+      "Keep existing is the initial default for every matching identity. This example's dentist copy is a deliberately chosen draft option; it never overwrites the device reminder.",
+      "Use title-associated radio groups with exactly one choice, at least48dp targets, wrapping labels and genuine scroll clearance. Changing a choice modifies preview only.",
+      "Use shared96dp opening,16dp corners/gutters,16/14sp type and56/48dp actions. Existing/shared metadata remains neutral; matching Sky Dark canvas and raised surfaces define soft black.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Sky Dark opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  },
+  {
+    "id": "R10-05",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "Busy ellipses are rendered as three dots instead of one typographic ellipsis.",
+      "Secondary header remains slightly taller than96dp below status, primary/secondary raster heights visually below canonical56/48dp.",
+      "Fourth card shows only its title at the reserved footer boundary; its new-entry and timing metadata continue below this captured scroll viewport.",
+      "The selected-file heading and frozen identity/choice labels are visible. Image generation omitted the exact compact When you restore… scope helper from this capture.",
+      "Native generated raster 841 × 1871 is retained without resampling; implement actual360 × 800dp layout."
+    ],
+    "corrections": [
+      "Render exact canonical Restoring backup… and Restoring… strings and measured56dp primary/>=48dp secondary controls with inset-aware measured footer outside scroll.",
+      "Keep Already on this device and Add a separate copy/Keep existing frozen; use neutral New entry · Included automatically for all new preview rows, never completed-import wording.",
+      "All new reminders/lists remain part of the whole restore. Existing records are untouched. Applying state guards Back/Cancel/new-file choice; no radio/toggle/checkbox.",
+      "Use same96dp opening and Evening Light shared canvas/elevated/token roles; do not sample approximate generated raster colors.",
+      "Keep the full whole-backup helper in the actual page/scroll; a captured scrolled view does not remove that component requirement.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Evening Light opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  },
+  {
+    "id": "R10-06",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "Section heading appears on a raised area adjoining the first card; canonical heading belongs outside the entry card group.",
+      "Primary/secondary raster heights remain visually below canonical56/48dp even after repair; disabled Cancel label is readable but static image cannot prove inactivity.",
+      "Fourth handover card shows its title only at body viewport boundary; new-entry and timing metadata continue below this captured scroll position.",
+      "The selected-file heading and frozen identity/choice labels are visible. Image generation omitted the exact compact When you restore… scope helper from this capture.",
+      "Native generated raster 841 × 1871 is retained without resampling; implement actual360 × 800dp layout."
+    ],
+    "corrections": [
+      "Place Reminders from the selected backup as a distinct section heading and use shared same96dp secondary opening/card anatomy across themes.",
+      "Freeze exact Already on this device + Add a separate copy/Keep existing choices while unconfirmed; all new rows use New entry · Included automatically with no controls.",
+      "Render exact uncertainty feedback and reuse captured backup/copyIDs/operationID on Retry; navigation/new-file choices/Cancel remain guarded; no completed-import claim.",
+      "Use measured56dp enabled Retry/>=48dp readable disabled Cancel and measured footer outside scroll, with all rows reachable; semantic warning role stays stable.",
+      "Keep the full whole-backup helper in the actual page/scroll; a captured scrolled view does not remove that component requirement.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Evening Dark opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  },
+  {
+    "id": "R10-07",
+    "observations": [
+      "Artwork remains somewhat taller than canonical shallow secondary crop.",
+      "Static raster presents all7 retained operational states and pending1 but does not establish refresh/share/accessibility behavior.",
+      "Native ImageGen output is 841 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use same96dp secondary opening below status as other pages; keep Night Light icy canvas/white opaque cards.",
+      "Counts Scheduled4, Stopped3, Blocked2, NoAlert1, Completed5, Deleted2, Skipped1 and pendingReminderUpdates1 must come from observed report; missing states omitted, no health grade.",
+      "Observation is Oct8 1:58PM report time, not2:00 device/page time; capabilities/technical/share follow in same scroll.",
+      "Use shared corresponding Night Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-08",
+    "observations": [
+      "Observed timestamp is tinted periwinkle in generated image; ordinary metadata should be neutral onSurfaceVariant.",
+      "Artwork and row/action heights remain approximate rather than canonical dp measurements.",
+      "Warm semantic refresh-error surface/glyph differs from cool navy report cards and neutral toolbar refresh glyph; final semantic role mapping needs consistent component tokens.",
+      "First introduction is above this captured scroll position; screenshot is scoped to old observation, refresh error and retained rows."
+    ],
+    "corrections": [
+      "Use neutral metadata text; primary only on actual Retry and stable semantic error/warning role for feedback, not random icon colors.",
+      "Retain Oct8 1:50PM old report and exact7state counts/pending1 on refresh failure; no fabricated zeros or freshly checked time.",
+      "Use >=48dp Retry target and shared shallow secondary crop, opaque soft navy planes; no independent near-black utility page.",
+      "Introduction remains present in page scroll. Capabilities/schema/share follow below capture; read-only refresh failure must not adopt import uncertainty guard.",
+      "Use shared corresponding Night Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-09",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "Whole-backup intro and existing-reminder copy helper align with the idle page.",
+      "The invalid file still correctly reports Nothing was imported, with Choose backup file as the only action.",
+      "Header/action geometry and large error icon remain approximate generated measurements.",
+      "Native generated raster 840 × 1871 is retained without resampling; implement actual360 × 800dp layout."
+    ],
+    "corrections": [
+      "Use shared96dp opening,16/14sp type,16dp corners and56dp primary action instead of sampling this raster.",
+      "Nothing was imported is valid only before an import began; never reuse this error after an unconfirmed import.",
+      "Semantic error colors remain defined separately from neutral structural glyphs and Sunrise Light primary.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Sunrise Light opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  },
+  {
+    "id": "R10-10",
+    "observations": [
+      "Correct confirmed content counts 5 restored/1 preserved and separate blocked-delivery warning, with no all-Scheduled or audibility claim.",
+      "Preview and footer cleared; Choose backup file remains normal flow.",
+      "Targeted repair reduced oversized scenery; residual crop and action-height variance remain approximate.",
+      "Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling.",
+      "Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use shared fixed compact secondary opening and 56dp Choose backup file action; result/warning surfaces wrap at font scale.",
+      "Bind counts to returned native import result; never infer delivery readiness from content acknowledgement.",
+      "Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster.",
+      "Use shared corresponding Sky Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls."
+    ]
+  },
+  {
+    "id": "R10-11",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "Receipt-only confirmation retains its limited meaning with no fabricated totals or delivery guarantee.",
+      "The shared whole-backup intro explains automatic new entries and optional separate copies while preserving existing reminders.",
+      "Sky Dark still uses a daytime scene with soft blue-slate planes; opening height and blue supporting tint remain generated discrepancies."
+    ],
+    "corrections": [
+      "Use canonical96dp secondary opening and16/14sp body/helper sizes.",
+      "Neutralize ordinary metadata/confirmation glyphs using shared roles rather than incidental accent assignments.",
+      "After a receipt-only acknowledgement, clear the preview/footer; never invent fresh result counts.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Sky Dark opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  },
+  {
+    "id": "R10-12",
+    "observations": [
+      "Inline Settings Data export failure wording correct; structural icons neutral; other Data/Help actions retained.",
+      "ImageGen first invented a Remilo support route; targeted repair removed it, leaving passive Remilo/version copy.",
+      "Supporting text remains subtly lavender-tinted and error appearance is close to Evening primary; exact palette remains a generated approximation."
+    ],
+    "corrections": [
+      "Use neutral onSurfaceVariant for backup/version helper copy and dedicated stable semantic error/onErrorContainer roles distinct from primary.",
+      "Keep Remilo/version passive; no support route or unsupported backup-prepared claim.",
+      "Use shared corresponding Evening Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-13",
+    "observations": [
+      "Report remains visible with observed timestamp and actual Content schema 4/Delivery schema 3 metadata.",
+      "Exact diagnostic privacy disclosure and share-sheet failure text; no sent/cancelled/uploaded claim.",
+      "Share diagnostic report appears as a section heading plus action; header crop slightly taller and main action slightly shorter than exact metrics."
+    ],
+    "corrections": [
+      "Keep one actionable Share diagnostic report; section title is informational and can be omitted if hierarchy becomes repetitive.",
+      "Use standard compact header, measured 56dp action and neutral metadata/semantic error tokens; retain captured report on share failure.",
+      "Use shared corresponding Evening Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-14",
+    "observations": [
+      "Revised after the whole-backup agreement; original r1 pixels and review are preserved in history/r1 and superseded for this state.",
+      "Introductory and new-entry/timing metadata are somewhat tinted blue/periwinkle in generated image, while ordinary support should use neutral onSurfaceVariant.",
+      "Header and action raster dimensions remain approximate; primary is visually somewhat below canonical56dp.",
+      "The long section heading and nearby count both render prominently; final component hierarchy should retain clear separation without duplicated oversized emphasis.",
+      "The one-file introduction carries the whole-backup meaning; this raster omits the separate Elapsed alarms stay silent sentence and exact compact When you restore… helper.",
+      "Native generated raster 842 × 1869 is retained without resampling; implement actual360 × 800dp layout."
+    ],
+    "corrections": [
+      "Render exact whole-backup introduction, Reminders from the selected backup and New entry · Included automatically. No selection controls on this new row.",
+      "Use neutral metadata support roles; periwinkle belongs to actionable Choose another backup/primary button, never arbitrary ordinary metadata tint.",
+      "Use shared Night Dark soft navy canvas/elevated surfaces and96dp secondary opening, canonical16/14sp typography, measured56dp primary/>=48dp secondary outside scroll.",
+      "Future time indicated is weak preview original-timing context for legacy data, not a claim of Scheduled/portabletarget; retain timing qualification.",
+      "Retain both elapsed-alarm qualification and whole-backup helper in the implemented page; preview timing still does not establish scheduling.",
+      "Restore applies the entire selected backup: all new reminders/series/lists included automatically, including unseen preview entries/empty lists. Existing identities remain unchanged. Existing conflict choices default Keep existing and only add an extra backup copy when explicitly requested; they are never generic include/overwrite controls.",
+      "Use shared matching Night Dark opaque canvas/elevation, neutral metadata/structural glyphs,16dp corners/gutters,16/14sp type,96dp opening and56/48dp actions. Generated gradients/tints/black and raster measurements do not redefine tokens."
+    ]
+  }
+]

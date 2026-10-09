@@ -1,5 +1,12 @@
 # Second UI refinement and managed Lists evidence
 
+> Implementation evidence at the revision/build recorded below. This report
+> preserves observed checks, counts, hashes and limitations; it is not the target
+> visual specification. Use [the current design](../design/current/README.md) and
+> [TD roadmap](../plans/redesign/README.md) for new UI/theme work. Physical checks
+> remain pending unless this report records an actual observation.
+
+
 The approved second review is implemented across shared presentation, explicit
 Browse roots, recorded Activity, recoverable completed cleanup, identified native
 sound preview and managed Lists. No alert recurrence recovery no longer creates

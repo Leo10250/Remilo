@@ -1,0 +1,816 @@
+[
+  {
+    "id": "R10-01",
+    "title": "Settings Data and Help",
+    "referenceId": "sunrise-light",
+    "atmosphere": "Sunrise",
+    "appearance": "Light",
+    "surface": "settings/data-help",
+    "state": "idle",
+    "data": {
+      "origin": {
+        "kind": "agenda"
+      },
+      "scrollPosition": "Data and Help",
+      "exportState": "idle",
+      "versionCopy": "0.4.0 · Android",
+      "actions": [
+        "Export backup",
+        "Restore backup",
+        "Diagnostics"
+      ]
+    },
+    "visibleText": [
+      "Settings",
+      "Data",
+      "Export backup",
+      "Restore backup",
+      "Backups include lists and reminders, except one-off reminders in Trash. Repeating deletion exclusions are kept.",
+      "Backups include reminder titles and notes.",
+      "Help",
+      "Diagnostics",
+      "Remilo",
+      "0.4.0 · Android"
+    ],
+    "notes": [
+      "Earlier Settings categories remain above the scroll position, not removed. No standalone Export screen, Save footer or root bar. Version is static app copy, not source/build verification."
+    ],
+    "file": "01-settings-data-and-help-sunrise-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "9226f827b9e9",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-02",
+    "title": "Export preparation and share handoff acknowledged",
+    "referenceId": "sunrise-dark",
+    "atmosphere": "Sunrise",
+    "appearance": "Dark",
+    "surface": "settings/data-help",
+    "state": "share-promise-resolved",
+    "data": {
+      "origin": {
+        "kind": "agenda"
+      },
+      "scrollPosition": "Data and Help",
+      "exportState": "prepared-share-promise-resolved",
+      "shareOutcome": "not-observed",
+      "actions": [
+        "Export backup",
+        "Restore backup",
+        "Diagnostics"
+      ]
+    },
+    "visibleText": [
+      "Settings",
+      "Data",
+      "Export backup",
+      "Backup prepared for sharing.",
+      "Restore backup",
+      "Help",
+      "Diagnostics"
+    ],
+    "notes": [
+      "Soft charcoal and raised charcoal; no external save/sent/cancel assertion. A subsequent Export creates a new snapshot, not same-file Retry sharing. Native share sheet is no longer covering this app-owned capture."
+    ],
+    "file": "02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "04b86a5ba5ca",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-03",
+    "title": "Restore before choosing a file",
+    "referenceId": "sky-light",
+    "atmosphere": "Sky",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "idle",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "lists"
+        }
+      },
+      "previewFixtureId": null,
+      "phase": "idle",
+      "persistentFooter": false,
+      "actions": [
+        "Choose backup file"
+      ],
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent."
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "You can add separate copies of existing reminders.",
+      "Elapsed alarms stay silent.",
+      "Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "No invented filename/size/exported date. Android owns the document chooser; this capture is before handoff. No Restore action without a valid preview."
+    ],
+    "file": "03-restore-before-choosing-a-file-sky-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "2fc5e14e291a",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-04",
+    "title": "Restore conflict preview and copy selection",
+    "referenceId": "sky-dark",
+    "atmosphere": "Sky",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "preview",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "mixed-format-3",
+      "copyIds": [
+        "existing-oneoff"
+      ],
+      "previewLimit": 25,
+      "phase": "idle",
+      "scrollPosition": "reminder-and-series-entry-group",
+      "controlsEnabled": true,
+      "footer": {
+        "primary": "Restore backup",
+        "secondary": "Cancel preview"
+      },
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent.",
+      "previewContext": "Reminders from the selected backup",
+      "previewScopeHelper": "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "conflictControls": "title-associated radio groups",
+      "exampleChosenOptions": {
+        "existing-oneoff": "Add a separate copy",
+        "existing-family": "Keep existing"
+      }
+    },
+    "visibleText": [
+      "Restore backup",
+      "Reminders from the selected backup",
+      "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "Already on this device",
+      "Call dentist about the revised treatment estimate",
+      "Add a separate copy",
+      "Team standup — review launch checklist and unresolved issues (series)",
+      "Keep existing",
+      "Future time indicated",
+      "Preview timing does not confirm delivery. Alerts are checked after restore.",
+      "Cancel preview",
+      "New entry · Included automatically",
+      "Water balcony plants (series)"
+    ],
+    "notes": [
+      "Scrolled capture shows reminders from one selected backup file, with compact scope context retained. Existing conflicts are explicitly labeled Already on this device, with two radio choices Keep existing / Add a separate copy. Dentist copy is explicitly chosen; Keep existing is the initial default. All new reminders and lists are added automatically, without an inclusion control. Whole-family copy only; no overwrite. Lists and Choose another backup remain earlier in the same scroll; long rows grow and lower content scrolls.",
+      "Included automatically is prospective preview inclusion, not acknowledgement that an import has happened. Conflict matching uses stored identity, not title. Choice edits are draft-only until Restore."
+    ],
+    "scrollContentText": [
+      "6 reminders or series",
+      "Lists · 3",
+      "Name on restore: Work",
+      "Name on restore: Home (restored)",
+      "Travel",
+      "Add list"
+    ],
+    "file": "04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "be9210fcca62",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-05",
+    "title": "Restore in progress with frozen choices",
+    "referenceId": "evening-light",
+    "atmosphere": "Evening",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "restoring",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "mixed-format-3",
+      "copyIds": [
+        "existing-oneoff"
+      ],
+      "previewLimit": 25,
+      "phase": "restoring",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "copyChoiceRowsFrozen": true,
+      "chooseAnotherDisabled": true,
+      "cancelPreviewDisabled": true,
+      "navigationGuard": true,
+      "footer": {
+        "primary": "Restoring…",
+        "secondary": "Cancel preview",
+        "disabled": true
+      },
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent.",
+      "previewContext": "Reminders from the selected backup",
+      "previewScopeHelper": "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "frozenChoiceLabels": {
+        "existing-oneoff": "Add a separate copy",
+        "existing-family": "Keep existing"
+      },
+      "conflictControls": "none while frozen; chosen result labels remain readable"
+    },
+    "visibleText": [
+      "Restore backup",
+      "Reminders from the selected backup",
+      "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "Restoring backup…",
+      "Call dentist about the revised treatment estimate",
+      "Add a separate copy",
+      "Team standup — review launch checklist and unresolved issues (series)",
+      "Keep existing",
+      "Restoring…",
+      "Cancel preview",
+      "New entry · Included automatically",
+      "Already on this device",
+      "Water balcony plants (series)",
+      "Future time indicated"
+    ],
+    "notes": [
+      "Frozen choices are readable rows rather than editable switches. Main action disabled and no percentage, Cancel restore or success counts. Scene crop yields to feedback/scroll and measured stacked footer.",
+      "Whole selected backup and prior choices are frozen. Keep the selected-backup context and identity labels; no task-inclusion switches or editable radio groups. Existing reminders remain unchanged even where a separate copy was requested.",
+      "Included automatically is prospective preview inclusion, not acknowledgement that an import has happened. Conflict matching uses stored identity, not title. Choice edits are draft-only until Restore."
+    ],
+    "file": "05-restore-in-progress-with-frozen-choices-evening-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "349f5adb3030",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-06",
+    "title": "Restore reply unconfirmed",
+    "referenceId": "evening-dark",
+    "atmosphere": "Evening",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "unconfirmed",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "mixed-format-3",
+      "copyIds": [
+        "existing-oneoff"
+      ],
+      "previewLimit": 25,
+      "phase": "idle",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "nativeOutcome": "unknown",
+      "copyChoiceRowsFrozen": true,
+      "chooseAnotherDisabled": true,
+      "cancelPreviewDisabled": true,
+      "navigationGuard": true,
+      "retryUsesExactJob": true,
+      "footer": {
+        "primary": "Retry same restore",
+        "secondary": "Cancel preview",
+        "primaryDisabled": false,
+        "secondaryDisabled": true
+      },
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent.",
+      "previewContext": "Reminders from the selected backup",
+      "previewScopeHelper": "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "frozenChoiceLabels": {
+        "existing-oneoff": "Add a separate copy",
+        "existing-family": "Keep existing"
+      },
+      "conflictControls": "none while frozen; chosen result labels remain readable"
+    },
+    "visibleText": [
+      "Restore backup",
+      "Reminders from the selected backup",
+      "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "Restore not confirmed. Retry the same restore; your backup and copy choices are kept.",
+      "Add a separate copy",
+      "Keep existing",
+      "Retry same restore",
+      "Cancel preview",
+      "New entry · Included automatically",
+      "Already on this device",
+      "Water balcony plants (series)",
+      "Future time indicated"
+    ],
+    "notes": [
+      "Same captured JSON fixture, copy IDs and operation; no Nothing imported or fresh command. Mounted controller guard, not process-death recovery proof. Soft plum surfaces match Evening Dark.",
+      "Whole selected backup and prior choices are frozen. Keep the selected-backup context and identity labels; no task-inclusion switches or editable radio groups. Existing reminders remain unchanged even where a separate copy was requested.",
+      "Included automatically is prospective preview inclusion, not acknowledgement that an import has happened. Conflict matching uses stored identity, not title. Choice edits are draft-only until Restore."
+    ],
+    "file": "06-restore-reply-unconfirmed-evening-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "b0d0898200b8",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-07",
+    "title": "Diagnostics operational snapshot",
+    "referenceId": "night-light",
+    "atmosphere": "Night",
+    "appearance": "Light",
+    "surface": "diagnostics",
+    "state": "populated",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "repeats"
+        }
+      },
+      "report": {
+        "observedAtMs": 1791493080000,
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": false,
+          "unlocked": true,
+          "activeSessionId": "",
+          "observedAtMs": 1791493080000
+        },
+        "contentSchema": 4,
+        "operationalSchema": 3,
+        "states": {
+          "Scheduled": 4,
+          "Stopped": 3,
+          "Blocked": 2,
+          "NoAlert": 1,
+          "Completed": 5,
+          "Deleted": 2,
+          "Skipped": 1
+        },
+        "pendingOperations": 1
+      },
+      "displayZone": "America/Los_Angeles",
+      "visibleGroups": [
+        "Observed",
+        "Alarm snapshot",
+        "Pending reminder updates"
+      ],
+      "lowerGroups": [
+        "Capabilities",
+        "Technical metadata"
+      ],
+      "actions": [
+        "Refresh report",
+        "Share diagnostic report"
+      ]
+    },
+    "visibleText": [
+      "Diagnostics",
+      "This snapshot helps investigate delivery. It does not verify that an alarm was heard.",
+      "Observed Oct 8 · 1:58 PM",
+      "Alarm snapshot",
+      "Scheduled",
+      "4",
+      "Alarm stopped",
+      "3",
+      "Alert blocked",
+      "2",
+      "Pending reminder updates",
+      "1"
+    ],
+    "notes": [
+      "Counts mean retained operational rows; missing state keys omitted. Capabilities/schema/share group may scroll below. No health grade or total unfinished-task count. Light reading plane under Night art."
+    ],
+    "file": "07-diagnostics-operational-snapshot-night-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "fced764b6402",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-08",
+    "title": "Diagnostics refresh failure retaining the old report",
+    "referenceId": "night-dark",
+    "atmosphere": "Night",
+    "appearance": "Dark",
+    "surface": "diagnostics",
+    "state": "retained-refresh-failure",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "report": {
+        "observedAtMs": 1791492600000,
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": false,
+          "unlocked": true,
+          "activeSessionId": "",
+          "observedAtMs": 1791492600000
+        },
+        "contentSchema": 4,
+        "operationalSchema": 3,
+        "states": {
+          "Scheduled": 4,
+          "Stopped": 3,
+          "Blocked": 2,
+          "NoAlert": 1,
+          "Completed": 5,
+          "Deleted": 2,
+          "Skipped": 1
+        },
+        "pendingOperations": 1
+      },
+      "refreshState": "failed",
+      "displayZone": "America/Los_Angeles",
+      "actions": [
+        "Retry",
+        "Share diagnostic report"
+      ]
+    },
+    "visibleText": [
+      "Diagnostics",
+      "Observed Oct 8 · 1:50 PM",
+      "Could not refresh. Showing the previous report.",
+      "Retry",
+      "Alarm snapshot",
+      "Pending reminder updates"
+    ],
+    "notes": [
+      "Old observation time and rows retained; no empty, fresh or zero-state inference. Sharing would capture this retained report unless a later refresh supplies a new one. No independent near-black page."
+    ],
+    "file": "08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "d11134072f50",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-09",
+    "title": "Invalid backup before an import",
+    "referenceId": "sunrise-light",
+    "atmosphere": "Sunrise",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "file-read-or-preview-failure",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": null,
+      "selectedSyntheticFormat": {
+        "format": "Remilo",
+        "version": 99
+      },
+      "phase": "idle",
+      "importStarted": false,
+      "nativeImportCalls": 0,
+      "operationId": null,
+      "actions": [
+        "Choose backup file"
+      ],
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent."
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "You can add separate copies of existing reminders.",
+      "Elapsed alarms stay silent.",
+      "This file could not be read as a valid Remilo backup. Nothing was imported.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "Pre-import failure; no Restore footer or uncertainty guard. Distinct from exception after an import begins. No invented filename or detailed parser diagnosis not supplied by the API.",
+      "Shared Restore explanation retains whole-backup semantics: new reminders/lists are automatic; local existing reminders stay unchanged and optional copies are separate. A cleared/absent preview has no inclusion controls or Restore footer."
+    ],
+    "file": "09-invalid-backup-before-an-import-sunrise-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "6cbd223a8ae4",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-10",
+    "title": "Confirmed restore with blocked delivery",
+    "referenceId": "sky-light",
+    "atmosphere": "Sky",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "fresh-import-acknowledged",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": null,
+      "copyIds": [],
+      "previewLimit": 25,
+      "phase": "idle",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "result": {
+        "status": "Blocked",
+        "added": 5,
+        "preserved": 1,
+        "blocked": 2,
+        "retry": false
+      },
+      "previewCleared": true,
+      "navigationGuard": false,
+      "actions": [
+        "Choose backup file"
+      ],
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent."
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restored 5; preserved 1 existing reminder or series entry.",
+      "Some alerts could not be scheduled. Review Alert problems in Agenda.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "Result is an independent returned native snapshot; content acknowledged while delivery can be blocked. Counts exclude lists/individual recurrence records. No all-Scheduled, guaranteed audibility or universal permission-only explanation.",
+      "Shared Restore explanation retains whole-backup semantics: new reminders/lists are automatic; local existing reminders stay unchanged and optional copies are separate. A cleared/absent preview has no inclusion controls or Restore footer."
+    ],
+    "file": "10-confirmed-restore-with-blocked-delivery-sky-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "0de4b02ba18c",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-11",
+    "title": "Previous import confirmed by its receipt",
+    "referenceId": "sky-dark",
+    "atmosphere": "Sky",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "receipt-retry-acknowledged",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": null,
+      "copyIds": [],
+      "previewLimit": 25,
+      "phase": "idle",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "result": {
+        "status": "Applied",
+        "retry": true
+      },
+      "previewCleared": true,
+      "navigationGuard": false,
+      "actions": [
+        "Choose backup file"
+      ],
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent."
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "You can add separate copies of existing reminders.",
+      "Elapsed alarms stay silent.",
+      "Your previous restore was confirmed.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "Native retry supplies no added/preserved/blocked totals. Do not show fabricated zero counters or copy the fresh-result counts. Refresh current delivery separately; no complete-series-recovery guarantee.",
+      "Shared Restore explanation retains whole-backup semantics: new reminders/lists are automatic; local existing reminders stay unchanged and optional copies are separate. A cleared/absent preview has no inclusion controls or Restore footer."
+    ],
+    "file": "11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "262028a7ac8d",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-12",
+    "title": "Export share unavailable",
+    "referenceId": "evening-dark",
+    "atmosphere": "Evening",
+    "appearance": "Dark",
+    "surface": "settings/data-help",
+    "state": "sharing-unavailable",
+    "data": {
+      "origin": {
+        "kind": "agenda"
+      },
+      "scrollPosition": "Data and Help",
+      "exportState": "idle-error",
+      "shareAvailable": false,
+      "nativeExportCalled": false,
+      "actions": [
+        "Export backup",
+        "Restore backup",
+        "Diagnostics"
+      ]
+    },
+    "visibleText": [
+      "Settings",
+      "Data",
+      "Export backup",
+      "Sharing is unavailable on this device. Try again when a share destination is available.",
+      "Restore backup",
+      "Help",
+      "Diagnostics"
+    ],
+    "notes": [
+      "Availability check failed before native export. Keep other Data/Help choices readable; no backup saved or captured-file Retry sharing. No new cloud destination picker."
+    ],
+    "file": "12-export-share-unavailable-evening-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "6686c172524c",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-13",
+    "title": "Diagnostics share sheet could not open",
+    "referenceId": "evening-light",
+    "atmosphere": "Evening",
+    "appearance": "Light",
+    "surface": "diagnostics",
+    "state": "share-failure",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "report": {
+        "observedAtMs": 1791493080000,
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": false,
+          "unlocked": true,
+          "activeSessionId": "",
+          "observedAtMs": 1791493080000
+        },
+        "contentSchema": 4,
+        "operationalSchema": 3,
+        "states": {
+          "Scheduled": 4,
+          "Stopped": 3,
+          "Blocked": 2,
+          "NoAlert": 1,
+          "Completed": 5,
+          "Deleted": 2,
+          "Skipped": 1
+        },
+        "pendingOperations": 1
+      },
+      "scrollPosition": "share-group",
+      "sharedSnapshotObservedAt": "2026-10-08T13:58:00-07:00",
+      "shareState": "failed",
+      "actions": [
+        "Share diagnostic report",
+        "Refresh report"
+      ]
+    },
+    "visibleText": [
+      "Diagnostics",
+      "Share diagnostic report",
+      "Delivery permissions, state counts and technical metadata. Reminder titles and notes are excluded.",
+      "Could not open the share sheet. Try again."
+    ],
+    "notes": [
+      "Snapshot remains intact; retry Share recaptures the available report. No sent/uploaded/dismissed claim or import-like guard. Observed time remains available above in the same scroll."
+    ],
+    "file": "13-diagnostics-share-sheet-could-not-open-evening-light.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "21645e4b99cf",
+    "approvalRecord": "A35"
+  },
+  {
+    "id": "R10-14",
+    "title": "Legacy preview with future definition but no portable target",
+    "referenceId": "night-dark",
+    "atmosphere": "Night",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "weak-preview-timing",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "legacy-defined-future-only",
+      "phase": "idle",
+      "copyIds": [],
+      "controlsEnabled": true,
+      "footer": {
+        "primary": "Restore backup",
+        "secondary": "Cancel preview"
+      },
+      "restoreMode": "whole-backup",
+      "introCopy": "Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.",
+      "copyHelper": "You can add separate copies of existing reminders.",
+      "timingHelper": "Elapsed alarms stay silent.",
+      "previewContext": "Reminders from the selected backup",
+      "previewScopeHelper": "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies."
+    },
+    "visibleText": [
+      "Restore backup",
+      "Reminders from the selected backup",
+      "When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.",
+      "1 reminder or series",
+      "Review the archived project notes before tomorrow's meeting",
+      "Future time indicated",
+      "Preview timing does not confirm delivery. Alerts are checked after restore.",
+      "Restore backup",
+      "Cancel preview",
+      "New entry · Included automatically"
+    ],
+    "notes": [
+      "Use localized singular '1 reminder or series' in final copy. Underlying legacy one-off original definition is future, nextAlertMs absent: preview boolean true does not promise scheduled restoration. No exact target date/mode absent from preview fields.",
+      "Single new entry from the selected backup is labeled New entry · Included automatically and has no radio group, switch or inclusion checkbox. Restore applies the whole backup; weak timing copy stays informational.",
+      "Included automatically is prospective preview inclusion, not acknowledgement that an import has happened. Conflict matching uses stored identity, not title. Choice edits are draft-only until Restore."
+    ],
+    "file": "14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+    "status": "design-direction-approved",
+    "referenceRevision": "r2",
+    "assetVersion": "9d9968416d5d",
+    "approvalRecord": "A35"
+  }
+]

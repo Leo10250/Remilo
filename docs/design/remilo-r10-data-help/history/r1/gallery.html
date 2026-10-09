@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Remilo R10 — Data and Help review</title>
+  <link rel="stylesheet" href="gallery.css">
+  <script src="gallery.js" defer></script>
+</head>
+<body>
+  <header class="gallery-header">
+    <div>
+      <p class="eyebrow">Remilo · R10</p>
+      <h1>Data and Help</h1>
+      <p class="review-status">Synthetic reference images — awaiting owner review</p>
+    </div>
+    <button id="menu-toggle" type="button" aria-expanded="false" aria-controls="capture-sidebar">Choose a screen</button>
+  </header>
+  <div class="gallery-layout">
+    <aside id="capture-sidebar" class="capture-sidebar" aria-label="Screen selection">
+      <h2>14 representative states</h2>
+      <p class="sidebar-intro">One readable screen at a time. The first eight cover every atmosphere in Light and Dark.</p>
+      <nav id="capture-list" aria-label="R10 screenshots"></nav>
+      <div class="source-links">
+        <h2>Source and review files</h2>
+        <a href="submission-specification-r1.md">Frozen R10 specification</a>
+        <a href="submission-fixtures-r1.json">Frozen capture fixtures</a>
+        <a href="capture-index.json">Capture index</a>
+        <a href="images.json">Selected image records</a>
+        <a href="review-notes.json">Generation corrections</a>
+        <a href="generation-provenance.json">Generation provenance and prompts</a>
+        <a href="generation-prompts.md">Full submitted prompts</a>
+        <a href="review-notes.md">Readable review notes</a>
+        <a href="validation-report.json">Packaging checks</a>
+        <a href="README.md">Scope and reading guide</a>
+      </div>
+    </aside>
+    <main id="main-content">
+      <section class="screen-toolbar" aria-label="Screen and size controls">
+        <div class="screen-picker">
+          <label for="capture-select">Screen</label>
+          <select id="capture-select"></select>
+        </div>
+        <div class="screen-navigation">
+          <button id="prev-screen" type="button" aria-label="Previous screen">← Previous</button>
+          <span id="screen-count" aria-live="polite"></span>
+          <button id="next-screen" type="button" aria-label="Next screen">Next →</button>
+        </div>
+        <div id="width-controls" class="width-controls" role="group" aria-label="Screenshot display width">
+          <span>Display width</span>
+          <button type="button" data-width="360" aria-pressed="true">360 px</button>
+          <button type="button" data-width="420" aria-pressed="false">420 px</button>
+          <button type="button" data-width="540" aria-pressed="false">540 px</button>
+          <button type="button" data-width="original" aria-pressed="false">Original</button>
+        </div>
+      </section>
+      <section class="screen-heading">
+        <p id="screen-id" class="eyebrow"></p>
+        <h2 id="screen-title"></h2>
+        <p id="screen-caption"><span id="screen-theme"></span> · <span id="screen-state"></span></p>
+        <p class="surface-label">App surface: <span id="screen-surface"></span></p>
+      </section>
+      <div class="review-layout">
+        <figure class="screen-figure">
+          <div id="screen-stage" class="screen-stage" tabindex="0" aria-label="Screenshot; larger sizes can be scrolled horizontally">
+            <img id="ui-image" class="ui-image" alt="" hidden>
+            <div id="image-placeholder" class="image-placeholder" role="status">
+              <strong>Awaiting generation</strong>
+              <p>This screen will appear here when its PNG is available.</p>
+            </div>
+          </div>
+          <figcaption>
+            <p id="image-status" aria-live="polite">Awaiting generation.</p>
+            <p>The brief uses 360 × 800 dp. These width controls only scale the raster; they do not test responsive layout or accessibility.</p>
+            <a id="open-image" href="#" target="_blank" rel="noopener">Open original PNG</a>
+          </figcaption>
+        </figure>
+        <aside class="review-notes" aria-label="Specification and generation review">
+          <section>
+            <h3>Matching R3 reference</h3>
+            <p id="reference-description"></p>
+            <a id="current-reference" href="#" target="_blank" rel="noopener">Open reference image</a>
+          </section>
+          <section>
+            <h3>Specification expectations</h3>
+            <ul id="review-expectations"></ul>
+          </section>
+          <section>
+            <h3>Generation observations</h3>
+            <ul id="generation-observations"></ul>
+            <p id="observations-placeholder">Per-image observations are awaiting the completed image review.</p>
+          </section>
+          <section>
+            <h3>Implementation corrections</h3>
+            <ul id="implementation-corrections"></ul>
+            <p id="corrections-placeholder">Implement from the frozen specification and shared component roles. Image drift does not replace those rules.</p>
+          </section>
+          <p class="review-limit">Synthetic references do not establish contrast, target size, TalkBack, native behavior or physical alarm verification.</p>
+        </aside>
+      </div>
+      <footer class="gallery-footer">
+        <p>Use Left/Right arrow keys to move between screens. All four atmospheres share the same UX; appearance follows the matching R3 canvas, raised surface and action roles.</p>
+        <p>Android owns document choosers and share sheets. App-owned states shown here do not confirm that a destination saved or sent a file.</p>
+      </footer>
+    </main>
+  </div>
+  <script id="capture-index-data" type="application/json">
+[
+  {
+    "id": "R10-01",
+    "title": "Settings Data and Help",
+    "referenceId": "sunrise-light",
+    "atmosphere": "Sunrise",
+    "appearance": "Light",
+    "surface": "settings/data-help",
+    "state": "idle",
+    "data": {
+      "origin": {
+        "kind": "agenda"
+      },
+      "scrollPosition": "Data and Help",
+      "exportState": "idle",
+      "versionCopy": "0.4.0 · Android",
+      "actions": [
+        "Export backup",
+        "Restore backup",
+        "Diagnostics"
+      ]
+    },
+    "visibleText": [
+      "Settings",
+      "Data",
+      "Export backup",
+      "Restore backup",
+      "Backups include lists and reminders, except one-off reminders in Trash. Repeating deletion exclusions are kept.",
+      "Backups include reminder titles and notes.",
+      "Help",
+      "Diagnostics",
+      "Remilo",
+      "0.4.0 · Android"
+    ],
+    "notes": [
+      "Earlier Settings categories remain above the scroll position, not removed. No standalone Export screen, Save footer or root bar. Version is static app copy, not source/build verification."
+    ],
+    "file": "01-settings-data-and-help-sunrise-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-02",
+    "title": "Export preparation and share handoff acknowledged",
+    "referenceId": "sunrise-dark",
+    "atmosphere": "Sunrise",
+    "appearance": "Dark",
+    "surface": "settings/data-help",
+    "state": "share-promise-resolved",
+    "data": {
+      "origin": {
+        "kind": "agenda"
+      },
+      "scrollPosition": "Data and Help",
+      "exportState": "prepared-share-promise-resolved",
+      "shareOutcome": "not-observed",
+      "actions": [
+        "Export backup",
+        "Restore backup",
+        "Diagnostics"
+      ]
+    },
+    "visibleText": [
+      "Settings",
+      "Data",
+      "Export backup",
+      "Backup prepared for sharing.",
+      "Restore backup",
+      "Help",
+      "Diagnostics"
+    ],
+    "notes": [
+      "Soft charcoal and raised charcoal; no external save/sent/cancel assertion. A subsequent Export creates a new snapshot, not same-file Retry sharing. Native share sheet is no longer covering this app-owned capture."
+    ],
+    "file": "02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-03",
+    "title": "Restore before choosing a file",
+    "referenceId": "sky-light",
+    "atmosphere": "Sky",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "idle",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "lists"
+        }
+      },
+      "previewFixtureId": null,
+      "phase": "idle",
+      "persistentFooter": false,
+      "actions": [
+        "Choose backup file"
+      ]
+    },
+    "visibleText": [
+      "Restore backup",
+      "Preview a backup before restoring. Existing reminders are preserved; elapsed alarms stay silent.",
+      "Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "No invented filename/size/exported date. Android owns the document chooser; this capture is before handoff. No Restore action without a valid preview."
+    ],
+    "file": "03-restore-before-choosing-a-file-sky-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-04",
+    "title": "Restore conflict preview and copy selection",
+    "referenceId": "sky-dark",
+    "atmosphere": "Sky",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "preview",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "mixed-format-3",
+      "copyIds": [
+        "existing-oneoff"
+      ],
+      "previewLimit": 25,
+      "phase": "idle",
+      "scrollPosition": "reminder-and-series-entry-group",
+      "controlsEnabled": true,
+      "footer": {
+        "primary": "Restore backup",
+        "secondary": "Cancel preview"
+      }
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restore a separate copy",
+      "Call dentist about the revised treatment estimate",
+      "Restore a copy",
+      "Team standup — review launch checklist and unresolved issues (series)",
+      "Keep existing",
+      "Future time indicated",
+      "Preview timing does not confirm delivery. Alerts are checked after restore.",
+      "Cancel preview"
+    ],
+    "notes": [
+      "Scrolled capture prioritizes supported conflict switches; Lists and initial Choose another backup are earlier in the same scroll. No new collapse mode. All new entries import automatically. No checkbox on nonconflicts, per-occurrence copy or overwrite. Long repeat title wraps; lower rows scroll."
+    ],
+    "scrollContentText": [
+      "6 reminders or series",
+      "Lists · 3",
+      "Name on restore: Work",
+      "Name on restore: Home (restored)",
+      "Travel",
+      "Add list"
+    ],
+    "file": "04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-05",
+    "title": "Restore in progress with frozen choices",
+    "referenceId": "evening-light",
+    "atmosphere": "Evening",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "restoring",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "mixed-format-3",
+      "copyIds": [
+        "existing-oneoff"
+      ],
+      "previewLimit": 25,
+      "phase": "restoring",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "copyChoiceRowsFrozen": true,
+      "chooseAnotherDisabled": true,
+      "cancelPreviewDisabled": true,
+      "navigationGuard": true,
+      "footer": {
+        "primary": "Restoring…",
+        "secondary": "Cancel preview",
+        "disabled": true
+      }
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restoring backup…",
+      "Call dentist about the revised treatment estimate",
+      "Restore a copy",
+      "Team standup — review launch checklist and unresolved issues (series)",
+      "Keep existing",
+      "Restoring…",
+      "Cancel preview"
+    ],
+    "notes": [
+      "Frozen choices are readable rows rather than editable switches. Main action disabled and no percentage, Cancel restore or success counts. Scene crop yields to feedback/scroll and measured stacked footer."
+    ],
+    "file": "05-restore-in-progress-with-frozen-choices-evening-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-06",
+    "title": "Restore reply unconfirmed",
+    "referenceId": "evening-dark",
+    "atmosphere": "Evening",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "unconfirmed",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "mixed-format-3",
+      "copyIds": [
+        "existing-oneoff"
+      ],
+      "previewLimit": 25,
+      "phase": "idle",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "nativeOutcome": "unknown",
+      "copyChoiceRowsFrozen": true,
+      "chooseAnotherDisabled": true,
+      "cancelPreviewDisabled": true,
+      "navigationGuard": true,
+      "retryUsesExactJob": true,
+      "footer": {
+        "primary": "Retry same restore",
+        "secondary": "Cancel preview",
+        "primaryDisabled": false,
+        "secondaryDisabled": true
+      }
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restore not confirmed. Retry the same restore; your backup and copy selection are kept.",
+      "Restore a copy",
+      "Keep existing",
+      "Retry same restore",
+      "Cancel preview"
+    ],
+    "notes": [
+      "Same captured JSON fixture, copy IDs and operation; no Nothing imported or fresh command. Mounted controller guard, not process-death recovery proof. Soft plum surfaces match Evening Dark."
+    ],
+    "file": "06-restore-reply-unconfirmed-evening-dark.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-07",
+    "title": "Diagnostics operational snapshot",
+    "referenceId": "night-light",
+    "atmosphere": "Night",
+    "appearance": "Light",
+    "surface": "diagnostics",
+    "state": "populated",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "repeats"
+        }
+      },
+      "report": {
+        "observedAtMs": 1791493080000,
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": false,
+          "unlocked": true,
+          "activeSessionId": "",
+          "observedAtMs": 1791493080000
+        },
+        "contentSchema": 4,
+        "operationalSchema": 3,
+        "states": {
+          "Scheduled": 4,
+          "Stopped": 3,
+          "Blocked": 2,
+          "NoAlert": 1,
+          "Completed": 5,
+          "Deleted": 2,
+          "Skipped": 1
+        },
+        "pendingOperations": 1
+      },
+      "displayZone": "America/Los_Angeles",
+      "visibleGroups": [
+        "Observed",
+        "Alarm snapshot",
+        "Pending reminder updates"
+      ],
+      "lowerGroups": [
+        "Capabilities",
+        "Technical metadata"
+      ],
+      "actions": [
+        "Refresh report",
+        "Share diagnostic report"
+      ]
+    },
+    "visibleText": [
+      "Diagnostics",
+      "This snapshot helps investigate delivery. It does not verify that an alarm was heard.",
+      "Observed Oct 8 · 1:58 PM",
+      "Alarm snapshot",
+      "Scheduled",
+      "4",
+      "Alarm stopped",
+      "3",
+      "Alert blocked",
+      "2",
+      "Pending reminder updates",
+      "1"
+    ],
+    "notes": [
+      "Counts mean retained operational rows; missing state keys omitted. Capabilities/schema/share group may scroll below. No health grade or total unfinished-task count. Light reading plane under Night art."
+    ],
+    "file": "07-diagnostics-operational-snapshot-night-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-08",
+    "title": "Diagnostics refresh failure retaining the old report",
+    "referenceId": "night-dark",
+    "atmosphere": "Night",
+    "appearance": "Dark",
+    "surface": "diagnostics",
+    "state": "retained-refresh-failure",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "report": {
+        "observedAtMs": 1791492600000,
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": false,
+          "unlocked": true,
+          "activeSessionId": "",
+          "observedAtMs": 1791492600000
+        },
+        "contentSchema": 4,
+        "operationalSchema": 3,
+        "states": {
+          "Scheduled": 4,
+          "Stopped": 3,
+          "Blocked": 2,
+          "NoAlert": 1,
+          "Completed": 5,
+          "Deleted": 2,
+          "Skipped": 1
+        },
+        "pendingOperations": 1
+      },
+      "refreshState": "failed",
+      "displayZone": "America/Los_Angeles",
+      "actions": [
+        "Retry",
+        "Share diagnostic report"
+      ]
+    },
+    "visibleText": [
+      "Diagnostics",
+      "Observed Oct 8 · 1:50 PM",
+      "Could not refresh. Showing the previous report.",
+      "Retry",
+      "Alarm snapshot",
+      "Pending reminder updates"
+    ],
+    "notes": [
+      "Old observation time and rows retained; no empty, fresh or zero-state inference. Sharing would capture this retained report unless a later refresh supplies a new one. No independent near-black page."
+    ],
+    "file": "08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-09",
+    "title": "Invalid backup before an import",
+    "referenceId": "sunrise-light",
+    "atmosphere": "Sunrise",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "file-read-or-preview-failure",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": null,
+      "selectedSyntheticFormat": {
+        "format": "Remilo",
+        "version": 99
+      },
+      "phase": "idle",
+      "importStarted": false,
+      "nativeImportCalls": 0,
+      "operationId": null,
+      "actions": [
+        "Choose backup file"
+      ]
+    },
+    "visibleText": [
+      "Restore backup",
+      "This file could not be read as a valid Remilo backup. Nothing was imported.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "Pre-import failure; no Restore footer or uncertainty guard. Distinct from exception after an import begins. No invented filename or detailed parser diagnosis not supplied by the API."
+    ],
+    "file": "09-invalid-backup-before-an-import-sunrise-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-10",
+    "title": "Confirmed restore with blocked delivery",
+    "referenceId": "sky-light",
+    "atmosphere": "Sky",
+    "appearance": "Light",
+    "surface": "restore-backup",
+    "state": "fresh-import-acknowledged",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": null,
+      "copyIds": [],
+      "previewLimit": 25,
+      "phase": "idle",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "result": {
+        "status": "Blocked",
+        "added": 5,
+        "preserved": 1,
+        "blocked": 2,
+        "retry": false
+      },
+      "previewCleared": true,
+      "navigationGuard": false,
+      "actions": [
+        "Choose backup file"
+      ]
+    },
+    "visibleText": [
+      "Restore backup",
+      "Restored 5; preserved 1 existing reminder or series entry.",
+      "Some alerts could not be scheduled. Review Alert problems in Agenda.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "Result is an independent returned native snapshot; content acknowledged while delivery can be blocked. Counts exclude lists/individual recurrence records. No all-Scheduled, guaranteed audibility or universal permission-only explanation."
+    ],
+    "file": "10-confirmed-restore-with-blocked-delivery-sky-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-11",
+    "title": "Previous import confirmed by its receipt",
+    "referenceId": "sky-dark",
+    "atmosphere": "Sky",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "receipt-retry-acknowledged",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": null,
+      "copyIds": [],
+      "previewLimit": 25,
+      "phase": "idle",
+      "capturedJob": {
+        "backupFixtureId": "mixed-format-3",
+        "copyIds": [
+          "existing-oneoff"
+        ],
+        "operationId": "fixture-r10-import-001"
+      },
+      "result": {
+        "status": "Applied",
+        "retry": true
+      },
+      "previewCleared": true,
+      "navigationGuard": false,
+      "actions": [
+        "Choose backup file"
+      ]
+    },
+    "visibleText": [
+      "Restore backup",
+      "Your previous restore was confirmed.",
+      "Choose backup file"
+    ],
+    "notes": [
+      "Native retry supplies no added/preserved/blocked totals. Do not show fabricated zero counters or copy the fresh-result counts. Refresh current delivery separately; no complete-series-recovery guarantee."
+    ],
+    "file": "11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-12",
+    "title": "Export share unavailable",
+    "referenceId": "evening-dark",
+    "atmosphere": "Evening",
+    "appearance": "Dark",
+    "surface": "settings/data-help",
+    "state": "sharing-unavailable",
+    "data": {
+      "origin": {
+        "kind": "agenda"
+      },
+      "scrollPosition": "Data and Help",
+      "exportState": "idle-error",
+      "shareAvailable": false,
+      "nativeExportCalled": false,
+      "actions": [
+        "Export backup",
+        "Restore backup",
+        "Diagnostics"
+      ]
+    },
+    "visibleText": [
+      "Settings",
+      "Data",
+      "Export backup",
+      "Sharing is unavailable on this device. Try again when a share destination is available.",
+      "Restore backup",
+      "Help",
+      "Diagnostics"
+    ],
+    "notes": [
+      "Availability check failed before native export. Keep other Data/Help choices readable; no backup saved or captured-file Retry sharing. No new cloud destination picker."
+    ],
+    "file": "12-export-share-unavailable-evening-dark.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-13",
+    "title": "Diagnostics share sheet could not open",
+    "referenceId": "evening-light",
+    "atmosphere": "Evening",
+    "appearance": "Light",
+    "surface": "diagnostics",
+    "state": "share-failure",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "report": {
+        "observedAtMs": 1791493080000,
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": false,
+          "unlocked": true,
+          "activeSessionId": "",
+          "observedAtMs": 1791493080000
+        },
+        "contentSchema": 4,
+        "operationalSchema": 3,
+        "states": {
+          "Scheduled": 4,
+          "Stopped": 3,
+          "Blocked": 2,
+          "NoAlert": 1,
+          "Completed": 5,
+          "Deleted": 2,
+          "Skipped": 1
+        },
+        "pendingOperations": 1
+      },
+      "scrollPosition": "share-group",
+      "sharedSnapshotObservedAt": "2026-10-08T13:58:00-07:00",
+      "shareState": "failed",
+      "actions": [
+        "Share diagnostic report",
+        "Refresh report"
+      ]
+    },
+    "visibleText": [
+      "Diagnostics",
+      "Share diagnostic report",
+      "Delivery permissions, state counts and technical metadata. Reminder titles and notes are excluded.",
+      "Could not open the share sheet. Try again."
+    ],
+    "notes": [
+      "Snapshot remains intact; retry Share recaptures the available report. No sent/uploaded/dismissed claim or import-like guard. Observed time remains available above in the same scroll."
+    ],
+    "file": "13-diagnostics-share-sheet-could-not-open-evening-light.png",
+    "status": "generated-awaiting-owner-review"
+  },
+  {
+    "id": "R10-14",
+    "title": "Legacy preview with future definition but no portable target",
+    "referenceId": "night-dark",
+    "atmosphere": "Night",
+    "appearance": "Dark",
+    "surface": "restore-backup",
+    "state": "weak-preview-timing",
+    "data": {
+      "origin": {
+        "kind": "settings",
+        "parent": {
+          "kind": "agenda"
+        }
+      },
+      "previewFixtureId": "legacy-defined-future-only",
+      "phase": "idle",
+      "copyIds": [],
+      "controlsEnabled": true,
+      "footer": {
+        "primary": "Restore backup",
+        "secondary": "Cancel preview"
+      }
+    },
+    "visibleText": [
+      "Restore backup",
+      "1 reminder or series",
+      "Review the archived project notes before tomorrow's meeting",
+      "Future time indicated",
+      "Preview timing does not confirm delivery. Alerts are checked after restore.",
+      "Restore backup",
+      "Cancel preview"
+    ],
+    "notes": [
+      "Use localized singular '1 reminder or series' in final copy. Underlying legacy one-off original definition is future, nextAlertMs absent: preview boolean true does not promise scheduled restoration. No exact target date/mode absent from preview fields."
+    ],
+    "file": "14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+    "status": "generated-awaiting-owner-review"
+  }
+]
+</script>
+  <script id="review-notes-data" type="application/json">
+[
+  {
+    "id": "R10-01",
+    "observations": [
+      "The content, neutral glyphs and backup disclosure match the requested Settings Data/Help state.",
+      "The scenic opening is taller and the lower blank space more generous than the compact layout target."
+    ],
+    "corrections": [
+      "Implement the shared 96 dp opening below status and 16/14 sp type, rather than copying raster heights or blank spacing.",
+      "Remilo/version is informational; no action or chevron is required. All ordinary glyphs share neutral roles.",
+      "Use shared corresponding Sunrise Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-02",
+    "observations": [
+      "Prepared-for-sharing copy distinguishes handoff from destination save; neutral structure is retained in Dark.",
+      "The semantic confirmation icon is saturated green and scenery remains taller than the prescribed compact opening."
+    ],
+    "corrections": [
+      "Use the shared theme success role for the labeled preparation result; it must never mean external save/send.",
+      "Reuse Sunrise Dark canvas/elevated tokens and the same compact opening/component spacing as Light; generated black shades are approximate.",
+      "Use shared corresponding Sunrise Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-03",
+    "observations": [
+      "Idle state correctly has Choose backup file only, with no premature Restore footer or file metadata.",
+      "Scenic crop and introductory type are larger than the shared compact/body specification.",
+      "Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use the shared 96 dp opening below status and 16 sp body/14 sp support; shrink decoration before content.",
+      "Choose backup file opens the Android-owned chooser; a disclosure chevron does not imply an app-owned file browser.",
+      "Use shared corresponding Sky Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-04",
+    "observations": [
+      "Both conflict copy choices and their labels are correct; the new series entry has no copy control.",
+      "Long titles wrap without shrinking. The blue-slate Dark plane retains daytime Sky artwork.",
+      "The scenic opening and action heights differ from the requested shared metrics.",
+      "Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use the shared 96 dp opening below status, not the generated larger scene crop.",
+      "Implement a measured scroll viewport above the fixed footer, 56 dp primary and at least 48 dp secondary actions, and consistent secondary foreground/border roles.",
+      "Preserve separate whole-family copy semantics; never add selection controls to new entries.",
+      "Use shared corresponding Sky Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-05",
+    "observations": [
+      "Artwork opening is a little taller than 96dp below status; button raster heights remain approximate and visually below canonical 56/48dp despite repair.",
+      "Busy ellipses are rendered as three dots rather than a single typographic ellipsis.",
+      "Fourth preview card is clipped at footer scroll boundary; static image cannot prove it scrolls clear of footer or that controls/navigation are disabled.",
+      "Cancel preview has a relatively saturated outline despite its disabled contract."
+    ],
+    "corrections": [
+      "Use shared inset-aware 56dp toolbar + about40dp scene below status. Use measured 56dp primary and >=48dp secondary controls, not raster dimensions.",
+      "Render canonical Restoring… and Restoring backup… strings. Keep neutral progress indicator.",
+      "Frozen choices are informational only, no switches or competing job; applying Back and Cancel preview guarded. Reserve measured feedback/footer space outside scroll; all rows must be reachable.",
+      "Use a consistent neutral disabled outline/content role so Cancel cannot be mistaken for an enabled action.",
+      "Use shared corresponding Evening Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-06",
+    "observations": [
+      "Retry and Cancel button raster heights remain approximate and visually below canonical56/48dp.",
+      "Disabled Cancel preview label is quite low contrast; its state is inactive but final token/label clarity needs review.",
+      "Warning icon uses coral while the action uses pale rose; this is a semantic role difference, not arbitrary per-icon tint."
+    ],
+    "corrections": [
+      "Use measured56dp enabled Retry same restore and >=48dp disabled Cancel preview; neutral disabled role must remain legible.",
+      "Reuse the exact captured backup, copy IDs and operation ID on Retry; preserve guarded navigation/new-file/copy choices until reconciliation.",
+      "Use stable semantic warning/error tokens independent of atmosphere; all ordinary informational support neutral.",
+      "Use shared corresponding Evening Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-07",
+    "observations": [
+      "Artwork remains somewhat taller than canonical shallow secondary crop.",
+      "Static raster presents all7 retained operational states and pending1 but does not establish refresh/share/accessibility behavior.",
+      "Native ImageGen output is 841 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use same96dp secondary opening below status as other pages; keep Night Light icy canvas/white opaque cards.",
+      "Counts Scheduled4, Stopped3, Blocked2, NoAlert1, Completed5, Deleted2, Skipped1 and pendingReminderUpdates1 must come from observed report; missing states omitted, no health grade.",
+      "Observation is Oct8 1:58PM report time, not2:00 device/page time; capabilities/technical/share follow in same scroll.",
+      "Use shared corresponding Night Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-08",
+    "observations": [
+      "Observed timestamp is tinted periwinkle in generated image; ordinary metadata should be neutral onSurfaceVariant.",
+      "Artwork and row/action heights remain approximate rather than canonical dp measurements.",
+      "Warm semantic refresh-error surface/glyph differs from cool navy report cards and neutral toolbar refresh glyph; final semantic role mapping needs consistent component tokens.",
+      "First introduction is above this captured scroll position; screenshot is scoped to old observation, refresh error and retained rows."
+    ],
+    "corrections": [
+      "Use neutral metadata text; primary only on actual Retry and stable semantic error/warning role for feedback, not random icon colors.",
+      "Retain Oct8 1:50PM old report and exact7state counts/pending1 on refresh failure; no fabricated zeros or freshly checked time.",
+      "Use >=48dp Retry target and shared shallow secondary crop, opaque soft navy planes; no independent near-black utility page.",
+      "Introduction remains present in page scroll. Capabilities/schema/share follow below capture; read-only refresh failure must not adopt import uncertainty guard.",
+      "Use shared corresponding Night Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-09",
+    "observations": [
+      "Exact invalid-backup copy; Nothing was imported; only Choose backup file, with no preview/footer or uncertainty guard.",
+      "Sunrise Light warm canvas, white/raised error plane and burnt-orange action fit references.",
+      "Opening crop and error glyph are slightly larger than planned; no content overlap.",
+      "Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling.",
+      "Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use shared 56dp toolbar + 40dp secondary art crop below status, and 24dp standard error glyph in a 48dp accessible action-free information region.",
+      "Use shared surface/primary/error tokens rather than sampling image pixels; enforce actual 56dp prominent action sizing.",
+      "Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster.",
+      "Use shared corresponding Sunrise Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-10",
+    "observations": [
+      "Correct confirmed content counts 5 restored/1 preserved and separate blocked-delivery warning, with no all-Scheduled or audibility claim.",
+      "Preview and footer cleared; Choose backup file remains normal flow.",
+      "Targeted repair reduced oversized scenery; residual crop and action-height variance remain approximate.",
+      "Built-in ImageGen raster is 840 x 1871 rather than the preferred 841 x 1870 reference. Near-9:20 aspect is preserved without image resampling.",
+      "Native ImageGen output is 840 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Use shared fixed compact secondary opening and 56dp Choose backup file action; result/warning surfaces wrap at font scale.",
+      "Bind counts to returned native import result; never infer delivery readiness from content acknowledgement.",
+      "Use the 360 x 800 logical viewport and shared actual dp/sp metrics in implementation; gallery fits the original image by aspect ratio without changing its raster.",
+      "Use shared corresponding Sky Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-11",
+    "observations": [
+      "Receipt confirmation is correctly limited to the prior import identity; there are no invented result totals or delivery assurances.",
+      "The old preview and its action footer are absent. A fresh file can be chosen.",
+      "The generated scene crop and introductory type are larger than the shared secondary-page metrics; confirmation glyph carries a pale blue tint.",
+      "Native ImageGen output is 841 × 1871 rather than preferred 841 × 1870. The original near-9:20 portrait is preserved without resampling."
+    ],
+    "corrections": [
+      "Implement the shared 96 dp opening below status and 16/14 sp body/helper sizes, using shared Sky Dark canvas/elevation roles.",
+      "Use a quiet neutral confirmation glyph or a consistent semantic role with its label; do not invent per-page accent assignments.",
+      "Keep receipt-only confirmation distinct from a fresh result that supplies added/preserved/blocked totals.",
+      "Use shared corresponding Sky Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-12",
+    "observations": [
+      "Inline Settings Data export failure wording correct; structural icons neutral; other Data/Help actions retained.",
+      "ImageGen first invented a Remilo support route; targeted repair removed it, leaving passive Remilo/version copy.",
+      "Supporting text remains subtly lavender-tinted and error appearance is close to Evening primary; exact palette remains a generated approximation."
+    ],
+    "corrections": [
+      "Use neutral onSurfaceVariant for backup/version helper copy and dedicated stable semantic error/onErrorContainer roles distinct from primary.",
+      "Keep Remilo/version passive; no support route or unsupported backup-prepared claim.",
+      "Use shared corresponding Evening Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-13",
+    "observations": [
+      "Report remains visible with observed timestamp and actual Content schema 4/Delivery schema 3 metadata.",
+      "Exact diagnostic privacy disclosure and share-sheet failure text; no sent/cancelled/uploaded claim.",
+      "Share diagnostic report appears as a section heading plus action; header crop slightly taller and main action slightly shorter than exact metrics."
+    ],
+    "corrections": [
+      "Keep one actionable Share diagnostic report; section title is informational and can be omitted if hierarchy becomes repetitive.",
+      "Use standard compact header, measured 56dp action and neutral metadata/semantic error tokens; retain captured report on share failure.",
+      "Use shared corresponding Evening Light canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  },
+  {
+    "id": "R10-14",
+    "observations": [
+      "Long title fully wraps, singular 1 reminder or series, informational Future time indicated and timing disclaimer accurate.",
+      "No checkbox/switch, exact target/date/mode or Scheduled promise; stacked Restore backup/Cancel preview stays clear of content.",
+      "Targeted repair reduced original oversized scenery; residual header height and periwinkle tint in ordinary supporting copy remain approximate."
+    ],
+    "corrections": [
+      "Use shared compact opening and onSurfaceVariant gray for timing/intro/helper, retaining primary only for actual Choose another backup/Restore action.",
+      "Use shared navy canvas/raised navy surfaces and measured footer safe-area/scroll clearance with 56dp actions; never infer portable eligibility from preview futureAlert.",
+      "Use shared corresponding Night Dark canvas/elevated/action/content tokens and opaque reading planes. Ordinary glyphs and metadata are neutral; selected/actions and labeled semantic feedback use defined roles. Generated tints, textures, gradients and per-page black do not define new tokens.",
+      "Use shared 16 dp corners, 16 dp gutters and real dp/sp metrics. Synthetic raster dimensions do not verify contrast, touch targets, scrolling, native behavior or large-text layout."
+    ]
+  }
+]
+</script>
+</body>
+</html>

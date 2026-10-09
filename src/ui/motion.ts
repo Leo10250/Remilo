@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
-import { useReviewMotion } from './theme';
+import { useReducedMotionOverride } from './theme';
 export function useReducedMotion() {
-  const review = useReviewMotion();
+  const override = useReducedMotionOverride();
   const [reduced, setReduced] = useState(true);
   useEffect(() => {
     let live = true;
@@ -10,5 +10,5 @@ export function useReducedMotion() {
     const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
     return () => { live = false; subscription.remove(); };
   }, []);
-  return review ?? reduced;
+  return override ?? reduced;
 }

@@ -20,7 +20,7 @@
   "locale": "en-US",
   "deviceZone": "America/Los_Angeles",
   "heldClock": "2026-10-07T14:00:00-07:00",
-  "clockPolicy": "Independent manually selected scene review fixtures; no automatic period/default/migration policy.",
+  "clockPolicy": "Held-clock manual scene captures; A36 current policy separately defines Automatic and defaults.",
   "referenceReview": {
     "allEightInspected": true,
     "method": "view_image qualitative inspection; exact source hashes; no pixel-token sampling or accessibility certification"
@@ -108,9 +108,9 @@
     ]
   },
   "proposalNotes": [
-    "Dedicated Appearance route/fixed atmosphere persistence require P04A contract and implementation.",
+    "TD-02 implements the five-value Automatic/manual selection and approved global policy.",
     "Expanded channel reasons, section-local feedback and View test reminder are layout/navigation proposals using existing data/routes.",
-    "No Automatic enabled control; four-scene boundaries/defaults/migrations remain open.",
+    "Historical images omit Automatic/show four tiles; A36 dropdown and intervals/defaults supersede that difference.",
     "Test lost-ack identity/reconciliation is an implementation gap; no current retry-safe API is claimed."
   ],
   "additionalComponentStates": [
@@ -616,5 +616,8 @@
     "talkBackObserved": false,
     "nativeTestExecuted": false,
     "physicalAlarmVerified": false
-  }
+  },
+  "currentContract": "current/screens/settings.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
 }

@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-08",
+  "source": "Owner in current chat",
+  "request": "Based on these specs, generate images for UIs",
+  "scope": "Fourteen R10 Data/Help captures from the last specification, all eight R3 references, no independent redesign",
+  "acceptance": "Awaiting owner review; generation request is not approval",
+  "tool": "built-in image_gen",
+  "sourceRepo": "C:/Users/Leo/Documents/GitHub/Remilo",
+  "specificationSha256": "e0767e594ed67d548471d0490107299bc6c43e25ecd8102a98f89b8814469ac9",
+  "fixturesSha256": "739b87240c546796ec899a597a0f43b5e6d1731f5c82fb66f8c11a3adb52ccdc"
+}

@@ -43,6 +43,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "verify": "node scripts/verify.mjs",
+    "verify:design": "node docs/evidence/time-of-day-realignment/verify.mjs",
     "verify:android": "node scripts/android.mjs verify",
     "verify:device": "node scripts/device.mjs",
     "build:beta": "node scripts/android.mjs beta",

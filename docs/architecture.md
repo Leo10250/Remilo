@@ -1,33 +1,25 @@
 # Architecture and consequential decisions
 
-The [7 October R3/R4 direction and implementation corrections](design/approved-ui-r3-r4.md)
-supersede conflicting earlier visual/task-specific appearance proposals below.
-They introduce no engine, storage, migration or lifecycle change in this task.
+The [current four-atmosphere design](design/current/README.md) and
+[appearance policy](design/current/appearance-policy.md) govern planned presentation.
+The documentation and review-tooling cleanup changes no runtime storage, lifecycle
+or native authority.
 
 ## ADR 001: Shared UI, autonomous Android implementation
 
-The [appearance redesign](appearance-redesign.md) adds an isolated design-review
-boundary before production migration. Metro substitutes the review entry/fixture
-bridge only for opt-in web previews; normal entries redirect and Android uses the
-real bridge. Debug-only Compose snapshots use immutable fake records with no
-engine/storage/audio acquisition. Production AlarmActivity retains its lifecycle,
-observation and actions, delegating the unchanged default rendering to
-AlarmControlsScreen. Review-only color/art slots default empty/identity.
+The ordinary fixture preview remains opt-in and web-only. Metro substitutes its
+synthetic native bridge only for that preview; Android resolves the real bridge.
+Preview state is memory-only and cannot schedule alarms or access durable storage.
+Obsolete review entrypoints, catalogs and Compose snapshot demos were removed
+under A37. Production AlarmActivity retains its lifecycle, observation and actions,
+delegating default rendering to AlarmControlsScreen. Reusable presentation slots
+default empty/identity; shared component defaults remain unchanged.
 
-These are preserved review boundaries. The [P01 handoff](handoffs/redesign-p01.md)
-records A15's accepted Sunrise/Meadow representatives; no production appearance
-system is introduced. P01's optional internal single-member presentation slot
-passes actual information/actions/feedback blocks to debug composition, with a
-null production default and unchanged callbacks. The [P01-P12 plans](plans/redesign/README.md) supersede the provisional broad
-comparison sequence. P01 first establishes approved environmental compositions;
-P04 owns the durable cosmetic/settings/migration contract, P08 native presentation,
-P09/P10 automatic resolution and P11 stable activity/alias integration. P04 is split
-into global configuration, internal policies, portability and chooser units; no
-manual mutations are exposed before portability passes. P11 background workers are
-optional P11B, with mechanism selection open, and do not gate first P12 acceptance.
-Their proposed storage/interface details require refinement and explicit approval;
-none is implied implemented by this ADR. Current credential/operational/backup
-versions remain 4/3/3 until their authorized migrations.
+The [current roadmap](plans/redesign/README.md) owns future scope: TD-01 shared
+roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
+TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
+versions remain 4/3/3; cleanup introduces no migration, descriptor wire shape or
+production API.
 
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
@@ -59,9 +51,8 @@ ones are rejected. Before unlock, the snapshot contains generic text only.
 A22's [R6 visual correction](design/r6-alarm-postpone-specification.md) requires
 global theming even for that generic content. A proposed minimal allowlisted
 non-private appearance mirror can identify bundled atmosphere/brightness without
-reading credential storage or copying content during Direct Boot. Exact storage,
-update ordering, migration and automatic resolution need P04A/P08 review; none is
-implemented or versioned by this documentation change. Titles, notes, categories,
+reading credential storage or copying content during Direct Boot. TD-02/TD-04 verify exact storage and update ordering; the approved global
+automatic policy is already fixed. None is implemented/versioned by this PR. Titles, notes, categories,
 list identities, credentials and content-derived appearance stay excluded from DP.
 
 Native commands return field/error metadata for rejected input; JavaScript form
@@ -84,10 +75,9 @@ product activity before unlock; it cannot be a prerequisite for alarm registrati
 Creating a handle does not start that activity. The UI remains unavailable until
 unlock; actual pre-unlock controls belong to the Direct Boot aware native activity.
 
-This is the current baseline. P11 requires a stable explicit MainActivity show
-handle and deployment launch target before aliases, retaining pre-unlock-safe
-handle construction and never disabling native alarm components. That planned
-replacement is not yet an implemented entry-point change.
+This is the current baseline. Static Classic branding preserves stable native
+activity/notification entry points; app-controlled aliases or launcher matching
+are not part of this redesign. Existing session guards remain native ownership.
 
 One native audio session with an elapsed-time deadline. New members do not extend
 it. Audio termination is independent of persistence. FGS is systemExempted while
@@ -210,7 +200,8 @@ bridge response from creating a second reminder on the next Save press.
 File-sharing providers remain credential-only in the merged manifest; alarm
 receivers/services/activity are Direct Boot aware. MainApplication still defers
 React/Expo startup until the principal UI is requested after unlock. The new native
-controls use the saved appearance after unlock, and system appearance before unlock.
+controls currently use saved brightness after unlock and system brightness before
+unlock. TD-02/TD-04 add the planned native-safe global atmosphere under A36.
 
 ## ADR 004: Unified presentation without another state authority
 
@@ -290,7 +281,11 @@ import with delivery warnings, not an uncertain import. This in-memory UI guard 
 not claim recovery of its screen draft across Android process death; native receipts
 and committed content remain the durable authority.
 
-## ADR 006: Explicit roots, presentation and native preview ownership
+## ADR 006: Shipped Browse routing, presentation and native preview ownership
+
+The Browse-root navigation below describes the shipped baseline. TD-03 replaces
+its visual routing with Agenda / Lists / Repeats and secondary origin returns;
+query keys, history truth and native preview ownership are retained.
 
 Browse is a modal control over explicit Agenda, list, Repeats, Completed and Trash
 roots. Root switching replaces the root context; Settings, editor, detail and Activity
@@ -346,13 +341,14 @@ The [7 October R3/R4 amendment](design/approved-ui-r3-r4.md) accepts the visual
 template with documented corrections. Structural icons use shared neutral roles;
 intentional actions/focus, category identity and labeled status have distinct
 roles. A single global atmosphere replaces task-specific screen environments in
-the current direction; legacy appearance/migration proposals require refinement.
+the current direction. A36 fixes Automatic/manual policy and defaults;
+legacy per-reminder appearance proposals are historical, not active migration work.
 These decisions do not add an engine, scheduling or storage authority.
 
 The planned editor uses one persistent Save footer outside form scrolling but
 inside the same Android IME-aware usable region. One owner handles IME/system
 insets; the scroll viewport accounts for the measured footer and keeps focused
 Title/Notes/caret/error content reachable. The current toolbar Save/basic keyboard
-resize is not acceptance evidence for that layout. P06 implements the client
+resize is not acceptance evidence for that layout. TD-03 implements the client
 presentation while preserving native command identity, validation and retry;
-P12 records real keyboard/TalkBack observations in the consolidated run.
+TD-06 records real keyboard/TalkBack observations in the consolidated run.

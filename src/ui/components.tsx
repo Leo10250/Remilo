@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ImageSourcePropType, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFoundationStyle, usePresentationState, useReviewFontScale, useTheme } from './theme';
+import { useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
 import { typography, space, shape } from './tokens';
 import { civilAt, deviceZone, mergeCivil, pickerCivil } from '../domain/time';
 import { engine } from './native';
@@ -57,18 +57,18 @@ export function IconButton({ icon, label, onPress, disabled = false }: { icon: I
   </Pressable>;
 }
 export function Copy({ children, muted = false, size = typography.body, heading = false }: PropsWithChildren<{ muted?: boolean; size?: number; heading?: boolean }>) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size * scale, lineHeight: size * scale * 1.4, fontWeight: heading ? '600' : undefined }}>{children}</Text>;
 }
 export function Heading({ children }: PropsWithChildren) {
-  const scale = useReviewFontScale();
+  const scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
   return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? typography.heading * scale * 1.4 : undefined, fontWeight: '600' }}>{children}</Text>;
 }
 export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false }: {
   label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'danger'; icon?: IconName; busy?: boolean;
 }) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
   const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : colors.ink;
@@ -88,7 +88,7 @@ export function Card({ children }: PropsWithChildren) {
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
 export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle(), [focused, setFocused] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const onContentSizeChange = props.onContentSizeChange;
@@ -108,7 +108,7 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
 export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel }: PropsWithChildren<{
   label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string;
 }>) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
   const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.md, paddingHorizontal: space.gutter }}>
     {icon && <Icon name={icon} />}
@@ -121,7 +121,7 @@ export function SettingRow({ label, value, icon, onPress, children, description,
     style={({ pressed }) => ({ backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>{body}</Pressable> : body;
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
   return <View style={{ gap: space.sm, backgroundColor: foundation ? colors.surface : undefined, borderRadius: foundation ? shape.group : undefined, paddingTop: foundation && title ? space.sm : undefined }}>{title && <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: (foundation ? typography.supporting : typography.label) * scale, fontWeight: '600', marginLeft: space.gutter }}>{title}</Text>}
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
@@ -129,7 +129,7 @@ export function Group({ title, children }: PropsWithChildren<{ title?: string }>
 export function SectionHeader({ title, count, expanded, onPress, overdue = false }: {
   title: string; count: number; expanded: boolean; onPress: () => void; overdue?: boolean;
 }) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   return <Pressable accessibilityRole="button" accessibilityLabel={title + ', ' + count}
     accessibilityState={{ expanded }} onPress={onPress} style={{ paddingHorizontal: 16, minHeight: 48, paddingVertical: 8,
       flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.background }}>
@@ -179,7 +179,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     {!!message && <ActionFeedback message={message} tone="muted" />}</>;
 }
 export function AppBar({ title, back = true, onBack, actions, leading }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; leading?: ReactNode }) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: back ? 4 : 16,
     backgroundColor: colors.background }}>
     {leading ?? (back && <IconButton icon="arrow_back" label="Back" onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />)}
@@ -222,7 +222,7 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
   </SafeAreaView>;
 }
 export function Sheet({ title, visible, onClose, onBack, children }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void }>) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
   return <Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
@@ -266,14 +266,14 @@ export function Disclosure({ title, children, initial = false, forceOpen = false
   </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
 export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
     <Icon name={icon ?? (tone === 'success' ? 'check_circle' : tone === 'danger' ? 'error' : tone === 'warning' ? 'warning' : 'info')} color={colors[tone]} size={16} />
     <Text style={{ color: colors[tone], fontSize: typography.supporting * scale, flexShrink: 1 }}>{label}</Text>
   </View>;
 }
 export function Snackbar({ message, action, onAction, onClose, persistent = false }: { message: string; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean }) {
-  const colors = useTheme(), scale = useReviewFontScale();
+  const colors = useTheme(), scale = useFontScaleOverride();
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
   const [interacting, setInteracting] = useState(false);

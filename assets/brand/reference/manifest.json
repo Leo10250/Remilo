@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "identity": "Classic ring/check/sun",
+  "decision": "A01 retained by A36 and A37",
+  "source": {
+    "file": "source-icon-board.png",
+    "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849",
+    "associatedDocumentationCopy": "../../../docs/design/references/supplied-classic-icon-board.png"
+  },
+  "crop": {
+    "file": "icon-classic.png",
+    "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+    "left": 491,
+    "top": 68,
+    "width": 467,
+    "height": 467
+  },
+  "relocation": "Original source bytes moved from assets/design-review/; no raster editing or regenerated artwork",
+  "productionStatus": "Reference source only; shipped geometric R exports remain unchanged until TD-05",
+  "interpretation": "Only the large Classic identity supplies the current static mark. Other examples printed on the original source board do not authorize themed launcher variants or an appearance catalog."
+}
