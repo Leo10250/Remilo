@@ -16,7 +16,10 @@ Creation and editing use one persistent Save above the IME, outside form scrolli
 Reserve footer clearance and retain focused Title/Notes/caret/error context, draft
 and composing text. Shared geometry is independent of atmosphere. Terminal details,
 schedule options, pickers, stale/replaced series, discard and unconfirmed Save still
-need bounded TD-03 review; R9 terminal compositions remain a draft.
+need bounded Android interaction observations. The owner
+[approved R9 runtime composition 05 for implementation](../../r9-runtime-composition-approval-v5.json);
+that composition decision does not pass the terminal-details, keyboard or
+recovery checks on an actual device.
 
 ## Per-image discrepancies and resolutions
 

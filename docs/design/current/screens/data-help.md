@@ -41,8 +41,9 @@ workflows, including app-owned reading, loading, error and feedback surfaces.
 
 Use matching shared canvas **and** elevated roles; no utility-specific black,
 glass reading plane, sampled PNG hex or backup-derived scenery. Sky Dark remains
-daytime; Night Light retains a Light reading plane. Final art abstraction is still
-deferred. Upload/download/info/refresh/Back glyphs and ordinary metadata stay
+daytime; Night Light retains a Light reading plane. The owner's
+[production-art abstraction review](../../production-assets/style-decision.md) is now active,
+with final assets requiring individual approval. Upload/download/info/refresh/Back glyphs and ordinary metadata stay
 neutral; actual actions, selected conflict choices and focus use primary with its
 paired content. Errors/warnings have stable semantic roles and explicit meaning.
 
@@ -389,4 +390,6 @@ records the later clarification and documentation/UI-example revision scope. The
 subsequent [A35 acceptance](../../approved-ui-r10-outline-acceptance.json) records the
 approved current template identities separately from those historical submissions.
 Remaining Agenda/detail/editor
-exceptions follow; R9 image review is still separate and pending.
+exceptions follow; the separate
+[R9 runtime composition 05 review is approved for implementation](../../r9-runtime-composition-approval-v5.json),
+while physical acceptance remains pending.

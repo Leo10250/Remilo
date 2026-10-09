@@ -18,9 +18,9 @@ collections, not more root destinations. The labeled bottom roots are **Agenda /
 Lists / Repeats**. A single Add action belongs to ordinary browsing; its overlay
 reserves scroll clearance so the last reminder and its actions remain reachable.
 
-Reminder rows share completion target, stable category badge, title, meaningful
-timing/delivery support and a separate More action. Category identity does not
-select the page's scene. Titles wrap/grow; repeat support appears when meaningful.
+Reminder rows share a leading completion target, one neutral `event` glyph, title,
+meaningful timing/delivery support and a separate More action. Semantic categories
+are deferred. Titles wrap/grow; repeat support appears when meaningful.
 Distinguish Event, Due and Next alert; postponed delivery never clears overdue work.
 Alarm, Notification and No alert retain native semantics. Status must reflect
 actual Saved/Blocked/Pending/Scheduled state, without promising audibility.

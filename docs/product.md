@@ -8,7 +8,9 @@ work is the last optional phase, after optional Android cloud sync.
 
 [The current design](design/current/README.md) consolidates the approved R3–R8/R10
 templates and corrections under A36. R3 all eight images govern color/art/style;
-R9 Completed/Trash/Activity is still draft. Global Automatic or manual Sunrise/Sky/
+R9 Completed/Trash/Activity runtime composition 05 has
+[owner approval for implementation](design/r9-runtime-composition-approval-v5.json),
+with four prior rejected compositions preserved. Global Automatic or manual Sunrise/Sky/
 Evening/Night selection is independent of System/Light/Dark brightness.
 [The appearance policy](design/current/appearance-policy.md) fixes local bands
 06–10, 10–17, 17–21, 21–06; missing/new preferences use Automatic with preserved
@@ -16,10 +18,12 @@ brightness. Every app-owned page and native full-screen alarm uses matching shar
 roles; standard Android notifications retain platform-owned layout.
 
 The exact Classic ring/check/sun mark is one static identity. Smart Colors,
-per-reminder palettes and task-specific alarm scenes leave active scope. Final
-abstract artwork remains later work; list icons remain provisional with omission
-preferred. Synthetic approval does not establish runtime/accessibility/device
-acceptance. Production still has brightness-only settings and the geometric R.
+per-reminder palettes and task-specific alarm scenes leave active scope. The owner's
+[production-art abstraction review](design/production-assets/style-decision.md)
+is now active, with individual asset approval still required. Lists omit decorative
+icons; reminder rows/details use one neutral `event` glyph and semantic categories
+remain deferred. Synthetic approval does not establish runtime/accessibility/device
+acceptance. See the [implementation decisions](design/current/implementation-decisions.md).
 
 The [six-unit roadmap](plans/redesign/README.md) precedes optional integrations;
 [backlog](backlog.md) alone records status. Superseded design specifications and
@@ -37,6 +41,8 @@ before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
 - Stop silences only the selected delivery; Done is separate and cancels its alert.
+- Reopen clears completed and skipped state while preserving occurrence identity
+  and guards. It never replays an elapsed alert; Restore retains skipped state.
 - Every ringing delivery, including one re-triggered by Snooze, provides native Stop
   and Snooze. Single-reminder notifications include both from their first post;
   grouped notifications open the native per-reminder controls. Android controls
@@ -86,6 +92,29 @@ before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
   Each destination retains its own filters and scroll position, including Completed
   and Trash. Details provide Activity through More, duplicate, Trash/Restore, Reopen
   and explicit occurrence/family scope actions.
+- The latest 9 October R9 instruction authorizes selected-occurrence Reopen and
+  Move to Trash in Completed, and Restore in Trash, overriding the earlier
+  no-bulk restriction. Normal collection rows keep single Reopen/Restore in their
+  three-dot menus without repeated inline buttons. Explicit selection mode adds
+  separate 48 dp selection checkboxes and contextual footer actions of at least
+  56 dp; terminal details retains its existing persistent action. Select all
+  loaded includes only the current loaded matching records, never unloaded or
+  newly paginated rows. Query/scope/Include skipped edits stay disabled while
+  selecting; Back/Done selecting clears the selection before origin navigation
+  unless an operation is pending or unconfirmed.
+- Selected operations capture occurrence IDs/revisions and an independent native
+  operation UUID per item, then submit existing guarded commands sequentially
+  through the serialized mutation worker. Results are per item, not atomic. Keep
+  confirmed partial outcomes, stop on an unknown reply and freeze the selected
+  snapshot/remaining queue until the same unresolved command is retried and
+  definitively acknowledged or rejected. Do not issue fresh operations for
+  applied/unresolved items, promise rollback or invent an atomic batch Undo.
+  After definitive completion, keep selection mode with the truthful summary,
+  clear selected IDs and refresh; rejected items require a new deliberate action.
+  Restore retains completed/skipped state; Reopen still clears both without
+  replaying elapsed alerts. No permanent Trash purge is authorized. Composition
+  05's [R9 review](design/current/screens/completed-trash-activity.md) is closed by
+  the explicit owner approval; actual Android acceptance remains pending.
 - Lists have durable credential-protected identities, names and revisions, with
   optional single membership and No list as the default. Empty lists are retained.
   Create/Rename/Remove are explicit. New names are trimmed and case-insensitively
@@ -141,7 +170,9 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   occurrence can be moved to Trash directly through its menu or swipe reveal and tap.
   Revision-guarded Undo restores only the captured deletion. Restore preserves prior
   completed/skipped state and never replays elapsed alerts. Trash stays in the local
-  installation until restored; no automatic expiry, permanent purge or bulk cleanup.
+  installation until restored; no automatic expiry or permanent purge. The latest
+  owner-directed selected-occurrence actions above supersede the old no-bulk
+  restriction without introducing Empty Trash.
   Backups exclude one-off Trash but retain recurring deletion exclusions.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only

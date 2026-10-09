@@ -6,7 +6,7 @@ Integrated TD-03, TD-04 and TD-05; TD-01/TD-02 contracts and evidence included t
 
 Read [the current design](../../design/current/README.md), [appearance policy](../../design/current/appearance-policy.md),
 [product](../../product.md), [architecture](../../architecture.md) and [backlog](../../backlog.md).
-The documentation PR does not execute this future production unit.
+The owner authorized production implementation on 9 October 2026; current corrections are recorded in [implementation decisions](../../design/current/implementation-decisions.md).
 
 ## Outcome
 

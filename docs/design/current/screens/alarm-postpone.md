@@ -38,7 +38,8 @@ These presentation templates are accepted with the documented corrections and
 A24 background/color condition. The original plain R6-04 remains rejected;
 the four corrected themed starting templates are accepted. Existing Stop/Snooze/Postpone semantics,
 privacy, native ownership, stale-action rejection and five-minute audio deadline
-are preserved. More abstract final artwork remains a later review.
+are preserved. The owner's [production-art abstraction review](../../production-assets/style-decision.md)
+is now active; final assets require individual approval.
 
 ## Shared atmosphere and presentation boundaries
 

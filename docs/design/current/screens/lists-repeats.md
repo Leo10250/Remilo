@@ -1,6 +1,6 @@
 # Lists, Repeats and recurrence controls
 
-Revision 2 · 7 October 2026 · **Overall UI/UX outline accepted; list-icon choice open.**
+Revision 3 · 9 October 2026 · **Overall UI/UX outline accepted; lists omit decorative icons.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
 
@@ -26,20 +26,17 @@ screen/keyboard anatomy. Existing [product](../../../product.md), [architecture]
 and [workflow](../../../appearance-redesign.md) contracts govern behavior. TD-03 owns
 Lists/navigation; TD-03 owns Repeats/family presentation; TD-03 owns recurrence controls.
 
-**A27 list-icon decision to raise at implementation:** generated list identity
-icons vary in presence/style, with no matching authoring control. They are a visual
-discrepancy, not an approved personalization feature. The owner currently favors
-no decorative list icons. Show an icon-free list-row candidate at implementation
-review and settle the treatment there. Ordinary navigation/form glyphs and
-reminder category badges have their existing separate purposes; do not turn this
-note into an undocumented custom-icon picker or name-based icon classifier.
+**9 October implementation decision:** omit decorative list identity icons.
+Generated icons are preserved in their historical references. Ordinary navigation/
+form glyphs retain their purpose; reminder rows/details use one neutral `event`
+glyph. No custom-icon picker or name-based classifier is introduced.
 
 This refinement makes concrete layout choices; it does not implement app routes,
 new scheduling/persistence or migrations. A36 separately fixes global automatic appearance policy.
 Bottom roots/origin return, durable Lists, family aggregation and guarded edits
 are established UX. The overall new layout/state direction is accepted; exact
-production rendering, listed corrections and the decorative list-icon choice remain
-open. Production currently uses Browse and basic management/family pages.
+production rendering and listed exceptional-state corrections still need actual
+acceptance. Agenda / Lists / Repeats are the roots; management is secondary.
 
 ## All eight visual references
 
@@ -58,8 +55,9 @@ component anatomy, role assignment and actions stay identical.
 These are qualitative directions, **not** final hex values. Under A24 the full-page
 canvas and elevated surfaces reuse the corresponding shared theme roles. Never use
 an independent Lists/Repeats black, a sampled PNG shade, or list/family-specific
-palette. All pages reuse the selected scene asset and common crop policy; final
-art abstraction is deferred. Structural list/repeat/calendar/zone glyphs and
+palette. All pages reuse the selected scene asset and common crop policy. The owner's
+[production-art abstraction review](../../production-assets/style-decision.md) is now active,
+with final assets requiring individual approval. Structural list/repeat/calendar/zone glyphs and
 chevrons are neutral. Primary belongs to actions, selected controls and focus.
 Category/status roles remain purposeful and independent of atmosphere.
 

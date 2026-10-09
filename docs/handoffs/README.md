@@ -12,8 +12,9 @@ evidence, compatibility/privacy/retry checks, failures/unobserved device cases,
 remaining conditions and links to the sole backlog status. Partial capabilities
 must identify outstanding integration; TD-06 requires actual integrated outputs.
 
-The owner's documentation-only A36 authorization does not execute future production
-units. Preserve draft R9 and the list-icon implementation decision. Separate builds/
+The owner authorized production implementation on 9 October 2026. Preserve
+the [R9 composition 05 approval](../design/r9-runtime-composition-approval-v5.json),
+four prior rejected compositions and the decision to omit list icons. Separate builds/
 physical observations/distribution from documentation checks. Keep unrelated work
 out of commits and one integrator for any later shared native/storage change.
 

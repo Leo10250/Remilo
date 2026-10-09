@@ -75,7 +75,8 @@ pending work; earlier deployment evidence retains its historical scope.
 Read [the current design](design/current/README.md), [coverage](design/current/coverage.md),
 [appearance policy](design/current/appearance-policy.md) and [TD roadmap](plans/redesign/README.md).
 R3 all eight images govern style. Approved templates/corrections govern R4/R5/R6/R7/
-R8/R10; R9 remains draft with no images/approval. Final artwork abstraction and
+R8/R10; [R9 runtime composition 05 has owner approval for implementation](design/r9-runtime-composition-approval-v5.json),
+separate from its historical A31 draft and four rejected runtime candidates. Final artwork abstraction and
 actual production tokens/measurement are separate from raster approval.
 
 Documentation and cleanup verification checks active links, JSON, all protected
@@ -115,8 +116,9 @@ Retain direct Stop/Snooze/Stop-all, deadline/race checks and OS notification lim
 
 TD-03 retains whole-backup inclusion/identity conflicts, no-overwrite separate-copy
 choices, frozen same-operation Restore retry and truthful Scheduled/Pending/Blocked,
-share handoff, receipts and diagnostics. R9 and icon-free list candidates require
-remaining layout review, not invented image acceptance. TD-05 validates faithful
+share handoff, receipts and diagnostics. Preserve R9's explicit composition 05
+approval and the fixed icon-free list decision; actual Android layout/accessibility
+observations remain pending. TD-05 validates faithful
 static Classic exports/masks/small sizes without app-controlled aliases.
 
 TD-06 integrates code-appropriate shared/native checks and a signed artifact with

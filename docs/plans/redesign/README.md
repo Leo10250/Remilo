@@ -3,7 +3,7 @@
 The [current design](../../design/current/README.md), approved under A36, is the
 only current visual/workflow direction. All eight R3 images govern style; approved
 page contracts and corrections govern page UX. [Backlog](../../backlog.md) alone
-owns status. These future implementation units replace the old P01–P12 sequence.
+owns status. These implementation units replace the old P01–P12 sequence.
 
 ## Current units
 
@@ -18,13 +18,16 @@ owns status. These future implementation units replace the old P01–P12 sequenc
 
 TD-05 is independent; TD-03 and TD-04 may proceed in parallel after TD-01/TD-02.
 TD-06 integrates their actual outputs and preserves consolidated physical acceptance.
-The owner authorized this documentation/reference PR; runtime execution occurs
-when requested. No cancelled classifier, per-reminder chooser, backup-v4 or dynamic
+The owner authorized runtime execution on 9 October 2026, including the
+[implementation corrections](../../design/current/implementation-decisions.md).
+No cancelled classifier, per-reminder chooser, backup-v4 or dynamic
 launcher gate is part of the current dependency graph.
 
 ## Implementation boundaries
 
-R9 remains a draft and the decorative list-icon choice must be raised during
-implementation. Exact storage field/export design is implementation work; this
-roadmap introduces no deployed interface/schema. A37 removes superseded plans and
+R9 [runtime composition 05 is approved for implementation](../../design/r9-runtime-composition-approval-v5.json),
+with four prior rejected compositions preserved and actual Android acceptance
+pending. Lists omit decorative icons.
+Storage/API changes are recorded in [architecture](../../architecture.md).
+A37 removes superseded plans and
 prototype evidence from the checkout; recovery is available through Git history.

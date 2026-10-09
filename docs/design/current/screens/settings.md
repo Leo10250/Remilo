@@ -42,8 +42,9 @@ state/theme permutation. Brightness is independent of scene identity.
 Use matching shared canvas **and** elevated-surface roles under A24. No independent
 Settings black, sampled PNG hex, glass reading card, or new scenic interpretation.
 Sky Dark retains daytime clouds; Night Light retains moon/stars above a Light
-reading plane. Reuse one selected scene asset/crop policy across pages; final art
-abstraction is deferred. Settings glyphs, chevrons, ordinary values and helper text
+reading plane. Reuse one selected scene asset/crop policy across pages. The owner's
+[production-art abstraction review](../../production-assets/style-decision.md) is now active,
+with final assets requiring individual approval. Settings glyphs, chevrons, ordinary values and helper text
 are neutral. Primary identifies actual actions, focus and selected controls;
 status colors require labeled meaning and remain independent of atmosphere.
 

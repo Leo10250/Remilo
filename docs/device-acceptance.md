@@ -9,24 +9,43 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Preparation for the shipped 0.4.0 baseline
+## Prepared redesign build for the future owner run
 
-This preparation records the earlier build and its toolbar/Browse layout. For
-the time-of-day redesign, install the specifically identified signed TD-06 build
-as an update without clearing data, record its source/version, open Settings from
-its invoking origin, and create QA reminders through the atmosphere-colored Add
-action and persistent Save footer. Do not infer a new version from this document.
+[TD-06 integration evidence](handoffs/redesign-td-06.md) records successful local
+preparation on **9 October 2026 at 17:18:00.718 UTC**, after the final candidate 05
+presentation/wording corrections. The release APK is
+**com.remilo.app 0.4.0 / versionCode 4**, **arm64-v8a**, minSdk 34/targetSdk 36,
+signed with bundled JavaScript and not debuggable. Its SHA-256 is
+`927482ad16efe01290fcc63057cffac137185db4074bf8bc6a800050834669d3`;
+the retained signer SHA-256 is
+`880b7bc2e35722a72f9170c863945e0a65e3cf4c9f142aedf9ab6837c1e43556`.
+Preparation installed/published nothing and leaves every physical observation
+pending. The working-tree/build relationship is recorded in TD-06; the base
+commit and version alone do not identify these bytes.
 
-1. Install the locally signed **0.4.0 / versionCode 4** APK as an update, without uninstalling or
-   clearing data. The build location and evidence are linked from the README.
+The owner [approved composition 05 for implementation](design/r9-runtime-composition-approval-v5.json),
+closing R9 composition review while physical observations remain pending.
+This checklist is for the later
+consolidated owner run against the specifically reviewed final artifact, not an
+instruction to resume phone testing now. If further runtime edits require another
+artifact, record that build/hash before observing it instead of relying on the
+unchanged 0.4.0 version label. Earlier toolbar/Browse build observations retain
+their historical scope and do not establish this redesign's behavior.
+
+1. When starting the owner run, install the specifically identified signed APK as
+   an update without uninstalling or clearing data. Preserve the recorded artifact
+   hash/source relationship; the local build path is
+   `android/app/build/outputs/apk/release/app-release.apk`.
 2. Open Remilo offline, with no development server running. Your saved reminders
-   should remain present. Tap Browse → Settings → Permissions and enable required
+   should remain present. Open Settings from the current root's More menu, then
+   Permissions, and enable required
    access through each row. Return: statuses refresh automatically.
 3. Record phone model, Android version, app version, date, and whether exact alarms,
    notifications, the alarm channel and full-screen access are enabled.
-4. Prefix new test titles with **QA**. Tap the blue + → enter a title → tap When.
+4. Prefix new test titles with **QA**. Tap Add reminder → enter a title → tap When.
    Select today's date and a time two or three minutes ahead; keep the default
-   linked timing. Tap Save in the app bar. Confirm return to Agenda and the saved
+   linked timing. Tap the persistent Save footer. Confirm return to Agenda or the
+   invoking named list and the saved
    alert message; use its View action to inspect details → Schedule details when present.
    For a quick native probe, use Settings → Alarms → Test alarm (15 seconds).
 
@@ -58,7 +77,9 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   then use Undo. Complete again: it leaves the active agenda. Find it through
   the secondary Completed destination. Include skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
-  request, then the secondary Trash destination → Restore recovers its content.
+  request, then the secondary Trash destination → row More → Restore recovers
+  its content. Completed/Skipped row More → Reopen clears both terminal states
+  without replaying elapsed alerts. Single row actions are not repeated inline.
   Search/filter both collections, including a list containing only Trash items.
   Complete/delete QA reminders in a different order from their event dates:
   the newest completion/deletion appears first. Elapsed alarms remain silent.
@@ -111,8 +132,10 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   action reachability. Enable reduced motion and repeat sheet/row transitions. Restore font and
   accessibility preferences. Native controls need their own large-font run.
 - **U12 — identity and loading:** inspect the static Classic ring/check/sun launcher,
-  adaptive/monochrome system treatment, splash and small notification icon. There
-  is no app-controlled theme/alias switching. Long titles remain readable in
+  adaptive/monochrome system treatment, splash and small notification icon. The
+  main ring/check is centered with the sun/rays offset; inspect actual round/
+  adaptive OEM masks and small sizes without treating full artwork bounds as the
+  ring center. There is no app-controlled theme/alias switching. Long titles remain readable in
   details and native controls. First loading must not claim an ended alarm or a blocked
   permission. Force-stop/reboot limitations remain those in C, rather than UI errors.
 - **U13 — city/zone authoring:** choose a city/region for a pinned QA reminder
@@ -184,10 +207,42 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   A ringing session keeps its captured scene; the next session resolves anew.
   Leave unavailable controlled-clock/upgrade cases pending instead of changing normal data.
 
+- **U22 — selected collection actions:** in Completed/Trash, normal browsing shows
+  labeled single Reopen/Restore through the row's three-dot menu, with independent
+  row-open targets. Toolbar More → Select reminders adds selection checkboxes and
+  a selected count; these checkboxes mean selected, not completed/restored. Select
+  several QA completed/skipped occurrences and use contextual Reopen or Move to
+  Trash. In Trash select QA occurrences and Restore: completed/skipped state is
+  preserved and elapsed alerts stay silent. Select all loaded includes only
+  loaded matching rows; Load more does not select new rows. Query/list/Include
+  skipped stay fixed while selecting. Back/Done selecting clears selection before
+  origin navigation; open sheets close first. Targets remain separate/reachable at
+  200% text and with TalkBack; contextual footer/feedback never covers content.
+  Partial/stale/lost-reply cases require a controlled QA setup: confirm truthful
+  per-item results, frozen captured selection/queue and exact unresolved-operation
+  Retry before remaining items. There is no atomic rollback, bulk Undo or permanent
+  Trash deletion. Leave unavailable fault setups pending; do not alter normal data
+  to force them.
+- **U23 — whole-backup inclusion and handoff:** export QA new reminders plus an
+  empty QA list and restore that backup. New identities, empty lists and entries
+  outside the current preview page are included automatically. Existing identity
+  conflicts offer Keep existing / Add a separate copy; matching titles alone do
+  not create conflicts. In a controlled lost-reply case the backup/choices/operation
+  remain frozen until the same restore is acknowledged or definitively rejected;
+  a receipt-only result supplies no invented totals. Diagnostics retains its last
+  observation timestamp after a failed refresh. Export/Diagnostics reports opening
+  the Android share sheet, not proof another app received or saved the file.
+- **U24 — captured Test alarm:** one deliberate Test alarm request commits one
+  test and target. Rapid taps do not duplicate the pending request. In a controlled
+  uncertain-reply case Retry returns the original test/target under the captured
+  operation identity; a new test requires a new deliberate request. Leave unavailable
+  fault setup pending and use only QA probes. Scheduling feedback does not prove
+  audibility; native delivery remains covered by B/C.
+
 ## A. Everyday reminders and timing
 
 - **A1 — upgrade/offline navigation:** your existing reminders remain. Agenda, editor,
-  Browse, Completed, Trash, Repeats, Settings and detail views open
+  Lists, Completed, Trash, Repeats, Settings and detail views open
   offline. Pull down on the home list to refresh.
 - **A2 — default timing:** create QA Timing. Its due and original alert equal the
   event start; event end is thirty minutes later. Add notes and a list. Search for

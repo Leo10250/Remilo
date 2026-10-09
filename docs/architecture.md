@@ -1,9 +1,9 @@
 # Architecture and consequential decisions
 
 The [current four-atmosphere design](design/current/README.md) and
-[appearance policy](design/current/appearance-policy.md) govern planned presentation.
-The documentation and review-tooling cleanup changes no runtime storage, lifecycle
-or native authority.
+[appearance policy](design/current/appearance-policy.md) govern presentation.
+The [9 October implementation decisions](design/current/implementation-decisions.md)
+activate the six TD units while retaining native storage/lifecycle authority.
 
 ## ADR 001: Shared UI, autonomous Android implementation
 
@@ -13,13 +13,18 @@ Preview state is memory-only and cannot schedule alarms or access durable storag
 Obsolete review entrypoints, catalogs and Compose snapshot demos were removed
 under A37. Production AlarmActivity retains its lifecycle, observation and actions,
 delegating default rendering to AlarmControlsScreen. Reusable presentation slots
-default empty/identity; shared component defaults remain unchanged.
+remain available to isolated fixtures. Production components consume generated
+atmosphere roles and bundled scene/crop mappings.
 
-The [current roadmap](plans/redesign/README.md) owns future scope: TD-01 shared
+The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions remain 4/3/3; cleanup introduces no migration, descriptor wire shape or
-production API.
+versions are 5/4/3. CE 4→5 adds global atmosphere with Automatic default and
+preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
+singleton and nullable migrated session presentation fields. Every new session
+captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
+follow silent Interrupted recovery. Settings/session presentation stays outside
+portable backup format 3.
 
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
@@ -49,11 +54,35 @@ notification; actions retain the delivery generation from their snapshot and sta
 ones are rejected. Before unlock, the snapshot contains generic text only.
 
 A22's [R6 visual correction](design/r6-alarm-postpone-specification.md) requires
-global theming even for that generic content. A proposed minimal allowlisted
-non-private appearance mirror can identify bundled atmosphere/brightness without
-reading credential storage or copying content during Direct Boot. TD-02/TD-04 verify exact storage and update ordering; the approved global
-automatic policy is already fixed. None is implemented/versioned by this PR. Titles, notes, categories,
-list identities, credentials and content-derived appearance stay excluded from DP.
+global theming even for that generic content. The allowlisted non-private mirror
+identifies bundled atmosphere and brightness policy without credential reads in
+Direct Boot. The native serialized mutation worker commits credential preferences,
+updates the mirror, then acknowledges. An identical operation retry repairs an
+interrupted mirror write. Appearance-only writes do not change reminder targets,
+generations, history or audio. Titles, notes, categories, list identities,
+credentials and content-derived appearance stay excluded from DP.
+
+Agenda queries apply optional `overdueOnly` alongside other intersections and
+apply group ordering/counts before pagination. Today/Upcoming continue inspecting
+Due or the stored alert target; Event still governs ordinary date grouping.
+`scheduleTestAlarm(operationId)` returns an identified receipt; a same-ID retry
+returns the original committed test/target. Whole-backup Restore returns structured
+Rejected only for definitive precommit validation; possible commits remain
+uncertain and retain their captured operation/choices until acknowledgement.
+
+UI geometry is presentation-only: the form observer reads its Activity/Modal
+window's bounds and native text-layout rectangles without consuming insets. Only
+geometry/state and opaque field identities cross the bridge. It cannot read the
+engine or persist text/composition. Native caret/viewport/scroll samples share one
+frame and coordinate system; deliberate parent scrolling does not force focus
+back into view.
+
+Export and Diagnostics prepare/share only from their owning foreground page.
+After a share-sheet opens, acknowledgement waits for that page to return to the
+foreground and is abandoned after route departure. Wording confirms handoff only,
+not receipt or saving by another app. A retry retains the captured prepared file/
+report. Backup files contain private content in credential-protected app cache;
+they are retained for provider access/retry and may later be reclaimed by the OS.
 
 Native commands return field/error metadata for rejected input; JavaScript form
 validation is presentation assistance. Dates and generations must be finite

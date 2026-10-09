@@ -5,7 +5,9 @@ All eight R3 references govern color relationships, atmosphere and artwork treat
 defines Automatic/manual resolution. Implement one component anatomy in RN and native
 UI, not independent designs for each theme. Use opaque reading surfaces and protect
 text/controls from busy artwork. Exact colors are implementation tokens to validate,
-not arbitrary sampled pixels. Final scenery abstraction remains a later review.
+not arbitrary sampled pixels. The owner's [production-art abstraction review](../production-assets/style-decision.md)
+is now active; final scene assets still require individual approval and actual
+runtime acceptance remains separate.
 
 ## Atmosphere roles
 
@@ -30,12 +32,12 @@ role values and artwork, not which role an otherwise identical icon receives.
 | Element | Required role and reason |
 |---|---|
 | Ordinary information/form icons: When, Date, Time, Due, Repeat, Alarm mode, Alert time, List, Notes and schedule disclosure; their chevrons | Neutral `onSurfaceVariant`. Being tappable or depicting an alarm does not make a row selected, urgent or a primary action. Optional icon-tile surfaces use one neutral container role. |
-| Back, More and ordinary toolbar glyphs | Shared toolbar content role, neutral `onSurface`/`onSurfaceVariant` on a contrast-protected toolbar. Night details and Night edit must use the same mapping. |
+| Back, More and ordinary toolbar glyphs | Canonical `headerInk` directly on atmospheric art, with transparent control backgrounds and a shared fading scrim; `onSurface` on the opaque constrained-height fallback. Night details and Night edit use the same mapping. |
 | Main field values and titles | `onSurface`; supporting labels, descriptions and ordinary timing summaries use `onSurfaceVariant`. Do not make every label blue in Night. |
 | Filled Done/Save | Atmosphere `primary` with its paired `onPrimary`. Same component geometry in Light/Dark. |
 | Postpone alert action | Secondary outlined action using the same atmosphere `primary` for label/outline. It is intentionally distinct from completion but not an error/destructive action. |
 | Focused input outline/caret and explicitly selected controls | Atmosphere `primary`. Selected states also need a visible/accessible state indicator. |
-| Reminder category badge | Stable category role, independent of atmosphere. The green plant badge is intentional identity. Category color belongs to the category, not generic editor controls. |
+| Reminder glyph | One neutral `event` glyph on rows/details. Semantic category badges and classification are deferred by the [implementation decision](implementation-decisions.md). |
 | Explicit scheduling state | Documented semantic role with text/icon. A green Scheduled chip is permissible only for confirmed scheduling; it does not mean guaranteed audibility and does not color the static Alarm-mode icon. |
 | Overdue / delivery warning / error | Stable semantic roles with explicit labels/icons. R4's amber overdue cue is deliberate; genuine failures/errors/destructive actions use their documented error role. The future postponed alert never clears overdue work. |
 | Independent timing badge | Neutral relationship text/container/outline. It communicates a relationship, not a selected chip, warning or primary action. |
@@ -47,7 +49,7 @@ are role directions, not sampled final production hex values. Within one atmosph
 and appearance, the same role comes from the same token on all pages. Do not sample
 slightly different orange/blue values from individual PNGs or hardcode per-screen
 hex overrides. Keep icon family, stroke, size and container treatment consistent.
-Remilo's expressive identity remains in its atmosphere, artwork, category badges
+Remilo's expressive identity remains in its atmosphere, artwork
 and intentional actions.
 
 This is Remilo's chosen role policy, informed by
@@ -62,6 +64,15 @@ do not mix in iOS Liquid Glass keyboard or control behavior.
 Retain the approved secondary template: compact atmospheric opening, solid reading
 surfaces, clear title/timing/delivery hierarchy and persistent action. Use one
 component definition rather than theme-specific copies of its structure.
+
+The owner's 9 October actual-render correction rejects opaque header title/button
+boxes. Use transparent controls/text over the scene, protected by the canonical
+fading scrim through the measured label/control region. Its 54% plateau and ink
+pair guarantee normal text 4.5:1 over the RGB extremes; actual image/UI framing
+still requires review. Drop decoration before compromising large text or controls.
+Use a 52 × 32 dp switch track with a 24 dp selected thumb and an accessible whole
+row target. Ordinary cards use 12 dp separation and neutral icon containers;
+root selection uses a glyph capsule and selected label, as in R3/R7/R8.
 
 - Secondary opening target: approximately 96 dp below the status inset, including
   the toolbar (56 dp) and short art crop. When usable height is constrained, reduce/
@@ -131,14 +142,14 @@ the actual edge-to-edge setup; do not blindly stack avoidance wrappers.
 
 ### Current code versus the requirement
 
-At this documentation review, [the editor](../../../src/app/edit.tsx) still places Save
-in the toolbar. [Page/Field](../../../src/ui/components.tsx) provide basic scrolling,
-footer/focus and multiline sizing, but no demonstrated editor-wide caret/error
-coordination for this template. MainActivity already declares `adjustResize` in
-[AndroidManifest.xml](../../../android/app/src/main/AndroidManifest.xml); that alone
-does not establish correctness under edge-to-edge, a persistent footer, growing
-Notes or changing keyboard height. This is a future component requirement, not a
-claim that the current implementation was fixed in this documentation task.
+[The editor](../../../src/app/edit.tsx) uses one persistent footer outside
+[FormViewport](../../../src/ui/form-viewport.tsx). The presentation-only
+[native geometry observer](../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/presentation/FormGeometryModule.kt)
+observes each mounted form's own window, residual IME overlap and native caret/
+viewport rectangles. It emits geometry and opaque field identities, never text
+or composition. MainActivity and RN Modal retain Android `adjustResize`; the
+observer does not consume insets or replace RN selection handling. Actual
+keyboard/selection/composition behavior still requires the observations below.
 
 ## Implementation acceptance and evidence
 

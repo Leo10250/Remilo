@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "r9-runtime-composition-v5",
+  "recordedAt": "2026-10-09T17:25:06Z",
+  "authority": "Direct owner response in the implementation conversation",
+  "questionReference": "request_user_input_async/call_18cfacbd51c84ac7833eaa194408738c/0",
+  "question": "Do you approve R9 revision 05 shown above: compact Completed/Trash rows with Reopen/Restore in More, bulk actions in selection mode, and display-only Activity icons? This is the composition checkpoint required by your implementation plan; physical Android acceptance remains pending.",
+  "answer": "Approve composition for implementation",
+  "scope": [
+    "Completed and Trash browsing rows: explicit terminal state, informational event glyph and outlined More control; single-item Reopen/Restore in labeled menus",
+    "Toolbar More opens Select reminders; selection-only checkboxes, captured selected count and persistent labeled Reopen/Move to Trash/Restore actions",
+    "Activity: trash/history icons describe recorded actions and are not buttons"
+  ],
+  "reviews": [
+    {
+      "privateCapture": "verification/local/ui-redesign/r9-composition-review-v5.png",
+      "sha256": "cd44f1eb15f7cf59c74ff2a8b193f63f2a630fc1d6cf4dc8010ebdd3a3f5fd4f",
+      "sources": ["r9-completed-final05.jpg", "r9-trash-final05.jpg", "r9-activity-final05.jpg"]
+    },
+    {
+      "privateCapture": "verification/local/ui-redesign/r9-selection-review-v5.png",
+      "sha256": "13afc68d79013f005b267229c5851b1f7fa6f1eedf9dff09c420c5ffc9cd4db4",
+      "sources": ["r9-completed-selection-final05.jpg", "r9-trash-selection-final05.jpg"]
+    }
+  ],
+  "render": {
+    "kind": "Actual React Native fixture web export",
+    "viewportCss": [360, 800],
+    "comparison": "Full viewport screenshots uniformly scaled; no rendered-content editing",
+    "data": "Synthetic, memory-only; isolated from Android delivery and durable phone data"
+  },
+  "evidenceAvailability": "The privateCapture values identify ignored local evidence by hash; they are not live public-resource links or fresh-checkout prerequisites.",
+  "history": "Runtime candidates 01, 02, 03 and 04 were rejected; this approval does not retroactively accept them or alter historical reference bundles.",
+  "notEstablished": ["Physical Android acceptance", "Native keyboard/composition or TalkBack observations", "Alarm reliability gates G1/G2/G3", "Distribution authorization"],
+  "contract": "docs/design/current/screens/completed-trash-activity.md",
+  "handoff": "docs/handoffs/redesign-td-03.md",
+  "statusSource": "docs/backlog.md"
+}

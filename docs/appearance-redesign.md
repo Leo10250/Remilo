@@ -13,8 +13,10 @@ provides Automatic or four manual choices, independent System/Light/Dark brightn
 Use shared matching canvas, elevated surfaces, action/content/neutral roles and
 component geometry. Preserve expressive artwork/category identity; do not simplify
 the product into an unrelated plain reminder app. Dark planes are corresponding
-charcoal/slate/plum/navy, without alarm-specific blacks. Final abstraction of artwork
-remains a later review. Android notifications retain supported OS templates.
+charcoal/slate/plum/navy, without alarm-specific blacks. The owner's
+[production-art abstraction review](design/production-assets/style-decision.md)
+is now active, with final assets requiring individual approval. Android notifications
+retain supported OS templates.
 
 The exact Classic ring/check/sun mark is one static identity. The previous eight-
 palette catalog, Smart Colors, per-reminder chooser and task-specific alarm scenes
