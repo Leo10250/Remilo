@@ -14,3 +14,8 @@ The existing exporter's central 66 dp adaptive safe area and ignored local mask/
 review describe the R implementation. TD-05 must validate Classic layer separation,
 actual small sizes, splash and notification alpha against its own faithful exports.
 Actual launcher/device observations remain part of the consolidated owner run.
+
+The [production export workflow](../../docs/design/production-assets/classic-exports.md)
+prepares faithful Classic candidates and records individual approvals before TD-05
+integration. Its [registry](../../docs/design/production-assets/brand-manifest.json)
+tracks export provenance; no unapproved candidate replaces the shipped R assets.

@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-notification",
+  "version": 2,
+  "candidate": 2,
+  "ownerStatement": "Approve artwork and integration",
+  "recordedAtUtc": "2026-10-09T09:06:53.592649+00:00",
+  "activationApproved": true,
+  "scope": "Approve the revised circle-centered Classic 24 dp notification vector v2 shown above for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+    "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+  },
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-notification-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-monochrome",
+      "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+      "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "notification",
+      "path": "assets/brand/classic/notification/ic_remilo_notification_v2.xml",
+      "sha256": "f32def671ab76aec54d5693f0dada56449a1b25d78866d01ad73f8a6cb3b4933",
+      "width": 24,
+      "height": 24,
+      "format": "AndroidVector",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "nativeVectorGeometry": {
+        "sourceAnchorPx": [
+          233,
+          243
+        ],
+        "centeringRevision": 2,
+        "uniformScaleDpPerSourcePx": 0.050066152607140715,
+        "controlHullInsetDp": 2
+      }
+    }
+  ],
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-notification/candidate-02.json",
+    "sha256": "4ce1431c7825e45ed244b0b215c24ac6b9ef0acc2c94022e518859e3dfb41687"
+  },
+  "manualLayerSources": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-notification-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-monochrome",
+      "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+      "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "checks": {
+    "candidateBytesPreserved": true,
+    "distinctLayerTransformsVerified": false,
+    "nativeVectorStructureVerified": true,
+    "allOutputDimensionsMatch": true,
+    "installedDeviceAppearanceAssessed": false
+  },
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "ownerQuestion": "Approve the revised circle-centered Classic 24 dp notification vector v2 shown above for artwork and integration?",
+  "ownerDecisionReference": {
+    "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+    "questionIndex": 4,
+    "humanResponse": "Approve artwork and integration"
+  }
+}

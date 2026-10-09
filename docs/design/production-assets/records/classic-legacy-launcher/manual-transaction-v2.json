@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-legacy-launcher",
+  "version": 2,
+  "state": "committed",
+  "expectedRegistrySha256": "3c4164c4270c6f01d17b057dcceb5e278812072e6b48ad10977f69c0b31b1e05",
+  "specificationSha256": "a64c4d85e0ccde48d3314a2225666026676d0532b58491ac0672002cc4116813",
+  "decision": {
+    "assetId": "classic-legacy-launcher",
+    "version": 2,
+    "candidate": 2,
+    "ownerStatement": "Approve artwork and integration",
+    "ownerQuestion": "Approve the revised circle-centered Classic legacy and round launcher v2 shown above, including the exact crop’s asymmetric tile trim, for artwork and integration?",
+    "ownerDecisionReference": {
+      "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+      "questionIndex": 0,
+      "humanResponse": "Approve artwork and integration"
+    },
+    "recordedAtUtc": "2026-10-09T09:05:35.946243+00:00",
+    "promote": true,
+    "activationApproved": true,
+    "scope": "Approve the revised circle-centered Classic legacy and round launcher v2 shown above, including the exact crop’s asymmetric tile trim, for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+    "specificationSha256": "a64c4d85e0ccde48d3314a2225666026676d0532b58491ac0672002cc4116813",
+    "profileConfigured": {
+      "path": "docs/design/production-assets/records/classic-legacy-launcher/profile-configured-v2-r2.json",
+      "sha256": "c9449591c7762e6bd1dbbb29109661d8f1d4a4e8af9a4c9cd16431d9479cbd05"
+    }
+  },
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "configuration",
+      "path": "assets/brand/classic/legacy/classic-launcher-v2.png",
+      "sha256": "46c60eca9a0c5fae252726650b2a7ef5c78f42e8e0d0f3c0b331131309d29c04",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          1024,
+          1024
+        ],
+        "allowUpscale": true
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": true,
+      "lossless": true,
+      "addedSourceDetail": false
+    },
+    {
+      "role": "legacy",
+      "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v2.webp",
+      "sha256": "184b5f6c26a91d7700a8d032f9eae740b5a1eb83c8af38a53f507ef17d181499",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "mdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          48,
+          48
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "legacy-round",
+      "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v2.webp",
+      "sha256": "3cacea6efe6708c9efbf5fd43b6c6870b36abb46b98a9b784ca3f435f539e2a9",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "mdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          48,
+          48
+        ],
+        "allowUpscale": false,
+        "mask": "circle",
+        "losslessWebpEncoding": {
+          "method": 6,
+          "exact": false
+        }
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true,
+      "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+    },
+    {
+      "role": "legacy",
+      "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v2.webp",
+      "sha256": "32e2ca5e649191ad9dc04f1ffc394b3796dc0213f0197d897f0446f58a925799",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "hdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          72,
+          72
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "legacy-round",
+      "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v2.webp",
+      "sha256": "de6adb88938add73234875228fa9b8a7ba68a68dda1c8228084d85d3aecdb985",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "hdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          72,
+          72
+        ],
+        "allowUpscale": false,
+        "mask": "circle",
+        "losslessWebpEncoding": {
+          "method": 6,
+          "exact": false
+        }
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true,
+      "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+    },
+    {
+      "role": "legacy",
+      "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v2.webp",
+      "sha256": "794c24bc1bce50b5ab885080662c95429cf6804640c852d1d81ad1a7f80028da",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "xhdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          96,
+          96
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "legacy-round",
+      "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v2.webp",
+      "sha256": "0df36a21583afe06ac41c025f56d9d1564eefed5dd10ff580d9fcf283a995562",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xhdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          96,
+          96
+        ],
+        "allowUpscale": false,
+        "mask": "circle",
+        "losslessWebpEncoding": {
+          "method": 6,
+          "exact": false
+        }
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true,
+      "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+    },
+    {
+      "role": "legacy",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v2.webp",
+      "sha256": "d98d5de45926f9fec604957f60849b38ecfe27c3b0c5bf21059ea12200f43aae",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "xxhdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          144,
+          144
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "legacy-round",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v2.webp",
+      "sha256": "fff3ebcb9eee95c9049c32ef5a4bad927090ecb91bdba632457fd737d3305938",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxhdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          144,
+          144
+        ],
+        "allowUpscale": false,
+        "mask": "circle",
+        "losslessWebpEncoding": {
+          "method": 6,
+          "exact": false
+        }
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true,
+      "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+    },
+    {
+      "role": "legacy",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v2.webp",
+      "sha256": "1f85bc5a37133c67f2454bcfb435f6a42608d49658c1178fd3ee00a26e6b53be",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "xxxhdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          192,
+          192
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "legacy-round",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v2.webp",
+      "sha256": "84a08d528f152a40b6d768ef4b9907db9b8cd5e7f06d1fcc5141005159bb5660",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxxhdpi",
+      "sourceRole": "legacy",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          192,
+          192
+        ],
+        "allowUpscale": false,
+        "mask": "circle",
+        "losslessWebpEncoding": {
+          "method": 6,
+          "exact": false
+        }
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true,
+      "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+    }
+  ],
+  "approvalSha256": "bd354af2554aab8b23609730ab52b40561c37622fadf014c235ca353c77fb276"
+}

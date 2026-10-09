@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-notification",
+  "version": 2,
+  "state": "committed",
+  "expectedRegistrySha256": "442d3396708e0e6a01c2846193f6763aa9550e4c2cd8981e113df8d4d975adc3",
+  "specificationSha256": "a1dc4137cec0b1c05c422d7e464e201bbd76a408f9e0ce86edcf114e8349affc",
+  "decision": {
+    "assetId": "classic-notification",
+    "version": 2,
+    "candidate": 2,
+    "ownerStatement": "Approve artwork and integration",
+    "ownerQuestion": "Approve the revised circle-centered Classic 24 dp notification vector v2 shown above for artwork and integration?",
+    "ownerDecisionReference": {
+      "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+      "questionIndex": 4,
+      "humanResponse": "Approve artwork and integration"
+    },
+    "recordedAtUtc": "2026-10-09T09:06:53.592649+00:00",
+    "promote": true,
+    "activationApproved": true,
+    "scope": "Approve the revised circle-centered Classic 24 dp notification vector v2 shown above for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+    "specificationSha256": "a1dc4137cec0b1c05c422d7e464e201bbd76a408f9e0ce86edcf114e8349affc",
+    "profileConfigured": {
+      "path": "docs/design/production-assets/records/classic-notification/profile-configured-v2.json",
+      "sha256": "b8e93d83f9d11a54e1b68427ea6afbe89a735c61ccc045a7a54af4c1a3eef1f1"
+    }
+  },
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-notification-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-monochrome",
+      "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+      "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "notification",
+      "path": "assets/brand/classic/notification/ic_remilo_notification_v2.xml",
+      "sha256": "f32def671ab76aec54d5693f0dada56449a1b25d78866d01ad73f8a6cb3b4933",
+      "width": 24,
+      "height": 24,
+      "format": "AndroidVector",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "nativeVectorGeometry": {
+        "sourceAnchorPx": [
+          233,
+          243
+        ],
+        "centeringRevision": 2,
+        "uniformScaleDpPerSourcePx": 0.050066152607140715,
+        "controlHullInsetDp": 2
+      }
+    }
+  ],
+  "approvalSha256": "0510b624b3c529b521b2ac97b5f1a0a6fb7870c3174a5f774b4afb4c1c81f554"
+}

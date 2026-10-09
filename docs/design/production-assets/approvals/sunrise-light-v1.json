@@ -1,0 +1,152 @@
+{
+  "assetId": "sunrise-light",
+  "version": 1,
+  "candidate": 3,
+  "recordedAtUtc": "2026-10-09T01:03:12.582065+00:00",
+  "ownerStatement": "The three one is good.",
+  "scope": "Approval of the candidate 03 artwork and abstract treatment; preserves the original returned source.",
+  "approvedCandidateSha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d",
+  "attachment": {
+    "localArtifactPath": "verification/local/artwork/sunrise-light/approval-01-attached.png",
+    "sha256": "a3579adda1c6054e2a0014ccf281f0ba38dc3da65034857c3de3540b65476327",
+    "width": 1672,
+    "height": 941,
+    "pixelIdenticalToCandidate": true
+  },
+  "masterResolutionContractAmended": false,
+  "masterResolutionRequirementMet": false,
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "actualPreservedSourceSizePx": [
+    1672,
+    941
+  ],
+  "resolutionNote": "Artwork approval is recorded separately from the unmet 2048 x 1152 target. Original pixels are preserved; runtime derivative is a downsample. No assertion of full dimensional or runtime acceptance.",
+  "files": {
+    "source": {
+      "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+      "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original untagged RGB PNG retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/sunrise-light-v1.webp",
+      "sha256": "cea2bfa17c6ee3f4ca1335a026260ccb395dc72137c7b149fc7f900ea9af5cbf",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB assumed sRGB; profile attached to derivative without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      },
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            181,
+            1440,
+            565
+          ]
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            205,
+            1440,
+            541
+          ]
+        }
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_light_v1.webp",
+      "sha256": "cea2bfa17c6ee3f4ca1335a026260ccb395dc72137c7b149fc7f900ea9af5cbf",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "checks": {
+    "originalSourceByteIdentical": true,
+    "runtime1440x810": true,
+    "webpLosslessRoundTrip": true,
+    "runtimeNativeHashIdentical": true,
+    "noUpscaling": true
+  }
+}

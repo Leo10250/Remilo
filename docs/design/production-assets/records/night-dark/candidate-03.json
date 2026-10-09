@@ -1,0 +1,178 @@
+{
+  "assetId": "night-dark",
+  "candidate": 3,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T04:50:09.438430+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/night-dark/candidate-03.txt",
+    "sha256": "39d914fc7111b14a1dc2269d1062f07efcca044339f3a3f890c253dece01d84c"
+  },
+  "inputImages": [
+    {
+      "localArtifactPath": "verification/local/artwork/night-dark/candidate-02.png",
+      "sha256": "9c2719bb7ffa2e1b05c40090c5022ff3ea57e985ddafc351e22eb544a2856022"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "path": "docs/design/production-assets/references/owner-night-shoreline-lights-01.png",
+      "sha256": "58e07ca2fea5060b974ee7e0a90f28d9ac4b624f6ac5f24f6a3e9474741fdc30"
+    },
+    {
+      "path": "docs/design/production-assets/references/owner-night-shoreline-lights-02.png",
+      "sha256": "c1715fb964be06c5039e507e6ef55a26d32a85e7669f9e58dfa0f90db05509b7"
+    }
+  ],
+  "styleDecision": "docs/design/production-assets/style-decision.md",
+  "output": {
+    "localArtifactPath": "verification/local/artwork/night-dark/candidate-03.png",
+    "sha256": "f24f3ddaaeaa5a93cce15229e49ce99889c2b8e15d449ac5a2e4a24611d9073a",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "visualInspection": {
+    "sceneIdentity": "Night Dark: current icy-blue crescent and reflection plus two groups of warm amber lights along the distant left and right shores, with short warm reflections.",
+    "composition": "Moon, mountain valley, lake shoreline, conifer framing and smooth foreground banks retain the existing blue-moon layout; warm light clusters are the added scenic detail.",
+    "abstractTreatment": "Broad smooth banks, simple tree silhouettes and coherent layered mountain planes.",
+    "visibleInterfaceRemnants": false,
+    "note": "Qualitative review only; owner approval, actual runtime contrast and physical acceptance remain pending.",
+    "cropFinding": "The initially generated light clusters sit too low for the 412 dp compact crop; candidate04 refines distant placement before owner review."
+  },
+  "cropProposal": {
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          6,
+          1672,
+          935
+        ],
+        "normalizedRect": [
+          0.0,
+          0.006376,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          64,
+          1672,
+          876
+        ],
+        "normalizedRect": [
+          0.0,
+          0.068013,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          182,
+          1672,
+          628
+        ],
+        "normalizedRect": [
+          0.0,
+          0.193411,
+          1.0,
+          0.473964
+        ],
+        "toolbarHeightDp": 56
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          210,
+          1672,
+          600
+        ],
+        "normalizedRect": [
+          0.0,
+          0.223167,
+          1.0,
+          0.414453
+        ],
+        "toolbarHeightDp": 56
+      }
+    }
+  },
+  "review": {
+    "localArtifactPath": "verification/local/artwork/night-dark/review-03.png",
+    "sha256": "52f88f6cab19d6da67d2a90ebdb6f22f39a4b2c676d3b17d30f1a0a3ca715951"
+  },
+  "approval": null,
+  "productionFiles": null,
+  "limitation": "No upscaling or production promotion. Artwork approval and source dimensional conformance remain separate.",
+  "purpose": "Owner-requested distant shoreline-light revision for both Night variants; Dark blue-moon revision reviewed first, existing approved v1 remains active.",
+  "proposedProductionVersion": 2,
+  "editTarget": {
+    "localArtifactPath": "verification/local/artwork/night-dark/candidate-02.png",
+    "sha256": "9c2719bb7ffa2e1b05c40090c5022ff3ea57e985ddafc351e22eb544a2856022"
+  },
+  "preservedApprovedProductionComposition": {
+    "path": "assets/atmospheres/masters/night-dark-v1.png",
+    "sha256": "63d11da84936c3defad2260f99a3fa563c4aee7f48a517438859b2ef75d6076b"
+  },
+  "requestBrief": {
+    "path": "docs/design/production-assets/night-shoreline-lights-revision.md"
+  },
+  "requestedPairDetail": "Matching sparse warm lights on the distant shores of Night Dark and Night Light; each revision requires individual approval.",
+  "supersededForReviewByCandidate": 4
+}

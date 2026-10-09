@@ -1,0 +1,15 @@
+Use case: precise-object-edit.
+Asset type: Remilo Night Dark shoreline-light crop correction, candidate 04.
+Input image 1: Night Dark candidate03 with the icy-blue crescent and new warm shoreline lights, the EDIT TARGET.
+Input image 2: accepted R3 Night Dark UI screenshot, scenery-only reference for very distant restrained shoreline lights.
+Input image 3: accepted R3 Night Light UI screenshot, scenery-only matching light/palette family reference.
+Input image 4: owner's attached small blue-moon Night UI crop, warm-light scale/style reference.
+Input image 5: owner's attached larger Night UI screenshot, distant-light and short-reflection reference.
+Ignore ALL UI/text/logo/status/navigation/phone/card/reading-plane content in images2–5.
+
+Single correction: relocate the two warm light groups FARTHER BACK and SLIGHTLY UP in image1 so they sit on the farthest low treeline, just ABOVE the first distant water/horizon band. Current lights are too low/near and disappear in shallow header crops. Remove the old lower lights/reflection streaks completely, then add smaller, more distant pinpoints in the corrected positions.
+Precise placement: all amber LIGHT CORES should lie near normalized y=0.619–0.629, about y582–592 on the supplied941px-high source. Do not put warm cores below y595 on that source. Put the left group roughly x0.35–0.39 and the right group roughly x0.58–0.64; place the groups on the existing distant land/forest rather than in the empty sky or water. The right group must move upward from its current roughly y614 position. Keep each group distinct from the central blue reflection path.
+Light treatment: tiny scattered amber/gold pinpoints suggesting faraway windows, roughly 3–5 per group, smaller than the current glowing bulbs. Subtle soft halos, no large luminous balls, lamp poles or detailed houses. Warm cores remain legible in a phone-scale broad header. Use only extremely short faint warm flecks immediately below them; avoid long upright golden streaks. Do not move shorelines or add buildings to support lights.
+Preserve absolutely everything else in image1: crescent outline/position/size/orientation and cool blue halo; navy sky and stars; cloud positions; mountain profiles and horizon; blue lake reflection/bands; shorelines; conifer silhouettes; foreground hill geometry; color/illumination and abstract low-detail style. Do not move the moon or horizon. Do not increase detail.
+Framing purpose: compact412dp×96dp cover-crop uses only source y210–600. Keep the complete existing crescent and the corrected light cores inside that same band. Broad200dp crops must retain the same landscape and distant-light identity.
+Output: target2048×1152 if supported, 16:9 opaque sRGB full rectangular scenery. No words, branding, UI/icons/controls/phone frame, borders, watermark, blank margins, transparency, scrim or curved interface boundary.

@@ -1,0 +1,2271 @@
+{
+  "schemaVersion": 1,
+  "localRoot": "verification/local/artwork",
+  "metadataRoot": "docs/design/production-assets",
+  "allowedOutputRoots": [
+    "verification/local/artwork",
+    "docs/design/production-assets",
+    "assets/atmospheres",
+    "assets/brand/classic",
+    "modules/remilo-alarm/android/src/main/res/drawable-nodpi"
+  ],
+  "authorityFiles": [
+    "AGENTS.md",
+    "docs/design/current/README.md",
+    "docs/design/current/visual-language.md",
+    "docs/design/current/appearance-policy.md",
+    "docs/product.md",
+    "docs/backlog.md",
+    "docs/architecture.md",
+    "docs/verification.md",
+    "docs/design/production-assets/style-decision.md",
+    "docs/design/production-assets/README.md",
+    "docs/design/production-assets/classic-exports.md",
+    "docs/plans/redesign/td-05-static-branding.md"
+  ],
+  "verificationCommands": [
+    "npm run verify:design",
+    "git diff --check"
+  ],
+  "registries": [
+    {
+      "key": "scenes",
+      "adapter": "remilo-scenes",
+      "file": "docs/design/production-assets/manifest.json"
+    },
+    {
+      "key": "brand",
+      "adapter": "remilo-brand",
+      "file": "docs/design/production-assets/brand-manifest.json"
+    }
+  ],
+  "defaults": {
+    "route": "creative-edit",
+    "registry": "scenes",
+    "master": {
+      "destination": "assets/atmospheres/masters/{asset}-v{version}{suffix}",
+      "format": "PNG",
+      "alpha": "opaque",
+      "colorSpace": "srgb",
+      "allowAssumedSrgb": true
+    },
+    "views": [
+      {
+        "name": "broad-360",
+        "size": [
+          360,
+          200
+        ],
+        "unit": "dp",
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "overlayHeight": 56,
+        "landmarks": []
+      },
+      {
+        "name": "broad-412",
+        "size": [
+          412,
+          200
+        ],
+        "unit": "dp",
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "overlayHeight": 56,
+        "landmarks": []
+      },
+      {
+        "name": "compact-360",
+        "size": [
+          360,
+          96
+        ],
+        "unit": "dp",
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0.46
+        ],
+        "overlayHeight": 56,
+        "landmarks": []
+      },
+      {
+        "name": "compact-412",
+        "size": [
+          412,
+          96
+        ],
+        "unit": "dp",
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0.46
+        ],
+        "overlayHeight": 56,
+        "landmarks": []
+      }
+    ]
+  },
+  "sharedStyleReferences": [
+    "docs/design/production-assets/references/owner-abstract-style-board-01.png",
+    "docs/design/production-assets/references/owner-abstract-style-board-02.png"
+  ],
+  "policies": {
+    "individualApproval": true,
+    "sequentialQueue": true,
+    "noGenerativeClassicRedraw": true,
+    "statusFile": "docs/backlog.md",
+    "immutableReferences": [
+      "docs/design/remilo-r3-atmospheres",
+      "docs/design/remilo-r4-details-editor",
+      "docs/design/remilo-r5-sky-evening-details-editor",
+      "docs/design/remilo-r6-alarm-postpone",
+      "docs/design/remilo-r7-lists-repeats",
+      "docs/design/remilo-r8-settings-appearance",
+      "docs/design/remilo-r10-data-help"
+    ],
+    "knownExistingSourceLimitation": "Current approved scenic source masters are 1672 \u00d7 941; 2048 \u00d7 1152 remains unmet. Existing approvals/history are preserved. This fact is not an automatic exception for new promotions.",
+    "runtimeAcceptance": "Synthetic asset review does not pass runtime crop/contrast/accessibility, offline pre-unlock packaging, or signed physical-device acceptance.",
+    "masterPolicy": "Preserve returned bytes and do not stretch/upscale scene masters. Tagged sRGB and explicitly documented untagged interpretation are distinct evidence.",
+    "queue": [
+      "sunrise-light",
+      "sunrise-dark",
+      "sky-light",
+      "sky-dark",
+      "evening-light",
+      "evening-dark",
+      "night-light",
+      "night-dark",
+      "classic-legacy-launcher",
+      "classic-adaptive",
+      "classic-monochrome",
+      "classic-splash",
+      "classic-notification",
+      "classic-favicon"
+    ]
+  },
+  "assets": {
+    "sunrise-light": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/01-sunrise-light.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        }
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_light_v{version}.webp"
+          ]
+        }
+      ],
+      "notes": "Preserve sun and warm lake reflection in the intended dawn/sunset identity. Measure defining landmark bounds for any new candidate."
+    },
+    "sunrise-dark": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/02-sunrise-dark.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        }
+      ],
+      "requiresAssets": [
+        "sunrise-light"
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_dark_v{version}.webp"
+          ]
+        }
+      ],
+      "notes": "Preserve sun and warm lake reflection in the intended dawn/sunset identity. Measure defining landmark bounds for any new candidate."
+    },
+    "sky-light": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/03-sky-light.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        }
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_light_v{version}.webp"
+          ]
+        }
+      ],
+      "notes": "Daytime clouds and green banks remain daytime in both brightness variants; no moon/stars. Measure defining landmark bounds for any new candidate."
+    },
+    "sky-dark": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/04-sky-dark.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        }
+      ],
+      "requiresAssets": [
+        "sky-light"
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_dark_v{version}.webp"
+          ]
+        }
+      ],
+      "notes": "Daytime clouds and green banks remain daytime in both brightness variants; no moon/stars. Measure defining landmark bounds for any new candidate."
+    },
+    "evening-light": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/05-evening-light.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        }
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_light_v{version}.webp"
+          ]
+        }
+      ],
+      "notes": "Preserve sun and warm lake reflection in the intended dawn/sunset identity. Measure defining landmark bounds for any new candidate."
+    },
+    "evening-dark": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/06-evening-dark.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        }
+      ],
+      "requiresAssets": [
+        "evening-light"
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_dark_v{version}.webp"
+          ]
+        }
+      ],
+      "notes": "Preserve sun and warm lake reflection in the intended dawn/sunset identity. Measure defining landmark bounds for any new candidate."
+    },
+    "night-light": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        },
+        {
+          "file": "docs/design/production-assets/references/owner-night-shoreline-lights-01.png",
+          "role": "detail",
+          "influence": "Distant amber shore lights; exclude phone/interface pixels"
+        },
+        {
+          "file": "docs/design/production-assets/references/owner-night-shoreline-lights-02.png",
+          "role": "detail",
+          "influence": "Restrained distant lights, matching water reflection; exclude interface pixels"
+        }
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_light_v{version}.webp"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "name": "broad-360",
+          "size": [
+            360,
+            200
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 56,
+          "landmarks": []
+        },
+        {
+          "name": "broad-412",
+          "size": [
+            412,
+            200
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 56,
+          "landmarks": []
+        },
+        {
+          "name": "compact-360",
+          "size": [
+            360,
+            96
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.43
+          ],
+          "overlayHeight": 56,
+          "landmarks": [
+            {
+              "name": "crescent",
+              "bounds": [
+                0.67,
+                0.236,
+                0.733,
+                0.362
+              ]
+            },
+            {
+              "name": "distant-shore-lights",
+              "bounds": [
+                0.366,
+                0.617,
+                0.655,
+                0.63
+              ]
+            }
+          ]
+        },
+        {
+          "name": "compact-412",
+          "size": [
+            412,
+            96
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.43
+          ],
+          "overlayHeight": 56,
+          "landmarks": [
+            {
+              "name": "crescent",
+              "bounds": [
+                0.67,
+                0.236,
+                0.733,
+                0.362
+              ]
+            },
+            {
+              "name": "distant-shore-lights",
+              "bounds": [
+                0.366,
+                0.617,
+                0.655,
+                0.63
+              ]
+            }
+          ]
+        }
+      ],
+      "notes": "Crescent and distant amber lights remain recognizable. Night Light keeps a cream crescent; Night Dark keeps the approved icy-blue crescent. Declared landmark bounds describe current v2 masters; remeasure them for any changed composition. Compact focal is measured against source, then mapped through runtime trim."
+    },
+    "night-dark": {
+      "route": "creative-edit",
+      "registry": "scenes",
+      "master": {
+        "exactSize": [
+          2048,
+          1152
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
+          "role": "palette",
+          "influence": "Scenic region only; current abstraction decision governs detail level; exclude all UI pixels"
+        },
+        {
+          "file": "docs/design/production-assets/references/owner-night-shoreline-lights-01.png",
+          "role": "detail",
+          "influence": "Distant amber shore lights; exclude phone/interface pixels"
+        },
+        {
+          "file": "docs/design/production-assets/references/owner-night-shoreline-lights-02.png",
+          "role": "detail",
+          "influence": "Restrained distant lights, matching water reflection; exclude interface pixels"
+        },
+        {
+          "file": "docs/design/production-assets/references/owner-blue-moon-style-01.png",
+          "role": "detail",
+          "influence": "Icy-blue crescent treatment only; preserve approved geography"
+        }
+      ],
+      "requiresAssets": [
+        "night-light"
+      ],
+      "exports": [
+        {
+          "role": "runtime",
+          "destination": "assets/atmospheres/{asset}-v{version}.webp",
+          "size": [
+            1440,
+            810
+          ],
+          "format": "WEBP",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_dark_v{version}.webp"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "name": "broad-360",
+          "size": [
+            360,
+            200
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 56,
+          "landmarks": []
+        },
+        {
+          "name": "broad-412",
+          "size": [
+            412,
+            200
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 56,
+          "landmarks": []
+        },
+        {
+          "name": "compact-360",
+          "size": [
+            360,
+            96
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.43
+          ],
+          "overlayHeight": 56,
+          "landmarks": [
+            {
+              "name": "crescent",
+              "bounds": [
+                0.67,
+                0.236,
+                0.733,
+                0.362
+              ]
+            },
+            {
+              "name": "distant-shore-lights",
+              "bounds": [
+                0.366,
+                0.617,
+                0.655,
+                0.63
+              ]
+            }
+          ]
+        },
+        {
+          "name": "compact-412",
+          "size": [
+            412,
+            96
+          ],
+          "unit": "dp",
+          "fit": "cover",
+          "focal": [
+            0.5,
+            0.43
+          ],
+          "overlayHeight": 56,
+          "landmarks": [
+            {
+              "name": "crescent",
+              "bounds": [
+                0.67,
+                0.236,
+                0.733,
+                0.362
+              ]
+            },
+            {
+              "name": "distant-shore-lights",
+              "bounds": [
+                0.366,
+                0.617,
+                0.655,
+                0.63
+              ]
+            }
+          ]
+        }
+      ],
+      "notes": "Crescent and distant amber lights remain recognizable. Night Light keeps a cream crescent; Night Dark keeps the approved icy-blue crescent. Declared landmark bounds describe current v2 masters; remeasure them for any changed composition. Compact focal is measured against source, then mapped through runtime trim."
+    },
+    "classic-legacy-launcher": {
+      "route": "faithful-export",
+      "registry": "brand",
+      "sourceSha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "maskReviews": [
+        "circle",
+        "squircle"
+      ],
+      "master": {
+        "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+        "format": "PNG",
+        "alpha": "opaque",
+        "colorSpace": "srgb",
+        "exactSize": [
+          467,
+          467
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "assets/brand/reference/icon-classic.png",
+          "role": "faithful-source",
+          "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+        },
+        {
+          "file": "assets/brand/reference/source-icon-board.png",
+          "role": "historical",
+          "influence": "Provenance only; source crop is authoritative"
+        }
+      ],
+      "sourceNotes": "Flattened 467 \u00d7 467 RGB source, no alpha/layered/vector master. The 1024 configuration is explicitly interpolated; no additional source detail. Derive native sizes directly from the original.",
+      "exports": [
+        {
+          "role": "configuration",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-1024.png",
+          "path": "assets/brand/classic/legacy/classic-launcher-v2.png",
+          "sha256": "46c60eca9a0c5fae252726650b2a7ef5c78f42e8e0d0f3c0b331131309d29c04",
+          "width": 1024,
+          "height": 1024,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              1024,
+              1024
+            ],
+            "allowUpscale": true
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": true,
+          "lossless": true,
+          "addedSourceDetail": false
+        },
+        {
+          "role": "legacy",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-48.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v2.webp",
+          "sha256": "184b5f6c26a91d7700a8d032f9eae740b5a1eb83c8af38a53f507ef17d181499",
+          "width": 48,
+          "height": 48,
+          "format": "WEBP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              48,
+              48
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-round-48.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "3cacea6efe6708c9efbf5fd43b6c6870b36abb46b98a9b784ca3f435f539e2a9",
+          "width": 48,
+          "height": 48,
+          "format": "WEBP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              48,
+              48
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-72.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v2.webp",
+          "sha256": "32e2ca5e649191ad9dc04f1ffc394b3796dc0213f0197d897f0446f58a925799",
+          "width": 72,
+          "height": 72,
+          "format": "WEBP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              72,
+              72
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-round-72.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "de6adb88938add73234875228fa9b8a7ba68a68dda1c8228084d85d3aecdb985",
+          "width": 72,
+          "height": 72,
+          "format": "WEBP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              72,
+              72
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-96.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v2.webp",
+          "sha256": "794c24bc1bce50b5ab885080662c95429cf6804640c852d1d81ad1a7f80028da",
+          "width": 96,
+          "height": 96,
+          "format": "WEBP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              96,
+              96
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-round-96.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "0df36a21583afe06ac41c025f56d9d1564eefed5dd10ff580d9fcf283a995562",
+          "width": 96,
+          "height": 96,
+          "format": "WEBP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              96,
+              96
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-144.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v2.webp",
+          "sha256": "d98d5de45926f9fec604957f60849b38ecfe27c3b0c5bf21059ea12200f43aae",
+          "width": 144,
+          "height": 144,
+          "format": "WEBP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              144,
+              144
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-round-144.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "fff3ebcb9eee95c9049c32ef5a4bad927090ecb91bdba632457fd737d3305938",
+          "width": 144,
+          "height": 144,
+          "format": "WEBP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              144,
+              144
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-192.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v2.webp",
+          "sha256": "1f85bc5a37133c67f2454bcfb435f6a42608d49658c1178fd3ee00a26e6b53be",
+          "width": 192,
+          "height": 192,
+          "format": "WEBP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              192,
+              192
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/legacy/legacy-round-192.webp",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "84a08d528f152a40b6d768ef4b9907db9b8cd5e7f06d1fcc5141005159bb5660",
+          "width": 192,
+          "height": 192,
+          "format": "WEBP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              192,
+              192
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        }
+      ],
+      "views": [],
+      "reviewNotes": "Inspect circle and diagnostic squircle masks and source fidelity. Mask previews are not claims about every OEM launcher.",
+      "manualSources": [
+        {
+          "role": "legacy",
+          "localArtifactPath": "assets/brand/reference/icon-classic.png",
+          "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+          "productionPath": "assets/brand/classic/masters/classic-legacy-launcher-v2.png"
+        }
+      ],
+      "helperUnsupported": true,
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ],
+      "requiredOutputContract": {
+        "configurationPx": 1024,
+        "androidPx": [
+          48,
+          72,
+          96,
+          144,
+          192
+        ]
+      },
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-legacy-launcher/manual-specification-v2.json",
+        "specificationSha256": "bbf2e65a2b81c875715abeec7503d9ef57ed33664aecf7a3fe2c74560cf79d04",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "unsupportedReason": "Reviewed source-ring anchoring/crop/vector geometry and explicit candidate bytes require this configured manual promotion support; generic single-source resizing cannot substitute."
+    },
+    "classic-adaptive": {
+      "route": "faithful-export",
+      "registry": "brand",
+      "master": {
+        "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+        "format": "PNG",
+        "alpha": "preserve",
+        "colorSpace": "srgb"
+      },
+      "referenceInputs": [
+        {
+          "file": "assets/brand/reference/icon-classic.png",
+          "role": "faithful-source",
+          "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+        },
+        {
+          "file": "assets/brand/reference/source-icon-board.png",
+          "role": "historical",
+          "influence": "Provenance only; source crop is authoritative"
+        }
+      ],
+      "helperUnsupported": true,
+      "unsupportedReason": "The single-source raster helper cannot infer layers. Explicit manual sources/outputs are now configured for scripts/promote-manual-brand.py; use that bounded manual lane.",
+      "preparationPrerequisites": [
+        "Faithful foreground/background sources, maintaining ring/check/sun finish and geometry",
+        "Central 66 dp safe circle in the 108 dp layer; inspect applicable adaptive masks"
+      ],
+      "requiredOutputContract": {
+        "layers": [
+          "foreground",
+          "background"
+        ],
+        "androidPx": [
+          108,
+          162,
+          216,
+          324,
+          432
+        ],
+        "format": "PNG or lossless WebP as native integration requires"
+      },
+      "exports": [
+        {
+          "role": "foreground",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/foreground-108.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v1.png",
+          "sha256": "57437e17c33d838a1cb26497851d9bc2745baf546cbcba16950f710c97aad920",
+          "width": 108,
+          "height": 108,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "foreground",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              108,
+              108
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "background",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/background-108.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v1.png",
+          "sha256": "2f00d90433fa9125259e8b97b396645913ecdd62336863d5620ca76ad007da48",
+          "width": 108,
+          "height": 108,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "background",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              108,
+              108
+            ],
+            "filter": "Lanczos"
+          }
+        },
+        {
+          "role": "foreground",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/foreground-162.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v1.png",
+          "sha256": "163e59fb5ae7b7f6655073e706d58218a7a1ce7b3262203d0cec952374aa9c3d",
+          "width": 162,
+          "height": 162,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "foreground",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              162,
+              162
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "background",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/background-162.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v1.png",
+          "sha256": "0babee7372cb021b15515f0fd9195912134aeefe074581a144835bf94724354b",
+          "width": 162,
+          "height": 162,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "background",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              162,
+              162
+            ],
+            "filter": "Lanczos"
+          }
+        },
+        {
+          "role": "foreground",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/foreground-216.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v1.png",
+          "sha256": "91e5663a5f0d4f9d2d2ce53e69a356e259cdd490148736d1489ec8b5138975ad",
+          "width": 216,
+          "height": 216,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "foreground",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              216,
+              216
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "background",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/background-216.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v1.png",
+          "sha256": "abd7424f7b382671b575dc575da685b918ad588467ce5e4233359807bb43d787",
+          "width": 216,
+          "height": 216,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "background",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              216,
+              216
+            ],
+            "filter": "Lanczos"
+          }
+        },
+        {
+          "role": "foreground",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/foreground-324.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v1.png",
+          "sha256": "56750018ee3ddf5a962a5f1f0f420a8da4a135f92cc788726d185acd543296ea",
+          "width": 324,
+          "height": 324,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "foreground",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              324,
+              324
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "background",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/background-324.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v1.png",
+          "sha256": "34686dd612c1888d10288309565bf0a6e3b6acbbf9ca90e53ea076928e42c851",
+          "width": 324,
+          "height": 324,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "background",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              324,
+              324
+            ],
+            "filter": "Lanczos"
+          }
+        },
+        {
+          "role": "foreground",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/foreground-432.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v1.png",
+          "sha256": "7becc0ff2be961fbb3b7fe7b7392f0c50a6e842ade3c78acb7c6af01c8f8b8f6",
+          "width": 432,
+          "height": 432,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "foreground",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              432,
+              432
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "background",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/exports/background-432.png",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v1.png",
+          "sha256": "351a23a574762eb5ae70b1b00e0f9180fef5017c498739877242817f71611e7e",
+          "width": 432,
+          "height": 432,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "background",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              432,
+              432
+            ],
+            "filter": "Lanczos"
+          }
+        }
+      ],
+      "views": [
+        {
+          "name": "adaptive-108",
+          "size": [
+            108,
+            108
+          ],
+          "unit": "px",
+          "fit": "contain",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 0,
+          "landmarks": []
+        }
+      ],
+      "manualSources": [
+        {
+          "role": "foreground",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/sources/foreground-isolated-467.png",
+          "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+          "productionPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png"
+        },
+        {
+          "role": "background",
+          "localArtifactPath": "verification/local/artwork/classic-adaptive/candidate-20261009-01/sources/background-reconstructed-467.png",
+          "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+          "productionPath": "assets/brand/classic/masters/classic-adaptive-background-v1.png"
+        }
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-adaptive/manual-specification-v1.json",
+        "specificationSha256": "223dd819692dae1ff21719caed145f72a4474fbab48630075a5b7a36a634b532",
+        "sourcePolicy": "Distinct reviewed layer sources and exact prepared PNG bytes; no flattened-tile substitute."
+      }
+    },
+    "classic-monochrome": {
+      "route": "faithful-export",
+      "registry": "brand",
+      "master": {
+        "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+        "format": "PNG",
+        "alpha": "preserve",
+        "colorSpace": "srgb"
+      },
+      "referenceInputs": [
+        {
+          "file": "assets/brand/reference/icon-classic.png",
+          "role": "faithful-source",
+          "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+        },
+        {
+          "file": "assets/brand/reference/source-icon-board.png",
+          "role": "historical",
+          "influence": "Provenance only; source crop is authoritative"
+        }
+      ],
+      "requiresAssets": [
+        "classic-adaptive"
+      ],
+      "helperUnsupported": true,
+      "unsupportedReason": "Single-source resizing cannot construct the Classic silhouette; reviewed manual silhouette/outputs are configured for scripts/promote-manual-brand.py.",
+      "requiredOutputContract": {
+        "alpha": "transparent",
+        "androidPx": [
+          108,
+          162,
+          216,
+          324,
+          432
+        ]
+      },
+      "exports": [
+        {
+          "role": "monochrome",
+          "localArtifactPath": "verification/local/artwork/classic-monochrome/candidate-20261009-01/exports/monochrome-108.png",
+          "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v1.png",
+          "sha256": "3282e6b98e2a19f365d2802ee078dd6ee2518867e24d2cfeea84cd212c083482",
+          "width": 108,
+          "height": 108,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "monochrome",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              108,
+              108
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "monochrome",
+          "localArtifactPath": "verification/local/artwork/classic-monochrome/candidate-20261009-01/exports/monochrome-162.png",
+          "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v1.png",
+          "sha256": "eae7bfd5d15e02a8080465102aa6962b8a229f59578e44f33917dae6f3726cbc",
+          "width": 162,
+          "height": 162,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "monochrome",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              162,
+              162
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "monochrome",
+          "localArtifactPath": "verification/local/artwork/classic-monochrome/candidate-20261009-01/exports/monochrome-216.png",
+          "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v1.png",
+          "sha256": "d50df302f664a3b53d4f1e5263eafca582efd25f5884e7d92d11a1beac6c0b72",
+          "width": 216,
+          "height": 216,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "monochrome",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              216,
+              216
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "monochrome",
+          "localArtifactPath": "verification/local/artwork/classic-monochrome/candidate-20261009-01/exports/monochrome-324.png",
+          "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v1.png",
+          "sha256": "2a50acf5cab5ad757341cff982849cf4ea2b2f7f29b31ae1439f844923ed1635",
+          "width": 324,
+          "height": 324,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "monochrome",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              324,
+              324
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        },
+        {
+          "role": "monochrome",
+          "localArtifactPath": "verification/local/artwork/classic-monochrome/candidate-20261009-01/exports/monochrome-432.png",
+          "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v1.png",
+          "sha256": "0221fc0b4d542f5ddaae8f5873b29be5a109093a3d76c9abeb1310650ffbbcd5",
+          "width": 432,
+          "height": 432,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "monochrome",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              432,
+              432
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.15470729745151487,
+            "layerSizeDp": 108
+          }
+        }
+      ],
+      "views": [
+        {
+          "name": "monochrome-108",
+          "size": [
+            108,
+            108
+          ],
+          "unit": "px",
+          "fit": "contain",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 0,
+          "landmarks": []
+        }
+      ],
+      "manualSources": [
+        {
+          "role": "monochrome",
+          "localArtifactPath": "verification/local/artwork/classic-monochrome/candidate-20261009-01/sources/monochrome-silhouette-467.png",
+          "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+          "productionPath": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png"
+        }
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-monochrome/manual-specification-v1.json",
+        "specificationSha256": "1c95e4c7ab68232cffbe585168b3e7951fe2d067427227c6e53182119f96f4d8",
+        "sourcePolicy": "Reviewed simplified Classic transparent silhouette and exact prepared PNG bytes."
+      }
+    },
+    "classic-splash": {
+      "route": "faithful-export",
+      "registry": "brand",
+      "master": {
+        "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+        "format": "PNG",
+        "alpha": "preserve",
+        "colorSpace": "srgb"
+      },
+      "referenceInputs": [
+        {
+          "file": "assets/brand/reference/icon-classic.png",
+          "role": "faithful-source",
+          "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+        },
+        {
+          "file": "assets/brand/reference/source-icon-board.png",
+          "role": "historical",
+          "influence": "Provenance only; source crop is authoritative"
+        }
+      ],
+      "requiresAssets": [
+        "classic-adaptive"
+      ],
+      "preparationPrerequisites": [
+        "Use approved isolated Classic source and reviewed padding, never the original flattened tile as a substitute"
+      ],
+      "exports": [
+        {
+          "role": "configuration",
+          "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-288.png",
+          "path": "assets/brand/classic/splash/classic-splash-v1.png",
+          "sha256": "096a335210498e37adefaf56bf7c633fa806d4c2d4d1090d933508a052210d07",
+          "width": 288,
+          "height": 288,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "splash",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              288,
+              288
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.44202084986147105,
+            "layerSizeDp": 288
+          }
+        },
+        {
+          "role": "native-76",
+          "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-76.png",
+          "path": "assets/brand/classic/splash/classic-splash-76-v1.png",
+          "sha256": "f67a8a4d277abdf334adc20114a75531f5070b94a0b2a4605a22860b7956104e",
+          "width": 76,
+          "height": 76,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "splash",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              76,
+              76
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.44202084986147105,
+            "layerSizeDp": 288
+          }
+        },
+        {
+          "role": "native-114",
+          "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-114.png",
+          "path": "assets/brand/classic/splash/classic-splash-114-v1.png",
+          "sha256": "347632848581a370d06ef496526df9a07f682c0d31b1656e4f9ff07123af84b6",
+          "width": 114,
+          "height": 114,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "splash",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              114,
+              114
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.44202084986147105,
+            "layerSizeDp": 288
+          }
+        },
+        {
+          "role": "native-152",
+          "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-152.png",
+          "path": "assets/brand/classic/splash/classic-splash-152-v1.png",
+          "sha256": "7d5bdaef55bfb797ac5e575a17a00c2c0913acd1cecc4933ed9b0bb18bd7ff5b",
+          "width": 152,
+          "height": 152,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "splash",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              152,
+              152
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.44202084986147105,
+            "layerSizeDp": 288
+          }
+        },
+        {
+          "role": "native-228",
+          "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-228.png",
+          "path": "assets/brand/classic/splash/classic-splash-228-v1.png",
+          "sha256": "259cccc425432b91779849aea849d7daa4646b4466335ed82267c54898fd1f88",
+          "width": 228,
+          "height": 228,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "splash",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              228,
+              228
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.44202084986147105,
+            "layerSizeDp": 288
+          }
+        },
+        {
+          "role": "native-304",
+          "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-304.png",
+          "path": "assets/brand/classic/splash/classic-splash-304-v1.png",
+          "sha256": "32775ff64a9625081bed78b7b18102508d670894b60f9794f8a4f7472fb647a2",
+          "width": 304,
+          "height": 304,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "splash",
+          "lossless": true,
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "size": [
+              304,
+              304
+            ],
+            "sourceCenterPx": [
+              253.625,
+              215.125
+            ],
+            "dpPerSourcePx": 0.44202084986147105,
+            "layerSizeDp": 288
+          }
+        }
+      ],
+      "views": [],
+      "manualSources": [
+        {
+          "role": "splash",
+          "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+          "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+          "productionPath": "assets/brand/classic/masters/classic-splash-isolated-v1.png"
+        }
+      ],
+      "helperUnsupported": true,
+      "requiredOutputContract": {
+        "configurationPx": 288,
+        "androidPx": [
+          76,
+          114,
+          152,
+          228,
+          304
+        ],
+        "alpha": "transparent"
+      },
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-splash/manual-specification-v1.json",
+        "specificationSha256": "6229a8366b0dc88b6865c2913014975990f05c13da8b3c2580c11f0c448b7311",
+        "sourcePolicy": "Approved isolated Classic foreground and exact reviewed uniformly padded PNG bytes."
+      },
+      "unsupportedReason": "Single-source resizing of the flattened tile cannot supply the reviewed transparent splash; exact approved isolated-source transforms are configured for scripts/promote-manual-brand.py."
+    },
+    "classic-notification": {
+      "route": "faithful-export",
+      "registry": "brand",
+      "master": {
+        "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+        "format": "PNG",
+        "alpha": "preserve",
+        "colorSpace": "srgb"
+      },
+      "referenceInputs": [
+        {
+          "file": "assets/brand/reference/icon-classic.png",
+          "role": "faithful-source",
+          "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+        },
+        {
+          "file": "assets/brand/reference/source-icon-board.png",
+          "role": "historical",
+          "influence": "Provenance only; source crop is authoritative"
+        }
+      ],
+      "helperUnsupported": true,
+      "unsupportedReason": "A faithful simplified 24 dp native vector alpha silhouette must be constructed/verified in vector tooling; raster CLI cannot replace that deliverable.",
+      "requiredOutputContract": {
+        "nativeVector": true,
+        "sizeDp": [
+          24,
+          24
+        ],
+        "alpha": "transparent"
+      },
+      "exports": [],
+      "views": [
+        {
+          "name": "actual-24",
+          "size": [
+            24,
+            24
+          ],
+          "unit": "px",
+          "fit": "contain",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "overlayHeight": 0,
+          "landmarks": []
+        }
+      ]
+    },
+    "classic-favicon": {
+      "route": "faithful-export",
+      "registry": "brand",
+      "sourceSha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "master": {
+        "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+        "format": "PNG",
+        "alpha": "opaque",
+        "colorSpace": "srgb",
+        "exactSize": [
+          467,
+          467
+        ]
+      },
+      "referenceInputs": [
+        {
+          "file": "assets/brand/reference/icon-classic.png",
+          "role": "faithful-source",
+          "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+        },
+        {
+          "file": "assets/brand/reference/source-icon-board.png",
+          "role": "historical",
+          "influence": "Provenance only; source crop is authoritative"
+        }
+      ],
+      "exports": [
+        {
+          "role": "favicon",
+          "destination": "assets/brand/classic/favicon/classic-favicon-v{version}.png",
+          "size": [
+            48,
+            48
+          ],
+          "format": "PNG",
+          "fit": "contain",
+          "focal": [
+            0.5,
+            0.5
+          ],
+          "lossless": true,
+          "allowUpscale": false,
+          "copies": []
+        }
+      ],
+      "views": []
+    }
+  }
+}

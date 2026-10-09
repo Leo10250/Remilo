@@ -1,0 +1,1145 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-09T05:13:39.221030+00:00",
+  "scope": "Final active eight-scene registry after the approved Night pair replacement; source/export/crop checks only.",
+  "replacementDecision": "I approve. Now replace the old night images with two new night images.",
+  "manifestSnapshot": {
+    "path": "docs/design/production-assets/scenery-manifest-v2.json",
+    "sha256": "aab4124a428ec09107fdb2ab047050bd29a86ed4bbb769a3584c4a70c3e9c7d1"
+  },
+  "activeNightVersions": {
+    "night-light": 2,
+    "night-dark": 2
+  },
+  "scenes": [
+    {
+      "assetId": "sunrise-light",
+      "activeVersion": 1,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sunrise-light-v1.json",
+        "sha256": "23c9521c0ac0fb4815305be9d0a431f71e5ccf5ec4457a265012c5185442ff9a",
+        "ownerStatement": "The three one is good."
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+        "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original untagged RGB PNG retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/sunrise-light-v1.webp",
+        "sha256": "cea2bfa17c6ee3f4ca1335a026260ccb395dc72137c7b149fc7f900ea9af5cbf",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB assumed sRGB; profile attached to derivative without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        },
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              181,
+              1440,
+              565
+            ]
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              205,
+              1440,
+              541
+            ]
+          }
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_light_v1.webp",
+        "sha256": "cea2bfa17c6ee3f4ca1335a026260ccb395dc72137c7b149fc7f900ea9af5cbf",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "sunrise-dark",
+      "activeVersion": 1,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sunrise-dark-v1.json",
+        "sha256": "ddf8884bd7ac19208984d13c07d0011596f55bd25c945780c11f066cfa5be933",
+        "ownerStatement": "approved"
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/sunrise-dark-v1.png",
+        "sha256": "7c5f60dbc4e2a3d658ba849d0f2426a34cccd191450d1063bbd21cd19a9f4c3f",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/sunrise-dark-v1.webp",
+        "sha256": "a30d49a800e3b058ce3b295b4f340a2224027f5c01595fe032b20bffe6d6fce3",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              181,
+              1440,
+              565
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              205,
+              1440,
+              541
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_dark_v1.webp",
+        "sha256": "a30d49a800e3b058ce3b295b4f340a2224027f5c01595fe032b20bffe6d6fce3",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "sky-light",
+      "activeVersion": 1,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sky-light-v1.json",
+        "sha256": "380490ec573fb277b18a0cbaab5715fc173501ff4fd5d7f6653375e2d6d99236",
+        "ownerStatement": "approved"
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/sky-light-v1.png",
+        "sha256": "3683559ed87e67772fe3f9caf0736aa67d1e559756fe49870b63f2599524acd4",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/sky-light-v1.webp",
+        "sha256": "8d3b9a9b9a918e8d95f0cfba247b2146fe6afc4aeb1adfa99a9fc17647f03427",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              181,
+              1440,
+              565
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              205,
+              1440,
+              541
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_light_v1.webp",
+        "sha256": "8d3b9a9b9a918e8d95f0cfba247b2146fe6afc4aeb1adfa99a9fc17647f03427",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "sky-dark",
+      "activeVersion": 1,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sky-dark-v1.json",
+        "sha256": "4bf8aec29a8a4f354c39fd9522c3ca8435a0902402a57c874b5c86415b4cde9a",
+        "ownerStatement": "approve"
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/sky-dark-v1.png",
+        "sha256": "ede54a8935b5ab466261ceea8b48e0613f7aba79ff7de10d310d2d542d7f9ad1",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/sky-dark-v1.webp",
+        "sha256": "2d55aa03d6f3fbdd68f0ce9c9b83b45b3687c6b37c7d88e38d1a961903471b56",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              181,
+              1440,
+              565
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              205,
+              1440,
+              541
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_dark_v1.webp",
+        "sha256": "2d55aa03d6f3fbdd68f0ce9c9b83b45b3687c6b37c7d88e38d1a961903471b56",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "evening-light",
+      "activeVersion": 1,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/evening-light-v1.json",
+        "sha256": "028631f64536ae3dda6c2bbc41ac4b836c103bada756408682955fa36d491f5f",
+        "ownerStatement": "approve"
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/evening-light-v1.png",
+        "sha256": "70862a516bf45f3c61a8f52f468db048828ee714c5ca1e5b7b46328ea7708570",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/evening-light-v1.webp",
+        "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              181,
+              1440,
+              565
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              205,
+              1440,
+              541
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_light_v1.webp",
+        "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "evening-dark",
+      "activeVersion": 1,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/evening-dark-v1.json",
+        "sha256": "39f6fd87cda62c4bf2864dfb020b8892e8c73e62db98238543fedb02a93c693f",
+        "ownerStatement": "approve"
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/evening-dark-v1.png",
+        "sha256": "f7e5521ba29f6b8e670b2d1b12aa07b1d3ca81dc4d8f869cc37374118da626fc",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/evening-dark-v1.webp",
+        "sha256": "02ec4470c8f102de627dda86156ac3ff620f90cedce9438ff09429d85fce8b23",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              181,
+              1440,
+              565
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46032051282051284
+            ],
+            "sourceRectPx": [
+              0,
+              205,
+              1440,
+              541
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_dark_v1.webp",
+        "sha256": "02ec4470c8f102de627dda86156ac3ff620f90cedce9438ff09429d85fce8b23",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "night-light",
+      "activeVersion": 2,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/night-light-v2.json",
+        "sha256": "ce57e3c2ce6122fba5d2c016942ab316605a646ac964681debce61741860fac3",
+        "ownerStatement": "I approve. Now replace the old night images with two new night images."
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/night-light-v2.png",
+        "sha256": "a11839c13b720bb33ec12a5a02af8ac04220465feb5a9ef5fae2ef7bdd7a1e59",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/night-light-v2.webp",
+        "sha256": "3110f9dca7fc2f1166ba5d7f1c2ad91b9747fe1f7dcae611840e334f4574c51e",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.4301602564102564
+            ],
+            "sourceRectPx": [
+              0,
+              156,
+              1440,
+              540
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.4301602564102564
+            ],
+            "sourceRectPx": [
+              0,
+              180,
+              1440,
+              516
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_light_v2.webp",
+        "sha256": "3110f9dca7fc2f1166ba5d7f1c2ad91b9747fe1f7dcae611840e334f4574c51e",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    },
+    {
+      "assetId": "night-dark",
+      "activeVersion": 2,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/night-dark-v2.json",
+        "sha256": "abc4c7682b576bda6c8be090dac456706453c025f668fa50f4c2bd7efa7aa9e4",
+        "ownerStatement": "I approve."
+      },
+      "source": {
+        "path": "assets/atmospheres/masters/night-dark-v2.png",
+        "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8",
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "opaque": true,
+        "bytesPreserved": true,
+        "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+        "masterResolutionRequirementMet": false
+      },
+      "runtime": {
+        "path": "assets/atmospheres/night-dark-v2.webp",
+        "sha256": "1e7b921002936bd3f3916173b92abe69543cd71ef37ffb89bf35e6a2c3b06b11",
+        "width": 1440,
+        "height": 810,
+        "format": "WebP",
+        "lossless": true,
+        "opaque": true,
+        "colorSpace": "sRGB",
+        "embeddedColorProfile": true,
+        "sourceRectPx": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "resizeFilter": "Lanczos",
+        "upscaled": false,
+        "cropProfiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              5,
+              1440,
+              805
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.500534188034188
+            ],
+            "sourceRectPx": [
+              0,
+              56,
+              1440,
+              755
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.4301602564102564
+            ],
+            "sourceRectPx": [
+              0,
+              156,
+              1440,
+              540
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.4301602564102564
+            ],
+            "sourceRectPx": [
+              0,
+              180,
+              1440,
+              516
+            ],
+            "toolbarHeightDp": 56
+          }
+        },
+        "exportDetails": {
+          "encoder": "Pillow",
+          "pillowVersion": "12.3.0",
+          "libwebpVersion": "1.6.0",
+          "settings": {
+            "lossless": true,
+            "quality": 100,
+            "method": 6
+          },
+          "resizeFilter": "Lanczos",
+          "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+          "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+        }
+      },
+      "native": {
+        "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_dark_v2.webp",
+        "sha256": "1e7b921002936bd3f3916173b92abe69543cd71ef37ffb89bf35e6a2c3b06b11",
+        "width": 1440,
+        "height": 810,
+        "identicalToRuntime": true
+      },
+      "checks": {
+        "approvedOriginalBytesPreserved": true,
+        "runtimeDimensions1440x810": true,
+        "decodedRuntimeMatchesTrimAndLanczos": true,
+        "runtimeNativeBytesIdentical": true,
+        "noUpscaling": true
+      }
+    }
+  ],
+  "checks": {
+    "activeScenesChecked": 8,
+    "activeProductionFilesChecked": 24,
+    "allCurrentSceneChecksPassed": true,
+    "originalV1FilesCheckedUnchanged": 24,
+    "originalV1ApprovalsCheckedUnchanged": 8,
+    "nightRuntimeWarmCoresInsideAllFourCropsEach": true,
+    "nightRuntimeWarmCoreBoundsPx": {
+      "light": [
+        [
+          525,
+          501,
+          562,
+          509
+        ],
+        [
+          902,
+          503,
+          942,
+          510
+        ]
+      ],
+      "dark": [
+        [
+          526,
+          502,
+          562,
+          507
+        ],
+        [
+          904,
+          503,
+          942,
+          509
+        ]
+      ]
+    }
+  },
+  "nightPairReview": {
+    "localArtifactPath": "verification/local/artwork/final-review/night-runtime-pair-v2.png",
+    "sha256": "b4d117e3cd46c415c41a5ce63e158e1833d096972e9e0b26d9e831a59e1c34bf"
+  },
+  "masterResolutionRequirementMet": false,
+  "resolutionNote": "All original approved source PNGs remain 1672 x 941. The 2048 x 1152 master target remains unmet; no enlargement or resolution-contract amendment is inferred. Runtime exports are 1440 x 810 downsampled lossless WebP.",
+  "unassessed": [
+    "Measured toolbar/control contrast",
+    "Wider or expanded-toolbar framing",
+    "Installed signed-device/native/offline/pre-unlock presentation",
+    "R9 layout approval",
+    "Decorative list-icon decision",
+    "Remaining Classic exports and TD implementation acceptance"
+  ],
+  "visualInspection": {
+    "reviewer": "Codex primary agent",
+    "reviewedRuntimeScenes": 2,
+    "reviewedCropProfiles": 8,
+    "observed": "Both full crescents and both distant warm light groups remain visible at 360 and 412 dp in broad and compact runtime crops. Light uses cream moonlight and softer blue layers; Dark retains the approved icy-blue crescent and deeper navy treatment. Major geography and light placement remain aligned, with no visible interface remnants or obvious crop/edge defects at review scale.",
+    "limitation": "The 412 dp compact crop keeps only a thin lake cue; short light reflections mostly fall below it. Component contrast, wider/expanded layouts and installed-device presentation are unassessed."
+  }
+}

@@ -1,0 +1,388 @@
+{
+  "assetId": "night-light",
+  "candidate": 1,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T01:43:11.952271+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/night-light/candidate-01.txt",
+    "sha256": "5bda58cb3a0f5ef2c1924563b35b8fe5154778097eb6f3f37570d1c6a6a77867"
+  },
+  "inputImages": [
+    {
+      "path": "assets/atmospheres/masters/sky-light-v1.png",
+      "sha256": "3683559ed87e67772fe3f9caf0736aa67d1e559756fe49870b63f2599524acd4"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "path": "docs/design/production-assets/references/owner-abstract-style-board-01.png",
+      "sha256": "6905fb8ddf796c6420429fc09e1e28d803f181a8b44789fa2a961c56d6f82fbf"
+    }
+  ],
+  "approvedCompositionAnchor": {
+    "path": "assets/atmospheres/masters/sky-light-v1.png",
+    "sha256": "3683559ed87e67772fe3f9caf0736aa67d1e559756fe49870b63f2599524acd4"
+  },
+  "styleDecision": "docs/design/production-assets/style-decision.md",
+  "output": {
+    "localArtifactPath": "verification/local/artwork/night-light/candidate-01.png",
+    "sha256": "3aa8727659ff5d45692593dc9a71fda529251193a04b0386d72708662f19184d",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "visualInspection": {
+    "sceneIdentity": "Night Light: a pale crescent and sparse stars above layered moonlit blue mountains, dark conifers and a silver-blue reflected lake; nighttime scenery above the later Light reading plane.",
+    "composition": "Mountain profiles, lake shorelines, tree framing and smooth bank curves continue the approved Sky landscape; blue nighttime lighting, subdued clouds and an upper-right crescent establish Night.",
+    "abstractTreatment": "Broad smooth banks, simple tree silhouettes and coherent layered mountain planes.",
+    "visibleInterfaceRemnants": false,
+    "note": "Owner approved candidate artwork and review crops. Actual runtime contrast and physical acceptance remain unobserved.",
+    "cropRevision": "Artwork pixels unchanged. Broad crops unchanged; compact focal revised from 0.46 to 0.43 to retain the crescent tip."
+  },
+  "cropProposal": {
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          6,
+          1672,
+          935
+        ],
+        "normalizedRect": [
+          0.0,
+          0.006376,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          64,
+          1672,
+          876
+        ],
+        "normalizedRect": [
+          0.0,
+          0.068013,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          182,
+          1672,
+          628
+        ],
+        "normalizedRect": [
+          0.0,
+          0.193411,
+          1.0,
+          0.473964
+        ],
+        "toolbarHeightDp": 56
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          210,
+          1672,
+          600
+        ],
+        "normalizedRect": [
+          0.0,
+          0.223167,
+          1.0,
+          0.414453
+        ],
+        "toolbarHeightDp": 56
+      }
+    },
+    "rationale": "Compact Night focal is raised to retain the complete crescent at 360 and 412 dp. At 412 dp only a thin lake horizon remains; wider or taller-toolbar layouts must prioritize the Night cue and verify framing separately."
+  },
+  "review": {
+    "localArtifactPath": "verification/local/artwork/night-light/review-01-crop-02.png",
+    "sha256": "cf70bbfd0baa38c170ab2fcc3a06377bb0495da64c4974dae2f54a94b008f122"
+  },
+  "approval": {
+    "path": "docs/design/production-assets/approvals/night-light-v1.json",
+    "ownerStatement": "approve",
+    "recordedAtUtc": "2026-10-09T01:49:20.574210+00:00",
+    "scope": "Approval of the presented candidate artwork and reviewed crop direction; original returned source preserved."
+  },
+  "productionFiles": {
+    "source": {
+      "path": "assets/atmospheres/masters/night-light-v1.png",
+      "sha256": "3aa8727659ff5d45692593dc9a71fda529251193a04b0386d72708662f19184d",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/night-light-v1.webp",
+      "sha256": "d126191648cb78de9dbefccdee7a5a1dc6b67c9c01ad3a214cc6ff6d541c595e",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.4301602564102564
+          ],
+          "sourceRectPx": [
+            0,
+            156,
+            1440,
+            540
+          ],
+          "toolbarHeightDp": 56
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.4301602564102564
+          ],
+          "sourceRectPx": [
+            0,
+            180,
+            1440,
+            516
+          ],
+          "toolbarHeightDp": 56
+        }
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_light_v1.webp",
+      "sha256": "d126191648cb78de9dbefccdee7a5a1dc6b67c9c01ad3a214cc6ff6d541c595e",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "limitation": "Approved original source is 1672 x 941; master target met=False. Runtime export is downsampled without enlargement. No runtime integration or device acceptance claimed.",
+  "cropRevisionHistory": [
+    {
+      "recordedAtUtc": "2026-10-09T01:47:36.959947+00:00",
+      "review": {
+        "localArtifactPath": "verification/local/artwork/night-light/review-01.png",
+        "sha256": "c67b209d5c9ae6fac83ccb8e3dddc11d658a855e0af2430a043a297122baba0b"
+      },
+      "cropProposal": {
+        "fit": "cover",
+        "profiles": {
+          "hero-360": {
+            "viewportDp": [
+              360,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.5
+            ],
+            "sourceRectPx": [
+              0,
+              6,
+              1672,
+              935
+            ],
+            "normalizedRect": [
+              0.0,
+              0.006376,
+              1.0,
+              0.987248
+            ]
+          },
+          "hero-412": {
+            "viewportDp": [
+              412,
+              200
+            ],
+            "focalNormalized": [
+              0.5,
+              0.5
+            ],
+            "sourceRectPx": [
+              0,
+              64,
+              1672,
+              876
+            ],
+            "normalizedRect": [
+              0.0,
+              0.068013,
+              1.0,
+              0.862912
+            ]
+          },
+          "compact-360": {
+            "viewportDp": [
+              360,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46
+            ],
+            "sourceRectPx": [
+              0,
+              210,
+              1672,
+              656
+            ],
+            "normalizedRect": [
+              0.0,
+              0.223167,
+              1.0,
+              0.473964
+            ],
+            "toolbarHeightDp": 56
+          },
+          "compact-412": {
+            "viewportDp": [
+              412,
+              96
+            ],
+            "focalNormalized": [
+              0.5,
+              0.46
+            ],
+            "sourceRectPx": [
+              0,
+              238,
+              1672,
+              628
+            ],
+            "normalizedRect": [
+              0.0,
+              0.252922,
+              1.0,
+              0.414453
+            ],
+            "toolbarHeightDp": 56
+          }
+        }
+      }
+    }
+  ]
+}

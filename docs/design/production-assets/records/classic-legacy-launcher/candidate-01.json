@@ -1,0 +1,482 @@
+{
+  "assetId": "classic-legacy-launcher",
+  "version": 1,
+  "candidate": 1,
+  "recordedAtUtc": "2026-10-09T04:32:39.004153+00:00",
+  "method": "Deterministic source resizing and explicit alpha masks; no ImageGen.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "mode": "RGB",
+      "format": "PNG"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "sourceContract": "Classic ring/check/sun source and TD-05, unchanged geometry and finish.",
+  "settings": {
+    "resizeFilter": "Lanczos",
+    "sourcePolicy": "All Android sizes resized directly from the unchanged 467 px source; 1024 px configuration is interpolated separately.",
+    "webp": {
+      "lossless": true,
+      "quality": 100,
+      "method": 6,
+      "exact": true
+    },
+    "roundMask": "4x supersampled full-circle alpha, Lanczos reduced; original RGB pixels unchanged within alpha.",
+    "diagnosticSquircle": "Superellipse exponent 4; synthetic comparison only.",
+    "colorSpace": "Original untagged RGB interpreted as sRGB; exported ICC attached without color transformation.",
+    "pillowVersion": "12.3.0",
+    "libwebpVersion": "1.6.0"
+  },
+  "exports": [
+    {
+      "role": "configuration",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01.png",
+      "sha256": "0f514348c437b6c2f5f74802cc29b4ed8eef6e3fbdefe2d4e459ee993536a347",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": true,
+      "interpolation": "Lanczos",
+      "addedSourceDetail": false,
+      "proposedProductionPath": "assets/brand/classic/legacy/classic-launcher-v1.png"
+    },
+    {
+      "role": "legacy",
+      "density": "mdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-mdpi/ic_launcher_classic_v1.webp",
+      "sha256": "cd2551fd34f4f83745247beaba10e9ff146249118b7f7bf69a442d4229a238cf",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v1.webp"
+    },
+    {
+      "role": "legacy-round",
+      "density": "mdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-mdpi/ic_launcher_round_classic_v1.webp",
+      "sha256": "247de023d0b97b9cc3c4bb322c2aed06f42a57538a8d25b8928da055c5d029fd",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v1.webp"
+    },
+    {
+      "role": "legacy",
+      "density": "hdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-hdpi/ic_launcher_classic_v1.webp",
+      "sha256": "9dee99358d01f3df08609949fa83ccb2f6e31a0f14c9f7ecab1da97a16416498",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v1.webp"
+    },
+    {
+      "role": "legacy-round",
+      "density": "hdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-hdpi/ic_launcher_round_classic_v1.webp",
+      "sha256": "704579f3d47d2d5cd9583e2c048d5a98fdff1f33fdee6fd76add84e84f6d4fcf",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v1.webp"
+    },
+    {
+      "role": "legacy",
+      "density": "xhdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-xhdpi/ic_launcher_classic_v1.webp",
+      "sha256": "e48b467541e238c102a988e29cfb2931fe2f5d3a19f706e9ea5ce252bb8fe4c2",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v1.webp"
+    },
+    {
+      "role": "legacy-round",
+      "density": "xhdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-xhdpi/ic_launcher_round_classic_v1.webp",
+      "sha256": "35866248dc07dd3d97bb0238b77768ef0992698483070f736df5d8229ecc7031",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v1.webp"
+    },
+    {
+      "role": "legacy",
+      "density": "xxhdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-xxhdpi/ic_launcher_classic_v1.webp",
+      "sha256": "d47fd534cea19c8b803e5d3ba531e961cf74184cf36523d364b137dd0e06f26f",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v1.webp"
+    },
+    {
+      "role": "legacy-round",
+      "density": "xxhdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-xxhdpi/ic_launcher_round_classic_v1.webp",
+      "sha256": "d60052285a92969d32453a6dbb6f25309af8914cfe88016d583142fa68b6e867",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v1.webp"
+    },
+    {
+      "role": "legacy",
+      "density": "xxxhdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-xxxhdpi/ic_launcher_classic_v1.webp",
+      "sha256": "ed928126e3ba1a25c3e9caa5222fea1c593aa293e3ed6efee1b084f2edba97a2",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v1.webp"
+    },
+    {
+      "role": "legacy-round",
+      "density": "xxxhdpi",
+      "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/candidate-01/android/mipmap-xxxhdpi/ic_launcher_round_classic_v1.webp",
+      "sha256": "290603e82c749190bcfeaa49f23b5c7a5689a55115a3dbf2847b0e725780c8be",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "proposedProductionPath": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v1.webp"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-legacy-launcher/review-01.png",
+    "sha256": "51c64275de40d8db57a9fa65c401858c0067a565b95a3d5e37f9c7a1dd561c3a"
+  },
+  "inspection": {
+    "geometryRedrawn": false,
+    "colorsAltered": false,
+    "sourceUnchanged": true,
+    "nativeWebpLosslessRoundTrip": true,
+    "configurationUpscaleDisclosed": true,
+    "ownerVisualApproval": "Approved.",
+    "installedDeviceObservation": null,
+    "nativeSizesDirectlyFromSourceVerified": true,
+    "configurationPixelsMatchDisclosedLanczosInterpolation": true,
+    "sourceFinishAndRingCheckSunProportionsRetainedAtReviewScale": true,
+    "roundAndSquircleDiagnosticMasksKeepCriticalMarkVisible": true,
+    "checkAndSunRecognizableAt48Px": true,
+    "visualInspectionScope": "Comparison board and all five actual Android/round export sizes; no device observations."
+  },
+  "approval": {
+    "path": "docs/design/production-assets/approvals/classic-legacy-launcher-v1.json",
+    "ownerStatement": "Approved.",
+    "candidate": 1,
+    "recordedAtUtc": "2026-10-09T04:39:56.489275+00:00"
+  },
+  "productionFiles": [
+    {
+      "role": "configuration",
+      "sha256": "0f514348c437b6c2f5f74802cc29b4ed8eef6e3fbdefe2d4e459ee993536a347",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": true,
+      "interpolation": "Lanczos",
+      "addedSourceDetail": false,
+      "path": "assets/brand/classic/legacy/classic-launcher-v1.png",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy",
+      "density": "mdpi",
+      "sha256": "cd2551fd34f4f83745247beaba10e9ff146249118b7f7bf69a442d4229a238cf",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy-round",
+      "density": "mdpi",
+      "sha256": "247de023d0b97b9cc3c4bb322c2aed06f42a57538a8d25b8928da055c5d029fd",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy",
+      "density": "hdpi",
+      "sha256": "9dee99358d01f3df08609949fa83ccb2f6e31a0f14c9f7ecab1da97a16416498",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy-round",
+      "density": "hdpi",
+      "sha256": "704579f3d47d2d5cd9583e2c048d5a98fdff1f33fdee6fd76add84e84f6d4fcf",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy",
+      "density": "xhdpi",
+      "sha256": "e48b467541e238c102a988e29cfb2931fe2f5d3a19f706e9ea5ce252bb8fe4c2",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy-round",
+      "density": "xhdpi",
+      "sha256": "35866248dc07dd3d97bb0238b77768ef0992698483070f736df5d8229ecc7031",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy",
+      "density": "xxhdpi",
+      "sha256": "d47fd534cea19c8b803e5d3ba531e961cf74184cf36523d364b137dd0e06f26f",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy-round",
+      "density": "xxhdpi",
+      "sha256": "d60052285a92969d32453a6dbb6f25309af8914cfe88016d583142fa68b6e867",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy",
+      "density": "xxxhdpi",
+      "sha256": "ed928126e3ba1a25c3e9caa5222fea1c593aa293e3ed6efee1b084f2edba97a2",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "mode": "RGB",
+      "opaque": true,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v1.webp",
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "legacy-round",
+      "density": "xxxhdpi",
+      "sha256": "290603e82c749190bcfeaa49f23b5c7a5689a55115a3dbf2847b0e725780c8be",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "interpolation": "Lanczos",
+      "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v1.webp",
+      "candidateBytesPreserved": true
+    }
+  ]
+}

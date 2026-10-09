@@ -1,0 +1,147 @@
+{
+  "assetId": "evening-light",
+  "version": 1,
+  "candidate": 1,
+  "recordedAtUtc": "2026-10-09T01:30:56.956799+00:00",
+  "ownerStatement": "approve",
+  "scope": "Approval of the presented candidate artwork and reviewed crop direction; original returned source preserved.",
+  "approvedCandidateSha256": "70862a516bf45f3c61a8f52f468db048828ee714c5ca1e5b7b46328ea7708570",
+  "masterResolutionContractAmended": false,
+  "masterResolutionRequirementMet": false,
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "actualPreservedSourceSizePx": [
+    1672,
+    941
+  ],
+  "resolutionNote": "Artwork approval and dimensional conformance are recorded separately. No upscaling, resolution-contract amendment or runtime/device acceptance claimed.",
+  "files": {
+    "source": {
+      "path": "assets/atmospheres/masters/evening-light-v1.png",
+      "sha256": "70862a516bf45f3c61a8f52f468db048828ee714c5ca1e5b7b46328ea7708570",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/evening-light-v1.webp",
+      "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            181,
+            1440,
+            565
+          ],
+          "toolbarHeightDp": 56
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            205,
+            1440,
+            541
+          ],
+          "toolbarHeightDp": 56
+        }
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_light_v1.webp",
+      "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "checks": {
+    "originalSourceByteIdentical": true,
+    "runtime1440x810": true,
+    "webpLosslessRoundTrip": true,
+    "runtimeNativeHashIdentical": true,
+    "noUpscaling": true
+  }
+}

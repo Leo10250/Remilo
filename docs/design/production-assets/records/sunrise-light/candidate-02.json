@@ -1,0 +1,140 @@
+{
+  "assetId": "sunrise-light",
+  "candidate": 2,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T00:51:05.178641+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/sunrise-light/candidate-02.txt",
+    "sha256": "89af3e9835084970d235c76377dca7a5d6aa65f7ea3d4e808d97368546bd86d4"
+  },
+  "inputImages": [
+    {
+      "sha256": "f59f1e2e3d8e532397eb5e6749a64e469779f86c33af55730da26a1459f4ac7b",
+      "localArtifactPath": "verification/local/artwork/sunrise-light/candidate-01.png"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+    }
+  ],
+  "output": {
+    "sha256": "6ef3157ab100bc81e324214054d6818aa2dc4744d269bab1a247e7a1dc0efb51",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false,
+    "localArtifactPath": "verification/local/artwork/sunrise-light/candidate-02.png"
+  },
+  "requestedGenerationSizePx": [
+    3840,
+    2160
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "proposedSmallerMasterSizePx": [
+    1664,
+    936
+  ],
+  "smallerMasterRequiresOwnerDecision": true,
+  "visualInspection": {
+    "sceneIdentity": "Sunrise Light: peach/gold sky, low central sun, mauve mountains, conifers, warm reflected lake",
+    "visibleInterfaceRemnants": false,
+    "note": "Qualitative artwork review only; no measured runtime contrast or physical acceptance."
+  },
+  "cropProposal": {
+    "focalNormalized": [
+      0.5,
+      0.575
+    ],
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "sourceRectPx": [
+          0,
+          12,
+          1672,
+          941
+        ],
+        "normalizedRect": [
+          0.0,
+          0.012752,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "sourceRectPx": [
+          0,
+          129,
+          1672,
+          941
+        ],
+        "normalizedRect": [
+          0.0,
+          0.137088,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "toolbarHeightDp": 56,
+        "sourceRectPx": [
+          0,
+          318,
+          1672,
+          764
+        ],
+        "normalizedRect": [
+          0.0,
+          0.337938,
+          1.0,
+          0.473964
+        ]
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "toolbarHeightDp": 56,
+        "sourceRectPx": [
+          0,
+          346,
+          1672,
+          736
+        ],
+        "normalizedRect": [
+          0.0,
+          0.367694,
+          1.0,
+          0.414453
+        ]
+      }
+    }
+  },
+  "review": {
+    "sha256": "77fe5d588583ace99251fa35a25579279eb27db111a9817e0a060c1b78586b72",
+    "localArtifactPath": "verification/local/artwork/sunrise-light/review.png"
+  },
+  "approval": null,
+  "productionFiles": null,
+  "limitation": "Both built-in generation attempts returned 1672 x 941; planned 2048 x 1152 master is unmet. No upscaling or production promotion."
+}

@@ -1,0 +1,278 @@
+{
+  "assetId": "sky-light",
+  "candidate": 1,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T01:15:45.046545+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/sky-light/candidate-01.txt",
+    "sha256": "3a22ba8d661b70ecea1d39f90021f83abc408409c05b21a539120f313bb6e1ec"
+  },
+  "inputImages": [
+    {
+      "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+      "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+    }
+  ],
+  "approvedCompositionAnchor": {
+    "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+    "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d"
+  },
+  "styleDecision": "docs/design/production-assets/style-decision.md",
+  "output": {
+    "localArtifactPath": "verification/local/artwork/sky-light/candidate-01.png",
+    "sha256": "3683559ed87e67772fe3f9caf0736aa67d1e559756fe49870b63f2599524acd4",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "visualInspection": {
+    "sceneIdentity": "Sky Light: clear blue daytime clouds, layered blue mountains, cool-blue lake and green banks; no sunrise sun disk.",
+    "composition": "Mountain profiles, lake shorelines, main conifers and bank curves closely follow the approved Sunrise setting; daytime clouds and cooler lighting establish Sky.",
+    "abstractTreatment": "Broad smooth banks, simple tree silhouettes and coherent layered mountain planes.",
+    "visibleInterfaceRemnants": false,
+    "note": "Owner approved candidate artwork and review crops. Actual runtime contrast and physical acceptance remain unobserved."
+  },
+  "cropProposal": {
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          6,
+          1672,
+          935
+        ],
+        "normalizedRect": [
+          0.0,
+          0.006376,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          64,
+          1672,
+          876
+        ],
+        "normalizedRect": [
+          0.0,
+          0.068013,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.46
+        ],
+        "sourceRectPx": [
+          0,
+          210,
+          1672,
+          656
+        ],
+        "normalizedRect": [
+          0.0,
+          0.223167,
+          1.0,
+          0.473964
+        ],
+        "toolbarHeightDp": 56
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.46
+        ],
+        "sourceRectPx": [
+          0,
+          238,
+          1672,
+          628
+        ],
+        "normalizedRect": [
+          0.0,
+          0.252922,
+          1.0,
+          0.414453
+        ],
+        "toolbarHeightDp": 56
+      }
+    }
+  },
+  "review": {
+    "localArtifactPath": "verification/local/artwork/sky-light/review-01.png",
+    "sha256": "82ce4be29cd87118b914bf0840f6d302c7576433fdaf6d2117d34a91ab1a8e3a"
+  },
+  "approval": {
+    "path": "docs/design/production-assets/approvals/sky-light-v1.json",
+    "ownerStatement": "approved",
+    "recordedAtUtc": "2026-10-09T01:21:11.370047+00:00",
+    "scope": "Approval of the presented candidate artwork and reviewed crop direction; original returned source preserved."
+  },
+  "productionFiles": {
+    "source": {
+      "path": "assets/atmospheres/masters/sky-light-v1.png",
+      "sha256": "3683559ed87e67772fe3f9caf0736aa67d1e559756fe49870b63f2599524acd4",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/sky-light-v1.webp",
+      "sha256": "8d3b9a9b9a918e8d95f0cfba247b2146fe6afc4aeb1adfa99a9fc17647f03427",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            181,
+            1440,
+            565
+          ],
+          "toolbarHeightDp": 56
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            205,
+            1440,
+            541
+          ],
+          "toolbarHeightDp": 56
+        }
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_light_v1.webp",
+      "sha256": "8d3b9a9b9a918e8d95f0cfba247b2146fe6afc4aeb1adfa99a9fc17647f03427",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "limitation": "Approved original source is 1672 x 941; master target met=False. Runtime export is downsampled without enlargement. No runtime integration or device acceptance claimed."
+}

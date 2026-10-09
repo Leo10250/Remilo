@@ -8,3 +8,8 @@
 # Preserve the accepted R10 bundle's exact submitted bytes.
 docs/design/remilo-r10-data-help/** -text whitespace=cr-at-eol,-blank-at-eof
 docs/design/approved-ui-r10-outline-acceptance.json -text
+
+# Preserve approval/export ledgers and the approved notification vector byte hashes.
+docs/design/production-assets/** -text whitespace=cr-at-eol,-blank-at-eof
+assets/brand/classic/notification/*.xml -text whitespace=cr-at-eol
+modules/remilo-alarm/android/src/main/res/drawable/ic_remilo_notification.xml -text whitespace=cr-at-eol
