@@ -1,0 +1,462 @@
+{
+  "date": "2026-10-08",
+  "originalRoot": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help",
+  "repositoryRoot": "docs/design/remilo-r10-data-help",
+  "scope": "Byte-identical relocation; original absolute generation paths are historical provenance, not gallery dependencies.",
+  "frozenSubmissionLogicalDirectory": "docs/design",
+  "logicalPathRule": "Resolve frozen submission specification links as if the document resides in docs/design, matching its original canonical source.",
+  "files": [
+    {
+      "file": "01-settings-data-and-help-sunrise-light.png",
+      "sha256": "9226f827b9e963c99941d92cd7333856d18f2e912f2b521a5a1b6c9a9fac2b43"
+    },
+    {
+      "file": "02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+      "sha256": "04b86a5ba5ca2b86de5cfd9fbca6f858a509a7ab3b0d15f25640822930509a39"
+    },
+    {
+      "file": "03-restore-before-choosing-a-file-sky-light.png",
+      "sha256": "2fc5e14e291aa2ec7f4993d1fd829ede0126fedc3664406e726cd53dceba24b3"
+    },
+    {
+      "file": "04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+      "sha256": "be9210fcca626c2147821fde6d25d3d431195a340b72ebc75ec9e75fc212ca44"
+    },
+    {
+      "file": "05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "sha256": "349f5adb3030bb9b4588fcf64f3898ba322c634792f5b275449623b0eb73cdba"
+    },
+    {
+      "file": "06-restore-reply-unconfirmed-evening-dark.png",
+      "sha256": "b0d0898200b8051d66910fe581f3ab3d242ecd7204f30caa2de616f718dd7ec3"
+    },
+    {
+      "file": "07-diagnostics-operational-snapshot-night-light.png",
+      "sha256": "fced764b64028faa81cf4b3aa0209c961fb96f2f24d585a765d78a2a55ef2ad8"
+    },
+    {
+      "file": "08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+      "sha256": "d11134072f5048063038a12ef4e290a6811730ff5da1ac0ca5516ba54adfe0b8"
+    },
+    {
+      "file": "09-invalid-backup-before-an-import-sunrise-light.png",
+      "sha256": "6cbd223a8ae4568c98265963dcad36e53b3f619193682872445eefe93287ffce"
+    },
+    {
+      "file": "10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc"
+    },
+    {
+      "file": "11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+      "sha256": "262028a7ac8d68139118c3ad467b038c08a8abe9e0ad2c35166b4c20084e55c4"
+    },
+    {
+      "file": "12-export-share-unavailable-evening-dark.png",
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685"
+    },
+    {
+      "file": "13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454"
+    },
+    {
+      "file": "14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "sha256": "9d9968416d5d72ad949c687d9d7e6755784754783da21e67e7b9abd39b7a686d"
+    },
+    {
+      "file": "approval-record.json",
+      "sha256": "dbd2c20b8e89b16d0a0b3f436c97622ca934988363645bd7f182b785b87d79dd"
+    },
+    {
+      "file": "capture-index.json",
+      "sha256": "0ee6f452cd353e8c620d81809adb229affaa48e61c302186baf2faf8521a2427"
+    },
+    {
+      "file": "documentation-revision-evidence.md",
+      "sha256": "5dfe071d52ace4130c50e56c8b15e5ae34e674803288dc54da9deb11507c9671"
+    },
+    {
+      "file": "gallery.css",
+      "sha256": "5d414fa879b19c186ccfc3e505389bcd87bb5948a8fb9f9c2e399044465b7185"
+    },
+    {
+      "file": "gallery.html",
+      "sha256": "92db02349623f36ae85855b9c834f1ae2b65d40897615a62e640ec3c315a43b8"
+    },
+    {
+      "file": "gallery.js",
+      "sha256": "a47a5410dd64efa2da364a2dc42322affe8f63e485b4e7af8f8d600b8514e21c"
+    },
+    {
+      "file": "generation/calls-05-08.json",
+      "sha256": "f46410fbf3e62425148c6a0427048b685c7e0936ba0c15fb6fe0c1e37142df11"
+    },
+    {
+      "file": "generation/calls-09-14.json",
+      "sha256": "d916e0b8f4b4d56aabc547e931eaeca2bb20272ef37f05c7fd3fd27e5315f509"
+    },
+    {
+      "file": "generation/calls-r2-05-06-14.json",
+      "sha256": "06e2836230b0c041724ec64798ceea972ae808562c1f05f1c3e4223db5aae7aa"
+    },
+    {
+      "file": "generation/calls-r2-root.json",
+      "sha256": "e1ba6f6b86e83acdf36a5a0e2d7789cc87fe80caa2e58378a7332454fa93bc96"
+    },
+    {
+      "file": "generation/calls-root.json",
+      "sha256": "eaa608ff541649041331e34049b3586ba4766cfc4061a3ebbcab848c15f7f392"
+    },
+    {
+      "file": "generation/candidates/R10-05-call-01.png",
+      "sha256": "d074f5f39640cd25b54cca860c047f7b953baf357257aaef998179a5387b5803"
+    },
+    {
+      "file": "generation/candidates/R10-06-call-01.png",
+      "sha256": "42a60c80fd192a7d87686dd3301a2c3daffdd21b7bab4e6ac3004b8e279af8f3"
+    },
+    {
+      "file": "generation/candidates/R10-07-call-01.png",
+      "sha256": "de8111e877a2ad6b3f72e2205b1a0af1ab7123be6c12e553aa825fd8adb8a14f"
+    },
+    {
+      "file": "generation/candidates/R10-10-call-01.png",
+      "sha256": "d86d63962b528dc06bb6d0ae7a5fc3eae5bf25f119b195ef3ae5cab6df39703e"
+    },
+    {
+      "file": "generation/candidates/R10-12-call-01.png",
+      "sha256": "45af7b083afac56a57b44a46e225a6264ea99f405587b54e159cbc380a579c0c"
+    },
+    {
+      "file": "generation/candidates/R10-14-call-01.png",
+      "sha256": "a3d76c8d1eb514f28c384232f57a376895920fc68348113f26dd26098bc3bfe4"
+    },
+    {
+      "file": "generation/inspect-r2-05-06-14.mjs",
+      "sha256": "8b14c9f62ae2e7f85859c3cbc0bc78fb1cf85818df60ad1683bcb153333c2e26"
+    },
+    {
+      "file": "generation/pending-08.json",
+      "sha256": "1c89d80db14f460e9ae5b36a9892811632089a5257234cd5ca84748db0c66cf2"
+    },
+    {
+      "file": "generation/r2-candidates/R10-05-r2-call-01.png",
+      "sha256": "e023fc1d231e3af63c65476e95326e50d96d80f34d3c13006051f3cb5e8e4f0a"
+    },
+    {
+      "file": "generation/r2-candidates/R10-06-r2-call-01.png",
+      "sha256": "7870afcc720001567993584838a65be97b05e911e32f3a951f06e4d08ef49e0a"
+    },
+    {
+      "file": "generation/README.md",
+      "sha256": "955ed234a26a6d9cca4498d7fdccdb275f7874f65b68d875fac7b3e96ef5e58a"
+    },
+    {
+      "file": "generation/shared-style-brief.txt",
+      "sha256": "ad02aff0df232ce7bd16d52cfe503fa8f5772d288b656ad0ffd78b71360726bb"
+    },
+    {
+      "file": "generation-intake.json",
+      "sha256": "781c913f8e6facc56ced88f98047ced61585645d6e7453d52536a773206ca3e7"
+    },
+    {
+      "file": "generation-prompts.md",
+      "sha256": "6b3898fa6264b55f17185cca7c66bf87faaab41fbff271297c69bb6f307dc4ff"
+    },
+    {
+      "file": "generation-provenance.json",
+      "sha256": "ef36d137d72a378d85010340654bf14cfbffc358b5458ede25a87c287aaa8e68"
+    },
+    {
+      "file": "history/r1/01-settings-data-and-help-sunrise-light.png",
+      "sha256": "9226f827b9e963c99941d92cd7333856d18f2e912f2b521a5a1b6c9a9fac2b43"
+    },
+    {
+      "file": "history/r1/02-export-preparation-and-share-handoff-acknowledged-sunrise-dark.png",
+      "sha256": "04b86a5ba5ca2b86de5cfd9fbca6f858a509a7ab3b0d15f25640822930509a39"
+    },
+    {
+      "file": "history/r1/03-restore-before-choosing-a-file-sky-light.png",
+      "sha256": "aa305479b7cd7e06fe72f06350e8d8e088ebc1753f66f5463cde1cc85a47347b"
+    },
+    {
+      "file": "history/r1/04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+      "sha256": "42535939903794636e78ece205ad1c097dc73d08e2e8e9f2502adfcc50eaa117"
+    },
+    {
+      "file": "history/r1/05-restore-in-progress-with-frozen-choices-evening-light.png",
+      "sha256": "5ba059bdda490eb1d4c9273ff4095953eef225a9c32cea3203b5a92a8acf2407"
+    },
+    {
+      "file": "history/r1/06-restore-reply-unconfirmed-evening-dark.png",
+      "sha256": "d76d86c646f4c00cf7cdc84f46c476fe76ec886aa5313288e7ebeabc0777a1d4"
+    },
+    {
+      "file": "history/r1/07-diagnostics-operational-snapshot-night-light.png",
+      "sha256": "fced764b64028faa81cf4b3aa0209c961fb96f2f24d585a765d78a2a55ef2ad8"
+    },
+    {
+      "file": "history/r1/08-diagnostics-refresh-failure-retaining-the-old-report-night-dark.png",
+      "sha256": "d11134072f5048063038a12ef4e290a6811730ff5da1ac0ca5516ba54adfe0b8"
+    },
+    {
+      "file": "history/r1/09-invalid-backup-before-an-import-sunrise-light.png",
+      "sha256": "d779b1a6ef14d6a762a84310941971dbd530ec6fff694c6db341c06086cb0edd"
+    },
+    {
+      "file": "history/r1/10-confirmed-restore-with-blocked-delivery-sky-light.png",
+      "sha256": "0de4b02ba18cca88f04868abce147504b987e9e93eb8371b21e196f7275793bc"
+    },
+    {
+      "file": "history/r1/11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+      "sha256": "6a88732fb07e74e32807f47a3d130c9dfcb924c8434975283889e90b33cfb37a"
+    },
+    {
+      "file": "history/r1/12-export-share-unavailable-evening-dark.png",
+      "sha256": "6686c172524cf4b399fd372b53fa682eeb78915e68ff27c0729a7b33ca2df685"
+    },
+    {
+      "file": "history/r1/13-diagnostics-share-sheet-could-not-open-evening-light.png",
+      "sha256": "21645e4b99cfcdab1da80db95a108a6d650bf2f5cb77c3c3a58bc3e58dad9454"
+    },
+    {
+      "file": "history/r1/14-legacy-preview-with-future-definition-but-no-portable-target-night-dark.png",
+      "sha256": "71a7a89938b92b77e3d202a917ba09e9a5d1b6bc50aa809b6151ce34deeffa13"
+    },
+    {
+      "file": "history/r1/capture-index.json",
+      "sha256": "973733c0bdb245a1e0f41eab246dee7726a646899539f80bf78217b1896d243c"
+    },
+    {
+      "file": "history/r1/gallery.css",
+      "sha256": "5d414fa879b19c186ccfc3e505389bcd87bb5948a8fb9f9c2e399044465b7185"
+    },
+    {
+      "file": "history/r1/gallery.html",
+      "sha256": "ad09423660b8aeee2da069dca8d2c59760bd9d3be966655adfad99c5af7f4cbc"
+    },
+    {
+      "file": "history/r1/gallery.js",
+      "sha256": "121c20e7b0d3571cd93da27c41b93542b6f1819c8b49bd8f468d50e617e1242d"
+    },
+    {
+      "file": "history/r1/generation/calls-05-08.json",
+      "sha256": "f46410fbf3e62425148c6a0427048b685c7e0936ba0c15fb6fe0c1e37142df11"
+    },
+    {
+      "file": "history/r1/generation/calls-09-14.json",
+      "sha256": "d916e0b8f4b4d56aabc547e931eaeca2bb20272ef37f05c7fd3fd27e5315f509"
+    },
+    {
+      "file": "history/r1/generation/calls-root.json",
+      "sha256": "eaa608ff541649041331e34049b3586ba4766cfc4061a3ebbcab848c15f7f392"
+    },
+    {
+      "file": "history/r1/generation/candidates/R10-05-call-01.png",
+      "sha256": "d074f5f39640cd25b54cca860c047f7b953baf357257aaef998179a5387b5803"
+    },
+    {
+      "file": "history/r1/generation/candidates/R10-06-call-01.png",
+      "sha256": "42a60c80fd192a7d87686dd3301a2c3daffdd21b7bab4e6ac3004b8e279af8f3"
+    },
+    {
+      "file": "history/r1/generation/candidates/R10-07-call-01.png",
+      "sha256": "de8111e877a2ad6b3f72e2205b1a0af1ab7123be6c12e553aa825fd8adb8a14f"
+    },
+    {
+      "file": "history/r1/generation/candidates/R10-10-call-01.png",
+      "sha256": "d86d63962b528dc06bb6d0ae7a5fc3eae5bf25f119b195ef3ae5cab6df39703e"
+    },
+    {
+      "file": "history/r1/generation/candidates/R10-12-call-01.png",
+      "sha256": "45af7b083afac56a57b44a46e225a6264ea99f405587b54e159cbc380a579c0c"
+    },
+    {
+      "file": "history/r1/generation/candidates/R10-14-call-01.png",
+      "sha256": "a3d76c8d1eb514f28c384232f57a376895920fc68348113f26dd26098bc3bfe4"
+    },
+    {
+      "file": "history/r1/generation/pending-08.json",
+      "sha256": "1c89d80db14f460e9ae5b36a9892811632089a5257234cd5ca84748db0c66cf2"
+    },
+    {
+      "file": "history/r1/generation/shared-style-brief.txt",
+      "sha256": "ad02aff0df232ce7bd16d52cfe503fa8f5772d288b656ad0ffd78b71360726bb"
+    },
+    {
+      "file": "history/r1/generation-intake.json",
+      "sha256": "e4e901ab1760761cb182f436f1a050eb942ccaeb68c81dc4faf718b6b3baddc3"
+    },
+    {
+      "file": "history/r1/generation-prompts.md",
+      "sha256": "c5b0444eaae07a0f3c028252bcfe3594289546f3bbc3b3b31666ee972fad14a2"
+    },
+    {
+      "file": "history/r1/generation-provenance.json",
+      "sha256": "cf699fc51cd957325d5e48adba564ea0a92ced9ac779dd65aa928ecb2127fef0"
+    },
+    {
+      "file": "history/r1/images.json",
+      "sha256": "fb3603390f7f99ddeba89ea9586fe297b39d98505023c2a3ebbb9a390af9867b"
+    },
+    {
+      "file": "history/r1/README.md",
+      "sha256": "653ef3e33ec6d89d9639fa568a9d04b687868188ea4b6317b8150c25af1d0762"
+    },
+    {
+      "file": "history/r1/references/01-settings-overview-sunrise-light.png",
+      "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+    },
+    {
+      "file": "history/r1/references/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+    },
+    {
+      "file": "history/r1/references/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+    },
+    {
+      "file": "history/r1/references/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+    },
+    {
+      "file": "history/r1/references/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+    },
+    {
+      "file": "history/r1/references/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+    },
+    {
+      "file": "history/r1/references/05-sound-preview-fallback-evening-light.png",
+      "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e"
+    },
+    {
+      "file": "history/r1/references/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+    },
+    {
+      "file": "history/r1/references/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "file": "history/r1/references/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    },
+    {
+      "file": "history/r1/references/08-permissions-refresh-failure-night-dark.png",
+      "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a"
+    },
+    {
+      "file": "history/r1/references/13-test-saved-with-pending-scheduling-evening-dark.png",
+      "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68"
+    },
+    {
+      "file": "history/r1/review-notes.json",
+      "sha256": "d548bb5721c299d0c716edfb34f8af3e1867770483a10507a48713a2048b17b0"
+    },
+    {
+      "file": "history/r1/review-notes.md",
+      "sha256": "72f6c50ffcc2654005219a0dc813a1827cff0ebe6fd9484062dd0cbd6a374582"
+    },
+    {
+      "file": "history/r1/submission-fixtures-r1.json",
+      "sha256": "739b87240c546796ec899a597a0f43b5e6d1731f5c82fb66f8c11a3adb52ccdc"
+    },
+    {
+      "file": "history/r1/submission-specification-r1.md",
+      "sha256": "e0767e594ed67d548471d0490107299bc6c43e25ecd8102a98f89b8814469ac9"
+    },
+    {
+      "file": "history/r1/validation-report.json",
+      "sha256": "096d1d19a5036bf707bdb6fd07f4b93983fcd01317ce820a9a5550c5d55a89b1"
+    },
+    {
+      "file": "images.json",
+      "sha256": "b22ef0eebebffd7e7b747e31b038d987622ed35563256a2346e7b62d3c85e10c"
+    },
+    {
+      "file": "README.md",
+      "sha256": "8238ee8145ea1a1bf293b3cda8c403baecdde5bdefb380557ca1e3a5ccc5efa8"
+    },
+    {
+      "file": "references/01-settings-overview-sunrise-light.png",
+      "sha256": "df50ad8618853974bf4c72ee78782f2320e49a43927b9f7b808110c8adb21710"
+    },
+    {
+      "file": "references/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+    },
+    {
+      "file": "references/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+    },
+    {
+      "file": "references/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+    },
+    {
+      "file": "references/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+    },
+    {
+      "file": "references/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+    },
+    {
+      "file": "references/05-sound-preview-fallback-evening-light.png",
+      "sha256": "a6a21c0646fc4d51c5d68d2597ae2c1fa85d4f0f6fc9d10498cd0a0e4c946b9e"
+    },
+    {
+      "file": "references/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+    },
+    {
+      "file": "references/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "file": "references/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    },
+    {
+      "file": "references/08-permissions-refresh-failure-night-dark.png",
+      "sha256": "dba4c154ec489cdf2900a1482b5951a39f96e10d9ac591714fcee05fcceb174a"
+    },
+    {
+      "file": "references/13-test-saved-with-pending-scheduling-evening-dark.png",
+      "sha256": "aa5cb04a82aa408ae5295ac8ad991d2b67a8a6f2add53bfc7c084f8be8cc9a68"
+    },
+    {
+      "file": "restore-whole-backup-agreement.json",
+      "sha256": "14196df6938352e1f0f6a9146c2079ac176b8f3f5234689610c2359f8f580f01"
+    },
+    {
+      "file": "review-notes.json",
+      "sha256": "7183ea0c107ada359f66ddb68ce0bf34f424cd0356e6e0e3b8373d03ec7b90ec"
+    },
+    {
+      "file": "review-notes.md",
+      "sha256": "a1b309406dc1bf27e4702decd2d36fa5d61dfc7f8fbfdaa9fa48ce0c7c586575"
+    },
+    {
+      "file": "submission-fixtures-r1.json",
+      "sha256": "739b87240c546796ec899a597a0f43b5e6d1731f5c82fb66f8c11a3adb52ccdc"
+    },
+    {
+      "file": "submission-fixtures-r2.json",
+      "sha256": "4d276bbce66441f025a410e5ba138eb71b6fd39174ebc179421a65772eed7c49"
+    },
+    {
+      "file": "submission-specification-r1.md",
+      "sha256": "e0767e594ed67d548471d0490107299bc6c43e25ecd8102a98f89b8814469ac9"
+    },
+    {
+      "file": "submission-specification-r2.md",
+      "sha256": "d31e19a6facb73a0922fc3373c2707aa0017d0e993a9e4d0ea73360202ee8c4f"
+    },
+    {
+      "file": "validation-report.json",
+      "sha256": "27a3e377669f9334e0022932c365c60c02a4a0f898d60cb9e10528ffc8b9545a"
+    }
+  ]
+}

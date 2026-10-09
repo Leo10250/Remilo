@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remilo R6 — Accepted alarm and Postpone templates</title>
+<link rel="stylesheet" href="gallery.css">
+<script src="gallery.js" defer></script>
+</head>
+<body>
+<header class="page-header">
+<p class="eyebrow">REMILO · R6 ACCEPTED TEMPLATES</p>
+<h1>Accepted native alarm and Postpone</h1>
+<p>Eleven R6 reference images: seven A22 workflow templates plus four A24 themed alarm starting templates. Backgrounds must match their existing theme colors; detailed coloring and visual polish remain open. The original plain alarm stays rejected.</p>
+<nav class="resources" aria-label="Review resources">
+<a href="review-notes.json">Discrepancy notes</a>
+<a href="../r6-alarm-postpone-specification.md">Source specification</a>
+<a href="../r6-alarm-postpone-fixtures.json">Exact states</a>
+<a href="manifest.json">Generation prompts</a>
+</nav>
+</header>
+<main>
+<section class="controls" aria-label="Screen selection">
+<div class="field"><label for="screen-select">Screen</label><select id="screen-select"></select></div>
+<div class="field"><label for="scale-select">Preview width</label><select id="scale-select">
+<option value="360">360 px · mobile scale</option>
+<option value="420">420 px · larger phone</option>
+<option value="540">540 px · enlarged</option>
+<option value="841">841 px · original</option>
+</select></div>
+<div class="paging"><button type="button" id="previous">← Previous</button><span id="position" aria-live="polite"></span><button type="button" id="next">Next →</button></div>
+</section>
+<div class="review-layout">
+<figure class="screen-preview">
+<img id="screen-image" alt="" width="841" height="1870">
+<figcaption><span id="screen-caption"></span> <a id="original-link" href="#" target="_blank" rel="noopener">Open original PNG</a></figcaption>
+</figure>
+<aside class="notes" aria-labelledby="screen-title">
+<p class="eyebrow" id="screen-id"></p>
+<h2 id="screen-title"></h2>
+<p id="intent"></p>
+<h3>What this screen demonstrates</h3>
+<ul id="review-list"></ul>
+<h3>Generation discrepancies and implementation treatment</h3>
+<ul id="discrepancy-list"></ul>
+<p class="notice">Control dimensions, text scaling, contrast, native scrolling, privacy and scheduling require implementation verification. The screenshot is an accepted synthetic reference with documented conditions.</p>
+</aside>
+</div>
+</main>
+<footer class="page-footer">Built-in ImageGen references · A22–A24, 7 October 2026 · Accepted templates with corrections; implementation and physical verification remain separate.</footer>
+<noscript><p>JavaScript is needed for the screen selector. All eleven PNGs and notes are available in <a href="images.json">the image manifest</a>.</p></noscript>
+</body>
+</html>

@@ -4,10 +4,16 @@ import type { AppSettings, Command, CommandResult, ImportPreview, Occurrence, Re
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
 
+const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
-  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light' };
+  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light', atmosphere: 'automatic' };
+const reviewScene = review.get('reviewScene'), reviewBrightness = review.get('reviewBrightness');
+if (reviewScene === 'automatic' || reviewScene === 'sunrise' || reviewScene === 'sky' || reviewScene === 'evening' || reviewScene === 'night') settings.atmosphere = reviewScene;
+if (reviewBrightness === 'system' || reviewBrightness === 'light' || reviewBrightness === 'dark') settings.theme = reviewBrightness;
 const today = new Date(); today.setHours(9, 0, 0, 0);
 const dayMs = 86_400_000, clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
+const civilMs = (local: string) => Date.parse(local + 'Z');
+const localAfterDays = (local: string, days: number) => new Date(civilMs(local) + days * dayMs).toISOString().slice(0, 19);
 let identity = 0;
 const nextId = () => 'fixture-' + ++identity;
 const lists = new Map<string, ListRecord>([
@@ -20,7 +26,8 @@ const make = (id: string, title: string, offset: number, changes: Partial<Occurr
   return { id, title, eventStartMs: event, eventEndMs: event + 1_800_000, dueAtMs: event, alarmAtMs: event, nextAlertMs: event,
     mode: 'Alarm', completed: false, deleted: false, skipped: false, revision: 1, generation: 1, deliveryState: 'Scheduled',
     notes: '', listName: '', listId: null, allDay: false, zoneId: 'America/Los_Angeles', dueLinked: true, alarmLinked: true, sound: 'remilo', vibration: true,
-    segmentId: null, nominalSlot: null, exception: false, seriesState: null, repeatSummary: null, overdue: false, agendaGroup: '',
+    segmentId: null, nominalSlot: null, exception: false, seriesState: null, repeatSummary: null, overdue: false, overdueAtMs: event,
+    quickSnoozeMinutes: settings.snoozeMinutes, agendaGroup: '', agendaAtMs:event,
     history: [{ kind: 'Create', atMs: event - dayMs, targetMs: event }], ...changes };
 };
 const items: Occurrence[] = [
@@ -39,16 +46,58 @@ const items: Occurrence[] = [
     history: [{ kind: 'Delete', atMs: today.getTime() - 1_800_000, targetMs: null }] }),
   make('paused', 'Stretch and take a break', dayMs, { segmentId: 'paused-series', seriesState: 'Paused', deliveryState: 'Paused', nextAlertMs: null, repeatSummary: 'Every day' }),
 ];
+if (review.get('reviewCards') === 'states') {
+  const now = Date.now(), zone = 'America/Los_Angeles', localStart = civilAt(now, zone).slice(0, 10) + 'T00:00:00';
+  const allDayStart = convert({ zoneId: zone, local: localStart }).instantMs;
+  const allDayEnd = convert({ zoneId: zone, local: localAfterDays(localStart, 1) }).instantMs;
+  items.push(
+    make('timed-out', 'An unanswered alarm', 0, { alarmAtMs: now - 180_000, nextAlertMs: null, deliveryState: 'TimedOut' }),
+    make('notified', 'A delivered notification', 0, { mode: 'Notification', alarmAtMs: now - 3_600_000, nextAlertMs: null, deliveryState: 'Notified' }),
+    make('no-alert-past', 'A saved reminder without an alert', 0, { mode: 'None', eventStartMs: now - 600_000, eventEndMs: now + 1_800_000,
+      dueAtMs: now + dayMs, nextAlertMs: null, deliveryState: 'NoAlert', dueLinked: false }),
+    make('no-alert-future', 'Future work with an earlier independent Due', 0, { mode: 'None', eventStartMs: now + dayMs, eventEndMs: now + dayMs + 1_800_000,
+      dueAtMs: now - 600_000, nextAlertMs: null, deliveryState: 'NoAlert', dueLinked: false }),
+    make('no-alert-all-day', 'An all-day reminder without an alert', 0, { mode: 'None', allDay: true, zoneId: zone,
+      eventStartMs: allDayStart, eventEndMs: allDayEnd, dueAtMs: allDayEnd, nextAlertMs: null, deliveryState: 'NoAlert' }),
+    make('blocked-alert', 'An alert blocked by permissions', 0, { alarmAtMs: now + 600_000, nextAlertMs: now + 600_000, deliveryState: 'Blocked' }),
+    make('failed-alert', 'A notification delivery problem', 0, { mode: 'Notification', alarmAtMs: now - 180_000, nextAlertMs: null, deliveryState: 'Failed' }),
+    make('done-repeat', 'A completed repeating reminder', -dayMs, { completed: true, deliveryState: 'Completed', nextAlertMs: null,
+      listId: 'work', segmentId: 'daily', repeatSummary: 'Every day', exception: true, dueLinked: false, dueAtMs: now - 3_600_000 }),
+    make('trash-completed', 'Completed work kept in Trash', -dayMs, { deleted: true, completed: true, deliveryState: 'Deleted', nextAlertMs: null }),
+    make('trash-skipped', 'A skipped occurrence kept in Trash', -dayMs, { deleted: true, skipped: true, deliveryState: 'Deleted', nextAlertMs: null }),
+  );
+}
+if (review.get('reviewSession') === 'ringing') {
+  const now = Date.now();
+  items.push(make('ring-one', 'First ringing reminder', 0, { alarmAtMs: now - 180_000, nextAlertMs: now - 180_000, deliveryState: 'Alerting' }),
+    make('ring-two', 'Second ringing reminder', 0, { alarmAtMs: now - 180_000, nextAlertMs: now - 180_000, deliveryState: 'Alerting' }));
+}
+if (review.get('reviewText') === 'long') {
+  lists.forEach((list) => { list.name += ' · Shared household and work review / 家庭与工作共同安排'; });
+  items.forEach((item) => {
+    item.title += ' · Check every detail and coordinate the next steps / 检查全部细节并确认下一步安排';
+    item.notes = ('Review the complete proposal, confirm the arrangements with everyone involved, and keep the original Event, Due and Next alert separately visible.\n请仔细阅读完整说明，确认参与者的安排，并保留原始事件、截止时间和下一次提醒。长文本应自然换行，编辑时光标与操作按钮都必须保持可见。\n\n').repeat(4);
+    item.listName = item.listId ? lists.get(item.listId)?.name ?? '' : '';
+  });
+}
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
 let soundPreview: SoundPreviewSnapshot | null = null;
 const soundChanged = () => { if (soundPreview) soundListeners.forEach((fn) => fn(clone(soundPreview!))); };
-const queryLists = () => [...lists.values()].map((list) => ({ ...list,
-  overdueCount: items.filter((item) => item.listId === list.id && !item.completed && !item.deleted && !item.skipped && item.dueAtMs < Date.now()).length,
-})).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+function overdueReference(item: Occurrence) {
+  if (item.mode !== 'None') return item.alarmAtMs;
+  if (!item.allDay) return item.eventStartMs;
+  const zone = item.zoneId || deviceZone(), localStart = civilAt(item.eventStartMs, zone).slice(0, 10) + 'T00:00:00';
+  return convert({ zoneId: zone, local: localAfterDays(localStart, 1) }).instantMs;
+}
+const queryLists = () => {
+  const now = Date.now();
+  return [...lists.values()].map((list) => ({ ...list,
+    overdueCount: items.filter((item) => item.listId === list.id && !item.completed && !item.deleted && !item.skipped && overdueReference(item) < now).length,
+  })).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+};
 const changed = () => listeners.forEach((fn) => fn());
-const civilMs = (local: string) => Date.parse(local + 'Z');
-const localAfterDays = (local: string, days: number) => new Date(civilMs(local) + days * dayMs).toISOString().slice(0, 19);
 
 /** Intl approximates native civil conversion solely to make the web form interactive. */
 function convert(input: TimeConversionInput): TimeConversion {
@@ -173,28 +222,40 @@ function familyViews(): RepeatFamily[] {
       unfinishedCount: items.filter((item) => members.some((member) => member.id === item.segmentId) && !item.completed && !item.deleted && !item.skipped).length };
   });
 }
-function view(item: Occurrence): Occurrence {
+function view(item: Occurrence, now=Date.now()): Occurrence {
   const value = clone(item);
   value.listName = value.listId ? lists.get(value.listId)?.name ?? '' : '';
-  value.overdue = !value.completed && !value.deleted && !value.skipped && value.dueAtMs < Date.now();
-  const eventDay = civilAt(value.eventStartMs, deviceZone()).slice(0, 10), currentDay = civilAt(Date.now(), deviceZone()).slice(0, 10);
+  value.overdueAtMs = overdueReference(value);
+  value.quickSnoozeMinutes = settings.snoozeMinutes;
+  value.overdue = !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
+  value.agendaAtMs = value.mode === 'None' ? value.eventStartMs : value.nextAlertMs ?? value.alarmAtMs;
+  const eventDay = civilAt(value.agendaAtMs,deviceZone()).slice(0,10), currentDay=civilAt(now,deviceZone()).slice(0,10);
   value.agendaGroup = value.completed || value.skipped ? 'completed' : value.overdue ? 'overdue' : eventDay < currentDay ? 'earlier' : eventDay;
   const kind = value.deleted ? 'Delete' : value.completed ? 'Done' : value.skipped ? 'Skip' : null;
   if (kind) { const times = value.history?.filter((entry) => entry.kind === kind).map((entry) => entry.atMs) ?? [];
     value.collectionAtMs = times.length ? Math.max(...times) : value.eventStartMs; }
   return value;
 }
+function sessionActions() {
+  const members = items.filter((item) => item.deliveryState === 'Alerting' && !item.completed && !item.deleted && !item.skipped)
+    .map((item) => ({ occurrenceId: item.id, expectedGeneration: item.generation }));
+  return members.length ? { sessionId: 'fixture-ringing-session', members, snoozeMinutes: settings.snoozeMinutes } : null;
+}
 function query(filter: ReminderFilter, cursor: string | null): ReminderPage {
+  const now=Date.now(), start=new Date(now);start.setHours(0,0,0,0);const end=new Date(start);end.setDate(end.getDate()+1);
   const matches = (item: Occurrence) => (!filter.search || (item.title + ' ' + item.notes).toLowerCase().includes(filter.search.trim().toLowerCase())) &&
     (filter.listId === undefined || filter.listId === (item.listId ?? null)) && (!filter.listName || filter.listName === item.listName) &&
     (!filter.deliveryIssuesOnly || item.mode !== 'None' && ['Missed', 'TimedOut', 'Interrupted', 'Blocked', 'Failed'].includes(item.deliveryState)) && (!filter.segmentId || filter.segmentId === item.segmentId) &&
     (!filter.seriesId || series.get(item.segmentId ?? '')?.seriesId === filter.seriesId);
-  const rows = items.map(view).filter((item) => matches(item) && (filter.view === 'deleted' ? item.deleted : !item.deleted &&
+  const rows = items.map(item=>view(item,now)).filter((item) => matches(item) && (filter.view === 'deleted' ? item.deleted : !item.deleted &&
     (filter.view === 'completed' ? item.completed || !!filter.includeSkipped && item.skipped : filter.view === 'history' ? item.completed || item.skipped : !item.completed && !item.skipped)) &&
-    (filter.view !== 'overdue' || item.overdue));
+    (filter.view !== 'overdue' || item.overdue) && (!filter.overdueOnly || item.overdue) &&
+    (filter.view !== 'today' || item.agendaAtMs >= start.getTime() && item.agendaAtMs < end.getTime()) &&
+    (filter.view !== 'upcoming' || item.agendaAtMs >= end.getTime()));
   const rank = (item: Occurrence) => item.agendaGroup === 'overdue' ? 0 : item.agendaGroup === 'earlier' ? 1 : 2;
+  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs : item.agendaAtMs;
   rows.sort((a, b) => ['completed', 'history', 'deleted'].includes(filter.view) ? (b.collectionAtMs ?? b.eventStartMs) - (a.collectionAtMs ?? a.eventStartMs) || b.eventStartMs - a.eventStartMs || a.id.localeCompare(b.id) :
-    (['agenda', 'overdue'].includes(filter.view) ? rank(a) - rank(b) : 0) || a.eventStartMs - b.eventStartMs || a.id.localeCompare(b.id));
+    (['agenda','overdue','today','upcoming','attention'].includes(filter.view) ? rank(a)-rank(b) || activeAnchor(a)-activeAnchor(b) : a.eventStartMs-b.eventStartMs) || a.id.localeCompare(b.id));
   const groups: Record<string, number> = {}; rows.forEach((row) => { groups[row.agendaGroup] = (groups[row.agendaGroup] ?? 0) + 1; });
   const offset = Number(cursor ?? 0);
   return { items: rows.slice(offset, offset + 50), total: rows.length, nextCursor: offset + 50 < rows.length ? String(offset + 50) : null, groups,
@@ -213,6 +274,29 @@ function apply(command: Command): CommandResult {
     if (command.expectedRevision !== settings.revision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
     const { kind: _kind, operationId: _operation, expectedRevision: _revision, ...patch } = command;
     settings = { ...settings, ...patch, revision: settings.revision + 1 };
+  } else if (command.kind === 'DoneAll' || command.kind === 'SnoozeAll') {
+    const session = sessionActions();
+    if (!session || command.expectedSessionId !== session.sessionId) return { status: 'Rejected', errorCode: 'STALE_SESSION' };
+    if (command.kind === 'SnoozeAll' && command.snoozeMinutes !== settings.snoozeMinutes) return { status: 'Rejected', errorCode: 'STALE_SNOOZE_DURATION' };
+    const captured = [...new Map(command.members.map((member) => [member.occurrenceId, member])).values()];
+    if (!captured.length || captured.length !== command.members.length) return { status: 'Rejected', errorCode: 'INVALID_SESSION_MEMBERS' };
+    const now = Date.now(), target = now + settings.snoozeMinutes * 60_000;
+    let count = 0;
+    const memberResults: NonNullable<CommandResult['memberResults']> = [];
+    for (const member of captured) {
+      const item = items.find((row) => row.id === member.occurrenceId);
+      if (!item || item.generation !== member.expectedGeneration || item.deliveryState !== 'Alerting' || item.completed || item.deleted || item.skipped) {
+        if (command.kind === 'SnoozeAll') memberResults.push({ occurrenceId: member.occurrenceId, generation: item?.generation ?? member.expectedGeneration, status: 'Superseded' });
+        continue;
+      }
+      item.generation++; count++;
+      if (command.kind === 'DoneAll') { item.completed = true; item.revision++; item.deliveryState = 'Completed'; item.nextAlertMs = null; }
+      else { item.deliveryState = 'Scheduled'; item.nextAlertMs = target; item.alertAdjustment = 'Snoozed'; item.exception = !!item.segmentId;
+        memberResults.push({ occurrenceId: item.id, generation: item.generation, status: 'Scheduled', targetMs: target }); }
+      item.history ??= []; item.history.push({ kind: command.kind === 'DoneAll' ? 'Done' : 'Snooze', atMs: now, targetMs: command.kind === 'SnoozeAll' ? target : null });
+    }
+    result = { status: count === captured.length ? command.kind === 'SnoozeAll' ? 'Scheduled' : 'Applied' : count ? 'Partial' : 'Rejected',
+      count, ...(command.kind === 'SnoozeAll' ? { memberResults } : {}), ...(count ? {} : { errorCode: 'STALE_GENERATION' }) };
   } else if (command.kind === 'CreateList' || command.kind === 'RenameList' || command.kind === 'RemoveList') {
     const old = command.kind === 'CreateList' ? null : lists.get(command.listId);
     if (command.kind !== 'CreateList' && !old) return { status: 'Rejected', errorCode: 'NOT_FOUND', errorMessage: 'This list was removed.' };
@@ -239,6 +323,10 @@ function apply(command: Command): CommandResult {
     if (!item) return { status: 'Rejected', errorCode: 'NOT_FOUND' };
     if ('expectedRevision' in command && item.revision !== command.expectedRevision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
     if ('expectedGeneration' in command && item.generation !== command.expectedGeneration) return { status: 'Rejected', errorCode: 'STALE_GENERATION' };
+    if (command.kind === 'Snooze' && command.expectedSnoozeMinutes != null && command.expectedSnoozeMinutes !== settings.snoozeMinutes)
+      return { status: 'Rejected', errorCode: 'STALE_SNOOZE_DURATION' };
+    if ((command.kind === 'Snooze' || command.kind === 'Postpone' || command.kind === 'CompleteDelivery') &&
+        (item.completed || item.deleted || item.skipped || item.mode === 'None')) return { status: 'Rejected', errorCode: 'INACTIVE_OCCURRENCE' };
     if (command.kind === 'Edit') {
       if (command.listId && !lists.has(command.listId)) return { status: 'Rejected', errorField: 'listId', errorMessage: 'This list was removed. Choose an existing list or No list.' };
       Object.assign(item, draft(command, item)); item.revision++;
@@ -253,12 +341,12 @@ function apply(command: Command): CommandResult {
       item.deliveryState = item.deleted ? 'Deleted' : item.completed ? 'Completed' : item.skipped ? 'Skipped' : item.mode === 'None' ? 'NoAlert' : item.alarmAtMs > Date.now() ? 'Scheduled' : 'Missed';
       item.nextAlertMs = item.deliveryState === 'Scheduled' ? item.alarmAtMs : null;
     }
-    if (command.kind === 'Stop') { item.deliveryState = 'Stopped'; item.nextAlertMs = null; item.generation++; }
+    if (command.kind === 'Stop' || command.kind === 'CompleteDelivery') { item.completed=true; item.revision++; item.deliveryState='Completed'; item.nextAlertMs=null; item.generation++; }
     if (command.kind === 'Postpone' || command.kind === 'Snooze') {
       item.nextAlertMs = command.kind === 'Postpone' ? command.alarmAtMs! : Date.now() + settings.snoozeMinutes * 60_000;
       item.deliveryState = 'Scheduled'; item.generation++; item.alertAdjustment = command.kind === 'Postpone' ? 'Postponed' : 'Snoozed'; item.exception = !!item.segmentId;
     }
-    item.history ??= []; item.history.push({ kind: command.kind, atMs: Date.now(), targetMs: ['Postpone', 'Snooze'].includes(command.kind) ? item.nextAlertMs : null });
+    item.history ??= []; item.history.push({ kind: command.kind === 'Stop' || command.kind === 'CompleteDelivery' ? 'Done' : command.kind, atMs: Date.now(), targetMs: ['Postpone', 'Snooze'].includes(command.kind) ? item.nextAlertMs : null });
     result = { status: ['Edit', 'Postpone', 'Snooze'].includes(command.kind) && item.nextAlertMs ? 'Scheduled' : 'Applied', occurrence: view(item) };
   } else if ('segmentId' in command) {
     const old = series.get(command.segmentId);
@@ -291,8 +379,11 @@ const preview = {
     const callback = fn as () => void; listeners.add(callback); return { remove: () => { listeners.delete(callback); } };
   },
   getSettings: async () => clone(settings),
-  getCapabilities: async () => ({ exactAlarms: true, notifications: true, channelEnabled: true, notificationChannelEnabled: true,
-    fullScreen: true, unlocked: true, observedAtMs: Date.now(), activeSessionId: '' }),
+  getCapabilities: async () => {
+    const activeSessionActions = sessionActions();
+    return { exactAlarms: true, notifications: true, channelEnabled: true, notificationChannelEnabled: true,
+      fullScreen: true, unlocked: true, observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
+  },
   getTimeZones: async (atMs: number) => zones(atMs), convertTime: async (input: TimeConversionInput) => convert(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),
   getOccurrence: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },
@@ -310,7 +401,14 @@ const preview = {
     return { eventStartMs: value.eventStartMs, eventEndMs: value.eventEndMs, dueAtMs: value.dueAtMs, alarmAtMs: value.alarmAtMs,
       warnings: upcoming.some((slot) => slot.adjusted) ? ['A clock change adjusts a preview time.'] : [], upcoming };
   },
-  applyCommand: async (command: Command) => apply(command), reconcile: async () => {}, openSettings: async () => {},
+  applyCommand: async (command: Command) => {
+    const result = apply(command);
+    if (review.get('reviewLostReply') === '1' && result.status !== 'Rejected' && !lostReplies.has(command.operationId)) {
+      lostReplies.add(command.operationId);
+      throw new Error('Synthetic preview: the change was applied but its reply was lost. Retry the same change.');
+    }
+    return result;
+  }, reconcile: async () => {}, openSettings: async () => {},
   scheduleTestAlarm: async (): Promise<CommandResult> => apply({ kind: 'Create', operationId: nextId(), title: 'Test alarm', eventStartMs: Date.now() + 15_000 }),
   previewSound: async (sound: 'remilo' | 'system', requestId: string): Promise<SoundPreviewSnapshot> => {
     soundPreview = { sound, requestId, state: 'Failed', reason: 'SyntheticPreview' }; soundChanged(); return clone(soundPreview);
@@ -321,7 +419,7 @@ const preview = {
   },
   getSoundPreview: async (): Promise<SoundPreviewSnapshot | null> => clone(soundPreview),
   getDiagnostics: async () => ({ states: items.reduce<Record<string, number>>((counts, item) => ({ ...counts, [item.deliveryState]: (counts[item.deliveryState] ?? 0) + 1 }), {}), pendingOperations: 0 }),
-  exportBackup: async () => JSON.stringify({ format: 'Remilo synthetic preview', reminders: items.map(view) }),
+  exportBackup: async () => JSON.stringify({ format: 'Remilo synthetic preview', reminders: items.map(item=>view(item)) }),
   previewImport: async (_json: string): Promise<ImportPreview> => { throw new Error('File restoration requires the Android app.'); },
   importBackup: async (): Promise<CommandResult> => ({ status: 'Rejected', errorMessage: 'File restoration requires the Android app.' }),
 };

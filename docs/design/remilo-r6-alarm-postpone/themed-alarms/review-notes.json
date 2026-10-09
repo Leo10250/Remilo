@@ -1,0 +1,78 @@
+[
+  {
+    "id": "R6-04-Sunrise-Dark",
+    "file": "01-sunrise-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Sunrise · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "Before first unlock retain generic content and no private category/Event/Due/notes/list data."
+    ]
+  },
+  {
+    "id": "R6-04-Sky-Dark",
+    "file": "02-sky-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Sky · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "Before first unlock retain generic content and no private category/Event/Due/notes/list data."
+    ]
+  },
+  {
+    "id": "R6-04-Evening-Dark",
+    "file": "03-evening-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Evening · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "No private category/Event/Due/notes/list data is allowed before first unlock. The stray generated plant badge was removed and must stay absent."
+    ]
+  },
+  {
+    "id": "R6-04-Night-Dark",
+    "file": "04-night-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Night · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "Before first unlock retain generic content and no private category/Event/Due/notes/list data."
+    ]
+  }
+]

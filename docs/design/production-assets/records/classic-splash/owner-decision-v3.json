@@ -1,0 +1,22 @@
+{
+  "assetId": "classic-splash",
+  "version": 3,
+  "candidate": 3,
+  "promote": true,
+  "activationApproved": true,
+  "ownerStatement": "Approve artwork and production activation",
+  "ownerQuestion": "Approve Classic splash candidate v3 (shown above) and its six exact density/configuration exports for production activation after technical checks pass? It preserves the current size and original mark, including the existing thin pale edge matte; the highest densities use documented 1.13\u00d7/1.51\u00d7 interpolation.",
+  "ownerDecisionReference": {
+    "questionItemId": [
+      "request_user_input_async",
+      "call_339d39d658c04849a0d932e725711f20",
+      0
+    ],
+    "reply": "Approve artwork and production activation",
+    "receivedAtUtc": "2026-10-09T19:21:31Z",
+    "evidence": "Root agent relayed the exact human response and reported inspecting all three review panels, with same-size-xhdpi shown to the owner."
+  },
+  "recordedAtUtc": "2026-10-09T19:24:28.648170+00:00",
+  "specificationSha256": "2a9f2fdcd9dd0ab7e97fcf1f88aa84bd92164cd55e6fc4be002c081afb684362",
+  "scope": "Six exact candidate v3 configuration/native splash exports, preserving current visible size and mark. Original source isolation and documented 1.13x/1.51x high-density interpolation accepted. Android source activation authorized; installed appearance remains pending."
+}

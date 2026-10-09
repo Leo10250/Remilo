@@ -1,0 +1,190 @@
+[
+  {
+    "id": "R6-01",
+    "file": "01-single-alarm-sky-light.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "One unlocked native alarm with the global Sky atmosphere, explicit delivery time and independent Event/Due information.",
+    "review": [
+      "Stop silences this occurrence without completing the reminder. Snooze is the quick 10-minute native action.",
+      "The single-alarm footer uses stacked urgent controls; no app navigation, edit menu, Done action or custom Postpone form."
+    ],
+    "discrepancies": [
+      "The raster shows a continuous pale reading area and separate white timing tiles. Build the specified opaque reading container with consistent 16 dp corners; do not infer a new nested-card hierarchy from the bitmap.",
+      "The enlarged buttons still approximate, rather than guarantee, the specified 64 dp height and 12 dp gap. Enforce measured layout values in the native component.",
+      "Wordmark and scenic detail remain illustrative; the owner’s later abstraction pass is still deferred."
+    ]
+  },
+  {
+    "id": "R6-02",
+    "file": "02-multiple-alarms-night-dark.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "Three simultaneously ringing alarms in Night / Dark, with member-specific Stop/Snooze and a separate Stop all footer.",
+    "review": [
+      "The first two members have independent actions. The third long title remains readable while its timing/actions are below the scroll viewport.",
+      "Stop all leaves every reminder unfinished. The global atmosphere stays stable for the active session."
+    ],
+    "discrepancies": [
+      "The third card looks like a short title-only card in this static viewport. Its complete Alarm time/Event/Due/Stop/Snooze content must exist in the scrolling list; never implement the cropped bitmap as a reduced card.",
+      "Passive metadata glyphs and labels retain a slight periwinkle cast. Use the neutral onSurfaceVariant token; reserve primary for actual actions and selection.",
+      "The scene is somewhat taller and action sizes somewhat smaller than the written minimums. Enforce the 96 dp opening budget, 56 dp member actions and 64 dp Stop all; allow fewer visible cards instead of compressing controls.",
+      "Use the approved theme's softer elevated Dark surfaces, as clarified by A23; avoid substituting a harsher near-black canvas. Layout and color roles come from shared components, not an alarm-specific palette."
+    ]
+  },
+  {
+    "id": "R6-03",
+    "file": "03-refresh-failure-evening-dark.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "A retained three-member Evening / Dark alarm view whose controls refresh failed, with the known actions still available.",
+    "review": [
+      "Refresh controls refreshes the projection; it does not reissue a previous Stop or Snooze command.",
+      "The third member continues below the scroll edge. The error never replaces the known member controls or Stop all."
+    ],
+    "discrepancies": [
+      "The earlier malformed segmented-looking Refresh control was repaired; the final image shows one normal outlined action.",
+      "Refresh and Stop all still look shorter than their specified 48 dp and 64 dp minimums. Enforce those sizes, even if the second/third cards move further below the fold.",
+      "The third overdue line is clipped at the viewport edge. It must be readable after scrolling, and the fixed footer must reserve layout space rather than overlay card actions.",
+      "Use neutral metadata tokens and the shared Evening palette; do not reproduce incidental saturation or spacing differences between this image and the approved references.",
+      "Use the approved theme's softer elevated Dark surfaces, as clarified by A23; avoid substituting a harsher near-black canvas. Layout and color roles come from shared components, not an alarm-specific palette."
+    ]
+  },
+  {
+    "id": "R6-04-Sunrise-Dark",
+    "file": "themed-alarms/01-sunrise-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Sunrise · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "Before first unlock retain generic content and no private category/Event/Due/notes/list data."
+    ]
+  },
+  {
+    "id": "R6-04-Sky-Dark",
+    "file": "themed-alarms/02-sky-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Sky · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "Before first unlock retain generic content and no private category/Event/Due/notes/list data."
+    ]
+  },
+  {
+    "id": "R6-04-Evening-Dark",
+    "file": "themed-alarms/03-evening-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Evening · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "No private category/Event/Due/notes/list data is allowed before first unlock. The stray generated plant badge was removed and must stay absent."
+    ]
+  },
+  {
+    "id": "R6-04-Night-Dark",
+    "file": "themed-alarms/04-night-dark.png",
+    "status": "Approved as starting direction with color condition (A24)",
+    "intent": "The same generic alarm information and native actions with the selected global Night · Dark atmosphere. Softer reading surfaces follow the existing theme card roles.",
+    "review": [
+      "Generic Reminder text remains appropriate before first unlock; bundled scenery and colors do not identify the task.",
+      "The same layout supports ordinary unlocked alarms with private content when permitted. All native states must support four atmospheres in Light and Dark.",
+      "The held 10:00 AM clock does not define automatic appearance boundaries.",
+      "Accepted as a design starting point; detailed coloring and overall visual polish may be refined later."
+    ],
+    "discrepancies": [
+      "Owner condition (A24): the full-page background and elevated reading surfaces must use the corresponding existing atmosphere/appearance's shared semantic color roles. Match the approved theme instead of adopting an independent alarm-specific black or sampling a generated PNG shade. Exact detailed coloring and later visual polish remain open.",
+      "Surface and button gradients are still raster approximation. Production uses the shared theme surface/primary/onPrimary tokens, with softer elevated Dark reading planes; do not sample these images as exact final hex values.",
+      "Title/bell spacing, corner radii and action heights drift slightly between variants. Use one native component with 64 dp urgent actions and 12 dp gap; change assets/role values rather than geometry.",
+      "The large calm middle region is flexible space, not a fixed spacer. Reduce artwork and scroll information appropriately for larger text/smaller height.",
+      "Before first unlock retain generic content and no private category/Event/Due/notes/list data."
+    ]
+  },
+  {
+    "id": "R6-05",
+    "file": "05-postpone-shortcuts-sky-light.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "A not-yet-applied 30-minute Postpone selection for an overdue reminder in Sky / Light.",
+    "review": [
+      "At the held 9:30 PM clock, the captured selection resolves to Today, Wed, 7 Oct at 10:00 PM.",
+      "The due time stays today at 5:00 PM, and the reminder stays Overdue · Not done. Tomorrow shortcuts remain 10:00 AM, 2:00 PM and 5:00 PM."
+    ],
+    "discrepancies": [
+      "The underlying toolbar varies from the approved details reference, and the dim scrim is too weak. Reuse the existing Reminder details toolbar and apply the standard modal scrim; no new toolbar design is implied.",
+      "The Save-equivalent Postpone footer must be pinned above safe-area/IME insets and reserve scroll-body space; its behavior cannot be proven by a raster.",
+      "Light-mode amber overdue text and secondary gray text need measured contrast on their actual surfaces. Use semantic tokens with text/icon contrast, not sampled image colors.",
+      "The selected 30 min control must expose selected state to accessibility services; the check and tint shown here are only the visual portion."
+    ]
+  },
+  {
+    "id": "R6-06",
+    "file": "06-postpone-custom-evening-dark.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "Custom Postpone for Tomorrow, Thu, 8 Oct at 9:00 AM in Evening / Dark, before submission.",
+    "review": [
+      "Date and Time are independent editable picker fields within the selected custom group.",
+      "9:00 AM is a deliberate custom time, not a change to the 10:00 AM tomorrow shortcut default. Event/Due stay unchanged."
+    ],
+    "discrepancies": [
+      "The underlying page incorrectly resembles a Remilo homepage toolbar with search. Use the approved Reminder details toolbar under the standard dim scrim.",
+      "Tomorrow shortcuts are not pictured in this scrolled custom view; they must still exist in the sheet, not be deleted from the flow.",
+      "The expanded custom grouping, input insets and footer geometry must use the same component as the invalid Sky example; exact radii/spacing remain approximate.",
+      "No keyboard/picker dialog is shown. Reuse the established focused-field visibility and pinned-footer contract when those controls open."
+    ]
+  },
+  {
+    "id": "R6-07",
+    "file": "07-postpone-past-time-sky-light.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "An invalid same-day custom target, Today, Wed, 7 Oct at 8:00 PM, while the held clock is 9:30 PM.",
+    "review": [
+      "Choose a future time is explicit; the form does not silently move the selected target to tomorrow.",
+      "The confirm is disabled. The preview is labeled Selected time to avoid implying the rejected value became the actual next alert."
+    ],
+    "discrepancies": [
+      "The selected expanded custom group was aligned with the valid custom screen; its date/time row insets still differ slightly. Implement one shared component, with validation as a state.",
+      "The generator omits the underlying Reminder toolbar. That background should remain the approved Details screen beneath a standard scrim, rather than a bare scenic wallpaper.",
+      "Use a contrast-tested semantic error token and readable disabled label; raw bright red/gray samples are not implementation tokens.",
+      "Native validation must still reject expired targets at mutation time; this visual error is not a timing or scheduling test."
+    ]
+  },
+  {
+    "id": "R6-08",
+    "file": "08-postpone-saved-blocked-night-dark.png",
+    "status": "Approved with documented corrections (A22)",
+    "intent": "The Postpone change is acknowledged and saved, but scheduling the requested Night / Dark alert is blocked.",
+    "review": [
+      "The retained target is Tomorrow, Thu, 8 Oct at 9:00 AM. The sheet truthfully says Saved; alert blocked.",
+      "Check permissions is a recovery action. Return to reminder replaces the submit footer; Close is allowed because the acknowledgment is known."
+    ],
+    "discrepancies": [
+      "The underlying Reminder toolbar is omitted and the scrim is weak. Reuse the approved Details backdrop and modal treatment rather than treating this as a standalone scenic result page.",
+      "Keep Next alert paired with the blocked status so it is understood as the saved requested target, not a promise of delivery. Do not add a Scheduled chip or a second ready Postpone submit.",
+      "Check permissions and Return to reminder still need measured 48 dp and 56 dp minimums. The large blank area is flexible layout space, not a fixed spacer requirement.",
+      "This is a known acknowledged-blocked result, not an uncertain operation retry. The separate uncertain-ack protocol remains defined by the specification."
+    ]
+  }
+]

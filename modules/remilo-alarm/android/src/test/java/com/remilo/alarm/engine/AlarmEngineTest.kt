@@ -123,7 +123,7 @@ class AlarmEngineTest {
     val id = id(create())
     now += 60_000; fire(id)
     val (firstIntent, first) = deliveryNotification()
-    assertEquals(listOf("Stop", "Snooze 10 min"), first.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), first.actions.map { it.title.toString() })
     assertTrue(first.actions.all { it.actionIntent.isImmutable })
     val oldStop = shadowOf(first.actions[0].actionIntent).savedIntent
     assertEquals(1L, oldStop.getLongExtra("generation", -1))
@@ -132,7 +132,7 @@ class AlarmEngineTest {
     request { Unit }
     now += 600_000; fire(id, 2)
     val (_, second) = deliveryNotification()
-    assertEquals(listOf("Stop", "Snooze 10 min"), second.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), second.actions.map { it.title.toString() })
     val newStop = shadowOf(second.actions[0].actionIntent).savedIntent
     assertEquals(2L, newStop.getLongExtra("generation", -1))
     assertNotEquals(first.actions[0].actionIntent, second.actions[0].actionIntent)
@@ -142,17 +142,17 @@ class AlarmEngineTest {
     val stopped = CompletableFuture<Unit>()
     engine.receive(newStop) { stopped.complete(Unit) }; stopped.get(20, TimeUnit.SECONDS)
     val after = request { engine.occurrence(id) } as Map<*, *>
-    assertEquals("Stopped", after["deliveryState"])
-    assertEquals(false, after["completed"])
+    assertEquals("Completed", after["deliveryState"])
+    assertEquals(true, after["completed"])
   }
-  @Test fun stopNeverCompletesAndCannotStopAFutureDelivery() {
+  @Test fun stopCompletesOnlyTheRingingOccurrence() {
     val id = id(create())
     assertEquals("NOT_RINGING", action(id, "Stop", 1, "too-early")["errorCode"])
     now += 60_000; fire(id)
     action(id, "Stop", 1, "stop")
     val after = request { engine.occurrence(id) } as Map<*, *>
-    assertEquals("Stopped", after["deliveryState"])
-    assertEquals(false, after["completed"])
+    assertEquals("Completed", after["deliveryState"])
+    assertEquals(true, after["completed"])
   }
   @Test fun registrationFailureLeavesARecoverableSave() {
     os.fail = true
@@ -328,7 +328,7 @@ class AlarmEngineTest {
       } finally { db.close() }
     }
     action(first, "Stop", 1, "stop-first")
-    assertEquals("Stopped", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
+    assertEquals("Completed", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
     assertEquals("Alerting", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
   }
   @Test fun directBootDoesNotOpenCredentialStorage() {
@@ -341,7 +341,7 @@ class AlarmEngineTest {
     assertEquals("Reminder", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
     assertEquals("Remilo · alarm ringing", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
     assertFalse(notification.extras.toString().contains("Private title"))
-    assertEquals(listOf("Stop", "Snooze 10 min"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), notification.actions.map { it.title.toString() })
     val done = CompletableFuture<List<Pair<AlertRecord, String>>>()
     val session = request {
       val db = OperationalDatabase.open(context)
@@ -352,7 +352,9 @@ class AlarmEngineTest {
     val snapshot = CompletableFuture<AlarmEngine.SessionSnapshot>()
     engine.sessionSnapshot(session, { snapshot.complete(it) }, { snapshot.completeExceptionally(AssertionError(it)) })
     val controls = snapshot.get(20, TimeUnit.SECONDS)
-    assertEquals("system", controls.theme)
+    assertTrue(controls.theme in setOf("light", "dark"))
+    assertTrue(controls.atmosphere in com.remilo.alarm.core.AppearancePolicy.atmospheres)
+    assertTrue(controls.content.isEmpty())
     assertEquals("Reminder", controls.members.single().second)
     assertEquals("Starting", controls.state)
     action(id, "Snooze", 1, "locked-snooze")
@@ -442,10 +444,8 @@ class AlarmEngineTest {
       "occurrenceId" to id, "expectedRevision" to 1)) }
     val json = request { engine.exportBackup() } as String
     val bad = json.replace("\"mode\": \"Alarm\"", "\"mode\": \"Unknown\"")
-    request {
-      try { engine.importBackup(bad, listOf(id), "invalid-backup"); fail("Malformed backup must be rejected") }
-      catch (_: IllegalArgumentException) { /* no partial import */ }
-    }
+    val rejected = request { engine.importBackup(bad, listOf(id), "invalid-backup") } as Map<*, *>
+    assertEquals("Rejected", rejected["status"]); assertEquals("INVALID_BACKUP", rejected["errorCode"])
     assertEquals(1, (request { engine.query("history", null) } as Map<*, *>)["items"].let { (it as List<*>).size })
     request { engine.importBackup(json, listOf(id), "restore-completed") }
     assertTrue(os.active.isEmpty())
@@ -496,7 +496,7 @@ class AlarmEngineTest {
     fire(id, 2)
     assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
   }
-  @Test fun stopAllRejectsAnOldSessionAndKeepsMembersUnfinished() {
+  @Test fun stopAllRejectsAnOldSessionAndCompletesCapturedMembers() {
     val first = id(create("first")); val second = id(create("second"))
     now += 60_000; fire(first); fire(second)
     val session = (request { engine.capabilities() } as Map<*, *>)["activeSessionId"] as String
@@ -506,8 +506,8 @@ class AlarmEngineTest {
     request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "stop-all", "expectedSessionId" to session)) }
     listOf(first, second).forEach { id ->
       val after = request { engine.occurrence(id) } as Map<*, *>
-      assertEquals("Stopped", after["deliveryState"])
-      assertEquals(false, after["completed"])
+      assertEquals("Completed", after["deliveryState"])
+      assertEquals(true, after["completed"])
     }
   }
   @Test fun changedSnoozePreferenceIsAvailableBeforeFirstUnlock() {
@@ -519,7 +519,7 @@ class AlarmEngineTest {
     engine = AlarmEngine(context, os, { now }, { 1L })
     now += 60_000; fire(id)
     val (_, notification) = deliveryNotification()
-    assertEquals("Snooze 15 min", notification.actions[1].title.toString())
+    assertEquals("Snooze · 15 min", notification.actions[1].title.toString())
     action(id, "Snooze", 1, "locked-snooze")
     assertEquals(now + 900_000, os.active[id]!!.targetMs)
   }
@@ -770,7 +770,7 @@ class AlarmEngineTest {
           db.records().insert(ReminderRecord("future-%02d".format(n), "Future $n", now + 86_400_000,
             now + 88_200_000, now + 86_400_000, now, listName = "Work", mode = "None"))
         }
-        db.records().insert(ReminderRecord("overdue", "Overdue", now + 172_800_000, now + 174_600_000, now - 1, now, listName = "Work"))
+        db.records().insert(ReminderRecord("overdue", "Overdue", now + 172_800_000, now + 174_600_000, now - 1, now, listName = "Work", definedAlarmAtMs = now - 172_800_000))
         db.records().insert(ReminderRecord("earlier", "Earlier", now - 86_400_000, now - 84_600_000, now + 3_600_000, now, listName = "Work"))
         db.records().insert(ReminderRecord("complete", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "Work"))
         db.records().insert(ReminderRecord("skip", "Skipped", now, now + 1_800_000, now, now, skipped = true, listName = "Work"))
@@ -822,7 +822,7 @@ class AlarmEngineTest {
     now += 60_000; fire(first); deliveryNotification(); fire(second)
     val (intent, notification) = deliveryNotification()
     val oldSession = intent.getStringExtra("sessionId")!!
-    assertEquals(listOf("Stop all"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Done all (2)", "Snooze all · 10 min"), notification.actions.map { it.title.toString() })
     request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "end-old", "expectedSessionId" to oldSession)) }
     val third = id(create("third")); now += 60_000; fire(third)
     val done = CompletableFuture<Unit>()
@@ -973,7 +973,7 @@ class AlarmEngineTest {
       val db = ContentDatabase.open(context)
       try {
         listOf("Active", "History", "Trash only").forEach { db.records().insertList(ListRecord(it, it, ListNames.key(it), createdAtMs = now)) }
-        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now - 1, now, listName = "Active", listId = "Active"))
+        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now - 1, now, listName = "Active", listId = "Active", definedAlarmAtMs = now - 1))
         db.records().insert(ReminderRecord("completed-list", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "History", listId = "History"))
         db.records().insert(ReminderRecord("deleted-list", "Deleted", now, now + 1_800_000, now, now, deleted = true, listName = "Trash only", listId = "Trash only"))
         db.records().insert(ReminderRecord("duplicate-list", "Duplicate", now, now + 1_800_000, now, now, deleted = true, listName = "History", listId = "History"))
@@ -1175,6 +1175,220 @@ class AlarmEngineTest {
     assertEquals(1, (request { engine.query(mapOf("view" to "completed"), null) } as Map<*, *>)["total"])
     assertEquals(2, (request { engine.query(mapOf("view" to "completed", "includeSkipped" to true), null) } as Map<*, *>)["total"])
     assertEquals(0, (request { engine.query(mapOf("view" to "deleted"), null) } as Map<*, *>)["total"])
+  }
+  private fun snapshot(sessionId: String): AlarmEngine.SessionSnapshot {
+    val result = CompletableFuture<AlarmEngine.SessionSnapshot>()
+    engine.sessionSnapshot(sessionId, { result.complete(it) }, { result.completeExceptionally(AssertionError(it)) })
+    return result.get(20, TimeUnit.SECONDS)
+  }
+  private fun activeSession() = (request { engine.capabilities() } as Map<*, *>)["activeSessionId"] as String
+  @Test fun appearanceWritesNeverChangeReminderTargetsGenerationsOrHistory() {
+    val first = id(create("appearance-reminder"))
+    action(first, "Snooze", 1, "appearance-snooze")
+    val rows = protectedRows()
+    val before = request { engine.occurrence(first) } as Map<*, *>
+    request { engine.apply(mapOf("kind" to "Settings", "expectedRevision" to 1, "operationId" to "appearance-settings", "atmosphere" to "evening", "theme" to "dark")) }
+    assertEquals(rows, protectedRows()); assertEquals(before, request { engine.occurrence(first) })
+    assertEquals("evening", (request { engine.settings() } as Map<*, *>)["atmosphere"])
+  }
+  @Test fun credentialCommittedMirrorFailureRetriesTheSameOperationWithoutAnotherRevision() {
+    engine.close()
+    var failMirror = false
+    engine = AlarmEngine(context, os, { now }, { 10_000L }, beforeAppearanceWrite = { if (failMirror) throw java.io.IOException("fixture") })
+    request { engine.settings() } // Wait for unlocked initialization before injecting the write boundary.
+    val first = id(create("mirror-reminder"))
+    val rows = protectedRows()
+    val command = mapOf("kind" to "Settings", "expectedRevision" to 1, "operationId" to "mirror-settings", "atmosphere" to "sunrise", "theme" to "dark")
+    failMirror = true
+    request { try { engine.apply(command); fail("DP failure must remain unacknowledged") } catch (_: java.io.IOException) { } }
+    assertEquals(2L, (request { engine.settings() } as Map<*, *>)["revision"])
+    request {
+      val db = OperationalDatabase.open(context)
+      try { assertEquals(AppearanceRecord(), db.records().appearance()) } finally { db.close() }
+    }
+    failMirror = false
+    assertEquals("Applied", (request { engine.apply(command) } as Map<*, *>)["status"])
+    assertEquals(2L, (request { engine.settings() } as Map<*, *>)["revision"])
+    assertEquals(rows, protectedRows())
+    request {
+      val db = OperationalDatabase.open(context)
+      try { assertEquals(AppearanceRecord(atmosphere = "sunrise", theme = "dark"), db.records().appearance()) } finally { db.close() }
+    }
+    assertNotNull(request { engine.occurrence(first) })
+  }
+  @Test fun unknownStoredAtmosphereFallsBackWithoutBeingOverwrittenByOtherPreferences() {
+    request {
+      val db = ContentDatabase.open(context)
+      try { db.records().settings(SettingsRecord(atmosphere = "unknown-future-value", theme = "dark")) } finally { db.close() }
+    }
+    assertEquals("automatic", (request { engine.settings() } as Map<*, *>)["atmosphere"])
+    request { engine.apply(mapOf("kind" to "Settings", "expectedRevision" to 1, "operationId" to "unknown-setting", "vibration" to false)) }
+    request {
+      val db = ContentDatabase.open(context)
+      try { assertEquals("unknown-future-value", db.records().settings()!!.atmosphere); assertEquals("dark", db.records().settings()!!.theme) } finally { db.close() }
+    }
+    val invalid = request { engine.apply(mapOf("kind" to "Settings", "expectedRevision" to 2, "operationId" to "invalid-atmosphere", "atmosphere" to "unknown")) } as Map<*, *>
+    assertEquals("Rejected", invalid["status"]); assertEquals("atmosphere", invalid["errorField"])
+  }
+  @Test fun directBootUsesTheSavedManualGlobalPairAndOnlyGenericContent() {
+    val first = id(create("themed-direct-boot"))
+    request { engine.apply(mapOf("kind" to "Settings", "expectedRevision" to 1, "operationId" to "boot-appearance", "atmosphere" to "evening", "theme" to "dark")) }
+    engine.close(); shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    engine = AlarmEngine(context, os, { now }, { 10_000L }, systemDark = { false })
+    now += 60_000; fire(first)
+    val (_, notification) = deliveryNotification()
+    val controls = snapshot(activeSession())
+    assertEquals("evening", controls.atmosphere); assertEquals("dark", controls.theme)
+    val accent = com.remilo.alarm.presentation.AtmosphereTokens.colors("evening", "dark").primary.toInt()
+    assertEquals(accent, notification.color); assertEquals(accent, notification.publicVersion.color)
+    val loading = shadowOf(notification.contentIntent).savedIntent
+    assertEquals("evening", loading.getStringExtra("atmosphere")); assertEquals("dark", loading.getStringExtra("brightness"))
+    assertEquals("Reminder", controls.members.single().second); assertTrue(controls.content.isEmpty())
+    assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+    assertEquals(listOf("Done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
+    action(first, "Stop", 1, "themed-boot-stop")
+    assertEquals("Completed", protectedRows().single().state)
+  }
+  @Test fun nativeSessionFreezesItsPairAcrossChangesArrivalsRemovalAndUnlock() {
+    engine.close()
+    var dark = true
+    var zone = java.time.ZoneId.of("America/Los_Angeles")
+    now = java.time.Instant.parse("2026-10-09T13:59:00Z").toEpochMilli()
+    engine = AlarmEngine(context, os, { now }, { 10_000L }, appearanceZone = { zone }, systemDark = { dark })
+    val first = id(create("frozen-first"))
+    now += 60_000; fire(first)
+    val session = activeSession(); deliveryNotification()
+    engine.audioStarted(session, 9_000L)
+    assertEquals("sunrise", snapshot(session).atmosphere); assertEquals("dark", snapshot(session).theme)
+    dark = false; zone = java.time.ZoneId.of("Asia/Shanghai")
+    request { engine.apply(mapOf("kind" to "Settings", "expectedRevision" to 1, "operationId" to "frozen-preferences", "atmosphere" to "sky", "theme" to "light")) }
+    now += 3_600_000
+    val second = id(create("frozen-second")); now += 60_000; fire(second); deliveryNotification()
+    assertEquals(session, activeSession())
+    action(first, "Stop", 1, "frozen-stop-first")
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    val generic = snapshot(session)
+    assertEquals("sunrise", generic.atmosphere); assertEquals("dark", generic.theme)
+    assertEquals(second, generic.members.single().first.occurrenceId); assertTrue(generic.content.isEmpty())
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    val unlocked = snapshot(session)
+    assertEquals("sunrise", unlocked.atmosphere); assertEquals("dark", unlocked.theme)
+    assertEquals("Private title", unlocked.content.getValue(second).title)
+    request {
+      val db = OperationalDatabase.open(context)
+      try { assertEquals(309_000L, db.records().session(session)!!.deadlineElapsedMs) } finally { db.close() }
+    }
+    action(second, "Stop", 1, "frozen-stop-final")
+    val third = id(create("new-session")); now += 60_000; fire(third); deliveryNotification()
+    assertNotEquals(session, activeSession())
+    assertEquals("sky", snapshot(activeSession()).atmosphere); assertEquals("light", snapshot(activeSession()).theme)
+  }
+  @Test fun publicRingingNotificationRedactsPrivateContentButKeepsGenerationSafeControls() {
+    val first = id(create("public-notification")); now += 60_000; fire(first)
+    val (_, notification) = deliveryNotification()
+    assertEquals("Private title", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+    assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+    assertEquals(listOf("Done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
+  }
+  @Test fun identifiedTestAlarmRetriesKeepTheOriginalReminderAndInstant() {
+    val first = request { engine.testAlarm("identified-test") } as Map<*, *>
+    val occurrence = first["occurrence"] as Map<*, *>
+    now += 8_000
+    val retry = (request { engine.testAlarm("identified-test") } as Map<*, *>)["occurrence"] as Map<*, *>
+    assertEquals(occurrence["id"], retry["id"]); assertEquals(occurrence["nextAlertMs"], retry["nextAlertMs"])
+    assertEquals(1, (request { engine.query("all", null) } as Map<*, *>)["total"])
+    assertEquals("Rejected", (request { engine.testAlarm(" ") } as Map<*, *>)["status"])
+  }
+  @Test fun overdueOnlyComposesWithAgendaMembershipAndDeliveryProblems() {
+    val overdue = id(create("overdue-filter"))
+    id(create("future-filter", 120_000))
+    now += 61_000
+    request {
+      val db = OperationalDatabase.open(context)
+      try { val row = db.records().find(overdue)!!; db.records().put(row.copy(state = "Missed")) } finally { db.close() }
+    }
+    val page = request { engine.query(mapOf("view" to "agenda", "overdueOnly" to true, "deliveryIssuesOnly" to true), null) } as Map<*, *>
+    assertEquals(1, page["total"]); assertEquals(mapOf("overdue" to 1), page["groups"])
+    assertEquals(overdue, ((page["items"] as List<*>).single() as Map<*, *>)["id"])
+  }
+  @Test fun reopeningSkippedOccurrenceClearsSkippedAndPreservesRecordedSkipAndSiblingIdentity() {
+    request { engine.apply(mapOf("kind" to "CreateSeries", "operationId" to "reopen-skipped-series", "title" to "Skipped occurrence",
+      "eventStartMs" to now + 120_000, "alarmAtMs" to now + 120_000, "zoneId" to "UTC",
+      "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 3, "zoneMode" to "pinned"))) }
+    val skippedId = protectedRows().filter { it.segmentId != null }.minBy { it.targetMs }.occurrenceId
+    request { engine.apply(mapOf("kind" to "Skip", "operationId" to "skip-to-reopen", "occurrenceId" to skippedId, "expectedRevision" to 1)) }
+    val siblings = protectedRows().filter { it.occurrenceId != skippedId }
+    request { engine.apply(mapOf("kind" to "Reopen", "operationId" to "reopen-skipped", "occurrenceId" to skippedId, "expectedRevision" to 2)) }
+    val reopened = request { engine.occurrence(skippedId) } as Map<*, *>
+    assertEquals(false, reopened["skipped"]); assertEquals(false, reopened["completed"]); assertEquals(true, reopened["exception"])
+    assertEquals("Scheduled", reopened["deliveryState"]); assertEquals(siblings, protectedRows().filter { it.occurrenceId != skippedId })
+    assertEquals(listOf("Skip", "Reopen"), (reopened["history"] as List<*>).map { (it as Map<*, *>)["kind"] })
+  }
+  @Test fun invalidRestoreChoicesReturnRejectedWithoutCreatingAReceiptOrMutatingRecords() {
+    create("restore-validation")
+    val json = request { engine.exportBackup() } as String
+    val before = protectedRows()
+    val result = request { engine.importBackup(json, listOf("not-in-file"), "invalid-restore-choices") } as Map<*, *>
+    assertEquals("Rejected", result["status"]); assertEquals("copyIds", result["errorField"])
+    assertEquals(before, protectedRows())
+    request {
+      val db = ContentDatabase.open(context)
+      try { assertNull(db.records().receipt("invalid-restore-choices")); assertEquals(1, db.records().all().size) } finally { db.close() }
+    }
+  }
+  @Test fun malformedBackupZoneReturnsRejectedBeforeAnyRestoreMutation() {
+    create("restore-invalid-zone")
+    val backup = org.json.JSONObject(request { engine.exportBackup() } as String)
+    backup.getJSONArray("reminders").getJSONObject(0).put("zoneId", "Invalid/Sentinel")
+    val before = protectedRows()
+    val result = request { engine.importBackup(backup.toString(), emptyList(), "invalid-zone-restore") } as Map<*, *>
+    assertEquals("Rejected", result["status"]); assertEquals("INVALID_BACKUP", result["errorCode"])
+    assertEquals(before, protectedRows())
+    request {
+      val db = ContentDatabase.open(context)
+      try { assertNull(db.records().receipt("invalid-zone-restore")); assertEquals(1, db.records().all().size) } finally { db.close() }
+    }
+  }
+  @Test fun committedRestoreRetryNeverReportsPrecommitRejection() {
+    val sourceId = id(create("committed-restore-source"))
+    val backup = request { engine.exportBackup() } as String
+    assertEquals("Applied", (request { engine.importBackup(backup, listOf(sourceId), "committed-restore") } as Map<*, *>)["status"])
+    val committed = protectedRows()
+    // Once the receipt exists, the supplied payload is no longer a new import.
+    assertEquals(true, (request { engine.importBackup("malformed retry", emptyList(), "committed-restore") } as Map<*, *>)["retry"])
+    assertEquals(committed, protectedRows())
+
+    val segmentId = seriesCommand("restore-replay-fixture", count = 2)["segmentId"] as String
+    val alert = protectedRows().first { it.segmentId == segmentId }
+    val original = request {
+      val db = ContentDatabase.open(context)
+      try {
+        val segment = db.records().series(segmentId)!!
+        db.records().series(segment.copy(rule = "{}")) // Validation-shaped replay fault, after a proven commit.
+        db.records().pending(PendingSchedule("restore-replay", alert.occurrenceId, alert.targetMs, alert.generation + 1))
+        segment
+      } finally { db.close() }
+    } as SeriesRecord
+    val failure = assertThrows(java.util.concurrent.ExecutionException::class.java) {
+      request { engine.importBackup(backup, listOf(sourceId), "committed-restore") }
+    }
+    assertEquals("STORAGE_ERROR", failure.cause?.message) // Transport remains uncertain; no structured Rejected.
+    request {
+      val db = ContentDatabase.open(context)
+      try {
+        assertEquals("Import", db.records().receipt("committed-restore")?.kind)
+        assertEquals(1, db.records().pending().size)
+        db.records().series(original)
+      } finally { db.close() }
+    }
+    assertEquals(true, (request { engine.importBackup(backup, listOf(sourceId), "committed-restore") } as Map<*, *>)["retry"])
+    assertEquals(committed, protectedRows().filter { it.segmentId == null })
+    request {
+      val db = ContentDatabase.open(context)
+      try { assertTrue(db.records().pending().isEmpty()) } finally { db.close() }
+    }
   }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false

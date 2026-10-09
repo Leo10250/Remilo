@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-07",
+  "records": [
+    {
+      "record": "A18",
+      "type": "visual-direction-adoption",
+      "owner": "Repository owner in this chat",
+      "statementExcerpt": "I approve these designs for everything.",
+      "attributedScope": "Use the R3 homepage as the new visual source; more abstract art later; defer task-specific alarm environments and use one theme across screens.",
+      "limits": [
+        "No exact production token or automatic-period/migration approval",
+        "No RN/Compose component or physical verification"
+      ]
+    },
+    {
+      "record": "A19",
+      "type": "template-acceptance-with-corrections",
+      "owner": "Repository owner in this chat",
+      "statementExcerpt": "We should go with this template when creating it",
+      "attributedScope": "Accept the R4 overall design while documenting per-image discrepancies, consistent color roles, and Save/focused-input visibility above the keyboard.",
+      "authorizedWork": "Documentation, per-image review annotations and preservation of the review reference set.",
+      "limits": [
+        "Generated color/shape omissions are not accepted implementation behavior",
+        "No app implementation or milestone completion claimed in this task"
+      ]
+    }
+  ],
+  "contract": "approved-ui-r3-r4.md",
+  "artifacts": {
+    "R3": [
+      {
+        "file": "01-sunrise-light.png",
+        "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+      },
+      {
+        "file": "02-sunrise-dark.png",
+        "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+      },
+      {
+        "file": "03-sky-light.png",
+        "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+      },
+      {
+        "file": "04-sky-dark.png",
+        "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+      },
+      {
+        "file": "05-evening-light.png",
+        "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+      },
+      {
+        "file": "06-evening-dark.png",
+        "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+      },
+      {
+        "file": "07-night-light.png",
+        "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+      },
+      {
+        "file": "08-night-dark.png",
+        "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+      }
+    ],
+    "R4": [
+      {
+        "file": "01-details-ordinary-light.png",
+        "sha256": "2a2f00a57230cb736d32521b51113b1d4e508d89459ed969b49a4bf4f84d5552"
+      },
+      {
+        "file": "02-details-overdue-dark.png",
+        "sha256": "32a1c37ebacedc4f771dd2308bd6b5d998de1a3c66ac4ae9e6e887ea450421d5"
+      },
+      {
+        "file": "03-create-keyboard-light.png",
+        "sha256": "97904ab3f399e0a4f77b2f8cf7064e6e1bfa89797073bc15f5ce15b5cc87da76"
+      },
+      {
+        "file": "04-edit-independent-dark.png",
+        "sha256": "6f0eb078fd4f94742ef57364a046403dfafe4b25a565c0192963dc1e7cc57c29"
+      }
+    ]
+  }
+}

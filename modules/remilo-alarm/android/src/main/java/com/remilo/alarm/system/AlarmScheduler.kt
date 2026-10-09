@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import com.remilo.alarm.data.AlertRecord
+import com.remilo.alarm.core.DeliverySnapshot
 
 class AlarmScheduler(private val context: Context) : AlarmRegistrar {
   private val alarms = context.getSystemService(AlarmManager::class.java)
@@ -38,6 +39,31 @@ class AlarmScheduler(private val context: Context) : AlarmRegistrar {
     context, 0, intent(context, "fire", alert.occurrenceId, alert.generation),
     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
   companion object {
+    fun capturedActionIntent(context: Context, purpose: String, alert: AlertRecord): Intent =
+      intent(context, purpose, alert.occurrenceId, alert.generation).apply {
+        // Settings change without advancing delivery generations. Keep old shown durations immutable.
+        if (purpose == "quicksnooze") {
+          data = data!!.buildUpon().appendPath(alert.snoozeMinutes.toString()).build()
+          putExtra("snoozeMinutes", alert.snoozeMinutes)
+        }
+      }
+    fun capturedAction(context: Context, purpose: String, alert: AlertRecord): PendingIntent =
+      PendingIntent.getBroadcast(context, 0, capturedActionIntent(context, purpose, alert),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+    fun capturedGroupIntent(context: Context, purpose: String, sessionId: String, members: List<AlertRecord>): Intent {
+      val captured = members.map { DeliverySnapshot.Member(it.occurrenceId, it.generation) }
+      val minutes = if (purpose == "snoozeall") members.first().snoozeMinutes else null
+      val key = DeliverySnapshot.key(captured, minutes)
+      return Intent(context, AlarmReceiver::class.java).setAction("com.remilo.alarm.$purpose")
+        .setData(Uri.Builder().scheme("remilo-alarm").authority(purpose).appendPath(sessionId).appendPath(key).build())
+        .putExtra("sessionId", sessionId).putExtra("memberIds", members.map { it.occurrenceId }.toTypedArray())
+        .putExtra("memberGenerations", members.map { it.generation }.toLongArray()).apply {
+          if (minutes != null) putExtra("snoozeMinutes", minutes)
+        }
+    }
+    fun capturedGroup(context: Context, purpose: String, sessionId: String, members: List<AlertRecord>): PendingIntent =
+      PendingIntent.getBroadcast(context, 0, capturedGroupIntent(context, purpose, sessionId, members),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     fun stopAllIntent(context: Context, sessionId: String): Intent = Intent(context, AlarmReceiver::class.java)
       .setAction("com.remilo.alarm.stopall").setData(Uri.Builder().scheme("remilo-alarm").authority("stopall").appendPath(sessionId).build())
       .putExtra("sessionId", sessionId)

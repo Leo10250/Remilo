@@ -1,0 +1,55 @@
+{
+  "assetId": "sunrise-light",
+  "candidate": 1,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T00:51:05.178641+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/sunrise-light/candidate-01.txt",
+    "sha256": "5989d92bd61014d665b7126600fc3ec7df4b4949c08d4defa435cea8c71083e2"
+  },
+  "inputImages": [
+    {
+      "path": "docs/design/remilo-r3-atmospheres/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+    },
+    {
+      "path": "docs/design/remilo-r4-details-editor/01-details-ordinary-light.png",
+      "sha256": "2a2f00a57230cb736d32521b51113b1d4e508d89459ed969b49a4bf4f84d5552"
+    }
+  ],
+  "output": {
+    "sha256": "f59f1e2e3d8e532397eb5e6749a64e469779f86c33af55730da26a1459f4ac7b",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false,
+    "localArtifactPath": "verification/local/artwork/sunrise-light/candidate-01.png"
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "proposedSmallerMasterSizePx": [
+    1664,
+    936
+  ],
+  "smallerMasterRequiresOwnerDecision": true,
+  "visualInspection": {
+    "sceneIdentity": "Sunrise Light: peach/gold sky, low central sun, mauve mountains, conifers, warm reflected lake",
+    "visibleInterfaceRemnants": false,
+    "note": "Qualitative artwork review only; no measured runtime contrast or physical acceptance."
+  },
+  "cropProposal": null,
+  "review": null,
+  "approval": null,
+  "productionFiles": null,
+  "limitation": "Both built-in generation attempts returned 1672 x 941; planned 2048 x 1152 master is unmet. No upscaling or production promotion."
+}

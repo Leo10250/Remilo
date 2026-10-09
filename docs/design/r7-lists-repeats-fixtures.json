@@ -1,0 +1,723 @@
+{
+  "revision": "R7-specification-r2",
+  "date": "2026-10-07",
+  "sourceCommit": "1231da45da53d5799fe9e2b1e2aaa628171e2ee7",
+  "status": "Overall UI/UX outline accepted (A27), with provisional decorative list icons and per-image implementation corrections; twelve associated synthetic references",
+  "authority": [
+    "r7-lists-repeats-specification.md",
+    "approved-ui-r3-r4.md",
+    "../product.md",
+    "../appearance-redesign.md"
+  ],
+  "viewportDp": {
+    "width": 360,
+    "height": 800
+  },
+  "locale": "en-US",
+  "deviceZone": "America/Los_Angeles",
+  "heldClock": "2026-10-07T14:00:00-07:00",
+  "clockPolicy": "All review states use a held clock and manually selected atmosphere; these fixtures do not define automatic period boundaries.",
+  "referenceReview": {
+    "allEightInspected": true,
+    "method": "view_image visual inspection; qualitative direction only, no sampled production hex or accessibility pass"
+  },
+  "references": [
+    {
+      "id": "R3-01",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "file": "remilo-r3-atmospheres/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129"
+    },
+    {
+      "id": "R3-02",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "file": "remilo-r3-atmospheres/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a"
+    },
+    {
+      "id": "R3-03",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "file": "remilo-r3-atmospheres/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03"
+    },
+    {
+      "id": "R3-04",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "file": "remilo-r3-atmospheres/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5"
+    },
+    {
+      "id": "R3-05",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "file": "remilo-r3-atmospheres/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+    },
+    {
+      "id": "R3-06",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "file": "remilo-r3-atmospheres/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765"
+    },
+    {
+      "id": "R3-07",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "file": "remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "id": "R3-08",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "file": "remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    }
+  ],
+  "requiredAtmospheres": [
+    "Sunrise",
+    "Sky",
+    "Evening",
+    "Night"
+  ],
+  "requiredAppearances": [
+    "Light",
+    "Dark"
+  ],
+  "sharedConstraints": [
+    "One readable screenshot per image; no device frame/comparison board",
+    "All states support every atmosphere and both appearances with shared anatomy",
+    "Corresponding R3 shared canvas and raised-surface roles; no page-specific black",
+    "Neutral structural glyphs/metadata; primary for action/selection/focus; independent labeled semantic/category roles",
+    "16 dp gutters/corners; 16 sp values/14 sp support; 56 dp buttons and at least 48 dp other targets",
+    "Root bar Agenda/Lists/Repeats only on roots; secondary origin return; existing transient/draft/uncertain guards",
+    "One measured footer/inset owner above IME; focused caret/error visible; no duplicate primary action",
+    "Native projection/mutations remain authority; Stop is not Done; Event/Due/alert independent",
+    "Exact tokens, source art/crops and RN/Compose/device verification remain future work",
+    "A27: decorative list icons are provisional; prefer an icon-free implementation candidate and raise the choice during review; no custom list-icon picker."
+  ],
+  "dataNote": "Independent synthetic page snapshots, not one merged installation dataset or a new stored schema. R7-01 through R7-05 share the Lists/Work snapshot; R7-06 through R7-10 share the separate family-management snapshot. Do not sum family records into the Lists snapshot badges. Counts in actual components always come from each native query. R7-11/12 are separate editor drafts. No native execution is claimed.",
+  "lists": [
+    {
+      "id": null,
+      "name": "No list",
+      "overdueCount": 0,
+      "default": true,
+      "renameRemoveAllowed": false
+    },
+    {
+      "id": "list-work",
+      "name": "Work",
+      "overdueCount": 2
+    },
+    {
+      "id": "list-health",
+      "name": "Health and appointments",
+      "overdueCount": 0
+    },
+    {
+      "id": "list-home",
+      "name": "Home",
+      "overdueCount": 1
+    },
+    {
+      "id": "list-long",
+      "name": "Personal projects and professional development",
+      "overdueCount": 0
+    },
+    {
+      "id": "list-travel",
+      "name": "Travel",
+      "overdueCount": 0,
+      "emptyRetained": true
+    }
+  ],
+  "workAgenda": [
+    {
+      "id": "work-proposal",
+      "title": "Send the revised proposal and confirm delivery dates with the supplier",
+      "event": "Today, Wed 7 Oct · 9:00–9:30 AM",
+      "due": "Today at 10:00 AM",
+      "dueRelationship": "Independent",
+      "workState": "Overdue · Not done",
+      "delivery": "Scheduled",
+      "nextAlert": "Today at 3:00 PM",
+      "nextAlertRelationship": "Postponed",
+      "group": "Overdue"
+    },
+    {
+      "id": "work-invoice",
+      "title": "Check the final invoice against the approved purchase order",
+      "event": "Yesterday, Tue 6 Oct · 4:00–4:30 PM",
+      "due": "Yesterday at 5:00 PM",
+      "dueRelationship": "Independent",
+      "workState": "Overdue · Not done",
+      "delivery": "Missed",
+      "nextAlert": null,
+      "group": "Overdue"
+    },
+    {
+      "id": "work-handoff",
+      "title": "Review release handoff",
+      "event": "Today, 4:00–4:30 PM",
+      "due": "At event start",
+      "mode": "Alarm",
+      "nextAlert": "Today at 4:00 PM",
+      "delivery": "Scheduled",
+      "group": "Today"
+    },
+    {
+      "id": "work-client",
+      "title": "Call client about revised delivery dates",
+      "event": "Today, 6:00–6:15 PM",
+      "due": "At event start",
+      "mode": "Notification",
+      "nextAlert": "Today at 6:00 PM",
+      "group": "Today"
+    },
+    {
+      "id": "work-review",
+      "title": "Project review",
+      "event": "Tomorrow, Thu 8 Oct · 11:00–11:30 AM",
+      "due": "Tomorrow at 12:00 PM",
+      "dueRelationship": "Independent",
+      "mode": "Alarm",
+      "nextAlert": "Tomorrow at 10:45 AM",
+      "alertRelationship": "Independent",
+      "delivery": "Scheduled",
+      "group": "Tomorrow"
+    }
+  ],
+  "families": [
+    {
+      "id": "family-team",
+      "title": "Team standup and delivery coordination across time zones",
+      "state": "Active",
+      "rule": "Mon, Tue, Wed, Thu, Fri",
+      "eventTime": "9:00–9:30 AM",
+      "due": "At event start",
+      "mode": "Alarm",
+      "alarmTime": "9:00 AM",
+      "zoneMode": "floating",
+      "zoneLabel": "Follows your device",
+      "list": "Work",
+      "ending": "Does not end",
+      "unfinishedCount": 3,
+      "nextDates": [
+        {
+          "event": "Thu 8 Oct · 9:00–9:30 AM",
+          "alert": "Alarm · 9:00 AM"
+        },
+        {
+          "event": "Fri 9 Oct · 9:00–9:30 AM",
+          "alert": "Alarm · 9:00 AM"
+        },
+        {
+          "event": "Mon 12 Oct · 9:00–9:30 AM",
+          "alert": "Alarm · 9:00 AM"
+        }
+      ],
+      "unfinishedMeaning": "Three retained materialized unfinished records, including future records; not an overdue/earlier-only count",
+      "unfinished": [
+        {
+          "id": "team-earlier",
+          "event": "Tue 6 Oct · 9:00–9:30 AM",
+          "due": "Tue 6 Oct at 9:00 AM",
+          "workState": "Overdue · Not done",
+          "delivery": "Stopped",
+          "nextAlert": null
+        },
+        {
+          "id": "team-thursday",
+          "event": "Thu 8 Oct · 9:00–9:30 AM",
+          "due": "At event start",
+          "workState": "Not done",
+          "delivery": "Scheduled",
+          "nextAlert": "Thu 8 Oct at 9:00 AM"
+        },
+        {
+          "id": "team-friday",
+          "event": "Fri 9 Oct · 9:00–9:30 AM",
+          "due": "At event start",
+          "workState": "Not done",
+          "delivery": "Scheduled",
+          "nextAlert": "Fri 9 Oct at 9:00 AM"
+        }
+      ]
+    },
+    {
+      "id": "family-projects",
+      "title": "Review the monthly budget and supplier commitments",
+      "state": "Active",
+      "rule": "Second Wednesday every month · until May 31, 2027",
+      "eventTime": "11:00–11:30 AM",
+      "mode": "Notification",
+      "alarmTime": "10:45 AM",
+      "alertRelationship": "Independent",
+      "zoneMode": "floating",
+      "zoneLabel": "Follows your device",
+      "list": "Work",
+      "unfinishedCount": 2,
+      "nextDates": [
+        {
+          "event": "Wed 14 Oct · 11:00–11:30 AM",
+          "alert": "Notification · 10:45 AM"
+        },
+        {
+          "event": "Wed 11 Nov · 11:00–11:30 AM",
+          "alert": "Notification · 10:45 AM"
+        },
+        {
+          "event": "Wed 9 Dec · 11:00–11:30 AM",
+          "alert": "Notification · 10:45 AM"
+        }
+      ]
+    },
+    {
+      "id": "family-insurance",
+      "title": "Renew car insurance and review the breakdown cover",
+      "state": "Active",
+      "rule": "April 4 · every year",
+      "eventTime": "10:00–10:30 AM",
+      "mode": "Alarm",
+      "alarmTime": "10:00 AM",
+      "zoneMode": "floating",
+      "zoneLabel": "Follows your device",
+      "list": "Personal projects and professional development",
+      "unfinishedCount": 2,
+      "nextDates": [
+        {
+          "event": "Sun 4 Apr 2027 · 10:00–10:30 AM",
+          "alert": "Alarm · 10:00 AM"
+        },
+        {
+          "event": "Tue 4 Apr 2028 · 10:00–10:30 AM",
+          "alert": "Alarm · 10:00 AM"
+        },
+        {
+          "event": "Wed 4 Apr 2029 · 10:00–10:30 AM",
+          "alert": "Alarm · 10:00 AM"
+        }
+      ]
+    },
+    {
+      "id": "family-plants",
+      "title": "Water the balcony plants and check the new seedlings",
+      "state": "Paused",
+      "rule": "Every 2 days",
+      "eventTime": "10:00–10:15 AM",
+      "mode": "Alarm",
+      "alarmTime": "10:00 AM",
+      "zoneMode": "floating",
+      "zoneLabel": "Follows your device",
+      "list": "Home",
+      "ending": "Does not end",
+      "unfinishedCount": 3,
+      "plannedDates": [
+        {
+          "event": "Fri 9 Oct · 10:00–10:15 AM",
+          "alert": "Planned Alarm · 10:00 AM · Paused"
+        },
+        {
+          "event": "Sun 11 Oct · 10:00–10:15 AM",
+          "alert": "Planned Alarm · 10:00 AM · Paused"
+        },
+        {
+          "event": "Tue 13 Oct · 10:00–10:15 AM",
+          "alert": "Planned Alarm · 10:00 AM · Paused"
+        }
+      ],
+      "unfinished": [
+        {
+          "id": "plants-earlier",
+          "event": "Mon 5 Oct · 10:00–10:15 AM",
+          "due": "Mon 5 Oct at 10:00 AM",
+          "workState": "Overdue · Not done",
+          "delivery": "Interrupted",
+          "nextAlert": null,
+          "previousSegment": true
+        },
+        {
+          "id": "plants-postponed",
+          "event": "Today, Wed 7 Oct · 10:00–10:15 AM",
+          "due": "Today at 10:00 AM",
+          "workState": "Overdue · Not done",
+          "delivery": "Scheduled",
+          "nextAlert": "Tomorrow, Thu 8 Oct at 2:00 PM",
+          "relationship": "Postponed; concrete independent alert"
+        },
+        {
+          "id": "plants-exception",
+          "event": "Sat 10 Oct · 10:00–10:15 AM",
+          "due": "Sat 10 Oct at 10:00 AM",
+          "workState": "Not done",
+          "delivery": "Scheduled",
+          "nextAlert": "Sat 10 Oct at 9:45 AM",
+          "relationship": "Individually changed occurrence"
+        }
+      ],
+      "helper": "Ordinary repeat alerts are paused. Individually changed occurrences can still have their own alerts."
+    },
+    {
+      "id": "family-health",
+      "title": "Complete the prescribed five-day care routine",
+      "state": "Ended",
+      "rule": "Every day · 5 occurrences",
+      "lastOrdinaryDate": "Tue 6 Oct",
+      "unfinishedCount": 2,
+      "nextDates": [],
+      "helper": "No ordinary future dates.",
+      "resumeEligible": false,
+      "unfinished": [
+        {
+          "id": "health-earlier",
+          "event": "Mon 5 Oct · 8:00–8:05 AM",
+          "due": "Mon 5 Oct at 8:00 AM",
+          "workState": "Overdue · Not done",
+          "delivery": "Stopped",
+          "nextAlert": null
+        },
+        {
+          "id": "health-final",
+          "event": "Tue 6 Oct · 8:00–8:05 AM",
+          "due": "Tue 6 Oct at 8:00 AM",
+          "workState": "Overdue · Not done",
+          "delivery": "Missed",
+          "nextAlert": null
+        }
+      ]
+    }
+  ],
+  "customRule": {
+    "title": "Weekly planning and supplier follow-up",
+    "anchorEvent": "Mon 12 Oct · 9:00–9:30 AM",
+    "frequency": "weekly",
+    "interval": 2,
+    "weekdays": [
+      1,
+      3,
+      5
+    ],
+    "weekdayLabels": [
+      "Monday",
+      "Wednesday",
+      "Friday"
+    ],
+    "ending": "Never",
+    "zoneMode": "floating",
+    "zoneLabel": "Follows your device",
+    "previewSource": "Existing native draft projection; future actual render must verify these synthetic expected labels",
+    "preview": [
+      {
+        "event": "Mon 12 Oct · 9:00–9:30 AM",
+        "alert": "Alarm · 9:00 AM"
+      },
+      {
+        "event": "Wed 14 Oct · 9:00–9:30 AM",
+        "alert": "Alarm · 9:00 AM"
+      },
+      {
+        "event": "Fri 16 Oct · 9:00–9:30 AM",
+        "alert": "Alarm · 9:00 AM"
+      }
+    ],
+    "helper": "Apply changes this draft. Save the reminder to commit.",
+    "invalidVariant": {
+      "intervalText": "0",
+      "field": "Repeat every (weeks)",
+      "error": "Enter a whole number from 1 to 999.",
+      "preview": "Current invalid rule has no valid preview; do not retain valid-looking stale dates.",
+      "keyboard": "Android numeric IME"
+    }
+  },
+  "screens": [
+    {
+      "id": "R7-01",
+      "screen": "Lists root — populated",
+      "referenceId": "R3-01",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "dataFrom": "lists",
+      "bottomDestination": "Lists",
+      "primaryAction": "Create list",
+      "visibleRequirements": [
+        "No list fixed entry",
+        "Work · 2 overdue",
+        "Home · 1 overdue",
+        "Wrapped long list name",
+        "One Add-style action; explicit per-list More"
+      ],
+      "noCompletionCheckbox": true,
+      "associatedReference": "remilo-r7-lists-repeats/01-lists-sunrise-light.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-02",
+      "screen": "Create list — duplicate name and keyboard",
+      "referenceId": "R3-02",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "underlying": "Lists root",
+      "draftName": "work",
+      "fieldError": "A list with this name already exists.",
+      "keyboard": "Android text IME",
+      "footerPrimary": "Create list",
+      "secondary": "Cancel",
+      "footerPosition": "Above actual keyboard; error/caret visible",
+      "rejectedOperation": true,
+      "notes": "Use error only after explicit rejection; form is editable. Rename and unconfirmed Save are additional component fixtures.",
+      "associatedReference": "remilo-r7-lists-repeats/02-create-list-error-sunrise-dark.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-03",
+      "screen": "Work list Agenda — dense overdue/postponed",
+      "referenceId": "R3-03",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "dataFrom": "workAgenda",
+      "fixedListId": "list-work",
+      "backOrigin": "Lists",
+      "bottomNavigation": false,
+      "primaryAction": "Add reminder",
+      "groupCounts": {
+        "Overdue": 2,
+        "Today": 2,
+        "Tomorrow": 1
+      },
+      "visibleRequirements": [
+        "Complete long title wraps",
+        "Overdue from original Due",
+        "Future postponed alert remains separate",
+        "List membership cannot be cleared by filters",
+        "Lower rows may scroll; never shrink text/targets"
+      ],
+      "associatedReference": "remilo-r7-lists-repeats/03-work-agenda-sky-light.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-04",
+      "screen": "Remove Work list — confirmation",
+      "referenceId": "R3-04",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "underlying": "Lists root",
+      "listId": "list-work",
+      "title": "Remove list?",
+      "copy": "Reminders in “Work” move to No list. Their schedules and completion stay the same.",
+      "actions": [
+        "Cancel",
+        "Remove list"
+      ],
+      "destructiveMeaning": "Remove metadata identity/membership, not reminders or alerts",
+      "surface": "Opaque shared Sky Dark dialog over normal shared scrim",
+      "associatedReference": "remilo-r7-lists-repeats/04-remove-list-sky-dark.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-05",
+      "screen": "Travel list — retained empty",
+      "referenceId": "R3-05",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "listId": "list-travel",
+      "title": "Travel",
+      "empty": "No reminders in this list yet.",
+      "helper": "Use + to add a reminder.",
+      "primaryAction": "Add reminder",
+      "backOrigin": "Lists",
+      "bottomNavigation": false,
+      "noNewScenery": true,
+      "associatedReference": "remilo-r7-lists-repeats/05-empty-list-evening-light.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-06",
+      "screen": "Repeats library — Active",
+      "referenceId": "R3-06",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "dataFrom": "families",
+      "selectedFilter": "Active",
+      "bottomDestination": "Repeats",
+      "visibleRequirements": [
+        "Long team-family title",
+        "Complete rule summary",
+        "Next Event date",
+        "N unfinished; not N overdue",
+        "Paused/Ended choices"
+      ],
+      "noCompletionCheckbox": true,
+      "noNewAddAction": true,
+      "associatedReference": "remilo-r7-lists-repeats/06-repeats-evening-dark.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-07",
+      "screen": "Active repeat family details",
+      "referenceId": "R3-07",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "familyId": "family-team",
+      "backOrigin": "Repeats",
+      "bottomNavigation": false,
+      "actions": [
+        "Pause repeat",
+        "Edit entire series"
+      ],
+      "dateHeading": "Next dates",
+      "minimumPreview": 3,
+      "previewSlotsInformational": true,
+      "visibleRequirements": [
+        "Event and alert separated",
+        "Rule/ending/zone/list",
+        "Actual retained occurrence area below previews"
+      ],
+      "noFamilyDone": true,
+      "capture": "Readable scroll position around Next dates; surrounding rule/schedule may extend above or below viewport. Do not compress all blocks into one screenshot.",
+      "associatedReference": "remilo-r7-lists-repeats/07-active-family-night-light.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-08",
+      "screen": "Paused family — overdue/postponed exception",
+      "referenceId": "R3-08",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "familyId": "family-plants",
+      "backOrigin": "Repeats",
+      "bottomNavigation": false,
+      "actions": [
+        "Resume repeat",
+        "Edit entire series"
+      ],
+      "dateHeading": "Planned dates",
+      "previewSlotsInformational": true,
+      "visibleRequirements": [
+        "Paused ordinary-alert helper",
+        "Expanded Unfinished occurrences",
+        "Original Event and Due still overdue",
+        "Tomorrow 2 PM postponed alert still Scheduled",
+        "Older previous-segment occurrence retained"
+      ],
+      "noFamilyDone": true,
+      "capture": "Scroll to the expanded Unfinished occurrences section so the postponed overdue item is readable; Planned dates may be above viewport. Normal shared toolbar/art remain. Explain captured scroll beside the future image.",
+      "associatedReference": "remilo-r7-lists-repeats/08-paused-family-night-dark.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-09",
+      "screen": "Ended family — unresolved work",
+      "referenceId": "R3-01",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "familyId": "family-health",
+      "backOrigin": "Repeats",
+      "bottomNavigation": false,
+      "visibleRequirements": [
+        "Repeat has ended",
+        "No ordinary future dates",
+        "Two actual unresolved occurrence rows",
+        "No Resume or family Done"
+      ],
+      "notes": "Edit entire series only if current native segment eligibility allows it.",
+      "capture": "Scroll position showing ended state and actual unresolved work; normal shared toolbar/art. No fabricated family completion footer.",
+      "associatedReference": "remilo-r7-lists-repeats/09-ended-family-sunrise-light.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-10",
+      "screen": "Edit repeating reminder — scope after postponement",
+      "referenceId": "R3-04",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "underlying": "Reminder details for plants-postponed",
+      "originalEvent": "Today, Wed 7 Oct · 10:00–10:15 AM",
+      "postponedAlert": "Tomorrow, Thu 8 Oct at 2:00 PM",
+      "choices": [
+        "This occurrence",
+        "This and following",
+        "Entire series"
+      ],
+      "followingBoundary": "Original nominal slot Wed 7 Oct at 10:00 AM, never Thu 8 Oct 2:00 PM",
+      "notes": "Show a non-archived eligible series context for all three choices. Archived variant allows individual edit/current-family access only.",
+      "associatedReference": "remilo-r7-lists-repeats/10-edit-scope-sky-dark.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-11",
+      "screen": "Custom repeat — valid weekly draft",
+      "referenceId": "R3-05",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "dataFrom": "customRule",
+      "footerPrimary": "Apply repeat",
+      "secondary": "Cancel changes",
+      "visibleRequirements": [
+        "Every 2 weeks",
+        "Monday/Wednesday/Friday selected with accessible indicators",
+        "Never ending",
+        "Follows your device",
+        "Three native-projection preview dates",
+        "Apply is draft only; Save commits"
+      ],
+      "bottomNavigation": false,
+      "associatedReference": "remilo-r7-lists-repeats/11-custom-repeat-evening-light.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    },
+    {
+      "id": "R7-12",
+      "screen": "Custom repeat — invalid interval and keyboard",
+      "referenceId": "R3-08",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "dataFrom": "customRule.invalidVariant",
+      "footerPrimary": "Apply repeat",
+      "secondary": "Cancel changes",
+      "visibleRequirements": [
+        "Repeat every (weeks) = 0",
+        "Inline error above numeric IME",
+        "Footer reserved above IME",
+        "No valid-looking stale preview",
+        "No saved-series mutation"
+      ],
+      "bottomNavigation": false,
+      "associatedReference": "remilo-r7-lists-repeats/12-repeat-error-keyboard-night-dark.png",
+      "visualDecision": "Associated reference for A27 approved outline; per-image corrections apply"
+    }
+  ],
+  "additionalComponentStates": [
+    "No list Agenda",
+    "Rename long/legacy/stale list",
+    "Unconfirmed Create/Rename/Remove with exact operation retry and guarded dismissal",
+    "Removed list / Open No list",
+    "List and family retained-content refresh errors",
+    "Repeats Paused/Ended/empty library",
+    "Common Repeat choices; archived edit scope",
+    "Monthly day/ordinal/last weekday/yearly/end date/count/zone rules and projection failures",
+    "Large English/Chinese and 200% font scale; actual IME/caret/error/Back/TalkBack"
+  ],
+  "verificationBoundary": {
+    "imagesGenerated": true,
+    "ownerAcceptedNewPresentation": true,
+    "productionChanged": false,
+    "nativeFixturesExecuted": false,
+    "actualContrastMeasured": false,
+    "physicalObserved": false
+  },
+  "approval": {
+    "record": "A27",
+    "scope": "Overall UI/UX outline",
+    "individualRasterReviewClaimed": false,
+    "exactTokensApproved": false,
+    "decorativeListIcons": "Open implementation decision; owner currently favors omission; no custom icon picker"
+  },
+  "currentContract": "current/screens/lists-repeats.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
+}

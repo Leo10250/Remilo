@@ -14,7 +14,7 @@
       "package": "com.remilo.app",
       "versionCode": 4,
       "adaptiveIcon": {
-        "backgroundColor": "#245CD6",
+        "backgroundColor": "#F7F0F8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -32,7 +32,7 @@
         {
           "backgroundColor": "#F7F8FA",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 288
         }
       ]
     ],

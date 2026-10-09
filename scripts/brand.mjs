@@ -1,70 +1,108 @@
-// Export the owned R geometry to Android raster/vector variants. No Prebuild.
-// Usage: node scripts/brand.mjs [path-to-sharp-package]
-import { createRequire } from 'node:module';
-import { Buffer } from 'node:buffer';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
-if (process.argv.includes('--help')) {
-  console.log('Usage: node scripts/brand.mjs [path-to-sharp-package]\nExports the owned R mark and an ignored mask/size review sheet. No Prebuild or installation.');
-  process.exit(0);
-}
-const require = createRequire(import.meta.url);
-const sharp = require(process.argv[2] || 'sharp');
-const blue = '#245CD6';
-// A substantial stem, open counter, diagonal leg, and one separated notification dot.
-// All adaptive foreground geometry fits Android's central 66 dp safe circle.
-const mark = 'M34 32 H55 C66 32 72 38 72 48 C72 55 67 60 60 61 L76 78 H62 L49 62 H43 V78 H34 Z M43 42 V53 H54 C60 53 62 51 62 48 C62 44 60 42 54 42 Z M74.5 31 A3.5 3.5 0 1 1 67.5 31 A3.5 3.5 0 1 1 74.5 31 Z';
-const glyph = (scale = 1) => `<g transform="translate(54 54) scale(${scale}) translate(-54 -54)"><path fill="white" fill-rule="evenodd" d="${mark}"/></g>`;
-const svg = (background = false, scale = 1) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">${background ? `<rect width="108" height="108" rx="24" fill="${blue}"/>` : ''}${glyph(scale)}</svg>`;
-const notificationSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="26 25 56 56">${glyph()}</svg>`;
-const write = async (path, data) => { await mkdir(dirname(path), { recursive: true }); await writeFile(path, data); };
-await write('assets/brand/remilo.svg', svg(true, 1.18));
-await write('assets/brand/remilo-mark.svg', svg());
-await write('assets/brand/remilo-notification.svg', notificationSvg);
-const raster = async (path, size, background = false, scale = 1) => {
-  const image = sharp(Buffer.from(svg(background, scale))).resize(size, size);
-  await write(path, await (path.endsWith('.webp') ? image.webp({ lossless: true }) : image.png()).toBuffer());
-};
-for (const [name, size, bg, scale] of [['icon', 1024, true, 1.18], ['android-icon-foreground', 432, false, 1],
-  ['android-icon-monochrome', 432, false, 1], ['splash-icon', 288, true, 1.18], ['favicon', 48, true, 1.18]]) {
-  await raster(`assets/images/${name}.png`, size, bg, scale);
-}
-await write('assets/images/android-icon-background.png', await sharp({ create: { width: 432, height: 432, channels: 4, background: blue } }).png().toBuffer());
-for (const [density, scale] of [['mdpi', 1], ['hdpi', 1.5], ['xhdpi', 2], ['xxhdpi', 3], ['xxxhdpi', 4]]) {
-  await raster(`android/app/src/main/res/mipmap-${density}/ic_launcher.webp`, 48 * scale, true, 1.18);
-  const round = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><defs><clipPath id="round"><circle cx="54" cy="54" r="54"/></clipPath></defs><g clip-path="url(#round)"><rect width="108" height="108" fill="${blue}"/>${glyph(1.18)}</g></svg>`;
-  await write(`android/app/src/main/res/mipmap-${density}/ic_launcher_round.webp`, await sharp(Buffer.from(round)).resize(48 * scale, 48 * scale).webp({ lossless: true }).toBuffer());
-  for (const name of ['ic_launcher_foreground', 'ic_launcher_monochrome']) await raster(`android/app/src/main/res/mipmap-${density}/${name}.webp`, 108 * scale);
-  await write(`android/app/src/main/res/mipmap-${density}/ic_launcher_background.webp`, await sharp({ create: { width: 108 * scale, height: 108 * scale, channels: 4, background: blue } }).webp({ lossless: true }).toBuffer());
-  await raster(`android/app/src/main/res/drawable-${density}/splashscreen_logo.png`, 76 * scale, true, 1.18);
-}
-const vector = `<?xml version="1.0" encoding="utf-8"?>\n<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108"><path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="${mark}"/></vector>\n`;
-await write('android/app/src/main/res/drawable/ic_remilo_foreground.xml', vector);
-// The notification has a tighter optical frame for a legible 24 dp alpha silhouette.
-await write('modules/remilo-alarm/android/src/main/res/drawable/ic_remilo_notification.xml',
-  `<?xml version="1.0" encoding="utf-8"?>\n<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="56" android:viewportHeight="56"><group android:translateX="-26" android:translateY="-25"><path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="${mark}"/></group></vector>\n`);
-for (const name of ['ic_launcher', 'ic_launcher_round']) await write(`android/app/src/main/res/mipmap-anydpi-v26/${name}.xml`, `<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/iconBackground"/><foreground android:drawable="@drawable/ic_remilo_foreground"/><monochrome android:drawable="@drawable/ic_remilo_foreground"/></adaptive-icon>\n`);
+// Copy hash-bound, individually approved Classic exports. Never redraw the mark.
+import { createHash } from 'node:crypto';
+import { access, copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { dirname, extname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// Private synthetic review: real 48 px exports plus enlarged adaptive masks and 24 px notification.
-const masks = {
-  Circle: '<circle cx="54" cy="54" r="36"/>',
-  Squircle: '<path d="M54 18 C82 18 90 26 90 54 C90 82 82 90 54 90 C26 90 18 82 18 54 C18 26 26 18 54 18 Z"/>',
-  Rounded: '<rect x="18" y="18" width="72" height="72" rx="15"/>',
-};
-const adaptive = (mask, monochrome = false) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72"><defs><clipPath id="mask">${mask}</clipPath></defs><g clip-path="url(#mask)"><rect width="108" height="108" fill="${monochrome ? '#DDE6F5' : blue}"/>${monochrome ? glyph().replace('fill="white"', 'fill="#18212F"') : glyph()}</g></svg>`;
-const reviewItems = [
-  { label: 'Legacy tile', source: svg(true, 1.18), size: 48 },
-  ...Object.entries(masks).map(([label, mask]) => ({ label: 'Adaptive ' + label.toLowerCase(), source: adaptive(mask), size: 48 })),
-  { label: 'Themed monochrome', source: adaptive(masks.Circle, true), size: 48 },
-  { label: 'Notification alpha', source: notificationSvg.replace('fill="white"', 'fill="#18212F"'), size: 24 },
-];
-const boardWidth = 960, boardHeight = 350;
-const board = `<svg xmlns="http://www.w3.org/2000/svg" width="${boardWidth}" height="${boardHeight}"><rect width="100%" height="100%" fill="#F7F8FA"/><text x="24" y="35" font-family="Arial" font-size="22" fill="#18212F">Remilo R · geometric identity and reminder dot</text><text x="24" y="59" font-family="Arial" font-size="13" fill="#596475">Enlarged mask previews above; actual 48 px / 24 px exports below. Synthetic review, not launcher evidence.</text>${reviewItems.map((item, index) => `<text x="${index * 156 + 24}" y="251" font-family="Arial" font-size="12" fill="#596475">${item.label}</text>`).join('')}</svg>`;
-const composites = [];
-for (const [index, item] of reviewItems.entries()) {
-  const original = await sharp(Buffer.from(item.source)).resize(item.size, item.size).png().toBuffer();
-  composites.push({ input: await sharp(original).resize(112, 112, { kernel: 'nearest' }).png().toBuffer(), left: index * 156 + 32, top: 96 });
-  composites.push({ input: original, left: index * 156 + 64, top: 275 });
+const required = ['classic-legacy-launcher','classic-adaptive','classic-monochrome','classic-splash','classic-notification','classic-favicon'];
+const densityNames = ['mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi'];
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const currentCentering = entry => entry?.centeringRevision===2 && Array.isArray(entry.sourceAnchorPx) &&
+  entry.sourceAnchorPx.length===2 && entry.sourceAnchorPx[0]===233 && entry.sourceAnchorPx[1]===243;
+export function classicPlan(registry) {
+  const entries = new Map(registry.exports.map(entry => [entry.id,entry]));
+  const missing = required.filter(id => !entries.get(id)?.approval?.path);
+  if (missing.length) throw new Error('Individual artwork-and-activation approvals required: '+missing.join(', '));
+  // The owner rejected the prior centering. Preserve its historical records,
+  // but never activate a mixed set or an earlier centered revision.
+  for(const id of required) if(!currentCentering(entries.get(id))) throw new Error('Current Classic centering revision 2 required: '+id);
+  const splash = entries.get('classic-splash'), splashLayout = splash.splashLayout;
+  if (splashLayout && (splashLayout.canvasDp !== 288 || splashLayout.imageWidthDp !== 288 ||
+    JSON.stringify(splashLayout.nativeCanvasPx) !== JSON.stringify([288,432,576,864,1152])))
+    throw new Error('Classic splash requires the reviewed 288dp density canvases.');
+  if (splash.activeVersion >= 3 && !splashLayout) throw new Error('Revised Classic splash requires explicit density-canvas metadata.');
+  // Preserve historical v2 resources until the corrected density set is approved.
+  const splashSizes = splashLayout?.nativeCanvasPx ?? [76,114,152,228,304];
+  const files = [];
+  const add = (id,roles,width,destination,density) => {
+    const matches = entries.get(id).productionFiles?.filter(file => roles.includes(file.role) && file.width===width && file.height===width && (!density || file.density===density)) ?? [];
+    if(matches.length!==1) throw new Error(id+': expected one '+roles.join('/')+' '+width+'px export'+(density?' '+density:''));
+    files.push({assetId:id,source:matches[0].path,sha256:matches[0].sha256,destination,approval:entries.get(id).approval.path,
+      centeringRevision:entries.get(id).centeringRevision,sourceAnchorPx:[...entries.get(id).sourceAnchorPx],
+      ...(id==='classic-splash' && splashLayout ? {splashLayout} : {})});
+  };
+  add(required[0],['configuration'],1024,'assets/images/icon.png');
+  add(required[1],['foreground'],432,'assets/images/android-icon-foreground.png');
+  add(required[1],['background'],432,'assets/images/android-icon-background.png');
+  add(required[2],['monochrome','configuration'],432,'assets/images/android-icon-monochrome.png');
+  add(required[3],['configuration'],288,'assets/images/splash-icon.png');
+  add(required[4],['notification','vector'],24,'modules/remilo-alarm/android/src/main/res/drawable/ic_remilo_notification.xml');
+  add(required[5],['favicon'],48,'assets/images/favicon.png');
+  densityNames.forEach((density,index)=> {
+    add(required[0],['legacy'],[48,72,96,144,192][index],'android/app/src/main/res/mipmap-'+density+'/ic_launcher.webp',density);
+    add(required[0],['legacy-round'],[48,72,96,144,192][index],'android/app/src/main/res/mipmap-'+density+'/ic_launcher_round.webp',density);
+    const layerSize=[108,162,216,324,432][index];
+    add(required[1],['foreground'],layerSize,'android/app/src/main/res/mipmap-'+density+'/ic_launcher_foreground.png');
+    add(required[1],['background'],layerSize,'android/app/src/main/res/mipmap-'+density+'/ic_launcher_background.png');
+    add(required[2],['monochrome','configuration'],layerSize,'android/app/src/main/res/mipmap-'+density+'/ic_launcher_monochrome.png');
+    add(required[3],['native-'+splashSizes[index]], splashSizes[index],'android/app/src/main/res/drawable-'+density+'/splashscreen_logo.png');
+  });
+  for(const file of files) {
+    if(!file.source?.startsWith('assets/brand/classic/') || file.source.includes('\\') || file.source.split('/').some(part=>part==='..'||part==='')) throw new Error('Classic source must remain under assets/brand/classic');
+    if(extname(file.source).toLowerCase()!==extname(file.destination)) throw new Error('Copier requires the approved source format: '+file.destination);
+  }
+  return files;
 }
-await write('verification/local/brand/icon-review.png', await sharp(Buffer.from(board)).composite(composites).png().toBuffer());
-console.log('Exported Remilo R adaptive, monochrome, legacy, splash, and notification variants; review: verification/local/brand/icon-review.png.');
+export async function validateClassicSources(workspace,files,{sources=[]}={}) {
+  // Validate the entire transaction before touching any active resource.
+  for(const source of sources) {
+    if(!source?.path || !source.sha256 || sha(await readFile(join(workspace,source.path)))!==source.sha256) throw new Error('Stale Classic reference source: '+source?.path);
+  }
+  for(const file of files) {
+    const bytes=await readFile(join(workspace,file.source));
+    const approval=JSON.parse(await readFile(join(workspace,file.approval),'utf8'));
+    if(sha(bytes)!==file.sha256 || !approval.files?.some(entry=>entry.path===file.source && entry.sha256===file.sha256)) throw new Error('Stale/unapproved Classic bytes: '+file.source);
+    if(approval.assetId!==file.assetId || typeof approval.ownerStatement!=='string' || !approval.ownerStatement.trim() ||
+      typeof approval.recordedAtUtc!=='string' || !approval.recordedAtUtc || approval.activationApproved!==true) throw new Error('Invalid Classic activation approval: '+file.assetId);
+    if(!currentCentering(file) || !currentCentering(approval)) throw new Error('Unbound Classic centering approval: '+file.assetId);
+    if(file.splashLayout && JSON.stringify(approval.splashLayout)!==JSON.stringify(file.splashLayout)) throw new Error('Unbound Classic splash density approval.');
+    for(const source of sources) if(!approval.sources?.some(entry=>entry.path===source.path && entry.sha256===source.sha256)) throw new Error('Unbound Classic reference source: '+file.assetId);
+  }
+}
+export async function copyClassic(workspace,registry,{check=false}={}) {
+  const files=classicPlan(registry);await validateClassicSources(workspace,files,{sources:[registry.source,registry.sourceBoard]});
+  for(const file of files) {
+    const target=join(workspace,file.destination);
+    if(check) {
+      if(sha(await readFile(target))!==file.sha256) throw new Error('Classic copy differs: '+file.destination);
+      if(/mipmap-.*\/ic_launcher_(foreground|background|monochrome)\.png$/.test(file.destination)) {
+        let collision=false;
+        try {await access(target.replace(/\.png$/,'.webp'));collision=true;} catch(error) {if(error.code!=='ENOENT')throw error;}
+        if(collision)throw new Error('Retired Classic WebP layer collides: '+file.destination);
+      }
+    }
+    else {
+      await mkdir(dirname(target),{recursive:true});await copyFile(join(workspace,file.source),target);
+      // Retired WebP layers would collide with the same PNG resource name.
+      if(/mipmap-.*\/ic_launcher_(foreground|background|monochrome)\.png$/.test(file.destination)) await rm(target.replace(/\.png$/,'.webp'),{force:true});
+    }
+  }
+  const xml='<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@mipmap/ic_launcher_background"/><foreground android:drawable="@mipmap/ic_launcher_foreground"/><monochrome android:drawable="@mipmap/ic_launcher_monochrome"/></adaptive-icon>\n';
+  for(const name of ['ic_launcher','ic_launcher_round']) {
+    const path=join(workspace,'android/app/src/main/res/mipmap-anydpi-v26/'+name+'.xml');
+    if(check) { if(await readFile(path,'utf8')!==xml) throw new Error('Classic adaptive selector differs: '+name); }
+    else {await mkdir(dirname(path),{recursive:true});await writeFile(path,xml);}
+  }
+  return files;
+}
+if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+  const flags=process.argv.slice(2);
+  if(flags.includes('--help')) console.log('node scripts/brand.mjs [--check]\nRequires all six individually artwork-and-activation approved Classic exports with centering revision 2 and source anchor [233,243]. Copies exact bytes to tracked resources; --check is read-only. No Prebuild/install.');
+  else try {
+    if(flags.some(flag=>flag!=='--check')) throw new Error('Unknown option; use --help');
+    const workspace=fileURLToPath(new URL('../',import.meta.url));
+    const registry=JSON.parse(await readFile(join(workspace,'docs/design/production-assets/brand-manifest.json'),'utf8'));
+    const files=await copyClassic(workspace,registry,{check:flags.includes('--check')});
+    console.log('Validated '+files.length+' approved Classic copies'+(flags.includes('--check')?'':' and updated native selectors')+'.');
+  } catch(error) {console.error(error.message);process.exitCode=1;}
+}

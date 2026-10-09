@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-09T09:09:21.150Z",
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "sourceRegistrySha256": "0fedf35f2b4677608cd4ceb17d7c131105d5f5bd52f7b32bb5cb5580365c39e1",
+  "copierPlanSha256": "3db0c072286d839fe1e12f1d0cb1bfab1056d3f82728f14b287c36bafc5763d6",
+  "verification": {
+    "approvedSourceHashesVerified": true,
+    "all37CopiesByteIdentical": true,
+    "bothSelectorsMatchGatedCopier": true,
+    "nativeResourcesWrittenByThisRecorder": false,
+    "installedAppearanceAssessed": false,
+    "deviceAcceptanceAssessed": false
+  },
+  "copies": [
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/classic-launcher-v2.png",
+      "path": "assets/images/icon.png",
+      "sha256": "46c60eca9a0c5fae252726650b2a7ef5c78f42e8e0d0f3c0b331131309d29c04",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "kind": "configuration"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v2.png",
+      "path": "assets/images/android-icon-foreground.png",
+      "sha256": "903f45513e5174c23d9092a10d1f23f2288d512e03cb986164509e28d6d114e1",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "kind": "configuration"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v2.png",
+      "path": "assets/images/android-icon-background.png",
+      "sha256": "8d362a70d2c268c7c547aab1e9ec2bdd68286114f3f526c77b47ba6e0a1a220d",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "kind": "configuration"
+    },
+    {
+      "assetId": "classic-monochrome",
+      "source": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v2.png",
+      "path": "assets/images/android-icon-monochrome.png",
+      "sha256": "ad48ef4bb3b9b9374b8627a8a6d7571ffb2da08527b324cc17ea38282cfd60b1",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "kind": "configuration"
+    },
+    {
+      "assetId": "classic-splash",
+      "source": "assets/brand/classic/splash/classic-splash-v2.png",
+      "path": "assets/images/splash-icon.png",
+      "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "kind": "configuration"
+    },
+    {
+      "assetId": "classic-notification",
+      "source": "assets/brand/classic/notification/ic_remilo_notification_v2.xml",
+      "path": "modules/remilo-alarm/android/src/main/res/drawable/ic_remilo_notification.xml",
+      "sha256": "f32def671ab76aec54d5693f0dada56449a1b25d78866d01ad73f8a6cb3b4933",
+      "width": 24,
+      "height": 24,
+      "format": "AndroidVector",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-favicon",
+      "source": "assets/brand/classic/favicon/classic-favicon-v2.png",
+      "path": "assets/images/favicon.png",
+      "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+      "width": 48,
+      "height": 48,
+      "format": "PNG",
+      "kind": "configuration"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.webp",
+      "sha256": "184b5f6c26a91d7700a8d032f9eae740b5a1eb83c8af38a53f507ef17d181499",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp",
+      "sha256": "3cacea6efe6708c9efbf5fd43b6c6870b36abb46b98a9b784ca3f435f539e2a9",
+      "width": 48,
+      "height": 48,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v2.png",
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png",
+      "sha256": "2b78dbe9854d9904fc276deda9c4c58843984a468989b33a8afa8846e019af36",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v2.png",
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_background.png",
+      "sha256": "8699b76c79d96a666fe9335194079bb39b4758607535a05ff5db6836d7ccd8e9",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-monochrome",
+      "source": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v2.png",
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_monochrome.png",
+      "sha256": "812a95a5a70f7c0b3d202ffc0800d385a5733dd9423b65dff0b3edaba60f817e",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-splash",
+      "source": "assets/brand/classic/splash/classic-splash-76-v2.png",
+      "path": "android/app/src/main/res/drawable-mdpi/splashscreen_logo.png",
+      "sha256": "fa5650223b837287c575c657f6133dca0af0ce59d09bb33a80936e1a0c08107c",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.webp",
+      "sha256": "32e2ca5e649191ad9dc04f1ffc394b3796dc0213f0197d897f0446f58a925799",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp",
+      "sha256": "de6adb88938add73234875228fa9b8a7ba68a68dda1c8228084d85d3aecdb985",
+      "width": 72,
+      "height": 72,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v2.png",
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png",
+      "sha256": "8f6c16a15aa62acbbbbb13b6157ee15bf63c6a1e36b6329d5ac39b5d9923ea42",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v2.png",
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_background.png",
+      "sha256": "cc4cb768953e5c2cd5e8689e548dc86cd60a751610c594a3ee10fcdbc652387e",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-monochrome",
+      "source": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v2.png",
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_monochrome.png",
+      "sha256": "cfeb5e68b39f2c6505d349b2c4d44488e217001b7ec90585a34c170b72a0816a",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-splash",
+      "source": "assets/brand/classic/splash/classic-splash-114-v2.png",
+      "path": "android/app/src/main/res/drawable-hdpi/splashscreen_logo.png",
+      "sha256": "62e196bed6ab31b9444b8e476ec2296f511d50619239d536136ad1a39ad8f12c",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.webp",
+      "sha256": "794c24bc1bce50b5ab885080662c95429cf6804640c852d1d81ad1a7f80028da",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp",
+      "sha256": "0df36a21583afe06ac41c025f56d9d1564eefed5dd10ff580d9fcf283a995562",
+      "width": 96,
+      "height": 96,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v2.png",
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png",
+      "sha256": "453559a306f996f7d07522b247118064bf7967874db332d083d0cac6bae3b2d4",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v2.png",
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_background.png",
+      "sha256": "0ad80068515a9014562ca68bec8fb1990fa41c52b7fd5d7d6a69f267da0411c5",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-monochrome",
+      "source": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v2.png",
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_monochrome.png",
+      "sha256": "2c145a1a86621bf0e62948395cb0ddfbdc27444c9a696c505e2fd5433f159020",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-splash",
+      "source": "assets/brand/classic/splash/classic-splash-152-v2.png",
+      "path": "android/app/src/main/res/drawable-xhdpi/splashscreen_logo.png",
+      "sha256": "bff0bbfa33ae6f1745ea49b3e158d8c914f68f5fd35f5e54e64f08d20c2675a4",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp",
+      "sha256": "d98d5de45926f9fec604957f60849b38ecfe27c3b0c5bf21059ea12200f43aae",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp",
+      "sha256": "fff3ebcb9eee95c9049c32ef5a4bad927090ecb91bdba632457fd737d3305938",
+      "width": 144,
+      "height": 144,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v2.png",
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png",
+      "sha256": "8e1a739048423646d96a7ccdcc6f659cb4f98662f23f89c3fddf8c7ac756e63e",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v2.png",
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_background.png",
+      "sha256": "32400c1e8af9d0b084045dc75fbdc3c449caad7a83bd135458d28c053ae9208b",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-monochrome",
+      "source": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v2.png",
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_monochrome.png",
+      "sha256": "d7ed146d897f0cf9bd3cbecfe0bb6e998d9ec12c15da07edbc785b28110a29f9",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-splash",
+      "source": "assets/brand/classic/splash/classic-splash-228-v2.png",
+      "path": "android/app/src/main/res/drawable-xxhdpi/splashscreen_logo.png",
+      "sha256": "56ed2ce617cea16b1d5a0118caf569f0f5a0f57fa1d14f0699fbbc5a82f55056",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp",
+      "sha256": "1f85bc5a37133c67f2454bcfb435f6a42608d49658c1178fd3ee00a26e6b53be",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-legacy-launcher",
+      "source": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v2.webp",
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp",
+      "sha256": "84a08d528f152a40b6d768ef4b9907db9b8cd5e7f06d1fcc5141005159bb5660",
+      "width": 192,
+      "height": 192,
+      "format": "WebP",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v2.png",
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+      "sha256": "903f45513e5174c23d9092a10d1f23f2288d512e03cb986164509e28d6d114e1",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-adaptive",
+      "source": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v2.png",
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png",
+      "sha256": "8d362a70d2c268c7c547aab1e9ec2bdd68286114f3f526c77b47ba6e0a1a220d",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-monochrome",
+      "source": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v2.png",
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_monochrome.png",
+      "sha256": "ad48ef4bb3b9b9374b8627a8a6d7571ffb2da08527b324cc17ea38282cfd60b1",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "kind": "native"
+    },
+    {
+      "assetId": "classic-splash",
+      "source": "assets/brand/classic/splash/classic-splash-304-v2.png",
+      "path": "android/app/src/main/res/drawable-xxxhdpi/splashscreen_logo.png",
+      "sha256": "2912475050db8dcd64c19be05398d131ba5ee7e02c8c1e2ecb43aad842f99db8",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "kind": "native"
+    }
+  ],
+  "selectors": [
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "582f83c2795e7b74ed14a1cd6ce4892018331b99008b7816b4853d5138d1b047",
+      "format": "AndroidAdaptiveIcon",
+      "centeringRevision": 2,
+      "resources": [
+        "@mipmap/ic_launcher_background",
+        "@mipmap/ic_launcher_foreground",
+        "@mipmap/ic_launcher_monochrome"
+      ],
+      "verification": "Byte identity against deterministic gated copier selector; not installed/OEM acceptance."
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "sha256": "582f83c2795e7b74ed14a1cd6ce4892018331b99008b7816b4853d5138d1b047",
+      "format": "AndroidAdaptiveIcon",
+      "centeringRevision": 2,
+      "resources": [
+        "@mipmap/ic_launcher_background",
+        "@mipmap/ic_launcher_foreground",
+        "@mipmap/ic_launcher_monochrome"
+      ],
+      "verification": "Byte identity against deterministic gated copier selector; not installed/OEM acceptance."
+    }
+  ]
+}

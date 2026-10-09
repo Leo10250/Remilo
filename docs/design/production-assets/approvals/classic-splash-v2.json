@@ -1,0 +1,328 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "version": 2,
+  "candidate": 2,
+  "ownerStatement": "Approve artwork and integration",
+  "recordedAtUtc": "2026-10-09T09:06:46.343204+00:00",
+  "activationApproved": true,
+  "scope": "Approve the revised circle-centered Classic splash v2 shown above, with safe padding and #F7F8FA surface, for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+    "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+  },
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-splash-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "configuration",
+      "path": "assets/brand/classic/splash/classic-splash-v2.png",
+      "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          288,
+          288
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-76",
+      "path": "assets/brand/classic/splash/classic-splash-76-v2.png",
+      "sha256": "fa5650223b837287c575c657f6133dca0af0ce59d09bb33a80936e1a0c08107c",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          76,
+          76
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-114",
+      "path": "assets/brand/classic/splash/classic-splash-114-v2.png",
+      "sha256": "62e196bed6ab31b9444b8e476ec2296f511d50619239d536136ad1a39ad8f12c",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          114,
+          114
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-152",
+      "path": "assets/brand/classic/splash/classic-splash-152-v2.png",
+      "sha256": "bff0bbfa33ae6f1745ea49b3e158d8c914f68f5fd35f5e54e64f08d20c2675a4",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          152,
+          152
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-228",
+      "path": "assets/brand/classic/splash/classic-splash-228-v2.png",
+      "sha256": "56ed2ce617cea16b1d5a0118caf569f0f5a0f57fa1d14f0699fbbc5a82f55056",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          228,
+          228
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-304",
+      "path": "assets/brand/classic/splash/classic-splash-304-v2.png",
+      "sha256": "2912475050db8dcd64c19be05398d131ba5ee7e02c8c1e2ecb43aad842f99db8",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          304,
+          304
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-splash/candidate-02.json",
+    "sha256": "17b6c79577ecdbd24b363d4a8cd8282da9b277e2b91aacc67598eebb2a021632"
+  },
+  "manualLayerSources": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-splash-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "checks": {
+    "candidateBytesPreserved": true,
+    "distinctLayerTransformsVerified": true,
+    "nativeVectorStructureVerified": false,
+    "allOutputDimensionsMatch": true,
+    "installedDeviceAppearanceAssessed": false
+  },
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "ownerQuestion": "Approve the revised circle-centered Classic splash v2 shown above, with safe padding and #F7F8FA surface, for artwork and integration?",
+  "ownerDecisionReference": {
+    "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+    "questionIndex": 3,
+    "humanResponse": "Approve artwork and integration"
+  }
+}

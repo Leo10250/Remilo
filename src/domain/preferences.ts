@@ -2,7 +2,7 @@ import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.typ
 export type PreferencePatch = Partial<Omit<AppSettings, 'revision'>>;
 type Job = { patch: PreferencePatch; operationId: string; revision: number };
 type Adapter = { read: () => Promise<AppSettings>; write: (job: Job) => Promise<void>; id: () => string };
-export type PreferenceState = { data?: AppSettings; saving: boolean; error?: string };
+export type PreferenceState = { data?: AppSettings; saving: boolean; error?: string; fields?: (keyof PreferencePatch)[] };
 
 /** One lifetime for settings writes, including acknowledgement-uncertain retries. */
 export class Preferences {
@@ -26,7 +26,8 @@ export class Preferences {
   retry = () => { this.state = { ...this.state, error: undefined }; this.publish(); void this.drain(); };
   private publish(error = this.state.error) {
     this.state = { data: this.confirmed ? error ? this.confirmed : { ...this.confirmed, ...this.job?.patch, ...this.queued } : undefined,
-      saving: this.running || (!error && (!!this.job || Object.keys(this.queued).length > 0)), error };
+      saving: this.running || (!error && (!!this.job || Object.keys(this.queued).length > 0)), error,
+      fields: [...new Set([...Object.keys(this.job?.patch ?? {}), ...Object.keys(this.queued)])] as (keyof PreferencePatch)[] };
     this.listeners.forEach((listener) => listener());
   }
   private async drain() {

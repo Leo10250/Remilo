@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "candidate": 3,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-09T19:22:57.609231+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-splash/prepared-03.json",
+    "sha256": "0c0df2e7edafc6fa2da6e121b194bf9e28781958ec5f91e9a86c7ec66fdc43e5"
+  },
+  "candidateSha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+  "views": [],
+  "viewsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "sourceProfiles": {},
+  "exportProfiles": {},
+  "checks": [],
+  "inspection": {
+    "reviewer": "native_audit after viewing actual decoded source, 432/864/1152 exports and all three usage panels",
+    "recordedAtUtc": "2026-10-09T19:22:57.219460+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Inspected actual decoded source, density exports and usage panels: unchanged ring/check/sun identity, source-ring anchor and original finish."
+      },
+      {
+        "name": "framing",
+        "status": "pass",
+        "observation": "The three presented review panels retain the approximately 131 by 139dp visible mark; safe-circle padding and clear sun/ray contours remain."
+      },
+      {
+        "name": "edges",
+        "status": "pass",
+        "observation": "Direct-source exports improve the simulated undersized-resource scaling; inherited thin pale matte remains visible on dark diagnostics and is explicitly disclosed."
+      },
+      {
+        "name": "scope",
+        "status": "pass",
+        "observation": "Current light launch background is represented; dark background is a diagnostic only. Synthetic previews make no device, contrast or accessibility claim."
+      }
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/same-size-xhdpi.png",
+        "sha256": "39d6a297ea8b8ed3f7c3a6aede17a8a61e68ab9fac40ba47c8bfccd428a6a756"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/usage-360dp.png",
+        "sha256": "006dfc037be3db621d32f1ae035502524a90914a7e7997a33ca773fb2e47c691"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/xxxhdpi-detail.png",
+        "sha256": "04753ff15ed8c5a5ffeae3e8d274b2d3bc123e0a67519ea38009f1f78c2f35b3"
+      }
+    ],
+    "independentVisualReview": {
+      "reviewer": "root",
+      "observation": "Root reported inspecting all three PNG reviews and confirmed the improvement and inherited matte findings."
+    }
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/review-01.png",
+    "sha256": "45e1e56a3365097f8eaab2e9629e446048da3cf84d36998e6fe74875d8626645"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/review-01-panels/01.png",
+      "sha256": "9ab788c07222501b42c28f394a6a1e50f18c7d2107a8147dc81664b2918adc31",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/review-01-panels/02.png",
+      "sha256": "89d9627ccc49d7f9168b5eb7851d39980289fbb748d7a907e302fe20f10d5380",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/review-01-panels/03.png",
+      "sha256": "a37dcc5eb473ed8b916702ceb84abcb6b7b7d100fa8aadb4a80c434bf7131aa0",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/review-01-panels/04.png",
+      "sha256": "f27a21e1171781bfd9448b7b05780057628465ea178508000803a0ef8938a823",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    }
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/same-size-xhdpi.png",
+      "sha256": "39d6a297ea8b8ed3f7c3a6aede17a8a61e68ab9fac40ba47c8bfccd428a6a756"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/usage-360dp.png",
+      "sha256": "006dfc037be3db621d32f1ae035502524a90914a7e7997a33ca773fb2e47c691"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/xxxhdpi-detail.png",
+      "sha256": "04753ff15ed8c5a5ffeae3e8d274b2d3bc123e0a67519ea38009f1f78c2f35b3"
+    }
+  ],
+  "stagedOutputIdentities": [],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/brand/classic/splash/classic-splash-v2.png",
+    "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366"
+  }
+}

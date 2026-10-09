@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-monochrome",
+  "version": 2,
+  "candidate": 2,
+  "ownerStatement": "Approve artwork and integration",
+  "recordedAtUtc": "2026-10-09T09:06:39.466175+00:00",
+  "activationApproved": true,
+  "scope": "Approve the revised circle-centered Classic monochrome v2 shown above for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+    "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+  },
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-monochrome-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-monochrome",
+      "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+      "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v2.png",
+      "sha256": "812a95a5a70f7c0b3d202ffc0800d385a5733dd9423b65dff0b3edaba60f817e",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "mdpi",
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          108,
+          108
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v2.png",
+      "sha256": "cfeb5e68b39f2c6505d349b2c4d44488e217001b7ec90585a34c170b72a0816a",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "hdpi",
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          162,
+          162
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v2.png",
+      "sha256": "2c145a1a86621bf0e62948395cb0ddfbdc27444c9a696c505e2fd5433f159020",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xhdpi",
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          216,
+          216
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v2.png",
+      "sha256": "d7ed146d897f0cf9bd3cbecfe0bb6e998d9ec12c15da07edbc785b28110a29f9",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxhdpi",
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          324,
+          324
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v2.png",
+      "sha256": "ad48ef4bb3b9b9374b8627a8a6d7571ffb2da08527b324cc17ea38282cfd60b1",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxxhdpi",
+      "sourceRole": "monochrome",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          432,
+          432
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-monochrome/candidate-02.json",
+    "sha256": "6ccf528473a25f07d945077dfbe365b05d9370e832eefee1a57acd99e5add306"
+  },
+  "manualLayerSources": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-monochrome-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-monochrome",
+      "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+      "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "checks": {
+    "candidateBytesPreserved": true,
+    "distinctLayerTransformsVerified": true,
+    "nativeVectorStructureVerified": false,
+    "allOutputDimensionsMatch": true,
+    "installedDeviceAppearanceAssessed": false
+  },
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "ownerQuestion": "Approve the revised circle-centered Classic monochrome v2 shown above for artwork and integration?",
+  "ownerDecisionReference": {
+    "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+    "questionIndex": 2,
+    "humanResponse": "Approve artwork and integration"
+  }
+}

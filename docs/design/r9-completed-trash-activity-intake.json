@@ -1,0 +1,28 @@
+{
+  "record": "A31",
+  "date": "2026-10-07",
+  "source": "Repository owner in current chat",
+  "ownerAnnotation": {
+    "index": 1,
+    "selectedText": "Next: Completed, Trash and Activity.",
+    "comment": "continue"
+  },
+  "ownerStatement": "Make sure to reference all four themes.Use all the images in docs\\design\\remilo-r3-atmospheres as the point of reference when deciding on the color and style. (UX is a different story). Follow what we have been using for UX.",
+  "authorizedScope": [
+    "Continue refinement of Completed, Trash and Activity",
+    "Use all eight R3 Light/Dark images for color and style",
+    "Preserve established UX, global themes and prior corrections",
+    "Record source discrepancies and proposed corrections without silently changing behavior"
+  ],
+  "artifacts": [
+    "r9-completed-trash-activity-specification.md",
+    "r9-completed-trash-activity-fixtures.json"
+  ],
+  "notImplied": [
+    "Owner acceptance of the resulting draft",
+    "New image generation in this request",
+    "Production P05/P07 execution or native action/storage changes",
+    "Approval of skipped clear-state semantics or a new query projection",
+    "Milestone completion or accessibility/runtime/device verification"
+  ]
+}

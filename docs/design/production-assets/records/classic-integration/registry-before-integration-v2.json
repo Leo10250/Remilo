@@ -1,0 +1,4963 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Faithful Classic export provenance and individual approvals; task status belongs only in docs/backlog.md.",
+  "source": {
+    "path": "assets/brand/reference/icon-classic.png",
+    "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+    "width": 467,
+    "height": 467
+  },
+  "sourceBoard": {
+    "path": "assets/brand/reference/source-icon-board.png",
+    "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+  },
+  "noGenerativeRedraw": true,
+  "exports": [
+    {
+      "id": "classic-legacy-launcher",
+      "requiredOutputs": {
+        "configurationPx": 1024,
+        "androidPx": [
+          48,
+          72,
+          96,
+          144,
+          192
+        ]
+      },
+      "candidateRecords": [
+        "records/classic-legacy-launcher/candidate-01.json",
+        "records/classic-legacy-launcher/candidate-02.json"
+      ],
+      "reviewCandidate": 2,
+      "approval": {
+        "path": "docs/design/production-assets/approvals/classic-legacy-launcher-v2.json",
+        "sha256": "bd354af2554aab8b23609730ab52b40561c37622fadf014c235ca353c77fb276",
+        "ownerStatement": "Approve artwork and integration",
+        "recordedAtUtc": "2026-10-09T09:05:35.946243+00:00",
+        "activationApproved": true,
+        "candidate": 2,
+        "files": [
+          {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "configuration",
+            "path": "assets/brand/classic/legacy/classic-launcher-v2.png",
+            "sha256": "46c60eca9a0c5fae252726650b2a7ef5c78f42e8e0d0f3c0b331131309d29c04",
+            "width": 1024,
+            "height": 1024,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                1024,
+                1024
+              ],
+              "allowUpscale": true
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": true,
+            "lossless": true,
+            "addedSourceDetail": false
+          },
+          {
+            "role": "legacy",
+            "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v2.webp",
+            "sha256": "184b5f6c26a91d7700a8d032f9eae740b5a1eb83c8af38a53f507ef17d181499",
+            "width": 48,
+            "height": 48,
+            "format": "WebP",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "mdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                48,
+                48
+              ],
+              "allowUpscale": false
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "legacy-round",
+            "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v2.webp",
+            "sha256": "3cacea6efe6708c9efbf5fd43b6c6870b36abb46b98a9b784ca3f435f539e2a9",
+            "width": 48,
+            "height": 48,
+            "format": "WebP",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "mdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                48,
+                48
+              ],
+              "allowUpscale": false,
+              "mask": "circle",
+              "losslessWebpEncoding": {
+                "method": 6,
+                "exact": false
+              }
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true,
+            "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+          },
+          {
+            "role": "legacy",
+            "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v2.webp",
+            "sha256": "32e2ca5e649191ad9dc04f1ffc394b3796dc0213f0197d897f0446f58a925799",
+            "width": 72,
+            "height": 72,
+            "format": "WebP",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "hdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                72,
+                72
+              ],
+              "allowUpscale": false
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "legacy-round",
+            "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v2.webp",
+            "sha256": "de6adb88938add73234875228fa9b8a7ba68a68dda1c8228084d85d3aecdb985",
+            "width": 72,
+            "height": 72,
+            "format": "WebP",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "hdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                72,
+                72
+              ],
+              "allowUpscale": false,
+              "mask": "circle",
+              "losslessWebpEncoding": {
+                "method": 6,
+                "exact": false
+              }
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true,
+            "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+          },
+          {
+            "role": "legacy",
+            "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v2.webp",
+            "sha256": "794c24bc1bce50b5ab885080662c95429cf6804640c852d1d81ad1a7f80028da",
+            "width": 96,
+            "height": 96,
+            "format": "WebP",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "xhdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                96,
+                96
+              ],
+              "allowUpscale": false
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "legacy-round",
+            "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v2.webp",
+            "sha256": "0df36a21583afe06ac41c025f56d9d1564eefed5dd10ff580d9fcf283a995562",
+            "width": 96,
+            "height": 96,
+            "format": "WebP",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xhdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                96,
+                96
+              ],
+              "allowUpscale": false,
+              "mask": "circle",
+              "losslessWebpEncoding": {
+                "method": 6,
+                "exact": false
+              }
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true,
+            "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+          },
+          {
+            "role": "legacy",
+            "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v2.webp",
+            "sha256": "d98d5de45926f9fec604957f60849b38ecfe27c3b0c5bf21059ea12200f43aae",
+            "width": 144,
+            "height": 144,
+            "format": "WebP",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "xxhdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                144,
+                144
+              ],
+              "allowUpscale": false
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "legacy-round",
+            "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v2.webp",
+            "sha256": "fff3ebcb9eee95c9049c32ef5a4bad927090ecb91bdba632457fd737d3305938",
+            "width": 144,
+            "height": 144,
+            "format": "WebP",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xxhdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                144,
+                144
+              ],
+              "allowUpscale": false,
+              "mask": "circle",
+              "losslessWebpEncoding": {
+                "method": 6,
+                "exact": false
+              }
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true,
+            "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+          },
+          {
+            "role": "legacy",
+            "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v2.webp",
+            "sha256": "1f85bc5a37133c67f2454bcfb435f6a42608d49658c1178fd3ee00a26e6b53be",
+            "width": 192,
+            "height": 192,
+            "format": "WebP",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "xxxhdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                192,
+                192
+              ],
+              "allowUpscale": false
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "legacy-round",
+            "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v2.webp",
+            "sha256": "84a08d528f152a40b6d768ef4b9907db9b8cd5e7f06d1fcc5141005159bb5660",
+            "width": 192,
+            "height": 192,
+            "format": "WebP",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xxxhdpi",
+            "sourceRole": "legacy",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                192,
+                192
+              ],
+              "allowUpscale": false,
+              "mask": "circle",
+              "losslessWebpEncoding": {
+                "method": 6,
+                "exact": false
+              }
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true,
+            "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+          }
+        ]
+      },
+      "productionFiles": [
+        {
+          "role": "configuration",
+          "path": "assets/brand/classic/legacy/classic-launcher-v2.png",
+          "sha256": "46c60eca9a0c5fae252726650b2a7ef5c78f42e8e0d0f3c0b331131309d29c04",
+          "width": 1024,
+          "height": 1024,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              1024,
+              1024
+            ],
+            "allowUpscale": true
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": true,
+          "lossless": true,
+          "addedSourceDetail": false
+        },
+        {
+          "role": "legacy",
+          "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v2.webp",
+          "sha256": "184b5f6c26a91d7700a8d032f9eae740b5a1eb83c8af38a53f507ef17d181499",
+          "width": 48,
+          "height": 48,
+          "format": "WebP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              48,
+              48
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "3cacea6efe6708c9efbf5fd43b6c6870b36abb46b98a9b784ca3f435f539e2a9",
+          "width": 48,
+          "height": 48,
+          "format": "WebP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              48,
+              48
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v2.webp",
+          "sha256": "32e2ca5e649191ad9dc04f1ffc394b3796dc0213f0197d897f0446f58a925799",
+          "width": 72,
+          "height": 72,
+          "format": "WebP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              72,
+              72
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "de6adb88938add73234875228fa9b8a7ba68a68dda1c8228084d85d3aecdb985",
+          "width": 72,
+          "height": 72,
+          "format": "WebP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              72,
+              72
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v2.webp",
+          "sha256": "794c24bc1bce50b5ab885080662c95429cf6804640c852d1d81ad1a7f80028da",
+          "width": 96,
+          "height": 96,
+          "format": "WebP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              96,
+              96
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "0df36a21583afe06ac41c025f56d9d1564eefed5dd10ff580d9fcf283a995562",
+          "width": 96,
+          "height": 96,
+          "format": "WebP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              96,
+              96
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v2.webp",
+          "sha256": "d98d5de45926f9fec604957f60849b38ecfe27c3b0c5bf21059ea12200f43aae",
+          "width": 144,
+          "height": 144,
+          "format": "WebP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              144,
+              144
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "fff3ebcb9eee95c9049c32ef5a4bad927090ecb91bdba632457fd737d3305938",
+          "width": 144,
+          "height": 144,
+          "format": "WebP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              144,
+              144
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        },
+        {
+          "role": "legacy",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v2.webp",
+          "sha256": "1f85bc5a37133c67f2454bcfb435f6a42608d49658c1178fd3ee00a26e6b53be",
+          "width": 192,
+          "height": 192,
+          "format": "WebP",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              192,
+              192
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "legacy-round",
+          "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v2.webp",
+          "sha256": "84a08d528f152a40b6d768ef4b9907db9b8cd5e7f06d1fcc5141005159bb5660",
+          "width": 192,
+          "height": 192,
+          "format": "WebP",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "legacy",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              192,
+              192
+            ],
+            "allowUpscale": false,
+            "mask": "circle",
+            "losslessWebpEncoding": {
+              "method": 6,
+              "exact": false
+            }
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true,
+          "encodingLimitation": "Only fully transparent RGB is optimized by lossless WebP method6/exact:false; all visible color/alpha is exact."
+        }
+      ],
+      "approvedVersionHistory": [
+        {
+          "id": "classic-legacy-launcher",
+          "requiredOutputs": {
+            "configurationPx": 1024,
+            "androidPx": [
+              48,
+              72,
+              96,
+              144,
+              192
+            ]
+          },
+          "candidateRecords": [
+            "records/classic-legacy-launcher/candidate-01.json"
+          ],
+          "reviewCandidate": 1,
+          "approval": {
+            "path": "docs/design/production-assets/approvals/classic-legacy-launcher-v1.json",
+            "ownerStatement": "Approved.",
+            "candidate": 1,
+            "recordedAtUtc": "2026-10-09T04:39:56.489275+00:00"
+          },
+          "productionFiles": [
+            {
+              "role": "configuration",
+              "sha256": "0f514348c437b6c2f5f74802cc29b4ed8eef6e3fbdefe2d4e459ee993536a347",
+              "width": 1024,
+              "height": 1024,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": true,
+              "interpolation": "Lanczos",
+              "addedSourceDetail": false,
+              "path": "assets/brand/classic/legacy/classic-launcher-v1.png",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy",
+              "density": "mdpi",
+              "sha256": "cd2551fd34f4f83745247beaba10e9ff146249118b7f7bf69a442d4229a238cf",
+              "width": 48,
+              "height": 48,
+              "format": "WebP",
+              "mode": "RGB",
+              "opaque": true,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy-round",
+              "density": "mdpi",
+              "sha256": "247de023d0b97b9cc3c4bb322c2aed06f42a57538a8d25b8928da055c5d029fd",
+              "width": 48,
+              "height": 48,
+              "format": "WebP",
+              "mode": "RGBA",
+              "opaque": false,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-mdpi/ic_launcher_round_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy",
+              "density": "hdpi",
+              "sha256": "9dee99358d01f3df08609949fa83ccb2f6e31a0f14c9f7ecab1da97a16416498",
+              "width": 72,
+              "height": 72,
+              "format": "WebP",
+              "mode": "RGB",
+              "opaque": true,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy-round",
+              "density": "hdpi",
+              "sha256": "704579f3d47d2d5cd9583e2c048d5a98fdff1f33fdee6fd76add84e84f6d4fcf",
+              "width": 72,
+              "height": 72,
+              "format": "WebP",
+              "mode": "RGBA",
+              "opaque": false,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-hdpi/ic_launcher_round_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy",
+              "density": "xhdpi",
+              "sha256": "e48b467541e238c102a988e29cfb2931fe2f5d3a19f706e9ea5ce252bb8fe4c2",
+              "width": 96,
+              "height": 96,
+              "format": "WebP",
+              "mode": "RGB",
+              "opaque": true,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy-round",
+              "density": "xhdpi",
+              "sha256": "35866248dc07dd3d97bb0238b77768ef0992698483070f736df5d8229ecc7031",
+              "width": 96,
+              "height": 96,
+              "format": "WebP",
+              "mode": "RGBA",
+              "opaque": false,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-xhdpi/ic_launcher_round_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy",
+              "density": "xxhdpi",
+              "sha256": "d47fd534cea19c8b803e5d3ba531e961cf74184cf36523d364b137dd0e06f26f",
+              "width": 144,
+              "height": 144,
+              "format": "WebP",
+              "mode": "RGB",
+              "opaque": true,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy-round",
+              "density": "xxhdpi",
+              "sha256": "d60052285a92969d32453a6dbb6f25309af8914cfe88016d583142fa68b6e867",
+              "width": 144,
+              "height": 144,
+              "format": "WebP",
+              "mode": "RGBA",
+              "opaque": false,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-xxhdpi/ic_launcher_round_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy",
+              "density": "xxxhdpi",
+              "sha256": "ed928126e3ba1a25c3e9caa5222fea1c593aa293e3ed6efee1b084f2edba97a2",
+              "width": 192,
+              "height": 192,
+              "format": "WebP",
+              "mode": "RGB",
+              "opaque": true,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_classic_v1.webp",
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "legacy-round",
+              "density": "xxxhdpi",
+              "sha256": "290603e82c749190bcfeaa49f23b5c7a5689a55115a3dbf2847b0e725780c8be",
+              "width": 192,
+              "height": 192,
+              "format": "WebP",
+              "mode": "RGBA",
+              "opaque": false,
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "interpolation": "Lanczos",
+              "path": "assets/brand/classic/legacy/android/mipmap-xxxhdpi/ic_launcher_round_classic_v1.webp",
+              "candidateBytesPreserved": true
+            }
+          ]
+        }
+      ],
+      "activeVersion": 2,
+      "approvedSource": {
+        "role": "source",
+        "path": "assets/brand/classic/masters/classic-legacy-launcher-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "format": "PNG",
+        "mode": "RGB",
+        "opaque": true,
+        "candidateBytesPreserved": true
+      },
+      "approvedSources": [],
+      "technicalLimitations": [
+        "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+        "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+        "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+        "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance.",
+        "Lossless WebP optimizes alpha0 RGB only; visible source colors/alpha remain exact."
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-legacy-launcher/manual-specification-v2-r2.json",
+        "specificationSha256": "a64c4d85e0ccde48d3314a2225666026676d0532b58491ac0672002cc4116813",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ]
+    },
+    {
+      "id": "classic-adaptive",
+      "requiredOutputs": {
+        "layers": [
+          "foreground",
+          "background"
+        ],
+        "androidPx": [
+          108,
+          162,
+          216,
+          324,
+          432
+        ]
+      },
+      "candidateRecords": [
+        "records/classic-adaptive/candidate-01.json",
+        "records/classic-adaptive/candidate-02.json"
+      ],
+      "approval": {
+        "path": "docs/design/production-assets/approvals/classic-adaptive-v2.json",
+        "sha256": "d7971cb0109c0e6f4747acd20931b9205f234f1c7c6be3ee7403bfa2c34281cb",
+        "ownerStatement": "Approve artwork and integration",
+        "recordedAtUtc": "2026-10-09T09:06:31.367947+00:00",
+        "activationApproved": true,
+        "candidate": 2,
+        "files": [
+          {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-adaptive-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "source-foreground",
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "source-background",
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "foreground",
+            "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v2.png",
+            "sha256": "2b78dbe9854d9904fc276deda9c4c58843984a468989b33a8afa8846e019af36",
+            "width": 108,
+            "height": 108,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "mdpi",
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                108,
+                108
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "background",
+            "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v2.png",
+            "sha256": "8699b76c79d96a666fe9335194079bb39b4758607535a05ff5db6836d7ccd8e9",
+            "width": 108,
+            "height": 108,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "mdpi",
+            "sourceRole": "background",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+              "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+            },
+            "manualExportSpec": {
+              "kind": "resize",
+              "size": [
+                108,
+                108
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "foreground",
+            "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v2.png",
+            "sha256": "8f6c16a15aa62acbbbbb13b6157ee15bf63c6a1e36b6329d5ac39b5d9923ea42",
+            "width": 162,
+            "height": 162,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "hdpi",
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                162,
+                162
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "background",
+            "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v2.png",
+            "sha256": "cc4cb768953e5c2cd5e8689e548dc86cd60a751610c594a3ee10fcdbc652387e",
+            "width": 162,
+            "height": 162,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "hdpi",
+            "sourceRole": "background",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+              "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+            },
+            "manualExportSpec": {
+              "kind": "resize",
+              "size": [
+                162,
+                162
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "foreground",
+            "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v2.png",
+            "sha256": "453559a306f996f7d07522b247118064bf7967874db332d083d0cac6bae3b2d4",
+            "width": 216,
+            "height": 216,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xhdpi",
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                216,
+                216
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "background",
+            "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v2.png",
+            "sha256": "0ad80068515a9014562ca68bec8fb1990fa41c52b7fd5d7d6a69f267da0411c5",
+            "width": 216,
+            "height": 216,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "xhdpi",
+            "sourceRole": "background",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+              "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+            },
+            "manualExportSpec": {
+              "kind": "resize",
+              "size": [
+                216,
+                216
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "foreground",
+            "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v2.png",
+            "sha256": "8e1a739048423646d96a7ccdcc6f659cb4f98662f23f89c3fddf8c7ac756e63e",
+            "width": 324,
+            "height": 324,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xxhdpi",
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                324,
+                324
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "background",
+            "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v2.png",
+            "sha256": "32400c1e8af9d0b084045dc75fbdc3c449caad7a83bd135458d28c053ae9208b",
+            "width": 324,
+            "height": 324,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "xxhdpi",
+            "sourceRole": "background",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+              "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+            },
+            "manualExportSpec": {
+              "kind": "resize",
+              "size": [
+                324,
+                324
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "foreground",
+            "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v2.png",
+            "sha256": "903f45513e5174c23d9092a10d1f23f2288d512e03cb986164509e28d6d114e1",
+            "width": 432,
+            "height": 432,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xxxhdpi",
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                432,
+                432
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "background",
+            "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v2.png",
+            "sha256": "8d362a70d2c268c7c547aab1e9ec2bdd68286114f3f526c77b47ba6e0a1a220d",
+            "width": 432,
+            "height": 432,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "density": "xxxhdpi",
+            "sourceRole": "background",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+              "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+            },
+            "manualExportSpec": {
+              "kind": "resize",
+              "size": [
+                432,
+                432
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          }
+        ]
+      },
+      "productionFiles": [
+        {
+          "role": "foreground",
+          "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v2.png",
+          "sha256": "2b78dbe9854d9904fc276deda9c4c58843984a468989b33a8afa8846e019af36",
+          "width": 108,
+          "height": 108,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              108,
+              108
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "background",
+          "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v2.png",
+          "sha256": "8699b76c79d96a666fe9335194079bb39b4758607535a05ff5db6836d7ccd8e9",
+          "width": 108,
+          "height": 108,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "background",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              108,
+              108
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "foreground",
+          "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v2.png",
+          "sha256": "8f6c16a15aa62acbbbbb13b6157ee15bf63c6a1e36b6329d5ac39b5d9923ea42",
+          "width": 162,
+          "height": 162,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              162,
+              162
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "background",
+          "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v2.png",
+          "sha256": "cc4cb768953e5c2cd5e8689e548dc86cd60a751610c594a3ee10fcdbc652387e",
+          "width": 162,
+          "height": 162,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "background",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              162,
+              162
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "foreground",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v2.png",
+          "sha256": "453559a306f996f7d07522b247118064bf7967874db332d083d0cac6bae3b2d4",
+          "width": 216,
+          "height": 216,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              216,
+              216
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "background",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v2.png",
+          "sha256": "0ad80068515a9014562ca68bec8fb1990fa41c52b7fd5d7d6a69f267da0411c5",
+          "width": 216,
+          "height": 216,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "background",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              216,
+              216
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "foreground",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v2.png",
+          "sha256": "8e1a739048423646d96a7ccdcc6f659cb4f98662f23f89c3fddf8c7ac756e63e",
+          "width": 324,
+          "height": 324,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              324,
+              324
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "background",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v2.png",
+          "sha256": "32400c1e8af9d0b084045dc75fbdc3c449caad7a83bd135458d28c053ae9208b",
+          "width": 324,
+          "height": 324,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "background",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              324,
+              324
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "foreground",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v2.png",
+          "sha256": "903f45513e5174c23d9092a10d1f23f2288d512e03cb986164509e28d6d114e1",
+          "width": 432,
+          "height": 432,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              432,
+              432
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "background",
+          "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v2.png",
+          "sha256": "8d362a70d2c268c7c547aab1e9ec2bdd68286114f3f526c77b47ba6e0a1a220d",
+          "width": 432,
+          "height": 432,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "background",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+            "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+          },
+          "manualExportSpec": {
+            "kind": "resize",
+            "size": [
+              432,
+              432
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        }
+      ],
+      "reviewCandidate": 2,
+      "activeVersion": 2,
+      "approvedSource": {
+        "role": "source",
+        "path": "assets/brand/classic/masters/classic-adaptive-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "format": "PNG",
+        "mode": "RGB",
+        "opaque": true,
+        "candidateBytesPreserved": true
+      },
+      "approvedSources": [
+        {
+          "role": "source-foreground",
+          "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+          "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+          "width": 467,
+          "height": 467,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true
+        },
+        {
+          "role": "source-background",
+          "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+          "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+          "width": 467,
+          "height": 467,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true
+        }
+      ],
+      "technicalLimitations": [
+        "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+        "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+        "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+        "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-adaptive/manual-specification-v2.json",
+        "specificationSha256": "81b4427dfe98f75d29b0c99b3268e57d8a6de5d34d3ee39dfc3704d5f5b22af3",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "approvedVersionHistory": [
+        {
+          "id": "classic-adaptive",
+          "requiredOutputs": {
+            "layers": [
+              "foreground",
+              "background"
+            ],
+            "androidPx": [
+              108,
+              162,
+              216,
+              324,
+              432
+            ]
+          },
+          "candidateRecords": [
+            "records/classic-adaptive/candidate-01.json"
+          ],
+          "approval": {
+            "path": "docs/design/production-assets/approvals/classic-adaptive-v1.json",
+            "sha256": "4a3a5e1a686b73177e7ec03787b135913fdc46b681d633ef925f4c5f2b984ea5",
+            "ownerStatement": "Approve artwork and integration",
+            "recordedAtUtc": "2026-10-09T08:12:41.016243+00:00",
+            "activationApproved": true,
+            "candidate": 1,
+            "files": [
+              {
+                "role": "source",
+                "path": "assets/brand/classic/masters/classic-adaptive-v1.png",
+                "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "source-foreground",
+                "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "source-background",
+                "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "foreground",
+                "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v1.png",
+                "sha256": "57437e17c33d838a1cb26497851d9bc2745baf546cbcba16950f710c97aad920",
+                "width": 108,
+                "height": 108,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "mdpi",
+                "sourceRole": "foreground",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    108,
+                    108
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "background",
+                "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v1.png",
+                "sha256": "2f00d90433fa9125259e8b97b396645913ecdd62336863d5620ca76ad007da48",
+                "width": 108,
+                "height": 108,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true,
+                "density": "mdpi",
+                "sourceRole": "background",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                  "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+                },
+                "manualExportSpec": {
+                  "kind": "resize",
+                  "size": [
+                    108,
+                    108
+                  ],
+                  "filter": "Lanczos"
+                }
+              },
+              {
+                "role": "foreground",
+                "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v1.png",
+                "sha256": "163e59fb5ae7b7f6655073e706d58218a7a1ce7b3262203d0cec952374aa9c3d",
+                "width": 162,
+                "height": 162,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "hdpi",
+                "sourceRole": "foreground",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    162,
+                    162
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "background",
+                "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v1.png",
+                "sha256": "0babee7372cb021b15515f0fd9195912134aeefe074581a144835bf94724354b",
+                "width": 162,
+                "height": 162,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true,
+                "density": "hdpi",
+                "sourceRole": "background",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                  "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+                },
+                "manualExportSpec": {
+                  "kind": "resize",
+                  "size": [
+                    162,
+                    162
+                  ],
+                  "filter": "Lanczos"
+                }
+              },
+              {
+                "role": "foreground",
+                "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v1.png",
+                "sha256": "91e5663a5f0d4f9d2d2ce53e69a356e259cdd490148736d1489ec8b5138975ad",
+                "width": 216,
+                "height": 216,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "xhdpi",
+                "sourceRole": "foreground",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    216,
+                    216
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "background",
+                "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v1.png",
+                "sha256": "abd7424f7b382671b575dc575da685b918ad588467ce5e4233359807bb43d787",
+                "width": 216,
+                "height": 216,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true,
+                "density": "xhdpi",
+                "sourceRole": "background",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                  "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+                },
+                "manualExportSpec": {
+                  "kind": "resize",
+                  "size": [
+                    216,
+                    216
+                  ],
+                  "filter": "Lanczos"
+                }
+              },
+              {
+                "role": "foreground",
+                "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v1.png",
+                "sha256": "56750018ee3ddf5a962a5f1f0f420a8da4a135f92cc788726d185acd543296ea",
+                "width": 324,
+                "height": 324,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "xxhdpi",
+                "sourceRole": "foreground",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    324,
+                    324
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "background",
+                "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v1.png",
+                "sha256": "34686dd612c1888d10288309565bf0a6e3b6acbbf9ca90e53ea076928e42c851",
+                "width": 324,
+                "height": 324,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true,
+                "density": "xxhdpi",
+                "sourceRole": "background",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                  "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+                },
+                "manualExportSpec": {
+                  "kind": "resize",
+                  "size": [
+                    324,
+                    324
+                  ],
+                  "filter": "Lanczos"
+                }
+              },
+              {
+                "role": "foreground",
+                "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v1.png",
+                "sha256": "7becc0ff2be961fbb3b7fe7b7392f0c50a6e842ade3c78acb7c6af01c8f8b8f6",
+                "width": 432,
+                "height": 432,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "xxxhdpi",
+                "sourceRole": "foreground",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    432,
+                    432
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "background",
+                "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v1.png",
+                "sha256": "351a23a574762eb5ae70b1b00e0f9180fef5017c498739877242817f71611e7e",
+                "width": 432,
+                "height": 432,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true,
+                "density": "xxxhdpi",
+                "sourceRole": "background",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                  "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+                },
+                "manualExportSpec": {
+                  "kind": "resize",
+                  "size": [
+                    432,
+                    432
+                  ],
+                  "filter": "Lanczos"
+                }
+              }
+            ]
+          },
+          "productionFiles": [
+            {
+              "role": "foreground",
+              "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v1.png",
+              "sha256": "57437e17c33d838a1cb26497851d9bc2745baf546cbcba16950f710c97aad920",
+              "width": 108,
+              "height": 108,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "mdpi",
+              "sourceRole": "foreground",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  108,
+                  108
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "background",
+              "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v1.png",
+              "sha256": "2f00d90433fa9125259e8b97b396645913ecdd62336863d5620ca76ad007da48",
+              "width": 108,
+              "height": 108,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "candidateBytesPreserved": true,
+              "density": "mdpi",
+              "sourceRole": "background",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+              },
+              "manualExportSpec": {
+                "kind": "resize",
+                "size": [
+                  108,
+                  108
+                ],
+                "filter": "Lanczos"
+              }
+            },
+            {
+              "role": "foreground",
+              "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v1.png",
+              "sha256": "163e59fb5ae7b7f6655073e706d58218a7a1ce7b3262203d0cec952374aa9c3d",
+              "width": 162,
+              "height": 162,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "hdpi",
+              "sourceRole": "foreground",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  162,
+                  162
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "background",
+              "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v1.png",
+              "sha256": "0babee7372cb021b15515f0fd9195912134aeefe074581a144835bf94724354b",
+              "width": 162,
+              "height": 162,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "candidateBytesPreserved": true,
+              "density": "hdpi",
+              "sourceRole": "background",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+              },
+              "manualExportSpec": {
+                "kind": "resize",
+                "size": [
+                  162,
+                  162
+                ],
+                "filter": "Lanczos"
+              }
+            },
+            {
+              "role": "foreground",
+              "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v1.png",
+              "sha256": "91e5663a5f0d4f9d2d2ce53e69a356e259cdd490148736d1489ec8b5138975ad",
+              "width": 216,
+              "height": 216,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "xhdpi",
+              "sourceRole": "foreground",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  216,
+                  216
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "background",
+              "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v1.png",
+              "sha256": "abd7424f7b382671b575dc575da685b918ad588467ce5e4233359807bb43d787",
+              "width": 216,
+              "height": 216,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "candidateBytesPreserved": true,
+              "density": "xhdpi",
+              "sourceRole": "background",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+              },
+              "manualExportSpec": {
+                "kind": "resize",
+                "size": [
+                  216,
+                  216
+                ],
+                "filter": "Lanczos"
+              }
+            },
+            {
+              "role": "foreground",
+              "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v1.png",
+              "sha256": "56750018ee3ddf5a962a5f1f0f420a8da4a135f92cc788726d185acd543296ea",
+              "width": 324,
+              "height": 324,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "xxhdpi",
+              "sourceRole": "foreground",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  324,
+                  324
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "background",
+              "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v1.png",
+              "sha256": "34686dd612c1888d10288309565bf0a6e3b6acbbf9ca90e53ea076928e42c851",
+              "width": 324,
+              "height": 324,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "candidateBytesPreserved": true,
+              "density": "xxhdpi",
+              "sourceRole": "background",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+              },
+              "manualExportSpec": {
+                "kind": "resize",
+                "size": [
+                  324,
+                  324
+                ],
+                "filter": "Lanczos"
+              }
+            },
+            {
+              "role": "foreground",
+              "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v1.png",
+              "sha256": "7becc0ff2be961fbb3b7fe7b7392f0c50a6e842ade3c78acb7c6af01c8f8b8f6",
+              "width": 432,
+              "height": 432,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "xxxhdpi",
+              "sourceRole": "foreground",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  432,
+                  432
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "background",
+              "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v1.png",
+              "sha256": "351a23a574762eb5ae70b1b00e0f9180fef5017c498739877242817f71611e7e",
+              "width": 432,
+              "height": 432,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "candidateBytesPreserved": true,
+              "density": "xxxhdpi",
+              "sourceRole": "background",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+                "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+              },
+              "manualExportSpec": {
+                "kind": "resize",
+                "size": [
+                  432,
+                  432
+                ],
+                "filter": "Lanczos"
+              }
+            }
+          ],
+          "reviewCandidate": 1,
+          "activeVersion": 1,
+          "approvedSource": {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-adaptive-v1.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          "approvedSources": [
+            {
+              "role": "source-foreground",
+              "path": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+              "width": 467,
+              "height": 467,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true
+            },
+            {
+              "role": "source-background",
+              "path": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+              "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+              "width": 467,
+              "height": 467,
+              "format": "PNG",
+              "mode": "RGB",
+              "opaque": true,
+              "candidateBytesPreserved": true
+            }
+          ],
+          "technicalLimitations": [
+            "Flattened source supplies neither original alpha nor underlying background pixels.",
+            "Silhouette is a manual trace; anti-aliased edge fidelity requires owner review.",
+            "Original external glow/shadow cannot be cleanly recovered and is omitted.",
+            "Background is a deterministic source-derived reconstruction, not an original layer.",
+            "All densities derive directly from the isolated 467px source; none gain detail.",
+            "Synthetic masks and safe-circle measures do not establish installed/OEM runtime acceptance."
+          ],
+          "manualPromotionSupport": {
+            "script": "scripts/promote-manual-brand.py",
+            "specification": "docs/design/production-assets/records/classic-adaptive/manual-specification-v1.json",
+            "specificationSha256": "223dd819692dae1ff21719caed145f72a4474fbab48630075a5b7a36a634b532",
+            "sourcePolicy": "Distinct reviewed layer sources and exact prepared PNG bytes; no flattened-tile substitute."
+          }
+        }
+      ],
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ]
+    },
+    {
+      "id": "classic-monochrome",
+      "requiredOutputs": {
+        "transparentSilhouette": true,
+        "androidPx": [
+          108,
+          162,
+          216,
+          324,
+          432
+        ]
+      },
+      "candidateRecords": [
+        "records/classic-monochrome/candidate-01.json",
+        "records/classic-monochrome/candidate-02.json"
+      ],
+      "approval": {
+        "path": "docs/design/production-assets/approvals/classic-monochrome-v2.json",
+        "sha256": "2b056c37a03066e655469ef1d750a7e5720c1ab656224f7a9c7b8a9da8065f28",
+        "ownerStatement": "Approve artwork and integration",
+        "recordedAtUtc": "2026-10-09T09:06:39.466175+00:00",
+        "activationApproved": true,
+        "candidate": 2,
+        "files": [
+          {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-monochrome-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "source-monochrome",
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "monochrome",
+            "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v2.png",
+            "sha256": "812a95a5a70f7c0b3d202ffc0800d385a5733dd9423b65dff0b3edaba60f817e",
+            "width": 108,
+            "height": 108,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "mdpi",
+            "sourceRole": "monochrome",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                108,
+                108
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "monochrome",
+            "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v2.png",
+            "sha256": "cfeb5e68b39f2c6505d349b2c4d44488e217001b7ec90585a34c170b72a0816a",
+            "width": 162,
+            "height": 162,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "hdpi",
+            "sourceRole": "monochrome",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                162,
+                162
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "monochrome",
+            "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v2.png",
+            "sha256": "2c145a1a86621bf0e62948395cb0ddfbdc27444c9a696c505e2fd5433f159020",
+            "width": 216,
+            "height": 216,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xhdpi",
+            "sourceRole": "monochrome",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                216,
+                216
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "monochrome",
+            "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v2.png",
+            "sha256": "d7ed146d897f0cf9bd3cbecfe0bb6e998d9ec12c15da07edbc785b28110a29f9",
+            "width": 324,
+            "height": 324,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xxhdpi",
+            "sourceRole": "monochrome",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                324,
+                324
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "monochrome",
+            "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v2.png",
+            "sha256": "ad48ef4bb3b9b9374b8627a8a6d7571ffb2da08527b324cc17ea38282cfd60b1",
+            "width": 432,
+            "height": 432,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "density": "xxxhdpi",
+            "sourceRole": "monochrome",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.13221180447949465,
+              "layerSizeDp": 108,
+              "size": [
+                432,
+                432
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          }
+        ]
+      },
+      "productionFiles": [
+        {
+          "role": "monochrome",
+          "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v2.png",
+          "sha256": "812a95a5a70f7c0b3d202ffc0800d385a5733dd9423b65dff0b3edaba60f817e",
+          "width": 108,
+          "height": 108,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "mdpi",
+          "sourceRole": "monochrome",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              108,
+              108
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "monochrome",
+          "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v2.png",
+          "sha256": "cfeb5e68b39f2c6505d349b2c4d44488e217001b7ec90585a34c170b72a0816a",
+          "width": 162,
+          "height": 162,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "hdpi",
+          "sourceRole": "monochrome",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              162,
+              162
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "monochrome",
+          "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v2.png",
+          "sha256": "2c145a1a86621bf0e62948395cb0ddfbdc27444c9a696c505e2fd5433f159020",
+          "width": 216,
+          "height": 216,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xhdpi",
+          "sourceRole": "monochrome",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              216,
+              216
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "monochrome",
+          "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v2.png",
+          "sha256": "d7ed146d897f0cf9bd3cbecfe0bb6e998d9ec12c15da07edbc785b28110a29f9",
+          "width": 324,
+          "height": 324,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxhdpi",
+          "sourceRole": "monochrome",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              324,
+              324
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "monochrome",
+          "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v2.png",
+          "sha256": "ad48ef4bb3b9b9374b8627a8a6d7571ffb2da08527b324cc17ea38282cfd60b1",
+          "width": 432,
+          "height": 432,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "density": "xxxhdpi",
+          "sourceRole": "monochrome",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.13221180447949465,
+            "layerSizeDp": 108,
+            "size": [
+              432,
+              432
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        }
+      ],
+      "reviewCandidate": 2,
+      "activeVersion": 2,
+      "approvedSource": {
+        "role": "source",
+        "path": "assets/brand/classic/masters/classic-monochrome-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "format": "PNG",
+        "mode": "RGB",
+        "opaque": true,
+        "candidateBytesPreserved": true
+      },
+      "approvedSources": [
+        {
+          "role": "source-monochrome",
+          "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v2.png",
+          "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+          "width": 467,
+          "height": 467,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true
+        }
+      ],
+      "technicalLimitations": [
+        "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+        "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+        "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+        "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-monochrome/manual-specification-v2.json",
+        "specificationSha256": "528bc6e05e3c76d5683dd864ca568612408ea5580f8fdc0235da6bb64ed55369",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "approvedVersionHistory": [
+        {
+          "id": "classic-monochrome",
+          "requiredOutputs": {
+            "transparentSilhouette": true,
+            "androidPx": [
+              108,
+              162,
+              216,
+              324,
+              432
+            ]
+          },
+          "candidateRecords": [
+            "records/classic-monochrome/candidate-01.json"
+          ],
+          "approval": {
+            "path": "docs/design/production-assets/approvals/classic-monochrome-v1.json",
+            "sha256": "b77dbeba457f4211dce1bee3c66f8b9301d6c64339aeae0a3adf3182c1248b61",
+            "ownerStatement": "Approve artwork and integration",
+            "recordedAtUtc": "2026-10-09T08:22:10.400366+00:00",
+            "activationApproved": true,
+            "candidate": 1,
+            "files": [
+              {
+                "role": "source",
+                "path": "assets/brand/classic/masters/classic-monochrome-v1.png",
+                "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "source-monochrome",
+                "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "monochrome",
+                "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v1.png",
+                "sha256": "3282e6b98e2a19f365d2802ee078dd6ee2518867e24d2cfeea84cd212c083482",
+                "width": 108,
+                "height": 108,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "mdpi",
+                "sourceRole": "monochrome",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                  "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    108,
+                    108
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "monochrome",
+                "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v1.png",
+                "sha256": "eae7bfd5d15e02a8080465102aa6962b8a229f59578e44f33917dae6f3726cbc",
+                "width": 162,
+                "height": 162,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "hdpi",
+                "sourceRole": "monochrome",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                  "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    162,
+                    162
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "monochrome",
+                "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v1.png",
+                "sha256": "d50df302f664a3b53d4f1e5263eafca582efd25f5884e7d92d11a1beac6c0b72",
+                "width": 216,
+                "height": 216,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "xhdpi",
+                "sourceRole": "monochrome",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                  "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    216,
+                    216
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "monochrome",
+                "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v1.png",
+                "sha256": "2a50acf5cab5ad757341cff982849cf4ea2b2f7f29b31ae1439f844923ed1635",
+                "width": 324,
+                "height": 324,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "xxhdpi",
+                "sourceRole": "monochrome",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                  "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    324,
+                    324
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              },
+              {
+                "role": "monochrome",
+                "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v1.png",
+                "sha256": "0221fc0b4d542f5ddaae8f5873b29be5a109093a3d76c9abeb1310650ffbbcd5",
+                "width": 432,
+                "height": 432,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "density": "xxxhdpi",
+                "sourceRole": "monochrome",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                  "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    432,
+                    432
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.15470729745151487,
+                  "layerSizeDp": 108
+                }
+              }
+            ]
+          },
+          "productionFiles": [
+            {
+              "role": "monochrome",
+              "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v1.png",
+              "sha256": "3282e6b98e2a19f365d2802ee078dd6ee2518867e24d2cfeea84cd212c083482",
+              "width": 108,
+              "height": 108,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "mdpi",
+              "sourceRole": "monochrome",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  108,
+                  108
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "monochrome",
+              "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v1.png",
+              "sha256": "eae7bfd5d15e02a8080465102aa6962b8a229f59578e44f33917dae6f3726cbc",
+              "width": 162,
+              "height": 162,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "hdpi",
+              "sourceRole": "monochrome",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  162,
+                  162
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "monochrome",
+              "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v1.png",
+              "sha256": "d50df302f664a3b53d4f1e5263eafca582efd25f5884e7d92d11a1beac6c0b72",
+              "width": 216,
+              "height": 216,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "xhdpi",
+              "sourceRole": "monochrome",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  216,
+                  216
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "monochrome",
+              "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v1.png",
+              "sha256": "2a50acf5cab5ad757341cff982849cf4ea2b2f7f29b31ae1439f844923ed1635",
+              "width": 324,
+              "height": 324,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "xxhdpi",
+              "sourceRole": "monochrome",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  324,
+                  324
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            },
+            {
+              "role": "monochrome",
+              "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v1.png",
+              "sha256": "0221fc0b4d542f5ddaae8f5873b29be5a109093a3d76c9abeb1310650ffbbcd5",
+              "width": 432,
+              "height": 432,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "density": "xxxhdpi",
+              "sourceRole": "monochrome",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+                "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  432,
+                  432
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.15470729745151487,
+                "layerSizeDp": 108
+              }
+            }
+          ],
+          "reviewCandidate": 1,
+          "activeVersion": 1,
+          "approvedSource": {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-monochrome-v1.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          "approvedSources": [
+            {
+              "role": "source-monochrome",
+              "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+              "width": 467,
+              "height": 467,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true
+            }
+          ],
+          "technicalLimitations": [
+            "Simplified flat alpha is the native monochrome treatment; original raster shading/color is intentionally absent.",
+            "Check silhouette is manually traced from flattened source and requires individual fidelity review.",
+            "Synthetic tints/masks do not establish actual OEM themed-icon appearance or launcher motion."
+          ],
+          "manualPromotionSupport": {
+            "script": "scripts/promote-manual-brand.py",
+            "specification": "docs/design/production-assets/records/classic-monochrome/manual-specification-v1.json",
+            "specificationSha256": "1c95e4c7ab68232cffbe585168b3e7951fe2d067427227c6e53182119f96f4d8",
+            "sourcePolicy": "Reviewed simplified Classic transparent silhouette and exact prepared PNG bytes."
+          }
+        }
+      ],
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ]
+    },
+    {
+      "id": "classic-splash",
+      "requiredOutputs": {
+        "configurationPx": 288,
+        "androidPx": [
+          76,
+          114,
+          152,
+          228,
+          304
+        ]
+      },
+      "candidateRecords": [
+        "records/classic-splash/candidate-01.json",
+        "records/classic-splash/candidate-02.json"
+      ],
+      "approval": {
+        "path": "docs/design/production-assets/approvals/classic-splash-v2.json",
+        "sha256": "221458903e0761052b3ba6235a412dffe13f4f0e949e3a579727ab8d36341f62",
+        "ownerStatement": "Approve artwork and integration",
+        "recordedAtUtc": "2026-10-09T09:06:46.343204+00:00",
+        "activationApproved": true,
+        "candidate": 2,
+        "files": [
+          {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-splash-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "source-foreground",
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "configuration",
+            "path": "assets/brand/classic/splash/classic-splash-v2.png",
+            "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366",
+            "width": 288,
+            "height": 288,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.3777480127985562,
+              "layerSizeDp": 288,
+              "size": [
+                288,
+                288
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "native-76",
+            "path": "assets/brand/classic/splash/classic-splash-76-v2.png",
+            "sha256": "fa5650223b837287c575c657f6133dca0af0ce59d09bb33a80936e1a0c08107c",
+            "width": 76,
+            "height": 76,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.3777480127985562,
+              "layerSizeDp": 288,
+              "size": [
+                76,
+                76
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "native-114",
+            "path": "assets/brand/classic/splash/classic-splash-114-v2.png",
+            "sha256": "62e196bed6ab31b9444b8e476ec2296f511d50619239d536136ad1a39ad8f12c",
+            "width": 114,
+            "height": 114,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.3777480127985562,
+              "layerSizeDp": 288,
+              "size": [
+                114,
+                114
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "native-152",
+            "path": "assets/brand/classic/splash/classic-splash-152-v2.png",
+            "sha256": "bff0bbfa33ae6f1745ea49b3e158d8c914f68f5fd35f5e54e64f08d20c2675a4",
+            "width": 152,
+            "height": 152,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.3777480127985562,
+              "layerSizeDp": 288,
+              "size": [
+                152,
+                152
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "native-228",
+            "path": "assets/brand/classic/splash/classic-splash-228-v2.png",
+            "sha256": "56ed2ce617cea16b1d5a0118caf569f0f5a0f57fa1d14f0699fbbc5a82f55056",
+            "width": 228,
+            "height": 228,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.3777480127985562,
+              "layerSizeDp": 288,
+              "size": [
+                228,
+                228
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          },
+          {
+            "role": "native-304",
+            "path": "assets/brand/classic/splash/classic-splash-304-v2.png",
+            "sha256": "2912475050db8dcd64c19be05398d131ba5ee7e02c8c1e2ecb43aad842f99db8",
+            "width": 304,
+            "height": 304,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "foreground",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+            },
+            "manualExportSpec": {
+              "kind": "uniform-affine",
+              "sourceCenterPx": [
+                233,
+                243
+              ],
+              "dpPerSourcePx": 0.3777480127985562,
+              "layerSizeDp": 288,
+              "size": [
+                304,
+                304
+              ]
+            },
+            "resizedFromPx": [
+              467,
+              467
+            ],
+            "upscaled": false,
+            "lossless": true
+          }
+        ]
+      },
+      "productionFiles": [
+        {
+          "role": "configuration",
+          "path": "assets/brand/classic/splash/classic-splash-v2.png",
+          "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366",
+          "width": 288,
+          "height": 288,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.3777480127985562,
+            "layerSizeDp": 288,
+            "size": [
+              288,
+              288
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "native-76",
+          "path": "assets/brand/classic/splash/classic-splash-76-v2.png",
+          "sha256": "fa5650223b837287c575c657f6133dca0af0ce59d09bb33a80936e1a0c08107c",
+          "width": 76,
+          "height": 76,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.3777480127985562,
+            "layerSizeDp": 288,
+            "size": [
+              76,
+              76
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "native-114",
+          "path": "assets/brand/classic/splash/classic-splash-114-v2.png",
+          "sha256": "62e196bed6ab31b9444b8e476ec2296f511d50619239d536136ad1a39ad8f12c",
+          "width": 114,
+          "height": 114,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.3777480127985562,
+            "layerSizeDp": 288,
+            "size": [
+              114,
+              114
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "native-152",
+          "path": "assets/brand/classic/splash/classic-splash-152-v2.png",
+          "sha256": "bff0bbfa33ae6f1745ea49b3e158d8c914f68f5fd35f5e54e64f08d20c2675a4",
+          "width": 152,
+          "height": 152,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.3777480127985562,
+            "layerSizeDp": 288,
+            "size": [
+              152,
+              152
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "native-228",
+          "path": "assets/brand/classic/splash/classic-splash-228-v2.png",
+          "sha256": "56ed2ce617cea16b1d5a0118caf569f0f5a0f57fa1d14f0699fbbc5a82f55056",
+          "width": 228,
+          "height": 228,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.3777480127985562,
+            "layerSizeDp": 288,
+            "size": [
+              228,
+              228
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        },
+        {
+          "role": "native-304",
+          "path": "assets/brand/classic/splash/classic-splash-304-v2.png",
+          "sha256": "2912475050db8dcd64c19be05398d131ba5ee7e02c8c1e2ecb43aad842f99db8",
+          "width": 304,
+          "height": 304,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "foreground",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+            "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+          },
+          "manualExportSpec": {
+            "kind": "uniform-affine",
+            "sourceCenterPx": [
+              233,
+              243
+            ],
+            "dpPerSourcePx": 0.3777480127985562,
+            "layerSizeDp": 288,
+            "size": [
+              304,
+              304
+            ]
+          },
+          "resizedFromPx": [
+            467,
+            467
+          ],
+          "upscaled": false,
+          "lossless": true
+        }
+      ],
+      "reviewCandidate": 2,
+      "activeVersion": 2,
+      "approvedSource": {
+        "role": "source",
+        "path": "assets/brand/classic/masters/classic-splash-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "format": "PNG",
+        "mode": "RGB",
+        "opaque": true,
+        "candidateBytesPreserved": true
+      },
+      "approvedSources": [
+        {
+          "role": "source-foreground",
+          "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+          "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+          "width": 467,
+          "height": 467,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true
+        }
+      ],
+      "technicalLimitations": [
+        "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+        "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+        "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+        "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-splash/manual-specification-v2.json",
+        "specificationSha256": "a7b47905df0c5f58e601f519c9c0a3bca776c33adc4804df72a4ff406153a6da",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "approvedVersionHistory": [
+        {
+          "id": "classic-splash",
+          "requiredOutputs": {
+            "configurationPx": 288,
+            "androidPx": [
+              76,
+              114,
+              152,
+              228,
+              304
+            ]
+          },
+          "candidateRecords": [
+            "records/classic-splash/candidate-01.json"
+          ],
+          "approval": {
+            "path": "docs/design/production-assets/approvals/classic-splash-v1.json",
+            "sha256": "24ff27557678cf110a51ae8942704574fc12ccba239e5f468a3bec19fc25e01e",
+            "ownerStatement": "Approve artwork and integration",
+            "recordedAtUtc": "2026-10-09T08:35:16.757386+00:00",
+            "activationApproved": true,
+            "candidate": 1,
+            "files": [
+              {
+                "role": "source",
+                "path": "assets/brand/classic/masters/classic-splash-v1.png",
+                "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGB",
+                "opaque": true,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "source-splash",
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+                "width": 467,
+                "height": 467,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true
+              },
+              {
+                "role": "configuration",
+                "path": "assets/brand/classic/splash/classic-splash-v1.png",
+                "sha256": "096a335210498e37adefaf56bf7c633fa806d4c2d4d1090d933508a052210d07",
+                "width": 288,
+                "height": 288,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "sourceRole": "splash",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    288,
+                    288
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.44202084986147105,
+                  "layerSizeDp": 288
+                }
+              },
+              {
+                "role": "native-76",
+                "path": "assets/brand/classic/splash/classic-splash-76-v1.png",
+                "sha256": "f67a8a4d277abdf334adc20114a75531f5070b94a0b2a4605a22860b7956104e",
+                "width": 76,
+                "height": 76,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "sourceRole": "splash",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    76,
+                    76
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.44202084986147105,
+                  "layerSizeDp": 288
+                }
+              },
+              {
+                "role": "native-114",
+                "path": "assets/brand/classic/splash/classic-splash-114-v1.png",
+                "sha256": "347632848581a370d06ef496526df9a07f682c0d31b1656e4f9ff07123af84b6",
+                "width": 114,
+                "height": 114,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "sourceRole": "splash",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    114,
+                    114
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.44202084986147105,
+                  "layerSizeDp": 288
+                }
+              },
+              {
+                "role": "native-152",
+                "path": "assets/brand/classic/splash/classic-splash-152-v1.png",
+                "sha256": "7d5bdaef55bfb797ac5e575a17a00c2c0913acd1cecc4933ed9b0bb18bd7ff5b",
+                "width": 152,
+                "height": 152,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "sourceRole": "splash",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    152,
+                    152
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.44202084986147105,
+                  "layerSizeDp": 288
+                }
+              },
+              {
+                "role": "native-228",
+                "path": "assets/brand/classic/splash/classic-splash-228-v1.png",
+                "sha256": "259cccc425432b91779849aea849d7daa4646b4466335ed82267c54898fd1f88",
+                "width": 228,
+                "height": 228,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "sourceRole": "splash",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    228,
+                    228
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.44202084986147105,
+                  "layerSizeDp": 288
+                }
+              },
+              {
+                "role": "native-304",
+                "path": "assets/brand/classic/splash/classic-splash-304-v1.png",
+                "sha256": "32775ff64a9625081bed78b7b18102508d670894b60f9794f8a4f7472fb647a2",
+                "width": 304,
+                "height": 304,
+                "format": "PNG",
+                "mode": "RGBA",
+                "opaque": false,
+                "candidateBytesPreserved": true,
+                "sourceRole": "splash",
+                "lossless": true,
+                "resizedFromPx": [
+                  467,
+                  467
+                ],
+                "upscaled": false,
+                "derivedFrom": {
+                  "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                  "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+                },
+                "manualExportSpec": {
+                  "kind": "uniform-affine",
+                  "size": [
+                    304,
+                    304
+                  ],
+                  "sourceCenterPx": [
+                    253.625,
+                    215.125
+                  ],
+                  "dpPerSourcePx": 0.44202084986147105,
+                  "layerSizeDp": 288
+                }
+              }
+            ]
+          },
+          "productionFiles": [
+            {
+              "role": "configuration",
+              "path": "assets/brand/classic/splash/classic-splash-v1.png",
+              "sha256": "096a335210498e37adefaf56bf7c633fa806d4c2d4d1090d933508a052210d07",
+              "width": 288,
+              "height": 288,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "sourceRole": "splash",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  288,
+                  288
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.44202084986147105,
+                "layerSizeDp": 288
+              }
+            },
+            {
+              "role": "native-76",
+              "path": "assets/brand/classic/splash/classic-splash-76-v1.png",
+              "sha256": "f67a8a4d277abdf334adc20114a75531f5070b94a0b2a4605a22860b7956104e",
+              "width": 76,
+              "height": 76,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "sourceRole": "splash",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  76,
+                  76
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.44202084986147105,
+                "layerSizeDp": 288
+              }
+            },
+            {
+              "role": "native-114",
+              "path": "assets/brand/classic/splash/classic-splash-114-v1.png",
+              "sha256": "347632848581a370d06ef496526df9a07f682c0d31b1656e4f9ff07123af84b6",
+              "width": 114,
+              "height": 114,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "sourceRole": "splash",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  114,
+                  114
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.44202084986147105,
+                "layerSizeDp": 288
+              }
+            },
+            {
+              "role": "native-152",
+              "path": "assets/brand/classic/splash/classic-splash-152-v1.png",
+              "sha256": "7d5bdaef55bfb797ac5e575a17a00c2c0913acd1cecc4933ed9b0bb18bd7ff5b",
+              "width": 152,
+              "height": 152,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "sourceRole": "splash",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  152,
+                  152
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.44202084986147105,
+                "layerSizeDp": 288
+              }
+            },
+            {
+              "role": "native-228",
+              "path": "assets/brand/classic/splash/classic-splash-228-v1.png",
+              "sha256": "259cccc425432b91779849aea849d7daa4646b4466335ed82267c54898fd1f88",
+              "width": 228,
+              "height": 228,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "sourceRole": "splash",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  228,
+                  228
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.44202084986147105,
+                "layerSizeDp": 288
+              }
+            },
+            {
+              "role": "native-304",
+              "path": "assets/brand/classic/splash/classic-splash-304-v1.png",
+              "sha256": "32775ff64a9625081bed78b7b18102508d670894b60f9794f8a4f7472fb647a2",
+              "width": 304,
+              "height": 304,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true,
+              "sourceRole": "splash",
+              "lossless": true,
+              "resizedFromPx": [
+                467,
+                467
+              ],
+              "upscaled": false,
+              "derivedFrom": {
+                "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+                "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+              },
+              "manualExportSpec": {
+                "kind": "uniform-affine",
+                "size": [
+                  304,
+                  304
+                ],
+                "sourceCenterPx": [
+                  253.625,
+                  215.125
+                ],
+                "dpPerSourcePx": 0.44202084986147105,
+                "layerSizeDp": 288
+              }
+            }
+          ],
+          "reviewCandidate": 1,
+          "activeVersion": 1,
+          "approvedSource": {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-splash-v1.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          "approvedSources": [
+            {
+              "role": "source-splash",
+              "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+              "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+              "width": 467,
+              "height": 467,
+              "format": "PNG",
+              "mode": "RGBA",
+              "opaque": false,
+              "candidateBytesPreserved": true
+            }
+          ],
+          "technicalLimitations": [
+            "Flattened-source alpha and omitted outer glow are inherited from individually approved adaptive isolation.",
+            "Padding/nominal image size requires individual owner review.",
+            "Synthetic safe-circle/phone examples do not establish installed OEM splash appearance or actual startup behavior."
+          ],
+          "manualPromotionSupport": {
+            "script": "scripts/promote-manual-brand.py",
+            "specification": "docs/design/production-assets/records/classic-splash/manual-specification-v1.json",
+            "specificationSha256": "6229a8366b0dc88b6865c2913014975990f05c13da8b3c2580c11f0c448b7311",
+            "sourcePolicy": "Approved isolated Classic foreground and exact reviewed uniformly padded PNG bytes."
+          }
+        }
+      ],
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ]
+    },
+    {
+      "id": "classic-notification",
+      "requiredOutputs": {
+        "vectorViewportDp": [
+          24,
+          24
+        ],
+        "alphaSilhouette": true
+      },
+      "candidateRecords": [
+        "records/classic-notification/candidate-02.json"
+      ],
+      "approval": {
+        "path": "docs/design/production-assets/approvals/classic-notification-v2.json",
+        "sha256": "0510b624b3c529b521b2ac97b5f1a0a6fb7870c3174a5f774b4afb4c1c81f554",
+        "ownerStatement": "Approve artwork and integration",
+        "recordedAtUtc": "2026-10-09T09:06:53.592649+00:00",
+        "activationApproved": true,
+        "candidate": 2,
+        "files": [
+          {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-notification-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "source-monochrome",
+            "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGBA",
+            "opaque": false,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "notification",
+            "path": "assets/brand/classic/notification/ic_remilo_notification_v2.xml",
+            "sha256": "f32def671ab76aec54d5693f0dada56449a1b25d78866d01ad73f8a6cb3b4933",
+            "width": 24,
+            "height": 24,
+            "format": "AndroidVector",
+            "opaque": false,
+            "candidateBytesPreserved": true,
+            "sourceRole": "monochrome",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+              "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+            },
+            "nativeVectorGeometry": {
+              "sourceAnchorPx": [
+                233,
+                243
+              ],
+              "centeringRevision": 2,
+              "uniformScaleDpPerSourcePx": 0.050066152607140715,
+              "controlHullInsetDp": 2
+            }
+          }
+        ]
+      },
+      "productionFiles": [
+        {
+          "role": "notification",
+          "path": "assets/brand/classic/notification/ic_remilo_notification_v2.xml",
+          "sha256": "f32def671ab76aec54d5693f0dada56449a1b25d78866d01ad73f8a6cb3b4933",
+          "width": 24,
+          "height": 24,
+          "format": "AndroidVector",
+          "opaque": false,
+          "candidateBytesPreserved": true,
+          "sourceRole": "monochrome",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+            "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+          },
+          "nativeVectorGeometry": {
+            "sourceAnchorPx": [
+              233,
+              243
+            ],
+            "centeringRevision": 2,
+            "uniformScaleDpPerSourcePx": 0.050066152607140715,
+            "controlHullInsetDp": 2
+          }
+        }
+      ],
+      "reviewCandidate": 2,
+      "activeVersion": 2,
+      "approvedSource": {
+        "role": "source",
+        "path": "assets/brand/classic/masters/classic-notification-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "format": "PNG",
+        "mode": "RGB",
+        "opaque": true,
+        "candidateBytesPreserved": true
+      },
+      "approvedSources": [
+        {
+          "role": "source-monochrome",
+          "path": "assets/brand/classic/masters/classic-notification-silhouette-v2.png",
+          "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+          "width": 467,
+          "height": 467,
+          "format": "PNG",
+          "mode": "RGBA",
+          "opaque": false,
+          "candidateBytesPreserved": true
+        }
+      ],
+      "technicalLimitations": [
+        "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+        "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+        "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+        "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-notification/manual-specification-v2.json",
+        "specificationSha256": "a1dc4137cec0b1c05c422d7e464e201bbd76a408f9e0ce86edcf114e8349affc",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ]
+    },
+    {
+      "id": "classic-favicon",
+      "requiredOutputs": {
+        "configurationPx": 48
+      },
+      "candidateRecords": [
+        "records/classic-favicon/candidate-02.json"
+      ],
+      "approval": {
+        "path": "docs/design/production-assets/approvals/classic-favicon-v2.json",
+        "sha256": "30396755fa7d3d5dd5021a37dd1d81cd7543e5f9558a915d5e9dd51ce562398e",
+        "ownerStatement": "Approve artwork and integration",
+        "recordedAtUtc": "2026-10-09T09:07:00.015686+00:00",
+        "activationApproved": true,
+        "candidate": 2,
+        "files": [
+          {
+            "role": "source",
+            "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+            "width": 467,
+            "height": 467,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true
+          },
+          {
+            "role": "favicon",
+            "path": "assets/brand/classic/favicon/classic-favicon-v2.png",
+            "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+            "width": 48,
+            "height": 48,
+            "format": "PNG",
+            "mode": "RGB",
+            "opaque": true,
+            "candidateBytesPreserved": true,
+            "sourceRole": "favicon",
+            "derivedFrom": {
+              "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+              "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+            },
+            "manualExportSpec": {
+              "kind": "crop-resize",
+              "sourceRectPx": [
+                9,
+                19,
+                457,
+                467
+              ],
+              "size": [
+                48,
+                48
+              ],
+              "allowUpscale": false
+            },
+            "resizedFromPx": [
+              448,
+              448
+            ],
+            "upscaled": false,
+            "lossless": true
+          }
+        ]
+      },
+      "productionFiles": [
+        {
+          "role": "favicon",
+          "path": "assets/brand/classic/favicon/classic-favicon-v2.png",
+          "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+          "width": 48,
+          "height": 48,
+          "format": "PNG",
+          "mode": "RGB",
+          "opaque": true,
+          "candidateBytesPreserved": true,
+          "sourceRole": "favicon",
+          "derivedFrom": {
+            "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+            "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+          },
+          "manualExportSpec": {
+            "kind": "crop-resize",
+            "sourceRectPx": [
+              9,
+              19,
+              457,
+              467
+            ],
+            "size": [
+              48,
+              48
+            ],
+            "allowUpscale": false
+          },
+          "resizedFromPx": [
+            448,
+            448
+          ],
+          "upscaled": false,
+          "lossless": true
+        }
+      ],
+      "reviewCandidate": 2,
+      "activeVersion": 2,
+      "approvedSource": {
+        "role": "source",
+        "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "format": "PNG",
+        "mode": "RGB",
+        "opaque": true,
+        "candidateBytesPreserved": true
+      },
+      "approvedSources": [],
+      "technicalLimitations": [
+        "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+        "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+        "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+        "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+      ],
+      "manualPromotionSupport": {
+        "script": "scripts/promote-manual-brand.py",
+        "specification": "docs/design/production-assets/records/classic-favicon/manual-specification-v2.json",
+        "specificationSha256": "2d7bfee01608d1d154d1c1f392826b1911d1fe8026189caa95a70d1100a37b56",
+        "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+      },
+      "centeringRevision": 2,
+      "sourceAnchorPx": [
+        233,
+        243
+      ]
+    }
+  ]
+}

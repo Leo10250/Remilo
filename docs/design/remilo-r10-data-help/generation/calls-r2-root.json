@@ -1,0 +1,112 @@
+[
+  {
+    "id": "R10-04",
+    "tool": "built-in image_gen",
+    "calls": [
+      {
+        "prompt": "Use case: precise-object-edit.\nAsset type: Remilo Android Restore backup UI evaluation screenshot, revision r2.\nInput1 is the existing Sky Dark Restore preview EDIT TARGET. Input2 is the approved R3 Sky Dark COLOR/SCENE reference only; do not copy homepage tabs or content.\nPrimary request: clarify WHOLE BACKUP restoration and replace ambiguous switches with explicit duplicate-handling radio choices. This is the contents of ONE selected file, never a file list or selective import.\nPreserve the same readable flat portrait raster/aspect, Roboto-like type, matching daytime sky/cloud lake/mountain/conifers, soft blue-slate Dark canvas and raised opaque blue-slate cards, pale sky-blue primary with dark content, status2:00 and gesturebar. No hardware frame, board, marketing design, root tabs, FAB, keyboard or new actions. Ordinary metadata/glyphs neutral. No independent black, no moon, no invented filename.\nUse compact secondary opening96dp below24dp status: 56dp Back + 'Restore backup' toolbar, shallow40dp panorama. Reduce current oversized scenery to make room for realistic wrapping. Body16dp gutters and16sp title/body14sp supporting type. No tiny type to fit.\nBelow shallow crop, heading EXACT \"Reminders from the selected backup\". Support EXACT \"When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.\"\nShow exactly three preview cards in existing native order, all titles wrap fully:\n1 Title \"Call dentist about the revised treatment estimate\".\nMuted status \"Already on this device\".\nA single clearly title-associated radio group, exactly TWO choices with round radio indicators:\n\"Keep existing\" — unselected circle.\n\"Add a separate copy\" — SELECTED blue radio.\nUse two compact ordinary48dp rows or one horizontal group with labels wrapping to two lines as needed. NO switch/toggle, no generic inclusion checkbox.\n2 Title \"Water balcony plants (series)\".\nMuted status \"New entry · Included automatically\".\nMuted timing \"Future time indicated\". This is new, absolutely NO selection control.\n3 Title \"Team standup — review launch checklist and unresolved issues (series)\".\nMuted status \"Already on this device\".\nTwo round radio choices:\n\"Keep existing\" — SELECTED blue radio.\n\"Add a separate copy\" — unselected circle.\nThe existing card is kept in both cases; choosing copy adds the backup version as an additional separate reminder/family. No overwrite/replace/skip-new selection.\nUnder cards, if visible, exact quiet informational helper \"Preview timing does not confirm delivery. Alerts are checked after restore.\" It may continue in real scroll below the captured viewport; all card choices must remain reachable through scrolling, never under the footer.\nPersistent opaque fixed footer, body scroll ends at its measured top: filled pale-sky-blue \"Restore backup\" with dark text56dp height and16dp corners, outlined \"Cancel preview\" at least48dp height beneath8dp gap, inset safe gesture area. No duplicate toolbar restore action. If density requires lower content to continue, show genuine viewport clipping above the footer, not cut through the selected option labels or shrink typography. Prioritize full visible dentist and standup choices with one new entry to distinguish them.\nRemove EVERY old 'Restore a separate copy', 'Restore a copy' string and switch. No additional reminder, totals, success, scheduling guarantee, clock date/time rows absent from preview. This is a preview, no actual import has happened. Render supplied copy exactly.",
+        "referencedImagePaths": [
+          "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+          "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/references/04-sky-dark.png"
+        ],
+        "returnedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-b3338dbe-aae0-40c2-b66f-734aaa627cb4.png",
+        "selected": true,
+        "purpose": "whole-backup clarity and explicit existing-reminder radio choices"
+      }
+    ],
+    "selectedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-b3338dbe-aae0-40c2-b66f-734aaa627cb4.png",
+    "selectedFile": "04-restore-conflict-preview-and-copy-selection-sky-dark.png",
+    "observations": [
+      "The screen identifies the entries as reminders from one selected backup, with all new entries automatically included.",
+      "Both existing reminders show Already on this device; explicit mutually exclusive radio choices replace ambiguous switches. Dentist adds a separate copy and standup keeps existing.",
+      "The new series entry has no selection control. Timing warning and both footer actions remain.",
+      "Opening height, footer sizing, metadata tints and radio spacing remain approximate generated metrics."
+    ],
+    "corrections": [
+      "Keep existing is the initial default for every matching identity. This example's dentist copy is a deliberately chosen draft option; it never overwrites the device reminder.",
+      "Use title-associated radio groups with exactly one choice, at least48dp targets, wrapping labels and genuine scroll clearance. Changing a choice modifies preview only.",
+      "Use shared96dp opening,16dp corners/gutters,16/14sp type and56/48dp actions. Existing/shared metadata remains neutral; matching Sky Dark canvas and raised surfaces define soft black."
+    ]
+  },
+  {
+    "id": "R10-03",
+    "tool": "built-in image_gen",
+    "calls": [
+      {
+        "prompt": "Use case: text-localization / precise-object-edit.\nInput1 is the existing Remilo Sky Light Restore backup idle screenshot EDIT TARGET.\nChange only the introductory copy and natural body layout to clarify whole-backup restore. Preserve exact original theme/style, daylight clouds/lake/mountains/conifers crop, cool very pale blue canvas, white raised Choose backup file row, neutral icons/type, status2:00 and gesturebar. Keep full flat portrait9:20 framing no phone/frame/marketing board.\nToolbar remains Back + \"Restore backup\".\nReplace old introduction with exact normal16sp body paragraph:\n\"Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.\"\nBelow it, exact14sp supporting sentence:\n\"You can add separate copies of existing reminders.\"\nNext exact14sp supporting sentence:\n\"Elapsed alarms stay silent.\"\nThen retain exact backup exclusion qualification:\n\"Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.\"\nRetain ONE elevated row with neutral download glyph, \"Choose backup file\", chevron. No footer, radios, switches, preview cards, backup filename, imported counts or new action. This is before selecting a file.\nUse compact secondary opening96dp belowstatus (56toolbar40shallowart),16dp gutters, actual16sp paragraph14sp supporting typography. Let paragraphs wrap/grow with realistic spacing; no oversized lead paragraph. Keep original corresponding Sky Light surface/color roles, no new theme or content. Remaining canvas naturally blank. Exact text only as supplied, no other copy.",
+        "referencedImagePaths": [
+          "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/03-restore-before-choosing-a-file-sky-light.png"
+        ],
+        "returnedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-2f568ee2-7528-4c4f-a4cb-c9fd3e0f1690.png",
+        "selected": true,
+        "purpose": "whole-backup introduction"
+      }
+    ],
+    "selectedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-2f568ee2-7528-4c4f-a4cb-c9fd3e0f1690.png",
+    "selectedFile": "03-restore-before-choosing-a-file-sky-light.png",
+    "observations": [
+      "Idle Restore now states one backup file, all new reminders/lists added automatically, and existing reminders unchanged.",
+      "The only action remains Choose backup file; there is no preview/import footer before a valid file.",
+      "Generated introductory type and scene height remain larger than the compact secondary-page metrics."
+    ],
+    "corrections": [
+      "Use canonical16/14sp body/helper sizes and shared96dp opening; keep both copy helper and elapsed-alarm qualification.",
+      "Idle copy describes what happens after deliberate Restore, not a claim that choosing a file has imported anything.",
+      "Use neutral supporting text rather than incidental lavender tint."
+    ]
+  },
+  {
+    "id": "R10-09",
+    "tool": "built-in image_gen",
+    "calls": [
+      {
+        "prompt": "Use case: precise-object-edit.\nInput1 is the existing Remilo Sunrise Light Restore backup PRE-IMPORT INVALID FILE screenshot EDIT TARGET.\nChange only introduction and natural wrapping/layout to clarify whole-backup restore; preserve all invalid-file status and only action. Keep same flat full-screen portrait9:20, sunrise sun/warm lake/mountain/conifers scene, warm off-white canvas, raised opaque surfaces, muted-red semantic error, burnt-orange primary with light text, neutral Back/icons, status2:00, gesturebar. No different black/theme, phoneframe/rootnavigation/FAB/keyboard/invented filename.\nToolbar Back + \"Restore backup\".\nReplace old introduction with exact normal16sp paragraph:\n\"Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.\"\nThen exact14sp supporting copy:\n\"You can add separate copies of existing reminders.\"\n\"Elapsed alarms stay silent.\"\nRetain exclusion qualification exactly:\n\"Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.\"\nRetain error card verbatim:\n\"This file could not be read as a valid Remilo backup. Nothing was imported.\"\nRetain only full-width burnt-orange56dp action:\n\"Choose backup file\".\nNo preview, no restore footer/Cancel preview, no Retry, no counts or successful import. The error happened before any import.\nCompact secondary96dp opening below status, 56toolbar40shallowart,16dp gutters/corners,16sp body14sp helper. Natural clear wrapping and no tiny/squeezed text; remaining blank warm canvas. Preserve all exact strings and existing shared product style.",
+        "referencedImagePaths": [
+          "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/09-invalid-backup-before-an-import-sunrise-light.png"
+        ],
+        "returnedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-e1e746cd-6a1c-4cae-af8d-cd722bf789c9.png",
+        "selected": true,
+        "purpose": "align pre-import error with whole-backup introduction"
+      }
+    ],
+    "selectedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-e1e746cd-6a1c-4cae-af8d-cd722bf789c9.png",
+    "selectedFile": "09-invalid-backup-before-an-import-sunrise-light.png",
+    "observations": [
+      "Whole-backup intro and existing-reminder copy helper align with the idle page.",
+      "The invalid file still correctly reports Nothing was imported, with Choose backup file as the only action.",
+      "Header/action geometry and large error icon remain approximate generated measurements."
+    ],
+    "corrections": [
+      "Use shared96dp opening,16/14sp type,16dp corners and56dp primary action instead of sampling this raster.",
+      "Nothing was imported is valid only before an import began; never reuse this error after an unconfirmed import.",
+      "Semantic error colors remain defined separately from neutral structural glyphs and Sunrise Light primary."
+    ]
+  },
+  {
+    "id": "R10-11",
+    "tool": "built-in image_gen",
+    "calls": [
+      {
+        "prompt": "Use case: precise-object-edit.\nInput1 is the existing Sky Dark Remilo Restore backup receipt-confirmation screenshot EDIT TARGET.\nChange only introductory copy/natural wrapping to align whole-backup restoration. Keep the same Sky Dark daylight/clouds/lake/mountain/conifers scene (NO moon), soft blue-slate canvas/raised card, neutral light main text, matching shared product style, flat portrait9:20 framing, Androidstatus2:00 and gesturebar. No independent black, phoneframe/poster/rootbar/FAB/keyboard.\nToolbar Back + \"Restore backup\".\nReplace old introduction with exact normal16sp paragraph:\n\"Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.\"\nThen exact14sp supporting copy:\n\"You can add separate copies of existing reminders.\"\n\"Elapsed alarms stay silent.\"\nKeep Trash qualification:\n\"One-off reminders in Trash are excluded. Repeating deletion exclusions are kept.\"\nKeep quiet receipt card exact:\n\"Your previous restore was confirmed.\"\nKeep neutral file glyph row + \"Choose backup file\" + chevron.\nThis receipt confirms prior operation identity only, supplies no totals or delivery readiness. NO counts/zeros, no fresh-result 5/1, no blocked counts, no Scheduled guarantee, no preview/radios/switches, no Restore/Cancel footer or Retry.\nCompact secondaryopening96dp below status:56dp toolbar and40dp shallow art.16dp gutters/corners,16sp paragraph14sp helpers,48dp choose row target. Ordinary metadata/glyphs neutral, not page-specific blue. Natural wrapping/space, no inflated lead paragraph. Remaining soft canvas blank. All text verbatim, no other action or slogan.",
+        "referencedImagePaths": [
+          "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help/history/r1/11-previous-import-confirmed-by-its-receipt-sky-dark.png"
+        ],
+        "returnedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-0e52a8c8-79cd-4939-99ca-d8b9e13ec16c.png",
+        "selected": true,
+        "purpose": "align receipt-only outcome with whole-backup introduction"
+      }
+    ],
+    "selectedSourcePath": "C:\\Users\\Leo\\.codex\\generated_images\\01a115a9-79f0-72a2-8d4a-fd04587d0644\\exec-0e52a8c8-79cd-4939-99ca-d8b9e13ec16c.png",
+    "selectedFile": "11-previous-import-confirmed-by-its-receipt-sky-dark.png",
+    "observations": [
+      "Receipt-only confirmation retains its limited meaning with no fabricated totals or delivery guarantee.",
+      "The shared whole-backup intro explains automatic new entries and optional separate copies while preserving existing reminders.",
+      "Sky Dark still uses a daytime scene with soft blue-slate planes; opening height and blue supporting tint remain generated discrepancies."
+    ],
+    "corrections": [
+      "Use canonical96dp secondary opening and16/14sp body/helper sizes.",
+      "Neutralize ordinary metadata/confirmation glyphs using shared roles rather than incidental accent assignments.",
+      "After a receipt-only acknowledgement, clear the preview/footer; never invent fresh result counts."
+    ]
+  }
+]

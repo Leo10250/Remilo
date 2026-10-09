@@ -49,7 +49,8 @@ data class SettingsRecord(@PrimaryKey val id: String = "app", val revision: Long
   val snoozeMinutes: Int = 10, val tomorrowMorning: Int = 600,
   val tomorrowAfternoon: Int = 840, val tomorrowEvening: Int = 1020,
   val sound: String = "remilo", val vibration: Boolean = true,
-  val theme: String = "system", val lastOperationId: String = "")
+  val theme: String = "system", val lastOperationId: String = "",
+  @ColumnInfo(defaultValue = "'automatic'") val atmosphere: String = "automatic")
 @Entity(tableName = "history")
 data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: String,
   val kind: String, val occurredAtMs: Long, val generation: Long,
@@ -83,12 +84,17 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM history WHERE operationId = :id") fun historyOperation(id: String): HistoryRecord?
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
-  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class], version = 4, exportSchema = true)
+  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class], version = 5, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE settings ADD COLUMN atmosphere TEXT NOT NULL DEFAULT 'automatic'")
+      }
+    }
     val MIGRATION_3_4 = object : Migration(3, 4) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE reminders ADD COLUMN listId TEXT DEFAULT NULL")

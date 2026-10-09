@@ -9,33 +9,95 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Preparation
+## Current alert experience acceptance
 
-1. Install the locally signed **0.4.0 / versionCode 4** APK as an update, without uninstalling or
-   clearing data. The build location and evidence are linked from the README.
+The [alert experience contract](design/current/alert-experience.md) supersedes
+earlier Stop wording, Due-based overdue checks and outlined terminal-card More
+controls in this checklist. The [alert experience evidence](evidence/2026-10-09-alert-experience.md)
+identifies the signed bundled ARM64 build prepared **9 October 2026 at
+22:01:25.394 UTC**, from production source revision
+`f772647eac203c898ee8c65bb82fef8a75f831eb`. Package/version are
+**com.remilo.app 0.4.0 / code 4**; the existing signer is retained.
+APK SHA-256: `aed83392c9a84e451555fddc308d46df28b9c417157d717ea43667bca7e539f4`.
+No installation or physical observation was performed or authorized by preparation.
+All checks below remain pending for this artifact until the owner records actual
+results. The evidence also lists remaining browser-render observations after the
+fixture browser stalled, including post-fix large-text navigation and group controls.
+
+## Earlier prepared beta-fix artifact (historical)
+
+The [beta-fix evidence](evidence/2026-10-09-beta-fixes.md) identifies the signed
+bundled ARM64 build prepared **9 October 2026 at 20:19:05.680 UTC**, including
+Stop completion, four roots, alert-first Agenda and stationary artwork covered
+by scrolling content. Package/version remain **com.remilo.app 0.4.0 / code 4**.
+APK SHA-256: `f8f07454eebcd9c98215966a452e93db10af5acacb23a299708eeaeda563a1f9`.
+The existing signer is retained. No installation or physical observation was
+performed. This identity records the earlier beta fixes and does not establish
+results for the subsequent alert experience changes. Apply the
+[beta acceptance additions](verification.md#beta-fix-acceptance-additions-9-october).
+
+Check browsing art at the top, partway and fully covered: it stays stationary
+while the opaque body rises over it and the toolbar remains reachable. Reverse
+scroll and return from another page must preserve the appropriate occlusion.
+Repeat with short/empty content, landscape, reduced motion and large text.
+
+## Earlier prepared redesign artifact (historical)
+
+[TD-06 integration evidence](handoffs/redesign-td-06.md) records successful local
+preparation on **9 October 2026 at 17:18:00.718 UTC**, after the final candidate 05
+presentation/wording corrections. The release APK is
+**com.remilo.app 0.4.0 / versionCode 4**, **arm64-v8a**, minSdk 34/targetSdk 36,
+signed with bundled JavaScript and not debuggable. Its SHA-256 is
+`927482ad16efe01290fcc63057cffac137185db4074bf8bc6a800050834669d3`;
+the retained signer SHA-256 is
+`880b7bc2e35722a72f9170c863945e0a65e3cf4c9f142aedf9ab6837c1e43556`.
+Preparation installed/published nothing and leaves every physical observation
+pending. The working-tree/build relationship is recorded in TD-06; the base
+commit and version alone do not identify these bytes.
+
+The owner [approved composition 05 for implementation](design/r9-runtime-composition-approval-v5.json),
+closing R9 composition review while physical observations remain pending.
+This checklist is for the later
+consolidated owner run against the specifically reviewed final artifact, not an
+instruction to resume phone testing now. If further runtime edits require another
+artifact, record that build/hash before observing it instead of relying on the
+unchanged 0.4.0 version label. Earlier toolbar/Browse build observations retain
+their historical scope and do not establish this redesign's behavior.
+
+1. When starting the owner run, install the specifically identified signed APK as
+   an update without uninstalling or clearing data. Preserve the recorded artifact
+   hash/source relationship; the local build path is
+   `android/app/build/outputs/apk/release/app-release.apk`.
 2. Open Remilo offline, with no development server running. Your saved reminders
-   should remain present. Tap Browse → Settings → Permissions and enable required
+   should remain present. Open Settings from the current root's More menu, then
+   Permissions, and enable required
    access through each row. Return: statuses refresh automatically.
 3. Record phone model, Android version, app version, date, and whether exact alarms,
    notifications, the alarm channel and full-screen access are enabled.
-4. Prefix new test titles with **QA**. Tap the blue + → enter a title → tap When.
+4. Prefix new test titles with **QA**. Tap Add reminder → enter a title → tap When.
    Select today's date and a time two or three minutes ahead; keep the default
-   linked timing. Tap Save in the app bar. Confirm return to Agenda and the saved
+   linked timing. Tap the persistent Save footer. Confirm return to Agenda or the
+   invoking named list and the saved
    alert message; use its View action to inspect details → Schedule details when present.
    For a quick native probe, use Settings → Alarms → Test alarm (15 seconds).
 
-## U. Redesign acceptance (start here)
+## U. Current time-of-day redesign acceptance (after implementation)
 
-These are the priority 0.4.0 checks. Record each as pass/fail/pending. No production
+Use [the current design](design/current/README.md) and [appearance policy](design/current/appearance-policy.md).
+This is a future observation checklist, not a claim that the documentation PR
+changed the installed app. Preserve the A–E native/recovery/recurrence/data scenarios.
+
+These are the current redesign checks. Record each as pass/fail/pending. No production
 data needs deletion. Keep alarm-volume conditions separate from appearance checks.
 
 - **U1 — agenda and density:** create four ordinary QA reminders today and one
   daily repeat. Return home. Reminders appear immediately, with one + and icon
   actions. At default text size at least four ordinary rows fit a 360×800-equivalent
   screen. Collapse Today: its count remains. Expand it: records reappear separately.
-- **U2 — event versus alarm:** create a No alert reminder with yesterday's event
-  and a future independent due time (Schedule options → disable Due with event).
-  It appears in Earlier. Move due into the past: it moves to Overdue. For an Alarm
+- **U2 — event versus alarm:** create a timed No alert reminder with yesterday's
+  When and a future independent Due. It is Overdue from When; changing Due does
+  not change its overdue age. An all-day No alert reminder becomes overdue after
+  the next local midnight after its start date, even across a DST boundary. For an Alarm
   reminder already overdue, Postpone to tomorrow: it stays Overdue and shows the
   new alarm time. Each occurrence appears once.
 - **U3 — search/filter:** tap Search; type a QA title or note. Results narrow.
@@ -44,11 +106,13 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   leaving Agenda. Clear query empties text while keeping search open; Exit search
   closes it. Tap Filter, choose a list and Overdue only, then Show reminders.
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
-- **U4 — completed, skipped and Trash:** complete a QA row using its trailing check,
+- **U4 — completed, skipped and Trash:** complete a QA row using its leading completion target,
   then use Undo. Complete again: it leaves the active agenda. Find it through
-  Browse → Completed. Include skipped exposes a skipped repeat.
+  the secondary Completed destination. Include skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
-  request, then Browse → Trash → Restore recovers its content.
+  request, then the Trash root → row More → Restore recovers
+  its content. Completed/Skipped row More → Reopen clears both terminal states
+  without replaying elapsed alerts. Single row actions are not repeated inline.
   Search/filter both collections, including a list containing only Trash items.
   Complete/delete QA reminders in a different order from their event dates:
   the newest completion/deletion appears first. Elapsed alarms remain silent.
@@ -67,7 +131,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   opens through More. Title, schedule, delivery and notes take priority over compact
   bottom actions. Tap Edit: This occurrence, This and following,
   Entire series are available. Cancel the selector, open Repeat details and Pause repeat.
-  Find it through Browse → Repeats → Paused, then Resume. Inspect
+  Find it through Repeats → Paused, then Resume. Inspect
   Active and Ended filters and verify one entry per family after following/whole
   edits. Family details retain earlier unfinished and postponed occurrences.
   Check scope behavior in D. Long-press a one-off row → Edit opens its editor
@@ -83,25 +147,30 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   No manual refresh is needed. Saved-but-blocked/pending feedback remains visible
   until acknowledged, including after reopening a future completed probe. See C for
   exact/notification restrictions; access never guarantees audibility.
-- **U9 — native auto-close:** use Test alarm. Stop: sound ends and native controls
-  close automatically; the reminder stays unfinished. Repeat and Snooze: controls
+- **U9 — native auto-close:** use Test alarm. Done: sound ends and native controls
+  close automatically; the occurrence appears in Completed. Repeat and Snooze: controls
   close, then both notification actions return at the selected duration. Repeat and
-  let the five-minute session expire: controls close. Press Stop from the notification
+  let the five-minute session expire: controls close. Press Done from the notification
   while native controls are open: the ended screen closes. No Close button exists.
 - **U10 — groups:** create two reminders at the same instant. Native controls show
-  two independent members. Stop one: screen remains for the other. Snooze the final
-  member: screen closes. Repeat the pair and use notification Stop all: both stop and
-  controls close; both remain unfinished. The notification tap opens native controls.
+  two independent members. Done one: screen remains for the other. Snooze the final
+  member: screen closes. Repeat with Done all (2): both appear in Completed. Repeat
+  with Snooze all: both remain unfinished and share one next alert instant. The
+  notification tap opens individual native controls. A captured group action excludes
+  later arrivals; controlled stale-member/retry cases belong to engineering checks.
 - **U11 — appearance/accessibility:** repeat home, search, filters, creation, Custom
   repeat, detail Schedule details and More → Activity, scope/Postpone sheets, Settings/selectors, Completed,
-  Trash, Browse/Repeats and repeat details, Restore preview and Diagnostics in Light and
+  Trash, Lists/Repeats and repeat details, Restore preview and Diagnostics in Light and
   Dark. Enable the largest font size (200% where available), then TalkBack. Essential
   actions remain reachable by scrolling, with clear labels/statuses and no clipping.
   Check keyboard behavior in title/notes and custom numeric fields, including bottom
   action reachability. Enable reduced motion and repeat sheet/row transitions. Restore font and
   accessibility preferences. Native controls need their own large-font run.
-- **U12 — identity and loading:** inspect the launcher R mark, themed icon
-  if supported, splash and small notification icon. Long titles remain readable in
+- **U12 — identity and loading:** inspect the static Classic ring/check/sun launcher,
+  adaptive/monochrome system treatment, splash and small notification icon. The
+  main ring/check is centered with the sun/rays offset; inspect actual round/
+  adaptive OEM masks and small sizes without treating full artwork bounds as the
+  ring center. There is no app-controlled theme/alias switching. Long titles remain readable in
   details and native controls. First loading must not claim an ended alarm or a blocked
   permission. Force-stop/reboot limitations remain those in C, rather than UI errors.
 - **U13 — city/zone authoring:** choose a city/region for a pinned QA reminder
@@ -137,13 +206,12 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   export and diagnostics refresh/share progress and errors; dismissing a share sheet
   must not claim that a report was sent.
 
-- **U17 — Browse and origin:** open Browse from Agenda, each list, Repeats,
-  Completed and Trash. The current destination is selected; tapping it closes
-  Browse. Switch roots, then Back: non-Agenda roots return to Agenda. Detail,
-  Activity, Settings and editor return to their origin. Keep different searches,
-  filters and scroll positions in Completed and Trash; switching restores each.
-  Sheets and search close before navigation; uncertain saves/restores remain guarded.
-- **U18 — managed lists:** create an empty QA list from Browse; it remains after
+- **U17 — roots and origin:** switch Agenda / Lists / Completed / Trash using the labeled
+  bottom roots. Open named lists, Completed/Trash, Settings, details and Activity
+  from their invoking origins; return with their independent queries, filters and
+  scroll retained. Hide root navigation inside editor/details/modal workflows.
+  Sheets and search/IME close before navigation; uncertain saves/restores remain guarded.
+- **U18 — managed lists:** create an empty QA list from Lists; it remains after
   leaving/reopening. Create a reminder inside it: Save returns to that list with
   acknowledgement and View. Choose No list, rename the QA list, and check alerts
   keep their times. Remove the list: reminders move to No list with completion,
@@ -164,10 +232,52 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   is unavailable. Let a QA real alarm arrive during preview: it takes priority.
   Repeat with TalkBack/large text; leave unavailable failure cases pending.
 
+- **U21 — four atmospheres and Automatic:** select each manual scene and verify
+  matching app pages/sheets/native alarms in Light and Dark, including Sky Dark
+  daytime clouds and Night Light reading surfaces. Check System brightness separately.
+  Select Automatic and test local 06:00/10:00/17:00/21:00 using a controlled QA clock;
+  preserve system time on a personal device. Verify missing/new atmosphere preference
+  uses Automatic while upgrade brightness remains. Manual selection survives reopen.
+  Retain edits/caret/scroll through clock/zone changes; reduced motion is immediate.
+  A ringing session keeps its captured scene; the next session resolves anew.
+  Leave unavailable controlled-clock/upgrade cases pending instead of changing normal data.
+
+- **U22 — selected collection actions:** in Completed/Trash, normal browsing shows
+  labeled single Reopen/Restore through the row's three-dot menu, with independent
+  row-open targets. Toolbar More → Select reminders adds selection checkboxes and
+  a selected count; these checkboxes mean selected, not completed/restored. Select
+  several QA completed/skipped occurrences and use contextual Reopen or Move to
+  Trash. In Trash select QA occurrences and Restore: completed/skipped state is
+  preserved and elapsed alerts stay silent. Select all loaded includes only
+  loaded matching rows; Load more does not select new rows. Query/list/Include
+  skipped stay fixed while selecting. Back/Done selecting clears selection before
+  origin navigation; open sheets close first. Targets remain separate/reachable at
+  200% text and with TalkBack; contextual footer/feedback never covers content.
+  Partial/stale/lost-reply cases require a controlled QA setup: confirm truthful
+  per-item results, frozen captured selection/queue and exact unresolved-operation
+  Retry before remaining items. There is no atomic rollback, bulk Undo or permanent
+  Trash deletion. Leave unavailable fault setups pending; do not alter normal data
+  to force them.
+- **U23 — whole-backup inclusion and handoff:** export QA new reminders plus an
+  empty QA list and restore that backup. New identities, empty lists and entries
+  outside the current preview page are included automatically. Existing identity
+  conflicts offer Keep existing / Add a separate copy; matching titles alone do
+  not create conflicts. In a controlled lost-reply case the backup/choices/operation
+  remain frozen until the same restore is acknowledged or definitively rejected;
+  a receipt-only result supplies no invented totals. Diagnostics retains its last
+  observation timestamp after a failed refresh. Export/Diagnostics reports opening
+  the Android share sheet, not proof another app received or saved the file.
+- **U24 — captured Test alarm:** one deliberate Test alarm request commits one
+  test and target. Rapid taps do not duplicate the pending request. In a controlled
+  uncertain-reply case Retry returns the original test/target under the captured
+  operation identity; a new test requires a new deliberate request. Leave unavailable
+  fault setup pending and use only QA probes. Scheduling feedback does not prove
+  audibility; native delivery remains covered by B/C.
+
 ## A. Everyday reminders and timing
 
 - **A1 — upgrade/offline navigation:** your existing reminders remain. Agenda, editor,
-  Browse, Completed, Trash, Repeats, Settings and detail views open
+  Lists, Completed, Trash, Repeats, Settings and detail views open
   offline. Pull down on the home list to refresh.
 - **A2 — default timing:** create QA Timing. Its due and original alert equal the
   event start; event end is thirty minutes later. Add notes and a list. Search for
@@ -177,12 +287,14 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   unchanged. Turn links on again and verify the native preview before saving.
 - **A4 — all day:** create QA All day with All-day enabled. Preview says Due by end
   of day, with the default alert at 9 AM on the event day.
-  Use No alert if that day's 9 AM has already elapsed. Overdue depends on due time,
-  rather than the alert state.
+  Use No alert if that day's 9 AM has already elapsed. No alert becomes overdue at
+  the next local midnight after its start date; Alarm/Notification overdue follows
+  the original alert, independently of Due and delivery state.
 - **A5 — modes:** create separate Alarm, Notification and No alert probes. Alarm
   rings; Notification posts one system notification; No alert schedules no sound.
   A blocked Alarm is never silently changed to Notification.
-- **A6 — Done/Stop:** Stop a ringing probe. It remains unfinished in the agenda.
+- **A6 — Done:** use Done on a ringing probe. Its occurrence moves to Completed; any
+  future repeat slots retain scheduling.
   Mark it Done: it moves to Completed and its pending alert is cancelled. Reopen an
   elapsed reminder: it stays silent. Reopen one with a future target: check scheduling.
 - **A7 — management:** duplicate a reminder, choose a new future time, and save.
@@ -195,19 +307,24 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   its UI out of Recents, turn off network, lock the screen and wait. The alarm
   rings and shows native controls where Android permits. This checks closed UI;
   proof that the process/JavaScript runtime was absent uses the engineering matrix.
-- **B2 — Stop and repeated Snooze:** keep Settings foregrounded for the initial
-  alarm. Check Stop and Snooze in the popup and expanded notification. Snooze ten
-  minutes, inspect the returning popup/panel, Snooze again, and Stop the next
-  delivery. Both actions stay available; Stop silences sound and leaves it unfinished.
+- **B2 — Done and repeated Snooze:** keep Settings foregrounded for the initial
+  alarm. Check Done and Snooze · X min in the popup and expanded notification. Snooze ten
+  minutes, inspect the returning popup/panel, Snooze again, and use Done on the next
+  delivery. Both actions stay available; Done silences sound and completes only
+  that occurrence.
 - **B3 — cutoff:** leave one alarm untouched with the screen off. Record playback
   start and stop times. It ends after approximately five minutes and stays silent.
-  The item remains unfinished, labeled Alarm timed out; native controls close.
+  The item remains unfinished, shows its overdue age in browsing and records
+  Alarm timed out in Details/Activity; native controls close.
 - **B4 — collision/deadline:** create QA Group A two minutes ahead and QA Group B
   at the same time. Both appear separately in native controls; one sound plays.
-  Stop A: B keeps ringing. Snooze B: the session stops and only B returns. On a
+  Done A: B keeps ringing. Snooze B: the session stops and only B returns. On a
   separate run, let B join three minutes after A starts; both stop at A's original
-  five-minute deadline. Stop all ends sound while keeping every member unfinished.
-- **B5 — Postpone after ringing/timeout:** open an unfinished stopped or timed-out
+  five-minute deadline. Done all completes exactly the displayed captured members;
+  later arrivals continue separately. Snooze all uses the displayed global duration
+  and one common target, retaining unfinished work. Timeout keeps every unresolved
+  member unfinished.
+- **B5 — Postpone after ringing/timeout:** open a historical unfinished stopped or timed-out
   item. Try 15/30/60 minutes, tomorrow presets and a custom future time. Check the
   resolved date/time before applying. Event/due/original alert stay unchanged;
   the next alert changes. Postpone a snoozed item: the old Snooze target is replaced.
@@ -225,12 +342,14 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 ## C. Recovery and permissions
 
 - **C1 — before first unlock:** schedule a probe several minutes ahead; reboot.
-  Keep the phone locked until delivery. Text stays generic; native Stop and quick
-  Snooze work. Unlock afterward: content and action history reconcile without a replay.
+  Keep the phone locked until delivery. Text stays generic; native Done and quick
+  Snooze work. Unlock afterward: one completion with the original action instant
+  and its history reconcile without a replay.
 - **C2 — system Active Apps Stop:** create QA Recovery A two minutes ahead and QA
   Recovery B four minutes ahead. When A rings, use Android's Active Apps/running-app
   control to stop Remilo. A goes silent. Keep Remilo closed until B rings, then use
-  Remilo's Stop. Reopen: A says Alarm interrupted, B Alarm stopped, both unfinished. If the system
+  Remilo's Done. Open the app: A records Alarm interrupted and is unfinished; B is
+  Completed. If the system
   control is unavailable, record unavailable rather than substituting Force stop.
 - **C3 — exact access:** save a future Alarm with exact-alarm access denied.
   It is saved but blocked. Grant before its target and refresh: it becomes scheduled.
@@ -316,6 +435,56 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   user action. Backups intentionally contain private content; diagnostics do not.
   Refresh shows progress and an acknowledgement; a failed query has Retry. Sharing
   shows progress and reports opening/cancellation only as far as Android confirms.
+
+- **E6 — editor keyboard and visual consistency:** part of the same consolidated
+  acceptance run; no separate phone run is requested by this documentation update.
+  Create with Title focused: Save stays above the real Android keyboard and the
+  caret remains visible. Scroll to List/Notes without dismissing IME. Focus Notes
+  near the bottom, grow it over many lines, select text and move the caret to
+  earlier/later lines. Repeat at 200% English/Chinese text and with a taller
+  keyboard/emoji panel. No focused text is behind Save/IME; draft and composing
+  text survive. Lower validation errors/inputs remain reachable. Show/hide IME,
+  switch Title/Notes and return from a picker. First Back dismisses IME; later
+  navigation retains draft guards. First deliberate Save tap creates one guarded
+  operation, with no double inset gap or duplicate toolbar Save. Compare the same
+  controls in Light/Dark and the four atmospheres: neutral ordinary icons,
+  intentional action/focus/category/status colors, shared geometry. Record actual
+  results/build/device; [references and corrections](design/approved-ui-r3-r4.md)
+  are not passing observations.
+
+## F. Alert experience and card consistency
+
+- **F1 — visible alert choices:** the editor continuously shows Alarm,
+  Notification and No alert. Alarm is the default. Switch among them: hidden
+  authored timing and Alarm options survive; sound/vibration appear only for
+  Alarm. At 200% text all three choices remain visible in a stacked group. Check
+  selected/checked TalkBack announcements and the IME-aware Save footer.
+- **F2 — Notification mode:** let a Notification reminder deliver. Done completes
+  it once; Snooze · X min keeps it unfinished and posts another Notification
+  without alarm sound or a full-screen activity. Posting, swiping and dismissing
+  a notification do not complete work. Inspect generic lock-screen actions and
+  actual OS action visibility without changing channel preferences.
+- **F3 — timing and browsing:** compare different original alerts, When and Due,
+  then Snooze/Postpone in a different order. Overdue age/order follows original
+  alert for Alarm/Notification and When for timed No alert. Ringing takes visible
+  precedence while Details retains overdue. Missed/Timed out/Interrupted/
+  Notification sent stay available in Details/Activity rather than duplicate row
+  badges. Inspect independent Due, blocked targets and scheduling warnings.
+- **F4 — consistent terminal cards:** compare Agenda, named-list Agenda,
+  Completed with Include skipped, mixed Trash and family occurrences. All use
+  shared keylines, wrapping and the borderless vertical-ellipsis target. Normal
+  Completed/Skipped/Trash has no completion checkbox, Done or empty placeholder;
+  selection mode uses selection-only checkboxes. One terminal state line retains
+  useful original schedule/alert and list/repeat context. Row tap opens Details;
+  More retains View/Reopen/Move to Trash or View/Restore as appropriate. Compare
+  all four atmospheres in both brightnesses, portrait/landscape and 200% text.
+- **F5 — captured actions and retries:** controlled QA engineering setups cover
+  later arrivals, stale generations, changed Snooze settings, lost replies,
+  registration failures, restart and pre-first-unlock recovery. Done all count
+  must match captured members; Snooze all retains a common target and truthful
+  per-member Scheduled/Blocked/Pending/superseded/elapsed results. Unknown results
+  retry the identical operation rather than resnoozing. Leave unavailable fault
+  cases pending; do not inject failures into normal phone data.
 
 ## Results and remaining engineering checks
 

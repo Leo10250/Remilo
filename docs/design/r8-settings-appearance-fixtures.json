@@ -1,0 +1,623 @@
+{
+  "revision": "R8-specification-r2",
+  "date": "2026-10-07",
+  "sourceCommit": "78815751391dcf13d0661fc24f857a0930ae4e01",
+  "status": "R8 direction/templates shown before response accepted (A30); thirteen associated synthetic references, with R8-08 subsequently completed under the accepted direction",
+  "referenceBundle": "remilo-r8-settings-appearance/gallery.html",
+  "acceptance": "approved-ui-r8-outline-acceptance.json",
+  "discrepancyNotes": "remilo-r8-settings-appearance/review-notes.json",
+  "authority": [
+    "r8-settings-appearance-specification.md",
+    "approved-ui-r3-r4.md",
+    "../product.md",
+    "../architecture.md",
+    "../appearance-redesign.md"
+  ],
+  "viewportDp": {
+    "width": 360,
+    "height": 800
+  },
+  "locale": "en-US",
+  "deviceZone": "America/Los_Angeles",
+  "heldClock": "2026-10-07T14:00:00-07:00",
+  "clockPolicy": "Held-clock manual scene captures; A36 current policy separately defines Automatic and defaults.",
+  "referenceReview": {
+    "allEightInspected": true,
+    "method": "view_image qualitative inspection; exact source hashes; no pixel-token sampling or accessibility certification"
+  },
+  "references": [
+    {
+      "id": "sunrise-light",
+      "file": "remilo-r3-atmospheres/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129",
+      "atmosphere": "Sunrise",
+      "appearance": "Light"
+    },
+    {
+      "id": "sunrise-dark",
+      "file": "remilo-r3-atmospheres/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark"
+    },
+    {
+      "id": "sky-light",
+      "file": "remilo-r3-atmospheres/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03",
+      "atmosphere": "Sky",
+      "appearance": "Light"
+    },
+    {
+      "id": "sky-dark",
+      "file": "remilo-r3-atmospheres/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5",
+      "atmosphere": "Sky",
+      "appearance": "Dark"
+    },
+    {
+      "id": "evening-light",
+      "file": "remilo-r3-atmospheres/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae",
+      "atmosphere": "Evening",
+      "appearance": "Light"
+    },
+    {
+      "id": "evening-dark",
+      "file": "remilo-r3-atmospheres/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765",
+      "atmosphere": "Evening",
+      "appearance": "Dark"
+    },
+    {
+      "id": "night-light",
+      "file": "remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad",
+      "atmosphere": "Night",
+      "appearance": "Light"
+    },
+    {
+      "id": "night-dark",
+      "file": "remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055",
+      "atmosphere": "Night",
+      "appearance": "Dark"
+    }
+  ],
+  "shared": {
+    "secondaryOpeningBelowStatusDp": 96,
+    "toolbarDp": 56,
+    "gutterDp": 16,
+    "cornerDp": 16,
+    "bodySp": 16,
+    "supportSp": 14,
+    "minTargetDp": 48,
+    "primaryHeightDp": 56,
+    "rootBarVisible": false,
+    "addFabVisible": false,
+    "settingsPageSave": false,
+    "appearancePageSave": false,
+    "structuralIcons": "neutral shared roles",
+    "surfaces": "matching R3 canvas and opaque elevated roles",
+    "settingsCategoryOrder": [
+      "Alarms",
+      "Permissions",
+      "Postpone shortcuts",
+      "Appearance",
+      "Data",
+      "Help"
+    ]
+  },
+  "proposalNotes": [
+    "TD-02 implements the five-value Automatic/manual selection and approved global policy.",
+    "Expanded channel reasons, section-local feedback and View test reminder are layout/navigation proposals using existing data/routes.",
+    "Historical images omit Automatic/show four tiles; A36 dropdown and intervals/defaults supersede that difference.",
+    "Test lost-ack identity/reconciliation is an implementation gap; no current retry-safe API is claimed."
+  ],
+  "additionalComponentStates": [
+    "initial Settings loading/error/no-native",
+    "initial capability Checking/error",
+    "ordinary preference acknowledged/stale revision",
+    "sound Starting/Ended/Interrupted/stop failure",
+    "test Rejected/lost reply without unsafe Retry",
+    "valid Snooze preset/custom and cancellation",
+    "large text and real keyboard/picker reachability"
+  ],
+  "screens": [
+    {
+      "id": "R8-01",
+      "title": "Settings overview",
+      "referenceId": "sunrise-light",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "surface": "settings/alarms",
+      "state": "ordinary",
+      "data": {
+        "sound": "remilo",
+        "vibration": true,
+        "snoozeMinutes": 10,
+        "permissions": {
+          "exactAlarms": true,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": true,
+          "observedAt": "2026-10-07T14:00:00-07:00"
+        }
+      },
+      "visibleText": [
+        "Alarms",
+        "Sound",
+        "Remilo",
+        "Vibration",
+        "Snooze duration",
+        "10 minutes",
+        "Test alarm",
+        "Schedule a test in 15 seconds",
+        "Sound and vibration defaults apply to new reminders."
+      ],
+      "notes": [
+        "Permissions may enter the lower viewport; remaining categories scroll.",
+        "No page Save, root bar or FAB."
+      ]
+    },
+    {
+      "id": "R8-02",
+      "title": "Preference save unconfirmed",
+      "referenceId": "sunrise-dark",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "surface": "settings/alarms",
+      "state": "preference-error",
+      "data": {
+        "confirmedSnoozeMinutes": 10,
+        "requestedSnoozeMinutes": 15,
+        "job": {
+          "operation": "synthetic-existing-preference-job",
+          "expectedRevision": 7,
+          "retained": true,
+          "acknowledgementOrRefreshUnconfirmed": true
+        },
+        "display": "last-confirmed",
+        "saving": false
+      },
+      "visibleText": [
+        "Snooze duration",
+        "10 minutes",
+        "Could not confirm the change to 15 minutes.",
+        "Last confirmed: 10 minutes.",
+        "Retry saving changes"
+      ],
+      "notes": [
+        "Retry retains the captured preference job; a stale revision follows existing rebase rules.",
+        "Do not claim native write failed or pending patch was discarded."
+      ]
+    },
+    {
+      "id": "R8-03",
+      "title": "Appearance fixed Sky Light",
+      "referenceId": "sky-light",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "surface": "appearance",
+      "state": "ordinary",
+      "data": {
+        "brightness": "light",
+        "deviceAppearance": "Light",
+        "atmosphere": "Sky",
+        "selectedTile": "Sky",
+        "choices": [
+          "Sunrise",
+          "Sky",
+          "Evening",
+          "Night"
+        ],
+        "saving": false
+      },
+      "visibleText": [
+        "Brightness",
+        "System",
+        "Light",
+        "Dark",
+        "Uses your device's light or dark appearance.",
+        "Atmosphere",
+        "Sunrise",
+        "Sky",
+        "Evening",
+        "Night",
+        "Used across Remilo, including full-screen alarms."
+      ],
+      "notes": [
+        "Four scene tiles are previews; surrounding page remains Sky Light.",
+        "Light and Sky each have explicit radio/check semantics; no Automatic control."
+      ]
+    },
+    {
+      "id": "R8-04",
+      "title": "Appearance System saving",
+      "referenceId": "sky-dark",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "surface": "appearance",
+      "state": "preference-saving",
+      "data": {
+        "brightness": "system",
+        "lastConfirmedBrightness": "light",
+        "deviceAppearance": "Dark",
+        "atmosphere": "Sky",
+        "selectedTile": "Sky",
+        "choices": [
+          "Sunrise",
+          "Sky",
+          "Evening",
+          "Night"
+        ],
+        "saving": true
+      },
+      "visibleText": [
+        "Brightness",
+        "System",
+        "Light",
+        "Dark",
+        "Atmosphere",
+        "Sunrise",
+        "Sky",
+        "Evening",
+        "Night",
+        "Saving changes…"
+      ],
+      "notes": [
+        "System selected and device Dark yields Sky Dark; preserve daytime scene.",
+        "Saving is brightness preference progress, not proof of four-atmosphere persistence."
+      ]
+    },
+    {
+      "id": "R8-05",
+      "title": "Sound preview fallback",
+      "referenceId": "evening-light",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "surface": "settings/sound-sheet",
+      "state": "preview-playing-fallback",
+      "data": {
+        "selectedSound": "remilo",
+        "preview": {
+          "requestId": "synthetic-preview-05",
+          "sound": "system",
+          "actualSound": "remilo",
+          "state": "Playing",
+          "limitSeconds": 5
+        }
+      },
+      "visibleText": [
+        "Alarm sound",
+        "Choose a sound, or use Play to listen before choosing.",
+        "Remilo",
+        "System alarm",
+        "Remilo preview playing · System tone unavailable; using Remilo.",
+        "Preview ends after five seconds. A ringing alarm takes priority."
+      ],
+      "notes": [
+        "System request has Stop; Remilo remains the selected radio.",
+        "Play does not save/select or create a test."
+      ]
+    },
+    {
+      "id": "R8-06",
+      "title": "Sound preview failure",
+      "referenceId": "evening-dark",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "surface": "settings/sound-sheet",
+      "state": "preview-failed",
+      "data": {
+        "selectedSound": "system",
+        "preview": {
+          "requestId": "synthetic-preview-06",
+          "sound": "system",
+          "state": "Failed",
+          "reason": "Failed",
+          "limitSeconds": 5
+        }
+      },
+      "visibleText": [
+        "Alarm sound",
+        "Remilo",
+        "System alarm",
+        "Could not play this sound. Check alarm volume and tap Play to retry.",
+        "Preview ends after five seconds. A ringing alarm takes priority."
+      ],
+      "notes": [
+        "System remains selected despite failure.",
+        "No invented volume reading; actions are preview Play, not retry preference saving."
+      ]
+    },
+    {
+      "id": "R8-07",
+      "title": "Permissions with mixed channels",
+      "referenceId": "night-light",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "surface": "settings/permissions",
+      "state": "observed-partial-access",
+      "data": {
+        "capabilities": {
+          "exactAlarms": true,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": false,
+          "fullScreen": false,
+          "observedAt": "2026-10-07T14:00:00-07:00"
+        },
+        "rowStates": {
+          "onTime": "Allowed",
+          "notifications": "Blocked",
+          "lockScreen": "Limited"
+        },
+        "alarmSchedulingReady": true,
+        "notificationSchedulingReady": false
+      },
+      "visibleText": [
+        "Permissions",
+        "On-time alarms",
+        "Allowed",
+        "Notifications",
+        "Blocked",
+        "Alarm channel: Allowed",
+        "Reminder channel: Blocked",
+        "Lock-screen alarms",
+        "Limited",
+        "Full-screen access is off."
+      ],
+      "notes": [
+        "Rows hand off to Android; no Enable toggle or custom permission screen.",
+        "Mixed channels do not block Alarm scheduling; full-screen Limited is presentation only."
+      ]
+    },
+    {
+      "id": "R8-08",
+      "title": "Permissions refresh failure",
+      "referenceId": "night-dark",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "surface": "settings/permissions",
+      "state": "retained-refresh-error",
+      "data": {
+        "capabilities": {
+          "exactAlarms": true,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": true,
+          "observedAt": "2026-10-07T13:55:00-07:00"
+        },
+        "refreshFailed": true,
+        "readInProgress": false,
+        "display": "last-observed",
+        "rowStates": {
+          "onTime": "Allowed",
+          "notifications": "Allowed",
+          "lockScreen": "Allowed"
+        }
+      },
+      "visibleText": [
+        "Permissions",
+        "On-time alarms",
+        "Notifications",
+        "Lock-screen alarms",
+        "Allowed",
+        "Last checked Today, 1:55 PM.",
+        "Could not refresh permissions.",
+        "Retry"
+      ],
+      "notes": [
+        "Retain last snapshot with explicit staleness; no freshly checked success.",
+        "Initial Checking and initial failure are additional component states, not this snapshot."
+      ]
+    },
+    {
+      "id": "R8-09",
+      "title": "Test scheduled",
+      "referenceId": "sunrise-light",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "surface": "settings/alarms",
+      "state": "test-scheduled",
+      "data": {
+        "capabilities": {
+          "exactAlarms": true,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": true,
+          "observedAt": "2026-10-07T14:00:00-07:00"
+        },
+        "result": {
+          "status": "Scheduled",
+          "occurrenceId": "synthetic-test-09",
+          "title": "Remilo test alarm",
+          "nextAlert": "2026-10-07T14:00:15-07:00",
+          "mode": "Alarm",
+          "sound": "remilo",
+          "vibration": true
+        },
+        "testIsRealRetainedReminder": true
+      },
+      "visibleText": [
+        "Test alarm",
+        "Test alarm scheduled for Today, 2:00:15 PM.",
+        "View test reminder",
+        "Scheduled does not confirm the alarm was heard."
+      ],
+      "notes": [
+        "Time/occurrence identity come from native result; View is proposed contextual navigation.",
+        "Do not imply test auto-deletes, Stop completes, or device acceptance passed."
+      ]
+    },
+    {
+      "id": "R8-10",
+      "title": "Test saved but blocked",
+      "referenceId": "sky-dark",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "surface": "settings/alarms",
+      "state": "test-blocked",
+      "data": {
+        "capabilities": {
+          "exactAlarms": false,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": true,
+          "observedAt": "2026-10-07T14:00:00-07:00"
+        },
+        "result": {
+          "status": "Blocked",
+          "occurrenceId": "synthetic-test-10",
+          "title": "Remilo test alarm",
+          "nextAlert": "2026-10-07T14:00:15-07:00",
+          "mode": "Alarm"
+        },
+        "knownReason": "Exact alarm access denied",
+        "testIsRealRetainedReminder": true
+      },
+      "visibleText": [
+        "Test alarm",
+        "Test reminder saved; alert blocked.",
+        "On-time alarm access is blocked.",
+        "View test reminder",
+        "On-time alarms",
+        "Blocked"
+      ],
+      "notes": [
+        "Use existing On-time alarms row for Android handoff; no silent Notification downgrade.",
+        "This particular fixture has a known permission cause; other Blocked results may be registration failure."
+      ]
+    },
+    {
+      "id": "R8-11",
+      "title": "Invalid custom Snooze with keyboard",
+      "referenceId": "evening-light",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "surface": "settings/snooze-sheet",
+      "state": "validation-ime",
+      "data": {
+        "confirmedSnoozeMinutes": 10,
+        "presets": [
+          5,
+          10,
+          15,
+          30
+        ],
+        "customDraft": "0",
+        "customMinimum": 1,
+        "customMaximum": 1440,
+        "valid": false,
+        "focusedField": "Custom minutes",
+        "keyboard": "Android numeric IME",
+        "actionEnabled": false
+      },
+      "visibleText": [
+        "Snooze duration",
+        "Custom minutes (1–1440)",
+        "0",
+        "Enter a whole number from 1 to 1440.",
+        "Use custom duration"
+      ],
+      "notes": [
+        "One disabled 56dp action above real IME, error and caret visible; Close/Cancel preserves 10.",
+        "Use custom duration is picker submission, not Settings-wide Save."
+      ]
+    },
+    {
+      "id": "R8-12",
+      "title": "Edit tomorrow shortcut time",
+      "referenceId": "night-dark",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "surface": "settings/postpone-shortcuts-time-picker",
+      "state": "uncommitted-picker",
+      "data": {
+        "confirmedLocalMinutes": {
+          "tomorrowMorning": 600,
+          "tomorrowAfternoon": 840,
+          "tomorrowEvening": 1020
+        },
+        "pickerField": "tomorrowAfternoon",
+        "pickerDraftLocalMinutes": 900,
+        "locale": "en-US",
+        "picker24Hour": false,
+        "deviceAppearance": "Dark"
+      },
+      "visibleText": [
+        "Postpone shortcuts",
+        "Tomorrow morning",
+        "10:00 AM",
+        "Tomorrow afternoon",
+        "2:00 PM",
+        "Tomorrow evening",
+        "5:00 PM",
+        "3:00 PM",
+        "Cancel",
+        "OK"
+      ],
+      "notes": [
+        "Underlying saved afternoon stays 2PM until picker OK; Cancel does not mutate.",
+        "OS-owned picker styling may differ from app; shortcuts are not atmosphere time bands."
+      ]
+    },
+    {
+      "id": "R8-13",
+      "title": "Test saved with pending scheduling",
+      "referenceId": "evening-dark",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "surface": "settings/alarms",
+      "state": "test-pending",
+      "data": {
+        "capabilities": {
+          "exactAlarms": true,
+          "notifications": true,
+          "channelEnabled": true,
+          "notificationChannelEnabled": true,
+          "fullScreen": true,
+          "observedAt": "2026-10-07T14:00:00-07:00"
+        },
+        "result": {
+          "status": "Pending",
+          "occurrenceId": "synthetic-test-13",
+          "title": "Remilo test alarm",
+          "nextAlert": "2026-10-07T14:00:15-07:00",
+          "mode": "Alarm"
+        },
+        "testIsRealRetainedReminder": true,
+        "contentAcknowledged": true
+      },
+      "visibleText": [
+        "Test alarm",
+        "Test reminder saved; scheduling pending.",
+        "Check its next alert status.",
+        "View test reminder"
+      ],
+      "notes": [
+        "Native result acknowledges content; Pending registration is not lost acknowledgement.",
+        "No Scheduled success chip, Retry test, invented Cancel test or physical-pass claim."
+      ]
+    }
+  ],
+  "verification": {
+    "imagesGenerated": true,
+    "ownerAcceptedUiUxDirection": true,
+    "individualPixelReviewClaimed": false,
+    "productionImplemented": false,
+    "actualRender": false,
+    "contrastMeasured": false,
+    "realImeObserved": false,
+    "talkBackObserved": false,
+    "nativeTestExecuted": false,
+    "physicalAlarmVerified": false
+  },
+  "currentContract": "current/screens/settings.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
+}

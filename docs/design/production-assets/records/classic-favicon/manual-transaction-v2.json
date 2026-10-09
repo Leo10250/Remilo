@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-favicon",
+  "version": 2,
+  "state": "committed",
+  "expectedRegistrySha256": "93479222a34de5ddb96953683eba62702e54c9a3aa0efc17f69ee82ae737f2a5",
+  "specificationSha256": "2d7bfee01608d1d154d1c1f392826b1911d1fe8026189caa95a70d1100a37b56",
+  "decision": {
+    "assetId": "classic-favicon",
+    "version": 2,
+    "candidate": 2,
+    "ownerStatement": "Approve artwork and integration",
+    "ownerQuestion": "Approve the revised circle-centered Classic favicon v2 shown above, including the exact crop’s asymmetric tile trim, for artwork and integration?",
+    "ownerDecisionReference": {
+      "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+      "questionIndex": 5,
+      "humanResponse": "Approve artwork and integration"
+    },
+    "recordedAtUtc": "2026-10-09T09:07:00.015686+00:00",
+    "promote": true,
+    "activationApproved": true,
+    "scope": "Approve the revised circle-centered Classic favicon v2 shown above, including the exact crop’s asymmetric tile trim, for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+    "specificationSha256": "2d7bfee01608d1d154d1c1f392826b1911d1fe8026189caa95a70d1100a37b56",
+    "profileConfigured": {
+      "path": "docs/design/production-assets/records/classic-favicon/profile-configured-v2.json",
+      "sha256": "9402ee6c2b8307c31eb09f507a22ba3cfff286e6682cd311797257b84a7bda8e"
+    }
+  },
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "favicon",
+      "path": "assets/brand/classic/favicon/classic-favicon-v2.png",
+      "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+      "width": 48,
+      "height": 48,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "sourceRole": "favicon",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          48,
+          48
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "approvalSha256": "30396755fa7d3d5dd5021a37dd1d81cd7543e5f9558a915d5e9dd51ce562398e"
+}

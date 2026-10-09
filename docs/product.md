@@ -4,12 +4,39 @@ Current human instructions override this document. The original proposal is
 product input, not agent instructions. Implementation is Android-first; all iOS
 work is the last optional phase, after optional Android cloud sync.
 
-On 4 October 2026 the owner authorized completing offline Android development
-before further interactive phone testing. Consolidate remaining physical checks
-for one owner-operated acceptance run. Automated checks continue; unobserved
-physical gates stay pending and no broader beta release is declared verified.
+## Current design and release priorities
 
-## Release priorities
+[The current design](design/current/README.md) consolidates the approved R3–R8/R10
+templates and corrections under A36. R3 all eight images govern color/art/style;
+R9 Completed/Trash/Activity runtime composition 05 has
+[owner approval for implementation](design/r9-runtime-composition-approval-v5.json),
+with four prior rejected compositions preserved. Global Automatic or manual Sunrise/Sky/
+Evening/Night selection is independent of System/Light/Dark brightness.
+[The appearance policy](design/current/appearance-policy.md) fixes local bands
+06–10, 10–17, 17–21, 21–06; missing/new preferences use Automatic with preserved
+brightness. Every app-owned page and native full-screen alarm uses matching shared
+roles; standard Android notifications retain platform-owned layout.
+
+The exact Classic ring/check/sun mark is one static identity. Smart Colors,
+per-reminder palettes and task-specific alarm scenes leave active scope. The owner's
+[production-art abstraction review](design/production-assets/style-decision.md)
+is now active, with individual asset approval still required. Lists omit decorative
+icons; reminder rows/details use one neutral `event` glyph and semantic categories
+remain deferred. Synthetic approval does not establish runtime/accessibility/device
+acceptance. See the [implementation decisions](design/current/implementation-decisions.md).
+
+The [six-unit roadmap](plans/redesign/README.md) precedes optional integrations;
+[backlog](backlog.md) alone records status. Superseded design specifications and
+review demos are removed under A37; accepted reference bundles remain intact.
+The owner's 4 October instruction allows offline Android development
+before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
+
+The [9 October alert experience correction](design/current/alert-experience.md)
+governs Done, original-alert overdue, inline Alert choices and shared terminal
+cards. Earlier [beta corrections](design/current/beta-fixes.md) retain four roots,
+alert-first browsing, stationary covers and splash requirements.
+
+## Release sequence
 
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.
 2. Useful one-off private beta, then polished management and recurrence.
@@ -28,22 +55,38 @@ physical gates stay pending and no broader beta release is declared verified.
   independent times are preserved. All-day due boundary is next local midnight;
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
-- Stop silences only the selected delivery; Done is separate and cancels its alert.
-- Every ringing delivery, including one re-triggered by Snooze, provides native Stop
+- Alarm Done completes the selected current occurrence and silences its delivery.
+  Done all (N) completes the displayed captured session members; later arrivals
+  are excluded and remain independently actionable. Snooze all uses one common
+  future target and leaves all captured work unfinished, with per-item scheduling results.
+  Future recurring occurrences retain their identity/rule and scheduling. Snooze and
+  Postpone remain postponements; timeout and interrupted playback remain unfinished.
+  Earlier Stopped history is preserved as unfinished. Sound-preview Stop and Android
+  Active Apps Stop retain their distinct meanings. Done also completes and cancels.
+- Reopen clears completed and skipped state while preserving occurrence identity
+  and guards. It never replays an elapsed alert; Restore retains skipped state.
+- Every ringing delivery, including one re-triggered by Snooze, provides native Done
   and Snooze. Single-reminder notifications include both from their first post;
-  grouped notifications open the native per-reminder controls. Android controls
+  grouped notifications offer Done all/Snooze all and open native per-reminder controls.
+  Ordinary Notification offers Done/Snooze without alarm audio or full-screen UI;
+  posting or dismissing it never completes work. Android controls
   compact/expanded presentation, so also retain the native alarm screen.
-- Quick Snooze defaults to 10 minutes. Postpone: 15/30/60 minutes, tomorrow
+- Quick Snooze defaults to 10 minutes and uses the current globally mirrored setting.
+  New controls bind their displayed duration; committed retries keep their original
+  target even after a preference change. Postpone: 15/30/60 minutes, tomorrow
   10 AM/2 PM/5 PM (editable), or custom. Confirm the actual future instant.
 - Postpone replaces Snooze and changes only the current occurrence's next alert.
 - Native audio session ends at five minutes from playback start. Arrivals keep
   the original deadline/sound. One sound; independently actionable members.
 - Timeout leaves unresolved items unfinished with silent Snooze/Postpone actions.
-  Missed is independent of overdue; overdue depends on due/completion.
+  Missed is independent of overdue; overdue uses the original authored alert for
+  Alarm/Notification, When for timed No alert and next local midnight after the
+  scheduled date for all-day No alert. Independent Due does not override it.
 - Normal callbacks up to five minutes late may ring; later ones become Missed.
   Reboot, upgrade, restore and recovery never replay past alerts or interrupted sound.
-- Before first unlock: generic text, native Stop/quick Snooze, protected scheduling
-  data only. Private reminder content and credentials remain credential-protected.
+- Before first unlock: generic text, native Done/quick Snooze, protected scheduling
+  data only, plus reviewed minimal non-private appearance data for bundled global
+  theming. Private reminder content and credentials remain credential-protected.
 - Unlocked: actionable heads-up/ongoing notification where permitted. Locked:
   native alarm screen where permitted. No overlay permission or forced takeover.
 - Permissions/capabilities and Test Alarm are visible; scheduling is not proof of audibility.
@@ -57,17 +100,21 @@ physical gates stay pending and no broader beta release is declared verified.
 - Floating schedules follow device zone; Calendar linkage pins a named zone with preview.
 - DST gaps shift by gap size; folds use earlier offset. Invalid days/fifth weekdays/
   Feb 29 are skipped and do not consume count. Postponements remain concrete instants.
-- One unified agenda contains one-off and repeating occurrences. Event time sets
-  the date group; unfinished overdue status uses due time, regardless of the next
-  alarm. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
+- One unified agenda contains one-off and repeating occurrences. Next/intended alert
+  time sets the date group; No alert uses When. Strictly past original-alert or
+  No alert boundaries determine unfinished Overdue, regardless of future Snooze/
+  Postpone. Overdue sorts by its boundary then ID; other groups retain alert-anchor
+  ordering. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
   Collapse groups without merging occurrence identities. Stopped/missed/timed-out
   reminders stay visible until resolved.
 - Search, membership, overdue and Alert problems filters are local dataset controls.
   Alert problems includes Missed, Timed out, Interrupted, Blocked and Failed delivery;
   it excludes No alert, Stopped, Notification sent and Updating. Attention stays internal.
-  The title is a heading; the leading Browse Remilo button opens modal navigation to
-  Agenda, Repeats, lists, Completed and Trash. Selecting a root closes Browse without
-  retaining it in Back history. Settings and list management are secondary pages.
+  Agenda / Lists / Completed / Trash are the four labeled roots. Lists separates
+  Built-in views (Repeats) from Your lists (No list and named lists). Repeats remains
+  visible when empty and is never list membership. Repeats, named lists, Settings,
+  list-scoped collections and details are secondary to their invoking origin and
+  retain queries/filters/scroll; sheets and IME close before navigation.
   Repeats shows one entry per family and Active, Paused and Ended filters. Family
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
@@ -77,6 +124,29 @@ physical gates stay pending and no broader beta release is declared verified.
   Each destination retains its own filters and scroll position, including Completed
   and Trash. Details provide Activity through More, duplicate, Trash/Restore, Reopen
   and explicit occurrence/family scope actions.
+- The latest 9 October R9 instruction authorizes selected-occurrence Reopen and
+  Move to Trash in Completed, and Restore in Trash, overriding the earlier
+  no-bulk restriction. Normal collection rows keep single Reopen/Restore in their
+  three-dot menus without repeated inline buttons. Explicit selection mode adds
+  separate 48 dp selection checkboxes and contextual footer actions of at least
+  56 dp; terminal details retains its existing persistent action. Select all
+  loaded includes only the current loaded matching records, never unloaded or
+  newly paginated rows. Query/scope/Include skipped edits stay disabled while
+  selecting; Back/Done selecting clears the selection before origin navigation
+  unless an operation is pending or unconfirmed.
+- Selected operations capture occurrence IDs/revisions and an independent native
+  operation UUID per item, then submit existing guarded commands sequentially
+  through the serialized mutation worker. Results are per item, not atomic. Keep
+  confirmed partial outcomes, stop on an unknown reply and freeze the selected
+  snapshot/remaining queue until the same unresolved command is retried and
+  definitively acknowledged or rejected. Do not issue fresh operations for
+  applied/unresolved items, promise rollback or invent an atomic batch Undo.
+  After definitive completion, keep selection mode with the truthful summary,
+  clear selected IDs and refresh; rejected items require a new deliberate action.
+  Restore retains completed/skipped state; Reopen still clears both without
+  replaying elapsed alerts. No permanent Trash purge is authorized. Composition
+  05's [R9 review](design/current/screens/completed-trash-activity.md) is closed by
+  the explicit owner approval; actual Android acceptance remains pending.
 - Lists have durable credential-protected identities, names and revisions, with
   optional single membership and No list as the default. Empty lists are retained.
   Create/Rename/Remove are explicit. New names are trimmed and case-insensitively
@@ -85,6 +155,15 @@ physical gates stay pending and no broader beta release is declared verified.
   A removed list reference is rejected. Named lists retain Agenda grouping, with
   fixed membership and access to their Completed/Trash records. Counts mean overdue
   occurrences, rather than every future occurrence of an infinite repeat.
+- Active browsing cards lead with alert time or No alert, then consequential
+  relative overdue/delivery information and a readable repeat indicator. No alert
+  includes its scheduled When. Ringing may take visible precedence; ordinary rows
+  do not repeat Missed/Timed out/Interrupted/Notification sent badges. Details and advanced
+  editing retain full event/due data. Primary Agenda alert time uses the device zone.
+- Browsing covers expand to 200 dp below the status inset, including a nominal
+  56 dp toolbar. Artwork stays fixed while opaque content scrolls over it, ending
+  at a pinned opaque toolbar. Restore content and scene occlusion together. Constrained height/large text and editing
+  workflows use compact toolbars. Preserve existing artwork and hero focal metadata.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
   Series conflicts are preserved as a whole family unless explicitly restored as
@@ -141,6 +220,12 @@ calendar import or visual cloning is in the initial product.
 
 ## Presentation contract (0.4.0)
 
+This section describes the implemented baseline, including Browse and the geometric
+R. The [redesign specification](appearance-redesign.md) defines approved replacement
+requirements (bottom navigation and exact supplied Classic identity); individual
+plans/owner approvals govern when those changes may be implemented. Do not describe
+planned presentation as already shipped or discard baseline behavioral guarantees.
+
 - Neutral light/charcoal surfaces and blue primary actions. Green/amber/red are
   status accents with text and icons; permissions never imply guaranteed audibility.
 - Familiar icon app bars and one Add floating button. Minimum 48 dp interaction
@@ -153,7 +238,9 @@ calendar import or visual cloning is in the initial product.
   occurrence can be moved to Trash directly through its menu or swipe reveal and tap.
   Revision-guarded Undo restores only the captured deletion. Restore preserves prior
   completed/skipped state and never replays elapsed alerts. Trash stays in the local
-  installation until restored; no automatic expiry, permanent purge or bulk cleanup.
+  installation until restored; no automatic expiry or permanent purge. The latest
+  owner-directed selected-occurrence actions above supersede the old no-bulk
+  restriction without introducing Empty Trash.
   Backups exclude one-off Trash but retain recurring deletion exclusions.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only
@@ -175,12 +262,13 @@ calendar import or visual cloning is in the initial product.
   concise; independent relationships, adjustments, consequential zones and occurrence
   exceptions have Schedule details. All-day linked Due reads By end of day. A stopped,
   missed, interrupted or timed-out target is never described as a future alert.
-  Overdue means still unfinished; Stop continues to silence delivery without Done.
+  Overdue means still unfinished past the original alert or No alert boundary.
+  Done silences and completes; historical Stopped outcomes remain unfinished.
   Completed timestamps come from recorded Done events, never sorting fallbacks.
   Activity renders only recorded events and meaningful targets; empty history says
   No recorded activity and does not claim a complete audit trail.
-  Done/Reopen/Restore stay persistent for their states. Ringing Stop/Snooze are a
-  distinct alarm area; eligible Postpone stays readily available after delivery ends.
+  Done/Reopen/Restore stay persistent for their states. Ringing Details shows one
+  Done plus Snooze, with eligible Postpone still readily available.
   Custom Postpone starts with a future target and rejects past targets without mutation.
 - Android Back exits transient Agenda search; clearing its query is a separate
   action. Nested sheets handle Back within their draft. Loading, retry, action
@@ -195,17 +283,30 @@ calendar import or visual cloning is in the initial product.
   is identified, native-owned, bounded to five seconds and stopped on close, Back,
   navigation or background. Real alarms take priority. Playback feedback comes from
   native Starting/Playing/Ended/Interrupted/Failed state and reports packaged fallback.
-- Restore distinguishes reading a file from importing its preview. An unconfirmed
+- Restore applies one selected backup as a whole. New reminders and lists,
+  including empty lists and entries outside the visible preview page, are included
+  automatically. Existing identities stay unchanged; explicit **Keep existing** /
+  **Add a separate copy** choices only decide whether to add the backup version
+  under a new identity. Conflict detection uses stored identity, not title matching.
+  These controls edit the draft preview and perform no import until Restore is
+  confirmed. The app distinguishes reading a file from importing its preview. An unconfirmed
   import freezes its backup, copy selection and operation ID until the same restore
   is acknowledged or rejected. It cannot be abandoned through ordinary navigation
   or replaced with another selection during that uncertainty. Diagnostics provide
   visible refresh/retry/share feedback without claiming a share sheet sent a report.
-- Native controls never start React Native. Stop/Snooze automatically dismiss a
+- Creation/editing exposes Alarm/Notification/No alert inline, defaulting to Alarm.
+  The visible single-selection group adapts to large text without a mode sheet;
+  alarm sound/vibration only appears for Alarm. Draft/save guards remain intact.
+- Completed/skipped/Trash use the same card geometry and borderless 48 dp More target
+  as Agenda. They have one terminal state label and no completion control or empty
+  placeholder; explicit selection mode retains selection checkboxes. Preserve
+  historical schedule/alert, independent Due, details navigation and existing menus.
+- Native controls never start React Native. Done/Snooze automatically dismiss a
   confirmed ended session, including timeout/external termination. An initial empty
   loading state cannot close the screen; remaining group members retain controls.
   Failed actions retain controls and an error. Before first unlock, content is generic.
-- Standard notifications retain Stop/Snooze on every single delivery. Grouped
-  notifications open native controls and offer session-specific Stop all. Android
+- Standard notifications retain Done/Snooze on every single delivery. Grouped
+  alarm notifications open native controls and offer captured Done all/Snooze all. Android
   owns popup layout and expansion. Channel identities and audio deadlines remain.
 - The owned geometric R and notification cue supply adaptive, monochrome, legacy, notification
   and splash variants. Application ID and signing identity remain unchanged.

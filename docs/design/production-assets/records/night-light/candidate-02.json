@@ -1,0 +1,336 @@
+{
+  "assetId": "night-light",
+  "candidate": 2,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T05:04:16.042391+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/night-light/candidate-02.txt",
+    "sha256": "c5e6cd48655f3b85d9f6e0370e46c38c62d00614853ea4226a5985f784f94c9d"
+  },
+  "inputImages": [
+    {
+      "path": "assets/atmospheres/masters/night-dark-v2.png",
+      "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8"
+    },
+    {
+      "path": "assets/atmospheres/masters/night-light-v1.png",
+      "sha256": "3aa8727659ff5d45692593dc9a71fda529251193a04b0386d72708662f19184d"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    },
+    {
+      "path": "docs/design/production-assets/references/owner-night-shoreline-lights-02.png",
+      "sha256": "c1715fb964be06c5039e507e6ef55a26d32a85e7669f9e58dfa0f90db05509b7"
+    }
+  ],
+  "approvedCompositionAnchor": {
+    "path": "assets/atmospheres/masters/night-dark-v2.png",
+    "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8"
+  },
+  "styleDecision": "docs/design/production-assets/style-decision.md",
+  "output": {
+    "localArtifactPath": "verification/local/artwork/night-light/candidate-02.png",
+    "sha256": "a11839c13b720bb33ec12a5a02af8ac04220465feb5a9ef5fae2ef7bdd7a1e59",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "visualInspection": {
+    "sceneIdentity": "Night Light with pale cream crescent and reflected moonlight, softer cool-blue night layers, and the two distant amber shoreline-light groups approved in Night Dark v2.",
+    "composition": "Mountain profiles, lake shorelines, stars, clouds, conifers, smooth bank curves and both distant light clusters closely match approved Night Dark v2; the palette and moon treatment follow Night Light v1.",
+    "abstractTreatment": "Broad smooth banks, simple tree silhouettes and coherent layered mountain planes.",
+    "visibleInterfaceRemnants": false,
+    "note": "Owner approved candidate artwork and review crops. Actual runtime contrast and physical acceptance remain unobserved.",
+    "shoreLightsReview": "Cream crescent, softer blue moonlit layers and two warm shoreline-light groups match the requested Night Light identity. Full crescent and both groups are visible in all four source crop previews; no UI remnants or detailed new buildings observed. Scene/shore geometry closely follows the approved Dark v2 composition.",
+    "warmCoreCropCheck": {
+      "sourceWarmCoreBoundingBoxPx": {
+        "left": [
+          611,
+          581,
+          654,
+          590
+        ],
+        "right": [
+          1047,
+          583,
+          1092,
+          591
+        ]
+      },
+      "qualifier": "Threshold-based warm core bounds in the far-shore ROI; short reflections mostly fall below compact412."
+    }
+  },
+  "cropProposal": {
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          6,
+          1672,
+          935
+        ],
+        "normalizedRect": [
+          0.0,
+          0.006376,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          64,
+          1672,
+          876
+        ],
+        "normalizedRect": [
+          0.0,
+          0.068013,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          182,
+          1672,
+          628
+        ],
+        "normalizedRect": [
+          0.0,
+          0.193411,
+          1.0,
+          0.473964
+        ],
+        "toolbarHeightDp": 56
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          210,
+          1672,
+          600
+        ],
+        "normalizedRect": [
+          0.0,
+          0.223167,
+          1.0,
+          0.414453
+        ],
+        "toolbarHeightDp": 56
+      }
+    }
+  },
+  "review": {
+    "localArtifactPath": "verification/local/artwork/night-light/review-02.png",
+    "sha256": "6fd0901d5a301fcdeb042215118a79912486d3224d806202978202e138d8afb4"
+  },
+  "approval": {
+    "path": "docs/design/production-assets/approvals/night-light-v2.json",
+    "ownerStatement": "I approve. Now replace the old night images with two new night images.",
+    "recordedAtUtc": "2026-10-09T05:11:25.730661+00:00",
+    "scope": "Approval of Night Light candidate02 with cream crescent, warm distant shore lights and presented crops, and selection of the two new Night v2 artworks as the active production pair. Preserve earlier versioned artwork and approval records."
+  },
+  "productionFiles": {
+    "source": {
+      "path": "assets/atmospheres/masters/night-light-v2.png",
+      "sha256": "a11839c13b720bb33ec12a5a02af8ac04220465feb5a9ef5fae2ef7bdd7a1e59",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/night-light-v2.webp",
+      "sha256": "3110f9dca7fc2f1166ba5d7f1c2ad91b9747fe1f7dcae611840e334f4574c51e",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.4301602564102564
+          ],
+          "sourceRectPx": [
+            0,
+            156,
+            1440,
+            540
+          ],
+          "toolbarHeightDp": 56
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.4301602564102564
+          ],
+          "sourceRectPx": [
+            0,
+            180,
+            1440,
+            516
+          ],
+          "toolbarHeightDp": 56
+        }
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_light_v2.webp",
+      "sha256": "3110f9dca7fc2f1166ba5d7f1c2ad91b9747fe1f7dcae611840e334f4574c51e",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "limitation": "Approved original source is 1672 x 941; master target met=False. Runtime export is downsampled without enlargement. No runtime integration or device acceptance claimed.",
+  "comparisonImage": {
+    "path": "assets/atmospheres/masters/night-light-v1.png",
+    "sha256": "3aa8727659ff5d45692593dc9a71fda529251193a04b0386d72708662f19184d"
+  },
+  "purpose": "Owner-requested matching Night Light shoreline-light revision; approved Night Dark v2 anchors light positions and geography, Night Light v1 anchors Light illumination and cream crescent. Existing Light v1 remains active until individual approval.",
+  "proposedProductionVersion": 2,
+  "requestBrief": {
+    "path": "docs/design/production-assets/night-shoreline-lights-revision.md"
+  },
+  "approvedPairAnchor": {
+    "path": "assets/atmospheres/masters/night-dark-v2.png",
+    "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8",
+    "approval": {
+      "path": "docs/design/production-assets/approvals/night-dark-v2.json",
+      "ownerStatement": "I approve.",
+      "candidate": 4,
+      "recordedAtUtc": "2026-10-09T05:00:23.720576+00:00"
+    }
+  },
+  "lightPaletteAnchor": {
+    "path": "assets/atmospheres/masters/night-light-v1.png",
+    "sha256": "3aa8727659ff5d45692593dc9a71fda529251193a04b0386d72708662f19184d"
+  },
+  "pairReview": {
+    "localArtifactPath": "verification/local/artwork/night-light/pair-review-02.png",
+    "sha256": "e44bebcefc5caa3d9c27a02268f41d21cbaf31f0713fb3b22530749a72330cf9"
+  },
+  "approvedProductionVersion": 2
+}

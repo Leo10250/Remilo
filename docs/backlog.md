@@ -8,6 +8,15 @@ block verified release, rather than development. Known failures still require fi
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| BETA-01 | Alarm Stop completion, durable pre-unlock projection and retries | owner-approved beta-fixes plan | implemented/unverified | [134 native tests and signed beta preparation](evidence/2026-10-09-beta-fixes.md); crash/Direct Boot/retry/Reopen tests pass; physical observations remain |
+| BETA-02 | Four roots, built-in Repeats, alert-first Agenda and fixed-artwork browsing covers | owner-approved beta-fixes plan | implemented/unverified | [349 shared tests, native pagination and fixture geometry/navigation](evidence/2026-10-09-beta-fixes.md); Android layout/accessibility observations remain |
+| BETA-03 | Faithful full-density splash and native alarm appearance | owner-approved beta-fixes plan | implemented/unverified | [Individually approved splash v3 activated; captured native colors and signed build pass](evidence/2026-10-09-beta-fixes.md); actual splash/OEM/native-frame observations remain |
+| BETA-04 | Trace and repair Recents afterimage | owner-approved beta-fixes plan | pending | [No connected target; scoped signed-device reproduction/trace cannot proceed](evidence/2026-10-09-beta-fixes.md); root cause remains unproven |
+| ALERT-01 | Original-alert overdue and No alert recurrence anchors | owner-approved alert experience plan | implemented/unverified | [172 native tests and timing evidence](evidence/2026-10-09-alert-experience.md); query/count/pagination, DST, edits and recurrence pass; physical observations remain |
+| ALERT-02 | Native Done, captured Done all/Snooze all and durable recovery | ALERT-01 | implemented/unverified | [Protected recovery and native action evidence](evidence/2026-10-09-alert-experience.md); captured membership, settings/stale guards, partial outcomes and exact retries pass; signed-phone Direct Boot/audio remain |
+| ALERT-03 | Inline Alert choices and consistent app/native/notification actions | ALERT-02 | implemented/unverified | [367 shared tests and control evidence](evidence/2026-10-09-alert-experience.md); stacked inline choices and duration/feedback checks pass; broader render and Android observations remain |
+| ALERT-04 | Shared Agenda/Completed/Skipped/Trash cards and compact status | ALERT-01 | implemented/unverified | [Eight-pair terminal row and menu evidence](evidence/2026-10-09-alert-experience.md); borderless 48dp More, selection and 200% rows inspected; stalled browser limits remaining rendering/TalkBack acceptance |
+| ALERT-05 | Integrated alert experience verification and signed preparation | ALERT-01–04 | implemented/unverified | [367 shared, 77 tooling, 172 native tests and final signed preparation pass](evidence/2026-10-09-alert-experience.md); remaining browser-render checks and consolidated signed-phone observations pending |
 | P0-01 | Expo 57 scaffold, pinned Node/JDK and tracked native project | none | verified | [clean CI, signed offline installation](evidence/2026-10-04-native-slice.md) |
 | P0-02 | AI instructions, contracts, backlog, verification scripts/CI | P0-01 | verified | [shared/native commands and clean GitHub verification](evidence/2026-10-04-native-slice.md) |
 | G0 | Foundation release gate | P0-01/02 | verified | [clean checkout and signed bundled UI offline on Pixel](evidence/2026-10-04-native-slice.md) |
@@ -45,6 +54,17 @@ block verified release, rather than development. Known failures still require fi
 | UX-10 | No alert recovery repair and shared schedule/work/delivery presentation | UX-08 | implemented/unverified | [62 domain tests; retained history/overdue recovery; signed-phone comprehension pending](evidence/2026-10-05-second-refinement.md) |
 | UX-11 | Browse roots, recorded Activity, recoverable completed cleanup and sound preview | UX-10 | implemented/unverified | [96 native tests; preview ownership and fixture interactions; Android Back/audio acceptance pending](evidence/2026-10-05-second-refinement.md) |
 | UX-12 | Managed Lists, content schema 4 and backup format 3 | UX-11 | implemented/unverified | [upgrade/legacy/empty/stale/template/import regressions; signed ARM64 build; phone upgrade pending](evidence/2026-10-05-second-refinement.md) |
+| TD-DOC | Four-atmosphere documentation/reference realignment | owner A36 documentation instruction | verified | [documentation/hash/link checks](evidence/2026-10-08-time-of-day-realignment.md); documentation/reference scope only, production TD units remain pending |
+| TD-CLEANUP | Remove obsolete design material and review tooling; consolidate current guidance | owner A37 cleanup instruction | verified | [exact removals, protected references and shared/native/preview checks](evidence/2026-10-08-design-cleanup.md); production redesign and physical acceptance remain pending |
+| TD-ART | Prepare production atmosphere artwork with sequential owner approval | approved production-asset preparation plan; all eight R3 references | implemented/unverified | Eight active scenes individually approved in the [registry](design/production-assets/manifest.json), including Night Light/Dark v2; [scene/crop validation](design/production-assets/records/scenery-validation-v2.json) and integrated hash/native-equality checks pass. All six circle-centered Classic v2 exports are individually approved and integrated in [TD-05](handoffs/redesign-td-05.md). Original bytes/v1 decisions remain preserved; masters are 1672 × 941 against the unmet 2048 × 1152 target. Artwork/export delivery and host checks do not establish physical runtime/branding acceptance. |
+| TD-ART-SKILL | Reusable visual asset preparation skill and personal discovery | approved skill implementation plan | verified | [package, 52 passing tests, four independent workflow evaluations, asset/history preservation and cross-project discovery](evidence/2026-10-08-visual-asset-skill.md); [canonical skill](../.agents/skills/prepare-visual-assets/SKILL.md) uses [project configuration](../.agents/visual-assets.json), individual approval and recoverable promotion; current scenery resolution shortfall and production acceptance gates remain unchanged |
+| TD-01 | Shared foundations | approved R3 and native/product baseline | implemented/unverified | [TD-01 handoff](handoffs/redesign-td-01.md); canonical roles/crops, shared components, verifier, contrast and all-eight fixture review recorded; [final integrated checks/signed assembly pass](handoffs/redesign-td-06.md). Physical accessibility/crop/IME acceptance remains pending. |
+| TD-02 | Global Appearance | TD-01 | implemented/unverified | [TD-02 handoff](handoffs/redesign-td-02.md); Automatic/manual appearance, native-safe mirror and CE5/DP4 implemented; persistence/migration and [final integrated host checks pass](handoffs/redesign-td-06.md). Actual clock/zone/lifecycle/draft transitions remain pending. |
+| TD-03 | App screens and remaining review | TD-01, TD-02 | implemented/unverified | [TD-03 handoff](handoffs/redesign-td-03.md); roots/origins, shared footers, editor/utility and native behavior corrections integrated; [latest 17:18 UTC host/signed preparation passes](handoffs/redesign-td-06.md), with 115 shared tests and unchanged 120-test native results. R9 compositions 01–04 remain rejected; [composition 05 approved for implementation](design/r9-runtime-composition-approval-v5.json), closing the checkpoint after actual menus/selection renders, two-item exact lost-reply Retry/Back guards and 200% long-text observations. Actual Android acceptance remains pending. |
+| TD-04 | Native presentation | TD-01, TD-02 | implemented/unverified | [TD-04 handoff](handoffs/redesign-td-04.md); captured session presentation, privacy-safe projections and bundled scenes implemented; [120 native tests, owned lint and signed ARM64 assembly pass](handoffs/redesign-td-06.md). Physical native/alarm/privacy acceptance remains pending. |
+| TD-05 | Static Classic branding | approved Classic source/A01 | implemented/unverified | [TD-05 handoff](handoffs/redesign-td-05.md); all six circle-centered Classic v2 exports approved/integrated; copier/hash and [signed assembly checks pass](handoffs/redesign-td-06.md). Actual OEM masks/splash/notification acceptance remains pending. |
+| TD-06 | Consolidated acceptance | TD-03, TD-04, TD-05; TD-01/02 integrated | implemented/unverified | [TD-06 handoff](handoffs/redesign-td-06.md); latest sequential release preparation passed 9 October 2026 at 17:18:00.718 UTC after final composition 05 presentation/wording corrections: 115 shared and 75 tooling tests, unchanged 120-test native results/lint, signed bundled ARM64 0.4.0/code 4 with current APK hash recorded. Earlier 17:01 pass preserved as history. [Owner composition 05 approval](design/r9-runtime-composition-approval-v5.json) closes R9 review. No install/publish; consolidated phone/G1/G2/G3 acceptance remains pending. |
+| FUT-ICON | Optional dynamic/themed launcher icons | separate future scope decision | pending | One static Classic identity ships first; no alias/worker feature or current acceptance dependency |
 | P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
@@ -64,6 +84,13 @@ block verified release, rather than development. Known failures still require fi
 | P6 | Optional iOS feasibility and complete port | G5, G-AND-EXT | pending | final phase only, after Android expansion; real iPhone capability evidence |
 
 ## Task verification contracts
+
+- TD-01–TD-06 are the active theme roadmap under A36. Image/template acceptance
+  is not implementation completion. TD-DOC records this documentation/reference
+  PR only. Keep R9 composition review, the fixed icon-free list decision and actual token/render/device
+  evidence explicit. Existing native reliability and unrelated feature gates remain.
+- A37 removes superseded design tasks and prototype evidence from the checkout.
+  Current TD requirements and unrelated native/product gates remain unchanged.
 
 - P0-01: shared checks and bundled Android assembly; clean-checkout CI and signed
   offline installation are separate evidence requirements.
@@ -111,7 +138,8 @@ block verified release, rather than development. Known failures still require fi
 - AI-02: external utterances/intents may propose titles, times, recurrence and
   alert mode but must resolve ambiguity and obtain explicit user confirmation.
   Strict native validation, idempotent command identity, permissions and existing
-  Stop-versus-Done semantics remain authoritative. Do not intercept a generic
+  Done completion and unfinished Snooze/Postpone semantics remain authoritative,
+  including legacy Stop command compatibility. Do not intercept a generic
   Android clock alarm without a tested, user-visible handler/selection contract.
 - AI-03/04: vendor-specific registration and optional on-device ML are deferred
   capability improvements. Neither is required for baseline external creation;

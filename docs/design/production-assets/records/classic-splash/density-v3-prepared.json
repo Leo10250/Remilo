@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "candidate": 3,
+  "version": 3,
+  "recordedAtUtc": "2026-10-09T19:18:01.496761+00:00",
+  "generator": "deterministic-export",
+  "promptKind": "preparation",
+  "pillowVersion": "12.3.0",
+  "source": {
+    "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+    "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+    "width": 467,
+    "height": 467,
+    "size": [
+      467,
+      467
+    ],
+    "format": "PNG",
+    "mode": "RGBA",
+    "hasAlpha": true,
+    "opaque": false,
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "iccPresent": true,
+    "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+    "iccDescription": "sRGB built-in",
+    "iccValid": true,
+    "exifOrientation": 1,
+    "displaySize": [
+      467,
+      467
+    ]
+  },
+  "originalProfile": {
+    "sha256": "9402ee6c2b8307c31eb09f507a22ba3cfff286e6682cd311797257b84a7bda8e",
+    "projectRelativeIdentifier": ".agents/visual-assets.json"
+  },
+  "preparationBrief": {
+    "path": "docs/design/production-assets/prompts/classic-splash/density-v3-preparation.txt",
+    "sha256": "0e438591e93a2147dfa8b4d6a7b05590c712e340ea817fef0c305099d829c1d7"
+  },
+  "manualSpecification": {
+    "path": "docs/design/production-assets/records/classic-splash/manual-specification-v3.json",
+    "sha256": "2a9f2fdcd9dd0ab7e97fcf1f88aa84bd92164cd55e6fc4be002c081afb684362"
+  },
+  "candidateProfile": {
+    "path": "docs/design/production-assets/records/classic-splash/profile-candidate-v3.json",
+    "sha256": "c6ec1be0113a03205300bf7546b0b8892cd8ff92062f3bb4c88b5559060b58d9"
+  },
+  "measurements": [
+    {
+      "role": "configuration",
+      "densityMultiplier": 1,
+      "sha256": "29b886c005aa5d02c4c74e22966d51cc2c18e9309a14747582319c602d078c1f",
+      "width": 288,
+      "height": 288,
+      "size": [
+        288,
+        288
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": true,
+      "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+      "iccDescription": "sRGB built-in",
+      "iccValid": true,
+      "exifOrientation": 1,
+      "displaySize": [
+        288,
+        288
+      ],
+      "alpha50BoundsPx": [
+        80,
+        69,
+        211,
+        208
+      ],
+      "maximumVisibleRadiusDp": 90.83226299063566,
+      "alpha50FootprintDp": [
+        131.0,
+        139.0
+      ]
+    },
+    {
+      "role": "native-288",
+      "densityMultiplier": 1,
+      "sha256": "29b886c005aa5d02c4c74e22966d51cc2c18e9309a14747582319c602d078c1f",
+      "width": 288,
+      "height": 288,
+      "size": [
+        288,
+        288
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": true,
+      "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+      "iccDescription": "sRGB built-in",
+      "iccValid": true,
+      "exifOrientation": 1,
+      "displaySize": [
+        288,
+        288
+      ],
+      "alpha50BoundsPx": [
+        80,
+        69,
+        211,
+        208
+      ],
+      "maximumVisibleRadiusDp": 90.83226299063566,
+      "alpha50FootprintDp": [
+        131.0,
+        139.0
+      ]
+    },
+    {
+      "role": "native-432",
+      "densityMultiplier": 1.5,
+      "sha256": "a092d1c3aaccc91014cd20deee41b04ae74cf3d32f9188060156139f3e1fa1ba",
+      "width": 432,
+      "height": 432,
+      "size": [
+        432,
+        432
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": true,
+      "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+      "iccDescription": "sRGB built-in",
+      "iccValid": true,
+      "exifOrientation": 1,
+      "displaySize": [
+        432,
+        432
+      ],
+      "alpha50BoundsPx": [
+        120,
+        104,
+        316,
+        312
+      ],
+      "maximumVisibleRadiusDp": 90.69729874698584,
+      "alpha50FootprintDp": [
+        130.66666666666666,
+        138.66666666666666
+      ]
+    },
+    {
+      "role": "native-576",
+      "densityMultiplier": 2,
+      "sha256": "9418885fcb86e901eb71971c860e24f0e7d3a6599384afe126460f108ee29b76",
+      "width": 576,
+      "height": 576,
+      "size": [
+        576,
+        576
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": true,
+      "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+      "iccDescription": "sRGB built-in",
+      "iccValid": true,
+      "exifOrientation": 1,
+      "displaySize": [
+        576,
+        576
+      ],
+      "alpha50BoundsPx": [
+        160,
+        138,
+        422,
+        416
+      ],
+      "maximumVisibleRadiusDp": 90.9154827298409,
+      "alpha50FootprintDp": [
+        131.0,
+        139.0
+      ]
+    },
+    {
+      "role": "native-864",
+      "densityMultiplier": 3,
+      "sha256": "12b5ad9a5d06d6aeeb2566473e08d255ca47cb347b6cdeb5b7a47030ff8a777c",
+      "width": 864,
+      "height": 864,
+      "size": [
+        864,
+        864
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": true,
+      "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+      "iccDescription": "sRGB built-in",
+      "iccValid": true,
+      "exifOrientation": 1,
+      "displaySize": [
+        864,
+        864
+      ],
+      "alpha50BoundsPx": [
+        240,
+        207,
+        633,
+        624
+      ],
+      "maximumVisibleRadiusDp": 90.92884886302892,
+      "alpha50FootprintDp": [
+        131.0,
+        139.0
+      ]
+    },
+    {
+      "role": "native-1152",
+      "densityMultiplier": 4,
+      "sha256": "7217f1a89fea57f4b95bc0fb59dffeeebf4387442102fc41e63862c75f0584ec",
+      "width": 1152,
+      "height": 1152,
+      "size": [
+        1152,
+        1152
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": true,
+      "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+      "iccDescription": "sRGB built-in",
+      "iccValid": true,
+      "exifOrientation": 1,
+      "displaySize": [
+        1152,
+        1152
+      ],
+      "alpha50BoundsPx": [
+        321,
+        276,
+        843,
+        832
+      ],
+      "maximumVisibleRadiusDp": 90.8709593324512,
+      "alpha50FootprintDp": [
+        130.5,
+        139.0
+      ]
+    }
+  ],
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/same-size-xhdpi.png",
+      "sha256": "39d6a297ea8b8ed3f7c3a6aede17a8a61e68ab9fac40ba47c8bfccd428a6a756"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/usage-360dp.png",
+      "sha256": "006dfc037be3db621d32f1ae035502524a90914a7e7997a33ca773fb2e47c691"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/xxxhdpi-detail.png",
+      "sha256": "04753ff15ed8c5a5ffeae3e8d274b2d3bc123e0a67519ea38009f1f78c2f35b3"
+    }
+  ],
+  "visualInspection": {
+    "status": "pending"
+  },
+  "approval": null,
+  "productionFilesWritten": false,
+  "runtimeAcceptance": "pending",
+  "technicalLimitations": [
+    "Every native density renders directly from the unchanged 467px approved isolated source; no intermediate configuration image is resized.",
+    "The 288dp composition retains the current visible mark, approximately 131 by 139dp at 50-percent alpha.",
+    "xxhdpi source pixels interpolate at 1.1332440383956686x and xxxhdpi at 1.5109920511942248x; interpolation adds no original detail.",
+    "The approved isolation retains its original matte/finish limitations.",
+    "Synthetic scaling, backgrounds and usage previews are not Android screenshots, device acceptance or accessibility evidence.",
+    "Actual-pixel artwork and activation approval remain pending; no active resources or configuration are changed."
+  ]
+}

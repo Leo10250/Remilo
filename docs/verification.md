@@ -70,8 +70,67 @@ pending work; earlier deployment evidence retains its historical scope.
 
 ## G0: foundation
 
-- Clean checkout builds with pinned tools and lockfile.
-- Locally signed release APK installs, opens offline, and has bundled JS/no Metro.
+### Current design verification
+
+Read [the current design](design/current/README.md), [coverage](design/current/coverage.md),
+[appearance policy](design/current/appearance-policy.md) and [TD roadmap](plans/redesign/README.md).
+R3 all eight images govern style. Approved templates/corrections govern R4/R5/R6/R7/
+R8/R10; [R9 runtime composition 05 has owner approval for implementation](design/r9-runtime-composition-approval-v5.json),
+separate from its historical A31 draft and four rejected runtime candidates. Final artwork abstraction and
+actual production tokens/measurement are separate from raster approval.
+
+Documentation and cleanup verification checks active links, JSON, all protected
+reference-bundle hashes, gallery resources, retained backlog rows and the exact
+removal manifest. Superseded catalog/demo tests are removed with their subjects.
+`npm run verify:design` runs the protection/removal/link audit; `npm run verify`
+includes that audit before shared checks. CI fetches the recorded baseline history
+so the deletion audit also covers committed changes.
+For later authorized runtime work, explicitly revise the implemented-source
+baseline for that unit while retaining reference protection and behavioral tests.
+Do not regenerate accepted artifact identities to conceal unintended changes.
+Production behavior tests and ordinary web-preview/Android bridge isolation remain
+required. Run the shared and Android checks for cleanup code/tooling changes;
+record actual results separately from pending physical observations.
+Frozen submissions can cite removed specifications as provenance. Resolve those
+citations through the recorded Git revision, without recreating obsolete specs.
+
+For TD-01/03, validate matching canvas/elevated roles and consistent neutral form
+icons, atmosphere actions and labeled category/status colors in all eight pairs.
+Use shared 16 dp gutters/corners, 16 sp values/14 sp support, >=48dp ordinary targets
+and >=56dp app prominent actions. R6 native single/Stop-all actions remain >=64dp
+and member actions >=56dp. Measure actual contrast: normal text 4.5:1, qualifying
+large text 3:1 and required control/state graphics 3:1.
+
+The [alert experience correction](design/current/alert-experience.md) changes those
+native labels to Done/Done all and adds Snooze all at the same 64 dp minimum.
+Terminal cards use borderless 24 dp More in a separate 48 dp target, with no work
+completion controls outside explicit selection. Inline Alert choices remain
+visible and stack at 200% text. Measure actual component keylines/wrapping/targets.
+
+Capture real Android Title creation and lower Notes/caret/validation editing at
+360x800 and 200% English/Chinese text. One Save sits above actual IME, outside form
+scrolling, with measured footer clearance and one inset owner. Test emoji/taller
+keyboards, multiline selection/composition, first-tap Save, Back, rotation and
+uncertain/stale draft preservation. Static screenshots prove none of these behaviors.
+
+TD-02 tests local 06/10/17/21 edges, midnight/DST/clock/zone changes, manual overrides,
+Automatic missing/new defaults, preserved brightness, long foreground absence and
+coalesced transient updates. Never change reminder target/generation/history as a
+cosmetic side effect. TD-04 freezes native session appearance through member and
+unlock changes; use privacy-safe native resolution without CE/React/network reads.
+Retain direct Stop/Snooze/Stop-all, deadline/race checks and OS notification limits.
+
+TD-03 retains whole-backup inclusion/identity conflicts, no-overwrite separate-copy
+choices, frozen same-operation Restore retry and truthful Scheduled/Pending/Blocked,
+share handoff, receipts and diagnostics. Preserve R9's explicit composition 05
+approval and the fixed icon-free list decision; actual Android layout/accessibility
+observations remain pending. TD-05 validates faithful
+static Classic exports/masks/small sizes without app-controlled aliases.
+
+TD-06 integrates code-appropriate shared/native checks and a signed artifact with
+[the consolidated owner run](device-acceptance.md). Preserve existing G1/G2/G3 tests
+and observed limitations. Record failures/unobserved cases; host checks and image
+approval never imply physical release verification.
 
 ## G1: physical native alarm proof
 
@@ -82,7 +141,7 @@ pending work; earlier deployment evidence retains its historical scope.
 | Locked/screen off | native alarm surface where permitted |
 | Reboot, do not unlock | generic delivery and native Stop/Snooze |
 | Ignore alarm five minutes; force idle/screen off | cutoff; no automatic repeat |
-| Stop | unfinished item, sound ends |
+| Alarm Stop / Stop all | affected occurrence(s) completed, sound ends; future repeat slots retained |
 | Snooze; invoke old Stop/callback | new generation unaffected |
 | Re-trigger after a full ten-minute Snooze | first notification includes current Stop/Snooze; both are usable |
 | Fail processing earlier independent alarm | later alarm remains registered |
@@ -148,8 +207,7 @@ Use distinct probe titles and record the signed build/hash. Do not clear app dat
    and leave the case unverified; do not substitute a different operation.
 3. Confirm sound ends. Leave the phone untouched until B's original target.
    B must still ring. Stop B with Remilo's native control.
-4. Open Remilo. A should be Interrupted and unfinished; B should be Stopped and
-   unfinished. A must not resume sounding. Confirm this across another reopen.
+4. Open Remilo. A should be Interrupted and unfinished; B should be Completed. A must not resume sounding. Confirm this across another reopen.
 
 Android documents that Active Apps Stop removes the process and media playback,
 while scheduled alarms remain eligible to fire. This is the platform expectation
@@ -183,7 +241,7 @@ do not claim to cover those conditions.
 
 ## Later gates
 
-G2: Done vs Stop, all postponements after timeout, independent colliding occurrences,
+G2: Stop/Done completion and stale-action races, all postponements after timeout, independent colliding occurrences,
 settings, restore preview, upgrade safety, no credential/runtime backup transfer.
 
 G3: rule fixtures, invalid dates/count, DST/travel, edits/skip/pause, preserved
@@ -197,7 +255,13 @@ G5: disconnected changes/convergence, normal and offline primary handoff, logout
 Calendar writer separate from ringing role. G6: real-iPhone behavior, documented
 limits, widget/countdown integration and visible coverage. No early iOS testing.
 
-## UX refinement acceptance
+## Shipped 0.4.0 UX refinement observations
+
+The layout references in this section describe earlier pending baseline checks.
+For TD-06, use the current Agenda / Lists / Completed / Trash roots, Repeats within
+Lists, secondary origins and
+leading completion target while retaining the underlying behavior/recovery tests.
+Browse and trailing completion below are historical layout, not new requirements.
 
 Host checks cover native query/conversion/action contracts and focused TypeScript
 domain logic for route selection, revision-safe Undo, civil draft conversion,
@@ -229,7 +293,7 @@ they remain pending until observed on the identified bundled build:
   same item before Undo and confirm the newer change is preserved. Confirm Trash
   requires acknowledgement for unfinished work; completed Trash is recoverable
   without a modal. Check revision-specific Trash Undo, Restore destinations and
-  native Stop leaving the reminder unfinished.
+  native Stop completing only the current occurrence.
 - Open Custom Postpone repeatedly and confirm it starts in the future. Reject a
   past target without mutation; accept a future target and retain other members'
   actions and targets.
@@ -247,7 +311,11 @@ These UI observations supplement [device-acceptance.md](device-acceptance.md) an
 the native G1–G3 gates. They do not replace the pending audibility, pre-unlock,
 recovery, five-minute cutoff or manufacturer coverage evidence.
 
-## Second refinement consolidated observations
+## Shipped second-refinement consolidated observations
+
+This retains the earlier build's pending observations. Its Browse references are
+baseline history; current TD-06 applies the same behavioral checks through the
+approved roots and invoking-origin navigation.
 
 The second refinement adds content schema 4 and backup format 3; operational schema
 stays 3. Native upgrade, retained-template membership, restore retry, No alert
@@ -267,3 +335,48 @@ leave/background, and let a real alarm interrupt preview. Record actual tone,
 fallback and playback failures separately from accepted start requests. Include
 light/dark, 200% text, TalkBack, reduced motion and keyboard reachability alongside
 the existing native time-zone/DST and alarm reliability matrix.
+
+## Beta-fix acceptance additions (9 October)
+
+The later [alert experience correction](design/current/alert-experience.md)
+supersedes Stop wording and due-based expectations in these scenarios. Add tests
+for CompleteDelivery on ringing/Notified, exact displayed DoneAll/SnoozeAll members,
+later arrival exclusion, stale precommit rejection, current duration changes,
+partial scheduling, crashes between protected commit/registrations/CE projection,
+same-command retries after restart/Reopen and silent elapsed recovery. Verify
+original alert separately from next delivery, strict overdue boundaries/counts/
+pagination, No alert When/end-of-date DST and hidden-alert recurrence offsets.
+Retain old command/backup compatibility and historical Stopped records.
+
+Use the [beta contract](design/current/beta-fixes.md) and identify the signed APK
+and source snapshot before physical observations. Host fixtures never establish
+Android lifecycle, native Animated performance, actual IME/TalkBack, splash or
+alarm eligibility. The consolidated acceptance arrangement remains in force.
+
+- Stop: one-off/finite repeat, after Snooze, individual/all, Direct Boot then
+  unlock, stale generation/session, Stop/Done race, crashes around both storage
+  commits, identical retries and Reopen after completion. Verify one Done with
+  the original Stop timestamp; retain historical Stopped as unfinished.
+- Agenda: independent event/due/alert dates, overdue tomorrow Postpone, No alert,
+  intended/pending/blocked/paused/missed/notified states, midnight/DST/device zone,
+  more than 50 rows, stable equal-time ID order and full counts before pagination.
+- Navigation: all four roots; scoped collections, Lists → Repeats → family →
+  occurrence and return; existing /series links and legacy origin; separate
+  search/filter/scroll snapshots; selection, IME/sheet and uncertain-job Back.
+- Covers/targets: fixed image bounds/crop while opaque content covers decoration;
+  pinned toolbar and no full reopening during small upward reading adjustments.
+  Check expanded/covered/restored positions, empty/short pages, eight appearance
+  pairs, 360×800, landscape, 200% English/Chinese, reduced motion and TalkBack.
+  Check list name/support/padding/chevron as one action and independent More.
+- Branding/native theme: density dimensions/hashes/centering, cold/warm release
+  launch, native loading frame, manual/Automatic, captured pair across arrivals
+  and unlock, generic pre-unlock notifications and actual OEM accent rendering.
+- Recents: affected OEM/launcher and installed-build identity; Agenda, Settings
+  and a minimal page; keyboard/sheet/alarm state. Collect scoped private capture
+  and Perfetto/system rendering evidence distinguishing app main/RenderThread,
+  launcher, SystemUI and SurfaceFlinger. Inspect activity/task/modal/snapshot
+  lifecycle. Choose a code change or supported workaround only from that evidence.
+  Repeat the same dismissal and confirm native alarm eligibility afterward.
+
+No connected target means that reproduction/trace and physical results stay
+pending; it is not evidence of a platform cause or successful fix.

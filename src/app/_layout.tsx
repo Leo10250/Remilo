@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import RemiloAlarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
 import { ThemeProvider, useTheme } from '../ui/theme';
+import PresentationPreview from '../ui/presentation-preview';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -24,7 +25,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider>
       <QueryClientProvider client={client}>
-        <ThemeProvider><Navigation /></ThemeProvider>
+        <ThemeProvider><PresentationPreview><Navigation /></PresentationPreview></ThemeProvider>
       </QueryClientProvider>
     </SafeAreaProvider></GestureHandlerRootView>
   );

@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-09T04:36:27.201806+00:00",
+  "scope": "Source preservation, production file exports, approval provenance and synthetic runtime crop review.",
+  "manifest": {
+    "path": "docs/design/production-assets/scenery-manifest-v1.json",
+    "sha256": "d3d3a30d67438e282adbbf6c8c8cc49acbbe0f208bc1f8d3e3f77ccd6325219c",
+    "observedLiveRegistryPath": "docs/design/production-assets/manifest.json",
+    "snapshotNote": "Exact registry bytes at the recorded validation hash are preserved separately before the later unapproved blue-moon exploration metadata. Timestamp and check results are unchanged."
+  },
+  "scenes": [
+    {
+      "assetId": "sunrise-light",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sunrise-light-v1.json",
+        "sha256": "23c9521c0ac0fb4815305be9d0a431f71e5ccf5ec4457a265012c5185442ff9a",
+        "ownerStatement": "The three one is good.",
+        "candidate": 3
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/sunrise-light/candidate-03.json",
+        "sha256": "757a70a4d720a24750ad7ac2e0bbda8046ba597226aaf8217ca84d92c01ab36e"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "sunrise-dark",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sunrise-dark-v1.json",
+        "sha256": "ddf8884bd7ac19208984d13c07d0011596f55bd25c945780c11f066cfa5be933",
+        "ownerStatement": "approved",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/sunrise-dark/candidate-01.json",
+        "sha256": "37443f2349ba231a5824524b2d17544980c9f4b2983ec85966c68c80b3103129"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "sky-light",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sky-light-v1.json",
+        "sha256": "380490ec573fb277b18a0cbaab5715fc173501ff4fd5d7f6653375e2d6d99236",
+        "ownerStatement": "approved",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/sky-light/candidate-01.json",
+        "sha256": "33f168305be4eb3dab9b3b429a7d687bd2ab752ce39e3eb7785d5100ccde1993"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "sky-dark",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/sky-dark-v1.json",
+        "sha256": "4bf8aec29a8a4f354c39fd9522c3ca8435a0902402a57c874b5c86415b4cde9a",
+        "ownerStatement": "approve",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/sky-dark/candidate-01.json",
+        "sha256": "6138c6363dc77dfc9d23dcafee65f74f6db13ee3a5c86c8a587db16adccba77c"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "evening-light",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/evening-light-v1.json",
+        "sha256": "028631f64536ae3dda6c2bbc41ac4b836c103bada756408682955fa36d491f5f",
+        "ownerStatement": "approve",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/evening-light/candidate-01.json",
+        "sha256": "3ac3597432bec3eb4ee75df903dca31ab2dbadb5588de66fecf4c3ad92e6f36c"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "evening-dark",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/evening-dark-v1.json",
+        "sha256": "39f6fd87cda62c4bf2864dfb020b8892e8c73e62db98238543fedb02a93c693f",
+        "ownerStatement": "approve",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/evening-dark/candidate-01.json",
+        "sha256": "a8623998735ef51c21f7b8eec869adb9717282e3f6344be55ebc777903fba176"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "night-light",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/night-light-v1.json",
+        "sha256": "685d764bb946631a4460c55a9d5e45a255aa70157b9e9ec4a15e5831f3699523",
+        "ownerStatement": "approve",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/night-light/candidate-01.json",
+        "sha256": "80f36f3314e6807bdec213c8197a8ba03941dc69a2e9e31b701014318661f87f"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    },
+    {
+      "assetId": "night-dark",
+      "approval": {
+        "path": "docs/design/production-assets/approvals/night-dark-v1.json",
+        "sha256": "f55f86b3842e9dc0e7195fc89584345e08901700bba7e48edf6e3f6fe0f68622",
+        "ownerStatement": "approve",
+        "candidate": 1
+      },
+      "selectedRecord": {
+        "path": "docs/design/production-assets/records/night-dark/candidate-01.json",
+        "sha256": "1d0c0aa453b53ac227ec9caea5f8843f344bed52b8db30cd25f71d5d9c274c11"
+      },
+      "sourceDimensions": [
+        1672,
+        941
+      ],
+      "sourceByteIdenticalToCandidate": true,
+      "runtimeDimensions": [
+        1440,
+        810
+      ],
+      "decodedPixelsEqualRecordedTrimLanczos": true,
+      "nativeByteIdenticalToRuntime": true,
+      "sourceTargetUnmet": true,
+      "resolutionContractAmended": false
+    }
+  ],
+  "checks": {
+    "approvedScenesChecked": 8,
+    "sceneFilesChecked": 24,
+    "candidateRecordsChecked": 10,
+    "protectedReferencesChecked": 245,
+    "allChecksPassed": true,
+    "masterTargetUnmet": true,
+    "runtimeIntegrationAndDeviceAcceptanceAssessed": false
+  },
+  "protectedReferenceScope": "245 accepted-reference/current-decision-or-fixture files compared to the immutable baseline; no mismatches.",
+  "retainedApprovalQualification": "Older recorded owner statements, candidate identities and file hashes agree across records, approvals and manifest. Whole approval JSON hashes are captured here for future comparison; no prior full-file approval hash baseline exists.",
+  "localFileAudit": {
+    "localArtifactPath": "verification/local/artwork/final-scenery-audit.json",
+    "sha256": "985c317446187a7abae2ecaeb2169304ef8933a60c0707eb360e5d4d4437b649"
+  },
+  "runtimeCropEvidence": {
+    "localArtifactPath": "verification/local/artwork/final-review/runtime-crop-evidence-v1.json",
+    "sha256": "bbdc24609a1198f0c745ea56789de43eec1ba821f62fe4e46398a9340ae5c510"
+  },
+  "visualInspection": {
+    "reviewer": "Codex primary agent",
+    "observedAtUtc": "2026-10-09T04:36:27.200805+00:00",
+    "reviewedScenes": 8,
+    "reviewedProfiles": 32,
+    "comparison": "All four Light/Dark pairs retain their mountain, lake, bank and tree landmarks; Dark preserves the respective dawn/daytime/sunset/moonlit identities.",
+    "atmosphereCues": "Sunrise and Evening sun, Sky daytime clouds and Night full crescent remain recognizable in all 360/412 broad and compact previews.",
+    "visibleInterfaceRemnants": false,
+    "obviousEdgeOrBandingDefectsObservedAtReviewScale": false,
+    "limitation": "Night compact412 retains only a very thin lake horizon. Full crescent and lake cannot both be guaranteed at wider shallow viewports; adaptive component framing, real toolbar contrast and installed/native presentation require later verification."
+  },
+  "masterResolutionLimitation": "All original approved sources are 1672 x 941. The 2048 x 1152 master target remains unmet; no enlargement or contract amendment is inferred. Runtime 1440 x 810 is downsampled from the centered 1664 x 936 trim.",
+  "nativePreparation": "Identical runtime files are staged in the native module drawable-nodpi resource tree. Packaged APK offline/pre-unlock presentation has not been observed in this asset phase.",
+  "implementationHandoff": "TD-01/TD-02 shared assets and appearance; TD-03/TD-04 app/native crops; TD-05 approved Classic exports; TD-06 consolidated acceptance.",
+  "unassessed": [
+    "Measured toolbar/control contrast",
+    "Wider/expanded-toolbar crops",
+    "Large text and TalkBack",
+    "Android IME behavior",
+    "R9 layout approval",
+    "Decorative list-icon decision",
+    "Installed signed-device alarm/privacy/offline presentation"
+  ]
+}

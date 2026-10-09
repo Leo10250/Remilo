@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "version": 1,
+  "state": "committed",
+  "expectedRegistrySha256": "fa93302f9882c8d4f719d91014f3e98c5fb4467cedb3d4cfe37ffa3335d87e3e",
+  "specificationSha256": "6229a8366b0dc88b6865c2913014975990f05c13da8b3c2580c11f0c448b7311",
+  "decision": {
+    "assetId": "classic-splash",
+    "version": 1,
+    "candidate": 1,
+    "ownerStatement": "Approve artwork and integration",
+    "recordedAtUtc": "2026-10-09T08:35:16.757386+00:00",
+    "promote": true,
+    "activationApproved": true,
+    "scope": "Exact candidate-20261009-01 Classic splash exports shown in review r2, including padded configuration288 and native76/114/152/228/304 PNGs on static #F7F8FA surface; artwork and integration approved. The approved adaptive gradient remains authoritative; measured #F7F0F8 is its integration fallback only. Device acceptance pending.",
+    "specificationSha256": "6229a8366b0dc88b6865c2913014975990f05c13da8b3c2580c11f0c448b7311",
+    "profileConfigured": {
+      "path": "docs/design/production-assets/records/classic-splash/profile-configured-v1.json",
+      "sha256": "87ba81ebe31328d057f7ee0ff7a48a1a39ebda1a26f01ef1bba8fca8222c3392"
+    }
+  },
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-splash-v1.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-splash",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "configuration",
+      "path": "assets/brand/classic/splash/classic-splash-v1.png",
+      "sha256": "096a335210498e37adefaf56bf7c633fa806d4c2d4d1090d933508a052210d07",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          288,
+          288
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-76",
+      "path": "assets/brand/classic/splash/classic-splash-76-v1.png",
+      "sha256": "f67a8a4d277abdf334adc20114a75531f5070b94a0b2a4605a22860b7956104e",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          76,
+          76
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-114",
+      "path": "assets/brand/classic/splash/classic-splash-114-v1.png",
+      "sha256": "347632848581a370d06ef496526df9a07f682c0d31b1656e4f9ff07123af84b6",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          114,
+          114
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-152",
+      "path": "assets/brand/classic/splash/classic-splash-152-v1.png",
+      "sha256": "7d5bdaef55bfb797ac5e575a17a00c2c0913acd1cecc4933ed9b0bb18bd7ff5b",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          152,
+          152
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-228",
+      "path": "assets/brand/classic/splash/classic-splash-228-v1.png",
+      "sha256": "259cccc425432b91779849aea849d7daa4646b4466335ed82267c54898fd1f88",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          228,
+          228
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-304",
+      "path": "assets/brand/classic/splash/classic-splash-304-v1.png",
+      "sha256": "32775ff64a9625081bed78b7b18102508d670894b60f9794f8a4f7472fb647a2",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          304,
+          304
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    }
+  ],
+  "approvalSha256": "24ff27557678cf110a51ae8942704574fc12ccba239e5f468a3bec19fc25e01e"
+}

@@ -1,0 +1,19 @@
+{
+  "record": "A29",
+  "date": "2026-10-07",
+  "source": "Repository owner in current chat",
+  "ownerStatement": "Now generate the UI images based on the above established specs.",
+  "authorizedScope": [
+    "Generate thirteen R8 images from the established specification and matching R3 references",
+    "Present readable one-screen-at-a-time gallery with generation discrepancies"
+  ],
+  "sourceSpecification": "r8-settings-appearance-specification.md",
+  "sourceBrief": {
+    "specificationSha256": "8d6146d1b8a5626cb3c5d79ce0bab3c8e64a2c01934e6ace7f50bac241feb91b",
+    "fixtureSha256": "bc38e829089fe8b0928e736c7890f33541954640022d78d33283637906954891"
+  },
+  "notImplied": [
+    "Independent redesign, new behavior/policies or production implementation",
+    "Acceptance before a direct owner response; A30 separately records later approval"
+  ]
+}

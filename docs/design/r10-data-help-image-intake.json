@@ -1,0 +1,23 @@
+{
+  "record": "A33",
+  "date": "2026-10-08",
+  "source": "Repository owner in current chat",
+  "ownerStatement": "Based on these specs, generate images for UIs",
+  "authorizedScope": [
+    "Generate the fourteen R10 Data/Help UI examples from specification r1 using the established R3 references",
+    "Save readable screenshots and discrepancy notes in the current projectless review bundle"
+  ],
+  "externalReviewBundle": "C:/Users/Leo/Documents/Codex/2026-10-08/based-on-these-specs-generate-images/remilo-r10-data-help",
+  "originalSubmission": {
+    "specification": "submission-specification-r1.md",
+    "specificationSha256": "e0767e594ed67d548471d0490107299bc6c43e25ecd8102a98f89b8814469ac9",
+    "fixtures": "submission-fixtures-r1.json",
+    "fixturesSha256": "739b87240c546796ec899a597a0f43b5e6d1731f5c82fb66f8c11a3adb52ccdc"
+  },
+  "notImplied": [
+    "Owner approval of generated screenshots",
+    "Production implementation or actual backup/share/import/device actions",
+    "Milestone completion or runtime/accessibility/device verification"
+  ],
+  "laterCorrection": "A34 clarifies whole-backup Restore and authorizes related documentation/UI-example revisions; original r1 snapshots and generation provenance retain their historical contents."
+}

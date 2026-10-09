@@ -28,6 +28,7 @@
     "react-native-web": "~0.21.0"
   },
   "devDependencies": {
+    "@material/material-color-utilities": "0.4.0",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
@@ -42,6 +43,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "verify": "node scripts/verify.mjs",
+    "verify:design": "node scripts/verify-design.mjs",
     "verify:android": "node scripts/android.mjs verify",
     "verify:device": "node scripts/device.mjs",
     "build:beta": "node scripts/android.mjs beta",

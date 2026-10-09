@@ -1,6 +1,30 @@
 # Architecture and consequential decisions
 
+The [current four-atmosphere design](design/current/README.md) and
+[appearance policy](design/current/appearance-policy.md) govern presentation.
+The [9 October implementation decisions](design/current/implementation-decisions.md)
+activate the six TD units while retaining native storage/lifecycle authority.
+
 ## ADR 001: Shared UI, autonomous Android implementation
+
+The ordinary fixture preview remains opt-in and web-only. Metro substitutes its
+synthetic native bridge only for that preview; Android resolves the real bridge.
+Preview state is memory-only and cannot schedule alarms or access durable storage.
+Obsolete review entrypoints, catalogs and Compose snapshot demos were removed
+under A37. Production AlarmActivity retains its lifecycle, observation and actions,
+delegating default rendering to AlarmControlsScreen. Reusable presentation slots
+remain available to isolated fixtures. Production components consume generated
+atmosphere roles and bundled scene/crop mappings.
+
+The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
+roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
+TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
+versions are 5/6/3. CE 4→5 adds global atmosphere with Automatic default and
+preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
+singleton and nullable migrated session presentation fields. Every new session
+captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
+follow silent Interrupted recovery. Settings/session presentation stays outside
+portable backup format 3.
 
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
@@ -17,8 +41,11 @@ Device-protected Room owns current operational eligibility, targets, generations
 sessions and native action records. No content or credentials belong in the latter.
 
 Definition-derived schedule changes have narrowly scoped pending-operation records.
-Stop/Snooze journal records describe history; replay never changes newer operational
-state. Alarm-affecting commands fence stale generations before acknowledgement.
+Snooze and historical Stop journal records describe history; replay never changes
+newer operational state. Native Done reuses protected completion receipts and the
+pending-completion journal introduced by DP 4→5. DP 5→6 binds captured completion
+membership and adds durable bulk-Snooze receipt/member records. CE and backup
+schemas are unchanged. Alarm-affecting commands fence stale generations before acknowledgement.
 OS registration and database commits are not atomic: reconcile idempotently and
 return Scheduled/Blocked/Pending distinctly. Every callback rechecks eligibility.
 
@@ -28,6 +55,43 @@ promotion is immediate and never waits for another Room query on the main thread
 There is no actionless placeholder. Subsequent member refreshes update the same
 notification; actions retain the delivery generation from their snapshot and stale
 ones are rejected. Before unlock, the snapshot contains generic text only.
+
+A22's [R6 visual correction](design/r6-alarm-postpone-specification.md) requires
+global theming even for that generic content. The allowlisted non-private mirror
+identifies bundled atmosphere and brightness policy without credential reads in
+Direct Boot. The native serialized mutation worker commits credential preferences,
+updates the mirror, then acknowledges. An identical operation retry repairs an
+interrupted mirror write. Appearance-only writes do not change reminder targets,
+generations, history or audio. Titles, notes, categories, list identities,
+credentials and content-derived appearance stay excluded from DP.
+
+Agenda queries apply optional `overdueOnly` alongside other intersections and
+apply group ordering/counts before pagination. The read-only `agendaAtMs` anchor
+is event start for No alert, otherwise operational target → configured alert → event
+fallback. Capture query time/device zone once; order active results by group rank,
+anchor and ID before the 50-row page. Today/Upcoming use only anchor dates.
+Overdue uses original configured alert, timed No alert event start or next local
+midnight after the No alert date; its rows sort by that reference and ID. One pure
+OverduePolicy and captured query clock govern filtering, grouping, counts and
+the derived overdueAtMs projection. History collections retain recorded-time ordering.
+`scheduleTestAlarm(operationId)` returns an identified receipt; a same-ID retry
+returns the original committed test/target. Whole-backup Restore returns structured
+Rejected only for definitive precommit validation; possible commits remain
+uncertain and retain their captured operation/choices until acknowledgement.
+
+UI geometry is presentation-only: the form observer reads its Activity/Modal
+window's bounds and native text-layout rectangles without consuming insets. Only
+geometry/state and opaque field identities cross the bridge. It cannot read the
+engine or persist text/composition. Native caret/viewport/scroll samples share one
+frame and coordinate system; deliberate parent scrolling does not force focus
+back into view.
+
+Export and Diagnostics prepare/share only from their owning foreground page.
+After a share-sheet opens, acknowledgement waits for that page to return to the
+foreground and is abandoned after route departure. Wording confirms handoff only,
+not receipt or saving by another app. A retry retains the captured prepared file/
+report. Backup files contain private content in credential-protected app cache;
+they are retained for provider access/retry and may later be reclaimed by the OS.
 
 Native commands return field/error metadata for rejected input; JavaScript form
 validation is presentation assistance. Dates and generations must be finite
@@ -48,6 +112,10 @@ Direct Boot match flags. Default launcher lookup hides the credential-protected
 product activity before unlock; it cannot be a prerequisite for alarm registration.
 Creating a handle does not start that activity. The UI remains unavailable until
 unlock; actual pre-unlock controls belong to the Direct Boot aware native activity.
+
+This is the current baseline. Static Classic branding preserves stable native
+activity/notification entry points; app-controlled aliases or launcher matching
+are not part of this redesign. Existing session guards remain native ownership.
 
 One native audio session with an elapsed-time deadline. New members do not extend
 it. Audio termination is independent of persistence. FGS is systemExempted while
@@ -170,13 +238,15 @@ bridge response from creating a second reminder on the next Save press.
 File-sharing providers remain credential-only in the merged manifest; alarm
 receivers/services/activity are Direct Boot aware. MainApplication still defers
 React/Expo startup until the principal UI is requested after unlock. The new native
-controls use the saved appearance after unlock, and system appearance before unlock.
+controls currently use saved brightness after unlock and system brightness before
+unlock. TD-02/TD-04 add the planned native-safe global atmosphere under A36.
 
 ## ADR 004: Unified presentation without another state authority
 
 The 0.4.0 redesign adds agenda/overdue/completed query views without a Room schema
-change. Membership derives from completion/due time; grouping derives from event
-time. Group rank, event start and occurrence ID order all matching rows before the
+change. The later beta correction replaces event grouping with alert-anchor
+grouping and date membership. Group rank, anchor and occurrence ID order all
+matching active rows before the
 50-row page is sliced. Aggregate counts cover the full filtered query. Read-only
 series/rule/adjustment information decorates rows; it never schedules an alarm.
 Existing internal views remain available while principal routes use the agenda.
@@ -195,7 +265,9 @@ members, appearance) from the existing engine worker. Its initial state is loadi
 An intent/refresh ticket rejects callbacks for another session or an earlier
 refresh. Only a confirmed terminal state dismisses the activity, including timeout
 or external termination; a partial action leaves remaining members visible.
-Notification Stop all carries immutable session identity and rejects an old session.
+New group notification actions carry immutable session/member generation snapshots
+and reject stale captured members. Later arrivals are excluded. Legacy Stop all
+retains its original session guard and installed-action compatibility.
 
 Expo SDK 57 Symbols supplies Android Material icons. Router's SDK 57 public
 `expo-router/react-navigation` export supplies draft removal guards; no separate
@@ -250,7 +322,12 @@ import with delivery warnings, not an uncertain import. This in-memory UI guard 
 not claim recovery of its screen draft across Android process death; native receipts
 and committed content remain the durable authority.
 
-## ADR 006: Explicit roots, presentation and native preview ownership
+## ADR 006: Shipped Browse routing, presentation and native preview ownership
+
+The Browse-root navigation below describes the shipped baseline. TD-03 replaces
+its visual routing; the latest beta correction uses Agenda / Lists / Completed /
+Trash roots, Repeats secondary to Lists, and secondary origin returns;
+query keys, history truth and native preview ownership are retained.
 
 Browse is a modal control over explicit Agenda, list, Repeats, Completed and Trash
 roots. Root switching replaces the root context; Settings, editor, detail and Activity
@@ -258,8 +335,9 @@ remain secondary pages. Destination state is keyed independently, including the 
 record queries sharing a route. Focus-scoped Back handlers yield to transient UI,
 search, draft and uncertain-operation guards. Navigation introduces no scheduler.
 
-Shared presentation separates work status from delivery outcome. Due controls
-Overdue; Stop/Missed/timeout remain delivery outcomes for unfinished work. Conditional
+Shared presentation separates work status from delivery outcome. Original alert
+or the No alert boundary controls Overdue; historical Stopped, Missed and timeout
+remain outcomes for unfinished work. Alarm Done completes only its occurrence. Conditional
 schedule detail preserves independent relationships even at coincident timestamps.
 Recorded Done time is separate from collection sorting fallback. Activity renders
 stored history without inventing missing lifecycle events or field differences.
@@ -299,3 +377,62 @@ membership IDs instead of decoding through the old version-one representation.
 Restore retains whole-family conflict semantics, current operational generations
 and no replay of elapsed targets. One-off Trash stays outside export; recurring
 deletion exclusions remain portable to prevent occurrence regeneration.
+
+## ADR 008: Current visual roles and keyboard layout contract
+
+The [7 October R3/R4 amendment](design/approved-ui-r3-r4.md) accepts the visual
+template with documented corrections. Structural icons use shared neutral roles;
+intentional actions/focus, category identity and labeled status have distinct
+roles. A single global atmosphere replaces task-specific screen environments in
+the current direction. A36 fixes Automatic/manual policy and defaults;
+legacy per-reminder appearance proposals are historical, not active migration work.
+These decisions do not add an engine, scheduling or storage authority.
+
+The planned editor uses one persistent Save footer outside form scrolling but
+inside the same Android IME-aware usable region. One owner handles IME/system
+insets; the scroll viewport accounts for the measured footer and keeps focused
+Title/Notes/caret/error content reachable. The current toolbar Save/basic keyboard
+resize is not acceptance evidence for that layout. TD-03 implements the client
+presentation while preserving native command identity, validation and retry;
+TD-06 records real keyboard/TalkBack observations in the consolidated run.
+
+## ADR 009: Alarm completion receipts and scroll-driven browsing
+
+The [alert experience](design/current/alert-experience.md) supersedes visible Stop
+wording while preserving legacy commands. On the existing serialized worker,
+CompleteDelivery/DoneAll and compatible Stop/StopAll atomically commit protected
+operational Completed state, generation fences, command-bound receipts and pending
+completion rows. New DoneAll binds the displayed members/generations and validates
+all before mutation; legacy StopAll snapshots current session members. The final
+member detaches and ends audio before CE completion/materialization, including
+before first unlock. Legacy receipt checks preserve historical retry semantics.
+
+Before CE queries, mutations/revision checks, import and export, materialize missing
+recurring content and project pending completion into one CE transaction: increment
+the revision, complete the same nominal occurrence, and write one Done at the
+original completion instant. A matching history operation proves that transaction already
+committed; a lost protected acknowledgement never re-completes a later Reopen.
+Receipts bind occurrence/generation or session and retain the original result across
+restart. CE 5 and portable backup 3 remain unchanged; old Stopped actions do not
+retroactively complete content. Timeout/interruption still leave work unfinished.
+
+SnoozeAll atomically captures its session/member fingerprint, current mirrored
+duration, action instant/common target, new generations and deterministic Snooze
+journals in DP6 before detachment and registration. Stored per-member outcomes
+support exact retries of unfinished registrations without recapturing members,
+moving the target or overriding newer generations. Mixed results return Partial;
+unknown replies retain the captured command. Elapsed recovery targets stay silent.
+Existing settings transactions already synchronize snoozeMinutes on all protected
+alerts/plans; no additional preference store is introduced. New single Snooze
+checks expectedSnoozeMinutes after receipt lookup. Legacy omitted guards retain
+their behavior. Capabilities exposes activeSessionActions; occurrences expose
+overdueAtMs/quickSnoozeMinutes, all read-only native projections.
+
+Shared browsing chrome has one native Animated scroll value. Stable expanded hero
+composition stays fixed while the opaque reading plane translates over decoration;
+React updates only at the collapsed toolbar boundary. A nominal 200 dp opening
+contains a measured 56 dp toolbar. Editing/utilities, usable height below 480 dp or
+font scale at least 1.6 use compact chrome. Saved content offset initializes both
+scroll and collapse positions. Safe-area/IME/footer geometry retains one owner.
+Native alarms retain dedicated layout and captured session appearance; supported
+notification accents and non-private loading extras use that same pair.

@@ -1,0 +1,588 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "version": 2,
+  "candidate": 2,
+  "registryPath": "docs/design/production-assets/brand-manifest.json",
+  "expectedRegistrySha256": "f54cf0e8105b6fca494da110108172f55fac7809ad0f651e556b7b2a5e43b1e0",
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "requiredAssetVersions": {
+    "classic-legacy-launcher": 2,
+    "classic-adaptive": 2,
+    "classic-monochrome": 2
+  },
+  "method": "Uniform source-ring-centered faithful revision; exact crop or same approved isolation, no individual feature movement or generative redraw.",
+  "sources": [
+    {
+      "role": "source",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "path": "assets/brand/classic/masters/classic-splash-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "references": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "layerSources": [
+    {
+      "role": "foreground",
+      "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "productionPath": "assets/brand/classic/masters/classic-splash-isolated-v2.png"
+    }
+  ],
+  "outputs": [
+    {
+      "role": "configuration",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-288.png",
+      "path": "assets/brand/classic/splash/classic-splash-v2.png",
+      "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          288,
+          288
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-76",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-76.png",
+      "path": "assets/brand/classic/splash/classic-splash-76-v2.png",
+      "sha256": "fa5650223b837287c575c657f6133dca0af0ce59d09bb33a80936e1a0c08107c",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          76,
+          76
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-114",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-114.png",
+      "path": "assets/brand/classic/splash/classic-splash-114-v2.png",
+      "sha256": "62e196bed6ab31b9444b8e476ec2296f511d50619239d536136ad1a39ad8f12c",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          114,
+          114
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-152",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-152.png",
+      "path": "assets/brand/classic/splash/classic-splash-152-v2.png",
+      "sha256": "bff0bbfa33ae6f1745ea49b3e158d8c914f68f5fd35f5e54e64f08d20c2675a4",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          152,
+          152
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-228",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-228.png",
+      "path": "assets/brand/classic/splash/classic-splash-228-v2.png",
+      "sha256": "56ed2ce617cea16b1d5a0118caf569f0f5a0f57fa1d14f0699fbbc5a82f55056",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          228,
+          228
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-304",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-304.png",
+      "path": "assets/brand/classic/splash/classic-splash-304-v2.png",
+      "sha256": "2912475050db8dcd64c19be05398d131ba5ee7e02c8c1e2ecb43aad842f99db8",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          304,
+          304
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "path": "assets/brand/classic/masters/classic-splash-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "configuration",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-288.png",
+      "path": "assets/brand/classic/splash/classic-splash-v2.png",
+      "sha256": "6fe1b6e264cb275cac78b79ceaf25a58ca835ee89cac4d1174635d77c2695366",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          288,
+          288
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-76",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-76.png",
+      "path": "assets/brand/classic/splash/classic-splash-76-v2.png",
+      "sha256": "fa5650223b837287c575c657f6133dca0af0ce59d09bb33a80936e1a0c08107c",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          76,
+          76
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-114",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-114.png",
+      "path": "assets/brand/classic/splash/classic-splash-114-v2.png",
+      "sha256": "62e196bed6ab31b9444b8e476ec2296f511d50619239d536136ad1a39ad8f12c",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          114,
+          114
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-152",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-152.png",
+      "path": "assets/brand/classic/splash/classic-splash-152-v2.png",
+      "sha256": "bff0bbfa33ae6f1745ea49b3e158d8c914f68f5fd35f5e54e64f08d20c2675a4",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          152,
+          152
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-228",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-228.png",
+      "path": "assets/brand/classic/splash/classic-splash-228-v2.png",
+      "sha256": "56ed2ce617cea16b1d5a0118caf569f0f5a0f57fa1d14f0699fbbc5a82f55056",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          228,
+          228
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "native-304",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/splash/splash-304.png",
+      "path": "assets/brand/classic/splash/classic-splash-304-v2.png",
+      "sha256": "2912475050db8dcd64c19be05398d131ba5ee7e02c8c1e2ecb43aad842f99db8",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          304,
+          304
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "centeringContract": {
+    "sourceAnchorPx": [
+      233,
+      243
+    ],
+    "ringFitCenterPx": [
+      233.01410689902775,
+      243.12794133017275
+    ],
+    "raisedDiscSourceCenterPx": [
+      232.5,
+      242
+    ],
+    "individualFeatureRepositioning": false,
+    "sourceCriticalRadiusPx": 238.2540660723338,
+    "adaptiveScaleDpPerSourcePx": 0.13221180447949465,
+    "splash288Scale": 0.3777480127985562,
+    "notificationScaleDpPerSourcePx": 0.050066152607140715,
+    "notificationControlHullHalfAxisPx": 199.73573920225186,
+    "legacyFaviconSourceRectPx": [
+      9,
+      19,
+      457,
+      467
+    ],
+    "legacyFaviconCropSizePx": [
+      448,
+      448
+    ]
+  },
+  "profileBefore": {
+    "path": "docs/design/production-assets/records/classic-splash/profile-before-v2.json",
+    "sha256": "e77b3bd5586f3b290319d851cc80c0470f43506fb2e3d6fe64914f37395d5925"
+  },
+  "staticConfiguration": {
+    "splashBackground": "#F7F8FA",
+    "nativeImageWidthDp": 76
+  },
+  "recordedAtUtc": "2026-10-09T09:06:52.381906+00:00",
+  "approval": null,
+  "productionFiles": null
+}

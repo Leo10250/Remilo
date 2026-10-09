@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remilo R7 — Lists and Repeats references</title>
+<link rel="stylesheet" href="gallery.css">
+<script src="gallery.js" defer></script>
+</head>
+<body>
+<header class="page-header">
+<p class="eyebrow">REMILO · R7 · APPROVED UI/UX OUTLINE · ICONS PROVISIONAL</p>
+<h1>Lists, Repeats and recurrence controls</h1>
+<p>Associated synthetic references for the owner-approved R7 UI/UX outline. All four atmospheres follow the approved R3 Light/Dark references. Layout, workflow states and image-generation discrepancies can be inspected beside each screen.</p>
+<nav class="resources" aria-label="Review resources">
+<a href="../r7-lists-repeats-specification.md">Source specification</a>
+<a href="../r7-lists-repeats-fixtures.json">Exact review states</a>
+<a href="review-notes.json">Discrepancy notes</a>
+<a href="generation-provenance.json">Generation prompts</a>
+<a href="images.json">Image manifest</a>
+</nav>
+</header>
+<main>
+<section class="controls" aria-label="Screen selection">
+<div class="field"><label for="screen-select">Screen</label><select id="screen-select"></select></div>
+<div class="field"><label for="scale-select">Preview width</label><select id="scale-select">
+<option value="360">360 px · mobile scale</option>
+<option value="420">420 px · larger phone</option>
+<option value="540">540 px · enlarged</option>
+<option value="original">Original pixels</option>
+</select></div>
+<div class="paging"><button type="button" id="previous">← Previous</button><span id="position" aria-live="polite"></span><button type="button" id="next">Next →</button></div>
+</section>
+<div class="review-layout">
+<figure class="screen-preview">
+<img id="screen-image" alt="" width="841" height="1870">
+<figcaption><span id="screen-caption"></span> <a id="original-link" href="#" target="_blank" rel="noopener">Open original PNG</a></figcaption>
+</figure>
+<aside class="notes" aria-labelledby="screen-title">
+<p class="eyebrow" id="screen-id"></p>
+<h2 id="screen-title"></h2>
+<p id="intent"></p>
+<h3>What to evaluate</h3>
+<ul id="review-list"></ul>
+<h3>Generation discrepancies and implementation treatment</h3>
+<ul id="discrepancy-list"></ul>
+<p class="notice">A27 approves the overall outline; exact generated pixels remain approximate. List icons are provisional: the owner favors omission, with the decision raised during implementation. No custom list-icon picker is in scope. Production must use the matching theme's shared canvas, elevated surface and action roles. These images do not establish accessible contrast, keyboard behavior or native correctness.</p>
+</aside>
+</div>
+</main>
+<footer class="page-footer">Built-in ImageGen references · 7 October 2026 · One screen at a time; artwork, component implementation and verification remain separate.</footer>
+<noscript><p>JavaScript is needed for the screen selector. Individual PNGs and notes are listed in <a href="images.json">the image manifest</a>.</p></noscript>
+</body>
+</html>

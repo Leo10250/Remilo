@@ -1,0 +1,27 @@
+{
+  "record": "A28",
+  "date": "2026-10-07",
+  "source": "Repository owner in current chat",
+  "ownerAnnotation": {
+    "index": 1,
+    "selectedText": "Next: Settings, Appearance, permissions and Test alarm.",
+    "comment": "continue"
+  },
+  "ownerStatement": "Make sure to reference all four themes.Use all the images in docs\\design\\remilo-r3-atmospheres as the point of reference when deciding on the color and style. (UX is a different story). Follow what we have been using for UX.",
+  "authorizedScope": [
+    "Continue refinement of Settings, Appearance, permissions and Test alarm",
+    "Use all eight R3 Light/Dark images for color/style",
+    "Preserve established UX and previous icon/keyboard/privacy/action corrections"
+  ],
+  "artifacts": [
+    "r8-settings-appearance-specification.md",
+    "r8-settings-appearance-fixtures.json"
+  ],
+  "notImplied": [
+    "Owner acceptance of the resulting new draft",
+    "New image generation in this refinement request",
+    "Production implementation or milestone completion",
+    "Automatic four-scene boundaries/default/migration/storage choices",
+    "New Test alarm command implementation or physical verification"
+  ]
+}

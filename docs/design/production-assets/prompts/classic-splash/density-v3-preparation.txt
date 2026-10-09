@@ -1,0 +1,9 @@
+Asset/use: Classic Android splash, renderer-sized density resources.
+Route: faithful-export; deterministic preparation only; no ImageGen.
+Input: assets/brand/classic/masters/classic-splash-isolated-v2.png; SHA-256 460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0; unchanged approved 467px RGBA isolation.
+Keep: ring/check/sun proportions, finish and source-ring anchor [233,243].
+Transform: 288dp transparent canvas; uniform scale 0.3777480127985562 dp/source-pixel; BICUBIC affine.
+Output: configuration288; native288/432/576/864/1152px, all rendered from original source.
+Retain the current approximately131x139dp visible mark; set imageWidth288 only after activation approval.
+Disclose: xxhdpi/xxxhdpi original-source interpolation at1.133x/1.511x adds no detail.
+Exclude: redraw, feature movement, fresh identity, active resource writes, synthetic owner approval.

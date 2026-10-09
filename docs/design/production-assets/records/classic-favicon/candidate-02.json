@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-favicon",
+  "version": 2,
+  "candidate": 2,
+  "registryPath": "docs/design/production-assets/brand-manifest.json",
+  "expectedRegistrySha256": "93479222a34de5ddb96953683eba62702e54c9a3aa0efc17f69ee82ae737f2a5",
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "requiredAssetVersions": {
+    "classic-legacy-launcher": 2,
+    "classic-adaptive": 2,
+    "classic-monochrome": 2,
+    "classic-splash": 2,
+    "classic-notification": 2
+  },
+  "method": "Uniform source-ring-centered faithful revision; exact crop or same approved isolation, no individual feature movement or generative redraw.",
+  "sources": [
+    {
+      "role": "source",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "references": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "layerSources": [
+    {
+      "role": "favicon",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "productionPath": "assets/brand/classic/masters/classic-favicon-v2.png"
+    }
+  ],
+  "outputs": [
+    {
+      "role": "favicon",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/favicon/favicon-48.png",
+      "path": "assets/brand/classic/favicon/classic-favicon-v2.png",
+      "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+      "width": 48,
+      "height": 48,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "sourceRole": "favicon",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          48,
+          48
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "favicon",
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/exports/favicon/favicon-48.png",
+      "path": "assets/brand/classic/favicon/classic-favicon-v2.png",
+      "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+      "width": 48,
+      "height": 48,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "sourceRole": "favicon",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          48,
+          48
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "centeringContract": {
+    "sourceAnchorPx": [
+      233,
+      243
+    ],
+    "ringFitCenterPx": [
+      233.01410689902775,
+      243.12794133017275
+    ],
+    "raisedDiscSourceCenterPx": [
+      232.5,
+      242
+    ],
+    "individualFeatureRepositioning": false,
+    "sourceCriticalRadiusPx": 238.2540660723338,
+    "adaptiveScaleDpPerSourcePx": 0.13221180447949465,
+    "splash288Scale": 0.3777480127985562,
+    "notificationScaleDpPerSourcePx": 0.050066152607140715,
+    "notificationControlHullHalfAxisPx": 199.73573920225186,
+    "legacyFaviconSourceRectPx": [
+      9,
+      19,
+      457,
+      467
+    ],
+    "legacyFaviconCropSizePx": [
+      448,
+      448
+    ]
+  },
+  "profileBefore": {
+    "path": "docs/design/production-assets/records/classic-favicon/profile-before-v2.json",
+    "sha256": "b8e93d83f9d11a54e1b68427ea6afbe89a735c61ccc045a7a54af4c1a3eef1f1"
+  },
+  "recordedAtUtc": "2026-10-09T09:07:05.454723+00:00",
+  "approval": null,
+  "productionFiles": null
+}

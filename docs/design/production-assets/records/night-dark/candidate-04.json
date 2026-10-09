@@ -1,0 +1,326 @@
+{
+  "assetId": "night-dark",
+  "candidate": 4,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T04:53:22.472726+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/night-dark/candidate-04.txt",
+    "sha256": "c37fc67a9142fa081b9fa2b873e2d174f0799c73bf196f37b329005c1628a316"
+  },
+  "inputImages": [
+    {
+      "localArtifactPath": "verification/local/artwork/night-dark/candidate-03.png",
+      "sha256": "f24f3ddaaeaa5a93cce15229e49ce99889c2b8e15d449ac5a2e4a24611d9073a"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad"
+    },
+    {
+      "path": "docs/design/production-assets/references/owner-night-shoreline-lights-01.png",
+      "sha256": "58e07ca2fea5060b974ee7e0a90f28d9ac4b624f6ac5f24f6a3e9474741fdc30"
+    },
+    {
+      "path": "docs/design/production-assets/references/owner-night-shoreline-lights-02.png",
+      "sha256": "c1715fb964be06c5039e507e6ef55a26d32a85e7669f9e58dfa0f90db05509b7"
+    }
+  ],
+  "styleDecision": "docs/design/production-assets/style-decision.md",
+  "output": {
+    "localArtifactPath": "verification/local/artwork/night-dark/candidate-04.png",
+    "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "visualInspection": {
+    "sceneIdentity": "Night Dark: icy-blue crescent, cool reflected moonlight and two sparse groups of warm amber lights along the farthest shoreline with short restrained reflections.",
+    "composition": "Blue crescent, stars, mountain valley, lake opening and conifer framing retain the existing scene. Tiny warm cores are placed higher on the far shore so both clusters remain within the 360 and 412 compact crop bands.",
+    "abstractTreatment": "Broad smooth banks, simple tree silhouettes and coherent layered mountain planes.",
+    "visibleInterfaceRemnants": false,
+    "note": "Owner approved candidate artwork and review crops. Actual runtime contrast and physical acceptance remain unobserved.",
+    "shoreLightsReview": "Both restrained warm light groups and the full icy-blue crescent are visible in all four reviewed crops. Short light reflections mostly fall below compact412. No UI remnants or detailed buildings observed. Major scene geometry remains closely aligned with candidate02; blues are slightly brighter/saturated.",
+    "warmCoreCropCheck": {
+      "left": {
+        "sourceWarmCoreBoundingBoxPx": [
+          614,
+          582,
+          653,
+          589
+        ],
+        "qualifier": "Threshold-based core bounds in the far-shore ROI, not a semantic light detector."
+      },
+      "right": {
+        "sourceWarmCoreBoundingBoxPx": [
+          1048,
+          584,
+          1093,
+          591
+        ],
+        "qualifier": "Threshold-based core bounds in the far-shore ROI, not a semantic light detector."
+      }
+    }
+  },
+  "cropProposal": {
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          6,
+          1672,
+          935
+        ],
+        "normalizedRect": [
+          0.0,
+          0.006376,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          64,
+          1672,
+          876
+        ],
+        "normalizedRect": [
+          0.0,
+          0.068013,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          182,
+          1672,
+          628
+        ],
+        "normalizedRect": [
+          0.0,
+          0.193411,
+          1.0,
+          0.473964
+        ],
+        "toolbarHeightDp": 56
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.43
+        ],
+        "sourceRectPx": [
+          0,
+          210,
+          1672,
+          600
+        ],
+        "normalizedRect": [
+          0.0,
+          0.223167,
+          1.0,
+          0.414453
+        ],
+        "toolbarHeightDp": 56
+      }
+    }
+  },
+  "review": {
+    "localArtifactPath": "verification/local/artwork/night-dark/review-04.png",
+    "sha256": "bde69d8d56c79d7e40d9cf5dc00e983aa613a3d91934e145b71967c6148b5c46"
+  },
+  "approval": {
+    "path": "docs/design/production-assets/approvals/night-dark-v2.json",
+    "ownerStatement": "I approve.",
+    "recordedAtUtc": "2026-10-09T05:00:23.720576+00:00",
+    "scope": "Approval of Night Dark candidate04 with icy-blue crescent, two distant amber shoreline-light groups and the presented broad/compact crops; replace the active Night Dark registry with v2 while preserving v1 files and decision."
+  },
+  "productionFiles": {
+    "source": {
+      "path": "assets/atmospheres/masters/night-dark-v2.png",
+      "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/night-dark-v2.webp",
+      "sha256": "1e7b921002936bd3f3916173b92abe69543cd71ef37ffb89bf35e6a2c3b06b11",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.4301602564102564
+          ],
+          "sourceRectPx": [
+            0,
+            156,
+            1440,
+            540
+          ],
+          "toolbarHeightDp": 56
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.4301602564102564
+          ],
+          "sourceRectPx": [
+            0,
+            180,
+            1440,
+            516
+          ],
+          "toolbarHeightDp": 56
+        }
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_dark_v2.webp",
+      "sha256": "1e7b921002936bd3f3916173b92abe69543cd71ef37ffb89bf35e6a2c3b06b11",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "limitation": "Approved original source is 1672 x 941; master target met=False. Runtime export is downsampled without enlargement. No runtime integration or device acceptance claimed.",
+  "comparisonImage": {
+    "localArtifactPath": "verification/local/artwork/night-dark/candidate-02.png",
+    "sha256": "9c2719bb7ffa2e1b05c40090c5022ff3ea57e985ddafc351e22eb544a2856022"
+  },
+  "purpose": "Owner-requested distant shoreline lights for both Night variants; Dark candidate04 corrects the shallow-crop visibility of candidate03 before individual review, preserving active v1.",
+  "proposedProductionVersion": 2,
+  "editTarget": {
+    "localArtifactPath": "verification/local/artwork/night-dark/candidate-03.png",
+    "sha256": "f24f3ddaaeaa5a93cce15229e49ce99889c2b8e15d449ac5a2e4a24611d9073a"
+  },
+  "preservedApprovedProductionComposition": {
+    "path": "assets/atmospheres/masters/night-dark-v1.png",
+    "sha256": "63d11da84936c3defad2260f99a3fa563c4aee7f48a517438859b2ef75d6076b"
+  },
+  "requestBrief": {
+    "path": "docs/design/production-assets/night-shoreline-lights-revision.md"
+  },
+  "requestedPairDetail": "Matching sparse warm lights on the distant shores of Night Dark and Night Light; each revision requires individual approval.",
+  "approvedProductionVersion": 2
+}

@@ -77,10 +77,12 @@ object Recurrence {
         alarm.toLocalDateTime() != nominal.plusNanos(rule.alarmOffsetMs * 1_000_000))
   }
   /** Finite COUNT is consumed by valid nominal slots, including skipped/completed instances. */
-  fun future(rule: RecurrenceRule, afterMs: Long, deviceZone: ZoneId): Sequence<ResolvedSlot> = sequence {
+  fun future(rule: RecurrenceRule, afterMs: Long, deviceZone: ZoneId, mode: String = "Alarm"): Sequence<ResolvedSlot> = sequence {
+    // A retained alert offset has no scheduling meaning while this series has no alert.
+    val noAlert = mode == "None"
     // No-count rules can seek. ±18h covers all legal zone offsets, including travel.
     val bound = Instant.ofEpochMilli(afterMs).atOffset(ZoneOffset.UTC).toLocalDateTime()
-      .minusNanos(rule.alarmOffsetMs * 1_000_000).minusHours(18).toLocalDate()
+      .minusNanos(if (noAlert) 0 else rule.alarmOffsetMs * 1_000_000).minusHours(18).toLocalDate()
     val base = cycleStart(rule, 0)
     val distance = when (rule.frequency) {
       "daily" -> ChronoUnit.DAYS.between(base, bound)
@@ -105,7 +107,7 @@ object Recurrence {
         consumed++
         if (rule.count != null && consumed > rule.count) return@sequence
         val resolved = resolve(rule, nominal, deviceZone, consumed)
-        if (resolved.alarmAtMs > afterMs) yield(resolved)
+        if ((if (noAlert) resolved.eventStartMs else resolved.alarmAtMs) > afterMs) yield(resolved)
       }
     }
   }

@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-monochrome",
+  "version": 1,
+  "state": "committed",
+  "expectedRegistrySha256": "ab131b9b519d0a449ae82d782f7c9f743f447ca4467cc1b010b3914556d4af40",
+  "specificationSha256": "1c95e4c7ab68232cffbe585168b3e7951fe2d067427227c6e53182119f96f4d8",
+  "decision": {
+    "assetId": "classic-monochrome",
+    "version": 1,
+    "candidate": 1,
+    "ownerStatement": "Approve artwork and integration",
+    "recordedAtUtc": "2026-10-09T08:22:10.400366+00:00",
+    "promote": true,
+    "activationApproved": true,
+    "scope": "Exact candidate-20261009-01 Classic monochrome ring/check/sun/rays transparent silhouette with removed raised disc and fivePNG densities; artwork and integration approved. Device acceptance pending.",
+    "specificationSha256": "1c95e4c7ab68232cffbe585168b3e7951fe2d067427227c6e53182119f96f4d8",
+    "profileConfigured": {
+      "path": "docs/design/production-assets/records/classic-monochrome/profile-configured-v1.json",
+      "sha256": "2e7782a6fcb30b33f0f4bb3d0bb8fa891af7499d225d93da020a460c78b8cb1a"
+    }
+  },
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-monochrome-v1.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-monochrome",
+      "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+      "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-mdpi/ic_launcher_classic_monochrome_v1.png",
+      "sha256": "3282e6b98e2a19f365d2802ee078dd6ee2518867e24d2cfeea84cd212c083482",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "mdpi",
+      "sourceRole": "monochrome",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          108,
+          108
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.15470729745151487,
+        "layerSizeDp": 108
+      }
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-hdpi/ic_launcher_classic_monochrome_v1.png",
+      "sha256": "eae7bfd5d15e02a8080465102aa6962b8a229f59578e44f33917dae6f3726cbc",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "hdpi",
+      "sourceRole": "monochrome",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          162,
+          162
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.15470729745151487,
+        "layerSizeDp": 108
+      }
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-xhdpi/ic_launcher_classic_monochrome_v1.png",
+      "sha256": "d50df302f664a3b53d4f1e5263eafca582efd25f5884e7d92d11a1beac6c0b72",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xhdpi",
+      "sourceRole": "monochrome",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          216,
+          216
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.15470729745151487,
+        "layerSizeDp": 108
+      }
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-xxhdpi/ic_launcher_classic_monochrome_v1.png",
+      "sha256": "2a50acf5cab5ad757341cff982849cf4ea2b2f7f29b31ae1439f844923ed1635",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxhdpi",
+      "sourceRole": "monochrome",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          324,
+          324
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.15470729745151487,
+        "layerSizeDp": 108
+      }
+    },
+    {
+      "role": "monochrome",
+      "path": "assets/brand/classic/monochrome/android/mipmap-xxxhdpi/ic_launcher_classic_monochrome_v1.png",
+      "sha256": "0221fc0b4d542f5ddaae8f5873b29be5a109093a3d76c9abeb1310650ffbbcd5",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxxhdpi",
+      "sourceRole": "monochrome",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-monochrome-silhouette-v1.png",
+        "sha256": "c453e37b8df529ec39b97d290e1c07621add0d5afc928a304780bc3cbb96517b"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          432,
+          432
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.15470729745151487,
+        "layerSizeDp": 108
+      }
+    }
+  ],
+  "approvalSha256": "b77dbeba457f4211dce1bee3c66f8b9301d6c64339aeae0a3adf3182c1248b61"
+}

@@ -1,0 +1,470 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-adaptive",
+  "version": 2,
+  "candidate": 2,
+  "ownerStatement": "Approve artwork and integration",
+  "recordedAtUtc": "2026-10-09T09:06:31.367947+00:00",
+  "activationApproved": true,
+  "scope": "Approve the revised circle-centered Classic adaptive layers v2 shown above, retaining the reconstructed background and omitted outer glow, for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+    "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+  },
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-adaptive-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-background",
+      "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+      "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "foreground",
+      "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_foreground_v2.png",
+      "sha256": "2b78dbe9854d9904fc276deda9c4c58843984a468989b33a8afa8846e019af36",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "mdpi",
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          108,
+          108
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "background",
+      "path": "assets/brand/classic/adaptive/android/mipmap-mdpi/ic_launcher_classic_background_v2.png",
+      "sha256": "8699b76c79d96a666fe9335194079bb39b4758607535a05ff5db6836d7ccd8e9",
+      "width": 108,
+      "height": 108,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "mdpi",
+      "sourceRole": "background",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+        "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+      },
+      "manualExportSpec": {
+        "kind": "resize",
+        "size": [
+          108,
+          108
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "foreground",
+      "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_foreground_v2.png",
+      "sha256": "8f6c16a15aa62acbbbbb13b6157ee15bf63c6a1e36b6329d5ac39b5d9923ea42",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "hdpi",
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          162,
+          162
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "background",
+      "path": "assets/brand/classic/adaptive/android/mipmap-hdpi/ic_launcher_classic_background_v2.png",
+      "sha256": "cc4cb768953e5c2cd5e8689e548dc86cd60a751610c594a3ee10fcdbc652387e",
+      "width": 162,
+      "height": 162,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "hdpi",
+      "sourceRole": "background",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+        "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+      },
+      "manualExportSpec": {
+        "kind": "resize",
+        "size": [
+          162,
+          162
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "foreground",
+      "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_foreground_v2.png",
+      "sha256": "453559a306f996f7d07522b247118064bf7967874db332d083d0cac6bae3b2d4",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xhdpi",
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          216,
+          216
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "background",
+      "path": "assets/brand/classic/adaptive/android/mipmap-xhdpi/ic_launcher_classic_background_v2.png",
+      "sha256": "0ad80068515a9014562ca68bec8fb1990fa41c52b7fd5d7d6a69f267da0411c5",
+      "width": 216,
+      "height": 216,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "xhdpi",
+      "sourceRole": "background",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+        "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+      },
+      "manualExportSpec": {
+        "kind": "resize",
+        "size": [
+          216,
+          216
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "foreground",
+      "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_foreground_v2.png",
+      "sha256": "8e1a739048423646d96a7ccdcc6f659cb4f98662f23f89c3fddf8c7ac756e63e",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxhdpi",
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          324,
+          324
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "background",
+      "path": "assets/brand/classic/adaptive/android/mipmap-xxhdpi/ic_launcher_classic_background_v2.png",
+      "sha256": "32400c1e8af9d0b084045dc75fbdc3c449caad7a83bd135458d28c053ae9208b",
+      "width": 324,
+      "height": 324,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "xxhdpi",
+      "sourceRole": "background",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+        "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+      },
+      "manualExportSpec": {
+        "kind": "resize",
+        "size": [
+          324,
+          324
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "foreground",
+      "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_foreground_v2.png",
+      "sha256": "903f45513e5174c23d9092a10d1f23f2288d512e03cb986164509e28d6d114e1",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "density": "xxxhdpi",
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.13221180447949465,
+        "layerSizeDp": 108,
+        "size": [
+          432,
+          432
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    },
+    {
+      "role": "background",
+      "path": "assets/brand/classic/adaptive/android/mipmap-xxxhdpi/ic_launcher_classic_background_v2.png",
+      "sha256": "8d362a70d2c268c7c547aab1e9ec2bdd68286114f3f526c77b47ba6e0a1a220d",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "density": "xxxhdpi",
+      "sourceRole": "background",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+        "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c"
+      },
+      "manualExportSpec": {
+        "kind": "resize",
+        "size": [
+          432,
+          432
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-adaptive/candidate-02.json",
+    "sha256": "435b5b679bd257d4752b11977dc3df7bc907026b60a05dba92a93744f2ccbf1e"
+  },
+  "manualLayerSources": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-adaptive-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "path": "assets/brand/classic/masters/classic-adaptive-foreground-v2.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-background",
+      "path": "assets/brand/classic/masters/classic-adaptive-background-v2.png",
+      "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "checks": {
+    "candidateBytesPreserved": true,
+    "distinctLayerTransformsVerified": true,
+    "nativeVectorStructureVerified": false,
+    "allOutputDimensionsMatch": true,
+    "installedDeviceAppearanceAssessed": false
+  },
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "ownerQuestion": "Approve the revised circle-centered Classic adaptive layers v2 shown above, retaining the reconstructed background and omitted outer glow, for artwork and integration?",
+  "ownerDecisionReference": {
+    "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+    "questionIndex": 1,
+    "humanResponse": "Approve artwork and integration"
+  }
+}

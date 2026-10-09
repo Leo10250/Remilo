@@ -1,6 +1,6 @@
 {
   "platforms": ["android"],
   "android": {
-    "modules": ["com.remilo.alarm.RemiloAlarmModule"]
+    "modules": ["com.remilo.alarm.RemiloAlarmModule", "com.remilo.alarm.presentation.FormGeometryModule"]
   }
 }

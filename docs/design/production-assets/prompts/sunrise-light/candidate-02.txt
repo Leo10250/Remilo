@@ -1,0 +1,5 @@
+Use case: background-extraction.
+Asset type: Remilo sunrise-light high-resolution production artwork.
+Input image 1 is the previously generated Sunrise Light candidate, the edit target. It is 1672 × 941 and is too small for the required 2048 × 1152 production master. Input image 2 is the accepted R3 Sunrise Light scenery/style reference.
+
+Re-create the first input at 4K landscape resolution, 3840 × 2160 pixels, 16:9. High resolution is essential: the delivered image must be at least 2048 pixels wide and 1152 pixels high so the project can downsample to its master without enlargement. Deliver a single large opaque rectangular image. Retain the first image's composition, sun position, mountain profiles, trees, grassy banks, lake reflection, peach-gold lighting and illustrated shading. Increase clean genuine scene detail at the larger resolution, rather than adding a border or more landscape. Keep it visually faithful to the accepted screenshot's scenic region. Do not change the geography or mood. No UI, text, status bar, buttons, cards, branding, frame, watermark, blank margins or curved content boundary. One sun, same warm reflection, quiet upper-left sky.

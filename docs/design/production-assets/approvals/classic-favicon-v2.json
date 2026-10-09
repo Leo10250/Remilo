@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-favicon",
+  "version": 2,
+  "candidate": 2,
+  "ownerStatement": "Approve artwork and integration",
+  "recordedAtUtc": "2026-10-09T09:07:00.015686+00:00",
+  "activationApproved": true,
+  "scope": "Approve the revised circle-centered Classic favicon v2 shown above, including the exact crop’s asymmetric tile trim, for artwork and integration? Exact staged bytes shown in family review r3; individual owner response approves artwork and integration. Centering revision2/source anchor(233,243). Native/physical acceptance remains pending.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+    "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+  },
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review/classic-centered-family-review-r3.png",
+      "sha256": "a8fb291c3fd8a3f7925ec32b3b54f76bcfd58191886894ccff8123d46a13f0fb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-r3.json",
+      "sha256": "1369d9961190570a70119d399e10de49464ca56a759514d42c095c68e37a70aa"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/review-inspection.json",
+      "sha256": "6e131ff7fe342188ddfe7a603a2b2f3b39f4df5ff86a92c2b4517113c83e07da"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-centering/candidate-20261009-02/candidate-manifest.json",
+      "sha256": "46f45dcc4e9ce59d9e197a41a1a2a8c1fcf702c1780cf03bc435ad6a39f89c0e"
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "favicon",
+      "path": "assets/brand/classic/favicon/classic-favicon-v2.png",
+      "sha256": "670d0e01bf3abb50a08d69d21098ea95f5fc23c5d15ad8a276b092bd57cf31e3",
+      "width": 48,
+      "height": 48,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true,
+      "sourceRole": "favicon",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      },
+      "manualExportSpec": {
+        "kind": "crop-resize",
+        "sourceRectPx": [
+          9,
+          19,
+          457,
+          467
+        ],
+        "size": [
+          48,
+          48
+        ],
+        "allowUpscale": false
+      },
+      "resizedFromPx": [
+        448,
+        448
+      ],
+      "upscaled": false,
+      "lossless": true
+    }
+  ],
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-favicon/candidate-02.json",
+    "sha256": "3a8ca4dc96528a0f593d367c46cfe03f626117c32c1dc00f41868ae2af36e375"
+  },
+  "manualLayerSources": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-favicon-v2.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened source retains no editable original layers; approved isolated masters are reused with their recorded matte/background limitations.",
+    "Legacy/favicon exact crop preserves visible artwork/glow but trims the decorative tile asymmetrically; no outside pixels are invented.",
+    "Legacy1024px configuration is enlarged from448px; it adds no source detail.",
+    "Synthetic circle/small-size/native-path diagnostics do not establish installed OEM rendering or physical accessibility acceptance."
+  ],
+  "checks": {
+    "candidateBytesPreserved": true,
+    "distinctLayerTransformsVerified": true,
+    "nativeVectorStructureVerified": false,
+    "allOutputDimensionsMatch": true,
+    "installedDeviceAppearanceAssessed": false
+  },
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "ownerQuestion": "Approve the revised circle-centered Classic favicon v2 shown above, including the exact crop’s asymmetric tile trim, for artwork and integration?",
+  "ownerDecisionReference": {
+    "toolCallId": "call_b5510c5054c84d7eb80a127eb1f8628a",
+    "questionIndex": 5,
+    "humanResponse": "Approve artwork and integration"
+  }
+}

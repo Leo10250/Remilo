@@ -1,0 +1,1045 @@
+{
+  "revision": "R9-specification-r1",
+  "date": "2026-10-07",
+  "sourceCommit": "316a1267ddebdc8540a9043537cc8f8c374cde27",
+  "status": "Proposed refinement and prospective captures under A31; no image generation or new acceptance",
+  "authority": [
+    "r9-completed-trash-activity-specification.md",
+    "approved-ui-r3-r4.md",
+    "../product.md",
+    "../architecture.md",
+    "../appearance-redesign.md"
+  ],
+  "viewportDp": {
+    "width": 360,
+    "height": 800
+  },
+  "locale": "en-US",
+  "deviceZone": "America/Los_Angeles",
+  "heldClock": "2026-10-07T14:00:00-07:00",
+  "clockPolicy": "Independent manually selected theme/state snapshots, not one continuous live session; no automatic period/default/migration policy.",
+  "referenceReview": {
+    "allEightInspected": true,
+    "method": "view_image qualitative inspection plus exact hashes; no sampled tokens or measured accessibility pass"
+  },
+  "references": [
+    {
+      "id": "sunrise-light",
+      "file": "remilo-r3-atmospheres/01-sunrise-light.png",
+      "sha256": "63176bd5ad60ef34bed790e95c3c128b027bbeaa1d474d6dc8cae7bc9afca129",
+      "atmosphere": "Sunrise",
+      "appearance": "Light"
+    },
+    {
+      "id": "sunrise-dark",
+      "file": "remilo-r3-atmospheres/02-sunrise-dark.png",
+      "sha256": "fbd689e84b288bebda78f21c7120ec5d40bcd816087d801db4072f354255fd0a",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark"
+    },
+    {
+      "id": "sky-light",
+      "file": "remilo-r3-atmospheres/03-sky-light.png",
+      "sha256": "93554cb225eb68081e6005c0539a0627c843ddc947a616d8fd0adc58188f2f03",
+      "atmosphere": "Sky",
+      "appearance": "Light"
+    },
+    {
+      "id": "sky-dark",
+      "file": "remilo-r3-atmospheres/04-sky-dark.png",
+      "sha256": "125c1f4da8ad3e7012408d05f0681a63766210d0e13a3110a4944904cdc3f1f5",
+      "atmosphere": "Sky",
+      "appearance": "Dark"
+    },
+    {
+      "id": "evening-light",
+      "file": "remilo-r3-atmospheres/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae",
+      "atmosphere": "Evening",
+      "appearance": "Light"
+    },
+    {
+      "id": "evening-dark",
+      "file": "remilo-r3-atmospheres/06-evening-dark.png",
+      "sha256": "e9b768fb258e4c6301a902d5aff75d3d875966453776a703575776ef25de5765",
+      "atmosphere": "Evening",
+      "appearance": "Dark"
+    },
+    {
+      "id": "night-light",
+      "file": "remilo-r3-atmospheres/07-night-light.png",
+      "sha256": "8df8f4807ae3970e6d0edd4cfc84dacb19b312c4c992d3822f8c2e402e7e0aad",
+      "atmosphere": "Night",
+      "appearance": "Light"
+    },
+    {
+      "id": "night-dark",
+      "file": "remilo-r3-atmospheres/08-night-dark.png",
+      "sha256": "2e318ff0fbca81eeeedacc3800a6c09d58fdf883f496a455491de7b948e7d055",
+      "atmosphere": "Night",
+      "appearance": "Dark"
+    }
+  ],
+  "shared": {
+    "secondaryOpeningBelowStatusDp": 96,
+    "toolbarDp": 56,
+    "gutterDp": 16,
+    "cornerDp": 16,
+    "bodySp": 16,
+    "supportSp": 14,
+    "minTargetDp": 48,
+    "primaryHeightDp": 56,
+    "rootBarVisible": false,
+    "addFabVisible": false,
+    "collectionActionDatesVisible": false,
+    "terminalStrikethrough": false,
+    "structuralIcons": "neutral shared roles",
+    "surfaces": "matching R3 canvas and opaque elevated surfaces",
+    "searchQueryClearing": "separate from exiting search",
+    "listIdentityIcons": "omit decorative icons for candidate; A27 final choice remains open",
+    "historyScope": "one actual occurrence; incomplete recorded actions only",
+    "historyTargets": "only Snooze/Postpone with real stored target"
+  },
+  "lists": [
+    {
+      "id": "personal",
+      "name": "Personal"
+    },
+    {
+      "id": "home",
+      "name": "Home"
+    },
+    {
+      "id": "work",
+      "name": "Work"
+    }
+  ],
+  "records": [
+    {
+      "id": "done-water",
+      "title": "Water the balcony plants and check the new seedlings",
+      "listId": "home",
+      "category": "plant",
+      "eventStart": "2026-10-07T10:00:00-07:00",
+      "eventEnd": "2026-10-07T10:15:00-07:00",
+      "dueAt": "2026-10-07T10:15:00-07:00",
+      "definedAlertAt": "2026-10-07T10:00:00-07:00",
+      "mode": "Alarm",
+      "completed": true,
+      "skipped": false,
+      "deleted": false,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Done",
+          "at": "2026-10-07T13:10:00-07:00"
+        }
+      ]
+    },
+    {
+      "id": "done-contract",
+      "title": "Send the revised contract and supporting documents to Morgan before the review",
+      "listId": "work",
+      "category": "document",
+      "eventStart": "2026-10-07T09:00:00-07:00",
+      "eventEnd": "2026-10-07T09:30:00-07:00",
+      "dueAt": "2026-10-07T09:30:00-07:00",
+      "definedAlertAt": "2026-10-07T09:00:00-07:00",
+      "mode": "Notification",
+      "completed": true,
+      "skipped": false,
+      "deleted": false,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Done",
+          "at": "2026-10-07T12:45:00-07:00"
+        }
+      ],
+      "notes": "Attach the signed appendix and revised cost breakdown."
+    },
+    {
+      "id": "done-medicine",
+      "title": "Take medicine",
+      "listId": "personal",
+      "category": "medicine",
+      "eventStart": "2026-10-07T08:00:00-07:00",
+      "eventEnd": "2026-10-07T08:05:00-07:00",
+      "dueAt": "2026-10-07T08:05:00-07:00",
+      "definedAlertAt": "2026-10-07T08:00:00-07:00",
+      "mode": "Alarm",
+      "completed": true,
+      "skipped": false,
+      "deleted": false,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Done",
+          "at": "2026-10-07T12:20:00-07:00"
+        }
+      ]
+    },
+    {
+      "id": "skipped-standup",
+      "title": "Team standup — review the launch checklist and unresolved issues",
+      "listId": "work",
+      "category": "team",
+      "eventStart": "2026-10-07T09:00:00-07:00",
+      "eventEnd": "2026-10-07T09:30:00-07:00",
+      "dueAt": "2026-10-07T09:30:00-07:00",
+      "definedAlertAt": "2026-10-07T09:00:00-07:00",
+      "mode": "Alarm",
+      "completed": false,
+      "skipped": true,
+      "deleted": false,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Skip",
+          "at": "2026-10-07T13:20:00-07:00"
+        }
+      ],
+      "repeat": "Every weekday",
+      "segmentId": "fixture-weekday-standup",
+      "nominalSlot": "2026-10-07T09:00",
+      "exception": false
+    },
+    {
+      "id": "legacy-review",
+      "title": "Review the archived project notes",
+      "listId": "work",
+      "category": "document",
+      "eventStart": "2026-10-06T11:00:00-07:00",
+      "eventEnd": "2026-10-06T11:30:00-07:00",
+      "dueAt": "2026-10-06T11:30:00-07:00",
+      "definedAlertAt": null,
+      "mode": "None",
+      "completed": true,
+      "skipped": false,
+      "deleted": false,
+      "revision": 4,
+      "history": [],
+      "recordedActionAt": null,
+      "imported": true
+    },
+    {
+      "id": "trash-future",
+      "title": "Pick up the replacement glasses after work",
+      "listId": "personal",
+      "category": "shopping",
+      "eventStart": "2026-10-07T15:00:00-07:00",
+      "eventEnd": "2026-10-07T15:15:00-07:00",
+      "dueAt": "2026-10-07T15:15:00-07:00",
+      "definedAlertAt": "2026-10-07T15:00:00-07:00",
+      "mode": "Alarm",
+      "completed": false,
+      "skipped": false,
+      "deleted": true,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Postpone",
+          "at": "2026-10-07T13:00:00-07:00",
+          "target": "2026-10-07T16:00:00-07:00"
+        },
+        {
+          "kind": "Delete",
+          "at": "2026-10-07T13:35:00-07:00"
+        }
+      ],
+      "previousOperationalTarget": "2026-10-07T16:00:00-07:00",
+      "deliveryState": "Deleted",
+      "notes": "Bring the receipt and the old frames."
+    },
+    {
+      "id": "trash-done",
+      "title": "Take medicine",
+      "listId": "personal",
+      "category": "medicine",
+      "eventStart": "2026-10-07T08:00:00-07:00",
+      "eventEnd": "2026-10-07T08:05:00-07:00",
+      "dueAt": "2026-10-07T08:05:00-07:00",
+      "definedAlertAt": "2026-10-07T08:00:00-07:00",
+      "mode": "Alarm",
+      "completed": true,
+      "skipped": false,
+      "deleted": true,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Done",
+          "at": "2026-10-07T08:05:00-07:00"
+        },
+        {
+          "kind": "Delete",
+          "at": "2026-10-07T13:30:00-07:00"
+        }
+      ],
+      "deliveryState": "Completed"
+    },
+    {
+      "id": "trash-skipped",
+      "title": "Team sync — confirm handover with the support team",
+      "listId": "work",
+      "category": "team",
+      "eventStart": "2026-10-07T09:00:00-07:00",
+      "eventEnd": "2026-10-07T09:30:00-07:00",
+      "dueAt": "2026-10-07T09:30:00-07:00",
+      "definedAlertAt": "2026-10-07T09:00:00-07:00",
+      "mode": "Alarm",
+      "completed": false,
+      "skipped": true,
+      "deleted": true,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Skip",
+          "at": "2026-10-07T12:00:00-07:00"
+        },
+        {
+          "kind": "Delete",
+          "at": "2026-10-07T13:10:00-07:00"
+        }
+      ],
+      "deliveryState": "Deleted",
+      "repeat": "Every weekday",
+      "segmentId": "fixture-support-sync",
+      "nominalSlot": "2026-10-07T09:00",
+      "exception": false
+    },
+    {
+      "id": "trash-past",
+      "title": "Call dentist about the revised treatment estimate",
+      "listId": "personal",
+      "category": "phone",
+      "eventStart": "2026-10-07T10:00:00-07:00",
+      "eventEnd": "2026-10-07T10:15:00-07:00",
+      "dueAt": "2026-10-07T10:15:00-07:00",
+      "definedAlertAt": "2026-10-07T10:00:00-07:00",
+      "mode": "Alarm",
+      "completed": false,
+      "skipped": false,
+      "deleted": true,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Stop",
+          "at": "2026-10-07T10:01:00-07:00"
+        },
+        {
+          "kind": "Delete",
+          "at": "2026-10-07T12:55:00-07:00"
+        }
+      ],
+      "deliveryState": "Deleted",
+      "previousOperationalTarget": "2026-10-07T10:00:00-07:00"
+    },
+    {
+      "id": "activity-call",
+      "title": "Call dentist about the revised treatment estimate and next appointment",
+      "listId": "personal",
+      "category": "phone",
+      "eventStart": "2026-10-07T10:00:00-07:00",
+      "eventEnd": "2026-10-07T10:15:00-07:00",
+      "dueAt": "2026-10-07T10:15:00-07:00",
+      "definedAlertAt": "2026-10-07T10:00:00-07:00",
+      "mode": "Alarm",
+      "completed": true,
+      "skipped": false,
+      "deleted": false,
+      "revision": 4,
+      "history": [
+        {
+          "kind": "Stop",
+          "at": "2026-10-07T10:01:00-07:00"
+        },
+        {
+          "kind": "Postpone",
+          "at": "2026-10-07T10:05:00-07:00",
+          "target": "2026-10-07T15:00:00-07:00"
+        },
+        {
+          "kind": "Edit",
+          "at": "2026-10-07T11:40:00-07:00"
+        },
+        {
+          "kind": "Done",
+          "at": "2026-10-07T13:40:00-07:00"
+        }
+      ],
+      "notes": "Ask for an itemized estimate. A notes-only Edit records Edited without field diffs.",
+      "deliveryState": "Completed"
+    }
+  ],
+  "recordSemantics": "Synthetic documented content/expected-history inputs for design review, not native execution evidence. Collection rows use native query projections with no displayed action timestamp; history here is for expected ordering and details/Activity only.",
+  "proposalNotes": [
+    "Secondary collection origins, transient search Back and fixed-key preservation need P05 integration.",
+    "Skipped Reopen currently retains skipped; R9-02 does not depict successful unskip.",
+    "R9-12 captured-command guard is proposed, since current collection handlers lack it.",
+    "No new collection timestamp/provenance API; keep status-only rows.",
+    "No pause/family/history changes or automatic purge are authorized."
+  ],
+  "additionalComponentStates": [
+    "true empty Completed with Include skipped off/on",
+    "true empty Trash",
+    "initial loading/error and unavailable occurrence",
+    "Load more progress/failure with prior rows",
+    "Completed details with actual recorded Done date",
+    "Skipped details action contract after resolution",
+    "explicit stale action rejection and new deliberate action",
+    "future postponed Restore returning Scheduled versus Blocked/Pending",
+    "elapsed Alarm Restore silent with no next alert",
+    "No alert Restore",
+    "paused-family Restore independent future exception",
+    "200% English/Chinese, focus/TalkBack, real IME and inset transitions",
+    "Unknown actual recorded history kind without guessed target; equal-time supplied order; device zone/DST date grouping"
+  ],
+  "screens": [
+    {
+      "id": "R9-01",
+      "title": "Completed with long content",
+      "referenceId": "sunrise-light",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "surface": "completed",
+      "state": "populated",
+      "data": {
+        "origin": {
+          "kind": "agenda"
+        },
+        "scope": "all",
+        "search": "",
+        "includeSkipped": false,
+        "rows": [
+          "done-water",
+          "done-contract",
+          "done-medicine",
+          "legacy-review"
+        ],
+        "rowActions": [
+          "Reopen",
+          "More"
+        ],
+        "loadMore": false
+      },
+      "visibleText": [
+        "Completed",
+        "Include skipped occurrences",
+        "Most recently completed or skipped first",
+        "Completed",
+        "Reopen"
+      ],
+      "notes": [
+        "Native order uses latest Done, not Event order. Status-only row dates. Fourth row may scroll below the viewport; no loaded-count total."
+      ],
+      "datasetIds": [
+        "done-water",
+        "done-contract",
+        "done-medicine",
+        "legacy-review",
+        "skipped-standup"
+      ]
+    },
+    {
+      "id": "R9-02",
+      "title": "Completed with skipped occurrences",
+      "referenceId": "sunrise-dark",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "surface": "completed",
+      "state": "include-skipped",
+      "data": {
+        "origin": {
+          "kind": "repeats"
+        },
+        "scope": "all",
+        "search": "",
+        "includeSkipped": true,
+        "rows": [
+          "skipped-standup",
+          "done-water",
+          "done-contract",
+          "done-medicine",
+          "legacy-review"
+        ],
+        "skippedActions": [
+          "View reminder",
+          "Move to Trash"
+        ],
+        "completedActions": [
+          "Reopen",
+          "More"
+        ]
+      },
+      "visibleText": [
+        "Completed",
+        "Include skipped occurrences",
+        "Skipped",
+        "Every weekday",
+        "Completed",
+        "Reopen"
+      ],
+      "notes": [
+        "Switch visibly ON. Skipped row has More, no enabled Reopen until the native clear-skipped contract is resolved. Titles keep full contrast."
+      ],
+      "datasetIds": [
+        "done-water",
+        "done-contract",
+        "done-medicine",
+        "legacy-review",
+        "skipped-standup"
+      ]
+    },
+    {
+      "id": "R9-03",
+      "title": "List-scoped Completed with no matches",
+      "referenceId": "sky-light",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "surface": "completed",
+      "state": "filtered-no-match",
+      "data": {
+        "origin": {
+          "kind": "list",
+          "listId": "work"
+        },
+        "fixedMembership": "work",
+        "scope": "Work",
+        "search": "dentist",
+        "includeSkipped": false,
+        "rows": [],
+        "keyboardVisible": false,
+        "actions": [
+          "Clear search"
+        ]
+      },
+      "visibleText": [
+        "Completed",
+        "Work",
+        "dentist",
+        "Include skipped occurrences",
+        "No matches",
+        "Clear search"
+      ],
+      "notes": [
+        "No global list picker or Clear filters that broadens Work; no true-empty copy. Query retained when closing search."
+      ],
+      "datasetIds": [
+        "done-water",
+        "done-contract",
+        "done-medicine",
+        "legacy-review",
+        "skipped-standup"
+      ]
+    },
+    {
+      "id": "R9-04",
+      "title": "Trash with mixed previous states",
+      "referenceId": "sky-dark",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "surface": "trash",
+      "state": "populated",
+      "data": {
+        "origin": {
+          "kind": "agenda"
+        },
+        "scope": "all",
+        "search": "",
+        "rows": [
+          "trash-future",
+          "trash-done",
+          "trash-skipped",
+          "trash-past"
+        ],
+        "rowActions": [
+          "Restore",
+          "More"
+        ]
+      },
+      "visibleText": [
+        "Trash",
+        "Most recently deleted first",
+        "Items stay here until restored.",
+        "In Trash",
+        "Unfinished",
+        "Completed",
+        "Skipped",
+        "Restore"
+      ],
+      "notes": [
+        "Order uses real Delete times, but status-only rows omit timestamps. No Scheduled promise for deleted future record. Retention and backup helper may continue below viewport."
+      ],
+      "datasetIds": [
+        "trash-future",
+        "trash-done",
+        "trash-skipped",
+        "trash-past"
+      ]
+    },
+    {
+      "id": "R9-05",
+      "title": "Completed item restored from Trash",
+      "referenceId": "evening-light",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "surface": "trash",
+      "state": "restore-acknowledged",
+      "data": {
+        "origin": {
+          "kind": "agenda"
+        },
+        "scope": "all",
+        "rows": [
+          "trash-future",
+          "trash-skipped",
+          "trash-past"
+        ],
+        "removedRecord": "trash-done",
+        "returnedRecord": {
+          "id": "trash-done",
+          "deleted": false,
+          "completed": true,
+          "skipped": false,
+          "revision": 5
+        },
+        "result": {
+          "status": "Applied",
+          "command": "UndoDelete",
+          "at": "2026-10-07T13:55:00-07:00"
+        },
+        "feedback": "Restored to Completed."
+      },
+      "visibleText": [
+        "Trash",
+        "Restored to Completed.",
+        "In Trash",
+        "Restore"
+      ],
+      "notes": [
+        "Independent post-action snapshot. Completed state stays true and silent; no automatic navigation or Reopen. Feedback reserves inset-safe clearance."
+      ],
+      "datasetIds": [
+        "trash-future",
+        "trash-done",
+        "trash-skipped",
+        "trash-past"
+      ]
+    },
+    {
+      "id": "R9-06",
+      "title": "Trash details of a skipped occurrence",
+      "referenceId": "evening-dark",
+      "atmosphere": "Evening",
+      "appearance": "Dark",
+      "surface": "reminder-details",
+      "state": "deleted-skipped",
+      "data": {
+        "origin": {
+          "kind": "trash",
+          "parent": {
+            "kind": "list",
+            "listId": "work"
+          }
+        },
+        "record": "trash-skipped",
+        "persistentAction": "Restore reminder",
+        "showNextAlert": false,
+        "more": [
+          "Duplicate",
+          "Activity"
+        ],
+        "footerVariant": "filled primary"
+      },
+      "visibleText": [
+        "Reminder",
+        "In Trash",
+        "Skipped",
+        "When",
+        "9:00–9:30 AM",
+        "Alarm was set for 9:00 AM",
+        "Every weekday",
+        "Restore reminder"
+      ],
+      "notes": [
+        "Show original Event/notes/list/Repeat using accepted details anatomy. No Done, Reopen, Postpone, Stop or Snooze. Restore preserves skipped."
+      ],
+      "datasetIds": [
+        "trash-skipped"
+      ]
+    },
+    {
+      "id": "R9-07",
+      "title": "Recorded occurrence Activity",
+      "referenceId": "night-light",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "surface": "activity",
+      "state": "populated",
+      "data": {
+        "origin": {
+          "kind": "reminder-details",
+          "record": "activity-call",
+          "parent": {
+            "kind": "completed",
+            "parent": {
+              "kind": "agenda"
+            }
+          }
+        },
+        "record": "activity-call",
+        "entriesNewestFirst": [
+          3,
+          2,
+          1,
+          0
+        ],
+        "displayZone": "America/Los_Angeles",
+        "summaryOffset": "UTC−07:00"
+      },
+      "visibleText": [
+        "Activity",
+        "Recorded actions for this occurrence. Changes to the whole repeat and individual edited fields are not recorded here.",
+        "Today",
+        "Completed",
+        "1:40 PM",
+        "Edited",
+        "11:40 AM",
+        "Postponed",
+        "10:05 AM",
+        "Alert moved to Today · 3:00 PM",
+        "Alarm stopped",
+        "10:01 AM"
+      ],
+      "notes": [
+        "Stop/Postpone/Edit/Done are recorded native kinds. Only Postpone target is shown; current Completed record has no active next alert. Full title can wrap; lower entries may scroll."
+      ],
+      "datasetIds": [
+        "activity-call"
+      ]
+    },
+    {
+      "id": "R9-08",
+      "title": "Activity refresh failure retaining content",
+      "referenceId": "night-dark",
+      "atmosphere": "Night",
+      "appearance": "Dark",
+      "surface": "activity",
+      "state": "retained-refresh-failure",
+      "data": {
+        "origin": {
+          "kind": "reminder-details",
+          "record": "activity-call",
+          "parent": {
+            "kind": "completed",
+            "parent": {
+              "kind": "agenda"
+            }
+          }
+        },
+        "record": "activity-call",
+        "entriesNewestFirst": [
+          3,
+          2,
+          1,
+          0
+        ],
+        "lastLoadedAt": "2026-10-07T13:50:00-07:00",
+        "refreshState": "failed",
+        "actions": [
+          "Retry"
+        ]
+      },
+      "visibleText": [
+        "Activity",
+        "Could not refresh. Showing previously loaded information.",
+        "Retry",
+        "Completed",
+        "Edited",
+        "Postponed"
+      ],
+      "notes": [
+        "Known title/timeline stay visible, labeled stale; no empty or success state. Retry reloads history, not a content mutation. Same scope qualification remains available in scroll."
+      ],
+      "datasetIds": [
+        "activity-call"
+      ]
+    },
+    {
+      "id": "R9-09",
+      "title": "Legacy completed details without recorded Done",
+      "referenceId": "sunrise-light",
+      "atmosphere": "Sunrise",
+      "appearance": "Light",
+      "surface": "reminder-details",
+      "state": "completed-no-history",
+      "data": {
+        "origin": {
+          "kind": "completed",
+          "parent": {
+            "kind": "list",
+            "listId": "work"
+          }
+        },
+        "record": "legacy-review",
+        "persistentAction": "Reopen reminder",
+        "showCompletionTimestamp": false,
+        "showNextAlert": false,
+        "more": [
+          "Activity",
+          "Duplicate",
+          "Move to Trash"
+        ],
+        "footerVariant": "outlined secondary"
+      },
+      "visibleText": [
+        "Reminder",
+        "Review the archived project notes",
+        "Completed",
+        "When",
+        "Oct 6 · 11:00–11:30 AM",
+        "No alert",
+        "Reopen reminder"
+      ],
+      "notes": [
+        "Do not turn Event fallback into completion date. No strikethrough or overdue warning. Activity opens the no-recorded-history state."
+      ],
+      "datasetIds": [
+        "legacy-review"
+      ]
+    },
+    {
+      "id": "R9-10",
+      "title": "Activity with no recorded entries",
+      "referenceId": "sky-light",
+      "atmosphere": "Sky",
+      "appearance": "Light",
+      "surface": "activity",
+      "state": "empty-history",
+      "data": {
+        "origin": {
+          "kind": "reminder-details",
+          "record": "legacy-review",
+          "parent": {
+            "kind": "completed",
+            "parent": {
+              "kind": "list",
+              "listId": "work"
+            }
+          }
+        },
+        "record": "legacy-review",
+        "entriesNewestFirst": []
+      },
+      "visibleText": [
+        "Activity",
+        "Review the archived project notes",
+        "Recorded actions for this occurrence. Changes to the whole repeat and individual edited fields are not recorded here.",
+        "No recorded activity."
+      ],
+      "notes": [
+        "True history empty; no Created, Completed event/date, no no-changes-ever assertion or new action footer."
+      ],
+      "datasetIds": [
+        "legacy-review"
+      ]
+    },
+    {
+      "id": "R9-11",
+      "title": "Completed search with Android keyboard",
+      "referenceId": "night-light",
+      "atmosphere": "Night",
+      "appearance": "Light",
+      "surface": "completed",
+      "state": "search-ime",
+      "data": {
+        "origin": {
+          "kind": "list",
+          "listId": "work"
+        },
+        "fixedMembership": "work",
+        "scope": "Work",
+        "search": "contract",
+        "includeSkipped": false,
+        "rows": [
+          "done-contract"
+        ],
+        "keyboardVisible": true,
+        "keyboardOwner": "Android",
+        "keyboardDeviceAppearance": "Light",
+        "actions": [
+          "Clear search",
+          "Reopen",
+          "More"
+        ]
+      },
+      "visibleText": [
+        "Completed",
+        "Work",
+        "contract",
+        "Include skipped occurrences",
+        "Completed",
+        "Reopen"
+      ],
+      "notes": [
+        "One inset owner, shallow/collapsed art, reachable focused query/caret. No Save button. Search matches title/notes before pagination. Actions remain scrollable above real OS IME."
+      ],
+      "datasetIds": [
+        "done-water",
+        "done-contract",
+        "done-medicine",
+        "legacy-review",
+        "skipped-standup"
+      ]
+    },
+    {
+      "id": "R9-12",
+      "title": "Restore reply unconfirmed",
+      "referenceId": "sky-dark",
+      "atmosphere": "Sky",
+      "appearance": "Dark",
+      "surface": "trash",
+      "state": "unconfirmed-command-proposal",
+      "data": {
+        "origin": {
+          "kind": "agenda"
+        },
+        "scope": "all",
+        "rows": [
+          "trash-future",
+          "trash-done",
+          "trash-skipped",
+          "trash-past"
+        ],
+        "lastConfirmedRecord": "trash-future",
+        "nativeOutcome": "unknown",
+        "pendingCommand": {
+          "kind": "UndoDelete",
+          "occurrenceId": "trash-future",
+          "expectedRevision": 4,
+          "operationId": "fixture-r9-restore-001"
+        },
+        "competingActionsDisabled": true,
+        "navigationGuard": true,
+        "retryReusesExactCommand": true
+      },
+      "visibleText": [
+        "Trash",
+        "Change not confirmed. Retry the same change before leaving.",
+        "Retry change",
+        "In Trash"
+      ],
+      "notes": [
+        "Explicit proposed collection guard; not implemented by current records.tsx. Preserve last confirmed snapshot; no restored/failure/Scheduled assertion and no fresh command on Retry."
+      ],
+      "datasetIds": [
+        "trash-future",
+        "trash-done",
+        "trash-skipped",
+        "trash-past"
+      ]
+    },
+    {
+      "id": "R9-13",
+      "title": "Stale Trash Undo",
+      "referenceId": "sunrise-dark",
+      "atmosphere": "Sunrise",
+      "appearance": "Dark",
+      "surface": "completed",
+      "state": "stale-undo",
+      "data": {
+        "origin": {
+          "kind": "agenda"
+        },
+        "scope": "all",
+        "includeSkipped": false,
+        "rows": [
+          "done-water",
+          "done-contract",
+          "done-medicine",
+          "legacy-review"
+        ],
+        "capturedDeletion": {
+          "id": "trash-done",
+          "revision": 4,
+          "operationId": "fixture-r9-undo-001"
+        },
+        "latestRecord": {
+          "id": "trash-done",
+          "deleted": true,
+          "completed": true,
+          "revision": 6
+        },
+        "undoCommandIssued": false
+      },
+      "visibleText": [
+        "Completed",
+        "Reminder changed; this deletion can no longer be undone"
+      ],
+      "notes": [
+        "Independent snapshot after another native change advances the deleted revision. Guard rejects old Undo; newer content remains deleted. No Undo success or automatic replacement operation."
+      ],
+      "datasetIds": [
+        "done-water",
+        "done-contract",
+        "done-medicine",
+        "legacy-review",
+        "skipped-standup",
+        "trash-done"
+      ]
+    },
+    {
+      "id": "R9-14",
+      "title": "Unfinished Trash confirmation",
+      "referenceId": "evening-light",
+      "atmosphere": "Evening",
+      "appearance": "Light",
+      "surface": "reminder-details/confirmation",
+      "state": "confirmation",
+      "data": {
+        "origin": {
+          "kind": "reminder-details",
+          "record": "activity-call"
+        },
+        "recordOverride": {
+          "id": "activity-call",
+          "completed": false,
+          "deleted": false,
+          "skipped": false,
+          "deliveryState": "Scheduled",
+          "nextTarget": "2026-10-07T15:00:00-07:00",
+          "historyKinds": [
+            "Stop",
+            "Postpone",
+            "Edit"
+          ]
+        },
+        "dialog": {
+          "title": "Move reminder to Trash?",
+          "message": "Its alert will be cancelled. You can restore it from Trash.",
+          "actions": [
+            "Keep reminder",
+            "Move to Trash"
+          ],
+          "destructiveAction": "Move to Trash"
+        }
+      },
+      "visibleText": [
+        "Move reminder to Trash?",
+        "Its alert will be cancelled. You can restore it from Trash.",
+        "Keep reminder",
+        "Move to Trash"
+      ],
+      "notes": [
+        "Independent alternative unfinished snapshot at the held clock; excludes the base record's Done. Existing native-style confirmation on themed surfaces; no permanent deletion."
+      ],
+      "datasetIds": [
+        "activity-call"
+      ]
+    }
+  ],
+  "datasetPolicy": "Each capture uses only its datasetIds plus its explicitly listed returnedRecord/latestRecord/recordOverride. These are independent synthetic snapshots, not one combined global store. Entries in the reusable records pool do not join a query implicitly.",
+  "currentContract": "current/screens/completed-trash-activity.md",
+  "currentAppearancePolicy": "current/appearance-policy.md",
+  "fixtureScope": "Recorded review capture states, not an alternate current appearance policy. Frozen submissions/images retain original identities."
+}

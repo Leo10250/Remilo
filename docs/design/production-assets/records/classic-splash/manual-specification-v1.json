@@ -1,0 +1,569 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "version": 1,
+  "candidate": 1,
+  "registryPath": "docs/design/production-assets/brand-manifest.json",
+  "expectedRegistrySha256": "fa93302f9882c8d4f719d91014f3e98c5fb4467cedb3d4cfe37ffa3335d87e3e",
+  "method": "Direct uniform affine padding/resize from approved colored Classic isolation; no redraw or ImageGen.",
+  "sources": [
+    {
+      "role": "source",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "path": "assets/brand/classic/masters/classic-splash-v1.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-splash",
+      "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "references": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "layerSources": [
+    {
+      "role": "splash",
+      "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "productionPath": "assets/brand/classic/masters/classic-splash-isolated-v1.png"
+    }
+  ],
+  "outputs": [
+    {
+      "role": "configuration",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-288.png",
+      "path": "assets/brand/classic/splash/classic-splash-v1.png",
+      "sha256": "096a335210498e37adefaf56bf7c633fa806d4c2d4d1090d933508a052210d07",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          288,
+          288
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-76",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-76.png",
+      "path": "assets/brand/classic/splash/classic-splash-76-v1.png",
+      "sha256": "f67a8a4d277abdf334adc20114a75531f5070b94a0b2a4605a22860b7956104e",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          76,
+          76
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-114",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-114.png",
+      "path": "assets/brand/classic/splash/classic-splash-114-v1.png",
+      "sha256": "347632848581a370d06ef496526df9a07f682c0d31b1656e4f9ff07123af84b6",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          114,
+          114
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-152",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-152.png",
+      "path": "assets/brand/classic/splash/classic-splash-152-v1.png",
+      "sha256": "7d5bdaef55bfb797ac5e575a17a00c2c0913acd1cecc4933ed9b0bb18bd7ff5b",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          152,
+          152
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-228",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-228.png",
+      "path": "assets/brand/classic/splash/classic-splash-228-v1.png",
+      "sha256": "259cccc425432b91779849aea849d7daa4646b4466335ed82267c54898fd1f88",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          228,
+          228
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-304",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-304.png",
+      "path": "assets/brand/classic/splash/classic-splash-304-v1.png",
+      "sha256": "32775ff64a9625081bed78b7b18102508d670894b60f9794f8a4f7472fb647a2",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          304,
+          304
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "localArtifactPath": "assets/brand/reference/icon-classic.png",
+      "path": "assets/brand/classic/masters/classic-splash-v1.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-splash",
+      "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "configuration",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-288.png",
+      "path": "assets/brand/classic/splash/classic-splash-v1.png",
+      "sha256": "096a335210498e37adefaf56bf7c633fa806d4c2d4d1090d933508a052210d07",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          288,
+          288
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-76",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-76.png",
+      "path": "assets/brand/classic/splash/classic-splash-76-v1.png",
+      "sha256": "f67a8a4d277abdf334adc20114a75531f5070b94a0b2a4605a22860b7956104e",
+      "width": 76,
+      "height": 76,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          76,
+          76
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-114",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-114.png",
+      "path": "assets/brand/classic/splash/classic-splash-114-v1.png",
+      "sha256": "347632848581a370d06ef496526df9a07f682c0d31b1656e4f9ff07123af84b6",
+      "width": 114,
+      "height": 114,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          114,
+          114
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-152",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-152.png",
+      "path": "assets/brand/classic/splash/classic-splash-152-v1.png",
+      "sha256": "7d5bdaef55bfb797ac5e575a17a00c2c0913acd1cecc4933ed9b0bb18bd7ff5b",
+      "width": 152,
+      "height": 152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          152,
+          152
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-228",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-228.png",
+      "path": "assets/brand/classic/splash/classic-splash-228-v1.png",
+      "sha256": "259cccc425432b91779849aea849d7daa4646b4466335ed82267c54898fd1f88",
+      "width": 228,
+      "height": 228,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          228,
+          228
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    },
+    {
+      "role": "native-304",
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/exports/splash-304.png",
+      "path": "assets/brand/classic/splash/classic-splash-304-v1.png",
+      "sha256": "32775ff64a9625081bed78b7b18102508d670894b60f9794f8a4f7472fb647a2",
+      "width": 304,
+      "height": 304,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "splash",
+      "lossless": true,
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "size": [
+          304,
+          304
+        ],
+        "sourceCenterPx": [
+          253.625,
+          215.125
+        ],
+        "dpPerSourcePx": 0.44202084986147105,
+        "layerSizeDp": 288
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/review/splash-candidate-review-r2.png",
+      "sha256": "75b21ca6626a42c56b040703b91caf267cf986072d133ed2825ce57e6374d88b"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/review-r2.json",
+      "sha256": "39f13c3de1983ac98c2db6ba5c8954cb158ce2ce5106e4d117bfbe4bfccaee72"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/review-inspection.json",
+      "sha256": "8ce5bd7b812bd76c6848ff1782489961b385fa4dae807418fbc21ef18f9ebb41"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/color-proposals.json",
+      "sha256": "e5eefef4444f5972bcf7d661b1a20e8103b88b8ce494829709af0e6e1074e29a"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-20261009-01/review/classic-color-proposals.png",
+      "sha256": "9b3a6560ce17b3687a399ab7c79f246bbbc068fa8e00969c9a8115d4b6d8347f"
+    }
+  ],
+  "technicalLimitations": [
+    "Flattened-source alpha and omitted outer glow are inherited from individually approved adaptive isolation.",
+    "Padding/nominal image size requires individual owner review.",
+    "Synthetic safe-circle/phone examples do not establish installed OEM splash appearance or actual startup behavior."
+  ],
+  "safeZoneMeasurements": {
+    "sourceCenterPx": [
+      253.625,
+      215.125
+    ],
+    "targetCriticalRadiusAt288Px": 90,
+    "uniformScaleAt288": 0.44202084986147105,
+    "diagnosticSafeCircleAt288Px": 192,
+    "staticBackground": "#F7F8FA",
+    "nativeImageWidthDp": 76
+  },
+  "staticConfiguration": {
+    "splashBackground": "#F7F8FA",
+    "nativeImageWidthDp": 76
+  },
+  "adaptiveFallbackMeasurement": {
+    "source": "assets/brand/classic/masters/classic-adaptive-background-v1.png",
+    "sha256": "d49487c0f0c578c166764dca49160708cb69275c743e190f48897295aaad281c",
+    "roundedAreaMeanRgb": [
+      247,
+      240,
+      248
+    ]
+  },
+  "adaptiveFallbackColor": "#F7F0F8",
+  "profileBefore": {
+    "path": "docs/design/production-assets/records/classic-splash/profile-before-v1.json",
+    "sha256": "2e7782a6fcb30b33f0f4bb3d0bb8fa891af7499d225d93da020a460c78b8cb1a"
+  }
+}

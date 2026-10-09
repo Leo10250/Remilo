@@ -32,7 +32,7 @@ export function useSettings() {
   const query = useQuery({ queryKey: ['settings'], queryFn: () => engine().getSettings(), enabled: !!Alarm });
   const state = useSyncExternalStore(preferences.subscribe, preferences.snapshot, preferences.snapshot);
   useEffect(() => { if (query.data) preferences.prime(query.data); }, [query.data]);
-  return { ...query, data: state.data ?? query.data, saving: state.saving, saveError: state.error };
+  return { ...query, data: state.data ?? query.data, saving: state.saving, saveError: state.error, preferenceFields: state.fields ?? [] };
 }
 export const preferences = new Preferences({
   read: () => engine().getSettings(),

@@ -15,7 +15,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getSeries(id: string): Promise<Series | null>;
   getSeriesDraft(id: string, nominal: string): Promise<{ template: ResolvedReminderDraft; remainingCount: number | null }>;
   applyCommand(command: Command): Promise<CommandResult>;
-  scheduleTestAlarm(): Promise<CommandResult>;
+  scheduleTestAlarm(operationId: string): Promise<CommandResult>;
   getSettings(): Promise<AppSettings>;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;

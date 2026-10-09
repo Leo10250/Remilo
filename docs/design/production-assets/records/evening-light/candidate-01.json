@@ -1,0 +1,278 @@
+{
+  "assetId": "evening-light",
+  "candidate": 1,
+  "generator": "built-in image_gen",
+  "recordedAtUtc": "2026-10-09T01:28:48.595707+00:00",
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/evening-light/candidate-01.txt",
+    "sha256": "99f1bc6e7ee37916c139010c387042af7cab89b0f55338888f075f5ff42d2d9a"
+  },
+  "inputImages": [
+    {
+      "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+      "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d"
+    },
+    {
+      "path": "docs/design/remilo-r3-atmospheres/05-evening-light.png",
+      "sha256": "eb46e552ee52dc0f0540576d4c34be033d7d8726720f4b05f907622fbe64b0ae"
+    }
+  ],
+  "approvedCompositionAnchor": {
+    "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+    "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d"
+  },
+  "styleDecision": "docs/design/production-assets/style-decision.md",
+  "output": {
+    "localArtifactPath": "verification/local/artwork/evening-light/candidate-01.png",
+    "sha256": "70862a516bf45f3c61a8f52f468db048828ee714c5ca1e5b7b46328ea7708570",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "opaque": true,
+    "embeddedColorProfile": false
+  },
+  "requestedGenerationSizePx": [
+    2048,
+    1152
+  ],
+  "requiredMasterSizePx": [
+    2048,
+    1152
+  ],
+  "masterResolutionRequirementMet": false,
+  "runtime1440x810PossibleWithoutUpscaling": true,
+  "visualInspection": {
+    "sceneIdentity": "Evening Light: mauve and rose sky, coral sunset horizon, a low central sun, purple mountains, dusk conifers and rose/coral lake reflection.",
+    "composition": "Sun position, mountain shoulders, lake shorelines, major conifer placements and smooth bank curves closely follow the approved source; rose/plum lighting and sunset clouds establish Evening.",
+    "abstractTreatment": "Broad smooth banks, simple tree silhouettes and coherent layered mountain planes.",
+    "visibleInterfaceRemnants": false,
+    "note": "Owner approved candidate artwork and review crops. Actual runtime contrast and physical acceptance remain unobserved."
+  },
+  "cropProposal": {
+    "fit": "cover",
+    "profiles": {
+      "hero-360": {
+        "viewportDp": [
+          360,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          6,
+          1672,
+          935
+        ],
+        "normalizedRect": [
+          0.0,
+          0.006376,
+          1.0,
+          0.987248
+        ]
+      },
+      "hero-412": {
+        "viewportDp": [
+          412,
+          200
+        ],
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          64,
+          1672,
+          876
+        ],
+        "normalizedRect": [
+          0.0,
+          0.068013,
+          1.0,
+          0.862912
+        ]
+      },
+      "compact-360": {
+        "viewportDp": [
+          360,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.46
+        ],
+        "sourceRectPx": [
+          0,
+          210,
+          1672,
+          656
+        ],
+        "normalizedRect": [
+          0.0,
+          0.223167,
+          1.0,
+          0.473964
+        ],
+        "toolbarHeightDp": 56
+      },
+      "compact-412": {
+        "viewportDp": [
+          412,
+          96
+        ],
+        "focalNormalized": [
+          0.5,
+          0.46
+        ],
+        "sourceRectPx": [
+          0,
+          238,
+          1672,
+          628
+        ],
+        "normalizedRect": [
+          0.0,
+          0.252922,
+          1.0,
+          0.414453
+        ],
+        "toolbarHeightDp": 56
+      }
+    }
+  },
+  "review": {
+    "localArtifactPath": "verification/local/artwork/evening-light/review-01.png",
+    "sha256": "a24e2a2f3e5d7d3e6b43a8d2fc47237b505aba9f9355554f09d8847af07250d4"
+  },
+  "approval": {
+    "path": "docs/design/production-assets/approvals/evening-light-v1.json",
+    "ownerStatement": "approve",
+    "recordedAtUtc": "2026-10-09T01:30:56.956799+00:00",
+    "scope": "Approval of the presented candidate artwork and reviewed crop direction; original returned source preserved."
+  },
+  "productionFiles": {
+    "source": {
+      "path": "assets/atmospheres/masters/evening-light-v1.png",
+      "sha256": "70862a516bf45f3c61a8f52f468db048828ee714c5ca1e5b7b46328ea7708570",
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "opaque": true,
+      "bytesPreserved": true,
+      "colorSpaceInterpretation": "sRGB; original RGB source retained unchanged",
+      "masterResolutionRequirementMet": false
+    },
+    "runtime": {
+      "path": "assets/atmospheres/evening-light-v1.webp",
+      "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+      "width": 1440,
+      "height": 810,
+      "format": "WebP",
+      "lossless": true,
+      "opaque": true,
+      "colorSpace": "sRGB",
+      "embeddedColorProfile": true,
+      "sourceRectPx": [
+        4,
+        2,
+        1668,
+        938
+      ],
+      "resizeFilter": "Lanczos",
+      "upscaled": false,
+      "cropProfiles": {
+        "hero-360": {
+          "viewportDp": [
+            360,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            5,
+            1440,
+            805
+          ]
+        },
+        "hero-412": {
+          "viewportDp": [
+            412,
+            200
+          ],
+          "focalNormalized": [
+            0.5,
+            0.500534188034188
+          ],
+          "sourceRectPx": [
+            0,
+            56,
+            1440,
+            755
+          ]
+        },
+        "compact-360": {
+          "viewportDp": [
+            360,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            181,
+            1440,
+            565
+          ],
+          "toolbarHeightDp": 56
+        },
+        "compact-412": {
+          "viewportDp": [
+            412,
+            96
+          ],
+          "focalNormalized": [
+            0.5,
+            0.46032051282051284
+          ],
+          "sourceRectPx": [
+            0,
+            205,
+            1440,
+            541
+          ],
+          "toolbarHeightDp": 56
+        }
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "12.3.0",
+        "libwebpVersion": "1.6.0",
+        "settings": {
+          "lossless": true,
+          "quality": 100,
+          "method": 6
+        },
+        "resizeFilter": "Lanczos",
+        "iccInterpretation": "Original untagged RGB interpreted as sRGB; derivative profile attached without color transformation.",
+        "losslessScope": "Exact resized pixels; original source bytes separately preserved."
+      }
+    },
+    "native": {
+      "path": "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_light_v1.webp",
+      "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+      "width": 1440,
+      "height": 810,
+      "identicalToRuntime": true
+    }
+  },
+  "limitation": "Approved original source is 1672 x 941; master target met=False. Runtime export is downsampled without enlargement. No runtime integration or device acceptance claimed."
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Visual Asset Preparation"
+  short_description: "Reference-led artwork, usage checks and approved exports"
+  default_prompt: "Use $prepare-visual-assets to prepare or revise these assets, inspect their references and usage previews, and preserve each individually approved result."
+policy:
+  allow_implicit_invocation: true
