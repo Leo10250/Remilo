@@ -62,8 +62,11 @@ Apply predicates, counts and ordering before pagination.
 
 The shared editor shows Alarm / Notification / No alert inline, with Alarm the
 default. Use a connected single-selection group and a concise description of the
-selected mode; all targets are at least 48 dp. At font scale 1.6 or greater use
-stacked visible choices. Preserve drafts, hidden timing/options, native validation,
+selected mode; all targets are at least 48 dp. Place each mode icon immediately left
+of its label, with the checked indicator at the trailing edge. Selected/focused
+outlines follow the group's rounded outer corners. Stack visible choices whenever
+the available width cannot fit these contents, and always at font scale 1.6 or
+greater; retain body-size labels. Preserve drafts, hidden timing/options, native validation,
 recurrence scopes and the persistent IME-aware Save action. Alarm sound/vibration
 controls appear only in Alarm mode. Selection has checked-state semantics.
 

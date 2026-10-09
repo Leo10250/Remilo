@@ -5,7 +5,10 @@ and selector treatment in the retained reference annotations below. Original ale
 determines Alarm/Notification overdue; No alert uses When/end of its all-day date.
 Ringing Details has one Done and Snooze plus eligible Postpone. The shared editor
 shows Alarm/Notification/No alert inline with checked semantics and at least 48 dp
-targets; font scale ≥1.6 stacks visible choices. Existing draft/IME/save guards remain.
+targets. Each icon sits immediately left of its label; the checked indicator is at
+the trailing edge. Selected/focused outlines follow the group's rounded corners.
+Narrow widths and font scale ≥1.6 stack visible choices with body-size labels.
+Existing draft/IME/save guards remain.
 
 R4/R5 accept twelve representatives of ordinary details, overdue details with
 a postponed alert, creation with Title keyboard focus and independent-timing editing.

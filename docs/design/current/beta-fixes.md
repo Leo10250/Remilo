@@ -60,8 +60,11 @@ artwork/activation approval before promotion; existing approved versions remain.
 
 Native alarms preserve captured session appearance. Loading uses only validated
 non-private appearance; Android notifications receive supported atmospheric accent
-without promising platform-owned popup backgrounds. Recents afterimage repair must
-follow scoped signed-build reproduction/tracing; pending physical evidence does
-not block independent implementation or establish a passed release gate.
+without promising platform-owned popup backgrounds. On 9 October 2026 the owner
+instructed us to disregard the Recents afterimage report after also being unable to
+reproduce it on the emulator. No rendering/lifecycle workaround follows from that
+report. Any future Recents correction requires scoped signed-build reproduction
+and tracing. Pending physical evidence does not block independent implementation
+or establish a passed release gate.
 
 Task status belongs only in [the backlog](../../backlog.md).
