@@ -62,4 +62,34 @@ class RecurrenceTest {
       ZoneId.of("America/Los_Angeles")).first()
     assertEquals(1_800_000L, shifted.eventEndMs - shifted.eventStartMs)
   }
+  @Test fun noAlertUpcomingUsesEventStartWithoutChangingAuthoredAlertOrCount() {
+    val anchor = LocalDateTime.parse("2027-01-01T09:00")
+    val after = Instant.parse("2027-01-01T10:00:00Z").toEpochMilli()
+    for (offset in listOf(-2L * 86_400_000, 2L * 86_400_000)) {
+      val rule = RecurrenceRule(anchor, "daily", count = 3, alarmOffsetMs = offset)
+      val future = Recurrence.future(rule, after, ZoneOffset.UTC, "None").toList()
+      assertEquals(listOf("2027-01-02T09:00", "2027-01-03T09:00"), future.map { it.nominal.toString() })
+      assertEquals(listOf(2, 3), future.map { it.index })
+      assertTrue(future.all { it.alarmAtMs - it.eventStartMs == offset })
+      assertEquals(Recurrence.future(rule, after, ZoneOffset.UTC).toList(),
+        Recurrence.future(rule, after, ZoneOffset.UTC, "Notification").toList())
+    }
+  }
+  @Test fun noAlertSeekIgnoresHiddenOffsetsForUnboundedSeries() {
+    val anchor = LocalDateTime.parse("2020-01-01T09:00")
+    val after = Instant.parse("2027-01-02T10:00:00Z").toEpochMilli()
+    for (offset in listOf(-30L * 86_400_000, 30L * 86_400_000)) {
+      val rule = RecurrenceRule(anchor, "daily", alarmOffsetMs = offset)
+      assertEquals(listOf("2027-01-03T09:00", "2027-01-04T09:00", "2027-01-05T09:00"),
+        Recurrence.future(rule, after, ZoneOffset.UTC, "None").take(3).map { it.nominal.toString() }.toList())
+    }
+  }
+  @Test fun noAlertInvalidMonthlyDaysStillDoNotConsumeCount() {
+    val rule = RecurrenceRule(LocalDateTime.parse("2027-01-31T09:00"), "monthlyDay", count = 3,
+      alarmOffsetMs = 20L * 86_400_000)
+    val after = Instant.parse("2027-02-02T00:00:00Z").toEpochMilli()
+    val future = Recurrence.future(rule, after, ZoneOffset.UTC, "None").toList()
+    assertEquals(listOf("2027-03-31T09:00", "2027-05-31T09:00"), future.map { it.nominal.toString() })
+    assertEquals(listOf(2, 3), future.map { it.index })
+  }
 }

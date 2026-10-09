@@ -123,7 +123,7 @@ class AlarmEngineTest {
     val id = id(create())
     now += 60_000; fire(id)
     val (firstIntent, first) = deliveryNotification()
-    assertEquals(listOf("Stop", "Snooze 10 min"), first.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), first.actions.map { it.title.toString() })
     assertTrue(first.actions.all { it.actionIntent.isImmutable })
     val oldStop = shadowOf(first.actions[0].actionIntent).savedIntent
     assertEquals(1L, oldStop.getLongExtra("generation", -1))
@@ -132,7 +132,7 @@ class AlarmEngineTest {
     request { Unit }
     now += 600_000; fire(id, 2)
     val (_, second) = deliveryNotification()
-    assertEquals(listOf("Stop", "Snooze 10 min"), second.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), second.actions.map { it.title.toString() })
     val newStop = shadowOf(second.actions[0].actionIntent).savedIntent
     assertEquals(2L, newStop.getLongExtra("generation", -1))
     assertNotEquals(first.actions[0].actionIntent, second.actions[0].actionIntent)
@@ -341,7 +341,7 @@ class AlarmEngineTest {
     assertEquals("Reminder", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
     assertEquals("Remilo · alarm ringing", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
     assertFalse(notification.extras.toString().contains("Private title"))
-    assertEquals(listOf("Stop", "Snooze 10 min"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), notification.actions.map { it.title.toString() })
     val done = CompletableFuture<List<Pair<AlertRecord, String>>>()
     val session = request {
       val db = OperationalDatabase.open(context)
@@ -519,7 +519,7 @@ class AlarmEngineTest {
     engine = AlarmEngine(context, os, { now }, { 1L })
     now += 60_000; fire(id)
     val (_, notification) = deliveryNotification()
-    assertEquals("Snooze 15 min", notification.actions[1].title.toString())
+    assertEquals("Snooze · 15 min", notification.actions[1].title.toString())
     action(id, "Snooze", 1, "locked-snooze")
     assertEquals(now + 900_000, os.active[id]!!.targetMs)
   }
@@ -770,7 +770,7 @@ class AlarmEngineTest {
           db.records().insert(ReminderRecord("future-%02d".format(n), "Future $n", now + 86_400_000,
             now + 88_200_000, now + 86_400_000, now, listName = "Work", mode = "None"))
         }
-        db.records().insert(ReminderRecord("overdue", "Overdue", now + 172_800_000, now + 174_600_000, now - 1, now, listName = "Work"))
+        db.records().insert(ReminderRecord("overdue", "Overdue", now + 172_800_000, now + 174_600_000, now - 1, now, listName = "Work", definedAlarmAtMs = now - 172_800_000))
         db.records().insert(ReminderRecord("earlier", "Earlier", now - 86_400_000, now - 84_600_000, now + 3_600_000, now, listName = "Work"))
         db.records().insert(ReminderRecord("complete", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "Work"))
         db.records().insert(ReminderRecord("skip", "Skipped", now, now + 1_800_000, now, now, skipped = true, listName = "Work"))
@@ -822,7 +822,7 @@ class AlarmEngineTest {
     now += 60_000; fire(first); deliveryNotification(); fire(second)
     val (intent, notification) = deliveryNotification()
     val oldSession = intent.getStringExtra("sessionId")!!
-    assertEquals(listOf("Stop all"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Done all (2)", "Snooze all · 10 min"), notification.actions.map { it.title.toString() })
     request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "end-old", "expectedSessionId" to oldSession)) }
     val third = id(create("third")); now += 60_000; fire(third)
     val done = CompletableFuture<Unit>()
@@ -973,7 +973,7 @@ class AlarmEngineTest {
       val db = ContentDatabase.open(context)
       try {
         listOf("Active", "History", "Trash only").forEach { db.records().insertList(ListRecord(it, it, ListNames.key(it), createdAtMs = now)) }
-        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now - 1, now, listName = "Active", listId = "Active"))
+        db.records().insert(ReminderRecord("active-list", "Active", now, now + 1_800_000, now - 1, now, listName = "Active", listId = "Active", definedAlarmAtMs = now - 1))
         db.records().insert(ReminderRecord("completed-list", "Completed", now, now + 1_800_000, now, now, completed = true, listName = "History", listId = "History"))
         db.records().insert(ReminderRecord("deleted-list", "Deleted", now, now + 1_800_000, now, now, deleted = true, listName = "Trash only", listId = "Trash only"))
         db.records().insert(ReminderRecord("duplicate-list", "Duplicate", now, now + 1_800_000, now, now, deleted = true, listName = "History", listId = "History"))
@@ -1245,7 +1245,7 @@ class AlarmEngineTest {
     assertEquals("evening", loading.getStringExtra("atmosphere")); assertEquals("dark", loading.getStringExtra("brightness"))
     assertEquals("Reminder", controls.members.single().second); assertTrue(controls.content.isEmpty())
     assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-    assertEquals(listOf("Stop", "Snooze 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
     assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
     action(first, "Stop", 1, "themed-boot-stop")
     assertEquals("Completed", protectedRows().single().state)
@@ -1289,7 +1289,7 @@ class AlarmEngineTest {
     val (_, notification) = deliveryNotification()
     assertEquals("Private title", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
     assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-    assertEquals(listOf("Stop", "Snooze 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertEquals(listOf("Done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
     assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
   }
   @Test fun identifiedTestAlarmRetriesKeepTheOriginalReminderAndInstant() {

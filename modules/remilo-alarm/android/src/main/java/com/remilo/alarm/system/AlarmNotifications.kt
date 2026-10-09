@@ -48,10 +48,12 @@ class AlarmNotifications(private val context: Context) {
     if (manager.canUseFullScreenIntent()) builder.setFullScreenIntent(open, true)
     if (members.size == 1) {
       val record = members.first().first
-      builder.addAction(Notification.Action.Builder(null, "Stop", AlarmScheduler.action(context, "stop", record)).build())
-      builder.addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
+      builder.addAction(Notification.Action.Builder(null, "Done", AlarmScheduler.capturedAction(context, "done", record)).build())
+      builder.addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
     } else {
-      builder.addAction(Notification.Action.Builder(null, "Stop all", AlarmScheduler.stopAll(context, sessionId)).build())
+      val records = members.map { it.first }
+      builder.addAction(Notification.Action.Builder(null, "Done all (${members.size})", AlarmScheduler.capturedGroup(context, "doneall", sessionId, records)).build())
+      builder.addAction(Notification.Action.Builder(null, "Snooze all · ${records.first().snoozeMinutes} min", AlarmScheduler.capturedGroup(context, "snoozeall", sessionId, records)).build())
     }
     if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, appearance, true))
     return builder.build()
@@ -64,26 +66,29 @@ class AlarmNotifications(private val context: Context) {
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, ATTENTION_CHANNEL)
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Unfinished reminder")
       .setContentText(when (record.state) { "Stopped" -> "Alarm stopped"; "TimedOut" -> "Alarm ended after five minutes";
-        "Missed" -> "Alarm missed"; "Interrupted" -> "Alarm interrupted"; else -> "Alarm could not ring" }).setOnlyAlertOnce(true)
+        "Missed" -> if (record.mode == "Notification") "Notification delivery missed" else "Alarm missed";
+        "Interrupted" -> "Alarm interrupted"; else -> if (record.mode == "Notification") "Notification could not be scheduled" else "Alarm could not ring" }).setOnlyAlertOnce(true)
       .setVisibility(Notification.VISIBILITY_PRIVATE)
       .setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
+      .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
       .build())
   }
-  fun regular(record: AlertRecord, title: String, appearance: AppearancePolicy.Resolved) {
+  fun regular(record: AlertRecord, title: String, appearance: AppearancePolicy.Resolved, onlyAlertOnce: Boolean = false) {
     if (!allowed()) return
     val public = Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Reminder")
-      .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
+      .setContentText("Reminder · tap to review").setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PUBLIC).setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build()).build()
+      .addAction(Notification.Action.Builder(null, "Done", AlarmScheduler.capturedAction(context, "done", record)).build())
+      .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build()).build()
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(title)
-      .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
+      .setContentText("Reminder · tap to review").setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(public).setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
+      .addAction(Notification.Action.Builder(null, "Done", AlarmScheduler.capturedAction(context, "done", record)).build())
+      .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
       .build())
   }
   private fun openReminder(id: String): PendingIntent = PendingIntent.getActivity(context, 0,

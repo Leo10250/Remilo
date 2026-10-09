@@ -39,10 +39,19 @@ data class ActionRecord(@PrimaryKey val operationId: String, val occurrenceId: S
 @Entity(tableName = "completion_receipts")
 data class CompletionReceipt(@PrimaryKey val operationId: String, val kind: String,
   val occurrenceId: String?, val expectedGeneration: Long?, val sessionId: String?,
-  val generation: Long?, val count: Int)
+  val generation: Long?, val count: Int,
+  @ColumnInfo(defaultValue = "NULL") val snapshotKey: String? = null)
 @Entity(tableName = "pending_completions")
 data class PendingCompletion(@PrimaryKey val operationId: String, val occurrenceId: String,
   val generation: Long, val occurredAtMs: Long)
+/** Frozen group intent and registration acknowledgements, never private content. */
+@Entity(tableName = "bulk_snooze_receipts")
+data class BulkSnoozeReceipt(@PrimaryKey val operationId: String, val sessionId: String,
+  val snapshotKey: String, val occurredAtMs: Long, val targetMs: Long, val snoozeMinutes: Int,
+  val settled: Boolean = false)
+@Entity(tableName = "bulk_snooze_members", primaryKeys = ["operationId", "occurrenceId"])
+data class BulkSnoozeMember(val operationId: String, val occurrenceId: String,
+  val expectedGeneration: Long, val generation: Long, val status: String = "Pending")
 @Dao interface OperationalDao {
   @Query("SELECT * FROM alerts") fun all(): List<AlertRecord>
   @Query("SELECT * FROM alerts WHERE occurrenceId = :id") fun find(id: String): AlertRecord?
@@ -65,15 +74,27 @@ data class PendingCompletion(@PrimaryKey val operationId: String, val occurrence
   @Query("SELECT * FROM pending_completions ORDER BY occurredAtMs, operationId") fun completions(): List<PendingCompletion>
   @Insert fun completion(record: PendingCompletion)
   @Query("DELETE FROM pending_completions WHERE operationId = :id") fun acknowledgeCompletion(id: String)
+  @Query("SELECT * FROM bulk_snooze_receipts WHERE operationId = :id") fun bulkSnoozeReceipt(id: String): BulkSnoozeReceipt?
+  @Query("SELECT * FROM bulk_snooze_receipts WHERE settled = 0") fun pendingBulkSnoozes(): List<BulkSnoozeReceipt>
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeReceipt(record: BulkSnoozeReceipt)
+  @Query("SELECT * FROM bulk_snooze_members WHERE operationId = :id ORDER BY occurrenceId") fun bulkSnoozeMembers(id: String): List<BulkSnoozeMember>
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class], version = 5, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class], version = 6, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE completion_receipts ADD COLUMN snapshotKey TEXT DEFAULT NULL")
+        db.execSQL("CREATE TABLE IF NOT EXISTS bulk_snooze_receipts (operationId TEXT NOT NULL PRIMARY KEY, sessionId TEXT NOT NULL, snapshotKey TEXT NOT NULL, occurredAtMs INTEGER NOT NULL, targetMs INTEGER NOT NULL, snoozeMinutes INTEGER NOT NULL, settled INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS bulk_snooze_members (operationId TEXT NOT NULL, occurrenceId TEXT NOT NULL, expectedGeneration INTEGER NOT NULL, generation INTEGER NOT NULL, status TEXT NOT NULL, PRIMARY KEY(operationId, occurrenceId))")
+      }
+    }
     val MIGRATION_4_5 = object : Migration(4, 5) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS completion_receipts (operationId TEXT NOT NULL PRIMARY KEY, kind TEXT NOT NULL, occurrenceId TEXT, expectedGeneration INTEGER, sessionId TEXT, generation INTEGER, count INTEGER NOT NULL)")

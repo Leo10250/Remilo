@@ -16,6 +16,14 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   private val alerts get() = operational.records()
   private fun unlocked() = context.getSystemService(UserManager::class.java).isUserUnlocked
   private fun zone() = ZoneId.systemDefault()
+  private fun scheduledAt(slot: ResolvedSlot, mode: String): Long =
+    if (mode == "None") slot.eventStartMs else slot.alarmAtMs
+  private fun scheduledAt(alert: AlertRecord, rule: RecurrenceRule): Long {
+    if (alert.mode != "None") return alert.targetMs
+    val resolved = Recurrence.resolve(if (alert.resolvedZone.isEmpty()) rule else rule.copy(zoneId = alert.resolvedZone),
+      LocalDateTime.parse(alert.nominalSlot), zone())
+    return resolved.eventStartMs
+  }
   fun template(series: SeriesRecord): ReminderRecord = BackupCodec.decodeRecord(JSONObject(series.template)).let { record ->
     record.copy(listName = record.listId?.let { db().records().list(it)?.name }.orEmpty())
   }
@@ -46,11 +54,11 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       endOffsetMs = if (record.allDay) 86_400_000 else record.eventEndMs - record.eventStartMs,
       dueOffsetMs = if (record.allDay && record.dueLinked) 86_400_000 else Duration.between(anchor, local(record.dueAtMs)).toMillis(),
       alarmOffsetMs = if (record.allDay && record.alarmLinked) 9 * 3_600_000 else
-        Duration.between(anchor, local(record.definedAlarmAtMs!!)).toMillis())
+        Duration.between(anchor, local(record.definedAlarmAtMs ?: record.eventStartMs)).toMillis())
   }
   fun preview(record: ReminderRecord, spec: Map<String, Any?>): List<Map<String, Any?>> {
     val rule = rule(record, spec)
-    return Recurrence.future(rule, now(), zone()).take(3).map { slot ->
+    return Recurrence.future(rule, now(), zone(), record.mode).take(3).map { slot ->
       mapOf("nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs,
         "dueAtMs" to slot.dueAtMs, "alarmAtMs" to slot.alarmAtMs, "adjusted" to slot.adjusted, "zoneId" to slot.zoneId)
     }.toList()
@@ -73,7 +81,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       val resolved = resolveRecord(segment, alert.nominalSlot!!, alert.occurrenceId, alert.resolvedZone)
       if (existing == null) dao.insert(resolved.copy(exception = alert.exception, skipped = alert.state in setOf("Skipped", "Replaced")))
       else if (alert.exception && !existing.exception) dao.update(existing.copy(exception = true))
-      else if (!existing.exception && !alert.exception && alert.targetMs > now() &&
+      // Eligibility uses the retained private schedule. Travel can move a future
+      // No alert slot into the past; its newly resolved DP zone must still project.
+      else if (!existing.exception && !alert.exception && (if (alert.mode == "None") existing.eventStartMs else alert.targetMs) > now() &&
         alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused", "NoAlert"))
         dao.update(resolved.copy(revision = existing.revision, createdAtMs = existing.createdAtMs,
           completed = existing.completed, deleted = existing.deleted, skipped = existing.skipped))
@@ -84,9 +94,10 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   fun get(id: String): Map<String, Any?>? = db().records().series(id)?.let { series ->
     val rule = RuleCodec.decode(series.rule)
     val rows = alerts.all().filter { it.segmentId == id }
-    val future = Recurrence.future(rule, now(), zone()).take(3).toList()
+    val original = template(series)
+    val future = Recurrence.future(rule, now(), zone(), original.mode).take(3).toList()
     mapOf("id" to series.id, "seriesId" to series.seriesId, "revision" to series.revision,
-      "state" to series.state, "exhausted" to future.isEmpty(), "template" to BackupCodec.record(template(series)),
+      "state" to series.state, "exhausted" to future.isEmpty(), "template" to BackupCodec.record(original),
       "rule" to RuleCodec.map(rule), "registered" to rows.count { !it.exception && it.state == "Scheduled" && it.targetMs > now() },
       "pending" to rows.count { !it.exception && it.state == "Blocked" && it.targetMs > now() },
       "upcoming" to future.map { mapOf("nominalSlot" to it.nominal.toString(), "eventStartMs" to it.eventStartMs, "alarmAtMs" to it.alarmAtMs) })
@@ -103,7 +114,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       val representative = (ordinary.ifEmpty { segments }).sortedWith(
         compareByDescending<SeriesRecord> { it.createdAtMs }.thenBy { it.id }).first()
       val candidates = ordinary.flatMap { segment ->
-        Recurrence.future(RuleCodec.decode(segment.rule), at, zone()).filter { slot ->
+        Recurrence.future(RuleCodec.decode(segment.rule), at, zone(), template(segment).mode).filter { slot ->
           val id = occurrenceId(segment.id, slot.nominal.toString())
           val record = records[id]
           val delivery = deliveries[id]
@@ -129,7 +140,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   fun editDraft(id: String, nominal: String): Map<String, Any?> {
     val segment = requireNotNull(db().records().series(id))
     val rule = RuleCodec.decode(segment.rule)
-    val selected = Recurrence.future(rule, -367L * 86_400_000, zone())
+    val selected = Recurrence.future(rule, -367L * 86_400_000, zone(), template(segment).mode)
       .takeWhile { it.nominal <= LocalDateTime.parse(nominal) }.lastOrNull()
     require(selected?.nominal.toString() == nominal) { "Choose an original series slot." }
     return mapOf("template" to BackupCodec.record(editTemplate(id, nominal)),
@@ -141,7 +152,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       require(it.kind == "CreateSeries"); recover(); return mapOf("status" to "Applied", "segmentId" to it.occurrenceId)
     }
     val rule = rule(record, spec)
-    require(Recurrence.future(rule, now(), zone()).any()) { "No future occurrences. Change the rule or its ending." }
+    require(Recurrence.future(rule, now(), zone(), record.mode).any()) { "No future occurrences. Change the rule or its ending." }
     val id = UUID.randomUUID().toString()
     val series = SeriesRecord(id, id, encodeTemplate(record), RuleCodec.encode(rule), createdAtMs = now())
     db().runInTransaction {
@@ -157,7 +168,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     "segmentId" to id)
   private fun fence(series: SeriesRecord, from: LocalDateTime? = null) {
     alerts.plan(series.id)?.let { alerts.plan(it.copy(state = "Changing")) }
-    alerts.all().filter { it.segmentId == series.id && !it.exception && it.targetMs > now() &&
+    val rule = RuleCodec.decode(series.rule)
+    alerts.all().filter { it.segmentId == series.id && !it.exception && scheduledAt(it, rule) > now() &&
       it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert", "Paused") &&
       (from == null || LocalDateTime.parse(it.nominalSlot) >= from) }.forEach { alert ->
       alerts.put(alert.copy(state = "SeriesChanging", previousState = alert.state, generation = alert.generation + 1))
@@ -180,7 +192,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       editDraft(id, following.toString()) // Only an actual original slot can split a series.
     }
     val nextRule = if (record != null) rule(record, command["recurrence"] as Map<String, Any?>) else priorRule
-    if (record != null) require(Recurrence.future(nextRule, now(), zone()).any()) { "No future occurrences. Change the rule or its ending." }
+    if (record != null) require(Recurrence.future(nextRule, now(), zone(), record.mode).any()) { "No future occurrences. Change the rule or its ending." }
     val nextId = if (record == null) id else UUID.randomUUID().toString()
     val related = dao.series().filter { it.seriesId == old.seriesId && it.state != "Archived" &&
       (following == null || it.id == old.id || RuleCodec.decode(it.rule).anchor >= following) }
@@ -231,9 +243,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       // outage. These rows are silent; they never dispatch presentation.
       plan.materializedThrough?.let { cursor ->
         val nominal = LocalDateTime.parse(cursor)
-        val boundary = Recurrence.resolve(rule, nominal, zone()).alarmAtMs
-        val elapsedSlots = Recurrence.future(rule, boundary - 1, zone()).filter { it.nominal > nominal }
-          .takeWhile { it.alarmAtMs <= now() }.toList()
+        val boundary = scheduledAt(Recurrence.resolve(rule, nominal, zone()), plan.mode)
+        val elapsedSlots = Recurrence.future(rule, boundary - 1, zone(), plan.mode).filter { it.nominal > nominal }
+          .takeWhile { scheduledAt(it, plan.mode) <= now() }.toList()
         operational.runInTransaction { elapsedSlots.forEach { slot ->
           val id = occurrenceId(plan.id, slot.nominal.toString())
           if (alerts.find(id) == null) alerts.put(AlertRecord(id, slot.alarmAtMs, 1, if (plan.mode == "None") "NoAlert" else "Missed", mode = plan.mode,
@@ -244,11 +256,11 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       val rows = alerts.all().filter { it.segmentId == plan.id }
       // Elapsed delivery is never revived by travel/recovery. The receiver itself
       // may still handle its ordinary callback within the lateness window.
-      rows.filter { !it.exception && it.targetMs <= now() && it.state in setOf("Paused") }.forEach {
+      rows.filter { !it.exception && scheduledAt(it, rule) <= now() && it.state in setOf("Paused") }.forEach {
         alerts.put(it.copy(state = if (it.mode == "None") "NoAlert" else "Missed", generation = it.generation + 1))
       }
       if (plan.resolvedZone != resolvedZone) {
-        rows.filter { !it.exception && it.targetMs > now() && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->
+        rows.filter { !it.exception && scheduledAt(it, rule) > now() && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->
           val slot = Recurrence.resolve(rule, LocalDateTime.parse(old.nominalSlot), zone())
           alerts.put(old.copy(targetMs = slot.alarmAtMs, resolvedZone = resolvedZone, generation = old.generation + 1, state = "Pending"))
           try { scheduler.cancel(old) } catch (_: Exception) { /* old callback fenced */ }
@@ -256,9 +268,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         alerts.plan(plan.copy(resolvedZone = resolvedZone))
       }
       val eligible = setOf("Scheduled", "Pending", "Blocked", "Paused", "NoAlert")
-      val candidates = Recurrence.future(rule, now(), zone()).filter { slot ->
+      val candidates = Recurrence.future(rule, now(), zone(), plan.mode).filter { slot ->
         val existing = alerts.find(occurrenceId(plan.id, slot.nominal.toString()))
-        existing == null || (!existing.exception && existing.targetMs > now() && existing.state in eligible)
+        existing == null || (!existing.exception && scheduledAt(existing, rule) > now() && existing.state in eligible)
       }.take(2).toList()
       candidates.forEach { slot ->
         val nominal = slot.nominal.toString()

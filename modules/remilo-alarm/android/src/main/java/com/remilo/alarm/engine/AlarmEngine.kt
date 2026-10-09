@@ -11,6 +11,8 @@ import com.remilo.alarm.core.AlarmPolicy
 import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.core.CivilTime
 import com.remilo.alarm.core.Recurrence
+import com.remilo.alarm.core.DeliverySnapshot
+import com.remilo.alarm.core.OverduePolicy
 import com.remilo.alarm.data.*
 import com.remilo.alarm.system.*
 import java.util.UUID
@@ -29,7 +31,8 @@ class AlarmEngine internal constructor(private val context: Context,
   private val appearanceZone: () -> ZoneId = ZoneId::systemDefault,
   private val systemDark: () -> Boolean = { (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES },
   private val beforeAppearanceWrite: () -> Unit = {},
-  private val completionCheckpoint: (String) -> Unit = {}) {
+  private val completionCheckpoint: (String) -> Unit = {},
+  private val bulkSnoozeCheckpoint: (String) -> Unit = {}) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
@@ -51,6 +54,7 @@ class AlarmEngine internal constructor(private val context: Context,
       // A surviving row from a prior process is evidence of interruption, not a
       // request to restart playback. Monotonic values never cross process recovery.
       alerts.activeSession()?.let { endSession(it.id, "Interrupted") }
+      alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
       if (unlocked()) try { mirrorAppearance(prepareContentActions().records().settings() ?: SettingsRecord()) }
       catch (_: Exception) { /* Presentation recovery must not block autonomous delivery. */ }
     }
@@ -112,16 +116,21 @@ class AlarmEngine internal constructor(private val context: Context,
     }
   }
 
-  fun capabilities(): Map<String, Any> {
+  fun capabilities(): Map<String, Any?> {
     val manager = context.getSystemService(NotificationManager::class.java)
     val channel = manager.getNotificationChannel(AlarmNotifications.RINGING_CHANNEL)
     val notificationChannel = manager.getNotificationChannel(AlarmNotifications.NOTIFICATION_CHANNEL)
+    val active = alerts.activeSession()
+    val members = active?.let { alerts.members(it.id) }.orEmpty()
     return mapOf("exactAlarms" to scheduler.canSchedule(),
       "notifications" to manager.areNotificationsEnabled(),
       "channelEnabled" to (channel == null || channel.importance != NotificationManager.IMPORTANCE_NONE),
       "notificationChannelEnabled" to (notificationChannel == null || notificationChannel.importance != NotificationManager.IMPORTANCE_NONE),
       "fullScreen" to manager.canUseFullScreenIntent(), "unlocked" to unlocked(),
-      "activeSessionId" to (alerts.activeSession()?.id ?: ""),
+      "activeSessionId" to (active?.id ?: ""),
+      "activeSessionActions" to if (active != null && members.isNotEmpty()) mapOf(
+        "sessionId" to active.id, "members" to DeliverySnapshot.maps(members.map { DeliverySnapshot.Member(it.occurrenceId, it.generation) }),
+        "snoozeMinutes" to members.first().snoozeMinutes) else null,
       "observedAtMs" to now())
   }
 
@@ -151,15 +160,15 @@ class AlarmEngine internal constructor(private val context: Context,
             (record.listId?.let { db.records().list(it)?.name } ?: record.listName) == filter["listName"]) &&
         (filter["deliveryIssuesOnly"] != true || (record.mode != "None" && alerts.find(record.id)?.state in
           setOf("Missed", "TimedOut", "Interrupted", "Blocked", "Failed"))) &&
-        (filter["overdueOnly"] != true || (!record.deleted && !record.completed && !record.skipped && record.dueAtMs < queryNow))
+        (filter["overdueOnly"] != true || overdue(record, queryNow))
     val records = db.records().all().filter { record ->
       val alert = alerts.find(record.id)
       val selected = when (filter["view"]) {
         "deleted" -> record.deleted
         "history" -> !record.deleted && (record.completed || record.skipped)
         "completed" -> !record.deleted && (record.completed || (filter["includeSkipped"] == true && record.skipped))
-        "overdue" -> !record.deleted && !record.completed && !record.skipped && record.dueAtMs < queryNow
-        "attention" -> !record.deleted && !record.completed && !record.skipped && (record.dueAtMs < queryNow ||
+        "overdue" -> overdue(record, queryNow)
+        "attention" -> !record.deleted && !record.completed && !record.skipped && (overdue(record, queryNow) ||
           alert?.state in setOf("Missed", "Stopped", "TimedOut", "Interrupted", "Blocked", "Failed", "Notified", "Changing"))
         "today" -> !record.deleted && !record.completed && !record.skipped && agendaAt(record, alert) in start until end
         "upcoming" -> !record.deleted && !record.completed && !record.skipped && agendaAt(record, alert) >= end
@@ -175,13 +184,14 @@ class AlarmEngine internal constructor(private val context: Context,
     } else emptyMap()
     val ordered = if (filter["view"] in setOf("agenda", "overdue", "today", "upcoming", "attention")) records.sortedWith(
       compareBy<ReminderRecord> { com.remilo.alarm.core.Agenda.rank(com.remilo.alarm.core.Agenda.group(
-        agendaAt(it), it.dueAtMs, it.completed, it.skipped, queryNow, zone)) }.thenBy { agendaAt(it) }.thenBy { it.id })
+        agendaAt(it), overdueAt(it), it.completed, it.skipped, queryNow, zone)) }
+        .thenBy { if (overdue(it, queryNow)) overdueAt(it) else agendaAt(it) }.thenBy { it.id })
       else if (historical) records.sortedWith(
         compareByDescending<ReminderRecord> { collectionTimes.getValue(it.id) }.thenByDescending { it.eventStartMs }.thenBy { it.id })
       else records.sortedWith(compareBy<ReminderRecord> { it.eventStartMs }.thenBy { it.id })
     val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
     val page = ordered.drop(offset).take(50)
-    val groups = ordered.groupingBy { com.remilo.alarm.core.Agenda.group(agendaAt(it), it.dueAtMs,
+    val groups = ordered.groupingBy { com.remilo.alarm.core.Agenda.group(agendaAt(it), overdueAt(it),
       it.completed, it.skipped, queryNow, zone) }.eachCount()
     val completedCount = db.records().all().count { !it.deleted && it.completed && matches(it) }
     return mapOf("items" to page.map { view(it, queryNow, zone) },
@@ -202,7 +212,11 @@ class AlarmEngine internal constructor(private val context: Context,
       ?: record.eventStartMs
   }
   private fun agendaAt(record: ReminderRecord, alert: AlertRecord? = alerts.find(record.id)): Long =
-    if (record.mode == "None") record.dueAtMs else alert?.targetMs ?: record.definedAlarmAtMs ?: record.eventStartMs
+    if (record.mode == "None") record.eventStartMs else alert?.targetMs ?: record.definedAlarmAtMs ?: record.eventStartMs
+  private fun overdueAt(record: ReminderRecord): Long = OverduePolicy.reference(record.mode, record.eventStartMs,
+    record.definedAlarmAtMs, record.allDay, ZoneId.of(record.zoneId.ifEmpty { ZoneId.systemDefault().id }))
+  private fun overdue(record: ReminderRecord, at: Long): Boolean =
+    OverduePolicy.isOverdue(overdueAt(record), record.completed, record.skipped, record.deleted, at)
   private fun view(record: ReminderRecord, queryNow: Long = now(), zone: ZoneId = ZoneId.systemDefault()): Map<String, Any?> {
     val alert = alerts.find(record.id)
     val adjustment = if (alert?.state == "Scheduled") content().records().history(record.id)
@@ -221,11 +235,12 @@ class AlarmEngine internal constructor(private val context: Context,
       "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs), "allDay" to record.allDay,
       "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id }, "dueLinked" to record.dueLinked,
       "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
-      "vibration" to record.vibration, "overdue" to (!record.completed && !record.deleted && !record.skipped && record.dueAtMs < queryNow),
+      "vibration" to record.vibration, "overdue" to overdue(record, queryNow), "overdueAtMs" to overdueAt(record),
+      "quickSnoozeMinutes" to (alert?.snoozeMinutes ?: (content().records().settings() ?: SettingsRecord()).snoozeMinutes),
       "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
       "seriesState" to segment?.state, "repeatSummary" to repeat, "repeatRule" to repeatRule,
       "alertAdjustment" to when (adjustment) { "Snooze" -> "Snoozed"; "Postpone" -> "Postponed"; else -> null },
-      "agendaGroup" to com.remilo.alarm.core.Agenda.group(agendaAt(record, alert), record.dueAtMs, record.completed,
+      "agendaGroup" to com.remilo.alarm.core.Agenda.group(agendaAt(record, alert), overdueAt(record), record.completed,
         record.skipped, queryNow, zone)) +
       if (record.completed || record.deleted || record.skipped) mapOf("collectionAtMs" to collectionTime(record)) else emptyMap()
   }
@@ -369,12 +384,15 @@ class AlarmEngine internal constructor(private val context: Context,
       "tomorrowEvening" to settings.tomorrowEvening, "sound" to settings.sound,
       "vibration" to settings.vibration, "theme" to settings.theme, "atmosphere" to AppearancePolicy.selection(settings.atmosphere))
   }
-  private fun listView(list: ListRecord): Map<String, Any> = mapOf("id" to list.id, "name" to list.name,
+  private fun listView(list: ListRecord): Map<String, Any> = listView(list, now())
+  private fun listView(list: ListRecord, queryNow: Long): Map<String, Any> = mapOf("id" to list.id, "name" to list.name,
     "revision" to list.revision, "overdueCount" to content().records().all().count {
-      it.listId == list.id && !it.completed && !it.deleted && !it.skipped && it.dueAtMs < now()
+      it.listId == list.id && overdue(it, queryNow)
     })
   fun lists(): List<Map<String, Any>> {
-    return prepareContentActions().records().lists().map(::listView)
+    val records = prepareContentActions().records().lists()
+    val queryNow = now()
+    return records.map { listView(it, queryNow) }
   }
   private fun mutateList(operation: String, command: Map<String, Any?>): Map<String, Any?> {
     val dao = content().records(); val kind = command["kind"] as String
@@ -475,7 +493,7 @@ class AlarmEngine internal constructor(private val context: Context,
     catch (_: Exception) { AppearancePolicy.captured(null, null) }
   }
   fun diagnostics(): Map<String, Any> { prepareContentActions(); return mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 5, "operationalSchema" to 5,
+    "contentSchema" to 5, "operationalSchema" to 6,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to (content().records().pending().size + alerts.completions().size)) }
   fun exportBackup(): String {
@@ -497,7 +515,8 @@ class AlarmEngine internal constructor(private val context: Context,
     } + families.map { (id, segments) ->
       val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
       mapOf("id" to id, "title" to "${series.template(segment).title} (series)", "conflict" to (id in localFamilies || segments.any { dao.series(it.id) != null }),
-        "futureAlert" to segments.any { it.state == "Active" && Recurrence.future(RuleCodec.decode(it.rule), now(), ZoneId.systemDefault()).any() })
+        "futureAlert" to segments.any { current -> val mode = series.template(current).mode
+          current.state == "Active" && mode != "None" && Recurrence.future(RuleCodec.decode(current.rule), now(), ZoneId.systemDefault(), mode).any() })
     }
     val restored = restoredLists(bundle).first
     return mapOf("count" to items.size, "items" to items, "lists" to bundle.lists.map { source ->
@@ -617,9 +636,10 @@ class AlarmEngine internal constructor(private val context: Context,
     val operationId = command["operationId"] as? String
       ?: throw InputError("operationId", "Try this action again.")
     validate(operationId.isNotBlank() && operationId.length <= 200, "operationId", "Try this action again.")
-    if (command["kind"] !in setOf("Stop", "StopAll", "Snooze", "Postpone")) {
+    if (command["kind"] !in setOf("Stop", "StopAll", "CompleteDelivery", "DoneAll", "SnoozeAll", "Snooze", "Postpone")) {
       prepareContentActions()
-      if (alerts.completionReceipt(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+      if (alerts.completionReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null)
+        return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     }
     return when (command["kind"]) {
       "Create" -> create(operationId, command)
@@ -651,7 +671,14 @@ class AlarmEngine internal constructor(private val context: Context,
       "Settings" -> updateSettings(operationId, command)
       "CreateList", "RenameList", "RemoveList" -> mutateList(operationId, command)
       "StopAll" -> stopAll(operationId, text(command, "expectedSessionId", "", 200))
-      "Stop", "Snooze", "Postpone" -> {
+      "DoneAll", "SnoozeAll" -> {
+        val sessionId = text(command, "expectedSessionId", "", 200)
+        validate(sessionId.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
+        val captured = capturedMembers(command["members"])
+        val minutes = if (command["kind"] == "SnoozeAll") integer(command["snoozeMinutes"], "snoozeMinutes", 1, 1440) else null
+        applySessionAction(operationId, sessionId, captured, minutes)
+      }
+      "Stop", "CompleteDelivery", "Snooze", "Postpone" -> {
         val id = command["occurrenceId"] as? String
           ?: throw InputError("occurrenceId", "Choose an existing reminder.")
         validate(id.isNotBlank() && id.length <= 200, "occurrenceId", "Choose an existing reminder.")
@@ -661,8 +688,9 @@ class AlarmEngine internal constructor(private val context: Context,
           "expectedGeneration", "Refresh this reminder and try again.")
         val generation = number.toLong()
         val at = if (command["kind"] == "Postpone") epoch(command["alarmAtMs"], "alarmAtMs") else null
-        if (at != null) validate(at > now(), "alarmAtMs", "Choose an alert time in the future.")
-        applyAction(id, generation, command["kind"] as String, operationId, at)
+        val expectedMinutes = if (command["kind"] == "Snooze" && command.containsKey("expectedSnoozeMinutes"))
+          integer(command["expectedSnoozeMinutes"], "expectedSnoozeMinutes", 1, 1440) else null
+        applyAction(id, generation, command["kind"] as String, operationId, at, expectedMinutes)
       }
       else -> mapOf("status" to "Rejected", "errorCode" to "UNSUPPORTED_COMMAND", "errorField" to "kind")
     }
@@ -718,7 +746,8 @@ class AlarmEngine internal constructor(private val context: Context,
       }
       val product = db.records().find(pending.occurrenceId)
       val segment = product?.segmentId?.let { db.records().series(it) }
-      val resolved = if (segment != null && product.nominalSlot != null && !product.exception && pending.targetMs > now())
+      val resolved = if (segment != null && product.nominalSlot != null && !product.exception &&
+          (if (product.mode == "None") product.eventStartMs else pending.targetMs) > now())
         Recurrence.resolve(RuleCodec.decode(segment.rule), java.time.LocalDateTime.parse(product.nominalSlot), ZoneId.systemDefault()) else null
       val desired = AlertRecord(pending.occurrenceId, resolved?.alarmAtMs ?: pending.targetMs, pending.generation,
         when {
@@ -726,11 +755,13 @@ class AlarmEngine internal constructor(private val context: Context,
           db.records().find(pending.occurrenceId)?.deleted == true -> "Deleted"
           db.records().find(pending.occurrenceId)?.skipped == true -> "Skipped"
           db.records().find(pending.occurrenceId)?.let { it.segmentId != null && !it.exception &&
-            db.records().series(it.segmentId)?.state == "Paused" && pending.targetMs > now() } == true -> "Paused"
+            db.records().series(it.segmentId)?.state == "Paused" &&
+            (if (it.mode == "None") it.eventStartMs else pending.targetMs) > now() } == true -> "Paused"
           pending.eligible -> "Pending"
           else -> "Missed"
         },
-        mode = pending.mode, sound = pending.sound, vibration = pending.vibration, snoozeMinutes = pending.snoozeMinutes,
+        mode = pending.mode, sound = pending.sound, vibration = pending.vibration,
+        snoozeMinutes = (db.records().settings() ?: SettingsRecord()).snoozeMinutes,
         segmentId = db.records().find(pending.occurrenceId)?.segmentId,
         nominalSlot = db.records().find(pending.occurrenceId)?.nominalSlot,
         exception = db.records().find(pending.occurrenceId)?.exception ?: false,
@@ -748,63 +779,91 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   private fun actionRecord(id: String, kind: String, generation: Long, operationId: String = UUID.randomUUID().toString(), targetMs: Long? = null) =
     ActionRecord(operationId, id, kind, now(), generation, targetMs)
+  private fun acknowledgedActionResult(current: AlertRecord, kind: String, generation: Long, targetMs: Long?): Map<String, Any?> {
+    // A receipt acknowledges the mutation, but must not claim its unchanged target
+    // was scheduled when registration is still blocked or pending. Later actions
+    // retain their own state; replaying this receipt only acknowledges its old result.
+    val status = if (kind in setOf("Snooze", "Postpone") && current.generation == generation &&
+        targetMs != null && current.targetMs == targetMs && current.state in setOf("Blocked", "Pending")) current.state else "Applied"
+    return mapOf("status" to status, "generation" to if (kind == "Stop") current.generation else generation)
+  }
 
-  private fun applyAction(id: String, expected: Long, kind: String, operationId: String, targetMs: Long? = null): Map<String, Any?> {
+  private fun applyAction(id: String, expected: Long, kind: String, operationId: String, targetMs: Long? = null,
+    expectedSnoozeMinutes: Int? = null): Map<String, Any?> {
+    if (alerts.bulkSnoozeReceipt(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     alerts.completionReceipt(operationId)?.let { receipt ->
-      if (kind != "Stop" || receipt.kind != kind || receipt.occurrenceId != id || receipt.expectedGeneration != expected)
+      if (kind !in setOf("Stop", "CompleteDelivery") || receipt.kind != kind || receipt.occurrenceId != id || receipt.expectedGeneration != expected)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       if (unlocked()) prepareContentActions()
       return completionResult(receipt)
     }
     // Stop's protected commit and sound termination precede CE projection. The
     // narrow legacy receipt lookups below preserve old retry semantics.
-    if (kind != "Stop" && unlocked()) prepareContentActions()
+    if (kind !in setOf("Stop", "CompleteDelivery") && unlocked()) prepareContentActions()
     val old = alerts.find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
     val receipt = alerts.action(operationId)
     if (receipt != null) {
-      if (receipt.occurrenceId != id || receipt.kind != kind) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-      return mapOf("status" to "Applied", "generation" to old.generation)
+      if (receipt.occurrenceId != id || receipt.kind != kind ||
+          (kind in setOf("Snooze", "Postpone") && (receipt.generation != expected + 1 ||
+            (kind == "Postpone" && receipt.targetMs != null && receipt.targetMs != targetMs))) ||
+          (kind == "Snooze" && expectedSnoozeMinutes != null &&
+            (receipt.targetMs == null || receipt.targetMs - receipt.occurredAtMs != expectedSnoozeMinutes * 60_000L)))
+        return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+      return acknowledgedActionResult(old, kind, receipt.generation, receipt.targetMs)
     }
     if (unlocked()) content().records().receipt(operationId)?.let {
       return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     }
     if (unlocked()) content().records().historyOperation(operationId)?.let {
-      return mapOf("status" to if (it.kind == kind && it.occurrenceId == id) "Applied" else "Rejected", "generation" to old.generation)
+      val matches = it.kind == kind && it.occurrenceId == id && (kind !in setOf("Snooze", "Postpone") ||
+        (it.generation == expected + 1 && (kind != "Postpone" || it.targetMs == null || it.targetMs == targetMs))) &&
+        (kind != "Snooze" || expectedSnoozeMinutes == null ||
+          (it.targetMs != null && it.targetMs - it.occurredAtMs == expectedSnoozeMinutes * 60_000L))
+      return if (matches) acknowledgedActionResult(old, kind, it.generation, it.targetMs)
+        else mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     }
     if (old.generation != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_GENERATION",
       "errorField" to "expectedGeneration", "generation" to old.generation)
     if (old.state in setOf("Completed", "Deleted", "Changing", "SeriesChanging", "Skipped", "Replaced", "Paused") || old.mode == "None")
       return mapOf("status" to "Rejected", "errorCode" to "NOT_ELIGIBLE", "errorMessage" to "This reminder has no eligible alert. Refresh it first.")
     if (kind == "Stop" && old.state != "Alerting") return mapOf("status" to "Rejected", "errorCode" to "NOT_RINGING")
-    if (kind == "Stop") {
+    if (kind == "CompleteDelivery" && old.state != "Alerting" && !(old.mode == "Notification" && old.state == "Notified"))
+      return mapOf("status" to "Rejected", "errorCode" to "NOT_DELIVERED", "errorMessage" to "That delivery has ended. Refresh this reminder.")
+    if (kind in setOf("Stop", "CompleteDelivery")) {
       val receipt = CompletionReceipt(operationId, kind, id, expected, null, old.generation + 1, 1)
       completeDeliveries(listOf(old), receipt)
       return completionResult(receipt)
     }
+    if (kind == "Snooze" && expectedSnoozeMinutes != null && old.snoozeMinutes != expectedSnoozeMinutes)
+      return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE", "errorMessage" to "The Snooze duration changed. Refresh controls and try again.")
+    if (kind == "Postpone") validate(requireNotNull(targetMs) > now(), "alarmAtMs", "Choose an alert time in the future.")
+    val actionAt = now()
     val next = old.copy(generation = old.generation + 1, sessionId = null,
       exception = old.exception || (old.segmentId != null && kind in setOf("Snooze", "Postpone")),
-      targetMs = when (kind) { "Snooze" -> now() + old.snoozeMinutes * 60_000L;
+      targetMs = when (kind) { "Snooze" -> actionAt + old.snoozeMinutes * 60_000L;
         "Postpone" -> requireNotNull(targetMs); else -> old.targetMs },
       state = "Pending")
     operational.runInTransaction {
       alerts.put(next)
-      alerts.action(actionRecord(id, kind, next.generation, operationId, next.targetMs))
+      alerts.action(ActionRecord(operationId, id, kind, actionAt, next.generation, next.targetMs))
     }
+    old.sessionId?.let { refreshOrEndSession(it) }
     try { scheduler.cancel(old) } catch (_: Exception) { /* generation already fences the old callback */ }
     val updated = if (kind in setOf("Snooze", "Postpone")) register(next) else next
-    old.sessionId?.let { refreshOrEndSession(it) }
-    AlarmNotifications(context).clearAttention(id)
+    if (updated.state == "Blocked") AlarmNotifications(context).unresolved(updated)
+    else AlarmNotifications(context).clearAttention(id)
     series.replenish(); series.materialize()
     changed()
     return mapOf("status" to if (updated.state == "Blocked") "Blocked" else "Applied", "generation" to updated.generation)
   }
 
   private fun completionResult(receipt: CompletionReceipt): Map<String, Any?> =
-    mapOf("status" to "Applied") + if (receipt.kind == "StopAll") mapOf("count" to receipt.count)
+    mapOf("status" to "Applied") + if (receipt.occurrenceId == null) mapOf("count" to receipt.count)
     else mapOf("generation" to receipt.generation)
 
   private fun stopAll(operationId: String, sessionId: String): Map<String, Any?> {
     validate(sessionId.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
+    if (alerts.bulkSnoozeReceipt(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     alerts.completionReceipt(operationId)?.let { receipt ->
       if (receipt.kind != "StopAll" || receipt.sessionId != sessionId)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
@@ -829,14 +888,124 @@ class AlarmEngine internal constructor(private val context: Context,
     return completionResult(receipt)
   }
 
+  private fun capturedMembers(input: Any?): List<DeliverySnapshot.Member> {
+    validate(input is List<*> && input.isNotEmpty(), "members", "Refresh the current alarm group.")
+    val members = (input as List<*>).map { raw ->
+      validate(raw is Map<*, *>, "members", "Refresh the current alarm group.")
+      val member = raw as Map<*, *>
+      val id = member["occurrenceId"] as? String
+      validate(id != null && id.isNotBlank() && id.length <= 200, "members", "Choose a current alarm.")
+      val generation = epoch(member["expectedGeneration"], "expectedGeneration")
+      validate(generation >= 1, "expectedGeneration", "Refresh the current alarm group.")
+      DeliverySnapshot.Member(requireNotNull(id), generation)
+    }.sortedBy { it.occurrenceId }
+    validate(members.map { it.occurrenceId }.distinct().size == members.size, "members", "Choose each alarm only once.")
+    return members
+  }
+
+  private fun applySessionAction(operationId: String, sessionId: String, captured: List<DeliverySnapshot.Member>,
+    snoozeMinutes: Int?): Map<String, Any?> {
+    val kind = if (snoozeMinutes == null) "DoneAll" else "SnoozeAll"
+    val key = DeliverySnapshot.key(captured, snoozeMinutes)
+    alerts.completionReceipt(operationId)?.let { receipt ->
+      if (kind != receipt.kind || receipt.sessionId != sessionId || receipt.snapshotKey != key)
+        return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+      if (unlocked()) prepareContentActions()
+      return completionResult(receipt)
+    }
+    alerts.bulkSnoozeReceipt(operationId)?.let { receipt ->
+      if (kind != "SnoozeAll" || receipt.sessionId != sessionId || receipt.snapshotKey != key)
+        return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+      return resumeBulkSnooze(receipt)
+    }
+    if (alerts.action(operationId) != null || (unlocked() &&
+        (content().records().receipt(operationId) != null || content().records().historyOperation(operationId) != null)))
+      return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+    if (snoozeMinutes != null && unlocked()) prepareContentActions()
+    val session = alerts.activeSession()
+    if (session?.id != sessionId) return mapOf("status" to "Rejected", "errorCode" to "STALE_SESSION",
+      "errorMessage" to "That alarm session has ended. Refresh controls.")
+    val members = captured.map { member -> alerts.find(member.occurrenceId) }
+    if (members.zip(captured).any { (record, member) -> record == null || record.state != "Alerting" ||
+        record.sessionId != sessionId || record.generation != member.expectedGeneration })
+      return mapOf("status" to "Rejected", "errorCode" to "STALE_MEMBERS", "errorMessage" to "The alarm group changed. Refresh controls and try again.")
+    val current = members.filterNotNull()
+    if (snoozeMinutes == null) {
+      val receipt = CompletionReceipt(operationId, kind, null, null, sessionId, null, current.size, key)
+      completeDeliveries(current, receipt)
+      return completionResult(receipt)
+    }
+    if (current.any { it.snoozeMinutes != snoozeMinutes }) return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE",
+      "errorMessage" to "The Snooze duration changed. Refresh controls and try again.")
+    val at = now()
+    val receipt = BulkSnoozeReceipt(operationId, sessionId, key, at, at + snoozeMinutes * 60_000L, snoozeMinutes)
+    operational.runInTransaction {
+      alerts.bulkSnoozeReceipt(receipt)
+      current.forEach { old ->
+        val next = old.copy(generation = old.generation + 1, state = "Pending", sessionId = null,
+          targetMs = receipt.targetMs, exception = old.exception || old.segmentId != null)
+        alerts.put(next)
+        alerts.bulkSnoozeMember(BulkSnoozeMember(operationId, old.occurrenceId, old.generation, next.generation))
+        val child = UUID.nameUUIDFromBytes("remilo:snoozeall:$operationId:${old.occurrenceId}".toByteArray()).toString()
+        alerts.action(ActionRecord(child, old.occurrenceId, "Snooze", at, next.generation, receipt.targetMs))
+      }
+    }
+    // Detach the exact captured group before registration or private projection.
+    refreshOrEndSession(sessionId)
+    current.forEach { try { scheduler.cancel(it) } catch (_: Exception) { /* fenced */ } }
+    changed()
+    bulkSnoozeCheckpoint("protected-committed")
+    return resumeBulkSnooze(receipt)
+  }
+
+  /** Resume only the frozen target/generations. A newer user action always wins. */
+  private fun resumeBulkSnooze(receipt: BulkSnoozeReceipt): Map<String, Any?> {
+    if (!receipt.settled) {
+      alerts.bulkSnoozeMembers(receipt.operationId).filter { it.status == "Pending" }.forEach { member ->
+        val current = alerts.find(member.occurrenceId)
+        val status = when {
+          current == null || current.generation != member.generation || current.targetMs != receipt.targetMs -> "Superseded"
+          current.state in setOf("Scheduled", "Alerting", "Notified") -> "Scheduled"
+          current.state == "Blocked" -> "Blocked"
+          current.state == "Missed" -> "Missed"
+          current.state != "Pending" -> "Superseded"
+          else -> {
+            try { scheduler.cancel(current.copy(generation = member.expectedGeneration)) } catch (_: Exception) { /* fenced */ }
+            register(current).state
+          }
+        }
+        bulkSnoozeCheckpoint("member-registered")
+        alerts.bulkSnoozeMember(member.copy(status = status))
+        if (status in setOf("Blocked", "Missed") && current != null)
+          AlarmNotifications(context).unresolved(alerts.find(current.occurrenceId) ?: current)
+        else if (status != "Superseded") AlarmNotifications(context).clearAttention(member.occurrenceId)
+        bulkSnoozeCheckpoint("member-acknowledged")
+      }
+      alerts.bulkSnoozeReceipt(receipt.copy(settled = true))
+      bulkSnoozeCheckpoint("settled")
+      series.replenish(); series.materialize()
+      changed()
+    }
+    val members = alerts.bulkSnoozeMembers(receipt.operationId)
+    val status = when {
+      members.all { it.status == "Scheduled" } -> "Applied"
+      members.all { it.status == "Blocked" } -> "Blocked"
+      members.all { it.status == "Pending" } -> "Pending"
+      else -> "Partial"
+    }
+    return mapOf("status" to status, "count" to members.size, "memberResults" to members.map {
+      mapOf("occurrenceId" to it.occurrenceId, "generation" to it.generation, "status" to it.status, "targetMs" to receipt.targetMs)
+    })
+  }
+
   private fun completeDeliveries(members: List<AlertRecord>, receipt: CompletionReceipt) {
     val at = now()
     operational.runInTransaction {
       members.forEach { old ->
         val next = old.copy(state = "Completed", generation = old.generation + 1, sessionId = null)
         alerts.put(next)
-        val operation = if (receipt.kind == "Stop") receipt.operationId else
-          UUID.nameUUIDFromBytes("remilo:stopall:${receipt.operationId}:${old.occurrenceId}".toByteArray()).toString()
+        val operation = if (receipt.occurrenceId != null) receipt.operationId else
+          UUID.nameUUIDFromBytes("remilo:${if (receipt.kind == "StopAll") "stopall" else "doneall"}:${receipt.operationId}:${old.occurrenceId}".toByteArray()).toString()
         alerts.completion(PendingCompletion(operation, old.occurrenceId, next.generation, at))
       }
       alerts.completionReceipt(receipt)
@@ -854,6 +1023,20 @@ class AlarmEngine internal constructor(private val context: Context,
   }
 
   fun receive(intent: Intent, finished: () -> Unit) = submit(finished) {
+    val purpose = intent.action?.substringAfterLast('.')
+    if (purpose in setOf("doneall", "snoozeall")) {
+      val sessionId = intent.getStringExtra("sessionId") ?: return@submit
+      val ids = intent.getStringArrayExtra("memberIds") ?: return@submit
+      val generations = intent.getLongArrayExtra("memberGenerations") ?: return@submit
+      if (ids.size != generations.size) return@submit
+      val command = mutableMapOf<String, Any?>("kind" to if (purpose == "doneall") "DoneAll" else "SnoozeAll",
+        "expectedSessionId" to sessionId, "members" to ids.indices.map { mapOf("occurrenceId" to ids[it], "expectedGeneration" to generations[it]) },
+        "operationId" to "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}")
+      if (purpose == "snoozeall") command["snoozeMinutes"] = intent.getIntExtra("snoozeMinutes", -1)
+      val result = apply(command)
+      if (result["status"] == "Rejected") RingingService.refresh(context, sessionId)
+      return@submit
+    }
     if (intent.action?.substringAfterLast('.') == "stopall") {
       val sessionId = intent.getStringExtra("sessionId") ?: return@submit
       apply(mapOf("kind" to "StopAll", "expectedSessionId" to sessionId, "operationId" to "notification-stopall:$sessionId"))
@@ -863,6 +1046,18 @@ class AlarmEngine internal constructor(private val context: Context,
     val generation = intent.getLongExtra("generation", -1)
     when (intent.action?.substringAfterLast('.')) {
       "fire" -> deliver(id, generation)
+      "done", "quicksnooze" -> {
+        val command = mutableMapOf<String, Any?>("kind" to if (purpose == "done") "CompleteDelivery" else "Snooze",
+          "occurrenceId" to id, "expectedGeneration" to generation,
+          "operationId" to "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}")
+        if (purpose == "quicksnooze") command["expectedSnoozeMinutes"] = intent.getIntExtra("snoozeMinutes", -1)
+        val result = apply(command)
+        if (result["status"] == "Rejected") alerts.find(id)?.let { current ->
+          current.sessionId?.let { RingingService.refresh(context, it) }
+          if (current.mode == "Notification" && current.state == "Notified")
+            AlarmNotifications(context).regular(current, memberContent(id)?.title ?: "Reminder", resolveAppearance(), onlyAlertOnce = true)
+        }
+      }
       "stop", "snooze" -> applyAction(id, generation,
         if (intent.action!!.endsWith("stop")) "Stop" else "Snooze", "${intent.action}:$id:$generation")
     }
@@ -985,6 +1180,7 @@ class AlarmEngine internal constructor(private val context: Context,
       try { syncProtectedSettings(db.records().settings() ?: SettingsRecord()) }
       catch (_: Exception) { /* Leave mirror repair retryable, never block scheduling recovery. */ }
     }
+    alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
     alerts.all().filter { it.state in setOf("Scheduled", "Pending", "Blocked") }.forEach { register(it) }
     series.recover()
     val caps = capabilities()

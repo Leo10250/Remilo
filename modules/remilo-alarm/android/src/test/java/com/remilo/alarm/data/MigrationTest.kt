@@ -62,7 +62,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO actions VALUES ('snooze', 'old', 'Snooze', 900, 3)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-migration.db")
-      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5).build()
+      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6).build()
     try {
       val alert = db.records().find("old")!!
       assertEquals(60000L, alert.targetMs)
@@ -95,7 +95,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,mode,sound,vibration,snoozeMinutes) VALUES ('v2',60000,9,'Scheduled','Alarm','system',1,15)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v2.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5).build()
+      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6).build()
     try {
       val alert = db.records().find("v2")!!
       assertEquals(60000L, alert.targetMs); assertEquals(9L, alert.generation)
@@ -151,7 +151,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO sessions VALUES ('session','Active',1000,301000,'system',1)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v3-appearance.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5).build()
+      .addMigrations(OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6).build()
     try {
       assertNull(db.records().appearance())
       val session = db.records().activeSession()!!
@@ -172,7 +172,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO actions (operationId,occurrenceId,kind,occurredAtMs,generation) VALUES ('old-stop','legacy','Stop',50000,7)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v4-completion.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_4_5).build()
+      .addMigrations(OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6).build()
     try {
       assertEquals("Stopped", db.records().find("legacy")!!.state)
       assertEquals("Stop", db.records().action("old-stop")!!.kind)
@@ -186,5 +186,29 @@ class MigrationTest {
         assertFalse(columns.any { it in setOf("title", "notes", "listName", "template", "credentials") })
       }
     } finally { db.close(); context.deleteDatabase("protected-v4-completion.db") }
+  }
+  @Test fun protectedV5UpgradeRetainsLegacyCompletionFingerprintsAndSnoozeProfiles() {
+    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v5-actions.db", 5).use { db ->
+      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,snoozeMinutes) VALUES ('old',60000,7,'Completed',15)")
+      db.execSQL("INSERT INTO completion_receipts VALUES ('done','Stop','old',6,NULL,7,1)")
+      db.execSQL("INSERT INTO pending_completions VALUES ('done','old',7,50000)")
+    }
+    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v5-actions.db").allowMainThreadQueries()
+      .addMigrations(OperationalDatabase.MIGRATION_5_6).build()
+    try {
+      val receipt = db.records().completionReceipt("done")!!
+      assertEquals("Stop", receipt.kind); assertEquals(6L, receipt.expectedGeneration); assertNull(receipt.snapshotKey)
+      assertEquals(15, db.records().find("old")!!.snoozeMinutes)
+      assertEquals(50000L, db.records().completions().single().occurredAtMs)
+      assertTrue(db.records().pendingBulkSnoozes().isEmpty())
+      for (table in listOf("bulk_snooze_receipts", "bulk_snooze_members")) {
+        val columns = mutableListOf<String>()
+        db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { cursor ->
+          while (cursor.moveToNext()) columns.add(cursor.getString(1))
+        }
+        assertFalse(columns.any { it in setOf("title", "notes", "listName", "template", "credentials") })
+      }
+    } finally { db.close(); context.deleteDatabase("protected-v5-actions.db") }
   }
 }

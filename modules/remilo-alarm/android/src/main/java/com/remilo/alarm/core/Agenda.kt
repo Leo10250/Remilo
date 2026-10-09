@@ -5,9 +5,9 @@ import java.time.ZoneId
 
 /** Presentation grouping never derives overdue from a delivery target/state. */
 object Agenda {
-  fun group(anchorMs: Long, dueMs: Long, completed: Boolean, skipped: Boolean, nowMs: Long, zone: ZoneId): String {
+  fun group(anchorMs: Long, overdueAtMs: Long, completed: Boolean, skipped: Boolean, nowMs: Long, zone: ZoneId): String {
     if (completed || skipped) return "completed"
-    if (dueMs < nowMs) return "overdue"
+    if (overdueAtMs < nowMs) return "overdue"
     val date = Instant.ofEpochMilli(anchorMs).atZone(zone).toLocalDate()
     return if (date < Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()) "earlier" else date.toString()
   }

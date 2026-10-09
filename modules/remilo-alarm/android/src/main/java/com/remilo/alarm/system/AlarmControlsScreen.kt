@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -181,7 +182,9 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
         val (record, title) = members.single()
         AlarmActions(record, title, current!!.state, busy || unconfirmed, roles, AtmosphereTokens.nativeSingle, onAction)
       } else if (members.size > 1) {
-        FilledAlarmButton("Stop all", "Stop all alarms and complete their occurrences", busy || unconfirmed, roles, AtmosphereTokens.nativeSingle) { onAction("StopAll", null) }
+        FilledAlarmButton("Done all (${members.size})", "Complete all ${members.size} shown reminders", busy || unconfirmed, roles,
+          AtmosphereTokens.nativeSingle, checkmark = true) { onAction("DoneAll", null) }
+        SnoozeGroupButton(members.first().first.snoozeMinutes, members.size, busy || unconfirmed, roles) { onAction("SnoozeAll", null) }
       }
       // Reserve one scalable status line so starting an action cannot move its
       // targets. The full member remains readable in the retained information card.
@@ -208,10 +211,10 @@ private fun AlarmActions(record: AlertRecord, title: String, state: String, busy
     // or usable width needs more room, retaining both measured action minimums.
     val inline = minimum == AtmosphereTokens.nativeMember && maxWidth >= 280.dp && density.fontScale <= 1.15f
     if (inline) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Stop", "Stop and complete this occurrence, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true) { onAction("Stop", record) }
+      FilledAlarmButton("Done", "Complete this occurrence, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, checkmark = true) { onAction("CompleteDelivery", record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, onAction = onAction)
     } else Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Stop", "Stop and complete this occurrence, $title, $stateLabel", busy, roles, minimum) { onAction("Stop", record) }
+      FilledAlarmButton("Done", "Complete this occurrence, $title, $stateLabel", busy, roles, minimum, checkmark = true) { onAction("CompleteDelivery", record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, onAction = onAction)
     }
   }
@@ -231,14 +234,34 @@ private fun SnoozeAlarmButton(record: AlertRecord, title: String, stateLabel: St
 }
 
 @Composable
+private fun SnoozeGroupButton(minutes: Int, count: Int, busy: Boolean, roles: AtmosphereTokens.Roles, onClick: () -> Unit) {
+  OutlinedButton(onClick = onClick, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
+    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(roles.primary), disabledContentColor = Color(roles.disabledInk)),
+    border = androidx.compose.foundation.BorderStroke(1.dp, Color(if (busy) roles.disabledInk else roles.primary)),
+    contentPadding = PaddingValues(horizontal = AtmosphereTokens.spaceGutter.dp, vertical = AtmosphereTokens.spaceSm.dp),
+    modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.nativeSingle.dp)
+      .semantics { contentDescription = "Snooze all $count shown reminders for $minutes minutes" }) {
+    Text("Snooze all · $minutes min", fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
+  }
+}
+
+@Composable
 private fun FilledAlarmButton(label: String, description: String, busy: Boolean, roles: AtmosphereTokens.Roles,
-  minimum: Int, modifier: Modifier = Modifier, compact: Boolean = false, onClick: () -> Unit) {
+  minimum: Int, modifier: Modifier = Modifier, compact: Boolean = false, checkmark: Boolean = false, onClick: () -> Unit) {
   Button(onClick = onClick, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
     contentPadding = PaddingValues(horizontal = (if (compact) AtmosphereTokens.spaceSm else AtmosphereTokens.spaceGutter).dp,
       vertical = AtmosphereTokens.spaceSm.dp),
     colors = ButtonDefaults.buttonColors(containerColor = Color(roles.primary), contentColor = Color(roles.onPrimary),
       disabledContainerColor = Color(roles.disabledSurface), disabledContentColor = Color(roles.disabledInk)),
     modifier = modifier.fillMaxWidth().heightIn(min = minimum.dp).semantics { contentDescription = description }) {
+    if (checkmark) {
+      Canvas(Modifier.size(24.dp)) {
+        val ink = Color(if (busy) roles.disabledInk else roles.onPrimary)
+        drawLine(ink, Offset(size.width * .2f, size.height * .5f), Offset(size.width * .42f, size.height * .72f), 2.dp.toPx(), StrokeCap.Round)
+        drawLine(ink, Offset(size.width * .42f, size.height * .72f), Offset(size.width * .8f, size.height * .28f), 2.dp.toPx(), StrokeCap.Round)
+      }
+      Spacer(Modifier.width(AtmosphereTokens.spaceSm.dp))
+    }
     Text(label, fontSize = AtmosphereTokens.typeHeading.sp, lineHeight = (AtmosphereTokens.typeHeading + AtmosphereTokens.spaceSm).sp)
   }
 }

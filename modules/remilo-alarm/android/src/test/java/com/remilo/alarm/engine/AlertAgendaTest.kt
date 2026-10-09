@@ -44,11 +44,11 @@ class AlertAgendaTest {
     engine.request(block,{result.complete(it)},{result.completeExceptionally(AssertionError(it))})
     return result.get(20,TimeUnit.SECONDS)
   }
-  private fun insert(id:String,alert:Long,due:Long,event:Long=start(3),mode:String="Alarm",state:String="Scheduled") {
+  private fun insert(id:String,alert:Long,due:Long,event:Long=start(3),mode:String="Alarm",state:String="Scheduled",originalAlert:Long=alert) {
     request {
       val ce=ContentDatabase.open(context);val dp=OperationalDatabase.open(context)
       try {
-        ce.records().insert(ReminderRecord(id,id,event,event+1_800_000,due,now,mode=mode,definedAlarmAtMs=alert))
+        ce.records().insert(ReminderRecord(id,id,event,event+1_800_000,due,now,mode=mode,definedAlarmAtMs=originalAlert))
         dp.records().put(AlertRecord(id,alert,1,state,mode=mode))
       } finally {ce.close();dp.close()}
     }
@@ -64,9 +64,9 @@ class AlertAgendaTest {
     assertEquals(now+1_000,rows(query("today")).single()["agendaAtMs"])
     assertEquals(day.toString(),rows(query("today")).single()["agendaGroup"])
   }
-  @Test fun overdueRemainsFirstWithFuturePostponeAndNoAlertUsesDue() {
-    insert("postponed",start(1)+36_000_000,now-1,event=start(-2))
-    insert("none",start(4),now+1_000,mode="None",state="NoAlert")
+  @Test fun overdueRemainsFirstWithFuturePostponeAndNoAlertUsesWhen() {
+    insert("postponed",start(1)+36_000_000,start(4),event=start(-2),originalAlert=now-1)
+    insert("none",start(4),now-1,event=now+1_000,mode="None",state="NoAlert")
     val page=query();val rows=rows(page)
     assertEquals("postponed",rows[0]["id"]);assertEquals("overdue",rows[0]["agendaGroup"])
     assertEquals(start(1)+36_000_000,rows[0]["agendaAtMs"])
@@ -96,11 +96,11 @@ class AlertAgendaTest {
       assertEquals(listOf("tomorrow"), rows(query("upcoming")).map { it["id"] })
       now = tomorrow
       assertEquals(listOf("today", "tomorrow"), rows(query()).map { it["id"] })
-      assertEquals("earlier", rows(query())[0]["agendaGroup"])
+      assertEquals("overdue", rows(query())[0]["agendaGroup"])
       assertEquals(listOf("tomorrow"), rows(query("today")).map { it["id"] })
       java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
       assertEquals(listOf("today", "tomorrow"), rows(query("today")).map { it["id"] })
-      assertTrue(rows(query()).all { it["agendaGroup"] == "2026-03-09" })
+      assertEquals(listOf("overdue", "2026-03-09"), rows(query()).map { it["agendaGroup"] })
     } finally { java.util.TimeZone.setDefault(original) }
   }
 
@@ -109,7 +109,7 @@ class AlertAgendaTest {
       insert(state,if(state=="Missed"||state=="Notified")start(-1)+36_000_000 else now+1_000+i, start(2),state=state)
     val rows=rows(query())
     assertEquals(setOf("Blocked","Pending","Paused","Missed","Notified"),rows.map {it["deliveryState"]}.toSet())
-    assertEquals(2,rows.count {it["agendaGroup"]=="earlier"})
+    assertEquals(2,rows.count {it["agendaGroup"]=="overdue"})
     assertTrue(rows.all {it["completed"]==false})
   }
 }
