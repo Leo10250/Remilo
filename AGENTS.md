@@ -68,6 +68,11 @@ Remilo is Android-first and offline. React Native presents the product UI; ordin
 
 ## Workflow commands and skills
 
+- Use `$prepare-visual-assets` for artwork creation/revision and faithful branding
+  preparation. Read `.agents/visual-assets.json` for this project's authorities,
+  export/crop requirements and storage; keep individual approval, technical
+  conformance and later runtime acceptance distinct. The linked personal skill
+  uses the same files but must resolve the project being worked on explicitly.
 - `npm run doctor` / `npm run devices`: read-only prerequisites and target discovery.
 - `npm run deploy`: build current source and install a signed bundled beta; leave
   UI closed. Use `--device SERIAL` for a chosen target and `--launch` only when

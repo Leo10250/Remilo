@@ -48,5 +48,6 @@ example
 android/local.properties
 android/signing.properties
 verification/local/
+__pycache__/
 *.keystore
 .env
