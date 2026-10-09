@@ -115,14 +115,14 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   until acknowledged, including after reopening a future completed probe. See C for
   exact/notification restrictions; access never guarantees audibility.
 - **U9 — native auto-close:** use Test alarm. Stop: sound ends and native controls
-  close automatically; the reminder stays unfinished. Repeat and Snooze: controls
+  close automatically; the occurrence appears in Completed. Repeat and Snooze: controls
   close, then both notification actions return at the selected duration. Repeat and
   let the five-minute session expire: controls close. Press Stop from the notification
   while native controls are open: the ended screen closes. No Close button exists.
 - **U10 — groups:** create two reminders at the same instant. Native controls show
   two independent members. Stop one: screen remains for the other. Snooze the final
   member: screen closes. Repeat the pair and use notification Stop all: both stop and
-  controls close; both remain unfinished. The notification tap opens native controls.
+  controls close; both occurrences appear in Completed. The notification tap opens native controls.
 - **U11 — appearance/accessibility:** repeat home, search, filters, creation, Custom
   repeat, detail Schedule details and More → Activity, scope/Postpone sheets, Settings/selectors, Completed,
   Trash, Lists/Repeats and repeat details, Restore preview and Diagnostics in Light and
@@ -171,7 +171,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   export and diagnostics refresh/share progress and errors; dismissing a share sheet
   must not claim that a report was sent.
 
-- **U17 — roots and origin:** switch Agenda / Lists / Repeats using the labeled
+- **U17 — roots and origin:** switch Agenda / Lists / Completed / Trash using the labeled
   bottom roots. Open named lists, Completed/Trash, Settings, details and Activity
   from their invoking origins; return with their independent queries, filters and
   scroll retained. Hide root navigation inside editor/details/modal workflows.
@@ -257,7 +257,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **A5 — modes:** create separate Alarm, Notification and No alert probes. Alarm
   rings; Notification posts one system notification; No alert schedules no sound.
   A blocked Alarm is never silently changed to Notification.
-- **A6 — Done/Stop:** Stop a ringing probe. It remains unfinished in the agenda.
+- **A6 — Done/Stop:** Stop a ringing probe. Its occurrence moves to Completed; any
+  future repeat slots retain scheduling.
   Mark it Done: it moves to Completed and its pending alert is cancelled. Reopen an
   elapsed reminder: it stays silent. Reopen one with a future target: check scheduling.
 - **A7 — management:** duplicate a reminder, choose a new future time, and save.
@@ -273,7 +274,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **B2 — Stop and repeated Snooze:** keep Settings foregrounded for the initial
   alarm. Check Stop and Snooze in the popup and expanded notification. Snooze ten
   minutes, inspect the returning popup/panel, Snooze again, and Stop the next
-  delivery. Both actions stay available; Stop silences sound and leaves it unfinished.
+  delivery. Both actions stay available; Stop silences sound and completes only
+  that occurrence.
 - **B3 — cutoff:** leave one alarm untouched with the screen off. Record playback
   start and stop times. It ends after approximately five minutes and stays silent.
   The item remains unfinished, labeled Alarm timed out; native controls close.
@@ -281,8 +283,9 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   at the same time. Both appear separately in native controls; one sound plays.
   Stop A: B keeps ringing. Snooze B: the session stops and only B returns. On a
   separate run, let B join three minutes after A starts; both stop at A's original
-  five-minute deadline. Stop all ends sound while keeping every member unfinished.
-- **B5 — Postpone after ringing/timeout:** open an unfinished stopped or timed-out
+  five-minute deadline. Stop all completes the current members; later arrivals
+  start a new session. Timeout keeps every unresolved member unfinished.
+- **B5 — Postpone after ringing/timeout:** open a historical unfinished stopped or timed-out
   item. Try 15/30/60 minutes, tomorrow presets and a custom future time. Check the
   resolved date/time before applying. Event/due/original alert stay unchanged;
   the next alert changes. Postpone a snoozed item: the old Snooze target is replaced.
@@ -305,7 +308,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **C2 — system Active Apps Stop:** create QA Recovery A two minutes ahead and QA
   Recovery B four minutes ahead. When A rings, use Android's Active Apps/running-app
   control to stop Remilo. A goes silent. Keep Remilo closed until B rings, then use
-  Remilo's Stop. Reopen: A says Alarm interrupted, B Alarm stopped, both unfinished. If the system
+  Remilo's Stop. Open the app: A says Alarm interrupted and is unfinished; B is
+  Completed. If the system
   control is unavailable, record unavailable rather than substituting Force stop.
 - **C3 — exact access:** save a future Alarm with exact-alarm access denied.
   It is saved but blocked. Grant before its target and refresh: it becomes scheduled.

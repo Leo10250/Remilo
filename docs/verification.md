@@ -135,7 +135,7 @@ approval never imply physical release verification.
 | Locked/screen off | native alarm surface where permitted |
 | Reboot, do not unlock | generic delivery and native Stop/Snooze |
 | Ignore alarm five minutes; force idle/screen off | cutoff; no automatic repeat |
-| Stop | unfinished item, sound ends |
+| Alarm Stop / Stop all | affected occurrence(s) completed, sound ends; future repeat slots retained |
 | Snooze; invoke old Stop/callback | new generation unaffected |
 | Re-trigger after a full ten-minute Snooze | first notification includes current Stop/Snooze; both are usable |
 | Fail processing earlier independent alarm | later alarm remains registered |
@@ -201,8 +201,7 @@ Use distinct probe titles and record the signed build/hash. Do not clear app dat
    and leave the case unverified; do not substitute a different operation.
 3. Confirm sound ends. Leave the phone untouched until B's original target.
    B must still ring. Stop B with Remilo's native control.
-4. Open Remilo. A should be Interrupted and unfinished; B should be Stopped and
-   unfinished. A must not resume sounding. Confirm this across another reopen.
+4. Open Remilo. A should be Interrupted and unfinished; B should be Completed. A must not resume sounding. Confirm this across another reopen.
 
 Android documents that Active Apps Stop removes the process and media playback,
 while scheduled alarms remain eligible to fire. This is the platform expectation
@@ -236,7 +235,7 @@ do not claim to cover those conditions.
 
 ## Later gates
 
-G2: Done vs Stop, all postponements after timeout, independent colliding occurrences,
+G2: Stop/Done completion and stale-action races, all postponements after timeout, independent colliding occurrences,
 settings, restore preview, upgrade safety, no credential/runtime backup transfer.
 
 G3: rule fixtures, invalid dates/count, DST/travel, edits/skip/pause, preserved
@@ -253,7 +252,8 @@ limits, widget/countdown integration and visible coverage. No early iOS testing.
 ## Shipped 0.4.0 UX refinement observations
 
 The layout references in this section describe earlier pending baseline checks.
-For TD-06, use the current Agenda / Lists / Repeats roots, secondary origins and
+For TD-06, use the current Agenda / Lists / Completed / Trash roots, Repeats within
+Lists, secondary origins and
 leading completion target while retaining the underlying behavior/recovery tests.
 Browse and trailing completion below are historical layout, not new requirements.
 
@@ -287,7 +287,7 @@ they remain pending until observed on the identified bundled build:
   same item before Undo and confirm the newer change is preserved. Confirm Trash
   requires acknowledgement for unfinished work; completed Trash is recoverable
   without a modal. Check revision-specific Trash Undo, Restore destinations and
-  native Stop leaving the reminder unfinished.
+  native Stop completing only the current occurrence.
 - Open Custom Postpone repeatedly and confirm it starts in the future. Reject a
   past target without mutation; accept a future target and retain other members'
   actions and targets.
@@ -329,3 +329,36 @@ leave/background, and let a real alarm interrupt preview. Record actual tone,
 fallback and playback failures separately from accepted start requests. Include
 light/dark, 200% text, TalkBack, reduced motion and keyboard reachability alongside
 the existing native time-zone/DST and alarm reliability matrix.
+
+## Beta-fix acceptance additions (9 October)
+
+Use the [beta contract](design/current/beta-fixes.md) and identify the signed APK
+and source snapshot before physical observations. Host fixtures never establish
+Android lifecycle, native Animated performance, actual IME/TalkBack, splash or
+alarm eligibility. The consolidated acceptance arrangement remains in force.
+
+- Stop: one-off/finite repeat, after Snooze, individual/all, Direct Boot then
+  unlock, stale generation/session, Stop/Done race, crashes around both storage
+  commits, identical retries and Reopen after completion. Verify one Done with
+  the original Stop timestamp; retain historical Stopped as unfinished.
+- Agenda: independent event/due/alert dates, overdue tomorrow Postpone, No alert,
+  intended/pending/blocked/paused/missed/notified states, midnight/DST/device zone,
+  more than 50 rows, stable equal-time ID order and full counts before pagination.
+- Navigation: all four roots; scoped collections, Lists → Repeats → family →
+  occurrence and return; existing /series links and legacy origin; separate
+  search/filter/scroll snapshots; selection, IME/sheet and uncertain-job Back.
+- Covers/targets: expanded/collapsed/restored, empty/short pages, eight appearance
+  pairs, 360×800, landscape, 200% English/Chinese, reduced motion and TalkBack.
+  Check list name/support/padding/chevron as one action and independent More.
+- Branding/native theme: density dimensions/hashes/centering, cold/warm release
+  launch, native loading frame, manual/Automatic, captured pair across arrivals
+  and unlock, generic pre-unlock notifications and actual OEM accent rendering.
+- Recents: affected OEM/launcher and installed-build identity; Agenda, Settings
+  and a minimal page; keyboard/sheet/alarm state. Collect scoped private capture
+  and Perfetto/system rendering evidence distinguishing app main/RenderThread,
+  launcher, SystemUI and SurfaceFlinger. Inspect activity/task/modal/snapshot
+  lifecycle. Choose a code change or supported workaround only from that evidence.
+  Repeat the same dismissal and confirm native alarm eligibility afterward.
+
+No connected target means that reproduction/trace and physical results stay
+pending; it is not evidence of a platform cause or successful fix.

@@ -1,5 +1,8 @@
 # TD-06 — Consolidated acceptance
 
+The [9 October beta corrections](../../design/current/beta-fixes.md) supersede prior
+Stop, navigation, alert-first cards, browsing cover and splash density requirements.
+
 ## Contract and dependencies
 
 Integrated TD-03, TD-04 and TD-05; TD-01/TD-02 contracts and evidence included transitively.

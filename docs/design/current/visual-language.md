@@ -61,8 +61,8 @@ do not mix in iOS Liquid Glass keyboard or control behavior.
 
 ## Shared geometry and accessibility corrections
 
-Retain the approved secondary template: compact atmospheric opening, solid reading
-surfaces, clear title/timing/delivery hierarchy and persistent action. Use one
+Use the [beta browsing cover](beta-fixes.md): expanded atmospheric opening, solid
+reading surfaces, clear alert/delivery hierarchy and persistent actions. Use one
 component definition rather than theme-specific copies of its structure.
 
 The owner's 9 October actual-render correction rejects opaque header title/button
@@ -74,9 +74,15 @@ Use a 52 × 32 dp switch track with a 24 dp selected thumb and an accessible who
 row target. Ordinary cards use 12 dp separation and neutral icon containers;
 root selection uses a glyph capsule and selected label, as in R3/R7/R8.
 
-- Secondary opening target: approximately 96 dp below the status inset, including
-  the toolbar (56 dp) and short art crop. When usable height is constrained, reduce/
-  scroll the decorative crop first; keep navigation and focused content usable.
+- Browsing opening: 200 dp below the status inset, including a nominal 56 dp
+  toolbar. Scrolling consumes the 144 dp decoration into an opaque toolbar; the
+  artwork expands again as content returns to the top. Keep the expanded hero
+  composition fixed in position and crop; native Animated scrolling moves only
+  the opaque reading plane over it. Keep the toolbar pinned and make it opaque
+  once the decorative opening is covered.
+  Restore content and cover offsets together. Editing, management, backup,
+  Diagnostics and sheets use compact toolbars. Usable height below 480 dp or font
+  scale at least 1.6 also uses compact chrome; the toolbar grows with text.
 - Use 16 dp gutters, 16 dp card/field corners, and a shared 16 dp radius for the
   filled primary button. Primary Done/Save height is at least 56 dp; Postpone and
   other interactive targets are at least 48 dp and do not overlap.

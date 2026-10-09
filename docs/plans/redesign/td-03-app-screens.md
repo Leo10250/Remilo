@@ -1,5 +1,8 @@
 # TD-03 — App screens and remaining review
 
+The [9 October beta corrections](../../design/current/beta-fixes.md) supersede prior
+Stop, navigation, alert-first cards, browsing cover and splash density requirements.
+
 ## Contract and dependencies
 
 TD-01 and TD-02; established native product/query/action contracts.
@@ -14,7 +17,7 @@ Apply the approved page contracts and correction notes to Agenda, Lists, Repeats
 
 ## Implementation
 
-- Adopt Agenda / Lists / Repeats roots and secondary invoking-origin navigation. Preserve queries, filters, scroll and IME Back precedence.
+- Adopt Agenda / Lists / Completed / Trash roots, with Repeats secondary to Lists and secondary invoking-origin navigation. Preserve queries, filters, scroll and IME Back precedence.
 - Implement neutral structural icons and one neutral reminder `event` glyph, intentional action/status roles, readable independent Event/Due/Next alert and guarded family/occurrence scope. Categories remain deferred.
 - Implement one Save above the real IME with footer-aware scrolling for lower Notes/caret/errors and first-tap guarded Save; preserve stale/discard/unconfirmed operation handling.
 - Carry whole-backup Restore with all new data automatic, explicit identity-conflict Keep existing/Add separate copy choices, frozen same-job retries and truthful timing/count/share/snapshot feedback.

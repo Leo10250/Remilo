@@ -51,13 +51,12 @@ status colors require labeled meaning and remain independent of atmosphere.
 ## Shared layout and navigation
 
 - Review at 360 × 800 dp with actual system insets and one screenshot per image.
-  Use a compact secondary opening, approximately 96 dp below the status inset
-  including a 56 dp toolbar. Back + Settings/Appearance supplies the heading;
+  Use the shared 200 dp browsing cover with scroll collapse to an opaque toolbar. Back + Settings/Appearance supplies the heading;
   no oversized repeated Remilo branding or motivational copy. Crop/scroll art
   first when height, large text, a modal or keyboard constrains useful content.
 - Settings is secondary and returns to its invoking origin. Appearance returns
   to Settings with its scroll position retained. Neither page shows the root
-  Agenda / Lists / Repeats bar or Add FAB. Permission/Test states are portions of
+  Agenda / Lists / Completed / Trash bar or Add FAB. Permission/Test states are portions of
   Settings, not invented Readiness or Test-alarm destinations.
 - Keep 16 dp gutters/corners, opaque grouped reading cards, 16 sp values and
   14 sp support. Minimum row targets are 48 dp; prominent actions are at least
@@ -212,7 +211,7 @@ Show Scheduling while in flight and prevent repeated taps for that request.
 
 Once an occurrence identity is returned, a contextual **View test reminder** link
 can open ordinary details (proposed feedback improvement using the existing route).
-Stop leaves it unfinished; Done is separate. The test is retained like other
+Alarm Stop completes its occurrence; timeout/interruption leaves it unfinished. The test is retained like other
 reminders; no automatic deletion, automatic human-success claim, new verification
 badge or silent cleanup. The ordinary themed native alarm controls remain R6.
 

@@ -5,6 +5,9 @@ only current visual/workflow direction. All eight R3 images govern style; approv
 page contracts and corrections govern page UX. [Backlog](../../backlog.md) alone
 owns status. These implementation units replace the old P01–P12 sequence.
 
+The [latest beta correction](../../design/current/beta-fixes.md) governs Stop completion, alert-first Agenda, four roots, shared collapsing
+covers and the approved direct-source Classic splash density exports.
+
 ## Current units
 
 | Unit | Dependencies |

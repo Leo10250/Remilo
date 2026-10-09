@@ -21,6 +21,9 @@ need bounded Android interaction observations. The owner
 that composition decision does not pass the terminal-details, keyboard or
 recovery checks on an actual device.
 
+The [latest beta correction](../beta-fixes.md) governs Stop completion, alert-first Agenda, four roots, shared collapsing
+covers and the approved direct-source Classic splash density exports.
+
 ## Per-image discrepancies and resolutions
 
 ### 01 — Ordinary details, Sunrise Light
@@ -102,7 +105,7 @@ Generic icon coloring is already corrected in R5. The remaining variations below
 [Reference PNG](../../remilo-r5-sky-evening-details-editor/01-sky-ordinary-details.png)
 
 - **Observed:** The ordinary-details scenic opening is taller than the other secondary samples; crop, toolbar spacing and title weight also vary.
-  **Resolution:** Use one compact secondary opening, about 96 dp below the status inset including a 56 dp toolbar. Crop the shared atmosphere asset; reduce decoration first when height is constrained, preserving readable navigation and focused content.
+  **Resolution:** Use the shared 200 dp collapsing browsing cover for Details and a compact measured toolbar for editing. Retain hero focal metadata and constrained-height/large-text fallback.
 - **Observed:** Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.
   **Resolution:** Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout.
 - **Observed:** Postpone blue appears brighter than the filled Done blue.
@@ -164,7 +167,7 @@ Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary button
 - **Observed:** Postpone outline/label is brighter magenta than muted-plum Done.
   **Resolution:** Use one Evening Light primary token for Postpone and Done. It is not error red or a separate urgency accent.
 - **Observed:** The ordinary-details scenic opening is taller than the other secondary samples; crop, toolbar spacing and title weight also vary.
-  **Resolution:** Use one compact secondary opening, about 96 dp below the status inset including a 56 dp toolbar. Crop the shared atmosphere asset; reduce decoration first when height is constrained, preserving readable navigation and focused content.
+  **Resolution:** Use the shared 200 dp collapsing browsing cover for Details and a compact measured toolbar for editing. Retain hero focal metadata and constrained-height/large-text fallback.
 - **Observed:** Ordinary Light details uses neutral icon tiles and stacked label/value rows; Dark overdue details uses mostly untiled icons and side-by-side columns.
   **Resolution:** Use shared details-card/icon-column/container/label-value anatomy in Light and Dark. Add the consequential independent Due row because of state, not appearance; grow/wrap and scroll instead of making a Dark-only layout.
 - **Intentional:** Neutral structural icons are already corrected from R4; green plant category and labeled confirmed Scheduled state remain distinct intentional roles.

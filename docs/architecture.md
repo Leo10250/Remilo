@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 5/4/3. CE 4→5 adds global atmosphere with Automatic default and
+versions are 5/5/3. CE 4→5 adds global atmosphere with Automatic default and
 preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
@@ -41,8 +41,9 @@ Device-protected Room owns current operational eligibility, targets, generations
 sessions and native action records. No content or credentials belong in the latter.
 
 Definition-derived schedule changes have narrowly scoped pending-operation records.
-Stop/Snooze journal records describe history; replay never changes newer operational
-state. Alarm-affecting commands fence stale generations before acknowledgement.
+Snooze and historical Stop journal records describe history; replay never changes
+newer operational state. New alarm Stop completion has its own protected durable
+receipt and pending-completion journal (DP 4→5); CE and backup schemas are unchanged. Alarm-affecting commands fence stale generations before acknowledgement.
 OS registration and database commits are not atomic: reconcile idempotently and
 return Scheduled/Blocked/Pending distinctly. Every callback rechecks eligibility.
 
@@ -63,8 +64,12 @@ generations, history or audio. Titles, notes, categories, list identities,
 credentials and content-derived appearance stay excluded from DP.
 
 Agenda queries apply optional `overdueOnly` alongside other intersections and
-apply group ordering/counts before pagination. Today/Upcoming continue inspecting
-Due or the stored alert target; Event still governs ordinary date grouping.
+apply group ordering/counts before pagination. The read-only `agendaAtMs` anchor
+is due for No alert, otherwise operational target → configured alert → event
+fallback. Capture query time/device zone once; order active results by group rank,
+anchor and ID before the 50-row page. Today/Upcoming use only anchor dates. Due
+continues determining unfinished Overdue, and history collections retain their
+recorded-time ordering.
 `scheduleTestAlarm(operationId)` returns an identified receipt; a same-ID retry
 returns the original committed test/target. Whole-backup Restore returns structured
 Rejected only for definitive precommit validation; possible commits remain
@@ -235,8 +240,9 @@ unlock. TD-02/TD-04 add the planned native-safe global atmosphere under A36.
 ## ADR 004: Unified presentation without another state authority
 
 The 0.4.0 redesign adds agenda/overdue/completed query views without a Room schema
-change. Membership derives from completion/due time; grouping derives from event
-time. Group rank, event start and occurrence ID order all matching rows before the
+change. The later beta correction replaces event grouping with alert-anchor
+grouping and date membership. Group rank, anchor and occurrence ID order all
+matching active rows before the
 50-row page is sliced. Aggregate counts cover the full filtered query. Read-only
 series/rule/adjustment information decorates rows; it never schedules an alarm.
 Existing internal views remain available while principal routes use the agenda.
@@ -313,7 +319,8 @@ and committed content remain the durable authority.
 ## ADR 006: Shipped Browse routing, presentation and native preview ownership
 
 The Browse-root navigation below describes the shipped baseline. TD-03 replaces
-its visual routing with Agenda / Lists / Repeats and secondary origin returns;
+its visual routing; the latest beta correction uses Agenda / Lists / Completed /
+Trash roots, Repeats secondary to Lists, and secondary origin returns;
 query keys, history truth and native preview ownership are retained.
 
 Browse is a modal control over explicit Agenda, list, Repeats, Completed and Trash
@@ -323,7 +330,8 @@ record queries sharing a route. Focus-scoped Back handlers yield to transient UI
 search, draft and uncertain-operation guards. Navigation introduces no scheduler.
 
 Shared presentation separates work status from delivery outcome. Due controls
-Overdue; Stop/Missed/timeout remain delivery outcomes for unfinished work. Conditional
+Overdue; historical Stopped, Missed and timeout remain outcomes for unfinished
+work. New alarm Stop completes only the affected occurrence. Conditional
 schedule detail preserves independent relationships even at coincident timestamps.
 Recorded Done time is separate from collection sorting fallback. Activity renders
 stored history without inventing missing lifecycle events or field differences.
@@ -381,3 +389,30 @@ Title/Notes/caret/error content reachable. The current toolbar Save/basic keyboa
 resize is not acceptance evidence for that layout. TD-03 implements the client
 presentation while preserving native command identity, validation and retry;
 TD-06 records real keyboard/TalkBack observations in the consolidated run.
+
+## ADR 009: Alarm completion receipts and scroll-driven browsing
+
+The [beta correction](design/current/beta-fixes.md) supersedes the old alarm Stop
+rule. On the existing serialized worker, Stop/StopAll atomically commit protected
+operational Completed state, generation fences, command-bound receipts and pending
+completion rows. Stop all snapshots only the captured session's members. The final
+member detaches and ends audio before CE completion/materialization, including
+before first unlock. Legacy receipt checks preserve historical retry semantics.
+
+Before CE queries, mutations/revision checks, import and export, materialize missing
+recurring content and project pending completion into one CE transaction: increment
+the revision, complete the same nominal occurrence, and write one Done at the
+original Stop instant. A matching history operation proves that transaction already
+committed; a lost protected acknowledgement never re-completes a later Reopen.
+Receipts bind occurrence/generation or session and retain the original result across
+restart. CE 5 and portable backup 3 remain unchanged; old Stopped actions do not
+retroactively complete content. Timeout/interruption still leave work unfinished.
+
+Shared browsing chrome has one native Animated scroll value. Stable expanded hero
+composition stays fixed while the opaque reading plane translates over decoration;
+React updates only at the collapsed toolbar boundary. A nominal 200 dp opening
+contains a measured 56 dp toolbar. Editing/utilities, usable height below 480 dp or
+font scale at least 1.6 use compact chrome. Saved content offset initializes both
+scroll and collapse positions. Safe-area/IME/footer geometry retains one owner.
+Native alarms retain dedicated layout and captured session appearance; supported
+notification accents and non-private loading extras use that same pair.

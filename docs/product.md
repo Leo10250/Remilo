@@ -31,6 +31,9 @@ review demos are removed under A37; accepted reference bundles remain intact.
 The owner's 4 October instruction allows offline Android development
 before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
 
+The [9 October beta corrections](design/current/beta-fixes.md) supersede earlier
+Stop, three-root, event-first browsing and short-cover requirements.
+
 ## Required behavior
 
 - Principal UI: React Native / TypeScript / Expo. Autonomous Kotlin engine and Room.
@@ -40,7 +43,12 @@ before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
   independent times are preserved. All-day due boundary is next local midnight;
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
-- Stop silences only the selected delivery; Done is separate and cancels its alert.
+- Alarm Stop completes the selected current occurrence and silences its delivery.
+  Stop all completes the captured session members; later arrivals start a new session.
+  Future recurring occurrences retain their identity/rule and scheduling. Snooze and
+  Postpone remain postponements; timeout and interrupted playback remain unfinished.
+  Earlier Stopped history is preserved as unfinished. Sound-preview Stop and Android
+  Active Apps Stop retain their distinct meanings. Done also completes and cancels.
 - Reopen clears completed and skipped state while preserving occurrence identity
   and guards. It never replays an elapsed alert; Restore retains skipped state.
 - Every ringing delivery, including one re-triggered by Snooze, provides native Stop
@@ -72,17 +80,19 @@ before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
 - Floating schedules follow device zone; Calendar linkage pins a named zone with preview.
 - DST gaps shift by gap size; folds use earlier offset. Invalid days/fifth weekdays/
   Feb 29 are skipped and do not consume count. Postponements remain concrete instants.
-- One unified agenda contains one-off and repeating occurrences. Event time sets
-  the date group; unfinished overdue status uses due time, regardless of the next
-  alarm. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
+- One unified agenda contains one-off and repeating occurrences. Alert time sets
+  the date group; No alert uses due time. Unfinished overdue status uses due time
+  and takes priority regardless of the next alert. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
   Collapse groups without merging occurrence identities. Stopped/missed/timed-out
   reminders stay visible until resolved.
 - Search, membership, overdue and Alert problems filters are local dataset controls.
   Alert problems includes Missed, Timed out, Interrupted, Blocked and Failed delivery;
   it excludes No alert, Stopped, Notification sent and Updating. Attention stays internal.
-  Agenda / Lists / Repeats are the three labeled roots. Named lists, Settings,
-  Completed/Trash and details are secondary to their invoking origin and retain
-  queries/filters/scroll; sheets and IME close before navigation.
+  Agenda / Lists / Completed / Trash are the four labeled roots. Lists separates
+  Built-in views (Repeats) from Your lists (No list and named lists). Repeats remains
+  visible when empty and is never list membership. Repeats, named lists, Settings,
+  list-scoped collections and details are secondary to their invoking origin and
+  retain queries/filters/scroll; sheets and IME close before navigation.
   Repeats shows one entry per family and Active, Paused and Ended filters. Family
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
@@ -123,6 +133,13 @@ before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
   A removed list reference is rejected. Named lists retain Agenda grouping, with
   fixed membership and access to their Completed/Trash records. Counts mean overdue
   occurrences, rather than every future occurrence of an infinite repeat.
+- Active browsing cards lead with alert time or No alert, then consequential
+  overdue/delivery information and a readable repeat indicator. Details and advanced
+  editing retain full event/due data. Primary Agenda alert time uses the device zone.
+- Browsing covers expand to 200 dp below the status inset, including a nominal
+  56 dp toolbar. Artwork stays fixed while opaque content scrolls over it, ending
+  at a pinned opaque toolbar. Restore content and scene occlusion together. Constrained height/large text and editing
+  workflows use compact toolbars. Preserve existing artwork and hero focal metadata.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
   Series conflicts are preserved as a whole family unless explicitly restored as

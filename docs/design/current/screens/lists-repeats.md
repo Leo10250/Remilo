@@ -36,7 +36,8 @@ new scheduling/persistence or migrations. A36 separately fixes global automatic 
 Bottom roots/origin return, durable Lists, family aggregation and guarded edits
 are established UX. The overall new layout/state direction is accepted; exact
 production rendering and listed exceptional-state corrections still need actual
-acceptance. Agenda / Lists / Repeats are the roots; management is secondary.
+acceptance. The beta roots are Agenda / Lists / Completed / Trash; Repeats is a
+built-in view secondary to Lists and management remains secondary.
 
 ## All eight visual references
 
@@ -64,8 +65,8 @@ Category/status roles remain purposeful and independent of atmosphere.
 ## Shared geometry, navigation and state treatment
 
 - Review at 360 × 800 dp with real system insets, one readable screen per image.
-  Use the established compact opening: about 96 dp below the status inset,
-  including a 56 dp toolbar and shallow scenic crop. The toolbar title is Lists,
+  Use the shared 200 dp scroll-collapsing browsing opening, including a measured
+  nominal 56 dp toolbar. Management uses a compact toolbar. The toolbar title is Lists,
   Repeats, the list name, or the secondary workflow title. Protect its contrast.
   Do not repeat a large Remilo wordmark, page title and motivational slogan above
   a workflow. Art yields before useful content when height/text is constrained.
@@ -73,12 +74,13 @@ Category/status roles remain purposeful and independent of atmosphere.
   14 sp support. Secondary titles are approximately 24 sp. Rows grow/wrap; 72 dp
   is only a minimum for a two-line list/library row, not a fixed height. Use 12 dp
   card gaps. Buttons are at least 56 dp; other targets at least 48 dp.
-- Lists/Repeats roots show the same labeled Agenda / Lists / Repeats bottom bar.
+- Lists shows the labeled Agenda / Lists / Completed / Trash bottom bar; Repeats
+  is secondary and Back returns to Lists.
   Only the selected destination changes. Root switching replaces context and
   preserves each destination's filter/scroll state; Back returns to Agenda.
   Named-list Agenda and family details are secondary, hide the root bar, and
   return to origin. Transient search/sheets/IME/draft/uncertain guards take priority.
-- Root More exposes Completed / Trash / Settings. Named-list More exposes
+- Root More exposes Settings; global Completed/Trash have their bottom destinations. Named-list More exposes
   Completed in this list / Trash in this list and named-list management. List
   removal is never a reminder-completion or alert-cancellation action.
 - Initial loading uses the shared loading treatment, not an empty success state.
@@ -88,8 +90,9 @@ Category/status roles remain purposeful and independent of atmosphere.
 
 ## A. Lists root and named-list Agenda
 
-**Lists root:** show a fixed No list entry first, then the existing durable named
-list query order. Each opaque row has a wrapped name and navigation chevron.
+**Lists root:** separate **Built-in views → Repeats** from **Your lists → No list**
+and the existing durable named-list query order. Repeats stays visible when empty,
+with no Rename/Remove and no membership entry. Each opaque row has a wrapped name and navigation chevron.
 Decorative list identity glyphs are provisional under A27, rather than a required
 feature. The owner currently favors omitting them; make an icon-free component
 candidate and raise the choice at implementation review. If retained after that
@@ -101,7 +104,9 @@ list is empty. Do not add total/future/progress counts or completion checkboxes.
 
 Use one Add-style floating action, accessible as **Create list**, matching the
 R3 action geometry and shared primary/onPrimary pair. Its plus glyph is paired
-with an accessible name/tooltip. Do not add a second Create action above the rows.
+with an accessible name/tooltip. Name, support, padding and chevron belong to one
+primary navigation Pressable; its decorative chevron is hidden from accessibility.
+More remains an independent guarded target of at least 48 dp. Do not add a second Create action above the rows.
 Each named-list menu offers Rename list and Remove list. A labeled Manage lists
 entry in root More opens the existing explicit management flow. No list has no
 Rename/Remove. Reserve actual floating-action/bar/feedback clearance in scrolling.
@@ -109,9 +114,9 @@ Rename/Remove. Reserve actual floating-action/bar/feedback clearance in scrollin
 **Named-list / No list Agenda:** reuse the accepted Agenda rows, sections and
 All / Today / Upcoming / Filters semantics with membership fixed to that list.
 Search covers the existing title/notes dataset; clearing filters never clears the
-fixed membership. Event drives date grouping; unfinished Due drives Overdue.
-Show consequential independent Due, actual delivery problems and changed next
-alerts without converting a postponed alert to a new Event date.
+fixed membership. Alert anchor drives grouping; No alert uses Due, and unfinished
+Due drives Overdue. Cards lead with device-local alert time, followed by consequential
+Due/delivery and readable repeat metadata. Keep Event/Due definitions in Details.
 
 One **Add reminder** action preselects this list (or No list), and Save returns to
 the originating list with contextual acknowledgement. Completion remains the

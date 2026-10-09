@@ -1,5 +1,8 @@
 # TD-04 — Native presentation
 
+The [9 October beta corrections](../../design/current/beta-fixes.md) supersede prior
+Stop, navigation, alert-first cards, browsing cover and splash density requirements.
+
 ## Contract and dependencies
 
 TD-01 and TD-02; existing native session/delivery authority.
@@ -15,7 +18,7 @@ Use the same four global scenes and color roles on every native full-screen alar
 ## Implementation
 
 - Capture resolved atmosphere/brightness at session creation; retain it through arrivals/removal/rotation/refresh/unlock and boundary changes. New sessions resolve again.
-- Apply single/multiple/loading/refresh-error/action feedback anatomy and larger R6 alarm targets. Stop/quick Snooze are immediately available; Stop all is distinct; Stop leaves work unfinished.
+- Apply single/multiple/loading/refresh-error/action feedback anatomy and larger R6 alarm targets. Stop/quick Snooze are immediately available; Stop all is distinct; Alarm Stop completes the affected current occurrence; timeout/interruption remains unfinished.
 - Use the native-safe allowlisted mirror and bundled assets without CE/React/network reads before unlock. Keep generic content and operational time; never infer public disclosure from CE availability.
 - Use supported notification branding and existing native generation-safe actions/public privacy treatment. Do not add custom scenic bubbles, aliases, task-specific scenes or JS startup dependencies.
 

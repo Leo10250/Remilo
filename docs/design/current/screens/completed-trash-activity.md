@@ -48,14 +48,13 @@ manually selected at a held review clock, not automatic switching examples.
 ## Shared layout and origin navigation
 
 - One readable portrait screenshot per capture, reviewed at 360 × 800 dp.
-  Use a compact opening approximately 96 dp below the status inset, including
-  a 56 dp Back/title toolbar and a shallow scene crop. No tall homepage hero,
-  repeated Remilo headline or motivational copy. Artwork yields first under
-  large text, IME, modal or constrained height.
-- Collections are secondary overflow destinations from Agenda / Lists / Repeats;
-  return to the invoking root. A list-scoped collection returns to its named
-  list or No list. Details returns to that collection; Activity returns to those
-  details with the parent context intact. No bottom root bar or creation FAB.
+  Use the shared 200 dp browsing cover, collapsing to an opaque measured toolbar.
+  Compact fallback applies under constrained height or font scale at least 1.6.
+- Global Completed and Trash are roots with the four-destination bottom bar. A
+  list-scoped collection remains secondary and returns to its named list or No
+  list. Details returns to that collection; Activity returns to those details
+  with parent context intact. Selection mode uses the contextual footer instead
+  of root navigation. Collections have no creation FAB.
 - Preserve independent query, editable membership, Include skipped and scroll
   state for each global collection and each fixed-list collection. Fixed scope
   always wins: a named-list/No list page cannot be broadened by Clear filters.
@@ -276,8 +275,8 @@ and actual time, without guessing a field difference or target.
 
 The event-label map is not evidence that an event was emitted. Native Create,
 ordinary Blocked/Missed registration, notification delivery and whole-family
-changes do not currently journal all corresponding labels. StopAll records
-per-occurrence Stop. Do not invent Created, Scheduled, Rang, Repeat paused/resumed
+changes do not currently journal all corresponding labels. New Stop/StopAll record
+per-occurrence Done; retained historical Stop records remain Alarm stopped. Do not invent Created, Scheduled, Rang, Repeat paused/resumed
 or every failed delivery from current state. Fixtures use actual recorded
 Stop/Postpone/Edit/Done/Delete/UndoDelete kinds. Empty says **No recorded activity.**
 Missing occurrence says **This reminder is unavailable.** Neither implies “nothing

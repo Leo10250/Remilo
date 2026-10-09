@@ -2,6 +2,10 @@
 
 The owner's implementation instruction fixes the following corrections. It does
 not modify accepted PNGs, frozen submissions or historical approval records.
+The [beta corrections](beta-fixes.md) supersede earlier Stop/navigation/timing
+requirements. The subsequent owner clarification fixes browsing artwork in place
+while opaque content covers it; [header research](header-scroll-research.md)
+defines the shared layer and restoration behavior.
 
 - Lists omit decorative icons. No list and named lists use text, explicit overdue
   occurrence counts and accessible browsing/management actions.

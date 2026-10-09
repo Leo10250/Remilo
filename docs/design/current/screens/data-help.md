@@ -49,9 +49,9 @@ paired content. Errors/warnings have stable semantic roles and explicit meaning.
 
 ## Shared layout, navigation and platform handoffs
 
-- Review one readable screenshot per state at 360 × 800 dp. Use approximately
-  96 dp of secondary opening below the status inset, including a 56 dp toolbar
-  and shallow scene crop. Keep 16 dp gutters/corners, 16 sp body/14 sp support,
+- Review one readable screenshot per state at 360 × 800 dp. Settings uses the
+  shared 200 dp collapsing cover. Backup/restore and Diagnostics use compact
+  measured toolbars. Keep 16 dp gutters/corners, 16 sp body/14 sp support,
   opaque grouped surfaces, at least 48 dp targets and 56 dp prominent actions.
   Long titles, feedback and labels wrap/grow and scroll; art yields first.
 - Settings keeps its accepted category order. Data contains **Export backup** and
@@ -311,7 +311,7 @@ observation time separate where it differs from outer report time. Required
 flags/channels are distinct; full-screen Limited concerns presentation. No live
 Settings controls, Check permissions CTA or repair action is invented here.
 
-Technical metadata contains actual **Content schema 4** / **Delivery schema 3**.
+Technical metadata contains actual **Content schema 5** / **Delivery schema 5**.
 It need not dominate the first viewport. This report has no app/build/OS version,
 source/APK identity, volume/route or audio observation. Settings's current
 **0.4.0 · Android** is static app copy, not diagnostics evidence of a tested build.

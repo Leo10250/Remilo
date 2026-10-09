@@ -120,9 +120,9 @@ or swipe-to-dismiss gestures.
   `Snooze · 10 min` (actual configured duration), each at least 64 dp high, with
   16 dp corners and a 12 dp gap. Use the atmosphere primary/onPrimary pair;
   Stop receives no destructive red simply because it silences audio.
-- **Explanation:** `Stop leaves the reminder unfinished.` stays readable near
-  the controls. Done/completion is not implied by a checkmark, button label or
-  confirmation animation on this surface.
+- **Stop meaning:** retain the visible Stop label and add the accessibility hint
+  that it completes the affected occurrence. Stop all completes captured session
+  members. Remove the old unfinished explanation; Snooze/Postpone remain postponement.
 
 The footer occupies measured layout space outside the information scroll area.
 At large text, long titles, small height or landscape orientation, reduce the art

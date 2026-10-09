@@ -1,5 +1,8 @@
 # TD-05 — Static Classic branding
 
+The [latest beta correction](../../design/current/beta-fixes.md) governs Stop completion, alert-first Agenda, four roots, shared collapsing
+covers and the approved direct-source Classic splash density exports.
+
 ## Contract and dependencies
 
 Approved Classic source/A01; independent of atmosphere implementation.

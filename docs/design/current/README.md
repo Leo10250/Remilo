@@ -6,6 +6,9 @@ repository cleanup authorized by [A37](../approved-design-cleanup.json), and
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
+The owner's [9 October beta corrections](beta-fixes.md) supersede the earlier
+Stop, navigation, Agenda timing and fixed secondary-cover requirements.
+
 ## Authority
 
 1. Current owner decisions and recorded implementation corrections govern requirements.
