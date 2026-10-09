@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "version": 3,
+  "recordedAtUtc": "2026-10-09T19:24:28.619679+00:00",
+  "reviewer": "native_audit file/export review",
+  "filesVerified": 8,
+  "checks": [
+    {
+      "name": "source-and-output-hashes",
+      "status": "pass",
+      "observation": "Verified every unchanged source and staged output hash, dimensions, alpha, sRGB tag and source-affine all-channel equality."
+    },
+    {
+      "name": "safe-circle",
+      "status": "pass",
+      "observation": "Every splash export stays inside the 192dp safe circle with transparent padding."
+    },
+    {
+      "name": "density-transform",
+      "status": "pass",
+      "observation": "Every native canvas renders directly from the approved original 467px isolation; xxhdpi/xxxhdpi interpolation is bounded and disclosed."
+    }
+  ],
+  "tests": {
+    "manualBrandPython": {
+      "passed": 15,
+      "failed": 0
+    },
+    "classicCopierNode": {
+      "passed": 13,
+      "failed": 0
+    }
+  },
+  "approvalAssessed": false,
+  "productionFilesWritten": false
+}

@@ -18,13 +18,16 @@ async function workspace(t) {
 }
 async function write(root,path,bytes) {await mkdir(dirname(join(root,path)),{recursive:true});await writeFile(join(root,path),bytes);}
 async function record(root,path) {return JSON.parse(await readFile(join(root,path),'utf8'));}
-async function fullFixture(t) {
+async function fullFixture(t,{splashVersion=2}={}) {
   const root=await workspace(t), source={path:'assets/brand/reference/icon-classic.png',sha256:sha(Buffer.from('fixture source'))},
     sourceBoard={path:'assets/brand/reference/source-icon-board.png',sha256:sha(Buffer.from('fixture board'))};
   await write(root,source.path,'fixture source');await write(root,sourceBoard.path,'fixture board');
   const ids=['classic-legacy-launcher','classic-adaptive','classic-monochrome','classic-splash','classic-notification','classic-favicon'];
   const registry={schemaVersion:1,source,sourceBoard,exports:ids.map(id=>({id,activeVersion:2,centeringRevision:2,sourceAnchorPx:[233,243],
     approval:{path:'docs/design/production-assets/approvals/'+id+'-v2.json'},productionFiles:[]}))};
+  const splash=registry.exports.find(entry=>entry.id==='classic-splash');
+  if(splashVersion===3) Object.assign(splash,{activeVersion:3,splashLayout:{canvasDp:288,imageWidthDp:288,nativeCanvasPx:[288,432,576,864,1152]}});
+  const splashSizes=splash.splashLayout?.nativeCanvasPx??[76,114,152,228,304];
   const add=async(id,role,width,extension,density)=>{
     const path='assets/brand/classic/'+id+'/'+role+'-'+width+'.'+extension;
     const bytes=Buffer.from('synthetic '+id+' '+role+' '+width+' '+extension);
@@ -38,12 +41,13 @@ async function fullFixture(t) {
     await add(ids[1],'foreground',[108,162,216,324,432][index],'png');
     await add(ids[1],'background',[108,162,216,324,432][index],'png');
     await add(ids[2],'monochrome',[108,162,216,324,432][index],'png');
-    await add(ids[3],'native-'+[76,114,152,228,304][index],[76,114,152,228,304][index],'png');
+    await add(ids[3],'native-'+splashSizes[index],splashSizes[index],'png');
   }
   await add(ids[3],'configuration',288,'png');await add(ids[4],'vector',24,'xml');await add(ids[5],'favicon',48,'png');
   for(const entry of registry.exports) await write(root,entry.approval.path,JSON.stringify({assetId:entry.id,
     version:2,centeringRevision:2,sourceAnchorPx:[233,243],ownerStatement:'Synthetic fixture approval.',recordedAtUtc:'2026-10-09T00:00:00Z',
-    sources:[source,sourceBoard],files:entry.productionFiles,activationApproved:true}));
+    sources:[source,sourceBoard],files:entry.productionFiles,activationApproved:true,
+    ...(entry.splashLayout?{splashLayout:entry.splashLayout}:{})}));
   return {root,registry};
 }
 async function oldTargets(root,registry) {
@@ -57,6 +61,29 @@ async function unchanged(root,before) {
 }
 test('incomplete artwork approvals reject before planning any native mutation',()=>{
   assert.throws(()=>classicPlan({exports:[{id:'classic-legacy-launcher',approval:{path:'approved.json'}}]}),/classic-adaptive/);
+});
+test('approved renderer-sized splash uses complete density canvases without changing other Classic mappings',async(t)=>{
+  const {root,registry}=await fullFixture(t,{splashVersion:3}), plan=classicPlan(registry);
+  for(const [density,size] of [['mdpi',288],['hdpi',432],['xhdpi',576],['xxhdpi',864],['xxxhdpi',1152]]) {
+    const file=plan.find(item=>item.destination==='android/app/src/main/res/drawable-'+density+'/splashscreen_logo.png');
+    assert.equal(file.source,'assets/brand/classic/classic-splash/native-'+size+'-'+size+'.png');
+    assert.equal(file.splashLayout.imageWidthDp,288);
+  }
+  assert.equal(plan.length,37);await copyClassic(root,registry);await copyClassic(root,registry,{check:true});
+});
+test('revised splash metadata and its individual approval must agree before copying anything',async(t)=>{
+  const {root,registry}=await fullFixture(t,{splashVersion:3}), before=await oldTargets(root,registry);
+  const entry=registry.exports.find(item=>item.id==='classic-splash');
+  const missing=structuredClone(registry);delete missing.exports.find(item=>item.id==='classic-splash').splashLayout;
+  assert.throws(()=>classicPlan(missing),/explicit density-canvas/);
+  for(const patch of [{canvasDp:76},{imageWidthDp:76},{nativeCanvasPx:[76,114,152,228,304]}]) {
+    const invalid=structuredClone(registry);Object.assign(invalid.exports.find(item=>item.id==='classic-splash').splashLayout,patch);
+    assert.throws(()=>classicPlan(invalid),/reviewed 288dp/);
+  }
+  const approval=await record(root,entry.approval.path);delete approval.splashLayout;
+  await write(root,entry.approval.path,JSON.stringify(approval));
+  await assert.rejects(copyClassic(root,registry),/Unbound Classic splash density approval/);
+  await unchanged(root,before);
 });
 test('changed bytes reject despite a recorded source hash and approval',async(t)=>{
   const root=await workspace(t);await mkdir(join(root,'assets'),{recursive:true});

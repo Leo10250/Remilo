@@ -66,23 +66,43 @@ def manual_pixels(source, specification):
     if specification['kind']=='resize':
         require(all(t<=s for t,s in zip(target,im.size)),'Manual resize would enlarge source')
         return im.resize(target,Image.Resampling.LANCZOS)
-    require(specification['kind']=='uniform-affine','Unknown manual export transformation')
+    splash_density=specification['kind']=='splash-density-affine'
+    require(specification['kind']=='uniform-affine' or splash_density,'Unknown manual export transformation')
     require(target[0]==target[1] and im.mode=='RGBA','Uniform affine requires a square transparent layer')
     center=specification['sourceCenterPx']
     require(len(center)==2 and all(isinstance(v,(int,float)) and __import__('math').isfinite(v) for v in center),'Invalid affine center')
     k=specification['dpPerSourcePx']*target[0]/specification['layerSizeDp']
-    require(0<k<=1,'Uniform affine must not enlarge source detail')
+    if splash_density:
+        # A renderer-sized canvas preserves the approved 288dp composition.
+        # Only this exact Classic source transform may interpolate its finite
+        # source detail at xxhdpi/xxxhdpi; ordinary exports still cannot enlarge.
+        require(im.size==(467,467) and center==[233,243]
+                and specification['dpPerSourcePx']==0.3777480127985562
+                and specification['layerSizeDp']==288
+                and target[0] in (288,432,576,864,1152),
+                'Splash density transform differs from the reviewed source geometry')
+        require(specification.get('interpolationPolicy')=='preserve-current-splash-size',
+                'Splash source interpolation must be explicitly disclosed')
+        require(0<k<=1.5109920511942248,'Splash interpolation exceeds the declared density bound')
+    else:
+        require(0<k<=1,'Uniform affine must not enlarge source detail')
     coefficients=(1/k,0,center[0]-target[0]/2/k,0,1/k,center[1]-target[1]/2/k)
     return im.transform(target,Image.Transform.AFFINE,coefficients,resample=Image.Resampling.BICUBIC)
 
 def validate(root,profile,specification,decision):
     require(specification['schemaVersion']==1 and decision.get('promote') is True and decision.get('activationApproved') is True,'Explicit artwork and integration decision is required')
+    return validate_candidate(root,profile,specification,decision)
+
+def validate_candidate(root,profile,specification,decision=None):
+    """Read-only technical eligibility; a candidate check never supplies approval."""
+    require(specification['schemaVersion']==1,'Unsupported manual specification schema')
     asset=specification['assetId']; version=specification['version']
     require(asset.startswith('classic-') and asset in profile['assets'],'Unknown static Classic asset')
-    require(decision['assetId']==asset and decision['version']==version,'Decision identity differs')
-    require(bool(decision.get('ownerStatement')) and decision['specificationSha256']==specification['_sha256'],'Decision must bind exact reviewed specification')
     require(bool(specification.get('reviews')) and all(output in specification['files'] for output in specification['outputs']),'Reviewed resources and every declared output must be present')
-    utc_timestamp(decision['recordedAtUtc'])
+    if decision is not None:
+        require(decision['assetId']==asset and decision['version']==version,'Decision identity differs')
+        require(bool(decision.get('ownerStatement')) and decision['specificationSha256']==specification['_sha256'],'Decision must bind exact reviewed specification')
+        utc_timestamp(decision['recordedAtUtc'])
     configured=profile['assets'][asset]
     require(configured.get('route')=='faithful-export','Manual branding requires faithful-export route')
     support=configured.get('manualPromotionSupport',{})
@@ -117,7 +137,8 @@ def validate(root,profile,specification,decision):
     require(isinstance(version,int) and not isinstance(version,bool) and version>0 and (version==previous_version+1 if previous_version else version in (1,2)),'Manual candidate version is not the next reviewed revision')
     if specification.get('centeringRevision'):
         require(specification['centeringRevision']==2 and specification['sourceAnchorPx']==[233,243],'Revised Classic centering anchor differs')
-        require(bool(decision.get('ownerQuestion')) and bool(decision.get('ownerDecisionReference')),'Revised individual decision must retain question and human response reference')
+        if decision is not None:
+            require(bool(decision.get('ownerQuestion')) and bool(decision.get('ownerDecisionReference')),'Revised individual decision must retain question and human response reference')
         for previous,required_version in specification.get('requiredAssetVersions',{}).items():
             entry=next(e for e in entries if e['id']==previous)
             require(entry.get('activeVersion')==required_version and entry.get('centeringRevision')==2 and entry.get('approval'),'Earlier centered Classic revision is not approved')
@@ -167,8 +188,13 @@ def validate(root,profile,specification,decision):
                 require(max_radius<96,'Actual splash isolation exceeds central192px safe circle')
         if item.get('manualExportSpec'):
             transform=item['manualExportSpec']
+            if transform['kind']=='splash-density-affine':
+                require(asset=='classic-splash' and item['role'].startswith('native-')
+                        and specification.get('splashLayout')=={'canvasDp':288,'imageWidthDp':288,
+                            'nativeCanvasPx':[288,432,576,864,1152]},
+                        'Renderer-sized splash interpolation belongs only to the declared splash density set')
             if specification.get('centeringRevision'):
-                if transform['kind']=='uniform-affine':require(transform['sourceCenterPx']==[233,243],'Layer transform does not center the main ring')
+                if transform['kind'] in ('uniform-affine','splash-density-affine'):require(transform['sourceCenterPx']==[233,243],'Layer transform does not center the main ring')
                 elif transform['kind']=='crop-resize':require(transform['sourceRectPx']==[9,19,457,467],'Legacy crop does not center the main ring')
             if transform.get('allowUpscale') is True:require(asset=='classic-legacy-launcher' and item['role']=='configuration' and item['width']==item['height']==1024,'Only explicitly reviewed legacy configuration may enlarge source')
             parent=next(s for s in specification['layerSources'] if s['role']==item['sourceRole'])
@@ -215,6 +241,8 @@ def promote(root,profile,specification,decision):
         if specification.get('centeringRevision'):
             approval.update({'centeringRevision':2,'sourceAnchorPx':specification['sourceAnchorPx'],
                              'ownerQuestion':decision['ownerQuestion'],'ownerDecisionReference':decision['ownerDecisionReference']})
+        if specification.get('splashLayout'):
+            approval['splashLayout']=specification['splashLayout']
         approval_bytes=(json.dumps(approval,indent=2,ensure_ascii=False)+'\n').encode('utf-8')
         approval_ref={'path':relative(root,approval_path),'sha256':hashlib.sha256(approval_bytes).hexdigest(),
                       'ownerStatement':decision['ownerStatement'],'recordedAtUtc':decision['recordedAtUtc'],
@@ -231,6 +259,7 @@ def promote(root,profile,specification,decision):
                         'technicalLimitations':specification['technicalLimitations'],
                         'manualPromotionSupport':profile['assets'][asset]['manualPromotionSupport']})
         if specification.get('centeringRevision'):updated.update({'centeringRevision':2,'sourceAnchorPx':specification['sourceAnchorPx']})
+        if specification.get('splashLayout'):updated['splashLayout']=specification['splashLayout']
         journal={'schemaVersion':1,'assetId':asset,'version':version,'state':'prepared',
                  'expectedRegistrySha256':sha(registry_path),'specificationSha256':specification['_sha256'],
                  'decision':decision,'files':files,'approvalSha256':approval_ref['sha256']}
@@ -257,16 +286,24 @@ def promote(root,profile,specification,decision):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['check','promote'])
-    for name in ['project-root','profile','specification','decision']: parser.add_argument('--'+name,required=True)
+    parser.add_argument('operation',choices=['check-staged','check','promote'])
+    for name in ['project-root','profile','specification']: parser.add_argument('--'+name,required=True)
+    parser.add_argument('--decision',help='Required for approval-bound check/promote; omitted for check-staged')
     args=parser.parse_args();root=Path(args.project_root).resolve()
     profile=load_json(confined(root,args.profile));path=confined(root,args.specification)
     specification=load_json(path);specification['_sha256']=sha(path)
-    decision=load_json(confined(root,args.decision))
-    if args.operation=='check':
+    if args.operation=='check-staged':
+        _,_,_,items=validate_candidate(root,profile,specification)
+        result={'assetId':specification['assetId'],'filesVerified':len(items),'productionFilesWritten':False,'approvalAssessed':False}
+    elif args.operation=='check':
+        require(args.decision,'Approval-bound check requires --decision')
+        decision=load_json(confined(root,args.decision))
         _,_,_,items=validate(root,profile,specification,decision)
         result={'assetId':specification['assetId'],'filesVerified':len(items),'productionFilesWritten':False}
-    else: result=promote(root,profile,specification,decision)
+    else:
+        require(args.decision,'Promotion requires --decision')
+        decision=load_json(confined(root,args.decision))
+        result=promote(root,profile,specification,decision)
     print(json.dumps(result,indent=2))
 
 if __name__=='__main__':

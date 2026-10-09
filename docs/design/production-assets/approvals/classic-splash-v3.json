@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "version": 3,
+  "candidate": 3,
+  "ownerStatement": "Approve artwork and production activation",
+  "recordedAtUtc": "2026-10-09T19:24:28.648170+00:00",
+  "activationApproved": true,
+  "scope": "Six exact candidate v3 configuration/native splash exports, preserving current visible size and mark. Original source isolation and documented 1.13x/1.51x high-density interpolation accepted. Android source activation authorized; installed appearance remains pending.",
+  "sources": [
+    {
+      "path": "assets/brand/reference/icon-classic.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+    },
+    {
+      "path": "assets/brand/reference/source-icon-board.png",
+      "sha256": "b7d19ae659fc43b747f468fbef91f674f19b235b739b8cf87ed83aefdb2fb849"
+    }
+  ],
+  "review": {
+    "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/same-size-xhdpi.png",
+    "sha256": "39d6a297ea8b8ed3f7c3a6aede17a8a61e68ab9fac40ba47c8bfccd428a6a756"
+  },
+  "reviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/same-size-xhdpi.png",
+      "sha256": "39d6a297ea8b8ed3f7c3a6aede17a8a61e68ab9fac40ba47c8bfccd428a6a756"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/usage-360dp.png",
+      "sha256": "006dfc037be3db621d32f1ae035502524a90914a7e7997a33ca773fb2e47c691"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash-density/candidate-v3/review/xxxhdpi-detail.png",
+      "sha256": "04753ff15ed8c5a5ffeae3e8d274b2d3bc123e0a67519ea38009f1f78c2f35b3"
+    },
+    {
+      "localArtifactPath": "docs/design/production-assets/records/classic-splash/density-v3-inspection.json",
+      "sha256": "7c55e0fb4de7f7e7ffd3640bfc5f504d796ed6ce6c5952a6afba1ad29727c00f"
+    },
+    {
+      "localArtifactPath": "docs/design/production-assets/records/classic-splash/review-03-01.json",
+      "sha256": "586cee611770f0e67236a3eb2a1bfb14679ac9c17738670a9ca1a06b900cd354"
+    },
+    {
+      "localArtifactPath": "docs/design/production-assets/records/classic-splash/density-v3-file-review.json",
+      "sha256": "81f93cf143250940e58501c3a64cfa1a9b31713eaed8585663dc716a024d3f9f"
+    }
+  ],
+  "files": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-splash-v3.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "configuration",
+      "path": "assets/brand/classic/splash/classic-splash-v3.png",
+      "sha256": "29b886c005aa5d02c4c74e22966d51cc2c18e9309a14747582319c602d078c1f",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "uniform-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          288,
+          288
+        ]
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "sourcePixelScale": 0.3777480127985562,
+      "lossless": true
+    },
+    {
+      "role": "native-288",
+      "path": "assets/brand/classic/splash/classic-splash-288-v3.png",
+      "sha256": "29b886c005aa5d02c4c74e22966d51cc2c18e9309a14747582319c602d078c1f",
+      "width": 288,
+      "height": 288,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "splash-density-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          288,
+          288
+        ],
+        "interpolationPolicy": "preserve-current-splash-size"
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "sourcePixelScale": 0.3777480127985562,
+      "lossless": true,
+      "density": "mdpi"
+    },
+    {
+      "role": "native-432",
+      "path": "assets/brand/classic/splash/classic-splash-432-v3.png",
+      "sha256": "a092d1c3aaccc91014cd20deee41b04ae74cf3d32f9188060156139f3e1fa1ba",
+      "width": 432,
+      "height": 432,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "splash-density-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          432,
+          432
+        ],
+        "interpolationPolicy": "preserve-current-splash-size"
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "sourcePixelScale": 0.5666220191978343,
+      "lossless": true,
+      "density": "hdpi"
+    },
+    {
+      "role": "native-576",
+      "path": "assets/brand/classic/splash/classic-splash-576-v3.png",
+      "sha256": "9418885fcb86e901eb71971c860e24f0e7d3a6599384afe126460f108ee29b76",
+      "width": 576,
+      "height": 576,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "splash-density-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          576,
+          576
+        ],
+        "interpolationPolicy": "preserve-current-splash-size"
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": false,
+      "sourcePixelScale": 0.7554960255971124,
+      "lossless": true,
+      "density": "xhdpi"
+    },
+    {
+      "role": "native-864",
+      "path": "assets/brand/classic/splash/classic-splash-864-v3.png",
+      "sha256": "12b5ad9a5d06d6aeeb2566473e08d255ca47cb347b6cdeb5b7a47030ff8a777c",
+      "width": 864,
+      "height": 864,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "splash-density-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          864,
+          864
+        ],
+        "interpolationPolicy": "preserve-current-splash-size"
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": true,
+      "sourcePixelScale": 1.1332440383956686,
+      "lossless": true,
+      "density": "xxhdpi"
+    },
+    {
+      "role": "native-1152",
+      "path": "assets/brand/classic/splash/classic-splash-1152-v3.png",
+      "sha256": "7217f1a89fea57f4b95bc0fb59dffeeebf4387442102fc41e63862c75f0584ec",
+      "width": 1152,
+      "height": 1152,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true,
+      "sourceRole": "foreground",
+      "derivedFrom": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      },
+      "manualExportSpec": {
+        "kind": "splash-density-affine",
+        "sourceCenterPx": [
+          233,
+          243
+        ],
+        "dpPerSourcePx": 0.3777480127985562,
+        "layerSizeDp": 288,
+        "size": [
+          1152,
+          1152
+        ],
+        "interpolationPolicy": "preserve-current-splash-size"
+      },
+      "resizedFromPx": [
+        467,
+        467
+      ],
+      "upscaled": true,
+      "sourcePixelScale": 1.5109920511942248,
+      "lossless": true,
+      "density": "xxxhdpi"
+    }
+  ],
+  "preparedRecord": {
+    "path": "docs/design/production-assets/records/classic-splash/candidate-03.json",
+    "sha256": "6cb5f85d8f59cf922355d5f529a24086bc3e1a02b1d89902f88b60eb61c10a5d"
+  },
+  "manualLayerSources": [
+    {
+      "role": "source",
+      "path": "assets/brand/classic/masters/classic-splash-v3.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "candidateBytesPreserved": true
+    },
+    {
+      "role": "source-foreground",
+      "path": "assets/brand/classic/masters/classic-splash-isolated-v3.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "width": 467,
+      "height": 467,
+      "format": "PNG",
+      "mode": "RGBA",
+      "opaque": false,
+      "candidateBytesPreserved": true
+    }
+  ],
+  "technicalLimitations": [
+    "Every native density renders directly from the unchanged 467px approved isolated source; no intermediate configuration image is resized.",
+    "The 288dp composition retains the current visible mark, approximately 131 by 139dp at 50-percent alpha.",
+    "xxhdpi source pixels interpolate at 1.1332440383956686x and xxxhdpi at 1.5109920511942248x; interpolation adds no original detail.",
+    "The approved isolation retains its original matte/finish limitations.",
+    "Synthetic scaling, backgrounds and usage previews are not Android screenshots, device acceptance or accessibility evidence."
+  ],
+  "checks": {
+    "candidateBytesPreserved": true,
+    "distinctLayerTransformsVerified": true,
+    "nativeVectorStructureVerified": false,
+    "allOutputDimensionsMatch": true,
+    "installedDeviceAppearanceAssessed": false
+  },
+  "centeringRevision": 2,
+  "sourceAnchorPx": [
+    233,
+    243
+  ],
+  "ownerQuestion": "Approve Classic splash candidate v3 (shown above) and its six exact density/configuration exports for production activation after technical checks pass? It preserves the current size and original mark, including the existing thin pale edge matte; the highest densities use documented 1.13×/1.51× interpolation.",
+  "ownerDecisionReference": {
+    "questionItemId": [
+      "request_user_input_async",
+      "call_339d39d658c04849a0d932e725711f20",
+      0
+    ],
+    "reply": "Approve artwork and production activation",
+    "receivedAtUtc": "2026-10-09T19:21:31Z",
+    "evidence": "Root agent relayed the exact human response and reported inspecting all three review panels, with same-size-xhdpi shown to the owner."
+  },
+  "splashLayout": {
+    "canvasDp": 288,
+    "imageWidthDp": 288,
+    "nativeCanvasPx": [
+      288,
+      432,
+      576,
+      864,
+      1152
+    ]
+  }
+}

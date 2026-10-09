@@ -65,6 +65,11 @@ class ManualBrandTests(unittest.TestCase):
     def test_requires_integration_authorization(self):
         self.decision['activationApproved']=False
         with self.assertRaisesRegex(ValueError,'integration'):helper.validate(self.root,self.profile,self.data,self.decision)
+    def test_staged_check_verifies_files_without_creating_an_owner_decision(self):
+        _,_,_,items=helper.validate_candidate(self.root,self.profile,self.data)
+        self.assertEqual(len(items),5)
+        self.assertEqual(list((self.root/'assets/brand/classic').iterdir()),[])
+        with self.assertRaisesRegex(ValueError,'integration'):helper.validate(self.root,self.profile,self.data,{})
     def test_rejects_changed_prepared_bytes(self):
         path=self.root/self.data['outputs'][0]['localArtifactPath'];path.write_bytes(b'changed')
         with self.assertRaisesRegex(ValueError,'bytes changed'):helper.validate(self.root,self.profile,self.data,self.decision)
@@ -86,6 +91,37 @@ class ManualBrandTests(unittest.TestCase):
         registry.write_text(json.dumps({'exports':[{'id':'classic-splash','approval':None,'productionFiles':None}]}))
         self.data['expectedRegistrySha256']=helper.sha(registry)
         with self.assertRaisesRegex(ValueError,'splash configuration/density'):helper.validate(self.root,self.profile,self.data,self.decision)
+    def test_ordinary_affine_still_rejects_source_enlargement(self):
+        source=self.root/self.data['layerSources'][0]['localArtifactPath']
+        with self.assertRaisesRegex(ValueError,'must not enlarge'):
+            helper.manual_pixels(source,{'kind':'uniform-affine','size':[1152,1152],
+                'sourceCenterPx':[233,243],'dpPerSourcePx':.3777480127985562,'layerSizeDp':288})
+    def test_splash_density_affine_preserves_logical_geometry_with_bounded_interpolation(self):
+        source=self.root/self.data['layerSources'][0]['localArtifactPath']
+        bounds=[]
+        for n in (288,432,576,864,1152):
+            transform={'kind':'splash-density-affine','size':[n,n],'sourceCenterPx':[233,243],
+                'dpPerSourcePx':.3777480127985562,'layerSizeDp':288,
+                'interpolationPolicy':'preserve-current-splash-size'}
+            image=helper.manual_pixels(source,transform)
+            box=image.getchannel('A').point(lambda a:255 if a>=128 else 0).getbbox()
+            bounds.append(tuple(value/(n/288) for value in box))
+            self.assertEqual(image.size,(n,n));self.assertEqual(image.mode,'RGBA')
+            self.assertEqual(image.getpixel((0,0))[3],0)
+        for box in bounds[1:]:
+            for actual,expected in zip(box,bounds[0]):self.assertLess(abs(actual-expected),1.1)
+    def test_splash_interpolation_requires_exact_geometry_and_disclosure(self):
+        source=self.root/self.data['layerSources'][0]['localArtifactPath']
+        transform={'kind':'splash-density-affine','size':[1152,1152],'sourceCenterPx':[233,243],
+            'dpPerSourcePx':.3777480127985562,'layerSizeDp':288,
+            'interpolationPolicy':'preserve-current-splash-size'}
+        for patch in ({'size':[1440,1440]},{'sourceCenterPx':[233,242]},
+                      {'dpPerSourcePx':.4},{'layerSizeDp':240},{'interpolationPolicy':None}):
+            with self.assertRaisesRegex(ValueError,'geometry|disclosed'):helper.manual_pixels(source,{**transform,**patch})
+    def test_splash_transform_cannot_be_used_for_another_brand_asset(self):
+        item=self.data['outputs'][0]
+        item['manualExportSpec']={'kind':'splash-density-affine','size':[108,108]}
+        with self.assertRaisesRegex(ValueError,'belongs only'):helper.validate(self.root,self.profile,self.data,self.decision)
     def test_native_vector_requires_white_alpha_shape(self):
         path=self.root/'verification/local/artwork/notification.xml'
         content='<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M2,2 L22,2 L12,22 Z" /></vector>'

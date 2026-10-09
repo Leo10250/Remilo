@@ -1,0 +1,14 @@
+[
+  {
+    "file": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+    "role": "faithful-source",
+    "influence": "Preserve the inspected approved isolation, source-ring anchor and finish",
+    "inspected": true
+  },
+  {
+    "file": "assets/brand/reference/icon-classic.png",
+    "role": "historical",
+    "influence": "Inspected original identity provenance only; no tile pixels added to isolation",
+    "inspected": true
+  }
+]

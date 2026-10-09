@@ -16,12 +16,20 @@ export function classicPlan(registry) {
   // The owner rejected the prior centering. Preserve its historical records,
   // but never activate a mixed set or an earlier centered revision.
   for(const id of required) if(!currentCentering(entries.get(id))) throw new Error('Current Classic centering revision 2 required: '+id);
+  const splash = entries.get('classic-splash'), splashLayout = splash.splashLayout;
+  if (splashLayout && (splashLayout.canvasDp !== 288 || splashLayout.imageWidthDp !== 288 ||
+    JSON.stringify(splashLayout.nativeCanvasPx) !== JSON.stringify([288,432,576,864,1152])))
+    throw new Error('Classic splash requires the reviewed 288dp density canvases.');
+  if (splash.activeVersion >= 3 && !splashLayout) throw new Error('Revised Classic splash requires explicit density-canvas metadata.');
+  // Preserve historical v2 resources until the corrected density set is approved.
+  const splashSizes = splashLayout?.nativeCanvasPx ?? [76,114,152,228,304];
   const files = [];
   const add = (id,roles,width,destination,density) => {
     const matches = entries.get(id).productionFiles?.filter(file => roles.includes(file.role) && file.width===width && file.height===width && (!density || file.density===density)) ?? [];
     if(matches.length!==1) throw new Error(id+': expected one '+roles.join('/')+' '+width+'px export'+(density?' '+density:''));
     files.push({assetId:id,source:matches[0].path,sha256:matches[0].sha256,destination,approval:entries.get(id).approval.path,
-      centeringRevision:entries.get(id).centeringRevision,sourceAnchorPx:[...entries.get(id).sourceAnchorPx]});
+      centeringRevision:entries.get(id).centeringRevision,sourceAnchorPx:[...entries.get(id).sourceAnchorPx],
+      ...(id==='classic-splash' && splashLayout ? {splashLayout} : {})});
   };
   add(required[0],['configuration'],1024,'assets/images/icon.png');
   add(required[1],['foreground'],432,'assets/images/android-icon-foreground.png');
@@ -37,7 +45,7 @@ export function classicPlan(registry) {
     add(required[1],['foreground'],layerSize,'android/app/src/main/res/mipmap-'+density+'/ic_launcher_foreground.png');
     add(required[1],['background'],layerSize,'android/app/src/main/res/mipmap-'+density+'/ic_launcher_background.png');
     add(required[2],['monochrome','configuration'],layerSize,'android/app/src/main/res/mipmap-'+density+'/ic_launcher_monochrome.png');
-    add(required[3],['native-'+[76,114,152,228,304][index]], [76,114,152,228,304][index],'android/app/src/main/res/drawable-'+density+'/splashscreen_logo.png');
+    add(required[3],['native-'+splashSizes[index]], splashSizes[index],'android/app/src/main/res/drawable-'+density+'/splashscreen_logo.png');
   });
   for(const file of files) {
     if(!file.source?.startsWith('assets/brand/classic/') || file.source.includes('\\') || file.source.split('/').some(part=>part==='..'||part==='')) throw new Error('Classic source must remain under assets/brand/classic');
@@ -57,6 +65,7 @@ export async function validateClassicSources(workspace,files,{sources=[]}={}) {
     if(approval.assetId!==file.assetId || typeof approval.ownerStatement!=='string' || !approval.ownerStatement.trim() ||
       typeof approval.recordedAtUtc!=='string' || !approval.recordedAtUtc || approval.activationApproved!==true) throw new Error('Invalid Classic activation approval: '+file.assetId);
     if(!currentCentering(file) || !currentCentering(approval)) throw new Error('Unbound Classic centering approval: '+file.assetId);
+    if(file.splashLayout && JSON.stringify(approval.splashLayout)!==JSON.stringify(file.splashLayout)) throw new Error('Unbound Classic splash density approval.');
     for(const source of sources) if(!approval.sources?.some(entry=>entry.path===source.path && entry.sha256===source.sha256)) throw new Error('Unbound Classic reference source: '+file.assetId);
   }
 }

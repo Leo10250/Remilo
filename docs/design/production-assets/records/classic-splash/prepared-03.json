@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "assetId": "classic-splash",
+  "candidate": 3,
+  "recordedAtUtc": "2026-10-09T19:18:15.102153+00:00",
+  "generator": "deterministic-export",
+  "promptKind": "preparation",
+  "upstreamGenerationProvenance": "not-applicable",
+  "source": {
+    "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/original.png",
+    "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+    "width": 467,
+    "height": 467,
+    "size": [
+      467,
+      467
+    ],
+    "format": "PNG",
+    "mode": "RGBA",
+    "hasAlpha": true,
+    "opaque": false,
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "iccPresent": true,
+    "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+    "iccDescription": "sRGB built-in",
+    "iccValid": true,
+    "exifOrientation": 1,
+    "displaySize": [
+      467,
+      467
+    ]
+  },
+  "prompt": {
+    "path": "docs/design/production-assets/prompts/classic-splash/prepared-03.txt",
+    "sha256": "0e438591e93a2147dfa8b4d6a7b05590c712e340ea817fef0c305099d829c1d7"
+  },
+  "inputImages": [
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/references/01.png",
+      "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+      "role": "faithful-source",
+      "influence": "Preserve the inspected approved isolation, source-ring anchor and finish",
+      "inspected": true,
+      "measurements": {
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+        "width": 467,
+        "height": 467,
+        "size": [
+          467,
+          467
+        ],
+        "format": "PNG",
+        "mode": "RGBA",
+        "hasAlpha": true,
+        "opaque": false,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "iccPresent": true,
+        "iccSha256": "9dc7b02fcf3be818b5b7eddfd049999e2a222be1bd405afe3d53f98776e7834c",
+        "iccDescription": "sRGB built-in",
+        "iccValid": true,
+        "exifOrientation": 1,
+        "displaySize": [
+          467,
+          467
+        ]
+      },
+      "originalReference": {
+        "path": "assets/brand/classic/masters/classic-splash-isolated-v2.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0"
+      }
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/classic-splash/candidate-03/references/02.png",
+      "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+      "role": "historical",
+      "influence": "Inspected original identity provenance only; no tile pixels added to isolation",
+      "inspected": true,
+      "measurements": {
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861",
+        "width": 467,
+        "height": 467,
+        "size": [
+          467,
+          467
+        ],
+        "format": "PNG",
+        "mode": "RGB",
+        "hasAlpha": false,
+        "opaque": true,
+        "alphaExtrema": [
+          255,
+          255
+        ],
+        "iccPresent": false,
+        "iccSha256": null,
+        "iccDescription": null,
+        "iccValid": null,
+        "exifOrientation": 1,
+        "displaySize": [
+          467,
+          467
+        ]
+      },
+      "originalReference": {
+        "path": "assets/brand/reference/icon-classic.png",
+        "sha256": "43486337bd5ab2e0e145c2ee73c329b7484388415871f8115290376223c5d861"
+      }
+    }
+  ],
+  "spec": {
+    "route": "faithful-export",
+    "registry": "brand",
+    "master": {
+      "destination": "assets/brand/classic/masters/{asset}-v{version}{suffix}",
+      "format": "PNG",
+      "alpha": "transparent",
+      "colorSpace": "srgb",
+      "allowAssumedSrgb": true,
+      "exactSize": [
+        467,
+        467
+      ]
+    },
+    "views": [],
+    "referenceInputs": [
+      {
+        "file": "assets/brand/reference/icon-classic.png",
+        "role": "faithful-source",
+        "influence": "Exact existing ring/check/sun proportions and finish; no generative redraw"
+      },
+      {
+        "file": "assets/brand/reference/source-icon-board.png",
+        "role": "historical",
+        "influence": "Provenance only; source crop is authoritative"
+      }
+    ],
+    "requiresAssets": [
+      "classic-adaptive"
+    ],
+    "preparationPrerequisites": [
+      "Use approved isolated Classic source and reviewed padding, never the original flattened tile as a substitute"
+    ],
+    "exports": [],
+    "manualSources": [
+      {
+        "role": "foreground",
+        "localArtifactPath": "assets/brand/classic/masters/classic-adaptive-foreground-v1.png",
+        "sha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+        "productionPath": "assets/brand/classic/masters/classic-splash-isolated-v2.png"
+      }
+    ],
+    "helperUnsupported": false,
+    "requiredOutputContract": {
+      "configurationPx": 288,
+      "androidPx": [
+        76,
+        114,
+        152,
+        228,
+        304
+      ]
+    },
+    "manualPromotionSupport": {
+      "script": "scripts/promote-manual-brand.py",
+      "specification": "docs/design/production-assets/records/classic-splash/manual-specification-v2.json",
+      "specificationSha256": "a7b47905df0c5f58e601f519c9c0a3bca776c33adc4804df72a4ff406153a6da",
+      "sourcePolicy": "Exact individually approved family revision02 files; main ring center(233,243), source finish/proportions and sun offset preserved."
+    },
+    "unsupportedReason": "Reviewed source-ring anchoring/crop/vector geometry and explicit candidate bytes require this configured manual promotion support; generic single-source resizing cannot substitute.",
+    "centeringRevision": 2,
+    "sourceAnchorPx": [
+      233,
+      243
+    ],
+    "sourceSha256": "460699483bf61755b5bd698f22ee3ed34c35e9099b24c117e3b156318ae4dfc0",
+    "reviewPurpose": "Source preservation and inspection only. Separate manual specification governs density exports; this profile cannot promote them."
+  },
+  "specSha256": "01b8a80697d10ad865f8df245f215764f4f964425452bf8dbdb73df5dbeedc7e",
+  "profileSha256": "1f4d6c3f9a53cac26037ccc73e6880ba361e1427dd386041833c20b50d064fae",
+  "checks": [
+    {
+      "id": "master-size",
+      "status": "pass",
+      "detail": "Actual [467, 467]; required exact [467, 467]"
+    },
+    {
+      "id": "master-format",
+      "status": "pass",
+      "detail": "Actual PNG"
+    },
+    {
+      "id": "master-alpha",
+      "status": "pass",
+      "detail": "Alpha extrema [0, 255]"
+    },
+    {
+      "id": "master-color",
+      "status": "pass",
+      "detail": "Tagged sRGB description"
+    }
+  ],
+  "stagedOutputs": [],
+  "expectedRegistrySha256": "fb4cd448a331244bdc198b732d12658f407da261d434fb45e498cc6fce2051e6",
+  "requestedDimensionsAreNotMeasuredOutput": true,
+  "visualInspection": {
+    "status": "pending"
+  },
+  "approval": null
+}
