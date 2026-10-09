@@ -119,6 +119,37 @@ preferences and postponement stay local. G4 proves both directions after documen
 sync opportunities, untouched unrelated events, no duplicate retries and offline
 alarm independence.
 
+## Post-core Android extension: daily workflows and assistant actions
+
+This is planned after the functioning Android reminder core (G3), before iOS
+feasibility (P6). It adds work items RW-01–04 and AI-01–04 without renumbering
+the already approved Calendar (P4), cloud (P5), or iOS (P6) phases.
+Local routines/Today do not require Google Calendar or cloud sign-in.
+Calendar entries appear in Today/digest only if the optional P4 connection and
+appropriate user consent exist.
+
+1. Audit the existing repeat/occurrence model; add reusable workout templates,
+   weekday-specific exercise lists and separately dated exercise completion.
+   Preserve the durable routine on Done, Skip, Undo and missed days.
+2. Reuse the agenda query/presentation infrastructure for a focused Today surface
+   and build a native Android widget that stays accurate at midnight, after edits,
+   across restart/time-zone changes and without live React Native.
+3. Add an opt-in, configurable daily overview notification, distinct from exact
+   alarms and their channels, with ordinary Android delivery limitations visible.
+4. Verify supported Android intents, shortcuts and current assistant-specific app
+   action APIs on actual devices before committing to providers. Provide a small
+   validated external action interface: create a reminder/alarm draft, show the
+   resolved schedule, confirm and submit once to the existing native engine.
+5. Only after verified support, optionally add Gemini/AppFunctions or Bixby
+   adapters. No claim that Android automatically routes every assistant through
+   one interface. Optional offline natural-language improvements cannot become
+   a required dependency.
+
+G-AND-EXT requires signed Android evidence for routines, widget, digest and
+baseline external creation. AI-03/04 are opportunistic and non-blocking when
+third-party APIs are unavailable; record these limits. No general-purpose task
+manager, chatbot, cloud inference service, or iOS compatibility work is implied.
+
 ## Phase 5: optional Android cloud
 
 No backend infrastructure before this phase. Isolate Supabase Auth/PostgreSQL
@@ -135,7 +166,7 @@ to converge after stated sync opportunities and verified handoff behavior.
 
 ## Phase 6: optional iOS, last
 
-First prove AlarmKit authorization, locked actions, persistence, scheduling capacity,
+Begin only after G5 and G-AND-EXT. First prove AlarmKit authorization, locked actions, persistence, scheduling capacity,
 sound and extension/countdown behavior on a real iPhone. Only then add shared screens,
 Swift/App Intents, required extension, GRDB SQLite, timing conformance, Calendar and
 optional cloud. Use relative weekly scheduling only when full semantics match;
