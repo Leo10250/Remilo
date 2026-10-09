@@ -1,11 +1,11 @@
-export type RootDestination = { kind: 'agenda' | 'lists' | 'repeats' };
-export type DestinationOrigin = RootDestination | { kind: 'list'; listId: string | null };
-export type Destination = DestinationOrigin | { kind: 'completed' | 'trash' };
-export type OriginParams = { originRoot?: string; originListId?: string; originNoList?: string; originCollection?: string; originFamily?: string; originSegmentId?: string; originReminderId?: string };
+export type RootDestination = { kind: 'agenda' | 'lists' | 'completed' | 'trash' };
+export type DestinationOrigin = RootDestination | { kind: 'list'; listId: string | null } | { kind: 'repeats' };
+export type Destination = DestinationOrigin;
+export type OriginParams = { originRoot?: string; originView?: string; originListId?: string; originNoList?: string; originCollection?: string; originFamily?: string; originSegmentId?: string; originReminderId?: string };
 export function rootKey(destination: Destination): string {
   return destination.kind === 'list' ? `list:${JSON.stringify(destination.listId)}` : destination.kind;
 }
-export function rootRoute(destination: Destination) {
+export function destinationRoute(destination: Destination) {
   if (destination.kind === 'list') return { pathname: '/lists/[id]' as const, params: { id: destination.listId ?? 'none', ...(destination.listId === null ? { noList: 'true' } : {}) } };
   if (destination.kind === 'repeats') return { pathname: '/series' as const };
   if (destination.kind === 'lists') return { pathname: '/lists' as const };
@@ -23,14 +23,16 @@ export function reminderListRoute(listId: string | null, reminderId: string, par
 export function creationOrigin(params: OriginParams): DestinationOrigin {
   if (params.originNoList === 'true') return { kind: 'list', listId: null };
   if (params.originListId !== undefined) return { kind: 'list', listId: params.originListId };
-  return { kind: params.originRoot === 'lists' || params.originRoot === 'repeats' ? params.originRoot : 'agenda' };
+  if (params.originView === 'repeats' || params.originRoot === 'repeats') return { kind: 'repeats' };
+  return { kind: ['lists', 'completed', 'trash'].includes(params.originRoot ?? '') ? params.originRoot as RootDestination['kind'] : 'agenda' };
 }
+export function rootRoute(destination: RootDestination) { return destinationRoute(destination); }
 export function originParams(origin: DestinationOrigin): OriginParams {
-  return origin.kind === 'list' ? listOriginParams(origin.listId) : { originRoot: origin.kind };
+  return origin.kind === 'list' ? listOriginParams(origin.listId) : origin.kind === 'repeats' ? { originRoot: 'lists', originView: 'repeats' } : { originRoot: origin.kind };
 }
 export function retainedOriginParams(params: OriginParams): OriginParams {
   const retained: OriginParams = {};
-  for (const key of ['originRoot', 'originListId', 'originNoList', 'originCollection', 'originFamily', 'originSegmentId', 'originReminderId'] as const)
+  for (const key of ['originRoot', 'originView', 'originListId', 'originNoList', 'originCollection', 'originFamily', 'originSegmentId', 'originReminderId'] as const)
     if (typeof params[key] === 'string') retained[key] = params[key];
   return retained;
 }
@@ -40,7 +42,7 @@ export function secondaryOriginRoute(params: OriginParams) {
   if (originReminderId) return { pathname: '/reminder/[id]' as const, params: { id: originReminderId, ...rootParams, originFamily, originSegmentId, originCollection } };
   if (originFamily && originSegmentId) return { pathname: '/series/[id]' as const, params: { id: originSegmentId, seriesId: originFamily, ...rootParams, originCollection } };
   if (originCollection === 'completed' || originCollection === 'deleted') return { pathname: '/records' as const, params: { view: originCollection, ...rootParams } };
-  return rootRoute(creationOrigin(rootParams));
+  return destinationRoute(creationOrigin(rootParams));
 }
 /** A family child returns to that family, retaining its underlying collection scope. */
 export function familyOriginParams(params: OriginParams, familyId: string, segmentId: string): OriginParams {

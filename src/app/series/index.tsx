@@ -7,19 +7,19 @@ import { engine, nativeAvailable } from '../../ui/native';
 import { repeatLabel } from '../../ui/recurrence';
 import { useFontScaleOverride, useTheme } from '../../ui/theme';
 import { typography } from '../../ui/tokens';
-import { RootMore, RootNavigation, RootNotice, useDestinationNavigation } from '../../ui/navigation';
+import { RootMore, RootNotice, useDestinationNavigation } from '../../ui/navigation';
 import { originParams } from '../../domain/navigation';
 import { useRootState } from '../../ui/root-state';
 
 export default function Repeats() {
   const colors = useTheme(), scale = useFontScaleOverride();
   const [state, setState] = useRootState<RepeatFamily['state']>('repeats:state', 'Active');
-  useDestinationNavigation({ kind: 'repeats' });
+  const back = useDestinationNavigation({ kind: 'repeats' });
   const query = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable });
   const items = query.data?.filter((family) => family.state === state) ?? [];
-  return <Page title="Repeats" back={false} scrollKey="repeats" scrollReady={!query.isLoading}
-    header={<AtmosphericHeader title="Repeats" back={false} actions={<RootMore origin={{ kind: 'repeats' }} />} />}
-    footer={<><RootNotice /><RootNavigation destination="repeats" /></>}>
+  return <Page title="Repeats" onBack={back} scrollKey="repeats" scrollReady={!query.isLoading}
+    header={<AtmosphericHeader title="Repeats" onBack={back} actions={<RootMore origin={{ kind: 'repeats' }} />} />}
+    footer={<RootNotice />}>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {(['Active', 'Paused', 'Ended'] as const).map((value) => <Pressable key={value} accessibilityRole="tab"
         aria-selected={state === value} accessibilityState={{ selected: state === value }} onPress={() => setState(value)}
@@ -32,7 +32,7 @@ export default function Repeats() {
       emptyMessage={!nativeAvailable ? 'Use the Android app to manage repeats.' : `No ${state.toLowerCase()} repeats.`} onRetry={() => void query.refetch()} />
     {!!items.length && <View style={{ gap: 12 }}>{items.map((family) => {
       const next = family.upcoming[0], series = family.current;
-      const nextLabel = next ? (state === 'Paused' ? 'Planned ' : 'Next ') + shortDateTime(next.eventStartMs, series.rule.zoneId ?? undefined) : state === 'Ended' ? 'No ordinary future dates' : '';
+      const nextLabel = next ? (state === 'Paused' ? 'Planned ' : 'Next ') + shortDateTime(next.alarmAtMs, series.rule.zoneId ?? undefined) : state === 'Ended' ? 'No ordinary future dates' : '';
       return <Pressable key={family.seriesId} accessibilityRole="button" accessibilityLabel={[series.template.title, repeatLabel(series.rule), nextLabel, `${family.unfinishedCount} unfinished occurrences`].filter(Boolean).join('. ')}
         onPress={() => router.push({ pathname: '/series/[id]', params: { id: series.id, seriesId: family.seriesId, ...originParams({ kind: 'repeats' }) } })}
         style={({ pressed }) => ({ minHeight: 72, padding: 16, borderRadius: 16, backgroundColor: colors.surface, flexDirection: 'row', gap: 12, alignItems: 'center', opacity: pressed ? 0.8 : 1 })}>

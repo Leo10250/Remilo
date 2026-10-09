@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { alertPresentation, calendarDate, canAdjustAlert, deliveryExplanation, eventRange, nextAlertTime, ordinaryDue, recordedCompletionTime, scheduleNeedsDetails, stateIcon, stateLabel, type ScheduleItem } from './presentation';
+import { agendaAlertPresentation, alertPresentation, calendarDate, canAdjustAlert, deliveryExplanation, eventRange, nextAlertTime, ordinaryDue, recordedCompletionTime, scheduleDateTime, scheduleNeedsDetails, stateIcon, stateLabel, type ScheduleItem } from './presentation';
 import { deviceZone } from './time';
 
 const start = Date.UTC(2027, 0, 5, 15);
@@ -75,7 +75,7 @@ describe('user-facing schedule', () => {
 });
 describe('task state and alert actions', () => {
   const item = { ...normal, completed: false, deleted: false, skipped: false } as Occurrence;
-  it('keeps stopped, missed and timed-out unfinished reminders adjustable without turning Stop into Done', () => {
+  it('keeps historical Stopped, missed and timed-out unfinished reminders adjustable', () => {
     for (const deliveryState of ['Stopped', 'Missed', 'TimedOut']) {
       expect(canAdjustAlert({ ...item, deliveryState })).toBe(true);
       expect(deliveryExplanation({ ...item, deliveryState })).toContain('Still unfinished');
@@ -94,5 +94,28 @@ describe('task state and alert actions', () => {
     expect(stateIcon({ ...item, deliveryState: 'Blocked' })).toBe('error');
     expect(recordedCompletionTime([{ kind: 'Edit', atMs: start, targetMs: null }])).toBeNull();
     expect(recordedCompletionTime([{ kind: 'Done', atMs: start, targetMs: null }, { kind: 'Done', atMs: start + 1000, targetMs: null }])).toBe(start + 1000);
+  });
+});
+
+
+describe('alert-first browsing', () => {
+  it('uses device-local alert dates even when the authored event zone differs', () => {
+    const result = agendaAlertPresentation({ ...normal, zoneId: 'Asia/Shanghai' }, start);
+    expect(result).toBe('Alarm at ' + scheduleDateTime(start, deviceZone(), start));
+    expect(agendaAlertPresentation({ ...normal, mode: 'None' }, start)).toBe('No alert');
+  });
+  it('retains tomorrow on an overdue postponed alert and explains intended scheduling', () => {
+    const tomorrow = new Date(start); tomorrow.setDate(tomorrow.getDate() + 1);
+    expect(agendaAlertPresentation({ ...normal, dueAtMs: start - 1, nextAlertMs: tomorrow.getTime(), alertAdjustment: 'Postponed' }, start)).toContain('postponed to Tomorrow');
+    for (const deliveryState of ['Pending', 'Blocked', 'Changing', 'SeriesChanging']) {
+      const result = agendaAlertPresentation({ ...normal, deliveryState }, start);
+      expect(result).toContain('intended for'); expect(result).not.toContain('Alarm at');
+    }
+  });
+  it('never advertises past or paused delivery as an upcoming alert', () => {
+    for (const deliveryState of ['Missed', 'TimedOut', 'Interrupted', 'Failed', 'Notified', 'Paused', 'Stopped']) {
+      const result = agendaAlertPresentation({ ...normal, deliveryState }, start);
+      expect(result).toContain('was set for'); expect(result).not.toContain('Alarm at');
+    }
   });
 });

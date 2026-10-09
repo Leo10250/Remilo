@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, LayoutAnimation, Pressable, SectionList, Text, TextInput, View } from 'react-native';
+import { Animated, Keyboard, LayoutAnimation, Pressable, SectionList, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ListRecord, Occurrence, ReminderFilter } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { commandFeedback, editDestination, reopenCompleted } from '../domain/actions';
@@ -17,6 +17,7 @@ import { activateNotice, CommandRecovery, ListNameSheet, notifyTrash, RootMore, 
 import { useRootState } from '../ui/root-state';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
+import { ScrollChromeProvider, ScrollReadingPlane, useChromeScroll, usePageChrome } from '../ui/scroll-chrome';
 
 type Toast = { message: string; persistent?: boolean; undo?: { id: string; revision: number; operationId: string } };
 type AgendaSection = { key: string; title: string; count: number };
@@ -28,6 +29,9 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const confirm = useAppearanceConfirmation();
   const notice = useNotice(), reducedMotion = useReducedMotion();
   const [searching, setSearching] = useRootState(key + ':searching', false), [search, setSearch] = useRootState(key + ':search', '');
+  const chrome = usePageChrome(key,searching);
+  const restoreChrome = chrome.restoreOffset;
+  const [listHeight,setListHeight] = useState(0);
   const [view, setView] = useRootState<'agenda' | 'today' | 'upcoming'>(key + ':view', 'agenda');
   const [listFilter, setListId] = useRootState<string | null | undefined>(key + ':list', undefined);
   const listId = destination.kind === 'list' ? destination.listId : listFilter;
@@ -35,8 +39,15 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const [filterOpen, setFilterOpen] = useState(false), [collapsed, setCollapsed] = useRootState<string[]>(key + ':collapsed', []);
   const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useState<Toast | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
-  const savedScroll = readRootSnapshot(key + ':scroll', 0);
+  const [savedScroll] = useState(()=>readRootSnapshot(key + ':scroll', 0));
+  const [contentOffset] = useState(()=>({x:0,y:savedScroll}));
+  const active = useRef(false);
   const list = useRef<SectionList<Occurrence, AgendaSection>>(null), scrollY = useRef(savedScroll), priorScroll = useRef(savedScroll), restoreScroll = useRef(true);
+  useFocusEffect(useCallback(()=>{
+    active.current=true;
+    if (!searching) { priorScroll.current=readRootSnapshot(key+':scroll',0); restoreScroll.current=true; restoreChrome(priorScroll.current); }
+    return ()=>{active.current=false;};
+  },[key,searching,restoreChrome]));
   const animate = useCallback(() => { if (!reducedMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); }, [reducedMotion]);
   const action = useCapturedCommand((job, result) => {
     if (job.command.kind === 'Delete' && job.item) notifyTrash(job.item, result);
@@ -68,9 +79,9 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const items = reminders.data?.pages.flatMap((page) => page.items) ?? [];
   useEffect(() => {
     if (searching || !restoreScroll.current || !reminders.data) return;
-    const frame = requestAnimationFrame(() => { list.current?.getScrollResponder()?.scrollTo({ y: priorScroll.current, animated: false }); restoreScroll.current = false; });
+    const frame = requestAnimationFrame(() => { restoreChrome(priorScroll.current); list.current?.getScrollResponder()?.scrollTo({ y: priorScroll.current, animated: false }); restoreScroll.current = false; });
     return () => cancelAnimationFrame(frame);
-  }, [searching, reminders.data]);
+  }, [searching, reminders.data, restoreChrome]);
   const groups = new Map<string, Occurrence[]>();
   items.forEach((item) => groups.set(item.agendaGroup, [...(groups.get(item.agendaGroup) ?? []), item]));
   const totals = reminders.data?.pages[0];
@@ -109,12 +120,21 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     : !caps.channelEnabled ? 'Alarm notifications are blocked' : !caps.fullScreen ? 'Lock-screen alarms are limited' : '' : '';
   const activeToast = toast ?? (notice ? { message: notice.message, persistent: notice.persistent } : null);
   const constrained = searching || filterOpen || guarded;
-  return <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: colors.background }}><WindowGeometryRegion>
+  const rememberScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => { scrollY.current=event.nativeEvent.contentOffset.y; if(active.current && !searching && !restoreScroll.current)writeRootSnapshot(key+':scroll',scrollY.current); },[key,searching]);
+  const onScroll=useChromeScroll(chrome,rememberScroll);
+  return <SafeAreaView edges={['top','left','right']} style={{flex:1,backgroundColor:colors.background}}><ScrollChromeProvider value={chrome}><View style={{flex:1}}>
+    <View pointerEvents="box-none" style={{position:'absolute',top:0,left:0,right:0,height:chrome.opening}}>
     <AtmosphericHeader title={title} home={!scoped && !constrained} subtitle={!scoped && !constrained ? new Date(caps?.observedAtMs ?? initialNow).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) : undefined} back={scoped} onBack={back} actions={<>
       <IconButton icon="search" label={searching ? 'Exit search' : 'Search reminders'} disabled={guarded} onPress={() => { if (searching) closeSearch(); else { priorScroll.current = scrollY.current; animate(); setSearching(true); } }} />
       <RootMore origin={destination} disabled={guarded} listActions={scoped && currentList ? { rename: () => setEditingList(currentList), remove: removeList } : undefined} />
     </>} />
-    {searching && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface }}>
+    </View>
+    <View pointerEvents="box-none" style={{flex:1,paddingTop:chrome.toolbar}}><WindowGeometryRegion>
+    <View style={{ flex: 1, overflow:'hidden' }}>
+      <ScrollReadingPlane />
+      <Animated.SectionList<Occurrence, AgendaSection> ref={list} sections={sections} keyExtractor={(item) => item.id} stickySectionHeadersEnabled contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 88, minHeight:listHeight+chrome.decoration }} keyboardShouldPersistTaps="handled"
+        contentOffset={contentOffset} onScroll={onScroll} scrollEventThrottle={16} onLayout={event=>setListHeight(event.nativeEvent.layout.height)}
+        ListHeaderComponent={<><View style={{height:chrome.decoration}} />    {searching && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface }}>
       <IconButton icon="arrow_back" label="Exit search" onPress={closeSearch} />
       <TextInput autoFocus accessibilityLabel="Search reminders and notes" value={search} onChangeText={setSearch} placeholder="Search reminders" editable={!guarded}
         placeholderTextColor={colors.muted} style={{ flex: 1, minHeight: 48, padding: 8, color: colors.ink, fontSize: 16 * scale }} />
@@ -138,11 +158,9 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       onPress={() => router.push({ pathname: '/settings', params: originParams(destination) })} style={{ paddingHorizontal: 16, paddingVertical: 8, minHeight: 48 }}>
       <Status label={warning} tone={!caps?.exactAlarms || !caps?.notifications || !caps?.channelEnabled ? 'danger' : 'warning'} /></Pressable>}
     {!!caps?.activeSessionId && <View style={{ marginHorizontal: 16, marginBottom: 8 }}><Button label="Stop all ringing alarms" variant="secondary" disabled={guarded}
-      onPress={() => void action.execute({ command: { kind: 'StopAll', expectedSessionId: caps.activeSessionId, operationId: engine().createOperationId() }, success: 'Ringing stopped. Reminders are still unfinished.' })} /></View>}
+      onPress={() => void action.execute({ command: { kind: 'StopAll', expectedSessionId: caps.activeSessionId, operationId: engine().createOperationId() }, success: 'Ringing stopped. Current occurrences completed.' })} /></View>}
     {!!reminders.error && !!items.length && <View><ActionFeedback message="Could not refresh. Showing previously loaded information." tone="danger" /><Button label="Retry" variant="secondary" onPress={() => void reminders.refetch()} /></View>}
-    <View style={{ flex: 1 }}>
-      <SectionList<Occurrence, AgendaSection> ref={list} sections={sections} keyExtractor={(item) => item.id} stickySectionHeadersEnabled contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 88 }} keyboardShouldPersistTaps="handled"
-        onScroll={(event) => { scrollY.current = event.nativeEvent.contentOffset.y; if (!searching && !restoreScroll.current) writeRootSnapshot(key + ':scroll', scrollY.current); }} scrollEventThrottle={32}
+</>}
         refreshing={reminders.isRefetching} onRefresh={() => { void engine().reconcile().then(() => client.invalidateQueries()).catch((error: Error) => setToast({ message: error.message, persistent: true })); }}
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
@@ -179,5 +197,5 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     </Sheet>
     {editingList && <ListNameSheet key={editingList.id} visible list={editingList} onGuardChange={setListGuarded} onClose={() => setEditingList(null)}
       onSaved={() => { setEditingList(null); setToast({ message: 'List renamed.' }); }} />}
-  </WindowGeometryRegion></SafeAreaView>;
+  </WindowGeometryRegion></View></View></ScrollChromeProvider></SafeAreaView>;
 }

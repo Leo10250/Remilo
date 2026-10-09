@@ -12,6 +12,7 @@ import type { Tone } from '../domain/actions';
 import { useReducedMotion } from './motion';
 import { FormViewport, useRevealInput } from './form-viewport';
 import { presentation } from './atmosphere.generated';
+import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
 
 export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'add' | 'repeat' | 'more_vert' | 'close' |
   'check' | 'check_circle' | 'radio_button_unchecked' | 'remove_circle_outline' | 'expand_more' | 'expand_less' | 'chevron_right' |
@@ -228,37 +229,48 @@ export function SceneArt({ home = false }: { home?: boolean }) {
 export function AtmosphericHeader({ title, home = false, subtitle, actions, leading, back = true, onBack }: {
   title: string; home?: boolean; subtitle?: string; actions?: ReactNode; leading?: ReactNode; back?: boolean; onBack?: () => void;
 }) {
-  const colors=useTheme(), {scene,brightness}=useAtmosphere(), {height,fontScale}=useWindowDimensions(), reviewScale=useFontScaleOverride(), [toolbar,setToolbar]=useState<number>(presentation.geometry.toolbar);
-  const opening=height<480 || Math.max(fontScale,reviewScale)>=1.6?presentation.geometry.toolbar:home && height>=600?presentation.geometry.home:presentation.geometry.secondary;
-  const decorative=opening>toolbar, header=presentation.header[`${scene}-${brightness}`];
+  const colors=useTheme(), {scene,brightness}=useAtmosphere(), {height,fontScale}=useWindowDimensions(), reviewScale=useFontScaleOverride(), [localToolbar,setToolbar]=useState<number>(presentation.geometry.toolbar);
+  const chromeState = useScrollChrome(), toolbar = chromeState?.toolbar ?? localToolbar;
+  const opening=chromeState?.opening ?? (height<480 || Math.max(fontScale,reviewScale)>=1.6?toolbar:Math.max(presentation.geometry.home,toolbar));
+  const decoration=opening-toolbar, decorative=decoration>0, scenic=decorative && !chromeState?.folded, header=presentation.header[`${scene}-${brightness}`];
   const chromeHeight=toolbar+(subtitle?24*reviewScale:0), scrimHeight=Math.min(opening,chromeHeight+40);
   const rgb=header.scrim==='#FFFFFF'?'255,255,255':'0,0,0';
   const gradient=`linear-gradient(180deg, rgba(${rgb},${header.scrimAlpha}) 0%, rgba(${rgb},${header.scrimAlpha}) ${chromeHeight/scrimHeight*100}%, rgba(${rgb},0) 100%)`;
   const scrim:ViewStyle=Platform.OS==='web'?{backgroundImage:gradient} as ViewStyle:{experimental_backgroundImage:gradient};
-  const chrome=<ScenicChrome.Provider value={decorative}><View onLayout={event=>setToolbar(event.nativeEvent.layout.height)} style={{minHeight:56}}>
-    <AppBar scenic={decorative} home={home} title={title} back={back} actions={actions} leading={leading} onBack={onBack}/>
-  </View>{subtitle && <View style={{marginHorizontal:16,marginBottom:8}}><Copy>{subtitle}</Copy></View>}</ScenicChrome.Provider>;
-  return <View style={{minHeight:Math.max(opening,toolbar),backgroundColor:colors.background,overflow:'hidden'}}>
-    {decorative && <><SceneArt home={home}/><View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{position:'absolute',top:0,left:0,right:0,height:scrimHeight},scrim]}/></>}
-    {decorative?<PresentationProvider colors={{...colors,ink:header.ink,muted:header.ink}}>{chrome}</PresentationProvider>:chrome}
+  const chrome=<ScenicChrome.Provider value={scenic}><View onLayout={event=>{
+    const h=event.nativeEvent.layout.height; if(chromeState)chromeState.measureToolbar(h);else setToolbar(h);
+  }} style={{minHeight:56,backgroundColor:scenic?'transparent':colors.background}}>
+    <AppBar scenic={scenic} home={home} title={title} back={back} actions={actions} leading={leading} onBack={onBack}/>
+  </View></ScenicChrome.Provider>;
+  return <View pointerEvents="box-none" style={{height:opening,overflow:'hidden'}}>
+    {decorative && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',top:0,left:0,right:0,height:opening}}><SceneArt home /></View>}
+    {scenic && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{position:'absolute',top:0,left:0,right:0,height:scrimHeight},scrim]}/>}
+    {scenic?<PresentationProvider colors={{...colors,ink:header.ink,muted:header.ink}}>{chrome}</PresentationProvider>:chrome}
+    {subtitle && scenic && <View pointerEvents="none" style={{position:'absolute',top:toolbar,left:0,right:0,height:decoration,overflow:'hidden'}}>
+      <View style={{marginHorizontal:16,marginBottom:8}}><PresentationProvider colors={{...colors,ink:header.ink,muted:header.ink}}><Copy>{subtitle}</Copy></PresentationProvider></View>
+    </View>}
   </View>;
 }
-export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, header }: PropsWithChildren<{
-  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; header?: ReactNode;
+export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, header, compact = false }: PropsWithChildren<{
+  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; header?: ReactNode; compact?: boolean;
 }>) {
-  const colors = useTheme();
+  const colors = useTheme(), chrome = usePageChrome(scrollKey,compact);
   return <SafeAreaView edges={['top','left','right']} style={{ flex: 1, backgroundColor: colors.background }}>
-    {header ?? <AtmosphericHeader title={title} back={back} actions={actions} onBack={onBack} leading={leading} />}
-    <FormViewport footer={footer} scrollKey={scrollKey} scrollReady={scrollReady} contentStyle={styles.page}>
-      {subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}
-    </FormViewport>
+    <ScrollChromeProvider value={chrome}><View style={{flex:1}}>
+      <View pointerEvents="box-none" style={{position:'absolute',top:0,left:0,right:0,height:chrome.opening}}>
+        {header ?? <AtmosphericHeader title={title} back={back} actions={actions} onBack={onBack} leading={leading} />}
+      </View>
+      <View pointerEvents="box-none" style={{flex:1,paddingTop:chrome.toolbar}}><FormViewport footer={footer} scrollKey={scrollKey} scrollReady={scrollReady} contentStyle={styles.page}>
+        {subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}
+      </FormViewport></View>
+    </View></ScrollChromeProvider>
   </SafeAreaView>;
 }
 export function Sheet({ title, visible, onClose, onBack, children, footer }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
   useAppearanceHold(visible);
-  return <Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
+  return <ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Pressable accessibilityLabel="Dismiss" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
@@ -272,7 +284,7 @@ export function Sheet({ title, visible, onClose, onBack, children, footer }: Pro
         <FormViewport fill={false} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
       </View>
     </View>
-  </Modal>;
+  </Modal></ScrollChromeProvider>;
 }
 export function Choice({ label, description, selected, onPress, disabled = false }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean }) {
   const colors = useTheme();

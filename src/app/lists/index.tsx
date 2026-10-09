@@ -30,25 +30,27 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const open = (id: string | null) => router.push({ pathname: '/lists/[id]', params: { id: id ?? 'none', ...(id === null ? { noList: 'true' } : {}), ...originParams({ kind: 'lists' }) } });
   const remove = (list: ListRecord) => { setSelected(null); confirm('Remove list?', 'Reminders in “' + list.name + '” move to No list. Their schedules and completion stay the same.', [
     { text: 'Cancel', style: 'cancel' }, { text: 'Remove list', style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: list.id, expectedRevision: list.revision, operationId: engine().createOperationId() }, success: 'List removed. Reminders moved to No list.' }) }]); };
-  const row = (name: string, id: string | null, count: number, record?: ListRecord) => <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface, paddingHorizontal: 16 }}>
+  const row = (name: string, id: string | null, count: number, record?: ListRecord) => <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' }}>
     <Pressable accessibilityRole="button" accessibilityLabel={name + (count ? ', ' + count + ' overdue occurrences' : '')} disabled={guarded || !nativeAvailable}
-      onPress={() => open(id)} style={{ flex: 1, minHeight: 72, paddingVertical: 16, gap: 4, justifyContent: 'center' }}>
-      <Copy>{name}</Copy>{count > 0 && <Status label={count + ' overdue'} tone="warning" />}
+      accessibilityState={{ disabled: guarded || !nativeAvailable }}
+      onPress={() => open(id)} style={({ pressed }) => ({ flex: 1, minHeight: 72, padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: pressed ? colors.soft : 'transparent' })}>
+      <View style={{ flex: 1, gap: 4 }}><Copy>{name}</Copy>{count > 0 && <Status label={count + ' overdue'} tone="warning" />}</View><Icon name="chevron_right" />
     </Pressable>
-    {record && <Pressable accessibilityRole="button" accessibilityLabel={'More actions for ' + name} disabled={guarded}
+    {record && <Pressable accessibilityRole="button" accessibilityLabel={'More actions for ' + name} disabled={guarded || !nativeAvailable} accessibilityState={{ disabled: guarded || !nativeAvailable }}
       onPress={() => setSelected(record)} style={{ minHeight: 48, minWidth: 48, justifyContent: 'center', alignItems: 'center' }}><Icon name="more_vert" /></Pressable>}
-    <Icon name="chevron_right" />
   </View>;
   return <View style={{ flex: 1 }}>
-    <Page title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} scrollKey={management ? 'manage-lists' : 'lists'} scrollReady={!query.isLoading}
+    <Page compact={management} title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} scrollKey={management ? 'manage-lists' : 'lists'} scrollReady={!query.isLoading}
       header={<AtmosphericHeader title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} actions={!management ? <RootMore origin={{ kind: 'lists' }} disabled={guarded} /> : undefined} />}
       footer={<View onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}><CommandRecovery action={action} /><RootNotice />{!management && <RootNavigation destination="lists" disabled={guarded} />}</View>}>
       {management && <><Copy muted>No list is the default. Lists organize reminders without changing their alerts.</Copy>
         <Button label="Create new list" icon="add" disabled={!nativeAvailable || guarded} onPress={() => setEditing('create')} /></>}
+      {!management && <Group title="Built-in views"><SettingRow label="Repeats" icon="repeat" description="Manage recurring reminders" disabled={guarded || !nativeAvailable}
+        onPress={() => router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })} /></Group>}
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error}
         empty={!nativeAvailable || management && !query.data?.length} emptyMessage={!nativeAvailable ? 'Use the Android app to manage lists.' : 'No named lists yet.'} onRetry={() => void query.refetch()} />
       {management ? <Group>{query.data?.map((list) => <SettingRow key={list.id} label={list.name} disabled={guarded} onPress={() => setSelected(list)} />)}</Group> :
-        <View style={{ gap: 12 }}>{row('No list', null, noList.data?.total ?? 0)}{query.data?.map((list) => row(list.name, list.id, list.overdueCount, list))}</View>}
+        <Group title="Your lists"><View style={{ gap: 12 }}>{row('No list', null, noList.data?.total ?? 0)}{query.data?.map((list) => row(list.name, list.id, list.overdueCount, list))}</View></Group>}
       {!!query.error && !!query.data && <Copy muted>Showing previously loaded lists.</Copy>}
       {!management && !!noList.error && <><ActionFeedback message={noList.data ? 'Could not refresh the No list count. Showing the previous count.' : 'Could not check the No list overdue count.'} tone="danger" />
         <Button label="Retry No list count" variant="secondary" onPress={() => void noList.refetch()} /></>}

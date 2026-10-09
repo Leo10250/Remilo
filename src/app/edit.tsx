@@ -44,8 +44,8 @@ export default function Editor() {
   const id = params.id ?? params.duplicate, editing = !!id || !!params.segmentId;
   const source = useQuery({ queryKey: ['editor-source', id, params.segmentId, params.following], enabled: nativeAvailable && editing,
     queryFn: () => readSeed(id, params.segmentId, params.following) });
-  if (!nativeAvailable) return <Page title="Reminder"><Copy>Install the Android build to create and edit reminders.</Copy></Page>;
-  if (editing && !source.data) return <Page title="Edit reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(retainedOriginParams(params)))}><QueryState loading={source.isLoading} error={source.error}
+  if (!nativeAvailable) return <Page compact title="Reminder"><Copy>Install the Android build to create and edit reminders.</Copy></Page>;
+  if (editing && !source.data) return <Page compact title="Edit reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(retainedOriginParams(params)))}><QueryState loading={source.isLoading} error={source.error}
     empty={false} onRetry={() => void source.refetch()} /></Page>;
   const origin = creationOrigin(params);
   const seed = source.data ?? { state: { draft: editorDraft({ title: '', listId: origin.kind === 'list' ? origin.listId : null }) } };
@@ -202,7 +202,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const disabled = !nativeAvailable || busy || !!review || scopeChanged || !draft.title.trim();
   const frozen = busy || retrySave || !!review;
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
-  return <Page title={creation ? 'New reminder' : editingSeries ? followingScope ? 'Edit following' : 'Edit repeat' : 'Edit reminder'}
+  return <Page compact title={creation ? 'New reminder' : editingSeries ? followingScope ? 'Edit following' : 'Edit repeat' : 'Edit reminder'}
     onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(originParams))}
     footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
       {!!zoneWarning && <ActionFeedback message={zoneWarning} tone="warning" />}

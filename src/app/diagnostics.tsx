@@ -40,7 +40,7 @@ export default function Diagnostics() {
   };
   const stateOrder = counts ? [...Object.keys(stateNames).filter((state) => state in counts), ...Object.keys(counts).filter((state) => !(state in stateNames)).sort()] : [];
   const capability = (key: string, limited = false) => typeof caps?.[key] !== 'boolean' ? 'Unavailable' : caps[key] ? 'Allowed' : limited ? 'Limited' : 'Blocked';
-  return <Page title="Diagnostics" onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}
+  return <Page compact title="Diagnostics" onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}
     actions={<IconButton icon="refresh" label="Refresh report" disabled={!nativeAvailable || report.isFetching} onPress={() => void refresh()} />}>
     <Copy muted>This snapshot helps investigate delivery. It does not verify that an alarm was heard.</Copy>
     {observed != null && <Copy muted size={14}>Observed {shortDateTime(observed)}</Copy>}

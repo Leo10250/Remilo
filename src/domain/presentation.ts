@@ -69,6 +69,21 @@ export function alertPresentation(item: ScheduleItem, draft = false, now = Date.
       `${mode} at ${time}` : 'No next alert scheduled';
   return { label, target, targetZone, changed, confirmed: !inactive && state === 'Scheduled' && item.mode !== 'None' };
 }
+/** Active browsing uses the phone zone so the time agrees with native date groups. */
+export function agendaAlertPresentation(item: ScheduleItem & { agendaAtMs?: number }, now = Date.now()) {
+  const zone = deviceZone(), mode = modeLabel(item.mode);
+  if (item.mode === 'None') return 'No alert';
+  if (item.deliveryState === 'Alerting') return 'Alarm ringing';
+  const instant = item.agendaAtMs ?? item.nextAlertMs ?? item.alarmAtMs;
+  const time = scheduleDateTime(instant, zone, now);
+  if (item.deliveryState === 'Blocked') return `Alert blocked · intended for ${time}`;
+  if (item.deliveryState === 'Pending') return `Scheduling… · intended for ${time}`;
+  if (['Changing', 'SeriesChanging'].includes(item.deliveryState ?? '')) return `Updating alert… · intended for ${time}`;
+  if (item.deliveryState !== 'Scheduled' || item.completed || item.deleted || item.skipped)
+    return `${mode} was set for ${time}`;
+  return item.alertAdjustment === 'Snoozed' ? `${mode} snoozed to ${time}` :
+    item.alertAdjustment === 'Postponed' ? `${mode} postponed to ${time}` : `${mode} at ${time}`;
+}
 export function canAdjustAlert(item: Pick<Occurrence, 'completed' | 'deleted' | 'skipped' | 'mode' | 'deliveryState'>) {
   return !item.completed && !item.deleted && !item.skipped && item.mode !== 'None' &&
     !['Completed', 'Deleted', 'Skipped', 'Replaced', 'Paused', 'Changing', 'SeriesChanging'].includes(item.deliveryState);

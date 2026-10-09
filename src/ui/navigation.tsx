@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { BackHandler, Keyboard, Pressable, Text, View } from 'react-native';
-import { originParams, rootRoute, type secondaryOriginRoute, type DestinationOrigin, type RootDestination } from '../domain/navigation';
+import { destinationRoute, originParams, rootRoute, type secondaryOriginRoute, type DestinationOrigin, type RootDestination } from '../domain/navigation';
 import { CapturedOperation } from '../domain/operation';
 import { ActionFeedback, Button, Choice, Copy, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
 import { dismissNotice, notify, useNotice, type Notice } from './feedback';
@@ -15,8 +15,8 @@ import { typography } from './tokens';
 import { useAppearanceConfirmation } from './confirmation';
 
 export function switchRoot(destination: RootDestination) { Keyboard.dismiss(); if (router.canDismiss()) router.dismissAll(); router.replace(rootRoute(destination)); }
-export function returnToOrigin(destination: DestinationOrigin) { Keyboard.dismiss(); router.dismissTo(rootRoute(destination)); }
-export function goBack(origin: DestinationOrigin, fallback?: ReturnType<typeof secondaryOriginRoute>) { Keyboard.dismiss(); if (router.canGoBack()) router.back(); else router.replace(fallback ?? rootRoute(origin)); }
+export function returnToOrigin(destination: DestinationOrigin) { Keyboard.dismiss(); router.dismissTo(destinationRoute(destination)); }
+export function goBack(origin: DestinationOrigin, fallback?: ReturnType<typeof secondaryOriginRoute>) { Keyboard.dismiss(); if (router.canGoBack()) router.back(); else router.replace(fallback ?? destinationRoute(origin)); }
 
 /** Navigation resolves mounted transient state before changing a root or origin. */
 export function useDestinationNavigation(destination: DestinationOrigin, beforeBack?: () => boolean, guarded = false, secondaryOrigin?: DestinationOrigin, secondaryFallback?: ReturnType<typeof secondaryOriginRoute>) {
@@ -24,7 +24,7 @@ export function useDestinationNavigation(destination: DestinationOrigin, beforeB
     if (guarded) return true;
     if (Keyboard.isVisible()) { Keyboard.dismiss(); return true; }
     if (beforeBack?.()) return true;
-    if (destination.kind === 'list' || secondaryOrigin) { goBack(secondaryOrigin ?? { kind: 'lists' }, secondaryFallback); return true; }
+    if (destination.kind === 'list' || destination.kind === 'repeats' || secondaryOrigin) { goBack(secondaryOrigin ?? { kind: 'lists' }, secondaryFallback); return true; }
     if (destination.kind !== 'agenda') { switchRoot({ kind: 'agenda' }); return true; }
     return false;
   }, [destination, beforeBack, guarded, secondaryOrigin, secondaryFallback]);
@@ -38,11 +38,12 @@ export function useDestinationNavigation(destination: DestinationOrigin, beforeB
 export function RootNavigation({ destination, disabled = false }: { destination: RootDestination['kind']; disabled?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
   return <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
-    {([{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' }, { kind: 'repeats', label: 'Repeats', icon: 'repeat' }] as const).map((entry) => {
+    {([{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' },
+      { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const).map((entry) => {
       const selected = destination === entry.kind;
       return <Pressable key={entry.kind} accessibilityRole="tab" accessibilityLabel={entry.label} aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled}
         onPress={() => { if (!selected) switchRoot({ kind: entry.kind }); }} style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
-        <View style={{ paddingHorizontal: 20, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}>
+        <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}>
           <Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
         <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
       </Pressable>;
@@ -112,8 +113,8 @@ export function RootMore({ origin, disabled = false, extra, listActions }: { ori
   const record = (view: 'completed' | 'deleted') => { close(); router.push({ pathname: '/records', params: { view, ...originParams(origin) } }); };
   return <><IconButton icon="more_vert" label="More destinations" disabled={disabled} onPress={() => { Keyboard.dismiss(); setOpen(true); }} />
     <Sheet title="More" visible={open} onClose={close}>
-      <SettingRow label={origin.kind === 'list' ? 'Completed in this list' : 'Completed'} icon="check_circle" onPress={() => record('completed')} />
-      <SettingRow label={origin.kind === 'list' ? 'Trash in this list' : 'Trash'} icon="delete" onPress={() => record('deleted')} />
+      {origin.kind === 'list' && <><SettingRow label="Completed in this list" icon="check_circle" onPress={() => record('completed')} />
+        <SettingRow label="Trash in this list" icon="delete" onPress={() => record('deleted')} /></>}
       {extra}
       {listActions && <><SettingRow label="Rename list" icon="edit" onPress={() => { close(); listActions.rename(); }} />
         <SettingRow label="Remove list" icon="delete" onPress={() => { close(); listActions.remove(); }} /></>}

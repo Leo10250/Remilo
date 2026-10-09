@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, I18nManager, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, type GestureUpdateEvent, type PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { alertPresentation, calendarDate, eventRange, ordinaryDue, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../domain/presentation';
+import { agendaAlertPresentation, alertPresentation, calendarDate, eventRange, ordinaryDue, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
 import { Icon, IconButton, Status, type IconName } from './components';
 import { useReducedMotion } from './motion';
@@ -43,7 +43,9 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     // eslint-disable-next-line react-hooks/refs
     .onBegin(begin).onUpdate(update).onEnd(end).onFinalize(finalize);
   const zone = item.zoneId || deviceZone();
-  const status = item.deleted ? 'In Trash. Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : stateLabel(item), delivery = alertPresentation(item, false, nowMs), repeat = repeatSummary(item);
+  const status = item.deleted ? 'In Trash. Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : stateLabel(item), delivery = alertPresentation(item, false, nowMs), repeat = repeatSummary(item) || (item.segmentId ? 'Repeating reminder' : '');
+  const active = !item.completed && !item.skipped && !item.deleted;
+  const browsingTime = agendaAlertPresentation(item, nowMs);
   const event = eventRange(item, nowMs);
   const compactEvent = eventRange(item, nowMs, ['Today', 'Tomorrow'].includes(calendarDate(item.eventStartMs, zone, nowMs)));
   const consequence = item.overdue ? 'Overdue — still unfinished' : !ordinaryDue(item) && item.dueAtMs !== item.eventStartMs ? 'Due ' + scheduleDateTime(item.dueAtMs, zone, nowMs) : '';
@@ -51,8 +53,8 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const compactDelivery = routineDelivery ? item.mode === 'Notification' ? 'Notification' : item.mode === 'None' ? 'No alert' : 'Alarm' : delivery.label;
   const recordedAt = item.deleted ? item.history?.filter((entry) => entry.kind === 'Delete').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) :
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
-  const summary = [item.title, event, item.listName, consequence, repeat, item.exception ? 'Changed occurrence' : '', status,
-    delivery.label].filter(Boolean).join('. ');
+  const summary = [item.title, active ? browsingTime : event, item.listName, consequence, repeat, item.exception ? 'Changed occurrence' : '', status,
+    !active ? delivery.label : ''].filter(Boolean).join('. ');
   const actionLabel = restore ? 'Restore' : item.completed || item.skipped ? 'Reopen' : 'Done';
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
@@ -112,12 +114,15 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
         onPress={() => { if (revealed) settle(false); else onOpen(); }} onLongPress={busy || selection ? undefined : onMore}
         style={{ flex: 1, gap: 4, minHeight: 48, justifyContent: terminal ? 'flex-start' : 'center', paddingTop: titleInset }}>
         {title}
-        {compact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
+        {active ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
+          <Icon name={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} color={colors.muted} size={16} />
+          <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting * scale, flexShrink: 1 }}>{browsingTime}{item.listName ? ' · ' + item.listName : ''}</Text>
+        </View> : compact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
           <Icon name={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} color={colors.muted} size={16} />
           <Text style={{ color: colors.muted, fontSize: typography.supporting * scale, flexShrink: 1 }}>{compactEvent}</Text>
         </View> : <Text style={{ color: colors.muted, fontSize: typography.supporting * scale }}>{event}{item.listName ? ' · ' + item.listName : ''}</Text>}
         {!!consequence && <Text style={{ color: item.overdue ? colors.warning : colors.muted, fontSize: typography.supporting * scale }}>{consequence}</Text>}
-        {(!compact || !routineDelivery || item.mode === 'None') && <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting * scale }}>{compact ? compactDelivery : delivery.label}</Text>}
+        {!active && (!compact || !routineDelivery || item.mode === 'None') && <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting * scale }}>{compact ? compactDelivery : delivery.label}</Text>}
         {!!repeat && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Icon name="repeat" size={14} />
           <Text style={{ color: colors.muted, fontSize: typography.label * scale, flexShrink: 1 }}>{repeat}{item.exception ? ' · changed occurrence' : ''}</Text></View>}
         {(item.completed || item.skipped || item.deleted) && <Text style={{ color: item.completed && !item.deleted ? colors.success : colors.muted, fontSize: typography.label * scale }}>{item.deleted ? 'In Trash · Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : item.skipped ? 'Skipped' : 'Completed'}{showActionDate && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : ''}</Text>}

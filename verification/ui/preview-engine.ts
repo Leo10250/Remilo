@@ -24,7 +24,7 @@ const make = (id: string, title: string, offset: number, changes: Partial<Occurr
   return { id, title, eventStartMs: event, eventEndMs: event + 1_800_000, dueAtMs: event, alarmAtMs: event, nextAlertMs: event,
     mode: 'Alarm', completed: false, deleted: false, skipped: false, revision: 1, generation: 1, deliveryState: 'Scheduled',
     notes: '', listName: '', listId: null, allDay: false, zoneId: 'America/Los_Angeles', dueLinked: true, alarmLinked: true, sound: 'remilo', vibration: true,
-    segmentId: null, nominalSlot: null, exception: false, seriesState: null, repeatSummary: null, overdue: false, agendaGroup: '',
+    segmentId: null, nominalSlot: null, exception: false, seriesState: null, repeatSummary: null, overdue: false, agendaGroup: '', agendaAtMs:event,
     history: [{ kind: 'Create', atMs: event - dayMs, targetMs: event }], ...changes };
 };
 const items: Occurrence[] = [
@@ -186,11 +186,12 @@ function familyViews(): RepeatFamily[] {
       unfinishedCount: items.filter((item) => members.some((member) => member.id === item.segmentId) && !item.completed && !item.deleted && !item.skipped).length };
   });
 }
-function view(item: Occurrence): Occurrence {
+function view(item: Occurrence, now=Date.now()): Occurrence {
   const value = clone(item);
   value.listName = value.listId ? lists.get(value.listId)?.name ?? '' : '';
-  value.overdue = !value.completed && !value.deleted && !value.skipped && value.dueAtMs < Date.now();
-  const eventDay = civilAt(value.eventStartMs, deviceZone()).slice(0, 10), currentDay = civilAt(Date.now(), deviceZone()).slice(0, 10);
+  value.overdue = !value.completed && !value.deleted && !value.skipped && value.dueAtMs < now;
+  value.agendaAtMs = value.mode === "None" ? value.dueAtMs : value.nextAlertMs ?? value.alarmAtMs;
+  const eventDay = civilAt(value.agendaAtMs,deviceZone()).slice(0,10), currentDay=civilAt(now,deviceZone()).slice(0,10);
   value.agendaGroup = value.completed || value.skipped ? 'completed' : value.overdue ? 'overdue' : eventDay < currentDay ? 'earlier' : eventDay;
   const kind = value.deleted ? 'Delete' : value.completed ? 'Done' : value.skipped ? 'Skip' : null;
   if (kind) { const times = value.history?.filter((entry) => entry.kind === kind).map((entry) => entry.atMs) ?? [];
@@ -198,16 +199,19 @@ function view(item: Occurrence): Occurrence {
   return value;
 }
 function query(filter: ReminderFilter, cursor: string | null): ReminderPage {
+  const now=Date.now(), start=new Date(now);start.setHours(0,0,0,0);const end=new Date(start);end.setDate(end.getDate()+1);
   const matches = (item: Occurrence) => (!filter.search || (item.title + ' ' + item.notes).toLowerCase().includes(filter.search.trim().toLowerCase())) &&
     (filter.listId === undefined || filter.listId === (item.listId ?? null)) && (!filter.listName || filter.listName === item.listName) &&
     (!filter.deliveryIssuesOnly || item.mode !== 'None' && ['Missed', 'TimedOut', 'Interrupted', 'Blocked', 'Failed'].includes(item.deliveryState)) && (!filter.segmentId || filter.segmentId === item.segmentId) &&
     (!filter.seriesId || series.get(item.segmentId ?? '')?.seriesId === filter.seriesId);
-  const rows = items.map(view).filter((item) => matches(item) && (filter.view === 'deleted' ? item.deleted : !item.deleted &&
+  const rows = items.map(item=>view(item,now)).filter((item) => matches(item) && (filter.view === 'deleted' ? item.deleted : !item.deleted &&
     (filter.view === 'completed' ? item.completed || !!filter.includeSkipped && item.skipped : filter.view === 'history' ? item.completed || item.skipped : !item.completed && !item.skipped)) &&
-    (filter.view !== 'overdue' || item.overdue));
+    (filter.view !== 'overdue' || item.overdue) && (!filter.overdueOnly || item.overdue) &&
+    (filter.view !== 'today' || item.agendaAtMs >= start.getTime() && item.agendaAtMs < end.getTime()) &&
+    (filter.view !== 'upcoming' || item.agendaAtMs >= end.getTime()));
   const rank = (item: Occurrence) => item.agendaGroup === 'overdue' ? 0 : item.agendaGroup === 'earlier' ? 1 : 2;
   rows.sort((a, b) => ['completed', 'history', 'deleted'].includes(filter.view) ? (b.collectionAtMs ?? b.eventStartMs) - (a.collectionAtMs ?? a.eventStartMs) || b.eventStartMs - a.eventStartMs || a.id.localeCompare(b.id) :
-    (['agenda', 'overdue'].includes(filter.view) ? rank(a) - rank(b) : 0) || a.eventStartMs - b.eventStartMs || a.id.localeCompare(b.id));
+    (['agenda','overdue','today','upcoming','attention'].includes(filter.view) ? rank(a)-rank(b) || a.agendaAtMs-b.agendaAtMs : a.eventStartMs-b.eventStartMs) || a.id.localeCompare(b.id));
   const groups: Record<string, number> = {}; rows.forEach((row) => { groups[row.agendaGroup] = (groups[row.agendaGroup] ?? 0) + 1; });
   const offset = Number(cursor ?? 0);
   return { items: rows.slice(offset, offset + 50), total: rows.length, nextCursor: offset + 50 < rows.length ? String(offset + 50) : null, groups,
@@ -266,12 +270,12 @@ function apply(command: Command): CommandResult {
       item.deliveryState = item.deleted ? 'Deleted' : item.completed ? 'Completed' : item.skipped ? 'Skipped' : item.mode === 'None' ? 'NoAlert' : item.alarmAtMs > Date.now() ? 'Scheduled' : 'Missed';
       item.nextAlertMs = item.deliveryState === 'Scheduled' ? item.alarmAtMs : null;
     }
-    if (command.kind === 'Stop') { item.deliveryState = 'Stopped'; item.nextAlertMs = null; item.generation++; }
+    if (command.kind === 'Stop') { item.completed=true; item.revision++; item.deliveryState='Completed'; item.nextAlertMs=null; item.generation++; }
     if (command.kind === 'Postpone' || command.kind === 'Snooze') {
       item.nextAlertMs = command.kind === 'Postpone' ? command.alarmAtMs! : Date.now() + settings.snoozeMinutes * 60_000;
       item.deliveryState = 'Scheduled'; item.generation++; item.alertAdjustment = command.kind === 'Postpone' ? 'Postponed' : 'Snoozed'; item.exception = !!item.segmentId;
     }
-    item.history ??= []; item.history.push({ kind: command.kind, atMs: Date.now(), targetMs: ['Postpone', 'Snooze'].includes(command.kind) ? item.nextAlertMs : null });
+    item.history ??= []; item.history.push({ kind: command.kind === 'Stop' ? 'Done' : command.kind, atMs: Date.now(), targetMs: ['Postpone', 'Snooze'].includes(command.kind) ? item.nextAlertMs : null });
     result = { status: ['Edit', 'Postpone', 'Snooze'].includes(command.kind) && item.nextAlertMs ? 'Scheduled' : 'Applied', occurrence: view(item) };
   } else if ('segmentId' in command) {
     const old = series.get(command.segmentId);
@@ -341,7 +345,7 @@ const preview = {
   },
   getSoundPreview: async (): Promise<SoundPreviewSnapshot | null> => clone(soundPreview),
   getDiagnostics: async () => ({ states: items.reduce<Record<string, number>>((counts, item) => ({ ...counts, [item.deliveryState]: (counts[item.deliveryState] ?? 0) + 1 }), {}), pendingOperations: 0 }),
-  exportBackup: async () => JSON.stringify({ format: 'Remilo synthetic preview', reminders: items.map(view) }),
+  exportBackup: async () => JSON.stringify({ format: 'Remilo synthetic preview', reminders: items.map(item=>view(item)) }),
   previewImport: async (_json: string): Promise<ImportPreview> => { throw new Error('File restoration requires the Android app.'); },
   importBackup: async (): Promise<CommandResult> => ({ status: 'Rejected', errorMessage: 'File restoration requires the Android app.' }),
 };

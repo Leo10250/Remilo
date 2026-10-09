@@ -67,7 +67,7 @@ export default function Backup() {
         error instanceof Error ? error.message : 'This backup could not be restored. Review the preview and try again.', tone: pending ? 'warning' : 'danger' });
     } finally { working.current = false; setPhase('idle'); }
   };
-  return <Page title="Restore backup" onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}
+  return <Page compact title="Restore backup" onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}
     footer={preview ? <BottomActionBar><View style={{ flex: 1, gap: 8 }}>
       {(phase === 'restoring' || uncertain || feedback) && <ActionFeedback loading={phase === 'restoring'} message={phase === 'restoring' ? 'Restoring backup…' : feedback?.message} tone={phase === 'restoring' ? 'muted' : feedback?.tone} />}
       <Button label={phase === 'restoring' ? 'Restoring…' : uncertain ? 'Retry same restore' : 'Restore backup'}

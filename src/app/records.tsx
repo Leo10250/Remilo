@@ -7,7 +7,7 @@ import { collectionKey, creationOrigin, originParams, type DestinationOrigin, ty
 import { alertPresentation } from '../domain/presentation';
 import { BulkRecovery, useBulkActions } from '../ui/bulk-actions';
 import { ActionFeedback, AtmosphericHeader, Button, Choice, Copy, Field, IconButton, Page, QueryState, SettingRow, Sheet, Toggle } from '../ui/components';
-import { CommandRecovery, notifyTrash, RootNotice, useCapturedCommand, useDestinationNavigation } from '../ui/navigation';
+import { CommandRecovery, notifyTrash, RootNavigation, RootNotice, useCapturedCommand, useDestinationNavigation } from '../ui/navigation';
 import { engine, nativeAvailable } from '../ui/native';
 import { ReminderRow } from '../ui/reminder-row';
 import { useRootState } from '../ui/root-state';
@@ -19,6 +19,7 @@ export default function Records() {
 }
 function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origin: DestinationOrigin }) {
   const title = view === 'deleted' ? 'Trash' : 'Completed', scoped = origin.kind === 'list', fixedListId = scoped ? origin.listId : undefined;
+  const destination: DestinationOrigin = scoped ? origin : { kind: view === 'deleted' ? 'trash' : 'completed' };
   const key = collectionKey(view, fixedListId);
   const [includeSkipped, setIncludeSkipped] = useRootState(key + ':skipped', false), [search, setSearch] = useRootState(key + ':search', ''), [searching, setSearching] = useRootState(key + ':searching', false);
   const [membership, setListId] = useRootState<string | null | undefined>(key + ':list', undefined);
@@ -40,7 +41,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     if (isGuarded()) return;
     setSelecting(false); setSelectionIds([]); setMenuOpen(false); bulk.clear();
   };
-  const back = useDestinationNavigation(origin, () => {
+  const back = useDestinationNavigation(destination, () => {
     if (isGuarded()) return true;
     if (filterOpen) { setFilterOpen(false); return true; }
     if (selected) { setSelected(null); return true; }
@@ -48,7 +49,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     if (selecting) { exitSelection(); return true; }
     if (searching) { Keyboard.dismiss(); setSearching(false); return true; }
     return false;
-  }, guarded, origin);
+  }, guarded, scoped ? origin : undefined);
   const guardedBack = () => isGuarded() || back();
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
   const scopeName = listId === null ? 'No list' : lists.data?.find((list) => list.id === listId)?.name ?? 'List unavailable';
@@ -77,7 +78,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
       success: kind === 'UndoDelete' ? item.completed ? 'Restored to Completed.' : item.skipped ? 'Skipped occurrence restored.' : 'Reminder restored.'
         : kind === 'Delete' ? 'Moved to Trash' : 'Reminder reopened.' }).finally(() => { singleRunning.current = false; });
   };
-  const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(origin), originCollection: view } }); } };
+  const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
   const clearEditableFilters = () => { if (!scoped && !selecting && !isGuarded()) setListId(undefined); };
   const startSelection = () => {
     if (isGuarded() || !items.length) return;
@@ -93,8 +94,8 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     Keyboard.dismiss(); setMenuOpen(false); void bulk.execute(kind, selectedItems);
   };
   const emptyMessage = !nativeAvailable ? 'Use the Android app to manage reminders.' : search || !scoped && listId !== undefined ? 'No matches.' : view === 'deleted' ? 'Trash is empty.' : includeSkipped ? 'No completed or skipped occurrences.' : 'No completed reminders.';
-  return <Page title={title} onBack={guardedBack} scrollKey={key} scrollReady={!query.isLoading}
-    header={<AtmosphericHeader title={selecting ? selectionIds.length + ' selected' : title} subtitle={selecting ? title + (scoped ? ' · ' + scopeName : '') : scoped ? scopeName : undefined} onBack={guardedBack} actions={<>
+  return <Page title={title} back={scoped || selecting} onBack={guardedBack} scrollKey={key} scrollReady={!query.isLoading}
+    header={<AtmosphericHeader back={scoped || selecting} title={selecting ? selectionIds.length + ' selected' : title} subtitle={selecting ? title + (scoped ? ' · ' + scopeName : '') : scoped ? scopeName : undefined} onBack={guardedBack} actions={<>
       {!selecting && <IconButton icon="search" label={searching ? 'Exit search' : 'Search ' + title.toLowerCase()} disabled={guarded} onPress={() => { if (isGuarded()) return; Keyboard.dismiss(); setSearching(!searching); }} />}
       {!scoped && !selecting && <IconButton icon="filter_list" label={'Filter ' + title.toLowerCase()} disabled={guarded} onPress={() => { if (isGuarded()) return; Keyboard.dismiss(); setFilterOpen(true); }} />}
       <IconButton icon="more_vert" label={selecting ? 'Selection actions' : title + ' actions'} disabled={guarded} onPress={() => { if (isGuarded()) return; Keyboard.dismiss(); setMenuOpen(true); }} />
@@ -108,7 +109,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
           {view === 'completed' && <Button label="Move to Trash" accessibilityLabel="Move selected to Trash" variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
         </>}
       </View>}
-      <RootNotice disabled={guarded} /></>}>
+      <RootNotice disabled={guarded} />{!scoped && !selecting && <RootNavigation destination={view === 'deleted' ? 'trash' : 'completed'} disabled={guarded} />}</>}>
     {searching && <View style={{ gap: 8 }}><Field autoFocus label={'Search ' + title.toLowerCase()} placeholder="Title or notes" value={search} onChangeText={(value) => { if (!isGuarded() && !selecting) setSearch(value); }} editable={!guarded && !selecting} />
       {!!search && <Button label="Clear search" variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selecting) setSearch(''); }} />}</View>}
     {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selecting) setSearch(''); }} />}
@@ -131,6 +132,9 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
         <SettingRow label="Clear selection" disabled={guarded || !selectionIds.length} onPress={() => { if (isGuarded()) return; setSelectionIds([]); setMenuOpen(false); bulk.clear(); }} />
         <SettingRow label="Done selecting" disabled={guarded} onPress={exitSelection} />
       </> : <SettingRow label="Select reminders" icon="checklist" disabled={guarded || !items.length} onPress={startSelection} />}
+      {!selecting && <SettingRow label="Settings" icon="settings" disabled={guarded} onPress={() => {
+        if (isGuarded()) return; setMenuOpen(false); router.push({ pathname: '/settings', params: originParams(destination) });
+      }} />}
     </Sheet>
     <Sheet title={'Filter ' + title.toLowerCase()} visible={filterOpen} onClose={() => { if (!isGuarded()) setFilterOpen(false); }}>
       <Choice label="All lists" selected={listId === undefined} disabled={guarded || selecting} onPress={() => { if (isGuarded() || selecting) return; setListId(undefined); setFilterOpen(false); }} />
