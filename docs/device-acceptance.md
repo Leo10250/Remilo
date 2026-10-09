@@ -9,7 +9,24 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Prepared redesign build for the future owner run
+## Latest prepared beta build for the future owner run
+
+The [beta-fix evidence](evidence/2026-10-09-beta-fixes.md) identifies the signed
+bundled ARM64 build prepared **9 October 2026 at 20:19:05.680 UTC**, including
+Stop completion, four roots, alert-first Agenda and stationary artwork covered
+by scrolling content. Package/version remain **com.remilo.app 0.4.0 / code 4**.
+APK SHA-256: `f8f07454eebcd9c98215966a452e93db10af5acacb23a299708eeaeda563a1f9`.
+The existing signer is retained. No installation or physical observation was
+performed. Use this identity for the consolidated run; the earlier artifact below
+does not establish results for these changes. Apply the
+[beta acceptance additions](verification.md#beta-fix-acceptance-additions-9-october).
+
+Check browsing art at the top, partway and fully covered: it stays stationary
+while the opaque body rises over it and the toolbar remains reachable. Reverse
+scroll and return from another page must preserve the appropriate occlusion.
+Repeat with short/empty content, landscape, reduced motion and large text.
+
+## Earlier prepared redesign artifact (historical)
 
 [TD-06 integration evidence](handoffs/redesign-td-06.md) records successful local
 preparation on **9 October 2026 at 17:18:00.718 UTC**, after the final candidate 05
@@ -77,7 +94,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   then use Undo. Complete again: it leaves the active agenda. Find it through
   the secondary Completed destination. Include skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
-  request, then the secondary Trash destination → row More → Restore recovers
+  request, then the Trash root → row More → Restore recovers
   its content. Completed/Skipped row More → Reopen clears both terminal states
   without replaying elapsed alerts. Single row actions are not repeated inline.
   Search/filter both collections, including a list containing only Trash items.

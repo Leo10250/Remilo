@@ -8,6 +8,10 @@ block verified release, rather than development. Known failures still require fi
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| BETA-01 | Alarm Stop completion, durable pre-unlock projection and retries | owner-approved beta-fixes plan | implemented/unverified | [134 native tests and signed beta preparation](evidence/2026-10-09-beta-fixes.md); crash/Direct Boot/retry/Reopen tests pass; physical observations remain |
+| BETA-02 | Four roots, built-in Repeats, alert-first Agenda and fixed-artwork browsing covers | owner-approved beta-fixes plan | implemented/unverified | [349 shared tests, native pagination and fixture geometry/navigation](evidence/2026-10-09-beta-fixes.md); Android layout/accessibility observations remain |
+| BETA-03 | Faithful full-density splash and native alarm appearance | owner-approved beta-fixes plan | implemented/unverified | [Individually approved splash v3 activated; captured native colors and signed build pass](evidence/2026-10-09-beta-fixes.md); actual splash/OEM/native-frame observations remain |
+| BETA-04 | Trace and repair Recents afterimage | owner-approved beta-fixes plan | pending | [No connected target; scoped signed-device reproduction/trace cannot proceed](evidence/2026-10-09-beta-fixes.md); root cause remains unproven |
 | P0-01 | Expo 57 scaffold, pinned Node/JDK and tracked native project | none | verified | [clean CI, signed offline installation](evidence/2026-10-04-native-slice.md) |
 | P0-02 | AI instructions, contracts, backlog, verification scripts/CI | P0-01 | verified | [shared/native commands and clean GitHub verification](evidence/2026-10-04-native-slice.md) |
 | G0 | Foundation release gate | P0-01/02 | verified | [clean checkout and signed bundled UI offline on Pixel](evidence/2026-10-04-native-slice.md) |

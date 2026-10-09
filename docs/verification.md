@@ -347,7 +347,9 @@ alarm eligibility. The consolidated acceptance arrangement remains in force.
 - Navigation: all four roots; scoped collections, Lists → Repeats → family →
   occurrence and return; existing /series links and legacy origin; separate
   search/filter/scroll snapshots; selection, IME/sheet and uncertain-job Back.
-- Covers/targets: expanded/collapsed/restored, empty/short pages, eight appearance
+- Covers/targets: fixed image bounds/crop while opaque content covers decoration;
+  pinned toolbar and no full reopening during small upward reading adjustments.
+  Check expanded/covered/restored positions, empty/short pages, eight appearance
   pairs, 360×800, landscape, 200% English/Chinese, reduced motion and TalkBack.
   Check list name/support/padding/chevron as one action and independent More.
 - Branding/native theme: density dimensions/hashes/centering, cold/warm release
