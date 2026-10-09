@@ -53,7 +53,9 @@ manually selected at a held review clock, not automatic switching examples.
 - Global Completed and Trash are roots with the four-destination bottom bar. A
   list-scoped collection remains secondary and returns to its named list or No
   list. Details returns to that collection; Activity returns to those details
-  with parent context intact. Selection mode uses the contextual footer instead
+  with parent context intact. Ordinary scoped browsing retains the bottom bar
+  with Lists selected; pressing Lists returns to its root. Selection mode uses
+  the contextual footer instead
   of root navigation. Collections have no creation FAB.
 - Preserve independent query, editable membership, Include skipped and scroll
   state for each global collection and each fixed-list collection. Fixed scope

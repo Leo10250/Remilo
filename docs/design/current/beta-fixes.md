@@ -21,6 +21,9 @@ Agenda / Lists / Completed / Trash are four labeled roots. Lists separates Built
 views → Repeats from Your lists → No list / named lists. Repeats is secondary to Lists;
 family/occurrence return preserves that origin and existing links. Global history
 collections are roots; explicitly list-scoped collections remain secondary.
+Ordinary collection browsing retains root navigation, with Lists selected for
+fixed-list scope; selection uses the contextual footer. Pressing a selected root
+from a secondary collection returns to that root.
 
 Active cards lead with the actual/intended alert time, or No alert, and retain
 consequential Due/Overdue, delivery state and a readable repeat indicator. Event

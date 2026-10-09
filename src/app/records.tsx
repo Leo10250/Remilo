@@ -109,7 +109,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
           {view === 'completed' && <Button label="Move to Trash" accessibilityLabel="Move selected to Trash" variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
         </>}
       </View>}
-      <RootNotice disabled={guarded} />{!scoped && !selecting && <RootNavigation destination={view === 'deleted' ? 'trash' : 'completed'} disabled={guarded} />}</>}>
+      <RootNotice disabled={guarded} />{!selecting && <RootNavigation destination={scoped ? 'lists' : view === 'deleted' ? 'trash' : 'completed'} atRoot={!scoped} disabled={guarded} />}</>}>
     {searching && <View style={{ gap: 8 }}><Field autoFocus label={'Search ' + title.toLowerCase()} placeholder="Title or notes" value={search} onChangeText={(value) => { if (!isGuarded() && !selecting) setSearch(value); }} editable={!guarded && !selecting} />
       {!!search && <Button label="Clear search" variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selecting) setSearch(''); }} />}</View>}
     {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selecting) setSearch(''); }} />}

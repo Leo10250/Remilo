@@ -35,14 +35,14 @@ export function useDestinationNavigation(destination: DestinationOrigin, beforeB
   return back;
 }
 
-export function RootNavigation({ destination, disabled = false }: { destination: RootDestination['kind']; disabled?: boolean }) {
+export function RootNavigation({ destination, disabled = false, atRoot = true }: { destination: RootDestination['kind']; disabled?: boolean; atRoot?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
   return <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
     {([{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' },
       { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const).map((entry) => {
       const selected = destination === entry.kind;
       return <Pressable key={entry.kind} accessibilityRole="tab" accessibilityLabel={entry.label} aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled}
-        onPress={() => { if (!selected) switchRoot({ kind: entry.kind }); }} style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
+        onPress={() => { if (!selected || !atRoot) switchRoot({ kind: entry.kind }); }} style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
         <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}>
           <Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
         <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
