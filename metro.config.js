@@ -7,6 +7,9 @@ if (process.env.REMILO_UI_PREVIEW === '1') {
     if (platform === 'web' && name.endsWith('/RemiloAlarmModule')) return {
       type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/preview-engine.ts'),
     };
+    if (platform === 'web' && name.endsWith('/presentation-preview')) return {
+      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/presentation-preview.tsx'),
+    };
     return context.resolveRequest(context, name, platform);
   };
 }

@@ -4,8 +4,12 @@ import type { AppSettings, Command, CommandResult, ImportPreview, Occurrence, Re
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
 
+const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
-  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light' };
+  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light', atmosphere: 'automatic' };
+const reviewScene = review.get('reviewScene'), reviewBrightness = review.get('reviewBrightness');
+if (reviewScene === 'automatic' || reviewScene === 'sunrise' || reviewScene === 'sky' || reviewScene === 'evening' || reviewScene === 'night') settings.atmosphere = reviewScene;
+if (reviewBrightness === 'system' || reviewBrightness === 'light' || reviewBrightness === 'dark') settings.theme = reviewBrightness;
 const today = new Date(); today.setHours(9, 0, 0, 0);
 const dayMs = 86_400_000, clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 let identity = 0;
@@ -39,7 +43,16 @@ const items: Occurrence[] = [
     history: [{ kind: 'Delete', atMs: today.getTime() - 1_800_000, targetMs: null }] }),
   make('paused', 'Stretch and take a break', dayMs, { segmentId: 'paused-series', seriesState: 'Paused', deliveryState: 'Paused', nextAlertMs: null, repeatSummary: 'Every day' }),
 ];
+if (review.get('reviewText') === 'long') {
+  lists.forEach((list) => { list.name += ' · Shared household and work review / 家庭与工作共同安排'; });
+  items.forEach((item) => {
+    item.title += ' · Check every detail and coordinate the next steps / 检查全部细节并确认下一步安排';
+    item.notes = ('Review the complete proposal, confirm the arrangements with everyone involved, and keep the original Event, Due and Next alert separately visible.\n请仔细阅读完整说明，确认参与者的安排，并保留原始事件、截止时间和下一次提醒。长文本应自然换行，编辑时光标与操作按钮都必须保持可见。\n\n').repeat(4);
+    item.listName = item.listId ? lists.get(item.listId)?.name ?? '' : '';
+  });
+}
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
 let soundPreview: SoundPreviewSnapshot | null = null;
 const soundChanged = () => { if (soundPreview) soundListeners.forEach((fn) => fn(clone(soundPreview!))); };
@@ -310,7 +323,14 @@ const preview = {
     return { eventStartMs: value.eventStartMs, eventEndMs: value.eventEndMs, dueAtMs: value.dueAtMs, alarmAtMs: value.alarmAtMs,
       warnings: upcoming.some((slot) => slot.adjusted) ? ['A clock change adjusts a preview time.'] : [], upcoming };
   },
-  applyCommand: async (command: Command) => apply(command), reconcile: async () => {}, openSettings: async () => {},
+  applyCommand: async (command: Command) => {
+    const result = apply(command);
+    if (review.get('reviewLostReply') === '1' && result.status !== 'Rejected' && !lostReplies.has(command.operationId)) {
+      lostReplies.add(command.operationId);
+      throw new Error('Synthetic preview: the change was applied but its reply was lost. Retry the same change.');
+    }
+    return result;
+  }, reconcile: async () => {}, openSettings: async () => {},
   scheduleTestAlarm: async (): Promise<CommandResult> => apply({ kind: 'Create', operationId: nextId(), title: 'Test alarm', eventStartMs: Date.now() + 15_000 }),
   previewSound: async (sound: 'remilo' | 'system', requestId: string): Promise<SoundPreviewSnapshot> => {
     soundPreview = { sound, requestId, state: 'Failed', reason: 'SyntheticPreview' }; soundChanged(); return clone(soundPreview);
