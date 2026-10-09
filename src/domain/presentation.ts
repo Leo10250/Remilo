@@ -21,7 +21,7 @@ export function stateLabel(item: Pick<Occurrence, 'deliveryState' | 'nextAlertMs
   if (item.skipped) return 'Skipped';
   if (item.mode === 'None') return 'No alert';
   if (item.deliveryState === 'Scheduled') return item.alertAdjustment ?? (item.nextAlertMs != null && item.nextAlertMs !== item.alarmAtMs ? 'Alert changed' : '');
-  if (item.mode === 'Notification' && item.deliveryState === 'Missed') return 'Notification missed';
+  if (item.mode === 'Notification' && item.deliveryState === 'Missed') return 'Notification delivery missed';
   return ({ Alerting: 'Ringing', Stopped: 'Alarm stopped', Missed: 'Alarm missed', TimedOut: 'Alarm timed out',
     Interrupted: 'Alarm interrupted', Blocked: 'Alert blocked', Failed: item.mode === 'Notification' ? 'Notification could not be sent' : 'Alarm could not play', Paused: 'Paused',
     Changing: 'Updating alert', SeriesChanging: 'Updating repeat', Pending: 'Scheduling', Notified: 'Notification sent', NoAlert: 'No alert' } as Record<string, string>)[item.deliveryState] ?? '';
@@ -29,7 +29,7 @@ export function stateLabel(item: Pick<Occurrence, 'deliveryState' | 'nextAlertMs
 
 export type ScheduleItem = Pick<Occurrence, 'eventStartMs' | 'eventEndMs' | 'dueAtMs' | 'alarmAtMs'> &
   Partial<Pick<Occurrence, 'allDay' | 'dueLinked' | 'alarmLinked' | 'mode' | 'zoneId' | 'nextAlertMs' | 'deliveryState' |
-  'alertAdjustment' | 'completed' | 'deleted' | 'skipped' | 'repeatRule' | 'exception' | 'overdue'>>;
+  'alertAdjustment' | 'completed' | 'deleted' | 'skipped' | 'repeatRule' | 'exception' | 'overdue' | 'overdueAtMs'>>;
 export function modeLabel(mode: ScheduleItem['mode']) { return mode === 'Notification' ? 'Notification' : mode === 'None' ? 'No alert' : 'Alarm'; }
 export function ordinaryDue(item: ScheduleItem) {
   return item.dueLinked !== false && item.dueAtMs === (item.allDay ? item.eventEndMs : item.eventStartMs);
@@ -84,6 +84,43 @@ export function agendaAlertPresentation(item: ScheduleItem & { agendaAtMs?: numb
   return item.alertAdjustment === 'Snoozed' ? `${mode} snoozed to ${time}` :
     item.alertAdjustment === 'Postponed' ? `${mode} postponed to ${time}` : `${mode} at ${time}`;
 }
+/** Relative age uses the native original scheduling reference, never the next delivery. */
+export function overduePresentation(item: ScheduleItem, now = Date.now()) {
+  if (item.completed || item.deleted || item.skipped || !item.overdue || item.overdueAtMs == null ||
+      !Number.isFinite(item.overdueAtMs) || item.overdueAtMs >= now) return null;
+  const minutes = Math.floor((now - item.overdueAtMs) / 60_000);
+  const amount = minutes < 60 ? minutes : minutes < 1_440 ? Math.floor(minutes / 60) : Math.floor(minutes / 1_440);
+  const unit = minutes < 60 ? 'minute' : minutes < 1_440 ? 'hour' : 'day';
+  const short = minutes < 1 ? '<1 min' : `${amount} ${unit === 'minute' ? 'min' : unit === 'hour' ? 'hr' : amount === 1 ? 'day' : 'days'}`;
+  const spoken = minutes < 1 ? 'less than one minute' : `${amount} ${unit}${amount === 1 ? '' : 's'}`;
+  return { label: 'Overdue · ' + short, spokenLabel: 'Overdue by ' + spoken };
+}
+type BrowsingStatus = { label: string; spokenLabel: string; tone: Tone; icon: ReturnType<typeof stateIcon> };
+/** Browsing chooses useful work state; detailed delivery diagnostics stay available separately. */
+export function reminderBrowsingPresentation(item: ScheduleItem & { agendaAtMs?: number }, now = Date.now()) {
+  const terminal = !!(item.completed || item.deleted || item.skipped), overdue = overduePresentation(item, now);
+  const ringing = !terminal && item.mode !== 'None' && item.deliveryState === 'Alerting';
+  const timing = terminal ? eventRange(item, now) : item.mode === 'None' ?
+    'No alert · ' + eventRange(item.allDay ? item : { ...item, zoneId: deviceZone() }, now) : ringing ?
+    `${modeLabel(item.mode)} was set for ${scheduleDateTime(item.agendaAtMs ?? item.nextAlertMs ?? item.alarmAtMs, deviceZone(), now)}` : agendaAlertPresentation(item, now);
+  let status: BrowsingStatus | null = null;
+  if (terminal) {
+    const label = item.deleted ? 'In Trash · Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : item.skipped ? 'Skipped' : 'Completed';
+    status = { label, spokenLabel: label, tone: item.completed && !item.deleted ? 'success' : 'muted', icon: item.deleted ? 'delete' : item.skipped ? 'cancel' : 'check_circle' };
+  } else if (ringing) status = { label: 'Ringing', spokenLabel: 'Alarm ringing', tone: 'accent', icon: 'alarm' };
+  else if (overdue) status = { ...overdue, tone: 'warning', icon: 'warning' };
+  else if (item.mode !== 'None' && item.deliveryState === 'Failed') {
+    const label = item.mode === 'Notification' ? 'Notification could not be sent' : 'Alarm could not play';
+    status = { label, spokenLabel: label, tone: 'danger', icon: 'error' };
+  } else if (item.mode !== 'None' && item.deliveryState === 'Paused') status = { label: 'Paused', spokenLabel: 'Alert paused', tone: 'muted', icon: 'pause' };
+  // A future snoozed/postponed target or blocked/intended target is already explicit
+  // in timing. Missed/timeout/interruption/notified labels add no useful work state.
+  const warning = !terminal && overdue && !ringing && item.mode !== 'None' && item.deliveryState === 'Failed' ?
+    item.mode === 'Notification' ? 'Notification could not be sent' : 'Alarm could not play' : null;
+  const spokenLabel = [timing, status?.spokenLabel, ringing ? overdue?.spokenLabel : null, warning,
+    terminal ? alertPresentation(item, false, now).label : null].filter(Boolean).join('. ');
+  return { timing, status, warning, overdue, spokenLabel };
+}
 export function canAdjustAlert(item: Pick<Occurrence, 'completed' | 'deleted' | 'skipped' | 'mode' | 'deliveryState'>) {
   return !item.completed && !item.deleted && !item.skipped && item.mode !== 'None' &&
     !['Completed', 'Deleted', 'Skipped', 'Replaced', 'Paused', 'Changing', 'SeriesChanging'].includes(item.deliveryState);
@@ -98,7 +135,7 @@ export function deliveryExplanation(item: Pick<Occurrence, 'completed' | 'delete
   return ({ Stopped: 'Alarm stopped. Still unfinished.',
     TimedOut: 'Alarm timed out. Still unfinished.',
     Interrupted: 'Alarm interrupted. Still unfinished.',
-    Missed: item.mode === 'Notification' ? 'Notification missed. Still unfinished.' : 'Alarm missed. Still unfinished.',
+    Missed: item.mode === 'Notification' ? 'Notification delivery missed. Still unfinished.' : 'Alarm missed. Still unfinished.',
     Failed: item.mode === 'Notification' ? 'Notification could not be sent. Still unfinished.' : 'Alarm could not play. Still unfinished.',
     Blocked: 'The alert is blocked. Check permissions in Settings.',
     Pending: 'Scheduling is not yet confirmed.', Changing: 'The alert is being updated.', SeriesChanging: 'The repeat is being updated.' } as Record<string, string>)[item.deliveryState] ?? null;

@@ -7,7 +7,7 @@ import type { ContentCommand, DeliveryCommand, Occurrence } from '../../../modul
 import { commandFeedback } from '../../domain/actions';
 import type { Tone } from '../../domain/actions';
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
-import { alertPresentation, canAdjustAlert, deliveryExplanation, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
+import { alertPresentation, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
 import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, formatTime, Group, Icon, IconButton, Page, QueryState, SettingRow, Sheet, shortTime, Status } from '../../ui/components';
 import { notifyTrash } from '../../ui/navigation';
@@ -93,8 +93,10 @@ export default function ReminderDetails() {
   };
   const delivery = async (kind: DeliveryCommand['kind'], alarmAtMs?: number) => {
     if (!item || command.isPending || pendingOperation.current || !canAdjustAlert(item) || kind === 'Stop' && item.deliveryState !== 'Alerting') return;
-    pendingOperation.current = { command: { kind, occurrenceId: id, expectedGeneration: item.generation, alarmAtMs, operationId: engine().createOperationId() }, item,
-      success: kind === 'Stop' ? 'Alarm stopped. Still unfinished.' : kind === 'Postpone' ? 'Next alert postponed to ' + formatTime(alarmAtMs!) : 'Next alert snoozed' };
+    if (kind === 'CompleteDelivery' && item.deliveryState !== 'Alerting' && !(item.mode === 'Notification' && item.deliveryState === 'Notified')) return;
+    pendingOperation.current = { command: { kind, occurrenceId: id, expectedGeneration: item.generation, alarmAtMs,
+      ...(kind === 'Snooze' ? { expectedSnoozeMinutes: item.quickSnoozeMinutes } : {}), operationId: engine().createOperationId() }, item,
+      success: kind === 'Stop' || kind === 'CompleteDelivery' ? 'Reminder completed.' : kind === 'Postpone' ? 'Next alert postponed to ' + formatTime(alarmAtMs!) : 'Next alert snoozed. Still unfinished.' };
     await runPending();
   };
   const edit = () => { if (command.isPending || uncertain) return; setMenu(false); if (item?.segmentId) setScope(true); else router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); };
@@ -103,22 +105,20 @@ export default function ReminderDetails() {
   const active = item && !item.deleted && !item.completed && !item.skipped;
   const adjust = item && canAdjustAlert(item), completion = recordedCompletionTime(item?.history);
   const explanation = item ? deliveryExplanation(item) : null;
+  const overdueStatus = item ? overduePresentation(item) : null;
   const frozenPostpone = command.isPending || uncertain || postponeResult;
   const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
   return <Page title="Reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
     actions={item ? <>{!item.deleted && <IconButton icon="edit" label="Edit reminder" disabled={command.isPending || uncertain} onPress={edit} />}
     <IconButton icon="more_vert" label="Reminder actions" disabled={command.isPending || uncertain} onPress={() => setMenu(true)} /></> : undefined}
     footer={item && (active || item.completed || item.skipped || item.deleted) ? <BottomActionBar>
-      {active && adjust && item.deliveryState === 'Alerting' && <View style={{ width: '100%', gap: 8 }}>
-        <Copy muted size={typography.supporting}>Alarm ringing · these actions leave the reminder unfinished</Copy>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <View style={{ flexGrow: 1, flexBasis: 120 }}><Button icon="stop" label="Stop alarm" variant="secondary" disabled={command.isPending || uncertain} onPress={() => void delivery('Stop')} /></View>
-          <View style={{ flexGrow: 1, flexBasis: 120 }}><Button icon="snooze" label={'Snooze ' + (settings.data?.snoozeMinutes ?? 10) + ' min'} variant="secondary" disabled={command.isPending || uncertain} onPress={() => void delivery('Snooze')} /></View>
-        </View>
-      </View>}
       {active && <>
+      {item.deliveryState === 'Alerting' && <Copy muted size={typography.supporting}>Alarm ringing</Copy>}
+      <View style={{ width: '100%' }}><Button icon="check" label="Done" disabled={command.isPending || uncertain}
+        onPress={() => void (item.deliveryState === 'Alerting' ? delivery('CompleteDelivery') : content('Done'))} /></View>
+      {adjust && item.deliveryState === 'Alerting' && <View style={{ width: '100%' }}><Button icon="snooze" label={'Snooze · ' + item.quickSnoozeMinutes + ' min'} variant="secondary"
+        disabled={command.isPending || uncertain} onPress={() => void delivery('Snooze')} /></View>}
       {adjust && <View style={{ width: '100%' }}><Button icon="schedule" label="Postpone alert" variant="secondary" disabled={command.isPending || uncertain} onPress={openPostpone} /></View>}
-      <View style={{ width: '100%' }}><Button icon="check" label="Done" disabled={command.isPending || uncertain} onPress={() => void content('Done')} /></View>
       </>}
       {item.deleted ? <View style={{ flex: 1 }}><Button icon="undo" label="Restore reminder" disabled={command.isPending || uncertain} onPress={() => void content('UndoDelete')} /></View> :
         (item.completed || item.skipped) && <View style={{ flex: 1 }}><Button icon="undo" label={item.skipped ? 'Reopen occurrence' : 'Reopen reminder'} variant="secondary" disabled={command.isPending || uncertain} onPress={() => void content('Reopen')} /></View>}
@@ -129,7 +129,7 @@ export default function ReminderDetails() {
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
       {item.deleted ? <Status icon="delete" label="In Trash" /> : item.completed ?
         <Status label={completion == null ? 'Completed' : 'Completed ' + scheduleDateTime(completion)} tone="success" /> :
-        item.skipped ? <Status icon="cancel" label="Skipped" /> : <View style={{ gap: 8 }}>{item.overdue && <Status icon="warning" label="Overdue — still unfinished" tone="warning" />}
+        item.skipped ? <Status icon="cancel" label="Skipped" /> : <View style={{ gap: 8 }}>{overdueStatus && <View accessible accessibilityLabel={overdueStatus.spokenLabel}><Status icon="warning" label={overdueStatus.label} tone="warning" /></View>}
           {alertPresentation(item).confirmed && <Status label="Scheduled" tone="success" />}
           {!explanation && item.mode !== 'None' && !!stateLabel(item) && <Status icon={stateIcon(item)} label={stateLabel(item)} tone={stateTone(item)} />}</View>}
       {explanation && !item.deleted && <Status icon={stateIcon(item)} label={explanation} tone={stateTone(item)} />}
@@ -162,7 +162,7 @@ export default function ReminderDetails() {
       {item && !item.deleted && <SettingRow icon="edit" label="Edit" onPress={edit} />}
       <SettingRow icon="content_copy" label="Duplicate" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }); }} />
       <SettingRow icon="history" label="Activity" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/activity', params: { id, ...routeParams, originReminderId: id } }); }} />
-      {adjust && item?.deliveryState !== 'Alerting' && <SettingRow icon="snooze" label={'Snooze ' + (settings.data?.snoozeMinutes ?? 10) + ' minutes'} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void delivery('Snooze'); }} />}
+      {adjust && item?.deliveryState !== 'Alerting' && <SettingRow icon="snooze" label={'Snooze · ' + item.quickSnoozeMinutes + ' min'} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void delivery('Snooze'); }} />}
       {active && item.segmentId && <SettingRow label="Skip this occurrence" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void content('Skip'); }} />}
       {item && !item.deleted && <View style={{ marginTop: 12, paddingTop: 8, borderTopWidth: 0.5, borderTopColor: colors.border }}>
         <SettingRow icon="delete" label="Move to Trash" description="Cancels its alert. Recoverable from Trash." disabled={command.isPending || uncertain} onPress={moveToTrash} />

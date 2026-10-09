@@ -2,12 +2,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, I18nManager, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, type GestureUpdateEvent, type PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { agendaAlertPresentation, alertPresentation, calendarDate, eventRange, ordinaryDue, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../domain/presentation';
+import { alertPresentation, ordinaryDue, recordedCompletionTime, reminderBrowsingPresentation, repeatSummary, scheduleDateTime } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { Icon, IconButton, Status, type IconName } from './components';
+import { Icon, IconButton, type IconName } from './components';
 import { useReducedMotion } from './motion';
 import { useFoundationStyle, useFontScaleOverride, useTheme } from './theme';
-import { typography } from './tokens';
+import { shape, space, typography } from './tokens';
+
+function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; icon?: IconName; iconSize?: number; color?: string }) {
+  const colors = useTheme(), scale = useFontScaleOverride(), { fontScale } = useWindowDimensions();
+  const lineHeight = typography.supporting * scale * 1.4;
+  return <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+    <View style={{ width: 20, height: lineHeight * fontScale, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {icon && <Icon name={icon} size={iconSize} color={color ?? colors.muted} />}
+    </View>
+    <Text style={{ flex: 1, color: color ?? colors.muted, fontSize: typography.supporting * scale, lineHeight }}>{label}</Text>
+  </View>;
+}
 
 export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
@@ -43,18 +54,15 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     // eslint-disable-next-line react-hooks/refs
     .onBegin(begin).onUpdate(update).onEnd(end).onFinalize(finalize);
   const zone = item.zoneId || deviceZone();
-  const status = item.deleted ? 'In Trash. Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : stateLabel(item), delivery = alertPresentation(item, false, nowMs), repeat = repeatSummary(item) || (item.segmentId ? 'Repeating reminder' : '');
+  const delivery = alertPresentation(item, false, nowMs), repeat = repeatSummary(item) || (item.segmentId ? 'Repeating reminder' : '');
   const active = !item.completed && !item.skipped && !item.deleted;
-  const browsingTime = agendaAlertPresentation(item, nowMs);
-  const event = eventRange(item, nowMs);
-  const compactEvent = eventRange(item, nowMs, ['Today', 'Tomorrow'].includes(calendarDate(item.eventStartMs, zone, nowMs)));
-  const consequence = item.overdue ? 'Overdue — still unfinished' : !ordinaryDue(item) && item.dueAtMs !== item.eventStartMs ? 'Due ' + scheduleDateTime(item.dueAtMs, zone, nowMs) : '';
-  const routineDelivery = item.deliveryState === 'Scheduled' && !delivery.changed && item.alarmAtMs === item.eventStartMs;
-  const compactDelivery = routineDelivery ? item.mode === 'Notification' ? 'Notification' : item.mode === 'None' ? 'No alert' : 'Alarm' : delivery.label;
+  const browsing = reminderBrowsingPresentation(item, nowMs);
+  const consequence = !ordinaryDue(item) ? 'Due ' + scheduleDateTime(item.dueAtMs, zone, nowMs) : '';
   const recordedAt = item.deleted ? item.history?.filter((entry) => entry.kind === 'Delete').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) :
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
-  const summary = [item.title, active ? browsingTime : event, item.listName, consequence, repeat, item.exception ? 'Changed occurrence' : '', status,
-    !active ? delivery.label : ''].filter(Boolean).join('. ');
+  const terminalState = (browsing.status?.label ?? '') + (showActionDate && !active && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : '');
+  const summary = [item.title, active ? browsing.spokenLabel : [browsing.timing, delivery.label, terminalState].join('. '),
+    item.listName, consequence, repeat, item.exception ? 'Changed occurrence' : ''].filter(Boolean).join('. ');
   const actionLabel = restore ? 'Restore' : item.completed || item.skipped ? 'Reopen' : 'Done';
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
@@ -63,8 +71,9 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const renderedLineHeight = titleLineHeight * fontScale;
   // The first title line shares the 48dp control's optical center. Metadata can
   // grow below it without moving the completion control or More down the card.
-  const titleInset = terminal || selection ? Math.max(0, (48 - renderedLineHeight) / 2) : 0;
-  const controlInset = terminal || selection ? Math.max(0, (renderedLineHeight - 48) / 2) : 0;
+  const hasControls = !!(selection || onMore || onDone && !restore && !terminal);
+  const titleInset = hasControls ? Math.max(0, (48 - renderedLineHeight) / 2) : 0;
+  const controlInset = hasControls ? Math.max(0, (renderedLineHeight - 48) / 2) : 0;
   const selectionControl = selection &&
     <Pressable accessibilityRole="checkbox" aria-checked={selection.selected}
       accessibilityLabel={(selection.selected ? 'Deselect ' : 'Select ') + summary}
@@ -97,14 +106,14 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     <View style={{ width: 20, height: renderedLineHeight, justifyContent: 'center', flexShrink: 0 }}><Icon name={compact ? glyph : 'event'} size={20} color={colors.muted} /></View>
     <Text style={{ color: colors.ink, fontSize: typography.body * scale, lineHeight: titleLineHeight, fontWeight: '500', flexShrink: 1 }}>{item.title}</Text>
   </View>;
-  return <View style={{ backgroundColor: colors.surface, overflow: 'hidden', borderRadius: 16, marginBottom: presentation === 'tile' || !compact ? 12 : 0 }}>
+  return <View style={{ backgroundColor: colors.surface, overflow: 'hidden', borderRadius: shape.field, marginBottom: presentation === 'tile' || !compact ? space.md : 0 }}>
     {canSwipe && <Animated.View style={{position:'absolute',[I18nManager.isRTL?'left':'right']:0,top:0,bottom:0,width:88,opacity:shift.interpolate({inputRange:[-88,-1,0,1,88],outputRange:[1,1,0,1,1],extrapolate:'clamp'})}}><Pressable aria-hidden={!revealed} accessibilityRole="button" accessibilityLabel={(swipeTrash ? 'Move to Trash: ' : 'Done: ') + summary} accessible={revealed} accessibilityElementsHidden={!revealed}
       importantForAccessibility={revealed ? 'yes' : 'no-hide-descendants'} disabled={busy || !revealed} onPress={swipeAct}
       style={{ flex:1,backgroundColor:swipeTrash ? colors.danger : colors.accent,minHeight:48,alignItems:'center',justifyContent:'center',gap:4 }}>
       <Icon name={swipeTrash ? 'delete' : 'check'} color={colors.accentInk} /><Text style={{ color: colors.accentInk, fontSize: typography.supporting * scale }}>{swipeTrash ? 'Trash' : 'Done'}</Text>
     </Pressable></Animated.View>}
-    <GestureDetector gesture={pan}><Animated.View onLayout={(event) => { width.current = event.nativeEvent.layout.width; }} style={{ transform: [{ translateX: shift }], flexDirection: 'row', alignItems: terminal ? 'flex-start' : 'center', backgroundColor: colors.surface,
-      minHeight: compact ? 72 : 80, paddingVertical: 12, paddingHorizontal: compact ? 4 : 12, gap: compact ? 4 : 8 }}>
+    <GestureDetector gesture={pan}><Animated.View onLayout={(event) => { width.current = event.nativeEvent.layout.width; }} style={{ transform: [{ translateX: shift }], flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.surface,
+      minHeight: compact ? 72 : 80, paddingVertical: space.md, paddingHorizontal: compact ? space.xs : space.md, gap: compact ? space.xs : space.sm }}>
       {selectionControl && <View style={{ marginTop: controlInset }}>{selectionControl}</View>}
       {doneControl && <View style={{ marginTop: controlInset }}>{doneControl}</View>}
       <Pressable accessibilityRole="button" accessibilityLabel={'Open ' + summary} accessibilityHint={!selection && onMore ? 'Long press for reminder actions' : undefined}
@@ -112,23 +121,19 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
         accessibilityActions={selection ? [] : [...(onMore ? [{ name: 'longpress', label: 'Reminder actions' }] : []), ...(onDone ? [{ name: restore ? 'restore' : terminal ? 'reopen' : 'complete', label: actionLabel }] : [])]}
         onAccessibilityAction={(event) => { if (selection || busy) return; if (['complete', 'reopen', 'restore'].includes(event.nativeEvent.actionName)) act(); else if (event.nativeEvent.actionName === 'longpress') onMore?.(); }}
         onPress={() => { if (revealed) settle(false); else onOpen(); }} onLongPress={busy || selection ? undefined : onMore}
-        style={{ flex: 1, gap: 4, minHeight: 48, justifyContent: terminal ? 'flex-start' : 'center', paddingTop: titleInset }}>
+        style={{ flex: 1, gap: space.xs, minHeight: 48, justifyContent: 'flex-start', paddingTop: titleInset }}>
         {title}
-        {active ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
-          <Icon name={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} color={colors.muted} size={16} />
-          <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting * scale, flexShrink: 1 }}>{browsingTime}{item.listName ? ' · ' + item.listName : ''}</Text>
-        </View> : compact ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
-          <Icon name={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} color={colors.muted} size={16} />
-          <Text style={{ color: colors.muted, fontSize: typography.supporting * scale, flexShrink: 1 }}>{compactEvent}</Text>
-        </View> : <Text style={{ color: colors.muted, fontSize: typography.supporting * scale }}>{event}{item.listName ? ' · ' + item.listName : ''}</Text>}
-        {!!consequence && <Text style={{ color: item.overdue ? colors.warning : colors.muted, fontSize: typography.supporting * scale }}>{consequence}</Text>}
-        {!active && (!compact || !routineDelivery || item.mode === 'None') && <Text style={{ color: delivery.changed ? colors.accent : colors.muted, fontSize: typography.supporting * scale }}>{compact ? compactDelivery : delivery.label}</Text>}
-        {!!repeat && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Icon name="repeat" size={14} />
-          <Text style={{ color: colors.muted, fontSize: typography.label * scale, flexShrink: 1 }}>{repeat}{item.exception ? ' · changed occurrence' : ''}</Text></View>}
-        {(item.completed || item.skipped || item.deleted) && <Text style={{ color: item.completed && !item.deleted ? colors.success : colors.muted, fontSize: typography.label * scale }}>{item.deleted ? 'In Trash · Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : item.skipped ? 'Skipped' : 'Completed'}{showActionDate && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : ''}</Text>}
-        {!!status && status !== 'No alert' && !item.completed && !item.skipped && !item.deleted && <Status label={status} tone={stateTone(item)} icon={stateIcon(item)} />}
+        <MetadataLine label={browsing.timing + (item.listName ? ' · ' + item.listName : '')}
+          icon={active ? item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm' : undefined}
+          color={active && delivery.changed ? colors.accent : colors.muted} />
+        {!!consequence && <MetadataLine icon="schedule" label={consequence} />}
+        {!active && <MetadataLine icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} label={delivery.label} />}
+        {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? ' · changed occurrence' : '')} />}
+        {!!browsing.status && <MetadataLine icon={active ? browsing.status.icon : undefined}
+          label={active ? browsing.status.label : terminalState} color={colors[browsing.status.tone]} />}
+        {!!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}
       </Pressable>
-      {!selection && onMore && <View style={{ marginTop: controlInset }}><IconButton icon="more_vert" label={'More actions for ' + item.title} onPress={onMore} disabled={busy} variant={terminal ? 'outlined' : 'standard'} /></View>}
+      {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton icon="more_vert" label={'More actions for ' + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
     </Animated.View></GestureDetector>
   </View>;
 }

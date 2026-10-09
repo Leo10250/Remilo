@@ -33,7 +33,7 @@ export function Schedule({ item, draft = false, details = true, children }: Prop
   const { label: alert, target: current, changed, targetZone: currentZone } = alertPresentation(item, draft);
   return <Group title="Schedule">
     <InformationRow icon="event" label="When" value={eventRange(item)} supporting={ordinaryDue(item) ? item.allDay ? 'Due by end of day' : 'Due at event start' : undefined} />
-    {(!ordinaryDue(item) || item.overdue && !item.allDay) && <InformationRow icon="schedule" label="Due" value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? 'Independent of When' : undefined} />}
+    {!ordinaryDue(item) && <InformationRow icon="schedule" label="Due" value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? 'Independent of When' : undefined} />}
     <InformationRow icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} label="Alert mode" value={modeLabel(item.mode)} />
     {item.mode !== 'None' && <InformationRow icon="schedule" label="Next alert" value={alert} supporting={changed ? 'Originally ' + scheduleDateTime(item.alarmAtMs, zone) + ' · Event and due time stay unchanged.' : item.alarmLinked === false ? 'Independent of Due' : undefined} />}
     {children}

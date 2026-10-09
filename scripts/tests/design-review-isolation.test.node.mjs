@@ -220,7 +220,15 @@ test('native atmosphere rendering leaves observation, guarded actions and confir
   const activity = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt');
   const controls = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt');
   assert.match(activity, /AtmosphereTokens\.colors\(current\?\.atmosphere/);
-  assert.match(activity, /SessionRefreshGuard\.ended\(current\.state\)\) finish\(\)/);
+  assert.match(activity, /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value\)\) finish\(\)/);
+  assert.match(activity, /if \(!guard\.select\(id, pendingCommand != null, busy\.value, unconfirmed\.value\)\)/);
+  assert.match(activity, /deferredIntent = Intent\(intent\)/, 'Later alarm intents are retained while the current action is unresolved.');
+  assert.match(activity, /pendingCommand\?\.get\("operationId"\) == command\["operationId"\]/, 'Action responses acknowledge the frozen operation rather than a mutable snapshot.');
+  assert.match(activity, /if \(definitive && deferredIntent != null\)/, 'Only a definitive action response selects the queued session.');
+  assert.match(activity, /outState\.putParcelable\("deferredIntent", it\)/, 'The queued intent survives activity recreation.');
+  const restorePosition = activity.indexOf('savedInstanceState?.getBundle("pendingAction")');
+  const initialRefreshPosition = activity.indexOf('select(initialIntent)');
+  assert.ok(restorePosition >= 0 && initialRefreshPosition > restorePosition, 'Restore the frozen action before selecting or refreshing its session.');
   assert.match(activity, /"expectedGeneration" to record\?\.generation/);
   assert.match(activity, /AlarmControlsScreen\(/);
   assert.ok(!controls.includes('engine.apply'), 'Rendering delegates mutations to the native activity.');

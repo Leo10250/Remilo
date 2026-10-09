@@ -20,10 +20,19 @@ describe('honest command feedback', () => {
     expect(commandFeedback({ status: 'Blocked' })).toContain('delivery is blocked');
     expect(commandFeedback({ status: 'Pending' })).toContain('still pending');
   });
-  it('requests refresh for a stale action and preserves Stop versus Done', () => {
+  it('reports new completion actions and never infers work state from a legacy Stop receipt', () => {
     expect(commandFeedback({ status: 'Rejected', errorCode: 'STALE_GENERATION' })).toContain('Refresh');
-    expect(commandFeedback({ status: 'Applied' }, 'Stop')).toContain('unfinished');
+    expect(commandFeedback({ status: 'Applied' }, 'Stop')).toContain('Check the reminder status');
     expect(commandFeedback({ status: 'Applied' }, 'Done')).toContain('completed');
+    expect(commandFeedback({ status: 'Applied' }, 'CompleteDelivery')).toContain('completed');
+    expect(commandFeedback({ status: 'Applied' }, 'DoneAll')).toContain('completed');
+    expect(commandFeedback({ status: 'Applied' }, 'SnoozeAll')).toContain('unfinished');
     expect(commandFeedback({ status: 'Applied' }, 'Done')).not.toContain('unfinished');
+  });
+  it('never reports a partial bulk schedule as completed or wholly scheduled', () => {
+    expect(commandFeedback({ status: 'Partial', memberResults: [
+      { occurrenceId: 'a', generation: 2, status: 'Scheduled' },
+      { occurrenceId: 'b', generation: 2, status: 'Blocked' },
+    ] }, 'SnoozeAll')).toContain('1 of 2 alerts scheduled');
   });
 });

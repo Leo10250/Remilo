@@ -25,4 +25,20 @@ describe('contextual actions', () => {
     expect(commandFeedback({ status: 'Pending' }, 'Scheduled').tone).toBe('warning');
     expect(commandFeedback({ status: 'Rejected' }, 'Scheduled').tone).toBe('danger');
   });
+  it('reports each bulk scheduling outcome without claiming whole-group success', () => {
+    const feedback = commandFeedback({ status: 'Partial', memberResults: [
+      { occurrenceId: 'a', generation: 3, status: 'Scheduled' },
+      { occurrenceId: 'b', generation: 3, status: 'Blocked' },
+      { occurrenceId: 'c', generation: 5, status: 'Superseded' },
+      { occurrenceId: 'd', generation: 3, status: 'Missed' },
+    ] }, 'All snoozed');
+    expect(feedback.tone).toBe('warning');
+    expect(feedback.message).toContain('1 of 4 alerts scheduled');
+    expect(feedback.message).toContain('1 blocked');
+    expect(feedback.message).toContain('1 changed since this action');
+    expect(feedback.message).toContain('1 elapsed without replay');
+    expect(feedback.message).toContain('remain unfinished');
+    expect(feedback.message).not.toContain('All snoozed');
+    expect(commandFeedback({ status: 'Partial' }, 'All snoozed').tone).toBe('warning');
+  });
 });

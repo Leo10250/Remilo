@@ -10,7 +10,8 @@ import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel, scheduleDateTime } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, SelectRow, Sheet, Status, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, Sheet, Status, Toggle } from '../ui/components';
+import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { notify } from '../ui/feedback';
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../ui/native';
 import { RepeatForm } from '../ui/recurrence';
@@ -230,8 +231,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       <Group>
         <DateField label="When" value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} onError={dateError} onChange={moveEvent} dateOnly={draft.allDay} />
         {!draft.dueLinked && <Copy muted size={14}>Due {formatTime(preview.data?.dueAtMs ?? draft.dueAtMs, zone)} · Independent of When</Copy>}
-        <SelectRow label="Alert" icon="alarm" value={draft.mode ?? 'Alarm'} choices={[{ value: 'Alarm', label: 'Alarm' }, { value: 'Notification', label: 'Notification' }, { value: 'None', label: 'No alert' }]}
-          onChange={(mode) => patch({ mode })} />
+        <AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} />
         {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
           zoneId={zone} onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} />}
         {invalid(['eventStartMs', 'alarmAtMs']) && <Status label={message} tone="danger" />}

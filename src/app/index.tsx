@@ -54,7 +54,10 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     else if (job.command.kind === 'Done') {
       const done = result.occurrence, feedback = commandFeedback(result, job.success);
       setToast({ message: feedback.message, persistent: feedback.tone !== 'success', ...(done?.completed ? { undo: { id: done.id, revision: done.revision, operationId: engine().createOperationId() } } : {}) });
-    } else setToast({ message: commandFeedback(result, job.success).message });
+    } else {
+      const feedback = commandFeedback(result, job.success);
+      setToast({ message: feedback.message, persistent: feedback.tone !== 'success' });
+    }
   });
   const guarded = action.guarded || listGuarded;
   useAppearanceHold(searching || guarded);
@@ -157,15 +160,24 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + '. Open Settings'} disabled={guarded}
       onPress={() => router.push({ pathname: '/settings', params: originParams(destination) })} style={{ paddingHorizontal: 16, paddingVertical: 8, minHeight: 48 }}>
       <Status label={warning} tone={!caps?.exactAlarms || !caps?.notifications || !caps?.channelEnabled ? 'danger' : 'warning'} /></Pressable>}
-    {!!caps?.activeSessionId && <View style={{ marginHorizontal: 16, marginBottom: 8 }}><Button label="Stop all ringing alarms" variant="secondary" disabled={guarded}
-      onPress={() => void action.execute({ command: { kind: 'StopAll', expectedSessionId: caps.activeSessionId, operationId: engine().createOperationId() }, success: 'Ringing stopped. Current occurrences completed.' })} /></View>}
+    {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={'Done all (' + caps.activeSessionActions.members.length + ')'} disabled={guarded}
+        onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
+          kind: 'DoneAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })), operationId: engine().createOperationId(),
+        }, success: captured.members.length + ' ringing reminders completed.' }); }} /></View>
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="snooze" label={'Snooze all · ' + caps.activeSessionActions.snoozeMinutes + ' min'} variant="secondary" disabled={guarded}
+        onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
+          kind: 'SnoozeAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })),
+          snoozeMinutes: captured.snoozeMinutes, operationId: engine().createOperationId(),
+        }, success: captured.members.length + ' reminders snoozed. Still unfinished.' }); }} /></View>
+    </View>}
     {!!reminders.error && !!items.length && <View><ActionFeedback message="Could not refresh. Showing previously loaded information." tone="danger" /><Button label="Retry" variant="secondary" onPress={() => void reminders.refetch()} /></View>}
 </>}
         refreshing={reminders.isRefetching} onRefresh={() => { void engine().reconcile().then(() => client.invalidateQueries()).catch((error: Error) => setToast({ message: error.message, persistent: true })); }}
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
-        renderItem={({ item }) => <ReminderRow item={item} onOpen={() => { if (!guarded) open(item); }} onDone={() => complete(item)} onMore={() => { if (!guarded) setSelected(item); }} busy={guarded} />}
+        renderItem={({ item }) => <ReminderRow item={item} nowMs={caps?.observedAtMs} onOpen={() => { if (!guarded) open(item); }} onDone={() => complete(item)} onMore={() => { if (!guarded) setSelected(item); }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? 'Use the Android app to manage reminders.' : search || overdue || issues || view !== 'agenda' || (!scoped && listId !== undefined) ? 'No reminders match.' : scoped ? 'No reminders in this list yet.' : 'No reminders yet.'} onRetry={() => void reminders.refetch()} />
           {nativeAvailable && !reminders.isLoading && !reminders.error && !search && !overdue && !issues && view === 'agenda' && !missingList && <Copy muted size={14}>Use + to add a reminder.</Copy>}
