@@ -40,13 +40,14 @@ class RingingService : Service() {
     return START_NOT_STICKY
   }
   private fun refreshMembers(id: String) {
-    AlarmEngine.get(this).sessionMembers(id) { members -> main.post {
+    AlarmEngine.get(this).sessionSnapshot(id, { snapshot -> main.post {
       if (sessionId != id) return@post
+      val members = snapshot.members
       if (members.isEmpty()) {
         audio?.stop(); audio = null; audioStarting = false
         stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
       } else {
-        notifications.update(id, members)
+        notifications.update(id, members, com.remilo.alarm.core.AppearancePolicy.captured(snapshot.atmosphere, snapshot.theme))
         if (audio == null && !audioStarting) {
           audioStarting = true
           // Foreground promotion already happened. Wait only for native preview
@@ -61,7 +62,7 @@ class RingingService : Service() {
           } }
         }
       }
-    } }
+    } }, { /* Keep the existing foreground controls/audio deadline on read failure. */ })
   }
   override fun onDestroy() {
     if (active === this) active = null

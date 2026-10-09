@@ -142,17 +142,17 @@ class AlarmEngineTest {
     val stopped = CompletableFuture<Unit>()
     engine.receive(newStop) { stopped.complete(Unit) }; stopped.get(20, TimeUnit.SECONDS)
     val after = request { engine.occurrence(id) } as Map<*, *>
-    assertEquals("Stopped", after["deliveryState"])
-    assertEquals(false, after["completed"])
+    assertEquals("Completed", after["deliveryState"])
+    assertEquals(true, after["completed"])
   }
-  @Test fun stopNeverCompletesAndCannotStopAFutureDelivery() {
+  @Test fun stopCompletesOnlyTheRingingOccurrence() {
     val id = id(create())
     assertEquals("NOT_RINGING", action(id, "Stop", 1, "too-early")["errorCode"])
     now += 60_000; fire(id)
     action(id, "Stop", 1, "stop")
     val after = request { engine.occurrence(id) } as Map<*, *>
-    assertEquals("Stopped", after["deliveryState"])
-    assertEquals(false, after["completed"])
+    assertEquals("Completed", after["deliveryState"])
+    assertEquals(true, after["completed"])
   }
   @Test fun registrationFailureLeavesARecoverableSave() {
     os.fail = true
@@ -328,7 +328,7 @@ class AlarmEngineTest {
       } finally { db.close() }
     }
     action(first, "Stop", 1, "stop-first")
-    assertEquals("Stopped", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
+    assertEquals("Completed", (request { engine.occurrence(first) } as Map<*, *>)["deliveryState"])
     assertEquals("Alerting", (request { engine.occurrence(second) } as Map<*, *>)["deliveryState"])
   }
   @Test fun directBootDoesNotOpenCredentialStorage() {
@@ -496,7 +496,7 @@ class AlarmEngineTest {
     fire(id, 2)
     assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
   }
-  @Test fun stopAllRejectsAnOldSessionAndKeepsMembersUnfinished() {
+  @Test fun stopAllRejectsAnOldSessionAndCompletesCapturedMembers() {
     val first = id(create("first")); val second = id(create("second"))
     now += 60_000; fire(first); fire(second)
     val session = (request { engine.capabilities() } as Map<*, *>)["activeSessionId"] as String
@@ -506,8 +506,8 @@ class AlarmEngineTest {
     request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "stop-all", "expectedSessionId" to session)) }
     listOf(first, second).forEach { id ->
       val after = request { engine.occurrence(id) } as Map<*, *>
-      assertEquals("Stopped", after["deliveryState"])
-      assertEquals(false, after["completed"])
+      assertEquals("Completed", after["deliveryState"])
+      assertEquals(true, after["completed"])
     }
   }
   @Test fun changedSnoozePreferenceIsAvailableBeforeFirstUnlock() {
@@ -1239,12 +1239,16 @@ class AlarmEngineTest {
     val (_, notification) = deliveryNotification()
     val controls = snapshot(activeSession())
     assertEquals("evening", controls.atmosphere); assertEquals("dark", controls.theme)
+    val accent = com.remilo.alarm.presentation.AtmosphereTokens.colors("evening", "dark").primary.toInt()
+    assertEquals(accent, notification.color); assertEquals(accent, notification.publicVersion.color)
+    val loading = shadowOf(notification.contentIntent).savedIntent
+    assertEquals("evening", loading.getStringExtra("atmosphere")); assertEquals("dark", loading.getStringExtra("brightness"))
     assertEquals("Reminder", controls.members.single().second); assertTrue(controls.content.isEmpty())
     assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
     assertEquals(listOf("Stop", "Snooze 10 min"), notification.publicVersion.actions.map { it.title.toString() })
     assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
     action(first, "Stop", 1, "themed-boot-stop")
-    assertEquals("Stopped", protectedRows().single().state)
+    assertEquals("Completed", protectedRows().single().state)
   }
   @Test fun nativeSessionFreezesItsPairAcrossChangesArrivalsRemovalAndUnlock() {
     engine.close()

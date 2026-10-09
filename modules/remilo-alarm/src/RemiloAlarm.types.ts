@@ -21,6 +21,8 @@ export type Occurrence = ResolvedReminderDraft & {
   repeatRule?: RecurrenceDraft | null;
   alertAdjustment?: 'Snoozed' | 'Postponed' | null;
   collectionAtMs?: number;
+  /** Native browsing anchor; independent of delivery confirmation and audibility. */
+  agendaAtMs: number;
 };
 export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listId?: string | null; listName?: string; deliveryIssuesOnly?: boolean; overdueOnly?: boolean; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
 export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };

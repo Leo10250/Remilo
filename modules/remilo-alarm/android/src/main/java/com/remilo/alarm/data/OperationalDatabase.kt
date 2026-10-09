@@ -35,6 +35,14 @@ data class AppearanceRecord(@PrimaryKey val id: String = "app", val atmosphere: 
 data class ActionRecord(@PrimaryKey val operationId: String, val occurrenceId: String,
   val kind: String, val occurredAtMs: Long, val generation: Long,
   @ColumnInfo(defaultValue = "NULL") val targetMs: Long? = null)
+/** Durable alarm completion identity. Captured IDs/enums only; no private content. */
+@Entity(tableName = "completion_receipts")
+data class CompletionReceipt(@PrimaryKey val operationId: String, val kind: String,
+  val occurrenceId: String?, val expectedGeneration: Long?, val sessionId: String?,
+  val generation: Long?, val count: Int)
+@Entity(tableName = "pending_completions")
+data class PendingCompletion(@PrimaryKey val operationId: String, val occurrenceId: String,
+  val generation: Long, val occurredAtMs: Long)
 @Dao interface OperationalDao {
   @Query("SELECT * FROM alerts") fun all(): List<AlertRecord>
   @Query("SELECT * FROM alerts WHERE occurrenceId = :id") fun find(id: String): AlertRecord?
@@ -52,15 +60,26 @@ data class ActionRecord(@PrimaryKey val operationId: String, val occurrenceId: S
   @Query("SELECT * FROM actions WHERE operationId = :id") fun action(id: String): ActionRecord?
   @Insert(onConflict = OnConflictStrategy.IGNORE) fun action(record: ActionRecord)
   @Query("DELETE FROM actions WHERE operationId = :id") fun acknowledge(id: String)
+  @Query("SELECT * FROM completion_receipts WHERE operationId = :id") fun completionReceipt(id: String): CompletionReceipt?
+  @Insert fun completionReceipt(record: CompletionReceipt)
+  @Query("SELECT * FROM pending_completions ORDER BY occurredAtMs, operationId") fun completions(): List<PendingCompletion>
+  @Insert fun completion(record: PendingCompletion)
+  @Query("DELETE FROM pending_completions WHERE operationId = :id") fun acknowledgeCompletion(id: String)
 }
-@Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class],
-  version = 4, exportSchema = true)
+@Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
+  CompletionReceipt::class, PendingCompletion::class], version = 5, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS completion_receipts (operationId TEXT NOT NULL PRIMARY KEY, kind TEXT NOT NULL, occurrenceId TEXT, expectedGeneration INTEGER, sessionId TEXT, generation INTEGER, count INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS pending_completions (operationId TEXT NOT NULL PRIMARY KEY, occurrenceId TEXT NOT NULL, generation INTEGER NOT NULL, occurredAtMs INTEGER NOT NULL)")
+      }
+    }
     val MIGRATION_3_4 = object : Migration(3, 4) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS appearance_preferences (id TEXT NOT NULL PRIMARY KEY, atmosphere TEXT NOT NULL, theme TEXT NOT NULL)")

@@ -12,6 +12,8 @@ import android.net.Uri
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import com.remilo.alarm.data.AlertRecord
+import com.remilo.alarm.core.AppearancePolicy
+import com.remilo.alarm.presentation.AtmosphereTokens
 import com.remilo.alarm.R
 
 /** Silent channels: only the native service owns alarm audio. */
@@ -28,17 +30,19 @@ class AlarmNotifications(private val context: Context) {
         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
     })
   }
-  fun ringing(sessionId: String, members: List<Pair<AlertRecord, String>>): Notification {
-    return ringingVariant(sessionId, members, false)
+  fun ringing(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved): Notification {
+    return ringingVariant(sessionId, members, appearance, false)
   }
-  private fun ringingVariant(sessionId: String, members: List<Pair<AlertRecord, String>>, public: Boolean): Notification {
+  private fun ringingVariant(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved, public: Boolean): Notification {
     require(members.isNotEmpty()) { "Ringing notifications need actionable members" }
     val open = PendingIntent.getActivity(context, 0,
       Intent(context, AlarmActivity::class.java).setData(Uri.parse("remilo-alarm://session/$sessionId"))
-        .putExtra("sessionId", sessionId), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        .putExtra("sessionId", sessionId).putExtra("atmosphere", appearance.atmosphere)
+        .putExtra("brightness", appearance.brightness), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     val builder = Notification.Builder(context, RINGING_CHANNEL)
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(if (members.size == 1) if (public) "Reminder" else members.first().second else "${members.size} reminders ringing")
       .setContentText("Remilo · alarm ringing")
+      .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setCategory(Notification.CATEGORY_ALARM).setOngoing(true).setOnlyAlertOnce(true)
       .setVisibility(if (public) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE).setContentIntent(open)
     if (manager.canUseFullScreenIntent()) builder.setFullScreenIntent(open, true)
@@ -49,11 +53,11 @@ class AlarmNotifications(private val context: Context) {
     } else {
       builder.addAction(Notification.Action.Builder(null, "Stop all", AlarmScheduler.stopAll(context, sessionId)).build())
     }
-    if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, true))
+    if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, appearance, true))
     return builder.build()
   }
-  fun update(sessionId: String, members: List<Pair<AlertRecord, String>>) {
-    if (allowed()) manager.notify(FOREGROUND_ID, ringing(sessionId, members))
+  fun update(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved) {
+    if (allowed()) manager.notify(FOREGROUND_ID, ringing(sessionId, members, appearance))
   }
   fun unresolved(record: AlertRecord) {
     if (!allowed()) return
@@ -66,14 +70,16 @@ class AlarmNotifications(private val context: Context) {
       .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
       .build())
   }
-  fun regular(record: AlertRecord, title: String) {
+  fun regular(record: AlertRecord, title: String, appearance: AppearancePolicy.Resolved) {
     if (!allowed()) return
     val public = Notification.Builder(context, NOTIFICATION_CHANNEL)
+      .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Reminder")
       .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
       .setVisibility(Notification.VISIBILITY_PUBLIC).setContentIntent(openReminder(record.occurrenceId))
       .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build()).build()
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
+      .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(title)
       .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
       .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(public).setContentIntent(openReminder(record.occurrenceId))

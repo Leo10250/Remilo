@@ -50,7 +50,7 @@ import kotlin.math.roundToInt
 internal fun AlarmControlsScreen(
   current: AlarmEngine.SessionSnapshot?, busy: Boolean, error: String?,
   onAction: (String, AlertRecord?) -> Unit, onRetry: () -> Unit,
-  roles: AtmosphereTokens.Roles, progress: String? = null, refreshError: String? = null
+  roles: AtmosphereTokens.Roles, progress: String? = null, refreshError: String? = null, unconfirmed: Boolean = false
 ) {
   val density = LocalDensity.current
   var footerHeight by remember { mutableIntStateOf(0) }
@@ -69,11 +69,11 @@ internal fun AlarmControlsScreen(
         else -> 0.dp
       }
       val body: @Composable () -> Unit = {
-        AlarmBody(current, busy, roles, art, onAction, refreshError, onRetry)
+        AlarmBody(current, busy || unconfirmed, roles, art, onAction, refreshError, onRetry)
       }
       val footer: @Composable () -> Unit = {
         AlarmFooter(current, busy, error, progress, roles, onAction, onRetry,
-          Modifier.onSizeChanged { footerHeight = it.height })
+          Modifier.onSizeChanged { footerHeight = it.height }, unconfirmed)
       }
       if (footerOverflows) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { body(); footer() }
@@ -173,17 +173,15 @@ private fun RefreshBanner(message: String, busy: Boolean, roles: AtmosphereToken
 
 @Composable
 private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, error: String?, progress: String?,
-  roles: AtmosphereTokens.Roles, onAction: (String, AlertRecord?) -> Unit, onRetry: () -> Unit, modifier: Modifier) {
+  roles: AtmosphereTokens.Roles, onAction: (String, AlertRecord?) -> Unit, onRetry: () -> Unit, modifier: Modifier, unconfirmed: Boolean) {
   Surface(color = Color(roles.surface), modifier = modifier.fillMaxWidth()) {
     Column(Modifier.padding(AtmosphereTokens.spaceGutter.dp), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
       val members = current?.members.orEmpty()
       if (members.size == 1) {
         val (record, title) = members.single()
-        AlarmActions(record, title, current!!.state, busy, roles, AtmosphereTokens.nativeSingle, onAction)
-        Text("Stop leaves the reminder unfinished.", color = Color(roles.onSurfaceVariant))
+        AlarmActions(record, title, current!!.state, busy || unconfirmed, roles, AtmosphereTokens.nativeSingle, onAction)
       } else if (members.size > 1) {
-        FilledAlarmButton("Stop all", "Stop all alarms in this session", busy, roles, AtmosphereTokens.nativeSingle) { onAction("StopAll", null) }
-        Text("Leaves all reminders unfinished.", color = Color(roles.onSurfaceVariant))
+        FilledAlarmButton("Stop all", "Stop all alarms and complete their occurrences", busy || unconfirmed, roles, AtmosphereTokens.nativeSingle) { onAction("StopAll", null) }
       }
       // Reserve one scalable status line so starting an action cannot move its
       // targets. The full member remains readable in the retained information card.
@@ -194,7 +192,7 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
       error?.let {
         Text(it, color = Color(roles.dangerInk))
         OutlinedButton(onClick = onRetry, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
-          modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text("Refresh controls") }
+          modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text(if (unconfirmed) "Retry action" else "Refresh controls") }
       }
     }
   }
@@ -210,10 +208,10 @@ private fun AlarmActions(record: AlertRecord, title: String, state: String, busy
     // or usable width needs more room, retaining both measured action minimums.
     val inline = minimum == AtmosphereTokens.nativeMember && maxWidth >= 280.dp && density.fontScale <= 1.15f
     if (inline) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Stop", "Stop, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true) { onAction("Stop", record) }
+      FilledAlarmButton("Stop", "Stop and complete this occurrence, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true) { onAction("Stop", record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, onAction = onAction)
     } else Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Stop", "Stop, $title, $stateLabel", busy, roles, minimum) { onAction("Stop", record) }
+      FilledAlarmButton("Stop", "Stop and complete this occurrence, $title, $stateLabel", busy, roles, minimum) { onAction("Stop", record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, onAction = onAction)
     }
   }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import com.remilo.alarm.core.SessionRefreshGuard
+import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.data.AlertRecord
 import com.remilo.alarm.engine.AlarmEngine
 import com.remilo.alarm.presentation.AtmosphereTokens
@@ -23,11 +24,22 @@ class AlarmActivity : ComponentActivity() {
   private val refreshError = mutableStateOf<String?>(null)
   private val busy = mutableStateOf(false)
   private val progress = mutableStateOf<String?>(null)
+  private val loadingAppearance = mutableStateOf(AppearancePolicy.resolve(null, null, System.currentTimeMillis(),
+    java.time.ZoneId.systemDefault(), false))
   private val guard = SessionRefreshGuard()
+  private var pendingCommand: Map<String, Any?>? = null
+  private val unconfirmed = mutableStateOf(false)
   private var observation: AutoCloseable? = null
   private lateinit var engine: AlarmEngine
   private fun select(intent: Intent) {
     val id = intent.getStringExtra("sessionId") ?: run { finish(); return }
+    val atmosphere = intent.getStringExtra("atmosphere")
+    val brightness = intent.getStringExtra("brightness")
+    loadingAppearance.value = if (atmosphere in AppearancePolicy.atmospheres && brightness in setOf("light", "dark"))
+      AppearancePolicy.captured(atmosphere, brightness) else AppearancePolicy.resolve(null, null,
+        System.currentTimeMillis(), java.time.ZoneId.systemDefault(),
+        (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES)
+    pendingCommand = null; unconfirmed.value = false
     guard.select(id); snapshot.value = null; error.value = null; refreshError.value = null; busy.value = false; progress.value = null
     refresh()
   }
@@ -43,22 +55,30 @@ class AlarmActivity : ComponentActivity() {
   }
   private fun act(kind: String, record: AlertRecord? = null) {
     val current = snapshot.value ?: return
-    if (busy.value) return
-    busy.value = true; error.value = null; refreshError.value = null
+    if (busy.value || pendingCommand != null) return
+    error.value = null; refreshError.value = null
     val title = current.members.firstOrNull { it.first.occurrenceId == record?.occurrenceId }?.second ?: "Reminder"
     progress.value = when (kind) { "StopAll" -> "Stopping all alarms…"; "Snooze" -> "Snoozing $title…"; else -> "Stopping $title…" }
-    val sessionId = current.id
     val command = mapOf("kind" to kind, "operationId" to UUID.randomUUID().toString(),
-      "expectedSessionId" to sessionId, "occurrenceId" to record?.occurrenceId, "expectedGeneration" to record?.generation)
+      "expectedSessionId" to current.id, "occurrenceId" to record?.occurrenceId, "expectedGeneration" to record?.generation)
+    pendingCommand = command
+    sendAction(command)
+  }
+  private fun retry() { pendingCommand?.let(::sendAction) ?: refresh() }
+  private fun sendAction(command: Map<String, Any?>) {
+    if (busy.value) return
+    val sessionId = command["expectedSessionId"] as String
+    busy.value = true; unconfirmed.value = false; error.value = null
     engine.request({ engine.apply(command) }, { result -> runOnUiThread {
       if (!isDestroyed && snapshot.value?.id == sessionId) {
-        busy.value = false; progress.value = null
+        busy.value = false; progress.value = null; pendingCommand = null; unconfirmed.value = false
         val status = result as? Map<*, *>
         if (status?.get("status") == "Rejected") error.value = status["errorMessage"] as? String ?: "Could not apply this action. Retry."
         refresh() // Only a confirmed terminated snapshot closes the activity.
       }
     } }, { runOnUiThread { if (!isDestroyed && snapshot.value?.id == sessionId) {
-      busy.value = false; progress.value = null; error.value = "Could not confirm this action. Refresh controls before trying again."; refresh()
+      busy.value = false; progress.value = null; unconfirmed.value = true
+      error.value = "Could not confirm this action. Retry the same action."; refresh()
     } } })
   }
   override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); select(intent) }
@@ -68,10 +88,18 @@ class AlarmActivity : ComponentActivity() {
     engine = AlarmEngine.get(this)
     observation = engine.observe { runOnUiThread { if (!isDestroyed) refresh() } }
     select(intent)
+    savedInstanceState?.getBundle("pendingAction")?.let { saved ->
+      if (saved.getString("sessionId") == intent.getStringExtra("sessionId")) {
+        pendingCommand = mapOf("kind" to saved.getString("kind"), "operationId" to saved.getString("operationId"),
+          "expectedSessionId" to saved.getString("sessionId"), "occurrenceId" to saved.getString("occurrenceId"),
+          "expectedGeneration" to if (saved.containsKey("generation")) saved.getLong("generation") else null)
+        unconfirmed.value = true; error.value = "Could not confirm this action. Retry the same action."
+      }
+    }
     setContent {
       val current = snapshot.value
-      val dark = current?.theme != "light"
-      val roles = AtmosphereTokens.colors(current?.atmosphere ?: "night", if (dark) "dark" else "light")
+      val dark = (current?.theme ?: loadingAppearance.value.brightness) == "dark"
+      val roles = AtmosphereTokens.colors(current?.atmosphere ?: loadingAppearance.value.atmosphere, if (dark) "dark" else "light")
       val scheme = if (dark) darkColorScheme(primary = Color(roles.primary), onPrimary = Color(roles.onPrimary),
         background = Color(roles.canvas), surface = Color(roles.surface), onSurface = Color(roles.onSurface),
         onSurfaceVariant = Color(roles.onSurfaceVariant), surfaceVariant = Color(roles.container), outline = Color(roles.outline), error = Color(roles.error))
@@ -98,9 +126,18 @@ class AlarmActivity : ComponentActivity() {
         labelSmall = baseType.labelSmall.copy(fontSize = AtmosphereTokens.typeLabel.sp, lineHeight = 20.sp)
       )
       MaterialTheme(colorScheme = scheme, typography = type) {
-        AlarmControlsScreen(current, busy.value, error.value, ::act, ::refresh, roles, progress.value, refreshError.value)
+        AlarmControlsScreen(current, busy.value, error.value, ::act, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
       }
     }
+  }
+  override fun onSaveInstanceState(outState: Bundle) {
+    pendingCommand?.let { command -> outState.putBundle("pendingAction", Bundle().apply {
+      putString("kind", command["kind"] as String); putString("operationId", command["operationId"] as String)
+      putString("sessionId", command["expectedSessionId"] as String)
+      putString("occurrenceId", command["occurrenceId"] as? String)
+      (command["expectedGeneration"] as? Long)?.let { putLong("generation", it) }
+    }) }
+    super.onSaveInstanceState(outState)
   }
   override fun onDestroy() { observation?.close(); super.onDestroy() }
 }

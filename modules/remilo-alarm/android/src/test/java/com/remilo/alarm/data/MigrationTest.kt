@@ -62,7 +62,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO actions VALUES ('snooze', 'old', 'Snooze', 900, 3)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-migration.db")
-      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4).build()
+      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5).build()
     try {
       val alert = db.records().find("old")!!
       assertEquals(60000L, alert.targetMs)
@@ -95,7 +95,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,mode,sound,vibration,snoozeMinutes) VALUES ('v2',60000,9,'Scheduled','Alarm','system',1,15)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v2.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4).build()
+      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5).build()
     try {
       val alert = db.records().find("v2")!!
       assertEquals(60000L, alert.targetMs); assertEquals(9L, alert.generation)
@@ -151,7 +151,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO sessions VALUES ('session','Active',1000,301000,'system',1)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v3-appearance.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_3_4).build()
+      .addMigrations(OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5).build()
     try {
       assertNull(db.records().appearance())
       val session = db.records().activeSession()!!
@@ -164,5 +164,27 @@ class MigrationTest {
       }
       assertEquals(listOf("id", "atmosphere", "theme"), columns)
     } finally { db.close(); context.deleteDatabase("protected-v3-appearance.db") }
+  }
+  @Test fun protectedV4UpgradeKeepsLegacyStopsAndAddsOnlyCompletionIdentityTables() {
+    val context = RuntimeEnvironment.getApplication()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v4-completion.db", 4).use { db ->
+      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state) VALUES ('legacy',60000,7,'Stopped')")
+      db.execSQL("INSERT INTO actions (operationId,occurrenceId,kind,occurredAtMs,generation) VALUES ('old-stop','legacy','Stop',50000,7)")
+    }
+    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v4-completion.db").allowMainThreadQueries()
+      .addMigrations(OperationalDatabase.MIGRATION_4_5).build()
+    try {
+      assertEquals("Stopped", db.records().find("legacy")!!.state)
+      assertEquals("Stop", db.records().action("old-stop")!!.kind)
+      assertTrue(db.records().completions().isEmpty())
+      assertNull(db.records().completionReceipt("old-stop"))
+      for (table in listOf("completion_receipts", "pending_completions")) {
+        val columns = mutableListOf<String>()
+        db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { cursor ->
+          while (cursor.moveToNext()) columns.add(cursor.getString(1))
+        }
+        assertFalse(columns.any { it in setOf("title", "notes", "listName", "template", "credentials") })
+      }
+    } finally { db.close(); context.deleteDatabase("protected-v4-completion.db") }
   }
 }
