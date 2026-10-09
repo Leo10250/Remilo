@@ -101,6 +101,12 @@ and >=56dp app prominent actions. R6 native single/Stop-all actions remain >=64d
 and member actions >=56dp. Measure actual contrast: normal text 4.5:1, qualifying
 large text 3:1 and required control/state graphics 3:1.
 
+The [alert experience correction](design/current/alert-experience.md) changes those
+native labels to Done/Done all and adds Snooze all at the same 64 dp minimum.
+Terminal cards use borderless 24 dp More in a separate 48 dp target, with no work
+completion controls outside explicit selection. Inline Alert choices remain
+visible and stack at 200% text. Measure actual component keylines/wrapping/targets.
+
 Capture real Android Title creation and lower Notes/caret/validation editing at
 360x800 and 200% English/Chinese text. One Save sits above actual IME, outside form
 scrolling, with measured footer clearance and one inset owner. Test emoji/taller
@@ -331,6 +337,16 @@ light/dark, 200% text, TalkBack, reduced motion and keyboard reachability alongs
 the existing native time-zone/DST and alarm reliability matrix.
 
 ## Beta-fix acceptance additions (9 October)
+
+The later [alert experience correction](design/current/alert-experience.md)
+supersedes Stop wording and due-based expectations in these scenarios. Add tests
+for CompleteDelivery on ringing/Notified, exact displayed DoneAll/SnoozeAll members,
+later arrival exclusion, stale precommit rejection, current duration changes,
+partial scheduling, crashes between protected commit/registrations/CE projection,
+same-command retries after restart/Reopen and silent elapsed recovery. Verify
+original alert separately from next delivery, strict overdue boundaries/counts/
+pagination, No alert When/end-of-date DST and hidden-alert recurrence offsets.
+Retain old command/backup compatibility and historical Stopped records.
 
 Use the [beta contract](design/current/beta-fixes.md) and identify the signed APK
 and source snapshot before physical observations. Host fixtures never establish

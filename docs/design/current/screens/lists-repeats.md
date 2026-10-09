@@ -114,9 +114,13 @@ Rename/Remove. Reserve actual floating-action/bar/feedback clearance in scrollin
 **Named-list / No list Agenda:** reuse the accepted Agenda rows, sections and
 All / Today / Upcoming / Filters semantics with membership fixed to that list.
 Search covers the existing title/notes dataset; clearing filters never clears the
-fixed membership. Alert anchor drives grouping; No alert uses Due, and unfinished
-Due drives Overdue. Cards lead with device-local alert time, followed by consequential
-Due/delivery and readable repeat metadata. Keep Event/Due definitions in Details.
+fixed membership. Alert anchor drives grouping; No alert uses When/event start.
+Unfinished Overdue uses the original configured alert for Alarm/Notification,
+When for timed No alert, or the next local midnight after the saved all-day date
+in its saved zone. Independent Due does not change that boundary. Cards lead with
+device-local alert time or No alert plus When; all-day dates retain their authored
+civil date. Follow with consequential Due/delivery and readable repeat metadata.
+Keep Event/Due definitions in Details.
 
 One **Add reminder** action preselects this list (or No list), and Save returns to
 the originating list with contextual acknowledgement. Completion remains the

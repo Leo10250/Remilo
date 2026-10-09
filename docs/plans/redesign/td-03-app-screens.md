@@ -17,6 +17,8 @@ Apply the approved page contracts and correction notes to Agenda, Lists, Repeats
 
 ## Implementation
 
+- Apply the [alert experience correction](../../design/current/alert-experience.md): inline mode choices, original-alert/No alert overdue, compact statuses, one ringing Details Done and shared terminal keylines/borderless More. Preserve selection-only checkboxes, supported menus, IME/draft guards and history truth.
+
 - Adopt Agenda / Lists / Completed / Trash roots, with Repeats secondary to Lists and secondary invoking-origin navigation. Preserve queries, filters, scroll and IME Back precedence.
 - Implement neutral structural icons and one neutral reminder `event` glyph, intentional action/status roles, readable independent Event/Due/Next alert and guarded family/occurrence scope. Categories remain deferred.
 - Implement one Save above the real IME with footer-aware scrolling for lower Notes/caret/errors and first-tap guarded Save; preserve stale/discard/unconfirmed operation handling.

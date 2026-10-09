@@ -1,5 +1,9 @@
 # Native alarm and Postpone visual specification
 
+The [9 October alert experience instruction](../alert-experience.md) supersedes
+Stop labels, group actions and overdue semantics here. Approved scene/reference
+identities remain unchanged; legacy Stop is command/history compatibility only.
+
 Revision 3, 7 October 2026. A22 accepts seven R6 visual templates and rejects the
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
@@ -24,9 +28,9 @@ extends those rules to alarm controls and Postpone; it does not replace the
 1. A single native alarm receives a larger scenic opening than Details/Editor,
    with a quiet information surface and two large, immediately reachable actions.
 2. Multiple alarms share one scene and a compact header. Each member owns a
-   clearly labeled Stop/Snooze pair; Stop all stays accessible in a separate footer.
-3. The native surface retains Stop and timed quick Snooze. Completion and custom
-   Postpone remain in the app's Reminder Details workflow. Opening an editor or
+   clearly labeled Done/Snooze pair; Done all and Snooze all stay accessible in a separate footer.
+3. The native surface retains Done and timed quick Snooze. Done completes the
+   occurrence; custom Postpone remains in the app's Reminder Details workflow. Opening an editor or
    picker is not required to silence an alarm.
 4. Postpone uses a themed, opaque, expandable sheet with shortcut selection,
    a custom date/time option, an exact next-alert preview and one persistent
@@ -96,7 +100,7 @@ atmospheres in both Light and Dark, without needing a separate generated image o
 every combination.
 
 Appearance failure falls back to usable privacy-safe controls and never blocks native
-foreground promotion, audio startup or Stop/Snooze.
+foreground promotion, audio startup or Done/Snooze.
 
 ## A. Single native alarm
 
@@ -116,13 +120,13 @@ or swipe-to-dismiss gestures.
   when a native credential-safe projection supplies them. Linked/coincident timing
   stays concise. A postponed alert does not overwrite the original Event or Due.
   Do not fabricate these values from the operational alert target.
-- **Action footer:** full-width filled `Stop`, then full-width outlined
+- **Action footer:** full-width filled `Done` with checkmark, then full-width outlined
   `Snooze · 10 min` (actual configured duration), each at least 64 dp high, with
   16 dp corners and a 12 dp gap. Use the atmosphere primary/onPrimary pair;
-  Stop receives no destructive red simply because it silences audio.
-- **Stop meaning:** retain the visible Stop label and add the accessibility hint
-  that it completes the affected occurrence. Stop all completes captured session
-  members. Remove the old unfinished explanation; Snooze/Postpone remain postponement.
+  Done receives the ordinary completion role.
+- **Done meaning:** silence and complete the affected occurrence without confirmation.
+  Done all completes the displayed captured session members. Snooze/Postpone leave
+  work unfinished and never move its original-alert overdue reference.
 
 The footer occupies measured layout space outside the information scroll area.
 At large text, long titles, small height or landscape orientation, reduce the art
@@ -139,15 +143,16 @@ than claiming playback is already active.
 
 Use one scrollable column of opaque member cards with 16 dp gutters/corners and
 12 dp gaps. Each card contains the complete title, an explicit alert time/state,
-available consequential Event/Due support, and its own filled `Stop` plus outlined
+available consequential Event/Due support, and its own filled `Done` plus outlined
 `Snooze · N min`. Member actions are at least 56 dp high. They may share a row
 when labels fit with at least a 12 dp gap; stack at larger text/narrower widths.
 Do not hide the action pair behind a row menu or require opening details first.
 
-The separate, measured footer contains filled `Stop all` at least 64 dp high and
-`Leaves all reminders unfinished.` It applies to the captured current session,
-not every reminder or later sessions. Preserve the native expected-session guard;
-do not add a new confirmation dialog before silence. There is no Snooze all.
+The separate, measured footer contains filled `Done all (N)` and outlined
+`Snooze all · X min`, each at least 64 dp high. Done completes and Snooze leaves
+unfinished the exact displayed IDs/generations. Later arrivals are excluded.
+Validate session and every captured member before mutation, without confirmation.
+Snooze all uses one target/current mirrored duration with truthful per-item results.
 
 Partially visible cards may scroll into view. The footer must not cover their
 controls, and TalkBack focus must bring a focused card/action into view. Keep
@@ -161,12 +166,14 @@ The shared scene must not change when the first member disappears.
 | Initial loading, no confirmed snapshot | Generic/last eligible safe background; `Loading alarm controls…`; progress/Retry as applicable. Do not show invented enabled member actions, close automatically, or infer that an empty view means the session ended. |
 | Starting with known members | Show known content and `Starting alarm…`; preserve eligible native actions under the existing engine policy. No guaranteed-audibility language. |
 | Action in progress | Name the selected action/member, show progress without relayout jumps, and prevent duplicate submissions using the existing native busy guard. Preserve known content and the scene; do not optimistically remove the member. |
-| Refresh failed with known members | Retain the last known cards/actions; show `Could not refresh alarm controls.` and `Refresh controls`. Refresh does not secretly reissue Stop/Snooze. |
-| Stop/Snooze rejected or not confirmed | Retain known controls, an inline action-specific error, and a refresh route. The next deliberate action uses authoritative refreshed identity/eligibility. Do not claim silence or future scheduling until confirmed; no new native retry protocol is specified. |
+| Refresh failed with known members | Retain the last known cards/actions; show `Could not refresh alarm controls.` and `Refresh controls`. Refresh does not secretly reissue Done/Snooze. |
+| Done/Snooze rejected | Retain known controls and the action-specific error. Refresh authoritative identity/eligibility before a new deliberate action. |
+| Done/Snooze not confirmed | Freeze the exact command, including operation ID, generations, members and displayed duration. Retry action resubmits that command; do not recapture or claim completion/scheduling before acknowledgement. |
+| Snooze scheduling partial/blocked/pending | Report truthful member outcomes and keep work unfinished. Do not use a generic success acknowledgement. |
 | Confirmed member removed, others remain | Remove only that confirmed member, update count, preserve other targets and shared canvas. Avoid taking focus to an unrelated action. |
 | Confirmed terminal session, including timeout | Dismiss the native activity under the existing lifecycle contract. Do not leave a full-screen ringing screen or invented timeout countdown behind. Unfinished outcomes and eligible follow-up actions live in the app/silent unresolved notification. |
 
-System Back/navigation is not Stop or Done. Preserve the current native navigation
+System Back/navigation is not Done. Preserve the current native navigation
 contract; do not wire incidental UI dismissal to an engine mutation. Post-timeout
 follow-up uses the existing silent notification/details route. The five-minute
 cutoff is measured from native playback start and is not reset by arrivals or UI
@@ -180,14 +187,15 @@ device state and system policy control how it is presented. Do not draw a custom
 floating bubble, scene-filled OS banner or app-managed overlay. The global theme
 may inform a supported accent; Android controls background, expansion and layout.
 
-- Single ringing delivery retains native Stop and duration-labeled Snooze from
+- Single ringing delivery retains native Done and duration-labeled Snooze from
   its first post and after Snooze re-trigger. Tapping opens native controls.
-- Grouped ringing notification opens native per-member controls and retains the
-  existing session-specific Stop all action. Do not invent per-member controls in
+- Grouped ringing notification opens native per-member controls and includes
+  captured Done all and Snooze all actions. Do not invent per-member controls in
   the collapsed system template.
 - Unresolved/timeout notifications stay silent; existing quick Snooze and the
   details route expose eligible follow-up Postpone. Ordinary Notification mode
-  keeps its own current behavior and is not presented as ringing alarm audio.
+  provides Done/Snooze, stays unfinished on posting/dismissal and never starts
+  ringing alarm audio/full-screen UI.
 - Public/pre-unlock variants use generic content. Never infer that a private
   notification flag alone proves title redaction on every lock screen.
 
@@ -261,12 +269,12 @@ Saving notes/text cannot silently clear a pending postponement.
 ## G. Shared roles, sizing and accessibility
 
 Use the canonical neutral structural icons and labeled semantic warning/error
-roles. Filled Stop, Stop all and Postpone use the atmosphere primary/onPrimary;
-Snooze uses its outlined action style. Stop is intentionally prominent on a ringing
-surface; Done remains the separate completion action on Reminder Details.
+roles. Filled Done and Done all use the atmosphere primary/onPrimary;
+Snooze/Snooze all use the outlined action style. Done is intentionally prominent
+on ringing surfaces and Details; Postpone retains its secondary outlined treatment.
 
 Native urgent controls are deliberately larger than the ordinary 56 dp app action:
-single Stop/Snooze and Stop all use at least 64 dp, per-member actions at least
+single Done/Snooze and Done all/Snooze all use at least 64 dp, per-member actions at least
 56 dp. All other interactive targets are at least 48 dp and must not overlap.
 Use the same 16 dp button corners across appearance; larger alarm controls do not
 justify per-theme pills or unrelated fonts. Baseline values are 16 sp, support
@@ -311,34 +319,30 @@ it does not propose automatic period boundaries. Use [the fixture brief](../../r
 for exact words/values when generating images. Labels and glyphs must obey the
 canonical roles; annotate any generation drift rather than treating it as policy.
 
-## I. Current implementation gaps and handoff boundaries
+## I. Implementation ownership and handoff boundaries
 
 - [AlarmControlsScreen](../../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt)
-  currently supplies native actions and generic rendering, with optional review
-  composition slots. It does not implement this new global atmosphere/layout.
-  Its default multi-member footer is part of the scroll content, not proof of the
-  proposed measured persistent footer. Preserve rendering/action ownership.
+  renders captured appearance, member Done/Snooze and both captured group actions.
+  Preserve measured footer/scroll fallback and accessible action minimums.
 - [AlarmActivity](../../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt)
-  owns snapshots/actions/confirmed dismissal. Its Retry refreshes controls; it is
-  not a same-operation retry for native Stop/Snooze. Do not confuse it with the
-  app Postpone retry. Appearance/capture changes need reviewed lifecycle contracts.
+  owns snapshots/actions/confirmed dismissal. Refresh controls fetches state;
+  Retry action retains the exact unknown command across activity recreation.
+  Loading, failed refresh and unconfirmed operations cannot dismiss a live session.
 - [SessionSnapshot](../../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/AlarmEngine.kt)
-  currently carries operational records/title pairs and brightness, without the
-  proposed global atmosphere descriptor or full Event/Due/category projection,
-  including the proposed minimal non-private Direct Boot appearance mirror.
-  Add any required private projection through authorized native boundaries after
-  unlock, not JS, device-protected storage or inference from `targetMs`.
+  carries operational member records, captured atmosphere/brightness and optional
+  private title/schedule projection after unlock. Private content never enters
+  device-protected storage or derives from `targetMs`.
 - [AlarmNotifications](../../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmNotifications.kt)
-  has current Stop/Snooze/session Stop all actions and PRIVATE visibility. Explicit
-  generic public-version treatment still needs review/verification; flag choice
-  alone is not proof of the proposed public presentation.
+  uses Done/Snooze or captured Done all/Snooze all with generic public variants.
+  Purpose/generation/member/duration identities keep old PendingIntent payloads
+  distinct. Android controls actual action visibility; phone observations remain
+  in the consolidated acceptance checklist.
 - [Reminder Details](../../../../src/app/reminder/[id].tsx) already supplies relative/
   Tomorrow/custom Postpone, future-time validation, and guarded captured-command
-  retries. The proposed sheet geometry, selection indicators, exact preview and
-  keyboard-aware persistent footer require actual component implementation.
-  Current sheet Close checks in-progress commands but does not by itself retain
-  the uncertain result context; the proposed uncertain-state dismissal guard and
-  acknowledged Blocked/Pending result footer require explicit refinement too.
+  retries, including frozen uncertain commands and truthful scheduling outcomes.
+  Ringing Details has one Done plus current-duration Snooze and Postpone. Sound
+  preview retains its separate Stop meaning. Live implementation status belongs
+  only in the backlog.
 
 Eleven R6 reference images are accepted with corrections: seven A22 workflow
 templates plus four A24 themed alarm starting templates. The original plain

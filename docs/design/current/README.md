@@ -6,8 +6,10 @@ repository cleanup authorized by [A37](../approved-design-cleanup.json), and
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
-The owner's [9 October beta corrections](beta-fixes.md) supersede the earlier
-Stop, navigation, Agenda timing and fixed secondary-cover requirements.
+The owner's [alert experience and card correction](alert-experience.md) governs
+Done actions, original-alert overdue, inline Alert choices and shared terminal
+cards. It supersedes action/timing treatment in the earlier [beta corrections](beta-fixes.md),
+which retain navigation, browsing-cover and splash requirements.
 
 ## Authority
 

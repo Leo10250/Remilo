@@ -5,7 +5,8 @@ accepted visual basis. Apply [shared roles and geometry](../visual-language.md)
 and [global appearance](../appearance-policy.md); exact PNG dimensions/tints are
 not production measurements.
 
-The [latest beta correction](../beta-fixes.md) governs Stop completion, alert-first Agenda, four roots, shared collapsing
+The [alert experience correction](../alert-experience.md) governs Done, original-alert
+overdue, compact status and shared row anatomy. The [beta correction](../beta-fixes.md) retains alert-first Agenda, four roots, shared collapsing
 covers and the approved direct-source Classic splash density exports.
 
 ## Primary experience
@@ -21,12 +22,20 @@ root destinations; list-scoped collections are secondary. The labeled bottom roo
 **Agenda / Lists / Completed / Trash**; Repeats is a built-in view within Lists. A single Add action belongs to ordinary browsing; its overlay
 reserves scroll clearance so the last reminder and its actions remain reachable.
 
-Reminder rows share a leading completion target, one neutral `event` glyph, title,
+Active reminder rows share a leading completion target, one neutral `event` glyph, title,
 meaningful timing/delivery support and a separate More action. Semantic categories
 are deferred. Titles wrap/grow; repeat support appears when meaningful.
 Distinguish Event, Due and Next alert; postponed delivery never clears overdue work.
 Alarm, Notification and No alert retain native semantics. Status must reflect
 actual Saved/Blocked/Pending/Scheduled state, without promising audibility.
+
+No alert leads with When and uses event start for grouping. Overdue uses original
+alert, timed No alert When or the next local midnight after an all-day date;
+Snooze/Postpone never move this reference. Ringing may lead the visible status,
+otherwise use relative Overdue and one changed next-alert line. Preserve actionable
+delivery problems without duplicating internal outcome badges. Completed/skipped/
+Trash reuse this anatomy with no completion control or empty control placeholder;
+every More uses the standard borderless 24 dp glyph/48 dp target.
 
 Date sections and their counts derive from the established native query/filter
 contract. Preserve collapsible sections and non-overlapping controls. Do not use

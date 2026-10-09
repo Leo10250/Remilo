@@ -39,7 +39,8 @@ Remilo is Android-first and offline. React Native presents the product UI; ordin
 - Keep the engine independent of Expo module instances, React contexts, activities, JavaScript timers and network access.
 - Use one serialized native mutation path for UI and system actions.
 - Device-protected storage must exclude titles, notes, credentials and Calendar content.
-- Reject stale generations. Alarm Stop completes the selected occurrence; timeout
+- Reject stale generations. Alarm Done completes the selected occurrence; legacy
+  Stop remains command-compatible. Timeout
   and interruption leave it unfinished. Sound-preview Stop only ends preview.
 - android/ is owned, tracked source. Never regenerate it or run Prebuild after bootstrap.
 - No iOS implementation before the final optional phase. No Calendar/cloud scaffolding before those milestones.

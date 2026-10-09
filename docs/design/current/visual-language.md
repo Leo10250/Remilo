@@ -21,7 +21,7 @@ runtime acceptance remains separate.
 Canvas and elevated surface roles are shared across every page, including native
 alarms. No per-page black or independent accent. Standard Android keyboard/permission/
 notification surfaces remain platform-owned. The explicit R6 alarm action minimum
-is 64 dp for prominent single/Stop-all controls and 56 dp for member actions;
+is 64 dp for prominent single/Done-all/Snooze-all controls and 56 dp for member actions;
 ordinary app prominent actions use the 56 dp minimum below.
 
 ## Color roles shared by every screen
@@ -92,6 +92,11 @@ root selection uses a glyph capsule and selected label, as in R3/R7/R8.
   pixel card heights.
 - Preserve the same icon-column and label/value alignment in Light/Dark. Add or
   remove a consequential Due row based on state/linkage, not appearance.
+- Reminder rows share a 20 dp informational icon column and 6 dp text gap, 12 dp
+  standard padding/separation, 8 dp outer gaps and 4 dp stacked gaps. Borderless More
+  uses a 24 dp glyph in a nonshrinking 48 dp target. Align real controls to the first
+  title line; terminal rows reserve no completion-control placeholder. See the
+  [alert experience](alert-experience.md) for state-specific metadata and relative overdue.
 - Do not copy component omissions from a sample (e.g. missing navigation chevron)
   or infer action availability from icon tint.
 - Measure contrast on actual surfaces: normal text at least 4.5:1, qualifying
@@ -171,7 +176,7 @@ consistent role tokens and geometry. TD-03/TD-06 must additionally cover:
 | Show/hide IME repeatedly; switch Title/Notes; open/close picker; Android Back | Footer, focus and scroll remain stable; existing draft/uncertain guards apply. |
 | Save once while IME is open; saving/retry cases | First tap starts one guarded operation; uncertain retries reuse the captured command. |
 | Light/Dark and all four atmospheres | Same component anatomy/role assignment; differences carry documented meaning. |
-| Overdue plus postponed alert | Due stays overdue while the next alert stays future; Done and Postpone remain distinct. |
+| Overdue plus postponed alert | Original alert remains the overdue reference while the next alert stays future; Done and Postpone remain distinct. |
 
 Host layout/state checks and synthetic captures are useful evidence, but actual
 Android keyboard, TalkBack and inset behavior remain observations in the existing

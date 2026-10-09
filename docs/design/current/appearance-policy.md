@@ -47,7 +47,7 @@ per-reminder descriptors are review/planning artifacts, not persisted production
 - A native ringing session captures its resolved atmosphere/brightness at creation.
   Arrivals, member removal, refresh, rotation, unlock and crossing a period boundary
   retain that presentation. A new session resolves again. Audio deadline, sound,
-  delivery generations and Stop/Snooze are independent of appearance.
+  delivery generations and Done/Snooze are independent of appearance.
 - Foreground cosmetic observation is not alarm delivery. Do not add exact alarms,
   closed-app cosmetic workers, network/classification calls or launcher switching.
 
@@ -64,7 +64,7 @@ System brightness. Keep generic Reminder text and operational alarm time/actions
 Unlock does not authorize public notification disclosure of private content.
 
 Artwork/token failure must retain usable native controls and cannot block audio,
-foreground promotion or Stop/Snooze. Emergency rendering is a failure path, not
+foreground promotion or Done/Snooze. Emergency rendering is a failure path, not
 the normal pre-unlock design. Storage fields/update ordering are implementation
 contracts to verify in TD-02; this document introduces no schema version or engine API.
 

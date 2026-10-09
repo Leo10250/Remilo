@@ -76,7 +76,10 @@ manually selected at a held review clock, not automatic switching examples.
   also use text/icon/accessible state. Historical content remains readable at
   full content contrast, with no whole-row fading or automatic strike-through.
 - Normal browsing has separate row-open and neutral three-dot **More** targets;
-  More has at least a 48 dp target. Single-item **Reopen** or **Restore** appears
+  More uses the same borderless 24 dp vertical ellipsis/48 dp target as Agenda,
+  including pressed/focus feedback. The [alert experience correction](../alert-experience.md)
+  aligns all title/metadata keylines and first-title-line control anchoring, with
+  no completion-control placeholder. Single-item **Reopen** or **Restore** appears
   only in that row's labeled menu, with no repeated inline action or leading
   completion-like control. Terminal state remains explicit readable text.
   Terminal details retains its own established persistent action footer.

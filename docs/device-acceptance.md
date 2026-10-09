@@ -9,7 +9,22 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Latest prepared beta build for the future owner run
+## Current alert experience acceptance
+
+The [alert experience contract](design/current/alert-experience.md) supersedes
+earlier Stop wording, Due-based overdue checks and outlined terminal-card More
+controls in this checklist. The [alert experience evidence](evidence/2026-10-09-alert-experience.md)
+identifies the signed bundled ARM64 build prepared **9 October 2026 at
+22:01:25.394 UTC**, from production source revision
+`f772647eac203c898ee8c65bb82fef8a75f831eb`. Package/version are
+**com.remilo.app 0.4.0 / code 4**; the existing signer is retained.
+APK SHA-256: `aed83392c9a84e451555fddc308d46df28b9c417157d717ea43667bca7e539f4`.
+No installation or physical observation was performed or authorized by preparation.
+All checks below remain pending for this artifact until the owner records actual
+results. The evidence also lists remaining browser-render observations after the
+fixture browser stalled, including post-fix large-text navigation and group controls.
+
+## Earlier prepared beta-fix artifact (historical)
 
 The [beta-fix evidence](evidence/2026-10-09-beta-fixes.md) identifies the signed
 bundled ARM64 build prepared **9 October 2026 at 20:19:05.680 UTC**, including
@@ -17,8 +32,8 @@ Stop completion, four roots, alert-first Agenda and stationary artwork covered
 by scrolling content. Package/version remain **com.remilo.app 0.4.0 / code 4**.
 APK SHA-256: `f8f07454eebcd9c98215966a452e93db10af5acacb23a299708eeaeda563a1f9`.
 The existing signer is retained. No installation or physical observation was
-performed. Use this identity for the consolidated run; the earlier artifact below
-does not establish results for these changes. Apply the
+performed. This identity records the earlier beta fixes and does not establish
+results for the subsequent alert experience changes. Apply the
 [beta acceptance additions](verification.md#beta-fix-acceptance-additions-9-october).
 
 Check browsing art at the top, partway and fully covered: it stays stationary
@@ -79,9 +94,10 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   daily repeat. Return home. Reminders appear immediately, with one + and icon
   actions. At default text size at least four ordinary rows fit a 360×800-equivalent
   screen. Collapse Today: its count remains. Expand it: records reappear separately.
-- **U2 — event versus alarm:** create a No alert reminder with yesterday's event
-  and a future independent due time (Schedule options → disable Due with event).
-  It appears in Earlier. Move due into the past: it moves to Overdue. For an Alarm
+- **U2 — event versus alarm:** create a timed No alert reminder with yesterday's
+  When and a future independent Due. It is Overdue from When; changing Due does
+  not change its overdue age. An all-day No alert reminder becomes overdue after
+  the next local midnight after its start date, even across a DST boundary. For an Alarm
   reminder already overdue, Postpone to tomorrow: it stays Overdue and shows the
   new alarm time. Each occurrence appears once.
 - **U3 — search/filter:** tap Search; type a QA title or note. Results narrow.
@@ -131,15 +147,17 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   No manual refresh is needed. Saved-but-blocked/pending feedback remains visible
   until acknowledged, including after reopening a future completed probe. See C for
   exact/notification restrictions; access never guarantees audibility.
-- **U9 — native auto-close:** use Test alarm. Stop: sound ends and native controls
+- **U9 — native auto-close:** use Test alarm. Done: sound ends and native controls
   close automatically; the occurrence appears in Completed. Repeat and Snooze: controls
   close, then both notification actions return at the selected duration. Repeat and
-  let the five-minute session expire: controls close. Press Stop from the notification
+  let the five-minute session expire: controls close. Press Done from the notification
   while native controls are open: the ended screen closes. No Close button exists.
 - **U10 — groups:** create two reminders at the same instant. Native controls show
-  two independent members. Stop one: screen remains for the other. Snooze the final
-  member: screen closes. Repeat the pair and use notification Stop all: both stop and
-  controls close; both occurrences appear in Completed. The notification tap opens native controls.
+  two independent members. Done one: screen remains for the other. Snooze the final
+  member: screen closes. Repeat with Done all (2): both appear in Completed. Repeat
+  with Snooze all: both remain unfinished and share one next alert instant. The
+  notification tap opens individual native controls. A captured group action excludes
+  later arrivals; controlled stale-member/retry cases belong to engineering checks.
 - **U11 — appearance/accessibility:** repeat home, search, filters, creation, Custom
   repeat, detail Schedule details and More → Activity, scope/Postpone sheets, Settings/selectors, Completed,
   Trash, Lists/Repeats and repeat details, Restore preview and Diagnostics in Light and
@@ -269,12 +287,13 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   unchanged. Turn links on again and verify the native preview before saving.
 - **A4 — all day:** create QA All day with All-day enabled. Preview says Due by end
   of day, with the default alert at 9 AM on the event day.
-  Use No alert if that day's 9 AM has already elapsed. Overdue depends on due time,
-  rather than the alert state.
+  Use No alert if that day's 9 AM has already elapsed. No alert becomes overdue at
+  the next local midnight after its start date; Alarm/Notification overdue follows
+  the original alert, independently of Due and delivery state.
 - **A5 — modes:** create separate Alarm, Notification and No alert probes. Alarm
   rings; Notification posts one system notification; No alert schedules no sound.
   A blocked Alarm is never silently changed to Notification.
-- **A6 — Done/Stop:** Stop a ringing probe. Its occurrence moves to Completed; any
+- **A6 — Done:** use Done on a ringing probe. Its occurrence moves to Completed; any
   future repeat slots retain scheduling.
   Mark it Done: it moves to Completed and its pending alert is cancelled. Reopen an
   elapsed reminder: it stays silent. Reopen one with a future target: check scheduling.
@@ -288,20 +307,23 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   its UI out of Recents, turn off network, lock the screen and wait. The alarm
   rings and shows native controls where Android permits. This checks closed UI;
   proof that the process/JavaScript runtime was absent uses the engineering matrix.
-- **B2 — Stop and repeated Snooze:** keep Settings foregrounded for the initial
-  alarm. Check Stop and Snooze in the popup and expanded notification. Snooze ten
-  minutes, inspect the returning popup/panel, Snooze again, and Stop the next
-  delivery. Both actions stay available; Stop silences sound and completes only
+- **B2 — Done and repeated Snooze:** keep Settings foregrounded for the initial
+  alarm. Check Done and Snooze · X min in the popup and expanded notification. Snooze ten
+  minutes, inspect the returning popup/panel, Snooze again, and use Done on the next
+  delivery. Both actions stay available; Done silences sound and completes only
   that occurrence.
 - **B3 — cutoff:** leave one alarm untouched with the screen off. Record playback
   start and stop times. It ends after approximately five minutes and stays silent.
-  The item remains unfinished, labeled Alarm timed out; native controls close.
+  The item remains unfinished, shows its overdue age in browsing and records
+  Alarm timed out in Details/Activity; native controls close.
 - **B4 — collision/deadline:** create QA Group A two minutes ahead and QA Group B
   at the same time. Both appear separately in native controls; one sound plays.
-  Stop A: B keeps ringing. Snooze B: the session stops and only B returns. On a
+  Done A: B keeps ringing. Snooze B: the session stops and only B returns. On a
   separate run, let B join three minutes after A starts; both stop at A's original
-  five-minute deadline. Stop all completes the current members; later arrivals
-  start a new session. Timeout keeps every unresolved member unfinished.
+  five-minute deadline. Done all completes exactly the displayed captured members;
+  later arrivals continue separately. Snooze all uses the displayed global duration
+  and one common target, retaining unfinished work. Timeout keeps every unresolved
+  member unfinished.
 - **B5 — Postpone after ringing/timeout:** open a historical unfinished stopped or timed-out
   item. Try 15/30/60 minutes, tomorrow presets and a custom future time. Check the
   resolved date/time before applying. Event/due/original alert stay unchanged;
@@ -320,12 +342,13 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 ## C. Recovery and permissions
 
 - **C1 — before first unlock:** schedule a probe several minutes ahead; reboot.
-  Keep the phone locked until delivery. Text stays generic; native Stop and quick
-  Snooze work. Unlock afterward: content and action history reconcile without a replay.
+  Keep the phone locked until delivery. Text stays generic; native Done and quick
+  Snooze work. Unlock afterward: one completion with the original action instant
+  and its history reconcile without a replay.
 - **C2 — system Active Apps Stop:** create QA Recovery A two minutes ahead and QA
   Recovery B four minutes ahead. When A rings, use Android's Active Apps/running-app
   control to stop Remilo. A goes silent. Keep Remilo closed until B rings, then use
-  Remilo's Stop. Open the app: A says Alarm interrupted and is unfinished; B is
+  Remilo's Done. Open the app: A records Alarm interrupted and is unfinished; B is
   Completed. If the system
   control is unavailable, record unavailable rather than substituting Force stop.
 - **C3 — exact access:** save a future Alarm with exact-alarm access denied.
@@ -428,6 +451,40 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   intentional action/focus/category/status colors, shared geometry. Record actual
   results/build/device; [references and corrections](design/approved-ui-r3-r4.md)
   are not passing observations.
+
+## F. Alert experience and card consistency
+
+- **F1 — visible alert choices:** the editor continuously shows Alarm,
+  Notification and No alert. Alarm is the default. Switch among them: hidden
+  authored timing and Alarm options survive; sound/vibration appear only for
+  Alarm. At 200% text all three choices remain visible in a stacked group. Check
+  selected/checked TalkBack announcements and the IME-aware Save footer.
+- **F2 — Notification mode:** let a Notification reminder deliver. Done completes
+  it once; Snooze · X min keeps it unfinished and posts another Notification
+  without alarm sound or a full-screen activity. Posting, swiping and dismissing
+  a notification do not complete work. Inspect generic lock-screen actions and
+  actual OS action visibility without changing channel preferences.
+- **F3 — timing and browsing:** compare different original alerts, When and Due,
+  then Snooze/Postpone in a different order. Overdue age/order follows original
+  alert for Alarm/Notification and When for timed No alert. Ringing takes visible
+  precedence while Details retains overdue. Missed/Timed out/Interrupted/
+  Notification sent stay available in Details/Activity rather than duplicate row
+  badges. Inspect independent Due, blocked targets and scheduling warnings.
+- **F4 — consistent terminal cards:** compare Agenda, named-list Agenda,
+  Completed with Include skipped, mixed Trash and family occurrences. All use
+  shared keylines, wrapping and the borderless vertical-ellipsis target. Normal
+  Completed/Skipped/Trash has no completion checkbox, Done or empty placeholder;
+  selection mode uses selection-only checkboxes. One terminal state line retains
+  useful original schedule/alert and list/repeat context. Row tap opens Details;
+  More retains View/Reopen/Move to Trash or View/Restore as appropriate. Compare
+  all four atmospheres in both brightnesses, portrait/landscape and 200% text.
+- **F5 — captured actions and retries:** controlled QA engineering setups cover
+  later arrivals, stale generations, changed Snooze settings, lost replies,
+  registration failures, restart and pre-first-unlock recovery. Done all count
+  must match captured members; Snooze all retains a common target and truthful
+  per-member Scheduled/Blocked/Pending/superseded/elapsed results. Unknown results
+  retry the identical operation rather than resnoozing. Leave unavailable fault
+  cases pending; do not inject failures into normal phone data.
 
 ## Results and remaining engineering checks
 

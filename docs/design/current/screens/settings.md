@@ -211,7 +211,7 @@ Show Scheduling while in flight and prevent repeated taps for that request.
 
 Once an occurrence identity is returned, a contextual **View test reminder** link
 can open ordinary details (proposed feedback improvement using the existing route).
-Alarm Stop completes its occurrence; timeout/interruption leaves it unfinished. The test is retained like other
+Alarm Done completes its occurrence; timeout/interruption leaves it unfinished. The test is retained like other
 reminders; no automatic deletion, automatic human-success claim, new verification
 badge or silent cleanup. The ordinary themed native alarm controls remain R6.
 

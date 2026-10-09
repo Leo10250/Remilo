@@ -31,8 +31,10 @@ review demos are removed under A37; accepted reference bundles remain intact.
 The owner's 4 October instruction allows offline Android development
 before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
 
-The [9 October beta corrections](design/current/beta-fixes.md) supersede earlier
-Stop, three-root, event-first browsing and short-cover requirements.
+The [9 October alert experience correction](design/current/alert-experience.md)
+governs Done, original-alert overdue, inline Alert choices and shared terminal
+cards. Earlier [beta corrections](design/current/beta-fixes.md) retain four roots,
+alert-first browsing, stationary covers and splash requirements.
 
 ## Required behavior
 
@@ -43,28 +45,36 @@ Stop, three-root, event-first browsing and short-cover requirements.
   independent times are preserved. All-day due boundary is next local midnight;
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
-- Alarm Stop completes the selected current occurrence and silences its delivery.
-  Stop all completes the captured session members; later arrivals start a new session.
+- Alarm Done completes the selected current occurrence and silences its delivery.
+  Done all (N) completes the displayed captured session members; later arrivals
+  are excluded and remain independently actionable. Snooze all uses one common
+  future target and leaves all captured work unfinished, with per-item scheduling results.
   Future recurring occurrences retain their identity/rule and scheduling. Snooze and
   Postpone remain postponements; timeout and interrupted playback remain unfinished.
   Earlier Stopped history is preserved as unfinished. Sound-preview Stop and Android
   Active Apps Stop retain their distinct meanings. Done also completes and cancels.
 - Reopen clears completed and skipped state while preserving occurrence identity
   and guards. It never replays an elapsed alert; Restore retains skipped state.
-- Every ringing delivery, including one re-triggered by Snooze, provides native Stop
+- Every ringing delivery, including one re-triggered by Snooze, provides native Done
   and Snooze. Single-reminder notifications include both from their first post;
-  grouped notifications open the native per-reminder controls. Android controls
+  grouped notifications offer Done all/Snooze all and open native per-reminder controls.
+  Ordinary Notification offers Done/Snooze without alarm audio or full-screen UI;
+  posting or dismissing it never completes work. Android controls
   compact/expanded presentation, so also retain the native alarm screen.
-- Quick Snooze defaults to 10 minutes. Postpone: 15/30/60 minutes, tomorrow
+- Quick Snooze defaults to 10 minutes and uses the current globally mirrored setting.
+  New controls bind their displayed duration; committed retries keep their original
+  target even after a preference change. Postpone: 15/30/60 minutes, tomorrow
   10 AM/2 PM/5 PM (editable), or custom. Confirm the actual future instant.
 - Postpone replaces Snooze and changes only the current occurrence's next alert.
 - Native audio session ends at five minutes from playback start. Arrivals keep
   the original deadline/sound. One sound; independently actionable members.
 - Timeout leaves unresolved items unfinished with silent Snooze/Postpone actions.
-  Missed is independent of overdue; overdue depends on due/completion.
+  Missed is independent of overdue; overdue uses the original authored alert for
+  Alarm/Notification, When for timed No alert and next local midnight after the
+  scheduled date for all-day No alert. Independent Due does not override it.
 - Normal callbacks up to five minutes late may ring; later ones become Missed.
   Reboot, upgrade, restore and recovery never replay past alerts or interrupted sound.
-- Before first unlock: generic text, native Stop/quick Snooze, protected scheduling
+- Before first unlock: generic text, native Done/quick Snooze, protected scheduling
   data only, plus reviewed minimal non-private appearance data for bundled global
   theming. Private reminder content and credentials remain credential-protected.
 - Unlocked: actionable heads-up/ongoing notification where permitted. Locked:
@@ -80,9 +90,11 @@ Stop, three-root, event-first browsing and short-cover requirements.
 - Floating schedules follow device zone; Calendar linkage pins a named zone with preview.
 - DST gaps shift by gap size; folds use earlier offset. Invalid days/fifth weekdays/
   Feb 29 are skipped and do not consume count. Postponements remain concrete instants.
-- One unified agenda contains one-off and repeating occurrences. Alert time sets
-  the date group; No alert uses due time. Unfinished overdue status uses due time
-  and takes priority regardless of the next alert. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
+- One unified agenda contains one-off and repeating occurrences. Next/intended alert
+  time sets the date group; No alert uses When. Strictly past original-alert or
+  No alert boundaries determine unfinished Overdue, regardless of future Snooze/
+  Postpone. Overdue sorts by its boundary then ID; other groups retain alert-anchor
+  ordering. Groups are Overdue, Earlier, Today, Tomorrow and explicit future dates.
   Collapse groups without merging occurrence identities. Stopped/missed/timed-out
   reminders stay visible until resolved.
 - Search, membership, overdue and Alert problems filters are local dataset controls.
@@ -134,7 +146,9 @@ Stop, three-root, event-first browsing and short-cover requirements.
   fixed membership and access to their Completed/Trash records. Counts mean overdue
   occurrences, rather than every future occurrence of an infinite repeat.
 - Active browsing cards lead with alert time or No alert, then consequential
-  overdue/delivery information and a readable repeat indicator. Details and advanced
+  relative overdue/delivery information and a readable repeat indicator. No alert
+  includes its scheduled When. Ringing may take visible precedence; ordinary rows
+  do not repeat Missed/Timed out/Interrupted/Notification sent badges. Details and advanced
   editing retain full event/due data. Primary Agenda alert time uses the device zone.
 - Browsing covers expand to 200 dp below the status inset, including a nominal
   56 dp toolbar. Artwork stays fixed while opaque content scrolls over it, ending
@@ -211,12 +225,13 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   concise; independent relationships, adjustments, consequential zones and occurrence
   exceptions have Schedule details. All-day linked Due reads By end of day. A stopped,
   missed, interrupted or timed-out target is never described as a future alert.
-  Overdue means still unfinished; Stop continues to silence delivery without Done.
+  Overdue means still unfinished past the original alert or No alert boundary.
+  Done silences and completes; historical Stopped outcomes remain unfinished.
   Completed timestamps come from recorded Done events, never sorting fallbacks.
   Activity renders only recorded events and meaningful targets; empty history says
   No recorded activity and does not claim a complete audit trail.
-  Done/Reopen/Restore stay persistent for their states. Ringing Stop/Snooze are a
-  distinct alarm area; eligible Postpone stays readily available after delivery ends.
+  Done/Reopen/Restore stay persistent for their states. Ringing Details shows one
+  Done plus Snooze, with eligible Postpone still readily available.
   Custom Postpone starts with a future target and rejects past targets without mutation.
 - Android Back exits transient Agenda search; clearing its query is a separate
   action. Nested sheets handle Back within their draft. Loading, retry, action
@@ -242,12 +257,19 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   is acknowledged or rejected. It cannot be abandoned through ordinary navigation
   or replaced with another selection during that uncertainty. Diagnostics provide
   visible refresh/retry/share feedback without claiming a share sheet sent a report.
-- Native controls never start React Native. Stop/Snooze automatically dismiss a
+- Creation/editing exposes Alarm/Notification/No alert inline, defaulting to Alarm.
+  The visible single-selection group adapts to large text without a mode sheet;
+  alarm sound/vibration only appears for Alarm. Draft/save guards remain intact.
+- Completed/skipped/Trash use the same card geometry and borderless 48 dp More target
+  as Agenda. They have one terminal state label and no completion control or empty
+  placeholder; explicit selection mode retains selection checkboxes. Preserve
+  historical schedule/alert, independent Due, details navigation and existing menus.
+- Native controls never start React Native. Done/Snooze automatically dismiss a
   confirmed ended session, including timeout/external termination. An initial empty
   loading state cannot close the screen; remaining group members retain controls.
   Failed actions retain controls and an error. Before first unlock, content is generic.
-- Standard notifications retain Stop/Snooze on every single delivery. Grouped
-  notifications open native controls and offer session-specific Stop all. Android
+- Standard notifications retain Done/Snooze on every single delivery. Grouped
+  alarm notifications open native controls and offer captured Done all/Snooze all. Android
   owns popup layout and expansion. Channel identities and audio deadlines remain.
 - The owned geometric R and notification cue supply adaptive, monochrome, legacy, notification
   and splash variants. Application ID and signing identity remain unchanged.

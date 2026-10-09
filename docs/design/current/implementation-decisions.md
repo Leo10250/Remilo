@@ -1,5 +1,10 @@
 # Implementation decisions — 9 October 2026
 
+The subsequent [alert experience implementation](alert-experience.md) changes
+visible Stop to Done, uses original-alert/No alert overdue boundaries, adds captured
+group Snooze, exposes Alert modes inline and normalizes terminal cards/More. It
+retains prior navigation, scenery, privacy and selected-occurrence decisions.
+
 The owner's implementation instruction fixes the following corrections. It does
 not modify accepted PNGs, frozen submissions or historical approval records.
 The [beta corrections](beta-fixes.md) supersede earlier Stop/navigation/timing

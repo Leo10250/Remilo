@@ -1,5 +1,10 @@
 # R9 completed-task and recovery action research
 
+The [9 October alert experience correction](alert-experience.md) supersedes
+outlined terminal More treatment with the same borderless 24 dp/48 dp affordance
+as Agenda. Candidate proposals below remain research provenance; accepted
+selection/menu behavior follows the current page contract.
+
 9 October 2026. This records primary-source research and a proposed implementation
 revision after the owner rejected composition 02, with candidate 04 reasoning
 after composition 03 and a candidate 05 update after composition 04 was rejected.

@@ -18,13 +18,13 @@ Use the same four global scenes and color roles on every native full-screen alar
 ## Implementation
 
 - Capture resolved atmosphere/brightness at session creation; retain it through arrivals/removal/rotation/refresh/unlock and boundary changes. New sessions resolve again.
-- Apply single/multiple/loading/refresh-error/action feedback anatomy and larger R6 alarm targets. Stop/quick Snooze are immediately available; Stop all is distinct; Alarm Stop completes the affected current occurrence; timeout/interruption remains unfinished.
+- Apply the [alert experience correction](../../design/current/alert-experience.md): Done/quick Snooze, captured Done all/Snooze all, normal Notification Done and immutable native action snapshots. Reuse protected completion reconciliation and current duration mirrors; DP6 binds group receipts and exact retry outcomes. Timeout/interruption remains unfinished.
 - Use the native-safe allowlisted mirror and bundled assets without CE/React/network reads before unlock. Keep generic content and operational time; never infer public disclosure from CE availability.
 - Use supported notification branding and existing native generation-safe actions/public privacy treatment. Do not add custom scenic bubbles, aliases, task-specific scenes or JS startup dependencies.
 
 ## Acceptance and handoff
 
-Run session/deadline/stale-action/process/recreation/privacy regressions plus real signed-device initial/re-triggered notifications, cold/locked/Direct Boot, single/multiple Stop/Snooze, retained refresh errors and all eight visual pairs. Appearance failure cannot block controls, service promotion or audio.
+Run session/deadline/stale-action/process/recreation/privacy and protected bulk-recovery regressions plus real signed-device initial/re-triggered notifications, cold/locked/Direct Boot, single/group Done/Snooze, captured later-arrival exclusion, partial registration, retained refresh errors and all eight visual pairs. Appearance failure cannot block controls, service promotion or audio.
 
 Record actual revision, delivered contracts, render/command evidence, unresolved
 review conditions and pending physical observations using [the handoff protocol](../../handoffs/README.md).

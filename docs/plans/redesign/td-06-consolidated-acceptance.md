@@ -17,6 +17,8 @@ Verify the integrated time-of-day redesign without weakening existing native rel
 
 ## Implementation
 
+- Include the [alert experience correction](../../design/current/alert-experience.md): original-alert/No alert boundaries and query pagination, native Done/Notification/group exact retries, current duration changes, terminal-card/inline-selector rendering and signed-phone pre-unlock completion. Keep physical results pending until observed.
+
 - Close current correction/remaining-review decisions and validate all four themes in Light/Dark plus System brightness behavior.
 - Run appropriate shared/native/build checks for actual code changes and preserve existing alarm, recurrence, restore and upgrade regressions.
 - Use one consolidated owner device checklist for large text/TalkBack/IME, appearance transitions, native sessions, permissions/audio, static identity and real data flows.

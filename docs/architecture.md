@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 5/5/3. CE 4→5 adds global atmosphere with Automatic default and
+versions are 5/6/3. CE 4→5 adds global atmosphere with Automatic default and
 preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
@@ -42,8 +42,10 @@ sessions and native action records. No content or credentials belong in the latt
 
 Definition-derived schedule changes have narrowly scoped pending-operation records.
 Snooze and historical Stop journal records describe history; replay never changes
-newer operational state. New alarm Stop completion has its own protected durable
-receipt and pending-completion journal (DP 4→5); CE and backup schemas are unchanged. Alarm-affecting commands fence stale generations before acknowledgement.
+newer operational state. Native Done reuses protected completion receipts and the
+pending-completion journal introduced by DP 4→5. DP 5→6 binds captured completion
+membership and adds durable bulk-Snooze receipt/member records. CE and backup
+schemas are unchanged. Alarm-affecting commands fence stale generations before acknowledgement.
 OS registration and database commits are not atomic: reconcile idempotently and
 return Scheduled/Blocked/Pending distinctly. Every callback rechecks eligibility.
 
@@ -65,11 +67,13 @@ credentials and content-derived appearance stay excluded from DP.
 
 Agenda queries apply optional `overdueOnly` alongside other intersections and
 apply group ordering/counts before pagination. The read-only `agendaAtMs` anchor
-is due for No alert, otherwise operational target → configured alert → event
+is event start for No alert, otherwise operational target → configured alert → event
 fallback. Capture query time/device zone once; order active results by group rank,
-anchor and ID before the 50-row page. Today/Upcoming use only anchor dates. Due
-continues determining unfinished Overdue, and history collections retain their
-recorded-time ordering.
+anchor and ID before the 50-row page. Today/Upcoming use only anchor dates.
+Overdue uses original configured alert, timed No alert event start or next local
+midnight after the No alert date; its rows sort by that reference and ID. One pure
+OverduePolicy and captured query clock govern filtering, grouping, counts and
+the derived overdueAtMs projection. History collections retain recorded-time ordering.
 `scheduleTestAlarm(operationId)` returns an identified receipt; a same-ID retry
 returns the original committed test/target. Whole-backup Restore returns structured
 Rejected only for definitive precommit validation; possible commits remain
@@ -261,7 +265,9 @@ members, appearance) from the existing engine worker. Its initial state is loadi
 An intent/refresh ticket rejects callbacks for another session or an earlier
 refresh. Only a confirmed terminal state dismisses the activity, including timeout
 or external termination; a partial action leaves remaining members visible.
-Notification Stop all carries immutable session identity and rejects an old session.
+New group notification actions carry immutable session/member generation snapshots
+and reject stale captured members. Later arrivals are excluded. Legacy Stop all
+retains its original session guard and installed-action compatibility.
 
 Expo SDK 57 Symbols supplies Android Material icons. Router's SDK 57 public
 `expo-router/react-navigation` export supplies draft removal guards; no separate
@@ -329,9 +335,9 @@ remain secondary pages. Destination state is keyed independently, including the 
 record queries sharing a route. Focus-scoped Back handlers yield to transient UI,
 search, draft and uncertain-operation guards. Navigation introduces no scheduler.
 
-Shared presentation separates work status from delivery outcome. Due controls
-Overdue; historical Stopped, Missed and timeout remain outcomes for unfinished
-work. New alarm Stop completes only the affected occurrence. Conditional
+Shared presentation separates work status from delivery outcome. Original alert
+or the No alert boundary controls Overdue; historical Stopped, Missed and timeout
+remain outcomes for unfinished work. Alarm Done completes only its occurrence. Conditional
 schedule detail preserves independent relationships even at coincident timestamps.
 Recorded Done time is separate from collection sorting fallback. Activity renders
 stored history without inventing missing lifecycle events or field differences.
@@ -392,21 +398,35 @@ TD-06 records real keyboard/TalkBack observations in the consolidated run.
 
 ## ADR 009: Alarm completion receipts and scroll-driven browsing
 
-The [beta correction](design/current/beta-fixes.md) supersedes the old alarm Stop
-rule. On the existing serialized worker, Stop/StopAll atomically commit protected
+The [alert experience](design/current/alert-experience.md) supersedes visible Stop
+wording while preserving legacy commands. On the existing serialized worker,
+CompleteDelivery/DoneAll and compatible Stop/StopAll atomically commit protected
 operational Completed state, generation fences, command-bound receipts and pending
-completion rows. Stop all snapshots only the captured session's members. The final
+completion rows. New DoneAll binds the displayed members/generations and validates
+all before mutation; legacy StopAll snapshots current session members. The final
 member detaches and ends audio before CE completion/materialization, including
 before first unlock. Legacy receipt checks preserve historical retry semantics.
 
 Before CE queries, mutations/revision checks, import and export, materialize missing
 recurring content and project pending completion into one CE transaction: increment
 the revision, complete the same nominal occurrence, and write one Done at the
-original Stop instant. A matching history operation proves that transaction already
+original completion instant. A matching history operation proves that transaction already
 committed; a lost protected acknowledgement never re-completes a later Reopen.
 Receipts bind occurrence/generation or session and retain the original result across
 restart. CE 5 and portable backup 3 remain unchanged; old Stopped actions do not
 retroactively complete content. Timeout/interruption still leave work unfinished.
+
+SnoozeAll atomically captures its session/member fingerprint, current mirrored
+duration, action instant/common target, new generations and deterministic Snooze
+journals in DP6 before detachment and registration. Stored per-member outcomes
+support exact retries of unfinished registrations without recapturing members,
+moving the target or overriding newer generations. Mixed results return Partial;
+unknown replies retain the captured command. Elapsed recovery targets stay silent.
+Existing settings transactions already synchronize snoozeMinutes on all protected
+alerts/plans; no additional preference store is introduced. New single Snooze
+checks expectedSnoozeMinutes after receipt lookup. Legacy omitted guards retain
+their behavior. Capabilities exposes activeSessionActions; occurrences expose
+overdueAtMs/quickSnoozeMinutes, all read-only native projections.
 
 Shared browsing chrome has one native Animated scroll value. Stable expanded hero
 composition stays fixed while the opaque reading plane translates over decoration;
