@@ -2,24 +2,24 @@ import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { changeDraftZone, chooseConflict, editorDraft, moveDraftDue, moveDraftEvent, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState } from '../domain/editor-draft';
 import { commandFeedback } from '../domain/actions';
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
-import { creationOrigin } from '../domain/navigation';
+import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel, scheduleDateTime } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { ActionFeedback, Button, Choice, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, SelectRow, Sheet, Status, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, SelectRow, Sheet, Status, Toggle } from '../ui/components';
 import { notify } from '../ui/feedback';
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../ui/native';
 import { RepeatForm } from '../ui/recurrence';
-import { useTheme } from '../ui/theme';
+import { useAppearanceHold } from '../ui/theme';
 import { TimeZoneField } from '../ui/time-zone';
-import { typography } from '../ui/tokens';
 import { ListPicker, returnToOrigin } from '../ui/navigation';
 import { Schedule } from '../ui/schedule';
 import { SoundPicker } from '../ui/sound-picker';
+import { useAppearanceConfirmation } from '../ui/confirmation';
 
 type Seed = { state: EditorState; revision?: number; series?: Series };
 async function readSeed(id?: string, segmentId?: string, following?: string): Promise<Seed> {
@@ -40,21 +40,23 @@ async function readSeed(id?: string, segmentId?: string, following?: string): Pr
   return { state: { draft, recurrence }, revision, series };
 }
 export default function Editor() {
-  const params = useLocalSearchParams<{ id?: string; duplicate?: string; segmentId?: string; following?: string; originListId?: string; originNoList?: string }>();
+  const params = useLocalSearchParams<OriginParams & { id?: string; duplicate?: string; segmentId?: string; following?: string }>();
   const id = params.id ?? params.duplicate, editing = !!id || !!params.segmentId;
   const source = useQuery({ queryKey: ['editor-source', id, params.segmentId, params.following], enabled: nativeAvailable && editing,
     queryFn: () => readSeed(id, params.segmentId, params.following) });
   if (!nativeAvailable) return <Page title="Reminder"><Copy>Install the Android build to create and edit reminders.</Copy></Page>;
-  if (editing && !source.data) return <Page title="Edit reminder"><QueryState loading={source.isLoading} error={source.error}
+  if (editing && !source.data) return <Page title="Edit reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(retainedOriginParams(params)))}><QueryState loading={source.isLoading} error={source.error}
     empty={false} onRetry={() => void source.refetch()} /></Page>;
   const origin = creationOrigin(params);
   const seed = source.data ?? { state: { draft: editorDraft({ title: '', listId: origin.kind === 'list' ? origin.listId : null }) } };
-  return <EditorForm key={id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={!!params.duplicate} following={params.following} originListId={params.originListId} originNoList={params.originNoList} />;
+  return <EditorForm key={id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={!!params.duplicate} following={params.following} originParams={retainedOriginParams(params)} />;
 }
 type Review = { latest: Seed; merged: EditorState; conflicts: DraftConflict[]; choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>> };
-function EditorForm({ seed, id, duplicate, following, originListId, originNoList }: { seed: Seed; id?: string; duplicate: boolean; following?: string; originListId?: string; originNoList?: string }) {
-  const settings = useSettings(), command = useCommand(), navigation = useNavigation(), colors = useTheme();
-  const [origin] = useState(() => creationOrigin({ originListId, originNoList }));
+function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Seed; id?: string; duplicate: boolean; following?: string; originParams: OriginParams }) {
+  const settings = useSettings(), command = useCommand(), navigation = useNavigation();
+  const confirm = useAppearanceConfirmation();
+  useAppearanceHold(true);
+  const [origin] = useState(() => creationOrigin(originParams));
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().getLists(), enabled: nativeAvailable });
   const [state, setState] = useState<EditorState>(() => ({ ...seed.state, draft: { ...seed.state.draft,
     title: duplicate ? seed.state.draft.title.slice(0, 193) + ' (copy)' : seed.state.draft.title } }));
@@ -73,9 +75,9 @@ function EditorForm({ seed, id, duplicate, following, originListId, originNoList
   const dirty = saveAsNew || JSON.stringify(state) !== JSON.stringify(baseline);
   const busy = preparing || command.isPending || reviewLoading;
   usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
-    if (retrySave || pendingSave.current || command.isPending) { Alert.alert('Save not yet confirmed', 'Retry or wait for this save before leaving.'); return; }
-    if (preparing) { Alert.alert('Updating timing', 'Wait for the timing update before leaving.'); return; }
-    Alert.alert('Discard changes?', 'Your reminder has not been saved.', [{ text: 'Keep editing', style: 'cancel' },
+    if (retrySave || pendingSave.current || command.isPending) { confirm('Save not yet confirmed', 'Retry or wait for this save before leaving.'); return; }
+    if (preparing) { confirm('Updating timing', 'Wait for the timing update before leaving.'); return; }
+    confirm('Discard changes?', 'Your reminder has not been saved.', [{ text: 'Keep editing', style: 'cancel' },
       { text: 'Discard', style: 'destructive', onPress: () => navigation.dispatch(data.action) }]);
   });
   useEffect(() => {
@@ -93,10 +95,11 @@ function EditorForm({ seed, id, duplicate, following, originListId, originNoList
     }
     if (creation) returnToOrigin(origin);
     else if (router.canGoBack()) router.back();
+    else if (originParams.originReminderId || originParams.originFamily || originParams.originCollection) router.replace(secondaryOriginRoute(originParams));
     else if (saved.segmentId) router.replace({ pathname: '/series/[id]', params: { id: saved.segmentId } });
     else if (saved.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: saved.occurrence.id } });
     else router.replace('/');
-  }, [saved, creation, draft.mode, origin]);
+  }, [saved, creation, draft.mode, origin, originParams]);
   const patch = (value: Partial<EditorDraft>) => { if (!pendingSave.current && !timingWork.current) setState((current) => ({ ...current, draft: { ...current.draft, ...value } })); };
   const updateTiming = async (resolve: () => Promise<{ draft: EditorDraft; warnings: string[] }>, field: string, nextRepeat?: { value?: RecurrenceDraft }) => {
     if (pendingSave.current || timingWork.current || busy || review) throw new Error('Wait for the current update before changing timing.');
@@ -200,16 +203,20 @@ function EditorForm({ seed, id, duplicate, following, originListId, originNoList
   const frozen = busy || retrySave || !!review;
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
   return <Page title={creation ? 'New reminder' : editingSeries ? followingScope ? 'Edit following' : 'Edit repeat' : 'Edit reminder'}
-    actions={<Pressable accessibilityRole="button" accessibilityLabel={retrySave ? 'Retry save' : 'Save reminder'} accessibilityState={{ disabled, busy }}
-      disabled={disabled} onPress={() => void save()} style={{ minHeight: 48, paddingHorizontal: 16, justifyContent: 'center' }}>
-      <Text style={{ color: colors.accent, fontSize: typography.body, fontWeight: '600', opacity: disabled ? 0.4 : 1 }}>{command.isPending ? 'Saving…' : preparing ? 'Updating…' : reviewLoading ? 'Reviewing…' : retrySave ? 'Retry' : 'Save'}</Text>
-    </Pressable>}>
+    onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(originParams))}
+    footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
+      {!!zoneWarning && <ActionFeedback message={zoneWarning} tone="warning" />}
+      {!!message && <ActionFeedback message={message} tone="danger" />}
+      {retrySave && <ActionFeedback message="Save not confirmed. Retry the same save before leaving." tone="warning" />}
+      <Button label={command.isPending ? 'Saving…' : preparing ? 'Updating…' : reviewLoading ? 'Reviewing…' : retrySave ? 'Retry same save' : 'Save'}
+        busy={busy} disabled={disabled} onPress={() => void save()} />
+    </View></BottomActionBar>}>
     {scopeChanged && <Group title="Repeat changed"><View style={{ padding: 14, gap: 12 }}>
       <Status label="This repeat was replaced. Your draft is kept; it cannot be applied to the previous schedule." tone="warning" />
       <Button label="Save as new reminder" variant="secondary" onPress={() => {
         setSaveAsNew(true); setScopeChanged(false); setReview(null); setMessage(''); setFieldError(undefined); command.reset();
       }} />
-      <Button label="Reload current repeat" variant="secondary" disabled={busy} onPress={() => Alert.alert('Reload current repeat?',
+      <Button label="Reload current repeat" variant="secondary" disabled={busy} onPress={() => confirm('Reload current repeat?',
         'Discard this draft and edit the entire current repeat.', [{ text: 'Keep draft', style: 'cancel' }, { text: 'Reload', style: 'destructive', onPress: () => void reloadCurrent() }])} />
     </View></Group>}
     {review && <Group><View style={{ padding: 14, gap: 10 }}><Status label="This reminder changed. Your draft is kept. Review the latest changes before editing or saving." tone="warning" />
@@ -222,18 +229,21 @@ function EditorForm({ seed, id, duplicate, following, originListId, originNoList
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <Group>
         <DateField label="When" value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} onError={dateError} onChange={moveEvent} dateOnly={draft.allDay} />
+        {!draft.dueLinked && <Copy muted size={14}>Due {formatTime(preview.data?.dueAtMs ?? draft.dueAtMs, zone)} · Independent of When</Copy>}
         <SelectRow label="Alert" icon="alarm" value={draft.mode ?? 'Alarm'} choices={[{ value: 'Alarm', label: 'Alarm' }, { value: 'Notification', label: 'Notification' }, { value: 'None', label: 'No alert' }]}
           onChange={(mode) => patch({ mode })} />
         {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
           zoneId={zone} onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} />}
         {invalid(['eventStartMs', 'alarmAtMs']) && <Status label={message} tone="danger" />}
-        {!editingId && <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} />}
+        {!editingId && <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} />}
         {invalid(['recurrence']) && <Status label={message} tone="danger" />}
       </Group>
       <View style={{ gap: 12 }}><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
         {invalid(['listId']) && <Status label={message} tone="danger" />}
-        <Field label="Notes (optional)" value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} /></View>
-      <Disclosure title="Schedule options" forceOpen={!!invalid(['dueAtMs', 'zoneId', 'eventEndMs'])}>
+        <Disclosure title="Notes (optional)" initial={!!draft.notes} forceOpen={!!invalid(['notes'])}>
+          <Field label="Notes" value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
+        </Disclosure></View>
+      <Disclosure title="Schedule options" icon="settings" forceOpen={!!invalid(['dueAtMs', 'zoneId', 'eventEndMs'])}>
         <Toggle label="All day" value={draft.allDay ?? false} onChange={(allDay) => patch({ allDay, dueLinked: true, alarmLinked: true })} />
         {!draft.allDay && <DateField label="Ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => patch({ eventEndMs })} />}
         <Toggle label="Due follows When" value={draft.dueLinked ?? true} onChange={(dueLinked) => {
@@ -263,8 +273,6 @@ function EditorForm({ seed, id, duplicate, following, originListId, originNoList
       {editingSeries && <Copy muted size={13}>Earlier unfinished and postponed occurrences are retained. {editingSeries.state === 'Paused' ? 'The repeat remains paused.' : ''}</Copy>}
       {preview.error && <Status label="Check the timing and repeat fields." tone="warning" />}
     </View>
-    {!!zoneWarning && <ActionFeedback message={zoneWarning} tone="warning" />}{!!message && <ActionFeedback message={message} tone="danger" />}
-    {retrySave && <ActionFeedback message="Save not confirmed. Retry the same save before leaving." tone="warning" />}
     {command.error instanceof CommandError && command.error.code?.startsWith('STALE') && !review && !scopeChanged && <Button label="Retry review" variant="secondary" disabled={busy} onPress={() => void loadReview()} />}
     <Sheet title="Review changes" visible={reviewOpen && !!review} onClose={() => setReviewOpen(false)}>
       <Copy muted>Your draft is kept. Changes made only in the latest reminder are included below. Choose a version for each conflict.</Copy>
@@ -285,7 +293,7 @@ function EditorForm({ seed, id, duplicate, following, originListId, originNoList
         {!!reviewed.draft.notes && <Disclosure title="Notes"><Copy>{reviewed.draft.notes}</Copy></Disclosure>}
       </View></Group>}
       <Button label="Use reviewed draft" disabled={!!review && !reviewChoicesComplete(review.conflicts, review.choices)} onPress={() => applyReview()} />
-      <Button label="Reload latest" variant="secondary" onPress={() => Alert.alert('Discard draft changes?', 'Reload the latest saved reminder.',
+      <Button label="Reload latest" variant="secondary" onPress={() => confirm('Discard draft changes?', 'Reload the latest saved reminder.',
         [{ text: 'Keep draft', style: 'cancel' }, { text: 'Reload', style: 'destructive', onPress: () => applyReview(true) }])} />
     </Sheet>
   </Page>;

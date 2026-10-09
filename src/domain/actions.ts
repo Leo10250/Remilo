@@ -2,7 +2,7 @@ import type { CommandResult, Occurrence, ContentCommand } from '../../modules/re
 export type Tone = 'success' | 'warning' | 'danger' | 'muted' | 'accent';
 export function commandFeedback(result: CommandResult, success: string): { message: string; tone: Tone } {
   if (result.status === 'Rejected') return { message: result.errorMessage ?? 'That action could not be applied. Refresh and retry.', tone: 'danger' };
-  if (result.status === 'Blocked') return { message: 'Saved; alert blocked. Check alarm permissions in Settings.', tone: 'danger' };
+  if (result.status === 'Blocked') return { message: 'Saved; alert blocked. Review Alert problems in Agenda.', tone: 'danger' };
   if (result.status === 'Pending') return { message: 'Saved; scheduling pending. Check the next alert status.', tone: 'warning' };
   return { message: success, tone: 'success' };
 }

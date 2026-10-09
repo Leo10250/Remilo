@@ -1,104 +1,166 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { normalizeAtmosphere } from '../domain/appearance';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { useRef, useState } from 'react';
-import { PermissionsAndroid } from 'react-native';
-import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { commandFeedback, type Tone } from '../domain/actions';
-import { ActionFeedback, Button, Choice, Copy, DateField, Field, Group, Page, QueryState, SettingRow, Sheet, shortDateTime, Status, Toggle } from '../ui/components';
+import { useEffect, useRef, useState } from 'react';
+import { PermissionsAndroid, View } from 'react-native';
+import type { AppSettings, CommandResult } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { Tone } from '../domain/actions';
+import { creationOrigin, retainedOriginParams, rootKey, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
+import { TestAlarmOperation } from '../domain/test-alarm';
+import type { HandoffTicket } from '../domain/handoff';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Field, Group, Page, QueryState, SettingRow, Sheet, shortDateTime, Status, Toggle } from '../ui/components';
 import { engine, nativeAvailable, preferences, useCapabilities, useSettings } from '../ui/native';
+import { PreferenceFeedback } from '../ui/preference-feedback';
 import { SoundPicker } from '../ui/sound-picker';
-type Picker = 'snooze' | 'theme' | null;
+import { useAppearanceHold } from '../ui/theme';
+import { useAppearanceConfirmation } from '../ui/confirmation';
+import { usePageHandoff } from '../ui/handoff';
+
 type Action = 'test' | 'permissions' | 'export';
 type Feedback = { message: string; tone: Tone };
 function timeValue(minutes: number) { const date = new Date(); date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0); return date.getTime(); }
+function appearanceSummary(settings: AppSettings) {
+  const atmosphere = normalizeAtmosphere(settings.atmosphere);
+  return `${atmosphere[0].toUpperCase() + atmosphere.slice(1)} · ${settings.theme === 'system' ? 'System' : settings.theme === 'light' ? 'Light' : 'Dark'}`;
+}
+function testFeedback(result: CommandResult): Feedback {
+  if (result.status === 'Rejected') return { message: result.errorMessage ?? 'Test alarm could not be created.', tone: 'danger' };
+  if (result.status === 'Blocked') return { message: 'Test reminder saved; alert blocked. Review permissions and its next alert status.', tone: 'warning' };
+  if (result.status === 'Pending') return { message: 'Test reminder saved; scheduling pending. Check its next alert status.', tone: 'warning' };
+  if (result.retry && !result.occurrence) return { message: 'Your previous test reminder was confirmed. Check its next alert status.', tone: 'muted' };
+  return { message: result.occurrence?.nextAlertMs != null ? `Test alarm scheduled for ${shortDateTime(result.occurrence.nextAlertMs)}.` : 'Test reminder saved. Check its next alert status.', tone: result.status === 'Scheduled' ? 'success' : 'muted' };
+}
 export default function Settings() {
+  const params = useLocalSearchParams<OriginParams>(), origin = creationOrigin(params), routeParams = retainedOriginParams(params);
   const query = useSettings(), caps = useCapabilities();
-  const [picker, setPicker] = useState<Picker>(null), [minutes, setMinutes] = useState('10');
+  const confirm = useAppearanceConfirmation();
+  const [picker, setPicker] = useState(false), [minutes, setMinutes] = useState('10');
   const [feedback, setFeedback] = useState<Partial<Record<Action, Feedback>>>({}), [pending, setPending] = useState<Action | null>(null), running = useRef(false);
-  const busy = pending !== null;
-  const settings = query.data;
-  const run = async (action: Action, task: () => Promise<Feedback>) => {
-    if (running.current) return; running.current = true; setPending(action); setFeedback((old) => ({ ...old, [action]: undefined }));
-    try { const result = await task(); setFeedback((old) => ({ ...old, [action]: result })); }
-    catch (error) { setFeedback((old) => ({ ...old, [action]: { message: error instanceof Error ? error.message : 'Could not complete that action. Try again.', tone: 'danger' } })); }
-    finally { running.current = false; setPending(null); }
+  const activeAction = useRef<Action | null>(null);
+  const [test, setTest] = useState<CommandResult>(), [uncertainTest, setUncertainTest] = useState(false);
+  const [preparedExport, setPreparedExport] = useState<File>(), mounted = useRef(true);
+  const [operation] = useState(() => new TestAlarmOperation({ id: () => engine().createOperationId(), schedule: (id) => engine().scheduleTestAlarm(id) }));
+  const handoff = usePageHandoff(() => setPending(activeAction.current));
+  const busy = pending !== null, frozen = busy || uncertainTest, settings = query.data;
+  useAppearanceHold(pending === 'test' || uncertainTest);
+  usePreventRemove(pending === 'test' || uncertainTest, () => confirm('Test alarm not yet confirmed', 'Wait for this request, or retry the same test before leaving.'));
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const run = async (action: Action, task: (ticket?: HandoffTicket) => Promise<Feedback | undefined>) => {
+    if (running.current || uncertainTest && action !== 'test') return;
+    const ticket = action === 'export' ? handoff.scope.capture() : undefined;
+    if (ticket && !handoff.scope.canLaunch(ticket)) return;
+    running.current = true; activeAction.current = action; setPending(action); setFeedback((old) => ({ ...old, [action]: undefined }));
+    const publish = (result: Feedback) => {
+      const update = () => setFeedback((old) => ({ ...old, [action]: result }));
+      if (ticket) handoff.commit(ticket, update); else if (mounted.current) update();
+    };
+    try { const result = await task(ticket); if (result) publish(result); }
+    catch (error) { publish({ message: error instanceof Error ? error.message : 'Could not complete that action. Try again.', tone: 'danger' }); }
+    finally { running.current = false; activeAction.current = null; if (mounted.current && (!ticket || handoff.scope.active())) setPending(null); }
   };
+  const scheduleTest = () => void run('test', async () => {
+    try { const result = await operation.run(); setTest(result); setUncertainTest(false); return testFeedback(result); }
+    catch { setUncertainTest(operation.pending); return { message: 'Test alarm not confirmed. Retry the same test before leaving; another test may create a duplicate reminder.', tone: 'warning' }; }
+  });
   const access = (kind: 'exact' | 'notifications' | 'fullScreen') => void run('permissions', async () => {
-    if (kind === 'notifications' && !caps.data?.notifications) {
+    if (kind === 'notifications' && caps.data?.notifications === false) {
       const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
       if (result !== PermissionsAndroid.RESULTS.GRANTED) await engine().openSettings(kind);
     } else await engine().openSettings(kind);
-    return { message: 'Return here after updating permissions.', tone: 'muted' };
+    await caps.refetch();
+    return { message: 'Permissions are checked again when you return to Remilo.', tone: 'muted' };
   });
-  const save = (patch: Partial<AppSettings>) => preferences.change(patch);
-  const permissionLabel = (enabled?: boolean, limited = false) => enabled === undefined ? 'Checking' : enabled ? 'Allowed' : limited ? 'Limited' : 'Blocked';
-  const permission = (enabled?: boolean, limited = false) => <Status label={enabled === undefined ? 'Checking' : enabled ? 'Allowed' : limited ? 'Limited' : 'Blocked'}
-    tone={enabled === undefined ? 'muted' : enabled ? 'success' : limited ? 'warning' : 'danger'} />;
-  const exportFile = () => void run('export', async () => {
-    if (!await Sharing.isAvailableAsync()) throw new Error('Sharing is unavailable on this device. Try again when a share destination is available.');
-    const data = await engine().exportBackup(), directory = new Directory(Paths.cache, 'remilo-exports');
+  const save = (patch: Partial<AppSettings>) => { if (!frozen) preferences.change(patch); };
+  const permissionLabel = (enabled?: boolean, limited = false) => enabled === undefined ? caps.error && !caps.data ? 'Unavailable' : 'Checking' : enabled ? 'Allowed' : limited ? 'Limited' : 'Blocked';
+  const permission = (enabled?: boolean, limited = false) => <Status label={permissionLabel(enabled, limited)} tone={enabled === undefined ? 'muted' : enabled ? 'success' : limited ? 'warning' : 'danger'} />;
+  const sharePrepared = async (file: File, ticket: HandoffTicket): Promise<Feedback | undefined> => {
+    try {
+      const available = await Sharing.isAvailableAsync();
+      if (!handoff.scope.canLaunch(ticket)) return;
+      if (!available) return { message: 'Backup prepared. Sharing is unavailable on this device. You can retry sharing this file.', tone: 'warning' };
+      if (!handoff.scope.markOpened(ticket)) return;
+      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Save Remilo backup' });
+      return { message: 'Backup prepared and opened in the share sheet. Remilo cannot confirm whether you saved or sent it.', tone: 'muted' };
+    } catch { return { message: 'Backup prepared, but the share sheet could not be opened. Retry sharing this file.', tone: 'danger' }; }
+  };
+  const exportFile = () => void run('export', async (ticket) => {
+    if (!ticket) return;
+    const data = await engine().exportBackup();
+    if (!handoff.scope.canLaunch(ticket)) return;
+    const directory = new Directory(Paths.cache, 'remilo-exports');
     directory.create({ idempotent: true, intermediates: true });
     const file = new File(directory, 'remilo-' + Date.now() + '.json'); file.create(); file.write(data);
-    await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Save Remilo backup' });
-    return { message: 'Backup prepared for sharing.', tone: 'success' };
+    if (mounted.current) setPreparedExport(file);
+    return sharePrepared(file, ticket);
   });
-  return <Page title="Settings">
-    <QueryState loading={!settings && query.isLoading && nativeAvailable} error={query.error} empty={!settings && !query.isLoading} emptyMessage="Settings are unavailable." onRetry={() => void query.refetch()} />
+  const snoozeValid = /^\d+$/.test(minutes) && Number(minutes) >= 1 && Number(minutes) <= 1440;
+  return <Page title="Settings" scrollKey={`settings:${rootKey(origin)}`} scrollReady={!!settings || !query.isLoading}
+    onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}>
+    <QueryState loading={!settings && query.isLoading && nativeAvailable} error={!settings ? query.error : undefined} empty={!settings && !query.isLoading}
+      emptyMessage={nativeAvailable ? 'Settings are unavailable.' : 'Use the Android app to manage settings.'} onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
     {!!settings && <>
       <Group title="Alarms">
-        <SoundPicker value={settings.sound} onChange={(sound) => save({ sound })} disabled={busy} />
-        <Toggle icon="vibration" label="Vibration" value={settings.vibration} onChange={(vibration) => save({ vibration })} />
-        <SettingRow icon="snooze" label="Snooze duration" value={settings.snoozeMinutes + ' minutes'}
-          onPress={() => { setMinutes(String(settings.snoozeMinutes)); setPicker('snooze'); }} />
-        <SettingRow icon="alarm" label="Test alarm" description="Schedule a test in 15 seconds" disabled={busy} onPress={() => void run('test', async () => {
-          const result = await engine().scheduleTestAlarm();
-          return commandFeedback(result, result.occurrence?.nextAlertMs ? 'Test alarm scheduled for ' + shortDateTime(result.occurrence.nextAlertMs) : 'Test alarm scheduled.');
-        })} />
+        <SoundPicker value={settings.sound} onChange={(sound) => save({ sound })} disabled={frozen} />
+        <Toggle icon="vibration" label="Vibration" value={settings.vibration} disabled={frozen} onChange={(vibration) => save({ vibration })} />
+        <Copy muted size={14}>Sound and vibration are defaults for new reminders. Existing reminders keep their choices.</Copy>
+        <SettingRow icon="snooze" label="Snooze duration" value={settings.snoozeMinutes + ' minutes'} disabled={frozen}
+          onPress={() => { setMinutes(String(settings.snoozeMinutes)); setPicker(true); }} />
+        <Copy muted size={14}>Used the next time you Snooze, including existing alerts. A current target or ringing deadline does not move.</Copy>
+        <PreferenceFeedback fields={['sound', 'vibration', 'snoozeMinutes']} />
+        <SettingRow icon="alarm" label={test && !uncertainTest ? 'Schedule a new test alarm' : 'Test alarm'} description="Schedule a test in 15 seconds" disabled={frozen} onPress={scheduleTest} />
         {(pending === 'test' || feedback.test) && <ActionFeedback loading={pending === 'test'} message={pending === 'test' ? 'Scheduling test alarm…' : feedback.test?.message} tone={feedback.test?.tone} />}
+        {uncertainTest && <Button label="Retry same test" variant="secondary" disabled={busy} onPress={scheduleTest} />}
+        {test?.occurrence && !uncertainTest && <SettingRow label="View test reminder" disabled={frozen} onPress={() => {
+          if (running.current || frozen) return;
+          router.push({ pathname: '/reminder/[id]', params: { id: test.occurrence!.id, ...routeParams } });
+        }} />}
       </Group>
-      <Copy muted size={13}>Sound and vibration defaults apply to new reminders.</Copy>
       <Group title="Permissions">
-        <SettingRow icon="schedule" label="On-time alarms" description={caps.data?.exactAlarms === false ? 'Allow alarms to ring at their scheduled time.' : undefined}
-          disabled={busy} statusLabel={permissionLabel(caps.data?.exactAlarms)} onPress={() => access('exact')}>{permission(caps.data?.exactAlarms)}</SettingRow>
+        {caps.error && <ActionFeedback tone="warning" message={caps.data ? `Last checked ${shortDateTime(caps.data.observedAtMs)}; could not refresh permissions.` : 'Could not check permissions.'} />}
+        {caps.error && <Button label="Retry permission check" variant="secondary" disabled={caps.isFetching || frozen} onPress={() => void caps.refetch()} />}
+        {caps.isFetching && <ActionFeedback loading message={caps.data ? 'Refreshing permissions…' : 'Checking permissions…'} />}
+        <SettingRow icon="schedule" label="On-time alarms" description={caps.data?.exactAlarms === false ? 'Exact-alarm access is blocked for Alarm scheduling.' : undefined}
+          disabled={frozen || !nativeAvailable} statusLabel={permissionLabel(caps.data?.exactAlarms)} onPress={() => access('exact')}>{permission(caps.data?.exactAlarms)}</SettingRow>
         <SettingRow icon="notifications" label="Notifications" description={caps.data && (!caps.data.notifications || !caps.data.channelEnabled || !caps.data.notificationChannelEnabled)
-          ? 'Allow notifications and enable Remilo’s channels.' : undefined} disabled={busy}
+          ? 'Check app access and the channels below. Each channel has separate delivery requirements.' : undefined} disabled={frozen || !nativeAvailable}
           statusLabel={permissionLabel(caps.data ? caps.data.notifications && caps.data.channelEnabled && caps.data.notificationChannelEnabled : undefined)} onPress={() => access('notifications')}>
           {permission(caps.data ? caps.data.notifications && caps.data.channelEnabled && caps.data.notificationChannelEnabled : undefined)}
         </SettingRow>
-        <SettingRow icon="lock" label="Lock-screen alarms" description={caps.data?.fullScreen === false ? 'Notifications remain available without full-screen access.' : undefined}
-          disabled={busy} statusLabel={permissionLabel(caps.data?.fullScreen, true)} onPress={() => access('fullScreen')}>{permission(caps.data?.fullScreen, true)}</SettingRow>
+        {!!caps.data && <><SettingRow label="App notifications" value={caps.data.notifications ? 'Allowed' : 'Blocked'} />
+          <SettingRow label="Alarm channel" value={caps.data.channelEnabled ? 'Allowed' : 'Blocked'} />
+          <SettingRow label="Reminder channel" value={caps.data.notificationChannelEnabled ? 'Allowed' : 'Blocked'} /></>}
+        <SettingRow icon="lock" label="Lock-screen alarms" description={caps.data?.fullScreen === false ? 'Full-screen presentation is unavailable. Notification delivery follows its separate access and channel settings.' : undefined}
+          disabled={frozen || !nativeAvailable} statusLabel={permissionLabel(caps.data?.fullScreen, true)} onPress={() => access('fullScreen')}>{permission(caps.data?.fullScreen, true)}</SettingRow>
+        {(pending === 'permissions' || feedback.permissions) && <ActionFeedback loading={pending === 'permissions'} message={pending === 'permissions' ? 'Opening permission settings…' : feedback.permissions?.message} tone={feedback.permissions?.tone} />}
+        <Copy muted size={14}>Allowed means checked access. It does not confirm volume, playback or audibility.</Copy>
       </Group>
-      <QueryState loading={false} error={caps.error} onRetry={() => void caps.refetch()} />
-      {(pending === 'permissions' || feedback.permissions) && <ActionFeedback loading={pending === 'permissions'} message={pending === 'permissions' ? 'Opening permission settings…' : feedback.permissions?.message} tone={feedback.permissions?.tone} />}
       <Group title="Postpone shortcuts">
         {(['tomorrowMorning', 'tomorrowAfternoon', 'tomorrowEvening'] as const).map((key, index) => <DateField key={key}
-          label={['Tomorrow morning', 'Tomorrow afternoon', 'Tomorrow evening'][index]} timeOnly value={timeValue(settings[key])}
+          label={['Tomorrow morning', 'Tomorrow afternoon', 'Tomorrow evening'][index]} timeOnly value={timeValue(settings[key])} disabled={frozen}
           onChange={(value) => { const date = new Date(value); save({ [key]: date.getHours() * 60 + date.getMinutes() }); }} />)}
+        <Copy muted size={14}>Local clock times for later Postpone selections. Already postponed reminders keep their chosen instant.</Copy>
+        <PreferenceFeedback fields={['tomorrowMorning', 'tomorrowAfternoon', 'tomorrowEvening']} />
       </Group>
-      <Group title="Appearance"><SettingRow icon="palette" label="Theme" value={settings.theme === 'system' ? 'Follow device' : settings.theme === 'light' ? 'Light' : 'Dark'}
-        onPress={() => setPicker('theme')} /></Group>
-      {query.saving && <Copy muted size={13}>Saving changes…</Copy>}
-      {query.saveError && <Group><Status label={query.saveError} tone="danger" /><Button label="Retry saving changes" variant="secondary" onPress={preferences.retry} /></Group>}
+      <Group title="Appearance"><SettingRow icon="palette" label="Appearance" value={appearanceSummary(settings)} disabled={frozen}
+        onPress={() => router.push({ pathname: '/appearance', params: routeParams })} /><PreferenceFeedback fields={['theme', 'atmosphere']} /></Group>
     </>}
     <Group title="Data">
-      <SettingRow icon="upload" label="Export backup" disabled={busy || !nativeAvailable} onPress={exportFile} />
-      {(pending === 'export' || feedback.export) && <ActionFeedback loading={pending === 'export'} message={pending === 'export' ? 'Preparing backup…' : feedback.export?.message} tone={feedback.export?.tone} />}
-      <SettingRow icon="download" label="Restore backup" onPress={() => router.push('/backup')} />
+      <SettingRow icon="upload" label="Export backup" disabled={frozen || !nativeAvailable} onPress={exportFile} />
+      {(pending === 'export' || feedback.export) && <ActionFeedback loading={pending === 'export'} message={pending === 'export' ? 'Preparing backup and opening share sheet…' : feedback.export?.message} tone={feedback.export?.tone} />}
+      {preparedExport && <Button label="Share prepared backup again" variant="secondary" disabled={frozen} onPress={() => void run('export', (ticket) => ticket ? sharePrepared(preparedExport, ticket) : Promise.resolve(undefined))} />}
+      <SettingRow icon="download" label="Restore backup" disabled={frozen} onPress={() => router.push({ pathname: '/backup', params: routeParams })} />
+      <Copy muted size={14}>Backups contain titles, notes, lists and reminders in plain JSON. They exclude one-off reminders in Trash; repeating deletion exclusions are kept. App settings and appearance are excluded.</Copy>
     </Group>
-    <Copy muted size={13}>Backups include lists and reminders, except one-off reminders in Trash. Repeating deletion exclusions are kept.</Copy>
-    <Group title="Help"><SettingRow icon="info" label="Diagnostics" onPress={() => router.push('/diagnostics')} />
+    <Group title="Help"><SettingRow icon="info" label="Diagnostics" disabled={frozen} onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })} />
       <SettingRow label="Remilo" value="0.4.0 · Android" /></Group>
-    <Sheet title={picker === 'theme' ? 'Theme' : 'Snooze duration'} visible={picker !== null} onClose={() => setPicker(null)}>
-      {picker === 'theme' && (['system', 'light', 'dark'] as const).map((theme) => <Choice key={theme} label={theme === 'system' ? 'Follow device' : theme === 'light' ? 'Light' : 'Dark'}
-        selected={settings?.theme === theme} onPress={() => { save({ theme }); setPicker(null); }} />)}
-      {picker === 'snooze' && <>
-        {[5, 10, 15, 30].map((duration) => <Choice key={duration} label={duration + ' minutes'} selected={settings?.snoozeMinutes === duration}
-          onPress={() => { save({ snoozeMinutes: duration }); setPicker(null); }} />)}
-        <Field label="Custom minutes (1–1440)" value={minutes} keyboardType="number-pad" onChangeText={setMinutes} />
-        <Button label="Use custom duration" disabled={!/^\d+$/.test(minutes) || Number(minutes) < 1 || Number(minutes) > 1440}
-          onPress={() => { save({ snoozeMinutes: Number(minutes) }); setPicker(null); }} />
-      </>}
+    <Sheet title="Snooze duration" visible={picker} onClose={() => setPicker(false)} footer={<BottomActionBar><View style={{ flex: 1 }}>
+      <Button label="Use custom duration" disabled={!snoozeValid || frozen} onPress={() => { save({ snoozeMinutes: Number(minutes) }); setPicker(false); }} />
+    </View></BottomActionBar>}>
+      {[5, 10, 15, 30].map((duration) => <Choice key={duration} label={duration + ' minutes'} selected={settings?.snoozeMinutes === duration}
+        onPress={() => { save({ snoozeMinutes: duration }); setPicker(false); }} />)}
+      <Field label="Custom minutes (1–1440)" value={minutes} keyboardType="number-pad" onChangeText={setMinutes} error={!snoozeValid ? 'Enter a whole number from 1 to 1440.' : undefined} />
     </Sheet>
   </Page>;
 }

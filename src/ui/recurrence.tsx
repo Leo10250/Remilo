@@ -1,16 +1,18 @@
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import type { RecurrenceDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { RecurrenceDraft, ReminderDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { changeDraftZone, editorDraft } from '../domain/editor-draft';
 import { cleanRepeat, dayNames, repeatErrors, repeatLabel, repeatNames } from '../domain/repeat';
 import { civilAt, deviceZone } from '../domain/time';
-import { ActionFeedback, Button, Choice, Copy, DateField, Field, SelectRow, SettingRow, Sheet, Toggle } from './components';
-import { engine } from './native';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Field, formatTime, Group, Icon, SelectRow, SettingRow, Sheet, Toggle } from './components';
+import { engine, nativeAvailable } from './native';
 import { useFontScaleOverride, useTheme } from './theme';
 import { TimeZoneField } from './time-zone';
 export { repeatLabel, repeatNames } from '../domain/repeat';
 
-export function RepeatForm({ value, onChange, startMs, zoneId }: {
-  value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string;
+export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
+  value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string; previewDraft: ReminderDraft;
 }) {
   const colors = useTheme(), scale = useFontScaleOverride(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
   const zone = zoneId ?? deviceZone();
@@ -19,8 +21,18 @@ export function RepeatForm({ value, onChange, startMs, zoneId }: {
     ordinal: Math.ceil(start.getUTCDate() / 7), weekday, month: start.getUTCMonth() + 1, zoneMode: 'floating' };
   const [rule, setRule] = useState<RecurrenceDraft>(base), [customZone, setCustomZone] = useState(zone);
   const [numbers, setNumbers] = useState({ interval: '1', day: String(base.day), count: '10' });
-  const [errors, setErrors] = useState<Record<string, string>>({}), [busy, setBusy] = useState(false), [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const [loadedEnd, setLoadedEnd] = useState<{ key: string; instantMs: number } | null>(null);
+  const numeric = (text: string) => /^\d+$/.test(text) ? Number(text) : Number.NaN;
+  const draftRule = { ...rule, interval: numeric(numbers.interval), day: ['monthlyDay', 'yearly'].includes(rule.frequency) ? numeric(numbers.day) : rule.day, ...(rule.count != null ? { count: numeric(numbers.count) } : {}) };
+  const validation = repeatErrors(draftRule, civilAt(startMs, zone).slice(0, 10)), valid = !Object.keys(validation).length;
+  const previewZone = rule.zoneMode === 'pinned' ? customZone : deviceZone();
+  const preview = useQuery({ queryKey: ['custom-repeat-preview', previewDraft, draftRule, previewZone], enabled: nativeAvailable && open && custom && valid,
+    queryFn: async () => {
+      const source = editorDraft(previewDraft);
+      const converted = source.zoneId === previewZone ? { draft: source } : await changeDraftZone(source, previewZone, (input) => engine().convertTime(input));
+      return engine().previewSchedule({ ...converted.draft, title: converted.draft.title.trim() || 'Preview', recurrence: cleanRepeat(draftRule) });
+    } });
   const endKey = customZone + '|' + rule.until;
   const endEpoch = loadedEnd?.key === endKey ? loadedEnd.instantMs : null;
   useEffect(() => {
@@ -49,20 +61,22 @@ export function RepeatForm({ value, onChange, startMs, zoneId }: {
     const next = cleanRepeat(value ?? base);
     setRule(next); setCustomZone(next.zoneMode === 'floating' ? deviceZone() : zone);
     setNumbers({ interval: String(next.interval), day: String(next.day ?? base.day), count: String(next.count ?? 10) });
-    setErrors({}); setMessage(''); setCustom(true);
+    setMessage(''); setCustom(true);
   };
   const useRule = () => {
-    const next = { ...rule, interval: Number(numbers.interval), day: Number(numbers.day),
-      ...(rule.count != null ? { count: Number(numbers.count) } : {}) };
-    const validation = repeatErrors(next, civilAt(startMs, zone).slice(0, 10));
-    setErrors(validation);
     if (Object.keys(validation).length) return;
-    void apply(next, customZone);
+    if (!preview.data || preview.isFetching || preview.error || !preview.data.upcoming.length) return;
+    void apply(draftRule, customZone);
   };
   const unit = rule.frequency === 'daily' ? 'days' : rule.frequency === 'weekly' ? 'weeks' : rule.frequency === 'yearly' ? 'years' : 'months';
   return <>
     <SettingRow icon="repeat" label="Repeat" value={repeatLabel(value)} onPress={() => { setCustom(false); setMessage(''); setOpen(true); }} />
-    <Sheet title={custom ? 'Custom repeat' : 'Repeat'} visible={open} onClose={close} onBack={() => { if (!busy) { if (custom) setCustom(false); else close(); } }}>
+    <Sheet title={custom ? 'Custom repeat' : 'Repeat'} visible={open} onClose={close} onBack={() => { if (!busy) { if (custom) setCustom(false); else close(); } }}
+      footer={custom ? <BottomActionBar><View style={{ flex: 1, gap: 8 }}>
+        {busy && <ActionFeedback loading message="Applying repeat…" />}{!!message && <ActionFeedback message={message} tone="danger" />}
+        <Button label={busy ? 'Applying…' : 'Apply repeat'} busy={busy} disabled={!valid || !preview.data || preview.isFetching || !!preview.error || !preview.data.upcoming.length} onPress={useRule} />
+        <Button label="Cancel changes" variant="neutral" disabled={busy} onPress={() => setCustom(false)} />
+      </View></BottomActionBar> : undefined}>
       <View pointerEvents={busy ? 'none' : 'auto'} importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
         accessibilityElementsHidden={busy} style={{ gap: 12 }}>
       {!custom ? <>
@@ -76,16 +90,16 @@ export function RepeatForm({ value, onChange, startMs, zoneId }: {
       </> : <>
         <SelectRow label="Frequency" value={rule.frequency} choices={Object.entries(repeatNames).map(([frequency, label]) => ({ value: frequency as RecurrenceDraft['frequency'], label }))}
           onChange={(frequency) => patch({ frequency })} />
-        <Field label={'Repeat every (' + unit + ')'} keyboardType="number-pad" value={numbers.interval} error={errors.interval}
+        <Field label={'Repeat every (' + unit + ')'} keyboardType="number-pad" value={numbers.interval} error={validation.interval}
           onChangeText={(interval) => setNumbers((current) => ({ ...current, interval }))} />
         {rule.frequency === 'weekly' && <><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
           {dayNames.map((name, index) => { const selected = rule.weekdays?.includes(index + 1) ?? false; return <Pressable key={name}
-            accessibilityRole="checkbox" accessibilityLabel={name} accessibilityState={{ checked: selected }}
+            accessibilityRole="checkbox" accessibilityLabel={name} aria-checked={selected} accessibilityState={{ checked: selected }}
             onPress={() => patch({ weekdays: selected ? rule.weekdays?.filter((day) => day !== index + 1) : [...(rule.weekdays ?? []), index + 1].sort() })}
             style={{ minWidth: 48, minHeight: 48, borderRadius: 24, padding: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? colors.accent : colors.soft }}>
-            <Text style={{ color: selected ? colors.accentInk : colors.ink, fontSize: 14 * scale }}>{name.slice(0, 2)}</Text></Pressable>; })}
-        </View>{errors.weekdays && <ActionFeedback message={errors.weekdays} tone="danger" />}</>}
-        {['monthlyDay', 'yearly'].includes(rule.frequency) && <Field label="Day of month" keyboardType="number-pad" value={numbers.day} error={errors.day}
+            {selected && <Icon name="check" size={14} color={colors.accentInk} />}<Text style={{ color: selected ? colors.accentInk : colors.ink, fontSize: 14 * scale }}>{name.slice(0, 2)}</Text></Pressable>; })}
+        </View>{validation.weekdays && <ActionFeedback message={validation.weekdays} tone="danger" />}</>}
+        {['monthlyDay', 'yearly'].includes(rule.frequency) && <Field label="Day of month" keyboardType="number-pad" value={numbers.day} error={validation.day}
           onChangeText={(day) => setNumbers((current) => ({ ...current, day }))} />}
         {rule.frequency === 'yearly' && <SelectRow label="Month" value={rule.month ?? base.month!}
           choices={Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Date(2024, index, 1).toLocaleString([], { month: 'long' }) }))}
@@ -96,20 +110,28 @@ export function RepeatForm({ value, onChange, startMs, zoneId }: {
         </>}
         <SelectRow label="Ends" value={rule.count != null ? 'count' : rule.until ? 'date' : 'never'} choices={[{ value: 'never', label: 'Never' }, { value: 'count', label: 'After a number of occurrences' }, { value: 'date', label: 'On a date' }]}
           onChange={(ending) => patch({ count: ending === 'count' ? Number(numbers.count) : undefined, until: ending === 'date' ? civilAt(startMs + 30 * 86_400_000, zone).slice(0, 10) : undefined })} />
-        {rule.count != null && <Field label="Number of occurrences" keyboardType="number-pad" value={numbers.count} error={errors.count}
+        {rule.count != null && <Field label="Number of occurrences" keyboardType="number-pad" value={numbers.count} error={validation.count}
           onChangeText={(count) => setNumbers((current) => ({ ...current, count }))} />}
         {rule.until && (endEpoch == null ? <Copy muted>Loading end date…</Copy> : <DateField label="End date" value={endEpoch} zoneId={customZone} dateOnly
           onError={setMessage} onChange={(ms) => patch({ until: civilAt(ms, customZone).slice(0, 10) })} />)}
-        {errors.until && <ActionFeedback message={errors.until} tone="danger" />}
+        {validation.until && <ActionFeedback message={validation.until} tone="danger" />}
         <Toggle label="Keep a specific time zone" value={rule.zoneMode === 'pinned'} onChange={(enabled) => {
           patch({ zoneMode: enabled ? 'pinned' : 'floating' }); if (!enabled) setCustomZone(deviceZone());
         }} />
         {rule.zoneMode === 'pinned' ? <TimeZoneField value={customZone} atMs={startMs} onChange={setCustomZone} /> : <Copy muted size={13}>Follows your device time zone when you travel.</Copy>}
         <Copy muted size={13}>Missing dates are skipped. Last weekday means Monday–Friday. Postponed alarms keep their chosen instant.</Copy>
-        <Button label="Apply repeat" onPress={useRule} />
-        <Button label="Cancel changes" variant="secondary" onPress={() => setCustom(false)} />
+        <Group title="Next dates">
+          {!valid ? <Copy muted>Correct the repeat fields to preview dates.</Copy> : preview.isFetching ? <ActionFeedback loading message="Previewing current rule…" /> : preview.error ?
+            <><ActionFeedback message="Could not preview this rule. Your draft is kept." tone="danger" /><Button label="Retry preview" variant="secondary" onPress={() => void preview.refetch()} /></> : preview.data && <>
+              <Copy muted size={14}>Informational native preview. Apply updates your draft; Save commits it.</Copy>
+              {preview.data.upcoming.map((slot) => <View key={slot.nominalSlot} style={{ padding: 12, gap: 4 }}><Copy>Event {formatTime(slot.eventStartMs, slot.zoneId)}</Copy>
+                <Copy muted size={14}>{previewDraft.mode === 'None' ? 'No alert' : 'Alert ' + formatTime(slot.alarmAtMs, slot.zoneId)}{slot.adjusted ? ' · Clock-change adjustment' : ''}</Copy></View>)}
+              {!preview.data.upcoming.length ? <Copy muted>No future dates. Review the ending and rule.</Copy> : preview.data.upcoming.length < 3 && <Copy muted>Fewer than three dates remain.</Copy>}
+              {preview.data.warnings.map((warning) => <ActionFeedback key={warning} message={warning} tone="warning" />)}
+            </>}
+        </Group>
       </>}
-      </View>{busy && <ActionFeedback loading message="Applying repeat…" />}{!!message && <ActionFeedback message={message} tone="danger" />}
+      </View>{!custom && busy && <ActionFeedback loading message="Applying repeat…" />}{!custom && !!message && <ActionFeedback message={message} tone="danger" />}
     </Sheet>
   </>;
 }

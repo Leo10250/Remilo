@@ -1,17 +1,84 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { BackHandler, Pressable, View } from 'react-native';
-import { rootKey, rootRoute, type RootDestination } from '../domain/navigation';
-import { Button, Choice, Copy, Field, Group, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar, type IconName } from './components';
+import { usePreventRemove } from 'expo-router/react-navigation';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { BackHandler, Keyboard, Pressable, Text, View } from 'react-native';
+import { originParams, rootRoute, type secondaryOriginRoute, type DestinationOrigin, type RootDestination } from '../domain/navigation';
+import { CapturedOperation } from '../domain/operation';
+import { ActionFeedback, Button, Choice, Copy, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
 import { dismissNotice, notify, useNotice, type Notice } from './feedback';
-import { apply, CommandError, engine, nativeAvailable, useCommand } from './native';
-import type { CommandResult, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { commandFeedback, restoreDeleted } from '../domain/actions';
-import { useTheme } from './theme';
+import { apply, CommandError, engine, nativeAvailable } from './native';
+import type { Command, CommandResult, ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { commandFeedback, restoreDeleted, type Tone } from '../domain/actions';
+import { useAppearanceHold, useFontScaleOverride, useTheme } from './theme';
+import { typography } from './tokens';
+import { useAppearanceConfirmation } from './confirmation';
 
-export function switchRoot(destination: RootDestination) { if (router.canDismiss()) router.dismissAll(); router.replace(rootRoute(destination)); }
-export function returnToOrigin(destination: RootDestination) { switchRoot(destination); }
+export function switchRoot(destination: RootDestination) { Keyboard.dismiss(); if (router.canDismiss()) router.dismissAll(); router.replace(rootRoute(destination)); }
+export function returnToOrigin(destination: DestinationOrigin) { Keyboard.dismiss(); router.dismissTo(rootRoute(destination)); }
+export function goBack(origin: DestinationOrigin, fallback?: ReturnType<typeof secondaryOriginRoute>) { Keyboard.dismiss(); if (router.canGoBack()) router.back(); else router.replace(fallback ?? rootRoute(origin)); }
+
+/** Navigation resolves mounted transient state before changing a root or origin. */
+export function useDestinationNavigation(destination: DestinationOrigin, beforeBack?: () => boolean, guarded = false, secondaryOrigin?: DestinationOrigin, secondaryFallback?: ReturnType<typeof secondaryOriginRoute>) {
+  const back = useCallback(() => {
+    if (guarded) return true;
+    if (Keyboard.isVisible()) { Keyboard.dismiss(); return true; }
+    if (beforeBack?.()) return true;
+    if (destination.kind === 'list' || secondaryOrigin) { goBack(secondaryOrigin ?? { kind: 'lists' }, secondaryFallback); return true; }
+    if (destination.kind !== 'agenda') { switchRoot({ kind: 'agenda' }); return true; }
+    return false;
+  }, [destination, beforeBack, guarded, secondaryOrigin, secondaryFallback]);
+  useFocusEffect(useCallback(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', back);
+    return () => subscription.remove();
+  }, [back]));
+  return back;
+}
+
+export function RootNavigation({ destination, disabled = false }: { destination: RootDestination['kind']; disabled?: boolean }) {
+  const colors = useTheme(), scale = useFontScaleOverride();
+  return <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
+    {([{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' }, { kind: 'repeats', label: 'Repeats', icon: 'repeat' }] as const).map((entry) => {
+      const selected = destination === entry.kind;
+      return <Pressable key={entry.kind} accessibilityRole="tab" accessibilityLabel={entry.label} aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled}
+        onPress={() => { if (!selected) switchRoot({ kind: entry.kind }); }} style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
+        <View style={{ paddingHorizontal: 20, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}>
+          <Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
+        <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
+      </Pressable>;
+    })}
+  </View>;
+}
+
+export type CapturedJob = { command: Command; success: string; item?: Occurrence };
+export function useCapturedCommand(onApplied?: (job: CapturedJob, result: CommandResult) => string | void) {
+  const confirm = useAppearanceConfirmation();
+  const client = useQueryClient(), applied = useRef(onApplied);
+  useEffect(() => { applied.current = onApplied; }, [onApplied]);
+  const [operation] = useState(() => new CapturedOperation<CapturedJob, CommandResult>((job) => apply(job.command), (error) => error instanceof CommandError));
+  const running = useRef(false), [busy, setBusy] = useState(false), [guarded, setGuarded] = useState(false);
+  useAppearanceHold(busy || guarded);
+  const [feedback, setFeedback] = useState<{ message: string; tone: Tone }>();
+  usePreventRemove(busy || guarded, () => confirm('Change not yet confirmed', 'Wait for this change, or retry the same change before leaving.'));
+  const execute = async (job: CapturedJob) => {
+    if (running.current) return;
+    running.current = true; setBusy(true); setGuarded(true); setFeedback(undefined);
+    const captured = operation.captured ?? job;
+    try {
+      const result = await operation.run(captured);
+      const success = applied.current?.(captured, result);
+      setFeedback(commandFeedback(result, success ?? captured.success));
+    } catch (error) { setFeedback({ message: error instanceof Error ? error.message : 'Could not confirm this change. Retry the same change.', tone: 'danger' }); }
+    finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
+  };
+  return { busy, guarded, feedback, execute, retry: () => { if (operation.captured) void execute(operation.captured); } };
+}
+export function CommandRecovery({ action }: { action: ReturnType<typeof useCapturedCommand> }) {
+  return <><ActionFeedback loading={action.busy} message={action.busy ? 'Applying change…' : action.feedback?.message} tone={action.feedback?.tone} />
+    {action.guarded && !action.busy && <><ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />
+      <Button label="Retry change" onPress={action.retry} /></>}</>;
+}
+
 export function notifyTrash(item: Occurrence, result: CommandResult) {
   const deleted = result.occurrence;
   notify({ message: 'Moved to Trash', ...(deleted?.id === item.id && deleted.deleted ? { action: { label: 'Undo', undoDelete: { id: item.id, revision: deleted.revision, operationId: engine().createOperationId() } } } : {}) });
@@ -31,83 +98,55 @@ export async function activateNotice(notice: Notice) {
   else if (notice.action?.segmentId) router.push({ pathname: '/series/[id]', params: { id: notice.action.segmentId } });
   dismissNotice(notice.id);
 }
-export function useBrowseNavigation(destination: RootDestination, beforeBack?: () => boolean) {
-  const [open, setOpen] = useState(false), key = rootKey(destination);
-  useFocusEffect(useCallback(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (open) { setOpen(false); return true; }
-      if (beforeBack?.()) return true;
-      if (key !== 'agenda') { switchRoot({ kind: 'agenda' }); return true; }
-      return false;
-    });
-    return () => subscription.remove();
-  }, [key, open, beforeBack]));
-  return { leading: <IconButton icon="menu" label="Browse Remilo" onPress={() => setOpen(true)} />,
-    overlay: <BrowseSheet destination={destination} visible={open} onClose={() => setOpen(false)} /> };
-}
-function BrowseSheet({ destination, visible, onClose }: { destination: RootDestination; visible: boolean; onClose: () => void }) {
-  const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable }), colors = useTheme();
-  const [creating, setCreating] = useState(false), [guarded, setGuarded] = useState(false);
-  const close = () => { if (guarded) return; if (creating) setCreating(false); else onClose(); };
-  const item = (label: string, target: RootDestination, icon: IconName, count?: number) => {
-    const selected = rootKey(destination) === rootKey(target);
-    const countLabel = count ? `${count} overdue occurrence${count === 1 ? '' : 's'}` : '';
-    return <Pressable key={rootKey(target)} accessibilityRole="button" accessibilityLabel={label + (countLabel ? ', ' + countLabel : '')}
-      accessibilityState={{ selected }} onPress={() => { onClose(); if (!selected) switchRoot(target); }}
-      style={({ pressed }) => ({ minHeight: 56, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: selected || pressed ? colors.soft : 'transparent' })}>
-      <Icon name={icon} color={selected ? colors.accent : colors.muted} /><View style={{ flex: 1 }}><Copy>{label}</Copy></View>
-      {!!countLabel && <View style={{ maxWidth: '45%', flexShrink: 1 }}><Copy muted size={14}>{countLabel}</Copy></View>}{selected && <Icon name="check" color={colors.accent} size={20} />}
-    </Pressable>;
-  };
-  return <Sheet title={creating ? 'Create list' : 'Browse'} visible={visible} onClose={close}>
-    {creating ? <ListNameForm onGuardChange={setGuarded} onCancel={() => setCreating(false)} onSaved={(id) => { setCreating(false); onClose(); switchRoot({ kind: 'list', listId: id }); }} /> : <>
-    <Group title="Reminders">{item('Agenda', { kind: 'agenda' }, 'event')}{item('Repeats', { kind: 'repeats' }, 'repeat')}</Group>
-    <Group title="Lists">{item('No list', { kind: 'list', listId: null }, 'checklist')}
-      <QueryState loading={lists.isLoading && nativeAvailable} error={lists.error} onRetry={() => void lists.refetch()} />
-      {lists.data?.map((list) => item(list.name, { kind: 'list', listId: list.id }, 'checklist', list.overdueCount))}
-      <SettingRow label="Create list" icon="add" onPress={() => setCreating(true)} />
-      <SettingRow label="Manage lists" icon="edit" onPress={() => { onClose(); router.push('/lists'); }} />
-    </Group>
-    <Group title="History">{item('Completed', { kind: 'completed' }, 'check_circle')}{item('Trash', { kind: 'trash' }, 'delete')}</Group>
-    <Group><SettingRow label="Settings" icon="settings" onPress={() => { onClose(); router.push('/settings'); }} /></Group></>}
-  </Sheet>;
-}
-export function RootNotice() {
+export function RootNotice({ disabled = false }: { disabled?: boolean } = {}) {
   const notice = useNotice(), client = useQueryClient();
   if (!notice) return null;
-  return <Snackbar message={notice.message} action={notice.action?.label} persistent={notice.persistent}
-    onAction={() => { void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
+  return <Snackbar message={notice.message} action={notice.action?.label} persistent={notice.persistent || disabled} actionDisabled={disabled}
+    onAction={() => { if (!disabled) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
     onClose={() => dismissNotice(notice.id)} />;
 }
+
+export function RootMore({ origin, disabled = false, extra, listActions }: { origin: DestinationOrigin; disabled?: boolean; extra?: ReactNode; listActions?: { rename: () => void; remove: () => void } }) {
+  const [open, setOpen] = useState(false);
+  const close = () => { Keyboard.dismiss(); setOpen(false); };
+  const record = (view: 'completed' | 'deleted') => { close(); router.push({ pathname: '/records', params: { view, ...originParams(origin) } }); };
+  return <><IconButton icon="more_vert" label="More destinations" disabled={disabled} onPress={() => { Keyboard.dismiss(); setOpen(true); }} />
+    <Sheet title="More" visible={open} onClose={close}>
+      <SettingRow label={origin.kind === 'list' ? 'Completed in this list' : 'Completed'} icon="check_circle" onPress={() => record('completed')} />
+      <SettingRow label={origin.kind === 'list' ? 'Trash in this list' : 'Trash'} icon="delete" onPress={() => record('deleted')} />
+      {extra}
+      {listActions && <><SettingRow label="Rename list" icon="edit" onPress={() => { close(); listActions.rename(); }} />
+        <SettingRow label="Remove list" icon="delete" onPress={() => { close(); listActions.remove(); }} /></>}
+      {origin.kind === 'lists' && <SettingRow label="Manage lists" icon="edit" onPress={() => { close(); router.push({ pathname: '/lists/manage', params: originParams(origin) }); }} />}
+      <SettingRow label="Settings" icon="settings" onPress={() => { close(); router.push({ pathname: '/settings', params: originParams(origin) }); }} />
+    </Sheet></>;
+}
+
+export function ListNameSheet({ visible, list, onSaved, onClose, onGuardChange }: { visible: boolean; list?: ListRecord; onSaved: (id: string) => void; onClose: () => void; onGuardChange?: (guarded: boolean) => void }) {
+  const [name, setName] = useState(list?.name ?? '');
+  const action = useCapturedCommand((_job, result) => { if (result.list) onSaved(result.list.id); });
+  useEffect(() => { onGuardChange?.(action.guarded); return () => onGuardChange?.(false); }, [action.guarded, onGuardChange]);
+  const save = () => void action.execute({ command: list ? { kind: 'RenameList', listId: list.id, name, expectedRevision: list.revision, operationId: engine().createOperationId() }
+    : { kind: 'CreateList', name, operationId: engine().createOperationId() }, success: 'List saved.' });
+  const title = list ? 'Rename list' : 'Create list';
+  return <Sheet title={title} visible={visible} onClose={() => { if (!action.guarded) onClose(); }} footer={<View style={{ padding: 16, gap: 8 }}>
+    <ActionFeedback message={action.feedback?.message} tone={action.feedback?.tone} />
+    {action.guarded && !action.busy && <Copy muted size={14}>Save not confirmed. Retry the same save before leaving.</Copy>}
+    <Button label={action.busy ? 'Saving…' : action.guarded ? 'Retry save' : title} disabled={action.busy || !name.trim()} onPress={action.guarded ? action.retry : save} />
+    <Button label="Cancel" variant="secondary" disabled={action.guarded} onPress={onClose} />
+  </View>}><Field label="List name" autoFocus value={name} onChangeText={setName} maxLength={60} editable={!action.guarded} error={action.guarded ? undefined : action.feedback?.tone === 'danger' ? action.feedback.message : undefined} /></Sheet>;
+}
+
 export function ListPicker({ value, onChange, disabled = false }: { value: string | null; onChange: (id: string | null) => void; disabled?: boolean }) {
   const query = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
-  const [open, setOpen] = useState(false), [create, setCreate] = useState(false), [guarded, setGuarded] = useState(false);
+  const [open, setOpen] = useState(false), [create, setCreate] = useState(false);
   return <><SettingRow label="List" icon="checklist" value={value === null ? 'No list' : query.data?.find((list) => list.id === value)?.name ?? 'List unavailable'} onPress={() => setOpen(true)} disabled={disabled} />
-    <Sheet title={create ? 'Create list' : 'Choose list'} visible={open} onClose={() => { if (!guarded) { if (create) setCreate(false); else setOpen(false); } }}>
-      {create ? <ListNameForm onGuardChange={setGuarded} onCancel={() => setCreate(false)} onSaved={(id) => { onChange(id); setCreate(false); setOpen(false); }} /> : <>
-        <Choice label="No list" selected={value === null} onPress={() => { onChange(null); setOpen(false); }} />
-        <QueryState loading={query.isLoading} error={query.error} onRetry={() => void query.refetch()} />
-        {query.data?.map((list) => <Choice key={list.id} label={list.name} selected={value === list.id} onPress={() => { onChange(list.id); setOpen(false); }} />)}
-        <Button label="Create new list" icon="add" variant="secondary" onPress={() => setCreate(true)} />
-      </>}
+    <Sheet title="Choose list" visible={open && !create} onClose={() => setOpen(false)}>
+      <Choice label="No list" selected={value === null} onPress={() => { onChange(null); setOpen(false); }} />
+      <QueryState loading={query.isLoading} error={query.error} onRetry={() => void query.refetch()} />
+      {query.data?.map((list) => <Choice key={list.id} label={list.name} selected={value === list.id} onPress={() => { onChange(list.id); setOpen(false); }} />)}
+      <Button label="Create new list" icon="add" variant="secondary" onPress={() => setCreate(true)} />
     </Sheet>
-  </>;
-}
-export function ListNameForm({ list, onSaved, onCancel, onGuardChange }: { list?: { id: string; name: string; revision: number }; onSaved: (id: string) => void; onCancel: () => void; onGuardChange?: (guarded: boolean) => void }) {
-  const [name, setName] = useState(list?.name ?? ''), [error, setError] = useState('');
-  const [job, setJob] = useState<Parameters<ReturnType<typeof engine>['applyCommand']>[0]>();
-  const command = useCommand();
-  useEffect(() => { onGuardChange?.(!!job); return () => onGuardChange?.(false); }, [job, onGuardChange]);
-  const save = async () => {
-    const operation = job ?? (list ? { kind: 'RenameList' as const, listId: list.id, name, expectedRevision: list.revision, operationId: engine().createOperationId() }
-      : { kind: 'CreateList' as const, name, operationId: engine().createOperationId() });
-    setJob(operation); setError('');
-    try { const result = await command.mutateAsync(operation); setJob(undefined); if (result.list) onSaved(result.list.id); }
-    catch (failure) { if (failure instanceof CommandError) setJob(undefined); setError(failure instanceof Error ? failure.message : 'Could not save this list. Retry the same save.'); }
-  };
-  return <><Field label="List name" autoFocus value={name} onChangeText={setName} maxLength={60} editable={!job} error={error} />
-    <Button label={command.isPending ? 'Saving…' : job ? 'Retry save' : list ? 'Rename list' : 'Create list'} disabled={command.isPending || !name.trim()} onPress={() => void save()} />
-    <Button label="Cancel" variant="secondary" disabled={!!job} onPress={onCancel} />
-    {!!job && !command.isPending && <Copy muted size={14}>The save is unconfirmed. Retry to confirm it before leaving.</Copy>}
+    {create && <ListNameSheet visible onClose={() => setCreate(false)} onSaved={(id) => { onChange(id); setCreate(false); setOpen(false); }} />}
   </>;
 }
