@@ -35,7 +35,7 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("getOccurrence") { id: String, promise: Promise -> dispatch(promise) { it.occurrence(id) } }
     AsyncFunction("previewSchedule") { draft: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.preview(draft) } }
     AsyncFunction("applyCommand") { command: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.apply(command) } }
-    AsyncFunction("scheduleTestAlarm") { promise: Promise -> dispatch(promise) { it.testAlarm() } }
+    AsyncFunction("scheduleTestAlarm") { operationId: String, promise: Promise -> dispatch(promise) { it.testAlarm(operationId) } }
     AsyncFunction("getSettings") { promise: Promise -> dispatch(promise) { it.settings() } }
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("queryLists") { promise: Promise -> dispatch(promise) { it.lists() } }

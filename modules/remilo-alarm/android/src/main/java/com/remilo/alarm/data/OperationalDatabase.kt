@@ -25,7 +25,12 @@ data class SeriesPlan(@PrimaryKey val id: String, val rule: String, val state: S
 data class SessionRecord(@PrimaryKey val id: String, val state: String,
   val startedElapsedMs: Long = 0, val deadlineElapsedMs: Long = 0,
   @ColumnInfo(defaultValue = "'remilo'") val sound: String = "remilo",
-  @ColumnInfo(defaultValue = "0") val vibration: Boolean = false)
+  @ColumnInfo(defaultValue = "0") val vibration: Boolean = false,
+  @ColumnInfo(defaultValue = "NULL") val resolvedAtmosphere: String? = null,
+  @ColumnInfo(defaultValue = "NULL") val resolvedBrightness: String? = null)
+/** Allowlist: global enum preferences only. No arbitrary settings/content blobs. */
+@Entity(tableName = "appearance_preferences")
+data class AppearanceRecord(@PrimaryKey val id: String = "app", val atmosphere: String = "automatic", val theme: String = "system")
 @Entity(tableName = "actions")
 data class ActionRecord(@PrimaryKey val operationId: String, val occurrenceId: String,
   val kind: String, val occurredAtMs: Long, val generation: Long,
@@ -40,20 +45,29 @@ data class ActionRecord(@PrimaryKey val operationId: String, val occurrenceId: S
   @Query("SELECT * FROM sessions WHERE state IN ('Starting','Active') LIMIT 1") fun activeSession(): SessionRecord?
   @Query("SELECT * FROM sessions WHERE id = :id") fun session(id: String): SessionRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun session(record: SessionRecord)
+  @Query("SELECT * FROM appearance_preferences WHERE id = 'app'") fun appearance(): AppearanceRecord?
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun appearance(record: AppearanceRecord)
   @Query("SELECT * FROM alerts WHERE sessionId = :id AND state = 'Alerting'") fun members(id: String): List<AlertRecord>
   @Query("SELECT * FROM actions") fun actions(): List<ActionRecord>
   @Query("SELECT * FROM actions WHERE operationId = :id") fun action(id: String): ActionRecord?
   @Insert(onConflict = OnConflictStrategy.IGNORE) fun action(record: ActionRecord)
   @Query("DELETE FROM actions WHERE operationId = :id") fun acknowledge(id: String)
 }
-@Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class],
-  version = 3, exportSchema = true)
+@Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class],
+  version = 4, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS appearance_preferences (id TEXT NOT NULL PRIMARY KEY, atmosphere TEXT NOT NULL, theme TEXT NOT NULL)")
+        db.execSQL("ALTER TABLE sessions ADD COLUMN resolvedAtmosphere TEXT DEFAULT NULL")
+        db.execSQL("ALTER TABLE sessions ADD COLUMN resolvedBrightness TEXT DEFAULT NULL")
+      }
+    }
     val MIGRATION_2_3 = object : Migration(2, 3) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE alerts ADD COLUMN segmentId TEXT DEFAULT NULL")

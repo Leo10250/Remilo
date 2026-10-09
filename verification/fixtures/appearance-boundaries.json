@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    { "label": "midnight", "instant": "2026-10-09T07:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "before sunrise", "instant": "2026-10-09T12:59:59Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "sunrise inclusive", "instant": "2026-10-09T13:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "sunrise" },
+    { "label": "before sky", "instant": "2026-10-09T16:59:59Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "sunrise" },
+    { "label": "sky inclusive", "instant": "2026-10-09T17:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "sky" },
+    { "label": "before evening", "instant": "2026-10-09T23:59:59Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "sky" },
+    { "label": "evening inclusive", "instant": "2026-10-10T00:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "evening" },
+    { "label": "before night", "instant": "2026-10-10T03:59:59Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "evening" },
+    { "label": "night inclusive", "instant": "2026-10-10T04:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "before midnight", "instant": "2026-10-10T06:59:59Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "missing uses automatic", "instant": "2026-10-09T13:00:00Z", "zone": "America/Los_Angeles", "selection": null, "expected": "sunrise" },
+    { "label": "unknown uses automatic", "instant": "2026-10-09T17:00:00Z", "zone": "America/Los_Angeles", "selection": "retired", "expected": "sky" },
+    { "label": "manual sunrise at night", "instant": "2026-10-10T04:00:00Z", "zone": "America/Los_Angeles", "selection": "sunrise", "expected": "sunrise" },
+    { "label": "manual sky at night", "instant": "2026-10-10T04:00:00Z", "zone": "America/Los_Angeles", "selection": "sky", "expected": "sky" },
+    { "label": "manual evening at dawn", "instant": "2026-10-09T13:00:00Z", "zone": "America/Los_Angeles", "selection": "evening", "expected": "evening" },
+    { "label": "manual night at midday", "instant": "2026-10-09T19:00:00Z", "zone": "America/Los_Angeles", "selection": "night", "expected": "night" },
+    { "label": "before DST gap", "instant": "2027-03-14T09:59:59Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "after DST gap", "instant": "2027-03-14T10:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "first DST fold", "instant": "2026-11-01T08:30:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "second DST fold", "instant": "2026-11-01T09:30:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "night" },
+    { "label": "travel west coast", "instant": "2026-10-09T16:00:00Z", "zone": "America/Los_Angeles", "selection": "automatic", "expected": "sunrise" },
+    { "label": "travel east coast", "instant": "2026-10-09T16:00:00Z", "zone": "America/New_York", "selection": "automatic", "expected": "sky" },
+    { "label": "travel Shanghai", "instant": "2026-10-09T16:00:00Z", "zone": "Asia/Shanghai", "selection": "automatic", "expected": "night" }
+  ]
+}

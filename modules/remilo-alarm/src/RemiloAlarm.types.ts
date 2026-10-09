@@ -22,7 +22,7 @@ export type Occurrence = ResolvedReminderDraft & {
   alertAdjustment?: 'Snoozed' | 'Postponed' | null;
   collectionAtMs?: number;
 };
-export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listId?: string | null; listName?: string; deliveryIssuesOnly?: boolean; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
+export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listId?: string | null; listName?: string; deliveryIssuesOnly?: boolean; overdueOnly?: boolean; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
 export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
 export type CreateCommand = ReminderDraft & { kind: 'Create'; operationId: string; alarmAtMs?: number };
 export type DeliveryCommand = {
@@ -31,9 +31,10 @@ export type DeliveryCommand = {
 export type ContentCommand = Partial<ReminderDraft> & {
   kind: 'Edit' | 'Done' | 'Reopen' | 'Delete' | 'UndoDelete' | 'Skip'; operationId: string; occurrenceId: string; expectedRevision: number;
 };
+export type AtmosphereSelection = 'automatic' | 'sunrise' | 'sky' | 'evening' | 'night';
 export type AppSettings = {
   revision: number; snoozeMinutes: number; tomorrowMorning: number; tomorrowAfternoon: number;
-  tomorrowEvening: number; sound: 'remilo' | 'system'; vibration: boolean; theme: 'system' | 'light' | 'dark';
+  tomorrowEvening: number; sound: 'remilo' | 'system'; vibration: boolean; theme: 'system' | 'light' | 'dark'; atmosphere: AtmosphereSelection;
 };
 export type RecurrenceDraft = {
   frequency: 'daily' | 'weekly' | 'monthlyDay' | 'monthlyOrdinal' | 'lastWeekday' | 'yearly';

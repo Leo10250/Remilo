@@ -29,15 +29,18 @@ class AlarmNotifications(private val context: Context) {
     })
   }
   fun ringing(sessionId: String, members: List<Pair<AlertRecord, String>>): Notification {
+    return ringingVariant(sessionId, members, false)
+  }
+  private fun ringingVariant(sessionId: String, members: List<Pair<AlertRecord, String>>, public: Boolean): Notification {
     require(members.isNotEmpty()) { "Ringing notifications need actionable members" }
     val open = PendingIntent.getActivity(context, 0,
       Intent(context, AlarmActivity::class.java).setData(Uri.parse("remilo-alarm://session/$sessionId"))
         .putExtra("sessionId", sessionId), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     val builder = Notification.Builder(context, RINGING_CHANNEL)
-      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(if (members.size == 1) members.first().second else "${members.size} reminders ringing")
+      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(if (members.size == 1) if (public) "Reminder" else members.first().second else "${members.size} reminders ringing")
       .setContentText("Remilo · alarm ringing")
       .setCategory(Notification.CATEGORY_ALARM).setOngoing(true).setOnlyAlertOnce(true)
-      .setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(open)
+      .setVisibility(if (public) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE).setContentIntent(open)
     if (manager.canUseFullScreenIntent()) builder.setFullScreenIntent(open, true)
     if (members.size == 1) {
       val record = members.first().first
@@ -46,6 +49,7 @@ class AlarmNotifications(private val context: Context) {
     } else {
       builder.addAction(Notification.Action.Builder(null, "Stop all", AlarmScheduler.stopAll(context, sessionId)).build())
     }
+    if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, true))
     return builder.build()
   }
   fun update(sessionId: String, members: List<Pair<AlertRecord, String>>) {
@@ -64,10 +68,15 @@ class AlarmNotifications(private val context: Context) {
   }
   fun regular(record: AlertRecord, title: String) {
     if (!allowed()) return
+    val public = Notification.Builder(context, NOTIFICATION_CHANNEL)
+      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Reminder")
+      .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
+      .setVisibility(Notification.VISIBILITY_PUBLIC).setContentIntent(openReminder(record.occurrenceId))
+      .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build()).build()
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(title)
       .setContentText("Reminder due · tap to review").setCategory(Notification.CATEGORY_REMINDER)
-      .setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(openReminder(record.occurrenceId))
+      .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(public).setContentIntent(openReminder(record.occurrenceId))
       .addAction(Notification.Action.Builder(null, "Snooze ${record.snoozeMinutes} min", AlarmScheduler.action(context, "snooze", record)).build())
       .build())
   }

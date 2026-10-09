@@ -26,6 +26,10 @@ class MigrationTest {
       for (index in 0 until entities.length()) {
         val entity = entities.getJSONObject(index)
         db.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName")))
+        val indices = entity.optJSONArray("indices") ?: org.json.JSONArray()
+        for (indexIndex in 0 until indices.length()) {
+          db.execSQL(indices.getJSONObject(indexIndex).getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName")))
+        }
       }
       val setup = schema.getJSONArray("setupQueries")
       for (index in 0 until setup.length()) db.execSQL(setup.getString(index))
@@ -40,7 +44,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO history VALUES ('action', 'old', 'Snooze', 900, 3)")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-migration.db")
-      .allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_1_2, ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4).build()
+      .allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_1_2, ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5).build()
     try {
       val record = db.records().find("old")!!
       assertEquals("Migration probe", record.title)
@@ -58,7 +62,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO actions VALUES ('snooze', 'old', 'Snooze', 900, 3)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-migration.db")
-      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3).build()
+      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4).build()
     try {
       val alert = db.records().find("old")!!
       assertEquals(60000L, alert.targetMs)
@@ -76,7 +80,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO settings VALUES ('app',4,15,600,840,1020,'system',1,'dark','preferences')")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v2.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4).build()
+      .addMigrations(ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5).build()
     try {
       assertEquals(1800L, db.records().find("v2")!!.definedAlarmAtMs)
       assertEquals("Retained", db.records().find("v2")!!.notes)
@@ -91,7 +95,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,mode,sound,vibration,snoozeMinutes) VALUES ('v2',60000,9,'Scheduled','Alarm','system',1,15)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v2.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_2_3).build()
+      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4).build()
     try {
       val alert = db.records().find("v2")!!
       assertEquals(60000L, alert.targetMs); assertEquals(9L, alert.generation)
@@ -110,7 +114,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO series VALUES ('old','family',?,'{}',5,'Archived',500)", arrayOf(JSONObject(BackupCodec.record(spaced)).toString()))
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v3-lists.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_3_4).build()
+      .addMigrations(ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5).build()
     try {
       assertEquals(setOf("Work", "work", " Work "), db.records().lists().map { it.name }.toSet())
       assertEquals(3, db.records().lists().map { it.id }.toSet().size)
@@ -124,5 +128,41 @@ class MigrationTest {
       assertEquals(ListNames.legacyId("Work"), BackupCodec.decodeRecord(JSONObject(active.template)).listId)
       assertEquals(ListNames.legacyId(" Work "), BackupCodec.decodeRecord(JSONObject(archived.template)).listId)
     } finally { db.close(); context.deleteDatabase("content-v3-lists.db") }
+  }
+  @Test fun atmosphereUpgradePreservesBrightnessAndSettingReceiptWithoutTouchingContent() {
+    val context = RuntimeEnvironment.getApplication()
+    legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-v4-appearance.db", 4).use { db ->
+      db.execSQL("INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings')")
+      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision) VALUES ('old','Private',1000,2000,1500,500,0,7)")
+    }
+    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v4-appearance.db").allowMainThreadQueries()
+      .addMigrations(ContentDatabase.MIGRATION_4_5).build()
+    try {
+      val settings = db.records().settings()!!
+      assertEquals("automatic", settings.atmosphere); assertEquals("dark", settings.theme)
+      assertEquals(9L, settings.revision); assertEquals("saved-settings", settings.lastOperationId)
+      assertEquals(7L, db.records().find("old")!!.revision)
+    } finally { db.close(); context.deleteDatabase("content-v4-appearance.db") }
+  }
+  @Test fun appearanceProtectedUpgradeKeepsDeliveryAndDoesNotInventSessionCapture() {
+    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v3-appearance.db", 3).use { db ->
+      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,sessionId) VALUES ('old',60000,7,'Alerting','session')")
+      db.execSQL("INSERT INTO sessions VALUES ('session','Active',1000,301000,'system',1)")
+    }
+    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v3-appearance.db").allowMainThreadQueries()
+      .addMigrations(OperationalDatabase.MIGRATION_3_4).build()
+    try {
+      assertNull(db.records().appearance())
+      val session = db.records().activeSession()!!
+      assertNull(session.resolvedAtmosphere); assertNull(session.resolvedBrightness)
+      assertEquals(301000L, session.deadlineElapsedMs); assertEquals("system", session.sound)
+      assertEquals(7L, db.records().find("old")!!.generation); assertEquals(60000L, db.records().find("old")!!.targetMs)
+      val columns = mutableListOf<String>()
+      db.openHelper.readableDatabase.query("PRAGMA table_info(appearance_preferences)").use { cursor ->
+        while (cursor.moveToNext()) columns.add(cursor.getString(1))
+      }
+      assertEquals(listOf("id", "atmosphere", "theme"), columns)
+    } finally { db.close(); context.deleteDatabase("protected-v3-appearance.db") }
   }
 }
