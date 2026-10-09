@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Preferences } from './preferences';
 import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 const initial: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
-  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'system' };
+  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'system', atmosphere: 'automatic' };
 function fixture() {
   let saved = { ...initial }, count = 0;
   const applied = new Set<string>();
@@ -43,6 +43,16 @@ describe('serialized preference writes', () => {
     f.controller.retry(); await settled(f.controller);
     expect(f.write.mock.calls[0][0].operationId).toBe(f.write.mock.calls[1][0].operationId);
     expect(f.saved.theme).toBe('dark');
+  });
+  it('retains affected fields for contextual errors across subscriptions and clears them after acknowledgement', async () => {
+    const f = fixture(); f.write.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    f.controller.change({ atmosphere: 'night', snoozeMinutes: 15 }); await settled(f.controller);
+    const unsubscribe = f.controller.subscribe(() => {}); unsubscribe();
+    expect(f.controller.snapshot().fields).toEqual(['atmosphere', 'snoozeMinutes']);
+    expect(f.controller.snapshot().data).toMatchObject({ atmosphere: 'automatic', snoozeMinutes: 10 });
+    f.controller.retry(); await settled(f.controller);
+    expect(f.controller.snapshot().fields).toEqual([]);
+    expect(f.saved).toMatchObject({ atmosphere: 'night', snoozeMinutes: 15 });
   });
   it('recovers a lost acknowledgement without duplicating the saved operation', async () => {
     const f = fixture(); const actual = f.write.getMockImplementation()!;

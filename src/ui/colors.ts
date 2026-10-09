@@ -1,9 +1,23 @@
-export const palettes = {
-  light: { dark: false, background: '#F7F8FA', surface: '#FFFFFF', ink: '#18212F', muted: '#596475',
-    accent: '#245CD6', accentInk: '#FFFFFF', soft: '#EAF0FC', border: '#D7DEE8',
-    danger: '#B3261E', warning: '#805000', success: '#17683C' },
-  dark: { dark: true, background: '#101318', surface: '#1B2028', ink: '#F1F4F9', muted: '#ADB8C8',
-    accent: '#A9C5FF', accentInk: '#102B59', soft: '#253247', border: '#424D5E',
-    danger: '#FFB4AB', warning: '#F3CC83', success: '#87D5A3' },
+import { presentation } from './atmosphere.generated';
+import type { Atmosphere, Brightness } from '../domain/appearance';
+export type Colors = {
+  dark: boolean; background: string; surface: string; ink: string; muted: string;
+  accent: string; accentInk: string; soft: string; border: string; danger: string; warning: string; success: string;
 };
-export type Colors = typeof palettes.light;
+export function atmosphereColors(scene: Atmosphere, brightness: Brightness) {
+  const pair = presentation.pairs[`${scene}-${brightness}`], semantic = presentation.semantic[brightness];
+  const roles = { ...pair, ...semantic };
+  const alias = presentation.roleAliases;
+  return {
+    dark: brightness === 'dark', background: pair.canvas, surface: pair.surface, ink: pair.onSurface,
+    muted: pair.onSurfaceVariant, accent: pair.primary, accentInk: pair.onPrimary, soft: pair.container,
+    border: pair.outline, danger: semantic.error, warning: semantic.warning, success: semantic.success,
+    outline: pair.outline, focus: roles[alias.focus], primaryPressed: roles[alias.primaryPressed], onPrimaryPressed: roles[alias.onPrimaryPressed],
+    secondaryPressed: roles[alias.secondaryPressed], onSecondaryPressed: roles[alias.onSecondaryPressed],
+    disabledSurface: semantic.disabledSurface, disabledInk: semantic.disabledInk,
+    selectedSurface: roles[alias.selectedSurface], selectedInk: roles[alias.selectedInk],
+    inverseSurface: semantic.inverseSurface, inverseInk: semantic.inverseInk, inverseAction: semantic.inverseAction,
+    dangerSurface: roles[alias.dangerSurface], dangerInk: roles[alias.dangerInk],
+  };
+}
+export const palettes = { light: atmosphereColors('sky', 'light'), dark: atmosphereColors('sky', 'dark') };
