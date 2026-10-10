@@ -74,7 +74,7 @@ export function useCapturedCommand(onApplied?: (job: CapturedJob, result: Comman
     } catch (error) { setFeedback({ message: error instanceof Error ? error.message : 'Could not confirm this change. Retry the same change.', tone: 'danger' }); }
     finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
   };
-  return { busy, guarded, feedback, execute, retry: () => { if (operation.captured) void execute(operation.captured); } };
+  return { busy, guarded, feedback, execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
 }
 export function CommandRecovery({ action }: { action: ReturnType<typeof useCapturedCommand> }) {
   return <><ActionFeedback loading={action.busy} message={action.busy ? 'Applying change…' : action.feedback?.message} tone={action.feedback?.tone} />

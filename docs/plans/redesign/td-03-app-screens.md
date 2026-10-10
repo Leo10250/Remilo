@@ -17,6 +17,14 @@ Apply the approved page contracts and correction notes to Agenda, Lists, Repeats
 
 ## Implementation
 
+- Implement the [10 October UX refinement](../../design/current/ux-refinement.md):
+  focused blank creation/keyboard handoff, one alert-time control, schedule-only
+  preview, ephemeral All day restoration; alert-first conditional Details and
+  truthful compact card timing/full spoken dates; Apply/Cancel filters and skipped
+  chip/reset; reorganized Settings, compact alarm-check route, clock shortcuts and
+  concise backup/repeat/Trash copy. Preserve captured retries, fixed scope,
+  publication context, native authority and existing artwork.
+
 - Apply the [alert experience correction](../../design/current/alert-experience.md): inline mode choices, original-alert/No alert overdue, compact statuses, one ringing Details Done and shared terminal keylines/borderless More. Preserve selection-only checkboxes, supported menus, IME/draft guards and history truth.
 
 - Adopt Agenda / Lists / Completed / Trash roots, with Repeats secondary to Lists and secondary invoking-origin navigation. Preserve queries, filters, scroll and IME Back precedence.

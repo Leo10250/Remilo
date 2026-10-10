@@ -576,6 +576,39 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 
 ## Results and remaining engineering checks
 
+### UX refinement additions — U27–U31 (pending)
+
+Use one identified signed bundled build; record APK/source identity, device/OS,
+conditions and observer. These are new observations, not inferred from earlier
+G1–G3 attestation or web/host results. The deferred consolidated run remains.
+
+- **U27 — keyboard handoff:** blank create focuses Title once; edit/duplicate
+  start closed. First-tap Save works above IME. Success/discard closes keyboard
+  before returning. Restored Agenda/Completed/Trash search keeps text/filters
+  without reopening keyboard. Explicit Search/text tap focuses normally. Long
+  Title grows to three lines then scrolls; 200% English/Chinese/IME composition,
+  Notes caret, validation, Done and hardware Back remain usable.
+- **U28 — timing:** review exactly one Alarm/Notification control and Event time
+  label. Test All day round trips, linked/independent fields, changed date/zone,
+  relink and initial-all-day 9 AM/30-minute fallback without advancing tomorrow.
+  Cancel native pickers keeps old values. Check DST cases and stale-review choices.
+- **U29 — filters:** Apply/Cancel/close/backdrop/Back; unchanged Apply retains exact
+  scroll/pages. Changed criteria caps at covered-art boundary without remount.
+  Show skipped chip/removal/reset and list/search independence; fixed list scope
+  cannot broaden. Selection/pending/unknown actions disable competing filters.
+- **U30 — timing and accessibility:** original/current/intended/previous alert
+  meaning, conditional Details Event/Due, overdue postponed target, terminal dates,
+  Ringing precedence and complete TalkBack dates. Check row Open/Done/More focus
+  order, long press, menu return focus, targets, landscape and reduced motion.
+- **U31 — settings:** permission return/recheck/stale reads and channel disclosure;
+  direct Android-settings handoff; Test In 15 seconds and same-test unknown retry
+  with Back guard; sound preview; failed preference recovery after closing a sheet;
+  Tomorrow clocks at midnight/23:59 and zone/DST changes without altering stored
+  minutes; automatic scene boundaries/Now and independent color-mode changes.
+
+No installation, distribution, Calendar repair or audible-delivery pass is implied
+by completing the implementation. Calendar load-view error remains separate.
+
 Send one report with `A1 pass; B4 fail — expected…, observed…; C2 unavailable…`.
 Include version/device, conditions, and measured start/end times where relevant.
 Screenshots are optional; keep unrelated notifications and private content out.

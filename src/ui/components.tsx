@@ -1,7 +1,7 @@
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type Ref } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PresentationProvider, useAppearanceHold, useAtmosphere, useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
@@ -112,8 +112,9 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
 export function Card({ children }: PropsWithChildren) {
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
-export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
+export function Field({ label, error, inputRef, compactMultiline = false, ...props }: TextInputProps & { label: string; error?: string; inputRef?: Ref<TextInput>; compactMultiline?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
+  const { fontScale } = useWindowDimensions();
   const foundation = useFoundationStyle(), [focused, setFocused] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const wrapper = useRef<View>(null), reveal = useRevealInput();
@@ -124,12 +125,14 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
     setContentHeight(Math.ceil(event.nativeEvent.contentSize.height) + 2);
     onContentSizeChange?.(event);
   }, [onContentSizeChange]);
-  return <View ref={wrapper} style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput accessibilityLabel={label}
+  const titleHeight = Math.max(48, Math.min(contentHeight || 48, typography.body * scale * fontScale * 1.4 * 3 + 22));
+  return <View ref={wrapper} style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput ref={inputRef} accessibilityLabel={label}
     placeholderTextColor={colors.muted} selectionColor={colors.accent} cursorColor={colors.accent} {...props}
-    onContentSizeChange={foundation && props.multiline ? resize : props.onContentSizeChange}
+    onContentSizeChange={props.multiline && (foundation || compactMultiline) ? resize : props.onContentSizeChange}
     onFocus={event => { setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
       borderRadius: foundation?.tokens.shape.field ?? shape.field,
-      backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
+      backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: compactMultiline ? 48 : props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
+      ...(compactMultiline ? { height: titleHeight, lineHeight: typography.body * scale * 1.4 } : {}),
       fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
@@ -160,11 +163,11 @@ export function Group({ title, children }: PropsWithChildren<{ title?: string }>
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 
-export function InformationRow({ label, value, supporting, icon, onPress }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void }) {
+export function InformationRow({ label, value, supporting, icon, onPress, prominent = false }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void; prominent?: boolean }) {
   const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
   const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
     <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
-    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
+    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy size={prominent ? typography.title : typography.body}>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
     {onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={[label, value, supporting].filter(Boolean).join(', ')} onPress={onPress}
@@ -326,8 +329,8 @@ export function AtmosphericHeader({ title, home = false, subtitle, actions, lead
     </View>}
   </View>;
 }
-export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, header, compact = false }: PropsWithChildren<{
-  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; header?: ReactNode; compact?: boolean;
+export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, scrollResetToken, header, compact = false }: PropsWithChildren<{
+  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; scrollResetToken?: number; header?: ReactNode; compact?: boolean;
 }>) {
   const colors = useTheme(), chrome = usePageChrome(scrollKey,compact);
   return <SafeAreaView edges={['top','left','right']} style={{ flex: 1, backgroundColor: colors.background }}>
@@ -335,7 +338,7 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
       <View pointerEvents="box-none" style={{position:'absolute',top:0,left:0,right:0,height:chrome.opening}}>
         {header ?? <AtmosphericHeader title={title} back={back} actions={actions} onBack={onBack} leading={leading} />}
       </View>
-      <View pointerEvents="box-none" style={{flex:1,paddingTop:chrome.toolbar}}><FormViewport footer={footer} scrollKey={scrollKey} scrollReady={scrollReady} contentStyle={styles.page}>
+      <View pointerEvents="box-none" style={{flex:1,paddingTop:chrome.toolbar}}><FormViewport footer={footer} scrollKey={scrollKey} scrollReady={scrollReady} scrollResetToken={scrollResetToken} contentStyle={styles.page}>
         {subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}
       </FormViewport></View>
     </View></ScrollChromeProvider>

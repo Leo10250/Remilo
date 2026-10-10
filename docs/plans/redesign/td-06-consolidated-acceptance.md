@@ -17,6 +17,12 @@ Verify the integrated time-of-day redesign without weakening existing native rel
 
 ## Implementation
 
+- Include [UX-13–18 refinement](../../design/current/ux-refinement.md) active-source
+  domain tests and eight-pair/360 dp/landscape/200% English-Chinese/reduced-motion
+  fixtures. Add U27–U31 for actual IME/search handoff, All day/picker Cancel,
+  filter guards/scroll, TalkBack card/menu and permission/Test/preference recovery.
+  Host/browser checks leave those signed-device observations pending.
+
 - Include the [alert experience correction](../../design/current/alert-experience.md): original-alert/No alert boundaries and query pagination, native Done/Notification/group exact retries, current duration changes, terminal-card/inline-selector rendering and signed-phone pre-unlock completion. Keep physical results pending until observed.
 
 - Close current correction/remaining-review decisions and validate all four themes in Light/Dark plus System brightness behavior.

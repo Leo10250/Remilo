@@ -1,5 +1,10 @@
 # Reminder details and editor
 
+The [10 October UX refinement](../ux-refinement.md) supersedes earlier hierarchy,
+preview, all-day transitions and keyboard handoff below. Details leads with alert
+time; Event/Due are conditional. The editor has one main alert-time picker and
+schedule-only preview; its ephemeral timed snapshot preserves All day round trips.
+
 The [alert experience correction](../alert-experience.md) supersedes action/timing
 and selector treatment in the retained reference annotations below. Original alert
 determines Alarm/Notification overdue; No alert uses When/end of its all-day date.

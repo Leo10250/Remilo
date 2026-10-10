@@ -1,5 +1,9 @@
 # Agenda and navigation
 
+The [10 October UX refinement](../ux-refinement.md) supersedes earlier card copy,
+search focus, filter application/reset and overflow-menu requirements below.
+Filters are transactional Apply/Cancel drafts; restored Search never autofocuses.
+
 The [eight R3 homepage references](../../remilo-r3-atmospheres/gallery.html) are the
 accepted visual basis. Apply [shared roles and geometry](../visual-language.md)
 and [global appearance](../appearance-policy.md); exact PNG dimensions/tints are

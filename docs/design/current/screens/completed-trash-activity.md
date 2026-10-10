@@ -1,5 +1,10 @@
 # Completed, Trash and Activity
 
+The [10 October UX refinement](../ux-refinement.md) governs transactional filters,
+Show skipped inside Filters, compact original-alert timing, menu cleanup and
+one-sentence Trash retention copy. Earlier Include skipped/top-switch/View menu
+annotations are superseded; composition approval and physical gates remain.
+
 Revision 5 · 9 October 2026 · **Runtime composition 05 approved for implementation.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
