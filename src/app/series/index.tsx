@@ -32,7 +32,7 @@ export default function Repeats() {
       emptyMessage={!nativeAvailable ? 'Use the Android app to manage repeats.' : `No ${state.toLowerCase()} repeats.`} onRetry={() => void query.refetch()} />
     {!!items.length && <View style={{ gap: 12 }}>{items.map((family) => {
       const next = family.upcoming[0], series = family.current;
-      const nextLabel = next ? (state === 'Paused' ? 'Planned ' : 'Next ') + shortDateTime(next.alarmAtMs, series.rule.zoneId ?? undefined) : state === 'Ended' ? 'No ordinary future dates' : '';
+      const nextLabel = next ? (state === 'Paused' ? 'Planned ' : 'Next ') + shortDateTime(next.alarmAtMs, series.rule.zoneId ?? undefined) : state === 'Ended' ? 'No new dates remain' : '';
       return <Pressable key={family.seriesId} accessibilityRole="button" accessibilityLabel={[series.template.title, repeatLabel(series.rule), nextLabel, `${family.unfinishedCount} unfinished occurrences`].filter(Boolean).join('. ')}
         onPress={() => router.push({ pathname: '/series/[id]', params: { id: series.id, seriesId: family.seriesId, ...originParams({ kind: 'repeats' }) } })}
         style={({ pressed }) => ({ minHeight: 72, padding: 16, borderRadius: 16, backgroundColor: colors.surface, flexDirection: 'row', gap: 12, alignItems: 'center', opacity: pressed ? 0.8 : 1 })}>
@@ -44,6 +44,6 @@ export default function Repeats() {
         </View><Icon name="chevron_right" />
       </Pressable>;
     })}</View>}
-    {state !== 'Active' && <Copy muted size={14}>{state === 'Paused' ? 'Planned dates have no ordinary alerts while this repeat is paused.' : 'This repeat has no ordinary future dates.'} Unfinished occurrences and independently scheduled exceptions remain actionable in Agenda.</Copy>}
+    {state !== 'Active' && <Copy muted size={14}>{state === 'Paused' ? 'Repeat alerts are paused.' : 'No new dates remain.'} Unfinished reminders remain in Agenda. Alerts changed for individual dates may still ring.</Copy>}
   </Page>;
 }

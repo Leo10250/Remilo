@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { agendaAlertPresentation, alertPresentation, calendarDate, canAdjustAlert, deliveryExplanation, eventRange, nextAlertTime, ordinaryDue, overduePresentation, recordedCompletionTime, reminderBrowsingPresentation, repeatSummary, scheduleDateTime, scheduleNeedsDetails, stateIcon, stateLabel, type ScheduleItem } from './presentation';
+import { agendaAlertPresentation, alertPresentation, calendarDate, canAdjustAlert, cardTimingPresentation, detailSchedulePresentation, deliveryExplanation, eventRange, nextAlertTime, ordinaryDue, overduePresentation, recordedCompletionTime, reminderBrowsingPresentation, repeatSummary, scheduleDateTime, scheduleNeedsDetails, spokenDateTime, stateIcon, stateLabel, type ScheduleItem } from './presentation';
 import { deviceZone } from './time';
 import * as time from './time';
 
@@ -151,7 +151,7 @@ describe('concise work-state browsing', () => {
     for (const alertAdjustment of ['Snoozed', 'Postponed'] as const) {
       const result = reminderBrowsingPresentation({ ...overdue, alertAdjustment }, start);
       expect(result.status?.label).toBe('Overdue · 3 min');
-      expect(result.timing).toContain(alertAdjustment.toLowerCase() + ' to');
+      expect(result.timing).toContain('Next alarm'); expect(result.timing).toContain(alertAdjustment);
       expect(result.spokenLabel).toContain('Overdue by 3 minutes');
     }
     const result = reminderBrowsingPresentation({ ...overdue, mode: 'None' }, start);
@@ -175,14 +175,14 @@ describe('concise work-state browsing', () => {
       const result = reminderBrowsingPresentation(item, now);
       expect(result.timing).toBe('No alert · ' + eventRange({ ...item, zoneId: 'America/Los_Angeles' }, now));
       expect(result.timing).toContain('Today'); expect(result.timing).not.toContain('Tomorrow');
-      expect(reminderBrowsingPresentation({ ...item, completed: true }, now).timing).toBe(eventRange(item, now));
+      expect(reminderBrowsingPresentation({ ...item, completed: true }, now).timing).toBe('No alert · ' + eventRange(item, now));
       const allDay = { ...item, allDay: true, eventStartMs: Date.parse('2027-01-05T16:00:00Z'), eventEndMs: Date.parse('2027-01-06T16:00:00Z') };
       expect(reminderBrowsingPresentation(allDay, now).timing).toBe('No alert · Tomorrow · All day');
     } finally { zone.mockRestore(); }
   });
   it('prioritizes ringing visually without erasing the spoken overdue state', () => {
     const result = reminderBrowsingPresentation({ ...overdue, deliveryState: 'Alerting' }, start);
-    expect(result.status?.label).toBe('Ringing'); expect(result.timing).toContain('was set for');
+    expect(result.status?.label).toBe('Ringing'); expect(result.timing).toContain('Alarm time');
     expect(result.spokenLabel).toContain('Alarm ringing'); expect(result.spokenLabel).toContain('Overdue by 3 minutes');
   });
   it('uses overdue rather than redundant delivery outcomes while retaining diagnostics', () => {
@@ -196,7 +196,7 @@ describe('concise work-state browsing', () => {
   });
   it('keeps an actionable blocked target and failed-delivery explanation truthful', () => {
     const blocked = reminderBrowsingPresentation({ ...overdue, deliveryState: 'Blocked' }, start);
-    expect(blocked.status?.label).toBe('Overdue · 3 min'); expect(blocked.timing).toContain('Alert blocked · intended for');
+    expect(blocked.status?.label).toBe('Overdue · 3 min'); expect(blocked.timing).toContain('Intended alarm'); expect(blocked.timing).toContain('Blocked');
     const failed = reminderBrowsingPresentation({ ...overdue, mode: 'Notification', deliveryState: 'Failed' }, start);
     expect(failed.status?.label).toBe('Overdue · 3 min'); expect(failed.warning).toBe('Notification could not be sent');
   });
@@ -209,8 +209,63 @@ describe('concise work-state browsing', () => {
   it('keeps terminal schedule, historical alert and one work-state label without an invented date', () => {
     for (const [state, label] of [[{ completed: true }, 'Completed'], [{ skipped: true }, 'Skipped'], [{ deleted: true }, 'In Trash · Previously unfinished']] as const) {
       const result = reminderBrowsingPresentation({ ...overdue, ...state }, start);
-      expect(result.status?.label).toBe(label); expect(result.timing).toBe(eventRange(overdue, start));
-      expect(result.spokenLabel).toContain('Alarm was set for'); expect(result.spokenLabel).not.toMatch(/Completed at|Skipped at|Moved to Trash at/);
+      expect(result.status?.label).toBe(label); expect(result.timing).toBe('Original alarm · ' + scheduleDateTime(overdue.alarmAtMs, overdue.zoneId, start));
+      expect(result.spokenLabel).toContain('Original alarm'); expect(result.spokenLabel).not.toMatch(/Completed at|Skipped at|Moved to Trash at/);
     }
+  });
+});
+
+describe('card and Details timing authority', () => {
+  it('chooses current, intended, previous and original targets independently of populated nextAlertMs', () => {
+    const adjusted = { ...normal, nextAlertMs: start + 600_000, agendaAtMs: start + 600_000, alertAdjustment: 'Postponed' as const };
+    expect(cardTimingPresentation(adjusted, start).timing).toBe('Next alarm · ' + scheduleDateTime(adjusted.nextAlertMs, deviceZone(), start) + ' · Postponed');
+    for (const deliveryState of ['Blocked', 'Pending', 'Changing', 'SeriesChanging']) {
+      const item = { ...adjusted, deliveryState };
+      expect(cardTimingPresentation(item, start).timing).toContain('Intended alarm');
+      expect(alertPresentation(item).confirmed).toBe(false);
+    }
+    for (const deliveryState of ['Missed', 'TimedOut', 'Interrupted', 'Failed', 'Stopped', 'Notified', 'Paused', 'Alerting']) {
+      const item = { ...adjusted, deliveryState };
+      expect(cardTimingPresentation(item, start).timing).toBe('Alarm time · ' + scheduleDateTime(adjusted.nextAlertMs, deviceZone(), start));
+      expect(nextAlertTime(item as Occurrence)).toBeNull();
+    }
+    for (const state of [{ completed: true }, { skipped: true }, { deleted: true }]) {
+      expect(cardTimingPresentation({ ...adjusted, ...state }, start).timing).toBe('Original alarm · ' + scheduleDateTime(normal.alarmAtMs, normal.zoneId, start));
+      expect(cardTimingPresentation({ ...adjusted, ...state, mode: 'Notification' }, start).timing).toContain('Original notification');
+    }
+  });
+  it('omits dates only beneath matching civil date headings and retains full accessible dates', () => {
+    const zone = vi.spyOn(time, 'deviceZone').mockReturnValue('UTC');
+    try {
+      const context = { groupKey: '2027-01-05' };
+      const matching = cardTimingPresentation(normal, start, context);
+      expect(matching.timing).not.toContain('Today');
+      expect(matching.spokenTiming).toContain(spokenDateTime(start, 'UTC'));
+      expect(matching.spokenTiming).toContain('2027');
+      for (const groupKey of ['overdue', 'earlier', 'completed', '2027-01-06'])
+        expect(cardTimingPresentation(normal, start, { groupKey }).timing).toContain('Today');
+      expect(cardTimingPresentation({ ...normal, completed: true }, start, context).timing).toContain('Today');
+      expect(cardTimingPresentation({ ...normal, zoneId: 'Asia/Shanghai' }, start, context).timing).toContain('Today');
+      const crossDay = { ...normal, mode: 'None' as const, eventStartMs: Date.UTC(2027, 0, 5, 23, 30), eventEndMs: Date.UTC(2027, 0, 6, 0, 30) };
+      expect(cardTimingPresentation(crossDay, start, context).timing).toContain('Today');
+      expect(cardTimingPresentation(crossDay, start, context).timing).toContain('Tomorrow');
+      const midnight = { ...normal, alarmAtMs: Date.UTC(2027, 0, 6), nextAlertMs: Date.UTC(2027, 0, 6) };
+      expect(cardTimingPresentation(midnight, start, context).timing).toContain('Tomorrow');
+    } finally { zone.mockRestore(); }
+  });
+  it('puts consequential Event and Due in Details without hiding independent coincident Due', () => {
+    expect(detailSchedulePresentation(normal, start).showEvent).toBe(false);
+    expect(detailSchedulePresentation(normal, start).showDue).toBe(false);
+    expect(detailSchedulePresentation({ ...normal, dueLinked: false }, start).showDue).toBe(true);
+    expect(detailSchedulePresentation({ ...normal, dueAtMs: start + 1 }, start).showDue).toBe(true);
+    expect(detailSchedulePresentation(normal, start, true).showEvent).toBe(true);
+    expect(detailSchedulePresentation({ ...normal, allDay: true }, start).showEvent).toBe(true);
+    expect(detailSchedulePresentation({ ...normal, nextAlertMs: start + 600_000 }, start).showEvent).toBe(true);
+    expect(detailSchedulePresentation({ ...normal, deliveryState: 'Blocked', nextAlertMs: start + 600_000 }, start).showEvent).toBe(true);
+    // Without an eligible current target, visibility compares the authored alert, not a stale next target.
+    for (const state of [{ deliveryState: 'Failed' }, { completed: true }, { skipped: true }, { deleted: true }])
+      expect(detailSchedulePresentation({ ...normal, nextAlertMs: start + 600_000, ...state }, start).showEvent).toBe(false);
+    const noAlert = detailSchedulePresentation({ ...normal, mode: 'None' }, start);
+    expect(noAlert.label).toBe('Scheduled for'); expect(noAlert.value).toBe(eventRange(normal, start));
   });
 });

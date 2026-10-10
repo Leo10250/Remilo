@@ -84,6 +84,48 @@ export function agendaAlertPresentation(item: ScheduleItem & { agendaAtMs?: numb
   return item.alertAdjustment === 'Snoozed' ? `${mode} snoozed to ${time}` :
     item.alertAdjustment === 'Postponed' ? `${mode} postponed to ${time}` : `${mode} at ${time}`;
 }
+export type CardContext = { groupKey: string };
+/** A date may be omitted only when this row has an actual matching date heading. */
+export function cardTimingPresentation(item: ScheduleItem & { agendaAtMs?: number }, now = Date.now(), context?: CardContext) {
+  const terminal = !!(item.completed || item.deleted || item.skipped), mode = modeLabel(item.mode);
+  const zone = terminal || item.mode === 'None' && item.allDay ? item.zoneId || deviceZone() : deviceZone();
+  const instant = terminal ? item.alarmAtMs : item.agendaAtMs ?? item.nextAlertMs ?? item.alarmAtMs;
+  const event = item.mode === 'None';
+  const dateInstant = event ? item.eventStartMs : instant;
+  const crossDay = !item.allDay && civilAt(item.eventStartMs, zone).slice(0, 10) !== civilAt(item.eventEndMs, zone).slice(0, 10);
+  const omitDate = !terminal && !crossDay && (!item.zoneId || item.zoneId === zone) && !!context && /^\d{4}-\d{2}-\d{2}$/.test(context.groupKey) &&
+    civilAt(dateInstant, zone).slice(0, 10) === context.groupKey;
+  const time = omitDate ? new Date(instant).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zone }) : scheduleDateTime(instant, zone, now);
+  const fullTime = spokenDateTime(instant, zone);
+  if (event) {
+    const timing = 'No alert · ' + eventRange({ ...item, zoneId: zone }, now, omitDate);
+    return { timing, spokenTiming: 'No alert. ' + spokenEventRange({ ...item, zoneId: zone }) };
+  }
+  const changed = instant !== item.alarmAtMs;
+  const intendedState = item.deliveryState === 'Blocked' ? 'Blocked' : item.deliveryState === 'Pending' ? 'Scheduling' :
+    item.deliveryState === 'Changing' || item.deliveryState === 'SeriesChanging' ? 'Updating' : null;
+  const label = terminal ? 'Original ' + mode.toLowerCase() : intendedState ? 'Intended ' + mode.toLowerCase() :
+    item.deliveryState === 'Scheduled' ? changed ? 'Next ' + mode.toLowerCase() : mode : mode + ' time';
+  const adjustment = !terminal && item.deliveryState === 'Scheduled' && changed ? item.alertAdjustment : null;
+  const support = intendedState ?? adjustment;
+  return { timing: [label, time, support].filter(Boolean).join(' · '),
+    spokenTiming: [label, fullTime, support].filter(Boolean).join('. ') };
+}
+
+/** Occurrence Details uses existing native eligibility and retains independent timing. */
+export function detailSchedulePresentation(item: ScheduleItem, now = Date.now(), hasPublication = false) {
+  const delivery = alertPresentation(item, false, now), zone = item.zoneId || deviceZone(), mode = modeLabel(item.mode);
+  const terminal = !!(item.completed || item.deleted || item.skipped);
+  const instant = terminal ? item.alarmAtMs : delivery.target ?? item.nextAlertMs ?? item.alarmAtMs;
+  const primaryZone = terminal ? zone : delivery.target == null && instant !== item.alarmAtMs ? deviceZone() : delivery.targetZone;
+  const intended = ['Blocked', 'Pending', 'Changing', 'SeriesChanging'].includes(item.deliveryState ?? '');
+  const label = item.mode === 'None' ? 'Scheduled for' : terminal ? 'Original ' + mode.toLowerCase() :
+    intended ? 'Intended ' + mode.toLowerCase() : delivery.confirmed ? delivery.changed ? 'Next ' + mode.toLowerCase() : mode : mode + ' time';
+  const support = item.mode === 'None' ? 'No alert' : intended ? item.deliveryState === 'Blocked' ? 'Blocked' : item.deliveryState === 'Pending' ? 'Scheduling' : 'Updating' : delivery.changed ? item.alertAdjustment ?? 'Alert changed' : undefined;
+  return { label, value: item.mode === 'None' ? eventRange(item, now) : scheduleDateTime(instant, primaryZone, now), supporting: support,
+    showEvent: item.mode !== 'None' && (!!item.allDay || item.eventStartMs !== (delivery.target ?? item.alarmAtMs) || hasPublication),
+    showDue: !ordinaryDue(item), changed: delivery.changed, target: instant, targetZone: primaryZone };
+}
 /** Relative age uses the native original scheduling reference, never the next delivery. */
 export function overduePresentation(item: ScheduleItem, now = Date.now()) {
   if (item.completed || item.deleted || item.skipped || !item.overdue || item.overdueAtMs == null ||
@@ -97,12 +139,10 @@ export function overduePresentation(item: ScheduleItem, now = Date.now()) {
 }
 type BrowsingStatus = { label: string; spokenLabel: string; tone: Tone; icon: ReturnType<typeof stateIcon> };
 /** Browsing chooses useful work state; detailed delivery diagnostics stay available separately. */
-export function reminderBrowsingPresentation(item: ScheduleItem & { agendaAtMs?: number }, now = Date.now()) {
+export function reminderBrowsingPresentation(item: ScheduleItem & { agendaAtMs?: number }, now = Date.now(), context?: CardContext) {
   const terminal = !!(item.completed || item.deleted || item.skipped), overdue = overduePresentation(item, now);
   const ringing = !terminal && item.mode !== 'None' && item.deliveryState === 'Alerting';
-  const timing = terminal ? eventRange(item, now) : item.mode === 'None' ?
-    'No alert · ' + eventRange(item.allDay ? item : { ...item, zoneId: deviceZone() }, now) : ringing ?
-    `${modeLabel(item.mode)} was set for ${scheduleDateTime(item.agendaAtMs ?? item.nextAlertMs ?? item.alarmAtMs, deviceZone(), now)}` : agendaAlertPresentation(item, now);
+  const { timing, spokenTiming } = cardTimingPresentation(item, now, context);
   let status: BrowsingStatus | null = null;
   if (terminal) {
     const label = item.deleted ? 'In Trash · Previously ' + (item.completed ? 'completed' : item.skipped ? 'skipped' : 'unfinished') : item.skipped ? 'Skipped' : 'Completed';
@@ -117,8 +157,8 @@ export function reminderBrowsingPresentation(item: ScheduleItem & { agendaAtMs?:
   // in timing. Missed/timeout/interruption/notified labels add no useful work state.
   const warning = !terminal && overdue && !ringing && item.mode !== 'None' && item.deliveryState === 'Failed' ?
     item.mode === 'Notification' ? 'Notification could not be sent' : 'Alarm could not play' : null;
-  const spokenLabel = [timing, status?.spokenLabel, ringing ? overdue?.spokenLabel : null, warning,
-    terminal ? alertPresentation(item, false, now).label : null].filter(Boolean).join('. ');
+  const spokenLabel = [spokenTiming, status?.spokenLabel, ringing ? overdue?.spokenLabel : null, warning,
+    terminal && item.mode !== 'None' ? 'Event ' + spokenEventRange(item) : null].filter(Boolean).join('. ');
   return { timing, status, warning, overdue, spokenLabel };
 }
 export function canAdjustAlert(item: Pick<Occurrence, 'completed' | 'deleted' | 'skipped' | 'mode' | 'deliveryState'>) {
@@ -150,6 +190,16 @@ export function calendarDate(value: number, zoneId = deviceZone(), now = Date.no
 }
 export function scheduleDateTime(value: number, zoneId = deviceZone(), now = Date.now()) {
   return calendarDate(value, zoneId, now) + ' · ' + new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zoneId });
+}
+/** Screen readers retain absolute dates even when visible group context is concise. */
+export function spokenDateTime(value: number, zoneId = deviceZone()) {
+  return new Date(value).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: zoneId }) + ', ' +
+    new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zoneId });
+}
+function spokenEventRange(item: ScheduleItem) {
+  const zone = item.zoneId || deviceZone();
+  return item.allDay ? new Date(item.eventStartMs).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: zone }) + ', All day' :
+    spokenDateTime(item.eventStartMs, zone) + ' to ' + spokenDateTime(item.eventEndMs, zone);
 }
 export function eventRange(item: ScheduleItem, now = Date.now(), omitDate = false) {
   const zone = item.zoneId || deviceZone();
