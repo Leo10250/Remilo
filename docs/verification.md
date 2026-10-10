@@ -14,6 +14,8 @@ verification then Android checks sequentially; record actual counts and APK
 identity. New physical observations are [U27–U31](device-acceptance.md), pending
 on an identified signed bundled build. No installation/distribution is part of
 this implementation. Existing Calendar load-view failure remains deferred.
+[The 10 October evidence](evidence/2026-10-10-ux-refinement.md) records actual host
+results, signed artifact identity, observed fixtures and the incomplete render matrix.
 
 The owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
 records acceptance on its identified APK, without asserting unspecified individual
