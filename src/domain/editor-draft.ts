@@ -1,8 +1,11 @@
 import type { RecurrenceDraft, ReminderDraft, TimeConversion, TimeConversionInput } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { cleanRepeat } from './repeat';
 import { civilAt, deviceZone } from './time';
 
 export type EditorDraft = ReminderDraft & { eventStartMs: number; eventEndMs: number; dueAtMs: number; alarmAtMs: number };
 export type EditorState = { draft: EditorDraft; recurrence?: RecurrenceDraft };
+/** Only the mounted editor remembers a timed shape; this never enters a command or backup. */
+export type TimedDraftSnapshot = { clock: string; durationMs: number; dueOffsetMs: number; alarmOffsetMs: number };
 export const contentFields = ['title', 'notes', 'listId', 'sound', 'vibration'] as const;
 const timingFields = ['eventStartMs', 'eventEndMs', 'dueAtMs', 'alarmAtMs', 'mode', 'allDay', 'zoneId', 'dueLinked', 'alarmLinked'] as const;
 export type DraftConflict = { key: typeof contentFields[number] | 'schedule'; label: string; yours: unknown; latest: unknown };
@@ -23,6 +26,22 @@ export function editorDraft(record?: ReminderDraft, now = Date.now()): EditorDra
 }
 export function schedulePart(state: EditorState) {
   return { ...Object.fromEntries(timingFields.map((field) => [field, state.draft[field]])), recurrence: state.recurrence };
+}
+/** Preview reads schedule inputs only, without waiting for or validating private draft content. */
+export function editorPreviewPayload({ draft, recurrence }: EditorState): ReminderDraft & { recurrence?: RecurrenceDraft } {
+  const payload = { title: 'Preview', eventStartMs: draft.eventStartMs, eventEndMs: draft.eventEndMs,
+    dueAtMs: draft.allDay && draft.dueLinked ? undefined : draft.dueAtMs,
+    alarmAtMs: draft.allDay && draft.alarmLinked ? undefined : draft.alarmAtMs,
+    mode: draft.mode, allDay: draft.allDay, zoneId: draft.zoneId, dueLinked: draft.dueLinked, alarmLinked: draft.alarmLinked,
+    ...(recurrence ? { recurrence: cleanRepeat(recurrence) } : {}) };
+  return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined)) as ReminderDraft & { recurrence?: RecurrenceDraft };
+}
+export function reviewedTimedSnapshot(snapshot: TimedDraftSnapshot | null, previous: EditorState, next: EditorState, reload = false) {
+  return reload || !same(schedulePart(previous), schedulePart(next)) ? null : snapshot;
+}
+/** Deliberately restoring a link resets its old offset rather than reviving a hidden schedule. */
+export function relinkTimedSnapshot(snapshot: TimedDraftSnapshot | null, link: 'due' | 'alarm') {
+  return snapshot ? { ...snapshot, [link === 'due' ? 'dueOffsetMs' : 'alarmOffsetMs']: 0 } : null;
 }
 export function chooseConflict(state: EditorState, conflict: DraftConflict, choice: 'yours' | 'latest'): EditorState {
   const selected = conflict[choice];
@@ -61,6 +80,34 @@ function adjustmentWarnings(values: TimeConversion[]) {
   const warnings = values.some((value) => value.adjustment === 'gapForward') ? ['A clock change moves a selected time forward. Check the resolved timing below.'] : [];
   if (values.some((value) => value.adjustment === 'earlierFold')) warnings.push('A repeated clock time uses its earlier offset.');
   return warnings;
+}
+function civilDifference(from: string, to: string) { return Date.parse(to + 'Z') - Date.parse(from + 'Z'); }
+function offsetCivil(local: string, offset: number) { return new Date(Date.parse(local + 'Z') + offset).toISOString().slice(0, 19); }
+/** All-day conversion preserves independent instants and restores the timed shape on the selected date. */
+export async function changeDraftAllDay(draft: EditorDraft, allDay: boolean, snapshot: TimedDraftSnapshot | null, convert: ConvertTime) {
+  if (allDay === !!draft.allDay) return { draft, snapshot, warnings: [] as string[] };
+  const zoneId = draft.zoneId ?? deviceZone(), resolved: TimeConversion[] = [];
+  const resolve = async (local: string) => { const time = await convert({ zoneId, local }); resolved.push(time); return time; };
+  const eventLocal = civilAt(draft.eventStartMs, zoneId), date = eventLocal.slice(0, 10);
+  let start: TimeConversion, end: number, due = draft.dueAtMs, alarm = draft.alarmAtMs;
+  let nextSnapshot: TimedDraftSnapshot | null = null;
+  if (allDay) {
+    nextSnapshot = { clock: eventLocal.slice(11), durationMs: draft.eventEndMs - draft.eventStartMs,
+      dueOffsetMs: draft.dueLinked ? civilDifference(eventLocal, civilAt(due, zoneId)) : 0,
+      alarmOffsetMs: draft.alarmLinked ? civilDifference(civilAt(due, zoneId), civilAt(alarm, zoneId)) : 0 };
+    start = await resolve(date + 'T00:00:00');
+    end = (await resolve(followingDay(start.local) + 'T00:00:00')).instantMs;
+    if (draft.dueLinked) due = end;
+    if (draft.alarmLinked) alarm = (await resolve(start.local.slice(0, 10) + 'T09:00:00')).instantMs;
+  } else {
+    const timed = snapshot ?? { clock: '09:00:00', durationMs: 1_800_000, dueOffsetMs: 0, alarmOffsetMs: 0 };
+    start = await resolve(date + 'T' + timed.clock);
+    end = start.instantMs + timed.durationMs;
+    if (draft.dueLinked) due = (await resolve(offsetCivil(start.local, timed.dueOffsetMs))).instantMs;
+    if (draft.alarmLinked) alarm = (await resolve(offsetCivil(civilAt(due, zoneId), timed.alarmOffsetMs))).instantMs;
+  }
+  return { draft: { ...draft, allDay, eventStartMs: start.instantMs, eventEndMs: end, dueAtMs: due, alarmAtMs: alarm },
+    snapshot: nextSnapshot, warnings: adjustmentWarnings(resolved) };
 }
 /** Linked due/alarm offsets are civil; a timed event's duration remains elapsed. */
 export async function moveDraftEvent(draft: EditorDraft, eventStartMs: number, convert: ConvertTime) {
