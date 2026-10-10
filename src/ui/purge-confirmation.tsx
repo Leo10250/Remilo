@@ -13,7 +13,7 @@ export function PurgeConfirmation({ items, onCancel, onConfirm }: {
     {items.some(item => !!item.segmentId) && <Copy muted>Only these occurrences are deleted. Repeating plans and other occurrences are kept.</Copy>}
     <View style={{ gap: 8 }}>
       <Button label="Delete permanently" icon="delete_forever" variant="danger" onPress={onConfirm} />
-      <Button label="Cancel" variant="secondary" onPress={onCancel} />
+      <Button label="Cancel" variant="outlined" onPress={onCancel} />
     </View>
   </Sheet>;
 }

@@ -193,7 +193,10 @@ There is no leading completion/status circle during normal browsing.
 No Done/Reopen action while deleted and no Trash swipe that suggests purging.
 Permanent deletion opens a shared confirmation sheet naming a single reminder or
 the captured selected count. Explain that content/activity removal cannot be undone
-or restored from Trash, and that repeating plans/other occurrences are kept. Cancel,
+or restored from Trash, and that repeating plans/other occurrences are kept. The
+owner's 9 October button correction requires a visible filled round error/onError
+Delete permanently button with a leading icon, and a lower-emphasis neutral outlined
+Cancel button. Both grow with text and use the shared 56 dp action minimum. Cancel,
 close, backdrop and Back dismiss without mutation. Confirmation submits the captured
 IDs/revisions through the serialized native worker, reusing existing unknown-reply
 guards and exact retries. A changed/restored item is rejected. No global/hidden-page

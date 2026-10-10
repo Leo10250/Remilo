@@ -3,8 +3,8 @@
   "geometry": { "home": 200, "secondary": 96, "toolbar": 56, "gutter": 16, "radius": 16, "target": 48, "action": 56, "nativeSingle": 64, "nativeMember": 56 },
   "typography": { "display": 32, "title": 24, "appBar": 22, "heading": 18, "body": 16, "supporting": 14, "label": 14 },
   "spacing": { "xs": 4, "sm": 8, "md": 12, "gutter": 16, "lg": 24, "xl": 32 },
-  "shape": { "field": 16, "group": 16, "sheet": 24, "action": 16 },
-  "roleAliases": { "focus": "primary", "selectedSurface": "container", "selectedInk": "primary", "primaryPressed": "primary", "onPrimaryPressed": "onPrimary", "secondaryPressed": "container", "onSecondaryPressed": "primary", "dangerSurface": "surface", "dangerInk": "error" },
+  "shape": { "field": 16, "group": 16, "sheet": 24, "action": 16, "roundAction": 999 },
+  "roleAliases": { "focus": "primary", "selectedSurface": "container", "selectedInk": "primary", "primaryPressed": "primary", "onPrimaryPressed": "onPrimary", "secondaryPressed": "container", "onSecondaryPressed": "primary", "dangerSurface": "error", "dangerInk": "onError", "dangerPressed": "errorPressed" },
   "header": {
     "sunrise-light": { "ink": "#172331", "scrim": "#FFFFFF", "scrimAlpha": 0.54 },
     "sunrise-dark": { "ink": "#FFFFFF", "scrim": "#000000", "scrimAlpha": 0.54 },
@@ -26,7 +26,7 @@
     "night-dark": { "canvas": "#121B2A", "surface": "#1F2B3C", "onSurface": "#ECF1FC", "onSurfaceVariant": "#B8C5DD", "primary": "#B2C3FF", "onPrimary": "#182B53", "container": "#2B3A53", "outline": "#869ABC", "heroFocal": [0.5, 0.500534], "compactFocal": [0.5, 0.430160], "asset": "night-dark-v2.webp", "native": "remilo_scene_night_dark_v2" }
   },
   "semantic": {
-    "light": { "error": "#A8231B", "warning": "#774900", "success": "#17603A", "disabledSurface": "#E3E1DF", "disabledInk": "#55514E", "inverseSurface": "#252B34", "inverseInk": "#F8FAFF", "inverseAction": "#B5CEFF" },
-    "dark": { "error": "#FFB4AB", "warning": "#F3CC83", "success": "#87D5A3", "disabledSurface": "#363D48", "disabledInk": "#C5C9D2", "inverseSurface": "#E8EDF5", "inverseInk": "#202A39", "inverseAction": "#244D9A" }
+    "light": { "error": "#A8231B", "onError": "#FFFFFF", "errorPressed": "#B13932", "warning": "#774900", "success": "#17603A", "disabledSurface": "#E3E1DF", "disabledInk": "#55514E", "inverseSurface": "#252B34", "inverseInk": "#F8FAFF", "inverseAction": "#B5CEFF" },
+    "dark": { "error": "#FFB4AB", "onError": "#690005", "errorPressed": "#F0A29A", "warning": "#F3CC83", "success": "#87D5A3", "disabledSurface": "#363D48", "disabledInk": "#C5C9D2", "inverseSurface": "#E8EDF5", "inverseInk": "#202A39", "inverseAction": "#244D9A" }
   }
 }

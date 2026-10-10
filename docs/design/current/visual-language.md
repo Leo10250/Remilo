@@ -35,6 +35,7 @@ role values and artwork, not which role an otherwise identical icon receives.
 | Back, More and ordinary toolbar glyphs | Canonical `headerInk` directly on atmospheric art, with transparent control backgrounds and a shared fading scrim; `onSurface` on the opaque constrained-height fallback. Night details and Night edit use the same mapping. |
 | Main field values and titles | `onSurface`; supporting labels, descriptions and ordinary timing summaries use `onSurfaceVariant`. Do not make every label blue in Night. |
 | Filled Done/Save | Atmosphere `primary` with its paired `onPrimary`. Same component geometry in Light/Dark. |
+| Filled Delete permanently | Semantic `error` with paired `onError` for label/icon, including a contrasting pressed state. Keep the error fill visible in every atmosphere. |
 | Postpone alert action | Secondary outlined action using the same atmosphere `primary` for label/outline. It is intentionally distinct from completion but not an error/destructive action. |
 | Focused input outline/caret and explicitly selected controls | Atmosphere `primary`. Selected states also need a visible/accessible state indicator. |
 | Reminder glyph | One neutral `event` glyph on rows/details. Semantic category badges and classification are deferred by the [implementation decision](implementation-decisions.md). |
@@ -90,6 +91,12 @@ root selection uses a glyph capsule and selected label, as in R3/R7/R8.
   approximately 24 sp. Text wraps/grows with system scaling. A bigger title, long
   notes or keyboard can require scrolling. Do not copy tiny raster labels or fixed
   pixel card heights.
+- The owner's 9 October permanent-delete correction uses a Material 3 Expressive
+  round filled destructive button, at least 56 dp high, with the leading icon and
+  an 8 dp label gap. Its paired Cancel is neutral outlined with the same round
+  geometry. Pressing these buttons changes the corners to the shared 16 dp radius
+  and shows a state fill without animation; focus has a contrasting outline.
+  This scoped action treatment follows [Material's Expressive button guidance](https://github.com/material-components/material-components-android/blob/master/docs/components/CommonButton.md).
 - Preserve the same icon-column and label/value alignment in Light/Dark. Add or
   remove a consequential Due row based on state/linkage, not appearance.
 - Reminder rows share a 20 dp informational icon column and 6 dp text gap, 12 dp

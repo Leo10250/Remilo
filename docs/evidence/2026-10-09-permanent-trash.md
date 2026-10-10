@@ -89,3 +89,46 @@ was performed. Android confirmation/Back/accessibility/large-font layout,
 return navigation, installed upgrade, recurring recovery and transfer acceptance
 remain pending in the consolidated run defined by `docs/verification.md`. Host
 results do not establish those observations or alarm reliability.
+
+## Owner's button correction
+
+The owner rejected the original Delete permanently action because its container
+was indistinguishable from the sheet. The shared `dangerSurface` alias pointed to
+`surface`, with error-colored text. The corrected shared destructive button uses
+`error` / `onError`, a full round shape, a leading icon and 8 dp label gap. Cancel
+is a lower-emphasis neutral outlined button. Both retain the 56 dp minimum and
+grow with text. Pressing changes the corners to 16 dp and uses a contrasting
+state fill; keyboard focus adds a contrasting border. These scoped styles follow
+[Material 3 Expressive button guidance](https://github.com/material-components/material-components-android/blob/master/docs/components/CommonButton.md)
+and [Material's paired color roles](https://github.com/material-components/material-components-android/blob/master/docs/theming/Color.md).
+Native alarm error messages now explicitly use `error` on `surface`, preserving
+their prior colors when the destructive-button aliases change.
+
+The isolated preview measured a 380×56 CSS px destructive button at a 412×915
+viewport in Evening Light, with a white label/icon on the red fill. Keyboard
+focus was visible, and Cancel retained the reminder. Evening Dark at 200% text
+used a 32 px label and grew the button to 72 px, without horizontal label overflow;
+both actions remained visible. Private captures are
+`verification/local/trash-button-light.jpg` and `trash-button-dark-large.jpg`.
+These are web fixture observations, not Android or TalkBack acceptance.
+
+Label/icon contrast is 7.19:1 in Light and 7.72:1 in Dark; pressed-state contrast
+is 6.00:1 and 6.45:1. The existing contrast regressions now cover these shared
+destructive pairs in all eight appearances.
+
+Design audit, TypeScript, ESLint (zero errors and the existing R8-gallery warning)
+and all 368 shared tests passed in `scripts/verify.mjs`. Its tooling stage initially
+failed because the synthetic generator fixture omitted the new `onError` and
+`errorPressed` roles. Adding those fixture roles retained the drift-rejection
+assertion; the targeted `scripts/tooling-tests.mjs` rerun passed all 77 tests.
+The subsequent `scripts/android.mjs verify` passed all 19 native suites / 183 tests,
+with zero failures/errors/skips, native/app lint, and signed bundled ARM64 assembly
+and APK inspection.
+
+Application sources were held constant during that build: the uncommitted button
+correction atop `bd2f2e7`. Later evidence, backlog and Git metadata updates do not
+change the application's contents. The latest local release APK retains package
+`com.remilo.app`, version `0.4.0` (4), and has SHA-256
+`4d201963daac025f58fd3f777eead9e07d445fb59b6bc68957ecd2509d7ec3e3`.
+It replaces the earlier local artifact recorded above. No installation or APK
+distribution was performed; the consolidated physical observations remain pending.

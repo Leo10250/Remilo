@@ -162,10 +162,10 @@ private fun AlarmHeader(stateHeading: String?, roles: AtmosphereTokens.Roles, ar
 
 @Composable
 private fun RefreshBanner(message: String, busy: Boolean, roles: AtmosphereTokens.Roles, onRetry: () -> Unit) {
-  Surface(shape = RoundedCornerShape(AtmosphereTokens.shapeGroup.dp), color = Color(roles.dangerSurface),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(roles.dangerInk))) {
+  Surface(shape = RoundedCornerShape(AtmosphereTokens.shapeGroup.dp), color = Color(roles.surface),
+    border = androidx.compose.foundation.BorderStroke(1.dp, Color(roles.error))) {
     Column(Modifier.fillMaxWidth().padding(AtmosphereTokens.spaceGutter.dp), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      Text(message, color = Color(roles.dangerInk), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+      Text(message, color = Color(roles.error), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
       OutlinedButton(onClick = onRetry, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
         modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text("Refresh controls") }
     }
@@ -193,7 +193,7 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
           if (progress != null) { contentDescription = progress; liveRegion = LiveRegionMode.Polite }
         })
       error?.let {
-        Text(it, color = Color(roles.dangerInk))
+        Text(it, color = Color(roles.error))
         OutlinedButton(onClick = onRetry, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
           modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text(if (unconfirmed) "Retry action" else "Refresh controls") }
       }

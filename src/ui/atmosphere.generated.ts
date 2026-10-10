@@ -33,7 +33,8 @@ export const presentation = {
     "field": 16,
     "group": 16,
     "sheet": 24,
-    "action": 16
+    "action": 16,
+    "roundAction": 999
   },
   "roleAliases": {
     "focus": "primary",
@@ -43,8 +44,9 @@ export const presentation = {
     "onPrimaryPressed": "onPrimary",
     "secondaryPressed": "container",
     "onSecondaryPressed": "primary",
-    "dangerSurface": "surface",
-    "dangerInk": "error"
+    "dangerSurface": "error",
+    "dangerInk": "onError",
+    "dangerPressed": "errorPressed"
   },
   "header": {
     "sunrise-light": {
@@ -253,6 +255,8 @@ export const presentation = {
   "semantic": {
     "light": {
       "error": "#A8231B",
+      "onError": "#FFFFFF",
+      "errorPressed": "#B13932",
       "warning": "#774900",
       "success": "#17603A",
       "disabledSurface": "#E3E1DF",
@@ -263,6 +267,8 @@ export const presentation = {
     },
     "dark": {
       "error": "#FFB4AB",
+      "onError": "#690005",
+      "errorPressed": "#F0A29A",
       "warning": "#F3CC83",
       "success": "#87D5A3",
       "disabledSurface": "#363D48",

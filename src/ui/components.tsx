@@ -69,18 +69,30 @@ export function Heading({ children }: PropsWithChildren) {
   return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? typography.heading * scale * 1.4 : undefined, fontWeight: '600' }}>{children}</Text>;
 }
 export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint }: {
-  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
+  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
 }) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
-  const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : variant === 'secondary' ? colors.accent : colors.ink;
+  const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.dangerInk : variant === 'secondary' ? colors.accent : colors.ink;
   const button = <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    style={({ pressed }) => [styles.button, { backgroundColor: c ? blocked ? c.disabledSurface : variant === 'primary' ? pressed || state === 'pressed' ? c.primaryPressed : c.accent : variant === 'danger' ? c.dangerSurface : pressed || state === 'pressed' ? c.secondaryPressed : c.soft : variant === 'primary' ? colors.accent : colors.soft,
-      borderRadius: foundation?.tokens.shape.action ?? shape.action,
-      borderWidth: c ? 2 : 0, borderColor: c && (focused || state === 'focused') ? c.focus : c && variant === 'secondary' ? blocked ? c.disabledInk : c.accent : 'transparent',
-      flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed ? 0.7 : 1 }]}>
+    style={({ pressed }) => {
+      const active = !blocked && (pressed || state === 'pressed');
+      const round = variant === 'danger' || variant === 'outlined';
+      const backgroundColor = c && blocked ? c.disabledSurface
+        : variant === 'danger' ? active ? colors.dangerPressed : c?.dangerSurface ?? colors.danger
+        : variant === 'outlined' ? active ? c?.secondaryPressed ?? colors.soft : 'transparent'
+        : c ? variant === 'primary' ? active ? c.primaryPressed : c.accent : active ? c.secondaryPressed : c.soft
+        : variant === 'primary' ? colors.accent : colors.soft;
+      const borderColor = !blocked && (focused || state === 'focused') ? variant === 'danger' ? foreground : c?.focus ?? colors.accent
+        : variant === 'outlined' ? blocked ? c?.disabledInk ?? colors.muted : c?.outline ?? colors.border
+        : c && variant === 'secondary' ? blocked ? c.disabledInk : c.accent : 'transparent';
+      return [styles.button, { backgroundColor, borderColor,
+        borderRadius: round && !active ? shape.roundAction : foundation?.tokens.shape.action ?? shape.action,
+        borderWidth: c || round ? 2 : 0,
+        flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed && !round ? 0.7 : 1 }];
+    }}>
     {(icon || busy) && <View style={{ width: 20, height: 20 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
     <Text style={{ color: foreground, lineHeight: c ? typography.body * scale * 1.4 : undefined,
       flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
