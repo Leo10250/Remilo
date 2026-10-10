@@ -77,8 +77,10 @@ commit, rollback or an atomic Undo. Stop at an unknown reply, freeze the capture
 set/remaining queue and navigation, and retry that exact unresolved command
 before continuing. Applied items are not submitted again as new work. After all
 definitive replies, keep selection mode with the truthful summary, clear IDs and
-refresh; rejected items require a fresh deliberate selection. There is no
-permanent Trash deletion. Reopen/Restore retain their existing silent elapsed
+refresh; rejected items require a fresh deliberate selection. The owner's subsequent
+9 October instruction adds confirmed individual/selected permanent Trash deletion;
+its current contract is in the maintained Completed/Trash page contract.
+Reopen/Restore retain their existing silent elapsed
 target and previous-state rules.
 
 The [maintained R9 contract](screens/completed-trash-activity.md) replaces prior

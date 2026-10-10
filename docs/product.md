@@ -144,7 +144,8 @@ alert-first browsing, stationary covers and splash requirements.
   After definitive completion, keep selection mode with the truthful summary,
   clear selected IDs and refresh; rejected items require a new deliberate action.
   Restore retains completed/skipped state; Reopen still clears both without
-  replaying elapsed alerts. No permanent Trash purge is authorized. Composition
+  replaying elapsed alerts. The owner's subsequent 9 October instruction adds
+  confirmed permanent deletion for individual and selected Trash occurrences. Composition
   05's [R9 review](design/current/screens/completed-trash-activity.md) is closed by
   the explicit owner approval; actual Android acceptance remains pending.
 - Lists have durable credential-protected identities, names and revisions, with
@@ -238,10 +239,22 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   occurrence can be moved to Trash directly through its menu or swipe reveal and tap.
   Revision-guarded Undo restores only the captured deletion. Restore preserves prior
   completed/skipped state and never replays elapsed alerts. Trash stays in the local
-  installation until restored; no automatic expiry or permanent purge. The latest
+  installation until restored or explicitly permanently deleted; no automatic expiry. The latest
   owner-directed selected-occurrence actions above supersede the old no-bulk
   restriction without introducing Empty Trash.
   Backups exclude one-off Trash but retain recurring deletion exclusions.
+  Trash row menus and deleted-reminder details offer Delete permanently; selection
+  mode offers Delete selected permanently for only captured loaded occurrences.
+  Both require a confirmation explaining content/activity removal and no Undo or
+  Trash Restore. A repeating plan and other occurrences remain intact. Native Purge
+  requires the captured deleted revision, atomically removes the reminder/activity/
+  pending content schedule and retains content-free identity exclusions and exact
+  retry receipts. Local recovery and older backup imports into the same installation
+  cannot resurrect that identity by default; an explicitly requested backup copy
+  has a separate identity. Existing
+  exported files are unchanged. Backup format 4 carries minimal repeating exclusions,
+  and versions 1–3 remain readable. Unknown replies keep the existing command/batch
+  guards; retry uses the same operation, and batches report confirmed partial results.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only
   on explicit Save. Unsaved drafts require a discard confirmation. Pending saves

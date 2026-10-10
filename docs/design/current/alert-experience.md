@@ -94,7 +94,8 @@ Due and list/repeat context, plus one Completed/Skipped or In Trash · Previousl
 line. Suppress overdue even when retained data has a stale flag. Do not infer
 completion dates from collectionAtMs; real history remains in Details/Activity.
 Rows still open Details. Completed/skipped More retains View reminder, Reopen and
-Move to Trash; Trash retains View reminder and Restore. Keep collection selection,
+Move to Trash; Trash retains View reminder and Restore and, under the subsequent
+owner instruction, confirmed Delete permanently. Keep collection selection,
 captured retries, Reopen clearing both work states and Restore preserving them.
 
 ## Notifications and acceptance

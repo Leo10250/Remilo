@@ -76,6 +76,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     if (!unlocked()) return
     val dao = db().records()
     alerts.all().filter { it.segmentId != null && it.nominalSlot != null }.forEach { alert ->
+      if (dao.purged(alert.occurrenceId) != null) return@forEach
       val segment = dao.series(alert.segmentId!!) ?: return@forEach
       val existing = dao.find(alert.occurrenceId)
       val resolved = resolveRecord(segment, alert.nominalSlot!!, alert.occurrenceId, alert.resolvedZone)
@@ -215,6 +216,15 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   fun recover() {
     if (unlocked()) {
       val dao = db().records()
+      // Restore identity exclusions before any replenishment, including Direct Boot.
+      dao.purged().filter { it.segmentId != null }.forEach { exclusion ->
+        val old = alerts.find(exclusion.id)
+        if (old?.state != "Deleted") {
+          old?.let { try { scheduler.cancel(it) } catch (_: Exception) { /* generation fenced below */ } }
+          alerts.put(AlertRecord(exclusion.id, 0, (old?.generation ?: 0) + 1, "Deleted",
+            segmentId = exclusion.segmentId, nominalSlot = exclusion.nominalSlot, exception = true))
+        }
+      }
       val ids = (dao.pendingSeries().map { it.segmentId } + alerts.plans().filter { it.state == "Changing" }.map { it.id }).distinct()
       ids.forEach { id ->
         val series = dao.series(id) ?: return@forEach

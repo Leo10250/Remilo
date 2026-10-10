@@ -5,6 +5,11 @@ outlined terminal More treatment with the same borderless 24 dp/48 dp affordance
 as Agenda. Candidate proposals below remain research provenance; accepted
 selection/menu behavior follows the current page contract.
 
+The owner's subsequent 9 October instruction adds confirmed individual/selected
+permanent Trash deletion under the maintained
+[page contract](screens/completed-trash-activity.md). The no-purge statements below
+describe the earlier composition proposals, rather than the current product scope.
+
 9 October 2026. This records primary-source research and a proposed implementation
 revision after the owner rejected composition 02, with candidate 04 reasoning
 after composition 03 and a candidate 05 update after composition 04 was rejected.

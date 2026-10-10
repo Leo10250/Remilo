@@ -16,8 +16,9 @@ import { typography } from '../../ui/tokens';
 import { InformationRow, Schedule, ScheduleDetails, ZoneSummary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
+import { PurgeConfirmation } from '../../ui/purge-confirmation';
 
-const activity: Record<string, string> = { TimedOut: 'Alarm timed out', UndoDelete: 'Restored', Delete: 'Moved to Trash', Reopen: 'Reopened', Done: 'Completed',
+const activity: Record<string, string> = { Purge: 'Reminder permanently deleted.', TimedOut: 'Alarm timed out', UndoDelete: 'Restored', Delete: 'Moved to Trash', Reopen: 'Reopened', Done: 'Completed',
   Stop: 'Alarm stopped', StopAll: 'Ringing stopped', Snooze: 'Snoozed', Postpone: 'Postponed', Skip: 'Occurrence skipped', Edit: 'Edited', Create: 'Created',
   Interrupted: 'Alarm interrupted', Failed: 'Alarm failed', Missed: 'Alarm missed', Notified: 'Notification sent', PauseSeries: 'Repeat paused', ResumeSeries: 'Repeat resumed' };
 type Feedback = { message: string; tone: Tone };
@@ -35,6 +36,7 @@ export default function ReminderDetails() {
   const families = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable && !!item?.segmentId });
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
   const [postpone, setPostpone] = useState(action === 'postpone'), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
+  const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
   const [now, setNow] = useState(Date.now);
   const [target, setTarget] = useState(() => Date.now() + 900_000), [feedback, setFeedback] = useState<Feedback | null>(null), [sheetFeedback, setSheetFeedback] = useState<Feedback | null>(null);
   const pendingOperation = useRef<{ command: ContentCommand | DeliveryCommand; item: Occurrence; success: string } | null>(null);
@@ -65,6 +67,8 @@ export default function ReminderDetails() {
         notifyTrash(operation.item, result);
         // Allow the confirmed-operation guard to settle before navigation.
         setDeleted(true);
+      } else if (operation.command.kind === 'Purge') {
+        setDeleted(true);
       } else if ('expectedGeneration' in operation.command) {
         if (operation.command.kind === 'Postpone' && (result.status === 'Blocked' || result.status === 'Pending')) { setSheetFeedback(next); setPostponeResult(true); }
         else setPostpone(false);
@@ -78,9 +82,9 @@ export default function ReminderDetails() {
   };
   const [deleted, setDeleted] = useState(false);
   useEffect(() => { if (deleted && !command.isPending && !uncertain) { if (router.canGoBack()) router.back(); else router.replace(secondaryOriginRoute(routeParams)); } }, [deleted, command.isPending, uncertain, routeParams]);
-  const content = async (kind: ContentCommand['kind']) => {
-    if (!item || command.isPending || pendingOperation.current) return;
-    pendingOperation.current = { command: { kind, occurrenceId: id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: activity[kind] ?? 'Reminder updated' };
+  const content = async (kind: ContentCommand['kind'], captured = item) => {
+    if (!captured || command.isPending || pendingOperation.current) return;
+    pendingOperation.current = { command: { kind, occurrenceId: id, expectedRevision: captured.revision, operationId: engine().createOperationId() }, item: captured, success: activity[kind] ?? 'Reminder updated' };
     await runPending();
   };
   const moveToTrash = () => {
@@ -123,7 +127,12 @@ export default function ReminderDetails() {
       {item.deleted ? <View style={{ flex: 1 }}><Button icon="undo" label="Restore reminder" disabled={command.isPending || uncertain} onPress={() => void content('UndoDelete')} /></View> :
         (item.completed || item.skipped) && <View style={{ flex: 1 }}><Button icon="undo" label={item.skipped ? 'Reopen occurrence' : 'Reopen reminder'} variant="secondary" disabled={command.isPending || uncertain} onPress={() => void content('Reopen')} /></View>}
     </BottomActionBar> : undefined}>
-    <QueryState loading={query.isLoading && nativeAvailable && !item} error={!item ? query.error : undefined} empty={!item && !query.isLoading} emptyMessage="This reminder is unavailable." onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
+    <QueryState loading={query.isLoading && nativeAvailable && !item} error={!item ? query.error : undefined} empty={!item && !query.isLoading && !uncertain && !command.isPending} emptyMessage="This reminder is unavailable." onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
+    {feedback && <ActionFeedback {...feedback} />}
+    {uncertain && <>
+      <ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />
+      <Button label="Retry change" variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
+    {command.isPending && <ActionFeedback loading message="Applying change…" />}
     {item && <>
       {query.error && <><ActionFeedback message="Could not refresh. Showing the previous reminder." tone="warning" /><Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
@@ -143,10 +152,6 @@ export default function ReminderDetails() {
         }} />
         {!!item.notes && <InformationRow icon="notes" label="Notes" value={item.notes} />}
       </Schedule>
-      {feedback && <ActionFeedback {...feedback} />}
-      {uncertain && <><ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />
-        <Button label="Retry change" variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
-      {command.isPending && <ActionFeedback loading message="Applying change…" />}
       {item.segmentId && <Group title="Repeat">
         <SettingRow icon="repeat" label={repeatSummary(item) ?? 'Repeating'} description={(family?.state === 'Paused' ? 'Repeat paused' : family?.state === 'Ended' ? 'Repeat ended' : 'This occurrence') +
           (item.exception ? item.deliveryState === 'Scheduled' ? ' · Independent alert scheduled' : item.deliveryState === 'Blocked' ? ' · Independent alert blocked' : item.deliveryState === 'Pending' ? ' · Independent alert pending' : ' · Individual change' : '')}
@@ -167,7 +172,13 @@ export default function ReminderDetails() {
       {item && !item.deleted && <View style={{ marginTop: 12, paddingTop: 8, borderTopWidth: 0.5, borderTopColor: colors.border }}>
         <SettingRow icon="delete" label="Move to Trash" description="Cancels its alert. Recoverable from Trash." disabled={command.isPending || uncertain} onPress={moveToTrash} />
       </View>}
+      {item?.deleted && <SettingRow icon="delete_forever" label="Delete permanently" description="Cannot be undone." disabled={command.isPending || uncertain}
+        onPress={() => { if (command.isPending || pendingOperation.current || runningOperation.current) return; setMenu(false); setPurgeItem({ ...item }); }} />}
     </Sheet>
+    <PurgeConfirmation items={purgeItem ? [purgeItem] : []} onCancel={() => setPurgeItem(null)} onConfirm={() => {
+      if (!purgeItem || command.isPending || pendingOperation.current || runningOperation.current) return;
+      const captured = purgeItem; setPurgeItem(null); void content('Purge', captured);
+    }} />
     <Sheet title="Edit repeating reminder" visible={scope && !!item?.segmentId} onClose={() => setScope(false)}>
       <SettingRow label="This occurrence" description="Changes only this occurrence. Repeat stays read-only family context." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); }} />
       <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />

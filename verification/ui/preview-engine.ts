@@ -323,6 +323,11 @@ function apply(command: Command): CommandResult {
     if (!item) return { status: 'Rejected', errorCode: 'NOT_FOUND' };
     if ('expectedRevision' in command && item.revision !== command.expectedRevision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
     if ('expectedGeneration' in command && item.generation !== command.expectedGeneration) return { status: 'Rejected', errorCode: 'STALE_GENERATION' };
+    if (command.kind === 'Purge') {
+      if (!item.deleted) return { status: 'Rejected', errorCode: 'INVALID_INPUT', errorMessage: 'Only reminders in Trash can be deleted permanently.' };
+      items.splice(items.indexOf(item), 1);
+      receipts.set(command.operationId, result); changed(); return clone(result);
+    }
     if (command.kind === 'Snooze' && command.expectedSnoozeMinutes != null && command.expectedSnoozeMinutes !== settings.snoozeMinutes)
       return { status: 'Rejected', errorCode: 'STALE_SNOOZE_DURATION' };
     if ((command.kind === 'Snooze' || command.kind === 'Postpone' || command.kind === 'CompleteDelivery') &&

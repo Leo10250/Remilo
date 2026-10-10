@@ -19,12 +19,12 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 5/6/3. CE 4→5 adds global atmosphere with Automatic default and
+versions are 6/6/4. CE 4→5 adds global atmosphere with Automatic default and
 preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
-portable backup format 3.
+portable backup format 4.
 
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
@@ -45,9 +45,27 @@ Snooze and historical Stop journal records describe history; replay never change
 newer operational state. Native Done reuses protected completion receipts and the
 pending-completion journal introduced by DP 4→5. DP 5→6 binds captured completion
 membership and adds durable bulk-Snooze receipt/member records. CE and backup
-schemas are unchanged. Alarm-affecting commands fence stale generations before acknowledgement.
+schemas were unchanged by that alert correction. Alarm-affecting commands fence stale generations before acknowledgement.
 OS registration and database commits are not atomic: reconcile idempotently and
 return Scheduled/Blocked/Pending distinctly. Every callback rechecks eligibility.
+
+The owner's confirmed permanent Trash deletion adds CE 5→6 `purged_occurrences`,
+containing only occurrence ID, optional segment ID and nominal slot. Purge accepts
+only a captured deleted revision and commits exclusion, reminder/history/outbox
+removal and a revision-bound receipt in one CE transaction. Trash already fenced
+delivery; protected terminal records and old command receipts remain operational
+guards. Series materialization and private history/completion replay skip purged
+identities. Restored recurring exclusions project Deleted into DP before protected
+replenishment. DP remains version 6 and never gains private content.
+
+Backup format 4 carries only recurring purge exclusions, separate from reminder
+content/history. It prevents an older importer silently ignoring them; readers
+retain versions 1–3. Strict decoding validates unique, disjoint deterministic
+occurrence IDs and segment/nominal references. Family-copy restore remaps exclusions
+with the whole family before replenishing; local one-off purge identities are
+conflicts preserved by default, with separate copies only on explicit selection.
+Existing external backups are unchanged. Permanent deletion removes logical app
+records; it does not claim secure erasure of SQLite pages or external copies.
 
 The serialized engine constructs a complete notification snapshot before service
 dispatch and passes it in the explicit, non-exported service intent. Foreground
@@ -413,7 +431,7 @@ the revision, complete the same nominal occurrence, and write one Done at the
 original completion instant. A matching history operation proves that transaction already
 committed; a lost protected acknowledgement never re-completes a later Reopen.
 Receipts bind occurrence/generation or session and retain the original result across
-restart. CE 5 and portable backup 3 remain unchanged; old Stopped actions do not
+restart. That completion correction left CE 5 and portable backup 3 unchanged; old Stopped actions do not
 retroactively complete content. Timeout/interruption still leave work unfinished.
 
 SnoozeAll atomically captures its session/member fingerprint, current mirrored

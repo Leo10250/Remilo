@@ -1,5 +1,13 @@
 # Verification and release evidence
 
+Permanent Trash deletion requires a signed Android check of single-item and selected
+confirmation, Cancel/Back, changed/restored rejection, unknown-reply retry and return
+from deleted-reminder details. Verify unrelated occurrences and the repeating plan
+remain, the purged occurrence stays absent after restart, and backup export/restore
+retains exclusions. Host tests cover CE migration, atomic removal, crash boundaries,
+retry identity, recurring recovery/Direct Boot and v1–v4 backup reading; those checks
+do not establish Android sheet/accessibility acceptance.
+
 Run npm run verify for shared checks, npm run verify:android for native checks,
 npm run verify:device for preflight and a pending observation report, and
 npm run build:beta for the locally signed bundled release. All manual observations

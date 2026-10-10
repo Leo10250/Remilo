@@ -8,7 +8,8 @@ class BackupLimitException : IllegalArgumentException()
 /** Portable data only. No generations, sessions, handles, credentials or device IDs. */
 object BackupCodec {
   data class Bundle(val records: List<ReminderRecord>, val nextAlerts: Map<String, Long?>,
-    val history: List<HistoryRecord>, val series: List<SeriesRecord> = emptyList(), val lists: List<ListRecord> = emptyList())
+    val history: List<HistoryRecord>, val series: List<SeriesRecord> = emptyList(), val lists: List<ListRecord> = emptyList(),
+    val purged: List<PurgedOccurrence> = emptyList())
   fun record(record: ReminderRecord): Map<String, Any?> = mapOf(
     "id" to record.id, "title" to record.title, "notes" to record.notes, "listName" to record.listName, "listId" to record.listId,
     "eventStartMs" to record.eventStartMs, "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs,
@@ -19,9 +20,10 @@ object BackupCodec {
     "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot,
     "exception" to record.exception, "skipped" to record.skipped, "deleted" to record.deleted)
   fun encode(records: List<ReminderRecord>, nextAlerts: Map<String, Long?>, history: List<HistoryRecord>, now: Long,
-    series: List<SeriesRecord> = emptyList(), lists: List<ListRecord> = emptyList()): String {
-    if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000) throw BackupLimitException()
-    val json = JSONObject(mapOf("format" to "Remilo", "version" to 3, "exportedAtMs" to now,
+    series: List<SeriesRecord> = emptyList(), lists: List<ListRecord> = emptyList(), purged: List<PurgedOccurrence> = emptyList()): String {
+    if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000 || purged.size > 10_000) throw BackupLimitException()
+    val json = JSONObject(mapOf("format" to "Remilo", "version" to 4, "exportedAtMs" to now,
+      "purgedOccurrences" to purged.map { mapOf("id" to it.id, "segmentId" to it.segmentId, "nominalSlot" to it.nominalSlot) },
       "lists" to lists.map { mapOf("id" to it.id, "name" to it.name, "createdAtMs" to it.createdAtMs) },
       "series" to series.map { mapOf("id" to it.id, "seriesId" to it.seriesId, "template" to JSONObject(it.template),
         "rule" to JSONObject(it.rule), "state" to it.state, "createdAtMs" to it.createdAtMs) },
@@ -74,7 +76,7 @@ object BackupCodec {
   fun decode(json: String): Bundle {
     require(json.toByteArray(Charsets.UTF_8).size <= 10_000_000) { "Backup exceeds 10 MB." }
     val root = JSONObject(json)
-    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3)) { "Unsupported backup format/version." }
+    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4)) { "Unsupported backup format/version." }
     val version = root.getInt("version")
     val listItems = if (version >= 3) root.getJSONArray("lists") else JSONArray()
     require(listItems.length() <= 10_000) { "Backup contains too many lists." }
@@ -132,6 +134,19 @@ object BackupCodec {
     }
     require(records.none { it.segmentId == null && it.nominalSlot != null })
     val ids = records.map { it.id }.toSet()
+    val exclusions = if (version >= 4) root.getJSONArray("purgedOccurrences") else JSONArray()
+    require(exclusions.length() <= 10_000) { "Backup contains too many exclusions." }
+    val exclusionIds = mutableSetOf<String>()
+    val purged = (0 until exclusions.length()).map { index ->
+      val obj = exclusions.getJSONObject(index)
+      val id = text(obj, "id", 200); val segmentId = text(obj, "segmentId", 200)
+      val nominalSlot = text(obj, "nominalSlot", 100)
+      require(id.isNotBlank() && exclusionIds.add(id) && id !in ids && segmentId in segmentIds) { "Invalid exclusion identity." }
+      val nominal = java.time.LocalDateTime.parse(nominalSlot)
+      require(nominal >= RuleCodec.decode(series.first { it.id == segmentId }.rule).anchor)
+      require(id == java.util.UUID.nameUUIDFromBytes("remilo:$segmentId:$nominalSlot".toByteArray()).toString())
+      PurgedOccurrence(id, segmentId, nominalSlot)
+    }
     val historyItems = root.optJSONArray("history") ?: JSONArray()
     require(historyItems.length() <= 100_000) { "Backup contains too much history." }
     val historyIds = mutableSetOf<String>()
@@ -145,6 +160,6 @@ object BackupCodec {
       HistoryRecord(id, reminderId, kind, time(obj, "atMs"), 0,
         if (!obj.has("targetMs") || obj.isNull("targetMs")) null else time(obj, "targetMs"))
     }
-    return Bundle(records, nextAlerts, history, series, lists)
+    return Bundle(records, nextAlerts, history, series, lists, purged)
   }
 }

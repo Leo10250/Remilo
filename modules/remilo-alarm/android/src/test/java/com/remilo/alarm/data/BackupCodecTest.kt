@@ -14,6 +14,31 @@ import java.time.LocalDateTime
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class BackupCodecTest {
+  @Test fun versionFourExclusionsAreContentFreeAndRejectMalformedOrOverlappingIdentities() {
+    val nominal = "2027-01-01T09:00"
+    val id = java.util.UUID.nameUUIDFromBytes("remilo:segment:$nominal".toByteArray()).toString()
+    val template = SeriesRecord("segment", "family", JSONObject(BackupCodec.record(record)).toString(), rule, createdAtMs = 500)
+    val exclusion = PurgedOccurrence(id, "segment", nominal)
+    val json = BackupCodec.encode(emptyList(), emptyMap(), emptyList(), 500, listOf(template), purged = listOf(exclusion))
+    assertEquals(listOf(exclusion), BackupCodec.decode(json).purged)
+    val encoded = JSONObject(json).getJSONArray("purgedOccurrences").getJSONObject(0)
+    assertEquals(setOf("id", "segmentId", "nominalSlot"), encoded.keys().asSequence().toSet())
+    listOf("id" to "wrong", "segmentId" to "missing", "nominalSlot" to "not-a-date").forEach { (field, value) ->
+      val root = JSONObject(json); root.getJSONArray("purgedOccurrences").getJSONObject(0).put(field, value)
+      assertThrows(Exception::class.java) { BackupCodec.decode(root.toString()) }
+    }
+    val duplicate = JSONObject(json); duplicate.getJSONArray("purgedOccurrences").put(JSONObject(encoded.toString()))
+    assertThrows(IllegalArgumentException::class.java) { BackupCodec.decode(duplicate.toString()) }
+    val overlap = BackupCodec.encode(listOf(record.copy(id = id, segmentId = "segment", nominalSlot = nominal)), emptyMap(), emptyList(),
+      500, listOf(template), purged = listOf(exclusion))
+    assertThrows(IllegalArgumentException::class.java) { BackupCodec.decode(overlap) }
+  }
+  @Test fun existingVersionThreeBackupStillReadsWithoutExclusions() {
+    val root = JSONObject(BackupCodec.encode(listOf(record), emptyMap(), emptyList(), 500))
+    root.put("version", 3); root.remove("purgedOccurrences")
+    val bundle = BackupCodec.decode(root.toString())
+    assertEquals(record.id, bundle.records.single().id); assertTrue(bundle.purged.isEmpty())
+  }
   private val record = ReminderRecord("one-off", "Reminder", 1000, 2000, 1500, 500,
     definedAlarmAtMs = 1000, zoneId = "UTC")
   private val rule = RuleCodec.encode(RecurrenceRule(LocalDateTime.of(2027, 1, 1, 9, 0), "daily", count = 3, zoneId = "UTC"))

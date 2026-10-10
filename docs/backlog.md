@@ -8,6 +8,7 @@ block verified release, rather than development. Known failures still require fi
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| TRASH-01 | Confirmed individual and selected permanent Trash deletion | owner 9 October instruction; ALERT-03/04 | implemented/unverified | [368 shared, 183 native and 77 tooling tests; signed assembly and fixture confirmation/retry review](evidence/2026-10-09-permanent-trash.md); native purge/retry/recovery/backup checks pass; Android observations remain |
 | BETA-01 | Alarm Stop completion, durable pre-unlock projection and retries | owner-approved beta-fixes plan | implemented/unverified | [134 native tests and signed beta preparation](evidence/2026-10-09-beta-fixes.md); crash/Direct Boot/retry/Reopen tests pass; physical observations remain |
 | BETA-02 | Four roots, built-in Repeats, alert-first Agenda and fixed-artwork browsing covers | owner-approved beta-fixes plan | implemented/unverified | [349 shared tests, native pagination and fixture geometry/navigation](evidence/2026-10-09-beta-fixes.md); Android layout/accessibility observations remain |
 | BETA-03 | Faithful full-density splash and native alarm appearance | owner-approved beta-fixes plan | implemented/unverified | [Individually approved splash v3 activated; captured native colors and signed build pass](evidence/2026-10-09-beta-fixes.md); actual splash/OEM/native-frame observations remain |
