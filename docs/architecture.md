@@ -19,7 +19,10 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 6/6/4. CE 4→5 adds global atmosphere with Automatic default and
+versions are 7/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+publication bindings and immutable jobs through 6→7; network/authorization runs
+on a separate I/O executor and cannot block the serialized alarm worker. Calendar
+state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
 preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions

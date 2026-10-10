@@ -5,5 +5,6 @@ import { PresentationProvider, useTheme } from '../../src/ui/theme';
 export default function PresentationPreview({ children }: PropsWithChildren) {
   const colors = useTheme();
   const [fontScale] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('reviewScale') === '2' ? 2 : undefined);
-  return <PresentationProvider colors={colors} fontScale={fontScale}>{children}</PresentationProvider>;
+  const [reducedMotion] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('reviewMotion') === 'reduced' ? true : undefined);
+  return <PresentationProvider colors={colors} fontScale={fontScale} reducedMotion={reducedMotion}>{children}</PresentationProvider>;
 }

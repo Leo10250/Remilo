@@ -3,8 +3,10 @@
 Statuses: pending, in progress, implemented/unverified, verified, blocked.
 Verified always links actual evidence. Implementation is not a passed release gate.
 Owner instruction, 4 October 2026: complete offline Android development now and
-consolidate physical checks for a later acceptance run. Pending G1/G2/G3 observations
-block verified release, rather than development. Known failures still require fixes.
+consolidate physical checks for a later acceptance run. The later
+[9 October owner attestation](evidence/2026-10-09-owner-g1-g3-attestation.md) accepts
+G1–G3 on its identified APK; unreported individual observations remain unclaimed.
+Known failures still require fixes, and new Calendar acceptance remains pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
@@ -30,15 +32,15 @@ block verified release, rather than development. Known failures still require fi
 | P1-04 | Preserve usable notification controls on Snooze re-trigger | P1-02 | verified | [owner confirmed initial/re-triggered buttons; second Snooze registered and final native Stop logged](evidence/2026-10-04-native-slice.md) |
 | P1-05 | Structured native command validation | P1-01 | verified | [invalid fields/generations leave data and registration unchanged; shared/native checks pass](evidence/2026-10-04-native-slice.md) |
 | P1-06 | Persisted interruption tests and installed-build evidence | P1-01, P0-02 | verified | [20 native tests; preflight distinguishes installed APK from local build](evidence/2026-10-04-native-slice.md) |
-| G1 | Native alarm reliability gate | P1-01/02/03/04/05/06, G0 | pending | signed physical tests; failures block wider beta |
+| G1 | Native alarm reliability gate | P1-01/02/03/04/05/06, G0 | verified | [Owner's 9 October acceptance on identified signed APK](evidence/2026-10-09-owner-g1-g3-attestation.md); owner attestation, no invented device/scenario coverage; BETA-04 remains open |
 | P2-01 | One-off create/detail/views, readiness and timing controls | P1 implementation; physical acceptance deferred | implemented/unverified | [shared/native checks; signed UI acceptance deferred](evidence/2026-10-04-one-off.md) |
 | P2-02 | Done/Postpone/post-timeout actions and session grouping | P1 implementation; physical acceptance deferred | implemented/unverified | [action/generation tests; collisions/audio acceptance deferred](evidence/2026-10-04-one-off.md) |
 | P2-03 | Settings, diagnostics, export/restore, upgrade safety | P2-01/02 | implemented/unverified | [restore conflicts and both v1→v2 migrations pass; physical transfer/file checks deferred](evidence/2026-10-04-one-off.md) |
-| G2 | Complete one-off private beta | P2-01/02/03 | pending | all one-off scenarios pass |
+| G2 | Complete one-off private beta | P2-01/02/03 | verified | [Owner's 9 October acceptance on identified signed APK](evidence/2026-10-09-owner-g1-g3-attestation.md); owner attestation; unrelated verification rows unchanged |
 | P3-01 | Pure Kotlin recurrence kernel and portable fixtures | P2 implementation; physical acceptance deferred | implemented/unverified | [fixtures/count/gap/fold/travel checks; physical acceptance pending](evidence/2026-10-04-offline.md) |
 | P3-02 | Exceptions, series edits and protected replenishment | P3-01 | implemented/unverified | [protected replenishment, pause/split/restore and interruption tests](evidence/2026-10-04-offline.md) |
 | P3-03 | Original accessible polish, management and history | P3-01/02 | implemented/unverified | [shared checks; device usability/accessibility deferred](evidence/2026-10-04-offline.md) |
-| G3 | Complete Android reminder product | P3-01/02/03 | pending | physical recurrence and tested OS matrix |
+| G3 | Complete Android reminder product | P3-01/02/03 | verified | [Owner's 9 October acceptance on identified signed APK](evidence/2026-10-09-owner-g1-g3-attestation.md); owner attestation; no unspecified OS/device matrix inferred |
 | UX-01 | Tokens/icons, unified agenda queries, search/filter, Completed and Trash | P3-01/02 | implemented/unverified | [host query tests and narrow fixture review; physical usability pending](evidence/2026-10-04-redesign.md) |
 | UX-02 | One-off/repeat editor, details, scope selection and Activity | UX-01 | implemented/unverified | [shared checks and fixture review; native picker/Back/keyboard acceptance pending](evidence/2026-10-04-redesign.md) |
 | UX-03 | Categorized automatic preferences, inline permissions, Test alarm | UX-01 | implemented/unverified | [sequencing/retry/contrast tests; phone persistence and permission-return checks pending](evidence/2026-10-04-redesign.md) |
@@ -69,7 +71,7 @@ block verified release, rather than development. Known failures still require fi
 | TD-05 | Static Classic branding | approved Classic source/A01 | implemented/unverified | [TD-05 handoff](handoffs/redesign-td-05.md); all six circle-centered Classic v2 exports approved/integrated; copier/hash and [signed assembly checks pass](handoffs/redesign-td-06.md). Actual OEM masks/splash/notification acceptance remains pending. |
 | TD-06 | Consolidated acceptance | TD-03, TD-04, TD-05; TD-01/02 integrated | implemented/unverified | [TD-06 handoff](handoffs/redesign-td-06.md); latest sequential release preparation passed 9 October 2026 at 17:18:00.718 UTC after final composition 05 presentation/wording corrections: 115 shared and 75 tooling tests, unchanged 120-test native results/lint, signed bundled ARM64 0.4.0/code 4 with current APK hash recorded. Earlier 17:01 pass preserved as history. [Owner composition 05 approval](design/r9-runtime-composition-approval-v5.json) closes R9 review. No install/publish; consolidated phone/G1/G2/G3 acceptance remains pending. |
 | FUT-ICON | Optional dynamic/themed launcher icons | separate future scope decision | pending | One static Classic identity ships first; no alias/worker feature or current acceptance dependency |
-| P4-A | Optional Google connection and one-off publishing | G3 | pending | explicit opt-in/backfill; retry-safe creation |
+| P4-A | Optional Google connection and one-off publishing | G3 | implemented/unverified | [378 shared, 82 tooling and 216 native tests; signed bundled assembly and fixture review](evidence/2026-10-09-calendar-publishing.md); [manual publishing contract/setup](calendar-publishing.md), CE 7 / DP 6 / backup 4, immutable identity recovery; designated signed-device OAuth/publishing/local-alarm acceptance remains pending |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
 | P4-D | Incremental/native background opportunities | P4-C | pending | allowlist, pagination, retries, 410 recovery |

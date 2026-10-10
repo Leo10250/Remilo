@@ -18,6 +18,7 @@ import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/them
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
+import { CalendarPublicationStatus } from '../../ui/calendar-publication';
 
 const activity: Record<string, string> = { Purge: 'Reminder permanently deleted.', TimedOut: 'Alarm timed out', UndoDelete: 'Restored', Delete: 'Moved to Trash', Reopen: 'Reopened', Done: 'Completed',
   Stop: 'Alarm stopped', StopAll: 'Ringing stopped', Snooze: 'Snoozed', Postpone: 'Postponed', Skip: 'Occurrence skipped', Edit: 'Edited', Create: 'Created',
@@ -30,6 +31,8 @@ export default function ReminderDetails() {
     originSegmentId: params.originSegmentId, originReminderId: params.originReminderId }), [origin, params.originCollection, params.originFamily, params.originSegmentId, params.originReminderId]);
   const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getOccurrence(id), enabled: nativeAvailable });
   const item = query.data, settings = useSettings(), command = useCommand(), colors = useTheme();
+  const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
+  const publication = calendar.data?.find((value) => value.occurrenceId === id);
   const scale = useFontScaleOverride(), { fontScale } = useWindowDimensions();
   const confirm = useAppearanceConfirmation();
   const itemId = item?.id, segmentId = item?.segmentId;
@@ -135,6 +138,7 @@ export default function ReminderDetails() {
       <Button label="Retry change" variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
     {command.isPending && <ActionFeedback loading message="Applying change…" />}
     {item && <>
+      {publication && <CalendarPublicationStatus publication={publication} />}
       {query.error && <><ActionFeedback message="Could not refresh. Showing the previous reminder." tone="warning" /><Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
       {item.deleted ? <Status icon="delete" label="In Trash" /> : item.completed ?
@@ -167,6 +171,8 @@ export default function ReminderDetails() {
     </>}
     <Sheet title="Reminder actions" visible={menu} onClose={() => setMenu(false)}>
       {item && !item.deleted && <SettingRow icon="edit" label="Edit" onPress={edit} />}
+      {active && !item.segmentId && (!publication || publication.state === 'Cancelled') && <SettingRow icon="event" label="Publish to Google Calendar" disabled={command.isPending || uncertain}
+        onPress={() => { setMenu(false); router.push({ pathname: '/calendar-publish', params: { id, ...routeParams, originReminderId: id } }); }} />}
       <SettingRow icon="content_copy" label="Duplicate" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }); }} />
       <SettingRow icon="history" label="Activity" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/activity', params: { id, ...routeParams, originReminderId: id } }); }} />
       {adjust && item?.deliveryState !== 'Alerting' && <SettingRow icon="snooze" label={'Snooze · ' + item.quickSnoozeMinutes + ' min'} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void delivery('Snooze'); }} />}

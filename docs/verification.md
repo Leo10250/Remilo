@@ -1,5 +1,11 @@
 # Verification and release evidence
 
+The owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
+records acceptance on its identified APK, without asserting unspecified individual
+observations or device coverage. BETA-04 still reproduces. New P4-A publishing uses
+the separate [signed-device procedure](calendar-publishing.md#signed-device-acceptance-procedure);
+prior gates do not establish Calendar OAuth, transport or reminder-suppression acceptance.
+
 Permanent Trash deletion requires a signed Android check of single-item and selected
 confirmation, Cancel/Back, changed/restored rejection, unknown-reply retry and return
 from deleted-reminder details. Verify unrelated occurrences and the repeating plan

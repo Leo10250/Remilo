@@ -1,6 +1,5 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
-
-import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput, ListRecord, SoundPreviewSnapshot, ResolvedReminderDraft } from './RemiloAlarm.types';
+import type { CalendarConnection, CalendarPublication, CalendarPublicationPreview, CalendarPage, CalendarCommand, AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput, ListRecord, SoundPreviewSnapshot, ResolvedReminderDraft } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
@@ -17,6 +16,12 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   applyCommand(command: Command): Promise<CommandResult>;
   scheduleTestAlarm(operationId: string): Promise<CommandResult>;
   getSettings(): Promise<AppSettings>;
+  getCalendarConnection(): Promise<CalendarConnection>;
+  getCalendarPublications(): Promise<CalendarPublication[]>;
+  previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
+  authorizeCalendar(publicationId: string | null): Promise<void>;
+  listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
+  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | { disconnected: boolean }>;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;

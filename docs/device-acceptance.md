@@ -9,6 +9,24 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
+## Optional Calendar acceptance
+
+The [P4-A publishing procedure](calendar-publishing.md#signed-device-acceptance-procedure)
+is a separate signed-device run using the owner-designated account and
+**Remilo Reminders** calendar. Connecting alone publishes nothing. Record the new
+APK identity and actual device/observer outcomes for connect/cancel/reconnect,
+owned selection, timed/all-day publishing, disabled Calendar reminders, offline
+recovery, disconnect and unchanged local alarms. These Calendar observations remain
+pending; the owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
+does not establish them. BETA-04 remains open because the Recents afterimage still
+reproduces.
+
+The [Calendar implementation evidence](evidence/2026-10-09-calendar-publishing.md)
+identifies the signed bundled ARM64 build prepared **10 October 2026 at
+06:14:43.215 UTC** (9 October local), **com.remilo.app 0.4.0 / code 4**.
+APK SHA-256: `0a010b846b21ae67a1b870990cce77dd9867601b4ebe4e3cfd05a961d04666c4`.
+It has not been installed or physically accepted.
+
 ## Current sheet, Details and Lists acceptance artifact
 
 The [sheet, Details and Lists evidence](evidence/2026-10-09-sheet-details-lists.md)
