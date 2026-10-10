@@ -1,6 +1,6 @@
 # Settings, Appearance, permissions and Test alarm
 
-Revision 2 · 7 October 2026 · **R8 design direction/templates accepted; associated pixels approximate.**
+Revision 3 · 9 October 2026 · **R8 direction/templates and connected-group correction accepted; associated pixels approximate.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
 
@@ -308,6 +308,30 @@ Host/native checks belong to implementation changes; physical permission-return,
 sound preview, test audibility, native alarm and pre-unlock behavior remain in the
 existing consolidated owner acceptance. [Refinement evidence](../../../evidence/2026-10-07-r8-settings-refinement.md)
 records only the checks actually performed for this draft.
+
+## Connected Settings groups (owner correction, 9 October 2026)
+
+The entire Settings page uses the shared 2 dp seams, 16 dp outside/4 dp inside
+corners and 12 dp independent-group spacing. Switches and navigation rows share
+surfaces/padding. Sound/Vibration defaults, Snooze duration and Test alarm are
+separate Alarms groups. Each explanation and preference/recovery message belongs
+to its group; Test recovery belongs inside Test and View test reminder is a
+conditional connected row. A pending preference operation spanning groups shows
+one feedback/retry block, owned by the first affected group, then moves to the
+next affected group as captured changes are confirmed.
+
+Permission actions are connected items. App notifications, Alarm channel and
+Reminder channel remain passive, inset information within Notifications, with no
+separate tiles or chevrons. Permission-query/action feedback and the distinction
+between access and audibility remain. Postpone shortcuts, Appearance, Data and
+Help use the same grouping. Prepared-export feedback/retry remains inside Export;
+backup guidance stays with Data. Build/version is passive Help content.
+At font scale >=1.6, trailing permission status moves beneath the label within
+the same action, preserving readable words and growing row height.
+
+Immediate saving, operation identity, exact retry, stale/handoff guards and
+navigation are unchanged. Existing accepted reference pixels are style references;
+this correction governs the current grouping structure.
 
 ## A36 policy correction beside the references
 

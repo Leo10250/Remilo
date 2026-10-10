@@ -5,11 +5,12 @@ import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ListRecord } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { creationOrigin, originParams, type OriginParams } from '../../domain/navigation';
-import { ActionFeedback, AtmosphericHeader, Button, Copy, Group, Icon, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
+import { ActionFeedback, AtmosphericHeader, Button, ConnectedGroup, Copy, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
 import { CommandRecovery, ListNameSheet, RootMore, RootNavigation, RootNotice, useCapturedCommand, useDestinationNavigation } from '../../ui/navigation';
 import { engine, nativeAvailable } from '../../ui/native';
 import { useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
+import { space } from '../../ui/tokens';
 
 export default function Lists() { return <ListLibrary />; }
 export function ManageLists() { return <ListLibrary management />; }
@@ -22,6 +23,11 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const [footerHeight, setFooterHeight] = useState(64), insets = useSafeAreaInsets(), colors = useTheme();
   const action = useCapturedCommand();
   const guarded = action.guarded || formGuarded;
+  const groupFeedback = (!!query.error && !!query.data || !management && !!noList.error) ? <>
+    {!!query.error && !!query.data && <Copy muted>Showing previously loaded lists.</Copy>}
+    {!management && !!noList.error && <><ActionFeedback message={noList.data ? 'Could not refresh the No list count. Showing the previous count.' : 'Could not check the No list overdue count.'} tone="danger" />
+      <Button label="Retry No list count" variant="secondary" onPress={() => void noList.refetch()} /></>}
+  </> : undefined;
   const back = useDestinationNavigation({ kind: 'lists' }, () => {
     if (selected) { setSelected(null); return true; }
     if (editing) { setEditing(null); return true; }
@@ -30,31 +36,27 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const open = (id: string | null) => router.push({ pathname: '/lists/[id]', params: { id: id ?? 'none', ...(id === null ? { noList: 'true' } : {}), ...originParams({ kind: 'lists' }) } });
   const remove = (list: ListRecord) => { setSelected(null); confirm('Remove list?', 'Reminders in “' + list.name + '” move to No list. Their schedules and completion stay the same.', [
     { text: 'Cancel', style: 'cancel' }, { text: 'Remove list', style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: list.id, expectedRevision: list.revision, operationId: engine().createOperationId() }, success: 'List removed. Reminders moved to No list.' }) }]); };
-  const row = (name: string, id: string | null, count: number, record?: ListRecord) => <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={name + (count ? ', ' + count + ' overdue occurrences' : '')} disabled={guarded || !nativeAvailable}
-      accessibilityState={{ disabled: guarded || !nativeAvailable }}
-      onPress={() => open(id)} style={({ pressed }) => ({ flex: 1, minHeight: 72, padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: pressed ? colors.soft : 'transparent' })}>
-      <View style={{ flex: 1, gap: 4 }}><Copy>{name}</Copy>{count > 0 && <Status label={count + ' overdue'} tone="warning" />}</View><Icon name="chevron_right" />
-    </Pressable>
-    {record && <Pressable accessibilityRole="button" accessibilityLabel={'More actions for ' + name} disabled={guarded || !nativeAvailable} accessibilityState={{ disabled: guarded || !nativeAvailable }}
-      onPress={() => setSelected(record)} style={{ minHeight: 48, minWidth: 48, justifyContent: 'center', alignItems: 'center' }}><Icon name="more_vert" /></Pressable>}
+  const row = (name: string, id: string | null, count: number, record?: ListRecord) => <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flex: 1 }}><SettingRow label={name} icon="checklist" minHeight={72} disabled={guarded || !nativeAvailable}
+      statusLabel={count ? count + ' overdue occurrences' : undefined} supporting={count > 0 ? <Status label={count + ' overdue'} tone="warning" /> : undefined}
+      onPress={() => open(id)} /></View>
+    {record && <IconButton icon="more_vert" label={'More actions for ' + name} disabled={guarded || !nativeAvailable} onPress={() => setSelected(record)} />}
   </View>;
   return <View style={{ flex: 1 }}>
     <Page compact={management} title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} scrollKey={management ? 'manage-lists' : 'lists'} scrollReady={!query.isLoading}
       header={<AtmosphericHeader title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} actions={!management ? <RootMore origin={{ kind: 'lists' }} disabled={guarded} /> : undefined} />}
       footer={<View onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}><CommandRecovery action={action} /><RootNotice />{!management && <RootNavigation destination="lists" disabled={guarded} />}</View>}>
+      <View style={{ gap: space.md }}>
       {management && <><Copy muted>No list is the default. Lists organize reminders without changing their alerts.</Copy>
         <Button label="Create new list" icon="add" disabled={!nativeAvailable || guarded} onPress={() => setEditing('create')} /></>}
-      {!management && <Group title="Built-in views"><SettingRow label="Repeats" icon="repeat" description="Manage recurring reminders" disabled={guarded || !nativeAvailable}
-        onPress={() => router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })} /></Group>}
+      {!management && <ConnectedGroup title="Built-in views"><SettingRow key="repeats" label="Repeats" icon="repeat" description="Manage recurring reminders" disabled={guarded || !nativeAvailable}
+        onPress={() => router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })} /></ConnectedGroup>}
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error}
         empty={!nativeAvailable || management && !query.data?.length} emptyMessage={!nativeAvailable ? 'Use the Android app to manage lists.' : 'No named lists yet.'} onRetry={() => void query.refetch()} />
-      {management ? <Group>{query.data?.map((list) => <SettingRow key={list.id} label={list.name} disabled={guarded} onPress={() => setSelected(list)} />)}</Group> :
-        <Group title="Your lists"><View style={{ gap: 12 }}>{row('No list', null, noList.data?.total ?? 0)}{query.data?.map((list) => row(list.name, list.id, list.overdueCount, list))}</View></Group>}
-      {!!query.error && !!query.data && <Copy muted>Showing previously loaded lists.</Copy>}
-      {!management && !!noList.error && <><ActionFeedback message={noList.data ? 'Could not refresh the No list count. Showing the previous count.' : 'Could not check the No list overdue count.'} tone="danger" />
-        <Button label="Retry No list count" variant="secondary" onPress={() => void noList.refetch()} /></>}
+      {management ? <ConnectedGroup footer={groupFeedback}>{query.data?.map((list) => <SettingRow key={list.id} label={list.name} icon="checklist" minHeight={72} disabled={guarded} onPress={() => setSelected(list)} />)}</ConnectedGroup> :
+        <ConnectedGroup title="Your lists" footer={groupFeedback}>{row('No list', null, noList.data?.total ?? 0)}{query.data?.map((list) => row(list.name, list.id, list.overdueCount, list))}</ConnectedGroup>}
       {!management && <View style={{ height: 88 }} />}
+      </View>
     </Page>
     {!management && <Pressable accessibilityRole="button" accessibilityLabel="Create list" accessibilityState={{ disabled: guarded || !nativeAvailable }} disabled={guarded || !nativeAvailable}
       onPress={() => setEditing('create')} style={{ position: 'absolute', right: 16, bottom: footerHeight + insets.bottom + 16, width: 56, height: 56, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', elevation: 3 }}>

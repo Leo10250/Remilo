@@ -115,7 +115,8 @@ The toolbar reads **Completed**, with Back, Search and list filter access. Below
 the compact scene show the current membership summary, **Include skipped
 occurrences** switch, and **Most recently completed or skipped first** support.
 Default excludes skipped. Global filtering offers All lists, No list and durable
-named lists using icon-free choices under the owner's fixed list-icon decision.
+named lists using ordinary radio choices. The library's leading checklist icons
+do not add extra glyphs to these selection controls.
 Fixed-list scope remains visible; omit an editable membership selector there.
 
 Native title/notes search and membership filtering happen before cursor

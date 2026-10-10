@@ -10,6 +10,12 @@ if (process.env.REMILO_UI_PREVIEW === '1') {
     if (platform === 'web' && name.endsWith('/presentation-preview')) return {
       type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/presentation-preview.tsx'),
     };
+    if (platform === 'web' && name === 'expo-file-system') return {
+      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/preview-files.ts'),
+    };
+    if (platform === 'web' && name === 'expo-sharing') return {
+      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/preview-sharing.ts'),
+    };
     return context.resolveRequest(context, name, platform);
   };
 }

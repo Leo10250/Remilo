@@ -164,8 +164,8 @@ checkboxes, select-all, overwrite choice or per-occurrence family copy.
 
 ### Lists and identity conflicts
 
-List preview is informational and icon-free under A27's provisional list-icon
-direction. Matching local identity keeps local metadata/name. Distinct identities
+List preview remains informational text; the library's leading checklist icons
+do not change backup-preview anatomy. Matching local identity keeps local metadata/name. Distinct identities
 with colliding names receive the native restored suffix and remain distinct lists;
 empty lists are included. Show source name and **Name on restore: [restoredName]**
 when it differs, otherwise **Keep local list** / **Add list** from the current

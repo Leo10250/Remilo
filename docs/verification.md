@@ -351,6 +351,26 @@ fallback and playback failures separately from accepted start requests. Include
 light/dark, 200% text, TalkBack, reduced motion and keyboard reachability alongside
 the existing native time-zone/DST and alarm reliability matrix.
 
+## Connected-item correction checks (9 October)
+
+For the editor, Lists library/management and entire Settings page, distinguish
+2 dp item seams from 12 dp independent-group spacing. Verify theme surfaces with
+transparent parents, 16 dp outside/4 dp inside corners and singleton corners.
+Conditional All day/Ends, Due/alert linkage, alert modes, Repeat and View test
+rows must update corners while retaining keyed controls and draft state. Check
+switch/navigation peer treatment, inset helper/errors/recovery, unclipped focus
+and independent List navigation/More targets. At 200% text, permission status
+moves beneath its label rather than squeezing the label beside it.
+
+Review all eight atmosphere/brightness fixtures, 360 dp width, long English/
+Chinese labels, scrolling and recovery. Preference failures spanning groups show
+one captured retry; Test and prepared-export recovery stay within their units.
+Run shared verification before Android verification because generated native
+tokens require compilation. Preview file/share substitutes are in-memory web-only
+fixtures: isolation checks must prove normal/native module resolution remains.
+Actual native date/time pickers, share-sheet handoff, TalkBack, system font scaling,
+focus and touch acceptance remain owner observations, not browser-fixture results.
+
 ## Beta-fix acceptance additions (9 October)
 
 The later [alert experience correction](design/current/alert-experience.md)

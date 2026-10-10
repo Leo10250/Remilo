@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { ActionFeedback, Field, Icon, QueryState, SettingRow, Sheet, Button } from './components';
+import { ActionFeedback, Field, Icon, QueryState, RowSupport, SettingRow, Sheet, Button } from './components';
 import { engine, nativeAvailable } from './native';
 import { useTheme } from './theme';
 import { typography } from './tokens';
@@ -26,7 +26,7 @@ export function TimeZoneField({ value, atMs, onChange, disabled = false, error }
   return <><SettingRow label="Time zone" icon="event" disabled={disabled}
     value={selected?.label ?? value.split('/').at(-1)?.replaceAll('_', ' ')} description={selected ? [selected.region, offset(selected.offsetSeconds)].filter(Boolean).join(' · ') : value}
     onPress={() => { setSearch(''); setLimit(30); setOpen(true); }} />
-    {error && <ActionFeedback message={error} tone="danger" />}
+    {error && <RowSupport><ActionFeedback message={error} tone="danger" /></RowSupport>}
     <Sheet title="Time zone" visible={open} onClose={() => setOpen(false)}>
       <Field label="Search cities or regions" placeholder="City, region, or time zone" autoFocus value={search}
         onChangeText={(text) => { setSearch(text); setLimit(30); }} autoCapitalize="none" />

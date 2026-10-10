@@ -30,7 +30,8 @@ launcher gate is part of the current dependency graph.
 
 R9 [runtime composition 05 is approved for implementation](../../design/r9-runtime-composition-approval-v5.json),
 with four prior rejected compositions preserved and actual Android acceptance
-pending. Lists omit decorative icons.
+pending. The later owner instruction selects the shared neutral checklist glyph
+for library/management lists, without an icon picker or category classification.
 Storage/API changes are recorded in [architecture](../../architecture.md).
 A37 removes superseded plans and
 prototype evidence from the checkout; recovery is available through Git history.

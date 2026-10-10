@@ -21,6 +21,10 @@ const lists = new Map<string, ListRecord>([
   ['work', { id: 'work', name: 'Work', revision: 1, overdueCount: 0 }],
   ['health', { id: 'health', name: 'Health', revision: 1, overdueCount: 0 }],
 ]);
+if (review.get('reviewLists') === 'empty') lists.clear();
+if (review.get('reviewLists') === 'single') {
+  for (const id of lists.keys()) if (id !== 'personal') lists.delete(id);
+}
 const make = (id: string, title: string, offset: number, changes: Partial<Occurrence> = {}): Occurrence => {
   const event = today.getTime() + offset;
   return { id, title, eventStartMs: event, eventEndMs: event + 1_800_000, dueAtMs: event, alarmAtMs: event, nextAlertMs: event,
@@ -385,9 +389,11 @@ const preview = {
   },
   getSettings: async () => clone(settings),
   getCapabilities: async () => {
+    if (review.get('reviewPermissions') === 'error') throw new Error('Synthetic preview: permissions could not be checked.');
     const activeSessionActions = sessionActions();
-    return { exactAlarms: true, notifications: true, channelEnabled: true, notificationChannelEnabled: true,
-      fullScreen: true, unlocked: true, observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
+    const allowed = review.get('reviewPermissions') !== 'blocked';
+    return { exactAlarms: allowed, notifications: allowed, channelEnabled: allowed, notificationChannelEnabled: allowed,
+      fullScreen: allowed, unlocked: true, observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
   },
   getTimeZones: async (atMs: number) => zones(atMs), convertTime: async (input: TimeConversionInput) => convert(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),
@@ -414,7 +420,13 @@ const preview = {
     }
     return result;
   }, reconcile: async () => {}, openSettings: async () => {},
-  scheduleTestAlarm: async (): Promise<CommandResult> => apply({ kind: 'Create', operationId: nextId(), title: 'Test alarm', eventStartMs: Date.now() + 15_000 }),
+  scheduleTestAlarm: async (operationId: string): Promise<CommandResult> => {
+    const result = apply({ kind: 'Create', operationId, title: 'Test alarm', eventStartMs: Date.now() + 15_000 });
+    if (review.get('reviewLostReply') === '1' && !lostReplies.has(operationId)) {
+      lostReplies.add(operationId); throw new Error('Synthetic preview: test reply lost.');
+    }
+    return result;
+  },
   previewSound: async (sound: 'remilo' | 'system', requestId: string): Promise<SoundPreviewSnapshot> => {
     soundPreview = { sound, requestId, state: 'Failed', reason: 'SyntheticPreview' }; soundChanged(); return clone(soundPreview);
   },

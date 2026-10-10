@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "geometry": { "home": 200, "secondary": 96, "toolbar": 56, "gutter": 16, "radius": 16, "target": 48, "action": 56, "nativeSingle": 64, "nativeMember": 56 },
   "typography": { "display": 32, "title": 24, "appBar": 22, "heading": 18, "body": 16, "supporting": 14, "label": 14 },
-  "spacing": { "xs": 4, "sm": 8, "md": 12, "gutter": 16, "lg": 24, "xl": 32 },
-  "shape": { "field": 16, "group": 16, "sheet": 24, "action": 16, "roundAction": 999 },
+  "spacing": { "connected": 2, "xs": 4, "sm": 8, "md": 12, "gutter": 16, "lg": 24, "xl": 32 },
+  "shape": { "connectedInner": 4, "field": 16, "group": 16, "sheet": 24, "action": 16, "roundAction": 999 },
   "roleAliases": { "focus": "primary", "selectedSurface": "container", "selectedInk": "primary", "primaryPressed": "primary", "onPrimaryPressed": "onPrimary", "secondaryPressed": "container", "onSecondaryPressed": "primary", "dangerSurface": "error", "dangerInk": "onError", "dangerPressed": "errorPressed" },
   "header": {
     "sunrise-light": { "ink": "#172331", "scrim": "#FFFFFF", "scrimAlpha": 0.54 },

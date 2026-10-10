@@ -22,6 +22,7 @@ export const presentation = {
     "label": 14
   },
   "spacing": {
+    "connected": 2,
     "xs": 4,
     "sm": 8,
     "md": 12,
@@ -30,6 +31,7 @@ export const presentation = {
     "xl": 32
   },
   "shape": {
+    "connectedInner": 4,
     "field": 16,
     "group": 16,
     "sheet": 24,

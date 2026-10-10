@@ -1,7 +1,7 @@
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PresentationProvider, useAppearanceHold, useAtmosphere, useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
@@ -14,6 +14,15 @@ import { FormViewport, useRevealInput } from './form-viewport';
 import { presentation } from './atmosphere.generated';
 import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
 import { scheduleSnackbarDismiss } from './snackbar-timeout';
+
+type ConnectedCorners = Pick<ViewStyle, 'borderTopLeftRadius' | 'borderTopRightRadius' | 'borderBottomLeftRadius' | 'borderBottomRightRadius'>;
+const ConnectedRowContext = createContext<ConnectedCorners | null>(null);
+
+function RowFocus({ corners }: { corners: ConnectedCorners }) {
+  const colors = useTheme();
+  return <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+    style={[StyleSheet.absoluteFill, corners, { borderWidth: 2, borderColor: colors.accent }]} />;
+}
 
 export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'add' | 'repeat' | 'more_vert' | 'close' |
   'check' | 'check_circle' | 'radio_button_unchecked' | 'remove_circle_outline' | 'expand_more' | 'expand_less' | 'chevron_right' |
@@ -124,25 +133,73 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
       fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel, compact = false }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean;
+export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean;
 }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
-  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight: 56,
+  const corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
+  const { fontScale } = useWindowDimensions();
+  const stackedStatus = corners !== null && Math.max(scale, fontScale) >= 1.6;
+  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight,
     paddingVertical: compact ? space.sm : space.md, paddingHorizontal: compact ? space.md : space.gutter }}>
     {icon && <View style={{width:compact?32:40,height:compact?32:40,borderRadius:compact?12:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} size={compact?20:24} /></View>}
-    <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
-    {children}{onPress && <Icon name="chevron_right" size={20} />}
+    <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
+    {!stackedStatus && children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
     accessibilityLabel={[label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={onPress}
-    style={({ pressed }) => ({ backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>{body}</Pressable> : body;
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...corners, backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>
+      {body}{corners && focused && <RowFocus corners={corners} />}
+    </Pressable> : body;
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.heading * scale, lineHeight:typography.heading*scale*1.4, fontWeight: '600' }}>{title}</Text>}
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
+}
+
+export function InformationRow({ label, value, supporting, icon, onPress }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void }) {
+  const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
+  const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+    <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
+    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
+    {onPress && <Icon name="chevron_right" size={20} />}
+  </View>;
+  return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={[label, value, supporting].filter(Boolean).join(', ')} onPress={onPress}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...corners, backgroundColor: pressed ? colors.soft : undefined })}>
+    {body}{corners && focused && <RowFocus corners={corners} />}
+  </Pressable> : body;
+}
+
+/** Direct, stable-keyed children are units; fragments remain one composite unit. */
+export function ConnectedGroup({ title, children, footer }: PropsWithChildren<{ title?: string; footer?: ReactNode }>) {
+  const colors = useTheme(), scale = useFontScaleOverride();
+  const items = Children.toArray(children);
+  return <View style={{ gap: space.sm }}>
+    {title && <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.heading * scale, lineHeight: typography.heading * scale * 1.4, fontWeight: '600' }}>{title}</Text>}
+    <View style={{ gap: space.connected }}>
+      {items.map((item, index) => {
+        const corners: ConnectedCorners = {
+          borderTopLeftRadius: index === 0 ? shape.group : shape.connectedInner,
+          borderTopRightRadius: index === 0 ? shape.group : shape.connectedInner,
+          borderBottomLeftRadius: index === items.length - 1 ? shape.group : shape.connectedInner,
+          borderBottomRightRadius: index === items.length - 1 ? shape.group : shape.connectedInner,
+        };
+        return <ConnectedRowContext.Provider key={isValidElement(item) ? item.key : index} value={corners}>
+          <View style={{ ...corners, backgroundColor: colors.surface, overflow: 'hidden' }}>{item}</View>
+        </ConnectedRowContext.Provider>;
+      })}
+    </View>
+    {footer && <View style={{ paddingHorizontal: space.gutter, gap: space.sm }}>{footer}</View>}
+  </View>;
+}
+
+/** Supporting content inside a unit keeps the same inset as ordinary rows. */
+export function RowSupport({ children }: PropsWithChildren) {
+  return <View style={{ paddingHorizontal: space.gutter, paddingBottom: space.md, gap: space.sm }}>{children}</View>;
 }
 export function SectionHeader({ title, count, expanded, onPress, overdue = false }: {
   title: string; count: number; expanded: boolean; onPress: () => void; overdue?: boolean;
@@ -158,11 +215,13 @@ export function SectionHeader({ title, count, expanded, onPress, overdue = false
 export function Toggle({ label, value, onChange, icon, disabled = false }: { label: string; value: boolean; onChange: (value: boolean) => void; icon?: IconName; disabled?: boolean }) {
   const colors = useTheme();
   const foundation = useFoundationStyle(), [focused,setFocused]=useState(false);
+  const corners = useContext(ConnectedRowContext);
   const disabledInk=foundation?.colors.disabledInk ?? colors.muted;
   return <Pressable disabled={disabled} accessibilityRole="switch" aria-checked={value} accessibilityLabel={label} accessibilityState={{checked:value,disabled}}
     onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} onPress={() => onChange(!value)}
-    style={({pressed})=>({minHeight:56,paddingVertical:12,paddingHorizontal:16,flexDirection:'row',alignItems:'center',gap:12,borderRadius:16,
-      borderWidth:2,borderColor:focused?colors.accent:'transparent',backgroundColor:pressed?colors.soft:colors.surface})}>
+    style={({pressed})=>({minHeight:56,paddingVertical:space.md,paddingHorizontal:space.gutter,flexDirection:'row',alignItems:'center',gap:space.md,
+      ...(corners ?? { borderRadius: shape.field }), borderWidth:corners?0:2,borderColor:focused?colors.accent:'transparent',
+      backgroundColor:corners && foundation && disabled?foundation.colors.disabledSurface:pressed?colors.soft:corners?'transparent':colors.surface})}>
     {icon && <View style={{width:40,height:40,borderRadius:16,backgroundColor:colors.soft,alignItems:'center',justifyContent:'center'}}><Icon name={icon}/></View>}
     <View style={{flex:1}}><Copy>{label}</Copy></View>
     <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
@@ -170,12 +229,14 @@ export function Toggle({ label, value, onChange, icon, disabled = false }: { lab
         backgroundColor:disabled?foundation?.colors.disabledSurface ?? colors.soft:value?colors.accent:colors.soft,borderWidth:value?0:2,borderColor:disabled?disabledInk:colors.border}}>
       <View style={{width:value?24:20,height:value?24:20,borderRadius:12,backgroundColor:disabled?disabledInk:value?colors.accentInk:colors.muted}}/>
     </View>
+    {corners && focused && <RowFocus corners={corners} />}
   </Pressable>;
 }
 export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false, compact = false }: {
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
   zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean;
 }) {
+  const connected = useContext(ConnectedRowContext) !== null;
   const [message, setMessage] = useState('');
   const [picking, setPicking] = useState(false);
   useAppearanceHold(picking);
@@ -203,7 +264,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
   };
   return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled} compact={compact}
     value={timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId)} onPress={pick} />
-    {!!message && <ActionFeedback message={message} tone="muted" />}</>;
+    {!!message && (connected ? <RowSupport><ActionFeedback message={message} tone="muted" /></RowSupport> : <ActionFeedback message={message} tone="muted" />)}</>;
 }
 export function AppBar({ title, back = true, onBack, actions, leading, scenic = false, home = false }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; leading?: ReactNode; scenic?: boolean; home?:boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
@@ -281,10 +342,12 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
   </SafeAreaView>;
 }
 export function Sheet({ title, visible, onClose, onBack, children, footer }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode }>) {
-  const colors = useTheme(), scale = useFontScaleOverride();
+  const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
+  // Modals retain React context, including scenic header foreground overrides.
+  const colors = foundation?.colors ?? inheritedColors;
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
   useAppearanceHold(visible);
-  return <ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
+  return <PresentationProvider colors={colors}><ScenicChrome.Provider value={false}><ConnectedRowContext.Provider value={null}><ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Pressable accessibilityLabel="Dismiss" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
@@ -298,7 +361,7 @@ export function Sheet({ title, visible, onClose, onBack, children, footer }: Pro
         <FormViewport fill={false} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
       </View>
     </View>
-  </Modal></ScrollChromeProvider>;
+  </Modal></ScrollChromeProvider></ConnectedRowContext.Provider></ScenicChrome.Provider></PresentationProvider>;
 }
 export function Choice({ label, description, selected, onPress, disabled = false }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean }) {
   const colors = useTheme();

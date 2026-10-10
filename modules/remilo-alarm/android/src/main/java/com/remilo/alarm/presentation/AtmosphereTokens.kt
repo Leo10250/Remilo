@@ -30,12 +30,14 @@ object AtmosphereTokens {
   const val typeBody = 16
   const val typeSupporting = 14
   const val typeLabel = 14
+  const val spaceConnected = 2
   const val spaceXs = 4
   const val spaceSm = 8
   const val spaceMd = 12
   const val spaceGutter = 16
   const val spaceLg = 24
   const val spaceXl = 32
+  const val shapeConnectedInner = 4
   const val shapeField = 16
   const val shapeGroup = 16
   const val shapeSheet = 24

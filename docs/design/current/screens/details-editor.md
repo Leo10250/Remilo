@@ -20,6 +20,32 @@ time next. All-day reminders show full-width Date only. Both controls use the
 established neutral calendar/clock icons, targets of at least 48 dp and the shared rounded group. Duration
 and linked Due/Alert offsets retain the existing native conversion and DST rules.
 
+### Connected editor units (owner correction, 9 October 2026)
+
+Use the shared connected-item geometry: 2 dp seams, 16 dp outside/4 dp inside
+corners and 12 dp between independent groups. The main form contains keyed
+Date/Time, Alert, Repeat when available, and List units. Independent Due support
+stays with Date/Time; independent alert time and its validation stay with Alert.
+Date/Time keeps its divider, responsive stacking and all-day Date-only behavior;
+Alert retains its radio-choice geometry and selection cues.
+
+Schedule options contains four logical groups: All day/Ends, Due linkage and
+independent Due, alert linkage and applicable linked alert time, and Time zone.
+Conditional items update the first/last corners without recreating retained
+controls. Zone guidance/errors belong to Time zone; other validation stays with
+its control. Sound/Vibration is a connected two-row group with the established
+Vibration icon. Notes, disclosure headers, drafts and persistent Save retain their
+existing behavior.
+
+The owner's subsequent 9 October follow-up extends connected grouping to reminder
+Details. Each Schedule information row (When, conditional independent Due, Alert
+mode, conditional Next alert, List and conditional Notes) receives its own surface
+with the same 2 dp seams and 16/4 dp corners. Keep label/value typography and
+neutral icon columns. Supporting timing text stays in its row; zone guidance stays
+in an inset group footer. Repeat is a separate filled item with recovery/guidance
+in its footer. Preserve navigation, action guards, conditional timing and the
+persistent action footer. The editor's read-only schedule preview remains unchanged.
+
 R4/R5 accept twelve representatives of ordinary details, overdue details with
 a postponed alert, creation with Title keyboard focus and independent-timing editing.
 Use [shared visual/IME rules](../visual-language.md) and [global appearance](../appearance-policy.md).

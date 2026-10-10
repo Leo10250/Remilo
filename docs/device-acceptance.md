@@ -9,10 +9,34 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Current Trash and editor acceptance
+## Current sheet, Details and Lists acceptance artifact
+
+The [sheet, Details and Lists evidence](evidence/2026-10-09-sheet-details-lists.md)
+identifies the latest signed bundled ARM64 build prepared **10 October 2026 at
+04:33:35.078 UTC** (9 October local time). It adds corrected header More sheet
+colors, connected Details rows and leading list glyphs to the preceding changes.
+Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
+APK SHA-256: `47fb75e5c6d03f507e7c93e10cebfe33f9fde2db5e4af0a4c31df857717c8a07`.
+The evidence states the application-source/build relationship. No installation
+or physical result is established. U26 and all other observations remain pending
+for this artifact until the owner records them.
+
+## Earlier connected-group artifact (historical)
+
+The [connected-group evidence](evidence/2026-10-09-connected-groups.md) identifies
+the latest signed bundled ARM64 build prepared **10 October 2026 at
+04:05:32.778 UTC** (9 October local time). It includes the editor, Lists and entire
+Settings grouping correction plus the preceding Trash/editor changes.
+Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
+APK SHA-256: `56f235df7a931b79a56fe4867736f57434095ee10f369ad7bd4817928313d445`.
+The evidence states the application-source/build relationship. No installation
+or physical result is established. U25 and all other observations remain pending
+for this artifact until the owner records them.
+
+## Earlier Trash and editor artifact (historical)
 
 The [Trash and editor correction evidence](evidence/2026-10-09-permanent-trash.md)
-identifies the latest local signed bundled ARM64 build prepared **10 October 2026
+identifies the earlier local signed bundled ARM64 build prepared **10 October 2026
 at 02:15:28.364 UTC** (9 October local time). It includes permanent Trash deletion,
 the themed Move to Trash sheet, compact independent Date/Time controls and one success snackbar.
 Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
@@ -292,6 +316,33 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   operation identity; a new test requires a new deliberate request. Leave unavailable
   fault setup pending and use only QA probes. Scheduling feedback does not prove
   audibility; native delivery remains covered by B/C.
+
+- **U25 — connected editor, Lists and Settings:** check 2 dp seams between related
+  items and 12 dp between groups, 16 dp outside/4 dp inside corners and full
+  singleton corners. Switches and navigation rows share the same surfaces. Toggle
+  All day and Due/alert linkage, select Alarm/Notification/No alert and open/close
+  the editor pickers; drafts and selections survive, hidden rows update corners,
+  and focus outlines stay unclipped. Check all eight appearance pairs, narrow
+  width and 200% system text. Permission statuses move beneath readable labels;
+  passive channel statuses/build info have no extra tiles or chevrons. Inspect
+  empty/single/multiple and long-name Lists, management and separate More targets.
+  Confirm one preference retry across affected groups, Test recovery/conditional
+  View test reminder, and prepared-backup retry inside Export with truthful
+  handoff feedback. TalkBack order, touch targets, native pickers and sharing
+    remain pending until observed on the signed Android build.
+
+- **U26 — header sheets, Details and list glyphs:** in Night Light, open Agenda
+  and Lists header More. Title, Close, Settings and Manage lists must contrast with
+  the sheet surface; focus/pressed treatment must use surface roles rather than
+  white scenic-header foregrounds. Compare all eight atmosphere/brightness pairs
+  and Completed/Trash menus. Details Schedule uses 2 dp connected seams and 16/4 dp
+  corners, including conditional independent Due, Next alert and Notes. List
+  navigation and its focus border remain functional/unclipped. Repeat recovery
+  and zone guidance stay with their group. Library No list and named/management
+  lists show the same neutral checklist glyph/container; overdue text and separate
+  More actions remain accessible. Check narrow width, 200% system text, long names,
+  scrolling, sheets, Back and TalkBack reading order on the signed build. These
+  observations remain pending; host fixtures do not establish Android acceptance.
 
 ## A. Everyday reminders and timing
 

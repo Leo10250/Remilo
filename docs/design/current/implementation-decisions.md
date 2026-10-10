@@ -12,8 +12,11 @@ requirements. The subsequent owner clarification fixes browsing artwork in place
 while opaque content covers it; [header research](header-scroll-research.md)
 defines the shared layer and restoration behavior.
 
-- Lists omit decorative icons. No list and named lists use text, explicit overdue
-  occurrence counts and accessible browsing/management actions.
+- The owner's 9 October follow-up supersedes the earlier list-icon omission.
+  No list and named lists use the shared neutral `checklist` glyph in the ordinary
+  soft icon container, explicit overdue occurrence counts and accessible,
+  separately targeted browsing/management actions. No name-based classifier or
+  custom-icon picker applies.
 - Reminder rows and details use one neutral `event` glyph. Semantic categories,
   category classification and per-reminder appearance remain deferred.
 - Reopen clears both completed and skipped state for the occurrence, preserving

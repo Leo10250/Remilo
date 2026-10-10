@@ -25,7 +25,7 @@ function metroResolver(preview) {
 }
 
 const context = { resolveRequest: (_context, name, platform) => ({ type: 'normal', filePath: platform + ':' + name }) };
-const names = ['../../modules/remilo-alarm/src/RemiloAlarmModule', '../ui/theme', '../ui/presentation-preview'];
+const names = ['../../modules/remilo-alarm/src/RemiloAlarmModule', '../ui/theme', '../ui/presentation-preview', 'expo-file-system', 'expo-sharing'];
 for (const preview of [undefined, '0', 'true', '']) {
   test(`preview environment ${String(preview)} preserves normal web and native resolution`, () => {
     const resolve = metroResolver(preview);
@@ -38,6 +38,8 @@ test('only the explicit preview web bundle substitutes the fixture bridge, leavi
   const resolve = metroResolver('1');
   assert.deepEqual({ ...resolve(context, names[0], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-engine.ts') });
   assert.deepEqual({ ...resolve(context, names[2], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/presentation-preview.tsx') });
+  assert.deepEqual({ ...resolve(context, names[3], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-files.ts') });
+  assert.deepEqual({ ...resolve(context, names[4], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-sharing.ts') });
   for (const platform of ['android', 'ios']) for (const name of names) {
     assert.deepEqual(resolve(context, name, platform), { type: 'normal', filePath: platform + ':' + name });
   }
@@ -103,6 +105,34 @@ test('fixture scene/brightness controls recognize all eight pairs and ignore unk
   }
   const settings = await loadPreview('?reviewScene=automatic&reviewBrightness=system').getSettings();
   assert.equal(settings.atmosphere, 'automatic'); assert.equal(settings.theme, 'system');
+});
+
+test('review fixtures cover empty/single lists and unavailable/blocked permission queries', async () => {
+  assert.equal((await loadPreview('?reviewLists=empty').queryLists()).length, 0);
+  assert.equal((await loadPreview('?reviewLists=single').queryLists()).length, 1);
+  await assert.rejects(loadPreview('?reviewPermissions=error').getCapabilities(), /could not be checked/);
+  const blocked = await loadPreview('?reviewPermissions=blocked').getCapabilities();
+  assert.equal(blocked.exactAlarms, false); assert.equal(blocked.notifications, false);
+});
+
+test('test lost-reply fixture retries the identified reminder without creating a duplicate', async () => {
+  const engine = loadPreview('?reviewLostReply=1');
+  await assert.rejects(engine.scheduleTestAlarm('tile-review-test'), /reply lost/);
+  const confirmed = await engine.scheduleTestAlarm('tile-review-test');
+  const repeated = await engine.scheduleTestAlarm('tile-review-test');
+  assert.ok(confirmed.occurrence); assert.equal(repeated.occurrence.id, confirmed.occurrence.id);
+});
+
+test('export review stays in memory and retries a synthetic share failure', async () => {
+  const { Directory, File, Paths } = compile('verification/ui/preview-files.ts');
+  const file = new File(new Directory(Paths.cache, 'exports'), 'fixture.json');
+  file.create(); file.write('synthetic backup');
+  assert.match(file.uri, /^memory:\/\//); assert.equal(await file.text(), 'synthetic backup');
+  await assert.rejects(File.pickFileAsync(), /requires the Android app/);
+  const sharing = compile('verification/ui/preview-sharing.ts', {}, { URLSearchParams, window: { location: { search: '?reviewShare=failed-once' } } });
+  assert.equal(await sharing.isAvailableAsync(), true);
+  await assert.rejects(sharing.shareAsync(file.uri), /unavailable/);
+  await sharing.shareAsync(file.uri);
 });
 
 test('long-text fixture supplies bounded English/Chinese content consistently across list membership and repeats', async () => {
@@ -188,6 +218,68 @@ test('optional presentation inherits scale and motion and preserves an explicit 
   const explicit = theme.PresentationProvider({ colors: colors.palettes.light, fontScale: 2, reducedMotion: false, children: 'content' });
   assert.equal(explicit.props.children.props.value, 2);
   assert.equal(explicit.props.children.props.children.props.value, false);
+});
+
+test('sheets restore surface foregrounds and controls when opened inside scenic headers in all eight themes', () => {
+  for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
+    const { theme, colors, contexts } = loadPresentation();
+    const palette = colors.atmosphereColors(scene, brightness);
+    const generated = compile('src/ui/atmosphere.generated.ts');
+    const tokens = compile('src/ui/tokens.ts', { './atmosphere.generated': generated });
+    const jsx = (type, props, key) => ({ type, props, key });
+    const components = compile('src/ui/components.tsx', {
+      ...Object.fromEntries([...read('src/ui/components.tsx').matchAll(/require\('([^']+\.webp)'\)/g)].map((match) => [match[1], 'fixture-artwork'])),
+      react: {
+        createContext: (value) => { const context = { value, Provider: Symbol('Provider') }; contexts.push(context); return context; },
+        useContext: (context) => context.value, useState: (value) => [value, () => {}],
+        useRef: (value) => ({ current: value }), useCallback: (callback) => callback, useEffect: () => {},
+        Children: { toArray: (children) => [children].flat(Infinity).filter((child) => child != null && typeof child !== 'boolean') },
+        isValidElement: (child) => child?.type != null,
+      },
+      'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
+      'react-native': {
+        View: 'View', Text: 'Text', Pressable: 'Pressable', Modal: 'Modal',
+        Platform: { OS: 'web' }, StyleSheet: { create: (styles) => styles, absoluteFill: { position: 'absolute' } },
+        useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
+      },
+      '@react-native-community/datetimepicker': {}, 'expo-symbols': { SymbolView: 'Glyph' }, 'expo-router': {},
+      'react-native-safe-area-context': {}, './theme': theme, './tokens': tokens,
+      '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
+      './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
+      './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},
+    });
+    // Model the header's foreground and scenic-control context; a Modal retains both.
+    contexts.find((context) => context.value === false).value = true;
+    contexts.find((context) => context.value === 'default').value = 'focused';
+    const render = (node) => {
+      if (Array.isArray(node)) return node.map(render);
+      if (node == null || typeof node !== 'object') return node;
+      const context = contexts.find((candidate) => candidate.Provider === node.type);
+      if (context) {
+        const previous = context.value; context.value = node.props.value;
+        const rendered = render(node.props.children); context.value = previous; return rendered;
+      }
+      if (typeof node.type === 'function') return render(node.type(node.props));
+      return { ...node, props: { ...node.props, children: render(node.props.children) } };
+    };
+    const collect = (node) => Array.isArray(node) ? node.flatMap(collect) : node && typeof node === 'object' ? [node, ...collect(node.props.children)] : [];
+    const content = jsx(components.Sheet, { title: 'More', visible: true, onClose: () => {},
+      children: jsx(components.SettingRow, { label: 'Settings', icon: 'settings', description: 'App preferences', onPress: () => {} }),
+      footer: jsx(components.Copy, { children: 'Footer' }),
+    });
+    const header = jsx(theme.PresentationProvider, { colors: { ...palette, ink: '#FFFFFF', muted: '#FFFFFF' }, fontScale: 2, reducedMotion: true, children: content });
+    const nodes = collect(render(jsx(theme.FoundationStyleProvider, { foundation: { colors: palette }, children: header })));
+    const text = (label) => nodes.find((node) => node.type === 'Text' && node.props.children === label);
+    assert.equal(text('More').props.style.color, palette.ink, scene + '/' + brightness);
+    assert.equal(text('Settings').props.style.color, palette.ink);
+    assert.equal(text('App preferences').props.style.color, palette.muted);
+    assert.equal(text('Footer').props.style.color, palette.ink);
+    assert.equal(text('More').props.style.fontSize, tokens.typography.appBar * 2, 'Large-text context survives the boundary.');
+    assert.equal(nodes.find((node) => node.type === 'Modal').props.animationType, 'none', 'Reduced-motion context survives the boundary.');
+    const close = nodes.find((node) => node.type === 'Pressable' && node.props.accessibilityLabel === 'Close More');
+    assert.equal(close.props.style({ pressed: false }).borderColor, palette.focus, 'Close uses surface focus treatment rather than scenic white.');
+    assert.ok(nodes.some((node) => node.type === 'Glyph' && node.props.name.web === 'settings' && node.props.tintColor === palette.muted));
+  }
 });
 
 test('ordinary reminder rows expose leading completion independently from opening and use a neutral glyph', () => {

@@ -9,7 +9,7 @@ import type { Tone } from '../../domain/actions';
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
 import { alertPresentation, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, formatTime, Group, Icon, IconButton, Page, QueryState, SettingRow, Sheet, shortTime, Status } from '../../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, formatTime, Icon, IconButton, Page, QueryState, SettingRow, Sheet, shortTime, Status } from '../../ui/components';
 import { notifyTrash } from '../../ui/navigation';
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
 import { typography } from '../../ui/tokens';
@@ -147,21 +147,22 @@ export default function ReminderDetails() {
       {item.deliveryState === 'Blocked' && active && <Button icon="settings" label="Review alert permissions" variant="secondary" disabled={command.isPending || uncertain} onPress={() => {
         if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/settings', params: { ...routeParams, originReminderId: id } });
       }} />}
-      <Schedule item={item} details={false}>
-        <InformationRow icon="checklist" label="List" value={item.listName || 'No list'} onPress={command.isPending || uncertain ? undefined : () => {
+      <Schedule item={item} details={false} connected>
+        <InformationRow key="list" icon="checklist" label="List" value={item.listName || 'No list'} onPress={command.isPending || uncertain ? undefined : () => {
           if (!pendingOperation.current && !runningOperation.current) router.push(reminderListRoute(item.listId ?? null, id, routeParams));
         }} />
-        {!!item.notes && <InformationRow icon="notes" label="Notes" value={item.notes} />}
+        {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
       </Schedule>
-      {item.segmentId && <Group title="Repeat">
-        <SettingRow icon="repeat" label={repeatSummary(item) ?? 'Repeating'} description={(family?.state === 'Paused' ? 'Repeat paused' : family?.state === 'Ended' ? 'Repeat ended' : 'This occurrence') +
+      {item.segmentId && <ConnectedGroup title="Repeat" footer={series.isLoading || series.error || series.data?.state === 'Archived' ? <>
+        <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
+        {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Repeat details shows the current family.</Copy>}
+      </> : undefined}>
+        <SettingRow key="repeat" icon="repeat" label={repeatSummary(item) ?? 'Repeating'} description={(family?.state === 'Paused' ? 'Repeat paused' : family?.state === 'Ended' ? 'Repeat ended' : 'This occurrence') +
           (item.exception ? item.deliveryState === 'Scheduled' ? ' · Independent alert scheduled' : item.deliveryState === 'Blocked' ? ' · Independent alert blocked' : item.deliveryState === 'Pending' ? ' · Independent alert pending' : ' · Individual change' : '')}
           disabled={command.isPending || uncertain} onPress={() => {
             if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/series/[id]', params: { id: item.segmentId!, ...(family ? { seriesId: family.seriesId } : {}), ...routeParams, originReminderId: id } });
           }} />
-        <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
-        {series.data?.state === 'Archived' && <View style={{ padding: 16 }}><Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Repeat details shows the current family.</Copy></View>}
-      </Group>}
+      </ConnectedGroup>}
       <ScheduleDetails item={item} />
     </>}
     <Sheet title="Reminder actions" visible={menu} onClose={() => setMenu(false)}>
