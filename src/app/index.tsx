@@ -3,10 +3,12 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Keyboard, LayoutAnimation, Pressable, SectionList, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ListRecord, Occurrence, ReminderFilter } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { commandFeedback, editDestination, reopenCompleted } from '../domain/actions';
 import { canAdjustAlert, groupTitle } from '../domain/presentation';
-import { ActionFeedback, AtmosphericHeader, Button, Choice, Copy, Icon, IconButton, QueryState, SectionHeader, SettingRow, Sheet, Snackbar, Status, Toggle } from '../ui/components';
+import { ActionFeedback, AtmosphericHeader, Button, Copy, Icon, IconButton, QueryState, SectionHeader, SettingRow, Sheet, Snackbar, Status } from '../ui/components';
+import { browseFilterChips, browseReminderFilter, commitBrowseFilters, removeBrowseFilter, resetBrowseFilters, type BrowseFilterField, type BrowseFilters } from '../domain/browse-filters';
+import { BrowseFilterButton, BrowseFilterChips, BrowseFilterSheet } from '../ui/browse-filters';
 import { dismissNotice, useNotice } from '../ui/feedback';
 import { useReducedMotion } from '../ui/motion';
 import { engine, nativeAvailable, useCapabilities } from '../ui/native';
@@ -34,10 +36,12 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const restoreChrome = chrome.restoreOffset;
   const [listHeight,setListHeight] = useState(0);
   const [view, setView] = useRootState<'agenda' | 'today' | 'upcoming'>(key + ':view', 'agenda');
-  const [listFilter, setListId] = useRootState<string | null | undefined>(key + ':list', undefined);
-  const listId = destination.kind === 'list' ? destination.listId : listFilter;
-  const [overdue, setOverdue] = useRootState(key + ':overdue', false), [issues, setIssues] = useRootState(key + ':issues', false);
-  const [filterOpen, setFilterOpen] = useState(false), [collapsed, setCollapsed] = useRootState<string[]>(key + ':collapsed', []);
+  const fixedListId = destination.kind === 'list' ? destination.listId : undefined;
+  const [appliedFilters, setAppliedFilters] = useRootState(key + ':filters', resetBrowseFilters('agenda', fixedListId));
+  const listId = scoped ? fixedListId : appliedFilters.listId;
+  const [filterDraft, setFilterDraft] = useState<BrowseFilters | null>(null), [collapsed, setCollapsed] = useRootState<string[]>(key + ':collapsed', []);
+  const filterOpen = filterDraft !== null;
+  const searchInput = useRef<TextInput>(null), searchFocusRequested = useRef(false);
   const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useState<Toast | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
@@ -45,10 +49,12 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const [contentOffset] = useState(()=>({x:0,y:savedScroll}));
   const active = useRef(false);
   const list = useRef<SectionList<Occurrence, AgendaSection>>(null), scrollY = useRef(savedScroll), priorScroll = useRef(savedScroll), restoreScroll = useRef(true);
+  useFocusEffect(useCallback(() => {
+    active.current = true;
+    return () => { active.current = false; searchFocusRequested.current = false; searchInput.current?.blur(); };
+  }, []));
   useFocusEffect(useCallback(()=>{
-    active.current=true;
     if (!searching) { priorScroll.current=readRootSnapshot(key+':scroll',0); restoreScroll.current=true; restoreChrome(priorScroll.current); }
-    return ()=>{active.current=false;};
   },[key,searching,restoreChrome]));
   const animate = useCallback(() => { if (!reducedMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); }, [reducedMotion]);
   const action = useCapturedCommand((job, result) => {
@@ -62,16 +68,22 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     }
   });
   const guarded = action.guarded || listGuarded;
+  const isGuarded = () => action.isGuarded() || listGuarded;
   useAppearanceHold(searching || guarded);
-  const closeSearch = useCallback(() => { animate(); Keyboard.dismiss(); restoreScroll.current = true; setSearching(false); }, [animate, setSearching]);
+  useEffect(() => {
+    if (!searching || !searchFocusRequested.current || guarded) return;
+    const frame = requestAnimationFrame(() => { if (active.current) searchInput.current?.focus(); searchFocusRequested.current = false; });
+    return () => cancelAnimationFrame(frame);
+  }, [searching, guarded]);
+  const closeSearch = useCallback(() => { animate(); searchFocusRequested.current = false; searchInput.current?.blur(); Keyboard.dismiss(); restoreScroll.current = true; setSearching(false); }, [animate, setSearching]);
   const beforeBack = useCallback(() => {
     if (trashItem) { setTrashItem(null); return true; }
-    if (filterOpen) { setFilterOpen(false); return true; }
+    if (filterOpen) { setFilterDraft(null); return true; }
     if (selected) { setSelected(null); return true; }
     if (editingList) { setEditingList(null); return true; }
     if (searching) { closeSearch(); return true; }
     return false;
-  }, [trashItem, filterOpen, selected, editingList, searching, closeSearch, setTrashItem, setFilterOpen, setSelected, setEditingList]);
+  }, [trashItem, filterOpen, selected, editingList, searching, closeSearch, setTrashItem, setFilterDraft, setSelected, setEditingList]);
   const back = useDestinationNavigation(destination, beforeBack, guarded, scoped ? origin : undefined,
     scoped ? secondaryOriginRoute({ ...originParams(origin), ...retainedOriginParams(params) }) : undefined);
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
@@ -79,7 +91,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const listName = listId === null ? 'No list' : currentList?.name ?? '';
   const missingList = scoped && listId !== null && !!lists.data && !currentList;
   const title = scoped ? listId === null ? 'No list' : listName || (missingList ? 'List removed' : 'List') : 'Remilo';
-  const filter = { view, search, ...(listId !== undefined ? { listId } : {}), deliveryIssuesOnly: issues, overdueOnly: overdue } satisfies ReminderFilter;
+  const chips = browseFilterChips('agenda', appliedFilters, lists.data, fixedListId);
+  const filter = browseReminderFilter('agenda', appliedFilters, { view, search, fixedListId });
   const reminders = useInfiniteQuery({ queryKey: ['reminders', filter], enabled: nativeAvailable, initialPageParam: null as string | null,
     queryFn: ({ pageParam }) => engine().queryReminders(filter, pageParam), getNextPageParam: (page) => page.nextCursor });
   const items = reminders.data?.pages.flatMap((page) => page.items) ?? [];
@@ -91,15 +104,15 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const groups = new Map<string, Occurrence[]>();
   items.forEach((item) => groups.set(item.agendaGroup, [...(groups.get(item.agendaGroup) ?? []), item]));
   const totals = reminders.data?.pages[0];
-  const sections = [...groups].map(([group, data]) => ({ key: group, title: groupTitle(group), count: totals?.groups[group] ?? data.length, data: collapsed.includes(group) ? [] : data }));
+  const sections = [...groups].map(([group, data]) => ({ key: group, title: groupTitle(group, new Date(capabilities.data?.observedAtMs ?? initialNow)), count: totals?.groups[group] ?? data.length, data: collapsed.includes(group) ? [] : data }));
   const open = (item: Occurrence) => { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination) } }); };
   const complete = (item: Occurrence) => {
-    if (guarded) return;
+    if (isGuarded()) return;
     if (notice) dismissNotice(notice.id); setToast(null); animate();
     void action.execute({ command: { kind: 'Done', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: 'Reminder completed' });
   };
   const undo = async (captured: NonNullable<Toast['undo']>) => {
-    if (guarded) return;
+    if (isGuarded()) return;
     try {
       const item = await engine().getOccurrence(captured.id), reversal = reopenCompleted(item, captured.revision, captured.operationId);
       if (!reversal) { setToast({ message: item && !item.completed ? 'Reminder is already open' : 'Reminder changed; this completion can no longer be undone', persistent: !!item?.completed }); return; }
@@ -107,21 +120,35 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     } catch (error) { setToast({ message: error instanceof Error ? error.message : 'Could not undo. Try again.', undo: captured, persistent: true }); }
   };
   const deleteItem = (item: Occurrence) => {
-    if (guarded) return;
+    if (isGuarded()) return;
     if (notice) dismissNotice(notice.id); setToast(null);
     void action.execute({ command: { kind: 'Delete', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: 'Moved to Trash' });
   };
   const trash = (item: Occurrence) => {
-    if (guarded) return;
+    if (isGuarded()) return;
     if (item.completed || item.skipped) { deleteItem(item); return; }
     setTrashItem({ ...item });
   };
   const removeList = () => {
-    if (!currentList || guarded) return;
+    if (!currentList || isGuarded()) return;
     confirm('Remove list?', 'Reminders in “' + currentList.name + '” move to No list. Their schedules and completion stay the same.', [
       { text: 'Cancel', style: 'cancel' }, { text: 'Remove list', style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: currentList.id, expectedRevision: currentList.revision, operationId: engine().createOperationId() }, success: 'List removed. Reminders moved to No list.' }) }]);
   };
-  const clearFilters = () => { if (!scoped) setListId(undefined); setOverdue(false); setIssues(false); };
+  const commitFilters = (draft: BrowseFilters) => {
+    const next = commitBrowseFilters('agenda', appliedFilters, draft, { fixedListId, guarded: isGuarded() });
+    if (!next) return false;
+    if (next !== appliedFilters) {
+      const offset = Math.min(Math.max(0, searching ? priorScroll.current : scrollY.current), chrome.decoration);
+      priorScroll.current = offset; scrollY.current = offset; restoreScroll.current = true;
+      writeRootSnapshot(key + ':scroll', offset); restoreChrome(offset);
+      list.current?.getScrollResponder()?.scrollTo({ y: offset, animated: false });
+      setAppliedFilters(next);
+    }
+    return true;
+  };
+  const removeFilter = (field: BrowseFilterField) => commitFilters(removeBrowseFilter(appliedFilters, field));
+  const resetFilters = () => commitFilters(resetBrowseFilters('agenda', fixedListId));
+  const openFilters = () => { if (isGuarded()) return; searchFocusRequested.current = false; searchInput.current?.blur(); Keyboard.dismiss(); setFilterDraft({ ...appliedFilters }); };
   const caps = capabilities.data, warning = caps ? !caps.exactAlarms ? 'On-time alarms need permission' : !caps.notifications ? 'Notifications are blocked'
     : !caps.channelEnabled ? 'Alarm notifications are blocked' : !caps.fullScreen ? 'Lock-screen alarms are limited' : '' : '';
   const activeToast = toast ?? (notice ? { message: notice.message, persistent: notice.persistent } : null);
@@ -131,7 +158,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   return <SafeAreaView edges={['top','left','right']} style={{flex:1,backgroundColor:colors.background}}><ScrollChromeProvider value={chrome}><View style={{flex:1}}>
     <View pointerEvents="box-none" style={{position:'absolute',top:0,left:0,right:0,height:chrome.opening}}>
     <AtmosphericHeader title={title} home={!scoped && !constrained} subtitle={!scoped && !constrained ? new Date(caps?.observedAtMs ?? initialNow).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) : undefined} back={scoped} onBack={back} actions={<>
-      <IconButton icon="search" label={searching ? 'Exit search' : 'Search reminders'} disabled={guarded} onPress={() => { if (searching) closeSearch(); else { priorScroll.current = scrollY.current; animate(); setSearching(true); } }} />
+      <IconButton icon="search" label={searching ? 'Exit search' : 'Search reminders'} disabled={guarded} onPress={() => { if (isGuarded()) return; if (searching) closeSearch(); else { priorScroll.current = scrollY.current; searchFocusRequested.current = true; animate(); setSearching(true); } }} />
       <RootMore origin={destination} disabled={guarded} listActions={scoped && currentList ? { rename: () => setEditingList(currentList), remove: removeList } : undefined} />
     </>} />
     </View>
@@ -142,22 +169,20 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         contentOffset={contentOffset} onScroll={onScroll} scrollEventThrottle={16} onLayout={event=>setListHeight(event.nativeEvent.layout.height)}
         ListHeaderComponent={<><View style={{height:chrome.decoration}} />    {searching && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface }}>
       <IconButton icon="arrow_back" label="Exit search" onPress={closeSearch} />
-      <TextInput autoFocus accessibilityLabel="Search reminders and notes" value={search} onChangeText={setSearch} placeholder="Search reminders" editable={!guarded}
+      <TextInput ref={searchInput} accessibilityLabel="Search reminders and notes" value={search} onChangeText={(value) => { if (!isGuarded()) setSearch(value); }} placeholder="Search reminders" editable={!guarded}
         placeholderTextColor={colors.muted} style={{ flex: 1, minHeight: 48, padding: 8, color: colors.ink, fontSize: 16 * scale }} />
-      {!!search && <IconButton icon="close" label="Clear query" disabled={guarded} onPress={() => setSearch('')} />}
+      {!!search && <IconButton icon="close" label="Clear query" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
     </View>}
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}>
+      <View accessibilityRole="tablist" style={{ flexGrow: 1, flexBasis: 190, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {([{ value: 'agenda', label: 'All' }, { value: 'today', label: 'Today' }, { value: 'upcoming', label: 'Upcoming' }] as const).map((tab) =>
-        <Pressable key={tab.value} accessibilityRole="tab" aria-selected={view === tab.value} accessibilityState={{ selected: view === tab.value, disabled: guarded }} disabled={guarded} onPress={() => setView(tab.value)}
+        <Pressable key={tab.value} accessibilityRole="tab" aria-selected={view === tab.value} accessibilityState={{ selected: view === tab.value, disabled: guarded }} disabled={guarded} onPress={() => { if (!isGuarded()) setView(tab.value); }}
           style={{ flexGrow: 1, minHeight: 48, paddingHorizontal: 10, paddingVertical: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 24, backgroundColor: view === tab.value ? colors.accent : colors.soft }}>
-          <Text style={{ color: view === tab.value ? colors.accentInk : colors.ink, fontSize: 14 * scale, lineHeight: 14 * scale * 1.4, fontWeight: view === tab.value ? '600' : '400' }}>{tab.label}</Text></Pressable>)}
-      <Pressable accessibilityRole="button" accessibilityLabel="Filter reminders" accessibilityState={{ disabled: guarded }} disabled={guarded}
-        onPress={() => { Keyboard.dismiss(); setFilterOpen(true); }} style={{ flexGrow: 1, minHeight: 48, paddingHorizontal: 10, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', borderRadius: 24, backgroundColor: colors.soft }}>
-        <Icon name="filter_list" size={18} /><Text style={{ color: colors.ink, fontSize: 14 * scale, lineHeight: 14 * scale * 1.4 }}>Filters</Text></Pressable>
+          <Text style={{ color: view === tab.value ? colors.accentInk : colors.ink, fontSize: 14 * scale, lineHeight: 14 * scale * 1.4, fontWeight: view === tab.value ? '600' : '400' }}>{tab.label}</Text></Pressable>)}</View>
+      <BrowseFilterButton count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />
     </View>
-    {((!scoped && listId !== undefined) || overdue || issues) && <SettingRow label={[!scoped ? listName : '', overdue ? 'Overdue only' : '', issues ? 'Alert problems only' : ''].filter(Boolean).join(' · ')}
-      value="Clear filters" icon="close" disabled={guarded} onPress={clearFilters} />}
-    {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded} onPress={() => setSearch('')} />}
+    {!!chips.length && <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}><BrowseFilterChips chips={chips} disabled={guarded} onRemove={removeFilter} onReset={resetFilters} /></View>}
+    {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
     {missingList && <View style={{ padding: 16, gap: 8 }}><Copy>This list was removed. Its reminders are in No list.</Copy><Button label="Open No list" disabled={guarded}
       onPress={() => router.replace({ pathname: '/lists/[id]', params: { id: 'none', noList: 'true', ...originParams(origin), ...retainedOriginParams(params) } })} /></View>}
     {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + '. Open Settings'} disabled={guarded}
@@ -180,11 +205,12 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
-        renderItem={({ item }) => <ReminderRow item={item} nowMs={caps?.observedAtMs} onOpen={() => { if (!guarded) open(item); }} onDone={() => complete(item)} onMore={() => { if (!guarded) setSelected(item); }} busy={guarded} />}
+        renderItem={({ item, section }) => <ReminderRow item={item} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={() => complete(item)} onMore={() => { if (!isGuarded()) setSelected(item); }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
-          emptyMessage={!nativeAvailable ? 'Use the Android app to manage reminders.' : search || overdue || issues || view !== 'agenda' || (!scoped && listId !== undefined) ? 'No reminders match.' : scoped ? 'No reminders in this list yet.' : 'No reminders yet.'} onRetry={() => void reminders.refetch()} />
-          {nativeAvailable && !reminders.isLoading && !reminders.error && !search && !overdue && !issues && view === 'agenda' && !missingList && <Copy muted size={14}>Use + to add a reminder.</Copy>}
-          {(search || overdue || issues || (!scoped && listId !== undefined)) && <Button label={search ? 'Clear search' : 'Clear filters'} variant="secondary" onPress={search ? () => setSearch('') : clearFilters} />}</View>}
+          emptyMessage={!nativeAvailable ? 'Use the Android app to manage reminders.' : search || chips.length ? 'No reminders match these filters.' : view === 'today' ? 'No reminders today.' : view === 'upcoming' ? 'No reminders from tomorrow onward.' : scoped ? 'No reminders in this list yet.' : 'No reminders yet.'} onRetry={() => void reminders.refetch()} />
+          {nativeAvailable && !reminders.isLoading && !reminders.error && !search && !chips.length && view === 'agenda' && !missingList && <Copy muted size={14}>Use + to add a reminder.</Copy>}
+          {!!search && <Button label="Clear search" variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
+          {!!chips.length && <Button label="Reset filters" variant="secondary" disabled={guarded} onPress={resetFilters} />}</View>}
         ListFooterComponent={reminders.isFetchingNextPage ? <ActionFeedback loading message="Loading more…" /> : reminders.isFetchNextPageError ? <Button label="Retry loading more" variant="secondary" onPress={() => void reminders.fetchNextPage()} /> : null} />
       <Pressable accessibilityRole="button" accessibilityLabel="Add reminder" accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
         onPress={() => { Keyboard.dismiss(); router.push(destination.kind === 'list' ? { pathname: '/edit', params: listOriginParams(destination.listId) } : '/edit'); }}
@@ -196,18 +222,15 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       onAction={() => { if (toast?.undo) void undo(toast.undo); else if (notice?.action) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
       onClose={() => { if (toast) setToast(null); else if (notice) dismissNotice(notice.id); }} />}
     {!scoped && <RootNavigation destination="agenda" disabled={guarded} />}
-    <Sheet title="Filter reminders" visible={filterOpen} onClose={() => setFilterOpen(false)} footer={<View style={{ padding: 16 }}><Button label="Show reminders" onPress={() => setFilterOpen(false)} /></View>}>
-      <QueryState loading={lists.isLoading && nativeAvailable} error={lists.error} onRetry={() => void lists.refetch()} />
-      {!scoped && <><Choice label="All lists" selected={listId === undefined} onPress={() => setListId(undefined)} /><Choice label="No list" selected={listId === null} onPress={() => setListId(null)} />
-        {lists.data?.map((item) => <Choice key={item.id} label={item.name} selected={listId === item.id} onPress={() => setListId(item.id)} />)}</>}
-      <Toggle label="Overdue only" value={overdue} onChange={setOverdue} /><Toggle label="Alert problems only" value={issues} onChange={setIssues} />
-      <Copy muted size={14}>Alert problems include missed, timed out, interrupted, blocked and failed alerts.</Copy>
-    </Sheet>
+    <BrowseFilterSheet title="Filter reminders" kind="agenda" draft={filterDraft} disabled={guarded} lists={lists.data ?? []} listsLoading={lists.isLoading && nativeAvailable}
+      listsError={lists.error} onRetryLists={() => void lists.refetch()} fixedListId={fixedListId} fixedListName={listName}
+      onDraftChange={next => { if (!isGuarded()) setFilterDraft(next); }} onCancel={() => setFilterDraft(null)}
+      onApply={() => { if (filterDraft && commitFilters(filterDraft)) setFilterDraft(null); }} />
     <Sheet title={selected?.title ?? 'Reminder actions'} visible={!!selected} onClose={() => setSelected(null)}>
-      <SettingRow label="View reminder" icon="info" onPress={() => { if (selected) open(selected); setSelected(null); }} />
+      <SettingRow label="Edit reminder" icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
+      {!!selected && canAdjustAlert(selected) && <SettingRow label="Postpone" icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
       <SettingRow label="Done" icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
-      <SettingRow label="Edit reminder" icon="edit" onPress={() => { if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
-      {!!selected && canAdjustAlert(selected) && <SettingRow label="Postpone" icon="snooze" onPress={() => { if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
+      <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
       <SettingRow label="Move to Trash" icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
