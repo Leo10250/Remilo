@@ -18,6 +18,8 @@ it.each(['sunrise', 'sky', 'evening', 'night'] as const)('%s body, supporting, s
     }
   }
   expect(contrast(palette.accentInk, palette.accent)).toBeGreaterThanOrEqual(4.5);
+  expect(contrast(palette.dangerInk, palette.dangerSurface), 'destructive button label/icon').toBeGreaterThanOrEqual(4.5);
+  expect(contrast(palette.dangerInk, palette.dangerPressed), 'pressed destructive button label/icon').toBeGreaterThanOrEqual(4.5);
   expect(contrast(palette.disabledInk,palette.disabledSurface)).toBeGreaterThanOrEqual(4.5);
   expect(contrast(palette.inverseInk,palette.inverseSurface)).toBeGreaterThanOrEqual(4.5);
   expect(contrast(palette.inverseAction,palette.inverseSurface)).toBeGreaterThanOrEqual(4.5);

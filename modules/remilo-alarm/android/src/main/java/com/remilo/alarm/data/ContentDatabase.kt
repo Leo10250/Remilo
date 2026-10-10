@@ -32,6 +32,9 @@ data class SeriesRecord(@PrimaryKey val id: String, val seriesId: String, val te
   val rule: String, val revision: Long = 1, val state: String = "Active", val createdAtMs: Long)
 @Entity(tableName = "pending_series")
 data class PendingSeries(@PrimaryKey val operationId: String, val segmentId: String)
+/** Identity only: prevents recovery/old backups from restoring purged content. */
+@Entity(tableName = "purged_occurrences")
+data class PurgedOccurrence(@PrimaryKey val id: String, val segmentId: String?, val nominalSlot: String?)
 @Entity(tableName = "pending_schedules")
 data class PendingSchedule(@PrimaryKey val operationId: String, val occurrenceId: String,
   val targetMs: Long, val generation: Long,
@@ -60,6 +63,12 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM reminders WHERE id = :id") fun find(id: String): ReminderRecord?
   @Insert(onConflict = OnConflictStrategy.ABORT) fun insert(record: ReminderRecord)
   @Update fun update(record: ReminderRecord)
+  @Query("DELETE FROM reminders WHERE id = :id") fun purgeReminder(id: String)
+  @Query("DELETE FROM history WHERE occurrenceId = :id") fun purgeHistory(id: String)
+  @Query("DELETE FROM pending_schedules WHERE occurrenceId = :id") fun purgePending(id: String)
+  @Query("SELECT * FROM purged_occurrences") fun purged(): List<PurgedOccurrence>
+  @Query("SELECT * FROM purged_occurrences WHERE id = :id") fun purged(id: String): PurgedOccurrence?
+  @Insert fun purge(record: PurgedOccurrence)
   @Query("SELECT * FROM lists ORDER BY normalizedName, id") fun lists(): List<ListRecord>
   @Query("SELECT * FROM lists WHERE id = :id") fun list(id: String): ListRecord?
   @Insert fun insertList(record: ListRecord)
@@ -84,12 +93,17 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM history WHERE operationId = :id") fun historyOperation(id: String): HistoryRecord?
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
-  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class], version = 5, exportSchema = true)
+  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class, PurgedOccurrence::class], version = 6, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS purged_occurrences (id TEXT NOT NULL PRIMARY KEY, segmentId TEXT, nominalSlot TEXT)")
+      }
+    }
     val MIGRATION_4_5 = object : Migration(4, 5) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE settings ADD COLUMN atmosphere TEXT NOT NULL DEFAULT 'automatic'")

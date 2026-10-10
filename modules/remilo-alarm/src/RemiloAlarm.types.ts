@@ -41,7 +41,7 @@ export type DeliveryCommand = {
 export type SessionCommand = { operationId: string; expectedSessionId: string; members: SessionActionMember[] } &
   ({ kind: 'DoneAll' } | { kind: 'SnoozeAll'; snoozeMinutes: number });
 export type ContentCommand = Partial<ReminderDraft> & {
-  kind: 'Edit' | 'Done' | 'Reopen' | 'Delete' | 'UndoDelete' | 'Skip'; operationId: string; occurrenceId: string; expectedRevision: number;
+  kind: 'Edit' | 'Done' | 'Reopen' | 'Delete' | 'UndoDelete' | 'Skip' | 'Purge'; operationId: string; occurrenceId: string; expectedRevision: number;
 };
 export type AtmosphereSelection = 'automatic' | 'sunrise' | 'sky' | 'evening' | 'night';
 export type AppSettings = {

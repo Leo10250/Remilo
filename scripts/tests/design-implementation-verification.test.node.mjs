@@ -13,7 +13,7 @@ const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
 const read = (root, file) => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const write = (root, file, value) => { fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), typeof value === 'object' && !Buffer.isBuffer(value) ? JSON.stringify(value) : value); };
 const ids = ['sunrise', 'sky', 'evening', 'night'].flatMap((scene) => ['light', 'dark'].map((brightness) => `${scene}-${brightness}`));
-const roles = Object.fromEntries(['canvas', 'surface', 'onSurface', 'onSurfaceVariant', 'primary', 'onPrimary', 'container', 'outline', 'error', 'warning', 'success', 'disabledSurface', 'disabledInk', 'inverseSurface', 'inverseInk', 'inverseAction'].map((role) => [role, '#123456']));
+const roles = Object.fromEntries(['canvas', 'surface', 'onSurface', 'onSurfaceVariant', 'primary', 'onPrimary', 'container', 'outline', 'error', 'onError', 'errorPressed', 'warning', 'success', 'disabledSurface', 'disabledInk', 'inverseSurface', 'inverseInk', 'inverseAction'].map((role) => [role, '#123456']));
 
 function png(width, height) {
   const bytes = Buffer.alloc(33);

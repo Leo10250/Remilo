@@ -13,6 +13,7 @@ import { useReducedMotion } from './motion';
 import { FormViewport, useRevealInput } from './form-viewport';
 import { presentation } from './atmosphere.generated';
 import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
+import { scheduleSnackbarDismiss } from './snackbar-timeout';
 
 export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'add' | 'repeat' | 'more_vert' | 'close' |
   'check' | 'check_circle' | 'radio_button_unchecked' | 'remove_circle_outline' | 'expand_more' | 'expand_less' | 'chevron_right' |
@@ -69,18 +70,30 @@ export function Heading({ children }: PropsWithChildren) {
   return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? typography.heading * scale * 1.4 : undefined, fontWeight: '600' }}>{children}</Text>;
 }
 export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint }: {
-  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
+  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
 }) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
-  const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.danger : variant === 'secondary' ? colors.accent : colors.ink;
+  const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.dangerInk : variant === 'secondary' ? colors.accent : colors.ink;
   const button = <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    style={({ pressed }) => [styles.button, { backgroundColor: c ? blocked ? c.disabledSurface : variant === 'primary' ? pressed || state === 'pressed' ? c.primaryPressed : c.accent : variant === 'danger' ? c.dangerSurface : pressed || state === 'pressed' ? c.secondaryPressed : c.soft : variant === 'primary' ? colors.accent : colors.soft,
-      borderRadius: foundation?.tokens.shape.action ?? shape.action,
-      borderWidth: c ? 2 : 0, borderColor: c && (focused || state === 'focused') ? c.focus : c && variant === 'secondary' ? blocked ? c.disabledInk : c.accent : 'transparent',
-      flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed ? 0.7 : 1 }]}>
+    style={({ pressed }) => {
+      const active = !blocked && (pressed || state === 'pressed');
+      const round = variant === 'danger' || variant === 'outlined';
+      const backgroundColor = c && blocked ? c.disabledSurface
+        : variant === 'danger' ? active ? colors.dangerPressed : c?.dangerSurface ?? colors.danger
+        : variant === 'outlined' ? active ? c?.secondaryPressed ?? colors.soft : 'transparent'
+        : c ? variant === 'primary' ? active ? c.primaryPressed : c.accent : active ? c.secondaryPressed : c.soft
+        : variant === 'primary' ? colors.accent : colors.soft;
+      const borderColor = !blocked && (focused || state === 'focused') ? variant === 'danger' ? foreground : c?.focus ?? colors.accent
+        : variant === 'outlined' ? blocked ? c?.disabledInk ?? colors.muted : c?.outline ?? colors.border
+        : c && variant === 'secondary' ? blocked ? c.disabledInk : c.accent : 'transparent';
+      return [styles.button, { backgroundColor, borderColor,
+        borderRadius: round && !active ? shape.roundAction : foundation?.tokens.shape.action ?? shape.action,
+        borderWidth: c || round ? 2 : 0,
+        flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed && !round ? 0.7 : 1 }];
+    }}>
     {(icon || busy) && <View style={{ width: 20, height: 20 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
     <Text style={{ color: foreground, lineHeight: c ? typography.body * scale * 1.4 : undefined,
       flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
@@ -111,13 +124,14 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
       fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string;
+export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel, compact = false }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean;
 }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
-  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.md, paddingHorizontal: space.gutter }}>
-    {icon && <View style={{width:40,height:40,borderRadius:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} /></View>}
+  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight: 56,
+    paddingVertical: compact ? space.sm : space.md, paddingHorizontal: compact ? space.md : space.gutter }}>
+    {icon && <View style={{width:compact?32:40,height:compact?32:40,borderRadius:compact?12:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} size={compact?20:24} /></View>}
     <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
     {children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
@@ -158,9 +172,9 @@ export function Toggle({ label, value, onChange, icon, disabled = false }: { lab
     </View>
   </Pressable>;
 }
-export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false }: {
+export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false, compact = false }: {
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
-  zoneId?: string; onError?: (message: string) => void; disabled?: boolean;
+  zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean;
 }) {
   const [message, setMessage] = useState('');
   const [picking, setPicking] = useState(false);
@@ -187,7 +201,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     };
     try { open(timeOnly ? 'time' : 'date', value, civilAt(value, zoneId)); } catch { fail(); }
   };
-  return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled}
+  return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled} compact={compact}
     value={timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId)} onPress={pick} />
     {!!message && <ActionFeedback message={message} tone="muted" />}</>;
 }
@@ -322,28 +336,25 @@ export function Status({ label, tone = 'muted', icon }: { label: string; tone?: 
 }
 export function Snackbar({ message, action, onAction, onClose, persistent = false, actionDisabled = false }: { message: string; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean; actionDisabled?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
+  const c = useFoundationStyle()?.colors;
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
   const [interacting, setInteracting] = useState(false);
   useEffect(() => {
     if (persistent || interacting) return;
-    let timer: ReturnType<typeof setTimeout> | undefined, live = true;
-    void (async () => {
-      const reader = await AccessibilityInfo.isScreenReaderEnabled();
-      if (reader || !live) return;
-      const duration = Platform.OS === 'android' ? await AccessibilityInfo.getRecommendedTimeoutMillis(action ? 10_000 : 5_000) : action ? 10_000 : 5_000;
-      if (live) timer = setTimeout(() => close.current(), duration);
-    })().catch(() => {});
-    return () => { live = false; if (timer) clearTimeout(timer); };
+    return scheduleSnackbarDismiss(() => close.current(), {
+      isScreenReaderEnabled: () => AccessibilityInfo.isScreenReaderEnabled(),
+      ...(Platform.OS === 'android' ? { getRecommendedTimeoutMillis: (duration: number) => AccessibilityInfo.getRecommendedTimeoutMillis(duration) } : {}),
+    }, action ? 10_000 : 5_000);
   }, [message, action, persistent, interacting]);
-  return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)}
-    style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: colors.ink,
+  return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)} onTouchCancel={() => setInteracting(false)}
+    style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: c?.inverseSurface ?? colors.ink,
     flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-    <Text style={{ color: colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md }}>{message}</Text>
+    <Text style={{ color: c?.inverseInk ?? colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md }}>{message}</Text>
     {action && <Pressable accessibilityRole="button" disabled={actionDisabled} accessibilityState={{ disabled: actionDisabled }} onPress={onAction} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center', opacity: actionDisabled ? 0.5 : 1 }}>
-      <Text style={{ color: colors.surface, fontWeight: '700' }}>{action}</Text></Pressable>}
+      <Text style={{ color: c?.inverseAction ?? colors.surface, fontSize: typography.supporting * scale, fontWeight: '700' }}>{action}</Text></Pressable>}
     <Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={onClose} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name="close" color={colors.surface} size={20} /></Pressable>
+      <Icon name="close" color={c?.inverseInk ?? colors.surface} size={20} /></Pressable>
   </View>;
 }
 export function ActionFeedback({ message, tone = 'muted', loading = false }: { message?: string; tone?: Tone; loading?: boolean }) {

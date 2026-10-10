@@ -16,6 +16,7 @@ import { creationOrigin, listOriginParams, originParams, readRootSnapshot, retai
 import { activateNotice, CommandRecovery, ListNameSheet, notifyTrash, RootMore, RootNavigation, useCapturedCommand, useDestinationNavigation } from '../ui/navigation';
 import { useRootState } from '../ui/root-state';
 import { useAppearanceConfirmation } from '../ui/confirmation';
+import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
 import { ScrollChromeProvider, ScrollReadingPlane, useChromeScroll, usePageChrome } from '../ui/scroll-chrome';
 
@@ -38,6 +39,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const [overdue, setOverdue] = useRootState(key + ':overdue', false), [issues, setIssues] = useRootState(key + ':issues', false);
   const [filterOpen, setFilterOpen] = useState(false), [collapsed, setCollapsed] = useRootState<string[]>(key + ':collapsed', []);
   const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useState<Toast | null>(null);
+  const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
   const [savedScroll] = useState(()=>readRootSnapshot(key + ':scroll', 0));
   const [contentOffset] = useState(()=>({x:0,y:savedScroll}));
@@ -50,7 +52,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   },[key,searching,restoreChrome]));
   const animate = useCallback(() => { if (!reducedMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); }, [reducedMotion]);
   const action = useCapturedCommand((job, result) => {
-    if (job.command.kind === 'Delete' && job.item) notifyTrash(job.item, result);
+    if (job.command.kind === 'Delete' && job.item) { notifyTrash(job.item, result); return false; }
     else if (job.command.kind === 'Done') {
       const done = result.occurrence, feedback = commandFeedback(result, job.success);
       setToast({ message: feedback.message, persistent: feedback.tone !== 'success', ...(done?.completed ? { undo: { id: done.id, revision: done.revision, operationId: engine().createOperationId() } } : {}) });
@@ -63,12 +65,13 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   useAppearanceHold(searching || guarded);
   const closeSearch = useCallback(() => { animate(); Keyboard.dismiss(); restoreScroll.current = true; setSearching(false); }, [animate, setSearching]);
   const beforeBack = useCallback(() => {
+    if (trashItem) { setTrashItem(null); return true; }
     if (filterOpen) { setFilterOpen(false); return true; }
     if (selected) { setSelected(null); return true; }
     if (editingList) { setEditingList(null); return true; }
     if (searching) { closeSearch(); return true; }
     return false;
-  }, [filterOpen, selected, editingList, searching, closeSearch, setFilterOpen, setSelected, setEditingList]);
+  }, [trashItem, filterOpen, selected, editingList, searching, closeSearch, setTrashItem, setFilterOpen, setSelected, setEditingList]);
   const back = useDestinationNavigation(destination, beforeBack, guarded, scoped ? origin : undefined,
     scoped ? secondaryOriginRoute({ ...originParams(origin), ...retainedOriginParams(params) }) : undefined);
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
@@ -109,9 +112,9 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     void action.execute({ command: { kind: 'Delete', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: 'Moved to Trash' });
   };
   const trash = (item: Occurrence) => {
+    if (guarded) return;
     if (item.completed || item.skipped) { deleteItem(item); return; }
-    confirm(item.segmentId ? 'Move this occurrence to Trash?' : 'Move reminder to Trash?', 'Its alert will be cancelled. You can restore it from Trash.', [
-      { text: 'Keep reminder', style: 'cancel' }, { text: 'Move to Trash', style: 'destructive', onPress: () => deleteItem(item) }]);
+    setTrashItem({ ...item });
   };
   const removeList = () => {
     if (!currentList || guarded) return;
@@ -189,7 +192,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         <Icon name="add" color={colors.accentInk} size={28} /></Pressable>
     </View>
     {(action.guarded || action.feedback?.tone === 'danger') && <CommandRecovery action={action} />}
-    {activeToast && !action.guarded && <Snackbar message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? 'Undo' : !toast ? notice?.action?.label : undefined}
+    {activeToast && !action.guarded && <Snackbar key={toast ? 'local' : notice?.id} message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? 'Undo' : !toast ? notice?.action?.label : undefined}
       onAction={() => { if (toast?.undo) void undo(toast.undo); else if (notice?.action) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
       onClose={() => { if (toast) setToast(null); else if (notice) dismissNotice(notice.id); }} />}
     {!scoped && <RootNavigation destination="agenda" disabled={guarded} />}
@@ -207,6 +210,10 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       {!!selected && canAdjustAlert(selected) && <SettingRow label="Postpone" icon="snooze" onPress={() => { if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
       <SettingRow label="Move to Trash" icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
+    <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
+      if (!trashItem || guarded) return;
+      const captured = trashItem; setTrashItem(null); deleteItem(captured);
+    }} />
     {editingList && <ListNameSheet key={editingList.id} visible list={editingList} onGuardChange={setListGuarded} onClose={() => setEditingList(null)}
       onSaved={() => { setEditingList(null); setToast({ message: 'List renamed.' }); }} />}
   </WindowGeometryRegion></View></View></ScrollChromeProvider></SafeAreaView>;

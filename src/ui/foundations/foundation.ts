@@ -16,7 +16,6 @@ export type FoundationColors = Colors & {
   readonly inverseInk: string;
   readonly inverseAction: string;
   readonly dangerSurface: string;
-  readonly dangerInk: string;
 };
 
 /** Existing component geometry; no palette, scene or settings resolution. */

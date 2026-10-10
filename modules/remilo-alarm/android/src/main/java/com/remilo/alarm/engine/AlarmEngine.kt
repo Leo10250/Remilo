@@ -32,7 +32,8 @@ class AlarmEngine internal constructor(private val context: Context,
   private val systemDark: () -> Boolean = { (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES },
   private val beforeAppearanceWrite: () -> Unit = {},
   private val completionCheckpoint: (String) -> Unit = {},
-  private val bulkSnoozeCheckpoint: (String) -> Unit = {}) {
+  private val bulkSnoozeCheckpoint: (String) -> Unit = {},
+  private val purgeCheckpoint: (String) -> Unit = {}) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
@@ -70,6 +71,10 @@ class AlarmEngine internal constructor(private val context: Context,
     val db = content()
     series.materialize()
     for (completion in alerts.completions()) {
+      if (db.records().purged(completion.occurrenceId) != null) {
+        alerts.acknowledgeCompletion(completion.operationId)
+        continue
+      }
       db.runInTransaction {
         // The history key proves CE commit, including a lost DP acknowledgement.
         // A later Reopen must never be overwritten by replay of that commit.
@@ -377,6 +382,32 @@ class AlarmEngine internal constructor(private val context: Context,
     applyPending(db); series.replenish(); series.materialize(); changed()
     return result(id)
   }
+  private fun purge(operation: String, command: Map<String, Any?>): Map<String, Any?> {
+    val db = content(); val dao = db.records()
+    val id = text(command, "occurrenceId", "", 200)
+    val expected = epoch(command["expectedRevision"], "expectedRevision")
+    dao.receipt(operation)?.let {
+      validate(it.kind == "Purge" && it.occurrenceId == id && it.sourceId == expected.toString(),
+        "operationId", "This operation was already used. Refresh and try again.")
+      return mapOf("status" to "Applied")
+    }
+    val record = dao.find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND",
+      "errorMessage" to "This reminder is no longer in Trash.")
+    if (record.revision != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION",
+      "errorMessage" to "This reminder changed. Refresh before deleting it permanently.")
+    validate(record.deleted, "occurrenceId", "Only reminders in Trash can be deleted permanently.")
+    // Moving to Trash already fenced and cancelled delivery. The CE transaction
+    // removes content/history together with the exclusion and exact retry receipt.
+    db.runInTransaction {
+      dao.purge(PurgedOccurrence(id, record.segmentId, record.nominalSlot))
+      dao.purgePending(id); dao.purgeHistory(id); dao.purgeReminder(id)
+      dao.receipt(CreationReceipt(operation, id, "Purge", expected.toString()))
+      purgeCheckpoint("before-commit")
+    }
+    changed()
+    purgeCheckpoint("committed")
+    return mapOf("status" to "Applied")
+  }
   fun settings(): Map<String, Any> {
     val settings = prepareContentActions().records().settings() ?: SettingsRecord()
     return mapOf("revision" to settings.revision, "snoozeMinutes" to settings.snoozeMinutes,
@@ -493,7 +524,7 @@ class AlarmEngine internal constructor(private val context: Context,
     catch (_: Exception) { AppearancePolicy.captured(null, null) }
   }
   fun diagnostics(): Map<String, Any> { prepareContentActions(); return mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 5, "operationalSchema" to 6,
+    "contentSchema" to 6, "operationalSchema" to 6,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to (content().records().pending().size + alerts.completions().size)) }
   fun exportBackup(): String {
@@ -502,7 +533,8 @@ class AlarmEngine internal constructor(private val context: Context,
     val targets = records.associate { record -> record.id to alerts.find(record.id)?.let { alert ->
       if (!record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused")) alert.targetMs else null
     } }
-    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series(), db.records().lists())
+    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series(), db.records().lists(),
+      db.records().purged().filter { it.segmentId != null })
   }
   fun previewImport(json: String): Map<String, Any> {
     val bundle = BackupCodec.decode(json)
@@ -510,7 +542,7 @@ class AlarmEngine internal constructor(private val context: Context,
     val families = bundle.series.groupBy { it.seriesId }
     val localFamilies = dao.series().map { it.seriesId }.toSet()
     val items = bundle.records.filter { it.segmentId == null }.map {
-      mapOf("id" to it.id, "title" to it.title, "conflict" to (dao.find(it.id) != null),
+      mapOf("id" to it.id, "title" to it.title, "conflict" to (dao.find(it.id) != null || dao.purged(it.id) != null),
         "futureAlert" to (!it.completed && it.mode != "None" && (bundle.nextAlerts[it.id] ?: it.definedAlarmAtMs!!) > now()))
     } + families.map { (id, segments) ->
       val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
@@ -557,7 +589,7 @@ class AlarmEngine internal constructor(private val context: Context,
       // uncertain even when its exception resembles input validation.
       mutationStarted = true
       prepareContentActions()
-      applyPending(db); return mapOf("status" to "Applied", "retry" to true)
+      applyPending(db); series.recover(); return mapOf("status" to "Applied", "retry" to true)
     }
     prepareContentActions()
     val bundle = BackupCodec.decode(json) // Entire new import is validated before writing anything.
@@ -570,10 +602,10 @@ class AlarmEngine internal constructor(private val context: Context,
     val segmentMap = segments.associate { it.id to if (it.seriesId !in conflicts) it.id
       else UUID.nameUUIDFromBytes("$operation:segment:${it.id}".toByteArray()).toString() }
     val accepted = bundle.records.filter { if (it.segmentId != null) it.segmentId in segmentMap
-      else db.records().find(it.id) == null || it.id in copyIds }
+      else db.records().find(it.id) == null && db.records().purged(it.id) == null || it.id in copyIds }
     val mapped = accepted.associate { record -> record.id to
       if (record.segmentId != null) UUID.nameUUIDFromBytes("remilo:${segmentMap.getValue(record.segmentId)}:${record.nominalSlot}".toByteArray()).toString()
-      else if (db.records().find(record.id) == null) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
+      else if (db.records().find(record.id) == null && db.records().purged(record.id) == null) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
     val (listMap, newLists) = restoredLists(bundle)
     mutationStarted = true
     db.runInTransaction {
@@ -586,6 +618,11 @@ class AlarmEngine internal constructor(private val context: Context,
         db.records().series(source.copy(id = id, seriesId = family,
           template = org.json.JSONObject(BackupCodec.record(template.copy(listId = list?.id, listName = list?.name.orEmpty()))).toString()))
         db.records().pendingSeries(PendingSeries("$operation:series:$id", id))
+      }
+      bundle.purged.filter { it.segmentId in segmentMap }.forEach { source ->
+        val segment = segmentMap.getValue(source.segmentId!!)
+        val id = UUID.nameUUIDFromBytes("remilo:$segment:${source.nominalSlot}".toByteArray()).toString()
+        db.records().purge(source.copy(id = id, segmentId = segment))
       }
       accepted.forEach { source ->
         val id = mapped.getValue(source.id)
@@ -644,6 +681,7 @@ class AlarmEngine internal constructor(private val context: Context,
     return when (command["kind"]) {
       "Create" -> create(operationId, command)
       "Edit", "Done", "Reopen", "Delete", "UndoDelete", "Skip" -> modify(operationId, command)
+      "Purge" -> purge(operationId, command)
       "CreateSeries", "EditSeries", "EditFollowing", "PauseSeries", "ResumeSeries" -> {
         if (command["kind"] != "CreateSeries") {
           validate(text(command, "segmentId", "", 200).isNotBlank(), "segmentId", "Choose a series.")
@@ -772,8 +810,9 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   private fun replayHistory(db: ContentDatabase) {
     for (action in alerts.actions()) {
-      db.records().history(HistoryRecord(action.operationId, action.occurrenceId, action.kind,
-        action.occurredAtMs, action.generation, action.targetMs))
+      if (db.records().purged(action.occurrenceId) == null)
+        db.records().history(HistoryRecord(action.operationId, action.occurrenceId, action.kind,
+          action.occurredAtMs, action.generation, action.targetMs))
       alerts.acknowledge(action.operationId) // history insert is idempotent; no operational replay
     }
   }

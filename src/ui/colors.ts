@@ -2,7 +2,8 @@ import { presentation } from './atmosphere.generated';
 import type { Atmosphere, Brightness } from '../domain/appearance';
 export type Colors = {
   dark: boolean; background: string; surface: string; ink: string; muted: string;
-  accent: string; accentInk: string; soft: string; border: string; danger: string; warning: string; success: string;
+  accent: string; accentInk: string; soft: string; border: string;
+  danger: string; dangerInk: string; dangerPressed: string; warning: string; success: string;
 };
 export function atmosphereColors(scene: Atmosphere, brightness: Brightness) {
   const pair = presentation.pairs[`${scene}-${brightness}`], semantic = presentation.semantic[brightness];
@@ -17,7 +18,7 @@ export function atmosphereColors(scene: Atmosphere, brightness: Brightness) {
     disabledSurface: semantic.disabledSurface, disabledInk: semantic.disabledInk,
     selectedSurface: roles[alias.selectedSurface], selectedInk: roles[alias.selectedInk],
     inverseSurface: semantic.inverseSurface, inverseInk: semantic.inverseInk, inverseAction: semantic.inverseAction,
-    dangerSurface: roles[alias.dangerSurface], dangerInk: roles[alias.dangerInk],
+    dangerSurface: roles[alias.dangerSurface], dangerInk: roles[alias.dangerInk], dangerPressed: roles[alias.dangerPressed],
   };
 }
 export const palettes = { light: atmosphereColors('sky', 'light'), dark: atmosphereColors('sky', 'dark') };

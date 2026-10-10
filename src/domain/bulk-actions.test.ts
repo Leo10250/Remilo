@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CommandResult, ContentCommand, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { BulkOperation, captureBulk } from './bulk-actions';
+import { BulkOperation, bulkSummary, captureBulk } from './bulk-actions';
 
 const item = (id: string, extra: Partial<Occurrence> = {}) => ({ id, title: id, revision: 7, completed: true, skipped: false, deleted: false, ...extra }) as Occurrence;
 const ids = () => { let next = 0; return () => `operation-${++next}`; };
@@ -63,5 +63,25 @@ describe('captured collection batches', () => {
     const operation = new BulkOperation(perform), job = captureBulk('UndoDelete', [item('a', { deleted: true }), item('b', { deleted: true, completed: false, skipped: true })], ids());
     await operation.run(job);
     expect(perform.mock.calls.map(([command]) => command)).toEqual(job.entries.map(entry => ({ kind: 'UndoDelete', occurrenceId: entry.id, expectedRevision: entry.revision, operationId: entry.operationId })));
+  });
+  it('permanently deletes only captured Trash items and retries an unknown child exactly', async () => {
+    expect(() => captureBulk('Purge', [item('active')], ids())).toThrow('selection changed');
+    const job = captureBulk('Purge', [item('a', { deleted: true, completed: false }), item('b', { deleted: true })], ids());
+    const calls: ContentCommand[] = [], receipts = new Set<string>();
+    const operation = new BulkOperation(async command => {
+      calls.push(command);
+      if (!receipts.has(command.operationId)) {
+        receipts.add(command.operationId);
+        if (command.occurrenceId === 'b') throw new Error('Reply lost after purge');
+      }
+      return { status: 'Applied' };
+    });
+    await expect(operation.run(job)).rejects.toThrow('Reply lost');
+    expect(operation.progress).toMatchObject({ confirmed: 1, pending: 1 });
+    await operation.run(job);
+    expect(calls.map(command => command.occurrenceId)).toEqual(['a', 'b', 'b']);
+    expect(calls[1]).toEqual(calls[2]);
+    expect(calls.every(command => command.kind === 'Purge')).toBe(true);
+    expect(bulkSummary(job, operation.progress)).toBe('2 of 2 permanently deleted.');
   });
 });

@@ -10,6 +10,7 @@ import { ActionFeedback, AtmosphericHeader, Button, Choice, Copy, Field, IconBut
 import { CommandRecovery, notifyTrash, RootNavigation, RootNotice, useCapturedCommand, useDestinationNavigation } from '../ui/navigation';
 import { engine, nativeAvailable } from '../ui/native';
 import { ReminderRow } from '../ui/reminder-row';
+import { PurgeConfirmation } from '../ui/purge-confirmation';
 import { useRootState } from '../ui/root-state';
 import { useAppearanceHold } from '../ui/theme';
 
@@ -26,9 +27,10 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
   const [selecting, setSelecting] = useRootState(key + ':selecting', false), [selectionIds, setSelectionIds] = useRootState<string[]>(key + ':selection', []);
   const listId = scoped ? fixedListId : membership;
   const [filterOpen, setFilterOpen] = useState(false), [menuOpen, setMenuOpen] = useState(false), [selected, setSelected] = useState<Occurrence | null>(null);
+  const [purgeItems, setPurgeItems] = useState<Occurrence[]>([]), [purgeBulk, setPurgeBulk] = useState(false);
   const singleRunning = useRef(false), completedBulk = useRef<string | null>(null);
   const action = useCapturedCommand((job, result) => {
-    if (job.command.kind === 'Delete' && job.item) notifyTrash(job.item, result);
+    if (job.command.kind === 'Delete' && job.item) { notifyTrash(job.item, result); return false; }
     const restored = result.occurrence;
     if (job.command.kind === 'UndoDelete' && restored && !restored.completed && !restored.skipped && restored.mode !== 'None' &&
       alertPresentation(restored).target === null && restored.deliveryState !== 'Alerting')
@@ -43,6 +45,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
   };
   const back = useDestinationNavigation(destination, () => {
     if (isGuarded()) return true;
+    if (purgeItems.length) { setPurgeItems([]); return true; }
     if (filterOpen) { setFilterOpen(false); return true; }
     if (selected) { setSelected(null); return true; }
     if (menuOpen) { setMenuOpen(false); return true; }
@@ -69,14 +72,14 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     const available = new Set(items.map((item) => item.id));
     setSelectionIds((current) => current.every((id) => available.has(id)) ? current : current.filter((id) => available.has(id)));
   }, [guarded, items, query.data, query.isFetching, setSelectionIds]);
-  const update = (item: Occurrence, kind: 'UndoDelete' | 'Reopen' | 'Delete') => {
+  const update = (item: Occurrence, kind: 'UndoDelete' | 'Reopen' | 'Delete' | 'Purge') => {
     if (isGuarded()) return;
     const operationId = engine().createOperationId();
     singleRunning.current = true;
     setSelected(null);
     void action.execute({ command: { kind, occurrenceId: item.id, expectedRevision: item.revision, operationId }, item,
       success: kind === 'UndoDelete' ? item.completed ? 'Restored to Completed.' : item.skipped ? 'Skipped occurrence restored.' : 'Reminder restored.'
-        : kind === 'Delete' ? 'Moved to Trash' : 'Reminder reopened.' }).finally(() => { singleRunning.current = false; });
+        : kind === 'Purge' ? 'Reminder permanently deleted.' : kind === 'Delete' ? 'Moved to Trash' : 'Reminder reopened.' }).finally(() => { singleRunning.current = false; });
   };
   const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
   const clearEditableFilters = () => { if (!scoped && !selecting && !isGuarded()) setListId(undefined); };
@@ -93,6 +96,16 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     if (isGuarded() || !selectedItems.length || selectedItems.length !== selectionIds.length) return;
     Keyboard.dismiss(); setMenuOpen(false); void bulk.execute(kind, selectedItems);
   };
+  const requestPurge = (captured: Occurrence[], multiple: boolean) => {
+    if (isGuarded() || view !== 'deleted' || !captured.length || captured.some(item => !item.deleted)) return;
+    Keyboard.dismiss(); setSelected(null); setMenuOpen(false); setPurgeBulk(multiple);
+    setPurgeItems(captured.map(item => ({ ...item })));
+  };
+  const confirmPurge = () => {
+    if (isGuarded() || !purgeItems.length) return;
+    const captured = purgeItems; setPurgeItems([]);
+    if (purgeBulk) bulk.execute('Purge', captured); else update(captured[0], 'Purge');
+  };
   const emptyMessage = !nativeAvailable ? 'Use the Android app to manage reminders.' : search || !scoped && listId !== undefined ? 'No matches.' : view === 'deleted' ? 'Trash is empty.' : includeSkipped ? 'No completed or skipped occurrences.' : 'No completed reminders.';
   return <Page title={title} back={scoped || selecting} onBack={guardedBack} scrollKey={key} scrollReady={!query.isLoading}
     header={<AtmosphericHeader back={scoped || selecting} title={selecting ? selectionIds.length + ' selected' : title} subtitle={selecting ? title + (scoped ? ' · ' + scopeName : '') : scoped ? scopeName : undefined} onBack={guardedBack} actions={<>
@@ -107,6 +120,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
         {!!selectionIds.length && !bulk.guarded && <>
           <Button label={view === 'deleted' ? 'Restore' : 'Reopen'} accessibilityLabel={view === 'deleted' ? 'Restore selected' : 'Reopen selected'} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
           {view === 'completed' && <Button label="Move to Trash" accessibilityLabel="Move selected to Trash" variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
+          {view === 'deleted' && <Button label="Delete permanently" accessibilityLabel="Delete selected permanently" variant="danger" disabled={guarded || !selectedItems.length || selectedItems.length !== selectionIds.length} onPress={() => requestPurge(selectedItems, true)} />}
         </>}
       </View>}
       <RootNotice disabled={guarded} />{!selecting && <RootNavigation destination={scoped ? 'lists' : view === 'deleted' ? 'trash' : 'completed'} atRoot={!scoped} disabled={guarded} />}</>}>
@@ -117,7 +131,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     {view === 'completed' && <Toggle label="Include skipped occurrences" value={includeSkipped} disabled={guarded || selecting} onChange={(value) => { if (!isGuarded() && !selecting) setIncludeSkipped(value); }} />}
     {selecting && <Copy muted size={14}>Select reminders using their checkboxes. Select all loaded includes only reminders currently loaded; loading more does not select them.</Copy>}
     <Copy muted size={14}>{view === 'deleted' ? 'Most recently deleted first. Restore keeps completed or skipped state and never replays past alerts.' : 'Most recently completed or skipped first.'}</Copy>
-    {view === 'deleted' && <Copy muted size={14}>Items stay here until restored. Backups exclude one-off reminders in Trash; repeating deletion exclusions are retained.</Copy>}
+    {view === 'deleted' && <Copy muted size={14}>Items stay here until restored or permanently deleted. Backups exclude one-off reminders in Trash; repeating deletion exclusions are retained.</Copy>}
     {selecting && <BulkRecovery action={bulk} />}
     {!!query.error && !!items.length ? <View style={{ gap: 8 }}><ActionFeedback message="Could not refresh. Showing previously loaded information." tone="danger" /><Button label="Retry" variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) void query.refetch(); }} /></View> :
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error} empty={!items.length} emptyMessage={emptyMessage} onRetry={() => { if (!isGuarded()) void query.refetch(); }} />}
@@ -146,6 +160,8 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
       <SettingRow label="View reminder" icon="info" disabled={guarded} onPress={() => { if (isGuarded()) return; if (selected) open(selected); setSelected(null); }} />
       {view === 'completed' && <SettingRow label="Reopen" icon="undo" disabled={guarded} onPress={() => { if (selected) update(selected, 'Reopen'); }} />}
       <SettingRow label={view === 'completed' ? 'Move to Trash' : 'Restore'} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
+      {view === 'deleted' && <SettingRow label="Delete permanently" icon="delete_forever" description="Cannot be undone." disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
     </Sheet>
+    <PurgeConfirmation items={purgeItems} onCancel={() => setPurgeItems([])} onConfirm={confirmPurge} />
   </Page>;
 }

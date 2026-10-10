@@ -172,23 +172,52 @@ Include skipped. The return route still works; no creation CTA is necessary.
 
 ## B. Trash and recovery
 
+The owner's 9 October confirmation/feedback correction uses the shared themed
+in-app sheet for unfinished reminders moving to Trash, from Agenda or Details.
+Show the captured reminder title, alert cancellation/restoration explanation,
+filled round **Move to Trash** with its leading delete icon, and neutral outlined
+**Keep reminder**. Close, backdrop and Android Back cancel. A repeating reminder
+explains that only the selected occurrence moves. Confirm submits the displayed
+identity/revision; stale and unconfirmed operation guards remain intact.
+
+A confirmed single-item move shows one app snackbar with revision-safe **Undo**,
+using shared inverse surface/content/action roles. Do not also retain a green
+inline success message. Ordinary messages expire after five seconds; actionable
+Undo messages use ten seconds, extended by Android's accessibility timeout.
+Touch interaction pauses expiry; TalkBack retains explicit dismissal. New notice
+identities reset the deadline, and failed accessibility queries use the ordinary
+deadline. Errors and unconfirmed retry feedback stay visible until resolved.
+
 Use the same collection anatomy with **Trash**, search and appropriate membership
 constraint. Support reads **Most recently deleted first** and **Restore keeps
 completed or skipped state and never replays past alerts**. A concise explanation says **Items stay
-here until restored.** Keep the local-retention and backup qualification available
+here until restored or permanently deleted.** Keep the local-retention and backup qualification available
 in the scroll content: one-off Trash is excluded from backups; recurring deletion
-exclusions are retained. There is no permanent delete, Empty Trash, automatic
-expiry or retention countdown. The latest owner instruction authorizes selected
-occurrence Restore; it does not authorize permanent deletion or Empty Trash.
+exclusions are retained. The owner's subsequent 9 October instruction adds
+individual and selected-occurrence permanent deletion with explicit confirmation.
+There is no Empty Trash, automatic expiry or retention countdown.
 
 Rows label **In Trash** plus meaningful previous work state: **Unfinished**,
 **Completed** or **Skipped**. Retain original timing, neutral reminder glyph and
 list information. Candidate 05 removes inline Restore. Keep row-open and the
 neutral three-dot 48 dp More control separate; More offers **View reminder** /
-**Restore** for one occurrence. Only selection mode adds leading 48 dp selection
-checkboxes and a persistent contextual **Restore** action of at least 56 dp.
+**Restore** / **Delete permanently** for one occurrence. Deleted-reminder details
+also offers **Delete permanently** through More. Only selection mode adds leading
+48 dp selection checkboxes and persistent contextual **Restore** and **Delete
+permanently** actions of at least 56 dp.
 There is no leading completion/status circle during normal browsing.
 No Done/Reopen action while deleted and no Trash swipe that suggests purging.
+Permanent deletion opens a shared confirmation sheet naming a single reminder or
+the captured selected count. Explain that content/activity removal cannot be undone
+or restored from Trash, and that repeating plans/other occurrences are kept. The
+owner's 9 October button correction requires a visible filled round error/onError
+Delete permanently button with a leading icon, and a lower-emphasis neutral outlined
+Cancel button. Both grow with text and use the shared 56 dp action minimum. Cancel,
+close, backdrop and Back dismiss without mutation. Confirmation submits the captured
+IDs/revisions through the serialized native worker, reusing existing unknown-reply
+guards and exact retries. A changed/restored item is rejected. No global/hidden-page
+purge or batch Undo is implied. Minimal recurring identity exclusions survive
+recovery and backup/restore without retaining the occurrence's private fields.
 Deleted records do not advertise an active Scheduled alert. As in Completed,
 list rows show no fabricated deletion timestamp.
 
@@ -348,8 +377,9 @@ remaining scroll. Rejected items require a fresh deliberate selection/action;
 they are not retried as new work automatically. Retained
 refresh failure is distinct from action results. Reopen continues clearing both
 completed and skipped with elapsed-target silence; Restore retains prior work
-state; Move to Trash retains cancellation and revision guards. There is no bulk
-permanent deletion, automatic selection of another page or atomic batch Undo.
+state; Move to Trash retains cancellation and revision guards. The subsequent
+owner instruction permits confirmed permanent deletion of captured Trash selections.
+There is no automatic selection of another page or atomic batch Undo.
 
 ## Source gaps and implementation checks
 

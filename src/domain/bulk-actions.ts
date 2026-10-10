@@ -1,6 +1,6 @@
 import type { CommandResult, ContentCommand, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
-export type BulkKind = 'Reopen' | 'Delete' | 'UndoDelete';
+export type BulkKind = 'Reopen' | 'Delete' | 'UndoDelete' | 'Purge';
 export type BulkEntry = Readonly<{ id: string; title: string; revision: number; operationId: string }>;
 export type BulkJob = Readonly<{ id: string; kind: BulkKind; entries: readonly BulkEntry[] }>;
 export type BulkOutcome = Readonly<{ entry: BulkEntry; result: CommandResult }>;
@@ -10,7 +10,7 @@ export type BulkProgress = { total: number; confirmed: number; rejected: number;
 export function captureBulk(kind: BulkKind, items: readonly Occurrence[], id: () => string): BulkJob {
   const unique = [...new Map(items.map(item => [item.id, item])).values()];
   if (!unique.length) throw new Error('Select at least one reminder.');
-  if (unique.some(item => kind === 'UndoDelete' ? !item.deleted : item.deleted || !item.completed && !item.skipped))
+  if (unique.some(item => kind === 'UndoDelete' || kind === 'Purge' ? !item.deleted : item.deleted || !item.completed && !item.skipped))
     throw new Error('The selection changed. Refresh and select the reminders again.');
   const identifiers = new Set<string>();
   const nextId = () => {
@@ -61,7 +61,7 @@ export class BulkOperation {
 }
 
 export function bulkSummary(job: BulkJob, progress: BulkProgress) {
-  const verb = job.kind === 'Delete' ? 'moved to Trash' : job.kind === 'UndoDelete' ? 'restored' : 'reopened';
+  const verb = job.kind === 'Purge' ? 'permanently deleted' : job.kind === 'Delete' ? 'moved to Trash' : job.kind === 'UndoDelete' ? 'restored' : 'reopened';
   let message = `${progress.pending ? 'Confirmed: ' : ''}${progress.confirmed} of ${progress.total} ${verb}.`;
   if (progress.rejected) message += ` ${progress.rejected} could not be changed. Select them again after reviewing the results.`;
   if (progress.pending) message += ` ${progress.pending} not yet confirmed.`;

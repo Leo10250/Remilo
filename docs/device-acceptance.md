@@ -9,7 +9,19 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Current alert experience acceptance
+## Current Trash and editor acceptance
+
+The [Trash and editor correction evidence](evidence/2026-10-09-permanent-trash.md)
+identifies the latest local signed bundled ARM64 build prepared **10 October 2026
+at 02:15:28.364 UTC** (9 October local time). It includes permanent Trash deletion,
+the themed Move to Trash sheet, compact independent Date/Time controls and one success snackbar.
+Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
+APK SHA-256: `b4464d21a26f8e58e20500518e9facbdd47f9f22cfb1c445c56fbca42e71fccf`.
+The linked evidence states the application-source/build relationship. No
+installation or physical result is established. All observations in this checklist
+remain pending for this artifact, including normal expiry and TalkBack dismissal.
+
+## Earlier alert experience artifact (historical)
 
 The [alert experience contract](design/current/alert-experience.md) supersedes
 earlier Stop wording, Due-based overdue checks and outlined terminal-card More
@@ -74,9 +86,9 @@ their historical scope and do not establish this redesign's behavior.
    access through each row. Return: statuses refresh automatically.
 3. Record phone model, Android version, app version, date, and whether exact alarms,
    notifications, the alarm channel and full-screen access are enabled.
-4. Prefix new test titles with **QA**. Tap Add reminder → enter a title → tap When.
-   Select today's date and a time two or three minutes ahead; keep the default
-   linked timing. Tap the persistent Save footer. Confirm return to Agenda or the
+4. Prefix new test titles with **QA**. Tap Add reminder → enter a title → tap Date.
+   Select today's date, then tap Time directly and choose two or three minutes
+   ahead; keep the default linked timing. Tap the persistent Save footer. Confirm return to Agenda or the
    invoking named list and the saved
    alert message; use its View action to inspect details → Schedule details when present.
    For a quick native probe, use Settings → Alarms → Test alarm (15 seconds).
@@ -110,14 +122,21 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   then use Undo. Complete again: it leaves the active agenda. Find it through
   the secondary Completed destination. Include skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
-  request, then the Trash root → row More → Restore recovers
+  themed request after checking Keep reminder/Back first. Check that one snackbar
+  with Undo appears, with no lasting green duplicate; ordinary Undo feedback expires
+  after ten seconds or the configured accessibility extension. Undo restores the
+  captured deletion. Move it again, then the Trash root → row More → Restore recovers
   its content. Completed/Skipped row More → Reopen clears both terminal states
   without replaying elapsed alerts. Single row actions are not repeated inline.
   Search/filter both collections, including a list containing only Trash items.
   Complete/delete QA reminders in a different order from their event dates:
   the newest completion/deletion appears first. Elapsed alarms remain silent.
 - **U5 — simple creation and draft safety:** tap +, enter a title and choose an
-  event using When. Save without opening advanced timing: Agenda acknowledges the
+  event using Date and Time side by side on one row. Constrained widths/larger
+  text stack the controls while preserving readable targets. Time opens directly without Date;
+  Date opens directly without Time. Changing either keeps the other component,
+  and cancelling a picker keeps both. All day shows Date only. Save without
+  opening advanced timing: Agenda acknowledges the
   actual saved alert, with a View action. Start another draft,
   change its title and press Android Back: choose Keep editing, then Back → Discard.
   No live reminder was created. Open Repeat: common rules precede Custom repeat.
