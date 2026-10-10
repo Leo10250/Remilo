@@ -210,3 +210,50 @@ These are source and web fixture observations, not physical Android acceptance.
 No installation, launch, phone-data mutation or APK distribution was requested
 or performed. Native picker ordering/cancellation, normal timeout and TalkBack
 remain part of the consolidated signed-phone acceptance run.
+
+## Compact Date/Time follow-up
+
+The owner requested Date and Time on one row to recover vertical space, while
+retaining independent picker access. `EventTimingFields` now puts the two labeled
+controls side by side with a neutral divider when measured space and text scale
+allow it. The existing SettingRow has an opt-in compact presentation for these
+two controls only; ordinary rows retain their existing geometry. Each target
+retains its calendar/clock icon, label, current value, chevron and independent
+DateField action. All-day retains one full-width Date control.
+
+The fallback uses the actual container width and native/review font scale:
+below 320×text-scale dp of available width, or text scale at least 1.6, controls
+stack with ordinary row geometry. This is an implementation sizing decision,
+informed by [Android's minimum target guidance](https://developer.android.com/develop/ui/compose/accessibility/api-defaults#minimum-touch-target-sizes),
+rather than a requirement that all phones use horizontal fields. It preserves
+readable labels and distinct targets instead of shrinking them to fit. Timing
+conversion, linked offsets and the date-only/time-only callbacks are unchanged.
+
+The settled Evening Light preview at 412×915 measured each independent target
+at 181.9×62 CSS px, with equal Y positions and no horizontal overflow. The shared
+row saved 78 px against the previous two 70 px rows. At 360×800 the available
+312.8 px fixture container selected stacked 70 px rows. Evening Dark at 200%
+text selected stacked 112 px rows without horizontal overflow. Toggling All day
+left exactly one Date control and no Time control. The initial server-rendered
+preview used stacked fallback before hydration; only the settled interactive
+measurements above count as rendering observations.
+
+Private captures are `verification/local/editor-timing-row-light.jpg`, the
+contextual cropped `editor-timing-row-detail.jpg`, `editor-timing-row-narrow.jpg`
+and `editor-timing-row-dark-large.jpg`. These remain isolated web fixtures.
+The new `scripts/verify.mjs --json` run passed design audit, TypeScript, lint
+(zero errors, the existing R8-gallery warning), all 374 shared tests and all
+77 tooling tests. No additional tests were added for this reversible layout
+change. Physical picker/keyboard/TalkBack acceptance remains pending.
+
+The subsequent `scripts/android.mjs beta --json` passed signed release assembly
+and APK inspection at **10 October 2026, 02:15:28.364 UTC** (9 October local time).
+Application sources stayed constant during the build: the compact layout changes
+uncommitted atop `f554c2f086ce6b53786f19f988ee7862d27769fb`. Later evidence/checklist
+and Git metadata updates do not change those application contents. This latest
+local signed, non-debuggable bundled ARM64 `com.remilo.app` **0.4.0 (4)** retains
+the signer, minSdk 34 and targetSdk 36, with SHA-256
+`b4464d21a26f8e58e20500518e9facbdd47f9f22cfb1c445c56fbca42e71fccf`.
+It replaces the previous local UI-correction artifact above. No native source
+changed or native unit tests were rerun for this layout follow-up. No installation,
+launch or distribution was performed.

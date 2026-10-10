@@ -13,10 +13,10 @@ those earlier observations do not establish results for this new build.
 
 The [Trash and editor correction evidence](evidence/2026-10-09-permanent-trash.md)
 identifies the latest local signed bundled ARM64 build prepared **10 October 2026
-at 01:30:43.653 UTC** (9 October local time). It includes permanent Trash deletion,
-the themed Move to Trash sheet, separate Date/Time rows and one success snackbar.
+at 02:15:28.364 UTC** (9 October local time). It includes permanent Trash deletion,
+the themed Move to Trash sheet, compact independent Date/Time controls and one success snackbar.
 Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
-APK SHA-256: `740bdbd93b3e4bb2f0bbc79841357fb572b2d95ba6a8bb841651218a8e19e502`.
+APK SHA-256: `b4464d21a26f8e58e20500518e9facbdd47f9f22cfb1c445c56fbca42e71fccf`.
 The linked evidence states the application-source/build relationship. No
 installation or physical result is established. All observations in this checklist
 remain pending for this artifact, including normal expiry and TalkBack dismissal.
@@ -132,7 +132,8 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Complete/delete QA reminders in a different order from their event dates:
   the newest completion/deletion appears first. Elapsed alarms remain silent.
 - **U5 — simple creation and draft safety:** tap +, enter a title and choose an
-  event using the separate Date and Time rows. Time opens directly without Date;
+  event using Date and Time side by side on one row. Constrained widths/larger
+  text stack the controls while preserving readable targets. Time opens directly without Date;
   Date opens directly without Time. Changing either keeps the other component,
   and cancelling a picker keeps both. All day shows Date only. Save without
   opening advanced timing: Agenda acknowledges the

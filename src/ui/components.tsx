@@ -124,13 +124,14 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
       fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string;
+export function SettingRow({ label, value, icon, onPress, children, description, disabled = false, statusLabel, compact = false }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean;
 }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
-  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.md, paddingHorizontal: space.gutter }}>
-    {icon && <View style={{width:40,height:40,borderRadius:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} /></View>}
+  const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight: 56,
+    paddingVertical: compact ? space.sm : space.md, paddingHorizontal: compact ? space.md : space.gutter }}>
+    {icon && <View style={{width:compact?32:40,height:compact?32:40,borderRadius:compact?12:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} size={compact?20:24} /></View>}
     <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
     {children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
@@ -171,9 +172,9 @@ export function Toggle({ label, value, onChange, icon, disabled = false }: { lab
     </View>
   </Pressable>;
 }
-export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false }: {
+export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false, compact = false }: {
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
-  zoneId?: string; onError?: (message: string) => void; disabled?: boolean;
+  zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean;
 }) {
   const [message, setMessage] = useState('');
   const [picking, setPicking] = useState(false);
@@ -200,7 +201,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     };
     try { open(timeOnly ? 'time' : 'date', value, civilAt(value, zoneId)); } catch { fail(); }
   };
-  return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled}
+  return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled} compact={compact}
     value={timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId)} onPress={pick} />
     {!!message && <ActionFeedback message={message} tone="muted" />}</>;
 }

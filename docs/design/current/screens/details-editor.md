@@ -11,10 +11,13 @@ Narrow widths and font scale ≥1.6 stack visible choices with body-size labels.
 Existing draft/IME/save guards remain.
 
 The owner's 9 October timing correction replaces the editor's combined **When**
-row with separate **Date** and **Time** rows. Each opens only its own picker and
+row with separate **Date** and **Time** controls. The owner's follow-up puts them
+side by side on one row, with a subtle divider and separate labeled tap targets.
+Keep stacked controls for constrained widths or larger text, rather than shrinking
+labels or targets. Each opens only its own picker and
 keeps the other civil component in the selected zone; choosing a date never opens
-time next. All-day reminders show Date only. Both rows use the established neutral
-calendar/clock icons, full-width touch targets and shared rounded group. Duration
+time next. All-day reminders show full-width Date only. Both controls use the
+established neutral calendar/clock icons, targets of at least 48 dp and the shared rounded group. Duration
 and linked Due/Alert offsets retain the existing native conversion and DST rules.
 
 R4/R5 accept twelve representatives of ordinary details, overdue details with
