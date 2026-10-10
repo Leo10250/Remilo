@@ -5,6 +5,10 @@ autonomous Kotlin engine owns Room, exact alarms, native controls and audio.
 The roadmap and implementation state live in [docs/backlog.md](docs/backlog.md).
 Read [AGENTS.md](AGENTS.md) before changing this repository.
 
+Optional [Google Calendar publishing](docs/calendar-publishing.md) reviews and
+manually publishes unfinished one-offs into an owned calendar. Local alarms remain
+independent. Calendar imports, linked updates and recurrence publishing are later work.
+
 ## Deploy to your phone
 
 Connect an Android 14+ device, enable USB debugging and approve this computer.

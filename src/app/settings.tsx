@@ -174,7 +174,9 @@ export default function Settings() {
       <ConnectedGroup title="Appearance" footer={preferenceFeedback('appearance')}><SettingRow key="appearance" icon="palette" label="Appearance" value={appearanceSummary(settings)} disabled={frozen}
         onPress={() => router.push({ pathname: '/appearance', params: routeParams })} /></ConnectedGroup>
     </>}
-    <ConnectedGroup title="Data" footer={<Copy muted size={14}>Backups contain titles, notes, lists and reminders in plain JSON. They exclude one-off reminders in Trash; repeating deletion exclusions are kept. App settings and appearance are excluded.</Copy>}>
+    <ConnectedGroup title="Google Calendar"><SettingRow key="google-calendar" icon="event" label="Google Calendar" description="Optional, manual one-off publishing" disabled={frozen}
+      onPress={() => router.push({ pathname: '/calendar', params: routeParams })} /></ConnectedGroup>
+    <ConnectedGroup title="Data" footer={<Copy muted size={14}>Backups contain titles, notes, lists and reminders in plain JSON. They exclude one-off reminders in Trash; repeating deletion exclusions are kept. App settings, appearance and Google Calendar connection/publication data are excluded.</Copy>}>
       <View key="export"><SettingRow icon="upload" label="Export backup" disabled={frozen || !nativeAvailable} onPress={exportFile} />
         {(pending === 'export' || feedback.export || preparedExport) && <RowSupport>
           {(pending === 'export' || feedback.export) && <ActionFeedback loading={pending === 'export'} message={pending === 'export' ? 'Preparing backup and opening share sheet…' : feedback.export?.message} tone={feedback.export?.tone} />}

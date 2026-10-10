@@ -88,3 +88,17 @@ export type SchedulePreview = { eventStartMs: number; eventEndMs: number; dueAtM
   upcoming: { nominalSlot: string; eventStartMs: number; dueAtMs: number; alarmAtMs: number; adjusted: boolean; zoneId: string }[] };
 export type ImportPreview = { count: number; items: { id: string; title: string; conflict: boolean; futureAlert: boolean }[];
   lists?: { id: string; name: string; restoredName: string; conflict: boolean }[] };
+
+export type CalendarConnection = { revision: number; connected: boolean; available: boolean; email: string; calendarId: string; calendarName: string; message: string };
+export type OwnedCalendar = { id: string; name: string; zoneId: string };
+export type CalendarPage = { items: OwnedCalendar[]; nextCursor: string | null; connectionRevision: number };
+export type CalendarPublicationPreview = { occurrenceId: string; reminderRevision: number; connectionRevision: number; fingerprint: string;
+  title: string; notes: string; eventStartMs: number; eventEndMs: number; allDay: boolean; zoneId: string; pinsZone: boolean; email: string; calendarName: string };
+export type CalendarPublication = { operationId: string; occurrenceId: string; calendarName: string; email: string;
+  state: 'Waiting' | 'Publishing' | 'Unconfirmed' | 'NeedsAccess' | 'Failed' | 'Conflict' | 'Cancelled' | 'Published';
+  message: string; htmlLink: string; publishedAtMs: number | null; differs: boolean; readOnly: boolean };
+export type CalendarCommand = { kind: 'PublishOneOff'; operationId: string; occurrenceId: string; expectedRevision: number;
+  expectedConnectionRevision: number; fingerprint: string } |
+  { kind: 'SelectCalendar'; operationId: string; calendarId: string; expectedConnectionRevision: number } |
+  { kind: 'DisconnectCalendar'; operationId: string; expectedConnectionRevision: number } |
+  { kind: 'RetryPublication'; operationId: string };

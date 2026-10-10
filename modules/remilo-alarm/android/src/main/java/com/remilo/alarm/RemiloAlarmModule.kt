@@ -8,6 +8,9 @@ import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.util.UUID
+import com.remilo.alarm.calendar.*
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.common.ConnectionResult
 
 class RemiloAlarmModule : Module() {
   private var observation: AutoCloseable? = null
@@ -37,6 +40,41 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("applyCommand") { command: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.apply(command) } }
     AsyncFunction("scheduleTestAlarm") { operationId: String, promise: Promise -> dispatch(promise) { it.testAlarm(operationId) } }
     AsyncFunction("getSettings") { promise: Promise -> dispatch(promise) { it.settings() } }
+    AsyncFunction("getCalendarConnection") { promise: Promise ->
+      val context = requireNotNull(appContext.reactContext).applicationContext
+      engine().calendarRequest(block = { it.connectionView() + mapOf("available" to (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS)) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar request could not be confirmed: $it", null) })
+    }
+    AsyncFunction("getCalendarPublications") { promise: Promise ->
+      engine().calendarRequest(block = { it.publications() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar request could not be confirmed: $it", null) })
+    }
+    AsyncFunction("previewCalendarPublication") { id: String, promise: Promise ->
+      engine().calendarRequest(block = { it.preview(id) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar preview unavailable: $it", null) })
+    }
+    AsyncFunction("authorizeCalendar") { publicationId: String? ->
+      val activity = requireNotNull(appContext.currentActivity) { "Open Calendar settings after unlocking." }
+      activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java).putExtra("publicationId", publicationId))
+    }
+    AsyncFunction("listOwnedCalendars") { cursor: String?, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).list(cursor,
+        { promise.resolve(it) }, { promise.reject(it, "Calendar list unavailable: $it", null) })
+    }
+    AsyncFunction("applyCalendarCommand") { command: Map<String, Any?>, promise: Promise ->
+      val runtime = CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext)
+      val reject: (String) -> Unit = { promise.reject(it, "Calendar action could not be confirmed: $it", null) }
+      when (command["kind"]) {
+        "SelectCalendar" -> runtime.select(command, { promise.resolve(it) }, reject)
+        "PublishOneOff" -> engine().calendarRequest(true, { it.capture(command) }, { result ->
+          promise.resolve(result); runtime.start(CalendarStore.string(command, "operationId"))
+        }, reject)
+        "RetryPublication" -> engine().calendarRequest(block = {
+          it.operation(CalendarStore.string(command, "operationId"))?.let(it::view) ?: throw CalendarFailure("NOT_FOUND")
+        }, resolve = { promise.resolve(it); runtime.start(CalendarStore.string(command, "operationId")) }, reject = reject)
+        "DisconnectCalendar" -> engine().calendarRequest(true, {
+          it.disconnect(CalendarStore.string(command, "operationId"), CalendarStore.number(command, "expectedConnectionRevision"))
+        }, { old -> promise.resolve(mapOf("disconnected" to true)); if (old != null) runtime.revoke(old) }, reject)
+        else -> reject("INVALID_INPUT")
+      }
+    }
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("queryLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("querySeries") { promise: Promise -> dispatch(promise) { it.querySeries() } }

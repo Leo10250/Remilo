@@ -3,6 +3,7 @@ import android.content.Context
 import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.remilo.alarm.calendar.*
 
 @Entity(tableName = "reminders")
 data class ReminderRecord(@PrimaryKey val id: String, val title: String, val eventStartMs: Long,
@@ -93,12 +94,21 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("SELECT * FROM history WHERE operationId = :id") fun historyOperation(id: String): HistoryRecord?
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
-  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class, PurgedOccurrence::class], version = 6, exportSchema = true)
+  HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class, PurgedOccurrence::class,
+  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class], version = 7, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
+  abstract fun calendar(): CalendarDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_connection (id TEXT NOT NULL PRIMARY KEY, revision INTEGER NOT NULL, connected INTEGER NOT NULL, subject TEXT NOT NULL, email TEXT NOT NULL, calendarId TEXT NOT NULL, calendarName TEXT NOT NULL, calendarZone TEXT NOT NULL, message TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_publications (occurrenceId TEXT NOT NULL PRIMARY KEY, operationId TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_operations (operationId TEXT NOT NULL PRIMARY KEY, occurrenceId TEXT NOT NULL, requestKey TEXT NOT NULL, reminderRevision INTEGER NOT NULL, connectionRevision INTEGER NOT NULL, subject TEXT NOT NULL, email TEXT NOT NULL, calendarId TEXT NOT NULL, calendarName TEXT NOT NULL, zoneId TEXT NOT NULL, eventId TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, state TEXT NOT NULL, attempted INTEGER NOT NULL, readOnly INTEGER NOT NULL, message TEXT NOT NULL, htmlLink TEXT NOT NULL, etag TEXT NOT NULL, publishedAtMs INTEGER)")
+      }
+    }
     val MIGRATION_5_6 = object : Migration(5, 6) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS purged_occurrences (id TEXT NOT NULL PRIMARY KEY, segmentId TEXT, nominalSlot TEXT)")

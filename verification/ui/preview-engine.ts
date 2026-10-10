@@ -3,6 +3,7 @@ import type { AppSettings, Command, CommandResult, ImportPreview, Occurrence, Re
   ListRecord, RecurrenceDraft, RepeatFamily, ResolvedReminderDraft, SchedulePreview, Series, SoundPreviewSnapshot, TimeConversion, TimeConversionInput, TimeZoneOption } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
+import { previewCalendar } from './preview-calendar';
 
 const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
@@ -382,6 +383,7 @@ function apply(command: Command): CommandResult {
   receipts.set(command.operationId, clone(result)); changed(); return clone(result);
 }
 const preview = {
+  ...previewCalendar(review, (id) => items.find((item) => item.id === id), changed),
   createOperationId: () => 'preview-operation-' + nextId(),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
     if (event === 'onSoundPreviewState') { const callback = fn as (snapshot: SoundPreviewSnapshot) => void; soundListeners.add(callback); return { remove: () => { soundListeners.delete(callback); } }; }

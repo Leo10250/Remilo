@@ -335,6 +335,13 @@ this correction governs the current grouping structure.
 
 ## A36 policy correction beside the references
 
+The approved [P4-A Calendar workflow](../../../calendar-publishing.md) adds a
+secondary Google Calendar page from Settings, retaining its invoking origin and
+scroll. Reuse connected groups, neutral `event` glyphs, wrapping destination/account
+text and the shared sheet surface. Details' publication review uses a persistent
+56 dp Publish action; no new atmosphere or artwork is introduced. Authorization
+remains Google's native UI. Saved progress/recovery is visible on Settings and Details.
+
 [The gallery supplement](../../remilo-r8-settings-appearance/current-policy.md)
 identifies the obsolete tile selector/held Automatic policy without changing accepted
 PNG, submission or review-note hashes. The current dropdown and Automatic selection

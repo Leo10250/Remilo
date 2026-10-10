@@ -29,7 +29,9 @@ The [six-unit roadmap](plans/redesign/README.md) precedes optional integrations;
 [backlog](backlog.md) alone records status. Superseded design specifications and
 review demos are removed under A37; accepted reference bundles remain intact.
 The owner's 4 October instruction allows offline Android development
-before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
+before the consolidated physical run. The owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
+records subsequent gate acceptance without inventing device/scenario observations;
+BETA-04 remains open and unrelated statuses remain unchanged.
 
 The [9 October alert experience correction](design/current/alert-experience.md)
 governs Done, original-alert overdue, inline Alert choices and shared terminal
@@ -47,6 +49,14 @@ alert-first browsing, stationary covers and splash requirements.
 7. Optional iOS 26+ port with honest capability differences.
 
 ## Required behavior
+
+Optional [P4-A Google Calendar publishing](calendar-publishing.md) is manual per
+saved unfinished one-off after native review and confirmation. Connecting publishes
+nothing; existing reminders are never backfilled. One account and an owned default
+calendar are supported. Google receives title, notes and authored event range with
+its Calendar reminders disabled; local alarms/actions remain authoritative. Durable
+native jobs recover by the same event identity, without remote updates or deletion.
+Import, recurrence publishing and ongoing synchronization remain later phases.
 
 - Principal UI: React Native / TypeScript / Expo. Autonomous Kotlin engine and Room.
 - Local use needs no account, network, server, Metro or active JavaScript.

@@ -88,11 +88,26 @@ function loadPresentation() {
 }
 
 function loadPreview(search) {
+  const time = compile('src/domain/time.ts');
   return compile('verification/ui/preview-engine.ts', {
-    '../../src/domain/time': compile('src/domain/time.ts'),
+    '../../src/domain/time': time,
     '../../src/domain/repeat': compile('src/domain/repeat.ts'),
+    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time }),
   }, { URLSearchParams, ...(search == null ? {} : { window: { location: { search } } }) }).default;
 }
+
+test('Calendar fixture executes connect/list/publish/retry with no network or native authorization globals', async () => {
+  const preview = loadPreview('?reviewCalendar=disconnected&reviewCalendarOffline=1');
+  await preview.authorizeCalendar(null);
+  const first = await preview.listOwnedCalendars(null), second = await preview.listOwnedCalendars(first.nextCursor);
+  assert.equal(first.items.length, 1); assert.equal(second.nextCursor, null);
+  const review = await preview.previewCalendarPublication('review');
+  await preview.applyCalendarCommand({ kind: 'PublishOneOff', operationId: 'fixture', occurrenceId: 'review', expectedRevision: review.reminderRevision,
+    expectedConnectionRevision: review.connectionRevision, fingerprint: review.fingerprint });
+  await preview.applyCalendarCommand({ kind: 'RetryPublication', operationId: 'fixture' });
+  assert.equal((await preview.getCalendarPublications()).length, 1);
+  assert.equal((await preview.getCalendarPublications())[0].state, 'Unconfirmed');
+});
 
 test('fixture scene/brightness controls recognize all eight pairs and ignore unknown or missing values', async () => {
   for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {

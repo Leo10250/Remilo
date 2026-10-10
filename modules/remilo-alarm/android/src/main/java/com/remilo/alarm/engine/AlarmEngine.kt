@@ -22,6 +22,8 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.time.Instant
 import java.time.ZoneId
+import com.remilo.alarm.calendar.CalendarStore
+import com.remilo.alarm.calendar.CalendarFailure
 
 /** The process-lifetime serialized owner. This class has no Expo/React imports. */
 class AlarmEngine internal constructor(private val context: Context,
@@ -38,6 +40,22 @@ class AlarmEngine internal constructor(private val context: Context,
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
   private var content: ContentDatabase? = null
+  private var calendarStore: CalendarStore? = null
+  private fun calendarStore(): CalendarStore = calendarStore ?: CalendarStore(content(), now)
+    .also { calendarStore = it }
+  internal fun <T> calendarRequest(notify: Boolean = false, block: (CalendarStore) -> T,
+    resolve: (T) -> Unit, reject: (String) -> Unit) {
+    submit {
+      try {
+        prepareContentActions()
+        val value = block(calendarStore())
+        if (notify) changed()
+        resolve(value)
+      } catch (error: CalendarFailure) { reject(error.code) }
+      catch (_: IllegalArgumentException) { reject("INVALID_INPUT") }
+      catch (_: Exception) { reject("NOT_AVAILABLE") }
+    }
+  }
   private val listeners = CopyOnWriteArrayList<() -> Unit>()
   private val previewListeners = CopyOnWriteArrayList<(Map<String, Any>) -> Unit>()
   private val preview = SoundPreviewController(context, { task -> submit(task = task) }, { snapshot ->
@@ -373,6 +391,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
     db.runInTransaction {
       db.records().update(record)
+      if (kind == "Delete") calendarStore().removed(id, false)
       db.records().pending(projection(operation, record, generation).copy(
         targetMs = if (changedDefinition) record.definedAlarmAtMs!! else previous?.targetMs ?: record.definedAlarmAtMs!!))
       db.records().receipt(CreationReceipt(operation, id, kind))
@@ -399,6 +418,7 @@ class AlarmEngine internal constructor(private val context: Context,
     // Moving to Trash already fenced and cancelled delivery. The CE transaction
     // removes content/history together with the exclusion and exact retry receipt.
     db.runInTransaction {
+      calendarStore().removed(id, true)
       dao.purge(PurgedOccurrence(id, record.segmentId, record.nominalSlot))
       dao.purgePending(id); dao.purgeHistory(id); dao.purgeReminder(id)
       dao.receipt(CreationReceipt(operation, id, "Purge", expected.toString()))
@@ -675,6 +695,8 @@ class AlarmEngine internal constructor(private val context: Context,
     validate(operationId.isNotBlank() && operationId.length <= 200, "operationId", "Try this action again.")
     if (command["kind"] !in setOf("Stop", "StopAll", "CompleteDelivery", "DoneAll", "SnoozeAll", "Snooze", "Postpone")) {
       prepareContentActions()
+      if (content().calendar().operation(operationId) != null)
+        return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       if (alerts.completionReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     }
