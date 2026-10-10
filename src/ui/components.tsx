@@ -13,6 +13,7 @@ import { useReducedMotion } from './motion';
 import { FormViewport, useRevealInput } from './form-viewport';
 import { presentation } from './atmosphere.generated';
 import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
+import { scheduleSnackbarDismiss } from './snackbar-timeout';
 
 export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'add' | 'repeat' | 'more_vert' | 'close' |
   'check' | 'check_circle' | 'radio_button_unchecked' | 'remove_circle_outline' | 'expand_more' | 'expand_less' | 'chevron_right' |
@@ -334,28 +335,25 @@ export function Status({ label, tone = 'muted', icon }: { label: string; tone?: 
 }
 export function Snackbar({ message, action, onAction, onClose, persistent = false, actionDisabled = false }: { message: string; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean; actionDisabled?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
+  const c = useFoundationStyle()?.colors;
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
   const [interacting, setInteracting] = useState(false);
   useEffect(() => {
     if (persistent || interacting) return;
-    let timer: ReturnType<typeof setTimeout> | undefined, live = true;
-    void (async () => {
-      const reader = await AccessibilityInfo.isScreenReaderEnabled();
-      if (reader || !live) return;
-      const duration = Platform.OS === 'android' ? await AccessibilityInfo.getRecommendedTimeoutMillis(action ? 10_000 : 5_000) : action ? 10_000 : 5_000;
-      if (live) timer = setTimeout(() => close.current(), duration);
-    })().catch(() => {});
-    return () => { live = false; if (timer) clearTimeout(timer); };
+    return scheduleSnackbarDismiss(() => close.current(), {
+      isScreenReaderEnabled: () => AccessibilityInfo.isScreenReaderEnabled(),
+      ...(Platform.OS === 'android' ? { getRecommendedTimeoutMillis: (duration: number) => AccessibilityInfo.getRecommendedTimeoutMillis(duration) } : {}),
+    }, action ? 10_000 : 5_000);
   }, [message, action, persistent, interacting]);
-  return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)}
-    style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: colors.ink,
+  return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)} onTouchCancel={() => setInteracting(false)}
+    style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: c?.inverseSurface ?? colors.ink,
     flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-    <Text style={{ color: colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md }}>{message}</Text>
+    <Text style={{ color: c?.inverseInk ?? colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md }}>{message}</Text>
     {action && <Pressable accessibilityRole="button" disabled={actionDisabled} accessibilityState={{ disabled: actionDisabled }} onPress={onAction} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center', opacity: actionDisabled ? 0.5 : 1 }}>
-      <Text style={{ color: colors.surface, fontWeight: '700' }}>{action}</Text></Pressable>}
+      <Text style={{ color: c?.inverseAction ?? colors.surface, fontSize: typography.supporting * scale, fontWeight: '700' }}>{action}</Text></Pressable>}
     <Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={onClose} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name="close" color={colors.surface} size={20} /></Pressable>
+      <Icon name="close" color={c?.inverseInk ?? colors.surface} size={20} /></Pressable>
   </View>;
 }
 export function ActionFeedback({ message, tone = 'muted', loading = false }: { message?: string; tone?: Tone; loading?: boolean }) {

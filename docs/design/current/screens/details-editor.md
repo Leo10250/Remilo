@@ -10,6 +10,13 @@ the trailing edge. Selected/focused outlines follow the group's rounded corners.
 Narrow widths and font scale ≥1.6 stack visible choices with body-size labels.
 Existing draft/IME/save guards remain.
 
+The owner's 9 October timing correction replaces the editor's combined **When**
+row with separate **Date** and **Time** rows. Each opens only its own picker and
+keeps the other civil component in the selected zone; choosing a date never opens
+time next. All-day reminders show Date only. Both rows use the established neutral
+calendar/clock icons, full-width touch targets and shared rounded group. Duration
+and linked Due/Alert offsets retain the existing native conversion and DST rules.
+
 R4/R5 accept twelve representatives of ordinary details, overdue details with
 a postponed alert, creation with Title keyboard focus and independent-timing editing.
 Use [shared visual/IME rules](../visual-language.md) and [global appearance](../appearance-policy.md).

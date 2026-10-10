@@ -229,7 +229,8 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       <Field label="Title" placeholder="What do you want to remember?" autoFocus={creation && !duplicate} value={draft.title}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <Group>
-        <DateField label="When" value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} onError={dateError} onChange={moveEvent} dateOnly={draft.allDay} />
+        <DateField label="Date" value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} onError={dateError} onChange={moveEvent} dateOnly disabled={frozen} />
+        {!draft.allDay && <DateField label="Time" value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} onError={dateError} onChange={moveEvent} timeOnly disabled={frozen} />}
         {!draft.dueLinked && <Copy muted size={14}>Due {formatTime(preview.data?.dueAtMs ?? draft.dueAtMs, zone)} · Independent of When</Copy>}
         <AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} />
         {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}

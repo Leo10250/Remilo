@@ -17,6 +17,7 @@ import { InformationRow, Schedule, ScheduleDetails, ZoneSummary } from '../../ui
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
+import { TrashConfirmation } from '../../ui/trash-confirmation';
 
 const activity: Record<string, string> = { Purge: 'Reminder permanently deleted.', TimedOut: 'Alarm timed out', UndoDelete: 'Restored', Delete: 'Moved to Trash', Reopen: 'Reopened', Done: 'Completed',
   Stop: 'Alarm stopped', StopAll: 'Ringing stopped', Snooze: 'Snoozed', Postpone: 'Postponed', Skip: 'Occurrence skipped', Edit: 'Edited', Create: 'Created',
@@ -37,6 +38,7 @@ export default function ReminderDetails() {
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
   const [postpone, setPostpone] = useState(action === 'postpone'), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
   const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
+  const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [now, setNow] = useState(Date.now);
   const [target, setTarget] = useState(() => Date.now() + 900_000), [feedback, setFeedback] = useState<Feedback | null>(null), [sheetFeedback, setSheetFeedback] = useState<Feedback | null>(null);
   const pendingOperation = useRef<{ command: ContentCommand | DeliveryCommand; item: Occurrence; success: string } | null>(null);
@@ -62,7 +64,7 @@ export default function ReminderDetails() {
       const next = 'expectedGeneration' in operation.command && operation.command.kind === 'Postpone' && ['Blocked', 'Pending'].includes(result.status)
         ? { message: `Saved; ${result.status === 'Blocked' ? 'alert blocked' : 'scheduling pending'}. Next alert ${formatTime(operation.command.alarmAtMs!)}. Check its next alert status.`, tone: 'warning' as const }
         : commandFeedback(result, operation.success);
-      setFeedback(next);
+      setFeedback(operation.command.kind === 'Delete' && next.tone === 'success' ? null : next);
       if (operation.command.kind === 'Delete') {
         notifyTrash(operation.item, result);
         // Allow the confirmed-operation guard to settle before navigation.
@@ -88,12 +90,11 @@ export default function ReminderDetails() {
     await runPending();
   };
   const moveToTrash = () => {
+    if (command.isPending || pendingOperation.current || runningOperation.current) return;
     setMenu(false);
     if (!item) return;
     if (item.completed || item.skipped) { void content('Delete'); return; }
-    confirm(item.segmentId ? 'Move this occurrence to Trash?' : 'Move reminder to Trash?',
-      'Its alert will be cancelled. You can restore it from Trash.', [{ text: 'Keep reminder', style: 'cancel' },
-        { text: 'Move to Trash', style: 'destructive', onPress: () => void content('Delete') }]);
+    setTrashItem({ ...item });
   };
   const delivery = async (kind: DeliveryCommand['kind'], alarmAtMs?: number) => {
     if (!item || command.isPending || pendingOperation.current || !canAdjustAlert(item) || kind === 'Stop' && item.deliveryState !== 'Alerting') return;
@@ -175,6 +176,10 @@ export default function ReminderDetails() {
       {item?.deleted && <SettingRow icon="delete_forever" label="Delete permanently" description="Cannot be undone." disabled={command.isPending || uncertain}
         onPress={() => { if (command.isPending || pendingOperation.current || runningOperation.current) return; setMenu(false); setPurgeItem({ ...item }); }} />}
     </Sheet>
+    <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
+      if (!trashItem || command.isPending || pendingOperation.current || runningOperation.current) return;
+      const captured = trashItem; setTrashItem(null); void content('Delete', captured);
+    }} />
     <PurgeConfirmation items={purgeItem ? [purgeItem] : []} onCancel={() => setPurgeItem(null)} onConfirm={() => {
       if (!purgeItem || command.isPending || pendingOperation.current || runningOperation.current) return;
       const captured = purgeItem; setPurgeItem(null); void content('Purge', captured);

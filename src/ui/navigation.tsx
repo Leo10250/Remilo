@@ -52,7 +52,7 @@ export function RootNavigation({ destination, disabled = false, atRoot = true }:
 }
 
 export type CapturedJob = { command: Command; success: string; item?: Occurrence };
-export function useCapturedCommand(onApplied?: (job: CapturedJob, result: CommandResult) => string | void) {
+export function useCapturedCommand(onApplied?: (job: CapturedJob, result: CommandResult) => string | false | void) {
   const confirm = useAppearanceConfirmation();
   const client = useQueryClient(), applied = useRef(onApplied);
   useEffect(() => { applied.current = onApplied; }, [onApplied]);
@@ -68,7 +68,9 @@ export function useCapturedCommand(onApplied?: (job: CapturedJob, result: Comman
     try {
       const result = await operation.run(captured);
       const success = applied.current?.(captured, result);
-      setFeedback(commandFeedback(result, success ?? captured.success));
+      const feedback = commandFeedback(result, typeof success === 'string' ? success : captured.success);
+      // A caller showing a snackbar owns confirmed success; recovery stays here.
+      setFeedback(success === false && feedback.tone === 'success' ? undefined : feedback);
     } catch (error) { setFeedback({ message: error instanceof Error ? error.message : 'Could not confirm this change. Retry the same change.', tone: 'danger' }); }
     finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
   };
@@ -102,7 +104,7 @@ export async function activateNotice(notice: Notice) {
 export function RootNotice({ disabled = false }: { disabled?: boolean } = {}) {
   const notice = useNotice(), client = useQueryClient();
   if (!notice) return null;
-  return <Snackbar message={notice.message} action={notice.action?.label} persistent={notice.persistent || disabled} actionDisabled={disabled}
+  return <Snackbar key={notice.id} message={notice.message} action={notice.action?.label} persistent={notice.persistent || disabled} actionDisabled={disabled}
     onAction={() => { if (!disabled) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
     onClose={() => dismissNotice(notice.id)} />;
 }

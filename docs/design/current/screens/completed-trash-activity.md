@@ -172,6 +172,22 @@ Include skipped. The return route still works; no creation CTA is necessary.
 
 ## B. Trash and recovery
 
+The owner's 9 October confirmation/feedback correction uses the shared themed
+in-app sheet for unfinished reminders moving to Trash, from Agenda or Details.
+Show the captured reminder title, alert cancellation/restoration explanation,
+filled round **Move to Trash** with its leading delete icon, and neutral outlined
+**Keep reminder**. Close, backdrop and Android Back cancel. A repeating reminder
+explains that only the selected occurrence moves. Confirm submits the displayed
+identity/revision; stale and unconfirmed operation guards remain intact.
+
+A confirmed single-item move shows one app snackbar with revision-safe **Undo**,
+using shared inverse surface/content/action roles. Do not also retain a green
+inline success message. Ordinary messages expire after five seconds; actionable
+Undo messages use ten seconds, extended by Android's accessibility timeout.
+Touch interaction pauses expiry; TalkBack retains explicit dismissal. New notice
+identities reset the deadline, and failed accessibility queries use the ordinary
+deadline. Errors and unconfirmed retry feedback stay visible until resolved.
+
 Use the same collection anatomy with **Trash**, search and appropriate membership
 constraint. Support reads **Most recently deleted first** and **Restore keeps
 completed or skipped state and never replays past alerts**. A concise explanation says **Items stay

@@ -30,7 +30,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
   const [purgeItems, setPurgeItems] = useState<Occurrence[]>([]), [purgeBulk, setPurgeBulk] = useState(false);
   const singleRunning = useRef(false), completedBulk = useRef<string | null>(null);
   const action = useCapturedCommand((job, result) => {
-    if (job.command.kind === 'Delete' && job.item) notifyTrash(job.item, result);
+    if (job.command.kind === 'Delete' && job.item) { notifyTrash(job.item, result); return false; }
     const restored = result.occurrence;
     if (job.command.kind === 'UndoDelete' && restored && !restored.completed && !restored.skipped && restored.mode !== 'None' &&
       alertPresentation(restored).target === null && restored.deliveryState !== 'Alerting')

@@ -8,6 +8,13 @@ retains exclusions. Host tests cover CE migration, atomic removal, crash boundar
 retry identity, recurring recovery/Direct Boot and v1–v4 backup reading; those checks
 do not establish Android sheet/accessibility acceptance.
 
+The themed Move to Trash and editor timing corrections also need signed-phone
+observations: Cancel/Back retains unfinished work; Date and Time open independently
+and preserve the other component; all-day shows Date only; a confirmed move has
+one snackbar with revision-safe Undo and no permanent inline success. Check normal
+expiry, Android's extended accessibility timeout, touch interruption and TalkBack
+explicit dismissal. Host timer tests and web fixture review do not pass these gates.
+
 Run npm run verify for shared checks, npm run verify:android for native checks,
 npm run verify:device for preflight and a pending observation report, and
 npm run build:beta for the locally signed bundled release. All manual observations

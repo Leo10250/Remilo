@@ -132,3 +132,81 @@ change the application's contents. The latest local release APK retains package
 `4d201963daac025f58fd3f777eead9e07d445fb59b6bc68957ecd2509d7ec3e3`.
 It replaces the earlier local artifact recorded above. No installation or APK
 distribution was performed; the consolidated physical observations remain pending.
+
+## Owner's confirmation, timing and feedback correction
+
+The inspected source used `useAppearanceConfirmation` / React Native `Alert`
+for unfinished Move to Trash, which renders the Android dialog outside Remilo's
+React theme. Agenda and Details now share `TrashConfirmation`, composed from the
+existing themed Sheet and Expressive filled/outlined buttons. Opening captures
+the displayed occurrence/revision; confirmation submits that captured revision.
+Completed/skipped moves retain their existing direct action. Cancel, close and
+Back do not submit a mutation. Repeating confirmations explain occurrence scope.
+
+The editor used DateField's default date-then-time mode. Separate Date and Time
+rows now pass `dateOnly` and `timeOnly` respectively; all-day hides Time. The
+existing selected-zone civil merge and native conversion keep the other component
+and linked duration/Due/Alert semantics. The installed 9.1.0 picker's
+[official API](https://github.com/react-native-datetimepicker/datetimepicker/blob/v9.1.0/README.md)
+supports independently opened date/time dialogs. Actual Android picker interaction
+is still pending.
+
+Both Trash success messages in the current UI were app-owned: `notifyTrash`
+created the snackbar, while command recovery retained green inline success.
+The inspected ordinary Trash path has no Android Toast call. Confirmed Delete
+now suppresses redundant inline success in Agenda/Completed/Details; guarded and
+error feedback remains. The snackbar uses shared inverse roles and scaled action
+text, following [Material Snackbar guidance](https://github.com/material-components/material-components-android/blob/master/docs/components/Snackbar.md).
+Notice identity resets its deadline. Failed accessibility queries fall back to
+five seconds (ordinary) or ten seconds (Undo), while longer Android accessibility
+timeouts and screen-reader explicit dismissal remain. Cancelled touch gestures
+also release the interaction pause.
+
+At 412×915, isolated Evening Dark preview confirmed the named Trash sheet and
+380×56 filled Move to Trash button. Cancel kept the reminder. Agenda, Details
+return and Completed each showed exactly one success message; Undo restored the
+reminder and completed work state. Evening Light at 200% text grew the action to
+380×72 without horizontal overflow. A simulated committed-but-lost reply kept
+Retry and disabled destinations; retry cleared recovery and showed one success
+snackbar. Evening Light creation showed separate Date/Time; toggling All day
+left Date only. Evening Dark at 200% text measured both rows at 112 px high with
+no horizontal overflow.
+
+Private fixture captures:
+
+- `verification/local/trash-confirmation-dark.jpg`
+- `verification/local/trash-confirmation-light-large.jpg`
+- `verification/local/trash-single-snackbar-dark.jpg`
+- `verification/local/trash-retry-snackbar-light-large.jpg`
+- `verification/local/editor-date-time-light.jpg`
+- `verification/local/editor-date-time-dark-large.jpg`
+
+React Native Web 0.21's accessibility implementation always resolves screen-reader
+enabled, so that preview exercised explicit message dismissal rather than normal
+expiry. Six new timer tests passed ordinary/Undo deadlines, extended accessibility
+timeouts, query failures, reader retention, stale async cancellation and invalid
+durations. Existing civil-merge, DST/linked draft and captured-operation tests
+also pass. The successful `scripts/verify.mjs --json` run passed design audit,
+TypeScript, lint (zero errors, the existing R8-gallery warning), all 374 shared
+tests and all 77 tooling tests. Its first run caught a missing Back-callback
+dependency; correcting the dependency resolved the compiler/lint check without
+changing rules or assertions.
+
+`scripts/android.mjs beta --json` then passed release assembly and APK inspection
+at **10 October 2026, 01:30:43.653 UTC** (9 October local time). Application
+sources were held constant throughout: the UI correction above, uncommitted atop
+`ce65aa26ba4c4106bced14b950021cf9ee305cc2`. The later evidence/checklist/Git updates
+do not alter those application contents. This UI-only follow-up did not change
+Kotlin/storage or rerun the earlier 183 native unit tests; their passing result
+above belongs to the preceding native verification. The new artifact is signed,
+non-debuggable, bundled ARM64 `com.remilo.app` **0.4.0 (4)**, minSdk 34 / targetSdk
+36, with SHA-256
+`740bdbd93b3e4bb2f0bbc79841357fb572b2d95ba6a8bb841651218a8e19e502`.
+The sandboxed first build attempt could not open the existing Gradle cache lock;
+the authorized local build rerun completed successfully, retaining the signer.
+This latest local artifact replaces the button-only artifact recorded above.
+
+These are source and web fixture observations, not physical Android acceptance.
+No installation, launch, phone-data mutation or APK distribution was requested
+or performed. Native picker ordering/cancellation, normal timeout and TalkBack
+remain part of the consolidated signed-phone acceptance run.
