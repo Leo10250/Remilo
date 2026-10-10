@@ -128,7 +128,7 @@ Import, recurrence publishing and ongoing synchronization remain later phases.
   Repeats shows one entry per family and Active, Paused and Ended filters. Family
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
-  completion/skip/deletion comes first; Completed has an Include skipped option.
+  completion/skip/deletion comes first; Completed has Show skipped inside Filters.
   Back from a non-Agenda root returns to Agenda; secondary pages return to their origin.
   Search/sheets, draft guards and unconfirmed operations take precedence over root Back.
   Each destination retains its own filters and scroll position, including Completed
@@ -141,7 +141,7 @@ Import, recurrence publishing and ongoing synchronization remain later phases.
   separate 48 dp selection checkboxes and contextual footer actions of at least
   56 dp; terminal details retains its existing persistent action. Select all
   loaded includes only the current loaded matching records, never unloaded or
-  newly paginated rows. Query/scope/Include skipped edits stay disabled while
+  newly paginated rows. Query/scope/Show skipped edits stay disabled while
   selecting; Back/Done selecting clears the selection before origin navigation
   unless an operation is pending or unconfirmed.
 - Selected operations capture occurrence IDs/revisions and an independent native

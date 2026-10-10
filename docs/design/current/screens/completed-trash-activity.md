@@ -116,10 +116,10 @@ these checks do not establish physical acceptance.
 
 ## A. Completed
 
-The toolbar reads **Completed**, with Back, Search and list filter access. Below
-the compact scene show the current membership summary, **Include skipped
-occurrences** switch, and **Most recently completed or skipped first** support.
-Default excludes skipped. Global filtering offers All lists, No list and durable
+The toolbar reads **Completed**, with Back, Search and Filters access. Filters
+contains **Show skipped**, before List. Default excludes skipped; enabling it adds
+the removable **Skipped included** chip. Apply commits the temporary filter draft;
+Cancel, close, backdrop and Back discard it. Global filtering offers All lists, No list and durable
 named lists using ordinary radio choices. The library's leading checklist icons
 do not add extra glyphs to these selection controls.
 Fixed-list scope remains visible; omit an editable membership selector there.
@@ -131,8 +131,8 @@ authorized collection selection actions are Reopen and Move to Trash only.
 
 A row preserves the reminder title, neutral reminder glyph, original Event range,
 list and meaningful repeat/exception metadata. Label **Completed** or **Skipped**
-explicitly. Inactive alert information reads **Alarm was set for…** / **Notification
-was set for…**, or **No alert**, with no future Scheduled promise. An expired
+explicitly. Inactive alert information reads **Original alarm · date, time** /
+**Original notification · date, time**; No alert uses Event timing. An expired
 event does not turn completed work into an overdue warning.
 
 **Collection timestamps:** use status-only collection rows in this R9 brief.
@@ -152,7 +152,7 @@ checked state means selected, not completed. Contextual Reopen and Move to Trash
 operate on the captured selected occurrences, including skipped records when
 Include skipped makes them available.
 
-More provides **View reminder** / **Reopen** / **Move to Trash**, and details keeps
+More provides **Reopen** / **Move to Trash**, and details keeps
 the labeled Reopen footer. The labeled More menu is accessible without relying
 on an unlabeled icon or gesture. Reopen is
 distinct from editing, duplicating or restoring and never replays an elapsed
@@ -170,11 +170,12 @@ actions using the actual guarded command.
 Restore continues retaining skipped state. The composition review checkpoint
 remains separate from this approved behavior correction.
 
-Truly empty: **No completed reminders.** With Include skipped on, **No completed
-or skipped occurrences.** A filtered empty result says **No matches**, shows the
-query/scope and provides **Clear search** or **Clear filters** only for editable
-constraints. None of those clears fixed list membership or silently turns off
-Include skipped. The return route still works; no creation CTA is necessary.
+Truly empty: **No completed reminders.** With Show skipped on, **No completed
+or skipped reminders.** A constrained empty result says **No reminders match these
+filters** and offers **Clear search** and **Reset filters** separately when relevant.
+Reset filters restores every optional filter, including Show skipped; Clear search
+and individual list chips preserve Show skipped. Neither clears fixed membership.
+The return route still works; no creation CTA is necessary.
 
 ## B. Trash and recovery
 
@@ -195,19 +196,18 @@ identities reset the deadline, and failed accessibility queries use the ordinary
 deadline. Errors and unconfirmed retry feedback stay visible until resolved.
 
 Use the same collection anatomy with **Trash**, search and appropriate membership
-constraint. Support reads **Most recently deleted first** and **Restore keeps
-completed or skipped state and never replays past alerts**. A concise explanation says **Items stay
-here until restored or permanently deleted.** Keep the local-retention and backup qualification available
-in the scroll content: one-off Trash is excluded from backups; recurring deletion
-exclusions are retained. The owner's subsequent 9 October instruction adds
+constraint. Its quiet retention sentence reads **Kept until restored or permanently
+deleted.** Restore feedback retains work-state consequences; backup information
+explains that one-off Trash is excluded and recurring deletion exclusions are
+retained. The owner's subsequent 9 October instruction adds
 individual and selected-occurrence permanent deletion with explicit confirmation.
 There is no Empty Trash, automatic expiry or retention countdown.
 
 Rows label **In Trash** plus meaningful previous work state: **Unfinished**,
 **Completed** or **Skipped**. Retain original timing, neutral reminder glyph and
 list information. Candidate 05 removes inline Restore. Keep row-open and the
-neutral three-dot 48 dp More control separate; More offers **View reminder** /
-**Restore** / **Delete permanently** for one occurrence. Deleted-reminder details
+neutral three-dot 48 dp More control separate; More offers **Restore** /
+**Delete permanently** for one occurrence. Deleted-reminder details
 also offers **Delete permanently** through More. Only selection mode adds leading
 48 dp selection checkboxes and persistent contextual **Restore** and **Delete
 permanently** actions of at least 56 dp.

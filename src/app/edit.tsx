@@ -223,7 +223,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const resolvedDraft = { ...draft, ...preview.data };
   const alertRelationship = !draft.alarmLinked ? 'Custom time' : draft.allDay ? '9 AM on this date' :
     draft.dueLinked && resolvedDraft.dueAtMs === resolvedDraft.eventStartMs && resolvedDraft.alarmAtMs === resolvedDraft.eventStartMs ? 'At event start' :
-      resolvedDraft.alarmAtMs === resolvedDraft.dueAtMs ? 'At due time' : 'Follows due time';
+      'Follows due time';
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
   return <Page compact title={creation ? 'New reminder' : editingSeries ? followingScope ? 'Edit following' : 'Edit repeat' : 'Edit reminder'}
     onBack={() => {

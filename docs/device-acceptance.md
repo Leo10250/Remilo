@@ -162,7 +162,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
 - **U4 — completed, skipped and Trash:** complete a QA row using its leading completion target,
   then use Undo. Complete again: it leaves the active agenda. Find it through
-  the secondary Completed destination. Include skipped exposes a skipped repeat.
+  the secondary Completed destination. Filters → Show skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
   themed request after checking Keep reminder/Back first. Check that one snackbar
   with Undo appears, with no lasting green duplicate; ordinary Undo feedback expires
@@ -470,7 +470,7 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 - **D9 — series lifecycle:** create a daily series with five occurrences, first
   alert a few minutes ahead. Future occurrences appear in the agenda; the engine
   independently registers two ordinary targets. Skip the first occurrence: find it
-  in Completed → Include skipped and
+  in Completed → Filters → Show skipped and
   another future ordinary occurrence fills the window. Count is still five nominal slots.
 - **D10 — individual exception:** Postpone an occurrence, then edit its notes.
   The chosen next alert survives. Edit that occurrence's alert definition instead:
@@ -559,12 +559,12 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   Notification sent stay available in Details/Activity rather than duplicate row
   badges. Inspect independent Due, blocked targets and scheduling warnings.
 - **F4 — consistent terminal cards:** compare Agenda, named-list Agenda,
-  Completed with Include skipped, mixed Trash and family occurrences. All use
+  Completed with Show skipped, mixed Trash and family occurrences. All use
   shared keylines, wrapping and the borderless vertical-ellipsis target. Normal
   Completed/Skipped/Trash has no completion checkbox, Done or empty placeholder;
   selection mode uses selection-only checkboxes. One terminal state line retains
   useful original schedule/alert and list/repeat context. Row tap opens Details;
-  More retains View/Reopen/Move to Trash or View/Restore as appropriate. Compare
+  More offers Reopen/Move to Trash or Restore/Delete permanently as appropriate. Compare
   all four atmospheres in both brightnesses, portrait/landscape and 200% text.
 - **F5 — captured actions and retries:** controlled QA engineering setups cover
   later arrivals, stale generations, changed Snooze settings, lost replies,
