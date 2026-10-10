@@ -37,7 +37,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const remove = (list: ListRecord) => { setSelected(null); confirm('Remove list?', 'Reminders in “' + list.name + '” move to No list. Their schedules and completion stay the same.', [
     { text: 'Cancel', style: 'cancel' }, { text: 'Remove list', style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: list.id, expectedRevision: list.revision, operationId: engine().createOperationId() }, success: 'List removed. Reminders moved to No list.' }) }]); };
   const row = (name: string, id: string | null, count: number, record?: ListRecord) => <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <View style={{ flex: 1 }}><SettingRow label={name} minHeight={72} disabled={guarded || !nativeAvailable}
+    <View style={{ flex: 1 }}><SettingRow label={name} icon="checklist" minHeight={72} disabled={guarded || !nativeAvailable}
       statusLabel={count ? count + ' overdue occurrences' : undefined} supporting={count > 0 ? <Status label={count + ' overdue'} tone="warning" /> : undefined}
       onPress={() => open(id)} /></View>
     {record && <IconButton icon="more_vert" label={'More actions for ' + name} disabled={guarded || !nativeAvailable} onPress={() => setSelected(record)} />}
@@ -53,7 +53,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
         onPress={() => router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })} /></ConnectedGroup>}
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error}
         empty={!nativeAvailable || management && !query.data?.length} emptyMessage={!nativeAvailable ? 'Use the Android app to manage lists.' : 'No named lists yet.'} onRetry={() => void query.refetch()} />
-      {management ? <ConnectedGroup footer={groupFeedback}>{query.data?.map((list) => <SettingRow key={list.id} label={list.name} minHeight={72} disabled={guarded} onPress={() => setSelected(list)} />)}</ConnectedGroup> :
+      {management ? <ConnectedGroup footer={groupFeedback}>{query.data?.map((list) => <SettingRow key={list.id} label={list.name} icon="checklist" minHeight={72} disabled={guarded} onPress={() => setSelected(list)} />)}</ConnectedGroup> :
         <ConnectedGroup title="Your lists" footer={groupFeedback}>{row('No list', null, noList.data?.total ?? 0)}{query.data?.map((list) => row(list.name, list.id, list.overdueCount, list))}</ConnectedGroup>}
       {!management && <View style={{ height: 88 }} />}
       </View>

@@ -35,7 +35,16 @@ Conditional items update the first/last corners without recreating retained
 controls. Zone guidance/errors belong to Time zone; other validation stays with
 its control. Sound/Vibration is a connected two-row group with the established
 Vibration icon. Notes, disclosure headers, drafts and persistent Save retain their
-existing behavior. Details-screen panels are outside this correction.
+existing behavior.
+
+The owner's subsequent 9 October follow-up extends connected grouping to reminder
+Details. Each Schedule information row (When, conditional independent Due, Alert
+mode, conditional Next alert, List and conditional Notes) receives its own surface
+with the same 2 dp seams and 16/4 dp corners. Keep label/value typography and
+neutral icon columns. Supporting timing text stays in its row; zone guidance stays
+in an inset group footer. Repeat is a separate filled item with recovery/guidance
+in its footer. Preserve navigation, action guards, conditional timing and the
+persistent action footer. The editor's read-only schedule preview remains unchanged.
 
 R4/R5 accept twelve representatives of ordinary details, overdue details with
 a postponed alert, creation with Title keyboard focus and independent-timing editing.

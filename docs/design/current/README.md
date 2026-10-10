@@ -34,7 +34,7 @@ implementation units; approval of a synthetic image does not complete one.
 | [Agenda and navigation](screens/agenda.md) | R3 homepage accepted; exceptional states still need review. |
 | [Details and editor](screens/details-editor.md) | R4/R5 twelve representatives accepted with icon, geometry and IME corrections. |
 | [Native alarm and Postpone](screens/alarm-postpone.md) | R6 accepted templates; original plain pre-unlock image rejected; four themed replacements accepted with color corrections. |
-| [Lists and Repeats](screens/lists-repeats.md) | R7 outline accepted; lists omit decorative icons. |
+| [Lists and Repeats](screens/lists-repeats.md) | R7 outline accepted; connected lists use the shared neutral checklist glyph. |
 | [Settings and Appearance](screens/settings.md) | R8 direction accepted; A36 adds Automatic policy/dropdown; R8-08 is a later supplement. |
 | [Completed, Trash and Activity](screens/completed-trash-activity.md) | [Runtime composition 05 approved for implementation](../r9-runtime-composition-approval-v5.json) on 9 October after four rejected compositions. Row menus and selected-occurrence actions follow the latest owner direction; actual Android acceptance remains pending. |
 | [Data and Help](screens/data-help.md) | R10 r2 fourteen templates accepted, including whole-backup Restore. |

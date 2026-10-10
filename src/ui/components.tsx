@@ -160,6 +160,20 @@ export function Group({ title, children }: PropsWithChildren<{ title?: string }>
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 
+export function InformationRow({ label, value, supporting, icon, onPress }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void }) {
+  const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
+  const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+    <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
+    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
+    {onPress && <Icon name="chevron_right" size={20} />}
+  </View>;
+  return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={[label, value, supporting].filter(Boolean).join(', ')} onPress={onPress}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...corners, backgroundColor: pressed ? colors.soft : undefined })}>
+    {body}{corners && focused && <RowFocus corners={corners} />}
+  </Pressable> : body;
+}
+
 /** Direct, stable-keyed children are units; fragments remain one composite unit. */
 export function ConnectedGroup({ title, children, footer }: PropsWithChildren<{ title?: string; footer?: ReactNode }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
@@ -328,10 +342,12 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
   </SafeAreaView>;
 }
 export function Sheet({ title, visible, onClose, onBack, children, footer }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode }>) {
-  const colors = useTheme(), scale = useFontScaleOverride();
+  const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
+  // Modals retain React context, including scenic header foreground overrides.
+  const colors = foundation?.colors ?? inheritedColors;
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
   useAppearanceHold(visible);
-  return <ConnectedRowContext.Provider value={null}><ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
+  return <PresentationProvider colors={colors}><ScenicChrome.Provider value={false}><ConnectedRowContext.Provider value={null}><ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Pressable accessibilityLabel="Dismiss" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
@@ -345,7 +361,7 @@ export function Sheet({ title, visible, onClose, onBack, children, footer }: Pro
         <FormViewport fill={false} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
       </View>
     </View>
-  </Modal></ScrollChromeProvider></ConnectedRowContext.Provider>;
+  </Modal></ScrollChromeProvider></ConnectedRowContext.Provider></ScenicChrome.Provider></PresentationProvider>;
 }
 export function Choice({ label, description, selected, onPress, disabled = false }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean }) {
   const colors = useTheme();

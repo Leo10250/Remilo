@@ -24,6 +24,12 @@ notification surfaces remain platform-owned. The explicit R6 alarm action minimu
 is 64 dp for prominent single/Done-all/Snooze-all controls and 56 dp for member actions;
 ordinary app prominent actions use the 56 dp minimum below.
 
+App sheets are surface boundaries even when opened from scenic toolbar actions.
+Restore the current foundation's surface, on-surface and on-surface-variant colors
+and ordinary control/focus treatment at that boundary. Header foreground overrides
+must not enter the sheet through React context. Retain text scaling, reduced motion,
+appearance holds and modal accessibility behavior.
+
 ## Color roles shared by every screen
 
 Use one shared role mapping in RN and native components. Appearance changes the

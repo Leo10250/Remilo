@@ -220,6 +220,68 @@ test('optional presentation inherits scale and motion and preserves an explicit 
   assert.equal(explicit.props.children.props.children.props.value, false);
 });
 
+test('sheets restore surface foregrounds and controls when opened inside scenic headers in all eight themes', () => {
+  for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
+    const { theme, colors, contexts } = loadPresentation();
+    const palette = colors.atmosphereColors(scene, brightness);
+    const generated = compile('src/ui/atmosphere.generated.ts');
+    const tokens = compile('src/ui/tokens.ts', { './atmosphere.generated': generated });
+    const jsx = (type, props, key) => ({ type, props, key });
+    const components = compile('src/ui/components.tsx', {
+      ...Object.fromEntries([...read('src/ui/components.tsx').matchAll(/require\('([^']+\.webp)'\)/g)].map((match) => [match[1], 'fixture-artwork'])),
+      react: {
+        createContext: (value) => { const context = { value, Provider: Symbol('Provider') }; contexts.push(context); return context; },
+        useContext: (context) => context.value, useState: (value) => [value, () => {}],
+        useRef: (value) => ({ current: value }), useCallback: (callback) => callback, useEffect: () => {},
+        Children: { toArray: (children) => [children].flat(Infinity).filter((child) => child != null && typeof child !== 'boolean') },
+        isValidElement: (child) => child?.type != null,
+      },
+      'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
+      'react-native': {
+        View: 'View', Text: 'Text', Pressable: 'Pressable', Modal: 'Modal',
+        Platform: { OS: 'web' }, StyleSheet: { create: (styles) => styles, absoluteFill: { position: 'absolute' } },
+        useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
+      },
+      '@react-native-community/datetimepicker': {}, 'expo-symbols': { SymbolView: 'Glyph' }, 'expo-router': {},
+      'react-native-safe-area-context': {}, './theme': theme, './tokens': tokens,
+      '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
+      './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
+      './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},
+    });
+    // Model the header's foreground and scenic-control context; a Modal retains both.
+    contexts.find((context) => context.value === false).value = true;
+    contexts.find((context) => context.value === 'default').value = 'focused';
+    const render = (node) => {
+      if (Array.isArray(node)) return node.map(render);
+      if (node == null || typeof node !== 'object') return node;
+      const context = contexts.find((candidate) => candidate.Provider === node.type);
+      if (context) {
+        const previous = context.value; context.value = node.props.value;
+        const rendered = render(node.props.children); context.value = previous; return rendered;
+      }
+      if (typeof node.type === 'function') return render(node.type(node.props));
+      return { ...node, props: { ...node.props, children: render(node.props.children) } };
+    };
+    const collect = (node) => Array.isArray(node) ? node.flatMap(collect) : node && typeof node === 'object' ? [node, ...collect(node.props.children)] : [];
+    const content = jsx(components.Sheet, { title: 'More', visible: true, onClose: () => {},
+      children: jsx(components.SettingRow, { label: 'Settings', icon: 'settings', description: 'App preferences', onPress: () => {} }),
+      footer: jsx(components.Copy, { children: 'Footer' }),
+    });
+    const header = jsx(theme.PresentationProvider, { colors: { ...palette, ink: '#FFFFFF', muted: '#FFFFFF' }, fontScale: 2, reducedMotion: true, children: content });
+    const nodes = collect(render(jsx(theme.FoundationStyleProvider, { foundation: { colors: palette }, children: header })));
+    const text = (label) => nodes.find((node) => node.type === 'Text' && node.props.children === label);
+    assert.equal(text('More').props.style.color, palette.ink, scene + '/' + brightness);
+    assert.equal(text('Settings').props.style.color, palette.ink);
+    assert.equal(text('App preferences').props.style.color, palette.muted);
+    assert.equal(text('Footer').props.style.color, palette.ink);
+    assert.equal(text('More').props.style.fontSize, tokens.typography.appBar * 2, 'Large-text context survives the boundary.');
+    assert.equal(nodes.find((node) => node.type === 'Modal').props.animationType, 'none', 'Reduced-motion context survives the boundary.');
+    const close = nodes.find((node) => node.type === 'Pressable' && node.props.accessibilityLabel === 'Close More');
+    assert.equal(close.props.style({ pressed: false }).borderColor, palette.focus, 'Close uses surface focus treatment rather than scenic white.');
+    assert.ok(nodes.some((node) => node.type === 'Glyph' && node.props.name.web === 'settings' && node.props.tintColor === palette.muted));
+  }
+});
+
 test('ordinary reminder rows expose leading completion independently from opening and use a neutral glyph', () => {
   const rowSource = ts.createSourceFile('row.tsx', read('src/ui/reminder-row.tsx'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const component = rowSource.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'ReminderRow');

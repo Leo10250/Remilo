@@ -1,6 +1,6 @@
 # Lists, Repeats and recurrence controls
 
-Revision 4 · 9 October 2026 · **Overall outline and connected grouping accepted; lists omit decorative icons.**
+Revision 5 · 9 October 2026 · **Overall outline, connected grouping and shared neutral list glyph accepted.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
 
@@ -24,7 +24,10 @@ Your lists and the shared management list use 2 dp connected-item seams, 16 dp
 outside corners and 4 dp inside corners. The parent is transparent and each
 entry paints the theme surface; remove the old continuous white wrapper and
 internal 12 dp spacing. Reserve 12 dp for independent groups. Built-in Repeats is
-a single filled item with four 16 dp corners. No decorative list icons apply.
+a single filled item with four 16 dp corners. Your lists and shared management
+rows use the established neutral `checklist` glyph, 24 dp in the same 40 dp soft
+container as ordinary navigation rows, including No list. This identifies the
+list role without assigning a category or theme-specific illustration.
 Overdue counts remain inside their entry; navigation and More retain separate
 targets (rows at least 72 dp, More at least 48 dp), and long names grow/wrap.
 
@@ -36,10 +39,12 @@ screen/keyboard anatomy. Existing [product](../../../product.md), [architecture]
 and [workflow](../../../appearance-redesign.md) contracts govern behavior. TD-03 owns
 Lists/navigation; TD-03 owns Repeats/family presentation; TD-03 owns recurrence controls.
 
-**9 October implementation decision:** omit decorative list identity icons.
-Generated icons are preserved in their historical references. Ordinary navigation/
-form glyphs retain their purpose; reminder rows/details use one neutral `event`
-glyph. No custom-icon picker or name-based classifier is introduced.
+**9 October owner follow-up:** add a generic leading list icon, superseding the
+earlier icon-free implementation decision. Use the existing neutral `checklist`
+glyph and shared container treatment, not generated category-specific badges.
+Generated icons are preserved in their historical references. Reminder rows/details
+retain one neutral `event` glyph. No custom-icon picker or name-based classifier
+is introduced.
 
 This refinement makes concrete layout choices; it does not implement app routes,
 new scheduling/persistence or migrations. A36 separately fixes global automatic appearance policy.
@@ -103,10 +108,9 @@ Category/status roles remain purposeful and independent of atmosphere.
 **Lists root:** separate **Built-in views → Repeats** from **Your lists → No list**
 and the existing durable named-list query order. Repeats stays visible when empty,
 with no Rename/Remove and no membership entry. Each opaque row has a wrapped name and navigation chevron.
-Decorative list identity glyphs are provisional under A27, rather than a required
-feature. The owner currently favors omitting them; make an icon-free component
-candidate and raise the choice at implementation review. If retained after that
-decision, use one neutral generic glyph rather than name-inferred colored badges.
+The later owner instruction resolves A27's provisional list icons in favor of the
+shared generic `checklist` glyph. Use the same neutral container for No list and
+every named list rather than name-inferred colored badges.
 Named lists may also have a separately targeted More menu.
 Show a nonzero badge as `2 overdue`, with the complete accessible phrase
 `2 overdue occurrences`. Zero may omit the badge; it does not establish that a
@@ -338,7 +342,7 @@ generation differences. In addition to A27's provisional list icons, resolve:
 
 | Reference | Implementation correction |
 |---|---|
-| R7-01 Lists | Decorative row icons are provisional; prefer an icon-free component candidate. Use shared compact geometry and semantic overdue badges, not the bright generated red/gradient. |
+| R7-01 Lists | The later owner instruction selects the shared neutral checklist glyph/container. Use shared compact geometry and semantic overdue badges, not the bright generated red/gradient. |
 | R7-02 Create + IME | Provisional underlying list glyphs; one measured primary footer and separate Cancel above real IME, with error/caret visible. Platform keyboard colors are not an app requirement. |
 | R7-03 Work Agenda | Keep exact authored Event/Due/next-alert values; the repaired client time is 6:00–6:15 PM. Use shared semantic overdue/delivery roles and measured FAB clearance. |
 | R7-04 Remove list | Provisional background glyphs; neutral secondary Cancel, semantic destructive Remove, shared modal/scrim/target geometry. Removal still preserves schedules and completion. |

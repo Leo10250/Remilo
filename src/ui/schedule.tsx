@@ -1,23 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import type { PropsWithChildren } from 'react';
-import { Pressable, View } from 'react-native';
+import { Children, type PropsWithChildren } from 'react';
+import { View } from 'react-native';
 import { alertPresentation, eventRange, modeLabel, ordinaryDue, scheduleDateTime, scheduleNeedsDetails, type ScheduleItem } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { Copy, Disclosure, formatTime, Group, Icon, type IconName } from './components';
+import { ConnectedGroup, Copy, Disclosure, formatTime, Group, InformationRow } from './components';
 import { engine, nativeAvailable } from './native';
 import { typography } from './tokens';
-import { useTheme } from './theme';
-
-export function InformationRow({ label, value, supporting, icon, onPress }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void }) {
-  const colors = useTheme();
-  const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-    <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
-    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
-    {onPress && <Icon name="chevron_right" size={20} />}
-  </View>;
-  return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={[label, value, supporting].filter(Boolean).join(', ')} onPress={onPress}
-    style={({ pressed }) => ({ backgroundColor: pressed ? colors.soft : undefined })}>{body}</Pressable> : body;
-}
+export { InformationRow } from './components';
 
 export function ZoneSummary({ zoneId, atMs, prefix = '' }: { zoneId: string; atMs: number; prefix?: string }) {
   const zones = useQuery({ queryKey: ['time-zones', atMs], queryFn: () => engine().getTimeZones(atMs), enabled: nativeAvailable });
@@ -28,20 +17,24 @@ export function ZoneSummary({ zoneId, atMs, prefix = '' }: { zoneId: string; atM
 }
 
 /** Read-only formatting of native instants; this component never resolves or schedules times. */
-export function Schedule({ item, draft = false, details = true, children }: PropsWithChildren<{ item: ScheduleItem; draft?: boolean; details?: boolean }>) {
+export function Schedule({ item, draft = false, details = true, connected = false, children }: PropsWithChildren<{ item: ScheduleItem; draft?: boolean; details?: boolean; connected?: boolean }>) {
   const zone = item.zoneId || deviceZone();
   const { label: alert, target: current, changed, targetZone: currentZone } = alertPresentation(item, draft);
-  return <Group title="Schedule">
-    <InformationRow icon="event" label="When" value={eventRange(item)} supporting={ordinaryDue(item) ? item.allDay ? 'Due by end of day' : 'Due at event start' : undefined} />
-    {!ordinaryDue(item) && <InformationRow icon="schedule" label="Due" value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? 'Independent of When' : undefined} />}
-    <InformationRow icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} label="Alert mode" value={modeLabel(item.mode)} />
-    {item.mode !== 'None' && <InformationRow icon="schedule" label="Next alert" value={alert} supporting={changed ? 'Originally ' + scheduleDateTime(item.alarmAtMs, zone) + ' · Event and due time stay unchanged.' : item.alarmLinked === false ? 'Independent of Due' : undefined} />}
-    {children}
-    <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>
-    {(zone !== deviceZone() || item.repeatRule?.zoneMode === 'pinned') && <ZoneSummary zoneId={zone} atMs={item.eventStartMs} />}
-    {changed && currentZone !== zone && <ZoneSummary zoneId={currentZone} atMs={current!} prefix="Current alert uses " />}
+  const showZone = zone !== deviceZone() || item.repeatRule?.zoneMode === 'pinned', showAlertZone = changed && currentZone !== zone;
+  const rows = [
+    <InformationRow key="when" icon="event" label="When" value={eventRange(item)} supporting={ordinaryDue(item) ? item.allDay ? 'Due by end of day' : 'Due at event start' : undefined} />,
+    !ordinaryDue(item) && <InformationRow key="due" icon="schedule" label="Due" value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? 'Independent of When' : undefined} />,
+    <InformationRow key="mode" icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} label="Alert mode" value={modeLabel(item.mode)} />,
+    item.mode !== 'None' && <InformationRow key="alert" icon="schedule" label="Next alert" value={alert} supporting={changed ? 'Originally ' + scheduleDateTime(item.alarmAtMs, zone) + ' · Event and due time stay unchanged.' : item.alarmLinked === false ? 'Independent of Due' : undefined} />,
+    ...Children.toArray(children),
+  ];
+  const support = <>
+    {showZone && <ZoneSummary zoneId={zone} atMs={item.eventStartMs} />}
+    {showAlertZone && <ZoneSummary zoneId={currentZone} atMs={current!} prefix="Current alert uses " />}
     {details && <ScheduleDetails item={item} draft={draft} />}
-    </View></Group>;
+  </>;
+  return connected ? <ConnectedGroup title="Schedule" footer={showZone || showAlertZone || details && scheduleNeedsDetails(item) ? support : undefined}>{rows}</ConnectedGroup> :
+    <Group title="Schedule">{rows}<View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>{support}</View></Group>;
 }
 
 export function ScheduleDetails({ item, draft = false }: { item: ScheduleItem; draft?: boolean }) {
