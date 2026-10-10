@@ -9,10 +9,22 @@ locked/screen-off delivery, delivery after reboot, Stop, ten-minute Snooze, and
 Stop/Snooze buttons on the returning alarm. This checklist checks the expanded app;
 those earlier observations do not establish results for this new build.
 
-## Current Trash and editor acceptance
+## Current connected-group acceptance artifact
+
+The [connected-group evidence](evidence/2026-10-09-connected-groups.md) identifies
+the latest signed bundled ARM64 build prepared **10 October 2026 at
+04:05:32.778 UTC** (9 October local time). It includes the editor, Lists and entire
+Settings grouping correction plus the preceding Trash/editor changes.
+Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
+APK SHA-256: `56f235df7a931b79a56fe4867736f57434095ee10f369ad7bd4817928313d445`.
+The evidence states the application-source/build relationship. No installation
+or physical result is established. U25 and all other observations remain pending
+for this artifact until the owner records them.
+
+## Earlier Trash and editor artifact (historical)
 
 The [Trash and editor correction evidence](evidence/2026-10-09-permanent-trash.md)
-identifies the latest local signed bundled ARM64 build prepared **10 October 2026
+identifies the earlier local signed bundled ARM64 build prepared **10 October 2026
 at 02:15:28.364 UTC** (9 October local time). It includes permanent Trash deletion,
 the themed Move to Trash sheet, compact independent Date/Time controls and one success snackbar.
 Package/version remain **com.remilo.app 0.4.0 / code 4**, with the existing signer.
@@ -292,6 +304,20 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   operation identity; a new test requires a new deliberate request. Leave unavailable
   fault setup pending and use only QA probes. Scheduling feedback does not prove
   audibility; native delivery remains covered by B/C.
+
+- **U25 — connected editor, Lists and Settings:** check 2 dp seams between related
+  items and 12 dp between groups, 16 dp outside/4 dp inside corners and full
+  singleton corners. Switches and navigation rows share the same surfaces. Toggle
+  All day and Due/alert linkage, select Alarm/Notification/No alert and open/close
+  the editor pickers; drafts and selections survive, hidden rows update corners,
+  and focus outlines stay unclipped. Check all eight appearance pairs, narrow
+  width and 200% system text. Permission statuses move beneath readable labels;
+  passive channel statuses/build info have no extra tiles or chevrons. Inspect
+  empty/single/multiple and long-name Lists, management and separate More targets.
+  Confirm one preference retry across affected groups, Test recovery/conditional
+  View test reminder, and prepared-backup retry inside Export with truthful
+  handoff feedback. TalkBack order, touch targets, native pickers and sharing
+  remain pending until observed on the signed Android build.
 
 ## A. Everyday reminders and timing
 

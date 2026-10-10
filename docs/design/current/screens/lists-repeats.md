@@ -1,6 +1,6 @@
 # Lists, Repeats and recurrence controls
 
-Revision 3 · 9 October 2026 · **Overall UI/UX outline accepted; lists omit decorative icons.**
+Revision 4 · 9 October 2026 · **Overall outline and connected grouping accepted; lists omit decorative icons.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
 
@@ -17,6 +17,16 @@ the overall outline as a sufficient starting template with provisional list icon
 PNG identities and per-image discrepancy guidance. This records template approval,
 not a claim of separate owner review of every raster or immutable pixel acceptance.
 The owner allows missing Night/state permutations to inherit the existing theme.
+
+## Connected library items (owner correction, 9 October 2026)
+
+Your lists and the shared management list use 2 dp connected-item seams, 16 dp
+outside corners and 4 dp inside corners. The parent is transparent and each
+entry paints the theme surface; remove the old continuous white wrapper and
+internal 12 dp spacing. Reserve 12 dp for independent groups. Built-in Repeats is
+a single filled item with four 16 dp corners. No decorative list icons apply.
+Overdue counts remain inside their entry; navigation and More retain separate
+targets (rows at least 72 dp, More at least 48 dp), and long names grow/wrap.
 
 ## Authority and scope
 

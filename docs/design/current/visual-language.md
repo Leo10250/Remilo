@@ -72,8 +72,33 @@ fading scrim through the measured label/control region. Its 54% plateau and ink
 pair guarantee normal text 4.5:1 over the RGB extremes; actual image/UI framing
 still requires review. Drop decoration before compromising large text or controls.
 Use a 52 × 32 dp switch track with a 24 dp selected thumb and an accessible whole
-row target. Ordinary cards use 12 dp separation and neutral icon containers;
+row target. Independent cards use 12 dp separation and neutral icon containers;
 root selection uses a glyph capsule and selected label, as in R3/R7/R8.
+
+### Connected items (owner correction, 9 October 2026)
+
+Related editor units, list-library entries and Settings controls use connected
+items: **2 dp seams**, **16 dp outside corners**, **4 dp inside corners** and
+**12 dp between independent groups**. Each item paints the current theme surface;
+the enclosing list stays transparent so the seam reveals the page background.
+A singleton has four 16 dp corners. Conditional hidden items do not participate
+in corner calculation, and stable item keys preserve retained forms and pickers.
+
+Navigation rows and switches follow the same container rules; the control type
+does not decide whether a row receives a surface. Press, selection, disabled and
+focus cues stay inside the item's corners. Sheet contents retain their own
+presentation rather than inheriting the row's treatment. Supporting text, errors,
+passive statuses and recovery actions belong to their item or group footer, with
+16 dp horizontal insets; they are not extra tiles. Composite Date/Time and Alert
+units keep their existing internal controls. Existing continuous Group panels
+outside this correction remain valid and unchanged.
+
+This follows the Expressive segmented-list anatomy in the official
+[ListItem defaults](https://developer.android.com/reference/kotlin/androidx/compose/material3/ListItemDefaults)
+and [list tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ListTokens.kt).
+The owner's selected scope is the reminder editor, Lists library/management and
+the entire Settings page. Shared/native constants come from the canonical
+presentation manifest; this correction changes no stored values or actions.
 
 - Browsing opening: 200 dp below the status inset, including a nominal 56 dp
   toolbar. Scrolling consumes the 144 dp decoration into an opaque toolbar; the

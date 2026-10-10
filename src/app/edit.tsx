@@ -10,7 +10,7 @@ import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel, scheduleDateTime } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, Sheet, Status, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, RowSupport, Sheet, Status, Toggle } from '../ui/components';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { EventTimingFields } from '../ui/event-timing-fields';
 import { notify } from '../ui/feedback';
@@ -22,6 +22,7 @@ import { ListPicker, returnToOrigin } from '../ui/navigation';
 import { Schedule } from '../ui/schedule';
 import { SoundPicker } from '../ui/sound-picker';
 import { useAppearanceConfirmation } from '../ui/confirmation';
+import { space } from '../ui/tokens';
 
 type Seed = { state: EditorState; revision?: number; series?: Series };
 async function readSeed(id?: string, segmentId?: string, following?: string): Promise<Seed> {
@@ -229,41 +230,61 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       accessibilityElementsHidden={frozen} style={{ gap: 16 }}>
       <Field label="Title" placeholder="What do you want to remember?" autoFocus={creation && !duplicate} value={draft.title}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
-      <Group>
-        <EventTimingFields value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} allDay={!!draft.allDay}
-          onError={dateError} onChange={moveEvent} disabled={frozen} />
-        {!draft.dueLinked && <Copy muted size={14}>Due {formatTime(preview.data?.dueAtMs ?? draft.dueAtMs, zone)} · Independent of When</Copy>}
-        <AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} />
-        {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
-          zoneId={zone} onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} />}
-        {invalid(['eventStartMs', 'alarmAtMs']) && <Status label={message} tone="danger" />}
-        {!editingId && <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} />}
-        {invalid(['recurrence']) && <Status label={message} tone="danger" />}
-      </Group>
-      <View style={{ gap: 12 }}><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
-        {invalid(['listId']) && <Status label={message} tone="danger" />}
-        <Disclosure title="Notes (optional)" initial={!!draft.notes} forceOpen={!!invalid(['notes'])}>
-          <Field label="Notes" value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
-        </Disclosure></View>
+      <ConnectedGroup>
+        <View key="timing">
+          <EventTimingFields value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} allDay={!!draft.allDay}
+            onError={dateError} onChange={moveEvent} disabled={frozen} />
+          {(!draft.dueLinked || invalid(['eventStartMs'])) && <RowSupport>
+            {!draft.dueLinked && <Copy muted size={14}>Due {formatTime(preview.data?.dueAtMs ?? draft.dueAtMs, zone)} · Independent of When</Copy>}
+            {invalid(['eventStartMs']) && <Status label={message} tone="danger" />}
+          </RowSupport>}
+        </View>
+        <View key="alert">
+          <AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} />
+          {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
+            zoneId={zone} onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} disabled={frozen} />}
+          {invalid(['alarmAtMs']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
+        </View>
+        {!editingId && <View key="repeat">
+          <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} />
+          {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
+        </View>}
+        <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
+          {invalid(['listId']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
+        </View>
+      </ConnectedGroup>
+      <Disclosure title="Notes (optional)" initial={!!draft.notes} forceOpen={!!invalid(['notes'])}>
+        <Field label="Notes" value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
+      </Disclosure>
       <Disclosure title="Schedule options" icon="settings" forceOpen={!!invalid(['dueAtMs', 'zoneId', 'eventEndMs'])}>
-        <Toggle label="All day" value={draft.allDay ?? false} onChange={(allDay) => patch({ allDay, dueLinked: true, alarmLinked: true })} />
-        {!draft.allDay && <DateField label="Ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => patch({ eventEndMs })} />}
-        <Toggle label="Due follows When" value={draft.dueLinked ?? true} onChange={(dueLinked) => {
-          const dueAtMs = dueLinked ? draft.allDay ? preview.data?.eventEndMs ?? draft.eventEndMs : draft.eventStartMs : preview.data?.dueAtMs ?? draft.dueAtMs;
-          patch({ dueLinked, dueAtMs, ...(dueLinked && draft.alarmLinked && !draft.allDay ? { alarmAtMs: dueAtMs } : {}) });
-        }} />
-        {!draft.dueLinked && <DateField label="Due" value={draft.dueAtMs} zoneId={zone} onError={dateError} onChange={changeDue} />}
-        {draft.mode !== 'None' && <><Toggle label={draft.allDay ? modeLabel(draft.mode) + ' at 9 AM' : modeLabel(draft.mode) + ' follows due time'} value={draft.alarmLinked ?? true} onChange={(alarmLinked) => patch({ alarmLinked,
-          alarmAtMs: alarmLinked && !draft.allDay ? preview.data?.dueAtMs ?? draft.dueAtMs : preview.data?.alarmAtMs ?? draft.alarmAtMs })} />
-          {draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs} zoneId={zone}
-            onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} />}</>}
-        {!recurrence && <><TimeZoneField value={zone} atMs={draft.eventStartMs} disabled={busy} onChange={(next) => { void changeZone(next, undefined).catch(() => {}); }} error={invalid(['zoneId'])} />
-          <Copy muted size={13}>Changing the zone keeps your clock times. This reminder stays at its saved instant when you travel.</Copy></>}
-        {invalid(['dueAtMs', 'eventEndMs']) && <Status label={message} tone="danger" />}
+        <View style={{ gap: space.md }}>
+          <ConnectedGroup footer={invalid(['eventEndMs']) ? <Status label={message} tone="danger" /> : undefined}>
+            <Toggle key="all-day" label="All day" value={draft.allDay ?? false} disabled={frozen} onChange={(allDay) => patch({ allDay, dueLinked: true, alarmLinked: true })} />
+            {!draft.allDay && <DateField key="ends" label="Ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => patch({ eventEndMs })} disabled={frozen} />}
+          </ConnectedGroup>
+          <ConnectedGroup footer={invalid(['dueAtMs']) ? <Status label={message} tone="danger" /> : undefined}>
+            <Toggle key="due-link" label="Due follows When" value={draft.dueLinked ?? true} disabled={frozen} onChange={(dueLinked) => {
+              const dueAtMs = dueLinked ? draft.allDay ? preview.data?.eventEndMs ?? draft.eventEndMs : draft.eventStartMs : preview.data?.dueAtMs ?? draft.dueAtMs;
+              patch({ dueLinked, dueAtMs, ...(dueLinked && draft.alarmLinked && !draft.allDay ? { alarmAtMs: dueAtMs } : {}) });
+            }} />
+            {!draft.dueLinked && <DateField key="due" label="Due" value={draft.dueAtMs} zoneId={zone} onError={dateError} onChange={changeDue} disabled={frozen} />}
+          </ConnectedGroup>
+          {draft.mode !== 'None' && <ConnectedGroup>
+            <Toggle key="alert-link" label={draft.allDay ? modeLabel(draft.mode) + ' at 9 AM' : modeLabel(draft.mode) + ' follows due time'} value={draft.alarmLinked ?? true} disabled={frozen} onChange={(alarmLinked) => patch({ alarmLinked,
+              alarmAtMs: alarmLinked && !draft.allDay ? preview.data?.dueAtMs ?? draft.dueAtMs : preview.data?.alarmAtMs ?? draft.alarmAtMs })} />
+            {draft.alarmLinked && <DateField key="alert-time" label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs} zoneId={zone}
+              onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} disabled={frozen} />}
+          </ConnectedGroup>}
+          {!recurrence && <ConnectedGroup footer={<Copy muted size={13}>Changing the zone keeps your clock times. This reminder stays at its saved instant when you travel.</Copy>}>
+            <TimeZoneField key="zone" value={zone} atMs={draft.eventStartMs} disabled={frozen} onChange={(next) => { void changeZone(next, undefined).catch(() => {}); }} error={invalid(['zoneId'])} />
+          </ConnectedGroup>}
+        </View>
       </Disclosure>
       {draft.mode === 'Alarm' && <Disclosure title="Alarm options" forceOpen={!!invalid(['sound', 'vibration'])}>
-        <SoundPicker value={draft.sound ?? settings.data?.sound ?? 'remilo'} onChange={(sound) => patch({ sound })} disabled={frozen} />
-        <Toggle label="Vibration" value={draft.vibration ?? settings.data?.vibration ?? true} onChange={(vibration) => patch({ vibration })} />
+        <ConnectedGroup>
+          <SoundPicker key="sound" value={draft.sound ?? settings.data?.sound ?? 'remilo'} onChange={(sound) => patch({ sound })} disabled={frozen} />
+          <Toggle key="vibration" icon="vibration" label="Vibration" value={draft.vibration ?? settings.data?.vibration ?? true} disabled={frozen} onChange={(vibration) => patch({ vibration })} />
+        </ConnectedGroup>
       </Disclosure>}
       {preview.data && <>
         <Schedule item={{ ...draft, ...preview.data, repeatRule: recurrence }} draft />

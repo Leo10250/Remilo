@@ -25,7 +25,7 @@ function metroResolver(preview) {
 }
 
 const context = { resolveRequest: (_context, name, platform) => ({ type: 'normal', filePath: platform + ':' + name }) };
-const names = ['../../modules/remilo-alarm/src/RemiloAlarmModule', '../ui/theme', '../ui/presentation-preview'];
+const names = ['../../modules/remilo-alarm/src/RemiloAlarmModule', '../ui/theme', '../ui/presentation-preview', 'expo-file-system', 'expo-sharing'];
 for (const preview of [undefined, '0', 'true', '']) {
   test(`preview environment ${String(preview)} preserves normal web and native resolution`, () => {
     const resolve = metroResolver(preview);
@@ -38,6 +38,8 @@ test('only the explicit preview web bundle substitutes the fixture bridge, leavi
   const resolve = metroResolver('1');
   assert.deepEqual({ ...resolve(context, names[0], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-engine.ts') });
   assert.deepEqual({ ...resolve(context, names[2], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/presentation-preview.tsx') });
+  assert.deepEqual({ ...resolve(context, names[3], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-files.ts') });
+  assert.deepEqual({ ...resolve(context, names[4], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-sharing.ts') });
   for (const platform of ['android', 'ios']) for (const name of names) {
     assert.deepEqual(resolve(context, name, platform), { type: 'normal', filePath: platform + ':' + name });
   }
@@ -103,6 +105,34 @@ test('fixture scene/brightness controls recognize all eight pairs and ignore unk
   }
   const settings = await loadPreview('?reviewScene=automatic&reviewBrightness=system').getSettings();
   assert.equal(settings.atmosphere, 'automatic'); assert.equal(settings.theme, 'system');
+});
+
+test('review fixtures cover empty/single lists and unavailable/blocked permission queries', async () => {
+  assert.equal((await loadPreview('?reviewLists=empty').queryLists()).length, 0);
+  assert.equal((await loadPreview('?reviewLists=single').queryLists()).length, 1);
+  await assert.rejects(loadPreview('?reviewPermissions=error').getCapabilities(), /could not be checked/);
+  const blocked = await loadPreview('?reviewPermissions=blocked').getCapabilities();
+  assert.equal(blocked.exactAlarms, false); assert.equal(blocked.notifications, false);
+});
+
+test('test lost-reply fixture retries the identified reminder without creating a duplicate', async () => {
+  const engine = loadPreview('?reviewLostReply=1');
+  await assert.rejects(engine.scheduleTestAlarm('tile-review-test'), /reply lost/);
+  const confirmed = await engine.scheduleTestAlarm('tile-review-test');
+  const repeated = await engine.scheduleTestAlarm('tile-review-test');
+  assert.ok(confirmed.occurrence); assert.equal(repeated.occurrence.id, confirmed.occurrence.id);
+});
+
+test('export review stays in memory and retries a synthetic share failure', async () => {
+  const { Directory, File, Paths } = compile('verification/ui/preview-files.ts');
+  const file = new File(new Directory(Paths.cache, 'exports'), 'fixture.json');
+  file.create(); file.write('synthetic backup');
+  assert.match(file.uri, /^memory:\/\//); assert.equal(await file.text(), 'synthetic backup');
+  await assert.rejects(File.pickFileAsync(), /requires the Android app/);
+  const sharing = compile('verification/ui/preview-sharing.ts', {}, { URLSearchParams, window: { location: { search: '?reviewShare=failed-once' } } });
+  assert.equal(await sharing.isAvailableAsync(), true);
+  await assert.rejects(sharing.shareAsync(file.uri), /unavailable/);
+  await sharing.shareAsync(file.uri);
 });
 
 test('long-text fixture supplies bounded English/Chinese content consistently across list membership and repeats', async () => {
