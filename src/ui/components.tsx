@@ -1,7 +1,7 @@
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type Ref } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PresentationProvider, useAppearanceHold, useAtmosphere, useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
@@ -112,8 +112,9 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
 export function Card({ children }: PropsWithChildren) {
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
-export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
+export function Field({ label, error, inputRef, compactMultiline = false, ...props }: TextInputProps & { label: string; error?: string; inputRef?: Ref<TextInput>; compactMultiline?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
+  const { fontScale } = useWindowDimensions();
   const foundation = useFoundationStyle(), [focused, setFocused] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const wrapper = useRef<View>(null), reveal = useRevealInput();
@@ -124,17 +125,19 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
     setContentHeight(Math.ceil(event.nativeEvent.contentSize.height) + 2);
     onContentSizeChange?.(event);
   }, [onContentSizeChange]);
-  return <View ref={wrapper} style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput accessibilityLabel={label}
+  const titleHeight = Math.max(48, Math.min(contentHeight || 48, typography.body * scale * fontScale * 1.4 * 3 + 22));
+  return <View ref={wrapper} style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput ref={inputRef} accessibilityLabel={label}
     placeholderTextColor={colors.muted} selectionColor={colors.accent} cursorColor={colors.accent} {...props}
-    onContentSizeChange={foundation && props.multiline ? resize : props.onContentSizeChange}
+    onContentSizeChange={props.multiline && (foundation || compactMultiline) ? resize : props.onContentSizeChange}
     onFocus={event => { setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
       borderRadius: foundation?.tokens.shape.field ?? shape.field,
-      backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
+      backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: compactMultiline ? 48 : props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
+      ...(compactMultiline ? { height: titleHeight, lineHeight: typography.body * scale * 1.4 } : {}),
       fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean;
+export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, accessibilityLabel }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean; accessibilityLabel?: string;
 }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
@@ -148,7 +151,7 @@ export function SettingRow({ label, value, icon, onPress, children, description,
     {!stackedStatus && children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
-    accessibilityLabel={[label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={onPress}
+    accessibilityLabel={accessibilityLabel ?? [label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={onPress}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ ...corners, backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>
       {body}{corners && focused && <RowFocus corners={corners} />}
@@ -160,11 +163,11 @@ export function Group({ title, children }: PropsWithChildren<{ title?: string }>
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 
-export function InformationRow({ label, value, supporting, icon, onPress }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void }) {
+export function InformationRow({ label, value, supporting, icon, onPress, prominent = false }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void; prominent?: boolean }) {
   const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
   const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
     <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
-    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
+    <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy size={prominent ? typography.title : typography.body}>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
     {onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={[label, value, supporting].filter(Boolean).join(', ')} onPress={onPress}
@@ -232,9 +235,9 @@ export function Toggle({ label, value, onChange, icon, disabled = false }: { lab
     {corners && focused && <RowFocus corners={corners} />}
   </Pressable>;
 }
-export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false, compact = false }: {
+export function DateField({ label, value, onChange, timeOnly = false, dateOnly = false, zoneId = deviceZone(), onError, disabled = false, compact = false, accessibilityLabel }: {
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
-  zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean;
+  zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean; accessibilityLabel?: string;
 }) {
   const connected = useContext(ConnectedRowContext) !== null;
   const [message, setMessage] = useState('');
@@ -262,8 +265,9 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     };
     try { open(timeOnly ? 'time' : 'date', value, civilAt(value, zoneId)); } catch { fail(); }
   };
+  const formatted = timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId);
   return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled} compact={compact}
-    value={timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId)} onPress={pick} />
+    value={formatted} accessibilityLabel={accessibilityLabel ? accessibilityLabel + ', ' + formatted : undefined} onPress={pick} />
     {!!message && (connected ? <RowSupport><ActionFeedback message={message} tone="muted" /></RowSupport> : <ActionFeedback message={message} tone="muted" />)}</>;
 }
 export function AppBar({ title, back = true, onBack, actions, leading, scenic = false, home = false }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; leading?: ReactNode; scenic?: boolean; home?:boolean }) {
@@ -326,8 +330,8 @@ export function AtmosphericHeader({ title, home = false, subtitle, actions, lead
     </View>}
   </View>;
 }
-export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, header, compact = false }: PropsWithChildren<{
-  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; header?: ReactNode; compact?: boolean;
+export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, scrollResetToken, header, compact = false }: PropsWithChildren<{
+  title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; scrollResetToken?: number; header?: ReactNode; compact?: boolean;
 }>) {
   const colors = useTheme(), chrome = usePageChrome(scrollKey,compact);
   return <SafeAreaView edges={['top','left','right']} style={{ flex: 1, backgroundColor: colors.background }}>
@@ -335,7 +339,7 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
       <View pointerEvents="box-none" style={{position:'absolute',top:0,left:0,right:0,height:chrome.opening}}>
         {header ?? <AtmosphericHeader title={title} back={back} actions={actions} onBack={onBack} leading={leading} />}
       </View>
-      <View pointerEvents="box-none" style={{flex:1,paddingTop:chrome.toolbar}}><FormViewport footer={footer} scrollKey={scrollKey} scrollReady={scrollReady} contentStyle={styles.page}>
+      <View pointerEvents="box-none" style={{flex:1,paddingTop:chrome.toolbar}}><FormViewport footer={footer} scrollKey={scrollKey} scrollReady={scrollReady} scrollResetToken={scrollResetToken} contentStyle={styles.page}>
         {subtitle && <Copy muted size={14}>{subtitle}</Copy>}{children}
       </FormViewport></View>
     </View></ScrollChromeProvider>
@@ -381,13 +385,13 @@ export function SelectRow<T extends string | number>({ label, value, choices, on
     <Sheet title={label} visible={open} onClose={() => setOpen(false)}>{choices.map((choice) => <Choice key={choice.value}
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }
-export function Disclosure({ title, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
+export function Disclosure({ title, summary, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; summary?: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
   const colors = useTheme();
   const [selected, setOpen] = useState(initial);
   const open = selected || forceOpen;
   return <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
     style={{ minHeight: 48, flexDirection: 'row', paddingHorizontal: space.xs, alignItems: 'center', gap: space.sm }}>
-    {icon && <Icon name={icon}/>}<View style={{ flex: 1 }}><Copy>{title}</Copy></View><Icon name={open ? 'expand_less' : 'expand_more'} />
+    {icon && <Icon name={icon}/>}<View style={{ flex: 1, paddingVertical: summary ? space.sm : 0, gap: space.xs }}><Copy>{title}</Copy>{!open && summary && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} />
   </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
 export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {

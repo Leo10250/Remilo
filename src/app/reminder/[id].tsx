@@ -9,11 +9,12 @@ import type { Tone } from '../../domain/actions';
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
 import { alertPresentation, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, formatTime, Icon, IconButton, Page, QueryState, SettingRow, Sheet, shortTime, Status } from '../../ui/components';
+import { clockPreferenceLabel } from '../../domain/clock-preferences';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, formatTime, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
 import { notifyTrash } from '../../ui/navigation';
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
 import { typography } from '../../ui/tokens';
-import { InformationRow, Schedule, ScheduleDetails, ZoneSummary } from '../../ui/schedule';
+import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary, ZoneSummary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
@@ -141,6 +142,7 @@ export default function ReminderDetails() {
       {publication && <CalendarPublicationStatus publication={publication} />}
       {query.error && <><ActionFeedback message="Could not refresh. Showing the previous reminder." tone="warning" /><Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
+      <SchedulePrimary item={item} />
       {item.deleted ? <Status icon="delete" label="In Trash" /> : item.completed ?
         <Status label={completion == null ? 'Completed' : 'Completed ' + scheduleDateTime(completion)} tone="success" /> :
         item.skipped ? <Status icon="cancel" label="Skipped" /> : <View style={{ gap: 8 }}>{overdueStatus && <View accessible accessibilityLabel={overdueStatus.spokenLabel}><Status icon="warning" label={overdueStatus.label} tone="warning" /></View>}
@@ -149,14 +151,9 @@ export default function ReminderDetails() {
       {explanation && !item.deleted && <Status icon={stateIcon(item)} label={explanation} tone={stateTone(item)} />}
       {item.deleted && <><Status label={item.skipped ? 'Previously skipped' : item.completed ? completion == null ? 'Previously completed' : 'Previously completed ' + scheduleDateTime(completion) : 'Previously unfinished'} tone={item.completed ? 'success' : 'muted'} /><Copy muted size={14}>Restore keeps this work state and never replays past alerts.</Copy></>}
       {item.deliveryState === 'Blocked' && active && <Button icon="settings" label="Review alert permissions" variant="secondary" disabled={command.isPending || uncertain} onPress={() => {
-        if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/settings', params: { ...routeParams, originReminderId: id } });
+        if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } });
       }} />}
-      <Schedule item={item} details={false} connected>
-        <InformationRow key="list" icon="checklist" label="List" value={item.listName || 'No list'} onPress={command.isPending || uncertain ? undefined : () => {
-          if (!pendingOperation.current && !runningOperation.current) router.push(reminderListRoute(item.listId ?? null, id, routeParams));
-        }} />
-        {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
-      </Schedule>
+      <Schedule item={item} details={false} connected occurrence hasPublication={!!publication} />
       {item.segmentId && <ConnectedGroup title="Repeat" footer={series.isLoading || series.error || series.data?.state === 'Archived' ? <>
         <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
         {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Repeat details shows the current family.</Copy>}
@@ -167,7 +164,13 @@ export default function ReminderDetails() {
             if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/series/[id]', params: { id: item.segmentId!, ...(family ? { seriesId: family.seriesId } : {}), ...routeParams, originReminderId: id } });
           }} />
       </ConnectedGroup>}
-      <ScheduleDetails item={item} />
+      <ConnectedGroup>
+        <InformationRow key="list" icon="checklist" label="List" value={item.listName || 'No list'} onPress={command.isPending || uncertain ? undefined : () => {
+          if (!pendingOperation.current && !runningOperation.current) router.push(reminderListRoute(item.listId ?? null, id, routeParams));
+        }} />
+        {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
+      </ConnectedGroup>
+      <ScheduleDetails item={item} occurrence hasPublication={!!publication} />
     </>}
     <Sheet title="Reminder actions" visible={menu} onClose={() => setMenu(false)}>
       {item && !item.deleted && <SettingRow icon="edit" label="Edit" onPress={edit} />}
@@ -204,20 +207,19 @@ export default function ReminderDetails() {
       {sheetFeedback && <ActionFeedback {...sheetFeedback} />}
       {uncertain && <ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />}
       {postponeResult ? <><Button label="Return to reminder" onPress={closePostpone} />
-        <Button label="Review alert permissions" variant="secondary" onPress={() => { closePostpone(); router.push({ pathname: '/settings', params: { ...routeParams, originReminderId: id } }); }} /></> :
+        <Button label="Review alert permissions" variant="secondary" onPress={() => { closePostpone(); router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } }); }} /></> :
         <Button label={command.isPending ? 'Postponing…' : uncertain ? 'Retry change' : 'Postpone alert'} busy={command.isPending}
           disabled={command.isPending || (!uncertain && (!adjust || target <= now))} onPress={() => void (uncertain ? runPending() : delivery('Postpone', target))} />}
     </View></BottomActionBar>}>
-      <Copy heading>{item?.title}</Copy><Copy muted size={14}>Changes the next alert only. Event and due time stay unchanged.</Copy>
+      <Copy heading>{item?.title}</Copy><Copy muted size={14}>Postpones this alert only.</Copy>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{[15, 30, 60].map((minutes) => <View key={minutes} style={{ flexGrow: 1, flexBasis: 88 }}>
-        <Choice label={minutes === 60 ? '1 hour' : minutes + ' min'} selected={selection === String(minutes)} disabled={frozenPostpone}
+        <Choice label={minutes === 60 ? 'In 1 hour' : 'In ' + minutes + ' minutes'} selected={selection === String(minutes)} disabled={frozenPostpone}
           onPress={() => { setTarget(Date.now() + minutes * 60_000); setSelection(String(minutes)); setSheetFeedback(null); }} /></View>)}</View>
       {[settings.data?.tomorrowMorning ?? 600, settings.data?.tomorrowAfternoon ?? 840, settings.data?.tomorrowEvening ?? 1020].map((minutes, index) => {
-        const date = new Date(); date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
-        return <Choice key={index} label={'Tomorrow ' + ['morning', 'afternoon', 'evening'][index] + ' · ' + shortTime(date.getTime())} selected={selection === 'tomorrow-' + index} disabled={frozenPostpone} onPress={() => { tomorrow(minutes); setSelection('tomorrow-' + index); }} />;
+        return <Choice key={index} label={'Tomorrow, ' + clockPreferenceLabel(minutes)} selected={selection === 'tomorrow-' + index} disabled={frozenPostpone} onPress={() => { tomorrow(minutes); setSelection('tomorrow-' + index); }} />;
       })}
-      <DateField label={selection === 'custom' ? 'Custom date and time · selected' : 'Custom date and time'} value={target} disabled={frozenPostpone} onChange={(value) => { setTarget(value); setSelection('custom'); setSheetFeedback(null); }} />
-      <Copy>Next alert {formatTime(target)}</Copy><ZoneSummary zoneId={deviceZone()} atMs={target} /><Copy muted size={typography.supporting}>When and due time stay unchanged. This replaces Snooze.</Copy>
+      <DateField label={selection === 'custom' ? 'Choose date & time · selected' : 'Choose date & time'} value={target} disabled={frozenPostpone} onChange={(value) => { setTarget(value); setSelection('custom'); setSheetFeedback(null); }} />
+      <Copy>Next alert {formatTime(target)}</Copy><ZoneSummary zoneId={deviceZone()} atMs={target} />
       {!postponeResult && !uncertain && target <= now && <Status label="Choose a future time." tone="danger" />}
       {!postponeResult && !uncertain && !adjust && item && <Status label="This reminder has no eligible alert to postpone." tone="warning" />}
     </Sheet>

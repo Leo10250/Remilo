@@ -14,6 +14,12 @@ Add one global atmosphere selection: Automatic / Sunrise / Sky / Evening / Night
 
 ## Implementation
 
+- The [10 October UX refinement](../../design/current/ux-refinement.md) names the
+  independent groups Color mode and Atmosphere, with Match device and By time of
+  day labels (stored values unchanged). Add canonical two-tone swatches, shared
+  resolver Now and a collapsed localized Daily schedule; retain one captured
+  recovery for both preferences. No new scene, palette or lifecycle timer.
+
 - Settings Appearance uses one five-value dropdown with explicit selection and existing serialized auto-saving/error/retry behavior.
 - Resolve Sunrise 06:00–10:00, Sky 10:00–17:00, Evening 17:00–21:00, Night 21:00–06:00 using current device-local time/zone. New/missing selection defaults Automatic; preserve brightness and persistent manual overrides.
 - Reconcile foreground boundaries/resume/time/zone changes; coalesce automatic updates during transient editing and preserve drafts, focus, caret, scroll and captured operations.

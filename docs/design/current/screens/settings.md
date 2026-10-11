@@ -21,10 +21,11 @@ separate owner review or immutable-pixel acceptance of every raster is asserted.
 Use [the shared visual language](../visual-language.md), [appearance policy](../appearance-policy.md),
 all eight R3 references and established native/product UX. TD-02 owns saved global
 appearance, resolution and the safe native mirror; TD-03 owns Settings presentation.
-Production currently stores brightness only. A36 adds the five-value atmosphere
-selection and Automatic defaults; no production storage change is performed by this
-document. Preserve serialized preference saving, inline permissions, native sound
-preview, Snooze/tomorrow shortcuts and guarded Test behavior.
+The production baseline stores independent atmosphere and brightness preferences.
+The [10 October UX refinement](../ux-refinement.md) governs the current category
+order, compact alarm-check page, clock shortcuts, swatches and concise copy.
+Preserve serialized preference saving, native sound preview and captured Test
+retry identity. Permission/Test workflow now lives in `/alarm-check`.
 
 ## All eight visual references
 
@@ -56,8 +57,8 @@ status colors require labeled meaning and remain independent of atmosphere.
   first when height, large text, a modal or keyboard constrains useful content.
 - Settings is secondary and returns to its invoking origin. Appearance returns
   to Settings with its scroll position retained. Neither page shows the root
-  Agenda / Lists / Completed / Trash bar or Add FAB. Permission/Test states are portions of
-  Settings, not invented Readiness or Test-alarm destinations.
+Agenda / Lists / Completed / Trash bar or Add FAB. The approved compact
+  Permissions & alarm check page returns to Settings or its invoking origin.
 - Keep 16 dp gutters/corners, opaque grouped reading cards, 16 sp values and
   14 sp support. Minimum row targets are 48 dp; prominent actions are at least
   56 dp. Rows wrap/grow. Use sections and scrolling rather than squeeze all
@@ -71,14 +72,13 @@ status colors require labeled meaning and remain independent of atmosphere.
 
 ## A. Categorized Settings and preference saving
 
-Retain category order **Alarms → Permissions → Postpone shortcuts → Appearance
-→ Data → Help**. Alarms contains Sound, Vibration, Snooze duration and Test alarm.
-Permissions is directly usable inline. Appearance has one disclosure row with a
-concise global-atmosphere/brightness summary. Data retains Export/Restore;
-Help retains Diagnostics and factual build/version information. Backup/diagnostics
-workflows get a later review. No accounts, weather, content classifier, launcher
-automation, custom list-icon picker or other product destination is added here
-beyond the expressly proposed Appearance page.
+Current order is **Sound & vibration → Snooze & postpone → Appearance →
+Permissions & alarm check → Google Calendar → Backups → Help**, with an actionable
+permission warning first when needed. Sound/Vibration defaults say For new
+reminders. Test is In 15 seconds on the compact secondary alarm-check page.
+Tomorrow shortcuts use three clock rows. Backups keeps Export/Restore; Help keeps
+Diagnostics and factual app information. The lifetime preference controller and
+one captured recovery action survive sheet closure and page changes.
 
 **Different preference scopes must be visible:**
 

@@ -457,3 +457,14 @@ font scale at least 1.6 use compact chrome. Saved content offset initializes bot
 scroll and collapse positions. Safe-area/IME/footer geometry retains one owner.
 Native alarms retain dedicated layout and captured session appearance; supported
 notification accents and non-private loading extras use that same pair.
+
+The 10 October UX refinement adds frontend-only applied/draft filter state,
+date-section card context, semantic timing formatting, owned input refs and an
+ephemeral timed editor snapshot (civil clock, elapsed duration, linked offsets).
+The snapshot is never serialized into commands/backups/storage; transitions use
+the existing native civil converter and serialized timing-update guard. Preview
+identity excludes Title/Notes and uses a non-private placeholder. The compact
+alarm-check page owns captured Test recovery; lifetime preference ownership stays
+in the existing singleton. UTC carrier dates adapt minutes-of-day picker values
+without converting a shortcut into a dated alarm. No engine/bridge/database/
+backup version, eligibility or overdue authority changes in this refinement.

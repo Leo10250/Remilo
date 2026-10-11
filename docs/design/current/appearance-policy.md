@@ -7,9 +7,14 @@ Use [all eight R3 references](../remilo-r3-atmospheres/gallery.html) and
 ## Selection
 
 Settings → Appearance exposes one **Atmosphere** dropdown with five choices:
-**Automatic, Sunrise, Sky, Evening, Night**. Its single-choice list has visible
-selection and accessible labels. Brightness remains a separate **System / Light /
-Dark** preference. System means the device's Light/Dark appearance, not time-of-day.
+**By time of day, Sunrise, Sky, Evening, Night**. Its single-choice list has visible
+selection, full accessible labels and decorative 32 × 24 dp surface/accent swatches;
+automatic uses a neutral clock. Brightness remains a separate **Color mode:
+Match device / Light / Dark** preference. Match device means device Light/Dark.
+Stored `automatic` and `system` values and local bands remain unchanged under the
+[10 October refinement](ux-refinement.md). Automatic shows Now from the shared
+displayed-scene resolver and a collapsed localized Daily schedule, with Uses your
+device's local time support. No additional resolver or timer is introduced.
 Valid selections use the existing serialized auto-saving preference controller.
 
 Automatic follows the current device-local clock and timezone. A manual atmosphere

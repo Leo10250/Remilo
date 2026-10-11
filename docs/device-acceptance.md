@@ -162,7 +162,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
 - **U4 — completed, skipped and Trash:** complete a QA row using its leading completion target,
   then use Undo. Complete again: it leaves the active agenda. Find it through
-  the secondary Completed destination. Include skipped exposes a skipped repeat.
+  the secondary Completed destination. Filters → Show skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
   themed request after checking Keep reminder/Back first. Check that one snackbar
   with Undo appears, with no lasting green duplicate; ordinary Undo feedback expires
@@ -470,7 +470,7 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 - **D9 — series lifecycle:** create a daily series with five occurrences, first
   alert a few minutes ahead. Future occurrences appear in the agenda; the engine
   independently registers two ordinary targets. Skip the first occurrence: find it
-  in Completed → Include skipped and
+  in Completed → Filters → Show skipped and
   another future ordinary occurrence fills the window. Count is still five nominal slots.
 - **D10 — individual exception:** Postpone an occurrence, then edit its notes.
   The chosen next alert survives. Edit that occurrence's alert definition instead:
@@ -559,12 +559,12 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   Notification sent stay available in Details/Activity rather than duplicate row
   badges. Inspect independent Due, blocked targets and scheduling warnings.
 - **F4 — consistent terminal cards:** compare Agenda, named-list Agenda,
-  Completed with Include skipped, mixed Trash and family occurrences. All use
+  Completed with Show skipped, mixed Trash and family occurrences. All use
   shared keylines, wrapping and the borderless vertical-ellipsis target. Normal
   Completed/Skipped/Trash has no completion checkbox, Done or empty placeholder;
   selection mode uses selection-only checkboxes. One terminal state line retains
   useful original schedule/alert and list/repeat context. Row tap opens Details;
-  More retains View/Reopen/Move to Trash or View/Restore as appropriate. Compare
+  More offers Reopen/Move to Trash or Restore/Delete permanently as appropriate. Compare
   all four atmospheres in both brightnesses, portrait/landscape and 200% text.
 - **F5 — captured actions and retries:** controlled QA engineering setups cover
   later arrivals, stale generations, changed Snooze settings, lost replies,
@@ -575,6 +575,44 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   cases pending; do not inject failures into normal phone data.
 
 ## Results and remaining engineering checks
+
+### UX refinement additions — U27–U31 (pending)
+
+Use one identified signed bundled build; record APK/source identity, device/OS,
+conditions and observer. These are new observations, not inferred from earlier
+G1–G3 attestation or web/host results. The deferred consolidated run remains.
+
+- **U27 — keyboard handoff:** blank create focuses Title once; edit/duplicate
+  start closed. First-tap Save works above IME. Success/discard closes keyboard
+  before returning. Restored Agenda/Completed/Trash search keeps text/filters
+  without reopening keyboard. Explicit Search/text tap focuses normally. Long
+  Title grows to three lines then scrolls; 200% English/Chinese/IME composition,
+  Notes caret, validation, Done and hardware Back remain usable.
+- **U28 — timing:** review Title → one Alarm/Notification Date/Time → alert type;
+  No alert uses Scheduled for. Calendar event starts collapsed; changing a normal
+  alarm moves its default schedule, but separate/published/coincident independent
+  event times survive. Event edits and All day event retain the alert clock; No
+  alert All day keeps its date boundary. Test round trips, fields, changed date/zone,
+  relink and initial-all-day 9 AM/30-minute fallback without advancing tomorrow.
+  Cancel native pickers keeps old values. Check DST cases and stale-review choices.
+- **U29 — filters:** Apply/Cancel/close/backdrop/Back; unchanged Apply retains exact
+  scroll/pages. Changed criteria caps at covered-art boundary without remount.
+  Show skipped chip/removal/reset and list/search independence; fixed list scope
+  cannot broaden. Selection/pending/unknown actions disable competing filters.
+- **U30 — timing and accessibility:** original/current/intended/previous alert
+  meaning, conditional Details Event/Due, overdue postponed target, terminal dates,
+  Ringing precedence and complete TalkBack dates. Check row Open/Done/More focus
+  order, long press, menu return focus, divider-free short action menus, targets,
+  landscape and reduced motion. Event ranges remain in Schedule details until
+  Calendar publication context makes them relevant in the main group.
+- **U31 — settings:** permission return/recheck/stale reads and channel disclosure;
+  direct Android-settings handoff; Test In 15 seconds and same-test unknown retry
+  with Back guard; sound preview; failed preference recovery after closing a sheet;
+  Tomorrow clocks at midnight/23:59 and zone/DST changes without altering stored
+  minutes; automatic scene boundaries/Now and independent color-mode changes.
+
+No installation, distribution, Calendar repair or audible-delivery pass is implied
+by completing the implementation. Calendar load-view error remains separate.
 
 Send one report with `A1 pass; B4 fail — expected…, observed…; C2 unavailable…`.
 Include version/device, conditions, and measured start/end times where relevant.

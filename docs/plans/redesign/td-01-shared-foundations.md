@@ -14,6 +14,11 @@ Create one RN/native role and component system from all eight R3 references. Reu
 
 ## Implementation
 
+- Apply the [10 October UX refinement](../../design/current/ux-refinement.md): owned
+  input refs/compact title sizing, date-group context, semantic timing helpers,
+  transactional foreground filters and synchronized scroll-reset token. Preserve
+  canonical tokens/geometry and avoid global IME dismissal on viewport unmount.
+
 - Define shared canvas/elevated/action/content/semantic roles for all eight pairs; validate actual contrast rather than sample isolated PNG pixels.
 - Implement shared geometry, typography, wrapping, target sizes and scene cropping; use 56dp app prominent actions and the explicit larger R6 alarm minima.
 - Keep production/readiness/native command callbacks and web fixture-preview isolation intact. Missing artwork must leave usable controls.

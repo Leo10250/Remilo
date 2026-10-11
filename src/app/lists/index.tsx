@@ -62,7 +62,6 @@ function ListLibrary({ management = false }: { management?: boolean }) {
       onPress={() => setEditing('create')} style={{ position: 'absolute', right: 16, bottom: footerHeight + insets.bottom + 16, width: 56, height: 56, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', elevation: 3 }}>
       <Icon name="add" color={colors.accentInk} size={28} /></Pressable>}
     <Sheet title={selected?.name ?? 'List actions'} visible={!!selected} onClose={() => setSelected(null)}>
-      {!management && <SettingRow label="Open list" onPress={() => { if (selected) open(selected.id); setSelected(null); }} />}
       <SettingRow label="Rename list" icon="edit" disabled={guarded} onPress={() => { setEditing(selected); setSelected(null); }} />
       <SettingRow label="Remove list" icon="delete" disabled={guarded} onPress={() => { if (selected) remove(selected); }} />
     </Sheet>

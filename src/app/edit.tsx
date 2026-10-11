@@ -1,25 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Keyboard, TextInput, View } from 'react-native';
 import type { Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { changeDraftZone, chooseConflict, editorDraft, moveDraftDue, moveDraftEvent, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState } from '../domain/editor-draft';
+import { changeCalendarAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState, type TimedDraftSnapshot } from '../domain/editor-draft';
 import { commandFeedback } from '../domain/actions';
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
-import { modeLabel, scheduleDateTime } from '../domain/presentation';
+import { eventRange, modeLabel, scheduleDateTime } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
 import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, RowSupport, Sheet, Status, Toggle } from '../ui/components';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
-import { EventTimingFields } from '../ui/event-timing-fields';
+import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../ui/native';
 import { RepeatForm } from '../ui/recurrence';
 import { useAppearanceHold } from '../ui/theme';
 import { TimeZoneField } from '../ui/time-zone';
 import { ListPicker, returnToOrigin } from '../ui/navigation';
-import { Schedule } from '../ui/schedule';
 import { SoundPicker } from '../ui/sound-picker';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { space } from '../ui/tokens';
@@ -70,18 +69,28 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const [message, setMessage] = useState(''), [fieldError, setFieldError] = useState<string | undefined>(), [zoneWarning, setZoneWarning] = useState('');
   const pendingSave = useRef<Command | null>(null);
   const timingWork = useRef(false);
+  const timedSnapshot = useRef<TimedDraftSnapshot | null>(null);
+  const titleInput = useRef<TextInput>(null), notesInput = useRef<TextInput>(null);
+  const [initialTitleFocus] = useState(() => !id && !seed.series && !duplicate && !seed.state.draft.title.trim());
+  const finishEditing = useCallback(() => {
+    titleInput.current?.blur(); notesInput.current?.blur(); Keyboard.dismiss();
+  }, []);
   const [retrySave, setRetrySave] = useState(false), [saved, setSaved] = useState<CommandResult | null>(null);
   const [preparing, setPreparing] = useState(false), [reviewLoading, setReviewLoading] = useState(false);
   const [review, setReview] = useState<Review | null>(null), [reviewOpen, setReviewOpen] = useState(false), [scopeChanged, setScopeChanged] = useState(false);
   const editingId = saveAsNew ? undefined : id, editingSeries = saveAsNew ? undefined : loadedSeries;
   const creation = !editingId && !editingSeries;
+  const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(),
+    enabled: nativeAvailable && !!editingId && !editingSeries });
+  // An unavailable publication read must not let a coincident published event move.
+  const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || calendar.data.some(item => item.occurrenceId === editingId));
   const dirty = saveAsNew || JSON.stringify(state) !== JSON.stringify(baseline);
   const busy = preparing || command.isPending || reviewLoading;
   usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
     if (retrySave || pendingSave.current || command.isPending) { confirm('Save not yet confirmed', 'Retry or wait for this save before leaving.'); return; }
     if (preparing) { confirm('Updating timing', 'Wait for the timing update before leaving.'); return; }
     confirm('Discard changes?', 'Your reminder has not been saved.', [{ text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => navigation.dispatch(data.action) }]);
+      { text: 'Discard', style: 'destructive', onPress: () => { finishEditing(); navigation.dispatch(data.action); } }]);
   });
   useEffect(() => {
     if (!saved) return;
@@ -96,13 +105,14 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       notify({ message: feedback.message, tone: feedback.tone === 'accent' ? 'muted' : feedback.tone, persistent: blocked || pending,
         action: { label: 'View', occurrenceId: saved.occurrence?.id, segmentId: saved.segmentId } });
     }
+    finishEditing();
     if (creation) returnToOrigin(origin);
     else if (router.canGoBack()) router.back();
     else if (originParams.originReminderId || originParams.originFamily || originParams.originCollection) router.replace(secondaryOriginRoute(originParams));
     else if (saved.segmentId) router.replace({ pathname: '/series/[id]', params: { id: saved.segmentId } });
     else if (saved.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: saved.occurrence.id } });
     else router.replace('/');
-  }, [saved, creation, draft.mode, origin, originParams]);
+  }, [saved, creation, draft.mode, origin, originParams, finishEditing]);
   const patch = (value: Partial<EditorDraft>) => { if (!pendingSave.current && !timingWork.current) setState((current) => ({ ...current, draft: { ...current.draft, ...value } })); };
   const updateTiming = async (resolve: () => Promise<{ draft: EditorDraft; warnings: string[] }>, field: string, nextRepeat?: { value?: RecurrenceDraft }) => {
     if (pendingSave.current || timingWork.current || busy || review) throw new Error('Wait for the current update before changing timing.');
@@ -115,8 +125,17 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     } finally { timingWork.current = false; setPreparing(false); }
   };
   const moveEvent = (value: number) => { void updateTiming(() => moveDraftEvent(draft, value, (input) => engine().convertTime(input)), 'eventStartMs').catch(() => {}); };
+  const moveAlert = (value: number) => { void updateTiming(() => moveDraftAlert(draft, value, (input) => engine().convertTime(input), preserveEvent), 'alarmAtMs').catch(() => {}); };
+  const moveCalendarEvent = (value: number) => { void updateTiming(() => moveDraftCalendarEvent(draft, value, (input) => engine().convertTime(input)), 'eventStartMs').catch(() => {}); };
   const changeDue = (value: number) => { void updateTiming(() => moveDraftDue(draft, value, (input) => engine().convertTime(input)), 'dueAtMs').catch(() => {}); };
   const changeZone = (nextZone: string, nextRepeat: RecurrenceDraft | undefined) => updateTiming(() => changeDraftZone(draft, nextZone, (input) => engine().convertTime(input)), 'zoneId', { value: nextRepeat });
+  const changeAllDay = (allDay: boolean) => {
+    void updateTiming(async () => {
+      const changed = await changeCalendarAllDay(draft, allDay, timedSnapshot.current, (input) => engine().convertTime(input));
+      timedSnapshot.current = changed.snapshot;
+      return changed;
+    }, 'allDay').catch(() => {});
+  };
   const applyRepeat = async (next?: RecurrenceDraft, nextZone?: string) => {
     if (pendingSave.current || timingWork.current || review) return;
     if (nextZone && nextZone !== zone) await changeZone(nextZone, next);
@@ -126,8 +145,9 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     ...(recurrence ? { recurrence: cleanRepeat(recurrence) } : {}),
     ...(draft.allDay && draft.dueLinked ? { dueAtMs: undefined } : {}), ...(draft.allDay && draft.alarmLinked ? { alarmAtMs: undefined } : {}) })
     .filter(([key, value]) => key !== 'listName' && value !== undefined));
-  const preview = useQuery({ queryKey: ['schedule-preview', payload], queryFn: () => engine().previewSchedule(payload as EditorDraft & { recurrence?: RecurrenceDraft }),
-    enabled: nativeAvailable && !!draft.title.trim() && !busy });
+  const previewPayload = editorPreviewPayload(state);
+  const preview = useQuery({ queryKey: ['schedule-preview', previewPayload], queryFn: () => engine().previewSchedule(previewPayload),
+    enabled: nativeAvailable && !busy });
   const loadReview = async () => {
     setReviewLoading(true); setMessage('');
     try {
@@ -147,6 +167,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const applyReview = (reload = false) => {
     if (!review || !reload && !reviewChoicesComplete(review.conflicts, review.choices)) return;
     const next = reload ? review.latest.state : review.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key]!), review.merged);
+    timedSnapshot.current = reviewedTimedSnapshot(timedSnapshot.current, state, next, reload);
     setBaseline(review.latest.state); setState(next); setLoadedRevision(review.latest.revision); setLoadedSeries(review.latest.series);
     setReview(null); setReviewOpen(false); setMessage(''); setFieldError(undefined); command.reset();
   };
@@ -156,6 +177,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       const family = (await engine().queryRepeatFamilies()).find((item) => item.seriesId === loadedSeries?.seriesId);
       if (!family) throw new Error('The current repeat is unavailable. Your draft is kept.');
       const latest = await readSeed(undefined, family.current.id);
+      timedSnapshot.current = null;
       setBaseline(latest.state); setState(latest.state); setLoadedSeries(latest.series); setLoadedRevision(undefined);
       setFollowingScope(undefined); setScopeChanged(false); setReview(null); setReviewOpen(false); setFieldError(undefined); command.reset();
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not reload the current repeat. Try again.'); }
@@ -193,7 +215,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     const value = conflict[side];
     if (conflict.key === 'schedule') {
       const timing = value as EditorDraft & { recurrence?: RecurrenceDraft };
-      return 'When ' + formatTime(timing.eventStartMs, timing.zoneId) + (timing.allDay ? ' · All day' : ' · Ends ' + formatTime(timing.eventEndMs, timing.zoneId)) +
+      return 'Event ' + formatTime(timing.eventStartMs, timing.zoneId) + (timing.allDay ? ' · All day' : ' · Ends ' + formatTime(timing.eventEndMs, timing.zoneId)) +
         ' · Due ' + formatTime(timing.dueAtMs, timing.zoneId) + (timing.dueLinked ? ' (linked)' : ' (independent)') + ' · ' +
         (timing.mode === 'None' ? 'No alert' : timing.mode + ' ' + formatTime(timing.alarmAtMs, timing.zoneId) + (timing.alarmLinked ? ' (linked)' : ' (independent)')) +
         ' · ' + repeatLabel(timing.recurrence) + ' · ' + timing.zoneId;
@@ -204,9 +226,16 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   };
   const disabled = !nativeAvailable || busy || !!review || scopeChanged || !draft.title.trim();
   const frozen = busy || retrySave || !!review;
+  const resolvedDraft = { ...draft, ...preview.data };
+  const noAlert = draft.mode === 'None';
+  const timingLabel = noAlert ? 'Scheduled for' : modeLabel(draft.mode) + ' time';
+  const calendarSummary = hasSeparateEvent(resolvedDraft) || preserveEvent ? eventRange(resolvedDraft) : undefined;
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
   return <Page compact title={creation ? 'New reminder' : editingSeries ? followingScope ? 'Edit following' : 'Edit repeat' : 'Edit reminder'}
-    onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(originParams))}
+    onBack={() => {
+      if (!dirty && !retrySave && !busy) finishEditing();
+      if (router.canGoBack()) router.back(); else router.replace(secondaryOriginRoute(originParams));
+    }}
     footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
       {!!zoneWarning && <ActionFeedback message={zoneWarning} tone="warning" />}
       {!!message && <ActionFeedback message={message} tone="danger" />}
@@ -228,23 +257,21 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     {saveAsNew && <Copy muted>This draft will create a separate reminder when you Save. Review its timing first.</Copy>}
     <View pointerEvents={frozen ? 'none' : 'auto'} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}
       accessibilityElementsHidden={frozen} style={{ gap: 16 }}>
-      <Field label="Title" placeholder="What do you want to remember?" autoFocus={creation && !duplicate} value={draft.title}
+      <Field label="Title" placeholder="What do you want to remember?" inputRef={titleInput} autoFocus={initialTitleFocus} value={draft.title}
+        multiline compactMultiline submitBehavior="blurAndSubmit" enterKeyHint="done" onSubmitEditing={() => titleInput.current?.blur()}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <ConnectedGroup>
         <View key="timing">
-          <EventTimingFields value={preview.data?.eventStartMs ?? draft.eventStartMs} zoneId={zone} allDay={!!draft.allDay}
-            onError={dateError} onChange={moveEvent} disabled={frozen} />
-          {(!draft.dueLinked || invalid(['eventStartMs'])) && <RowSupport>
-            {!draft.dueLinked && <Copy muted size={14}>Due {formatTime(preview.data?.dueAtMs ?? draft.dueAtMs, zone)} · Independent of When</Copy>}
-            {invalid(['eventStartMs']) && <Status label={message} tone="danger" />}
-          </RowSupport>}
-        </View>
-        <View key="alert">
-          <AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} />
-          {draft.mode !== 'None' && !draft.alarmLinked && <DateField label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs}
-            zoneId={zone} onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} disabled={frozen} />}
+          <RowSupport><Copy muted size={14}>{timingLabel}</Copy></RowSupport>
+          <DateTimeFields labelPrefix={noAlert ? 'Scheduled' : modeLabel(draft.mode)} value={noAlert ? resolvedDraft.eventStartMs : resolvedDraft.alarmAtMs} zoneId={zone} allDay={noAlert && !!draft.allDay}
+            onError={dateError} onChange={noAlert ? moveEvent : moveAlert} disabled={frozen || !preview.data} />
+          {(preview.error || preview.isPending) && <RowSupport>{preview.error ? <><ActionFeedback message="Could not check this time. Try again." tone="warning" />
+              <Button label="Retry" variant="secondary" disabled={frozen} onPress={() => void preview.refetch()} /></> :
+              <ActionFeedback loading message="Checking time…" />}</RowSupport>}
+          {noAlert && invalid(['eventStartMs']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
           {invalid(['alarmAtMs']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>
+        <View key="alert"><AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} /></View>
         {!editingId && <View key="repeat">
           <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
@@ -254,26 +281,38 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
         </View>
       </ConnectedGroup>
       <Disclosure title="Notes (optional)" initial={!!draft.notes} forceOpen={!!invalid(['notes'])}>
-        <Field label="Notes" value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
+        <Field label="Notes" inputRef={notesInput} value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
       </Disclosure>
-      <Disclosure title="Schedule options" icon="settings" forceOpen={!!invalid(['dueAtMs', 'zoneId', 'eventEndMs'])}>
+      <Disclosure title="Calendar event (optional)" icon="event" summary={calendarSummary} forceOpen={!noAlert && !!invalid(['eventStartMs', 'allDay', 'eventEndMs']) || !!invalid(['eventEndMs'])}>
+        <Copy muted size={13}>Publishing to Google Calendar is a separate action.</Copy>
+        <ConnectedGroup footer={invalid(['eventStartMs', 'allDay', 'eventEndMs']) ? <Status label={message} tone="danger" /> : undefined}>
+          {!noAlert && <View key="start"><RowSupport><Copy muted size={14}>Event time</Copy></RowSupport>
+            <DateTimeFields labelPrefix="Event" value={resolvedDraft.eventStartMs} zoneId={zone} allDay={!!draft.allDay}
+              onError={dateError} onChange={moveCalendarEvent} disabled={frozen} /></View>}
+          {!noAlert && <Toggle key="all-day" label="All day event" value={draft.allDay ?? false} disabled={frozen} onChange={changeAllDay} />}
+          {!draft.allDay && <DateField key="ends" label="Ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => {
+            if (eventEndMs !== draft.eventEndMs) patch({ eventEndMs, ...(!noAlert ? { alarmLinked: false } : {}) });
+          }} disabled={frozen} />}
+        </ConnectedGroup>
+      </Disclosure>
+      <Disclosure title="Schedule options" icon="settings" forceOpen={!!invalid(['dueAtMs', 'zoneId']) || noAlert && !!invalid(['allDay'])}>
         <View style={{ gap: space.md }}>
-          <ConnectedGroup footer={invalid(['eventEndMs']) ? <Status label={message} tone="danger" /> : undefined}>
-            <Toggle key="all-day" label="All day" value={draft.allDay ?? false} disabled={frozen} onChange={(allDay) => patch({ allDay, dueLinked: true, alarmLinked: true })} />
-            {!draft.allDay && <DateField key="ends" label="Ends" value={draft.eventEndMs} zoneId={zone} onError={dateError} onChange={(eventEndMs) => patch({ eventEndMs })} disabled={frozen} />}
-          </ConnectedGroup>
+          {noAlert && <ConnectedGroup footer={invalid(['allDay']) ? <Status label={message} tone="danger" /> : undefined}>
+            <Toggle key="all-day" label="All day" value={draft.allDay ?? false} disabled={frozen} onChange={changeAllDay} />
+          </ConnectedGroup>}
           <ConnectedGroup footer={invalid(['dueAtMs']) ? <Status label={message} tone="danger" /> : undefined}>
-            <Toggle key="due-link" label="Due follows When" value={draft.dueLinked ?? true} disabled={frozen} onChange={(dueLinked) => {
+            <Toggle key="due-link" label="Due follows event time" value={draft.dueLinked ?? true} disabled={frozen} onChange={(dueLinked) => {
+              if (dueLinked && !pendingSave.current && !timingWork.current) timedSnapshot.current = relinkTimedSnapshot(timedSnapshot.current, 'due');
               const dueAtMs = dueLinked ? draft.allDay ? preview.data?.eventEndMs ?? draft.eventEndMs : draft.eventStartMs : preview.data?.dueAtMs ?? draft.dueAtMs;
               patch({ dueLinked, dueAtMs, ...(dueLinked && draft.alarmLinked && !draft.allDay ? { alarmAtMs: dueAtMs } : {}) });
             }} />
             {!draft.dueLinked && <DateField key="due" label="Due" value={draft.dueAtMs} zoneId={zone} onError={dateError} onChange={changeDue} disabled={frozen} />}
           </ConnectedGroup>
           {draft.mode !== 'None' && <ConnectedGroup>
-            <Toggle key="alert-link" label={draft.allDay ? modeLabel(draft.mode) + ' at 9 AM' : modeLabel(draft.mode) + ' follows due time'} value={draft.alarmLinked ?? true} disabled={frozen} onChange={(alarmLinked) => patch({ alarmLinked,
-              alarmAtMs: alarmLinked && !draft.allDay ? preview.data?.dueAtMs ?? draft.dueAtMs : preview.data?.alarmAtMs ?? draft.alarmAtMs })} />
-            {draft.alarmLinked && <DateField key="alert-time" label={modeLabel(draft.mode) + ' time'} value={preview.data?.alarmAtMs ?? draft.alarmAtMs} zoneId={zone}
-              onError={dateError} onChange={(alarmAtMs) => patch({ alarmAtMs, alarmLinked: false })} disabled={frozen} />}
+            <Toggle key="alert-link" label={draft.allDay ? modeLabel(draft.mode) + ' at 9 AM' : modeLabel(draft.mode) + ' follows due time'} value={draft.alarmLinked ?? true} disabled={frozen} onChange={(alarmLinked) => {
+              if (alarmLinked && !pendingSave.current && !timingWork.current) timedSnapshot.current = relinkTimedSnapshot(timedSnapshot.current, 'alarm');
+              patch({ alarmLinked, alarmAtMs: alarmLinked && !draft.allDay ? preview.data?.dueAtMs ?? draft.dueAtMs : preview.data?.alarmAtMs ?? draft.alarmAtMs });
+            }} />
           </ConnectedGroup>}
           {!recurrence && <ConnectedGroup footer={<Copy muted size={13}>Changing the zone keeps your clock times. This reminder stays at its saved instant when you travel.</Copy>}>
             <TimeZoneField key="zone" value={zone} atMs={draft.eventStartMs} disabled={frozen} onChange={(next) => { void changeZone(next, undefined).catch(() => {}); }} error={invalid(['zoneId'])} />
@@ -287,9 +326,8 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
         </ConnectedGroup>
       </Disclosure>}
       {preview.data && <>
-        <Schedule item={{ ...draft, ...preview.data, repeatRule: recurrence }} draft />
         {recurrence && <Group title="Next dates">{preview.data.upcoming.map((slot) => <View key={slot.nominalSlot} style={{ padding: 12, gap: 3 }}>
-          <Copy size={14}>{formatTime(slot.eventStartMs, slot.zoneId)}</Copy><Copy muted size={13}>{slot.adjusted ? 'Clock-change adjustment · ' : ''}{draft.mode === 'None' ? 'No alert' : modeLabel(draft.mode) + ' ' + formatTime(slot.alarmAtMs, slot.zoneId)}</Copy>
+          <Copy size={14}>{formatTime(noAlert ? slot.eventStartMs : slot.alarmAtMs, slot.zoneId)}</Copy><Copy muted size={13}>{slot.adjusted ? 'Clock-change adjustment · ' : ''}{noAlert ? 'No alert' : modeLabel(draft.mode)}</Copy>
         </View>)}{preview.data.upcoming.length < 3 && <Copy muted size={13}>Fewer than three occurrences remain.</Copy>}</Group>}
         {preview.data.warnings.map((warning) => <ActionFeedback tone="warning" message={warning} key={warning} />)}
       </>}
@@ -308,7 +346,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       {!review?.conflicts.length && <Copy>No fields conflict. Your edits and the latest changes can be kept together.</Copy>}
       {reviewed && <Group title="Draft after review"><View style={{ padding: 14, gap: 8 }}>
         <Copy>{reviewed.draft.title}</Copy>
-        <Copy size={14}>When: {formatTime(reviewed.draft.eventStartMs, reviewed.draft.zoneId)}{reviewed.draft.allDay ? ' · All day' : ''}</Copy>
+        <Copy size={14}>Event: {formatTime(reviewed.draft.eventStartMs, reviewed.draft.zoneId)}{reviewed.draft.allDay ? ' · All day' : ''}</Copy>
         <Copy size={14}>Due: {formatTime(reviewed.draft.dueAtMs, reviewed.draft.zoneId)}</Copy>
         <Copy size={14}>{reviewed.draft.mode === 'None' ? 'No alert' : reviewed.draft.mode + ': ' + formatTime(reviewed.draft.alarmAtMs, reviewed.draft.zoneId)}</Copy>
         <Copy size={14}>{repeatLabel(reviewed.recurrence)}</Copy>

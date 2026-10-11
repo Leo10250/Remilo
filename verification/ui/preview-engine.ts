@@ -9,6 +9,7 @@ const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.l
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
   tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light', atmosphere: 'automatic' };
 const reviewScene = review.get('reviewScene'), reviewBrightness = review.get('reviewBrightness');
+let capabilityReads = 0;
 if (reviewScene === 'automatic' || reviewScene === 'sunrise' || reviewScene === 'sky' || reviewScene === 'evening' || reviewScene === 'night') settings.atmosphere = reviewScene;
 if (reviewBrightness === 'system' || reviewBrightness === 'light' || reviewBrightness === 'dark') settings.theme = reviewBrightness;
 const today = new Date(); today.setHours(9, 0, 0, 0);
@@ -391,11 +392,16 @@ const preview = {
   },
   getSettings: async () => clone(settings),
   getCapabilities: async () => {
-    if (review.get('reviewPermissions') === 'error') throw new Error('Synthetic preview: permissions could not be checked.');
+    const permissionFixture = review.get('reviewPermissions');
+    capabilityReads++;
+    if (permissionFixture === 'error' || permissionFixture === 'refresh-error' && capabilityReads > 1) throw new Error('Synthetic preview: permissions could not be checked.');
     const activeSessionActions = sessionActions();
-    const allowed = review.get('reviewPermissions') !== 'blocked';
-    return { exactAlarms: allowed, notifications: allowed, channelEnabled: allowed, notificationChannelEnabled: allowed,
-      fullScreen: allowed, unlocked: true, observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
+    const allowed = permissionFixture !== 'blocked';
+    return { exactAlarms: allowed && permissionFixture !== 'exact' && permissionFixture !== 'mixed',
+      notifications: allowed && permissionFixture !== 'app', channelEnabled: allowed && permissionFixture !== 'alarm-channel',
+      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed',
+      fullScreen: allowed && permissionFixture !== 'full-screen' && permissionFixture !== 'mixed', unlocked: true,
+      observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
   },
   getTimeZones: async (atMs: number) => zones(atMs), convertTime: async (input: TimeConversionInput) => convert(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),

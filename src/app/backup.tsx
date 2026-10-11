@@ -8,7 +8,7 @@ import { View } from 'react-native';
 import type { ImportPreview } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { RestoreOperation } from '../domain/restore';
 import { retainedOriginParams, type OriginParams } from '../domain/navigation';
-import { ActionFeedback, BottomActionBar, Button, Choice, Copy, Group, Page, SettingRow } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, Disclosure, Group, Page, SettingRow } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
@@ -75,10 +75,7 @@ export default function Backup() {
       <Button label="Cancel preview" variant="secondary" disabled={busy || uncertain}
         onPress={() => { setPreview(null); setJson(''); setCopies([]); setFeedback(undefined); }} />
     </View></BottomActionBar> : undefined}>
-    <Copy muted>Restore one backup file. New reminders and lists are added automatically. Existing reminders stay unchanged.</Copy>
-    <Copy muted>You can add separate copies of existing reminders.</Copy>
-    <Copy muted size={14}>Elapsed alarms stay silent.</Copy>
-    <Copy muted size={14}>Backups exclude one-off reminders in Trash. Repeating deletion exclusions are retained.</Copy>
+    <Copy muted>Restore reminders and lists from a backup. Existing reminders stay unchanged.</Copy>
     {!nativeAvailable && <Copy muted>Use the Android app to restore a backup.</Copy>}
     <Group><SettingRow label={phase === 'reading' ? 'Reading backup…' : preview ? 'Choose another backup' : 'Choose backup file'}
       icon="download" disabled={!nativeAvailable || busy || uncertain} onPress={() => void choose()} /></Group>
@@ -86,8 +83,8 @@ export default function Backup() {
       tone={phase === 'reading' ? 'muted' : feedback?.tone} />}
     {preview && <>
       <Copy size={20}>{preview.count} reminders or series</Copy>
-      <Copy muted>When you restore, all new reminders and lists are added automatically. Existing reminders stay unchanged; you can add separate copies.</Copy>
-      <Copy muted size={14}>A repeating series includes its exceptions and activity.</Copy>
+      <Copy muted>New reminders and lists are included. You can add separate copies of reminders already on this device.</Copy>
+      <Copy muted size={14}>Elapsed alarms stay silent.</Copy>
       {!!preview.lists?.length && <Group title={`Lists · ${preview.lists.length}`}>
         <Copy muted size={14}>Empty lists are included. Matching list identities keep local names; other name conflicts use the restored names below.</Copy>
         {preview.lists.map((list) => <SettingRow key={list.id} label={list.name}
@@ -108,5 +105,10 @@ export default function Backup() {
       {previewLimit < preview.items.length && <Button label="Show 25 more preview entries" variant="secondary"
         onPress={() => setPreviewLimit((current) => current + 25)} />}
     </>}
+    <Disclosure title="What's included?">
+      <Copy muted size={14}>A repeating reminder includes its changed occurrences and activity. Empty lists are included.</Copy>
+      <Copy muted size={14}>One-off reminders in Trash are excluded. Repeating deletion exclusions are retained.</Copy>
+      <Copy muted size={14}>Restore adds the whole backup. Existing reminders are kept unless you choose a separate copy.</Copy>
+    </Disclosure>
   </Page>;
 }

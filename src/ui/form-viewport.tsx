@@ -1,6 +1,6 @@
 import { requireNativeView } from 'expo';
 import { useFocusEffect } from 'expo-router';
-import { createContext, useCallback, useContext, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { Animated, Platform, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readRootSnapshot, writeRootSnapshot } from '../domain/navigation';
@@ -22,8 +22,8 @@ export function WindowGeometryRegion({children,onGeometry,fill=true}:PropsWithCh
     }}/>}{children}
   </View>;
 }
-export function FormViewport({ children, footer, scrollKey, scrollReady = true, fill = true, contentStyle }: PropsWithChildren<{
-  footer?: ReactNode; scrollKey?: string; scrollReady?: boolean; fill?: boolean; contentStyle?: ViewProps['style'];
+export function FormViewport({ children, footer, scrollKey, scrollReady = true, scrollResetToken, fill = true, contentStyle }: PropsWithChildren<{
+  footer?: ReactNode; scrollKey?: string; scrollReady?: boolean; scrollResetToken?: number; fill?: boolean; contentStyle?: ViewProps['style'];
 }>) {
   const scroll = useRef<ScrollView>(null), offset = useRef(0), content = useRef(0), viewport = useRef({top:0,height:0});
   const [initialOffset] = useState(()=>scrollKey?readRootSnapshot(scrollKey+':scroll',0):0);
@@ -59,6 +59,16 @@ export function FormViewport({ children, footer, scrollKey, scrollReady = true, 
     restoreChrome?.(targetOffset.current); measure(restore);
     return ()=>{active.current=false;};
   },[scrollKey,measure,restore,restoreChrome]));
+  const previousReset = useRef({ key: scrollKey, token: scrollResetToken });
+  useEffect(() => {
+    const previous = previousReset.current;
+    previousReset.current = { key: scrollKey, token: scrollResetToken };
+    if (previous.key !== scrollKey || previous.token === scrollResetToken || scrollResetToken == null || !active.current) return;
+    const y = Math.max(0, Math.min(offset.current, chrome?.decoration ?? 0));
+    targetOffset.current = y; offset.current = y; restored.current = false;
+    if (scrollKey) writeRootSnapshot(scrollKey + ':scroll', y);
+    restoreChrome?.(y); scroll.current?.scrollTo({ y, animated: false }); measure(restore);
+  }, [scrollResetToken, scrollKey, chrome?.decoration, restoreChrome, measure, restore]);
   const rememberScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     offset.current=event.nativeEvent.contentOffset.y;
     if(active.current&&scrollKey&&scrollReady&&restored.current)writeRootSnapshot(scrollKey+':scroll',offset.current);

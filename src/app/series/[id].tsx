@@ -43,7 +43,7 @@ export default function SeriesDetails() {
       <Copy heading size={typography.title}>{series.template.title}</Copy>
       <Status label={state === 'Ended' ? 'Repeat has ended' : state ?? 'Active'} tone={state === 'Active' ? 'success' : 'muted'} />
       <Copy muted size={typography.supporting}>{repeatLabel(series.rule)}</Copy>
-      {state !== 'Active' && <Copy muted size={typography.supporting}>{state === 'Paused' ? 'Ordinary repeat alerts are paused.' : 'There are no ordinary future occurrences.'} Individually changed occurrences can still have their own alerts.</Copy>}
+      {state !== 'Active' && <Copy muted size={typography.supporting}>{state === 'Paused' ? 'Repeat alerts are paused.' : 'No new dates remain.'} Alerts changed for individual dates may still ring.</Copy>}
       <QueryState loading={families.isLoading} error={families.error} onRetry={() => void families.refetch()} />
       <Group title="Schedule">
         <SettingRow icon="event" label="Event" description={eventRange(series.template)} />
@@ -68,8 +68,8 @@ export default function SeriesDetails() {
           {(slot.zoneId ?? series.rule.zoneId) && (slot.zoneId ?? series.rule.zoneId) !== deviceZone() && <ZoneSummary zoneId={(slot.zoneId ?? series.rule.zoneId)!} atMs={slot.eventStartMs} />}
         </SettingRow>;
       })}
-        {!upcoming.length && !families.isLoading && !families.error && <SettingRow label="No ordinary future dates" />}</Group>
-      {!!upcoming.length && upcoming.length < 3 && <Copy muted size={14}>Fewer than three ordinary dates remain.</Copy>}
+        {!upcoming.length && !families.isLoading && !families.error && <SettingRow label="No new dates remain" />}</Group>
+      {!!upcoming.length && upcoming.length < 3 && <Copy muted size={14}>Fewer than three dates remain.</Copy>}
       <Disclosure title="Unfinished occurrences" initial>
         <QueryState loading={occurrences.isLoading} error={occurrences.error} empty={!items.length}
           emptyMessage="No unfinished occurrences." onRetry={() => void occurrences.refetch()} />

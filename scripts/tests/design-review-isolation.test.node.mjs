@@ -304,7 +304,7 @@ test('ordinary reminder rows expose leading completion independently from openin
   const binding = component.parameters[0].name;
   const glyph = binding.elements.find((element) => element.name.getText(rowSource) === 'glyph');
   assert.equal(glyph?.initializer?.text, 'event');
-  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf("accessibilityLabel={'Open ' + summary}");
+  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf("accessibilityLabel={'Open reminder: ' + summary}");
   assert.ok(completionPosition >= 0 && openingPosition > completionPosition, 'The independent completion control precedes opening the reminder.');
   assert.match(body, /accessibilityRole="checkbox" aria-checked=\{item.completed\} accessibilityLabel=\{actionLabel \+ ': ' \+ summary\}/);
   assert.match(body, /accessibilityState=\{\{ checked: item.completed, disabled: busy \}\} disabled=\{busy\} onPress=\{act\}/);
