@@ -599,6 +599,9 @@ G1–G3 attestation or web/host results. The deferred consolidated run remains.
   scroll/pages. Changed criteria caps at covered-art boundary without remount.
   Show skipped chip/removal/reset and list/search independence; fixed list scope
   cannot broaden. Selection/pending/unknown actions disable competing filters.
+  Collection-header Filters matches Search/More without a word label; active count
+  is legible at 200% and TalkBack reads one Filters button with the count/state.
+  Zero optional filters hides the badge; Agenda retains its labeled content action.
 - **U30 — timing and accessibility:** original/current/intended/previous alert
   meaning, conditional Details Event/Due, overdue postponed target, terminal dates,
   Ringing precedence and complete TalkBack dates. Check row Open/Done/More focus

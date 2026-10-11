@@ -1,13 +1,25 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { ListRecord } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { resetBrowseFilters, type BrowseFilterChip, type BrowseFilterField, type BrowseFilters, type BrowseKind } from '../domain/browse-filters';
-import { Button, Choice, ConnectedGroup, Copy, Icon, QueryState, Sheet } from './components';
+import { Button, Choice, ConnectedGroup, Copy, Icon, IconButton, QueryState, Sheet } from './components';
 import { useFontScaleOverride, useFoundationStyle, useTheme } from './theme';
 
-export function BrowseFilterButton({ count, onPress, disabled = false, expanded = false }: { count: number; onPress: () => void; disabled?: boolean; expanded?: boolean }) {
-  const colors = useTheme(), scale = useFontScaleOverride(), [focused, setFocused] = useState(false);
-  return <Pressable accessibilityRole="button" accessibilityLabel={'Filters' + (count ? ', ' + count + ' active' : '')} accessibilityState={{ disabled, expanded }} disabled={disabled}
+export function BrowseFilterButton({ count, onPress, disabled = false, expanded = false, presentation = 'label' }: { count: number; onPress: () => void; disabled?: boolean; expanded?: boolean; presentation?: 'label' | 'icon' }) {
+  const colors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride(), [focused, setFocused] = useState(false);
+  const { fontScale } = useWindowDimensions();
+  const label = 'Filters' + (count ? ', ' + count + ' active' : '');
+  // Reserve extra badge space as text grows rather than covering the toolbar glyph.
+  const iconWidth = 48 + (count > 0 ? 24 * Math.max(0, scale * fontScale - 1) : 0);
+  if (presentation === 'icon') return <View style={{ minWidth: iconWidth, minHeight: 48 }}>
+    <IconButton icon="filter_list" label={label} disabled={disabled} expanded={expanded} onPress={onPress} />
+    {count > 0 && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      style={{ position: 'absolute', top: 0, end: 0, minWidth: 18, minHeight: 18, paddingHorizontal: 4, borderRadius: 16, borderWidth: 1,
+        borderColor: colors.border, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1 }}>
+      <Text style={{ color: foundation?.colors.ink ?? colors.ink, fontSize: 11 * scale, lineHeight: 16 * scale, fontWeight: '600' }}>{count}</Text>
+    </View>}
+  </View>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} aria-expanded={expanded} accessibilityState={{ disabled, expanded }} disabled={disabled}
     onPress={onPress} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center',
       borderRadius: 24, borderWidth: 2, borderColor: focused ? colors.accent : count ? colors.border : 'transparent', backgroundColor: pressed || count ? colors.soft : 'transparent', opacity: disabled ? 0.5 : 1 })}>

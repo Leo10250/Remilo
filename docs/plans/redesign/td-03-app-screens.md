@@ -22,7 +22,8 @@ Apply the approved page contracts and correction notes to Agenda, Lists, Repeats
   collapsed optional Calendar event details and divider-free short menus; schedule-only
   preview, ephemeral All day restoration; alert-first conditional Details and
   truthful compact card timing/full spoken dates; Apply/Cancel filters and skipped
-  chip/reset; reorganized Settings, compact alarm-check route, clock shortcuts and
+  chip/reset; icon-only collection-header Filters with an active-count badge and
+  labeled Agenda content-row Filters; reorganized Settings, compact alarm-check route, clock shortcuts and
   concise backup/repeat/Trash copy. Preserve captured retries, fixed scope,
   publication context, native authority and existing artwork.
 

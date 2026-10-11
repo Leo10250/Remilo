@@ -138,7 +138,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
         if (isGuarded() || selectingRef.current) return; Keyboard.dismiss(); searchFocusRequested.current = !searching;
         if (searching) searchInput.current?.blur(); setSearching(!searching);
       }} />}
-      {(view === 'completed' || !scoped) && !selecting && <BrowseFilterButton count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />}
+      {(view === 'completed' || !scoped) && !selecting && <BrowseFilterButton presentation="icon" count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />}
       <IconButton icon="more_vert" label={selecting ? 'Selection actions' : title + ' actions'} disabled={guarded} onPress={() => { if (isGuarded()) return; Keyboard.dismiss(); setMenuOpen(true); }} />
     </>} />}
     footer={<><CommandRecovery action={action} />

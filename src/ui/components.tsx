@@ -57,11 +57,11 @@ function AndroidSymbol({ name, color, size }: { name: IconName; color: string; s
   return loaded.source ? <Image accessible={false} source={loaded.source} style={{ width: size, height: size }} /> :
     <SymbolView name={{ android: name }} tintColor={color} size={size} style={{ width: size, height: size }} />;
 }
-export function IconButton({ icon, label, onPress, disabled = false, variant = 'standard' }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; variant?: 'standard' | 'outlined' }) {
+export function IconButton({ icon, label, onPress, disabled = false, variant = 'standard', expanded }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; variant?: 'standard' | 'outlined'; expanded?: boolean }) {
   const colors = useTheme();
   const foundation = useFoundationStyle(), state = usePresentationState(), scenic = useContext(ScenicChrome), [focused, setFocused] = useState(false);
   const c = foundation?.colors;
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} accessibilityState={{ disabled }}
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} aria-expanded={expanded} disabled={disabled} accessibilityState={{ disabled, ...(expanded !== undefined ? { expanded } : {}) }}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     onPress={onPress} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
       borderRadius: 24, backgroundColor: scenic ? pressed ? colors.ink + '20' : 'transparent' : c ? disabled ? c.disabledSurface : pressed || state === 'pressed' ? c.secondaryPressed : 'transparent' : pressed ? colors.soft : 'transparent',

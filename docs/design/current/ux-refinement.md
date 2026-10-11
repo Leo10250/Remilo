@@ -97,7 +97,13 @@ Remove Open list where tapping the list row already opens it.
 One applied object per destination is retained. Filters opens a temporary copy;
 Apply filters commits atomically, Cancel/close/backdrop/Back discards it. Unchanged
 Apply preserves query, pagination and exact scroll. All/Today/Upcoming and search
-remain independent. Filters · N counts editable optional filters only. Removable
+remain independent. Completed/Trash header Filters uses the same neutral 24 dp
+glyph and 48 dp target as Search/More, without a visible word label. A small neutral
+count badge appears only with active editable optional filters; it is decorative,
+and the single button's spoken name includes the count and expanded/disabled state.
+Large text reserves extra horizontal badge space instead of obscuring the glyph.
+Agenda retains the labeled Filters · N action beside All/Today/Upcoming. Counts
+exclude search, time view and fixed membership. Removable
 List/Overdue/Alert problems/Skipped included chips show applied state; fixed list
 scope is visible and non-removable. Status precedes List in the sheet.
 

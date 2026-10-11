@@ -117,6 +117,9 @@ these checks do not establish physical acceptance.
 ## A. Completed
 
 The toolbar reads **Completed**, with Back, Search and Filters access. Filters
+is icon-only beside Search/More, with a small neutral active-count badge and a
+single descriptive accessible button; Trash uses the same treatment. Agenda's
+content-row Filters remains labeled. Applied chips remain visible below. Filters
 contains **Show skipped**, before List. Default excludes skipped; enabling it adds
 the removable **Skipped included** chip. Apply commits the temporary filter draft;
 Cancel, close, backdrop and Back discard it. Global filtering offers All lists, No list and durable

@@ -136,6 +136,9 @@ Import, recurrence publishing and ongoing synchronization remain later phases.
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
   completion/skip/deletion comes first; Completed has Show skipped inside Filters.
+  Collection headers use icon-only Filters beside Search/More, showing an active
+  optional-filter count and a complete spoken label. Agenda's content-row Filters
+  retains its label, and applied removable chips remain visible on both surfaces.
   Back from a non-Agenda root returns to Agenda; secondary pages return to their origin.
   Search/sheets, draft guards and unconfirmed operations take precedence over root Back.
   Each destination retains its own filters and scroll position, including Completed
