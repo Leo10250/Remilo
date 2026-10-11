@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, Keyboard, Pressable, Text, View } from 'react-native';
+import { BackHandler, Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { destinationRoute, originParams, rootRoute, type secondaryOriginRoute, type DestinationOrigin, type RootDestination } from '../domain/navigation';
 import { CapturedOperation } from '../domain/operation';
 import { ActionFeedback, Button, Choice, Copy, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
@@ -12,6 +12,8 @@ import type { Command, CommandResult, ListRecord, Occurrence } from '../../modul
 import { commandFeedback, recoveryPresentation, restoreDeleted, type Tone } from '../domain/actions';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from './theme';
 import { typography } from './tokens';
+import { rootLabelsFit } from '../domain/navigation-fit';
+import { useTimeDisplay } from './time-display';
 import { useAppearanceConfirmation } from './confirmation';
 
 export function switchRoot(destination: RootDestination) { Keyboard.dismiss(); if (router.canDismiss()) router.dismissAll(); router.replace(rootRoute(destination)); }
@@ -35,19 +37,53 @@ export function useDestinationNavigation(destination: DestinationOrigin, beforeB
   return back;
 }
 
-export function RootNavigation({ destination, disabled = false, atRoot = true }: { destination: RootDestination['kind']; disabled?: boolean; atRoot?: boolean }) {
-  const colors = useTheme(), scale = useFontScaleOverride();
-  return <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
-    {([{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' },
-      { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const).map((entry) => {
-      const selected = destination === entry.kind;
-      return <Pressable key={entry.kind} accessibilityRole="tab" accessibilityLabel={entry.label} aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled}
-        onPress={() => { if (!selected || !atRoot) switchRoot({ kind: entry.kind }); }} style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
-        <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}>
-          <Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
-        <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, alignSelf: 'stretch', maxWidth: '100%', flexShrink: 1, textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
-      </Pressable>;
-    })}
+const rootEntries = [{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' },
+  { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const;
+export function RootNavigation({ destination, disabled = false, atRoot = true, isGuarded }: { destination: RootDestination['kind']; disabled?: boolean; atRoot?: boolean; isGuarded?: () => boolean }) {
+  const colors = useTheme(), scale = useFontScaleOverride(), { width, fontScale } = useWindowDimensions(), locale = useTimeDisplay().localeTag;
+  const [available, setAvailable] = useState(width), [open, setOpen] = useState(false);
+  const key = [available, fontScale, scale, locale].join('|');
+  const [measurement, setMeasurement] = useState<{ key: string; widths: Record<string, number> }>({ key: '', widths: {} });
+  const priorFits = useRef(!(Math.max(scale, fontScale) >= 1.6 && width < 600));
+  const widths = rootEntries.map(entry => measurement.widths[entry.kind]);
+  const ready = measurement.key === key && widths.every(value => value != null);
+  const fits = ready ? rootLabelsFit(available, widths) : priorFits.current;
+  useEffect(() => { if (ready) priorFits.current = fits; }, [ready, fits]);
+  const measure = (kind: string, measured: number) => setMeasurement(previous => {
+    const values = previous.key === key ? previous.widths : {};
+    return values[kind] === measured ? previous : { key, widths: { ...values, [kind]: measured } };
+  });
+  const compact = open || !fits, trigger = useRef<View>(null), guard = useRef(isGuarded);
+  guard.current = isGuarded;
+  const blocked = () => disabled || !!guard.current?.();
+  const current = rootEntries.find(entry => entry.kind === destination)!;
+  const choose = (entry: typeof rootEntries[number]) => {
+    if (blocked()) return;
+    setOpen(false);
+    if (entry.kind !== destination || !atRoot) switchRoot({ kind: entry.kind });
+  };
+  return <View onLayout={event => setAvailable(event.nativeEvent.layout.width)} style={{ backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
+    <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', width: available, opacity: 0 }}>
+      {rootEntries.map(entry => <Text key={key + entry.kind} onLayout={event => measure(entry.kind, Math.ceil(event.nativeEvent.layout.width))} onTextLayout={event => {
+        const measured = Math.ceil(event.nativeEvent.lines.reduce((sum, line) => sum + line.width, 0));
+        measure(entry.kind, measured);
+      }} style={{ alignSelf: 'flex-start', fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, fontWeight: '600' }}>{entry.label}</Text>)}
+    </View>
+    {compact ? <Pressable ref={trigger} accessibilityRole="button" accessibilityLabel={'Current destination: ' + current.label + '. Open navigation.'}
+      aria-expanded={open} accessibilityState={{ expanded: open, disabled }} disabled={disabled} onPress={() => { if (!blocked()) { Keyboard.dismiss(); setOpen(true); } }}
+      style={({ pressed }) => ({ minHeight: 64, padding: 12, flexDirection: 'row', gap: 12, alignItems: 'center', borderRadius: 16, backgroundColor: pressed ? colors.soft : 'transparent' })}>
+      <Icon name={current.icon} color={colors.accent} /><Text style={{ flex: 1, color: colors.accent, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, fontWeight: '600' }}>{current.label}</Text><Icon name="expand_more" color={colors.muted} />
+    </Pressable> : <View accessibilityRole="tablist" style={{ flexDirection: 'row' }}>
+      {rootEntries.map(entry => { const selected = destination === entry.kind; return <Pressable key={entry.kind} ref={selected ? trigger : undefined} accessibilityRole="tab" accessibilityLabel={entry.label}
+        aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled} onPress={() => choose(entry)}
+        style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
+        <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}><Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
+        <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, alignSelf: 'stretch', textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
+      </Pressable>; })}
+    </View>}
+    <Sheet title="Go to" visible={open} onClose={() => setOpen(false)} returnFocusRef={trigger}>
+      {rootEntries.map(entry => <Choice key={entry.kind} icon={entry.icon} label={entry.label} selected={entry.kind === destination} disabled={disabled} onPress={() => choose(entry)} />)}
+    </Sheet>
   </View>;
 }
 

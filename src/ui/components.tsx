@@ -384,13 +384,14 @@ export function Sheet({ title, visible, onClose, onBack, children, footer, retur
     </View>
   </Modal></ScrollChromeProvider></ConnectedRowContext.Provider></ScenicChrome.Provider></PresentationProvider>;
 }
-export function Choice({ label, description, selected, onPress, disabled = false }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean }) {
+export function Choice({ label, description, selected, onPress, disabled = false, icon }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean; icon?: IconName }) {
   const colors = useTheme();
   return <Pressable disabled={disabled} accessibilityRole="radio" aria-checked={selected} accessibilityState={{ checked: selected, disabled }} onPress={onPress}
     style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16,paddingVertical:12 }}>
     <View style={{width:24,height:24,borderRadius:12,borderWidth:2,borderColor:selected?colors.accent:colors.muted,alignItems:'center',justifyContent:'center'}} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {selected && <View style={{width:12,height:12,borderRadius:6,backgroundColor:colors.accent}}/>}
     </View>
+    {icon && <Icon name={icon} color={colors.muted} />}
     <View style={{ flex: 1,gap:4 }}><Copy>{label}</Copy>{description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
   </Pressable>;
 }

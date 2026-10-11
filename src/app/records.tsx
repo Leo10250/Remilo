@@ -153,7 +153,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
           {view === 'deleted' && <Button label="Delete permanently" accessibilityLabel="Delete selected permanently" variant="danger" disabled={guarded || !selectedItems.length || selectedItems.length !== selectionIds.length} onPress={() => requestPurge(selectedItems, true)} />}
         </>}
       </View>}
-      <RootNotice disabled={guarded} />{!selecting && <RootNavigation destination={scoped ? 'lists' : view === 'deleted' ? 'trash' : 'completed'} atRoot={!scoped} disabled={guarded} />}</>}>
+      <RootNotice disabled={guarded} />{!selecting && <RootNavigation destination={scoped ? 'lists' : view === 'deleted' ? 'trash' : 'completed'} atRoot={!scoped} disabled={guarded} isGuarded={isGuarded} />}</>}>
     {searching && <View style={{ gap: 8 }}><Field inputRef={searchInput} label={'Search ' + title.toLowerCase()} placeholder="Title or notes" value={search} onChangeText={(value) => { if (!isGuarded() && !selectingRef.current) setSearch(value); }} editable={!guarded && !selecting} />
       {!!search && <Button label="Clear search" variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}</View>}
     {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}

@@ -45,7 +45,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   return <View style={{ flex: 1 }}>
     <Page compact={management} title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} scrollKey={management ? 'manage-lists' : 'lists'} scrollReady={!query.isLoading}
       header={<AtmosphericHeader title={management ? 'Manage lists' : 'Lists'} back={management} onBack={back} actions={!management ? <RootMore origin={{ kind: 'lists' }} disabled={guarded} /> : undefined} />}
-      footer={<View onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}><CommandRecovery action={action} /><RootNotice />{!management && <RootNavigation destination="lists" disabled={guarded} />}</View>}>
+      footer={<View onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}><CommandRecovery action={action} /><RootNotice />{!management && <RootNavigation destination="lists" disabled={guarded} isGuarded={() => action.isGuarded() || formGuarded} />}</View>}>
       <View style={{ gap: space.md }}>
       {management && <><Copy muted>No list is the default. Lists organize reminders without changing their alerts.</Copy>
         <Button label="Create new list" icon="add" disabled={!nativeAvailable || guarded} onPress={() => setEditing('create')} /></>}
