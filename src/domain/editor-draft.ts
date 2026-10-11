@@ -73,6 +73,31 @@ function followingDay(local: string) {
   return date.toISOString().slice(0, 10);
 }
 type ConvertTime = (input: TimeConversionInput) => Promise<TimeConversion>;
+/** Non-default or deliberately independent schedules must survive primary alert edits. */
+export function hasSeparateEvent(draft: EditorDraft) {
+  return !!draft.allDay || draft.dueLinked === false || draft.alarmLinked === false ||
+    draft.dueAtMs !== draft.eventStartMs || draft.alarmAtMs !== draft.eventStartMs ||
+    draft.eventEndMs - draft.eventStartMs !== 1_800_000;
+}
+/** The picker supplies a native-resolved instant. Ordinary schedules follow it. */
+export async function moveDraftAlert(draft: EditorDraft, alarmAtMs: number, convert: ConvertTime, preserveEvent = false) {
+  if (alarmAtMs === draft.alarmAtMs) return { draft, warnings: [] as string[] };
+  if (preserveEvent || hasSeparateEvent(draft))
+    return { draft: { ...draft, alarmAtMs, alarmLinked: false }, warnings: [] as string[] };
+  return moveDraftEvent(draft, alarmAtMs, convert);
+}
+/** Calendar edits preserve the selected alert, including coincident and all-day times. */
+function independentCalendarDraft(draft: EditorDraft) {
+  return draft.mode === 'None' ? draft : { ...draft, alarmLinked: false };
+}
+export async function moveDraftCalendarEvent(draft: EditorDraft, eventStartMs: number, convert: ConvertTime) {
+  if (eventStartMs === draft.eventStartMs) return { draft, warnings: [] as string[] };
+  return moveDraftEvent(independentCalendarDraft(draft), eventStartMs, convert);
+}
+export async function changeCalendarAllDay(draft: EditorDraft, allDay: boolean, snapshot: TimedDraftSnapshot | null, convert: ConvertTime) {
+  if (allDay === !!draft.allDay) return { draft, snapshot, warnings: [] as string[] };
+  return changeDraftAllDay(independentCalendarDraft(draft), allDay, snapshot, convert);
+}
 function shiftedCivil(base: string, from: string, to: string) {
   return new Date(Date.parse(base + 'Z') + Date.parse(to + 'Z') - Date.parse(from + 'Z')).toISOString().slice(0, 19);
 }

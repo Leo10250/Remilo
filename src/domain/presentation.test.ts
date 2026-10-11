@@ -253,16 +253,16 @@ describe('card and Details timing authority', () => {
       expect(cardTimingPresentation(midnight, start, context).timing).toContain('Tomorrow');
     } finally { zone.mockRestore(); }
   });
-  it('puts consequential Event and Due in Details without hiding independent coincident Due', () => {
+    it('discloses Calendar Event when relevant and retains independent coincident Due', () => {
     expect(detailSchedulePresentation(normal, start).showEvent).toBe(false);
     expect(detailSchedulePresentation(normal, start).showDue).toBe(false);
     expect(detailSchedulePresentation({ ...normal, dueLinked: false }, start).showDue).toBe(true);
     expect(detailSchedulePresentation({ ...normal, dueAtMs: start + 1 }, start).showDue).toBe(true);
     expect(detailSchedulePresentation(normal, start, true).showEvent).toBe(true);
-    expect(detailSchedulePresentation({ ...normal, allDay: true }, start).showEvent).toBe(true);
-    expect(detailSchedulePresentation({ ...normal, nextAlertMs: start + 600_000 }, start).showEvent).toBe(true);
-    expect(detailSchedulePresentation({ ...normal, deliveryState: 'Blocked', nextAlertMs: start + 600_000 }, start).showEvent).toBe(true);
-    // Without an eligible current target, visibility compares the authored alert, not a stale next target.
+      expect(detailSchedulePresentation({ ...normal, allDay: true }, start).showEvent).toBe(false);
+      expect(detailSchedulePresentation({ ...normal, nextAlertMs: start + 600_000 }, start).showEvent).toBe(false);
+      expect(detailSchedulePresentation({ ...normal, deliveryState: 'Blocked', nextAlertMs: start + 600_000 }, start).showEvent).toBe(false);
+      // Operational target/state changes never promote an optional Event to the main group.
     for (const state of [{ deliveryState: 'Failed' }, { completed: true }, { skipped: true }, { deleted: true }])
       expect(detailSchedulePresentation({ ...normal, nextAlertMs: start + 600_000, ...state }, start).showEvent).toBe(false);
     const noAlert = detailSchedulePresentation({ ...normal, mode: 'None' }, start);

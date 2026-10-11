@@ -123,7 +123,7 @@ export function detailSchedulePresentation(item: ScheduleItem, now = Date.now(),
     intended ? 'Intended ' + mode.toLowerCase() : delivery.confirmed ? delivery.changed ? 'Next ' + mode.toLowerCase() : mode : mode + ' time';
   const support = item.mode === 'None' ? 'No alert' : intended ? item.deliveryState === 'Blocked' ? 'Blocked' : item.deliveryState === 'Pending' ? 'Scheduling' : 'Updating' : delivery.changed ? item.alertAdjustment ?? 'Alert changed' : undefined;
   return { label, value: item.mode === 'None' ? eventRange(item, now) : scheduleDateTime(instant, primaryZone, now), supporting: support,
-    showEvent: item.mode !== 'None' && (!!item.allDay || item.eventStartMs !== (delivery.target ?? item.alarmAtMs) || hasPublication),
+    showEvent: item.mode !== 'None' && hasPublication,
     showDue: !ordinaryDue(item), changed: delivery.changed, target: instant, targetZone: primaryZone };
 }
 /** Relative age uses the native original scheduling reference, never the next delivery. */

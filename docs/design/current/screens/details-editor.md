@@ -2,7 +2,9 @@
 
 The [10 October UX refinement](../ux-refinement.md) supersedes earlier hierarchy,
 preview, all-day transitions and keyboard handoff below. Details leads with alert
-time; Event/Due are conditional. The editor has one main alert-time picker and
+time; Event appears for Calendar publication context, with other event ranges in
+Schedule details; Due remains conditional. The editor has one main Date/Time
+control above alert type and collapsed optional Calendar event details, plus
 schedule-only preview; its ephemeral timed snapshot preserves All day round trips.
 
 The [alert experience correction](../alert-experience.md) supersedes action/timing

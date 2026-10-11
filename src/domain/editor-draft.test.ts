@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { TimeConversionInput } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { changeDraftAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type EditorState, type TimedDraftSnapshot } from './editor-draft';
+import { changeCalendarAllDay, changeDraftAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type EditorState, type TimedDraftSnapshot } from './editor-draft';
 const state = (): EditorState => ({ draft: editorDraft({ title: 'Original', zoneId: 'UTC', eventStartMs: Date.UTC(2027, 0, 5, 9) }) });
 const utc = async (input: TimeConversionInput) => ({ zoneId: input.zoneId, instantMs: input.instantMs ?? Date.parse(input.local + 'Z'),
   local: input.local ?? new Date(input.instantMs!).toISOString().slice(0, 19), offsetSeconds: 0, adjustment: 'none' as const });
@@ -272,5 +272,82 @@ describe('schedule-only editor preview', () => {
     expect(editorPreviewPayload(original).recurrence).toEqual(original.recurrence);
     const independent = editorPreviewPayload({ ...original, draft: { ...original.draft, dueLinked: false, alarmLinked: false } });
     expect(independent).toMatchObject({ dueAtMs: original.draft.dueAtMs, alarmAtMs: original.draft.alarmAtMs });
+  });
+});
+
+describe('primary alert time and optional Calendar timing', () => {
+  const target = Date.UTC(2027, 0, 8, 10, 50);
+  it('moves the ordinary linked schedule from the primary Alarm or Notification choice', async () => {
+    for (const mode of ['Alarm', 'Notification'] as const) {
+      const draft = { ...state().draft, mode }, before = structuredClone(draft);
+      const moved = await moveDraftAlert(draft, target, utc);
+      expect(moved.draft).toMatchObject({ eventStartMs: target, eventEndMs: target + 1_800_000,
+        dueAtMs: target, alarmAtMs: target, dueLinked: true, alarmLinked: true, mode });
+      expect(hasSeparateEvent(moved.draft)).toBe(false);
+      expect(editorPreviewPayload({ draft: moved.draft })).toMatchObject({ eventStartMs: target, alarmAtMs: target });
+      expect(draft).toEqual(before);
+    }
+  });
+  it('keeps custom event ranges, coincident independent events and independent Due exact', async () => {
+    const ordinary = state().draft;
+    for (const changes of [
+      { eventStartMs: ordinary.eventStartMs + 600_000, eventEndMs: ordinary.eventEndMs + 600_000 },
+      { alarmLinked: false },
+      { eventEndMs: ordinary.eventEndMs + 1_800_000 },
+      { dueLinked: false, dueAtMs: ordinary.dueAtMs + 900_000 },
+    ]) {
+      const draft = { ...ordinary, ...changes }, convert = vi.fn(utc);
+      const changed = (await moveDraftAlert(draft, target, convert)).draft;
+      expect(changed).toMatchObject({ eventStartMs: draft.eventStartMs, eventEndMs: draft.eventEndMs,
+        dueAtMs: draft.dueAtMs, dueLinked: draft.dueLinked, alarmAtMs: target, alarmLinked: false });
+      expect(convert).not.toHaveBeenCalled();
+    }
+  });
+  it('protects a published or uncertain Calendar event even when its clock coincides with the alarm', async () => {
+    const draft = state().draft, changed = (await moveDraftAlert(draft, target, utc, true)).draft;
+    expect(changed.eventStartMs).toBe(draft.eventStartMs);
+    expect(changed.eventEndMs).toBe(draft.eventEndMs);
+    expect(changed.dueAtMs).toBe(draft.dueAtMs);
+    expect(changed).toMatchObject({ alarmAtMs: target, alarmLinked: false });
+  });
+  it('preserves a resolved later-fold instant for independent alarm editing', async () => {
+    const draft = { ...state().draft, zoneId: 'America/Los_Angeles', alarmLinked: false };
+    const laterFold = Date.parse('2027-11-07T01:30:00-08:00'), convert = vi.fn(utc);
+    expect((await moveDraftAlert(draft, laterFold, convert)).draft.alarmAtMs).toBe(laterFold);
+    expect(convert).not.toHaveBeenCalled();
+  });
+  it('makes an explicit Calendar date independent without moving its selected alert', async () => {
+    const draft = state().draft;
+    const calendar = (await moveDraftCalendarEvent(draft, target + 600_000, utc)).draft;
+    expect(calendar).toMatchObject({ eventStartMs: target + 600_000, eventEndMs: target + 2_400_000,
+      dueAtMs: target + 600_000, alarmAtMs: draft.alarmAtMs, alarmLinked: false });
+    const alarm = (await moveDraftAlert(calendar, target, utc)).draft;
+    expect(alarm).toMatchObject({ eventStartMs: calendar.eventStartMs, eventEndMs: calendar.eventEndMs,
+      dueAtMs: calendar.dueAtMs, alarmAtMs: target });
+  });
+  it('keeps an alarm exact through Calendar all-day transitions and changed dates', async () => {
+    const original = state().draft;
+    const on = await changeCalendarAllDay(original, true, null, utc);
+    const dated = await moveDraftCalendarEvent(on.draft, Date.UTC(2027, 0, 9), utc);
+    const off = await changeCalendarAllDay(dated.draft, false, on.snapshot, utc);
+    for (const draft of [on.draft, dated.draft, off.draft])
+      expect(draft).toMatchObject({ alarmAtMs: original.alarmAtMs, alarmLinked: false });
+    expect(off.draft).toMatchObject({ eventStartMs: Date.UTC(2027, 0, 9, 9), eventEndMs: Date.UTC(2027, 0, 9, 9, 30) });
+  });
+  it('keeps No alert scheduling and all-day boundaries on the event date', async () => {
+    const original = { ...state().draft, mode: 'None' as const };
+    const on = await changeCalendarAllDay(original, true, null, utc);
+    expect(on.draft).toMatchObject({ dueAtMs: Date.UTC(2027, 0, 6), alarmLinked: true, dueLinked: true });
+    const moved = await moveDraftEvent(on.draft, Date.UTC(2027, 0, 9), utc);
+    expect(moved.draft).toMatchObject({ eventStartMs: Date.UTC(2027, 0, 9), eventEndMs: Date.UTC(2027, 0, 10), dueAtMs: Date.UTC(2027, 0, 10), mode: 'None' });
+  });
+  it('preserves no-op identity and retains the previous draft after failed timing conversion', async () => {
+    const draft = state().draft, before = structuredClone(draft), fail = vi.fn(async () => { throw new Error('Conversion failed'); });
+    expect((await moveDraftAlert(draft, draft.alarmAtMs, fail)).draft).toBe(draft);
+    expect((await moveDraftCalendarEvent(draft, draft.eventStartMs, fail)).draft).toBe(draft);
+    await expect(moveDraftAlert(draft, target, fail)).rejects.toThrow('Conversion failed');
+    await expect(moveDraftCalendarEvent(draft, target, fail)).rejects.toThrow('Conversion failed');
+    await expect(changeCalendarAllDay(draft, true, null, fail)).rejects.toThrow('Conversion failed');
+    expect(draft).toEqual(before);
   });
 });

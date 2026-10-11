@@ -14,7 +14,7 @@ import { engine, nativeAvailable } from '../ui/native';
 import { ReminderRow } from '../ui/reminder-row';
 import { PurgeConfirmation } from '../ui/purge-confirmation';
 import { useRootState } from '../ui/root-state';
-import { useAppearanceHold, useTheme } from '../ui/theme';
+import { useAppearanceHold } from '../ui/theme';
 
 export default function Records() {
   const params = useLocalSearchParams<OriginParams & { view?: string }>(), view = params.view === 'deleted' ? 'deleted' : 'completed', origin = creationOrigin(params);
@@ -23,7 +23,7 @@ export default function Records() {
 function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origin: DestinationOrigin }) {
   const title = view === 'deleted' ? 'Trash' : 'Completed', scoped = origin.kind === 'list', fixedListId = scoped ? origin.listId : undefined;
   const destination: DestinationOrigin = scoped ? origin : { kind: view === 'deleted' ? 'trash' : 'completed' };
-  const key = collectionKey(view, fixedListId), colors = useTheme();
+  const key = collectionKey(view, fixedListId);
   const [search, setSearch] = useRootState(key + ':search', ''), [searching, setSearching] = useRootState(key + ':searching', false);
   const [appliedFilters, setAppliedFilters] = useRootState(key + ':filters', resetBrowseFilters(view, fixedListId));
   const [selecting, setSelecting] = useRootState(key + ':selecting', false), [selectionIds, setSelectionIds] = useRootState<string[]>(key + ':selection', []);
@@ -192,9 +192,8 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     </Sheet>
     <Sheet title={selected?.title ?? 'Reminder actions'} visible={!!selected} onClose={() => { if (!isGuarded()) setSelected(null); }}>
       {view === 'completed' && <SettingRow label="Reopen" icon="undo" disabled={guarded} onPress={() => { if (selected) update(selected, 'Reopen'); }} />}
-      {view === 'completed' && <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />}
       <SettingRow label={view === 'completed' ? 'Move to Trash' : 'Restore'} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
-      {view === 'deleted' && <><View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} /><SettingRow label="Delete permanently" icon="delete_forever" description="Cannot be undone." disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} /></>}
+      {view === 'deleted' && <SettingRow label="Delete permanently" icon="delete_forever" description="Cannot be undone." disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
     </Sheet>
     <PurgeConfirmation items={purgeItems} onCancel={() => setPurgeItems([])} onConfirm={confirmPurge} />
   </Page>;

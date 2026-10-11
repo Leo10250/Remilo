@@ -21,11 +21,25 @@ saving or inserting a newline. Notes keeps separate sizing. Restored search keep
 query and presentation without autofocus; only an explicit Search action requests
 focus, consumed once and never stored in destination state.
 
-Main order: Title; Event time Date/Time; Alarm/Notification/No alert; exactly one
-preview-backed Alarm time or Notification time; Repeat; List; Notes; Schedule
-options; Alarm options when applicable. Alert editing makes timing independent.
-Support reads At event start, Follows due time, 9 AM on this date or Custom time.
-Schedule options retains linkage, not a second alert picker. Remove the repeated
+The owner's subsequent 10 October discussion approves this order: Title; one
+preview-backed Alarm time Date/Time; Alarm/Notification/No alert; Repeat; List;
+collapsed Notes, Calendar event and other options. Time becomes Notification time
+or Scheduled for as appropriate, keeping its position and saved values. Keep alert
+type visible directly below time and retain Title focus. Date/Time stay side by
+side when space permits and stack for large text. An alert always has a clock time.
+
+Ordinary timed reminders move their default linked event/due schedule when the
+primary alert changes. Non-default ranges, offsets, independent fields, all-day
+events and stored Calendar publication context preserve event/due instants exactly;
+the changed alert becomes independent. A pending/failed stored-publication read
+conservatively preserves a coincident event rather than blocking editing.
+
+Calendar event (optional) starts collapsed, with a concise range summary when
+configured. It contains event start, end and All day event; opening it publishes
+nothing. Explicit event edits preserve the selected alert and record independence
+through existing link flags, including coincident times and All day round trips.
+No alert keeps its scheduled date/time in the main control and All day in Schedule
+options. Schedule options retains linkage, not a second alert picker. Remove the repeated
 full Schedule preview. Keep validation, conversion warnings and repeat next dates.
 Preview identity includes schedule/repeat only and uses a non-private placeholder
 title. Save validates the real Title. Updating/failure never presents an older
@@ -52,9 +66,9 @@ alarm according to native state; Notification follows the same rules. No alert
 leads with Scheduled for and its event date/range. Remove ordinary Alert mode and
 Next alert rows and routine Due at event start support.
 
-Alert-enabled Event is in the main group for all-day, differing event/eligible
-alert instants or existing publication context. Without a current target, compare
-the original authored alert. Independent coincident Due stays visible. Schedule
+Alert-enabled Event is in the main group only for existing Calendar publication
+context. Otherwise its full range remains in Schedule details, including all-day
+and differing alert times. Independent coincident Due stays visible. Schedule
 details retains hidden full ranges, linkage, zones, original adjusted alert and
 occurrence exceptions. Existing publication queries and behavior stay intact.
 
@@ -72,6 +86,10 @@ Spoken summaries include complete absolute dates and state. Preserve accessible
 row Open, independent More and long press; remove View reminder. Agenda menu:
 Edit/Postpone/Done/Move to Trash; Completed: Reopen/Move to Trash; Trash:
 Restore/Delete permanently, with existing eligibility/confirmation/Undo/retries.
+Short overflow sheets use one consistent list without dividers or invented groups;
+Trash remains last. Permanent deletion retains its explicit irreversible wording
+and destructive confirmation. Larger menus may group genuinely related functions
+with subtle spacing rather than the ordinary control-border color.
 Remove Open list where tapping the list row already opens it.
 
 ## Filters and collections

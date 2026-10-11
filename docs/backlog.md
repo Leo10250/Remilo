@@ -10,6 +10,7 @@ Known failures still require fixes, and new Calendar acceptance remains pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| UX-19 | Primary alarm Date/Time before mode, optional Calendar event and quiet menus | owner-approved 10 October follow-up; UX-14/15/16 | in progress | Ordinary schedule movement, separate/published event preservation, Calendar All day and No alert domain checks; shared/design/Android and fixture review pending; U28/U30 remain physical |
 | UX-13 | Approved refinement contracts and shared frontend helpers | owner-approved 10 October implementation plan | implemented/unverified | [Current correction](design/current/ux-refinement.md) and [184 active source/82 tooling checks](evidence/2026-10-10-ux-refinement.md); input refs, filter/timing/context/permission helpers; physical acceptance remains separate |
 | UX-14 | Editor keyboard handoff, alert control, preview and All day preservation | UX-13 | implemented/unverified | [Domain round-trip/DST/preview/review cases pass](evidence/2026-10-10-ux-refinement.md); U27/U28 Android and unfinished large-text render observations pending |
 | UX-15 | Alert-first Details/cards, full spoken dates and menu cleanup | UX-13 | implemented/unverified | [Timing/date/visibility cases pass](evidence/2026-10-10-ux-refinement.md); U30 TalkBack/device and remaining render observations pending |

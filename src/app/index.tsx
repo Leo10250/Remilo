@@ -230,7 +230,6 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       <SettingRow label="Edit reminder" icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
       {!!selected && canAdjustAlert(selected) && <SettingRow label="Postpone" icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
       <SettingRow label="Done" icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
-      <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
       <SettingRow label="Move to Trash" icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {

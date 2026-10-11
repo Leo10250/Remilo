@@ -65,6 +65,13 @@ Import, recurrence publishing and ongoing synchronization remain later phases.
   independent times are preserved. All-day due boundary is next local midnight;
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
+- The editor leads with Title and alert Date/Time before the visible mode choices.
+  Ordinary linked schedules follow this primary alert edit; explicitly separate
+  or non-default event/due timing and existing Calendar publication context are
+  preserved. Calendar event details are optional and collapsed, and their edits
+  preserve the selected alert. No alert uses Scheduled for. Opening event details
+  does not publish anything. Main Details shows Event for publication context;
+  other full event ranges remain accessible in Schedule details.
 - Alarm Done completes the selected current occurrence and silences its delivery.
   Done all (N) completes the displayed captured session members; later arrivals
   are excluded and remain independently actionable. Snooze all uses one common

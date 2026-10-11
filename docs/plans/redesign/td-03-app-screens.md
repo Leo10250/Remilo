@@ -18,7 +18,8 @@ Apply the approved page contracts and correction notes to Agenda, Lists, Repeats
 ## Implementation
 
 - Implement the [10 October UX refinement](../../design/current/ux-refinement.md):
-  focused blank creation/keyboard handoff, one alert-time control, schedule-only
+  focused blank creation/keyboard handoff, one Date/Time control before alert type,
+  collapsed optional Calendar event details and divider-free short menus; schedule-only
   preview, ephemeral All day restoration; alert-first conditional Details and
   truthful compact card timing/full spoken dates; Apply/Cancel filters and skipped
   chip/reset; reorganized Settings, compact alarm-check route, clock shortcuts and

@@ -588,8 +588,11 @@ G1–G3 attestation or web/host results. The deferred consolidated run remains.
   without reopening keyboard. Explicit Search/text tap focuses normally. Long
   Title grows to three lines then scrolls; 200% English/Chinese/IME composition,
   Notes caret, validation, Done and hardware Back remain usable.
-- **U28 — timing:** review exactly one Alarm/Notification control and Event time
-  label. Test All day round trips, linked/independent fields, changed date/zone,
+- **U28 — timing:** review Title → one Alarm/Notification Date/Time → alert type;
+  No alert uses Scheduled for. Calendar event starts collapsed; changing a normal
+  alarm moves its default schedule, but separate/published/coincident independent
+  event times survive. Event edits and All day event retain the alert clock; No
+  alert All day keeps its date boundary. Test round trips, fields, changed date/zone,
   relink and initial-all-day 9 AM/30-minute fallback without advancing tomorrow.
   Cancel native pickers keeps old values. Check DST cases and stale-review choices.
 - **U29 — filters:** Apply/Cancel/close/backdrop/Back; unchanged Apply retains exact
@@ -599,7 +602,9 @@ G1–G3 attestation or web/host results. The deferred consolidated run remains.
 - **U30 — timing and accessibility:** original/current/intended/previous alert
   meaning, conditional Details Event/Due, overdue postponed target, terminal dates,
   Ringing precedence and complete TalkBack dates. Check row Open/Done/More focus
-  order, long press, menu return focus, targets, landscape and reduced motion.
+  order, long press, menu return focus, divider-free short action menus, targets,
+  landscape and reduced motion. Event ranges remain in Schedule details until
+  Calendar publication context makes them relevant in the main group.
 - **U31 — settings:** permission return/recheck/stale reads and channel disclosure;
   direct Android-settings handoff; Test In 15 seconds and same-test unknown retry
   with Back guard; sound preview; failed preference recovery after closing a sheet;
