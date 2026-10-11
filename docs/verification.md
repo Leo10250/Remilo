@@ -19,6 +19,9 @@ results, signed artifact identity, observed fixtures and the incomplete render m
 [The alarm-first follow-up](evidence/2026-10-10-alarm-first-followup.md) records
 primary alert editing, preserved optional event timing and quiet short menus;
 U28/U30 incorporate its additional signed-device observations.
+[The collection Filters follow-up](evidence/2026-10-10-filter-header-followup.md)
+records icon-only headers, active counts, scaled badge spacing and the updated
+artifact; U29 retains the remaining Android/TalkBack observations.
 
 The owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
 records acceptance on its identified APK, without asserting unspecified individual
