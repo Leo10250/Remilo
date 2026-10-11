@@ -13,7 +13,9 @@ landscape, long English/Chinese, 200% text and reduced motion. Run shared/design
 verification then Android checks sequentially; record actual counts and APK
 identity. New physical observations are [U27–U31](device-acceptance.md), pending
 on an identified signed bundled build. No installation/distribution is part of
-this implementation. Existing Calendar load-view failure remains deferred.
+this implementation. The [11 October Calendar repair](evidence/2026-10-11-calendar-repair.md)
+addresses unfinished setup and timed request encoding; its updated signed-device
+publication observation remains separate from the earlier offline UI checks.
 [The 10 October evidence](evidence/2026-10-10-ux-refinement.md) records actual host
 results, signed artifact identity, observed fixtures and the incomplete render matrix.
 [The alarm-first follow-up](evidence/2026-10-10-alarm-first-followup.md) records

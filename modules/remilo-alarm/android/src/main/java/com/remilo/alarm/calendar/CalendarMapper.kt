@@ -20,11 +20,11 @@ object CalendarMapper {
     val end = Instant.ofEpochMilli(record.eventEndMs).atZone(zoneId)
     require(record.eventEndMs > record.eventStartMs)
     val first = if (record.allDay) JSONObject().put("date", start.toLocalDate().toString())
-      else JSONObject().put("dateTime", start.toOffsetDateTime().toString()).put("timeZone", zone)
+      else JSONObject().put("dateTime", start.toInstant().toString()).put("timeZone", zone)
     val last = if (record.allDay) {
       require(end.toLocalDate().isAfter(start.toLocalDate()))
       JSONObject().put("date", end.toLocalDate().toString())
-    } else JSONObject().put("dateTime", end.toOffsetDateTime().toString()).put("timeZone", zone)
+    } else JSONObject().put("dateTime", end.toInstant().toString()).put("timeZone", zone)
     return JSONObject().put("summary", record.title).put("description", record.notes)
       .put("start", first).put("end", last).put("visibility", "private").put("transparency", "opaque")
       .put("reminders", JSONObject().put("useDefault", false).put("overrides", org.json.JSONArray()))

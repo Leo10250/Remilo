@@ -42,7 +42,9 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     dao.connection(old.copy(revision = old.revision + 1, connected = true, subject = account.subject,
       email = account.email, calendarId = if (old.subject == account.subject) old.calendarId else "",
       calendarName = if (old.subject == account.subject) old.calendarName else "",
-      calendarZone = if (old.subject == account.subject) old.calendarZone else "", message = "Connected. Publishing is manual."))
+      calendarZone = if (old.subject == account.subject) old.calendarZone else "",
+      message = if (old.subject == account.subject && old.calendarId.isNotBlank()) "Ready to publish. Each task needs your confirmation."
+        else "Google account connected. Choose a publishing calendar to finish setup."))
   }
   fun connectionMessage(message: String, expectedRevision: Long) {
     val old = connection()
@@ -155,6 +157,8 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
       "ACCOUNT_MISMATCH" -> "This publication belongs to another Google account. Reconnect its original account."
       "NOT_OWNER" -> "You no longer own the selected calendar. No new event was sent."
       "FORBIDDEN" -> "Google denied access to this destination. Review its permissions before retrying."
+      "BAD_REQUEST" -> "Google rejected the saved event details (HTTP 400). If retrying still fails, report this error."
+      "INVALID_EVENT" -> "The saved event times could not be prepared for Google Calendar. Report this error before retrying."
       "REMOTE_REMOVED" -> "The previously sent Calendar identity is missing or cancelled. No replacement event was created."
       "NETWORK", "RETRY" -> "Publication is not confirmed. Retry the same publication; its content and destination are retained."
       else -> "Calendar could not confirm this publication. Retry the same publication or review Google access."

@@ -17,6 +17,18 @@ describe('Calendar publication boundary', () => {
     const fixture = previewCalendar(new URLSearchParams('reviewCalendarConsent=cancel'), () => undefined, () => {});
     const before = await fixture.getCalendarConnection(); await fixture.authorizeCalendar(null); expect(await fixture.getCalendarConnection()).toEqual(before);
   });
+  it('connecting alone leaves publication blocked until a destination is deliberately selected', async () => {
+    const item = { id: 'one', revision: 1, zoneId: 'UTC', title: 'Synthetic', notes: '', eventStartMs: 1000, eventEndMs: 2000 } as Occurrence;
+    const fixture = previewCalendar(new URLSearchParams('reviewCalendar=disconnected'), () => item, () => {});
+    await fixture.authorizeCalendar(null);
+    const connection = await fixture.getCalendarConnection();
+    expect(connection.connected).toBe(true); expect(connection.calendarId).toBe('');
+    await expect(fixture.previewCalendarPublication('one')).rejects.toMatchObject({ code: 'NEEDS_CONNECTION' });
+    const page = await fixture.listOwnedCalendars(null);
+    await fixture.applyCalendarCommand({ kind: 'SelectCalendar', operationId: 'choose', expectedConnectionRevision: connection.revision, calendarId: page.items[0].id });
+    expect((await fixture.previewCalendarPublication('one')).calendarName).toBe(page.items[0].name);
+    expect(await fixture.getCalendarPublications()).toEqual([]);
+  });
   it('fixture lost reply retains authority and exact retry without replacing publication', async () => {
     const item = { id: 'one', revision: 1, zoneId: 'UTC', title: 'Synthetic', notes: '', eventStartMs: 1000, eventEndMs: 2000 } as Occurrence;
     const fixture = previewCalendar(new URLSearchParams('reviewLostReply=1&reviewCalendarOffline=1'), () => item, () => {});

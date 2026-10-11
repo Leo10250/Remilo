@@ -29,6 +29,14 @@ captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
 portable backup format 4.
 
+Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
+and retain the captured IANA zone. The HTTPS adapter reencodes older captured
+minute-only strings without rewriting durable jobs, content, destination or
+identity. Same-operation recovery still reads the original event ID first.
+HTTP 400 has a distinct non-private rejection code; response bodies and tokens
+remain excluded from JS, storage and logs. No schema, alarm or backup change is
+introduced by this encoding repair.
+
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
 No Prebuild after bootstrap, no OTA, no iOS until the last optional phase.

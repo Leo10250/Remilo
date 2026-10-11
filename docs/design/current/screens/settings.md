@@ -341,6 +341,13 @@ scroll. Reuse connected groups, neutral `event` glyphs, wrapping destination/acc
 text and the shared sheet surface. Details' publication review uses a persistent
 56 dp Publish action; no new atmosphere or artwork is introduced. Authorization
 remains Google's native UI. Saved progress/recovery is visible on Settings and Details.
+The owner's 11 October setup correction requires two visible steps: connect the
+Google account and select an owned publishing calendar. Keep the second step
+visible before connection, and show an explicit unfinished-setup message and
+Choose publishing calendar action when the account is connected without a
+destination. Publication review explains the missing setup instead of presenting
+the generic Could not load this view error. Existing atmosphere roles and
+Details → More publication entry remain in use.
 
 [The gallery supplement](../../remilo-r8-settings-appearance/current-policy.md)
 identifies the obsolete tile selector/held Automatic policy without changing accepted

@@ -20,6 +20,7 @@ export default function CalendarSettings() {
   const [rows, setRows] = useState<OwnedCalendar[]>([]), [cursor, setCursor] = useState<string | null>(null), [listLoaded, setListLoaded] = useState(false);
   const selection = useRef<CalendarCommand | null>(null);
   const [selectionPending, setSelectionPending] = useState(false);
+  const needsCalendar = connection.data?.connected && !connection.data.calendarId;
   useAppearanceHold(busy || selecting);
   const refresh = () => client.invalidateQueries({ queryKey: ['calendar'] });
   const run = async (task: () => Promise<void>) => {
@@ -56,8 +57,10 @@ export default function CalendarSettings() {
   });
   const authorize = () => run(async () => {
     await engine().authorizeCalendar(null);
-    setFeedback('Google authorization opened. Connection is checked when you return; no reminders are published.');
+    setRows([]); setListLoaded(false); setCursor(null);
+    setFeedback('After connecting your Google account, choose a publishing calendar to finish setup. Connecting publishes nothing.');
   });
+  const chooseCalendar = () => { setSelecting(true); if (!listLoaded) void load(null); };
   const disconnect = () => {
     if (!connection.data || busy || selection.current) return;
     confirm('Disconnect Google Calendar?', 'Published events remain in Google. A request already sent may still finish. Future requests stop.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Disconnect', onPress: () => void run(async () => {
@@ -69,13 +72,18 @@ export default function CalendarSettings() {
     <QueryState loading={connection.isLoading && nativeAvailable} error={connection.error} empty={!nativeAvailable} emptyMessage="Use the Android app to connect Google Calendar." onRetry={() => void refresh()} />
     <Copy muted>Optional, manual publishing. Local reminders and alarms work without Google or network access.</Copy>
     {connection.data?.available === false && <ActionFeedback message="Google Play services is unavailable or needs updating. Google authorization cannot open on this device." tone="warning" />}
-    {connection.data && <ConnectedGroup title="Connection" footer={<Copy muted>{connection.data.message || 'Connecting Google publishes nothing.'}</Copy>}>
-      <SettingRow key="connect" icon="event" label={connection.data.connected ? 'Change Google account' : 'Connect Google Calendar'} value={connection.data.connected ? connection.data.email : undefined}
+    {needsCalendar && <><ActionFeedback message="Google account connected. Choose a publishing calendar to finish setup." tone="warning" />
+      <Button label="Choose publishing calendar" disabled={busy || selectionPending || !connection.data?.available} onPress={chooseCalendar} /></>}
+    {connection.data && <ConnectedGroup title="Publishing setup" footer={<Copy muted>Both a connected Google account and a selected calendar are required. Setup publishes nothing.</Copy>}>
+      <SettingRow key="connect" icon="event" label={connection.data.connected ? '1. Google account' : '1. Connect Google account'} value={connection.data.connected ? connection.data.email : undefined}
+        description={connection.data.connected ? 'Connected · tap to change account' : 'Allow Remilo to access Google Calendar.'}
         disabled={busy || selectionPending || !connection.data.available} onPress={authorize} />
-      {connection.data.connected && <SettingRow key="calendar" icon="event" label="Publishing calendar" value={connection.data.calendarName || 'Choose a calendar you own'}
-        disabled={busy || selectionPending || !connection.data.available} onPress={() => { setSelecting(true); if (!listLoaded) void load(null); }} />}
+      <SettingRow key="calendar" icon="event" label="2. Publishing calendar" value={connection.data.calendarName || 'Not selected'}
+        description="Choose a calendar you own where published tasks will appear."
+        disabled={busy || selectionPending || !connection.data.available || !connection.data.connected} onPress={chooseCalendar} />
       {connection.data.connected && <SettingRow key="disconnect" icon="close" label="Disconnect" disabled={busy || selectionPending} onPress={disconnect} />}
     </ConnectedGroup>}
+    {connection.data?.message && <Copy muted>{connection.data.message}</Copy>}
     {!!feedback && <ActionFeedback message={feedback} tone="warning" />}
     {busy && <ActionFeedback loading message="Checking Google Calendar…" />}
     {selectionPending && !busy && <Button label="Retry same calendar selection" variant="secondary" onPress={() => void retrySelection()} />}

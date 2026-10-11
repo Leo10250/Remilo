@@ -10,6 +10,12 @@ linked updates or background synchronization. Those remain P4-B–P4-D.
 Settings → Google Calendar is secondary navigation with the existing origin and
 retained Settings scroll. Connection, destination selection, saved jobs and
 Disconnect use the shared atmosphere roles, connected groups and sheets.
+Setup presents two explicit steps: connect the Google account, then select an
+owned publishing calendar. A connected account without a destination shows an
+unfinished-setup message and a prominent Choose publishing calendar action.
+Publication review reports this prerequisite directly instead of a generic
+load-view failure. The compact Agenda menu remains Edit/Postpone/Done/Move to
+Trash; publication is reached through Details → More.
 Details → More → Publish opens a native-derived review of destination, exact title
 and notes, event range and named zone. Cancel sends nothing. Publish captures
 native revision guards and an operation UUID before any I/O. An unresolved job
@@ -34,6 +40,16 @@ erased metadata. Recovery selects the original account again when its email was
 erased and still verifies the stable Google subject before any remote lookup.
 Disconnect fences new requests and attempts Google revocation. Sent requests can
 finish and remote events remain; failed revocation is reported as unconfirmed.
+
+Timed event JSON uses RFC 3339 timestamps with seconds and the captured named
+zone. The UTC timestamp represents the original instant, including milliseconds;
+it does not change local reminder times. At the HTTPS boundary, saved older
+minute-precision timestamps are reencoded to the same instant with seconds.
+Recovery retains the captured payload, account, destination, fingerprint,
+operation and remote event ID, and still looks up that ID before insertion.
+All-day date/exclusive-end mapping remains intact. HTTP 400 rejection is reported
+as rejected event details rather than generic Google-access advice. See the
+[11 October diagnosis and verification](evidence/2026-10-11-calendar-repair.md).
 
 ## Native authority and lifecycle
 

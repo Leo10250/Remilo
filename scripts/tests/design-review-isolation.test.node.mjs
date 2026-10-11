@@ -101,6 +101,11 @@ test('Calendar fixture executes connect/list/publish/retry with no network or na
   await preview.authorizeCalendar(null);
   const first = await preview.listOwnedCalendars(null), second = await preview.listOwnedCalendars(first.nextCursor);
   assert.equal(first.items.length, 1); assert.equal(second.nextCursor, null);
+  const connection = await preview.getCalendarConnection();
+  assert.equal(connection.connected, true); assert.equal(connection.calendarId, '');
+  await assert.rejects(() => preview.previewCalendarPublication('review'), { code: 'NEEDS_CONNECTION' });
+  await preview.applyCalendarCommand({ kind: 'SelectCalendar', operationId: 'choose-calendar',
+    expectedConnectionRevision: connection.revision, calendarId: first.items[0].id });
   const review = await preview.previewCalendarPublication('review');
   await preview.applyCalendarCommand({ kind: 'PublishOneOff', operationId: 'fixture', occurrenceId: 'review', expectedRevision: review.reminderRevision,
     expectedConnectionRevision: review.connectionRevision, fingerprint: review.fingerprint });
