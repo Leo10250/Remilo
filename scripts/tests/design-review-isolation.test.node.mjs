@@ -259,6 +259,7 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
       },
       '@react-native-community/datetimepicker': {}, 'expo-symbols': { SymbolView: 'Glyph' }, 'expo-router': {},
       'react-native-safe-area-context': {}, './theme': theme, './tokens': tokens,
+      './time-display': { useTimeDisplay: () => ({}), useTimeFormatting: () => ({}) },
       '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
       './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
       './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},

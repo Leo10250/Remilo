@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayClock } from './time-display';
+import { displayClock, TimeDisplayObservation } from './time-display';
 import { clockPreferenceLabel } from './clock-preferences';
 import { cardTimingPresentation, eventRange, spokenDateTime } from './presentation';
 
@@ -28,5 +28,23 @@ describe('device clock overrides', () => {
   it('uses Chinese locale and retains locale fallback when no observation exists', () => {
     expect(displayClock(day + 18 * 3_600_000, 'UTC', { localeTag: 'zh-CN', uses24HourClock: true })).toBe('18:00');
     expect(displayClock(day + 18 * 3_600_000, 'UTC', { localeTag: 'en-US' })).toMatch(/6:00.*PM/);
+  });
+});
+
+describe('device presentation observation lifetime', () => {
+  it('retains observations on failure and ignores reads superseded by a device event', async () => {
+    const values: boolean[] = [], owner = new TimeDisplayObservation(next => values.push(next.uses24HourClock));
+    await owner.refresh(async () => ({ localeTag: 'en-US', uses24HourClock: false }));
+    await owner.refresh(async () => { throw new Error('Unavailable'); });
+    let resolve!: (value: { localeTag: string; uses24HourClock: boolean }) => void;
+    const pending = owner.refresh(() => new Promise(next => { resolve = next; }));
+    owner.update({ localeTag: 'en-US', uses24HourClock: true });
+    resolve({ localeTag: 'en-US', uses24HourClock: false }); await pending;
+    expect(values).toEqual([false, true]);
+    await owner.refresh(async () => ({ localeTag: 'zh-CN', uses24HourClock: false }));
+    expect(values).toEqual([false, true, false]);
+    owner.close(); owner.update({ localeTag: 'en-US', uses24HourClock: true });
+    await owner.refresh(async () => ({ localeTag: 'en-US', uses24HourClock: true }));
+    expect(values).toEqual([false, true, false]);
   });
 });

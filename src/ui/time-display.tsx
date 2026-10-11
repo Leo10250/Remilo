@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { AppState } from 'react-native';
 import Alarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
-import { displayClock, displayDateTime, type TimeDisplayOptions } from '../domain/time-display';
+import { displayClock, displayDateTime, TimeDisplayObservation, type TimeDisplayOptions } from '../domain/time-display';
 import * as presentation from '../domain/presentation';
 import { clockPreferenceLabel } from '../domain/clock-preferences';
 
@@ -9,16 +9,12 @@ const TimeDisplay = createContext<TimeDisplayOptions>({});
 export function TimeDisplayProvider({ children }: PropsWithChildren) {
   const [options, setOptions] = useState<TimeDisplayOptions>({});
   useEffect(() => {
-    let live = true, revision = 0;
-    const refresh = async () => {
-      const request = ++revision;
-      try { const next = await Alarm?.getTimeDisplayPreferences(); if (live && request === revision && next) setOptions(next); }
-      catch { /* Retain the last observation; locale fallback works before the first read. */ }
-    };
-    void refresh();
-    const native = Alarm?.addListener('onTimeDisplayPreferencesChanged', next => { ++revision; if (live) setOptions(next); });
+    const observation = new TimeDisplayObservation(setOptions);
+    const refresh = () => { const module = Alarm; if (module) void observation.refresh(() => module.getTimeDisplayPreferences()); };
+    refresh();
+    const native = Alarm?.addListener('onTimeDisplayPreferencesChanged', next => observation.update(next));
     const app = AppState.addEventListener('change', state => { if (state === 'active') void refresh(); });
-    return () => { live = false; ++revision; native?.remove(); app.remove(); };
+    return () => { observation.close(); native?.remove(); app.remove(); };
   }, []);
   return <TimeDisplay.Provider value={options}>{children}</TimeDisplay.Provider>;
 }

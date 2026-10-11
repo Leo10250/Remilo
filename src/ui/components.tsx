@@ -1,5 +1,5 @@
-import { useTimeFormatting } from './time-display';
-import { useTimeDisplay } from './time-display';
+import { useTimeFormatting, useTimeDisplay } from './time-display';
+
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
@@ -352,18 +352,20 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
     </View></ScrollChromeProvider>
   </SafeAreaView>;
 }
-export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null> }>) {
+export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef, returnFocusWhen }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean }>) {
   const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
   // Modals retain React context, including scenic header foreground overrides.
   const colors = foundation?.colors ?? inheritedColors;
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
   const wasVisible = useRef(visible);
+  const focusGuard = useRef(returnFocusWhen);
+  useEffect(() => { focusGuard.current = returnFocusWhen; }, [returnFocusWhen]);
   useEffect(() => {
     const closed = wasVisible.current && !visible; wasVisible.current = visible;
     if (!closed || !returnFocusRef) return;
     const timer = setTimeout(() => {
       const target = returnFocusRef.current;
-      if (target) { target.focus(); if (Platform.OS === 'android') AccessibilityInfo.sendAccessibilityEvent(target, 'focus'); }
+      if (target && (focusGuard.current?.() ?? true)) { target.focus(); if (Platform.OS === 'android') AccessibilityInfo.sendAccessibilityEvent(target, 'focus'); }
     }, reduced ? 0 : 350);
     return () => clearTimeout(timer);
   }, [visible, returnFocusRef, reduced]);

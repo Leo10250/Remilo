@@ -1,4 +1,4 @@
-import { useTimeFormatting } from '../ui/time-display';
+import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
@@ -7,7 +7,7 @@ import { Keyboard, TextInput, View } from 'react-native';
 import type { Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { changeCalendarAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState, type TimedDraftSnapshot } from '../domain/editor-draft';
 import { saveFeedback, type SaveContext } from '../domain/save-feedback';
-import { useTimeDisplay } from '../ui/time-display';
+
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel } from '../domain/presentation';
@@ -57,7 +57,7 @@ export default function Editor() {
 }
 type Review = { latest: Seed; merged: EditorState; conflicts: DraftConflict[]; choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>> };
 function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Seed; id?: string; duplicate: boolean; following?: string; originParams: OriginParams }) {
-  const { scheduleDateTime, formatTime, eventRange } = useTimeFormatting();
+  const { formatTime, eventRange } = useTimeFormatting();
   const settings = useSettings(), command = useCommand(), navigation = useNavigation();
   const confirm = useAppearanceConfirmation();
   useAppearanceHold(true);
@@ -277,7 +277,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
         </View>
         <View key="alert"><AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} /></View>
         {!editingId && <View key="repeat">
-          <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={calendar.data?.some(item => item.occurrenceId === editingId)} />
+          <RepeatForm disabled={frozen} value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={calendar.data?.some(item => item.occurrenceId === editingId)} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}
         <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />

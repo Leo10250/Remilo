@@ -1,19 +1,19 @@
-import { RootNotice } from '../../ui/navigation';
+import { RootNotice, notifyTrash } from '../../ui/navigation';
 import { useTimeFormatting } from '../../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import type { ContentCommand, DeliveryCommand, Occurrence } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { recoveryPresentation, commandFeedback } from '../../domain/actions';
-import type { Tone } from '../../domain/actions';
+import { recoveryPresentation, commandFeedback, type Tone } from '../../domain/actions';
+
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
 import { modeLabel, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
 import {  } from '../../domain/clock-preferences';
 import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
-import { notifyTrash } from '../../ui/navigation';
+
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
 import { typography } from '../../ui/tokens';
 import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary, ZoneSummary } from '../../ui/schedule';
@@ -43,7 +43,7 @@ export default function ReminderDetails() {
   const series = useQuery({ queryKey: ['series', item?.segmentId], queryFn: () => engine().getSeries(item!.segmentId!), enabled: nativeAvailable && !!item?.segmentId });
   const families = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable && !!item?.segmentId });
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
-  const scopeTrigger = useRef<View>(null);
+  const scopeTrigger = useRef<View>(null), focused = useIsFocused();
   const [postpone, setPostpone] = useState(action === 'postpone'), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
   const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
@@ -52,6 +52,7 @@ export default function ReminderDetails() {
   const pendingOperation = useRef<{ command: ContentCommand | DeliveryCommand; item: Occurrence; success: string } | null>(null);
   const runningOperation = useRef(false);
   const [uncertain, setUncertain] = useState(false);
+  const [recoveryKind, setRecoveryKind] = useState<string>();
   const [postponeResult, setPostponeResult] = useState(false), [selection, setSelection] = useState('15');
   useAppearanceHold(command.isPending || uncertain);
   usePreventRemove(command.isPending || uncertain, () => {
@@ -65,6 +66,7 @@ export default function ReminderDetails() {
     const operation = pendingOperation.current;
     if (!operation || command.isPending || runningOperation.current) return;
     runningOperation.current = true;
+    setRecoveryKind(operation.command.kind);
     setFeedback(null); setSheetFeedback(null);
     try {
       const result = await command.mutateAsync(operation.command);
@@ -119,7 +121,7 @@ export default function ReminderDetails() {
   const adjust = item && canAdjustAlert(item), completion = recordedCompletionTime(item?.history);
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
-  const recovery = recoveryPresentation(pendingOperation.current?.command.kind);
+  const recovery = recoveryPresentation(recoveryKind);
   const frozenPostpone = command.isPending || uncertain || postponeResult;
   const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
   return <Page title="Reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
@@ -199,7 +201,7 @@ export default function ReminderDetails() {
       if (!purgeItem || command.isPending || pendingOperation.current || runningOperation.current) return;
       const captured = purgeItem; setPurgeItem(null); void content('Purge', captured);
     }} />
-    <Sheet title="Edit repeating reminder" visible={scope && !!item?.segmentId} returnFocusRef={scopeTrigger} onClose={() => setScope(false)}>
+    <Sheet title="Edit repeating reminder" visible={scope && !!item?.segmentId} returnFocusRef={scopeTrigger} returnFocusWhen={() => focused} onClose={() => setScope(false)}>
       <Copy heading>{item?.title}</Copy>
       {item && <Copy muted>{item.mode === 'None' ? 'Scheduled for · ' + (item.allDay ? formatDate(item.eventStartMs, item.zoneId) + ' · All day' : formatTime(item.eventStartMs, item.zoneId)) : 'Original ' + modeLabel(item.mode).toLowerCase() + ' · ' + formatTime(item.alarmAtMs, item.zoneId)}</Copy>}
       <SettingRow label="This occurrence" description="Changes only this reminder. The repeat schedule stays unchanged." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); }} />

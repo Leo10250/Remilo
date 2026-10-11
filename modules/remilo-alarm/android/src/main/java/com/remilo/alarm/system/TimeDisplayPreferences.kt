@@ -25,7 +25,8 @@ object TimeDisplayPreferences {
       override fun onReceive(context: Context?, intent: Intent?) { changed() }
     }
     owner.contentResolver.registerContentObserver(Settings.System.getUriFor(Settings.System.TIME_12_24), false, observer)
-    owner.registerReceiver(receiver, IntentFilter(Intent.ACTION_LOCALE_CHANGED), Context.RECEIVER_NOT_EXPORTED)
+    try { owner.registerReceiver(receiver, IntentFilter(Intent.ACTION_LOCALE_CHANGED), Context.RECEIVER_NOT_EXPORTED) }
+    catch (error: Exception) { owner.contentResolver.unregisterContentObserver(observer); throw error }
     return AutoCloseable { owner.contentResolver.unregisterContentObserver(observer); owner.unregisterReceiver(receiver) }
   }
 }

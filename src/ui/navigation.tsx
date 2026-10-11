@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { BackHandler, Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { destinationRoute, originParams, rootRoute, type secondaryOriginRoute, type DestinationOrigin, type RootDestination } from '../domain/navigation';
 import { CapturedOperation } from '../domain/operation';
-import { ActionFeedback, Button, Choice, Copy, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
+import { ActionFeedback, Button, Choice, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
 import { dismissNotice, notify, useNotice, type Notice } from './feedback';
 import { apply, CommandError, engine, nativeAvailable } from './native';
 import type { Command, CommandResult, ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -41,21 +41,21 @@ const rootEntries = [{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind:
   { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const;
 export function RootNavigation({ destination, disabled = false, atRoot = true, isGuarded }: { destination: RootDestination['kind']; disabled?: boolean; atRoot?: boolean; isGuarded?: () => boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride(), { width, fontScale } = useWindowDimensions(), locale = useTimeDisplay().localeTag;
+  const focused = useIsFocused();
   const [available, setAvailable] = useState(width), [open, setOpen] = useState(false);
   const key = [available, fontScale, scale, locale].join('|');
-  const [measurement, setMeasurement] = useState<{ key: string; widths: Record<string, number> }>({ key: '', widths: {} });
-  const priorFits = useRef(!(Math.max(scale, fontScale) >= 1.6 && width < 600));
+  const [measurement, setMeasurement] = useState<{ key: string; widths: Record<string, number>; fits: boolean }>({ key: '', widths: {}, fits: !(Math.max(scale, fontScale) >= 1.6 && width < 600) });
   const widths = rootEntries.map(entry => measurement.widths[entry.kind]);
   const ready = measurement.key === key && widths.every(value => value != null);
-  const fits = ready ? rootLabelsFit(available, widths) : priorFits.current;
-  useEffect(() => { if (ready) priorFits.current = fits; }, [ready, fits]);
+  const fits = ready ? rootLabelsFit(available, widths) : measurement.fits;
   const measure = (kind: string, measured: number) => setMeasurement(previous => {
     const values = previous.key === key ? previous.widths : {};
-    return values[kind] === measured ? previous : { key, widths: { ...values, [kind]: measured } };
+    const next = { ...values, [kind]: measured };
+    const resolved = rootEntries.map(entry => next[entry.kind]);
+    return previous.key === key && values[kind] === measured ? previous : { key, widths: next, fits: resolved.every(value => value != null) ? rootLabelsFit(available, resolved) : previous.fits };
   });
-  const compact = open || !fits, trigger = useRef<View>(null), guard = useRef(isGuarded);
-  guard.current = isGuarded;
-  const blocked = () => disabled || !!guard.current?.();
+  const compact = open || !fits, trigger = useRef<View>(null);
+  const blocked = () => disabled || !!isGuarded?.();
   const current = rootEntries.find(entry => entry.kind === destination)!;
   const choose = (entry: typeof rootEntries[number]) => {
     if (blocked()) return;
@@ -81,7 +81,7 @@ export function RootNavigation({ destination, disabled = false, atRoot = true, i
         <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, alignSelf: 'stretch', textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
       </Pressable>; })}
     </View>}
-    <Sheet title="Go to" visible={open} onClose={() => setOpen(false)} returnFocusRef={trigger}>
+    <Sheet title="Go to" visible={open} onClose={() => setOpen(false)} returnFocusRef={trigger} returnFocusWhen={() => focused}>
       {rootEntries.map(entry => <Choice key={entry.kind} icon={entry.icon} label={entry.label} selected={entry.kind === destination} disabled={disabled} onPress={() => choose(entry)} />)}
     </Sheet>
   </View>;

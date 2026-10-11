@@ -27,7 +27,7 @@ class RemiloAlarmModule : Module() {
     Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
     OnCreate {
       val context = requireNotNull(appContext.reactContext).applicationContext
-      timeObservation = TimeDisplayPreferences.observe(context) { sendEvent("onTimeDisplayPreferencesChanged", TimeDisplayPreferences.read(context)) }
+      timeObservation = runCatching { TimeDisplayPreferences.observe(context) { sendEvent("onTimeDisplayPreferencesChanged", TimeDisplayPreferences.read(context)) } }.getOrNull()
       val owner = engine()
       observation = owner.observe { sendEvent("onChange", emptyMap<String, Any>()) }
       previewObservation = owner.observeSoundPreview { sendEvent("onSoundPreviewState", it) }

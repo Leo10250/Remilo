@@ -1,6 +1,6 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
-import type { TimeDisplayPreferences } from './RemiloAlarm.types';
-import type { CalendarConnection, CalendarPublication, CalendarPublicationPreview, CalendarPage, CalendarCommand, AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput, ListRecord, SoundPreviewSnapshot, ResolvedReminderDraft } from './RemiloAlarm.types';
+import { type TimeDisplayPreferences, type CalendarConnection, type CalendarPublication, type CalendarPublicationPreview, type CalendarPage, type CalendarCommand, type AppSettings, type Capabilities, type Command, type CommandResult, type ImportPreview, type Occurrence, type ReminderDraft, type ReminderFilter, type ReminderPage, type RemiloAlarmModuleEvents, type SchedulePreview, type RecurrenceDraft, type Series, type RepeatFamily, type TimeZoneOption, type TimeConversion, type TimeConversionInput, type ListRecord, type SoundPreviewSnapshot, type ResolvedReminderDraft } from './RemiloAlarm.types';
+
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;

@@ -12,8 +12,8 @@ import { useFontScaleOverride, useTheme } from './theme';
 import { TimeZoneField } from './time-zone';
 export { repeatLabel, repeatNames } from '../domain/repeat';
 
-export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, hasPublication = false }: {
-  value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string; previewDraft: ReminderDraft; hasPublication?: boolean;
+export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, hasPublication = false, disabled = false }: {
+  value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string; previewDraft: ReminderDraft; hasPublication?: boolean; disabled?: boolean;
 }) {
   const { formatTime, formatDate, eventRange } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
@@ -50,6 +50,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
   const patch = (change: Partial<RecurrenceDraft>) => setRule((current) => ({ ...current, ...change }));
   const close = () => { if (!busy) { setOpen(false); setCustom(false); setMessage(''); } };
   const apply = async (next?: RecurrenceDraft, nextZone = zone) => {
+    if (disabled || busy) return;
     setBusy(true); setMessage('');
     try { await onChange(next ? cleanRepeat(next) : undefined, next?.zoneMode === 'floating' ? deviceZone() : nextZone); setOpen(false); setCustom(false); }
     catch (error) { setMessage(error instanceof Error ? error.message : 'Could not apply this repeat rule. Try again.'); }
@@ -78,7 +79,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
   };
   const unit = rule.frequency === 'daily' ? 'days' : rule.frequency === 'weekly' ? 'weeks' : rule.frequency === 'yearly' ? 'years' : 'months';
   return <>
-    <SettingRow icon="repeat" label="Repeat" value={repeatLabel(value)} onPress={() => { setCustom(false); setMessage(''); setOpen(true); }} />
+    <SettingRow icon="repeat" label="Repeat" value={repeatLabel(value)} disabled={disabled || busy} onPress={() => { if (disabled || busy) return; setCustom(false); setMessage(''); setOpen(true); }} />
     <Sheet title={custom ? 'Custom repeat' : 'Repeat'} visible={open} onClose={close} onBack={() => { if (!busy) { if (custom) setCustom(false); else close(); } }}
       footer={custom ? <BottomActionBar><View style={{ flex: 1, gap: 8 }}>
         {busy && <ActionFeedback loading message="Applying repeat…" />}{!!message && <ActionFeedback message={message} tone="danger" />}

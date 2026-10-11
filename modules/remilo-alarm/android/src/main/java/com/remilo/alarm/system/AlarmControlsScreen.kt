@@ -272,7 +272,8 @@ private fun TimingContext(content: AlarmEngine.SessionMemberContent, roles: Atmo
   val zone = TimeZone.getTimeZone(content.zoneId.ifEmpty { TimeZone.getDefault().id })
   val time = rememberDeviceTimeFormat(zone)
   val date = DateFormat.getDateInstance(DateFormat.MEDIUM).apply { timeZone = zone }
-  val dateTime: (Date) -> String = { date.format(it) + " · " + time.format(it) }
+  val shortDate = DateFormat.getDateInstance(DateFormat.SHORT).apply { timeZone = zone }
+  val dateTime: (Date) -> String = { shortDate.format(it) + " · " + time.format(it) }
   val startDate = date.format(Date(content.eventStartMs))
   val lastDate = date.format(Date(content.eventEndMs - 1)) // All-day end is exclusive.
   val event = if (content.allDay) "All day · $startDate" + if (startDate == lastDate) "" else " – $lastDate"
@@ -345,8 +346,8 @@ private fun rememberDeviceTimeFormat(zone: TimeZone = TimeZone.getDefault()): ja
   val context = LocalContext.current
   var observation by remember { mutableIntStateOf(0) }
   DisposableEffect(context) {
-    val subscription = TimeDisplayPreferences.observe(context) { observation++ }
-    onDispose { subscription.close() }
+    val subscription = runCatching { TimeDisplayPreferences.observe(context) { observation++ } }.getOrNull()
+    onDispose { subscription?.close() }
   }
   return remember(context, observation, zone.id) { android.text.format.DateFormat.getTimeFormat(context).apply { timeZone = zone } }
 }
