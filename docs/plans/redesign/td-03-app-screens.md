@@ -45,3 +45,11 @@ Record actual revision, delivered contracts, render/command evidence, unresolved
 review conditions and pending physical observations using [the handoff protocol](../../handoffs/README.md).
 Only backlog records live status. Template approval does not establish production
 implementation or actual accessibility/device acceptance.
+
+## Approved follow-up packages
+
+UX-21/22 refine custom repeat preview and scope; UX-23/24 refine captured save
+feedback and Required Title; UX-25 observes device clock formatting read-only;
+UX-26 uses measured root-label fit and Go to; UX-27 retains one empty-Agenda Add.
+Native scheduling, artwork and existing root identities remain authoritative.
+UX-28 records actual review and U32–U35 physical observations stay separate.

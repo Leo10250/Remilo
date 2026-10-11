@@ -376,3 +376,11 @@ native preview/date policy, same-operation retries and origin/keyed-state guards
 No list management or visual change may alter registrations/audio. Shared/native
 checks run when changed implementation warrants them; this documentation refinement
 does not claim runtime/native/physical results or complete TD-03.
+
+## Latest repeat refinement
+
+Custom preview leads with complete alarm/notification dates, or scheduled dates
+for No alert. Relevant missing-date/fifth-weekday/leap-year rules explain their
+consequences; ordinary rules omit generic engine explanations. Custom selection
+includes endings. Optional Calendar range is collapsed. Edit scope names the
+authored occurrence and retains its native nominal boundary and earlier work.

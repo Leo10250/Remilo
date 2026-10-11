@@ -30,6 +30,7 @@ export function useTimeFormatting() {
   const options = useTimeDisplay();
   return useMemo(() => ({
     shortTime: (value: number, zone?: string) => displayClock(value, zone, options),
+    formatDate: (value: number, zone?: string) => new Intl.DateTimeFormat(options.localeTag, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: zone }).format(value),
     formatTime: (value: number | null | undefined, zone?: string) => value == null ? 'No alarm scheduled' : displayDateTime(value, zone, options, true),
     shortDateTime: (value: number, zone?: string) => displayDateTime(value, zone, options),
     clockPreferenceLabel: (minutes: number) => clockPreferenceLabel(minutes, options.localeTag, options),

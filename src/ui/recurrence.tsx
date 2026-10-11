@@ -3,19 +3,19 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { RecurrenceDraft, ReminderDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { changeDraftZone, editorDraft } from '../domain/editor-draft';
-import { cleanRepeat, dayNames, repeatErrors, repeatLabel, repeatNames } from '../domain/repeat';
+import { changeDraftZone, editorDraft, editorPreviewPayload, hasSeparateEvent } from '../domain/editor-draft';
+import { cleanRepeat, dayNames, matchesRepeatPreset, repeatErrors, repeatExplanation, repeatLabel, repeatNames } from '../domain/repeat';
 import { civilAt, deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Field, Group, Icon, SelectRow, SettingRow, Sheet, Toggle } from './components';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Disclosure, Field, Group, Icon, SelectRow, SettingRow, Sheet, Toggle } from './components';
 import { engine, nativeAvailable } from './native';
 import { useFontScaleOverride, useTheme } from './theme';
 import { TimeZoneField } from './time-zone';
 export { repeatLabel, repeatNames } from '../domain/repeat';
 
-export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
-  value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string; previewDraft: ReminderDraft;
+export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, hasPublication = false }: {
+  value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string; previewDraft: ReminderDraft; hasPublication?: boolean;
 }) {
-  const { formatTime } = useTimeFormatting();
+  const { formatTime, formatDate, eventRange } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
   const zone = zoneId ?? deviceZone();
   const start = new Date(civilAt(startMs, zone) + 'Z'), weekday = (start.getUTCDay() + 6) % 7 + 1;
@@ -29,11 +29,12 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
   const draftRule = { ...rule, interval: numeric(numbers.interval), day: ['monthlyDay', 'yearly'].includes(rule.frequency) ? numeric(numbers.day) : rule.day, ...(rule.count != null ? { count: numeric(numbers.count) } : {}) };
   const validation = repeatErrors(draftRule, civilAt(startMs, zone).slice(0, 10)), valid = !Object.keys(validation).length;
   const previewZone = rule.zoneMode === 'pinned' ? customZone : deviceZone();
-  const preview = useQuery({ queryKey: ['custom-repeat-preview', previewDraft, draftRule, previewZone], enabled: nativeAvailable && open && custom && valid,
+  const previewSource = editorPreviewPayload({ draft: editorDraft(previewDraft), recurrence: draftRule });
+  const preview = useQuery({ queryKey: ['custom-repeat-preview', previewSource, previewZone], enabled: nativeAvailable && open && custom && valid,
     queryFn: async () => {
-      const source = editorDraft(previewDraft);
+      const source = editorDraft({ ...previewDraft, title: 'Preview', notes: '' });
       const converted = source.zoneId === previewZone ? { draft: source } : await changeDraftZone(source, previewZone, (input) => engine().convertTime(input));
-      return engine().previewSchedule({ ...converted.draft, title: converted.draft.title.trim() || 'Preview', recurrence: cleanRepeat(draftRule) });
+      return engine().previewSchedule(editorPreviewPayload({ draft: converted.draft, recurrence: draftRule }));
     } });
   const endKey = customZone + '|' + rule.until;
   const endEpoch = loadedEnd?.key === endKey ? loadedEnd.instantMs : null;
@@ -56,9 +57,14 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
   };
   const quick = (frequency: RecurrenceDraft['frequency'], weekdays?: number[]) => void apply({ ...base,
     ...(value ? { zoneMode: value.zoneMode, count: value.count, until: value.until } : {}), frequency, ...(weekdays ? { weekdays } : {}) });
-  const preset = (frequency: RecurrenceDraft['frequency'], weekdays?: number[]) => !!value && value.frequency === frequency && value.interval === 1 &&
-    value.count == null && !value.until && (frequency !== 'weekly' || value.weekdays?.join() === (weekdays ?? [weekday]).join()) &&
-    (!['monthlyDay', 'yearly'].includes(frequency) || value.day === base.day) && (frequency !== 'yearly' || value.month === base.month);
+  const preset = (frequency: RecurrenceDraft['frequency'], weekdays?: number[]) => matchesRepeatPreset(value, base, frequency, weekdays);
+  const customSelected = !!value && !(['daily', 'weekly', 'monthlyDay', 'yearly'] as const).some(frequency => preset(frequency)) && !preset('weekly', [1, 2, 3, 4, 5]);
+  const explanation = repeatExplanation(draftRule);
+  const support = explanation === 'missingMonthDate' ? 'Months without this date are skipped.' : explanation === 'fifthWeekday' ?
+    `Months without a fifth ${dayNames[(rule.weekday ?? weekday) - 1]} are skipped.` : explanation === 'leapYear' ? 'Repeats in leap years.' :
+    explanation === 'missingYearDate' ? 'Years without this date are skipped.' : explanation === 'lastWeekday' ? 'Uses the last Monday–Friday day of the month.' : null;
+  const noAlert = previewDraft.mode === 'None';
+  const showCalendar = !noAlert && (hasPublication || hasSeparateEvent(editorDraft(previewDraft)));
   const openCustom = () => {
     const next = cleanRepeat(value ?? base);
     setRule(next); setCustomZone(next.zoneMode === 'floating' ? deviceZone() : zone);
@@ -88,7 +94,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
         <Choice label={'Every ' + dayNames[weekday - 1]} selected={preset('weekly')} onPress={() => quick('weekly')} />
         <Choice label="Every month" selected={preset('monthlyDay')} onPress={() => quick('monthlyDay')} />
         <Choice label="Every year" selected={preset('yearly')} onPress={() => quick('yearly')} />
-        <SettingRow label="Custom repeat" description={value ? repeatLabel(value) : 'Intervals, selected days, and an ending'} onPress={openCustom} />
+        <Choice label="Custom repeat" selected={customSelected} description={value ? repeatLabel(value) : 'Intervals, selected days, and an ending'} onPress={openCustom} />
       </> : <>
         <SelectRow label="Frequency" value={rule.frequency} choices={Object.entries(repeatNames).map(([frequency, label]) => ({ value: frequency as RecurrenceDraft['frequency'], label }))}
           onChange={(frequency) => patch({ frequency })} />
@@ -121,13 +127,15 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
           patch({ zoneMode: enabled ? 'pinned' : 'floating' }); if (!enabled) setCustomZone(deviceZone());
         }} />
         {rule.zoneMode === 'pinned' ? <TimeZoneField value={customZone} atMs={startMs} onChange={setCustomZone} /> : <Copy muted size={13}>Follows your device time zone when you travel.</Copy>}
-        <Copy muted size={13}>Missing dates are skipped. Last weekday means Monday–Friday. Postponed alarms keep their chosen instant.</Copy>
-        <Group title="Next dates">
+        {support && <Copy muted size={13}>{support}</Copy>}
+        <Group title={noAlert ? 'Next scheduled dates' : previewDraft.mode === 'Notification' ? 'Next notifications' : 'Next alarms'}>
           {!valid ? <Copy muted>Correct the repeat fields to preview dates.</Copy> : preview.isFetching ? <ActionFeedback loading message="Previewing current rule…" /> : preview.error ?
             <><ActionFeedback message="Could not preview this rule. Your draft is kept." tone="danger" /><Button label="Retry preview" variant="secondary" onPress={() => void preview.refetch()} /></> : preview.data && <>
-              <Copy muted size={14}>Informational native preview. Apply updates your draft; Save commits it.</Copy>
-              {preview.data.upcoming.map((slot) => <View key={slot.nominalSlot} style={{ padding: 12, gap: 4 }}><Copy>Event {formatTime(slot.eventStartMs, slot.zoneId)}</Copy>
-                <Copy muted size={14}>{previewDraft.mode === 'None' ? 'No alert' : 'Alert ' + formatTime(slot.alarmAtMs, slot.zoneId)}{slot.adjusted ? ' · Clock-change adjustment' : ''}</Copy></View>)}
+              {preview.data.upcoming.map((slot) => <View key={slot.nominalSlot} style={{ padding: 12, gap: 4 }}><Copy>{noAlert && previewDraft.allDay ? formatDate(slot.eventStartMs, slot.zoneId) + ' · All day' : formatTime(noAlert ? slot.eventStartMs : slot.alarmAtMs, slot.zoneId)}</Copy>
+                {slot.adjusted && <Copy muted size={14}>Clock-change adjustment</Copy>}</View>)}
+              {showCalendar && <Disclosure title="Calendar event details" icon="event">
+                <Copy size={14}>{eventRange({ ...editorDraft(previewDraft), ...preview.data, zoneId: previewZone })}</Copy>
+              </Disclosure>}
               {!preview.data.upcoming.length ? <Copy muted>No future dates. Review the ending and rule.</Copy> : preview.data.upcoming.length < 3 && <Copy muted>Fewer than three dates remain.</Copy>}
               {preview.data.warnings.map((warning) => <ActionFeedback key={warning} message={warning} tone="warning" />)}
             </>}

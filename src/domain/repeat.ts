@@ -4,6 +4,23 @@ export const repeatNames: Record<RecurrenceDraft['frequency'], string> = {
   daily: 'Daily', weekly: 'Weekly', monthlyDay: 'Monthly date', monthlyOrdinal: 'Monthly weekday', lastWeekday: 'Last weekday', yearly: 'Yearly',
 };
 const ordinals = ['First', 'Second', 'Third', 'Fourth', 'Fifth'];
+export type RepeatExplanation = 'missingMonthDate' | 'fifthWeekday' | 'leapYear' | 'missingYearDate' | 'lastWeekday';
+export function repeatExplanation(rule: RecurrenceDraft): RepeatExplanation | null {
+  if (rule.frequency === 'monthlyDay' && (rule.day ?? 0) >= 29) return 'missingMonthDate';
+  if (rule.frequency === 'monthlyOrdinal' && rule.ordinal === 5) return 'fifthWeekday';
+  if (rule.frequency === 'lastWeekday') return 'lastWeekday';
+  if (rule.frequency === 'yearly') {
+    if (rule.month === 2 && rule.day === 29) return 'leapYear';
+    const date = new Date(Date.UTC(2024, (rule.month ?? 1) - 1, rule.day ?? 1));
+    if (date.getUTCMonth() !== (rule.month ?? 1) - 1) return 'missingYearDate';
+  }
+  return null;
+}
+export function matchesRepeatPreset(value: RecurrenceDraft | undefined, base: RecurrenceDraft, frequency: RecurrenceDraft['frequency'], weekdays?: number[]) {
+  return !!value && value.frequency === frequency && value.interval === 1 && value.count == null && !value.until &&
+    (frequency !== 'weekly' || value.weekdays?.join() === (weekdays ?? base.weekdays)?.join()) &&
+    (!['monthlyDay', 'yearly'].includes(frequency) || value.day === base.day) && (frequency !== 'yearly' || value.month === base.month);
+}
 export function cleanRepeat(value: RecurrenceDraft): RecurrenceDraft {
   const keys: (keyof RecurrenceDraft)[] = ['frequency', 'interval', 'weekdays', 'day', 'ordinal', 'weekday', 'month', 'count', 'until', 'zoneMode'];
   return Object.fromEntries(keys.filter((key) => value[key] != null).map((key) => [key, key === 'weekdays' ? [...value.weekdays!] : value[key]])) as RecurrenceDraft;
