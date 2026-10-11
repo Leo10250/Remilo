@@ -198,7 +198,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       onPress={() => router.push({ pathname: '/settings', params: originParams(destination) })} style={{ paddingHorizontal: 16, paddingVertical: 8, minHeight: 48 }}>
       <Status label={warning} tone={!caps?.exactAlarms || !caps?.notifications || !caps?.channelEnabled ? 'danger' : 'warning'} /></Pressable>}
     {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={'Done all (' + caps.activeSessionActions.members.length + ')'} disabled={guarded}
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={'Mark all as done (' + caps.activeSessionActions.members.length + ')'} disabled={guarded}
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
           kind: 'DoneAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })), operationId: engine().createOperationId(),
         }, success: captured.members.length + ' ringing reminders completed.' }); }} /></View>
@@ -238,7 +238,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     <Sheet title={selected?.title ?? 'Reminder actions'} visible={!!selected} onClose={() => setSelected(null)}>
       <SettingRow label="Edit reminder" icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
       {!!selected && canAdjustAlert(selected) && <SettingRow label="Postpone" icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
-      <SettingRow label="Done" icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
+      <SettingRow label="Mark as done" icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
       <SettingRow label="Move to Trash" icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {

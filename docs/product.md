@@ -50,6 +50,13 @@ alert-first browsing, stationary covers and splash requirements.
 
 ## Required behavior
 
+The owner's 11 October wording correction labels every work-completion action
+**Mark as done**, and captured group completion **Mark all as done (N)**, across
+app pages, row/swipe accessibility actions, native alarms and private/public
+notifications. Longer labels wrap at large text sizes. Internal Done command and
+history identities, completion semantics and non-completion Done selecting/IME
+actions stay distinct. See the [current alert contract](design/current/alert-experience.md).
+
 The latest UX follow-up uses device-owned clock formatting in app/native alarm
 presentation without changing saved times. Title quietly shows Required with
 blank Save disabled. Custom repeats lead with upcoming alerts and explain only

@@ -66,7 +66,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const terminalState = (browsing.status?.label ?? '') + (showActionDate && !active && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : '');
   const summary = [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
     item.listName, !ordinaryDue(item) ? 'Due ' + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? 'Changed occurrence' : ''].filter(Boolean).join('. ');
-  const actionLabel = restore ? 'Restore' : item.completed || item.skipped ? 'Reopen' : 'Done';
+  const actionLabel = restore ? 'Restore' : item.completed || item.skipped ? 'Reopen' : 'Mark as done';
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
   const terminal = item.completed || item.skipped || item.deleted;
@@ -95,7 +95,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     </Pressable>;
   const doneControl = !selection && onDone && !restore && !terminal &&
     <Pressable accessibilityRole="checkbox" aria-checked={item.completed} accessibilityLabel={actionLabel + ': ' + summary}
-      accessibilityHint={item.completed ? 'Mark unfinished. Past alerts will not be replayed.' : 'Mark completed.'}
+      accessibilityHint={item.completed ? 'Mark unfinished. Past alerts will not be replayed.' : 'Completes this reminder and cancels its alert.'}
       accessibilityState={{ checked: item.completed, disabled: busy }} disabled={busy} onPress={act}
       onFocus={() => setActionFocused(true)} onBlur={() => setActionFocused(false)}
       style={({ pressed }) => ({ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 24,
@@ -110,10 +110,10 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     <Text style={{ color: colors.ink, fontSize: typography.body * scale, lineHeight: titleLineHeight, fontWeight: '500', flexShrink: 1 }}>{item.title}</Text>
   </View>;
   return <View style={{ backgroundColor: colors.surface, overflow: 'hidden', borderRadius: shape.field, marginBottom: presentation === 'tile' || !compact ? space.md : 0 }}>
-    {canSwipe && <Animated.View style={{position:'absolute',[I18nManager.isRTL?'left':'right']:0,top:0,bottom:0,width:88,opacity:shift.interpolate({inputRange:[-88,-1,0,1,88],outputRange:[1,1,0,1,1],extrapolate:'clamp'})}}><Pressable aria-hidden={!revealed} accessibilityRole="button" accessibilityLabel={(swipeTrash ? 'Move to Trash: ' : 'Done: ') + summary} accessible={revealed} accessibilityElementsHidden={!revealed}
+    {canSwipe && <Animated.View style={{position:'absolute',[I18nManager.isRTL?'left':'right']:0,top:0,bottom:0,width:88,opacity:shift.interpolate({inputRange:[-88,-1,0,1,88],outputRange:[1,1,0,1,1],extrapolate:'clamp'})}}><Pressable aria-hidden={!revealed} accessibilityRole="button" accessibilityLabel={(swipeTrash ? 'Move to Trash: ' : 'Mark as done: ') + summary} accessible={revealed} accessibilityElementsHidden={!revealed}
       importantForAccessibility={revealed ? 'yes' : 'no-hide-descendants'} disabled={busy || !revealed} onPress={swipeAct}
       style={{ flex:1,backgroundColor:swipeTrash ? colors.danger : colors.accent,minHeight:48,alignItems:'center',justifyContent:'center',gap:4 }}>
-      <Icon name={swipeTrash ? 'delete' : 'check'} color={colors.accentInk} /><Text style={{ color: colors.accentInk, fontSize: typography.supporting * scale }}>{swipeTrash ? 'Trash' : 'Done'}</Text>
+      <Icon name={swipeTrash ? 'delete' : 'check'} color={colors.accentInk} /><Text style={{ alignSelf: 'stretch', paddingHorizontal: 4, textAlign: 'center', color: colors.accentInk, fontSize: typography.supporting * scale }}>{swipeTrash ? 'Trash' : 'Mark as done'}</Text>
     </Pressable></Animated.View>}
     <GestureDetector gesture={pan}><Animated.View onLayout={(event) => { width.current = event.nativeEvent.layout.width; }} style={{ transform: [{ translateX: shift }], flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.surface,
       minHeight: compact ? 72 : 80, paddingVertical: space.md, paddingHorizontal: compact ? space.xs : space.md, gap: compact ? space.xs : space.sm }}>

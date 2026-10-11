@@ -183,7 +183,7 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
         val (record, title) = members.single()
         AlarmActions(record, title, current!!.state, busy || unconfirmed, roles, AtmosphereTokens.nativeSingle, onAction)
       } else if (members.size > 1) {
-        FilledAlarmButton("Done all (${members.size})", "Complete all ${members.size} shown reminders", busy || unconfirmed, roles,
+        FilledAlarmButton("Mark all as done (${members.size})", "Mark all ${members.size} shown reminders as done", busy || unconfirmed, roles,
           AtmosphereTokens.nativeSingle, checkmark = true) { onAction("DoneAll", null) }
         SnoozeGroupButton(members.first().first.snoozeMinutes, members.size, busy || unconfirmed, roles) { onAction("SnoozeAll", null) }
       }
@@ -212,10 +212,10 @@ private fun AlarmActions(record: AlertRecord, title: String, state: String, busy
     // or usable width needs more room, retaining both measured action minimums.
     val inline = minimum == AtmosphereTokens.nativeMember && maxWidth >= 280.dp && density.fontScale <= 1.15f
     if (inline) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Done", "Complete this occurrence, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, checkmark = true) { onAction("CompleteDelivery", record) }
+      FilledAlarmButton("Mark as done", "Mark as done, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, checkmark = true) { onAction("CompleteDelivery", record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, onAction = onAction)
     } else Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Done", "Complete this occurrence, $title, $stateLabel", busy, roles, minimum, checkmark = true) { onAction("CompleteDelivery", record) }
+      FilledAlarmButton("Mark as done", "Mark as done, $title, $stateLabel", busy, roles, minimum, checkmark = true) { onAction("CompleteDelivery", record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, onAction = onAction)
     }
   }

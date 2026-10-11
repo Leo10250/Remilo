@@ -10,6 +10,7 @@ Known failures still require fixes, and new Calendar acceptance remains pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| UX-29 | Consistent Mark as done completion wording on app/native surfaces | owner 11 October request | implemented/unverified | [216 source, 82 tooling and 222 native tests; module lint, source audit and narrow/200% fixtures](evidence/2026-10-11-completion-wording.md); single/group and spoken completion labels updated; existing action identities preserved; updated signed-device wrapping/TalkBack remains required |
 | CAL-01 | Explicit account/calendar setup and RFC 3339 timed publication/retry repair | owner 11 October report; P4-A | implemented/unverified | [216 source, 82 tooling and 222 native tests; module lint and focused setup/review fixtures](evidence/2026-10-11-calendar-repair.md); exact-minute defect reproduced before repair; saved retries retain identity/content; updated signed-device timed retry remains required |
 | UX-21 | Alarm-first custom-repeat preview, contextual explanations and selection | approved follow-up; UX-25 | implemented/unverified | [Follow-up host/build and fixture evidence](evidence/2026-10-10-ux-followup.md); Schedule-only preview, native rules retained; U32 pending |
 | UX-22 | Plain repeating-edit scope with authored occurrence identity | approved follow-up; UX-25 | implemented/unverified | [Follow-up host/build and fixture evidence](evidence/2026-10-10-ux-followup.md); Original nominal boundary and earlier reminders retained; U32 pending |

@@ -83,8 +83,8 @@ class AlertExperienceTest {
     assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
     val manager = context.getSystemService(NotificationManager::class.java)
     val notification = manager.activeNotifications.single().notification
-    assertEquals(listOf("Done", "Snooze · 10 min"), notification.actions.map { it.title.toString() })
-    assertEquals(listOf("Done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
     assertNull(notification.fullScreenIntent)
     manager.cancel(id, 1)
     assertEquals(false, occurrence(id)["completed"])

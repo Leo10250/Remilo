@@ -130,7 +130,7 @@ export default function ReminderDetails() {
     footer={<><RootNotice disabled={command.isPending || uncertain} />{item && (active || item.completed || item.skipped || item.deleted) ? <BottomActionBar>
       {active && <>
       {item.deliveryState === 'Alerting' && <Copy muted size={typography.supporting}>Alarm ringing</Copy>}
-      <View style={{ width: '100%' }}><Button icon="check" label="Done" disabled={command.isPending || uncertain}
+      <View style={{ width: '100%' }}><Button icon="check" label="Mark as done" disabled={command.isPending || uncertain}
         onPress={() => void (item.deliveryState === 'Alerting' ? delivery('CompleteDelivery') : content('Done'))} /></View>
       {adjust && item.deliveryState === 'Alerting' && <View style={{ width: '100%' }}><Button icon="snooze" label={'Snooze · ' + item.quickSnoozeMinutes + ' min'} variant="secondary"
         disabled={command.isPending || uncertain} onPress={() => void delivery('Snooze')} /></View>}

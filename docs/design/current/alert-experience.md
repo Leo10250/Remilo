@@ -8,18 +8,28 @@ TD-04 and TD-06; task status belongs only in the backlog.
 
 ## Completion and postponement
 
-Done completes the selected occurrence and cancels its delivery, without confirmation.
+The owner's 11 October wording correction uses **Mark as done** for every single
+work-completion control and **Mark all as done (N)** for captured group completion.
+Apply this to Details, Agenda/list menus, row/swipe spoken actions, native alarm
+member/single/group controls and private/public notification actions, including
+pre-unlock variants. This wording supersedes Done labels in earlier contracts and
+accepted reference pixels. Allow the longer text to wrap without clipping or
+reducing action targets. Completion commands/history still use their existing
+Done/CompleteDelivery/DoneAll identities. Done selecting and the system keyboard's
+Done action end their specific interaction; they never become completion actions.
+
+Mark as done completes the selected occurrence and cancels its delivery, without confirmation.
 Snooze means later and leaves work unfinished. No response, timeout, interruption,
 notification posting and notification dismissal never complete work. Historical
 Stopped outcomes remain unfinished; sound-preview Stop is still preview-only.
 
-Native controls use filled Done with a checkmark and outlined Snooze · X min.
+Native controls use filled Mark as done with a checkmark and outlined Snooze · X min.
 Prominent single/group actions are at least 64 dp; member actions are at least
 56 dp. Preserve captured atmosphere/brightness, first-member sound, the original
 five-minute deadline, generic pre-unlock content and confirmed-terminal dismissal.
-Ringing Details contains one Done plus Snooze and retains Postpone.
+Ringing Details contains one Mark as done plus Snooze and retains Postpone.
 
-Each group action binds the session and displayed member IDs/generations. Done all
+Each group action binds the session and displayed member IDs/generations. Mark all as done
 (N) and Snooze all · X min affect exactly that set. Validate all captured members
 before mutation; stale members reject an uncommitted operation. Later arrivals
 remain independently actionable. Bulk Snooze computes one target from one action
@@ -99,7 +109,7 @@ captured retries, Reopen clearing both work states and Restore preserving them.
 
 ## Notifications and acceptance
 
-Single alarm and ordinary Notification posts include Done and Snooze · X min in
+Single alarm and ordinary Notification posts include Mark as done and Snooze · X min in
 private and generic/public variants. Group ringing posts include both captured
 group actions and open individual native controls through content tap. Android
 owns layout/expansion. Preserve channel identities and notification audio; ordinary
