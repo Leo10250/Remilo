@@ -6,7 +6,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, TextInput, View } from 'react-native';
 import type { Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { changeCalendarAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState, type TimedDraftSnapshot } from '../domain/editor-draft';
-import { commandFeedback } from '../domain/actions';
+import { saveFeedback, type SaveContext } from '../domain/save-feedback';
+import { useTimeDisplay } from '../ui/time-display';
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel } from '../domain/presentation';
@@ -15,7 +16,7 @@ import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, 
 import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
-import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../ui/native';
+import { CommandError, engine, nativeAvailable, useCommand, useSettings, useCapabilities } from '../ui/native';
 import { RepeatForm } from '../ui/recurrence';
 import { useAppearanceHold } from '../ui/theme';
 import { TimeZoneField } from '../ui/time-zone';
@@ -70,6 +71,9 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const [followingScope, setFollowingScope] = useState(following), [saveAsNew, setSaveAsNew] = useState(false);
   const [message, setMessage] = useState(''), [fieldError, setFieldError] = useState<string | undefined>(), [zoneWarning, setZoneWarning] = useState('');
   const pendingSave = useRef<Command | null>(null);
+  const savedContext = useRef<SaveContext>(null);
+  const savedNotified = useRef(false);
+  const caps = useCapabilities(), timeDisplay = useTimeDisplay();
   const timingWork = useRef(false);
   const timedSnapshot = useRef<TimedDraftSnapshot | null>(null);
   const titleInput = useRef<TextInput>(null), notesInput = useRef<TextInput>(null);
@@ -89,24 +93,20 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const dirty = saveAsNew || JSON.stringify(state) !== JSON.stringify(baseline);
   const busy = preparing || command.isPending || reviewLoading;
   usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
-    if (retrySave || pendingSave.current || command.isPending) { confirm('Save not yet confirmed', 'Retry or wait for this save before leaving.'); return; }
+    if (retrySave || pendingSave.current || command.isPending) { confirm('Save not confirmed', 'Retry save before leaving.'); return; }
     if (preparing) { confirm('Updating timing', 'Wait for the timing update before leaving.'); return; }
     confirm('Discard changes?', 'Your reminder has not been saved.', [{ text: 'Keep editing', style: 'cancel' },
       { text: 'Discard', style: 'destructive', onPress: () => { finishEditing(); navigation.dispatch(data.action); } }]);
   });
   useEffect(() => {
     if (!saved) return;
-    const blocked = saved.status === 'Blocked', pending = saved.status === 'Pending';
-    if (creation || blocked || pending) {
-      const occurrence = saved.occurrence;
-      const success = draft.mode === 'None' ? 'Reminder created without an alert' :
-        saved.status === 'Scheduled' && occurrence?.nextAlertMs != null ?
-          `${modeLabel(occurrence.mode)} scheduled for ${scheduleDateTime(occurrence.nextAlertMs, occurrence.zoneId || deviceZone())}` :
-          saved.segmentId ? 'Repeating reminder created' : 'Reminder created';
-      const feedback = commandFeedback(saved, success);
-      notify({ message: feedback.message, tone: feedback.tone === 'accent' ? 'muted' : feedback.tone, persistent: blocked || pending,
-        action: { label: 'View', occurrenceId: saved.occurrence?.id, segmentId: saved.segmentId } });
-    }
+    if (savedNotified.current) return;
+    savedNotified.current = true;
+    const feedback = saveFeedback(savedContext.current!, saved, { access: caps.data, failed: !!caps.error, checking: caps.isFetching }, Date.now(), timeDisplay);
+    notify({ message: feedback.message, tone: feedback.tone === 'accent' ? 'muted' : feedback.tone, persistent: feedback.persistent,
+      action: { label: feedback.review === 'access' ? 'Review access' : feedback.review === 'schedule' ? 'Review schedule' : feedback.review === 'reminder' ? 'Review reminder' : 'View',
+        occurrenceId: saved.occurrence?.id, segmentId: saved.segmentId, origin: originParams,
+        ...(feedback.review === 'access' ? { alarmCheck: { ...originParams, ...(saved.occurrence ? { originReminderId: saved.occurrence.id } : {}) } } : {}) } });
     finishEditing();
     if (creation) returnToOrigin(origin);
     else if (router.canGoBack()) router.back();
@@ -114,7 +114,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     else if (saved.segmentId) router.replace({ pathname: '/series/[id]', params: { id: saved.segmentId } });
     else if (saved.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: saved.occurrence.id } });
     else router.replace('/');
-  }, [saved, creation, draft.mode, origin, originParams, finishEditing]);
+  }, [saved, creation, origin, originParams, finishEditing, caps.data, caps.error, caps.isFetching, timeDisplay]);
   const patch = (value: Partial<EditorDraft>) => { if (!pendingSave.current && !timingWork.current) setState((current) => ({ ...current, draft: { ...current.draft, ...value } })); };
   const updateTiming = async (resolve: () => Promise<{ draft: EditorDraft; warnings: string[] }>, field: string, nextRepeat?: { value?: RecurrenceDraft }) => {
     if (pendingSave.current || timingWork.current || busy || review) throw new Error('Wait for the current update before changing timing.');
@@ -201,7 +201,9 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
           : recurrence ? { ...payload, recurrence: cleanRepeat(recurrence), kind: 'CreateSeries', operationId: engine().createOperationId() }
           : { ...payload, kind: 'Create', operationId: engine().createOperationId() }) as Command;
       }
-      const result = await command.mutateAsync(pendingSave.current);
+      const captured = pendingSave.current;
+      savedContext.current = { kind: captured.kind, mode: 'mode' in captured ? captured.mode : draft.mode };
+      const result = await command.mutateAsync(captured);
       setRetrySave(false); setSaved(result);
     } catch (error) {
       if (error instanceof CommandError) {
@@ -240,10 +242,10 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     }}
     footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
       {!!zoneWarning && <ActionFeedback message={zoneWarning} tone="warning" />}
-      {!!message && <ActionFeedback message={message} tone="danger" />}
+      {!!message && !retrySave && <ActionFeedback message={message} tone="danger" />}
       {retrySave && <ActionFeedback message="Save not confirmed. Retry the same save before leaving." tone="warning" />}
-      <Button label={command.isPending ? 'Saving…' : preparing ? 'Updating…' : reviewLoading ? 'Reviewing…' : retrySave ? 'Retry same save' : 'Save'}
-        busy={busy} disabled={disabled} onPress={() => void save()} />
+      <Button label={command.isPending ? 'Saving…' : preparing ? 'Updating…' : reviewLoading ? 'Reviewing…' : retrySave ? 'Retry save' : 'Save'}
+        accessibilityHint={!draft.title.trim() ? 'Add a title to enable Save.' : undefined} busy={busy} disabled={disabled} onPress={() => void save()} />
     </View></BottomActionBar>}>
     {scopeChanged && <Group title="Repeat changed"><View style={{ padding: 14, gap: 12 }}>
       <Status label="This repeat was replaced. Your draft is kept; it cannot be applied to the previous schedule." tone="warning" />
@@ -259,7 +261,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     {saveAsNew && <Copy muted>This draft will create a separate reminder when you Save. Review its timing first.</Copy>}
     <View pointerEvents={frozen ? 'none' : 'auto'} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}
       accessibilityElementsHidden={frozen} style={{ gap: 16 }}>
-      <Field label="Title" placeholder="What do you want to remember?" inputRef={titleInput} autoFocus={initialTitleFocus} value={draft.title}
+      <Field required label="Title" placeholder="What do you want to remember?" inputRef={titleInput} autoFocus={initialTitleFocus} value={draft.title}
         multiline compactMultiline submitBehavior="blurAndSubmit" enterKeyHint="done" onSubmitEditing={() => titleInput.current?.blur()}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <ConnectedGroup>
@@ -275,7 +277,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
         </View>
         <View key="alert"><AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} /></View>
         {!editingId && <View key="repeat">
-          <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} />
+          <RepeatForm value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={calendar.data?.some(item => item.occurrenceId === editingId)} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}
         <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
@@ -333,7 +335,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
         </View>)}{preview.data.upcoming.length < 3 && <Copy muted size={13}>Fewer than three occurrences remain.</Copy>}</Group>}
         {preview.data.warnings.map((warning) => <ActionFeedback tone="warning" message={warning} key={warning} />)}
       </>}
-      {editingSeries && <Copy muted size={13}>Earlier unfinished and postponed occurrences are retained. {editingSeries.state === 'Paused' ? 'The repeat remains paused.' : ''}</Copy>}
+      {editingSeries && <Copy muted size={13}>Earlier unfinished and postponed reminders stay unchanged. {editingSeries.state === 'Paused' ? 'The repeat remains paused.' : ''}</Copy>}
       {preview.error && <Status label="Check the timing and repeat fields." tone="warning" />}
     </View>
     {command.error instanceof CommandError && command.error.code?.startsWith('STALE') && !review && !scopeChanged && <Button label="Retry review" variant="secondary" disabled={busy} onPress={() => void loadReview()} />}

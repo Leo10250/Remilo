@@ -1,3 +1,4 @@
+import { RootNotice } from '../../ui/navigation';
 import { useTimeFormatting } from '../../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -37,7 +38,7 @@ export default function SeriesDetails() {
       expectedRevision: series.revision, operationId: engine().createOperationId() }, success: state === 'Paused' ? 'Repeat resumed.' : 'Repeat paused.' });
   };
   return <Page title="Repeat details" onBack={back} scrollKey={'family:' + (seriesId ?? id)} scrollReady={!query.isLoading && !families.isLoading}
-    header={<AtmosphericHeader title="Repeat details" onBack={back} />} footer={<CommandRecovery action={action} />}>
+    header={<AtmosphericHeader title="Repeat details" onBack={back} />} footer={<><RootNotice disabled={action.guarded} /><CommandRecovery action={action} /></>}>
     <QueryState loading={!series && (query.isLoading || families.isLoading)} error={!series ? query.error ?? families.error : undefined}
       empty={!series} emptyMessage={!nativeAvailable ? 'Use the Android app to manage repeats.' : 'This repeat is no longer available.'}
       onRetry={() => { void query.refetch(); void families.refetch(); }} />

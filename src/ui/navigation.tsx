@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { BackHandler, Keyboard, Pressable, Text, View } from 'react-native';
@@ -9,7 +9,7 @@ import { ActionFeedback, Button, Choice, Copy, Field, Icon, IconButton, QuerySta
 import { dismissNotice, notify, useNotice, type Notice } from './feedback';
 import { apply, CommandError, engine, nativeAvailable } from './native';
 import type { Command, CommandResult, ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { commandFeedback, restoreDeleted, type Tone } from '../domain/actions';
+import { commandFeedback, recoveryPresentation, restoreDeleted, type Tone } from '../domain/actions';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from './theme';
 import { typography } from './tokens';
 import { useAppearanceConfirmation } from './confirmation';
@@ -74,12 +74,11 @@ export function useCapturedCommand(onApplied?: (job: CapturedJob, result: Comman
     } catch (error) { setFeedback({ message: error instanceof Error ? error.message : 'Could not confirm this change. Retry the same change.', tone: 'danger' }); }
     finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
   };
-  return { busy, guarded, feedback, execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
+  return { busy, guarded, feedback, recovery: recoveryPresentation(operation.captured?.command.kind), execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
 }
 export function CommandRecovery({ action }: { action: ReturnType<typeof useCapturedCommand> }) {
-  return <><ActionFeedback loading={action.busy} message={action.busy ? 'Applying change…' : action.feedback?.message} tone={action.feedback?.tone} />
-    {action.guarded && !action.busy && <><ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />
-      <Button label="Retry change" onPress={action.retry} /></>}</>;
+  return <><ActionFeedback loading={action.busy} message={action.busy ? action.recovery.progress : action.guarded ? action.recovery.message : action.feedback?.message} tone={action.guarded ? 'warning' : action.feedback?.tone} />
+    {action.guarded && !action.busy && <Button label={action.recovery.retry} onPress={action.retry} />}</>;
 }
 
 export function notifyTrash(item: Occurrence, result: CommandResult) {
@@ -97,13 +96,15 @@ export async function activateNotice(notice: Notice) {
     } catch (error) { notify({ message: error instanceof Error ? error.message : 'Could not undo. Retry.', persistent: true, action: notice.action }); }
     return;
   }
-  if (notice.action?.occurrenceId) router.push({ pathname: '/reminder/[id]', params: { id: notice.action.occurrenceId } });
-  else if (notice.action?.segmentId) router.push({ pathname: '/series/[id]', params: { id: notice.action.segmentId } });
+  if (notice.action?.alarmCheck) router.push({ pathname: '/alarm-check', params: notice.action.alarmCheck });
+  else if (notice.action?.occurrenceId) router.navigate({ pathname: '/reminder/[id]', params: { ...notice.action.origin, id: notice.action.occurrenceId } });
+  else if (notice.action?.segmentId) router.navigate({ pathname: '/series/[id]', params: { ...notice.action.origin, id: notice.action.segmentId } });
   dismissNotice(notice.id);
 }
 export function RootNotice({ disabled = false }: { disabled?: boolean } = {}) {
+  const focused = useIsFocused();
   const notice = useNotice(), client = useQueryClient();
-  if (!notice) return null;
+  if (!notice || !focused) return null;
   return <Snackbar key={notice.id} message={notice.message} action={notice.action?.label} persistent={notice.persistent || disabled} actionDisabled={disabled}
     onAction={() => { if (!disabled) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
     onClose={() => dismissNotice(notice.id)} />;
@@ -133,8 +134,7 @@ export function ListNameSheet({ visible, list, onSaved, onClose, onGuardChange }
     : { kind: 'CreateList', name, operationId: engine().createOperationId() }, success: 'List saved.' });
   const title = list ? 'Rename list' : 'Create list';
   return <Sheet title={title} visible={visible} onClose={() => { if (!action.guarded) onClose(); }} footer={<View style={{ padding: 16, gap: 8 }}>
-    <ActionFeedback message={action.feedback?.message} tone={action.feedback?.tone} />
-    {action.guarded && !action.busy && <Copy muted size={14}>Save not confirmed. Retry the same save before leaving.</Copy>}
+    <ActionFeedback message={action.guarded && !action.busy ? action.recovery.message : action.feedback?.message} tone={action.guarded ? 'warning' : action.feedback?.tone} />
     <Button label={action.busy ? 'Saving…' : action.guarded ? 'Retry save' : title} disabled={action.busy || !name.trim()} onPress={action.guarded ? action.retry : save} />
     <Button label="Cancel" variant="secondary" disabled={action.guarded} onPress={onClose} />
   </View>}><Field label="List name" autoFocus value={name} onChangeText={setName} maxLength={60} editable={!action.guarded} error={action.guarded ? undefined : action.feedback?.tone === 'danger' ? action.feedback.message : undefined} /></Sheet>;

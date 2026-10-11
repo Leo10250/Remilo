@@ -3,7 +3,7 @@ import { useTimeDisplay } from './time-display';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type Ref } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type Ref, type RefObject } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PresentationProvider, useAppearanceHold, useAtmosphere, useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
@@ -59,11 +59,11 @@ function AndroidSymbol({ name, color, size }: { name: IconName; color: string; s
   return loaded.source ? <Image accessible={false} source={loaded.source} style={{ width: size, height: size }} /> :
     <SymbolView name={{ android: name }} tintColor={color} size={size} style={{ width: size, height: size }} />;
 }
-export function IconButton({ icon, label, onPress, disabled = false, variant = 'standard', expanded }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; variant?: 'standard' | 'outlined'; expanded?: boolean }) {
+export function IconButton({ icon, label, onPress, disabled = false, variant = 'standard', expanded, buttonRef }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; variant?: 'standard' | 'outlined'; expanded?: boolean; buttonRef?: Ref<View> }) {
   const colors = useTheme();
   const foundation = useFoundationStyle(), state = usePresentationState(), scenic = useContext(ScenicChrome), [focused, setFocused] = useState(false);
   const c = foundation?.colors;
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} aria-expanded={expanded} disabled={disabled} accessibilityState={{ disabled, ...(expanded !== undefined ? { expanded } : {}) }}
+  return <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={label} aria-expanded={expanded} disabled={disabled} accessibilityState={{ disabled, ...(expanded !== undefined ? { expanded } : {}) }}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     onPress={onPress} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
       borderRadius: 24, backgroundColor: scenic ? pressed ? colors.ink + '20' : 'transparent' : c ? disabled ? c.disabledSurface : pressed || state === 'pressed' ? c.secondaryPressed : 'transparent' : pressed ? colors.soft : 'transparent',
@@ -114,7 +114,7 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
 export function Card({ children }: PropsWithChildren) {
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
-export function Field({ label, error, inputRef, compactMultiline = false, ...props }: TextInputProps & { label: string; error?: string; inputRef?: Ref<TextInput>; compactMultiline?: boolean }) {
+export function Field({ label, error, inputRef, compactMultiline = false, required = false, ...props }: TextInputProps & { label: string; error?: string; inputRef?: Ref<TextInput>; compactMultiline?: boolean; required?: boolean }) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const { fontScale } = useWindowDimensions();
   const foundation = useFoundationStyle(), [focused, setFocused] = useState(false);
@@ -128,7 +128,9 @@ export function Field({ label, error, inputRef, compactMultiline = false, ...pro
     onContentSizeChange?.(event);
   }, [onContentSizeChange]);
   const titleHeight = Math.max(48, Math.min(contentHeight || 48, typography.body * scale * fontScale * 1.4 * 3 + 22));
-  return <View ref={wrapper} style={{ gap: space.xs }}><Copy muted size={typography.supporting}>{label}</Copy><TextInput ref={inputRef} accessibilityLabel={label}
+  return <View ref={wrapper} style={{ gap: space.xs }}><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'baseline' }}>
+    <Copy muted size={typography.supporting}>{label}</Copy>{required && <Text aria-hidden accessibilityElementsHidden importantForAccessibility="no" style={{ color: colors.muted, fontSize: typography.supporting * scale }}>Required</Text>}
+    </View><TextInput ref={inputRef} accessibilityLabel={required ? label + ', required' : label}
     placeholderTextColor={colors.muted} selectionColor={colors.accent} cursorColor={colors.accent} {...props}
     onContentSizeChange={props.multiline && (foundation || compactMultiline) ? resize : props.onContentSizeChange}
     onFocus={event => { setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
@@ -350,11 +352,21 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
     </View></ScrollChromeProvider>
   </SafeAreaView>;
 }
-export function Sheet({ title, visible, onClose, onBack, children, footer }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode }>) {
+export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null> }>) {
   const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
   // Modals retain React context, including scenic header foreground overrides.
   const colors = foundation?.colors ?? inheritedColors;
   const reduced = useReducedMotion(), heading = useRef<Text>(null);
+  const wasVisible = useRef(visible);
+  useEffect(() => {
+    const closed = wasVisible.current && !visible; wasVisible.current = visible;
+    if (!closed || !returnFocusRef) return;
+    const timer = setTimeout(() => {
+      const target = returnFocusRef.current;
+      if (target) { target.focus(); if (Platform.OS === 'android') AccessibilityInfo.sendAccessibilityEvent(target, 'focus'); }
+    }, reduced ? 0 : 350);
+    return () => clearTimeout(timer);
+  }, [visible, returnFocusRef, reduced]);
   useAppearanceHold(visible);
   return <PresentationProvider colors={colors}><ScenicChrome.Provider value={false}><ConnectedRowContext.Provider value={null}><ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>

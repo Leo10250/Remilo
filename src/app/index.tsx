@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useIsFocused, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Keyboard, LayoutAnimation, Pressable, SectionList, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -151,7 +151,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const openFilters = () => { if (isGuarded()) return; searchFocusRequested.current = false; searchInput.current?.blur(); Keyboard.dismiss(); setFilterDraft({ ...appliedFilters }); };
   const caps = capabilities.data, warning = caps ? !caps.exactAlarms ? 'On-time alarms need permission' : !caps.notifications ? 'Notifications are blocked'
     : !caps.channelEnabled ? 'Alarm notifications are blocked' : !caps.fullScreen ? 'Lock-screen alarms are limited' : '' : '';
-  const activeToast = toast ?? (notice ? { message: notice.message, persistent: notice.persistent } : null);
+  const focused = useIsFocused();
+  const activeToast = !focused ? null : toast ?? (notice ? { message: notice.message, persistent: notice.persistent } : null);
   const constrained = searching || filterOpen || guarded;
   const rememberScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => { scrollY.current=event.nativeEvent.contentOffset.y; if(active.current && !searching && !restoreScroll.current)writeRootSnapshot(key+':scroll',scrollY.current); },[key,searching]);
   const onScroll=useChromeScroll(chrome,rememberScroll);
