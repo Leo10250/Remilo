@@ -1,10 +1,11 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, View, type TextInput } from 'react-native';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { collectionKey, creationOrigin, originParams, type DestinationOrigin, type OriginParams } from '../domain/navigation';
-import { alertPresentation } from '../domain/presentation';
+import {  } from '../domain/presentation';
 import { BulkRecovery, useBulkActions } from '../ui/bulk-actions';
 import { ActionFeedback, AtmosphericHeader, Button, Copy, Field, IconButton, Page, QueryState, SettingRow, Sheet } from '../ui/components';
 import { browseFilterChips, browseReminderFilter, commitBrowseFilters, removeBrowseFilter, resetBrowseFilters, type BrowseFilterField, type BrowseFilters } from '../domain/browse-filters';
@@ -21,6 +22,7 @@ export default function Records() {
   return <RecordsContent key={collectionKey(view, origin.kind === 'list' ? origin.listId : undefined)} view={view} origin={origin} />;
 }
 function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origin: DestinationOrigin }) {
+  const { alertPresentation } = useTimeFormatting();
   const title = view === 'deleted' ? 'Trash' : 'Completed', scoped = origin.kind === 'list', fixedListId = scoped ? origin.listId : undefined;
   const destination: DestinationOrigin = scoped ? origin : { kind: view === 'deleted' ? 'trash' : 'completed' };
   const key = collectionKey(view, fixedListId);

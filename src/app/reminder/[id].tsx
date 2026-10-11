@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
@@ -7,10 +8,10 @@ import type { ContentCommand, DeliveryCommand, Occurrence } from '../../../modul
 import { commandFeedback } from '../../domain/actions';
 import type { Tone } from '../../domain/actions';
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
-import { alertPresentation, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
+import { canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
-import { clockPreferenceLabel } from '../../domain/clock-preferences';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, formatTime, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
+import {  } from '../../domain/clock-preferences';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
 import { notifyTrash } from '../../ui/navigation';
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
 import { typography } from '../../ui/tokens';
@@ -26,6 +27,7 @@ const activity: Record<string, string> = { Purge: 'Reminder permanently deleted.
   Interrupted: 'Alarm interrupted', Failed: 'Alarm failed', Missed: 'Alarm missed', Notified: 'Notification sent', PauseSeries: 'Repeat paused', ResumeSeries: 'Repeat resumed' };
 type Feedback = { message: string; tone: Tone };
 export default function ReminderDetails() {
+  const { formatTime, scheduleDateTime, alertPresentation, clockPreferenceLabel } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; action?: string }>(), { id, action } = params;
   const origin = useMemo(() => creationOrigin({ originRoot: params.originRoot, originListId: params.originListId, originNoList: params.originNoList }), [params.originRoot, params.originListId, params.originNoList]);
   const routeParams = useMemo(() => ({ ...originParams(origin), originCollection: params.originCollection, originFamily: params.originFamily,

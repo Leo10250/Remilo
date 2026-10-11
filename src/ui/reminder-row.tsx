@@ -1,8 +1,9 @@
+import { useTimeFormatting } from './time-display';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, I18nManager, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, type GestureUpdateEvent, type PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { alertPresentation, ordinaryDue, recordedCompletionTime, reminderBrowsingPresentation, repeatSummary, scheduleDateTime, spokenDateTime, type CardContext } from '../domain/presentation';
+import { ordinaryDue, recordedCompletionTime, repeatSummary, spokenDateTime, type CardContext } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
 import { Icon, IconButton, type IconName } from './components';
 import { useReducedMotion } from './motion';
@@ -28,6 +29,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   context?: CardContext;
   selection?: { selected: boolean; onToggle: () => void };
 }) {
+  const { alertPresentation, reminderBrowsingPresentation, scheduleDateTime } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride(), reducedMotion = useReducedMotion();
   const { fontScale } = useWindowDimensions();
   const foundation = useFoundationStyle();

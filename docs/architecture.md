@@ -39,6 +39,13 @@ recoverable independently of their bridge promise. Receivers/services never load
 
 ## ADR 002: Storage protection and authority
 
+UX-25 adds a read-only device presentation method/event (`uses24HourClock`,
+`localeTag`). UI-owned Android clock/locale observers and foreground refresh feed
+one explicit frontend formatting context; native alarm rendering reads the same
+preference. There is no stored data, command or scheduler dependency. Reading
+non-private device preferences before unlock is permitted; observer teardown
+never cancels a captured engine operation.
+
 Credential-protected Room owns content, event/due timing, completion and history.
 Device-protected Room owns current operational eligibility, targets, generations,
 sessions and native action records. No content or credentials belong in the latter.

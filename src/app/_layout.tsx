@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import RemiloAlarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
 import { ThemeProvider, useTheme } from '../ui/theme';
 import PresentationPreview from '../ui/presentation-preview';
+import { TimeDisplayProvider } from '../ui/time-display';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -25,7 +26,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider>
       <QueryClientProvider client={client}>
-        <ThemeProvider><PresentationPreview><Navigation /></PresentationPreview></ThemeProvider>
+        <TimeDisplayProvider><ThemeProvider><PresentationPreview><Navigation /></PresentationPreview></ThemeProvider></TimeDisplayProvider>
       </QueryClientProvider>
     </SafeAreaProvider></GestureHandlerRootView>
   );

@@ -159,6 +159,21 @@ retaining consequential pause/exception and recovery rules.
 
 ## Scope and verification
 
+The subsequent owner-approved UX-21–28 plan adds alarm-first custom-repeat
+previews and contextual skip-date explanations; plain recurring-edit scope;
+truthful save/recovery feedback; a quiet Required cue on Title with blank Save
+disabled; device-owned clock formatting; measured navigation fit with a Go to
+sheet; and a direct empty-Agenda Create action replacing its floating +.
+The four destinations, repeat nominal boundaries and captured retries remain.
+
+This follow-up narrowly supersedes the frontend-only API boundary below: a
+read-only device time-display method/event observes Android's 12/24-hour setting
+and locale. Explicit options feed all presentation helpers and native alarm text;
+pickers agree. UI-owned observation closes independently of engine operations,
+reads no private data before unlock and changes no saved timing or minute clocks.
+Failed reads retain the last observation; initial reads use locale fallback.
+U32–U35 remain pending physical observations.
+
 Frontend-only interfaces cover filters, timed snapshot, card context, semantic
 timing, owned field refs and permission observation. Native APIs/schema/commands,
 backup versions, scheduling and overdue policy stay unchanged. Calendar repair,

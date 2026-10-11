@@ -1,9 +1,10 @@
+import { useTimeFormatting } from '../../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { eventRange, modeLabel } from '../../domain/presentation';
+import { modeLabel } from '../../domain/presentation';
 import { creationOrigin, familyBackRoute, familyOriginParams, type OriginParams } from '../../domain/navigation';
-import { ActionFeedback, AtmosphericHeader, Button, Copy, Disclosure, Group, Page, QueryState, SettingRow, shortDateTime, Status } from '../../ui/components';
+import { ActionFeedback, AtmosphericHeader, Button, Copy, Disclosure, Group, Page, QueryState, SettingRow, Status } from '../../ui/components';
 import { engine, nativeAvailable } from '../../ui/native';
 import { CommandRecovery, useCapturedCommand, useDestinationNavigation } from '../../ui/navigation';
 import { repeatLabel } from '../../ui/recurrence';
@@ -13,6 +14,7 @@ import { ZoneSummary } from '../../ui/schedule';
 import { deviceZone } from '../../domain/time';
 
 export default function SeriesDetails() {
+  const { eventRange, shortDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; seriesId?: string }>();
   const { id, seriesId: requestedFamily } = params, origin = creationOrigin(params);
   const query = useQuery({ queryKey: ['series', id], queryFn: () => engine().getSeries(id), enabled: nativeAvailable });

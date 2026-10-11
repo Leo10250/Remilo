@@ -91,6 +91,7 @@ internal fun AlarmControlsScreen(
 @Composable
 private fun AlarmBody(current: AlarmEngine.SessionSnapshot?, busy: Boolean, roles: AtmosphereTokens.Roles,
   artHeight: androidx.compose.ui.unit.Dp, onAction: (String, AlertRecord?) -> Unit, refreshError: String?, onRetry: () -> Unit) {
+  val timeFormat = rememberDeviceTimeFormat()
   val members = current?.members.orEmpty()
   Column(Modifier.fillMaxWidth()) {
     val stateHeading = if (members.size > 1) if (current?.state == "Active") "${members.size} alarms ringing" else "Starting ${members.size} alarms…" else null
@@ -110,7 +111,7 @@ private fun AlarmBody(current: AlarmEngine.SessionSnapshot?, busy: Boolean, role
             Text(title, style = if (members.size == 1) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.titleLarge,
               fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f).semantics { heading() })
           }
-          val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(record.targetMs))
+          val time = timeFormat.format(Date(record.targetMs))
           if (members.size == 1) {
             Text("Alarm time", style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant))
             Text(time, fontSize = AtmosphereTokens.typeDisplay.sp,
@@ -269,15 +270,16 @@ private fun FilledAlarmButton(label: String, description: String, busy: Boolean,
 @Composable
 private fun TimingContext(content: AlarmEngine.SessionMemberContent, roles: AtmosphereTokens.Roles) {
   val zone = TimeZone.getTimeZone(content.zoneId.ifEmpty { TimeZone.getDefault().id })
-  val dateTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).apply { timeZone = zone }
+  val time = rememberDeviceTimeFormat(zone)
   val date = DateFormat.getDateInstance(DateFormat.MEDIUM).apply { timeZone = zone }
+  val dateTime: (Date) -> String = { date.format(it) + " · " + time.format(it) }
   val startDate = date.format(Date(content.eventStartMs))
   val lastDate = date.format(Date(content.eventEndMs - 1)) // All-day end is exclusive.
   val event = if (content.allDay) "All day · $startDate" + if (startDate == lastDate) "" else " – $lastDate"
-    else "${dateTime.format(Date(content.eventStartMs))} – ${dateTime.format(Date(content.eventEndMs))}"
+    else "${dateTime(Date(content.eventStartMs))} – ${dateTime(Date(content.eventEndMs))}"
   TimingRow("Event", event, roles)
   if (!content.dueLinked || content.dueAtMs != (if (content.allDay) content.eventEndMs else content.eventStartMs))
-    TimingRow("Due", dateTime.format(Date(content.dueAtMs)), roles)
+    TimingRow("Due", dateTime(Date(content.dueAtMs)), roles)
 }
 
 @Composable
@@ -335,4 +337,16 @@ private fun SceneArtwork(roles: AtmosphereTokens.Roles, compact: Boolean, modifi
     bitmap?.let { Image(bitmap = it, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
       alignment = cropAlignment) }
   }
+}
+
+/** Observer follows this rendering owner, including Direct Boot without private reads. */
+@Composable
+private fun rememberDeviceTimeFormat(zone: TimeZone = TimeZone.getDefault()): java.text.DateFormat {
+  val context = LocalContext.current
+  var observation by remember { mutableIntStateOf(0) }
+  DisposableEffect(context) {
+    val subscription = TimeDisplayPreferences.observe(context) { observation++ }
+    onDispose { subscription.close() }
+  }
+  return remember(context, observation, zone.id) { android.text.format.DateFormat.getTimeFormat(context).apply { timeZone = zone } }
 }

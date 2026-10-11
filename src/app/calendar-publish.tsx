@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -6,13 +7,14 @@ import type { CalendarCommand } from '../../modules/remilo-alarm/src/RemiloAlarm
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { publicationCommand, calendarError } from '../domain/calendar';
 import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, Page, QueryState } from '../ui/components';
-import { scheduleDateTime } from '../domain/presentation';
+import {  } from '../domain/presentation';
 import { civilAt } from '../domain/time';
 import { engine, nativeAvailable } from '../ui/native';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
 import { useAppearanceHold } from '../ui/theme';
 
 export default function CalendarPublish() {
+  const { scheduleDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string }>(), routeParams = retainedOriginParams(params), id = params.id;
   const client = useQueryClient();
   const jobs = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });

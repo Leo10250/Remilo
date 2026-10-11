@@ -1,3 +1,5 @@
+import { useTimeFormatting } from './time-display';
+import { useTimeDisplay } from './time-display';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
@@ -239,6 +241,8 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
   zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean; accessibilityLabel?: string;
 }) {
+  const { shortTime, shortDateTime } = useTimeFormatting();
+  const timeDisplay = useTimeDisplay();
   const connected = useContext(ConnectedRowContext) !== null;
   const [message, setMessage] = useState('');
   const [picking, setPicking] = useState(false);
@@ -253,6 +257,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     const fail = () => { if (live.current && current === ticket.current) { setPicking(false); const text = 'Could not choose this time. Try again.'; setMessage(text); onError?.(text); } };
     const open = (mode: 'date' | 'time', instant: number, local: string) => {
       DateTimePickerAndroid.open({ value: new Date(instant), timeZoneName: zoneId, mode,
+        ...(timeDisplay.uses24HourClock == null ? {} : { is24Hour: timeDisplay.uses24HourClock }),
         onError: fail, onDismiss: () => { if(live.current && current===ticket.current) setPicking(false); }, onValueChange: (event) => {
           void (async () => {
             const selected = pickerCivil(event.nativeEvent.timestamp, event.nativeEvent.utcOffset);

@@ -386,6 +386,7 @@ function apply(command: Command): CommandResult {
 const preview = {
   ...previewCalendar(review, (id) => items.find((item) => item.id === id), changed),
   createOperationId: () => 'preview-operation-' + nextId(),
+  getTimeDisplayPreferences: async () => ({ uses24HourClock: review.get('reviewClock') === '24', localeTag: review.get('reviewLocale') ?? 'en-US' }),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
     if (event === 'onSoundPreviewState') { const callback = fn as (snapshot: SoundPreviewSnapshot) => void; soundListeners.add(callback); return { remove: () => { soundListeners.delete(callback); } }; }
     const callback = fn as () => void; listeners.add(callback); return { remove: () => { listeners.delete(callback); } };

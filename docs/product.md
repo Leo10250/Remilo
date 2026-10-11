@@ -50,6 +50,15 @@ alert-first browsing, stationary covers and splash requirements.
 
 ## Required behavior
 
+The latest UX follow-up uses device-owned clock formatting in app/native alarm
+presentation without changing saved times. Title quietly shows Required with
+blank Save disabled. Custom repeats lead with upcoming alerts and explain only
+relevant skipped-date rules. Save feedback distinguishes confirmed scheduling
+from saved Blocked/Pending and preserves captured unknown retries. The four-root
+bar uses a current-destination Go to sheet when full scaled labels cannot fit.
+A genuine unscoped, unconstrained empty All Agenda offers Create a reminder in
+place of the floating +. Native repeat boundaries and retained history stay intact.
+
 Optional [P4-A Google Calendar publishing](calendar-publishing.md) is manual per
 saved unfinished one-off after native review and confirmation. Connecting publishes
 nothing; existing reminders are never backfilled. One account and an owned default

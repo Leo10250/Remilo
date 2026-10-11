@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { router, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -7,7 +8,7 @@ import type { Tone } from '../domain/actions';
 import { retainedOriginParams, type OriginParams } from '../domain/navigation';
 import { permissionSummary } from '../domain/settings-presentation';
 import { TestAlarmOperation } from '../domain/test-alarm';
-import { ActionFeedback, Button, ConnectedGroup, Copy, Disclosure, Page, QueryState, RowSupport, SettingRow, shortDateTime, Status } from '../ui/components';
+import { ActionFeedback, Button, ConnectedGroup, Copy, Disclosure, Page, QueryState, RowSupport, SettingRow, Status } from '../ui/components';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { engine, nativeAvailable, useCapabilities } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
@@ -15,15 +16,16 @@ import { useAppearanceHold } from '../ui/theme';
 type Action = 'test' | 'permissions';
 type Feedback = { message: string; tone: Tone };
 type PermissionKind = 'exact' | 'notifications' | 'fullScreen';
-function testFeedback(result: CommandResult): Feedback {
+function testFeedback(result: CommandResult, format: (value: number) => string): Feedback {
   if (result.status === 'Rejected') return { message: result.errorMessage ?? 'Test alarm could not be created.', tone: 'danger' };
   if (result.status === 'Blocked') return { message: 'Test reminder saved; alert blocked. Review permissions.', tone: 'warning' };
   if (result.status === 'Pending') return { message: 'Test reminder saved; scheduling pending. Check its next alert status.', tone: 'warning' };
   if (result.retry && !result.occurrence) return { message: 'Your previous test reminder was confirmed. Check its next alert status.', tone: 'muted' };
-  return { message: result.occurrence?.nextAlertMs != null ? `Test alarm scheduled for ${shortDateTime(result.occurrence.nextAlertMs)}.` : 'Test reminder saved. Check its next alert status.',
+  return { message: result.occurrence?.nextAlertMs != null ? `Test alarm scheduled for ${format(result.occurrence.nextAlertMs)}.` : 'Test reminder saved. Check its next alert status.',
     tone: result.status === 'Scheduled' ? 'success' : 'muted' };
 }
 export default function AlarmCheck() {
+  const { shortDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams>(), routeParams = retainedOriginParams(params), caps = useCapabilities();
   const confirm = useAppearanceConfirmation();
   const [feedback, setFeedback] = useState<Partial<Record<Action, Feedback>>>({}), [pending, setPending] = useState<Action | null>(null);
@@ -43,7 +45,7 @@ export default function AlarmCheck() {
     finally { running.current = false; if (mounted.current) setPending(null); }
   };
   const scheduleTest = () => void run('test', async () => {
-    try { const result = await operation.run(); if (mounted.current) { setTest(result); setUncertainTest(false); } return testFeedback(result); }
+    try { const result = await operation.run(); if (mounted.current) { setTest(result); setUncertainTest(false); } return testFeedback(result, shortDateTime); }
     catch { if (mounted.current) setUncertainTest(operation.pending); return { message: 'Test alarm not confirmed. Retry the same test before leaving.', tone: 'warning' }; }
   });
   const openPermission = (kind: PermissionKind, requestNotification = true) => void run('permissions', async () => {

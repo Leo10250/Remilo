@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -6,11 +7,11 @@ import { View } from 'react-native';
 import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import type { Tone } from '../domain/actions';
 import { normalizeAtmosphere } from '../domain/appearance';
-import { clockPreferenceLabel } from '../domain/clock-preferences';
+import {  } from '../domain/clock-preferences';
 import { creationOrigin, retainedOriginParams, rootKey, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { atmosphereNames, permissionSummary, preferenceRecoveryOwner, type preferenceGroups } from '../domain/settings-presentation';
 import type { HandoffTicket } from '../domain/handoff';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, QueryState, RowSupport, SettingRow, Sheet, shortDateTime, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, QueryState, RowSupport, SettingRow, Sheet, Toggle } from '../ui/components';
 import { engine, nativeAvailable, preferences, useCapabilities, useSettings } from '../ui/native';
 import { PreferenceFeedback } from '../ui/preference-feedback';
 import { SoundPicker } from '../ui/sound-picker';
@@ -23,6 +24,7 @@ function appearanceSummary(settings: AppSettings) {
   return `${atmosphereNames[normalizeAtmosphere(settings.atmosphere)]} · ${settings.theme === 'system' ? 'Match device' : settings.theme === 'light' ? 'Light' : 'Dark'}`;
 }
 export default function Settings() {
+  const { shortDateTime, clockPreferenceLabel } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams>(), origin = creationOrigin(params), routeParams = retainedOriginParams(params);
   const query = useSettings(), caps = useCapabilities(), settings = query.data;
   const [snoozePicker, setSnoozePicker] = useState(false), [shortcuts, setShortcuts] = useState(false), [backupInfo, setBackupInfo] = useState(false);

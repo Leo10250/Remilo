@@ -1,14 +1,16 @@
+import { useTimeFormatting } from './time-display';
 import { useQuery } from '@tanstack/react-query';
 import { Children, type PropsWithChildren } from 'react';
 import { View } from 'react-native';
-import { alertPresentation, detailSchedulePresentation, eventRange, modeLabel, ordinaryDue, scheduleDateTime, scheduleNeedsDetails, type ScheduleItem } from '../domain/presentation';
+import { modeLabel, ordinaryDue, scheduleNeedsDetails, type ScheduleItem } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { ConnectedGroup, Copy, Disclosure, formatTime, Group, InformationRow } from './components';
+import { ConnectedGroup, Copy, Disclosure, Group, InformationRow } from './components';
 import { engine, nativeAvailable } from './native';
 import { typography } from './tokens';
 export { InformationRow } from './components';
 
 export function SchedulePrimary({ item }: { item: ScheduleItem }) {
+  const { detailSchedulePresentation } = useTimeFormatting();
   const primary = detailSchedulePresentation(item);
   return <ConnectedGroup><InformationRow key="alert" prominent icon={item.mode === 'None' ? 'event' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
     label={primary.label} value={primary.value} supporting={item.mode === 'None' ? primary.supporting : undefined} /></ConnectedGroup>;
@@ -24,6 +26,7 @@ export function ZoneSummary({ zoneId, atMs, prefix = '' }: { zoneId: string; atM
 
 /** Read-only formatting of native instants; this component never resolves or schedules times. */
 export function Schedule({ item, draft = false, details = true, connected = false, occurrence = false, hasPublication = false, children }: PropsWithChildren<{ item: ScheduleItem; draft?: boolean; details?: boolean; connected?: boolean; occurrence?: boolean; hasPublication?: boolean }>) {
+  const { alertPresentation, detailSchedulePresentation, eventRange, scheduleDateTime } = useTimeFormatting();
   const zone = item.zoneId || deviceZone();
   const { label: alert, target: current, changed, targetZone: currentZone } = alertPresentation(item, draft);
   const showZone = zone !== deviceZone() || item.repeatRule?.zoneMode === 'pinned', showAlertZone = changed && currentZone !== zone;
@@ -50,6 +53,7 @@ export function Schedule({ item, draft = false, details = true, connected = fals
 }
 
 export function ScheduleDetails({ item, draft = false, occurrence = false, hasPublication = false }: { item: ScheduleItem; draft?: boolean; occurrence?: boolean; hasPublication?: boolean }) {
+  const { alertPresentation, detailSchedulePresentation, eventRange, formatTime, scheduleDateTime } = useTimeFormatting();
   const zone = item.zoneId || deviceZone(), mode = modeLabel(item.mode);
   const { changed } = alertPresentation(item, draft);
   const summary = detailSchedulePresentation(item, undefined, hasPublication);

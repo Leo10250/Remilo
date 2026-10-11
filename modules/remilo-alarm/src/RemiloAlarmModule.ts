@@ -1,8 +1,10 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
+import type { TimeDisplayPreferences } from './RemiloAlarm.types';
 import type { CalendarConnection, CalendarPublication, CalendarPublicationPreview, CalendarPage, CalendarCommand, AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput, ListRecord, SoundPreviewSnapshot, ResolvedReminderDraft } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
+  getTimeDisplayPreferences(): Promise<TimeDisplayPreferences>;
   getCapabilities(): Promise<Capabilities>;
   queryReminders(filter: ReminderFilter, cursor: string | null): Promise<ReminderPage>;
   getOccurrence(id: string): Promise<Occurrence | null>;

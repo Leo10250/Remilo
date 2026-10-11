@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, useWindowDimensions } from 'react-native';
@@ -5,7 +6,7 @@ import type { Tone } from '../domain/actions';
 import { calendarDate } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
-import { ActionFeedback, Button, Copy, Group, Icon, Page, QueryState, shortTime, type IconName } from '../ui/components';
+import { ActionFeedback, Button, Copy, Group, Icon, Page, QueryState, type IconName } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { ZoneSummary } from '../ui/schedule';
 import { useFontScaleOverride, useTheme } from '../ui/theme';
@@ -25,6 +26,7 @@ const events: Record<string, { label: string; icon: IconName; tone: Tone }> = {
   Blocked: { label: 'Alert blocked', icon: 'error', tone: 'danger' },
 };
 export default function Activity() {
+  const { shortTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string }>(), { id } = params;
   const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getOccurrence(id), enabled: nativeAvailable });
   const colors = useTheme(), zone = deviceZone(), scale = useFontScaleOverride();

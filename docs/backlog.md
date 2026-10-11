@@ -10,6 +10,14 @@ Known failures still require fixes, and new Calendar acceptance remains pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| UX-21 | Alarm-first custom-repeat preview, contextual explanations and selection | approved follow-up; UX-25 | in progress | Schedule-only preview, native rules retained; U32 pending |
+| UX-22 | Plain repeating-edit scope with authored occurrence identity | approved follow-up; UX-25 | in progress | Original nominal boundary and earlier reminders retained; U32 pending |
+| UX-23 | Truthful save confirmation and specific captured recovery | approved follow-up; UX-25 | in progress | Native eligibility and exact retry identity retained; U33 pending |
+| UX-24 | Required Title cue with blank Save disabled | approved follow-up | in progress | Quiet visual/spoken cue; U33 pending |
+| UX-25 | Read-only device clock observation and explicit formatting | approved follow-up | in progress | No durable timing/API command changes; U34 pending |
+| UX-26 | Measured navigation fit and accessible Go to sheet | approved follow-up | in progress | Four roots and retained origin/scroll; U35 pending |
+| UX-27 | One direct Add action in genuine empty Agenda | approved follow-up | in progress | No CTA on constrained/stale/error results; U35 pending |
+| UX-28 | Follow-up integration, render matrix and actual verification | UX-21–27 | in progress | Shared/design/Android checks and signed identity; U32–U35 pending |
 | UX-20 | Icon-only collection-header Filters with active count; retain labeled Agenda action | owner-approved filter discussion; UX-16 | implemented/unverified | [192 source/82 tooling checks, signed Android assembly and cached 216 native reports](evidence/2026-10-10-filter-header-followup.md); narrow Completed headers in five pairs and Night Dark at 200% reviewed; full render matrix and U29 Android/TalkBack remain pending |
 | UX-19 | Primary alarm Date/Time before mode, optional Calendar event and quiet menus | owner-approved 10 October follow-up; UX-14/15/16 | implemented/unverified | [192 source/82 tooling checks, signed Android assembly, 216 cached native reports and narrow editor/menu fixtures](evidence/2026-10-10-alarm-first-followup.md); separate/published event preservation and Calendar All day pass host checks; 200%/landscape and U28/U30 remain pending |
 | UX-13 | Approved refinement contracts and shared frontend helpers | owner-approved 10 October implementation plan | implemented/unverified | [Current correction](design/current/ux-refinement.md) and [184 active source/82 tooling checks](evidence/2026-10-10-ux-refinement.md); input refs, filter/timing/context/permission helpers; physical acceptance remains separate |

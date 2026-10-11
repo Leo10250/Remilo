@@ -1,3 +1,4 @@
+import { useTimeFormatting } from './time-display';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -5,7 +6,7 @@ import type { RecurrenceDraft, ReminderDraft } from '../../modules/remilo-alarm/
 import { changeDraftZone, editorDraft } from '../domain/editor-draft';
 import { cleanRepeat, dayNames, repeatErrors, repeatLabel, repeatNames } from '../domain/repeat';
 import { civilAt, deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Field, formatTime, Group, Icon, SelectRow, SettingRow, Sheet, Toggle } from './components';
+import { ActionFeedback, BottomActionBar, Button, Choice, Copy, DateField, Field, Group, Icon, SelectRow, SettingRow, Sheet, Toggle } from './components';
 import { engine, nativeAvailable } from './native';
 import { useFontScaleOverride, useTheme } from './theme';
 import { TimeZoneField } from './time-zone';
@@ -14,6 +15,7 @@ export { repeatLabel, repeatNames } from '../domain/repeat';
 export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft }: {
   value?: RecurrenceDraft; onChange: (value?: RecurrenceDraft, zoneId?: string) => void | Promise<void>; startMs: number; zoneId?: string; previewDraft: ReminderDraft;
 }) {
+  const { formatTime } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride(), [open, setOpen] = useState(false), [custom, setCustom] = useState(false);
   const zone = zoneId ?? deviceZone();
   const start = new Date(civilAt(startMs, zone) + 'Z'), weekday = (start.getUTCDay() + 6) % 7 + 1;

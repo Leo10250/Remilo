@@ -1,14 +1,17 @@
+import { useTimeDisplay, useTimeFormatting } from './time-display';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { Atmosphere, AtmosphereSelection, Brightness } from '../domain/appearance';
-import { clockPreferenceDate, clockPreferenceFromPicker, clockPreferenceLabel } from '../domain/clock-preferences';
+import { clockPreferenceDate, clockPreferenceFromPicker } from '../domain/clock-preferences';
 import { atmosphereNames } from '../domain/settings-presentation';
 import { ActionFeedback, Copy, Icon, SettingRow, Sheet } from './components';
 import { atmosphereColors } from './colors';
 import { useAppearanceHold, useAtmosphere, useTheme } from './theme';
 
 export function ClockPreferenceRow({ minutes, onChange, disabled = false }: { minutes: number; onChange: (minutes: number) => void; disabled?: boolean }) {
+  const { clockPreferenceLabel } = useTimeFormatting();
+  const timeDisplay = useTimeDisplay();
   const [picking, setPicking] = useState(false), [error, setError] = useState('');
   const mounted = useRef(true), request = useRef(0);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -21,6 +24,7 @@ export function ClockPreferenceRow({ minutes, onChange, disabled = false }: { mi
     setError(''); setPicking(true);
     try {
       DateTimePickerAndroid.open({ value: clockPreferenceDate(minutes), timeZoneName: 'UTC', mode: 'time',
+        ...(timeDisplay.uses24HourClock == null ? {} : { is24Hour: timeDisplay.uses24HourClock }),
         onDismiss: () => { if (active()) setPicking(false); }, onError: fail,
         onValueChange: event => {
           if (!active()) return;

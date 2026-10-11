@@ -1,8 +1,9 @@
+import { useTimeFormatting } from '../../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import type { RepeatFamily } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { AtmosphericHeader, Copy, Icon, Page, QueryState, shortDateTime } from '../../ui/components';
+import { AtmosphericHeader, Copy, Icon, Page, QueryState } from '../../ui/components';
 import { engine, nativeAvailable } from '../../ui/native';
 import { repeatLabel } from '../../ui/recurrence';
 import { useFontScaleOverride, useTheme } from '../../ui/theme';
@@ -12,6 +13,7 @@ import { originParams } from '../../domain/navigation';
 import { useRootState } from '../../ui/root-state';
 
 export default function Repeats() {
+  const { shortDateTime } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride();
   const [state, setState] = useRootState<RepeatFamily['state']>('repeats:state', 'Active');
   const back = useDestinationNavigation({ kind: 'repeats' });

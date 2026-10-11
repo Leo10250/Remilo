@@ -1,14 +1,16 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { retainedOriginParams, type OriginParams } from '../domain/navigation';
 import { normalizeAtmosphere } from '../domain/appearance';
-import { clockPreferenceLabel } from '../domain/clock-preferences';
+import {  } from '../domain/clock-preferences';
 import { Choice, ConnectedGroup, Copy, Disclosure, Group, Page, QueryState } from '../ui/components';
 import { nativeAvailable, preferences, useSettings } from '../ui/native';
 import { PreferenceFeedback } from '../ui/preference-feedback';
 import { AtmospherePicker } from '../ui/settings-controls';
 
 export default function Appearance() {
+  const { clockPreferenceLabel } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams>(), query = useSettings(), settings = query.data;
   const automatic = normalizeAtmosphere(settings?.atmosphere) === 'automatic';
   return <Page title="Appearance" onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}>

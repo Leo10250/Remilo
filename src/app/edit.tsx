@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
@@ -8,9 +9,9 @@ import { changeCalendarAllDay, changeDraftZone, chooseConflict, editorDraft, edi
 import { commandFeedback } from '../domain/actions';
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
-import { eventRange, modeLabel, scheduleDateTime } from '../domain/presentation';
+import { modeLabel } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, formatTime, Group, Page, QueryState, RowSupport, Sheet, Status, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, Page, QueryState, RowSupport, Sheet, Status, Toggle } from '../ui/components';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
@@ -55,6 +56,7 @@ export default function Editor() {
 }
 type Review = { latest: Seed; merged: EditorState; conflicts: DraftConflict[]; choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>> };
 function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Seed; id?: string; duplicate: boolean; following?: string; originParams: OriginParams }) {
+  const { scheduleDateTime, formatTime, eventRange } = useTimeFormatting();
   const settings = useSettings(), command = useCommand(), navigation = useNavigation();
   const confirm = useAppearanceConfirmation();
   useAppearanceHold(true);
