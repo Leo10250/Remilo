@@ -444,3 +444,9 @@ alarm eligibility. The consolidated acceptance arrangement remains in force.
 
 No connected target means that reproduction/trace and physical results stay
 pending; it is not evidence of a platform cause or successful fix.
+
+The owner-approved UX-21–28 follow-up adds repeat-context/scope, captured save
+feedback, required-title, device-format, measured navigation and genuine-empty
+behavior checks. Review production components in eight pairs at 360 dp/100–200%,
+landscape, long English/Chinese and reduced motion. U32–U35 are pending signed
+device observations; no installation/distribution accompanies implementation.

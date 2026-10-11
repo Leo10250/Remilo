@@ -629,3 +629,21 @@ Android API 34–37 and another physical manufacturer. Host tests cover determin
 state/rule behavior; they do not prove these physical outcomes. You do not need to
 manually inject database faults. Calendar, cloud and iOS are deferred and have no
 acceptance steps in this offline Android run.
+
+### UX follow-up — U32–U35 (pending)
+
+Observe on an identified signed bundled build; host/fixture results do not pass these.
+
+- **U32:** custom Alarm/Notification/No alert preview; conditional skip-date support;
+  Apply/Cancel/Back; authored scope identity after Postpone; original nominal boundary;
+  paused/archived choices and earlier unfinished/postponed reminders preserved.
+- **U33:** Required Title spoken once, blank/whitespace Save disabled; create/edit/
+  duplicate/repeat confirmation appears once on return; Blocked/Pending review route;
+  unknown save/complete/restore/postpone retries retain the same operation.
+- **U34:** English locale with explicit 12/24-hour setting overrides, Chinese locale,
+  midnight/noon/23:59, picker Cancel, device format/locale changes on return; native
+  alarm text including generic before-unlock content; saved instants and shortcut
+  minutes unchanged. Permissions/audible-delivery observations remain distinct.
+- **U35:** 100–200% text and rotation, four full labels or Go to choices, TalkBack
+  selection/focus return, guarded navigation and retained search/filter/scroll;
+  genuine empty Agenda has one Add action and opens the normal focused editor.

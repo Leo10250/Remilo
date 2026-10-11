@@ -30,3 +30,9 @@ Record actual revision, delivered contracts, render/command evidence, unresolved
 review conditions and pending physical observations using [the handoff protocol](../../handoffs/README.md).
 Only backlog records live status. Template approval does not establish production
 implementation or actual accessibility/device acceptance.
+
+## Read-only clock presentation follow-up
+
+UX-25 native alarm text honors Android device 12/24-hour preference with the
+existing zones. UI-owned observers read non-private configuration before unlock
+and close independently of engine work. No alarm layout, timing or command changes.

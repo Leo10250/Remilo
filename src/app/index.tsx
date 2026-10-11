@@ -1,3 +1,4 @@
+import { canCreateFromEmptyAgenda } from '../domain/empty-agenda';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useIsFocused, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -104,6 +105,13 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const groups = new Map<string, Occurrence[]>();
   items.forEach((item) => groups.set(item.agendaGroup, [...(groups.get(item.agendaGroup) ?? []), item]));
   const totals = reminders.data?.pages[0];
+  const emptyCreate = canCreateFromEmptyAgenda({ native: nativeAvailable, scoped, view, searching: searching || !!search,
+    optionalFilters: chips.length, items: items.length, total: totals?.total, success: reminders.isSuccess,
+    fetching: reminders.isFetching, error: !!reminders.error, placeholder: reminders.isPlaceholderData });
+  const createReminder = () => {
+    if (isGuarded() || !nativeAvailable || missingList) return;
+    Keyboard.dismiss(); router.push(destination.kind === 'list' ? { pathname: '/edit', params: listOriginParams(destination.listId) } : '/edit');
+  };
   const sections = [...groups].map(([group, data]) => ({ key: group, title: groupTitle(group, new Date(capabilities.data?.observedAtMs ?? initialNow)), count: totals?.groups[group] ?? data.length, data: collapsed.includes(group) ? [] : data }));
   const open = (item: Occurrence) => { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination) } }); };
   const complete = (item: Occurrence) => {
@@ -209,20 +217,20 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         renderItem={({ item, section }) => <ReminderRow item={item} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={() => complete(item)} onMore={() => { if (!isGuarded()) setSelected(item); }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? 'Use the Android app to manage reminders.' : search || chips.length ? 'No reminders match these filters.' : view === 'today' ? 'No reminders today.' : view === 'upcoming' ? 'No reminders from tomorrow onward.' : scoped ? 'No reminders in this list yet.' : 'No reminders yet.'} onRetry={() => void reminders.refetch()} />
-          {nativeAvailable && !reminders.isLoading && !reminders.error && !search && !chips.length && view === 'agenda' && !missingList && <Copy muted size={14}>Use + to add a reminder.</Copy>}
+          {emptyCreate && <Button label="Create a reminder" disabled={guarded} onPress={createReminder} />}
           {!!search && <Button label="Clear search" variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
           {!!chips.length && <Button label="Reset filters" variant="secondary" disabled={guarded} onPress={resetFilters} />}</View>}
         ListFooterComponent={reminders.isFetchingNextPage ? <ActionFeedback loading message="Loading more…" /> : reminders.isFetchNextPageError ? <Button label="Retry loading more" variant="secondary" onPress={() => void reminders.fetchNextPage()} /> : null} />
-      <Pressable accessibilityRole="button" accessibilityLabel="Add reminder" accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
-        onPress={() => { Keyboard.dismiss(); router.push(destination.kind === 'list' ? { pathname: '/edit', params: listOriginParams(destination.listId) } : '/edit'); }}
+      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel="Add reminder" accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
+        onPress={createReminder}
         style={({ pressed }) => ({ position: 'absolute', right: 16, bottom: 16, width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, elevation: 3, opacity: pressed ? 0.8 : 1 })}>
-        <Icon name="add" color={colors.accentInk} size={28} /></Pressable>
+        <Icon name="add" color={colors.accentInk} size={28} /></Pressable>}
     </View>
     {(action.guarded || action.feedback?.tone === 'danger') && <CommandRecovery action={action} />}
     {activeToast && !action.guarded && <Snackbar key={toast ? 'local' : notice?.id} message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? 'Undo' : !toast ? notice?.action?.label : undefined}
       onAction={() => { if (toast?.undo) void undo(toast.undo); else if (notice?.action) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
       onClose={() => { if (toast) setToast(null); else if (notice) dismissNotice(notice.id); }} />}
-    {!scoped && <RootNavigation destination="agenda" disabled={guarded} />}
+    {!scoped && <RootNavigation destination="agenda" disabled={guarded} isGuarded={isGuarded} />}
     <BrowseFilterSheet title="Filter reminders" kind="agenda" draft={filterDraft} disabled={guarded} lists={lists.data ?? []} listsLoading={lists.isLoading && nativeAvailable}
       listsError={lists.error} onRetryLists={() => void lists.refetch()} fixedListId={fixedListId} fixedListName={listName}
       onDraftChange={next => { if (!isGuarded()) setFilterDraft(next); }} onCancel={() => setFilterDraft(null)}
