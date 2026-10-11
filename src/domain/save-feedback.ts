@@ -12,10 +12,10 @@ export function saveFeedback(operation: SaveContext, result: CommandResult, obse
   const item = result.occurrence, mode = item?.mode ?? operation.mode ?? 'Alarm';
   let success = creation ? 'Reminder created' : 'Reminder updated';
   if (repeat) success = creation ? 'Repeating reminder created' : 'Repeat schedule updated';
-  else if (mode === 'None') success += ' · No alert';
-  else if (result.status === 'Scheduled' && item && !item.completed && !item.deleted && !item.skipped &&
+  if (mode !== 'None' && result.status === 'Scheduled' && item && !item.completed && !item.deleted && !item.skipped &&
       item.deliveryState === 'Scheduled' && item.nextAlertMs != null && item.nextAlertMs > now)
     success = `${modeLabel(mode)} ${creation ? 'set' : 'updated'} · ${scheduleDateTime(item.nextAlertMs, item.nextAlertMs !== item.alarmAtMs ? undefined : item.zoneId, now, options)}`;
+  else if (!repeat && mode === 'None') success += ' · No alert';
   const mixed = !!result.memberResults && result.status !== 'Applied' && result.status !== 'Scheduled';
   const feedback = commandFeedback(result, success);
   if (!mixed && result.status === 'Blocked') feedback.message = 'Reminder saved · Alert needs attention';

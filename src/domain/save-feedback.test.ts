@@ -19,6 +19,15 @@ describe('captured save outcomes', () => {
     for (const patch of [{ completed: true }, { deleted: true }, { skipped: true }, { nextAlertMs: now - 1 }])
       expect(saveFeedback({ kind: 'Edit' }, { status: 'Scheduled', occurrence: { ...item, ...patch } }, {}, now).message).toBe('Reminder updated');
   });
+  it('uses an explicitly returned eligible repeat occurrence, never a preview or unconfirmed target', () => {
+    for (const mode of ['Alarm', 'Notification'] as const) {
+      const result: CommandResult = { status: 'Scheduled', segmentId: 'series', occurrence: { ...item, mode } };
+      expect(saveFeedback({ kind: 'CreateSeries', mode }, result, {}, now).message).toBe(saveFeedback({ kind: 'Create', mode }, result, {}, now).message);
+      expect(saveFeedback({ kind: 'EditFollowing', mode }, result, {}, now).message).toBe(saveFeedback({ kind: 'Edit', mode }, result, {}, now).message);
+      expect(saveFeedback({ kind: 'CreateSeries', mode }, { ...result, occurrence: undefined }, {}, now).message).toBe('Repeating reminder created');
+      expect(saveFeedback({ kind: 'EditSeries', mode }, { ...result, occurrence: { ...item, mode, deliveryState: 'Changing' } }, {}, now).message).toBe('Repeat schedule updated');
+    }
+  });
   it('routes only fresh mode-specific access failures to alarm check', () => {
     const blocked: CommandResult = { status: 'Blocked' };
     expect(saveFeedback({ kind: 'Edit', mode: 'Alarm' }, blocked, { access: { ...access, exactAlarms: false } }, now).review).toBe('access');
