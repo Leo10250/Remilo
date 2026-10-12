@@ -129,8 +129,14 @@ Documentation and cleanup verification checks active links, JSON, all protected
 reference-bundle hashes, gallery resources, retained backlog rows and the exact
 removal manifest. Superseded catalog/demo tests are removed with their subjects.
 `npm run verify:design` runs the protection/removal/link audit; `npm run verify`
-includes that audit before shared checks. CI fetches the recorded baseline history
-so the deletion audit also covers committed changes.
+includes that audit before shared checks. CI explicitly fetches the full commit
+SHA recorded in both cleanup inventories with
+`node scripts/fetch-design-baseline.mjs`, in addition to the full-depth checkout.
+Squash merges and deletion of historical branches can make that commit absent
+from every advertised ref. The deletion audit still compares against the original
+commit and covers committed changes. Ordinary verification never fetches; a
+missing baseline fails with the exact Git fetch command before historical path
+reads. Neither command changes the checked-out branch or rewrites frozen evidence.
 For later authorized runtime work, explicitly revise the implemented-source
 baseline for that unit while retaining reference protection and behavioral tests.
 Do not regenerate accepted artifact identities to conceal unintended changes.

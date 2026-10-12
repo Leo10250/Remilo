@@ -13,6 +13,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Fetch recorded design-audit baseline
+        run: node scripts/fetch-design-baseline.mjs
       - run: npm ci
       - run: npm run verify
   android:

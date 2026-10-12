@@ -7,6 +7,7 @@ import cp from 'node:child_process';
 import { Buffer } from 'node:buffer';
 import { fileURLToPath } from 'node:url';
 import { verifyDesign as verifyCleanup } from '../docs/evidence/time-of-day-realignment/verify.mjs';
+import { ensureDesignBaseline } from './lib/design-history.mjs';
 
 const repository = path.resolve(import.meta.dirname, '..');
 const evidence = 'docs/evidence/time-of-day-realignment';
@@ -255,6 +256,7 @@ export function implementationResourceFindings(findings, root = repository) {
 }
 
 export function verifyDesign(root = repository) {
+  ensureDesignBaseline(root);
   const cleanup = verifyCleanup(root), baseline = readJson(root, `${evidence}/immutable-baseline.json`);
   const assets = verifyProductionAssets(root), presentation = verifyPresentation(root);
   const checks = { ...cleanup.checks, ...assets.checks, ...presentation.checks };
