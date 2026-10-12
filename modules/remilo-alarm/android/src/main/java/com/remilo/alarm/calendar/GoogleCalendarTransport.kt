@@ -9,14 +9,22 @@ import javax.net.ssl.HttpsURLConnection
 class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }) : CalendarTransport {
   private fun path(id: String) = URLEncoder.encode(id, "UTF-8").replace("+", "%20")
   private val base = "https://www.googleapis.com/calendar/v3"
-  private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false): JSONObject? {
+  private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false, method: String = "POST", etag: String? = null): JSONObject? {
     val connection = openConnection(URL(url))
     try {
       connection.connectTimeout = 10_000; connection.readTimeout = 20_000; connection.instanceFollowRedirects = false
       connection.setRequestProperty("Authorization", "Bearer $token")
       connection.setRequestProperty("Accept", "application/json")
+      if (etag != null) connection.setRequestProperty("If-Match", etag)
       if (payload != null) {
-        connection.requestMethod = "POST"; connection.doOutput = true
+        try { connection.requestMethod = method }
+        catch (error: java.net.ProtocolException) {
+          if (method != "PATCH") throw error
+          // Google API's documented method override for URLConnection implementations without PATCH.
+          connection.requestMethod = "POST"
+          connection.setRequestProperty("X-HTTP-Method-Override", "PATCH")
+        }
+        connection.doOutput = true
         connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
         connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
       }
@@ -34,7 +42,7 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
           "insufficientPermissions" -> "AUTH"
           else -> "FORBIDDEN"
         }
-        404 -> "NOT_FOUND"; 409 -> "DUPLICATE"; 410 -> "REMOTE_REMOVED"
+        404 -> "NOT_FOUND"; 409 -> "DUPLICATE"; 410 -> "REMOTE_REMOVED"; 412 -> "STALE_REMOTE"
         429, in 500..599 -> "RETRY"; else -> "API_ERROR"
         })
       }
@@ -64,7 +72,8 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
   override fun calendar(token: String, id: String): OwnedCalendar {
     val value = request(token, "$base/users/me/calendarList/${path(id)}")!!
     if (value.optString("accessRole") != "owner" || value.optBoolean("deleted")) throw CalendarFailure("NOT_OWNER")
-    return OwnedCalendar(value.getString("id"), value.optString("summaryOverride", value.optString("summary")), value.optString("timeZone"))
+    return OwnedCalendar(value.getString("id"), value.optString("summaryOverride", value.optString("summary")), value.optString("timeZone"),
+      hasDefaultReminders = (value.optJSONArray("defaultReminders")?.length() ?: 0) > 0)
   }
   override fun event(token: String, calendarId: String, eventId: String): JSONObject? =
     request(token, "$base/calendars/${path(calendarId)}/events/${path(eventId)}", allowMissing = true)
@@ -83,4 +92,11 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
   }
   override fun insert(token: String, calendarId: String, payload: String): JSONObject =
     request(token, "$base/calendars/${path(calendarId)}/events?sendUpdates=none", publicationPayload(payload))!!
+  override fun events(token: String, calendarId: String, from: String, until: String, cursor: String?): JSONObject =
+    request(token, "$base/calendars/${path(calendarId)}/events?singleEvents=true&orderBy=startTime&eventTypes=default&maxResults=100&showDeleted=false&timeMin=${path(from)}&timeMax=${path(until)}" +
+      (cursor?.let { "&pageToken=${path(it)}" } ?: ""))!!
+  override fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): JSONObject {
+    if (etag.isBlank()) throw CalendarFailure("INVALID_INPUT")
+    return request(token, "$base/calendars/${path(calendarId)}/events/${path(eventId)}?sendUpdates=none", payload, method = "PATCH", etag = etag)!!
+  }
 }

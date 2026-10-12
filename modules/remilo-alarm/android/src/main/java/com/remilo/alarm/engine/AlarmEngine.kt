@@ -35,7 +35,8 @@ class AlarmEngine internal constructor(private val context: Context,
   private val beforeAppearanceWrite: () -> Unit = {},
   private val completionCheckpoint: (String) -> Unit = {},
   private val bulkSnoozeCheckpoint: (String) -> Unit = {},
-  private val purgeCheckpoint: (String) -> Unit = {}) {
+  private val purgeCheckpoint: (String) -> Unit = {},
+  private val calendarCheckpoint: (String) -> Unit = {}) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
@@ -132,7 +133,8 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun request(block: () -> Any?, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
     submit {
-      try { resolve(block()) } catch (_: BackupLimitException) { reject("BACKUP_TOO_LARGE") }
+      try { resolve(block()) } catch (error: CalendarFailure) { reject(error.code) }
+      catch (_: BackupLimitException) { reject("BACKUP_TOO_LARGE") }
       catch (_: IllegalArgumentException) { reject("INVALID_INPUT") }
       catch (_: IllegalStateException) { reject("NOT_AVAILABLE") }
       catch (_: Exception) { reject("STORAGE_ERROR") }
@@ -342,7 +344,8 @@ class AlarmEngine internal constructor(private val context: Context,
     PendingSchedule(operation, record.id, record.definedAlarmAtMs ?: record.eventStartMs, generation,
       record.mode, record.sound, record.vibration, (content().records().settings() ?: SettingsRecord()).snoozeMinutes,
       !record.completed && !record.deleted && !record.skipped)
-  private fun modify(operation: String, command: Map<String, Any?>): Map<String, Any?> {
+  private fun modify(operation: String, command: Map<String, Any?>, preserveAdjustment: Boolean = false,
+    afterCommit: () -> Unit = {}, checkpoint: () -> Unit = {}): Map<String, Any?> {
     val db = content()
     val kind = command["kind"] as String
     val id = text(command, "occurrenceId", "", 200)
@@ -375,10 +378,11 @@ class AlarmEngine internal constructor(private val context: Context,
         db.records().update(record)
         db.records().receipt(CreationReceipt(operation, id, kind))
         db.records().history(HistoryRecord(operation, id, kind, now(), previous?.generation ?: 0))
+        checkpoint()
       }
       previous?.sessionId?.let { RingingService.refresh(context, it) }
       if (record.segmentId != null) { previous?.let { alerts.put(it.copy(exception = record.exception)) }; series.replenish(); series.materialize() }
-      changed(); return result(id)
+      afterCommit(); changed(); return result(id)
     }
     val generation = maxOf(previous?.generation ?: 0, db.records().pending().filter { it.occurrenceId == id }.maxOfOrNull { it.generation } ?: 0) + 1
     // Fence first. If the CE commit is interrupted, Changing is recovered from
@@ -393,10 +397,14 @@ class AlarmEngine internal constructor(private val context: Context,
       db.records().update(record)
       if (kind == "Delete") calendarStore().removed(id, false)
       db.records().pending(projection(operation, record, generation).copy(
-        targetMs = if (changedDefinition) record.definedAlarmAtMs!! else previous?.targetMs ?: record.definedAlarmAtMs!!))
+        targetMs = if (preserveAdjustment && previous != null && previous.targetMs > now() &&
+          previous.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)) previous.targetMs
+          else if (changedDefinition) record.definedAlarmAtMs!! else previous?.targetMs ?: record.definedAlarmAtMs!!))
       db.records().receipt(CreationReceipt(operation, id, kind))
       db.records().history(HistoryRecord(operation, id, kind, now(), generation, record.definedAlarmAtMs))
+      checkpoint()
     }
+    afterCommit()
     AlarmNotifications(context).clearAttention(id)
     applyPending(db); series.replenish(); series.materialize(); changed()
     return result(id)
@@ -757,21 +765,57 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun testAlarm(operationId: String): Map<String, Any?> = apply(mapOf(
     "kind" to "Create", "operationId" to operationId, "title" to "Remilo test alarm", "alarmAtMs" to now() + 15_000L))
-  private fun create(operationId: String, command: Map<String, Any?>): Map<String, Any?> {
+  /** Called only through request(), on the native mutation worker. */
+  fun calendarLocal(operationId: String, executionRevision: Long? = null): Map<String, Any?> {
+    prepareContentActions()
+    val store = calendarStore().links
+    val job = store.operation(operationId) ?: throw CalendarFailure("NOT_FOUND")
+    store.check(job, executionRevision)
+    if (job.localApplied) {
+      applyPending(content())
+      return result(job.occurrenceId).also { store.localStatus(operationId, it["status"] as String) }
+    }
+    if (job.kind != "ImportCalendarEvent") {
+      val alert = alerts.find(job.occurrenceId)
+      if ((alert?.generation ?: 0) != job.expectedGeneration || alert?.sessionId != null) throw CalendarFailure("STALE_PREVIEW")
+    }
+    val draft = com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(job.draft))
+    val record = store.record(job.occurrenceId)
+    val result = if (record != null && com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+        com.remilo.alarm.calendar.CalendarLinkMapper.fields(record), org.json.JSONObject(job.desired))) {
+      content().runInTransaction {
+        content().records().receipt(CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey))
+        store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit")
+      }
+      calendarCheckpoint("afterLocalCommit")
+      result(job.occurrenceId)
+    } else if (job.kind == "ImportCalendarEvent") create(operationId, draft, job.occurrenceId,
+      { calendarCheckpoint("afterLocalCommit") }) { store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit") }
+      else modify(operationId, draft + mapOf("kind" to "Edit", "occurrenceId" to job.occurrenceId,
+        "expectedRevision" to job.expectedRevision), true,
+        { calendarCheckpoint("afterLocalCommit") }) { store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit") }
+    if (result["status"] == "Rejected") throw CalendarFailure("STALE_PREVIEW")
+    store.localStatus(operationId, result["status"] as String)
+    return result
+  }
+  private fun create(operationId: String, command: Map<String, Any?>, allocatedId: String? = null,
+    afterCommit: () -> Unit = {}, checkpoint: () -> Unit = {}): Map<String, Any?> {
     val db = content()
     db.records().receipt(operationId)?.let {
       validate(it.kind == "Create", "operationId", "This operation was already used. Refresh and try again.")
       applyPending(db)
       return result(it.occurrenceId)
     }
-    val id = UUID.randomUUID().toString()
+    val id = allocatedId ?: UUID.randomUUID().toString()
     val record = draft(command, id)
     validate(record.mode == "None" || record.definedAlarmAtMs!! > now(), "alarmAtMs", "Choose an alarm time in the future.")
     db.runInTransaction {
       db.records().insert(record)
       db.records().pending(projection(operationId, record, 1))
       db.records().receipt(CreationReceipt(operationId, id))
+      checkpoint()
     }
+    afterCommit()
     applyPending(db)
     changed()
     return result(id)

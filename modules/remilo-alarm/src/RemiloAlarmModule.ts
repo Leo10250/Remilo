@@ -19,11 +19,17 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   scheduleTestAlarm(operationId: string): Promise<CommandResult>;
   getSettings(): Promise<AppSettings>;
   getCalendarConnection(): Promise<CalendarConnection>;
+  listCalendarEvents(query: import('./RemiloAlarm.types').CalendarEventQuery): Promise<import('./RemiloAlarm.types').CalendarEventPage>;
+  previewCalendarImport(event: import('./RemiloAlarm.types').CalendarEventRef, choices: import('./RemiloAlarm.types').CalendarImportChoices): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
+  previewCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
+  previewCalendarUpdate(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
+  getCalendarLinks(): Promise<import('./RemiloAlarm.types').CalendarLink[]>;
+  getCalendarOperations(): Promise<import('./RemiloAlarm.types').CalendarLinkedOperation[]>;
   getCalendarPublications(): Promise<CalendarPublication[]>;
   previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
   authorizeCalendar(publicationId: string | null): Promise<void>;
   listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
-  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | { disconnected: boolean }>;
+  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | import('./RemiloAlarm.types').CalendarLinkedOperation | { disconnected: boolean } | { unlinked: boolean }>;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;

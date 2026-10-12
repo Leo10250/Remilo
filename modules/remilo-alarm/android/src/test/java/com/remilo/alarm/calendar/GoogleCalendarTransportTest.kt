@@ -38,6 +38,29 @@ class GoogleCalendarTransportTest {
     override fun getInputStream() = "{}".byteInputStream()
     override fun getErrorStream() = "private server diagnostics must not escape".byteInputStream()
   }
+  @Test fun linkedPatchUsesReviewedEtagAndOnlyExplicitlySelectedFields() {
+    val response = Response(URL("https://synthetic.test"))
+    val transport = GoogleCalendarTransport { response }
+    val payload = JSONObject().put("summary", "Reviewed title").toString()
+    transport.patch("synthetic-token", "original@calendar", "event/identity", "\"reviewed\"", payload)
+    assertEquals("POST", response.requestMethod)
+    assertEquals("PATCH", response.getRequestProperty("X-HTTP-Method-Override"))
+    assertEquals("\"reviewed\"", response.getRequestProperty("If-Match"))
+    assertEquals(mapOf("summary" to "Reviewed title"), content(JSONObject(response.sent.toString("UTF-8"))))
+  }
+  @Test fun staleConditionalWriteIsAConflictAndNeverLeaksServerDiagnostics() {
+    val transport = GoogleCalendarTransport { url -> Response(url, 412) }
+    try { transport.patch("synthetic-token", "source", "event", "old", "{}"); fail("Must reject stale etag") }
+    catch (error: CalendarFailure) { assertEquals("STALE_REMOTE", error.code); assertFalse(error.message!!.contains("private")) }
+  }
+  @Test fun eventListingIsOrderedPaginatedBoundedAndDoesNotWrite() {
+    lateinit var response: Response
+    GoogleCalendarTransport { url -> Response(url).also { response = it } }
+      .events("synthetic", "source@test", "2026-10-12T00:00:00Z", "2026-11-11T00:00:00Z", "next+page")
+    assertEquals("GET", response.requestMethod); assertEquals(0, response.sent.size())
+    assertTrue(response.url.query.contains("singleEvents=true")); assertTrue(response.url.query.contains("orderBy=startTime"))
+    assertTrue(response.url.query.contains("maxResults=100")); assertTrue(response.url.query.contains("pageToken=next%2Bpage"))
+  }
   @Test fun savedMinutePrecisionPayloadIsReencodedWithoutChangingContentDestinationOrIdentity() {
     val payload = JSONObject("""{"id":"00112233445566778899aabbccddeeff","summary":"Original title","description":"Original notes","start":{"dateTime":"2026-10-12T12:00-07:00","timeZone":"America/Los_Angeles"},"end":{"dateTime":"2026-10-12T12:30-07:00","timeZone":"America/Los_Angeles"},"visibility":"private","transparency":"opaque","reminders":{"useDefault":false,"overrides":[]},"extendedProperties":{"private":{"remiloPublication":"00112233445566778899aabbccddeeff"}}}""")
     val captured = payload.toString()

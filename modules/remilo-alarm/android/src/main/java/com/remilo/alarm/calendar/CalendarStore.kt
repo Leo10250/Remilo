@@ -9,6 +9,7 @@ import java.time.ZoneId
 class CalendarStore(private val db: ContentDatabase, private val now: () -> Long,
   private val deviceZone: () -> String = { ZoneId.systemDefault().id }) {
   private val dao = db.calendar()
+  val links = CalendarLinkStore(db, now)
   init {
     dao.operations().filter { it.state == "Publishing" }.forEach {
       dao.update(it.copy(state = "Unconfirmed", message = "Publication was interrupted. Retry the same publication to confirm it."))
@@ -21,7 +22,11 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   fun operation(id: String) = dao.operation(id)
   fun authorizationEmail(id: String?): String? {
     if (id == null) return null // Connect/change-account explicitly opens account selection.
-    val job = operation(id) ?: throw CalendarFailure("NOT_FOUND")
+    val job = operation(id)
+    if (job == null) {
+      val linkJob = links.operation(id) ?: throw CalendarFailure("NOT_FOUND")
+      return connection().takeIf { it.subject == linkJob.subject }?.email?.takeIf { it.isNotBlank() }
+    }
     return connection().takeIf { it.subject == job.subject }?.email?.takeIf { it.isNotBlank() }
       ?: job.email.takeIf { it.isNotBlank() } // Purged jobs can select an account; UserInfo still verifies sub.
   }
@@ -88,6 +93,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     val record = db.records().find(id) ?: throw CalendarFailure("NOT_FOUND")
     if (record.deleted || record.completed || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
     if (dao.binding(id) != null) throw CalendarFailure("ALREADY_PUBLISHED")
+    if (links.link(id) != null) throw CalendarFailure("ALREADY_IMPORTED")
     val connection = connection()
     if (!connection.connected || connection.calendarId.isBlank()) throw CalendarFailure("NEEDS_CONNECTION")
     val zone = record.zoneId.ifEmpty(deviceZone)
@@ -166,6 +172,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     dao.update(job.copy(state = state, message = message))
   }
   fun removed(id: String, purge: Boolean) {
+    links.removed(id, purge)
     dao.operationsFor(id).forEach { job ->
       val cancelled = !job.attempted && job.state != "Published"
       dao.update(job.copy(payload = if (purge || cancelled) "" else job.payload, readOnly = true,

@@ -34,7 +34,7 @@ data class CalendarOperation(@PrimaryKey val operationId: String, val occurrence
   @Query("DELETE FROM calendar_publications WHERE occurrenceId = :id") fun unbind(id: String)
 }
 
-data class OwnedCalendar(val id: String, val name: String, val zoneId: String, val accessRole: String = "owner") {
+data class OwnedCalendar(val id: String, val name: String, val zoneId: String, val accessRole: String = "owner", val hasDefaultReminders: Boolean = true) {
   fun view(): Map<String, Any> = mapOf("id" to id, "name" to name, "zoneId" to zoneId)
 }
 data class CalendarAccount(val subject: String, val email: String)
@@ -57,4 +57,6 @@ interface CalendarTransport {
   fun calendar(token: String, id: String): OwnedCalendar
   fun event(token: String, calendarId: String, eventId: String): org.json.JSONObject?
   fun insert(token: String, calendarId: String, payload: String): org.json.JSONObject
+  fun events(token: String, calendarId: String, from: String, until: String, cursor: String?): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
+  fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
 }

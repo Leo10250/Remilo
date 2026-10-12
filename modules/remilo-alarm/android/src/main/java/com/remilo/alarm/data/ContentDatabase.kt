@@ -95,13 +95,22 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
   HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class, PurgedOccurrence::class,
-  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class], version = 7, exportSchema = true)
+  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class, CalendarLink::class, CalendarLinkOperation::class], version = 8, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun calendar(): CalendarDao
+  abstract fun links(): CalendarLinkDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_links (occurrenceId TEXT NOT NULL PRIMARY KEY, remoteKey TEXT NOT NULL, subject TEXT NOT NULL, calendarId TEXT NOT NULL, eventId TEXT NOT NULL, calendarName TEXT NOT NULL, origin TEXT NOT NULL, baseline TEXT NOT NULL, etag TEXT NOT NULL, state TEXT NOT NULL, message TEXT NOT NULL, htmlLink TEXT NOT NULL, revision INTEGER NOT NULL, erased INTEGER NOT NULL, checkedAtMs INTEGER)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_link_operations (operationId TEXT NOT NULL PRIMARY KEY, occurrenceId TEXT NOT NULL, remoteKey TEXT NOT NULL, kind TEXT NOT NULL, requestKey TEXT NOT NULL, subject TEXT NOT NULL, calendarId TEXT NOT NULL, eventId TEXT NOT NULL, calendarName TEXT NOT NULL, origin TEXT NOT NULL, etag TEXT NOT NULL, remote TEXT NOT NULL, desired TEXT NOT NULL, draft TEXT NOT NULL, patch TEXT NOT NULL, state TEXT NOT NULL, localStatus TEXT NOT NULL, message TEXT NOT NULL, expectedRevision INTEGER NOT NULL, expectedGeneration INTEGER NOT NULL, expectedLinkRevision INTEGER NOT NULL, expectedConnectionRevision INTEGER NOT NULL, disableReminders INTEGER NOT NULL, localApplied INTEGER NOT NULL, remoteAttempted INTEGER NOT NULL, erased INTEGER NOT NULL, htmlLink TEXT NOT NULL)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_calendar_links_remoteKey ON calendar_links (remoteKey)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_calendar_link_operations_remoteKey ON calendar_link_operations (remoteKey)")
+      }
+    }
     val MIGRATION_6_7 = object : Migration(6, 7) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS calendar_connection (id TEXT NOT NULL PRIMARY KEY, revision INTEGER NOT NULL, connected INTEGER NOT NULL, subject TEXT NOT NULL, email TEXT NOT NULL, calendarId TEXT NOT NULL, calendarName TEXT NOT NULL, calendarZone TEXT NOT NULL, message TEXT NOT NULL)")
