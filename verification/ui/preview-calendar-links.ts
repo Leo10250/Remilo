@@ -22,17 +22,17 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     remote.notes = 'Preserve these personal notes exactly. 请保留完整的个人备注。\n'.repeat(20);
   }
   if (scenario === 'all-day') { const day = new Date(); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + 1); remote.schedule = { ...remote.schedule, eventStartMs: day.getTime(), eventEndMs: day.getTime() + 86_400_000, allDay: true }; }
-  if (['conflict', 'linked', 'deleted', 'unavailable', 'unsupported', 'detached', 'restored', 'terminal', 'partial', 'blocked'].includes(scenario || '')) links.set('review', {
+  if (['conflict', 'linked', 'deleted', 'unavailable', 'unsupported', 'detached', 'restored', 'terminal', 'partial-status', 'blocked-status'].includes(scenario || '')) links.set('review', {
     ...metadata(), occurrenceId: 'review', revision: 1, calendarName: 'Synthetic source / 测试日历', state: scenario === 'detached' ? 'Detached' : ['deleted', 'unavailable', 'unsupported', 'restored'].includes(scenario!) ? 'Suspended' : 'Linked',
     availability: scenario === 'deleted' ? 'Deleted' : scenario === 'unavailable' ? 'Unavailable' : scenario === 'unsupported' ? 'Unsupported' : 'Available',
     availabilityReason: scenario === 'deleted' ? 'REMOTE_DELETED' : scenario === 'unavailable' ? 'NOT_FOUND' : scenario === 'unsupported' ? 'MEETING_EVENT' : '',
     requiresReview: ['deleted', 'unavailable', 'unsupported', 'restored'].includes(scenario!),
     checkedAtMs: Date.now(), message: 'Synthetic connection. No Google requests.', htmlLink: '', readOnly: false, differs: scenario === 'conflict', source: { calendarId: 'fixture-calendar', eventId: 'personal' },
   });
-  if (scenario === 'partial' || scenario === 'blocked') jobs.set('synthetic-operation', {
+  if (scenario === 'partial-status' || scenario === 'blocked-status') jobs.set('synthetic-operation', {
     operationId: 'synthetic-operation', occurrenceId: 'review', kind: 'ApplyCalendarResolution', calendarName: 'Synthetic source / 测试日历',
-    state: scenario === 'partial' ? 'Unconfirmed' : 'Blocked', recoveryMode: 'Retry', localApplied: true, localStatus: scenario === 'partial' ? 'Scheduled' : 'Blocked',
-    remoteAttempted: scenario === 'partial', readOnly: false, message: scenario === 'partial' ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Google reminders remain. Resolve alert readiness, then retry.',
+    state: scenario === 'partial-status' ? 'Unconfirmed' : 'Blocked', recoveryMode: 'Retry', localApplied: true, localStatus: scenario === 'partial-status' ? 'Scheduled' : 'Blocked',
+    remoteAttempted: scenario === 'partial-status', readOnly: false, message: scenario === 'partial-status' ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Google reminders remain. Resolve alert readiness, then retry.',
   });
   const preview = (id: string | null, choices: CalendarImportChoices = {}, source?: CalendarEventRef): CalendarLinkPreview => {
     const item = id ? find(id) : undefined;
