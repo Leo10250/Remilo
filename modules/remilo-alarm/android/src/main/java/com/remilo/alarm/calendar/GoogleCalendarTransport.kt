@@ -9,7 +9,7 @@ import javax.net.ssl.HttpsURLConnection
 class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }) : CalendarTransport {
   private fun path(id: String) = URLEncoder.encode(id, "UTF-8").replace("+", "%20")
   private val base = "https://www.googleapis.com/calendar/v3"
-  private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false, method: String = "POST", etag: String? = null): JSONObject? {
+  private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false, method: String = "POST", etag: String? = null, inspect: Boolean = false): JSONObject? {
     val connection = openConnection(URL(url))
     try {
       connection.connectTimeout = 10_000; connection.readTimeout = 20_000; connection.instanceFollowRedirects = false
@@ -32,7 +32,7 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
       if (allowMissing && status == 404) return null
       if (status !in 200..299) {
         // Parse only bounded error codes, never retain or log the response body.
-        val reason = if (status == 403) try {
+        val reason = if (status == 403 || status == 410 && inspect) try {
           val bytes = connection.errorStream?.use { it.readNBytes(16_384) }
           bytes?.let { JSONObject(String(it, Charsets.UTF_8)).optJSONObject("error")?.optJSONArray("errors")?.optJSONObject(0)?.optString("reason") }
         } catch (_: Exception) { null } else null
@@ -42,7 +42,9 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
           "insufficientPermissions" -> "AUTH"
           else -> "FORBIDDEN"
         }
-        404 -> "NOT_FOUND"; 409 -> "DUPLICATE"; 410 -> "REMOTE_REMOVED"; 412 -> "STALE_REMOTE"
+        404 -> "NOT_FOUND"; 409 -> "DUPLICATE"
+        410 -> if (!inspect) "REMOTE_REMOVED" else if (reason == "deleted") "REMOTE_DELETED" else "REMOTE_UNAVAILABLE"
+        412 -> "STALE_REMOTE"
         429, in 500..599 -> "RETRY"; else -> "API_ERROR"
         })
       }
@@ -77,6 +79,12 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
   }
   override fun event(token: String, calendarId: String, eventId: String): JSONObject? =
     request(token, "$base/calendars/${path(calendarId)}/events/${path(eventId)}", allowMissing = true)
+  override fun lookup(token: String, calendarId: String, eventId: String): CalendarEventLookup = try {
+    request(token, "$base/calendars/${path(calendarId)}/events/${path(eventId)}", allowMissing = true, inspect = true)
+      ?.let { CalendarEventLookup.Found(it) } ?: CalendarEventLookup.Missing
+  } catch (error: CalendarFailure) {
+    if (error.code == "REMOTE_DELETED") CalendarEventLookup.Deleted else throw error
+  }
   /** Repair legacy timestamp encoding at the wire boundary, retaining captured content and identity. */
   private fun publicationPayload(payload: String): String {
     val event = JSONObject(payload)

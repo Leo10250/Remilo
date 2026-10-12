@@ -7,7 +7,18 @@ data class CalendarLink(@PrimaryKey val occurrenceId: String, val remoteKey: Str
   val subject: String, val calendarId: String, val eventId: String, val calendarName: String,
   val origin: String, val revision: Long = 1, val baseline: String = "", val etag: String = "",
   val state: String = "Linked", val checkedAtMs: Long? = null, val message: String = "",
-  val htmlLink: String = "", val erased: Boolean = false)
+  val htmlLink: String = "", val erased: Boolean = false,
+  @ColumnInfo(defaultValue = "''") val accountEmail: String = "",
+  @ColumnInfo(defaultValue = "'Unknown'") val availability: String = "Unknown",
+  @ColumnInfo(defaultValue = "''") val availabilityReason: String = "",
+  val observedAtMs: Long? = null, val lastCheckAttemptAtMs: Long? = null,
+  @ColumnInfo(defaultValue = "''") val lastCheckErrorCode: String = "",
+  val remoteDiffers: Boolean? = null,
+  @ColumnInfo(defaultValue = "0") val requiresReview: Boolean = false)
+
+/** Captured on the engine worker before I/O; observations cannot cross lifecycle fences. */
+data class CalendarObservationGuard(val id: String, val remoteKey: String, val linkRevision: Long,
+  val recordRevision: Long, val connectionRevision: Long)
 
 @Entity(tableName = "calendar_link_operations", indices = [Index(value = ["remoteKey"])])
 data class CalendarLinkOperation(@PrimaryKey val operationId: String, val occurrenceId: String,

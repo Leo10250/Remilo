@@ -101,6 +101,7 @@ class AlarmEngine internal constructor(private val context: Context,
         if (committed == null) {
           val record = checkNotNull(db.records().find(completion.occurrenceId)) { "Completion content not materialized" }
           db.records().update(record.copy(completed = true, revision = record.revision + 1))
+          calendarStore().links.terminal(record.id)
           db.records().history(HistoryRecord(completion.operationId, record.id, "Done",
             completion.occurredAtMs, completion.generation))
           completionCheckpoint("content-before-commit")
@@ -396,6 +397,7 @@ class AlarmEngine internal constructor(private val context: Context,
     db.runInTransaction {
       db.records().update(record)
       if (kind == "Delete") calendarStore().removed(id, false)
+      if (kind in setOf("Done", "Skip")) calendarStore().links.terminal(id)
       db.records().pending(projection(operation, record, generation).copy(
         targetMs = if (preserveAdjustment && previous != null && previous.targetMs > now() &&
           previous.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)) previous.targetMs

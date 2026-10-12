@@ -37,7 +37,9 @@ class CalendarRuntime private constructor(private val context: Context, private 
   }
   fun linkRequest(action: String, input: Map<String, Any?>, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
     io.execute {
+      var observation: CalendarObservationGuard? = null
       try {
+        (input["occurrenceId"] as? String)?.let { id -> observation = links { if (it.link(id) != null) it.guard(id) else null } }
         val connection = links { it.connection() }
         if (!connection.connected) throw CalendarFailure("NEEDS_ACCESS")
         val value = authorized(connection.email) { token ->
@@ -77,7 +79,16 @@ class CalendarRuntime private constructor(private val context: Context, private 
           } else {
             val eventId = old?.eventId ?: publicationJob?.eventId ?: CalendarStore.string(input, "eventId")
             if (id != null && old == null && publicationJob?.state != "Published") throw CalendarFailure("INELIGIBLE")
-            val event = transport.event(token, calendarId, eventId) ?: throw CalendarFailure("REMOTE_REMOVED")
+            val lookup = transport.lookup(token, calendarId, eventId)
+            if (action == "check") {
+              return@authorized links(true) { it.observe(observation ?: throw CalendarFailure("INELIGIBLE"), calendar, lookup) }
+            }
+            observation?.let { guard -> links(true) { it.observe(guard, calendar, lookup) } }
+            val event = when (lookup) {
+              is CalendarEventLookup.Found -> lookup.event
+              CalendarEventLookup.Missing -> throw CalendarFailure("REMOTE_UNAVAILABLE")
+              CalendarEventLookup.Deleted -> throw CalendarFailure("REMOTE_DELETED")
+            }
             if (event.optString("id") != eventId) throw CalendarFailure("FOREIGN_IDENTITY")
             if (publicationJob != null && !CalendarMapper.matching(event, eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
             @Suppress("UNCHECKED_CAST") val choices = input["choices"] as? Map<String, Any?> ?: emptyMap()
@@ -93,7 +104,12 @@ class CalendarRuntime private constructor(private val context: Context, private 
         resolve(value)
       } catch (error: Exception) {
         val code = (error as? CalendarFailure)?.code ?: "INVALID_INPUT"
-        (input["occurrenceId"] as? String)?.let { id -> links(true) { it.observedFailure(id, code) } }
+        observation?.let { guard ->
+          try {
+            val saved = links(true) { it.observedFailure(guard.id, code, guard) }
+            if (action == "check" && saved != null) { resolve(saved); return@execute }
+          } catch (stale: CalendarFailure) { reject(stale.code); return@execute }
+        }
         reject(code)
       }
     }

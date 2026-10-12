@@ -23,20 +23,32 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     (it.attempted || it.state == "Published") && CalendarLinkMapper.key(it.subject, it.calendarId, it.eventId) == key
   }?.let { CalendarLink(it.occurrenceId, key, it.subject, it.calendarId, it.eventId, it.calendarName, "Published",
     erased = it.readOnly && it.zoneId.isBlank()) }
-  fun links() = connection().let { current -> dao.links().map { link ->
+  fun links() = connection().let { current -> dao.links().map { view(it, current) } }
+  fun view(link: CalendarLink): Map<String, Any?> = view(link, connection())
+  private fun view(link: CalendarLink, current: CalendarConnection): Map<String, Any?> {
     val record = record(link.occurrenceId)
-    mapOf("occurrenceId" to link.occurrenceId, "revision" to link.revision, "calendarName" to link.calendarName,
+    return mapOf("occurrenceId" to link.occurrenceId, "revision" to link.revision, "calendarName" to link.calendarName,
       "state" to link.state, "checkedAtMs" to link.checkedAtMs, "message" to link.message,
+      "accountEmail" to link.accountEmail, "availability" to link.availability, "availabilityReason" to link.availabilityReason,
+      "observedAtMs" to link.observedAtMs, "lastCheckAttemptAtMs" to link.lastCheckAttemptAtMs,
+      "lastCheckErrorCode" to link.lastCheckErrorCode, "remoteDiffers" to link.remoteDiffers, "requiresReview" to link.requiresReview,
       "htmlLink" to link.htmlLink, "source" to sourceView(link.subject, link.calendarId, link.eventId, current),
       "readOnly" to (link.erased || record == null || record.deleted || record.completed || record.skipped),
       "differs" to (record != null && link.baseline.isNotBlank() && !CalendarLinkMapper.equal(CalendarLinkMapper.fields(record), JSONObject(link.baseline))))
-  } }
+  }
   fun operations() = connection().let { current -> dao.operations().map { view(it, current) } }
   fun view(job: CalendarLinkOperation): Map<String, Any?> = view(job, connection())
   private fun view(job: CalendarLinkOperation, current: CalendarConnection): Map<String, Any?> = mapOf("operationId" to job.operationId,
     "occurrenceId" to job.occurrenceId, "kind" to job.kind, "calendarName" to job.calendarName,
     "title" to if (job.erased) "" else (record(job.occurrenceId)?.title ?: job.draft.takeIf(String::isNotBlank)?.let { JSONObject(it).optString("title") }.orEmpty()),
-    "state" to job.state, "message" to job.message, "localApplied" to job.localApplied,
+    "state" to job.state, "message" to if (job.state == "Failed") (if (job.localApplied) "Local changes saved. " else "Local change not applied. ") + "The Calendar request could not be completed. Review again." else job.message, "localApplied" to job.localApplied,
+    "recoveryMode" to when {
+      job.erased -> "None"
+      job.remoteAttempted && (job.patch.isBlank() || record(job.occurrenceId)?.let { it.completed || it.deleted || it.skipped } == true) && job.state !in terminal -> "ConfirmOutcome"
+      job.state in setOf("Waiting", "Unconfirmed", "NeedsAccess", "Blocked") -> "Retry"
+      job.state in setOf("Conflict", "Failed") && record(job.occurrenceId)?.let { !it.deleted && !it.completed && !it.skipped } == true -> "ReviewAgain"
+      else -> "None"
+    },
     "localStatus" to job.localStatus, "remoteAttempted" to job.remoteAttempted,
     "readOnly" to job.erased, "source" to sourceView(job.subject, job.calendarId, job.eventId, current),
     "localResult" to if (job.localApplied) mapOf("status" to job.localStatus) else null)
@@ -86,7 +98,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       CalendarLinkMapper.reminders(event, calendar.hasDefaultReminders), preservedAlertMs)
     previews[preview.id] = now() to preview
     while (previews.size > 1024) previews.remove(previews.keys.first())
-    if (old != null) dao.put(old.copy(checkedAtMs = now(), state = if (old.state == "Detached") "Detached" else "Linked", message = "Checked just now. Changes require review."))
+    if (old != null) observe(guard(id!!), calendar, CalendarEventLookup.Found(event))
     return previewView(preview)
   }
   private fun previewView(p: CalendarLinkPreview): Map<String, Any?> {
@@ -259,7 +271,11 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     val old = link(job.occurrenceId)
     dao.put(CalendarLink(job.occurrenceId, job.remoteKey, job.subject, job.calendarId, job.eventId,
       job.calendarName, job.origin, (old?.revision ?: 0) + 1,
-      old?.baseline ?: job.remote, job.etag, "Linked", now(), "Local changes saved; checking Google outcome.", job.htmlLink))
+      old?.baseline ?: job.remote, job.etag, if (old?.requiresReview == true) "Suspended" else "Linked", now(), "Local changes saved; checking Google outcome.", job.htmlLink,
+      accountEmail = old?.accountEmail?.takeIf(String::isNotBlank) ?: connection().email,
+      availability = "Available", observedAtMs = now(), lastCheckAttemptAtMs = now(),
+      remoteDiffers = old?.baseline?.takeIf(String::isNotBlank)?.let { !CalendarLinkMapper.equal(JSONObject(job.remote), JSONObject(it)) } ?: false,
+      requiresReview = old?.requiresReview ?: false))
     dao.update(job.copy(localApplied = true, localStatus = "Pending", state = "Waiting", message = "Local change committed; scheduling outcome pending."))
   }
   fun localStatus(id: String, status: String) { operation(id)?.let { dao.update(it.copy(localStatus = status)) } }
@@ -279,7 +295,11 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     val fields = CalendarLinkMapper.fields(event, JSONObject(job.desired).getJSONObject("schedule").getString("zoneId"))
     db.runInTransaction {
       dao.update(job.copy(state = "Confirmed", message = "Local changes confirmed. Google outcome confirmed.", remote = "", desired = "", draft = "", patch = ""))
-      if (old.state != "Detached") dao.put(old.copy(revision = old.revision + 1, baseline = fields.toString(), etag = event.optString("etag"),
+      // A sent acknowledgement is truthful even after local removal; it cannot reactivate the link.
+      val active = record(job.occurrenceId)?.let { !it.deleted && !it.completed && !it.skipped } == true
+      if (old.state != "Detached" && active && job.patch.isNotBlank()) dao.put(old.copy(revision = old.revision + 1, baseline = fields.toString(), etag = event.optString("etag"),
+        state = "Linked", availability = "Available", availabilityReason = "", requiresReview = false, remoteDiffers = false,
+        observedAtMs = now(), lastCheckAttemptAtMs = now(), lastCheckErrorCode = "",
         checkedAtMs = now(), message = "Confirmed. Check for changes when needed.", htmlLink = event.optString("htmlLink")
           .takeIf { it.startsWith("https://calendar.google.com/") || it.startsWith("https://www.google.com/calendar/") }.orEmpty()))
     }
@@ -291,7 +311,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       "AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH", "STALE_CONNECTION" -> "NeedsAccess"
       "NETWORK", "RETRY", "NOT_AVAILABLE", "STORAGE_ERROR" -> "Unconfirmed"
       "ALERT_BLOCKED" -> "Blocked"
-      "STALE_REMOTE", "STALE_PREVIEW", "INELIGIBLE", "REMOTE_REMOVED", "NOT_FOUND" -> "Conflict"
+      "STALE_REMOTE", "STALE_PREVIEW", "INELIGIBLE", "REMOTE_REMOVED", "REMOTE_DELETED", "REMOTE_UNAVAILABLE", "NOT_FOUND" -> "Conflict"
       else -> "Failed"
     }
     dao.update(job.copy(state = state, message = (if (job.localApplied) "Local changes saved. " else "Local change not applied. ") + when (state) {
@@ -301,13 +321,68 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       "Unconfirmed" -> if (job.localApplied && job.kind == "ImportCalendarEvent" && job.disableReminders)
         "Imported; Google reminder change unconfirmed. Retry the same operation."
         else "Google outcome unconfirmed. Retry the same operation."
-      else -> "Request rejected ($code). Correct the issue and review again."
+      else -> "Request could not be completed. Correct the issue and review again."
     }))
   }
-  fun observedFailure(id: String, code: String) { link(id)?.let {
-    dao.put(it.copy(checkedAtMs = now(), state = if (it.state == "Detached") "Detached" else if (code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) "NeedsAccess" else "Suspended",
-      message = "Check could not confirm a supported event ($code). Your local reminder is retained."))
-  } }
+  fun guard(id: String): CalendarObservationGuard {
+    val link = link(id) ?: throw CalendarFailure("NOT_FOUND")
+    val record = record(id) ?: throw CalendarFailure("NOT_FOUND")
+    if (link.erased) throw CalendarFailure("INELIGIBLE")
+    return CalendarObservationGuard(id, link.remoteKey, link.revision, record.revision, connection().revision)
+  }
+  private fun guarded(guard: CalendarObservationGuard): CalendarLink {
+    val old = link(guard.id) ?: throw CalendarFailure("NOT_FOUND")
+    if (old.erased || record(guard.id) == null) throw CalendarFailure("INELIGIBLE")
+    if (old.remoteKey != guard.remoteKey || old.revision != guard.linkRevision || record(guard.id)!!.revision != guard.recordRevision)
+      throw CalendarFailure("STALE_PREVIEW")
+    if (connection().revision != guard.connectionRevision) throw CalendarFailure("STALE_CONNECTION")
+    return old
+  }
+  fun observe(guard: CalendarObservationGuard, calendar: OwnedCalendar?, lookup: CalendarEventLookup): Map<String, Any?> {
+    val old = guarded(guard)
+    if (!connection().connected || connection().subject != old.subject) throw CalendarFailure("STALE_CONNECTION")
+    val event = (lookup as? CalendarEventLookup.Found)?.event
+    val code = when {
+      lookup == CalendarEventLookup.Deleted -> "REMOTE_DELETED"
+      lookup == CalendarEventLookup.Missing -> "NOT_FOUND"
+      event?.optString("id") != old.eventId -> "FOREIGN_IDENTITY"
+      event!!.optString("status") == "cancelled" -> "REMOTE_DELETED"
+      old.origin == "Published" && !CalendarMapper.matching(event, old.eventId) -> "FOREIGN_IDENTITY"
+      else -> CalendarLinkMapper.reason(event, calendar!!.zoneId)
+    }
+    val availability = when (code) { null -> "Available"; "REMOTE_DELETED" -> "Deleted"; "NOT_FOUND", "FOREIGN_IDENTITY" -> "Unavailable"; else -> "Unsupported" }
+    return saveObservation(old, availability, code.orEmpty(), event?.takeIf { availability == "Available" }?.let { CalendarLinkMapper.fields(it, calendar!!.zoneId) })
+  }
+  private fun saveObservation(old: CalendarLink, availability: String, reason: String, fields: JSONObject? = null): Map<String, Any?> {
+    val suspended = availability != "Available"
+    val fence = suspended && old.state != "Detached" && !old.requiresReview
+    db.runInTransaction {
+      dao.put(old.copy(accountEmail = old.accountEmail.ifBlank { connection().takeIf { it.subject == old.subject }?.email.orEmpty() },
+        availability = availability, availabilityReason = reason, observedAtMs = now(), lastCheckAttemptAtMs = now(), checkedAtMs = now(), lastCheckErrorCode = "",
+        remoteDiffers = fields?.let { old.baseline.takeIf(String::isNotBlank)?.let { baseline -> !CalendarLinkMapper.equal(it, JSONObject(baseline)) } },
+        requiresReview = old.requiresReview || suspended, revision = old.revision + if (fence) 1 else 0,
+        state = if (old.state == "Detached") "Detached" else if (old.requiresReview || suspended) "Suspended" else "Linked",
+        message = if (suspended) "Calendar updates suspended. Your Remilo reminder is unchanged." else "Checked. Changes require review."))
+      if (suspended && old.state != "Detached") fenceOperations(old.occurrenceId, "Calendar event unavailable. No further writes from this operation.")
+    }
+    return view(link(old.occurrenceId)!!)
+  }
+  private fun fenceOperations(id: String, message: String) {
+    dao.operations().filter { it.occurrenceId == id && it.state !in terminal }.forEach {
+      dao.update(it.copy(state = if (it.remoteAttempted) it.state else "Cancelled", patch = "", draft = "", message = message))
+    }
+  }
+  fun observedFailure(id: String, code: String, guard: CalendarObservationGuard? = null): Map<String, Any?>? {
+    val old = if (guard == null) link(id)?.takeUnless { it.erased } ?: return null else guarded(guard)
+    val safe = if (code in observationCodes) code else "API_ERROR"
+    if (safe in setOf("NOT_FOUND", "REMOTE_UNAVAILABLE", "NOT_OWNER", "FORBIDDEN", "FOREIGN_IDENTITY"))
+      return saveObservation(old, "Unavailable", safe)
+    if (safe == "REMOTE_DELETED") return saveObservation(old, "Deleted", safe)
+    dao.put(old.copy(lastCheckAttemptAtMs = now(), checkedAtMs = now(), lastCheckErrorCode = safe,
+      state = if (old.state == "Detached") "Detached" else if (safe in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) "NeedsAccess" else old.state,
+      message = "The latest check could not finish. Your Remilo reminder is unchanged."))
+    return view(link(id)!!)
+  }
   fun unlink(command: Map<String, Any?>): Map<String, Any?> {
     val id = CalendarStore.string(command, "occurrenceId"); val op = CalendarStore.string(command, "operationId")
     val expected = CalendarStore.number(command, "expectedLinkRevision")
@@ -320,7 +395,8 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     val old = link(id) ?: throw CalendarFailure("NOT_FOUND")
     if (old.revision != expected) throw CalendarFailure("STALE_PREVIEW")
     db.runInTransaction {
-      dao.put(old.copy(revision = old.revision + 1, state = "Detached", message = "Unlinked. Local reminder and Google event retained."))
+      if (old.erased) throw CalendarFailure("INELIGIBLE")
+      dao.put(old.copy(revision = old.revision + 1, state = "Detached", message = "Unlinked. Your reminder is kept; Google Calendar was not changed."))
       dao.operations().filter { it.occurrenceId == id && it.state !in terminal }.forEach {
         dao.update(it.copy(state = if (it.remoteAttempted) it.state else "Cancelled", patch = "", draft = "",
           message = if (it.remoteAttempted) "Unlinked. Retry only checks the previously sent outcome; no further writes." else "Unsent changes cancelled by unlink."))
@@ -333,7 +409,11 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     link(id)?.let { dao.put(it.copy(revision = it.revision + 1, state = if (it.state == "Detached") "Detached" else "Suspended",
       baseline = if (purge) "" else it.baseline, calendarName = if (purge) "" else it.calendarName,
       htmlLink = if (purge) "" else it.htmlLink, etag = if (purge) "" else it.etag,
-      erased = purge || it.erased, message = "Local reminder removed. Google event retained.")) }
+      accountEmail = if (purge) "" else it.accountEmail, availability = if (purge) "Unknown" else it.availability,
+      availabilityReason = if (purge) "" else it.availabilityReason, observedAtMs = if (purge) null else it.observedAtMs,
+      lastCheckAttemptAtMs = if (purge) null else it.lastCheckAttemptAtMs, lastCheckErrorCode = if (purge) "" else it.lastCheckErrorCode,
+      checkedAtMs = if (purge) null else it.checkedAtMs, remoteDiffers = if (purge) null else it.remoteDiffers, requiresReview = true,
+      erased = purge || it.erased, message = "Local reminder removed. Google Calendar was not changed.")) }
     dao.operations().filter { it.occurrenceId == id }.forEach {
       dao.update(it.copy(erased = purge || it.erased, remote = if (purge) "" else it.remote,
         desired = if (purge) "" else it.desired, draft = "", patch = "",
@@ -342,5 +422,13 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
         message = "Local reminder removed. No further Calendar writes."))
     }
   }
-  companion object { val terminal = setOf("Confirmed", "Cancelled", "Conflict", "Failed") }
+  fun terminal(id: String) {
+    link(id)?.takeUnless { it.erased }?.let { dao.put(it.copy(revision = it.revision + 1,
+      requiresReview = true, state = if (it.state == "Detached") "Detached" else "Suspended")) }
+    fenceOperations(id, "Local work is terminal. Only a previously sent outcome may be checked; no further writes.")
+  }
+  companion object {
+    val terminal = setOf("Confirmed", "Cancelled", "Conflict", "Failed")
+    private val observationCodes = setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH", "NETWORK", "RETRY", "NOT_AVAILABLE", "STORAGE_ERROR", "NOT_FOUND", "REMOTE_DELETED", "REMOTE_UNAVAILABLE", "NOT_OWNER", "FORBIDDEN", "FOREIGN_IDENTITY", "API_ERROR")
+  }
 }

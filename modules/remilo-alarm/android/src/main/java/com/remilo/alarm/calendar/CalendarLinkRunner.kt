@@ -10,9 +10,11 @@ interface CalendarLinkAccess {
 /** One approved operation; all network waits are outside the engine worker. */
 class CalendarLinkRunner(private val state: CalendarLinkAccess, private val transport: CalendarTransport) {
   fun run(id: String, token: String, executionRevision: Long? = null) {
+    var observation: CalendarObservationGuard? = null
     try {
       var job = state.links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
       if (job.state in CalendarLinkStore.terminal || job.erased) return
+      observation = state.links { if (it.link(job.occurrenceId) != null) it.guard(job.occurrenceId) else null }
       val connection = state.links { it.connection() }
       val revision = executionRevision ?: connection.revision
       if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("NEEDS_ACCESS")
@@ -20,7 +22,13 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
       if (transport.account(token).subject != job.subject) throw CalendarFailure("ACCOUNT_MISMATCH")
       val calendar = transport.calendar(token, job.calendarId)
       if (calendar.accessRole != "owner") throw CalendarFailure("NOT_OWNER")
-      val event = transport.event(token, job.calendarId, job.eventId) ?: throw CalendarFailure("REMOTE_REMOVED")
+      val lookup = transport.lookup(token, job.calendarId, job.eventId)
+      observation?.let { guard -> state.links(true) { it.observe(guard, calendar, lookup) } }
+      val event = when (lookup) {
+        is CalendarEventLookup.Found -> lookup.event
+        CalendarEventLookup.Missing -> throw CalendarFailure("REMOTE_UNAVAILABLE")
+        CalendarEventLookup.Deleted -> throw CalendarFailure("REMOTE_DELETED")
+      }
       if (event.optString("id") != job.eventId) throw CalendarFailure("FOREIGN_IDENTITY")
       if (job.origin == "Published" && !CalendarMapper.matching(event, job.eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
       val remote = CalendarLinkMapper.fields(event, calendar.zoneId)
@@ -28,11 +36,13 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
       if (job.localApplied && job.remoteAttempted && matches(job, event, remote)) {
         state.links(true) { it.complete(id, event) }; return
       }
+      if (job.patch.isBlank()) throw CalendarFailure("INELIGIBLE")
       if (event.optString("etag") != job.etag) throw CalendarFailure("STALE_REMOTE")
       if (!CalendarLinkMapper.equal(remote, JSONObject(job.remote))) throw CalendarFailure("STALE_REMOTE")
       state.links { it.check(job, revision) }
       state.local(id, revision)
       job = state.links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
+      observation = state.links { it.guard(job.occurrenceId) }
       if (job.patch == "{}") { state.links(true) { it.complete(id, event) }; return }
       job = state.links(true) { it.permit(id, revision) }
       val result = transport.patch(token, job.calendarId, job.eventId, job.etag, job.patch)
@@ -41,7 +51,13 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
       val fields = CalendarLinkMapper.fields(result, calendar.zoneId)
       if (!matches(job, result, fields)) throw CalendarFailure("STALE_REMOTE")
       state.links(true) { it.complete(id, result) }
-    } catch (error: CalendarFailure) { state.links(true) { it.fail(id, error.code) } }
+    } catch (error: CalendarFailure) {
+      observation?.let { guard ->
+        try { state.links(true) { it.observedFailure(guard.id, error.code, guard) } }
+        catch (_: CalendarFailure) { /* Lifecycle/connection changed: discard the stale observation. */ }
+      }
+      state.links(true) { it.fail(id, error.code) }
+    }
     catch (_: IllegalArgumentException) { state.links(true) { it.fail(id, "INVALID_INPUT") } }
     catch (_: Exception) { state.links(true) { it.fail(id, "NETWORK") } }
   }

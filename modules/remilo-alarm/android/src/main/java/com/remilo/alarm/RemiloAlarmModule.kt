@@ -104,6 +104,10 @@ class RemiloAlarmModule : Module() {
       CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("link", mapOf("occurrenceId" to id),
         { promise.resolve(it) }, { promise.reject(it, "Calendar link review unavailable: $it", null) })
     }
+    AsyncFunction("checkCalendarLink") { id: String, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("check", mapOf("occurrenceId" to id),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
     AsyncFunction("previewCalendarUpdate") { id: String, promise: Promise ->
       CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("update", mapOf("occurrenceId" to id),
         { promise.resolve(it) }, { promise.reject(it, "Calendar changes unavailable: $it", null) })

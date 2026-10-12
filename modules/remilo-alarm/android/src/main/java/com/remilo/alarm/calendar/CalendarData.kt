@@ -51,11 +51,18 @@ object CalendarConsent {
 }
 
 /** Transport errors never carry server response text or private content. */
+sealed class CalendarEventLookup {
+  data class Found(val event: org.json.JSONObject) : CalendarEventLookup()
+  data object Missing : CalendarEventLookup()
+  data object Deleted : CalendarEventLookup()
+}
 interface CalendarTransport {
   fun account(token: String): CalendarAccount
   fun calendars(token: String, cursor: String?): CalendarPage
   fun calendar(token: String, id: String): OwnedCalendar
   fun event(token: String, calendarId: String, eventId: String): org.json.JSONObject?
+  fun lookup(token: String, calendarId: String, eventId: String): CalendarEventLookup =
+    event(token, calendarId, eventId)?.let { CalendarEventLookup.Found(it) } ?: CalendarEventLookup.Missing
   fun insert(token: String, calendarId: String, payload: String): org.json.JSONObject
   fun events(token: String, calendarId: String, from: String, until: String, cursor: String?): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
   fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")

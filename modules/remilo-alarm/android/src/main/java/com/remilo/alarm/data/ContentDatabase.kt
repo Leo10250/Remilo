@@ -95,14 +95,28 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
   HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class, PurgedOccurrence::class,
-  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class, CalendarLink::class, CalendarLinkOperation::class], version = 8, exportSchema = true)
+  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class, CalendarLink::class, CalendarLinkOperation::class], version = 9, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun calendar(): CalendarDao
   abstract fun links(): CalendarLinkDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build()
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN accountEmail TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN availability TEXT NOT NULL DEFAULT 'Unknown'")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN availabilityReason TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN observedAtMs INTEGER")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN lastCheckAttemptAtMs INTEGER")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN lastCheckErrorCode TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN remoteDiffers INTEGER")
+        db.execSQL("ALTER TABLE calendar_links ADD COLUMN requiresReview INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE calendar_links SET lastCheckAttemptAtMs = CASE WHEN erased = 1 THEN NULL ELSE checkedAtMs END, requiresReview = CASE WHEN state = 'Suspended' THEN 1 ELSE 0 END")
+        db.execSQL("UPDATE calendar_links SET accountEmail = COALESCE((SELECT email FROM calendar_operations WHERE subject = calendar_links.subject AND occurrenceId = calendar_links.occurrenceId AND email != '' LIMIT 1), (SELECT email FROM calendar_connection WHERE connected = 1 AND subject = calendar_links.subject), '') WHERE erased = 0")
+      }
+    }
     val MIGRATION_7_8 = object : Migration(7, 8) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS calendar_links (occurrenceId TEXT NOT NULL PRIMARY KEY, remoteKey TEXT NOT NULL, subject TEXT NOT NULL, calendarId TEXT NOT NULL, eventId TEXT NOT NULL, calendarName TEXT NOT NULL, origin TEXT NOT NULL, baseline TEXT NOT NULL, etag TEXT NOT NULL, state TEXT NOT NULL, message TEXT NOT NULL, htmlLink TEXT NOT NULL, revision INTEGER NOT NULL, erased INTEGER NOT NULL, checkedAtMs INTEGER)")

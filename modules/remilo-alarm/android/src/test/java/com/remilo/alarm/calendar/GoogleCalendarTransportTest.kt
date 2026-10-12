@@ -25,7 +25,7 @@ class GoogleCalendarTransportTest {
     JSONObject.NULL -> null
     else -> value
   }
-  private class Response(url: URL, private val status: Int = 200) : HttpsURLConnection(url) {
+  private class Response(url: URL, private val status: Int = 200, private val body: String = "{}", private val error: String = "private server diagnostics must not escape") : HttpsURLConnection(url) {
     val sent = ByteArrayOutputStream()
     override fun connect() {}
     override fun disconnect() {}
@@ -35,8 +35,30 @@ class GoogleCalendarTransportTest {
     override fun getServerCertificates(): Array<Certificate> = emptyArray()
     override fun getResponseCode() = status
     override fun getOutputStream() = sent
-    override fun getInputStream() = "{}".byteInputStream()
-    override fun getErrorStream() = "private server diagnostics must not escape".byteInputStream()
+    override fun getInputStream() = body.byteInputStream()
+    override fun getErrorStream() = error.byteInputStream()
+  }
+  @Test fun linkedLookupDistinguishesAmbiguousMissingFromExplicitResourceDeletion() {
+    val missing = GoogleCalendarTransport { url -> Response(url, 404) }
+    assertEquals(CalendarEventLookup.Missing, missing.lookup("synthetic", "source", "event"))
+    assertNull(missing.event("synthetic", "source", "event")) // P4-A contract retained.
+    val deleted = GoogleCalendarTransport { url -> Response(url, 410, error = """{"error":{"errors":[{"reason":"deleted"}],"message":"private data"}}""") }
+    assertEquals(CalendarEventLookup.Deleted, deleted.lookup("synthetic", "source", "event"))
+    try { deleted.event("synthetic", "source", "event"); fail("Legacy contract") }
+    catch (e: CalendarFailure) { assertEquals("REMOTE_REMOVED", e.code) }
+  }
+  @Test fun genericOrExpiredSync410NeverEstablishesDeletionOrExposesDiagnostics() {
+    for (reason in listOf("fullSyncRequired", "updatedMinTooLongAgo", "unknown")) {
+      val transport = GoogleCalendarTransport { url -> Response(url, 410, error = """{"error":{"errors":[{"reason":"$reason"}],"message":"private diagnostics"}}""") }
+      try { transport.lookup("synthetic", "source", "event"); fail("Must classify unavailable") }
+      catch (e: CalendarFailure) { assertEquals("REMOTE_UNAVAILABLE", e.code); assertFalse(e.message!!.contains("private")) }
+    }
+  }
+  @Test fun tombstoneLookupRetainsOnlyDataForNativeClassificationAndNeverWrites() {
+    lateinit var response: Response
+    val found = GoogleCalendarTransport { url -> Response(url, body = """{"id":"event","status":"cancelled"}""").also { response = it } }
+      .lookup("synthetic", "source", "event") as CalendarEventLookup.Found
+    assertEquals("cancelled", found.event.getString("status")); assertEquals("GET", response.requestMethod); assertEquals(0, response.sent.size())
   }
   @Test fun linkedPatchUsesReviewedEtagAndOnlyExplicitlySelectedFields() {
     val response = Response(URL("https://synthetic.test"))

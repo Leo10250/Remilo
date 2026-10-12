@@ -108,9 +108,12 @@ export type CalendarEventPage = { items: { eventId: string; title: string; field
 export type CalendarLinkPreview = { previewId: string; occurrenceId: string; calendarName: string; email: string; remote: CalendarFields; local: CalendarFields | null;
   baseline: CalendarFields | null; selections: CalendarSelections | null; choices: CalendarImportChoices & { dueAtMs: number; alarmAtMs: number }; googleReminders: boolean; checkedAtMs: number; nextAlertMs: number | null;
   timings: Record<'remilo' | 'google', { mode: string; dueAtMs: number; alarmAtMs: number }> | null };
-export type CalendarLink = { occurrenceId: string; revision: number; calendarName: string; state: string; checkedAtMs: number | null; message: string; htmlLink: string; readOnly: boolean; differs: boolean; source?: CalendarEventRef | null };
+export type CalendarLink = { occurrenceId: string; revision: number; calendarName: string; state: string; checkedAtMs: number | null; message: string; htmlLink: string; readOnly: boolean; differs: boolean; source?: CalendarEventRef | null;
+  accountEmail: string; availability: 'Unknown' | 'Available' | 'Deleted' | 'Unavailable' | 'Unsupported'; availabilityReason: string;
+  observedAtMs: number | null; lastCheckAttemptAtMs: number | null; lastCheckErrorCode: string; remoteDiffers: boolean | null; requiresReview: boolean };
 export type CalendarLinkedOperation = { operationId: string; occurrenceId: string; kind: string; calendarName: string; title?: string;
   state: 'Waiting' | 'Sending' | 'Unconfirmed' | 'NeedsAccess' | 'Blocked' | 'Conflict' | 'Failed' | 'Cancelled' | 'Confirmed';
+  recoveryMode: 'Retry' | 'ConfirmOutcome' | 'ReviewAgain' | 'None';
   message: string; localApplied: boolean; localStatus: string; remoteAttempted: boolean; readOnly: boolean; localResult?: Pick<CommandResult, 'status'> | null; source?: CalendarEventRef | null };
 export type CalendarImportBatchResult = { operationId: string; operations: CalendarLinkedOperation[] };
 export type CalendarCommand = { kind: 'PublishOneOff'; operationId: string; occurrenceId: string; expectedRevision: number;

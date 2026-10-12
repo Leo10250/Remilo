@@ -32,6 +32,7 @@ class CalendarLinkTest {
   private var loseReply = false
   private var patchFailure: String? = null
   private var beforeEvent: (() -> Unit)? = null
+  private var lookupResult: CalendarEventLookup? = null
   private val calendar = OwnedCalendar("source", "Private source", "UTC", hasDefaultReminders = false)
   private val access = object : CalendarLinkAccess {
     override fun <T> links(write: Boolean, block: (CalendarLinkStore) -> T): T = store(block)
@@ -45,6 +46,8 @@ class CalendarLinkTest {
       beforeEvent?.invoke()
       return JSONObject(event.toString())
     }
+    override fun lookup(token: String, calendarId: String, eventId: String): CalendarEventLookup =
+      lookupResult ?: CalendarEventLookup.Found(event(token, calendarId, eventId)!!)
     override fun insert(token: String, calendarId: String, payload: String): JSONObject = throw AssertionError("Import never inserts in Google")
     override fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): JSONObject {
       patches++
@@ -118,6 +121,109 @@ class CalendarLinkTest {
   private fun edit(id: String, fields: Map<String, Any?>) {
     val revision = occurrence(id)["revision"]
     native { engine.apply(fields + mapOf("kind" to "Edit", "operationId" to UUID.randomUUID().toString(), "occurrenceId" to id, "expectedRevision" to revision)) }
+  }
+  @Test fun confirmedCancellationKeepsExactAlarmSnoozeAndContentAcrossRestartAndFailedCheck() {
+    val job = capture(importCommand("Alarm")); run(job); val id = job.occurrenceId
+    val generation = occurrence(id)["generation"]
+    native { engine.apply(mapOf("kind" to "Snooze", "operationId" to "snooze-before-check", "occurrenceId" to id,
+      "expectedGeneration" to generation, "expectedSnoozeMinutes" to 10)) }
+    val before = occurrence(id)
+    val deleted = JSONObject().put("id", job.eventId).put("status", "cancelled")
+    store { it.observe(it.guard(id), calendar, CalendarEventLookup.Found(deleted)) }
+    assertEquals(before, occurrence(id)); assertEquals(0, patches)
+    engine.close(); open()
+    assertEquals("Deleted", store { it.link(id)!!.availability })
+    store { it.observedFailure(id, "NETWORK", it.guard(id)) }
+    assertEquals("Deleted", store { it.link(id)!!.availability }); assertEquals("NETWORK", store { it.link(id)!!.lastCheckErrorCode })
+    assertEquals(before, occurrence(id))
+  }
+  @Test fun ambiguousMissingAndUnsupportedEventsNeverBecomeDeletionNotices() {
+    val id = imported().occurrenceId; val before = occurrence(id)
+    store { it.observe(it.guard(id), calendar, CalendarEventLookup.Missing) }
+    assertEquals("Unavailable", store { it.link(id)!!.availability })
+    val meeting = JSONObject(event.toString()).put("attendees", JSONArray().put(JSONObject().put("email", "guest@example.test")))
+    store { it.observe(it.guard(id), calendar, CalendarEventLookup.Found(meeting)) }
+    assertEquals("Unsupported", store { it.link(id)!!.availability }); assertEquals("MEETING_EVENT", store { it.link(id)!!.availabilityReason })
+    assertEquals(before, occurrence(id))
+  }
+  @Test fun remoteRestorationRequiresFreshResolutionAndDoesNotAdvanceBaselineOnCheckOrPreview() {
+    val id = imported().occurrenceId; val baseline = store { it.link(id)!!.baseline }
+    store { it.observe(it.guard(id), calendar, CalendarEventLookup.Deleted) }
+    event.put("summary", "Restored with a newer title")
+    store { it.observe(it.guard(id), calendar, CalendarEventLookup.Found(event)) }
+    assertEquals("Available", store { it.link(id)!!.availability }); assertTrue(store { it.link(id)!!.requiresReview })
+    assertEquals(baseline, store { it.link(id)!!.baseline }); assertEquals("Personal", occurrence(id)["title"])
+    val approved = update(id)
+    assertEquals("Suspended", store { it.link(id)!!.state }); assertEquals(baseline, store { it.link(id)!!.baseline })
+    run(approved)
+    assertFalse(store { it.link(id)!!.requiresReview }); assertEquals("Linked", store { it.link(id)!!.state })
+    assertEquals("Restored with a newer title", occurrence(id)["title"])
+  }
+  @Test fun terminalChecksRemainReadOnlyAndDoNotReopenOrSchedule() {
+    val id = imported().occurrenceId
+    for (kind in listOf("Done", "Delete", "UndoDelete")) {
+      val revision = occurrence(id)["revision"]
+      native { engine.apply(mapOf("kind" to kind, "operationId" to "terminal-$kind", "occurrenceId" to id, "expectedRevision" to revision)) }
+      val before = occurrence(id)
+      store { it.observe(it.guard(id), calendar, CalendarEventLookup.Found(event)) }
+      assertEquals(before, occurrence(id)); assertEquals(true, store { it.view(it.link(id)!!)["readOnly"] })
+    }
+    assertTrue(store { it.link(id)!!.requiresReview }); assertEquals(0, patches)
+  }
+  @Test fun staleObservationsCannotCrossUnlinkTrashPurgeOrConnectionChanges() {
+    for (action in listOf("Unlink", "Delete", "Purge", "Disconnect")) {
+      event.put("id", "event-$action"); val id = imported().occurrenceId; val guard = store { it.guard(id) }
+      when (action) {
+        "Unlink" -> store { it.unlink(mapOf("operationId" to "unlink-$id", "occurrenceId" to id, "expectedLinkRevision" to guard.linkRevision)) }
+        "Disconnect" -> native { val db = ContentDatabase.open(context); try { CalendarStore(db, { now }).disconnect("disconnect-$id", 1) } finally { db.close() } }
+        else -> {
+          native { engine.apply(mapOf("kind" to "Delete", "operationId" to "trash-$id", "occurrenceId" to id, "expectedRevision" to guard.recordRevision)) }
+          if (action == "Purge") { val revision = occurrence(id)["revision"]; native { engine.apply(mapOf("kind" to "Purge", "operationId" to "purge-$id", "occurrenceId" to id, "expectedRevision" to revision)) } }
+        }
+      }
+      try { store { it.observe(guard, calendar, CalendarEventLookup.Deleted) }; fail("Stale observation must be discarded") }
+      catch (e: CalendarFailure) { assertTrue(e.code in setOf("STALE_PREVIEW", "STALE_CONNECTION", "INELIGIBLE")) }
+      assertNotEquals("Deleted", store { it.link(id)!!.availability })
+      if (action == "Purge") { assertEquals("", store { it.link(id)!!.accountEmail }); assertNull(store { it.link(id)!!.observedAtMs }) }
+    }
+  }
+  @Test fun runnerRecordsDeletionBeforeMappingIncompleteTombstoneAndFencesUnsentWork() {
+    val id = imported().occurrenceId; edit(id, mapOf("notes" to "Local notes")); val job = update(id)
+    event = JSONObject().put("id", job.eventId).put("status", "cancelled")
+    val before = occurrence(id); run(job)
+    assertEquals("Deleted", store { it.link(id)!!.availability }); assertEquals(before, occurrence(id)); assertEquals(0, patches)
+    assertEquals("Cancelled", store { it.operation(job.operationId)!!.state })
+  }
+  @Test fun runnerMissingResponseSuspendsWithoutDeletingOrApplyingLocalFields() {
+    val id = imported().occurrenceId; event.put("summary", "Unseen Google title"); val job = update(id)
+    val before = occurrence(id); lookupResult = CalendarEventLookup.Missing; run(job)
+    assertEquals("Unavailable", store { it.link(id)!!.availability }); assertEquals(before, occurrence(id)); assertEquals(0, patches)
+  }
+  @Test fun deletionDuringConditionalPatchPreservesApprovedLocalPhaseAndRecordsCancellation() {
+    val id = imported().occurrenceId; event.put("summary", "Google changed")
+    // An approved outgoing field makes this operation include a PATCH.
+    edit(id, mapOf("notes" to "Outgoing notes"))
+    val fresh = update(id); patchFailure = "REMOTE_DELETED"; run(fresh)
+    assertEquals("Deleted", store { it.link(id)!!.availability }); assertTrue(store { it.operation(fresh.operationId)!!.localApplied })
+    assertEquals("Outgoing notes", occurrence(id)["notes"])
+  }
+  @Test fun sentOutcomeCanBeAcknowledgedAfterUnlinkWithoutReactivatingOrRewriting() {
+    val id = imported().occurrenceId; edit(id, mapOf("notes" to "Sent notes")); val job = update(id)
+    loseReply = true; run(job); assertEquals(1, patches)
+    store { it.unlink(mapOf("operationId" to "unlink-sent", "occurrenceId" to id, "expectedLinkRevision" to it.link(id)!!.revision)) }
+    assertEquals("ConfirmOutcome", store { it.view(it.operation(job.operationId)!!)["recoveryMode"] })
+    run(job); assertEquals(1, patches); assertEquals("Confirmed", store { it.operation(job.operationId)!!.state })
+    assertEquals("Detached", store { it.link(id)!!.state })
+  }
+  @Test fun completionThenReopenCannotReviveAnOlderUnconfirmedWrite() {
+    val id = imported().occurrenceId; edit(id, mapOf("notes" to "Old approved notes")); val job = update(id)
+    patchFailure = "NETWORK"; run(job); assertEquals(1, patches)
+    val revision = occurrence(id)["revision"]
+    native { engine.apply(mapOf("kind" to "Done", "operationId" to "done-under-write", "occurrenceId" to id, "expectedRevision" to revision)) }
+    val doneRevision = occurrence(id)["revision"]
+    native { engine.apply(mapOf("kind" to "Reopen", "operationId" to "reopen-under-write", "occurrenceId" to id, "expectedRevision" to doneRevision)) }
+    patchFailure = null; run(job)
+    assertEquals(1, patches); assertEquals("Private notes", event.getString("description")); assertTrue(store { it.link(id)!!.requiresReview })
   }
   @Test fun defaultAlarmAndKeepGoogleRemindersAreExplicitAndImportDoesNotChoosePublishingCalendar() {
     val preview = store { it.preview(calendar, event, null, emptyMap(), 0) }
