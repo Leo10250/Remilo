@@ -99,7 +99,7 @@ export default function CalendarReview() {
         <Field label="Title" required multiline compactMultiline value={title} editable={!busy && !uncertain} maxLength={200} onChangeText={value => change({ title: value })} />
         <ConnectedGroup title="Remilo alert"><View key="mode" style={{ padding: 16 }}>
           {(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={value === 'None' ? 'No alert' : value} selected={mode === value}
-            disabled={busy || uncertain} onPress={() => change({ mode: value, ...(value === 'None' ? { disableReminders: false } : {}) })} />)}
+            disabled={busy || uncertain} onPress={() => change({ mode: value })} />)}
         </View>
         {mode !== 'None' && alarm !== undefined && <DateTimeFields key="time" value={alarm} zoneId={preview.remote.schedule.zoneId} allDay={false}
           disabled={busy || uncertain} onError={setError} onChange={value => change({ alarmAtMs: value })} labelPrefix="Import alert" />}
@@ -109,8 +109,8 @@ export default function CalendarReview() {
         {!busy && !uncertain && <SelectRow label="List" value={choices.listId || ''} choices={[{ value: '', label: 'No list' }, ...(lists.data || []).map(row => ({ value: row.id, label: row.name }))]}
           onChange={value => change({ listId: value || null })} />}
         <ConnectedGroup title="Google reminders"><Toggle key="suppress" label="Disable this event's Google reminders" value={choices.disableReminders || false}
-          disabled={busy || uncertain || mode === 'None'} onChange={value => change({ disableReminders: value })} /></ConnectedGroup>
-        <Copy muted>{preview.googleReminders ? mode === 'None' ? 'Google reminders remain enabled. Remilo sends no alert.' : 'Google reminders are enabled. Both apps may alert unless you explicitly disable Google reminders.' : 'No Google reminders are currently configured for this event.'}</Copy>
+          disabled={busy || uncertain} onChange={value => change({ disableReminders: value })} /></ConnectedGroup>
+        <Copy muted>{preview.googleReminders ? mode === 'None' ? 'Google reminders are enabled unless you explicitly disable them. Remilo sends no alert.' : 'Google reminders are enabled. Both apps may alert unless you explicitly disable Google reminders.' : 'No Google reminders are currently configured for this event.'}</Copy>
         <Copy muted>Remilo saves first. Google reminder changes are separate and wait if the local alert is blocked or pending.</Copy>
         {dirty && <ActionFeedback message="Refresh the review to capture these choices before importing." tone="warning" />}
       </> : preview.local && <>

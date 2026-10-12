@@ -57,8 +57,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (id == null) {
       val mode = choices["mode"] as? String ?: "Alarm"
       if (mode !in setOf("Alarm", "Notification", "None")) throw CalendarFailure("INVALID_INPUT")
-      if (choices.containsKey("disableReminders") && choices["disableReminders"] !is Boolean ||
-        mode == "None" && choices["disableReminders"] == true) throw CalendarFailure("INVALID_INPUT")
+      if (choices.containsKey("disableReminders") && choices["disableReminders"] !is Boolean) throw CalendarFailure("INVALID_INPUT")
       val schedule = remote.getJSONObject("schedule")
       val alarm = if (schedule.getBoolean("allDay")) Instant.ofEpochMilli(schedule.getLong("eventStartMs"))
         .atZone(ZoneId.of(schedule.getString("zoneId"))).toLocalDate().atTime(9, 0)
@@ -147,7 +146,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (desired.getString("title").isBlank()) throw CalendarFailure("TITLE_REQUIRED")
     val draft = CalendarLinkMapper.draft(desired)
     if (imported) for (field in listOf("mode", "alarmAtMs", "dueAtMs", "dueLinked", "alarmLinked", "sound", "vibration", "listId")) draft.put(field, options.get(field))
-    val suppress = imported && options.optBoolean("disableReminders") && options.optString("mode") != "None"
+    val suppress = imported && options.optBoolean("disableReminders")
     val patch = if (imported) CalendarLinkMapper.patch(remote, remote, suppress) else CalendarLinkMapper.patch(remote, desired, false)
     val job = CalendarLinkOperation(op, p.occurrenceId.ifEmpty { UUID.randomUUID().toString() }, key, kind, requestKey,
       p.subject, p.calendar.id, p.eventId, p.calendar.name, p.origin, p.revision, p.generation, p.linkRevision,
@@ -217,7 +216,9 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       "NeedsAccess" -> "Authorize the original Google account and retry this operation."
       "Blocked" -> "Google reminders remain. Resolve Remilo alert readiness, then retry explicitly."
       "Conflict" -> "The reminder or Google event changed. Review again; no replacement event is created."
-      "Unconfirmed" -> "Google outcome unconfirmed. Retry the same operation."
+      "Unconfirmed" -> if (job.localApplied && job.kind == "ImportCalendarEvent" && job.disableReminders)
+        "Imported; Google reminder change unconfirmed. Retry the same operation."
+        else "Google outcome unconfirmed. Retry the same operation."
       else -> "Request rejected ($code). Correct the issue and review again."
     }))
   }

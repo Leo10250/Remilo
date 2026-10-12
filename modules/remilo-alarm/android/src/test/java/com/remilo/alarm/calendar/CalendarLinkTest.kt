@@ -135,6 +135,15 @@ class CalendarLinkTest {
     assertEquals(1, patches); assertEquals("Confirmed", store { it.operation(job.operationId)!!.state })
     assertEquals("Retain location", event.getString("location")); assertEquals("6", event.getString("colorId"))
   }
+  @Test fun noAlertStillAllowsSeparatelyConfirmedGoogleReminderSuppression() {
+    val job = capture(importCommand("None", true)); run(job)
+    val saved = store { it.operation(job.operationId)!! }
+    assertEquals("Confirmed", saved.state); assertEquals("Applied", saved.localStatus)
+    assertEquals("None", occurrence(job.occurrenceId)["mode"])
+    assertEquals(1, patches)
+    assertFalse(event.getJSONObject("reminders").getBoolean("useDefault"))
+    assertEquals(0, event.getJSONObject("reminders").getJSONArray("overrides").length())
+  }
   @Test fun blockedAlarmDoesNotDisableGoogleAndOnlyExplicitRetryResumes() {
     allowed = false
     val job = capture(importCommand("Alarm", true)); run(job)

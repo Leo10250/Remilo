@@ -31,8 +31,8 @@ An elapsed proposed alert requires a deliberate future time or No alert.
 A changed alert time becomes independent. Save reports native Scheduled,
 Blocked/Pending or Applied; it never substitutes another alert mode.
 
-An unchecked Disable this event's Google reminders option is available with
-Alarm/Notification. Switching to No alert clears this option. Review warns when
+An unchecked Disable this event's Google reminders option is independent of the
+Remilo alert mode, including No alert. Review warns when
 both apps may alert. Suppression is a separately captured, conditional Google
 change after local creation. Blocked/Pending scheduling defers suppression until
 an explicit retry succeeds. Disconnect/Unlink never restores Google reminders.
