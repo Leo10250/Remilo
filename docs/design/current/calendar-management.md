@@ -21,6 +21,15 @@ results. Review performs its own fresh native preview. Terminal records permit
 checks without editing or reopening. Unlink is a visible neutral action here and
 remains a shortcut in Reminder actions. Unknown mutations retain captured recovery.
 
+The owner's later 12 October decision assigns the discussed automatic-sync
+wording, action hierarchy, review notices and Activity/history refinements to
+[P4-D](../../calendar-sync.md#status-buttons-and-review-notices). This page retains
+the current manual P4-B contract. P4-D will explicitly distinguish Not linked from
+Linked · Automatic sync, keep neutral Unlink separate, reduce the visual emphasis
+of external navigation, and replace the technical Previous Calendar operations
+section with concise user history in Activity. Do not imply automatic behavior
+before that capability is delivered.
+
 ## Independent copies and cancellation
 
 Google deletion never stops Remilo delivery. Once observed, active Agenda rows

@@ -54,6 +54,16 @@ events suspend transfers. Trash/Unlink fence unsent work; a sent outcome may be
 acknowledged without reactivating the association. Restore and remote availability
 do not clear required review. Old message text never supplies an inferred observation.
 
+The owner's [P4-D target](calendar-sync.md) reuses common compatible-field values
+for automatic one-sided transfers and manual true-conflict recovery. Future
+native background adapters dispatch authorization/HTTPS outside the alarm worker;
+immutable job capture, activation/version fencing, local scheduling checkpoints,
+observations and confirmed baselines stay on the serialized worker. Incremental
+tokens/cache and synchronization records stay CE-only. Expired-token recovery
+rebuilds the remote cache without clearing reminder data. This future scope does
+not activate background work, migrate manual permissions or select a new schema
+version in the current P4-B implementation.
+
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured
 minute-only strings without rewriting durable jobs, content, destination or

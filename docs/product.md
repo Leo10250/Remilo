@@ -81,6 +81,15 @@ disabled; personal timed/single-day all-day events only. Existing published copi
 require deliberate linking. Recurrence publishing and ongoing synchronization
 remain later phases.
 
+The owner's 12 October follow-up assigns automatic updates and the related status,
+button, review-notice and history refinements to [P4-D](calendar-sync.md), after
+P4-C recurrence mapping. Its target transfers ordinary compatible-field edits in
+both directions automatically, using the last confirmed common values; genuine
+conflicts and unresolved outcomes require manual review. Event-wide timestamps
+are context, not a latest-edit-wins rule. Deliberate activation, independent local
+alerts/Trash and truthful native background opportunities remain explicit. This
+future contract does not change P4-B's current manual checks and confirmations.
+
 The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
 places a compact Calendar entry after the reminder's local Details information.
 Its separate management page reads saved status until an explicit Check or review.

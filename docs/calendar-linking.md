@@ -162,7 +162,11 @@ Host/domain/transport/migration tests and fixture renders supplement identified
 signed-device acceptance. They do not prove Google OAuth, actual conditional
 writes/reminder suppression, physical audibility, Android pickers/Back/TalkBack or
 OEM behavior. Use the consolidated [owner checklist](device-acceptance.md).
-P4-C recurrence and P4-D incremental/background synchronization remain separate.
+P4-C recurrence and [P4-D automatic synchronization](calendar-sync.md) remain
+separate. The owner's 12 October follow-up moves automatic ordinary updates,
+baseline conflict/uncertain-outcome review, precise sync wording, action emphasis,
+review notifications and user Activity refinements into P4-D. The manual behavior
+documented here remains the P4-B runtime contract until that phase is delivered.
 
 - [Google event listing](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)
 - [Conditional resource modifications](https://developers.google.com/workspace/calendar/api/guides/version-resources)

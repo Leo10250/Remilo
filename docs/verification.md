@@ -1,5 +1,14 @@
 # Verification and release evidence
 
+The [P4-D target contract](calendar-sync.md#required-evidence) adds automatic
+ordinary transfers, common-baseline conflict detection, unknown-outcome recovery,
+incremental/background opportunities and review-notice/action/history checks.
+Its eventual evidence must cover time-only updates without review, timestamp
+misordering, conditional-write races, cursor/410 recovery, preserved local alerts
+and terminal states, notification permissions/deduplication, and accurate status.
+This documentation update supplies no new runtime, build or device evidence;
+current P4-B procedures below remain applicable until P4-D is implemented.
+
 The Calendar management follow-up requires CE 8→9 migration, structured remote
 observations, explicit check isolation and lifecycle-fenced late replies. Verify
 cancelled/explicit-deleted responses versus ambiguous 404/410, unchanged local
