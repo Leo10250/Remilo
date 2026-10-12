@@ -199,7 +199,11 @@ Import, recurrence publishing and ongoing synchronization remain later phases.
   editing retain full event/due data. Primary Agenda alert time uses the device zone.
 - Browsing covers expand to 200 dp below the status inset, including a nominal
   56 dp toolbar. Artwork stays fixed while opaque content scrolls over it, ending
-  at a pinned opaque toolbar. Restore content and scene occlusion together. Constrained height/large text and editing
+  at a pinned opaque toolbar. The canvas-colored header surface blends from 66%
+  to opaque over the last 64 dp of cover travel, with stable onSurface title/icons
+  and a 40 dp feather below measured labels/controls. Reduced motion retains the
+  direct scroll relationship without timed animation. Restore content, scene
+  occlusion and header opacity together. Constrained height/large text and editing
   workflows use compact toolbars. Preserve existing artwork and hero focal metadata.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.

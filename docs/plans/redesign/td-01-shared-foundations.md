@@ -14,6 +14,8 @@ Create one RN/native role and component system from all eight R3 references. Reu
 
 ## Implementation
 
+- Apply the [11 October shared browsing-header correction](../../design/current/header-scroll-research.md): fixed artwork/reading-plane geometry, stable onSurface foreground, continuous canvas-surface opacity over the final 64 dp, measured protection and direct reduced-motion blending. Keep native alarms and captured appearance unchanged.
+
 - Apply the [10 October UX refinement](../../design/current/ux-refinement.md): owned
   input refs/compact title sizing, date-group context, semantic timing helpers,
   transactional foreground filters and synchronized scroll-reset token. Preserve

@@ -3,8 +3,9 @@ import { useTimeFormatting, useTimeDisplay } from './time-display';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type Ref, type RefObject } from 'react';
-import { AccessibilityInfo, ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Animated, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PresentationProvider, useAppearanceHold, useAtmosphere, useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
 import { typography, space, shape } from './tokens';
@@ -15,6 +16,7 @@ import { useReducedMotion } from './motion';
 import { FormViewport, useRevealInput } from './form-viewport';
 import { presentation } from './atmosphere.generated';
 import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
+import { headerScrimGeometry, headerTransition } from './header-transition';
 import { scheduleSnackbarDismiss } from './snackbar-timeout';
 
 type ConnectedCorners = Pick<ViewStyle, 'borderTopLeftRadius' | 'borderTopRightRadius' | 'borderBottomLeftRadius' | 'borderBottomRightRadius'>;
@@ -315,25 +317,32 @@ export function SceneArt({ home = false }: { home?: boolean }) {
 export function AtmosphericHeader({ title, home = false, subtitle, actions, leading, back = true, onBack }: {
   title: string; home?: boolean; subtitle?: string; actions?: ReactNode; leading?: ReactNode; back?: boolean; onBack?: () => void;
 }) {
-  const colors=useTheme(), {scene,brightness}=useAtmosphere(), {height,fontScale}=useWindowDimensions(), reviewScale=useFontScaleOverride(), [localToolbar,setToolbar]=useState<number>(presentation.geometry.toolbar);
+  const colors=useTheme(), {height,width,fontScale}=useWindowDimensions(), reviewScale=useFontScaleOverride(), [localToolbar,setToolbar]=useState<number>(presentation.geometry.toolbar);
+  const [subtitleBounds, setSubtitleBounds] = useState<{ label: string; scale: number; fontScale: number; width: number; height: number }>();
   const chromeState = useScrollChrome(), toolbar = chromeState?.toolbar ?? localToolbar;
   const opening=chromeState?.opening ?? (height<480 || Math.max(fontScale,reviewScale)>=1.6?toolbar:Math.max(presentation.geometry.home,toolbar));
-  const decoration=opening-toolbar, decorative=decoration>0, scenic=decorative && !chromeState?.folded, header=presentation.header[`${scene}-${brightness}`];
-  const chromeHeight=toolbar+(subtitle?24*reviewScale:0), scrimHeight=Math.min(opening,chromeHeight+40);
-  const rgb=header.scrim==='#FFFFFF'?'255,255,255':'0,0,0';
-  const gradient=`linear-gradient(180deg, rgba(${rgb},${header.scrimAlpha}) 0%, rgba(${rgb},${header.scrimAlpha}) ${chromeHeight/scrimHeight*100}%, rgba(${rgb},0) 100%)`;
-  const scrim:ViewStyle=Platform.OS==='web'?{backgroundImage:gradient} as ViewStyle:{experimental_backgroundImage:gradient};
-  const chrome=<ScenicChrome.Provider value={scenic}><View onLayout={event=>{
+  const decoration=opening-toolbar, decorative=decoration>0;
+  const subtitleHeight = !subtitle ? 0 : subtitleBounds?.label === subtitle && subtitleBounds.scale === reviewScale && subtitleBounds.fontScale === fontScale && subtitleBounds.width === width ? subtitleBounds.height : null;
+  const scrim = headerScrimGeometry(opening, toolbar, subtitleHeight);
+  const opacity = chromeState?.surfaceOpacity ?? (decorative ? headerTransition.minimumOpacity : 1);
+  const chrome=<ScenicChrome.Provider value={decorative}><View onLayout={event=>{
     const h=event.nativeEvent.layout.height; if(chromeState)chromeState.measureToolbar(h);else setToolbar(h);
-  }} style={{minHeight:56,backgroundColor:scenic?'transparent':colors.background}}>
-    <AppBar scenic={scenic} home={home} title={title} back={back} actions={actions} leading={leading} onBack={onBack}/>
+  }} style={{minHeight:56,backgroundColor:decorative?'transparent':colors.background}}>
+    <AppBar scenic={decorative} home={home} title={title} back={back} actions={actions} leading={leading} onBack={onBack}/>
   </View></ScenicChrome.Provider>;
   return <View pointerEvents="box-none" style={{height:opening,overflow:'hidden'}}>
     {decorative && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',top:0,left:0,right:0,height:opening}}><SceneArt home /></View>}
-    {scenic && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{position:'absolute',top:0,left:0,right:0,height:scrimHeight},scrim]}/>}
-    {scenic?<PresentationProvider colors={{...colors,ink:header.ink,muted:header.ink}}>{chrome}</PresentationProvider>:chrome}
-    {subtitle && scenic && <View pointerEvents="none" style={{position:'absolute',top:toolbar,left:0,right:0,height:decoration,overflow:'hidden'}}>
-      <View style={{marginHorizontal:16,marginBottom:8}}><PresentationProvider colors={{...colors,ink:header.ink,muted:header.ink}}><Copy>{subtitle}</Copy></PresentationProvider></View>
+    {decorative && <Animated.View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      style={{position:'absolute',top:0,left:0,right:0,height:scrim.height,opacity}}>
+      <LinearGradient colors={[colors.background, colors.background, colors.background + '00']} locations={[0, scrim.plateauEnd, 1]}
+        start={{x:0,y:0}} end={{x:0,y:1}} style={StyleSheet.absoluteFill} />
+    </Animated.View>}
+    {chrome}
+    {subtitle && decorative && <View pointerEvents="none" style={{position:'absolute',top:toolbar,left:0,right:0,height:decoration,overflow:'hidden'}}>
+      <View style={{marginHorizontal:16,paddingBottom:8}} onLayout={event => {
+        const measured = event.nativeEvent.layout.height;
+        setSubtitleBounds(previous => previous?.label === subtitle && previous.scale === reviewScale && previous.fontScale === fontScale && previous.width === width && Math.abs(previous.height - measured) < 0.5 ? previous : { label: subtitle, scale: reviewScale, fontScale, width, height: measured });
+      }}><Copy>{subtitle}</Copy></View>
     </View>}
   </View>;
 }

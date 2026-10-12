@@ -352,7 +352,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **U26 — header sheets, Details and list glyphs:** in Night Light, open Agenda
   and Lists header More. Title, Close, Settings and Manage lists must contrast with
   the sheet surface; focus/pressed treatment must use surface roles rather than
-  white scenic-header foregrounds. Compare all eight atmosphere/brightness pairs
+  inherited scenic-control treatment. Compare all eight atmosphere/brightness pairs
   and Completed/Trash menus. Details Schedule uses 2 dp connected seams and 16/4 dp
   corners, including conditional independent Due, Next alert and Notes. List
   navigation and its focus border remain functional/unclipped. Repeat recovery
@@ -647,3 +647,18 @@ Observe on an identified signed bundled build; host/fixture results do not pass 
 - **U35:** 100–200% text and rotation, four full labels or Go to choices, TalkBack
   selection/focus return, guarded navigation and retained search/filter/scroll;
   genuine empty Agenda has one Add action and opens the normal focused editor.
+
+### Continuous browsing-header follow-up — U36
+
+Observe on an identified signed bundled build in the consolidated owner run.
+
+- **U36:** scroll Agenda and form-style browsing through the final 64 dp of artwork
+  cover, pause at intermediate offsets, reverse direction and fling. The artwork
+  and title/action positions remain fixed; the canvas-colored header blends to
+  opaque without a boundary flash or gesture lag. Compare all eight atmosphere/
+  brightness pairs, including dark foreground in Night Light. Check title/icon
+  contrast, wrapped date text, gradient banding and More/Filters sheet boundaries.
+  Return at partially and fully covered saved offsets; search, reset filters and
+  rotate without losing state. Remove animations retains the direct blend with
+  no timer or spring; 200% text and constrained height use opaque compact chrome.
+  TalkBack sees one heading and one instance of each action, with retained focus.

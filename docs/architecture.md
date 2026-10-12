@@ -465,11 +465,16 @@ their behavior. Capabilities exposes activeSessionActions; occurrences expose
 overdueAtMs/quickSnoozeMinutes, all read-only native projections.
 
 Shared browsing chrome has one native Animated scroll value. Stable expanded hero
-composition stays fixed while the opaque reading plane translates over decoration;
-React updates only at the collapsed toolbar boundary. A nominal 200 dp opening
+composition stays fixed while the opaque reading plane translates over decoration.
+The 11 October header correction also drives a static canvas gradient's opacity
+from the same value using native smoothstep arithmetic, with stable onSurface
+foreground and no threshold/per-scroll React appearance updates. The last 64 dp
+blends a 66% scrim to opaque; measured control/subtitle bounds precede a 40 dp
+feather. Expo SDK 57 LinearGradient supplies the native/Web view. A nominal 200 dp opening
 contains a measured 56 dp toolbar. Editing/utilities, usable height below 480 dp or
 font scale at least 1.6 use compact chrome. Saved content offset initializes both
-scroll and collapse positions. Safe-area/IME/footer geometry retains one owner.
+scroll, cover and surface opacity. Reduced motion preserves this direct relationship.
+Safe-area/IME/footer geometry retains one owner.
 Native alarms retain dedicated layout and captured session appearance; supported
 notification accents and non-private loading extras use that same pair.
 

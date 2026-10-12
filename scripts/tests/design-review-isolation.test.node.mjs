@@ -263,6 +263,7 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
         useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
       },
       '@react-native-community/datetimepicker': {}, 'expo-symbols': { SymbolView: 'Glyph' }, 'expo-router': {},
+      'expo-linear-gradient': { LinearGradient: 'Gradient' }, './header-transition': compile('src/ui/header-transition.ts'),
       'react-native-safe-area-context': {}, './theme': theme, './tokens': tokens,
       './time-display': { useTimeDisplay: () => ({}), useTimeFormatting: () => ({}) },
       '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },

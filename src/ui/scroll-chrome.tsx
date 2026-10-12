@@ -1,13 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { Animated, Platform, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { readRootSnapshot } from '../domain/navigation';
 import { useFontScaleOverride, useTheme } from './theme';
 import { presentation } from './atmosphere.generated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { headerBlendBounds, headerTransition } from './header-transition';
 
 type ScrollChrome = {
-  value: Animated.Value; opening: number; toolbar: number; decoration: number; folded: boolean;
-  measureToolbar: (height: number) => void; observeOffset: (offset: number) => void; restoreOffset: (offset: number) => void;
+  value: Animated.Value; surfaceOpacity: number | ReturnType<typeof Animated.add>;
+  opening: number; toolbar: number; decoration: number;
+  measureToolbar: (height: number) => void; restoreOffset: (offset: number) => void;
 };
 const Chrome = createContext<ScrollChrome | null>(null);
 export const ScrollChromeProvider = Chrome.Provider;
@@ -22,7 +24,7 @@ export function ScrollReadingPlane() {
     style={{position:'absolute',top:chrome.decoration,left:0,right:0,height:'100%',backgroundColor:colors.background,transform:[{translateY:travel}]}} />;
 }
 
-/** One native scroll value; React state changes only at the toolbar boundary. */
+/** One native scroll value drives both cover travel and the continuous header surface. */
 export function usePageChrome(scrollKey?: string, compact = false): ScrollChrome {
   const { height, fontScale } = useWindowDimensions(), reviewScale = useFontScaleOverride();
   const insets=useSafeAreaInsets();
@@ -32,24 +34,22 @@ export function usePageChrome(scrollKey?: string, compact = false): ScrollChrome
   const decoration = opening - toolbar;
   const initial = readRootSnapshot(scrollKey ? scrollKey + ':scroll' : '', 0);
   const [value] = useState(() => new Animated.Value(initial));
-  const offset = useRef(initial), foldedRef = useRef(initial >= decoration);
-  const [folded, setFolded] = useState(initial >= decoration);
-  const observeOffset = useCallback((y: number) => {
-    offset.current = y;
-    const next = decoration <= 0 || y >= decoration - 0.5;
-    if (next !== foldedRef.current) { foldedRef.current = next; setFolded(next); }
-  }, [decoration]);
-  const restoreOffset = useCallback((y: number) => { value.setValue(y); observeOffset(y); }, [value, observeOffset]);
-  useEffect(() => { observeOffset(offset.current); }, [observeOffset]);
+  const surfaceOpacity = useMemo(() => {
+    const bounds = headerBlendBounds(decoration);
+    if (!bounds) return 1;
+    const p = value.interpolate({ inputRange: [bounds.start, bounds.end], outputRange: [0, 1], extrapolate: 'clamp' });
+    // Native arithmetic keeps smoothstep on the UI thread, including gesture reversal.
+    const blend = Animated.multiply(Animated.multiply(p, p), Animated.subtract(3, Animated.multiply(2, p)));
+    return Animated.add(headerTransition.minimumOpacity, Animated.multiply(1 - headerTransition.minimumOpacity, blend));
+  }, [value, decoration]);
+  const restoreOffset = useCallback((y: number) => value.setValue(y), [value]);
   const measureToolbar = useCallback((h: number) => setToolbar(previous => Math.abs(previous - h) < 0.5 ? previous : Math.max(56, h)), []);
-  return useMemo(() => ({ value, opening, toolbar, decoration, folded: constrained || folded,
-    measureToolbar, observeOffset, restoreOffset }), [value, opening, toolbar, decoration, constrained, folded, measureToolbar, observeOffset, restoreOffset]);
+  return useMemo(() => ({ value, surfaceOpacity, opening, toolbar, decoration,
+    measureToolbar, restoreOffset }), [value, surfaceOpacity, opening, toolbar, decoration, measureToolbar, restoreOffset]);
 }
 
 export function useChromeScroll(chrome: ScrollChrome | null, listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => void) {
   return useMemo(() => chrome ? Animated.event([{ nativeEvent: { contentOffset: { y: chrome.value } } }], {
-    useNativeDriver: Platform.OS !== 'web', listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      chrome.observeOffset(event.nativeEvent.contentOffset.y); listener(event);
-    },
+    useNativeDriver: Platform.OS !== 'web', listener,
   }) : listener, [chrome, listener]);
 }

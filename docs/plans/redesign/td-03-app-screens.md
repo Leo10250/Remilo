@@ -13,6 +13,8 @@ The owner authorized production implementation on 9 October 2026; current correc
 
 ## Outcome
 
+All shared browsing pages follow the [11 October header correction](../../design/current/header-scroll-research.md), including saved offsets, compact layouts, search and sheet boundaries. The foreground and action tree remain stable while the canvas surface blends with scroll.
+
 Apply the approved page contracts and correction notes to Agenda, Lists, Repeats, Details/Editor, Postpone, Settings and Data/Help. Extend shared components for exceptional states. Completed/Trash/Activity uses [runtime composition 05 approved for implementation](../../design/r9-runtime-composition-approval-v5.json); its required R9 composition checkpoint is closed while Android acceptance remains pending.
 
 ## Implementation

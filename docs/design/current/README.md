@@ -6,6 +6,10 @@ repository cleanup authorized by [A37](../approved-design-cleanup.json), and
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
+The owner's [11 October browsing-header correction](header-scroll-research.md)
+replaces the abrupt toolbar surface switch with a continuous scroll blend and
+stable foreground colors, including reduced-motion mode. Artwork remains fixed.
+
 The owner's [10 October UX refinement](ux-refinement.md) governs the latest
 editor focus/timing, alert-first Details/cards, transactional filters and
 Settings/Appearance/permission presentation. It supersedes conflicting earlier
