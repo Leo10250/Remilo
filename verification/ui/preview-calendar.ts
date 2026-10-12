@@ -12,7 +12,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
     calendarId: ['disconnected', 'no-calendar'].includes(state) ? '' : 'fixture-calendar',
     calendarName: ['disconnected', 'no-calendar'].includes(state) ? '' : 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
   const jobs = new Map<string, CalendarPublication>(), captures = new Map<string, CalendarCommand>();
-  const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision);
+  const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision, () => connection.connected);
   const error = (code: string): never => { throw Object.assign(new Error('Synthetic Calendar: ' + code), { code }); };
   const preview = (id: string): CalendarPublicationPreview => {
     const item = find(id);

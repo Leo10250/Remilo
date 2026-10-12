@@ -72,8 +72,10 @@ nothing; existing reminders are never backfilled. One account and an owned defau
 calendar are supported. Google receives title, notes and authored event range with
 its Calendar reminders disabled; local alarms/actions remain authoritative. Durable
 native jobs recover by the same event identity, without remote updates or deletion.
-[P4-B imports and linked updates](calendar-linking.md) add explicit one-event
-imports from owned calendars and per-field manually confirmed resolution.
+[P4-B imports and linked updates](calendar-linking.md) add explicit individual
+or reviewed all-event imports from owned calendars and per-field manually
+confirmed resolution. The owner's follow-up makes the Start/End dates inclusive,
+keeps them ordered, and removes associated/pending sources from the browser.
 Import review defaults to Alarm while keeping Google reminders unless explicitly
 disabled; personal timed/single-day all-day events only. Existing published copies
 require deliberate linking. Recurrence publishing and ongoing synchronization

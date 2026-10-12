@@ -29,7 +29,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
   authorizeCalendar(publicationId: string | null): Promise<void>;
   listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
-  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | import('./RemiloAlarm.types').CalendarLinkedOperation | { disconnected: boolean } | { unlinked: boolean }>;
+  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | import('./RemiloAlarm.types').CalendarLinkedOperation | import('./RemiloAlarm.types').CalendarImportBatchResult | { disconnected: boolean } | { unlinked: boolean }>;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;

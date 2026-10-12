@@ -17,23 +17,29 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
   fun link(id: String) = dao.link(id)
   fun record(id: String) = db.records().find(id)
   fun operation(id: String) = dao.operation(id)
+  private fun sourceView(subject: String, calendarId: String, eventId: String, current: CalendarConnection): Map<String, String>? =
+    current.takeIf { it.connected && it.subject == subject }?.let { mapOf("calendarId" to calendarId, "eventId" to eventId) }
   fun source(key: String): CalendarLink? = dao.remote(key) ?: db.calendar().operations().firstOrNull {
     (it.attempted || it.state == "Published") && CalendarLinkMapper.key(it.subject, it.calendarId, it.eventId) == key
   }?.let { CalendarLink(it.occurrenceId, key, it.subject, it.calendarId, it.eventId, it.calendarName, "Published",
     erased = it.readOnly && it.zoneId.isBlank()) }
-  fun links() = dao.links().map { link ->
+  fun links() = connection().let { current -> dao.links().map { link ->
     val record = record(link.occurrenceId)
     mapOf("occurrenceId" to link.occurrenceId, "revision" to link.revision, "calendarName" to link.calendarName,
       "state" to link.state, "checkedAtMs" to link.checkedAtMs, "message" to link.message,
-      "htmlLink" to link.htmlLink, "readOnly" to (link.erased || record == null || record.deleted || record.completed || record.skipped),
+      "htmlLink" to link.htmlLink, "source" to sourceView(link.subject, link.calendarId, link.eventId, current),
+      "readOnly" to (link.erased || record == null || record.deleted || record.completed || record.skipped),
       "differs" to (record != null && link.baseline.isNotBlank() && !CalendarLinkMapper.equal(CalendarLinkMapper.fields(record), JSONObject(link.baseline))))
-  }
-  fun operations() = dao.operations().map(::view)
-  fun view(job: CalendarLinkOperation): Map<String, Any?> = mapOf("operationId" to job.operationId,
+  } }
+  fun operations() = connection().let { current -> dao.operations().map { view(it, current) } }
+  fun view(job: CalendarLinkOperation): Map<String, Any?> = view(job, connection())
+  private fun view(job: CalendarLinkOperation, current: CalendarConnection): Map<String, Any?> = mapOf("operationId" to job.operationId,
     "occurrenceId" to job.occurrenceId, "kind" to job.kind, "calendarName" to job.calendarName,
+    "title" to if (job.erased) "" else (record(job.occurrenceId)?.title ?: job.draft.takeIf(String::isNotBlank)?.let { JSONObject(it).optString("title") }.orEmpty()),
     "state" to job.state, "message" to job.message, "localApplied" to job.localApplied,
     "localStatus" to job.localStatus, "remoteAttempted" to job.remoteAttempted,
-    "readOnly" to job.erased, "localResult" to if (job.localApplied) mapOf("status" to job.localStatus) else null)
+    "readOnly" to job.erased, "source" to sourceView(job.subject, job.calendarId, job.eventId, current),
+    "localResult" to if (job.localApplied) mapOf("status" to job.localStatus) else null)
   fun active(record: ReminderRecord?) {
     if (record == null) throw CalendarFailure("NOT_FOUND")
     if (record.completed || record.deleted || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
@@ -79,7 +85,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       event.optString("htmlLink").takeIf { it.startsWith("https://calendar.google.com/") || it.startsWith("https://www.google.com/calendar/") }.orEmpty(),
       CalendarLinkMapper.reminders(event, calendar.hasDefaultReminders), preservedAlertMs)
     previews[preview.id] = now() to preview
-    while (previews.size > 128) previews.remove(previews.keys.first())
+    while (previews.size > 1024) previews.remove(previews.keys.first())
     if (old != null) dao.put(old.copy(checkedAtMs = now(), state = if (old.state == "Detached") "Detached" else "Linked", message = "Checked just now. Changes require review."))
     return previewView(preview)
   }
@@ -153,6 +159,82 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       p.connectionRevision, p.etag, p.remote, desired.toString(), draft.toString(), patch.toString(), suppress, htmlLink = p.htmlLink)
     dao.insert(job)
     return view(job)
+  }
+  /** Capture all child jobs and one immutable receipt before any I/O is dispatched. */
+  fun captureBatch(command: Map<String, Any?>): Map<String, Any?> {
+    val id = CalendarStore.string(command, "operationId")
+    val items = command["items"] as? List<*> ?: throw CalendarFailure("INVALID_INPUT")
+    if (items.isEmpty() || items.size > 500) throw CalendarFailure("IMPORT_LIMIT")
+    val approved = items.map { item ->
+      @Suppress("UNCHECKED_CAST") val value = item as? Map<String, Any?> ?: throw CalendarFailure("INVALID_INPUT")
+      @Suppress("UNCHECKED_CAST") val choices = value["choices"] as? Map<String, Any?> ?: throw CalendarFailure("INVALID_INPUT")
+      if (choices.keys.any { it !in setOf("mode", "title", "alarmAtMs", "listId", "disableReminders") }) throw CalendarFailure("INVALID_INPUT")
+      CalendarStore.string(value, "previewId") to choices
+    }
+    val key = CalendarMapper.hash(JSONArray(approved.map { (previewId, choices) ->
+      JSONArray(listOf(previewId, JSONArray(listOf("mode", "title", "alarmAtMs", "listId", "disableReminders").map {
+        JSONArray(listOf(it, choices.containsKey(it), choices[it] ?: JSONObject.NULL))
+      })))
+    }).toString())
+    db.records().receipt(id)?.let { receipt ->
+      if (receipt.kind != "CalendarImportBatch") throw CalendarFailure("OPERATION_REUSED")
+      val saved = JSONArray(receipt.sourceId ?: throw CalendarFailure("NOT_FOUND"))
+      if (saved.getString(0) != key) throw CalendarFailure("OPERATION_REUSED")
+      val children = saved.getJSONArray(1)
+      return mapOf("operationId" to id, "retry" to true, "operations" to (0 until children.length()).map {
+        operation(children.getString(it))?.let(::view) ?: throw CalendarFailure("NOT_FOUND")
+      })
+    }
+    if (operation(id) != null || db.calendar().operation(id) != null) throw CalendarFailure("OPERATION_REUSED")
+    val captured = mutableListOf<String>()
+    val sources = mutableSetOf<String>()
+    var sourceCalendar: String? = null
+    db.runInTransaction {
+      for ((previewId, choices) in approved) {
+        val cached = previews[previewId] ?: throw CalendarFailure("STALE_PREVIEW")
+        if (now() - cached.first > 600_000) throw CalendarFailure("STALE_PREVIEW")
+        val p = cached.second
+        if (p.occurrenceId.isNotEmpty()) throw CalendarFailure("INVALID_INPUT")
+        if (sourceCalendar != null && sourceCalendar != p.calendar.id) throw CalendarFailure("INVALID_INPUT")
+        sourceCalendar = p.calendar.id
+        if (!sources.add(CalendarLinkMapper.key(p.subject, p.calendar.id, p.eventId))) throw CalendarFailure("ALREADY_IMPORTED")
+        val options = JSONObject(p.choices)
+        for ((field, value) in choices) when (field) {
+          "mode" -> {
+            if (value !is String || value !in setOf("Alarm", "Notification", "None")) throw CalendarFailure("INVALID_INPUT")
+            options.put(field, value)
+          }
+          "title" -> {
+            if (value !is String) throw CalendarFailure("INVALID_INPUT")
+            if (value.trim().length > 200) throw CalendarFailure("CONTENT_LIMIT")
+            options.put(field, value.trim())
+          }
+          "alarmAtMs" -> {
+            val time = CalendarStore.number(choices, field)
+            if (time < 0) throw CalendarFailure("INVALID_INPUT")
+            options.put(field, time).put("alarmLinked", false)
+          }
+          "listId" -> {
+            if (value != null && (value !is String || db.records().list(value) == null)) throw CalendarFailure("INVALID_INPUT")
+            options.put(field, value ?: JSONObject.NULL)
+          }
+          "disableReminders" -> {
+            if (value !is Boolean) throw CalendarFailure("INVALID_INPUT")
+            options.put(field, value)
+          }
+        }
+        if (options.getString("title").isBlank()) throw CalendarFailure("TITLE_REQUIRED")
+        if (options.getString("mode") != "None" && options.getLong("alarmAtMs") <= now()) throw CalendarFailure("ELAPSED_ALERT")
+        val derived = p.copy(id = UUID.randomUUID().toString(), choices = options.toString())
+        previews[derived.id] = now() to derived
+        val child = UUID.randomUUID().toString()
+        try { capture(mapOf("kind" to "ImportCalendarEvent", "operationId" to child, "previewId" to derived.id)) }
+        finally { previews.remove(derived.id) }
+        captured.add(child)
+      }
+      db.records().receipt(CreationReceipt(id, "", "CalendarImportBatch", JSONArray(listOf(key, JSONArray(captured))).toString()))
+    }
+    return mapOf("operationId" to id, "operations" to captured.map { view(operation(it)!!) })
   }
   fun check(job: CalendarLinkOperation, executionRevision: Long? = null) {
     val connection = connection()

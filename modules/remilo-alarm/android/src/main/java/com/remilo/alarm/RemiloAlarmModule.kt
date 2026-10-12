@@ -67,6 +67,12 @@ class RemiloAlarmModule : Module() {
       val runtime = CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext)
       val reject: (String) -> Unit = { promise.reject(it, "Calendar action could not be confirmed: $it", null) }
       when (command["kind"]) {
+        "ImportCalendarEvents" -> engine().calendarRequest(true,
+          { it.links.captureBatch(command) }, { result ->
+            promise.resolve(result)
+            @Suppress("UNCHECKED_CAST") val jobs = result["operations"] as List<Map<String, Any?>>
+            jobs.forEach { runtime.startLink(CalendarStore.string(it, "operationId"), result["retry"] == true) }
+          }, reject)
         "ImportCalendarEvent", "EnableCalendarLink", "ApplyCalendarResolution" -> engine().calendarRequest(true,
           { it.links.capture(command) }, { result -> promise.resolve(result); runtime.startLink(CalendarStore.string(command, "operationId")) }, reject)
         "RetryCalendarOperation" -> engine().calendarRequest(block = {

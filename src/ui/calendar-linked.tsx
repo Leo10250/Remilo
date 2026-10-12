@@ -22,6 +22,7 @@ export function CalendarOperationStatus({ operation }: { operation: CalendarLink
     } catch (e) { setError(calendarError(e)); } finally { setBusy(false); }
   };
   return <ConnectedGroup title="Calendar operation"><View key="status" style={{ padding: 16, gap: 12 }}>
+    {!!operation.title && !operation.readOnly && <Copy heading>{operation.title}</Copy>}
     <Copy heading>{operation.state === 'Confirmed' ? 'Confirmed' : operation.localApplied ? 'Local change saved' : 'Calendar request saved'}</Copy>
     <Copy muted>{operation.calendarName || 'Original Calendar destination'}</Copy>
     {operation.localApplied && !operation.readOnly && <Copy>Local save result: {operation.localStatus === 'Scheduled' ? 'Alert was scheduled' : operation.localStatus === 'Blocked' ? 'Alert was blocked' : operation.localStatus === 'Pending' ? 'Scheduling was pending' : 'Saved'}</Copy>}

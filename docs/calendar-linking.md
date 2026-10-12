@@ -9,13 +9,28 @@ existing copies do not become linked automatically.
 
 Settings → Google Calendar → Import from Google Calendar browses one owned source
 calendar independently of the default publishing destination. Account and source
-are visible. The browser initially covers today to the exclusive date 30 local
-days later, accepts ranges of 1–366 days, and loads 100 server results per page.
+are visible. The browser labels **Start date** and **End date**, includes both
+dates, and keeps the earlier date first when either picker changes. It initially
+covers today through 29 days later (30 included local days), accepts ranges of
+1–366 days, and loads 100 server results per page. The native Google query retains
+its exclusive next-day upper bound; civil-day arithmetic handles DST boundaries.
 Unsupported rows explain their restriction; an empty supported page never hides
 a next page. Query/account changes invalidate earlier cursors/results. Browsing
-does not create reminders or modify Google.
+does not create reminders or modify Google. Retained associations, erased sources
+and captured unresolved imports are hidden, including when returning to a cached
+browser. Their status/recovery lives in Calendar settings and Details. Detached
+sources stay hidden and can be explicitly relinked from the existing reminder.
 
-Imports review one personal, non-recurring event without attendees. Timed and
+The owner's follow-up authorizes **Import all** alongside individual import. This
+reads every page of the selected range, skips unsupported/already-associated/
+pending events, and shows the complete eligible count before confirmation.
+The review defaults to Alarm/No list/keeping Google reminders, permits common
+choices and per-event Title/alert/reminder overrides, and rejects elapsed alerts
+until a future time or No alert is explicitly chosen. Large sets require narrowing
+the range rather than silently importing a partial list; one review is bounded
+to 500 eligible events. The row browser's Load more does not limit Import all.
+
+Each imported entry is a personal, non-recurring event without attendees. Timed and
 single-day all-day events are supported. Meetings/incomplete attendee data,
 recurring masters/instances, locked/private-copy/special/cancelled events,
 unspecified ends, multi-day all-day ranges, malformed dates and incompatible or
@@ -85,6 +100,14 @@ operations. Commands capture a native preview ID, operation UUID and field
 selections, never arbitrary Google JSON from JavaScript. Previews are bounded,
 native-owned and expire after ten minutes. Saved operations retain immutable
 identity/content and separate local status/remote progress across process death.
+
+ImportCalendarEvents captures all reviewed per-event jobs plus one immutable
+batch receipt in a single CE transaction, before dispatching any Calendar I/O.
+The receipt retains only a request hash and allocated child operation IDs.
+Retrying a lost batch acknowledgement returns those same jobs; different input
+with its operation ID is rejected. Each child's existing local/remote phases
+report actual outcomes independently. Startup performs no batch network work;
+saved child operations retain explicit manual recovery. CE remains 8/DP 6/backup 4.
 
 Before local application, revalidate the original account, ownership, event
 eligibility, etag, compatible fields and local guards. Sparse Google patches send

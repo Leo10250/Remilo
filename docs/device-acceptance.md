@@ -36,6 +36,13 @@ and only the designated test account/calendar. Record each actual outcome:
    Local completion/Trash/Restore remain local; no remote replacement/deletion.
 7. Observe compact review/browser layout, 200% text, TalkBack, date/time
    pickers, keyboard/Back and reachable persistent confirmation controls.
+8. Check inclusive Start/End dates, earlier-date ordering and an event on the end
+   date. Import all over multiple result pages, including unsupported-only pages.
+   Review common/per-event alert choices and reminder consent; an elapsed alert
+   requires a future time or explicit No alert. Confirm exactly one local reminder
+   per eligible event, named individual outcomes, and imported/pending rows absent
+   on return without browsing again. Interrupt the batch reply and resume its
+   same saved children. Unlink/Trash/Purge sources remain excluded from reimport.
 
 Host/fixture results do not establish these device/Google observations. Retain
 CAL-01's timed-retry observation and the existing consolidated alarm cases.

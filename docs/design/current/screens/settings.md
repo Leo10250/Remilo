@@ -357,6 +357,13 @@ groups, wrapping labels and a persistent 56 dp confirmation action. Show native
 local and remote outcomes separately; recovery remains within its saved operation.
 Existing published copies require explicit Enable linked updates.
 
+The owner's import-browser follow-up uses inclusive Start date then End date and
+keeps the earlier date first. Hide associated/erased/pending sources when returning
+to the browser. Import all covers the entire selected range across server pages,
+then uses a compact review with eligible count, default Alarm/No list/retained
+Google reminders, common choices and per-event corrections. Keep a persistent
+wrapping confirmation action; report each actual local/remote outcome separately.
+
 [The gallery supplement](../../remilo-r8-settings-appearance/current-policy.md)
 identifies the obsolete tile selector/held Automatic policy without changing accepted
 PNG, submission or review-note hashes. The current dropdown and Automatic selection

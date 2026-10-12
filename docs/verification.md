@@ -7,6 +7,14 @@ preserved independent/postponed timings, removed/terminal states, backup/DP
 privacy and a responsive native worker under blocked Calendar I/O. Host and
 fixture results do not close signed-device Google or Android acceptance.
 
+The import-browser follow-up adds inclusive civil-day range/DST checks, removal
+of retained and pending sources from cached rows, and all-page collection through
+unsupported-only pages. Verify atomic child-job capture, immutable parent replay,
+rollback of invalid/duplicate input, restart recovery and independent partial
+outcomes. Named job titles must disappear on purge; source references are scoped
+to the connected original account. Batch receipts contain hashes/IDs only and
+remain outside portable backup/DP. No batch network work runs on startup.
+
 The [10 October UX refinement](design/current/ux-refinement.md) requires active-source
 tests for All day combinations/round trips/relink/conflict/conversion failure,
 DST civil timing, schedule-only preview, original/current/intended/previous timing,

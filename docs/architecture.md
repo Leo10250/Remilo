@@ -37,6 +37,13 @@ If-Match patches, including Google's method-override fallback where needed,
 with local/remote outcomes acknowledged separately. Preview checks are manual;
 startup never resumes network work. Existing publications require explicit adoption.
 
+Reviewed all-event import reuses those per-event jobs. One CE transaction captures
+every child and a hash/child-ID batch receipt before dispatch; a lost parent reply
+returns the same allocated jobs. Child saves/scheduling/remote phases remain
+independent and manually recoverable. No schema/version change is needed.
+Current-account source references in native link/job views let cached browser rows
+hide associated and pending events without requiring Google reads on navigation.
+
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured
 minute-only strings without rewriting durable jobs, content, destination or

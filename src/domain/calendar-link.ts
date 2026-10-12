@@ -12,7 +12,7 @@ export function calendarOperationRetryable(job: CalendarLinkedOperation) {
 export function calendarCaptureRejected(error: unknown) {
   const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
   return ['STALE', 'INELIGIBLE', 'INVALID_INPUT', 'OPERATION_REUSED', 'ALREADY_IMPORTED', 'OPERATION_PENDING',
-    'TITLE_REQUIRED', 'RESOLUTION_REQUIRED', 'CONTENT_LIMIT', 'NOT_FOUND'].some(value => code.includes(value));
+    'TITLE_REQUIRED', 'ELAPSED_ALERT', 'IMPORT_LIMIT', 'RESOLUTION_REQUIRED', 'CONTENT_LIMIT', 'NOT_FOUND'].some(value => code.includes(value));
 }
 export function unsupportedCalendarReason(code: string) {
   return ({ RECURRING_EVENT: 'Recurring events are a later stage.', MEETING_EVENT: 'Meetings with attendees are not supported yet.',

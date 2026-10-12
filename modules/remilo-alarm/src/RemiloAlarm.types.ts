@@ -108,15 +108,17 @@ export type CalendarEventPage = { items: { eventId: string; title: string; field
 export type CalendarLinkPreview = { previewId: string; occurrenceId: string; calendarName: string; email: string; remote: CalendarFields; local: CalendarFields | null;
   baseline: CalendarFields | null; selections: CalendarSelections | null; choices: CalendarImportChoices & { dueAtMs: number; alarmAtMs: number }; googleReminders: boolean; checkedAtMs: number; nextAlertMs: number | null;
   timings: Record<'remilo' | 'google', { mode: string; dueAtMs: number; alarmAtMs: number }> | null };
-export type CalendarLink = { occurrenceId: string; revision: number; calendarName: string; state: string; checkedAtMs: number | null; message: string; htmlLink: string; readOnly: boolean; differs: boolean };
-export type CalendarLinkedOperation = { operationId: string; occurrenceId: string; kind: string; calendarName: string;
+export type CalendarLink = { occurrenceId: string; revision: number; calendarName: string; state: string; checkedAtMs: number | null; message: string; htmlLink: string; readOnly: boolean; differs: boolean; source?: CalendarEventRef | null };
+export type CalendarLinkedOperation = { operationId: string; occurrenceId: string; kind: string; calendarName: string; title?: string;
   state: 'Waiting' | 'Sending' | 'Unconfirmed' | 'NeedsAccess' | 'Blocked' | 'Conflict' | 'Failed' | 'Cancelled' | 'Confirmed';
-  message: string; localApplied: boolean; localStatus: string; remoteAttempted: boolean; readOnly: boolean; localResult?: Pick<CommandResult, 'status'> | null };
+  message: string; localApplied: boolean; localStatus: string; remoteAttempted: boolean; readOnly: boolean; localResult?: Pick<CommandResult, 'status'> | null; source?: CalendarEventRef | null };
+export type CalendarImportBatchResult = { operationId: string; operations: CalendarLinkedOperation[] };
 export type CalendarCommand = { kind: 'PublishOneOff'; operationId: string; occurrenceId: string; expectedRevision: number;
   expectedConnectionRevision: number; fingerprint: string } |
   { kind: 'SelectCalendar'; operationId: string; calendarId: string; expectedConnectionRevision: number } |
   { kind: 'DisconnectCalendar'; operationId: string; expectedConnectionRevision: number } |
   { kind: 'RetryPublication'; operationId: string } |
   { kind: 'ImportCalendarEvent' | 'EnableCalendarLink' | 'ApplyCalendarResolution'; operationId: string; previewId: string; selections?: CalendarSelections } |
+  { kind: 'ImportCalendarEvents'; operationId: string; items: { previewId: string; choices: CalendarImportChoices }[] } |
   { kind: 'UnlinkCalendar'; operationId: string; occurrenceId: string; expectedLinkRevision: number } |
   { kind: 'RetryCalendarOperation'; operationId: string };

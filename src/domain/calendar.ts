@@ -12,8 +12,10 @@ export function calendarError(error: unknown): string {
   if (code.includes('STALE_CURSOR')) return 'The account or date range changed. Browse events again before loading another page.';
   if (code.includes('STALE')) return 'This reminder or Google Calendar version changed. Refresh the review before confirming.';
   if (code.includes('OPERATION_PENDING')) return 'This event has an unresolved operation. Continue its saved request before reviewing another change.';
-  if (code.includes('ALREADY_IMPORTED')) return 'This event is already associated with a Remilo reminder. Open that reminder.';
+  if (code.includes('ALREADY_IMPORTED')) return 'This event is already in Remilo. Refresh the list or review to remove it.';
   if (code.includes('TITLE_REQUIRED')) return 'Enter a title before importing this event.';
+  if (code.includes('ELAPSED_ALERT')) return 'An alert has elapsed. Review a future alert time or explicitly choose No alert.';
+  if (code.includes('IMPORT_LIMIT')) return 'There are too many events to review together. Narrow the date range and try again.';
   if (code.includes('INVALID_RANGE')) return 'Choose an end date after the start, with a range of at most 366 days.';
   if (code.includes('RESOLUTION_REQUIRED')) return 'Choose Remilo or Google values for each field before confirming.';
   if (code.includes('NEEDS_CONNECTION')) return 'Publishing needs both a connected Google account and a selected calendar. Open Calendar settings to finish setup.';

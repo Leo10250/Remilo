@@ -4,12 +4,12 @@ import { resolvedCalendarFields } from '../../src/domain/calendar-link';
 
 export function previewCalendarLinks(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
   save?: (fields: CalendarFields, choices: CalendarImportChoices, operationId: string, id?: string) => Occurrence,
-  connectionRevision: () => number = () => 1) {
+  connectionRevision: () => number = () => 1, connected: () => boolean = () => true) {
   const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
   const error = (code: string): never => { throw Object.assign(new Error('Synthetic link: ' + code), { code }); };
   const scenario = review.get('reviewCalendarLink');
   const previews = new Map<string, CalendarLinkPreview>(), links = new Map<string, CalendarLink>(), jobs = new Map<string, CalendarLinkedOperation>();
-  const receipts = new Map<string, string>(); let count = 0;
+  const receipts = new Map<string, string>(), sources = new Map<string, CalendarEventRef>(), batches = new Map<string, string[]>(); let count = 0;
   const fields = (item?: Occurrence): CalendarFields => ({ title: item?.title || 'A personal Calendar event / 私人日程',
     notes: item?.notes || 'Synthetic notes. No Google requests.', schedule: { eventStartMs: item?.eventStartMs || Date.now() + 3_600_000,
       eventEndMs: item?.eventEndMs || Date.now() + 5_400_000, allDay: item?.allDay || false, zoneId: item?.zoneId || 'America/Los_Angeles' } });
@@ -20,10 +20,12 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
   }
   if (scenario === 'all-day') { const day = new Date(); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + 1); remote.schedule = { ...remote.schedule, eventStartMs: day.getTime(), eventEndMs: day.getTime() + 86_400_000, allDay: true }; }
   if (scenario === 'conflict') links.set('review', { occurrenceId: 'review', revision: 1, calendarName: 'Synthetic source / 测试日历', state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic conflict. Manual review required.', htmlLink: '', readOnly: false, differs: true });
-  const preview = (id: string | null, choices: CalendarImportChoices = {}): CalendarLinkPreview => {
+  const preview = (id: string | null, choices: CalendarImportChoices = {}, source?: CalendarEventRef): CalendarLinkPreview => {
     const item = id ? find(id) : undefined;
     if (id && (!item || item.completed || item.deleted || item.skipped || item.segmentId)) return error('INELIGIBLE');
     const local = id ? fields(item) : null, google = id ? fields(item) : clone(remote);
+    if (source && [...links.values()].some(link => link.source?.calendarId === source.calendarId && link.source.eventId === source.eventId)) return error('ALREADY_IMPORTED');
+    if (source && source.eventId !== 'personal') google.title += ' · ' + source.eventId;
     if (id && scenario === 'conflict') { google.title = 'Google changed title / 新标题'; google.notes = 'Google changed notes'; }
     const defaults: CalendarSelections = { title: 'remilo', notes: 'remilo', schedule: 'remilo' };
     if (id && scenario === 'conflict') { defaults.title = null; defaults.notes = null; }
@@ -34,23 +36,54 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
         alarmAtMs: choices.alarmAtMs ?? defaultAlarm, dueAtMs: google.schedule.allDay ? google.schedule.eventEndMs : google.schedule.eventStartMs },
       googleReminders: true, checkedAtMs: Date.now(), nextAlertMs: item?.alertAdjustment ? item.nextAlertMs : null,
       timings: item ? { remilo: { mode: item.mode, dueAtMs: item.dueAtMs, alarmAtMs: item.alarmAtMs }, google: { mode: item.mode, dueAtMs: item.dueAtMs, alarmAtMs: item.alarmAtMs } } : null };
-    previews.set(result.previewId, clone(result)); return clone(result);
+    previews.set(result.previewId, clone(result)); if (source) sources.set(result.previewId, clone(source)); return clone(result);
   };
   return {
-    getCalendarLinks: async () => clone([...links.values()]),
-    getCalendarOperations: async () => clone([...jobs.values()]),
+    getCalendarLinks: async () => clone([...links.values()].map(link => ({ ...link, source: connected() ? link.source : null }))),
+    getCalendarOperations: async () => clone([...jobs.values()].map(job => ({ ...job, source: connected() ? job.source : null }))),
     listCalendarEvents: async (query: CalendarEventQuery) => {
       const days = (Date.parse(query.until) - Date.parse(query.from)) / 86_400_000;
       if (!(days > 0 && days <= 366)) return error('INVALID_RANGE');
+      const bulk = review.get('reviewCalendarBulk') === '1';
+      const eventId = bulk && query.cursor ? query.cursor === 'synthetic-next' ? 'personal-2' : 'personal-3' : 'personal';
       return { connectionRevision: connectionRevision(), calendarName: 'Synthetic source / 测试日历',
-        items: [{ eventId: 'personal', title: remote.title, fields: clone(remote), unsupportedReason: null, occurrenceId: [...links.keys()].find(id => id !== 'review') || null, erased: false },
+        items: [{ eventId, title: remote.title + (eventId === 'personal' ? '' : ' · ' + eventId), fields: clone(remote), unsupportedReason: null,
+          occurrenceId: [...links.values()].find(link => link.source?.calendarId === query.calendarId && link.source.eventId === eventId)?.occurrenceId || null, erased: false },
           { eventId: 'meeting', title: 'Meeting with attendees', fields: null, unsupportedReason: 'MEETING_EVENT', occurrenceId: null, erased: false },
-          { eventId: 'repeat', title: 'Recurring event', fields: null, unsupportedReason: 'RECURRING_EVENT', occurrenceId: null, erased: false }], nextCursor: query.cursor ? null : 'synthetic-next' };
+          { eventId: 'repeat', title: 'Recurring event', fields: null, unsupportedReason: 'RECURRING_EVENT', occurrenceId: null, erased: false }],
+        nextCursor: bulk && query.cursor === 'synthetic-next' ? 'synthetic-next-2' : query.cursor ? null : 'synthetic-next' };
     },
-    previewCalendarImport: async (_event: CalendarEventRef, choices: CalendarImportChoices) => preview(null, choices),
+    previewCalendarImport: async (event: CalendarEventRef, choices: CalendarImportChoices) => preview(null, choices, event),
     previewCalendarLink: async (id: string) => preview(id),
     previewCalendarUpdate: async (id: string) => preview(id),
-    applyCalendarLinked: async (command: CalendarCommand): Promise<unknown> => {
+    applyCalendarLinked: async function applyLinked(command: CalendarCommand): Promise<unknown> {
+      if (command.kind === 'ImportCalendarEvents') {
+        const input = JSON.stringify(command), prior = receipts.get(command.operationId);
+        if (prior) {
+          if (prior !== input || !batches.has(command.operationId)) return error('OPERATION_REUSED');
+          return clone({ operationId: command.operationId, operations: batches.get(command.operationId)!.map(id => jobs.get(id)) });
+        }
+        if (!command.items.length || command.items.length > 500) return error('IMPORT_LIMIT');
+        const keys = new Set<string>();
+        for (const item of command.items) {
+          const p = previews.get(item.previewId), source = sources.get(item.previewId);
+          if (!p || p.local || !source) return error('STALE_PREVIEW');
+          const key = JSON.stringify(source); if (keys.has(key)) return error('ALREADY_IMPORTED'); keys.add(key);
+          if (!(item.choices.title ?? p.choices.title)?.trim()) return error('TITLE_REQUIRED');
+          if ((item.choices.mode || p.choices.mode) !== 'None' && (item.choices.alarmAtMs ?? p.choices.alarmAtMs) <= Date.now()) return error('ELAPSED_ALERT');
+        }
+        const children: string[] = [];
+        for (const item of command.items) {
+          const p = previews.get(item.previewId)!, id = 'synthetic-batch-child-' + ++count, previewId = 'synthetic-batch-preview-' + ++count;
+          previews.set(previewId, { ...clone(p), previewId, choices: { ...p.choices, ...item.choices } }); sources.set(previewId, sources.get(item.previewId)!);
+          try { await applyLinked({ kind: 'ImportCalendarEvent', operationId: id, previewId }); }
+          catch (e) { if (!jobs.has(id)) throw e; } // Synthetic lost reply occurs after its in-memory save.
+          children.push(id);
+        }
+        receipts.set(command.operationId, input); batches.set(command.operationId, children);
+        if (review.get('reviewLostReply') === '1') throw new Error('Synthetic batch reply lost after captured imports.');
+        return clone({ operationId: command.operationId, operations: children.map(id => jobs.get(id)) });
+      }
       if (command.kind === 'RetryCalendarOperation') {
         const job = jobs.get(command.operationId); if (!job) return error('NOT_FOUND');
         if (review.get('reviewCalendarOffline') !== '1') jobs.set(job.operationId, { ...job, state: 'Confirmed', message: 'Synthetic outcome confirmed. No Google write.' });
@@ -65,14 +98,15 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
       }
       if (!('previewId' in command)) return error('INVALID_INPUT');
       const p = previews.get(command.previewId); if (!p) return error('STALE_PREVIEW');
+      const source = sources.get(command.previewId);
       const values = p.local ? resolvedCalendarFields(p.local, p.remote, command.selections || { title: null, notes: null, schedule: null }) : p.remote;
       if (!values) return error('RESOLUTION_REQUIRED');
       const item = save?.(p.local ? values : { ...values, title: p.choices.title || values.title }, p.choices, command.operationId, p.occurrenceId || undefined);
       const id = item?.id || p.occurrenceId || 'synthetic-import-' + ++count;
       const blocked = scenario === 'blocked', partial = scenario === 'partial' || review.get('reviewCalendarOffline') === '1';
-      links.set(id, { occurrenceId: id, revision: 1, calendarName: p.calendarName, state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic manually linked reminder.', htmlLink: '', readOnly: false, differs: false });
-      const job: CalendarLinkedOperation = { operationId: command.operationId, occurrenceId: id, kind: command.kind, calendarName: p.calendarName,
-        state: blocked ? 'Blocked' : partial ? 'Unconfirmed' : 'Confirmed', localApplied: true, localStatus: blocked ? 'Blocked' : (item?.mode || p.choices.mode) === 'None' ? 'Applied' : 'Scheduled',
+      links.set(id, { occurrenceId: id, revision: 1, calendarName: p.calendarName, state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic manually linked reminder.', htmlLink: '', readOnly: false, differs: false, source });
+      const job: CalendarLinkedOperation = { operationId: command.operationId, occurrenceId: id, kind: command.kind, calendarName: p.calendarName, title: item?.title || p.choices.title || values.title,
+        state: blocked ? 'Blocked' : partial ? 'Unconfirmed' : 'Confirmed', source, localApplied: true, localStatus: blocked ? 'Blocked' : (item?.mode || p.choices.mode) === 'None' ? 'Applied' : 'Scheduled',
         remoteAttempted: partial, readOnly: false, message: blocked ? 'Google reminders remain. Resolve alert readiness, then retry.' : partial ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Local and Google outcomes confirmed in memory only.' };
       jobs.set(command.operationId, job); receipts.set(command.operationId, input); changed();
       if (review.get('reviewLostReply') === '1') throw new Error('Synthetic reply lost after durable-capture substitute.');

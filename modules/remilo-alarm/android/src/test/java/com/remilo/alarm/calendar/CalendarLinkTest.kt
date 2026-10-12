@@ -100,6 +100,14 @@ class CalendarLinkTest {
   }
   private fun run(job: CalendarLinkOperation) { CalendarLinkRunner(access, transport).run(job.operationId, "synthetic") }
   private fun imported(): CalendarLinkOperation = capture(importCommand()).also(::run)
+  private fun batchCommand(secondTitle: String = "Second", mode: String = "None"): Map<String, Any?> {
+    val first = store { it.preview(calendar, event, null, emptyMap(), 0) }
+    val second = JSONObject(event.toString()).put("id", "second-event").put("summary", secondTitle)
+    val next = store { it.preview(calendar, second, null, emptyMap(), 0) }
+    return mapOf("kind" to "ImportCalendarEvents", "operationId" to UUID.randomUUID().toString(), "items" to listOf(
+      mapOf("previewId" to first["previewId"], "choices" to mapOf("mode" to mode)),
+      mapOf("previewId" to next["previewId"], "choices" to mapOf("mode" to mode))))
+  }
   private fun occurrence(id: String) = native { engine.occurrence(id)!! }
   private fun update(id: String, selection: Map<String, String> = mapOf("title" to "google", "notes" to "remilo", "schedule" to "google")): CalendarLinkOperation {
     val gen = (occurrence(id)["generation"] as Number).toLong()
@@ -143,6 +151,77 @@ class CalendarLinkTest {
     assertEquals(1, patches)
     assertFalse(event.getJSONObject("reminders").getBoolean("useDefault"))
     assertEquals(0, event.getJSONObject("reminders").getJSONArray("overrides").length())
+  }
+  @Test fun batchCaptureSurvivesProcessDeathAndLostReplyWithoutAllocatingMoreChildren() {
+    val command = batchCommand(); store { it.captureBatch(command) }
+    val children = store { it.operations().map { row -> row["operationId"] } }
+    assertEquals(2, children.size)
+    assertEquals(0, native { engine.query(mapOf("view" to "all"), null)["total"] })
+    engine.close(); open()
+    store { it.captureBatch(command) }
+    assertEquals(children, store { it.operations().map { row -> row["operationId"] } })
+    val jobs = store { it.operations().map { row -> it.operation(row["operationId"] as String)!! } }
+    for (job in jobs) { event.put("id", job.eventId).put("summary", JSONObject(job.remote).getString("title")); run(job) }
+    assertEquals(2, native { engine.query(mapOf("view" to "all"), null)["total"] }); assertEquals(0, patches)
+    store { it.captureBatch(command) }
+    assertEquals(2, store { it.operations().size })
+  }
+  @Test fun batchValidationRollsBackEveryCapturedChildBeforeAnyAlarmOrRemoteWork() {
+    val command = batchCommand("")
+    try { store { it.captureBatch(command) }; fail("Missing title must reject the batch") }
+    catch (e: CalendarFailure) { assertEquals("TITLE_REQUIRED", e.code) }
+    assertTrue(store { it.operations().isEmpty() }); assertEquals(0, patches)
+    assertEquals(0, native { engine.query(mapOf("view" to "all"), null)["total"] })
+  }
+  @Test fun duplicateSourcesInABatchCannotAllocateTwoRetainedOperations() {
+    val preview = store { it.preview(calendar, event, null, emptyMap(), 0) }
+    val item = mapOf("previewId" to preview["previewId"], "choices" to mapOf("mode" to "None"))
+    try { store { it.captureBatch(mapOf("operationId" to "duplicate-batch", "items" to listOf(item, item))) }; fail("Duplicate source") }
+    catch (e: CalendarFailure) { assertEquals("ALREADY_IMPORTED", e.code) }
+    assertTrue(store { it.operations().isEmpty() })
+  }
+  @Test fun oneRemoteFailureInABatchDoesNotRollBackAnotherConfirmedChild() {
+    val initial = JSONObject(event.toString()); val command = batchCommand()
+    @Suppress("UNCHECKED_CAST") val items = command["items"] as List<Map<String, Any?>>
+    val approved = command + mapOf("items" to items.map { it + mapOf("choices" to mapOf("mode" to "None", "disableReminders" to true)) })
+    store { it.captureBatch(approved) }
+    val jobs = store { it.operations().map { row -> it.operation(row["operationId"] as String)!! } }
+    jobs.forEachIndexed { index, job ->
+      event = JSONObject(initial.toString()).put("id", job.eventId).put("summary", JSONObject(job.remote).getString("title"))
+      patchFailure = if (index == 0) "NETWORK" else null; run(job)
+    }
+    assertEquals(setOf("Unconfirmed", "Confirmed"), store { it.operations().map { row -> row["state"] }.toSet() })
+    assertTrue(store { it.operations().all { row -> row["localApplied"] == true } })
+    assertEquals(2, native { engine.query(mapOf("view" to "all"), null)["total"] })
+    store { it.captureBatch(approved) }; assertEquals(2, store { it.operations().size })
+  }
+  @Test fun batchOperationIdCannotBeReusedWithDifferentConsentOrFields() {
+    val command = batchCommand(); store { it.captureBatch(command) }
+    @Suppress("UNCHECKED_CAST") val items = command["items"] as List<Map<String, Any?>>
+    val changed = command + mapOf("items" to items.map { it + mapOf("choices" to mapOf("mode" to "None", "disableReminders" to true)) })
+    try { store { it.captureBatch(changed) }; fail("Consent is immutable") }
+    catch (e: CalendarFailure) { assertEquals("OPERATION_REUSED", e.code) }
+    assertEquals(2, store { it.operations().size })
+  }
+  @Test fun batchKeepsDefaultAlarmLinkedAndRejectsElapsedAlertsUnlessNoAlertIsExplicit() {
+    val command = batchCommand(mode = "Alarm"); store { it.captureBatch(command) }
+    assertTrue(store { it.operations().all { row -> JSONObject(it.operation(row["operationId"] as String)!!.draft).getBoolean("alarmLinked") } })
+    event.put("id", "elapsed").getJSONObject("start").put("dateTime", Instant.ofEpochMilli(now - 3600_000).toString())
+    val p = store { it.preview(calendar, event, null, emptyMap(), 0) }
+    val expired = mapOf("kind" to "ImportCalendarEvents", "operationId" to "elapsed-batch", "items" to listOf(mapOf("previewId" to p["previewId"], "choices" to mapOf("mode" to "Alarm"))))
+    try { store { it.captureBatch(expired) }; fail("Elapsed alarm") } catch (e: CalendarFailure) { assertEquals("ELAPSED_ALERT", e.code) }
+    store { it.captureBatch(expired + mapOf("items" to listOf(mapOf("previewId" to p["previewId"], "choices" to mapOf("mode" to "None"))))) }
+    assertEquals(3, store { it.operations().size })
+  }
+  @Test fun sourceViewsExposePendingImportsOnlyForTheConnectedOriginalAccount() {
+    val job = capture(importCommand())
+    assertEquals(mapOf("calendarId" to "source", "eventId" to job.eventId), store { it.view(job)["source"] })
+    store {
+      val content = ContentDatabase.open(context)
+      try { val state = CalendarStore(content, { now }); state.connect(CalendarAccount("other", "another@example.test"), state.connection().revision) }
+      finally { content.close() }
+    }
+    assertNull(store { it.view(job)["source"] })
   }
   @Test fun blockedAlarmDoesNotDisableGoogleAndOnlyExplicitRetryResumes() {
     allowed = false
@@ -239,6 +318,7 @@ class CalendarLinkTest {
     val link = store { it.link(id)!! }; assertTrue(link.erased); assertEquals("", link.baseline)
     val op = store { it.operation(old.operationId)!! }
     assertEquals("", op.desired); assertEquals("", op.remote); assertEquals("", op.draft)
+    assertEquals("", store { it.view(op)["title"] })
     assertTrue(store { it.source(old.remoteKey)!!.erased })
   }
   @Test fun localBackupHasReminderButNoRemoteIdentityOrCalendarSnapshots() {

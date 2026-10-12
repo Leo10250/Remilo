@@ -114,6 +114,17 @@ test('Calendar import/link fixtures create once and recover partial results with
   await preview.applyCalendarCommand({ kind: 'RetryCalendarOperation', operationId: command.operationId });
   assert.equal((await preview.getCalendarOperations())[0].state, 'Confirmed');
 });
+test('Calendar all-event capture recovers its reply and excludes saved sources with no network or native globals', async () => {
+  const preview = loadPreview('?reviewCalendarBulk=1&reviewLostReply=1');
+  const reviews = await Promise.all(['personal', 'personal-2', 'personal-3'].map(eventId => preview.previewCalendarImport({ calendarId: 'source', eventId }, {})));
+  const command = { kind: 'ImportCalendarEvents', operationId: 'all', items: reviews.map(p => ({ previewId: p.previewId, choices: { mode: 'None' } })) };
+  await assert.rejects(preview.applyCalendarCommand(command), /batch reply lost/);
+  const result = await preview.applyCalendarCommand(command);
+  assert.equal(result.operations.length, 3);
+  assert.equal((await preview.getCalendarOperations()).length, 3);
+  assert.equal((await preview.getCalendarLinks()).filter(link => link.source?.calendarId === 'source').length, 3);
+  assert.equal((await preview.queryReminders({ view: 'all', search: reviews[0].remote.title }, null)).total, 3);
+});
 
 test('Calendar fixture executes connect/list/publish/retry with no network or native authorization globals', async () => {
   const preview = loadPreview('?reviewCalendar=disconnected&reviewCalendarOffline=1');
