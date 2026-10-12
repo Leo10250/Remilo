@@ -136,7 +136,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     }
     val key = CalendarLinkMapper.key(p.subject, p.calendar.id, p.eventId)
     if (imported && source(key) != null) throw CalendarFailure("ALREADY_IMPORTED")
-    if (dao.operations().any { it.remoteKey == key && it.state !in terminal }) throw CalendarFailure("OPERATION_PENDING")
+    if (dao.unresolved(key, terminal.toList())) throw CalendarFailure("OPERATION_PENDING")
     val remote = JSONObject(p.remote)
     val desired = JSONObject(p.remote)
     if (!imported) {

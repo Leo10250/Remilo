@@ -27,6 +27,8 @@ data class CalendarLinkOperation(@PrimaryKey val operationId: String, val occurr
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun put(link: CalendarLink)
   @Query("SELECT * FROM calendar_link_operations WHERE operationId = :id") fun operation(id: String): CalendarLinkOperation?
   @Query("SELECT * FROM calendar_link_operations ORDER BY rowid DESC") fun operations(): List<CalendarLinkOperation>
+  @Query("SELECT EXISTS(SELECT 1 FROM calendar_link_operations WHERE remoteKey = :key AND state NOT IN (:terminal))")
+  fun unresolved(key: String, terminal: List<String>): Boolean
   @Insert fun insert(operation: CalendarLinkOperation)
   @Update fun update(operation: CalendarLinkOperation)
 }
