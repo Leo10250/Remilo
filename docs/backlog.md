@@ -8,7 +8,8 @@ consolidate physical checks for a later acceptance run. The later
 G1–G3 on its identified APK; unreported individual observations remain unclaimed.
 Known failures still require fixes. The owner's
 [11 October P4-A sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md)
-accepts one-off Google Calendar publishing; P4-B–P4-D and G4 remain pending.
+accepts one-off Google Calendar publishing. P4-B implementation has host/build
+evidence below; P4-B signed-device acceptance, P4-C–P4-D and G4 remain pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
@@ -95,13 +96,13 @@ accepts one-off Google Calendar publishing; P4-B–P4-D and G4 remain pending.
 | TD-06 | Consolidated acceptance | TD-03, TD-04, TD-05; TD-01/02 integrated | implemented/unverified | [TD-06 handoff](handoffs/redesign-td-06.md); latest sequential release preparation passed 9 October 2026 at 17:18:00.718 UTC after final composition 05 presentation/wording corrections: 115 shared and 75 tooling tests, unchanged 120-test native results/lint, signed bundled ARM64 0.4.0/code 4 with current APK hash recorded. Earlier 17:01 pass preserved as history. [Owner composition 05 approval](design/r9-runtime-composition-approval-v5.json) closes R9 review. No install/publish; consolidated phone/G1/G2/G3 acceptance remains pending. |
 | FUT-ICON | Optional dynamic/themed launcher icons | separate future scope decision | pending | One static Classic identity ships first; no alias/worker feature or current acceptance dependency |
 | P4-A | Optional Google connection and one-off publishing | G3 | verified | [Owner's 11 October publishing sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md); [host/build evidence](evidence/2026-10-09-calendar-publishing.md) and [timed publication repair](evidence/2026-10-11-calendar-repair.md) retained; owner attestation without supplied accepted APK identity or individual scenario coverage; P4-B–P4-D/G4 remain pending |
-| P4-B | Explicit import and protected linked updates | P4-A | in progress | [Owner-approved import/linking contract](calendar-linking.md); one-event imports, Alarm default, explicit Google reminder consent and per-field manual resolution; signed-device acceptance remains separate |
-| P4-B01 | Import/linking contract and isolated fixtures | owner 12 October implementation instruction; P4-A | in progress | [Current contract](calendar-linking.md); source calendar independent of publishing default; one-off personal/single-day scope |
-| P4-B02 | Native event mapping, browsing and conditional patches | P4-B01 | in progress | Transport seams retain owned scopes, sparse fields and If-Match; unsupported events and bound pagination |
-| P4-B03 | CE 7→8 identity, atomic import and local scheduling recovery | P4-B02 | in progress | DP 6/backup 4 retained; one occurrence/source and serialized engine checkpoints |
-| P4-B04 | Reviewed linked resolution, consent and durable partial recovery | P4-B03 | in progress | Field choices, common baseline, local timing preservation, exact retries and removal/account guards |
-| P4-B05 | Browser, compact review, Details status and scoped recovery | P4-B04 | in progress | Current shared components; no new root, artwork or automatic network synchronization |
-| P4-B06 | Host/native/render checks, signed artifact and consolidated acceptance | P4-B05 | in progress | Actual evidence to be recorded; device observations remain pending |
+| P4-B | Explicit import and protected linked updates | P4-A | implemented/unverified | [230 shared/89 tooling/254 native tests, lint, fixture observations and identified signed artifact](evidence/2026-10-12-calendar-linking.md); [owner-approved contract](calendar-linking.md); signed-device/live Google acceptance remains separate |
+| P4-B01 | Import/linking contract and isolated fixtures | owner 12 October implementation instruction; P4-A | implemented/unverified | [Contract and strict memory-only fixture evidence](evidence/2026-10-12-calendar-linking.md); independent source calendar and explicit consent, including No alert |
+| P4-B02 | Native event mapping, browsing and conditional patches | P4-B01 | implemented/unverified | [Mapping/transport evidence](evidence/2026-10-12-calendar-linking.md); owned scopes, bounded ordered pagination, sparse If-Match patches and safe 412 outcomes |
+| P4-B03 | CE 7→8 identity, atomic import and local scheduling recovery | P4-B02 | implemented/unverified | [Migration/transaction/crash/privacy evidence](evidence/2026-10-12-calendar-linking.md); DP 6/backup 4 retained; one allocated occurrence/source and serialized checkpoints |
+| P4-B04 | Reviewed linked resolution, consent and durable partial recovery | P4-B03 | implemented/unverified | [Conflict/retry/removal evidence](evidence/2026-10-12-calendar-linking.md); common baseline, independent timing and postponement preserved; obsolete operations fenced |
+| P4-B05 | Browser, compact review, Details status and scoped recovery | P4-B04 | implemented/unverified | [Eight-pair and focused large-text/landscape fixture observations](evidence/2026-10-12-calendar-linking.md); full state matrix and Android Back/keyboard/TalkBack remain for consolidated acceptance |
+| P4-B06 | Host/native/render checks, signed artifact and consolidated acceptance | P4-B05 | implemented/unverified | [Signed ARM64 0.4.0 (4), hash/signer/source relationship and host checks](evidence/2026-10-12-calendar-linking.md); [owner checklist](device-acceptance.md) extended; not installed or distributed; physical/live Google observations pending |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
 | P4-D | Incremental/native background opportunities | P4-C | pending | allowlist, pagination, retries, 410 recovery |
 | G4 | Calendar release gate | P4-A/B/C/D | pending | both directions after documented sync opportunity |
