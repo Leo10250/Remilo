@@ -9,6 +9,7 @@ import { calendarCaptureRejected, resolvedCalendarFields } from '../domain/calen
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, SelectRow, Toggle } from '../ui/components';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
+import { calendarImportIndependence } from '../domain/calendar-presentation';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { engine, nativeAvailable } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
@@ -86,6 +87,7 @@ export default function CalendarReview() {
       <Button label="Cancel" variant="secondary" disabled={busy || uncertain} onPress={back} />
     </BottomActionBar> : undefined}>
     <Copy muted>{imported ? 'Only this event is imported. Review its local alarm and Google reminder choices.' : 'Choose the values to keep. Confirmation applies the shown changes to Remilo and Google; each outcome is recorded separately.'}</Copy>
+    {imported && <Copy muted>{calendarImportIndependence}</Copy>}
     {!!error && <ActionFeedback message={error} tone="warning" />}
     {busy && <ActionFeedback loading message="Checking the captured Calendar review…" />}
     {!preview && !busy && <Button label="Retry review" variant="secondary" onPress={() => void load()} />}

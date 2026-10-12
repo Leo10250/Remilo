@@ -7,7 +7,7 @@ export function resolvedCalendarFields(local: CalendarFields, remote: CalendarFi
     schedule: selections.schedule === 'remilo' ? local.schedule : remote.schedule };
 }
 export function calendarOperationRetryable(job: CalendarLinkedOperation) {
-  return !job.readOnly && ['Waiting', 'Unconfirmed', 'NeedsAccess', 'Blocked'].includes(job.state);
+  return !job.readOnly && ['Retry', 'ConfirmOutcome'].includes(job.recoveryMode);
 }
 export function calendarCaptureRejected(error: unknown) {
   const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';

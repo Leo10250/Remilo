@@ -14,12 +14,26 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     notes: item?.notes || 'Synthetic notes. No Google requests.', schedule: { eventStartMs: item?.eventStartMs || Date.now() + 3_600_000,
       eventEndMs: item?.eventEndMs || Date.now() + 5_400_000, allDay: item?.allDay || false, zoneId: item?.zoneId || 'America/Los_Angeles' } });
   const remote = fields();
+  const metadata = (): Pick<CalendarLink, 'accountEmail' | 'availability' | 'availabilityReason' | 'observedAtMs' | 'lastCheckAttemptAtMs' | 'lastCheckErrorCode' | 'remoteDiffers' | 'requiresReview'> => ({
+    accountEmail: 'calendar-tester@example.test', availability: 'Available', availabilityReason: '', observedAtMs: Date.now(), lastCheckAttemptAtMs: Date.now(), lastCheckErrorCode: '', remoteDiffers: false, requiresReview: false,
+  });
   if (review.get('reviewText') === 'long') {
     remote.title = 'Review the complete project proposal and supporting materials / 审阅完整项目计划与支持材料';
     remote.notes = 'Preserve these personal notes exactly. 请保留完整的个人备注。\n'.repeat(20);
   }
   if (scenario === 'all-day') { const day = new Date(); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + 1); remote.schedule = { ...remote.schedule, eventStartMs: day.getTime(), eventEndMs: day.getTime() + 86_400_000, allDay: true }; }
-  if (scenario === 'conflict') links.set('review', { occurrenceId: 'review', revision: 1, calendarName: 'Synthetic source / 测试日历', state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic conflict. Manual review required.', htmlLink: '', readOnly: false, differs: true });
+  if (['conflict', 'linked', 'deleted', 'unavailable', 'unsupported', 'detached', 'restored', 'terminal', 'partial', 'blocked'].includes(scenario || '')) links.set('review', {
+    ...metadata(), occurrenceId: 'review', revision: 1, calendarName: 'Synthetic source / 测试日历', state: scenario === 'detached' ? 'Detached' : ['deleted', 'unavailable', 'unsupported', 'restored'].includes(scenario!) ? 'Suspended' : 'Linked',
+    availability: scenario === 'deleted' ? 'Deleted' : scenario === 'unavailable' ? 'Unavailable' : scenario === 'unsupported' ? 'Unsupported' : 'Available',
+    availabilityReason: scenario === 'deleted' ? 'REMOTE_DELETED' : scenario === 'unavailable' ? 'NOT_FOUND' : scenario === 'unsupported' ? 'MEETING_EVENT' : '',
+    requiresReview: ['deleted', 'unavailable', 'unsupported', 'restored'].includes(scenario!),
+    checkedAtMs: Date.now(), message: 'Synthetic connection. No Google requests.', htmlLink: '', readOnly: false, differs: scenario === 'conflict', source: { calendarId: 'fixture-calendar', eventId: 'personal' },
+  });
+  if (scenario === 'partial' || scenario === 'blocked') jobs.set('synthetic-operation', {
+    operationId: 'synthetic-operation', occurrenceId: 'review', kind: 'ApplyCalendarResolution', calendarName: 'Synthetic source / 测试日历',
+    state: scenario === 'partial' ? 'Unconfirmed' : 'Blocked', recoveryMode: 'Retry', localApplied: true, localStatus: scenario === 'partial' ? 'Scheduled' : 'Blocked',
+    remoteAttempted: scenario === 'partial', readOnly: false, message: scenario === 'partial' ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Google reminders remain. Resolve alert readiness, then retry.',
+  });
   const preview = (id: string | null, choices: CalendarImportChoices = {}, source?: CalendarEventRef): CalendarLinkPreview => {
     const item = id ? find(id) : undefined;
     if (id && (!item || item.completed || item.deleted || item.skipped || item.segmentId)) return error('INELIGIBLE');
@@ -39,7 +53,18 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     previews.set(result.previewId, clone(result)); if (source) sources.set(result.previewId, clone(source)); return clone(result);
   };
   return {
-    getCalendarLinks: async () => clone([...links.values()].map(link => ({ ...link, source: connected() ? link.source : null }))),
+    getCalendarLinks: async () => clone([...links.values()].map(link => {
+      const item = find(link.occurrenceId);
+      if ((item?.deleted || item?.completed || item?.skipped) && !link.requiresReview) { link = { ...link, state: link.state === 'Detached' ? 'Detached' : 'Suspended', requiresReview: true }; links.set(link.occurrenceId, link); }
+      return { ...link, readOnly: !!item?.deleted || !!item?.completed || !!item?.skipped, source: connected() ? link.source : null };
+    })),
+    checkCalendarLink: async (id: string) => {
+      const old = links.get(id); if (!old || !find(id)) return error('NOT_FOUND');
+      const checkedAtMs = Date.now(), offline = review.get('reviewCalendarOffline') === '1';
+      const next = { ...old, lastCheckAttemptAtMs: checkedAtMs, lastCheckErrorCode: offline ? 'NETWORK' : '',
+        ...(offline ? {} : { observedAtMs: checkedAtMs, availability: scenario === 'deleted' ? 'Deleted' as const : scenario === 'unavailable' ? 'Unavailable' as const : scenario === 'unsupported' ? 'Unsupported' as const : 'Available' as const }) };
+      links.set(id, next); changed(); return clone(next);
+    },
     getCalendarOperations: async () => clone([...jobs.values()].map(job => ({ ...job, source: connected() ? job.source : null }))),
     listCalendarEvents: async (query: CalendarEventQuery) => {
       const days = (Date.parse(query.until) - Date.parse(query.from)) / 86_400_000;
@@ -86,7 +111,7 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
       }
       if (command.kind === 'RetryCalendarOperation') {
         const job = jobs.get(command.operationId); if (!job) return error('NOT_FOUND');
-        if (review.get('reviewCalendarOffline') !== '1') jobs.set(job.operationId, { ...job, state: 'Confirmed', message: 'Synthetic outcome confirmed. No Google write.' });
+        if (review.get('reviewCalendarOffline') !== '1') jobs.set(job.operationId, { ...job, state: 'Confirmed', recoveryMode: 'None', message: 'Synthetic outcome confirmed. No Google write.' });
         changed(); return clone(jobs.get(job.operationId));
       }
       const input = JSON.stringify(command), prior = receipts.get(command.operationId);
@@ -104,10 +129,10 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
       const item = save?.(p.local ? values : { ...values, title: p.choices.title || values.title }, p.choices, command.operationId, p.occurrenceId || undefined);
       const id = item?.id || p.occurrenceId || 'synthetic-import-' + ++count;
       const blocked = scenario === 'blocked', partial = scenario === 'partial' || review.get('reviewCalendarOffline') === '1';
-      links.set(id, { occurrenceId: id, revision: 1, calendarName: p.calendarName, state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic manually linked reminder.', htmlLink: '', readOnly: false, differs: false, source });
+      links.set(id, { ...metadata(), occurrenceId: id, revision: 1, calendarName: p.calendarName, state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic manually linked reminder.', htmlLink: '', readOnly: false, differs: false, source });
       const job: CalendarLinkedOperation = { operationId: command.operationId, occurrenceId: id, kind: command.kind, calendarName: p.calendarName, title: item?.title || p.choices.title || values.title,
         state: blocked ? 'Blocked' : partial ? 'Unconfirmed' : 'Confirmed', source, localApplied: true, localStatus: blocked ? 'Blocked' : (item?.mode || p.choices.mode) === 'None' ? 'Applied' : 'Scheduled',
-        remoteAttempted: partial, readOnly: false, message: blocked ? 'Google reminders remain. Resolve alert readiness, then retry.' : partial ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Local and Google outcomes confirmed in memory only.' };
+        remoteAttempted: partial, readOnly: false, recoveryMode: blocked || partial ? 'Retry' : 'None', message: blocked ? 'Google reminders remain. Resolve alert readiness, then retry.' : partial ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Local and Google outcomes confirmed in memory only.' };
       jobs.set(command.operationId, job); receipts.set(command.operationId, input); changed();
       if (review.get('reviewLostReply') === '1') throw new Error('Synthetic reply lost after durable-capture substitute.');
       return clone(job);

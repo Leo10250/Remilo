@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 8/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 9/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -43,6 +43,16 @@ returns the same allocated jobs. Child saves/scheduling/remote phases remain
 independent and manually recoverable. No schema/version change is needed.
 Current-account source references in native link/job views let cached browser rows
 hide associated and pending events without requiring Google reads on navigation.
+
+CE 8→9 adds typed remote availability, original account labels, observed/attempt
+times, remote comparisons and a required-review flag to Calendar links. This data
+stays outside DP/portable backups. An explicit Check uses the I/O executor and
+then validates the captured connection, source, link and reminder revisions on
+the serialized worker; it changes no reminder fields or scheduling projections.
+Confirmed cancellation preserves local alarms, while unavailable/unsupported
+events suspend transfers. Trash/Unlink fence unsent work; a sent outcome may be
+acknowledged without reactivating the association. Restore and remote availability
+do not clear required review. Old message text never supplies an inferred observation.
 
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured

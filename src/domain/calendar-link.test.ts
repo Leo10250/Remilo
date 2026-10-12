@@ -12,9 +12,10 @@ describe('Calendar linked review', () => {
     expect(resolvedCalendarFields(fields, remote, { title: 'google', notes: 'remilo', schedule: 'google' })).toEqual({ title: 'Google', notes: 'Local notes', schedule: remote.schedule });
   });
   it('allows captured recovery only for unresolved operations with retained content', () => {
-    for (const state of ['Waiting', 'Unconfirmed', 'NeedsAccess', 'Blocked'] as const) expect(calendarOperationRetryable({ state, readOnly: false } as CalendarLinkedOperation)).toBe(true);
-    for (const state of ['Confirmed', 'Cancelled', 'Conflict', 'Failed'] as const) expect(calendarOperationRetryable({ state, readOnly: false } as CalendarLinkedOperation)).toBe(false);
-    expect(calendarOperationRetryable({ state: 'Unconfirmed', readOnly: true } as CalendarLinkedOperation)).toBe(false);
+    for (const state of ['Waiting', 'Unconfirmed', 'NeedsAccess', 'Blocked'] as const) expect(calendarOperationRetryable({ state, recoveryMode: 'Retry', readOnly: false } as CalendarLinkedOperation)).toBe(true);
+    for (const state of ['Confirmed', 'Cancelled', 'Conflict', 'Failed'] as const) expect(calendarOperationRetryable({ state, recoveryMode: 'None', readOnly: false } as CalendarLinkedOperation)).toBe(false);
+    expect(calendarOperationRetryable({ state: 'Unconfirmed', recoveryMode: 'ConfirmOutcome', readOnly: false } as CalendarLinkedOperation)).toBe(true);
+    expect(calendarOperationRetryable({ state: 'Unconfirmed', recoveryMode: 'Retry', readOnly: true } as CalendarLinkedOperation)).toBe(false);
     expect(calendarCaptureRejected({ code: 'STALE_PREVIEW' })).toBe(true);
     expect(calendarCaptureRejected({ code: 'NETWORK' })).toBe(false);
   });

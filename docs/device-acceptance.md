@@ -684,6 +684,29 @@ Observe on an identified signed bundled build; host/fixture results do not pass 
   selection/focus return, guarded navigation and retained search/filter/scroll;
   genuine empty Agenda has one Add action and opens the normal focused editor.
 
+### Calendar management and independent Trash follow-up — CAL-03
+
+Use the identified signed bundled follow-up build and the original connected
+Google account. Host/fixture observations do not establish these device results.
+
+- Open a linked reminder: Title and local alert lead, ordinary information follows,
+  and the compact Calendar row is last. Open management and return to the same
+  Details scroll/origin. Opening either page performs no Google check.
+- Explicitly check a deleted owned event. Confirm the cancellation appears in
+  Agenda and Details while the exact local alarm/notification/postponement stays.
+  Repeat offline and after app restart. No alert and terminal wording must remain
+  truthful. An unavailable account/event must not be labelled deleted.
+- From the cancellation notice, cancel local Trash, then confirm it: Remilo
+  delivery stops, Google remains unchanged, and the originating collection shows
+  revision-safe Undo. Restore does not replay elapsed delivery or old Google work.
+- Unlink from both entry points. Confirm local content/alert and Google settings
+  remain, cancellation metadata clears, and relinking requires fresh review.
+  Previously sent updates may finish; uncertain replies use the original operation.
+- Restore the Google event and Check: the cancellation notice clears but updates
+  remain suspended until reviewed. Completed/skipped/trashed work never reopens.
+- Exercise interrupted Check, unlink/Trash while a read is outstanding, 200% text,
+  English/Chinese, keyboard/Back, TalkBack and reduced motion on actual Android.
+
 ### Continuous browsing-header follow-up — U36
 
 Observe on an identified signed bundled build in the consolidated owner run.

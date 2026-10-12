@@ -1,5 +1,14 @@
 # Verification and release evidence
 
+The Calendar management follow-up requires CE 8→9 migration, structured remote
+observations, explicit check isolation and lifecycle-fenced late replies. Verify
+cancelled/explicit-deleted responses versus ambiguous 404/410, unchanged local
+generation/target/postponement, restart/offline persistence, read-only terminal
+checks, and restored availability that still requires review. Inspect the compact
+Details row, separate management/history, Agenda/Details notices, unlink and local
+Trash/Purge wording across eight pairs and accessibility constraints. Identified
+signed-device/live Google observations remain part of the owner checklist.
+
 [P4-B Calendar imports/linking](calendar-linking.md) require duplicate-free
 native import, CE 7→8 migration, conditional patch and phased retry evidence.
 Check future/default alert validation, blocked suppression, conflict choices,

@@ -58,9 +58,21 @@ Imported events receive a retained source association. Published copies require
 Enable linked updates. Initial adoption compares current local/Google values;
 there is no invented historical baseline for an old publication.
 
-Details shows last check time, manually linked status, Check for changes, review,
-Google link and Unlink under More. Check/preview reads never apply compatible
-fields. Completed/skipped/trashed records have read-only Calendar context.
+The owner's subsequent [Calendar management correction](design/current/calendar-management.md)
+keeps Title/local alert first in Details. A compact Google Calendar row follows
+Schedule details and opens a separate management page with explicit Check,
+review, Google link and visible Unlink; Reminder actions retains its shortcut.
+Opening local pages reads saved metadata only. Check/preview reads never apply
+compatible fields. Completed/skipped/trashed records allow read-only checks.
+
+Confirmed Google deletion keeps the reminder and its exact local alert, including
+Snooze/Postpone. Agenda shows mode-specific cancellation metadata; Details adds a
+state-aware notice with local Trash and Calendar details. A failed/offline check
+preserves that observation. An ambiguous 404 means unavailable, not deleted.
+Restored Google events require fresh reviewed resolution before updates resume;
+they never reopen terminal local work. Local Trash cancels only Remilo delivery;
+Restore preserves work state, never replays elapsed delivery and does not revive
+old writes. Unlink keeps both copies and never restores Google reminders.
 
 Title, Notes and Schedule have separate Remilo/Google choices. Schedule includes
 start, end, all-day and named zone as one unit. Equal values are selected locally;
@@ -83,7 +95,10 @@ second reminder; detached existing reminders can be explicitly relinked.
 
 ## Native authority, storage and recovery
 
-Content schema 7→8 adds CE-only calendar_links and calendar_link_operations.
+Content schema 7→8 adds CE-only calendar_links and calendar_link_operations;
+8→9 adds structured remote observations, original account labels and required
+review state. Migration initializes unknown availability without interpreting old
+messages, retains historical attempt time and performs no Google work.
 DP remains 6; portable backup remains 4. Existing publication tables/jobs/receipts
 are retained unchanged and upgrade performs no linking, backfill or network work.
 Calendar associations/snapshots/jobs/credentials are excluded from backups.
@@ -98,7 +113,13 @@ policy. Calendar I/O and authorization run separately and cannot block alarms.
 The bridge adds event listing, import/link/update previews, saved links and
 operations. Commands capture a native preview ID, operation UUID and field
 selections, never arbitrary Google JSON from JavaScript. Previews are bounded,
-native-owned and expire after ten minutes. Saved operations retain immutable
+native-owned and expire after ten minutes. `checkCalendarLink` records structured
+availability and comparisons without advancing the baseline or scheduling.
+Observation commits validate connection/source/link/content revisions after I/O.
+Deletion tombstones are inspected before field mapping; explicit deleted-resource
+errors differ from generic/expired-sync 410 responses. Recovery modes distinguish
+retry from read-only confirmation of an already-sent outcome.
+Saved operations retain immutable
 identity/content and separate local status/remote progress across process death.
 
 ImportCalendarEvents captures all reviewed per-event jobs plus one immutable
@@ -107,7 +128,7 @@ The receipt retains only a request hash and allocated child operation IDs.
 Retrying a lost batch acknowledgement returns those same jobs; different input
 with its operation ID is rejected. Each child's existing local/remote phases
 report actual outcomes independently. Startup performs no batch network work;
-saved child operations retain explicit manual recovery. CE remains 8/DP 6/backup 4.
+saved child operations retain explicit manual recovery. CE is now 9/DP 6/backup 4.
 
 Before local application, revalidate the original account, ownership, event
 eligibility, etag, compatible fields and local guards. Sparse Google patches send

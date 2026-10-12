@@ -1,8 +1,9 @@
 # Reminder details and editor
 
-The owner's [P4-B contract](../../../calendar-linking.md) adds manually linked
-Calendar context to Details. Show last check, Check for changes/Review changes
-and Google link; Unlink belongs in More. Terminal reminders retain read-only
+The owner's [Calendar management correction](../calendar-management.md) places
+compact Calendar context after local information and Schedule details. Its separate
+page owns explicit Check/review, Google link and visible Unlink; More retains its
+shortcut. Active cancellation notices follow local alert state. Terminal reminders retain read-only
 context. Existing published copies require explicit adoption. Compact import/
 resolution reviews keep Title/Notes/Schedule choices distinct and show the
 retained postponed target, local outcome and separate Google recovery.

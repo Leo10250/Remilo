@@ -81,6 +81,14 @@ disabled; personal timed/single-day all-day events only. Existing published copi
 require deliberate linking. Recurrence publishing and ongoing synchronization
 remain later phases.
 
+The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
+places a compact Calendar entry after the reminder's local Details information.
+Its separate management page reads saved status until an explicit Check or review.
+Confirmed Google deletion keeps the local alert, with Agenda/Details cancellation
+notices and a local Trash action. Local Trash/Unlink never changes Google; restoring
+either copy never reopens the other or reauthorizes old writes. A fresh reviewed
+resolution is required before a suspended link resumes.
+
 - Principal UI: React Native / TypeScript / Expo. Autonomous Kotlin engine and Room.
 - Local use needs no account, network, server, Metro or active JavaScript.
 - Event, due and alarm are separate. Event duration defaults to 30 minutes; due

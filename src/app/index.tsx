@@ -21,6 +21,7 @@ import { useRootState } from '../ui/root-state';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
+import { calendarCancellation } from '../domain/calendar-presentation';
 import { ScrollChromeProvider, ScrollReadingPlane, useChromeScroll, usePageChrome } from '../ui/scroll-chrome';
 
 type Toast = { message: string; persistent?: boolean; undo?: { id: string; revision: number; operationId: string } };
@@ -88,6 +89,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const back = useDestinationNavigation(destination, beforeBack, guarded, scoped ? origin : undefined,
     scoped ? secondaryOriginRoute({ ...originParams(origin), ...retainedOriginParams(params) }) : undefined);
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
+  const calendarLinks = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(), enabled: nativeAvailable });
+  const calendarByReminder = new Map(calendarLinks.data?.map(link => [link.occurrenceId, link]));
   const currentList = lists.data?.find((item) => item.id === listId);
   const listName = listId === null ? 'No list' : currentList?.name ?? '';
   const missingList = scoped && listId !== null && !!lists.data && !currentList;
@@ -214,7 +217,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
-        renderItem={({ item, section }) => <ReminderRow item={item} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={() => complete(item)} onMore={() => { if (!isGuarded()) setSelected(item); }} busy={guarded} />}
+        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarByReminder.get(item.id))?.row} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={() => complete(item)} onMore={() => { if (!isGuarded()) setSelected(item); }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? 'Use the Android app to manage reminders.' : search || chips.length ? 'No reminders match these filters.' : view === 'today' ? 'No reminders today.' : view === 'upcoming' ? 'No reminders from tomorrow onward.' : scoped ? 'No reminders in this list yet.' : 'No reminders yet.'} onRetry={() => void reminders.refetch()} />
           {emptyCreate && <Button label="Create a reminder" disabled={guarded} onPress={createReminder} />}

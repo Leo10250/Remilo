@@ -126,6 +126,15 @@ test('Calendar all-event capture recovers its reply and excludes saved sources w
   assert.equal((await preview.queryReminders({ view: 'all', search: reviews[0].remote.title }, null)).total, 3);
 });
 
+test('Calendar checks keep cancellation and terminal local state with no network or scheduler globals', async () => {
+  const preview = loadPreview('?reviewCalendarLink=deleted&reviewCalendarLocal=completed&reviewCalendarOffline=1');
+  const before = await preview.getOccurrence('review');
+  const checked = await preview.checkCalendarLink('review');
+  assert.equal(checked.availability, 'Deleted'); assert.equal(checked.lastCheckErrorCode, 'NETWORK');
+  assert.equal(checked.requiresReview, true); assert.deepEqual(await preview.getOccurrence('review'), before);
+  assert.equal((await preview.getCalendarLinks())[0].readOnly, true);
+});
+
 test('Calendar fixture executes connect/list/publish/retry with no network or native authorization globals', async () => {
   const preview = loadPreview('?reviewCalendar=disconnected&reviewCalendarOffline=1');
   await preview.authorizeCalendar(null);

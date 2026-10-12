@@ -1,7 +1,7 @@
 import { RootNotice, notifyTrash } from '../../ui/navigation';
 import { useTimeFormatting } from '../../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
-import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams, type Href } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
@@ -21,8 +21,7 @@ import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/them
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
-import { CalendarPublicationStatus } from '../../ui/calendar-publication';
-import { CalendarLinkStatus, CalendarOperationStatus } from '../../ui/calendar-linked';
+import { CalendarExceptionNotice, CalendarSummaryRow } from '../../ui/calendar-association';
 import { calendarCaptureRejected } from '../../domain/calendar-link';
 import { calendarError } from '../../domain/calendar';
 
@@ -140,7 +139,7 @@ export default function ReminderDetails() {
   const recovery = recoveryPresentation(recoveryKind);
   const frozenPostpone = command.isPending || uncertain || postponeResult;
   const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
-  return <Page title="Reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
+  return <Page title="Reminder" scrollKey={'reminder:' + id} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
     actions={item ? <>{!item.deleted && <IconButton icon="edit" label="Edit reminder" buttonRef={scopeTrigger} disabled={command.isPending || uncertain} onPress={edit} />}
     <IconButton icon="more_vert" label="Reminder actions" disabled={command.isPending || uncertain} onPress={() => setMenu(true)} /></> : undefined}
     footer={<><RootNotice disabled={command.isPending || uncertain} />{item && (active || item.completed || item.skipped || item.deleted) ? <BottomActionBar>
@@ -162,9 +161,6 @@ export default function ReminderDetails() {
       <Button label={recovery.retry} variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
     {command.isPending && <ActionFeedback loading message="Applying change…" />}
     {item && <>
-      {calendarLink ? <CalendarLinkStatus link={calendarLink} routeParams={routeParams} /> : publication && <CalendarPublicationStatus publication={publication} routeParams={routeParams} />}
-      {calendarOperations.data?.filter(operation => operation.occurrenceId === id && operation.state !== 'Confirmed').map(operation => <CalendarOperationStatus key={operation.operationId} operation={operation} />)}
-      {unlinkUncertain && <Button label="Retry same unlink" variant="secondary" disabled={unlinkBusy} onPress={() => void unlink()} />}
       {query.error && <><ActionFeedback message="Could not refresh. Showing the previous reminder." tone="warning" /><Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
       <SchedulePrimary item={item} />
@@ -178,6 +174,9 @@ export default function ReminderDetails() {
       {item.deliveryState === 'Blocked' && active && <Button icon="settings" label="Review alert permissions" variant="secondary" disabled={command.isPending || uncertain} onPress={() => {
         if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } });
       }} />}
+      <CalendarExceptionNotice item={item} link={calendarLink} jobs={calendarOperations.data?.filter(operation => operation.occurrenceId === id) || []}
+        disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain} onTrash={moveToTrash}
+        onManage={() => router.push({ pathname: '/calendar-manage', params: { id, ...routeParams, originReminderId: id } } as Href)} />
       <Schedule item={item} details={false} connected occurrence hasPublication={!!publication || !!calendarLink} />
       {item.segmentId && <ConnectedGroup title="Repeat" footer={series.isLoading || series.error || series.data?.state === 'Archived' ? <>
         <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
@@ -196,13 +195,16 @@ export default function ReminderDetails() {
         {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
       </ConnectedGroup>
       <ScheduleDetails item={item} occurrence hasPublication={!!publication || !!calendarLink} />
+      <CalendarSummaryRow id={id} link={calendarLink} publication={publication} jobs={calendarOperations.data?.filter(operation => operation.occurrenceId === id) || []} origin={routeParams} disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain} />
+      {unlinkUncertain && <Button label="Retry same unlink" variant="secondary" disabled={unlinkBusy} onPress={() => void unlink()} />}
     </>}
     <Sheet title="Reminder actions" visible={menu} onClose={() => setMenu(false)}>
       {item && !item.deleted && <SettingRow icon="edit" label="Edit" onPress={edit} />}
       {active && !item.segmentId && !calendarLink && (!publication || publication.state === 'Cancelled') && <SettingRow icon="event" label="Publish to Google Calendar" disabled={command.isPending || uncertain}
         onPress={() => { setMenu(false); router.push({ pathname: '/calendar-publish', params: { id, ...routeParams, originReminderId: id } }); }} />}
-      {calendarLink && calendarLink.state !== 'Detached' && <SettingRow icon="close" label="Unlink Google Calendar" disabled={unlinkBusy || unlinkUncertain}
-        onPress={() => { setMenu(false); confirm('Unlink Google Calendar?', 'Local reminder and Google event remain. Unsent changes stop; a sent request may still finish. Google reminders are not restored automatically.',
+      {calendarLink && calendarLink.state !== 'Detached' && <SettingRow icon="close" label="Unlink from Google Calendar" disabled={unlinkBusy || unlinkUncertain}
+        onPress={() => { setMenu(false); confirm('Unlink from Google Calendar?', 'Keep this reminder and the Google event. Stop linked updates between them. Google reminder settings will not be changed.' +
+          (calendarOperations.data?.some(operation => operation.occurrenceId === id && operation.remoteAttempted && !['Confirmed', 'Cancelled', 'Conflict', 'Failed'].includes(operation.state)) ? '\n\nA previously sent Google update may still finish.' : ''),
           [{ text: 'Cancel', style: 'cancel' }, { text: 'Unlink', onPress: () => void unlink() }]); }} />}
       <SettingRow icon="content_copy" label="Duplicate" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }); }} />
       <SettingRow icon="history" label="Activity" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/activity', params: { id, ...routeParams, originReminderId: id } }); }} />

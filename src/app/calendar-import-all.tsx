@@ -7,6 +7,7 @@ import type { CalendarCommand, CalendarImportChoices, CalendarImportBatchResult,
 import { collectCalendarImports, excludedCalendarImports } from '../domain/calendar-import';
 import { calendarCaptureRejected } from '../domain/calendar-link';
 import { calendarError } from '../domain/calendar';
+import { calendarImportIndependence } from '../domain/calendar-presentation';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, SelectRow, SettingRow, Sheet, Toggle } from '../ui/components';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
@@ -96,6 +97,7 @@ export default function CalendarImportAll() {
     <Button label="Cancel" variant="secondary" disabled={busy || uncertain} onPress={back} />
   </BottomActionBar> : undefined}>
     <Copy muted>All eligible events in your selected dates are included, across every page. Imported, pending and unsupported events are skipped.</Copy>
+    <Copy muted>{calendarImportIndependence}</Copy>
     {!!error && <ActionFeedback message={error} tone="warning" />}
     {reading && <ActionFeedback message={message || 'Checking all selected dates…'} loading />}
     {!reading && !ready && <Button label="Retry review" variant="secondary" onPress={() => void load()} />}

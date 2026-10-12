@@ -52,6 +52,19 @@ const items: Occurrence[] = [
     history: [{ kind: 'Delete', atMs: today.getTime() - 1_800_000, targetMs: null }] }),
   make('paused', 'Stretch and take a break', dayMs, { segmentId: 'paused-series', seriesState: 'Paused', deliveryState: 'Paused', nextAlertMs: null, repeatSummary: 'Every day' }),
 ];
+const calendarLocal = review.get('reviewCalendarLocal');
+if (calendarLocal) {
+  const item = items.find(item => item.id === 'review')!;
+  if (calendarLocal === 'notification') item.mode = 'Notification';
+  if (calendarLocal === 'none') { item.mode = 'None'; item.deliveryState = 'NoAlert'; item.nextAlertMs = null; }
+  if (calendarLocal === 'completed') { item.completed = true; item.deliveryState = 'Completed'; item.nextAlertMs = null; }
+  if (calendarLocal === 'trash') { item.deleted = true; item.deliveryState = 'Deleted'; item.nextAlertMs = null; }
+  if (calendarLocal === 'skipped') { item.skipped = true; item.deliveryState = 'Skipped'; item.nextAlertMs = null; }
+  if (calendarLocal === 'blocked') item.deliveryState = 'Blocked';
+  if (calendarLocal === 'pending') item.deliveryState = 'Pending';
+  if (calendarLocal === 'ringing') item.deliveryState = 'Alerting';
+  if (calendarLocal === 'postponed') { item.nextAlertMs = today.getTime() + dayMs; item.agendaAtMs = item.nextAlertMs; item.alertAdjustment = 'Postponed'; }
+}
 if (review.get('reviewCards') === 'states') {
   const now = Date.now(), zone = 'America/Los_Angeles', localStart = civilAt(now, zone).slice(0, 10) + 'T00:00:00';
   const allDayStart = convert({ zoneId: zone, local: localStart }).instantMs;
