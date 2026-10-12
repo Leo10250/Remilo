@@ -6,7 +6,9 @@ Owner instruction, 4 October 2026: complete offline Android development now and
 consolidate physical checks for a later acceptance run. The later
 [9 October owner attestation](evidence/2026-10-09-owner-g1-g3-attestation.md) accepts
 G1–G3 on its identified APK; unreported individual observations remain unclaimed.
-Known failures still require fixes, and new Calendar acceptance remains pending.
+Known failures still require fixes. The owner's
+[11 October P4-A sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md)
+accepts one-off Google Calendar publishing; P4-B–P4-D and G4 remain pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
@@ -92,7 +94,7 @@ Known failures still require fixes, and new Calendar acceptance remains pending.
 | TD-05 | Static Classic branding | approved Classic source/A01 | implemented/unverified | [TD-05 handoff](handoffs/redesign-td-05.md); all six circle-centered Classic v2 exports approved/integrated; copier/hash and [signed assembly checks pass](handoffs/redesign-td-06.md). Actual OEM masks/splash/notification acceptance remains pending. |
 | TD-06 | Consolidated acceptance | TD-03, TD-04, TD-05; TD-01/02 integrated | implemented/unverified | [TD-06 handoff](handoffs/redesign-td-06.md); latest sequential release preparation passed 9 October 2026 at 17:18:00.718 UTC after final composition 05 presentation/wording corrections: 115 shared and 75 tooling tests, unchanged 120-test native results/lint, signed bundled ARM64 0.4.0/code 4 with current APK hash recorded. Earlier 17:01 pass preserved as history. [Owner composition 05 approval](design/r9-runtime-composition-approval-v5.json) closes R9 review. No install/publish; consolidated phone/G1/G2/G3 acceptance remains pending. |
 | FUT-ICON | Optional dynamic/themed launcher icons | separate future scope decision | pending | One static Classic identity ships first; no alias/worker feature or current acceptance dependency |
-| P4-A | Optional Google connection and one-off publishing | G3 | implemented/unverified | [378 shared, 82 tooling and 216 native tests; signed bundled assembly and fixture review](evidence/2026-10-09-calendar-publishing.md); [manual publishing contract/setup](calendar-publishing.md), CE 7 / DP 6 / backup 4, immutable identity recovery; designated signed-device OAuth/publishing/local-alarm acceptance remains pending |
+| P4-A | Optional Google connection and one-off publishing | G3 | verified | [Owner's 11 October publishing sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md); [host/build evidence](evidence/2026-10-09-calendar-publishing.md) and [timed publication repair](evidence/2026-10-11-calendar-repair.md) retained; owner attestation without supplied accepted APK identity or individual scenario coverage; P4-B–P4-D/G4 remain pending |
 | P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
 | P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
 | P4-D | Incremental/native background opportunities | P4-C | pending | allowlist, pagination, retries, 410 recovery |
