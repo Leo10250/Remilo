@@ -1,5 +1,12 @@
 # Verification and release evidence
 
+[P4-B Calendar imports/linking](calendar-linking.md) require duplicate-free
+native import, CE 7→8 migration, conditional patch and phased retry evidence.
+Check future/default alert validation, blocked suppression, conflict choices,
+preserved independent/postponed timings, removed/terminal states, backup/DP
+privacy and a responsive native worker under blocked Calendar I/O. Host and
+fixture results do not close signed-device Google or Android acceptance.
+
 The [10 October UX refinement](design/current/ux-refinement.md) requires active-source
 tests for All day combinations/round trips/relink/conflict/conversion failure,
 DST civil timing, schedule-only preview, original/current/intended/previous timing,

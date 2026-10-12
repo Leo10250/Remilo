@@ -89,7 +89,10 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(),
     enabled: nativeAvailable && !!editingId && !editingSeries });
   // An unavailable publication read must not let a coincident published event move.
-  const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || calendar.data.some(item => item.occurrenceId === editingId));
+  const calendarLinks = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(),
+    enabled: nativeAvailable && !!editingId && !editingSeries });
+  const hasCalendarContext = calendar.data?.some(item => item.occurrenceId === editingId) || calendarLinks.data?.some(item => item.occurrenceId === editingId);
+  const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || !calendarLinks.data || !!calendarLinks.error || !!hasCalendarContext);
   const dirty = saveAsNew || JSON.stringify(state) !== JSON.stringify(baseline);
   const busy = preparing || command.isPending || reviewLoading;
   usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
@@ -277,7 +280,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
         </View>
         <View key="alert"><AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} /></View>
         {!editingId && <View key="repeat">
-          <RepeatForm disabled={frozen} value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={calendar.data?.some(item => item.occurrenceId === editingId)} />
+          <RepeatForm disabled={frozen} value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={hasCalendarContext} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}
         <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />

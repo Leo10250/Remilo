@@ -1,14 +1,18 @@
 /** Synthetic Calendar adapter: memory only, with no native authorization or HTTP capability. */
 import type { CalendarCommand, CalendarConnection, CalendarPublication, CalendarPublicationPreview, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { deviceZone } from '../../src/domain/time';
+import { previewCalendarLinks } from './preview-calendar-links';
+import type { CalendarFields, CalendarImportChoices } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
-export function previewCalendar(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void) {
+export function previewCalendar(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
+  save?: (fields: CalendarFields, choices: CalendarImportChoices, operationId: string, id?: string) => Occurrence) {
   const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
   const state = review.get('reviewCalendar') || 'connected';
   let connection: CalendarConnection = { revision: 1, connected: state !== 'disconnected', available: state !== 'unavailable', email: 'calendar-tester@example.test',
     calendarId: ['disconnected', 'no-calendar'].includes(state) ? '' : 'fixture-calendar',
     calendarName: ['disconnected', 'no-calendar'].includes(state) ? '' : 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
   const jobs = new Map<string, CalendarPublication>(), captures = new Map<string, CalendarCommand>();
+  const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision);
   const error = (code: string): never => { throw Object.assign(new Error('Synthetic Calendar: ' + code), { code }); };
   const preview = (id: string): CalendarPublicationPreview => {
     const item = find(id);
@@ -27,6 +31,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
       htmlLink: '', publishedAtMs: state === 'Published' ? Date.now() : null, differs: review.get('reviewCalendarDiffers') === '1', readOnly: false });
   }
   return {
+    ...linked,
     getCalendarConnection: async () => clone(connection),
     getCalendarPublications: async () => clone([...jobs.values()]),
     previewCalendarPublication: async (id: string) => clone(preview(id)),
@@ -40,6 +45,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
       items: state === 'empty' ? [] : [{ id: cursor ? 'fixture-calendar-2' : 'fixture-calendar', name: cursor ? 'Another owned calendar' : 'Synthetic owned calendar / 测试日历', zoneId: 'America/Los_Angeles' }],
       nextCursor: !cursor && state !== 'empty' ? 'fixture-page-2' : null }),
     applyCalendarCommand: async (command: CalendarCommand): Promise<unknown> => {
+      if (!['PublishOneOff', 'RetryPublication', 'SelectCalendar', 'DisconnectCalendar'].includes(command.kind)) return linked.applyCalendarLinked(command);
       if (command.kind === 'RetryPublication') {
         const job = jobs.get(command.operationId); if (!job) return error('NOT_FOUND');
         if (review.get('reviewCalendarOffline') !== '1') jobs.set(job.operationId, { ...job, state: 'Published', message: 'Synthetic publication confirmed.' });
@@ -53,7 +59,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
         jobs.set(command.operationId, { operationId: command.operationId, occurrenceId: command.occurrenceId, email: value.email,
           calendarName: value.calendarName, state: review.get('reviewCalendarOffline') === '1' ? 'Unconfirmed' : 'Published',
           message: 'Synthetic captured publication. No Google requests.', htmlLink: '', publishedAtMs: null, differs: false, readOnly: false });
-      } else {
+      } else if (command.kind === 'SelectCalendar' || command.kind === 'DisconnectCalendar') {
         if (command.expectedConnectionRevision !== connection.revision) return error('STALE_CONNECTION');
         connection = { ...connection, revision: connection.revision + 1, ...(command.kind === 'DisconnectCalendar' ? { connected: false } : { calendarId: command.calendarId, calendarName: command.calendarId === 'fixture-calendar-2' ? 'Another owned calendar' : 'Synthetic owned calendar / 测试日历' }) };
       }

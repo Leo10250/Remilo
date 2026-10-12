@@ -1,5 +1,12 @@
 # Reminder details and editor
 
+The owner's [P4-B contract](../../../calendar-linking.md) adds manually linked
+Calendar context to Details. Show last check, Check for changes/Review changes
+and Google link; Unlink belongs in More. Terminal reminders retain read-only
+context. Existing published copies require explicit adoption. Compact import/
+resolution reviews keep Title/Notes/Schedule choices distinct and show the
+retained postponed target, local outcome and separate Google recovery.
+
 The [10 October UX refinement](../ux-refinement.md) supersedes earlier hierarchy,
 preview, all-day transitions and keyboard handoff below. Details leads with alert
 time; Event appears for Calendar publication context, with other event ranges in

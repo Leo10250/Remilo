@@ -385,7 +385,16 @@ function apply(command: Command): CommandResult {
 }
 if (review.get('reviewAgenda') === 'empty') items.splice(0, items.length);
 const preview = {
-  ...previewCalendar(review, (id) => items.find((item) => item.id === id), changed),
+  ...previewCalendar(review, (id) => items.find((item) => item.id === id), changed, (fields, choices, operationId, id) => {
+    const existing = id ? items.find(item => item.id === id) : null;
+    const target = existing?.alertAdjustment ? existing.nextAlertMs : null;
+    const result = apply({ ...fields.schedule, title: fields.title, notes: fields.notes,
+      ...(id ? { kind: 'Edit', occurrenceId: id, expectedRevision: existing!.revision } : { ...choices, kind: 'Create' }), operationId });
+    const item = result.occurrence || (id ? items.find(item => item.id === id) : items.at(-1));
+    if (!item) throw new Error('Synthetic creation unavailable');
+    if (target && existing) { existing.nextAlertMs = target; item.nextAlertMs = target; }
+    return item;
+  }),
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => ({ uses24HourClock: review.get('reviewClock') === '24', localeTag: review.get('reviewLocale') ?? 'en-US' }),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {

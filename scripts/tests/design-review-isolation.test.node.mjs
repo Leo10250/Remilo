@@ -89,12 +89,31 @@ function loadPresentation() {
 
 function loadPreview(search) {
   const time = compile('src/domain/time.ts');
+  const linked = compile('verification/ui/preview-calendar-links.ts', {
+    '../../src/domain/calendar-link': compile('src/domain/calendar-link.ts'),
+  });
   return compile('verification/ui/preview-engine.ts', {
     '../../src/domain/time': time,
     '../../src/domain/repeat': compile('src/domain/repeat.ts'),
-    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time }),
+    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time, './preview-calendar-links': linked }),
   }, { URLSearchParams, ...(search == null ? {} : { window: { location: { search } } }) }).default;
 }
+
+test('Calendar import/link fixtures create once and recover partial results without network or native globals', async () => {
+  const preview = loadPreview('?reviewCalendarLink=partial');
+  const before = await preview.getCalendarConnection();
+  const review = await preview.previewCalendarImport({ calendarId: 'source', eventId: 'personal' }, { mode: 'None' });
+  assert.equal(review.choices.mode, 'None');
+  const command = { kind: 'ImportCalendarEvent', previewId: review.previewId, operationId: 'same-import' };
+  const result = await preview.applyCalendarCommand(command);
+  assert.equal(result.localApplied, true); assert.equal(result.state, 'Unconfirmed');
+  await preview.applyCalendarCommand(command);
+  assert.equal((await preview.getCalendarOperations()).length, 1);
+  assert.equal((await preview.queryReminders({ view: 'all', search: review.remote.title }, null)).total, 1);
+  assert.deepEqual(await preview.getCalendarConnection(), before);
+  await preview.applyCalendarCommand({ kind: 'RetryCalendarOperation', operationId: command.operationId });
+  assert.equal((await preview.getCalendarOperations())[0].state, 'Confirmed');
+});
 
 test('Calendar fixture executes connect/list/publish/retry with no network or native authorization globals', async () => {
   const preview = loadPreview('?reviewCalendar=disconnected&reviewCalendarOffline=1');

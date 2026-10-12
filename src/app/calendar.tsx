@@ -8,6 +8,8 @@ import { calendarError } from '../domain/calendar';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Page, QueryState, SettingRow, Sheet } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
+import { CalendarOperationStatus } from '../ui/calendar-linked';
+import type { Href } from 'expo-router';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 
@@ -16,6 +18,7 @@ export default function CalendarSettings() {
   const client = useQueryClient(), confirm = useAppearanceConfirmation();
   const connection = useQuery({ queryKey: ['calendar', 'connection'], queryFn: () => engine().getCalendarConnection(), enabled: nativeAvailable });
   const jobs = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
+  const linkedJobs = useQuery({ queryKey: ['calendar', 'operations'], queryFn: () => engine().getCalendarOperations(), enabled: nativeAvailable });
   const [selecting, setSelecting] = useState(false), [busy, setBusy] = useState(false), [feedback, setFeedback] = useState('');
   const [rows, setRows] = useState<OwnedCalendar[]>([]), [cursor, setCursor] = useState<string | null>(null), [listLoaded, setListLoaded] = useState(false);
   const selection = useRef<CalendarCommand | null>(null);
@@ -70,7 +73,9 @@ export default function CalendarSettings() {
   };
   return <Page title="Google Calendar" scrollKey="calendar-settings" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}>
     <QueryState loading={connection.isLoading && nativeAvailable} error={connection.error} empty={!nativeAvailable} emptyMessage="Use the Android app to connect Google Calendar." onRetry={() => void refresh()} />
-    <Copy muted>Optional, manual publishing. Local reminders and alarms work without Google or network access.</Copy>
+    <Copy muted>Optional publishing, individual imports and manually reviewed linked updates. Local reminders and alarms work without Google or network access.</Copy>
+    <Button label="Import from Google Calendar" disabled={busy || selectionPending || !connection.data?.connected}
+      onPress={() => router.push({ pathname: '/calendar-import', params: routeParams } as Href)} />
     {connection.data?.available === false && <ActionFeedback message="Google Play services is unavailable or needs updating. Google authorization cannot open on this device." tone="warning" />}
     {needsCalendar && <><ActionFeedback message="Google account connected. Choose a publishing calendar to finish setup." tone="warning" />
       <Button label="Choose publishing calendar" disabled={busy || selectionPending || !connection.data?.available} onPress={chooseCalendar} /></>}
@@ -88,7 +93,9 @@ export default function CalendarSettings() {
     {busy && <ActionFeedback loading message="Checking Google Calendar…" />}
     {selectionPending && !busy && <Button label="Retry same calendar selection" variant="secondary" onPress={() => void retrySelection()} />}
     {jobs.error && <ActionFeedback message="Saved publication status could not be refreshed. Retry before starting another publication." tone="warning" />}
-    {jobs.data?.map((publication) => <CalendarPublicationStatus key={publication.operationId} publication={publication} />)}
+    {jobs.data?.map((publication) => <CalendarPublicationStatus key={publication.operationId} publication={publication} routeParams={routeParams} />)}
+    {linkedJobs.error && <ActionFeedback message="Saved linked operation status could not be refreshed." tone="warning" />}
+    {linkedJobs.data?.map(operation => <CalendarOperationStatus key={operation.operationId} operation={operation} />)}
     <Sheet visible={selecting} title="Choose an owned calendar" onClose={() => { if (!busy && !selection.current) setSelecting(false); }}>
       <View style={{ gap: 12 }}>
         <Copy muted>Only calendars you own are available. Changing this default leaves previous publications in their original destination.</Copy>

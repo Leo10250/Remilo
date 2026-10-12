@@ -349,6 +349,14 @@ destination. Publication review explains the missing setup instead of presenting
 the generic Could not load this view error. Existing atmosphere roles and
 Details → More publication entry remain in use.
 
+The owner's 12 October [P4-B contract](../../../calendar-linking.md) adds Import
+from Google Calendar without changing the publishing destination. Source/date
+browsing retains origin/scroll and marks unsupported personal-event rows.
+Import and field-resolution reviews use compact toolbars, connected shared
+groups, wrapping labels and a persistent 56 dp confirmation action. Show native
+local and remote outcomes separately; recovery remains within its saved operation.
+Existing published copies require explicit Enable linked updates.
+
 [The gallery supplement](../../remilo-r8-settings-appearance/current-policy.md)
 identifies the obsolete tile selector/held Automatic policy without changing accepted
 PNG, submission or review-note hashes. The current dropdown and Automatic selection

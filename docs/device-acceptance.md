@@ -11,6 +11,35 @@ those earlier observations do not establish results for this new build.
 
 ## Optional Calendar acceptance
 
+P4-A has [owner sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md);
+its unspecified individual observations and accepted-build identity remain
+unclaimed. For [P4-B](calendar-linking.md), use an identified updated signed build
+and only the designated test account/calendar. Record each actual outcome:
+
+1. Import one timed event and one single-day all-day event. Confirm exact range/
+   zone, default Alarm, No list and exactly one reminder after repeated actions.
+   Change source calendar without changing the publishing destination.
+2. Keep Google reminders by default; deliberately disable them for a separate
+   import. Check both remote configuration and local scheduling. With Remilo
+   blocked, confirm Google suppression waits for explicit recovery.
+3. Change title/notes/schedule in either app; check without applying. Review
+   mixed field choices and confirm both outcomes. Edit Google after review and
+   verify conflict handling preserves that newer edit.
+4. Preserve independent Due/Alarm and future Snooze/Postpone while accepting
+   an event move. Elapsed new alerts require correction or No alert. Existing
+   local delivery works offline without an active React UI.
+5. Interrupt connectivity/request replies and reopen. Continue the saved
+   operation without a duplicate reminder or repeated acknowledged local phase.
+   Report local success and unknown Google outcome separately.
+6. Upgrade a P4-A build, explicitly enable a published copy's link, Unlink/
+   relink, revoke ownership, change/disconnect accounts and remove a remote event.
+   Local completion/Trash/Restore remain local; no remote replacement/deletion.
+7. Observe compact review/browser layout, 200% text, TalkBack, date/time
+   pickers, keyboard/Back and reachable persistent confirmation controls.
+
+Host/fixture results do not establish these device/Google observations. Retain
+CAL-01's timed-retry observation and the existing consolidated alarm cases.
+
 The [P4-A publishing procedure](calendar-publishing.md#signed-device-acceptance-procedure)
 is a separate signed-device run using the owner-designated account and
 **Remilo Reminders** calendar. Connecting alone publishes nothing. Record the new

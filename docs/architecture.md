@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 7/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 8/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -28,6 +28,14 @@ singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
 portable backup format 4.
+
+[P4-B linking](calendar-linking.md) adds CE 7→8 links and immutable phased
+operations. Local import/edit, link checkpoints, receipts and scheduling outbox
+commit together through the existing worker; the internal Calendar edit policy
+preserves current future Snooze/Postpone targets. Remote writes use sparse
+If-Match patches, including Google's method-override fallback where needed,
+with local/remote outcomes acknowledged separately. Preview checks are manual;
+startup never resumes network work. Existing publications require explicit adoption.
 
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured

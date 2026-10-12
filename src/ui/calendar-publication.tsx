@@ -3,11 +3,13 @@ import { Linking, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CalendarPublication } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { canRetryPublication, calendarError } from '../domain/calendar';
+import type { OriginParams } from '../domain/navigation';
 import { engine } from './native';
 import { ActionFeedback, Button, ConnectedGroup, Copy } from './components';
 import { useAppearanceHold } from './theme';
+import { router, type Href } from 'expo-router';
 
-export function CalendarPublicationStatus({ publication }: { publication: CalendarPublication }) {
+export function CalendarPublicationStatus({ publication, routeParams = {} }: { publication: CalendarPublication; routeParams?: OriginParams }) {
   const client = useQueryClient(), [busy, setBusy] = useState(false), [error, setError] = useState('');
   useAppearanceHold(busy);
   const retry = async () => {
@@ -28,5 +30,7 @@ export function CalendarPublicationStatus({ publication }: { publication: Calend
     {publication.state === 'Published' && !!publication.htmlLink && <Button label="Open in Google Calendar" variant="secondary" onPress={() => {
       void Linking.openURL(publication.htmlLink).catch(() => setError('The Calendar link could not be opened.'));
     }} />}
+    {publication.state === 'Published' && !publication.readOnly && <Button label="Enable linked updates" variant="secondary"
+      onPress={() => router.push({ pathname: '/calendar-review', params: { ...routeParams, id: publication.occurrenceId } } as Href)} />}
   </View></ConnectedGroup>;
 }
