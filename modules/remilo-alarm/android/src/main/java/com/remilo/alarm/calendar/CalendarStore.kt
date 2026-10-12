@@ -38,7 +38,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     return mapOf("operationId" to job.operationId, "occurrenceId" to job.occurrenceId,
       "calendarName" to job.calendarName, "email" to job.email, "state" to job.state,
       "message" to job.message, "htmlLink" to job.htmlLink, "publishedAtMs" to job.publishedAtMs,
-      "differs" to differs, "readOnly" to job.readOnly)
+      "differs" to differs, "readOnly" to (job.readOnly || record == null || record.completed || record.deleted || record.skipped))
   }
   fun connect(account: CalendarAccount, expectedRevision: Long) {
     require(account.subject.isNotBlank() && account.email.isNotBlank())

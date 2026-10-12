@@ -277,6 +277,21 @@ class CalendarLinkTest {
     try { capture(first + mapOf("previewId" to "replacement")); fail("Input cannot be replaced") }
     catch (error: CalendarFailure) { assertEquals("OPERATION_REUSED", error.code) }
   }
+  @Test fun rejectedImportCannotBeRevivedAfterAReplacementReviewCreatesTheReminder() {
+    val rejected = capture(importCommand())
+    event.put("summary", "Newer Google title").put("etag", "changed")
+    run(rejected)
+    assertEquals("Conflict", store { it.operation(rejected.operationId)!!.state })
+    val fresh = capture(importCommand()); run(fresh)
+    assertEquals("Confirmed", store { it.operation(fresh.operationId)!!.state })
+    // Restore even the original precondition: the rejected operation still has no write permission.
+    event.put("summary", "Personal").put("etag", "original")
+    run(rejected)
+    assertEquals("Conflict", store { it.operation(rejected.operationId)!!.state })
+    assertFalse(store { it.operation(rejected.operationId)!!.localApplied })
+    assertEquals(fresh.occurrenceId, store { it.source(fresh.remoteKey)!!.occurrenceId })
+    assertEquals(0, patches)
+  }
   @Test fun interruptedEnableCannotWriteAgainAfterUnlink() {
     val original = imported(); val id = original.occurrenceId
     store { it.unlink(mapOf("operationId" to "unlink-first", "occurrenceId" to id, "expectedLinkRevision" to it.link(id)!!.revision)) }

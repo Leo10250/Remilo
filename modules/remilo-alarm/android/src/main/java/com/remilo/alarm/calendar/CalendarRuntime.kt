@@ -103,7 +103,7 @@ class CalendarRuntime private constructor(private val context: Context, private 
     io.execute {
       try {
         val job = links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
-        if (job.state in setOf("Confirmed", "Cancelled") || job.erased) return@execute
+        if (job.state in CalendarLinkStore.terminal || job.erased) return@execute
         val connection = links { it.connection() }
         if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("NEEDS_ACCESS")
         if (!retry && connection.revision != job.expectedConnectionRevision) throw CalendarFailure("STALE_CONNECTION")

@@ -12,7 +12,7 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
   fun run(id: String, token: String, executionRevision: Long? = null) {
     try {
       var job = state.links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
-      if (job.state in setOf("Confirmed", "Cancelled") || job.erased) return
+      if (job.state in CalendarLinkStore.terminal || job.erased) return
       val connection = state.links { it.connection() }
       val revision = executionRevision ?: connection.revision
       if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("NEEDS_ACCESS")
