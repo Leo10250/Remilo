@@ -8,6 +8,7 @@
   <uses-permission android:name="android.permission.WAKE_LOCK" />
   <uses-permission android:name="android.permission.VIBRATE" />
   <application>
+    <activity android:name=".calendar.CalendarAuthorizationActivity" android:exported="false" android:directBootAware="false" android:excludeFromRecents="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     <receiver android:name=".system.AlarmReceiver" android:exported="false" android:directBootAware="true" />
     <receiver android:name=".system.RecoveryReceiver" android:exported="true" android:directBootAware="true">
       <intent-filter>

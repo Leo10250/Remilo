@@ -48,11 +48,11 @@ class AlarmNotifications(private val context: Context) {
     if (manager.canUseFullScreenIntent()) builder.setFullScreenIntent(open, true)
     if (members.size == 1) {
       val record = members.first().first
-      builder.addAction(Notification.Action.Builder(null, "Done", AlarmScheduler.capturedAction(context, "done", record)).build())
+      builder.addAction(Notification.Action.Builder(null, "Mark as done", AlarmScheduler.capturedAction(context, "done", record)).build())
       builder.addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
     } else {
       val records = members.map { it.first }
-      builder.addAction(Notification.Action.Builder(null, "Done all (${members.size})", AlarmScheduler.capturedGroup(context, "doneall", sessionId, records)).build())
+      builder.addAction(Notification.Action.Builder(null, "Mark all as done (${members.size})", AlarmScheduler.capturedGroup(context, "doneall", sessionId, records)).build())
       builder.addAction(Notification.Action.Builder(null, "Snooze all · ${records.first().snoozeMinutes} min", AlarmScheduler.capturedGroup(context, "snoozeall", sessionId, records)).build())
     }
     if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, appearance, true))
@@ -80,14 +80,14 @@ class AlarmNotifications(private val context: Context) {
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Reminder")
       .setContentText("Reminder · tap to review").setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PUBLIC).setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Done", AlarmScheduler.capturedAction(context, "done", record)).build())
+      .addAction(Notification.Action.Builder(null, "Mark as done", AlarmScheduler.capturedAction(context, "done", record)).build())
       .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build()).build()
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(title)
       .setContentText("Reminder · tap to review").setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(public).setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Done", AlarmScheduler.capturedAction(context, "done", record)).build())
+      .addAction(Notification.Action.Builder(null, "Mark as done", AlarmScheduler.capturedAction(context, "done", record)).build())
       .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
       .build())
   }

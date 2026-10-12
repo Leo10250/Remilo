@@ -1,5 +1,12 @@
 import type { CommandResult, Occurrence, ContentCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 export type Tone = 'success' | 'warning' | 'danger' | 'muted' | 'accent';
+export function recoveryPresentation(kind?: string) {
+  const action = ({ Create: 'save', Edit: 'save', CreateSeries: 'save', EditSeries: 'save', EditFollowing: 'save',
+    Done: 'completion', CompleteDelivery: 'completion', Stop: 'completion', UndoDelete: 'restoration', Reopen: 'reopening',
+    Postpone: 'postponement', Snooze: 'snooze', Delete: 'move to Trash', Purge: 'permanent deletion', CreateList: 'save', RenameList: 'save' } as Record<string, string>)[kind ?? ''] ?? 'change';
+  return { message: `${action[0].toUpperCase() + action.slice(1)} not confirmed. Retry before leaving.`, retry: `Retry ${action}`,
+    progress: action === 'completion' ? 'Completing reminder…' : action === 'restoration' ? 'Restoring reminder…' : action === 'save' ? 'Saving…' : `Applying ${action}…` };
+}
 export function commandFeedback(result: CommandResult, success: string): { message: string; tone: Tone } {
   if (result.status === 'Rejected') return { message: result.errorMessage ?? 'That action could not be applied. Refresh and retry.', tone: 'danger' };
   if (result.memberResults && result.status !== 'Applied' && result.status !== 'Scheduled') {

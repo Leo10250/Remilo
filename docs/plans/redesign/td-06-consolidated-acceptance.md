@@ -17,6 +17,22 @@ Verify the integrated time-of-day redesign without weakening existing native rel
 
 ## Implementation
 
+- Include the approved UX-21–28 follow-up: contextual repeat/scope presentation,
+  definitive captured save feedback and Required Title, explicit device clock
+  formatting with read-only observer lifecycle, measured full-label navigation
+  and genuine-empty Agenda creation. Preserve scheduling, nominal boundaries,
+  same-operation recovery, origin and scroll. Review actual production fixtures
+  at eight pairs/360 dp/100–200% plus landscape, long English/Chinese and reduced
+  motion; distinguish unresolved web glyphs and hydration from verified layouts.
+  Add U32–U35 to the consolidated signed-device run. Host compilation does not
+  establish system-observer handoff, Android IME, nonlinear text or TalkBack focus.
+
+- Include [UX-13–18 refinement](../../design/current/ux-refinement.md) active-source
+  domain tests and eight-pair/360 dp/landscape/200% English-Chinese/reduced-motion
+  fixtures. Add U27–U31 for actual IME/search handoff, All day/picker Cancel,
+  filter guards/scroll, TalkBack card/menu and permission/Test/preference recovery.
+  Host/browser checks leave those signed-device observations pending.
+
 - Include the [alert experience correction](../../design/current/alert-experience.md): original-alert/No alert boundaries and query pagination, native Done/Notification/group exact retries, current duration changes, terminal-card/inline-selector rendering and signed-phone pre-unlock completion. Keep physical results pending until observed.
 
 - Close current correction/remaining-review decisions and validate all four themes in Light/Dark plus System brightness behavior.

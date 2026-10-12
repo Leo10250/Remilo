@@ -88,11 +88,31 @@ function loadPresentation() {
 }
 
 function loadPreview(search) {
+  const time = compile('src/domain/time.ts');
   return compile('verification/ui/preview-engine.ts', {
-    '../../src/domain/time': compile('src/domain/time.ts'),
+    '../../src/domain/time': time,
     '../../src/domain/repeat': compile('src/domain/repeat.ts'),
+    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time }),
   }, { URLSearchParams, ...(search == null ? {} : { window: { location: { search } } }) }).default;
 }
+
+test('Calendar fixture executes connect/list/publish/retry with no network or native authorization globals', async () => {
+  const preview = loadPreview('?reviewCalendar=disconnected&reviewCalendarOffline=1');
+  await preview.authorizeCalendar(null);
+  const first = await preview.listOwnedCalendars(null), second = await preview.listOwnedCalendars(first.nextCursor);
+  assert.equal(first.items.length, 1); assert.equal(second.nextCursor, null);
+  const connection = await preview.getCalendarConnection();
+  assert.equal(connection.connected, true); assert.equal(connection.calendarId, '');
+  await assert.rejects(() => preview.previewCalendarPublication('review'), { code: 'NEEDS_CONNECTION' });
+  await preview.applyCalendarCommand({ kind: 'SelectCalendar', operationId: 'choose-calendar',
+    expectedConnectionRevision: connection.revision, calendarId: first.items[0].id });
+  const review = await preview.previewCalendarPublication('review');
+  await preview.applyCalendarCommand({ kind: 'PublishOneOff', operationId: 'fixture', occurrenceId: 'review', expectedRevision: review.reminderRevision,
+    expectedConnectionRevision: review.connectionRevision, fingerprint: review.fingerprint });
+  await preview.applyCalendarCommand({ kind: 'RetryPublication', operationId: 'fixture' });
+  assert.equal((await preview.getCalendarPublications()).length, 1);
+  assert.equal((await preview.getCalendarPublications())[0].state, 'Unconfirmed');
+});
 
 test('fixture scene/brightness controls recognize all eight pairs and ignore unknown or missing values', async () => {
   for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
@@ -243,7 +263,9 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
         useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
       },
       '@react-native-community/datetimepicker': {}, 'expo-symbols': { SymbolView: 'Glyph' }, 'expo-router': {},
+      'expo-linear-gradient': { LinearGradient: 'Gradient' }, './header-transition': compile('src/ui/header-transition.ts'),
       'react-native-safe-area-context': {}, './theme': theme, './tokens': tokens,
+      './time-display': { useTimeDisplay: () => ({}), useTimeFormatting: () => ({}) },
       '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
       './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
       './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},
@@ -289,7 +311,7 @@ test('ordinary reminder rows expose leading completion independently from openin
   const binding = component.parameters[0].name;
   const glyph = binding.elements.find((element) => element.name.getText(rowSource) === 'glyph');
   assert.equal(glyph?.initializer?.text, 'event');
-  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf("accessibilityLabel={'Open ' + summary}");
+  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf("accessibilityLabel={'Open reminder: ' + summary}");
   assert.ok(completionPosition >= 0 && openingPosition > completionPosition, 'The independent completion control precedes opening the reminder.');
   assert.match(body, /accessibilityRole="checkbox" aria-checked=\{item.completed\} accessibilityLabel=\{actionLabel \+ ': ' \+ summary\}/);
   assert.match(body, /accessibilityState=\{\{ checked: item.completed, disabled: busy \}\} disabled=\{busy\} onPress=\{act\}/);

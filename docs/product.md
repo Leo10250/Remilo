@@ -29,7 +29,9 @@ The [six-unit roadmap](plans/redesign/README.md) precedes optional integrations;
 [backlog](backlog.md) alone records status. Superseded design specifications and
 review demos are removed under A37; accepted reference bundles remain intact.
 The owner's 4 October instruction allows offline Android development
-before the consolidated physical run; unobserved G1/G2/G3 tests remain pending.
+before the consolidated physical run. The owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
+records subsequent gate acceptance without inventing device/scenario observations;
+BETA-04 remains open and unrelated statuses remain unchanged.
 
 The [9 October alert experience correction](design/current/alert-experience.md)
 governs Done, original-alert overdue, inline Alert choices and shared terminal
@@ -48,6 +50,30 @@ alert-first browsing, stationary covers and splash requirements.
 
 ## Required behavior
 
+The owner's 11 October wording correction labels every work-completion action
+**Mark as done**, and captured group completion **Mark all as done (N)**, across
+app pages, row/swipe accessibility actions, native alarms and private/public
+notifications. Longer labels wrap at large text sizes. Internal Done command and
+history identities, completion semantics and non-completion Done selecting/IME
+actions stay distinct. See the [current alert contract](design/current/alert-experience.md).
+
+The latest UX follow-up uses device-owned clock formatting in app/native alarm
+presentation without changing saved times. Title quietly shows Required with
+blank Save disabled. Custom repeats lead with upcoming alerts and explain only
+relevant skipped-date rules. Save feedback distinguishes confirmed scheduling
+from saved Blocked/Pending and preserves captured unknown retries. The four-root
+bar uses a current-destination Go to sheet when full scaled labels cannot fit.
+A genuine unscoped, unconstrained empty All Agenda offers Create a reminder in
+place of the floating +. Native repeat boundaries and retained history stay intact.
+
+Optional [P4-A Google Calendar publishing](calendar-publishing.md) is manual per
+saved unfinished one-off after native review and confirmation. Connecting publishes
+nothing; existing reminders are never backfilled. One account and an owned default
+calendar are supported. Google receives title, notes and authored event range with
+its Calendar reminders disabled; local alarms/actions remain authoritative. Durable
+native jobs recover by the same event identity, without remote updates or deletion.
+Import, recurrence publishing and ongoing synchronization remain later phases.
+
 - Principal UI: React Native / TypeScript / Expo. Autonomous Kotlin engine and Room.
 - Local use needs no account, network, server, Metro or active JavaScript.
 - Event, due and alarm are separate. Event duration defaults to 30 minutes; due
@@ -55,6 +81,13 @@ alert-first browsing, stationary covers and splash requirements.
   independent times are preserved. All-day due boundary is next local midnight;
   default alert is 9 AM.
 - Modes: Alarm, Notification, No alert. No silent downgrade of an alarm.
+- The editor leads with Title and alert Date/Time before the visible mode choices.
+  Ordinary linked schedules follow this primary alert edit; explicitly separate
+  or non-default event/due timing and existing Calendar publication context are
+  preserved. Calendar event details are optional and collapsed, and their edits
+  preserve the selected alert. No alert uses Scheduled for. Opening event details
+  does not publish anything. Main Details shows Event for publication context;
+  other full event ranges remain accessible in Schedule details.
 - Alarm Done completes the selected current occurrence and silences its delivery.
   Done all (N) completes the displayed captured session members; later arrivals
   are excluded and remain independently actionable. Snooze all uses one common
@@ -118,7 +151,10 @@ alert-first browsing, stationary covers and splash requirements.
   Repeats shows one entry per family and Active, Paused and Ended filters. Family
   details retain unfinished occurrences from earlier segments. Completed and Trash
   load on demand, search titles/notes and filter by list. Their newest relevant
-  completion/skip/deletion comes first; Completed has an Include skipped option.
+  completion/skip/deletion comes first; Completed has Show skipped inside Filters.
+  Collection headers use icon-only Filters beside Search/More, showing an active
+  optional-filter count and a complete spoken label. Agenda's content-row Filters
+  retains its label, and applied removable chips remain visible on both surfaces.
   Back from a non-Agenda root returns to Agenda; secondary pages return to their origin.
   Search/sheets, draft guards and unconfirmed operations take precedence over root Back.
   Each destination retains its own filters and scroll position, including Completed
@@ -131,7 +167,7 @@ alert-first browsing, stationary covers and splash requirements.
   separate 48 dp selection checkboxes and contextual footer actions of at least
   56 dp; terminal details retains its existing persistent action. Select all
   loaded includes only the current loaded matching records, never unloaded or
-  newly paginated rows. Query/scope/Include skipped edits stay disabled while
+  newly paginated rows. Query/scope/Show skipped edits stay disabled while
   selecting; Back/Done selecting clears the selection before origin navigation
   unless an operation is pending or unconfirmed.
 - Selected operations capture occurrence IDs/revisions and an independent native
@@ -163,7 +199,11 @@ alert-first browsing, stationary covers and splash requirements.
   editing retain full event/due data. Primary Agenda alert time uses the device zone.
 - Browsing covers expand to 200 dp below the status inset, including a nominal
   56 dp toolbar. Artwork stays fixed while opaque content scrolls over it, ending
-  at a pinned opaque toolbar. Restore content and scene occlusion together. Constrained height/large text and editing
+  at a pinned opaque toolbar. The canvas-colored header surface blends from 66%
+  to opaque over the last 64 dp of cover travel, with stable onSurface title/icons
+  and a 40 dp feather below measured labels/controls. Reduced motion retains the
+  direct scroll relationship without timed animation. Restore content, scene
+  occlusion and header opacity together. Constrained height/large text and editing
   workflows use compact toolbars. Preserve existing artwork and hero focal metadata.
 - Original accessible design, dark/light themes, large text and screen readers.
 - Versioned export/restore; no restored session or stale OS handle is replayed.
@@ -221,6 +261,11 @@ calendar import or visual cloning is in the initial product.
 
 ## Presentation contract (0.4.0)
 
+The owner's [10 October UX refinement](design/current/ux-refinement.md) supersedes
+earlier presentation details below: alert-first Details/cards, explicit Search
+focus, transactional filters, preserved All day custom timing and reorganized
+Settings. Native timing/actions, privacy, backup and Calendar behavior are retained.
+
 This section describes the implemented baseline, including Browse and the geometric
 R. The [redesign specification](appearance-redesign.md) defines approved replacement
 requirements (bottom navigation and exact supplied Classic identity); individual
@@ -270,8 +315,10 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   zone. Changing the zone preserves authored wall times and resolves through the
   native gap/fold policy. Merely opening or saving untouched fields preserves their
   original instants. Linked event/due/alert offsets and independent times stay explicit.
-- Reminder details show a complete event range and consequential Due, followed by
-  the current delivery outcome and what happens next. Ordinary linked timing is
+- Reminder details lead with alert mode/time and consequential state. Event is
+  visible for all-day, differing alert timing or existing publication context;
+  hidden full range stays in Schedule details. Independent/non-default Due stays
+  visible, including independent coincident timing. Ordinary linked timing is
   concise; independent relationships, adjustments, consequential zones and occurrence
   exceptions have Schedule details. All-day linked Due reads By end of day. A stopped,
   missed, interrupted or timed-out target is never described as a future alert.
@@ -287,9 +334,11 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   action. Nested sheets handle Back within their draft. Loading, retry, action
   progress and failures are visible. Reduced motion, large text and screen-reader
   focus are supported; timed feedback respects accessibility timeout preferences.
-- Settings are categorized Alarms, Permissions, Postpone shortcuts, Appearance,
-  Data and Help. Valid preferences save automatically, serially and with rollback
-  and Retry on failure. Permissions are directly reachable and refresh on return.
+- Settings order is Sound & vibration, Snooze & postpone, Appearance, Permissions
+  & alarm check, Google Calendar, Backups and Help. The compact alarm-check page
+  owns permission/Test workflow. Valid preferences save automatically, serially,
+  with one captured recovery beside the owning group even after closing a sheet.
+  Permission observations refresh on return and never establish audible delivery.
 - Settings and editor share explicit radio selection and separate Play/Stop controls
   for Remilo tone and System alarm tone. Preview never selects or saves a tone.
   Editor sound/vibration are Alarm options, separate from Schedule options. Preview

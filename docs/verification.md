@@ -1,5 +1,36 @@
 # Verification and release evidence
 
+The [10 October UX refinement](design/current/ux-refinement.md) requires active-source
+tests for All day combinations/round trips/relink/conflict/conversion failure,
+DST civil timing, schedule-only preview, original/current/intended/previous timing,
+safe date omission/full spoken dates, transactional filter equality/reset/scope/
+guards, permission blockers/stale reads and minutes-of-day shortcuts. Historical
+source snapshots under ignored verification/local are evidence, not current test
+discovery/typecheck inputs. Keep their recorded results unchanged.
+
+Review actual components across eight atmosphere/color-mode pairs, 360 dp,
+landscape, long English/Chinese, 200% text and reduced motion. Run shared/design
+verification then Android checks sequentially; record actual counts and APK
+identity. New physical observations are [U27–U31](device-acceptance.md), pending
+on an identified signed bundled build. No installation/distribution is part of
+this implementation. The [11 October Calendar repair](evidence/2026-10-11-calendar-repair.md)
+addresses unfinished setup and timed request encoding; its updated signed-device
+publication observation remains separate from the earlier offline UI checks.
+[The 10 October evidence](evidence/2026-10-10-ux-refinement.md) records actual host
+results, signed artifact identity, observed fixtures and the incomplete render matrix.
+[The alarm-first follow-up](evidence/2026-10-10-alarm-first-followup.md) records
+primary alert editing, preserved optional event timing and quiet short menus;
+U28/U30 incorporate its additional signed-device observations.
+[The collection Filters follow-up](evidence/2026-10-10-filter-header-followup.md)
+records icon-only headers, active counts, scaled badge spacing and the updated
+artifact; U29 retains the remaining Android/TalkBack observations.
+
+The owner's [9 October G1–G3 attestation](evidence/2026-10-09-owner-g1-g3-attestation.md)
+records acceptance on its identified APK, without asserting unspecified individual
+observations or device coverage. BETA-04 still reproduces. New P4-A publishing uses
+the separate [signed-device procedure](calendar-publishing.md#signed-device-acceptance-procedure);
+prior gates do not establish Calendar OAuth, transport or reminder-suppression acceptance.
+
 Permanent Trash deletion requires a signed Android check of single-item and selected
 confirmation, Cancel/Back, changed/restored rejection, unknown-reply retry and return
 from deleted-reminder details. Verify unrelated occurrences and the repeating plan
@@ -98,8 +129,14 @@ Documentation and cleanup verification checks active links, JSON, all protected
 reference-bundle hashes, gallery resources, retained backlog rows and the exact
 removal manifest. Superseded catalog/demo tests are removed with their subjects.
 `npm run verify:design` runs the protection/removal/link audit; `npm run verify`
-includes that audit before shared checks. CI fetches the recorded baseline history
-so the deletion audit also covers committed changes.
+includes that audit before shared checks. CI explicitly fetches the full commit
+SHA recorded in both cleanup inventories with
+`node scripts/fetch-design-baseline.mjs`, in addition to the full-depth checkout.
+Squash merges and deletion of historical branches can make that commit absent
+from every advertised ref. The deletion audit still compares against the original
+commit and covers committed changes. Ordinary verification never fetches; a
+missing baseline fails with the exact Git fetch command before historical path
+reads. Neither command changes the checked-out branch or rewrites frozen evidence.
 For later authorized runtime work, explicitly revise the implemented-source
 baseline for that unit while retaining reference protection and behavioral tests.
 Do not regenerate accepted artifact identities to conceal unintended changes.
@@ -415,3 +452,9 @@ alarm eligibility. The consolidated acceptance arrangement remains in force.
 
 No connected target means that reproduction/trace and physical results stay
 pending; it is not evidence of a platform cause or successful fix.
+
+The owner-approved UX-21–28 follow-up adds repeat-context/scope, captured save
+feedback, required-title, device-format, measured navigation and genuine-empty
+behavior checks. Review production components in eight pairs at 360 dp/100–200%,
+landscape, long English/Chinese and reduced motion. U32–U35 are pending signed
+device observations; no installation/distribution accompanies implementation.

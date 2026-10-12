@@ -1,17 +1,19 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, Keyboard, Pressable, Text, View } from 'react-native';
+import { BackHandler, Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { destinationRoute, originParams, rootRoute, type secondaryOriginRoute, type DestinationOrigin, type RootDestination } from '../domain/navigation';
 import { CapturedOperation } from '../domain/operation';
-import { ActionFeedback, Button, Choice, Copy, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
+import { ActionFeedback, Button, Choice, Field, Icon, IconButton, QueryState, SettingRow, Sheet, Snackbar } from './components';
 import { dismissNotice, notify, useNotice, type Notice } from './feedback';
 import { apply, CommandError, engine, nativeAvailable } from './native';
 import type { Command, CommandResult, ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { commandFeedback, restoreDeleted, type Tone } from '../domain/actions';
+import { commandFeedback, recoveryPresentation, restoreDeleted, type Tone } from '../domain/actions';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from './theme';
 import { typography } from './tokens';
+import { rootLabelsFit } from '../domain/navigation-fit';
+import { useTimeDisplay } from './time-display';
 import { useAppearanceConfirmation } from './confirmation';
 
 export function switchRoot(destination: RootDestination) { Keyboard.dismiss(); if (router.canDismiss()) router.dismissAll(); router.replace(rootRoute(destination)); }
@@ -35,19 +37,53 @@ export function useDestinationNavigation(destination: DestinationOrigin, beforeB
   return back;
 }
 
-export function RootNavigation({ destination, disabled = false, atRoot = true }: { destination: RootDestination['kind']; disabled?: boolean; atRoot?: boolean }) {
-  const colors = useTheme(), scale = useFontScaleOverride();
-  return <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
-    {([{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' },
-      { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const).map((entry) => {
-      const selected = destination === entry.kind;
-      return <Pressable key={entry.kind} accessibilityRole="tab" accessibilityLabel={entry.label} aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled}
-        onPress={() => { if (!selected || !atRoot) switchRoot({ kind: entry.kind }); }} style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
-        <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}>
-          <Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
-        <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, alignSelf: 'stretch', maxWidth: '100%', flexShrink: 1, textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
-      </Pressable>;
-    })}
+const rootEntries = [{ kind: 'agenda', label: 'Agenda', icon: 'event' }, { kind: 'lists', label: 'Lists', icon: 'checklist' },
+  { kind: 'completed', label: 'Completed', icon: 'check_circle' }, { kind: 'trash', label: 'Trash', icon: 'delete' }] as const;
+export function RootNavigation({ destination, disabled = false, atRoot = true, isGuarded }: { destination: RootDestination['kind']; disabled?: boolean; atRoot?: boolean; isGuarded?: () => boolean }) {
+  const colors = useTheme(), scale = useFontScaleOverride(), { width, fontScale } = useWindowDimensions(), locale = useTimeDisplay().localeTag;
+  const focused = useIsFocused();
+  const [available, setAvailable] = useState(width), [open, setOpen] = useState(false);
+  const key = [available, fontScale, scale, locale].join('|');
+  const [measurement, setMeasurement] = useState<{ key: string; widths: Record<string, number>; fits: boolean }>({ key: '', widths: {}, fits: !(Math.max(scale, fontScale) >= 1.6 && width < 600) });
+  const widths = rootEntries.map(entry => measurement.widths[entry.kind]);
+  const ready = measurement.key === key && widths.every(value => value != null);
+  const fits = ready ? rootLabelsFit(available, widths) : measurement.fits;
+  const measure = (kind: string, measured: number) => setMeasurement(previous => {
+    const values = previous.key === key ? previous.widths : {};
+    const next = { ...values, [kind]: measured };
+    const resolved = rootEntries.map(entry => next[entry.kind]);
+    return previous.key === key && values[kind] === measured ? previous : { key, widths: next, fits: resolved.every(value => value != null) ? rootLabelsFit(available, resolved) : previous.fits };
+  });
+  const compact = open || !fits, trigger = useRef<View>(null);
+  const blocked = () => disabled || !!isGuarded?.();
+  const current = rootEntries.find(entry => entry.kind === destination)!;
+  const choose = (entry: typeof rootEntries[number]) => {
+    if (blocked()) return;
+    setOpen(false);
+    if (entry.kind !== destination || !atRoot) switchRoot({ kind: entry.kind });
+  };
+  return <View onLayout={event => setAvailable(event.nativeEvent.layout.width)} style={{ backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 8 }}>
+    <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', width: available, opacity: 0 }}>
+      {rootEntries.map(entry => <Text key={key + entry.kind} onLayout={event => measure(entry.kind, Math.ceil(event.nativeEvent.layout.width))} onTextLayout={event => {
+        const measured = Math.ceil(event.nativeEvent.lines.reduce((sum, line) => sum + line.width, 0));
+        measure(entry.kind, measured);
+      }} style={{ alignSelf: 'flex-start', fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, fontWeight: '600' }}>{entry.label}</Text>)}
+    </View>
+    {compact ? <Pressable ref={trigger} accessibilityRole="button" accessibilityLabel={'Current destination: ' + current.label + '. Open navigation.'}
+      aria-expanded={open} accessibilityState={{ expanded: open, disabled }} disabled={disabled} onPress={() => { if (!blocked()) { Keyboard.dismiss(); setOpen(true); } }}
+      style={({ pressed }) => ({ minHeight: 64, padding: 12, flexDirection: 'row', gap: 12, alignItems: 'center', borderRadius: 16, backgroundColor: pressed ? colors.soft : 'transparent' })}>
+      <Icon name={current.icon} color={colors.accent} /><Text style={{ flex: 1, color: colors.accent, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, fontWeight: '600' }}>{current.label}</Text><Icon name="expand_more" color={colors.muted} />
+    </Pressable> : <View accessibilityRole="tablist" style={{ flexDirection: 'row' }}>
+      {rootEntries.map(entry => { const selected = destination === entry.kind; return <Pressable key={entry.kind} ref={selected ? trigger : undefined} accessibilityRole="tab" accessibilityLabel={entry.label}
+        aria-selected={selected} accessibilityState={{ selected, disabled }} disabled={disabled} onPress={() => choose(entry)}
+        style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 64, padding: 8, gap: 4, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}>
+        <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, backgroundColor: selected ? colors.soft : 'transparent' }}><Icon name={entry.icon} color={selected ? colors.accent : colors.muted} /></View>
+        <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: typography.supporting * scale, lineHeight: typography.supporting * scale * 1.4, alignSelf: 'stretch', textAlign: 'center', fontWeight: selected ? '600' : '400' }}>{entry.label}</Text>
+      </Pressable>; })}
+    </View>}
+    <Sheet title="Go to" visible={open} onClose={() => setOpen(false)} returnFocusRef={trigger} returnFocusWhen={() => focused}>
+      {rootEntries.map(entry => <Choice key={entry.kind} icon={entry.icon} label={entry.label} selected={entry.kind === destination} disabled={disabled} onPress={() => choose(entry)} />)}
+    </Sheet>
   </View>;
 }
 
@@ -74,12 +110,11 @@ export function useCapturedCommand(onApplied?: (job: CapturedJob, result: Comman
     } catch (error) { setFeedback({ message: error instanceof Error ? error.message : 'Could not confirm this change. Retry the same change.', tone: 'danger' }); }
     finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
   };
-  return { busy, guarded, feedback, execute, retry: () => { if (operation.captured) void execute(operation.captured); } };
+  return { busy, guarded, feedback, recovery: recoveryPresentation(operation.captured?.command.kind), execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
 }
 export function CommandRecovery({ action }: { action: ReturnType<typeof useCapturedCommand> }) {
-  return <><ActionFeedback loading={action.busy} message={action.busy ? 'Applying change…' : action.feedback?.message} tone={action.feedback?.tone} />
-    {action.guarded && !action.busy && <><ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />
-      <Button label="Retry change" onPress={action.retry} /></>}</>;
+  return <><ActionFeedback loading={action.busy} message={action.busy ? action.recovery.progress : action.guarded ? action.recovery.message : action.feedback?.message} tone={action.guarded ? 'warning' : action.feedback?.tone} />
+    {action.guarded && !action.busy && <Button label={action.recovery.retry} onPress={action.retry} />}</>;
 }
 
 export function notifyTrash(item: Occurrence, result: CommandResult) {
@@ -97,13 +132,15 @@ export async function activateNotice(notice: Notice) {
     } catch (error) { notify({ message: error instanceof Error ? error.message : 'Could not undo. Retry.', persistent: true, action: notice.action }); }
     return;
   }
-  if (notice.action?.occurrenceId) router.push({ pathname: '/reminder/[id]', params: { id: notice.action.occurrenceId } });
-  else if (notice.action?.segmentId) router.push({ pathname: '/series/[id]', params: { id: notice.action.segmentId } });
+  if (notice.action?.alarmCheck) router.push({ pathname: '/alarm-check', params: notice.action.alarmCheck });
+  else if (notice.action?.occurrenceId) router.navigate({ pathname: '/reminder/[id]', params: { ...notice.action.origin, id: notice.action.occurrenceId } });
+  else if (notice.action?.segmentId) router.navigate({ pathname: '/series/[id]', params: { ...notice.action.origin, id: notice.action.segmentId } });
   dismissNotice(notice.id);
 }
 export function RootNotice({ disabled = false }: { disabled?: boolean } = {}) {
+  const focused = useIsFocused();
   const notice = useNotice(), client = useQueryClient();
-  if (!notice) return null;
+  if (!notice || !focused) return null;
   return <Snackbar key={notice.id} message={notice.message} action={notice.action?.label} persistent={notice.persistent || disabled} actionDisabled={disabled}
     onAction={() => { if (!disabled) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
     onClose={() => dismissNotice(notice.id)} />;
@@ -133,8 +170,7 @@ export function ListNameSheet({ visible, list, onSaved, onClose, onGuardChange }
     : { kind: 'CreateList', name, operationId: engine().createOperationId() }, success: 'List saved.' });
   const title = list ? 'Rename list' : 'Create list';
   return <Sheet title={title} visible={visible} onClose={() => { if (!action.guarded) onClose(); }} footer={<View style={{ padding: 16, gap: 8 }}>
-    <ActionFeedback message={action.feedback?.message} tone={action.feedback?.tone} />
-    {action.guarded && !action.busy && <Copy muted size={14}>Save not confirmed. Retry the same save before leaving.</Copy>}
+    <ActionFeedback message={action.guarded && !action.busy ? action.recovery.message : action.feedback?.message} tone={action.guarded ? 'warning' : action.feedback?.tone} />
     <Button label={action.busy ? 'Saving…' : action.guarded ? 'Retry save' : title} disabled={action.busy || !name.trim()} onPress={action.guarded ? action.retry : save} />
     <Button label="Cancel" variant="secondary" disabled={action.guarded} onPress={onClose} />
   </View>}><Field label="List name" autoFocus value={name} onChangeText={setName} maxLength={60} editable={!action.guarded} error={action.guarded ? undefined : action.feedback?.tone === 'danger' ? action.feedback.message : undefined} /></Sheet>;

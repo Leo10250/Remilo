@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { atmosphereColors } from '../ui/colors';
 import { presentation } from '../ui/atmosphere.generated';
+import { headerSurfaceOpacity } from '../ui/header-transition';
 function luminance(hex: string) {
   const rgb = hex.slice(1).match(/../g)!.map((part) => parseInt(part, 16) / 255).map((v) => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
   return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
@@ -25,6 +26,19 @@ it.each(['sunrise', 'sky', 'evening', 'night'] as const)('%s body, supporting, s
   expect(contrast(palette.inverseAction,palette.inverseSurface)).toBeGreaterThanOrEqual(4.5);
   expect(contrast(palette.outline,palette.surface)).toBeGreaterThanOrEqual(3);
  }
+});
+
+it('stable browsing-header foreground retains 4.5:1 throughout the surface blend in all eight pairs', () => {
+  for (const [pair, colors] of Object.entries(presentation.pairs)) {
+    const canvas = colors.canvas.slice(1).match(/../g)!.map(part => parseInt(part, 16));
+    // Each composited channel is monotone in artwork RGB, so black/white bound
+    // every artwork pixel; no sampled-image average substitutes for contrast.
+    for (const endpoint of [0, 255]) for (let offset = 0; offset <= 160; offset++) {
+      const alpha = headerSurfaceOpacity(offset, 144);
+      const background = '#' + canvas.map(channel => Math.round(channel * alpha + endpoint * (1 - alpha)).toString(16).padStart(2, '0')).join('');
+      expect(contrast(colors.onSurface, background), pair + ' offset ' + offset + ' on ' + endpoint).toBeGreaterThanOrEqual(4.5);
+    }
+  }
 });
 it('transparent header scrims retain 4.5:1 text over the full RGB range', () => {
   for (const [pair, header] of Object.entries(presentation.header)) {

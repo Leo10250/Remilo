@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { TimeConversionInput } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { changeDraftZone, chooseConflict, editorDraft, moveDraftDue, moveDraftEvent, reviewChoicesComplete, reviewEditorDraft, type EditorState } from './editor-draft';
+import { changeCalendarAllDay, changeDraftAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type EditorState, type TimedDraftSnapshot } from './editor-draft';
 const state = (): EditorState => ({ draft: editorDraft({ title: 'Original', zoneId: 'UTC', eventStartMs: Date.UTC(2027, 0, 5, 9) }) });
 const utc = async (input: TimeConversionInput) => ({ zoneId: input.zoneId, instantMs: input.instantMs ?? Date.parse(input.local + 'Z'),
   local: input.local ?? new Date(input.instantMs!).toISOString().slice(0, 19), offsetSeconds: 0, adjustment: 'none' as const });
@@ -132,5 +132,222 @@ describe('clock-preserving zone selection', () => {
   it('surfaces native gap and fold adjustments without inventing a resolution policy', async () => {
     const resolve = vi.fn(async (input: TimeConversionInput) => ({ ...await utc(input), adjustment: 'gapForward' as const }));
     expect((await changeDraftZone(state().draft, 'Europe/London', resolve)).warnings[0]).toContain('moves a selected time forward');
+  });
+});
+
+describe('all-day editor conversion', () => {
+  const timed = () => editorDraft({ title: 'Remember this', notes: 'Keep my notes', listId: 'work', zoneId: 'UTC',
+    eventStartMs: Date.UTC(2027, 0, 5, 14), eventEndMs: Date.UTC(2027, 0, 5, 16),
+    dueAtMs: Date.UTC(2027, 0, 6, 14), alarmAtMs: Date.UTC(2027, 0, 6, 13, 45) });
+  it('keeps the selected date and restores the timed clock, duration and linked civil offsets', async () => {
+    const original = timed(), before = structuredClone(original);
+    const on = await changeDraftAllDay(original, true, null, utc);
+    expect(on.draft).toMatchObject({ allDay: true, eventStartMs: Date.UTC(2027, 0, 5), eventEndMs: Date.UTC(2027, 0, 6),
+      dueAtMs: Date.UTC(2027, 0, 6), alarmAtMs: Date.UTC(2027, 0, 5, 9), dueLinked: true, alarmLinked: true });
+    const moved = await moveDraftEvent(on.draft, Date.UTC(2027, 0, 8), utc);
+    const off = await changeDraftAllDay(moved.draft, false, on.snapshot, utc);
+    expect(off.draft).toMatchObject({ allDay: false, eventStartMs: Date.UTC(2027, 0, 8, 14), eventEndMs: Date.UTC(2027, 0, 8, 16),
+      dueAtMs: Date.UTC(2027, 0, 9, 14), alarmAtMs: Date.UTC(2027, 0, 9, 13, 45), title: original.title, notes: original.notes, listId: 'work' });
+    expect(off.snapshot).toBeNull(); expect(original).toEqual(before);
+  });
+  it('never moves or relinks independent times through all-day conversion or date changes', async () => {
+    const original = { ...timed(), dueLinked: false, alarmLinked: false };
+    const on = await changeDraftAllDay(original, true, null, utc);
+    const moved = await moveDraftEvent(on.draft, Date.UTC(2027, 0, 20), utc);
+    const off = await changeDraftAllDay(moved.draft, false, on.snapshot, utc);
+    for (const draft of [on.draft, moved.draft, off.draft]) {
+      expect(draft).toMatchObject({ dueAtMs: original.dueAtMs, alarmAtMs: original.alarmAtMs, dueLinked: false, alarmLinked: false });
+    }
+    expect(off.draft.eventStartMs).toBe(Date.UTC(2027, 0, 20, 14));
+  });
+  it('restores a linked alert offset against an independently edited live due time', async () => {
+    const original = { ...timed(), dueLinked: false };
+    const on = await changeDraftAllDay(original, true, null, utc);
+    const changed = await moveDraftDue(on.draft, Date.UTC(2027, 0, 10, 11), utc);
+    const off = await changeDraftAllDay(changed.draft, false, on.snapshot, utc);
+    expect(off.draft).toMatchObject({ dueLinked: false, alarmLinked: true, dueAtMs: Date.UTC(2027, 0, 10, 11),
+      alarmAtMs: Date.UTC(2027, 0, 10, 10, 45) });
+  });
+  it('keeps an explicit alert edit made while all day instead of restoring a former link', async () => {
+    const on = await changeDraftAllDay(timed(), true, null, utc), alarm = Date.UTC(2027, 0, 12, 18);
+    const off = await changeDraftAllDay({ ...on.draft, alarmAtMs: alarm, alarmLinked: false }, false, on.snapshot, utc);
+    expect(off.draft).toMatchObject({ alarmAtMs: alarm, alarmLinked: false, dueAtMs: Date.UTC(2027, 0, 6, 14) });
+  });
+  it('uses zero offsets after deliberate relinking rather than resurrecting remembered offsets', async () => {
+    const on = await changeDraftAllDay(timed(), true, null, utc);
+    const reset = relinkTimedSnapshot(relinkTimedSnapshot(on.snapshot, 'due'), 'alarm');
+    const off = await changeDraftAllDay(on.draft, false, reset, utc);
+    expect(off.draft.dueAtMs).toBe(off.draft.eventStartMs);
+    expect(off.draft.alarmAtMs).toBe(off.draft.eventStartMs);
+    expect(on.snapshot).toMatchObject({ dueOffsetMs: 86_400_000, alarmOffsetMs: -900_000 });
+    expect(relinkTimedSnapshot(null, 'alarm')).toBeNull();
+  });
+  it('uses 9 AM and a 30-minute duration for an initially all-day record without changing independent values', async () => {
+    for (const independent of [false, true]) {
+      const original = editorDraft({ title: 'Existing all day', zoneId: 'UTC', allDay: true, eventStartMs: Date.UTC(2027, 0, 8),
+        eventEndMs: Date.UTC(2027, 0, 9), dueAtMs: Date.UTC(2027, 0, 9), alarmAtMs: Date.UTC(2027, 0, 8, 11),
+        dueLinked: !independent, alarmLinked: !independent });
+      const off = await changeDraftAllDay(original, false, null, utc);
+      expect(off.draft).toMatchObject({ eventStartMs: Date.UTC(2027, 0, 8, 9), eventEndMs: Date.UTC(2027, 0, 8, 9, 30),
+        dueLinked: !independent, alarmLinked: !independent });
+      expect(off.draft.dueAtMs).toBe(independent ? original.dueAtMs : off.draft.eventStartMs);
+      expect(off.draft.alarmAtMs).toBe(independent ? original.alarmAtMs : off.draft.eventStartMs);
+    }
+  });
+  it('restores remembered civil clocks in the currently chosen zone after all-day date and zone edits', async () => {
+    const original = editorDraft({ title: 'Travel', zoneId: 'America/Los_Angeles', eventStartMs: Date.parse('2027-01-05T14:00:00-08:00'),
+      eventEndMs: Date.parse('2027-01-05T15:00:00-08:00'), dueAtMs: Date.parse('2027-01-05T15:00:00-08:00'),
+      alarmAtMs: Date.parse('2027-01-05T14:45:00-08:00') });
+    const la = async (input: TimeConversionInput) => ({ ...await utc(input), instantMs: Date.parse(input.local + '-08:00'), offsetSeconds: -8 * 3600 });
+    const on = await changeDraftAllDay(original, true, null, la);
+    const zoned = await changeDraftZone(on.draft, 'UTC', utc);
+    const moved = await moveDraftEvent(zoned.draft, Date.UTC(2027, 0, 8), utc);
+    const off = await changeDraftAllDay(moved.draft, false, on.snapshot, utc);
+    expect(off.draft).toMatchObject({ zoneId: 'UTC', eventStartMs: Date.UTC(2027, 0, 8, 14), eventEndMs: Date.UTC(2027, 0, 8, 15),
+      dueAtMs: Date.UTC(2027, 0, 8, 15), alarmAtMs: Date.UTC(2027, 0, 8, 14, 45) });
+  });
+  it.each([
+    ['2026-03-08', '-08:00', '-07:00', 23],
+    ['2026-11-01', '-07:00', '-08:00', 25],
+  ])('derives local all-day boundaries on %s without an elapsed-day shortcut', async (day, midnightOffset, laterOffset, hours) => {
+    const next = day === '2026-03-08' ? '2026-03-09' : '2026-11-02';
+    const original = editorDraft({ title: 'Clock change', zoneId: 'America/Los_Angeles',
+      eventStartMs: Date.parse(day + 'T14:00:00' + laterOffset) });
+    const convert = async (input: TimeConversionInput) => {
+      const local = input.local!, offset = local === day + 'T00:00:00' ? midnightOffset : laterOffset;
+      return { zoneId: input.zoneId, local, instantMs: Date.parse(local + offset), offsetSeconds: offset === '-07:00' ? -25_200 : -28_800, adjustment: 'none' as const };
+    };
+    const on = await changeDraftAllDay(original, true, null, convert);
+    expect(on.draft.eventEndMs - on.draft.eventStartMs).toBe(Number(hours) * 3_600_000);
+    expect(on.draft.dueAtMs).toBe(Date.parse(next + 'T00:00:00' + laterOffset));
+    expect(on.draft.alarmAtMs).toBe(Date.parse(day + 'T09:00:00' + laterOffset));
+  });
+  it('uses native gap resolution and retains an independent later-fold instant exactly', async () => {
+    const snapshot: TimedDraftSnapshot = { clock: '02:30:00', durationMs: 2_700_000, dueOffsetMs: 0, alarmOffsetMs: 0 };
+    const laterFold = Date.parse('2026-11-01T01:30:00-08:00');
+    const original = editorDraft({ title: 'Gap', zoneId: 'America/Los_Angeles', allDay: true,
+      eventStartMs: Date.parse('2026-03-08T00:00:00-08:00'), alarmAtMs: laterFold, alarmLinked: false });
+    const convert = async (input: TimeConversionInput) => {
+      const gap = input.local === '2026-03-08T02:30:00', local = gap ? '2026-03-08T03:30:00' : input.local!;
+      return { zoneId: input.zoneId, local, instantMs: Date.parse(local + '-07:00'), offsetSeconds: -25_200,
+        adjustment: gap ? 'gapForward' as const : 'none' as const };
+    };
+    const off = await changeDraftAllDay(original, false, snapshot, convert);
+    expect(off.draft.eventStartMs).toBe(Date.parse('2026-03-08T03:30:00-07:00'));
+    expect(off.draft.eventEndMs - off.draft.eventStartMs).toBe(2_700_000);
+    expect(off.draft.dueAtMs).toBe(off.draft.eventStartMs);
+    expect(off.draft.alarmAtMs).toBe(laterFold);
+    expect(off.warnings).toHaveLength(1);
+  });
+  it('does not overwrite the snapshot for a no-op and leaves the input unchanged on conversion failure', async () => {
+    const original = timed(), before = structuredClone(original), fail = vi.fn(async () => { throw new Error('Native conversion failed'); });
+    const snapshot = { clock: '14:00:00', durationMs: 7_200_000, dueOffsetMs: 0, alarmOffsetMs: 0 };
+    expect((await changeDraftAllDay(original, false, snapshot, fail)).snapshot).toBe(snapshot);
+    expect(fail).not.toHaveBeenCalled();
+    await expect(changeDraftAllDay(original, true, null, fail)).rejects.toThrow('Native conversion failed');
+    expect(original).toEqual(before);
+  });
+  it('keeps its snapshot for content-only review but clears it after adopting another schedule or reloading', () => {
+    const original = { draft: timed() }, snapshot = { clock: '14:00:00', durationMs: 7_200_000, dueOffsetMs: 0, alarmOffsetMs: 0 };
+    expect(reviewedTimedSnapshot(snapshot, original, { draft: { ...original.draft, title: 'Renamed', notes: 'Latest' } })).toBe(snapshot);
+    expect(reviewedTimedSnapshot(snapshot, original, { draft: { ...original.draft, eventStartMs: Date.UTC(2027, 0, 8) } })).toBeNull();
+    expect(reviewedTimedSnapshot(snapshot, original, original, true)).toBeNull();
+  });
+});
+
+describe('schedule-only editor preview', () => {
+  it('previews blank titles without including content, membership or sound in its query identity', () => {
+    const original = state(), changed = { draft: { ...original.draft, title: '', notes: 'Long private notes', listId: 'home', sound: 'system' as const, vibration: false } };
+    expect(editorPreviewPayload(changed)).toEqual(editorPreviewPayload(original));
+    expect(editorPreviewPayload(changed).title).toBe('Preview');
+    expect(editorPreviewPayload(changed)).not.toHaveProperty('notes');
+    expect(editorPreviewPayload(changed)).not.toHaveProperty('listId');
+    expect(editorPreviewPayload(changed)).not.toHaveProperty('sound');
+    expect(editorPreviewPayload({ draft: { ...original.draft, alarmAtMs: original.draft.alarmAtMs + 600_000 } })).not.toEqual(editorPreviewPayload(original));
+  });
+  it('omits linked all-day values for native defaults and retains explicit independent values and recurrence', () => {
+    const original: EditorState = { draft: { ...state().draft, allDay: true }, recurrence: { frequency: 'daily', interval: 2, zoneMode: 'floating' } };
+    expect(editorPreviewPayload(original)).not.toHaveProperty('dueAtMs');
+    expect(editorPreviewPayload(original)).not.toHaveProperty('alarmAtMs');
+    expect(editorPreviewPayload(original).recurrence).toEqual(original.recurrence);
+    const independent = editorPreviewPayload({ ...original, draft: { ...original.draft, dueLinked: false, alarmLinked: false } });
+    expect(independent).toMatchObject({ dueAtMs: original.draft.dueAtMs, alarmAtMs: original.draft.alarmAtMs });
+  });
+});
+
+describe('primary alert time and optional Calendar timing', () => {
+  const target = Date.UTC(2027, 0, 8, 10, 50);
+  it('moves the ordinary linked schedule from the primary Alarm or Notification choice', async () => {
+    for (const mode of ['Alarm', 'Notification'] as const) {
+      const draft = { ...state().draft, mode }, before = structuredClone(draft);
+      const moved = await moveDraftAlert(draft, target, utc);
+      expect(moved.draft).toMatchObject({ eventStartMs: target, eventEndMs: target + 1_800_000,
+        dueAtMs: target, alarmAtMs: target, dueLinked: true, alarmLinked: true, mode });
+      expect(hasSeparateEvent(moved.draft)).toBe(false);
+      expect(editorPreviewPayload({ draft: moved.draft })).toMatchObject({ eventStartMs: target, alarmAtMs: target });
+      expect(draft).toEqual(before);
+    }
+  });
+  it('keeps custom event ranges, coincident independent events and independent Due exact', async () => {
+    const ordinary = state().draft;
+    for (const changes of [
+      { eventStartMs: ordinary.eventStartMs + 600_000, eventEndMs: ordinary.eventEndMs + 600_000 },
+      { alarmLinked: false },
+      { eventEndMs: ordinary.eventEndMs + 1_800_000 },
+      { dueLinked: false, dueAtMs: ordinary.dueAtMs + 900_000 },
+    ]) {
+      const draft = { ...ordinary, ...changes }, convert = vi.fn(utc);
+      const changed = (await moveDraftAlert(draft, target, convert)).draft;
+      expect(changed).toMatchObject({ eventStartMs: draft.eventStartMs, eventEndMs: draft.eventEndMs,
+        dueAtMs: draft.dueAtMs, dueLinked: draft.dueLinked, alarmAtMs: target, alarmLinked: false });
+      expect(convert).not.toHaveBeenCalled();
+    }
+  });
+  it('protects a published or uncertain Calendar event even when its clock coincides with the alarm', async () => {
+    const draft = state().draft, changed = (await moveDraftAlert(draft, target, utc, true)).draft;
+    expect(changed.eventStartMs).toBe(draft.eventStartMs);
+    expect(changed.eventEndMs).toBe(draft.eventEndMs);
+    expect(changed.dueAtMs).toBe(draft.dueAtMs);
+    expect(changed).toMatchObject({ alarmAtMs: target, alarmLinked: false });
+  });
+  it('preserves a resolved later-fold instant for independent alarm editing', async () => {
+    const draft = { ...state().draft, zoneId: 'America/Los_Angeles', alarmLinked: false };
+    const laterFold = Date.parse('2027-11-07T01:30:00-08:00'), convert = vi.fn(utc);
+    expect((await moveDraftAlert(draft, laterFold, convert)).draft.alarmAtMs).toBe(laterFold);
+    expect(convert).not.toHaveBeenCalled();
+  });
+  it('makes an explicit Calendar date independent without moving its selected alert', async () => {
+    const draft = state().draft;
+    const calendar = (await moveDraftCalendarEvent(draft, target + 600_000, utc)).draft;
+    expect(calendar).toMatchObject({ eventStartMs: target + 600_000, eventEndMs: target + 2_400_000,
+      dueAtMs: target + 600_000, alarmAtMs: draft.alarmAtMs, alarmLinked: false });
+    const alarm = (await moveDraftAlert(calendar, target, utc)).draft;
+    expect(alarm).toMatchObject({ eventStartMs: calendar.eventStartMs, eventEndMs: calendar.eventEndMs,
+      dueAtMs: calendar.dueAtMs, alarmAtMs: target });
+  });
+  it('keeps an alarm exact through Calendar all-day transitions and changed dates', async () => {
+    const original = state().draft;
+    const on = await changeCalendarAllDay(original, true, null, utc);
+    const dated = await moveDraftCalendarEvent(on.draft, Date.UTC(2027, 0, 9), utc);
+    const off = await changeCalendarAllDay(dated.draft, false, on.snapshot, utc);
+    for (const draft of [on.draft, dated.draft, off.draft])
+      expect(draft).toMatchObject({ alarmAtMs: original.alarmAtMs, alarmLinked: false });
+    expect(off.draft).toMatchObject({ eventStartMs: Date.UTC(2027, 0, 9, 9), eventEndMs: Date.UTC(2027, 0, 9, 9, 30) });
+  });
+  it('keeps No alert scheduling and all-day boundaries on the event date', async () => {
+    const original = { ...state().draft, mode: 'None' as const };
+    const on = await changeCalendarAllDay(original, true, null, utc);
+    expect(on.draft).toMatchObject({ dueAtMs: Date.UTC(2027, 0, 6), alarmLinked: true, dueLinked: true });
+    const moved = await moveDraftEvent(on.draft, Date.UTC(2027, 0, 9), utc);
+    expect(moved.draft).toMatchObject({ eventStartMs: Date.UTC(2027, 0, 9), eventEndMs: Date.UTC(2027, 0, 10), dueAtMs: Date.UTC(2027, 0, 10), mode: 'None' });
+  });
+  it('preserves no-op identity and retains the previous draft after failed timing conversion', async () => {
+    const draft = state().draft, before = structuredClone(draft), fail = vi.fn(async () => { throw new Error('Conversion failed'); });
+    expect((await moveDraftAlert(draft, draft.alarmAtMs, fail)).draft).toBe(draft);
+    expect((await moveDraftCalendarEvent(draft, draft.eventStartMs, fail)).draft).toBe(draft);
+    await expect(moveDraftAlert(draft, target, fail)).rejects.toThrow('Conversion failed');
+    await expect(moveDraftCalendarEvent(draft, target, fail)).rejects.toThrow('Conversion failed');
+    await expect(changeCalendarAllDay(draft, true, null, fail)).rejects.toThrow('Conversion failed');
+    expect(draft).toEqual(before);
   });
 });

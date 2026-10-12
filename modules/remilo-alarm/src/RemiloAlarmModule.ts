@@ -1,9 +1,10 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
+import { type TimeDisplayPreferences, type CalendarConnection, type CalendarPublication, type CalendarPublicationPreview, type CalendarPage, type CalendarCommand, type AppSettings, type Capabilities, type Command, type CommandResult, type ImportPreview, type Occurrence, type ReminderDraft, type ReminderFilter, type ReminderPage, type RemiloAlarmModuleEvents, type SchedulePreview, type RecurrenceDraft, type Series, type RepeatFamily, type TimeZoneOption, type TimeConversion, type TimeConversionInput, type ListRecord, type SoundPreviewSnapshot, type ResolvedReminderDraft } from './RemiloAlarm.types';
 
-import type { AppSettings, Capabilities, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage, RemiloAlarmModuleEvents, SchedulePreview, RecurrenceDraft, Series, RepeatFamily, TimeZoneOption, TimeConversion, TimeConversionInput, ListRecord, SoundPreviewSnapshot, ResolvedReminderDraft } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
+  getTimeDisplayPreferences(): Promise<TimeDisplayPreferences>;
   getCapabilities(): Promise<Capabilities>;
   queryReminders(filter: ReminderFilter, cursor: string | null): Promise<ReminderPage>;
   getOccurrence(id: string): Promise<Occurrence | null>;
@@ -17,6 +18,12 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   applyCommand(command: Command): Promise<CommandResult>;
   scheduleTestAlarm(operationId: string): Promise<CommandResult>;
   getSettings(): Promise<AppSettings>;
+  getCalendarConnection(): Promise<CalendarConnection>;
+  getCalendarPublications(): Promise<CalendarPublication[]>;
+  previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
+  authorizeCalendar(publicationId: string | null): Promise<void>;
+  listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
+  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | { disconnected: boolean }>;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;

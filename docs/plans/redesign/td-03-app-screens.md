@@ -13,9 +13,21 @@ The owner authorized production implementation on 9 October 2026; current correc
 
 ## Outcome
 
+All shared browsing pages follow the [11 October header correction](../../design/current/header-scroll-research.md), including saved offsets, compact layouts, search and sheet boundaries. The foreground and action tree remain stable while the canvas surface blends with scroll.
+
 Apply the approved page contracts and correction notes to Agenda, Lists, Repeats, Details/Editor, Postpone, Settings and Data/Help. Extend shared components for exceptional states. Completed/Trash/Activity uses [runtime composition 05 approved for implementation](../../design/r9-runtime-composition-approval-v5.json); its required R9 composition checkpoint is closed while Android acceptance remains pending.
 
 ## Implementation
+
+- Implement the [10 October UX refinement](../../design/current/ux-refinement.md):
+  focused blank creation/keyboard handoff, one Date/Time control before alert type,
+  collapsed optional Calendar event details and divider-free short menus; schedule-only
+  preview, ephemeral All day restoration; alert-first conditional Details and
+  truthful compact card timing/full spoken dates; Apply/Cancel filters and skipped
+  chip/reset; icon-only collection-header Filters with an active-count badge and
+  labeled Agenda content-row Filters; reorganized Settings, compact alarm-check route, clock shortcuts and
+  concise backup/repeat/Trash copy. Preserve captured retries, fixed scope,
+  publication context, native authority and existing artwork.
 
 - Apply the [alert experience correction](../../design/current/alert-experience.md): inline mode choices, original-alert/No alert overdue, compact statuses, one ringing Details Done and shared terminal keylines/borderless More. Preserve selection-only checkboxes, supported menus, IME/draft guards and history truth.
 
@@ -35,3 +47,11 @@ Record actual revision, delivered contracts, render/command evidence, unresolved
 review conditions and pending physical observations using [the handoff protocol](../../handoffs/README.md).
 Only backlog records live status. Template approval does not establish production
 implementation or actual accessibility/device acceptance.
+
+## Approved follow-up packages
+
+UX-21/22 refine custom repeat preview and scope; UX-23/24 refine captured save
+feedback and Required Title; UX-25 observes device clock formatting read-only;
+UX-26 uses measured root-label fit and Go to; UX-27 retains one empty-Agenda Add.
+Native scheduling, artwork and existing root identities remain authoritative.
+UX-28 records actual review and U32–U35 physical observations stay separate.

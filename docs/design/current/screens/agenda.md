@@ -1,5 +1,9 @@
 # Agenda and navigation
 
+The [10 October UX refinement](../ux-refinement.md) supersedes earlier card copy,
+search focus, filter application/reset and overflow-menu requirements below.
+Filters are transactional Apply/Cancel drafts; restored Search never autofocuses.
+
 The [eight R3 homepage references](../../remilo-r3-atmospheres/gallery.html) are the
 accepted visual basis. Apply [shared roles and geometry](../visual-language.md)
 and [global appearance](../appearance-policy.md); exact PNG dimensions/tints are
@@ -60,3 +64,13 @@ R3 accepts the homepage direction, not every exceptional-state render. TD-03
 reviews search+IME, filter sheets, dense/long English and Chinese content, empty/
 no-match, loading/retained-error and mutation feedback using the same components.
 Verify 200% text, TalkBack, reachable targets and reduced motion in TD-06.
+
+## Approved fit and empty-state follow-up
+
+All four full root labels remain in the ordinary bar while measured text fits.
+Otherwise the current-destination bottom button opens the themed Go to sheet with
+Agenda, Lists, Completed and Trash, icons and separate selection. Closing returns
+focus; guarded operations retain synchronous checks and origin/scroll state.
+A genuine loaded empty unscoped All Agenda replaces the floating + with one
+Create a reminder button. Constrained, scoped, stale and failed states retain
+their existing actions; collapsed populated groups are never treated as empty.
