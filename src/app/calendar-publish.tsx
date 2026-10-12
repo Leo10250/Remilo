@@ -1,3 +1,4 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -6,13 +7,13 @@ import type { CalendarCommand } from '../../modules/remilo-alarm/src/RemiloAlarm
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { publicationCommand, calendarError } from '../domain/calendar';
 import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, Page, QueryState } from '../ui/components';
-import { scheduleDateTime } from '../domain/presentation';
 import { civilAt } from '../domain/time';
 import { engine, nativeAvailable } from '../ui/native';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
 import { useAppearanceHold } from '../ui/theme';
 
 export default function CalendarPublish() {
+  const { scheduleDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string }>(), routeParams = retainedOriginParams(params), id = params.id;
   const client = useQueryClient();
   const jobs = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
@@ -37,7 +38,11 @@ export default function CalendarPublish() {
   return <Page title={publication ? 'Calendar publication' : 'Publish to Google Calendar'} onBack={back}
     footer={!publication && preview.data ? <BottomActionBar><Button label={uncertain ? 'Retry same publication' : 'Publish'} disabled={busy} onPress={() => void publish()} />
       <Button label="Cancel" variant="secondary" disabled={busy || uncertain} onPress={back} /></BottomActionBar> : undefined}>
-    <QueryState loading={jobs.isLoading || preview.isLoading && !preview.data} error={jobs.error || (!publication ? preview.error : undefined)} onRetry={() => void client.invalidateQueries({ queryKey: ['calendar'] })} />
+    <QueryState loading={jobs.isLoading || preview.isLoading && !preview.data} />
+    {(jobs.error || !publication && preview.error) && <View style={{ gap: 8 }}>
+      <ActionFeedback message={jobs.error ? 'Saved publication status could not be refreshed. Retry before publishing.' : calendarError(preview.error)} tone="warning" />
+      <Button label="Retry" variant="secondary" onPress={() => void client.invalidateQueries({ queryKey: ['calendar'] })} />
+    </View>}
     {publication ? <CalendarPublicationStatus publication={publication} /> : preview.data && <>
       <ConnectedGroup title="Calendar copy"><View key="review" style={{ padding: 16, gap: 12 }}>
         <Copy heading>{preview.data.title}</Copy><Copy>{preview.data.notes || 'No notes'}</Copy>

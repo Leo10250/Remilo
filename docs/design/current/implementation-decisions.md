@@ -67,7 +67,7 @@ Toolbar More → Select reminders reveals 48 dp selection checkboxes and a selec
 count, with contextual actions in a measured footer of at least 56 dp. A checked
 selection box means selected, never completed or restored. Select all loaded
 affects only matching records already loaded; Load more never selects added rows.
-Scope/query/Include skipped cannot change during selection. Back/Done selecting
+Scope/query/Show skipped cannot change during selection. Back/Done selecting
 clears selection before origin navigation unless an operation is pending/unknown.
 More and the informational neutral title glyph anchor to the first title line
 using rendered font size. Activity retains 24 dp informational event glyphs;

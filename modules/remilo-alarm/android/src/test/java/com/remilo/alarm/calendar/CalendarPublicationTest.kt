@@ -80,6 +80,26 @@ class CalendarPublicationTest {
       assertEquals("America/Los_Angeles", mapped.getJSONObject("end").getString("timeZone"))
     }
   }
+  @Test fun exactMinuteTimesIncludeRfc3339SecondsWithoutChangingInstants() {
+    val start = Instant.parse("2026-10-12T19:00:00Z").toEpochMilli()
+    val mapped = CalendarMapper.fields(record.copy(eventStartMs = start, eventEndMs = start + 1_800_000), "America/Los_Angeles")
+    val timestamp = Regex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})")
+    listOf("start" to start, "end" to start + 1_800_000).forEach { (field, expected) ->
+      val value = mapped.getJSONObject(field)
+      assertTrue("Google requires seconds in $field.dateTime", timestamp.matches(value.getString("dateTime")))
+      assertEquals(expected, java.time.OffsetDateTime.parse(value.getString("dateTime")).toInstant().toEpochMilli())
+      assertEquals("America/Los_Angeles", value.getString("timeZone"))
+    }
+  }
+  @Test fun connectingAnAccountStillRequiresExplicitCalendarSelection() {
+    store.connect(CalendarAccount("new-subject", "new@example.test"), 2)
+    assertTrue(store.connection().connected)
+    assertEquals("", store.connection().calendarId)
+    failure("NEEDS_CONNECTION") { store.preview("one") }
+    store.select(UUID.randomUUID().toString(), 3, "new-subject", OwnedCalendar("new-owned", "Chosen calendar", "UTC"))
+    assertEquals("Chosen calendar", store.preview("one")["calendarName"])
+    assertTrue(store.publications().isEmpty())
+  }
   @Test fun fixedOffsetCannotMasqueradeAsNamedZone() {
     failure("INVALID_ZONE") { CalendarMapper.fields(record, "+01:00") }
   }

@@ -6,7 +6,8 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
   const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
   const state = review.get('reviewCalendar') || 'connected';
   let connection: CalendarConnection = { revision: 1, connected: state !== 'disconnected', available: state !== 'unavailable', email: 'calendar-tester@example.test',
-    calendarId: 'fixture-calendar', calendarName: 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
+    calendarId: ['disconnected', 'no-calendar'].includes(state) ? '' : 'fixture-calendar',
+    calendarName: ['disconnected', 'no-calendar'].includes(state) ? '' : 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
   const jobs = new Map<string, CalendarPublication>(), captures = new Map<string, CalendarCommand>();
   const error = (code: string): never => { throw Object.assign(new Error('Synthetic Calendar: ' + code), { code }); };
   const preview = (id: string): CalendarPublicationPreview => {
@@ -36,7 +37,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
       connection = { ...connection, connected: true, revision: connection.revision + 1 }; changed();
     },
     listOwnedCalendars: async (cursor: string | null) => ({ connectionRevision: connection.revision,
-      items: state === 'empty' ? [] : [{ id: cursor ? 'fixture-calendar-2' : 'fixture-calendar', name: cursor ? 'Another owned calendar' : connection.calendarName, zoneId: 'America/Los_Angeles' }],
+      items: state === 'empty' ? [] : [{ id: cursor ? 'fixture-calendar-2' : 'fixture-calendar', name: cursor ? 'Another owned calendar' : 'Synthetic owned calendar / 测试日历', zoneId: 'America/Los_Angeles' }],
       nextCursor: !cursor && state !== 'empty' ? 'fixture-page-2' : null }),
     applyCalendarCommand: async (command: CalendarCommand): Promise<unknown> => {
       if (command.kind === 'RetryPublication') {

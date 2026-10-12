@@ -3,13 +3,14 @@ package com.remilo.alarm.calendar
 import org.json.JSONObject
 import java.net.URL
 import java.net.URLEncoder
+import java.time.OffsetDateTime
 import javax.net.ssl.HttpsURLConnection
 
-class GoogleCalendarTransport : CalendarTransport {
+class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }) : CalendarTransport {
   private fun path(id: String) = URLEncoder.encode(id, "UTF-8").replace("+", "%20")
   private val base = "https://www.googleapis.com/calendar/v3"
   private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false): JSONObject? {
-    val connection = URL(url).openConnection() as HttpsURLConnection
+    val connection = openConnection(URL(url))
     try {
       connection.connectTimeout = 10_000; connection.readTimeout = 20_000; connection.instanceFollowRedirects = false
       connection.setRequestProperty("Authorization", "Bearer $token")
@@ -28,7 +29,7 @@ class GoogleCalendarTransport : CalendarTransport {
           bytes?.let { JSONObject(String(it, Charsets.UTF_8)).optJSONObject("error")?.optJSONArray("errors")?.optJSONObject(0)?.optString("reason") }
         } catch (_: Exception) { null } else null
         throw CalendarFailure(when (status) {
-        401 -> "AUTH"; 403 -> when (reason) {
+        400 -> "BAD_REQUEST"; 401 -> "AUTH"; 403 -> when (reason) {
           "rateLimitExceeded", "userRateLimitExceeded" -> "RETRY"
           "insufficientPermissions" -> "AUTH"
           else -> "FORBIDDEN"
@@ -67,6 +68,19 @@ class GoogleCalendarTransport : CalendarTransport {
   }
   override fun event(token: String, calendarId: String, eventId: String): JSONObject? =
     request(token, "$base/calendars/${path(calendarId)}/events/${path(eventId)}", allowMissing = true)
+  /** Repair legacy timestamp encoding at the wire boundary, retaining captured content and identity. */
+  private fun publicationPayload(payload: String): String {
+    val event = JSONObject(payload)
+    for (field in listOf("start", "end")) {
+      val bound = event.getJSONObject(field)
+      if (bound.has("dateTime")) {
+        val instant = try { OffsetDateTime.parse(bound.getString("dateTime")).toInstant() }
+        catch (_: java.time.DateTimeException) { throw CalendarFailure("INVALID_EVENT") }
+        bound.put("dateTime", instant.toString()) // Instant always includes RFC 3339 seconds; named zone stays intact.
+      }
+    }
+    return event.toString()
+  }
   override fun insert(token: String, calendarId: String, payload: String): JSONObject =
-    request(token, "$base/calendars/${path(calendarId)}/events?sendUpdates=none", payload)!!
+    request(token, "$base/calendars/${path(calendarId)}/events?sendUpdates=none", publicationPayload(payload))!!
 }

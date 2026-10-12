@@ -162,7 +162,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
   Check the compact summary; tap it to clear. There are no six-tab filter rows.
 - **U4 — completed, skipped and Trash:** complete a QA row using its leading completion target,
   then use Undo. Complete again: it leaves the active agenda. Find it through
-  the secondary Completed destination. Include skipped exposes a skipped repeat.
+  the secondary Completed destination. Filters → Show skipped exposes a skipped repeat.
   Move a different QA reminder to Trash through its detail menu; confirm the
   themed request after checking Keep reminder/Back first. Check that one snackbar
   with Undo appears, with no lasting green duplicate; ordinary Undo feedback expires
@@ -352,7 +352,7 @@ data needs deletion. Keep alarm-volume conditions separate from appearance check
 - **U26 — header sheets, Details and list glyphs:** in Night Light, open Agenda
   and Lists header More. Title, Close, Settings and Manage lists must contrast with
   the sheet surface; focus/pressed treatment must use surface roles rather than
-  white scenic-header foregrounds. Compare all eight atmosphere/brightness pairs
+  inherited scenic-control treatment. Compare all eight atmosphere/brightness pairs
   and Completed/Trash menus. Details Schedule uses 2 dp connected seams and 16/4 dp
   corners, including conditional independent Due, Next alert and Notes. List
   navigation and its focus border remain functional/unclipped. Repeat recovery
@@ -470,7 +470,7 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 - **D9 — series lifecycle:** create a daily series with five occurrences, first
   alert a few minutes ahead. Future occurrences appear in the agenda; the engine
   independently registers two ordinary targets. Skip the first occurrence: find it
-  in Completed → Include skipped and
+  in Completed → Filters → Show skipped and
   another future ordinary occurrence fills the window. Count is still five nominal slots.
 - **D10 — individual exception:** Postpone an occurrence, then edit its notes.
   The chosen next alert survives. Edit that occurrence's alert definition instead:
@@ -559,12 +559,12 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   Notification sent stay available in Details/Activity rather than duplicate row
   badges. Inspect independent Due, blocked targets and scheduling warnings.
 - **F4 — consistent terminal cards:** compare Agenda, named-list Agenda,
-  Completed with Include skipped, mixed Trash and family occurrences. All use
+  Completed with Show skipped, mixed Trash and family occurrences. All use
   shared keylines, wrapping and the borderless vertical-ellipsis target. Normal
   Completed/Skipped/Trash has no completion checkbox, Done or empty placeholder;
   selection mode uses selection-only checkboxes. One terminal state line retains
   useful original schedule/alert and list/repeat context. Row tap opens Details;
-  More retains View/Reopen/Move to Trash or View/Restore as appropriate. Compare
+  More offers Reopen/Move to Trash or Restore/Delete permanently as appropriate. Compare
   all four atmospheres in both brightnesses, portrait/landscape and 200% text.
 - **F5 — captured actions and retries:** controlled QA engineering setups cover
   later arrivals, stale generations, changed Snooze settings, lost replies,
@@ -575,6 +575,47 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
   cases pending; do not inject failures into normal phone data.
 
 ## Results and remaining engineering checks
+
+### UX refinement additions — U27–U31 (pending)
+
+Use one identified signed bundled build; record APK/source identity, device/OS,
+conditions and observer. These are new observations, not inferred from earlier
+G1–G3 attestation or web/host results. The deferred consolidated run remains.
+
+- **U27 — keyboard handoff:** blank create focuses Title once; edit/duplicate
+  start closed. First-tap Save works above IME. Success/discard closes keyboard
+  before returning. Restored Agenda/Completed/Trash search keeps text/filters
+  without reopening keyboard. Explicit Search/text tap focuses normally. Long
+  Title grows to three lines then scrolls; 200% English/Chinese/IME composition,
+  Notes caret, validation, Done and hardware Back remain usable.
+- **U28 — timing:** review Title → one Alarm/Notification Date/Time → alert type;
+  No alert uses Scheduled for. Calendar event starts collapsed; changing a normal
+  alarm moves its default schedule, but separate/published/coincident independent
+  event times survive. Event edits and All day event retain the alert clock; No
+  alert All day keeps its date boundary. Test round trips, fields, changed date/zone,
+  relink and initial-all-day 9 AM/30-minute fallback without advancing tomorrow.
+  Cancel native pickers keeps old values. Check DST cases and stale-review choices.
+- **U29 — filters:** Apply/Cancel/close/backdrop/Back; unchanged Apply retains exact
+  scroll/pages. Changed criteria caps at covered-art boundary without remount.
+  Show skipped chip/removal/reset and list/search independence; fixed list scope
+  cannot broaden. Selection/pending/unknown actions disable competing filters.
+  Collection-header Filters matches Search/More without a word label; active count
+  is legible at 200% and TalkBack reads one Filters button with the count/state.
+  Zero optional filters hides the badge; Agenda retains its labeled content action.
+- **U30 — timing and accessibility:** original/current/intended/previous alert
+  meaning, conditional Details Event/Due, overdue postponed target, terminal dates,
+  Ringing precedence and complete TalkBack dates. Check row Open/Done/More focus
+  order, long press, menu return focus, divider-free short action menus, targets,
+  landscape and reduced motion. Event ranges remain in Schedule details until
+  Calendar publication context makes them relevant in the main group.
+- **U31 — settings:** permission return/recheck/stale reads and channel disclosure;
+  direct Android-settings handoff; Test In 15 seconds and same-test unknown retry
+  with Back guard; sound preview; failed preference recovery after closing a sheet;
+  Tomorrow clocks at midnight/23:59 and zone/DST changes without altering stored
+  minutes; automatic scene boundaries/Now and independent color-mode changes.
+
+No installation, distribution, Calendar repair or audible-delivery pass is implied
+by completing the implementation. Calendar load-view error remains separate.
 
 Send one report with `A1 pass; B4 fail — expected…, observed…; C2 unavailable…`.
 Include version/device, conditions, and measured start/end times where relevant.
@@ -588,3 +629,36 @@ Android API 34–37 and another physical manufacturer. Host tests cover determin
 state/rule behavior; they do not prove these physical outcomes. You do not need to
 manually inject database faults. Calendar, cloud and iOS are deferred and have no
 acceptance steps in this offline Android run.
+
+### UX follow-up — U32–U35 (pending)
+
+Observe on an identified signed bundled build; host/fixture results do not pass these.
+
+- **U32:** custom Alarm/Notification/No alert preview; conditional skip-date support;
+  Apply/Cancel/Back; authored scope identity after Postpone; original nominal boundary;
+  paused/archived choices and earlier unfinished/postponed reminders preserved.
+- **U33:** Required Title spoken once, blank/whitespace Save disabled; create/edit/
+  duplicate/repeat confirmation appears once on return; Blocked/Pending review route;
+  unknown save/complete/restore/postpone retries retain the same operation.
+- **U34:** English locale with explicit 12/24-hour setting overrides, Chinese locale,
+  midnight/noon/23:59, picker Cancel, device format/locale changes on return; native
+  alarm text including generic before-unlock content; saved instants and shortcut
+  minutes unchanged. Permissions/audible-delivery observations remain distinct.
+- **U35:** 100–200% text and rotation, four full labels or Go to choices, TalkBack
+  selection/focus return, guarded navigation and retained search/filter/scroll;
+  genuine empty Agenda has one Add action and opens the normal focused editor.
+
+### Continuous browsing-header follow-up — U36
+
+Observe on an identified signed bundled build in the consolidated owner run.
+
+- **U36:** scroll Agenda and form-style browsing through the final 64 dp of artwork
+  cover, pause at intermediate offsets, reverse direction and fling. The artwork
+  and title/action positions remain fixed; the canvas-colored header blends to
+  opaque without a boundary flash or gesture lag. Compare all eight atmosphere/
+  brightness pairs, including dark foreground in Night Light. Check title/icon
+  contrast, wrapped date text, gradient banding and More/Filters sheet boundaries.
+  Return at partially and fully covered saved offsets; search, reset filters and
+  rotate without losing state. Remove animations retains the direct blend with
+  no timer or spring; 200% text and constrained height use opaque compact chrome.
+  TalkBack sees one heading and one instance of each action, with retained focus.

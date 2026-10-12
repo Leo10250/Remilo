@@ -11,10 +11,12 @@ import java.util.UUID
 import com.remilo.alarm.calendar.*
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.ConnectionResult
+import com.remilo.alarm.system.TimeDisplayPreferences
 
 class RemiloAlarmModule : Module() {
   private var observation: AutoCloseable? = null
   private var previewObservation: AutoCloseable? = null
+  private var timeObservation: AutoCloseable? = null
   private fun engine() = AlarmEngine.get(requireNotNull(appContext.reactContext).applicationContext)
   private fun dispatch(promise: Promise, body: (AlarmEngine) -> Any?) {
     val owner = engine()
@@ -22,14 +24,17 @@ class RemiloAlarmModule : Module() {
   }
   override fun definition() = ModuleDefinition {
     Name("RemiloAlarm")
-    Events("onChange", "onSoundPreviewState")
+    Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
     OnCreate {
+      val context = requireNotNull(appContext.reactContext).applicationContext
+      timeObservation = runCatching { TimeDisplayPreferences.observe(context) { sendEvent("onTimeDisplayPreferencesChanged", TimeDisplayPreferences.read(context)) } }.getOrNull()
       val owner = engine()
       observation = owner.observe { sendEvent("onChange", emptyMap<String, Any>()) }
       previewObservation = owner.observeSoundPreview { sendEvent("onSoundPreviewState", it) }
       owner.recover()
     }
-    OnDestroy { observation?.close(); observation = null; previewObservation?.close(); previewObservation = null }
+    OnDestroy { observation?.close(); observation = null; previewObservation?.close(); previewObservation = null; timeObservation?.close(); timeObservation = null }
+    AsyncFunction("getTimeDisplayPreferences") { TimeDisplayPreferences.read(requireNotNull(appContext.reactContext).applicationContext) }
     Function("createOperationId") { UUID.randomUUID().toString() }
     AsyncFunction("getCapabilities") { promise: Promise -> dispatch(promise) { it.capabilities() } }
     AsyncFunction("queryReminders") { filter: Map<String, Any?>, cursor: String?, promise: Promise ->

@@ -1,5 +1,9 @@
 # Lists, Repeats and recurrence controls
 
+The [10 October UX refinement](../ux-refinement.md) removes redundant Open list
+menus and simplifies repeat copy while retaining independently changed alerts
+when paused/ended. It introduces no recurrence or native lifecycle change.
+
 Revision 5 · 9 October 2026 · **Overall outline, connected grouping and shared neutral list glyph accepted.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
@@ -372,3 +376,11 @@ native preview/date policy, same-operation retries and origin/keyed-state guards
 No list management or visual change may alter registrations/audio. Shared/native
 checks run when changed implementation warrants them; this documentation refinement
 does not claim runtime/native/physical results or complete TD-03.
+
+## Latest repeat refinement
+
+Custom preview leads with complete alarm/notification dates, or scheduled dates
+for No alert. Relevant missing-date/fifth-weekday/leap-year rules explain their
+consequences; ordinary rules omit generic engine explanations. Custom selection
+includes endings. Optional Calendar range is collapsed. Edit scope names the
+authored occurrence and retains its native nominal boundary and earlier work.

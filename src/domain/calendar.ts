@@ -10,6 +10,7 @@ export function canRetryPublication(publication: CalendarPublication) {
 export function calendarError(error: unknown): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (code.includes('STALE')) return 'This reminder or Calendar destination changed. Refresh the preview before publishing.';
+  if (code.includes('NEEDS_CONNECTION')) return 'Publishing needs both a connected Google account and a selected calendar. Open Calendar settings to finish setup.';
   if (code.includes('NEEDS') || code.includes('AUTH')) return 'Connect or authorize Google Calendar, choose a calendar you own, and try again.';
   if (code.includes('INELIGIBLE')) return 'Only saved, unfinished one-off reminders can be published.';
   if (code.includes('INVALID_ZONE')) return 'Choose a named time zone for this reminder and refresh its publication preview.';

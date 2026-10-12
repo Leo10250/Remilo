@@ -1,19 +1,22 @@
+import { RootNotice, notifyTrash } from '../../ui/navigation';
+import { useTimeFormatting } from '../../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import type { ContentCommand, DeliveryCommand, Occurrence } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { commandFeedback } from '../../domain/actions';
-import type { Tone } from '../../domain/actions';
+import { recoveryPresentation, commandFeedback, type Tone } from '../../domain/actions';
+
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
-import { alertPresentation, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, scheduleDateTime, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
+import { modeLabel, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, formatTime, Icon, IconButton, Page, QueryState, SettingRow, Sheet, shortTime, Status } from '../../ui/components';
-import { notifyTrash } from '../../ui/navigation';
+import {  } from '../../domain/clock-preferences';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
+
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
 import { typography } from '../../ui/tokens';
-import { InformationRow, Schedule, ScheduleDetails, ZoneSummary } from '../../ui/schedule';
+import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary, ZoneSummary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
@@ -25,6 +28,7 @@ const activity: Record<string, string> = { Purge: 'Reminder permanently deleted.
   Interrupted: 'Alarm interrupted', Failed: 'Alarm failed', Missed: 'Alarm missed', Notified: 'Notification sent', PauseSeries: 'Repeat paused', ResumeSeries: 'Repeat resumed' };
 type Feedback = { message: string; tone: Tone };
 export default function ReminderDetails() {
+  const { formatDate, formatTime, scheduleDateTime, alertPresentation, clockPreferenceLabel } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; action?: string }>(), { id, action } = params;
   const origin = useMemo(() => creationOrigin({ originRoot: params.originRoot, originListId: params.originListId, originNoList: params.originNoList }), [params.originRoot, params.originListId, params.originNoList]);
   const routeParams = useMemo(() => ({ ...originParams(origin), originCollection: params.originCollection, originFamily: params.originFamily,
@@ -39,6 +43,7 @@ export default function ReminderDetails() {
   const series = useQuery({ queryKey: ['series', item?.segmentId], queryFn: () => engine().getSeries(item!.segmentId!), enabled: nativeAvailable && !!item?.segmentId });
   const families = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable && !!item?.segmentId });
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
+  const scopeTrigger = useRef<View>(null), focused = useIsFocused();
   const [postpone, setPostpone] = useState(action === 'postpone'), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
   const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
@@ -47,6 +52,7 @@ export default function ReminderDetails() {
   const pendingOperation = useRef<{ command: ContentCommand | DeliveryCommand; item: Occurrence; success: string } | null>(null);
   const runningOperation = useRef(false);
   const [uncertain, setUncertain] = useState(false);
+  const [recoveryKind, setRecoveryKind] = useState<string>();
   const [postponeResult, setPostponeResult] = useState(false), [selection, setSelection] = useState('15');
   useAppearanceHold(command.isPending || uncertain);
   usePreventRemove(command.isPending || uncertain, () => {
@@ -60,6 +66,7 @@ export default function ReminderDetails() {
     const operation = pendingOperation.current;
     if (!operation || command.isPending || runningOperation.current) return;
     runningOperation.current = true;
+    setRecoveryKind(operation.command.kind);
     setFeedback(null); setSheetFeedback(null);
     try {
       const result = await command.mutateAsync(operation.command);
@@ -114,15 +121,16 @@ export default function ReminderDetails() {
   const adjust = item && canAdjustAlert(item), completion = recordedCompletionTime(item?.history);
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
+  const recovery = recoveryPresentation(recoveryKind);
   const frozenPostpone = command.isPending || uncertain || postponeResult;
   const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
   return <Page title="Reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
-    actions={item ? <>{!item.deleted && <IconButton icon="edit" label="Edit reminder" disabled={command.isPending || uncertain} onPress={edit} />}
+    actions={item ? <>{!item.deleted && <IconButton icon="edit" label="Edit reminder" buttonRef={scopeTrigger} disabled={command.isPending || uncertain} onPress={edit} />}
     <IconButton icon="more_vert" label="Reminder actions" disabled={command.isPending || uncertain} onPress={() => setMenu(true)} /></> : undefined}
-    footer={item && (active || item.completed || item.skipped || item.deleted) ? <BottomActionBar>
+    footer={<><RootNotice disabled={command.isPending || uncertain} />{item && (active || item.completed || item.skipped || item.deleted) ? <BottomActionBar>
       {active && <>
       {item.deliveryState === 'Alerting' && <Copy muted size={typography.supporting}>Alarm ringing</Copy>}
-      <View style={{ width: '100%' }}><Button icon="check" label="Done" disabled={command.isPending || uncertain}
+      <View style={{ width: '100%' }}><Button icon="check" label="Mark as done" disabled={command.isPending || uncertain}
         onPress={() => void (item.deliveryState === 'Alerting' ? delivery('CompleteDelivery') : content('Done'))} /></View>
       {adjust && item.deliveryState === 'Alerting' && <View style={{ width: '100%' }}><Button icon="snooze" label={'Snooze · ' + item.quickSnoozeMinutes + ' min'} variant="secondary"
         disabled={command.isPending || uncertain} onPress={() => void delivery('Snooze')} /></View>}
@@ -130,17 +138,18 @@ export default function ReminderDetails() {
       </>}
       {item.deleted ? <View style={{ flex: 1 }}><Button icon="undo" label="Restore reminder" disabled={command.isPending || uncertain} onPress={() => void content('UndoDelete')} /></View> :
         (item.completed || item.skipped) && <View style={{ flex: 1 }}><Button icon="undo" label={item.skipped ? 'Reopen occurrence' : 'Reopen reminder'} variant="secondary" disabled={command.isPending || uncertain} onPress={() => void content('Reopen')} /></View>}
-    </BottomActionBar> : undefined}>
+    </BottomActionBar> : undefined}</>}>
     <QueryState loading={query.isLoading && nativeAvailable && !item} error={!item ? query.error : undefined} empty={!item && !query.isLoading && !uncertain && !command.isPending} emptyMessage="This reminder is unavailable." onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
-    {feedback && <ActionFeedback {...feedback} />}
+    {feedback && !uncertain && <ActionFeedback {...feedback} />}
     {uncertain && <>
-      <ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />
-      <Button label="Retry change" variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
+      <ActionFeedback message={recovery.message} tone="warning" />
+      <Button label={recovery.retry} variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
     {command.isPending && <ActionFeedback loading message="Applying change…" />}
     {item && <>
       {publication && <CalendarPublicationStatus publication={publication} />}
       {query.error && <><ActionFeedback message="Could not refresh. Showing the previous reminder." tone="warning" /><Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
+      <SchedulePrimary item={item} />
       {item.deleted ? <Status icon="delete" label="In Trash" /> : item.completed ?
         <Status label={completion == null ? 'Completed' : 'Completed ' + scheduleDateTime(completion)} tone="success" /> :
         item.skipped ? <Status icon="cancel" label="Skipped" /> : <View style={{ gap: 8 }}>{overdueStatus && <View accessible accessibilityLabel={overdueStatus.spokenLabel}><Status icon="warning" label={overdueStatus.label} tone="warning" /></View>}
@@ -149,17 +158,12 @@ export default function ReminderDetails() {
       {explanation && !item.deleted && <Status icon={stateIcon(item)} label={explanation} tone={stateTone(item)} />}
       {item.deleted && <><Status label={item.skipped ? 'Previously skipped' : item.completed ? completion == null ? 'Previously completed' : 'Previously completed ' + scheduleDateTime(completion) : 'Previously unfinished'} tone={item.completed ? 'success' : 'muted'} /><Copy muted size={14}>Restore keeps this work state and never replays past alerts.</Copy></>}
       {item.deliveryState === 'Blocked' && active && <Button icon="settings" label="Review alert permissions" variant="secondary" disabled={command.isPending || uncertain} onPress={() => {
-        if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/settings', params: { ...routeParams, originReminderId: id } });
+        if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } });
       }} />}
-      <Schedule item={item} details={false} connected>
-        <InformationRow key="list" icon="checklist" label="List" value={item.listName || 'No list'} onPress={command.isPending || uncertain ? undefined : () => {
-          if (!pendingOperation.current && !runningOperation.current) router.push(reminderListRoute(item.listId ?? null, id, routeParams));
-        }} />
-        {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
-      </Schedule>
+      <Schedule item={item} details={false} connected occurrence hasPublication={!!publication} />
       {item.segmentId && <ConnectedGroup title="Repeat" footer={series.isLoading || series.error || series.data?.state === 'Archived' ? <>
         <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
-        {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Repeat details shows the current family.</Copy>}
+        {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Repeat details shows the current schedule.</Copy>}
       </> : undefined}>
         <SettingRow key="repeat" icon="repeat" label={repeatSummary(item) ?? 'Repeating'} description={(family?.state === 'Paused' ? 'Repeat paused' : family?.state === 'Ended' ? 'Repeat ended' : 'This occurrence') +
           (item.exception ? item.deliveryState === 'Scheduled' ? ' · Independent alert scheduled' : item.deliveryState === 'Blocked' ? ' · Independent alert blocked' : item.deliveryState === 'Pending' ? ' · Independent alert pending' : ' · Individual change' : '')}
@@ -167,7 +171,13 @@ export default function ReminderDetails() {
             if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/series/[id]', params: { id: item.segmentId!, ...(family ? { seriesId: family.seriesId } : {}), ...routeParams, originReminderId: id } });
           }} />
       </ConnectedGroup>}
-      <ScheduleDetails item={item} />
+      <ConnectedGroup>
+        <InformationRow key="list" icon="checklist" label="List" value={item.listName || 'No list'} onPress={command.isPending || uncertain ? undefined : () => {
+          if (!pendingOperation.current && !runningOperation.current) router.push(reminderListRoute(item.listId ?? null, id, routeParams));
+        }} />
+        {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
+      </ConnectedGroup>
+      <ScheduleDetails item={item} occurrence hasPublication={!!publication} />
     </>}
     <Sheet title="Reminder actions" visible={menu} onClose={() => setMenu(false)}>
       {item && !item.deleted && <SettingRow icon="edit" label="Edit" onPress={edit} />}
@@ -191,33 +201,34 @@ export default function ReminderDetails() {
       if (!purgeItem || command.isPending || pendingOperation.current || runningOperation.current) return;
       const captured = purgeItem; setPurgeItem(null); void content('Purge', captured);
     }} />
-    <Sheet title="Edit repeating reminder" visible={scope && !!item?.segmentId} onClose={() => setScope(false)}>
-      <SettingRow label="This occurrence" description="Changes only this occurrence. Repeat stays read-only family context." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); }} />
+    <Sheet title="Edit repeating reminder" visible={scope && !!item?.segmentId} returnFocusRef={scopeTrigger} returnFocusWhen={() => focused} onClose={() => setScope(false)}>
+      <Copy heading>{item?.title}</Copy>
+      {item && <Copy muted>{item.mode === 'None' ? 'Scheduled for · ' + (item.allDay ? formatDate(item.eventStartMs, item.zoneId) + ' · All day' : formatTime(item.eventStartMs, item.zoneId)) : 'Original ' + modeLabel(item.mode).toLowerCase() + ' · ' + formatTime(item.alarmAtMs, item.zoneId)}</Copy>}
+      <SettingRow label="This occurrence" description="Changes only this reminder. The repeat schedule stays unchanged." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); }} />
       <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
       {item?.segmentId && series.data && series.data.state !== 'Archived' && <>
-        <SettingRow label="This and following" description={'Starts from the original Event ' + formatTime(item.eventStartMs, item.zoneId) + '. Earlier unfinished and postponed occurrences remain separate.'} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, following: item.nominalSlot!, ...routeParams, originReminderId: id } }); }} />
-        <SettingRow label="Entire series" description="Opens the current series. Earlier unfinished and postponed occurrences remain retained." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, ...routeParams, originReminderId: id } }); }} />
+        <SettingRow label="This and following" description="Starts with this occurrence. Earlier unfinished and postponed reminders stay unchanged." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, following: item.nominalSlot!, ...routeParams, originReminderId: id } }); }} />
+        <SettingRow label="Entire series" description="Changes the repeating schedule. Earlier unfinished and postponed reminders stay unchanged." onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, ...routeParams, originReminderId: id } }); }} />
       </>}
       {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Use Repeat details to review the current reminder.</Copy>}
     </Sheet>
     <Sheet title="Postpone alert" visible={postpone} onClose={closePostpone} footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
-      {sheetFeedback && <ActionFeedback {...sheetFeedback} />}
-      {uncertain && <ActionFeedback message="Change not confirmed. Retry the same change before leaving." tone="warning" />}
+      {sheetFeedback && !uncertain && <ActionFeedback {...sheetFeedback} />}
+      {uncertain && <ActionFeedback message={recovery.message} tone="warning" />}
       {postponeResult ? <><Button label="Return to reminder" onPress={closePostpone} />
-        <Button label="Review alert permissions" variant="secondary" onPress={() => { closePostpone(); router.push({ pathname: '/settings', params: { ...routeParams, originReminderId: id } }); }} /></> :
-        <Button label={command.isPending ? 'Postponing…' : uncertain ? 'Retry change' : 'Postpone alert'} busy={command.isPending}
+        <Button label="Review alert permissions" variant="secondary" onPress={() => { closePostpone(); router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } }); }} /></> :
+        <Button label={command.isPending ? 'Postponing…' : uncertain ? recovery.retry : 'Postpone alert'} busy={command.isPending}
           disabled={command.isPending || (!uncertain && (!adjust || target <= now))} onPress={() => void (uncertain ? runPending() : delivery('Postpone', target))} />}
     </View></BottomActionBar>}>
-      <Copy heading>{item?.title}</Copy><Copy muted size={14}>Changes the next alert only. Event and due time stay unchanged.</Copy>
+      <Copy heading>{item?.title}</Copy><Copy muted size={14}>Postpones this alert only.</Copy>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{[15, 30, 60].map((minutes) => <View key={minutes} style={{ flexGrow: 1, flexBasis: 88 }}>
-        <Choice label={minutes === 60 ? '1 hour' : minutes + ' min'} selected={selection === String(minutes)} disabled={frozenPostpone}
+        <Choice label={minutes === 60 ? 'In 1 hour' : 'In ' + minutes + ' minutes'} selected={selection === String(minutes)} disabled={frozenPostpone}
           onPress={() => { setTarget(Date.now() + minutes * 60_000); setSelection(String(minutes)); setSheetFeedback(null); }} /></View>)}</View>
       {[settings.data?.tomorrowMorning ?? 600, settings.data?.tomorrowAfternoon ?? 840, settings.data?.tomorrowEvening ?? 1020].map((minutes, index) => {
-        const date = new Date(); date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
-        return <Choice key={index} label={'Tomorrow ' + ['morning', 'afternoon', 'evening'][index] + ' · ' + shortTime(date.getTime())} selected={selection === 'tomorrow-' + index} disabled={frozenPostpone} onPress={() => { tomorrow(minutes); setSelection('tomorrow-' + index); }} />;
+        return <Choice key={index} label={'Tomorrow, ' + clockPreferenceLabel(minutes)} selected={selection === 'tomorrow-' + index} disabled={frozenPostpone} onPress={() => { tomorrow(minutes); setSelection('tomorrow-' + index); }} />;
       })}
-      <DateField label={selection === 'custom' ? 'Custom date and time · selected' : 'Custom date and time'} value={target} disabled={frozenPostpone} onChange={(value) => { setTarget(value); setSelection('custom'); setSheetFeedback(null); }} />
-      <Copy>Next alert {formatTime(target)}</Copy><ZoneSummary zoneId={deviceZone()} atMs={target} /><Copy muted size={typography.supporting}>When and due time stay unchanged. This replaces Snooze.</Copy>
+      <DateField label={selection === 'custom' ? 'Choose date & time · selected' : 'Choose date & time'} value={target} disabled={frozenPostpone} onChange={(value) => { setTarget(value); setSelection('custom'); setSheetFeedback(null); }} />
+      <Copy>Next alert {formatTime(target)}</Copy><ZoneSummary zoneId={deviceZone()} atMs={target} />
       {!postponeResult && !uncertain && target <= now && <Status label="Choose a future time." tone="danger" />}
       {!postponeResult && !uncertain && !adjust && item && <Status label="This reminder has no eligible alert to postpone." tone="warning" />}
     </Sheet>

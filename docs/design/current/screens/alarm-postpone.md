@@ -1,5 +1,9 @@
 # Native alarm and Postpone visual specification
 
+The [10 October UX refinement](../ux-refinement.md) updates app-owned Postpone
+shortcuts to Tomorrow plus actual clock time, one scope sentence and exact target
+preview. Native alarm layout/actions and eligibility remain unchanged.
+
 The [9 October alert experience instruction](../alert-experience.md) supersedes
 Stop labels, group actions and overdue semantics here. Approved scene/reference
 identities remain unchanged; legacy Stop is command/history compatibility only.

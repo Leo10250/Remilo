@@ -1,5 +1,7 @@
 export type SoundPreviewSnapshot = { requestId: string; sound: 'remilo' | 'system'; state: 'Starting' | 'Playing' | 'Ended' | 'Interrupted' | 'Failed'; actualSound?: 'remilo' | 'system'; reason?: string };
-export type RemiloAlarmModuleEvents = { onChange: (params: Record<string, never>) => void; onSoundPreviewState: (snapshot: SoundPreviewSnapshot) => void };
+export type TimeDisplayPreferences = { uses24HourClock: boolean; localeTag: string };
+export type RemiloAlarmModuleEvents = { onChange: (params: Record<string, never>) => void; onSoundPreviewState: (snapshot: SoundPreviewSnapshot) => void;
+  onTimeDisplayPreferencesChanged: (preferences: TimeDisplayPreferences) => void };
 export type ListRecord = { id: string; name: string; revision: number; overdueCount: number };
 export type SessionActionMember = { occurrenceId: string; expectedGeneration: number };
 export type SessionActions = { sessionId: string; members: SessionActionMember[]; snoozeMinutes: number };

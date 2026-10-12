@@ -38,7 +38,7 @@ role values and artwork, not which role an otherwise identical icon receives.
 | Element | Required role and reason |
 |---|---|
 | Ordinary information/form icons: When, Date, Time, Due, Repeat, Alarm mode, Alert time, List, Notes and schedule disclosure; their chevrons | Neutral `onSurfaceVariant`. Being tappable or depicting an alarm does not make a row selected, urgent or a primary action. Optional icon-tile surfaces use one neutral container role. |
-| Back, More and ordinary toolbar glyphs | Canonical `headerInk` directly on atmospheric art, with transparent control backgrounds and a shared fading scrim; `onSurface` on the opaque constrained-height fallback. Night details and Night edit use the same mapping. |
+| Back, More and ordinary browsing-toolbar glyphs | Stable `onSurface` throughout expanded/covered browsing, protected by the canvas-colored surface blend; compact editing/fallback also uses `onSurface`. The 11 October header correction supersedes scenic `headerInk` for browsing without altering native alarms. |
 | Main field values and titles | `onSurface`; supporting labels, descriptions and ordinary timing summaries use `onSurfaceVariant`. Do not make every label blue in Night. |
 | Filled Done/Save | Atmosphere `primary` with its paired `onPrimary`. Same component geometry in Light/Dark. |
 | Filled Delete permanently | Semantic `error` with paired `onError` for label/icon, including a contrasting pressed state. Keep the error fill visible in every atmosphere. |
@@ -73,10 +73,13 @@ reading surfaces, clear alert/delivery hierarchy and persistent actions. Use one
 component definition rather than theme-specific copies of its structure.
 
 The owner's 9 October actual-render correction rejects opaque header title/button
-boxes. Use transparent controls/text over the scene, protected by the canonical
-fading scrim through the measured label/control region. Its 54% plateau and ink
-pair guarantee normal text 4.5:1 over the RGB extremes; actual image/UI framing
-still requires review. Drop decoration before compromising large text or controls.
+boxes. The [11 October browsing-header correction](header-scroll-research.md)
+keeps controls transparent and foreground stable, with a 66% canvas-colored
+protective surface that becomes opaque during the last 64 dp of cover travel.
+Protect measured title/action/subtitle bounds before the 40 dp feather. Validate
+4.5:1 normal-text contrast throughout all eight pairs and the actual image/UI
+framing. Drop decoration before compromising large text or controls. Retained
+54% scene-specific scrim tokens do not govern this browsing transition.
 Use a 52 × 32 dp switch track with a 24 dp selected thumb and an accessible whole
 row target. Independent cards use 12 dp separation and neutral icon containers;
 root selection uses a glyph capsule and selected label, as in R3/R7/R8.

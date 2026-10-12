@@ -1,5 +1,12 @@
 # Reminder details and editor
 
+The [10 October UX refinement](../ux-refinement.md) supersedes earlier hierarchy,
+preview, all-day transitions and keyboard handoff below. Details leads with alert
+time; Event appears for Calendar publication context, with other event ranges in
+Schedule details; Due remains conditional. The editor has one main Date/Time
+control above alert type and collapsed optional Calendar event details, plus
+schedule-only preview; its ephemeral timed snapshot preserves All day round trips.
+
 The [alert experience correction](../alert-experience.md) supersedes action/timing
 and selector treatment in the retained reference annotations below. Original alert
 determines Alarm/Notification overdue; No alert uses When/end of its all-day date.
@@ -265,3 +272,13 @@ Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary button
 - **Intentional:** Editable Schedule options uses a gear; read-only Schedule details uses circled information. This difference communicates different destinations.
 
 Implementation checks: Verify shared 16 dp gutters/corners, 56 dp primary buttons, >=48 dp other targets, 16 sp values/14 sp support, actual contrast and TalkBack. Raster sizing is approximate, not measured component evidence. Keep opaque raised reading surfaces; raster glow/shading is not a new translucency or Liquid Glass requirement. Keep one Save footer above the actual IME, outside the form scroll; reserve its measured height and apply keyboard/navigation/safe-area insets once. Focus lower Notes and validation fields, grow text, move/select the caret, and change keyboard height without covering the insertion point, helper or error. Verify first-tap guarded Save, draft/composition preservation, 200% text, emoji panels and Android Back; the static raster does not demonstrate these behaviors.
+
+## Approved follow-up feedback and requirement cue
+
+Title has a persistent quiet Required cue and one spoken required label; blank
+Save remains disabled. Definitive create/edit results show one current-screen
+confirmation, with Scheduled confirmed targets distinct from Applied and saved
+Blocked/Pending. Relevant fresh access blockers route directly to alarm-check;
+other problems review the reminder/schedule. Unknown replies remain in place with
+one action-specific recovery, keeping the captured command/UUID unchanged.
+Recurring edit scope identifies authored timing and retains native nominal slots.

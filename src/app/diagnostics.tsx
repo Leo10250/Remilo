@@ -1,9 +1,10 @@
+import { useTimeFormatting } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Share } from 'react-native';
 import { retainedOriginParams, type OriginParams } from '../domain/navigation';
-import { ActionFeedback, Button, Copy, Group, IconButton, Page, QueryState, SettingRow, shortDateTime } from '../ui/components';
+import { ActionFeedback, Button, Copy, Group, IconButton, Page, QueryState, SettingRow } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { usePageHandoff } from '../ui/handoff';
 
@@ -14,6 +15,7 @@ const stateNames: Record<string, string> = {
 };
 type Feedback = { message: string; tone: 'success' | 'danger' | 'muted' };
 export default function Diagnostics() {
+  const { shortDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams>();
   const report = useQuery({ queryKey: ['diagnostics'], queryFn: () => engine().getDiagnostics(), enabled: nativeAvailable });
   const [sharing, setSharing] = useState(false), [shareFeedback, setShareFeedback] = useState<Feedback>(), [refreshFeedback, setRefreshFeedback] = useState<Feedback>();

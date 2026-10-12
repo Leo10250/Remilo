@@ -29,6 +29,14 @@ captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
 portable backup format 4.
 
+Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
+and retain the captured IANA zone. The HTTPS adapter reencodes older captured
+minute-only strings without rewriting durable jobs, content, destination or
+identity. Same-operation recovery still reads the original event ID first.
+HTTP 400 has a distinct non-private rejection code; response bodies and tokens
+remain excluded from JS, storage and logs. No schema, alarm or backup change is
+introduced by this encoding repair.
+
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
 No Prebuild after bootstrap, no OTA, no iOS until the last optional phase.
@@ -38,6 +46,13 @@ application-context lifetime and serialized executor; committed operations remai
 recoverable independently of their bridge promise. Receivers/services never load JS.
 
 ## ADR 002: Storage protection and authority
+
+UX-25 adds a read-only device presentation method/event (`uses24HourClock`,
+`localeTag`). UI-owned Android clock/locale observers and foreground refresh feed
+one explicit frontend formatting context; native alarm rendering reads the same
+preference. There is no stored data, command or scheduler dependency. Reading
+non-private device preferences before unlock is permitted; observer teardown
+never cancels a captured engine operation.
 
 Credential-protected Room owns content, event/due timing, completion and history.
 Device-protected Room owns current operational eligibility, targets, generations,
@@ -450,10 +465,26 @@ their behavior. Capabilities exposes activeSessionActions; occurrences expose
 overdueAtMs/quickSnoozeMinutes, all read-only native projections.
 
 Shared browsing chrome has one native Animated scroll value. Stable expanded hero
-composition stays fixed while the opaque reading plane translates over decoration;
-React updates only at the collapsed toolbar boundary. A nominal 200 dp opening
+composition stays fixed while the opaque reading plane translates over decoration.
+The 11 October header correction also drives a static canvas gradient's opacity
+from the same value using native smoothstep arithmetic, with stable onSurface
+foreground and no threshold/per-scroll React appearance updates. The last 64 dp
+blends a 66% scrim to opaque; measured control/subtitle bounds precede a 40 dp
+feather. Expo SDK 57 LinearGradient supplies the native/Web view. A nominal 200 dp opening
 contains a measured 56 dp toolbar. Editing/utilities, usable height below 480 dp or
 font scale at least 1.6 use compact chrome. Saved content offset initializes both
-scroll and collapse positions. Safe-area/IME/footer geometry retains one owner.
+scroll, cover and surface opacity. Reduced motion preserves this direct relationship.
+Safe-area/IME/footer geometry retains one owner.
 Native alarms retain dedicated layout and captured session appearance; supported
 notification accents and non-private loading extras use that same pair.
+
+The 10 October UX refinement adds frontend-only applied/draft filter state,
+date-section card context, semantic timing formatting, owned input refs and an
+ephemeral timed editor snapshot (civil clock, elapsed duration, linked offsets).
+The snapshot is never serialized into commands/backups/storage; transitions use
+the existing native civil converter and serialized timing-update guard. Preview
+identity excludes Title/Notes and uses a non-private placeholder. The compact
+alarm-check page owns captured Test recovery; lifetime preference ownership stays
+in the existing singleton. UTC carrier dates adapt minutes-of-day picker values
+without converting a shortcut into a dated alarm. No engine/bridge/database/
+backup version, eligibility or overdue authority changes in this refinement.

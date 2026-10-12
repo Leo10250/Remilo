@@ -1,5 +1,9 @@
 # Data/Help: Export, Restore and Diagnostics
 
+The [10 October UX refinement](../ux-refinement.md) condenses backup introductions
+and moves inclusion/exclusion details into disclosures. Whole-backup Restore,
+identity conflict choices, frozen retries and consequential recovery rules remain.
+
 Revision 2 · 8 October 2026 · **Design direction and fourteen current UI templates approved under A35, with documented implementation corrections.**
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).

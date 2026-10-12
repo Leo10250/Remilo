@@ -1,11 +1,13 @@
+import { RootNotice, CommandRecovery, useCapturedCommand, useDestinationNavigation } from '../../ui/navigation';
+import { useTimeFormatting } from '../../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { eventRange, modeLabel } from '../../domain/presentation';
+import { modeLabel } from '../../domain/presentation';
 import { creationOrigin, familyBackRoute, familyOriginParams, type OriginParams } from '../../domain/navigation';
-import { ActionFeedback, AtmosphericHeader, Button, Copy, Disclosure, Group, Page, QueryState, SettingRow, shortDateTime, Status } from '../../ui/components';
+import { ActionFeedback, AtmosphericHeader, Button, Copy, Disclosure, Group, Page, QueryState, SettingRow, Status } from '../../ui/components';
 import { engine, nativeAvailable } from '../../ui/native';
-import { CommandRecovery, useCapturedCommand, useDestinationNavigation } from '../../ui/navigation';
+
 import { repeatLabel } from '../../ui/recurrence';
 import { ReminderRow } from '../../ui/reminder-row';
 import { typography } from '../../ui/tokens';
@@ -13,6 +15,7 @@ import { ZoneSummary } from '../../ui/schedule';
 import { deviceZone } from '../../domain/time';
 
 export default function SeriesDetails() {
+  const { eventRange, shortDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; seriesId?: string }>();
   const { id, seriesId: requestedFamily } = params, origin = creationOrigin(params);
   const query = useQuery({ queryKey: ['series', id], queryFn: () => engine().getSeries(id), enabled: nativeAvailable });
@@ -35,7 +38,7 @@ export default function SeriesDetails() {
       expectedRevision: series.revision, operationId: engine().createOperationId() }, success: state === 'Paused' ? 'Repeat resumed.' : 'Repeat paused.' });
   };
   return <Page title="Repeat details" onBack={back} scrollKey={'family:' + (seriesId ?? id)} scrollReady={!query.isLoading && !families.isLoading}
-    header={<AtmosphericHeader title="Repeat details" onBack={back} />} footer={<CommandRecovery action={action} />}>
+    header={<AtmosphericHeader title="Repeat details" onBack={back} />} footer={<><RootNotice disabled={action.guarded} /><CommandRecovery action={action} /></>}>
     <QueryState loading={!series && (query.isLoading || families.isLoading)} error={!series ? query.error ?? families.error : undefined}
       empty={!series} emptyMessage={!nativeAvailable ? 'Use the Android app to manage repeats.' : 'This repeat is no longer available.'}
       onRetry={() => { void query.refetch(); void families.refetch(); }} />
@@ -43,7 +46,7 @@ export default function SeriesDetails() {
       <Copy heading size={typography.title}>{series.template.title}</Copy>
       <Status label={state === 'Ended' ? 'Repeat has ended' : state ?? 'Active'} tone={state === 'Active' ? 'success' : 'muted'} />
       <Copy muted size={typography.supporting}>{repeatLabel(series.rule)}</Copy>
-      {state !== 'Active' && <Copy muted size={typography.supporting}>{state === 'Paused' ? 'Ordinary repeat alerts are paused.' : 'There are no ordinary future occurrences.'} Individually changed occurrences can still have their own alerts.</Copy>}
+      {state !== 'Active' && <Copy muted size={typography.supporting}>{state === 'Paused' ? 'Repeat alerts are paused.' : 'No new dates remain.'} Alerts changed for individual dates may still ring.</Copy>}
       <QueryState loading={families.isLoading} error={families.error} onRetry={() => void families.refetch()} />
       <Group title="Schedule">
         <SettingRow icon="event" label="Event" description={eventRange(series.template)} />
@@ -68,8 +71,8 @@ export default function SeriesDetails() {
           {(slot.zoneId ?? series.rule.zoneId) && (slot.zoneId ?? series.rule.zoneId) !== deviceZone() && <ZoneSummary zoneId={(slot.zoneId ?? series.rule.zoneId)!} atMs={slot.eventStartMs} />}
         </SettingRow>;
       })}
-        {!upcoming.length && !families.isLoading && !families.error && <SettingRow label="No ordinary future dates" />}</Group>
-      {!!upcoming.length && upcoming.length < 3 && <Copy muted size={14}>Fewer than three ordinary dates remain.</Copy>}
+        {!upcoming.length && !families.isLoading && !families.error && <SettingRow label="No new dates remain" />}</Group>
+      {!!upcoming.length && upcoming.length < 3 && <Copy muted size={14}>Fewer than three dates remain.</Copy>}
       <Disclosure title="Unfinished occurrences" initial>
         <QueryState loading={occurrences.isLoading} error={occurrences.error} empty={!items.length}
           emptyMessage="No unfinished occurrences." onRetry={() => void occurrences.refetch()} />
