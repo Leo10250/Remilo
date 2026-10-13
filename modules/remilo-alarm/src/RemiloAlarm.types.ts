@@ -16,12 +16,13 @@ export type ReminderDraft = {
   allDay?: boolean; zoneId?: string; dueLinked?: boolean; alarmLinked?: boolean;
   sound?: 'remilo' | 'system'; vibration?: boolean;
 };
-export type HistoryEntry = { kind: string; atMs: number; targetMs: number | null };
+export type HistoryEntry = { kind: string; atMs: number; targetMs: number | null; groups?: string[] };
 export type ResolvedReminderDraft = Omit<Required<ReminderDraft>, 'listId'> & Pick<ReminderDraft, 'listId'>;
 export type Occurrence = ResolvedReminderDraft & {
   id: string; completed: boolean; deleted: boolean; revision: number; nextAlertMs: number | null;
   generation: number; deliveryState: string; overdue: boolean; history?: HistoryEntry[];
   segmentId: string | null; nominalSlot: string | null; exception: boolean; skipped: boolean;
+  seriesId?: string | null;
   seriesState: string | null; repeatSummary: string | null; agendaGroup: string;
   repeatRule?: RecurrenceDraft | null;
   alertAdjustment?: 'Snoozed' | 'Postponed' | null;
@@ -94,23 +95,35 @@ export type ImportPreview = { count: number; items: { id: string; title: string;
 export type CalendarConnection = { revision: number; connected: boolean; available: boolean; email: string; calendarId: string; calendarName: string; message: string };
 export type OwnedCalendar = { id: string; name: string; zoneId: string };
 export type CalendarPage = { items: OwnedCalendar[]; nextCursor: string | null; connectionRevision: number };
-export type CalendarPublicationPreview = { occurrenceId: string; reminderRevision: number; connectionRevision: number; fingerprint: string;
+export type CalendarPublicationPreview = { occurrenceId: string; reminderRevision: number; connectionRevision: number; fingerprint: string; recurrence?: string[];
   title: string; notes: string; eventStartMs: number; eventEndMs: number; allDay: boolean; zoneId: string; pinsZone: boolean; email: string; calendarName: string };
 export type CalendarPublication = { operationId: string; occurrenceId: string; calendarName: string; email: string;
   state: 'Waiting' | 'Publishing' | 'Unconfirmed' | 'NeedsAccess' | 'Failed' | 'Conflict' | 'Cancelled' | 'Published';
   message: string; htmlLink: string; publishedAtMs: number | null; differs: boolean; readOnly: boolean };
-export type CalendarFields = { title: string; notes: string; schedule: { eventStartMs: number; eventEndMs: number; allDay: boolean; zoneId: string } };
+export type CalendarFields = { title: string; notes: string; schedule: { eventStartMs: number; eventEndMs: number; allDay: boolean; zoneId: string; recurrence?: string[]; exceptions?: { nominalSlot: string; fields: CalendarFields }[]; segments?: CalendarFields[] } };
 export type CalendarSelections = Record<'title' | 'notes' | 'schedule', 'remilo' | 'google' | null>;
-export type CalendarImportChoices = { mode?: 'Alarm' | 'Notification' | 'None'; title?: string; alarmAtMs?: number; listId?: string | null; disableReminders?: boolean };
+export type CalendarImportChoices = { mode?: 'Alarm' | 'Notification' | 'None'; title?: string; alarmAtMs?: number; listId?: string | null; disableReminders?: boolean; automaticSync?: boolean };
 export type CalendarEventRef = { calendarId: string; eventId: string };
 export type CalendarEventQuery = { calendarId: string; from: string; until: string; cursor: string | null };
 export type CalendarEventPage = { items: { eventId: string; title: string; fields: CalendarFields | null; unsupportedReason: string | null; occurrenceId: string | null; erased: boolean }[]; nextCursor: string | null; connectionRevision: number; calendarName: string };
 export type CalendarLinkPreview = { previewId: string; occurrenceId: string; calendarName: string; email: string; remote: CalendarFields; local: CalendarFields | null;
-  baseline: CalendarFields | null; selections: CalendarSelections | null; choices: CalendarImportChoices & { dueAtMs: number; alarmAtMs: number }; googleReminders: boolean; checkedAtMs: number; nextAlertMs: number | null;
+  baseline: Partial<CalendarFields> | null; selections: CalendarSelections | null; choices: CalendarImportChoices & { dueAtMs: number; alarmAtMs: number }; googleReminders: boolean; checkedAtMs: number; nextAlertMs: number | null;
+  recurrence?: RecurrenceDraft | null; upcoming?: { eventStartMs: number; alarmAtMs: number }[] | null;
   timings: Record<'remilo' | 'google', { mode: string; dueAtMs: number; alarmAtMs: number }> | null };
-export type CalendarLink = { occurrenceId: string; revision: number; calendarName: string; state: string; checkedAtMs: number | null; message: string; htmlLink: string; readOnly: boolean; differs: boolean; source?: CalendarEventRef | null;
+export type CalendarLink = { occurrenceId: string; revision: number; calendarName: string; state: string; checkedAtMs: number | null; message: string; htmlLink: string; readOnly: boolean; differs: boolean; source?: CalendarEventRef | null; seriesId?: string | null;
   accountEmail: string; availability: 'Unknown' | 'Available' | 'Deleted' | 'Unavailable' | 'Unsupported'; availabilityReason: string;
-  observedAtMs: number | null; lastCheckAttemptAtMs: number | null; lastCheckErrorCode: string; remoteDiffers: boolean | null; requiresReview: boolean };
+  observedAtMs: number | null; lastCheckAttemptAtMs: number | null; lastCheckErrorCode: string; remoteDiffers: boolean | null; requiresReview: boolean;
+  cancelledInstances?: { segmentId: string; nominalSlot: string }[]; syncMode?: CalendarSyncMode; syncStatus?: CalendarSyncStatus; activationRevision?: number; baselineVersion?: number; authoredAtMs?: number | null;
+  successfulAtMs?: number | null; attemptedAtMs?: number | null; googleUpdated?: string; pauseReason?: CalendarPauseReason };
+export type CalendarSyncMode = 'Manual' | 'Pending' | 'Automatic';
+export type CalendarSyncStatus = 'Confirmed' | 'UpdatePending' | 'Review' | 'Paused' | 'Unconfirmed' | 'Deferred';
+export type CalendarPauseReason = '' | 'Ringing' | 'ChangesNeedReview' | 'UnconfirmedWrite' | 'ElapsedAlert' | 'AccessRequired' | 'AccountChanged' | 'NotOwner' | 'RemoteDeleted' | 'RemoteUnavailable' | 'Unsupported' | 'LocalTerminal' | 'LocalRemoved' | 'Unlinked' | 'StaleAuthorization' | 'InvalidTiming' | 'ContentRequired' | 'ReviewRequired';
+export type CalendarSyncSummary = { connected: boolean; automaticCount: number; pendingCount: number; reviewCount: number; notifications: { enabled: boolean; revision: number }; lastRun?: CalendarRunSummary & { atMs: number } | null };
+export type CalendarReviewIssue = { occurrenceId: string; seriesId: string | null; title: string; reason: CalendarPauseReason; discoveredAtMs: number; affectedScopes?: string[] };
+export type CalendarReviewPage = { items: CalendarReviewIssue[]; count: number; nextCursor: string | null };
+export type CalendarActivationPreview = CalendarLinkPreview & { automaticSync: boolean; activation: boolean; equal: boolean; transfers: { inbound: string[]; outbound: string[] } };
+export type CalendarActivationReview = { items: { occurrenceId: string; title?: string | null; calendarName?: string | null; email?: string | null; preview: CalendarActivationPreview | null; excludedReason: string | null }[] };
+export type CalendarRunSummary = { pages: number; attempted: number; confirmed: number; continuation: boolean };
 export type CalendarLinkedOperation = { operationId: string; occurrenceId: string; kind: string; calendarName: string; title?: string;
   state: 'Waiting' | 'Sending' | 'Unconfirmed' | 'NeedsAccess' | 'Blocked' | 'Conflict' | 'Failed' | 'Cancelled' | 'Confirmed';
   recoveryMode: 'Retry' | 'ConfirmOutcome' | 'ReviewAgain' | 'None';
@@ -121,7 +134,9 @@ export type CalendarCommand = { kind: 'PublishOneOff'; operationId: string; occu
   { kind: 'SelectCalendar'; operationId: string; calendarId: string; expectedConnectionRevision: number } |
   { kind: 'DisconnectCalendar'; operationId: string; expectedConnectionRevision: number } |
   { kind: 'RetryPublication'; operationId: string } |
-  { kind: 'ImportCalendarEvent' | 'EnableCalendarLink' | 'ApplyCalendarResolution'; operationId: string; previewId: string; selections?: CalendarSelections } |
+  { kind: 'ImportCalendarEvent' | 'EnableCalendarLink' | 'ApplyCalendarResolution' | 'EnableAutomaticCalendarSync'; operationId: string; previewId: string; selections?: CalendarSelections; automaticSync?: boolean } |
+  { kind: 'ActivateCalendarLinks'; operationId: string; previewIds: string[] } |
+  { kind: 'SetCalendarReviewNotifications'; operationId: string; expectedRevision: number; enabled: boolean } |
   { kind: 'ImportCalendarEvents'; operationId: string; items: { previewId: string; choices: CalendarImportChoices }[] } |
   { kind: 'UnlinkCalendar'; operationId: string; occurrenceId: string; expectedLinkRevision: number } |
   { kind: 'RetryCalendarOperation'; operationId: string };

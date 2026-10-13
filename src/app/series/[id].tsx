@@ -20,10 +20,14 @@ export default function SeriesDetails() {
   const { id, seriesId: requestedFamily } = params, origin = creationOrigin(params);
   const query = useQuery({ queryKey: ['series', id], queryFn: () => engine().getSeries(id), enabled: nativeAvailable });
   const families = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable });
+  const links = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(), enabled: nativeAvailable });
+  const publications = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
   const familyId = requestedFamily ?? query.data?.seriesId;
   const family = families.data?.find((item) => item.seriesId === familyId || item.current.id === id);
   const series = family?.current ?? query.data;
   const seriesId = family?.seriesId ?? series?.seriesId;
+  const calendarLink = links.data?.find(item => item.seriesId === seriesId || item.occurrenceId === seriesId);
+  const publication = publications.data?.find(item => item.occurrenceId === seriesId);
   const occurrences = useInfiniteQuery({ queryKey: ['series-occurrences', seriesId], enabled: nativeAvailable && !!seriesId,
     initialPageParam: null as string | null, queryFn: ({ pageParam }) => engine().queryReminders({ view: 'all', seriesId }, pageParam),
     getNextPageParam: (page) => page.nextCursor });
@@ -72,6 +76,8 @@ export default function SeriesDetails() {
         </SettingRow>;
       })}
         {!upcoming.length && !families.isLoading && !families.error && <SettingRow label="No new dates remain" />}</Group>
+      <Group><SettingRow icon="event" label="Google Calendar" description={calendarLink ? 'Manage this linked repeating event' : publication ? 'Published once' : 'Publish or link this repeating event'} disabled={action.guarded}
+        onPress={() => router.push({ pathname: calendarLink || publication ? '/calendar-manage' : '/calendar-publish', params: { id: calendarLink?.occurrenceId ?? seriesId ?? series.id, ...familyOriginParams(params, seriesId ?? series.seriesId, series.id) } })} /></Group>
       {!!upcoming.length && upcoming.length < 3 && <Copy muted size={14}>Fewer than three dates remain.</Copy>}
       <Disclosure title="Unfinished occurrences" initial>
         <QueryState loading={occurrences.isLoading} error={occurrences.error} empty={!items.length}

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { View } from 'react-native';
 import type { CalendarLink, CalendarLinkedOperation, CalendarPublication, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import type { OriginParams } from '../domain/navigation';
-import { calendarCancellation, calendarSummary } from '../domain/calendar-presentation';
+import { calendarCancellation, calendarReviewReason, calendarRowNotice, calendarSummary } from '../domain/calendar-presentation';
 import { engine, nativeAvailable } from './native';
 import { Button, ConnectedGroup, Copy, SettingRow } from './components';
 import { useTimeFormatting } from './time-display';
@@ -18,18 +18,20 @@ export function CalendarSummaryRow({ id, link, publication, jobs, origin, disabl
   if (!link && !publication && !jobs.length) return null;
   const summary = calendarSummary(link, publication, jobs);
   return <ConnectedGroup><SettingRow icon="event" label="Google Calendar" disabled={disabled}
-    description={summary === 'Linked' && link?.observedAtMs != null ? 'Linked · Last checked ' + scheduleDateTime(link.observedAtMs) : summary}
-    onPress={() => router.push({ pathname: '/calendar-manage', params: { id, ...origin, originReminderId: id } } as Href)} /></ConnectedGroup>;
+    description={summary + (link?.successfulAtMs != null ? ' · Last successful sync ' + scheduleDateTime(link.successfulAtMs) : '')}
+    onPress={() => router.push({ pathname: '/calendar-manage', params: { id: link?.occurrenceId ?? id, ...origin, originReminderId: id } } as Href)} /></ConnectedGroup>;
 }
 export function CalendarExceptionNotice({ item, link, jobs, onTrash, onManage, disabled }: { item: Occurrence; link?: CalendarLink; jobs: CalendarLinkedOperation[]; onTrash: () => void; onManage: () => void; disabled: boolean }) {
   const { detailSchedulePresentation } = useTimeFormatting();
   const cancellation = calendarCancellation(item, link);
   const partial = !item.completed && !item.deleted && !item.skipped && jobs.some(job => job.localApplied && job.state === 'Unconfirmed');
-  if (!cancellation && !partial) return null;
+  const review = !item.completed && !item.deleted && !item.skipped && ['Review', 'Paused', 'Unconfirmed'].includes(link?.syncStatus ?? '');
+  if (!cancellation && !partial && !review) return null;
   const time = detailSchedulePresentation(item);
-  return <ConnectedGroup><View key="notice" style={{ padding: 16, gap: 12 }}><Copy heading>{cancellation?.detail || 'Reminder saved. Google update not confirmed.'}</Copy>
-    {cancellation && item.mode !== 'None' && <Copy muted>{item.deliveryState === 'Alerting' ? 'Alarm ringing' : time.label + ': ' + time.value + (time.supporting ? ' · ' + time.supporting : '')}</Copy>}
+  return <ConnectedGroup><View key="notice" style={{ padding: 16, gap: 12 }}><Copy heading>{cancellation?.detail || calendarRowNotice(link) || 'Reminder saved. Google update not confirmed.'}</Copy>
+    {review && <Copy muted>{calendarReviewReason(link?.pauseReason)}</Copy>}
+    {item.mode !== 'None' && <Copy muted>{item.deliveryState === 'Alerting' ? 'Alarm ringing' : time.label + ': ' + time.value + (time.supporting ? ' · ' + time.supporting : '')}</Copy>}
     {cancellation && <Button label="Move reminder to Trash" icon="delete" variant="secondary" disabled={disabled} onPress={onTrash} />}
-    <Button label="Calendar details" variant="secondary" disabled={disabled} onPress={onManage} />
+    <Button label={review ? 'Review Calendar changes' : 'Calendar details'} variant={review ? 'primary' : 'secondary'} disabled={disabled} onPress={onManage} />
   </View></ConnectedGroup>;
 }

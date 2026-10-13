@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import type { CalendarCommand, OwnedCalendar } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { calendarError } from '../domain/calendar';
-import { ActionFeedback, Button, ConnectedGroup, Copy, Page, QueryState, SettingRow, Sheet } from '../ui/components';
+import { ActionFeedback, Button, ConnectedGroup, Copy, Page, QueryState, SettingRow, Sheet, Toggle } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
@@ -19,6 +19,7 @@ export default function CalendarSettings() {
   const connection = useQuery({ queryKey: ['calendar', 'connection'], queryFn: () => engine().getCalendarConnection(), enabled: nativeAvailable });
   const jobs = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
   const linkedJobs = useQuery({ queryKey: ['calendar', 'operations'], queryFn: () => engine().getCalendarOperations(), enabled: nativeAvailable });
+  const sync = useQuery({ queryKey: ['calendar', 'sync-summary'], queryFn: () => engine().getCalendarSyncSummary(), enabled: nativeAvailable });
   const [selecting, setSelecting] = useState(false), [busy, setBusy] = useState(false), [feedback, setFeedback] = useState('');
   const [rows, setRows] = useState<OwnedCalendar[]>([]), [cursor, setCursor] = useState<string | null>(null), [listLoaded, setListLoaded] = useState(false);
   const selection = useRef<CalendarCommand | null>(null);
@@ -73,7 +74,16 @@ export default function CalendarSettings() {
   };
   return <Page title="Google Calendar" scrollKey="calendar-settings" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}>
     <QueryState loading={connection.isLoading && nativeAvailable} error={connection.error} empty={!nativeAvailable} emptyMessage="Use the Android app to connect Google Calendar." onRetry={() => void refresh()} />
-    <Copy muted>Optional publishing, individual imports and manually reviewed linked updates. Local reminders and alarms work without Google or network access.</Copy>
+    <Copy muted>Optional publishing and deliberately linked automatic updates. Local reminders and alarms work without Google or network access.</Copy>
+    <ConnectedGroup title="Linked updates">
+      <SettingRow key="activate" icon="event" label="Enable automatic sync for existing links" description="Review eligible reminders and their source calendars before confirming." disabled={busy || !connection.data?.connected}
+        onPress={() => router.push({ pathname: '/calendar-activate', params: routeParams } as Href)} />
+      <SettingRow key="review" icon="event" label="Calendar review" value={String(sync.data?.reviewCount ?? 0)} onPress={() => router.push({ pathname: '/calendar-reviews', params: routeParams } as Href)} />
+      {sync.data && <Toggle key="notifications" label="Calendar review notifications" value={sync.data.notifications.enabled} disabled={busy}
+        onChange={value => void run(async () => { await engine().applyCalendarCommand({ kind: 'SetCalendarReviewNotifications', operationId: engine().createOperationId(), expectedRevision: sync.data!.notifications.revision, enabled: value }); })} />}
+    </ConnectedGroup>
+    <Copy muted>Background sync requests an hourly opportunity while connected. Android may delay it. Review notifications are quiet and use existing notification permission.</Copy>
+    <Button label="Sync now" variant="secondary" disabled={busy || !connection.data?.connected} onPress={() => void run(async () => { await engine().syncCalendarNow(null); })} />
     <Button label="Import from Google Calendar" disabled={busy || selectionPending || !connection.data?.connected}
       onPress={() => router.push({ pathname: '/calendar-import', params: routeParams } as Href)} />
     {connection.data?.available === false && <ActionFeedback message="Google Play services is unavailable or needs updating. Google authorization cannot open on this device." tone="warning" />}
@@ -93,9 +103,9 @@ export default function CalendarSettings() {
     {busy && <ActionFeedback loading message="Checking Google Calendar…" />}
     {selectionPending && !busy && <Button label="Retry same calendar selection" variant="secondary" onPress={() => void retrySelection()} />}
     {jobs.error && <ActionFeedback message="Saved publication status could not be refreshed. Retry before starting another publication." tone="warning" />}
-    {jobs.data?.map((publication) => <CalendarPublicationStatus key={publication.operationId} publication={publication} routeParams={routeParams} />)}
+    {jobs.data?.filter(publication => publication.state !== 'Published' && publication.state !== 'Cancelled').map((publication) => <CalendarPublicationStatus key={publication.operationId} publication={publication} routeParams={routeParams} />)}
     {linkedJobs.error && <ActionFeedback message="Saved linked operation status could not be refreshed." tone="warning" />}
-    {linkedJobs.data?.map(operation => <CalendarOperationStatus key={operation.operationId} operation={operation} />)}
+    {linkedJobs.data?.filter(operation => ['Waiting', 'Sending', 'Unconfirmed', 'NeedsAccess', 'Blocked'].includes(operation.state)).map(operation => <CalendarOperationStatus key={operation.operationId} operation={operation} />)}
     <Sheet visible={selecting} title="Choose an owned calendar" onClose={() => { if (!busy && !selection.current) setSelecting(false); }}>
       <View style={{ gap: 12 }}>
         <Copy muted>Only calendars you own are available. Changing this default leaves previous publications in their original destination.</Copy>

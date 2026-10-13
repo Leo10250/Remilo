@@ -17,7 +17,7 @@ import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 
 export default function CalendarReview() {
-  const params = useLocalSearchParams<OriginParams & { id?: string; calendarId?: string; eventId?: string }>(), origin = retainedOriginParams(params);
+  const params = useLocalSearchParams<OriginParams & { id?: string; calendarId?: string; eventId?: string; automatic?: string }>(), origin = retainedOriginParams(params);
   const imported = !params.id, client = useQueryClient(), confirm = useAppearanceConfirmation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
   const [preview, setPreview] = useState<CalendarLinkPreview | null>(null), [choices, setChoices] = useState<CalendarImportChoices>({});
@@ -33,19 +33,22 @@ export default function CalendarReview() {
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().getLists(), enabled: nativeAvailable && imported });
   const link = links.data?.find(item => item.occurrenceId === params.id), job = operations.data?.find(item => item.operationId === operationId);
   const enable = !link || link.state === 'Detached';
+  const activating = params.automatic === 'true';
   useAppearanceHold(busy || uncertain);
   usePreventRemove(busy || uncertain, () => confirm('Calendar request not confirmed', 'Wait for this request or retry the same captured action before leaving.'));
   const load = useCallback(async () => {
     if (running.current || captured.current) return; running.current = true; setBusy(true); setError('');
     const ticket = ++readTicket.current;
     try {
-      const next = imported ? await engine().previewCalendarImport({ calendarId: params.calendarId!, eventId: params.eventId! }, choices) :
+      const activation = activating ? await engine().previewCalendarActivation([params.id!]) : null;
+      const next = activation ? activation.items[0]?.preview : imported ? await engine().previewCalendarImport({ calendarId: params.calendarId!, eventId: params.eventId! }, choices) :
         enable ? await engine().previewCalendarLink(params.id!) : await engine().previewCalendarUpdate(params.id!);
+      if (!next) throw new Error(activation?.items[0]?.excludedReason || 'This link needs a fresh individual review.');
       if (!live.current || ticket !== readTicket.current) return;
       setPreview(next); setSelections(next.selections || { title: null, notes: null, schedule: null }); setDirty(false);
     } catch (e) { if (live.current) setError(calendarError(e)); }
     finally { running.current = false; if (live.current) setBusy(false); }
-  }, [choices, imported, enable, params.calendarId, params.eventId, params.id]);
+  }, [choices, imported, enable, activating, params.calendarId, params.eventId, params.id]);
   const loadRef = useRef(load);
   useEffect(() => { loadRef.current = load; }, [load]);
   useEffect(() => {
@@ -58,8 +61,8 @@ export default function CalendarReview() {
   const apply = async () => {
     if (running.current || !preview) return;
     if (dirty && !captured.current) { await load(); return; }
-    captured.current ??= { kind: imported ? 'ImportCalendarEvent' : enable ? 'EnableCalendarLink' : 'ApplyCalendarResolution',
-      operationId: engine().createOperationId(), previewId: preview.previewId, ...(imported ? {} : { selections: { ...selections } }) };
+    captured.current ??= { kind: imported ? 'ImportCalendarEvent' : activating ? 'EnableAutomaticCalendarSync' : enable ? 'EnableCalendarLink' : 'ApplyCalendarResolution',
+      operationId: engine().createOperationId(), previewId: preview.previewId, automaticSync: choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating), ...(imported ? {} : { selections: { ...selections } }) };
     running.current = true; setBusy(true); setError('');
     try {
       const result = await engine().applyCalendarCommand(captured.current);
@@ -73,14 +76,19 @@ export default function CalendarReview() {
   const title = choices.title ?? preview?.choices.title ?? preview?.remote.title ?? '';
   const resolved = preview?.local ? resolvedCalendarFields(preview.local, preview.remote, selections) : null;
   const timing = selections.schedule ? preview?.timings?.[selections.schedule] : null;
-  const elapsedChange = !!timing && timing.mode !== 'None' && timing.alarmAtMs <= now && timing.alarmAtMs !== preview?.timings?.remilo.alarmAtMs;
-  const fieldText = (field: keyof CalendarFields, fields: CalendarFields) => field === 'schedule' ?
-    (fields.schedule.allDay ? formatDate(fields.schedule.eventStartMs, fields.schedule.zoneId) + ' · All day' :
-      scheduleDateTime(fields.schedule.eventStartMs, fields.schedule.zoneId) + ' – ' + scheduleDateTime(fields.schedule.eventEndMs, fields.schedule.zoneId)) + ' · ' + fields.schedule.zoneId :
-    fields[field] || (field === 'notes' ? 'No notes' : 'Required');
-  const invalid = imported ? !title.trim() || mode !== 'None' && (!alarm || alarm <= now) : !resolved || elapsedChange;
+  const elapsedChange = !preview?.recurrence && !!timing && timing.mode !== 'None' && timing.alarmAtMs <= now && timing.alarmAtMs !== preview?.timings?.remilo.alarmAtMs;
+  const fieldText = (field: keyof CalendarFields, fields: Partial<CalendarFields>) => {
+    if (fields[field] === undefined) return 'No common value recorded';
+    if (field !== 'schedule') return fields[field] || (field === 'notes' ? 'No notes' : 'Required');
+    const schedule = fields.schedule!;
+    return (schedule.allDay ? formatDate(schedule.eventStartMs, schedule.zoneId) + ' · All day' :
+      scheduleDateTime(schedule.eventStartMs, schedule.zoneId) + ' – ' + scheduleDateTime(schedule.eventEndMs, schedule.zoneId)) + ' · ' + schedule.zoneId +
+      (schedule.recurrence ? ' · Repeating schedule, exceptions and following segments' : '');
+  };
+  const recurring = !!preview?.recurrence;
+  const invalid = imported ? !title.trim() || (recurring ? !preview?.upcoming?.length : mode !== 'None' && (!alarm || alarm <= now)) : !resolved || elapsedChange;
   const back = () => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin));
-  return <Page compact title={imported ? 'Review Calendar import' : enable ? 'Enable linked updates' : 'Review Calendar changes'} onBack={back}
+  return <Page compact title={imported ? 'Review Calendar import' : activating ? 'Enable automatic sync' : enable ? 'Enable linked updates' : 'Review Calendar changes'} onBack={back}
     footer={!operationId && preview ? <BottomActionBar>
       <Button label={uncertain ? 'Retry same captured action' : dirty ? 'Review import' : imported ? 'Import reminder' : 'Apply resolution'}
         disabled={busy || !uncertain && !dirty && invalid} onPress={() => void apply()} />
@@ -93,7 +101,12 @@ export default function CalendarReview() {
     {!preview && !busy && <Button label="Retry review" variant="secondary" onPress={() => void load()} />}
     {preview && !operationId && <>
       <ConnectedGroup title="Source"><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
-        <Copy muted>Checked {scheduleDateTime(preview.checkedAtMs)}. Updates are manual.</Copy></View></ConnectedGroup>
+        <Copy muted>Checked {scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
+      <ConnectedGroup title="Linked updates"><View key="sync" style={{ padding: 16, gap: 12 }}>
+        <Toggle label="Automatic sync" value={choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating)} disabled={busy || uncertain || activating}
+          onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />
+        <Copy muted>After confirmation, ordinary Title, Notes and Schedule edits transfer between both copies. Conflicts and unsafe timing need review. Local alerts, completion, Trash and postponement remain independent.</Copy>
+      </View></ConnectedGroup>
       {imported ? <>
         <ConnectedGroup title="Calendar event"><View key="event" style={{ padding: 16, gap: 12 }}>
           <Copy heading>{preview.remote.title || 'Untitled event'}</Copy><Copy>{preview.remote.notes || 'No notes'}</Copy>
@@ -103,10 +116,13 @@ export default function CalendarReview() {
           {(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={value === 'None' ? 'No alert' : value} selected={mode === value}
             disabled={busy || uncertain} onPress={() => change({ mode: value })} />)}
         </View>
-        {mode !== 'None' && alarm !== undefined && <DateTimeFields key="time" value={alarm} zoneId={preview.remote.schedule.zoneId} allDay={false}
+        {mode !== 'None' && alarm !== undefined && !recurring && <DateTimeFields key="time" value={alarm} zoneId={preview.remote.schedule.zoneId} allDay={false}
           disabled={busy || uncertain} onError={setError} onChange={value => change({ alarmAtMs: value })} labelPrefix="Import alert" />}
         </ConnectedGroup>
-        {mode !== 'None' && alarm !== undefined && alarm <= now && <ActionFeedback tone="warning" message="Choose a future alert time or No alert. This event's alert has elapsed." />}
+        {recurring && <View key="repeat" style={{ padding: 16, gap: 8 }}><Copy heading>Repeating event · Next dates</Copy>
+          {preview.upcoming?.map(slot => <Copy key={slot.eventStartMs}>{scheduleDateTime(mode === 'None' ? slot.eventStartMs : slot.alarmAtMs, preview.remote.schedule.zoneId)}</Copy>)}
+          <Copy muted>The repeat stays pinned to its event time zone. Individual alerts and completion stay in Remilo.</Copy></View>}
+        {!recurring && mode !== 'None' && alarm !== undefined && alarm <= now && <ActionFeedback tone="warning" message="Choose a future alert time or No alert. This event's alert has elapsed." />}
         {choices.alarmAtMs !== undefined && <Button label="Use event's default alert" variant="secondary" disabled={busy || uncertain} onPress={() => change({ alarmAtMs: undefined })} />}
         {!busy && !uncertain && <SelectRow label="List" value={choices.listId || ''} choices={[{ value: '', label: 'No list' }, ...(lists.data || []).map(row => ({ value: row.id, label: row.name }))]}
           onChange={value => change({ listId: value || null })} />}

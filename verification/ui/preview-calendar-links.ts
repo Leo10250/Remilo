@@ -1,5 +1,5 @@
-/** Memory-only P4-B fixtures. No authorization, HTTPS, durable storage or native scheduler. */
-import type { CalendarCommand, CalendarFields, CalendarImportChoices, CalendarLink, CalendarLinkedOperation, CalendarLinkPreview, CalendarEventQuery, CalendarEventRef, CalendarSelections, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+/** Memory-only Calendar fixtures. No authorization, HTTPS, durable storage or native scheduler. */
+import type { CalendarCommand, CalendarFields, CalendarImportChoices, CalendarLink, CalendarLinkedOperation, CalendarLinkPreview, CalendarEventQuery, CalendarEventRef, CalendarSelections, Occurrence, CalendarActivationReview, CalendarReviewPage } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { resolvedCalendarFields } from '../../src/domain/calendar-link';
 
 export function previewCalendarLinks(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
@@ -7,7 +7,9 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
   connectionRevision: () => number = () => 1, connected: () => boolean = () => true) {
   const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
   const error = (code: string): never => { throw Object.assign(new Error('Synthetic link: ' + code), { code }); };
-  const scenario = review.get('reviewCalendarLink');
+  const syncScenario = review.get('reviewCalendarSync');
+  const scenario = review.get('reviewCalendarLink') ?? (syncScenario === 'conflict' ? 'conflict' : syncScenario ? 'linked' : null);
+  let notificationPreference = { enabled: true, revision: 1 };
   const previews = new Map<string, CalendarLinkPreview>(), links = new Map<string, CalendarLink>(), jobs = new Map<string, CalendarLinkedOperation>();
   const receipts = new Map<string, string>(), sources = new Map<string, CalendarEventRef>(), batches = new Map<string, string[]>(); let count = 0;
   const fields = (item?: Occurrence): CalendarFields => ({ title: item?.title || 'A personal Calendar event / 私人日程',
@@ -28,6 +30,8 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     availabilityReason: scenario === 'deleted' ? 'REMOTE_DELETED' : scenario === 'unavailable' ? 'NOT_FOUND' : scenario === 'unsupported' ? 'MEETING_EVENT' : '',
     requiresReview: ['deleted', 'unavailable', 'unsupported', 'restored'].includes(scenario!),
     checkedAtMs: Date.now(), message: 'Synthetic connection. No Google requests.', htmlLink: '', readOnly: false, differs: scenario === 'conflict', source: { calendarId: 'fixture-calendar', eventId: 'personal' },
+    syncMode: syncScenario && syncScenario !== 'manual' ? 'Automatic' : 'Manual', syncStatus: syncScenario === 'pending' ? 'UpdatePending' : syncScenario === 'paused' ? 'Paused' : syncScenario === 'conflict' ? 'Review' : syncScenario === 'unknown' ? 'Unconfirmed' : 'Confirmed',
+    pauseReason: syncScenario === 'paused' ? 'AccessRequired' : syncScenario === 'conflict' ? 'ChangesNeedReview' : syncScenario === 'unknown' ? 'UnconfirmedWrite' : '', successfulAtMs: Date.now() - 300_000,
   });
   if (scenario === 'partial-status' || scenario === 'blocked-status') jobs.set('synthetic-operation', {
     operationId: 'synthetic-operation', occurrenceId: 'review', kind: 'ApplyCalendarResolution', calendarName: 'Synthetic source / 测试日历',
@@ -46,17 +50,30 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     const defaultAlarm = google.schedule.allDay ? google.schedule.eventStartMs + 9 * 3_600_000 : google.schedule.eventStartMs;
     const result: CalendarLinkPreview = { previewId: 'synthetic-review-' + ++count, occurrenceId: id || '', calendarName: 'Synthetic source / 测试日历',
       email: 'calendar-tester@example.test', remote: google, local, baseline: local ? { ...clone(local), title: 'Last confirmed title', notes: 'Last confirmed notes' } : null,
-      selections: id ? defaults : null, choices: { ...choices, mode: choices.mode || 'Alarm', title: choices.title ?? google.title,
+      selections: id ? defaults : null, choices: { automaticSync: choices.automaticSync ?? (!id || links.get(id)?.syncMode === 'Automatic'), ...choices, mode: choices.mode || 'Alarm', title: choices.title ?? google.title,
         alarmAtMs: choices.alarmAtMs ?? defaultAlarm, dueAtMs: google.schedule.allDay ? google.schedule.eventEndMs : google.schedule.eventStartMs },
       googleReminders: true, checkedAtMs: Date.now(), nextAlertMs: item?.alertAdjustment ? item.nextAlertMs : null,
       timings: item ? { remilo: { mode: item.mode, dueAtMs: item.dueAtMs, alarmAtMs: item.alarmAtMs }, google: { mode: item.mode, dueAtMs: item.dueAtMs, alarmAtMs: item.alarmAtMs } } : null };
     previews.set(result.previewId, clone(result)); if (source) sources.set(result.previewId, clone(source)); return clone(result);
   };
   return {
+    getCalendarSyncSummary: async () => ({ connected: connected(), automaticCount: [...links.values()].filter(link => link.syncMode === 'Automatic').length,
+      pendingCount: syncScenario === 'pending' ? 1 : 0, reviewCount: [...links.values()].filter(link => ['Review', 'Paused', 'Unconfirmed'].includes(link.syncStatus || '') && link.state !== 'Detached' && syncScenario !== 'read-only' && !find(link.occurrenceId)?.completed && !find(link.occurrenceId)?.deleted && !find(link.occurrenceId)?.skipped).length,
+      notifications: clone(notificationPreference) }),
+    getCalendarReviewIssues: async (_cursor: string | null): Promise<CalendarReviewPage> => {
+      const items = [...links.values()].filter(link => ['Review', 'Paused', 'Unconfirmed'].includes(link.syncStatus || '') && link.state !== 'Detached' && !link.readOnly && syncScenario !== 'read-only' && !find(link.occurrenceId)?.completed && !find(link.occurrenceId)?.deleted && !find(link.occurrenceId)?.skipped).map(link => ({ occurrenceId: link.occurrenceId,
+        seriesId: link.seriesId ?? null, title: find(link.occurrenceId)?.title || 'Synthetic reminder', reason: link.pauseReason || 'ReviewRequired' as const, discoveredAtMs: Date.now() }));
+      return clone({ items, count: items.length, nextCursor: null });
+    },
+    previewCalendarActivation: async (ids: string[]): Promise<CalendarActivationReview> => ({ items: ids.map(id => {
+      const p = preview(id, { automaticSync: true }); return { occurrenceId: id, excludedReason: p.selections && Object.values(p.selections).some(value => value === null) ? 'ChangesNeedReview' : null,
+        preview: { ...p, automaticSync: true, activation: true, equal: scenario !== 'conflict', transfers: { inbound: scenario === 'conflict' ? ['title'] : [], outbound: [] } } };
+    }) }),
+    syncCalendarNow: async (_id: string | null) => { changed(); return { pages: 1, attempted: 1, confirmed: syncScenario === 'conflict' ? 0 : 1, continuation: false }; },
     getCalendarLinks: async () => clone([...links.values()].map(link => {
       const item = find(link.occurrenceId);
       if ((item?.deleted || item?.completed || item?.skipped) && !link.requiresReview) { link = { ...link, state: link.state === 'Detached' ? 'Detached' : 'Suspended', requiresReview: true }; links.set(link.occurrenceId, link); }
-      return { ...link, readOnly: !!item?.deleted || !!item?.completed || !!item?.skipped, source: connected() ? link.source : null };
+      return { ...link, readOnly: syncScenario === 'read-only' || !!item?.deleted || !!item?.completed || !!item?.skipped, source: connected() ? link.source : null };
     })),
     checkCalendarLink: async (id: string) => {
       const old = links.get(id); if (!old || !find(id)) return error('NOT_FOUND');
@@ -82,6 +99,18 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     previewCalendarLink: async (id: string) => preview(id),
     previewCalendarUpdate: async (id: string) => preview(id),
     applyCalendarLinked: async function applyLinked(command: CalendarCommand): Promise<unknown> {
+      if (command.kind === 'SetCalendarReviewNotifications') {
+        if (command.expectedRevision !== notificationPreference.revision) return error('STALE_REVISION');
+        notificationPreference = { enabled: command.enabled, revision: notificationPreference.revision + 1 }; changed(); return clone(notificationPreference);
+      }
+      if (command.kind === 'ActivateCalendarLinks') {
+        const input = JSON.stringify(command), prior = receipts.get(command.operationId);
+        if (prior) { if (prior !== input) return error('OPERATION_REUSED'); return clone({ operationId: command.operationId, operations: (batches.get(command.operationId) || []).map(id => jobs.get(id)) }); }
+        const children: string[] = [];
+        for (const previewId of command.previewIds) { const p = previews.get(previewId); if (!p) return error('STALE_PREVIEW');
+          const id = 'synthetic-activation-' + ++count; await applyLinked({ kind: 'EnableAutomaticCalendarSync', operationId: id, previewId, selections: p.selections! }); children.push(id); }
+        receipts.set(command.operationId, input); batches.set(command.operationId, children); return clone({ operationId: command.operationId, operations: children.map(id => jobs.get(id)) });
+      }
       if (command.kind === 'ImportCalendarEvents') {
         const input = JSON.stringify(command), prior = receipts.get(command.operationId);
         if (prior) {
@@ -123,13 +152,16 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
       }
       if (!('previewId' in command)) return error('INVALID_INPUT');
       const p = previews.get(command.previewId); if (!p) return error('STALE_PREVIEW');
-      const source = sources.get(command.previewId);
+      const source = sources.get(command.previewId) ?? links.get(p.occurrenceId)?.source ?? undefined;
       const values = p.local ? resolvedCalendarFields(p.local, p.remote, command.selections || { title: null, notes: null, schedule: null }) : p.remote;
       if (!values) return error('RESOLUTION_REQUIRED');
       const item = save?.(p.local ? values : { ...values, title: p.choices.title || values.title }, p.choices, command.operationId, p.occurrenceId || undefined);
       const id = item?.id || p.occurrenceId || 'synthetic-import-' + ++count;
       const blocked = scenario === 'blocked', partial = scenario === 'partial' || review.get('reviewCalendarOffline') === '1';
-      links.set(id, { ...metadata(), occurrenceId: id, revision: 1, calendarName: p.calendarName, state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic manually linked reminder.', htmlLink: '', readOnly: false, differs: false, source });
+      const automatic = command.kind === 'EnableAutomaticCalendarSync' || (command.automaticSync ?? p.choices.automaticSync ?? false);
+      links.set(id, { ...metadata(), occurrenceId: id, revision: 1, calendarName: p.calendarName, state: 'Linked', checkedAtMs: Date.now(), message: 'Synthetic linked reminder.', htmlLink: '', readOnly: false, differs: false, source,
+        syncMode: automatic ? partial || blocked ? 'Pending' : 'Automatic' : 'Manual', syncStatus: partial ? 'Unconfirmed' : blocked ? 'UpdatePending' : 'Confirmed', successfulAtMs: partial || blocked ? null : Date.now() });
+      if (item && automatic && !partial && !blocked) item.history = [...item.history || [], { kind: 'CalendarActivated', atMs: Date.now(), targetMs: null }];
       const job: CalendarLinkedOperation = { operationId: command.operationId, occurrenceId: id, kind: command.kind, calendarName: p.calendarName, title: item?.title || p.choices.title || values.title,
         state: blocked ? 'Blocked' : partial ? 'Unconfirmed' : 'Confirmed', source, localApplied: true, localStatus: blocked ? 'Blocked' : (item?.mode || p.choices.mode) === 'None' ? 'Applied' : 'Scheduled',
         remoteAttempted: partial, readOnly: false, recoveryMode: blocked || partial ? 'Retry' : 'None', message: blocked ? 'Google reminders remain. Resolve alert readiness, then retry.' : partial ? 'Local changes saved. Google outcome unconfirmed. Retry the same operation.' : 'Local and Google outcomes confirmed in memory only.' };

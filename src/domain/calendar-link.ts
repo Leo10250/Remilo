@@ -15,7 +15,8 @@ export function calendarCaptureRejected(error: unknown) {
     'TITLE_REQUIRED', 'ELAPSED_ALERT', 'IMPORT_LIMIT', 'RESOLUTION_REQUIRED', 'CONTENT_LIMIT', 'NOT_FOUND'].some(value => code.includes(value));
 }
 export function unsupportedCalendarReason(code: string) {
-  return ({ RECURRING_EVENT: 'Recurring events are a later stage.', MEETING_EVENT: 'Meetings with attendees are not supported yet.',
+  return ({ RECURRING_EVENT: 'This recurrence is not supported.', UNSUPPORTED_RECURRENCE: 'This repeat rule cannot be represented safely in Remilo.',
+    INSTANCE_REQUIRES_MASTER: 'Import the repeating event rather than a separate instance.', MEETING_EVENT: 'Meetings with attendees are not supported yet.',
     MULTI_DAY_EVENT: 'Only single-day all-day events are supported.', CONTENT_LIMIT: 'Shorten the title to 200 characters and notes to 10,000 in Google Calendar.',
     INVALID_ZONE: 'A supported named time zone is required.', INCOMPATIBLE_ZONES: 'Start and end need the same named time zone.',
     LOCKED_EVENT: 'This event is locked or a private copy.', SPECIAL_EVENT: 'This Calendar event type is not supported.',

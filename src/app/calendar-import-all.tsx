@@ -23,6 +23,7 @@ export default function CalendarImportAll() {
   const client = useQueryClient(), confirm = useAppearanceConfirmation(), { scheduleDateTime, formatDate } = useTimeFormatting();
   const [entries, setEntries] = useState<Entry[]>([]), [overrides, setOverrides] = useState<Record<string, CalendarImportChoices>>({});
   const [mode, setMode] = useState<'Alarm' | 'Notification' | 'None'>('Alarm'), [listId, setListId] = useState<string | null>(null), [suppress, setSuppress] = useState(false);
+  const [automaticSync, setAutomaticSync] = useState(true);
   const [reading, setReading] = useState(false), [busy, setBusy] = useState(false), [uncertain, setUncertain] = useState(false), [ready, setReady] = useState(false);
   const [message, setMessage] = useState(''), [error, setError] = useState(''), [selected, setSelected] = useState<string | null>(null);
   const [operationIds, setOperationIds] = useState<string[]>([]), [account, setAccount] = useState(''), [now, setNow] = useState(Date.now);
@@ -70,10 +71,10 @@ export default function CalendarImportAll() {
     void Promise.resolve().then(() => { if (live.current) return loadRef.current(); });
     return () => { live.current = false; tickets.current++; };
   }, [params.calendarId, params.from, params.until]);
-  const choices = (entry: Entry): CalendarImportChoices => ({ mode, listId, disableReminders: suppress, ...overrides[entry.eventId] });
+  const choices = (entry: Entry): CalendarImportChoices => ({ mode, listId, disableReminders: suppress, automaticSync, ...overrides[entry.eventId] });
   const title = (entry: Entry) => choices(entry).title ?? entry.preview.choices.title ?? entry.preview.remote.title;
-  const alert = (entry: Entry) => choices(entry).alarmAtMs ?? entry.preview.choices.alarmAtMs;
-  const invalid = entries.filter(entry => !title(entry)?.trim() || choices(entry).mode !== 'None' && alert(entry) <= now);
+  const alert = (entry: Entry) => choices(entry).alarmAtMs ?? (entry.preview.recurrence ? entry.preview.nextAlertMs ?? 0 : entry.preview.choices.alarmAtMs);
+  const invalid = entries.filter(entry => !title(entry)?.trim() || entry.preview.recurrence && !entry.preview.upcoming?.length || choices(entry).mode !== 'None' && alert(entry) <= now);
   const edited = entries.find(entry => entry.eventId === selected);
   const locked = busy || uncertain || operationIds.length > 0;
   const change = (eventId: string, next: CalendarImportChoices) => { if (!locked) setOverrides(old => ({ ...old, [eventId]: { ...old[eventId], ...next } })); };
@@ -105,6 +106,8 @@ export default function CalendarImportAll() {
       <Copy>{account}{entries[0] ? ' · ' + entries[0].preview.calendarName : ''}</Copy>
       <Copy heading>{entries.length ? entries.length + ' events to import' : 'No new eligible events in these dates.'}</Copy>
       {!!entries.length && <>
+        <ConnectedGroup title="Linked updates"><Toggle key="automatic" label="Automatic sync" value={automaticSync} disabled={locked} onChange={setAutomaticSync} /></ConnectedGroup>
+        <Copy muted>Confirmation enables ordinary Title, Notes and Schedule transfers for selected automatic links. Conflicts and unsafe timing need review. Local alerts, completion, Trash and postponement stay independent.</Copy>
         <ConnectedGroup title="Alerts for all reminders"><View key="modes" style={{ padding: 16 }}>
           {(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={value === 'None' ? 'No alert' : value} selected={mode === value} disabled={locked}
             onPress={() => { setMode(value); setOverrides(old => Object.fromEntries(Object.entries(old).map(([id, values]) => { const { mode: _mode, ...rest } = values; return [id, rest]; }))); }} />)}
@@ -134,8 +137,10 @@ export default function CalendarImportAll() {
         <Copy muted>Checked {scheduleDateTime(edited.preview.checkedAtMs)}. Confirming rechecks this event.</Copy>
         <Field label="Title" required multiline compactMultiline value={title(edited)} maxLength={200} editable={!locked} onChangeText={value => change(edited.eventId, { title: value })} />
         {(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={value === 'None' ? 'No alert' : value} selected={choices(edited).mode === value} disabled={locked} onPress={() => change(edited.eventId, { mode: value })} />)}
-        {choices(edited).mode !== 'None' && <DateTimeFields labelPrefix="Import alert" value={alert(edited)} zoneId={edited.preview.remote.schedule.zoneId} allDay={false} disabled={locked} onError={setError} onChange={value => change(edited.eventId, { alarmAtMs: value })} />}
+        {choices(edited).mode !== 'None' && !edited.preview.recurrence && <DateTimeFields labelPrefix="Import alert" value={alert(edited)} zoneId={edited.preview.remote.schedule.zoneId} allDay={false} disabled={locked} onError={setError} onChange={value => change(edited.eventId, { alarmAtMs: value })} />}
+        {edited.preview.recurrence && <Copy muted>Repeating event. Its next dates and alerts follow the named event zone; edit individual alerts in Remilo after import.</Copy>}
         <Toggle label="Disable this event's Google reminders" value={choices(edited).disableReminders || false} disabled={locked} onChange={value => change(edited.eventId, { disableReminders: value })} />
+        <Toggle label="Automatic sync for this event" value={choices(edited).automaticSync ?? true} disabled={locked} onChange={value => change(edited.eventId, { automaticSync: value })} />
         <Copy muted>{edited.preview.googleReminders ? 'Google reminders are currently enabled.' : 'No Google reminders are currently configured.'}</Copy>
         <Button label="Done reviewing" onPress={() => setSelected(null)} />
       </>}

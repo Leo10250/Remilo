@@ -48,6 +48,7 @@ export default function CalendarPublish() {
         <Copy heading>{preview.data.title}</Copy><Copy>{preview.data.notes || 'No notes'}</Copy>
         <Copy>{preview.data.allDay ? `${civilAt(preview.data.eventStartMs, preview.data.zoneId).slice(0, 10)} → ${civilAt(preview.data.eventEndMs, preview.data.zoneId).slice(0, 10)} (exclusive end date)` : `${scheduleDateTime(preview.data.eventStartMs, preview.data.zoneId)} – ${scheduleDateTime(preview.data.eventEndMs, preview.data.zoneId)}`}</Copy>
         <Copy muted>{preview.data.allDay ? 'All day · ' : ''}{preview.data.zoneId}</Copy>
+        {!!preview.data.recurrence?.length && <Copy>Repeating event. This publishes the reviewed series schedule.</Copy>}
         <Copy>{preview.data.calendarName} · {preview.data.email}</Copy>
       </View></ConnectedGroup>
       <Copy muted>Title, notes and event times will be sent to this calendar. Google Calendar reminders are disabled. Due, completion and alert controls stay in Remilo. Later edits are not synchronized.</Copy>

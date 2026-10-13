@@ -25,12 +25,17 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   previewCalendarUpdate(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   checkCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLink>;
   getCalendarLinks(): Promise<import('./RemiloAlarm.types').CalendarLink[]>;
+  getCalendarContext(id: string): Promise<import('./RemiloAlarm.types').Occurrence & { calendarSeriesId?: string } | null>;
+  getCalendarSyncSummary(): Promise<import('./RemiloAlarm.types').CalendarSyncSummary>;
+  getCalendarReviewIssues(cursor: string | null): Promise<import('./RemiloAlarm.types').CalendarReviewPage>;
+  previewCalendarActivation(ids: string[]): Promise<import('./RemiloAlarm.types').CalendarActivationReview>;
+  syncCalendarNow(id: string | null): Promise<import('./RemiloAlarm.types').CalendarRunSummary>;
   getCalendarOperations(): Promise<import('./RemiloAlarm.types').CalendarLinkedOperation[]>;
   getCalendarPublications(): Promise<CalendarPublication[]>;
   previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
   authorizeCalendar(publicationId: string | null): Promise<void>;
   listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
-  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | import('./RemiloAlarm.types').CalendarLinkedOperation | import('./RemiloAlarm.types').CalendarImportBatchResult | { disconnected: boolean } | { unlinked: boolean }>;
+  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | import('./RemiloAlarm.types').CalendarLinkedOperation | import('./RemiloAlarm.types').CalendarImportBatchResult | { enabled: boolean; revision: number } | { disconnected: boolean } | { unlinked: boolean }>;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;

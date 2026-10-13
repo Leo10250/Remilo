@@ -13,6 +13,13 @@ import { useFontScaleOverride, useTheme } from '../ui/theme';
 import { typography } from '../ui/tokens';
 
 const events: Record<string, { label: string; icon: IconName; tone: Tone }> = {
+  CalendarActivated: { label: 'Automatic Calendar sync enabled', icon: 'event', tone: 'muted' },
+  CalendarUpdatedGoogle: { label: 'Updated Google Calendar', icon: 'upload', tone: 'muted' },
+  CalendarUpdatedRemilo: { label: 'Updated from Google Calendar', icon: 'download', tone: 'muted' },
+  CalendarResolved: { label: 'Calendar changes reviewed', icon: 'check', tone: 'muted' },
+  CalendarSuspended: { label: 'Calendar sync paused', icon: 'pause', tone: 'muted' },
+  CalendarResumed: { label: 'Calendar sync resumed', icon: 'play_arrow', tone: 'muted' },
+  CalendarUnlinked: { label: 'Unlinked from Google Calendar', icon: 'link_off', tone: 'muted' },
   Done: { label: 'Completed', icon: 'check_circle', tone: 'success' },
   Reopen: { label: 'Reopened', icon: 'undo', tone: 'muted' }, UndoDelete: { label: 'Restored', icon: 'undo', tone: 'muted' },
   Delete: { label: 'Moved to Trash', icon: 'delete', tone: 'danger' }, Skip: { label: 'Occurrence skipped', icon: 'cancel', tone: 'muted' },
@@ -28,7 +35,7 @@ const events: Record<string, { label: string; icon: IconName; tone: Tone }> = {
 export default function Activity() {
   const { shortTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string }>(), { id } = params;
-  const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getOccurrence(id), enabled: nativeAvailable });
+  const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getCalendarContext(id), enabled: nativeAvailable });
   const colors = useTheme(), zone = deviceZone(), scale = useFontScaleOverride();
   const { fontScale } = useWindowDimensions();
   const labelHeight = Math.max(24, typography.body * scale * fontScale * 1.4);

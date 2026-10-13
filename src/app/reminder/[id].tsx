@@ -41,7 +41,7 @@ export default function ReminderDetails() {
   const publication = calendar.data?.find((value) => value.occurrenceId === id);
   const calendarLinks = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(), enabled: nativeAvailable });
   const calendarOperations = useQuery({ queryKey: ['calendar', 'operations'], queryFn: () => engine().getCalendarOperations(), enabled: nativeAvailable });
-  const calendarLink = calendarLinks.data?.find(value => value.occurrenceId === id);
+  const calendarLink = calendarLinks.data?.find(value => value.occurrenceId === id || !!item?.seriesId && value.seriesId === item.seriesId);
   const unlinkCommand = useRef<CalendarCommand | null>(null);
   const [unlinkBusy, setUnlinkBusy] = useState(false), [unlinkUncertain, setUnlinkUncertain] = useState(false);
   const scale = useFontScaleOverride(), { fontScale } = useWindowDimensions();
@@ -127,7 +127,7 @@ export default function ReminderDetails() {
   const active = item && !item.deleted && !item.completed && !item.skipped;
   const unlink = async () => {
     if (unlinkBusy || !calendarLink) return;
-    unlinkCommand.current ??= { kind: 'UnlinkCalendar', occurrenceId: id, operationId: engine().createOperationId(), expectedLinkRevision: calendarLink.revision };
+    unlinkCommand.current ??= { kind: 'UnlinkCalendar', occurrenceId: calendarLink.occurrenceId, operationId: engine().createOperationId(), expectedLinkRevision: calendarLink.revision };
     setUnlinkBusy(true);
     try { await engine().applyCalendarCommand(unlinkCommand.current); unlinkCommand.current = null; setUnlinkUncertain(false); await calendarLinks.refetch(); await calendarOperations.refetch(); }
     catch (error) { if (calendarCaptureRejected(error)) { unlinkCommand.current = null; setUnlinkUncertain(false); } else setUnlinkUncertain(true); setFeedback({ message: calendarError(error), tone: 'warning' }); }
@@ -176,7 +176,7 @@ export default function ReminderDetails() {
       }} />}
       <CalendarExceptionNotice item={item} link={calendarLink} jobs={calendarOperations.data?.filter(operation => operation.occurrenceId === id) || []}
         disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain} onTrash={moveToTrash}
-        onManage={() => router.push({ pathname: '/calendar-manage', params: { id, ...routeParams, originReminderId: id } } as Href)} />
+        onManage={() => router.push({ pathname: '/calendar-manage', params: { id: calendarLink?.occurrenceId ?? id, ...routeParams, originReminderId: id } } as Href)} />
       <Schedule item={item} details={false} connected occurrence hasPublication={!!publication || !!calendarLink} />
       {item.segmentId && <ConnectedGroup title="Repeat" footer={series.isLoading || series.error || series.data?.state === 'Archived' ? <>
         <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />

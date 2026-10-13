@@ -431,6 +431,7 @@ const preview = {
   getTimeZones: async (atMs: number) => zones(atMs), convertTime: async (input: TimeConversionInput) => convert(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),
   getOccurrence: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },
+  getCalendarContext: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },
   getLists: async () => clone(queryLists()), queryLists: async () => clone(queryLists()),
   querySeries: async () => [...series.values()].filter((value) => value.state !== 'Archived').map(seriesView),
   queryRepeatFamilies: async () => clone(familyViews()),

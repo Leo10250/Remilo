@@ -8,18 +8,25 @@ const link: CalendarLink = { occurrenceId: 'review', revision: 1, calendarName: 
 const item = { id: 'review', mode: 'Alarm', deleted: false, completed: false, skipped: false } as Occurrence;
 describe('Calendar hierarchy and independent cancellation', () => {
   it('distinguishes published copies, unknown checks, differences and detached links', () => {
-    expect(calendarSummary(link)).toBe('Linked');
-    expect(calendarSummary({ ...link, observedAtMs: null })).toBe('Linked · Check for changes');
-    expect(calendarSummary({ ...link, remoteDiffers: true })).toBe('Changes to review');
-    expect(calendarSummary({ ...link, requiresReview: true })).toBe('Review linked updates');
-    expect(calendarSummary({ ...link, state: 'Detached', availability: 'Deleted' })).toBe('Unlinked');
-    expect(calendarSummary(undefined, { state: 'Published' } as CalendarPublication)).toBe('Published copy');
+    expect(calendarSummary(link)).toBe('Linked · Manual updates');
+    expect(calendarSummary({ ...link, observedAtMs: null })).toBe('Linked · Manual updates');
+    expect(calendarSummary({ ...link, remoteDiffers: true })).toBe('Linked · Manual updates');
+    expect(calendarSummary({ ...link, requiresReview: true })).toBe('Sync paused');
+    expect(calendarSummary({ ...link, state: 'Detached', availability: 'Deleted' })).toBe('Not linked · Updates stopped');
+    expect(calendarSummary(undefined, { state: 'Published' } as CalendarPublication)).toBe('Not linked · Published once');
+  });
+  it('uses the same automatic outcome policy across reminder surfaces', () => {
+    expect(calendarSummary({ ...link, syncMode: 'Automatic' })).toBe('Linked · Automatic sync');
+    expect(calendarSummary({ ...link, syncMode: 'Automatic', differs: true })).toBe('Update pending');
+    expect(calendarSummary({ ...link, syncStatus: 'Review' })).toBe('Changes need review');
+    expect(calendarSummary({ ...link, syncStatus: 'Unconfirmed' })).toBe('Google update not confirmed');
+    expect(calendarSummary({ ...link, syncStatus: 'Paused', pauseReason: 'ElapsedAlert' })).toBe('Sync paused');
   });
   it('never presents an inaccessible or unsupported event as deleted', () => {
     expect(calendarCancellation(item, { ...link, availability: 'Unavailable' })).toBeNull();
-    expect(calendarSummary({ ...link, availability: 'Unavailable' })).toBe('Google event unavailable');
+    expect(calendarSummary({ ...link, availability: 'Unavailable' })).toBe('Sync paused');
     expect(calendarCancellation(item, { ...link, availability: 'Unsupported' })).toBeNull();
-    expect(calendarSummary({ ...link, source: null })).toBe('Google access needed');
+    expect(calendarSummary({ ...link, source: null })).toBe('Sync paused');
   });
   it('keeps a confirmed cancellation through a failed check and uses mode-specific consequences', () => {
     const deleted = { ...link, availability: 'Deleted' as const, lastCheckErrorCode: 'NETWORK' };
@@ -31,8 +38,8 @@ describe('Calendar hierarchy and independent cancellation', () => {
   });
   it('separates captured pending work from locally saved unknown remote outcomes', () => {
     const job = { state: 'Waiting', localApplied: false } as CalendarLinkedOperation;
-    expect(calendarSummary(link, undefined, [job])).toBe('Request pending');
-    expect(calendarSummary(link, undefined, [{ ...job, localApplied: true, state: 'Unconfirmed' }])).toBe('Google update not confirmed');
+    expect(calendarSummary(link, undefined, [job])).toBe('Update pending');
+    expect(calendarSummary(link, undefined, [{ ...job, localApplied: true, remoteAttempted: true, state: 'Unconfirmed' }])).toBe('Google update not confirmed');
   });
   it('checks synthetic terminal links without changing the reminder or enabling updates', async () => {
     const reminder = { ...item, completed: true }, fixture = previewCalendar(new URLSearchParams('reviewCalendarLink=deleted&reviewCalendarOffline=1'), () => reminder, () => {});
