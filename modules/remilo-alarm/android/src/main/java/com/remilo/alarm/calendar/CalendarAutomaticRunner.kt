@@ -133,7 +133,7 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
         }
       }
     }
-    continuation = continuation || state.access { store -> store.incremental.calendars().any { store.incremental.cursor(it).paging } }
+    continuation = continuation || state.access { store -> store.sync.nextRetryMs() != null || store.incremental.calendars().any { store.incremental.cursor(it).paging } }
     return CalendarRunSummary(pages, attempted, confirmed, continuation).also { value -> state.access(true) { it.sync.saveRun(value) } }
   }
   fun preview(token: String, id: String, activation: Boolean): Map<String, Any?> {

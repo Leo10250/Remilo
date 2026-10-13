@@ -184,7 +184,7 @@ class CalendarAutomaticTest {
   @Test fun lostReplyConfirmsSameOperationAndKeepsNewerLocalEditsDirty() {
     val job = imported(); edit(job.occurrenceId, mapOf("notes" to "Sent notes")); loseReply = true
     run(); assertEquals("Unconfirmed", calendar { it.sync.state(job.occurrenceId).status }); assertEquals(1, patches.size)
-    edit(job.occurrenceId, mapOf("title" to "Later local title")); run(job.occurrenceId)
+    edit(job.occurrenceId, mapOf("title" to "Later local title")); assertTrue(run(job.occurrenceId).continuation)
     assertEquals(1, patches.size); assertEquals("Later local title", native { engine.occurrence(job.occurrenceId)!!["title"] })
     assertEquals("UpdatePending", calendar { it.sync.state(job.occurrenceId).status })
     run(); assertEquals(2, patches.size); assertEquals("Later local title", events["event"]!!.getString("summary"))
