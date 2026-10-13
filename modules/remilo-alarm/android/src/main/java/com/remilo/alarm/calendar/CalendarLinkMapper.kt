@@ -16,7 +16,7 @@ object CalendarLinkMapper {
   private fun reject(test: Boolean, code: String) { if (test) throw CalendarFailure(code) }
   fun fields(event: JSONObject, calendarZone: String): JSONObject {
     reject(event.optString("status") == "cancelled", "REMOTE_REMOVED")
-    reject(event.has("recurrence") || event.has("recurringEventId"), "RECURRING_EVENT")
+    reject(event.has("recurringEventId"), "INSTANCE_REQUIRES_MASTER")
     reject(event.has("attendees") && (event.optJSONArray("attendees") == null || event.getJSONArray("attendees").length() > 0) ||
       event.optBoolean("attendeesOmitted"), "MEETING_EVENT")
     reject(event.optBoolean("locked") || event.optBoolean("privateCopy"), "LOCKED_EVENT")
@@ -43,14 +43,33 @@ object CalendarLinkMapper {
       last = OffsetDateTime.parse(end.getString("dateTime")).toInstant().toEpochMilli()
     }
     reject(first < 0 || last <= first, "INVALID_EVENT")
-    return JSONObject().put("title", title).put("notes", notes).put("schedule", JSONObject()
-      .put("eventStartMs", first).put("eventEndMs", last).put("allDay", allDay).put("zoneId", zone.id))
+    val schedule = JSONObject().put("eventStartMs", first).put("eventEndMs", last).put("allDay", allDay).put("zoneId", zone.id)
+    event.optJSONArray("recurrence")?.let { lines ->
+      val rule = CalendarRecurrence.decode(lines, Instant.ofEpochMilli(first).atZone(zone).toLocalDateTime(), zone.id, allDay,
+        if (allDay) 86_400_000 else last - first)
+      schedule.put("recurrence", CalendarRecurrence.encode(rule))
+      val exceptions = event.optJSONArray("remiloInstances") ?: JSONArray()
+      schedule.put("exceptions", JSONArray((0 until exceptions.length()).map { exceptions.getJSONObject(it) }
+        .filter { !it.optBoolean("cancelled") && it.optBoolean("exception", true) }.sortedBy { it.getString("nominalSlot") }.map {
+          JSONObject().put("nominalSlot", it.getString("nominalSlot")).put("fields", it.getJSONObject("fields"))
+        }))
+      schedule.put("segments", event.optJSONArray("remiloSegments") ?: JSONArray())
+    }
+    if (event.has("recurrence") && event.optJSONArray("recurrence") == null) throw CalendarFailure("UNSUPPORTED_RECURRENCE")
+    return JSONObject().put("title", title).put("notes", notes).put("schedule", schedule)
   }
-  fun fields(record: ReminderRecord): JSONObject = JSONObject().put("title", record.title).put("notes", record.notes)
+  fun fields(record: ReminderRecord): JSONObject {
+    reject(record.zoneId !in ZoneId.getAvailableZoneIds(), "INVALID_ZONE")
+    return JSONObject().put("title", record.title).put("notes", record.notes)
     .put("schedule", JSONObject().put("eventStartMs", record.eventStartMs).put("eventEndMs", record.eventEndMs)
       .put("allDay", record.allDay).put("zoneId", record.zoneId))
+  }
+  fun mainFields(fields: JSONObject): JSONObject = JSONObject(fields.toString()).also {
+    it.getJSONObject("schedule").remove("exceptions"); it.getJSONObject("schedule").remove("segments")
+  }
   fun equal(a: Any?, b: Any?): Boolean = if (a is JSONObject && b is JSONObject)
     a.keys().asSequence().toSet() == b.keys().asSequence().toSet() && a.keys().asSequence().all { equal(a.opt(it), b.opt(it)) }
+    else if (a is JSONArray && b is JSONArray) a.length() == b.length() && (0 until a.length()).all { equal(a.opt(it), b.opt(it)) }
     else if (a is Number && b is Number) a.toDouble() == b.toDouble() else a == b
   fun defaults(local: JSONObject, remote: JSONObject, baseline: JSONObject?): Map<String, String?> =
     listOf("title", "notes", "schedule").associateWith { field ->
@@ -64,13 +83,15 @@ object CalendarLinkMapper {
     val result = JSONObject()
     if (!equal(remote.opt("title"), desired.opt("title"))) result.put("summary", desired.getString("title"))
     if (!equal(remote.opt("notes"), desired.opt("notes"))) result.put("description", desired.getString("notes"))
-    if (!equal(remote.opt("schedule"), desired.opt("schedule"))) {
+    if (!equal(mainFields(remote).opt("schedule"), mainFields(desired).opt("schedule"))) {
       val schedule = desired.getJSONObject("schedule"); val zone = ZoneId.of(schedule.getString("zoneId"))
       for ((key, field) in listOf("start" to "eventStartMs", "end" to "eventEndMs")) {
         val instant = Instant.ofEpochMilli(schedule.getLong(field))
         result.put(key, if (schedule.getBoolean("allDay")) JSONObject().put("date", instant.atZone(zone).toLocalDate().toString())
           else JSONObject().put("dateTime", instant.toString()).put("timeZone", zone.id))
       }
+      if (schedule.has("recurrence")) result.put("recurrence", schedule.getJSONArray("recurrence"))
+      else if (remote.getJSONObject("schedule").has("recurrence")) result.put("recurrence", JSONArray())
     }
     if (suppress) result.put("reminders", JSONObject().put("useDefault", false).put("overrides", JSONArray()))
     return result
@@ -87,6 +108,8 @@ object CalendarLinkMapper {
     return start.atStartOfDay(zone).toInstant().toString() to end.atStartOfDay(zone).toInstant().toString()
   }
   fun map(value: JSONObject): Map<String, Any?> = value.keys().asSequence().associateWith { key ->
-    val item = value.get(key); when (item) { is JSONObject -> map(item); JSONObject.NULL -> null; else -> item }
+    val item = value.get(key); when (item) { is JSONObject -> map(item); is JSONArray -> (0 until item.length()).map { index ->
+      item.get(index).let { if (it is JSONObject) map(it) else if (it == JSONObject.NULL) null else it }
+    }; JSONObject.NULL -> null; else -> item }
   }
 }

@@ -65,5 +65,9 @@ interface CalendarTransport {
     event(token, calendarId, eventId)?.let { CalendarEventLookup.Found(it) } ?: CalendarEventLookup.Missing
   fun insert(token: String, calendarId: String, payload: String): org.json.JSONObject
   fun events(token: String, calendarId: String, from: String, until: String, cursor: String?): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
+  fun recurringEvents(token: String, calendarId: String, from: String, until: String, cursor: String?): org.json.JSONObject = events(token, calendarId, from, until, cursor)
+  fun syncEvents(token: String, calendarId: String, syncToken: String?, pageToken: String?): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
+  fun instance(token: String, calendarId: String, masterId: String, originalStart: String): org.json.JSONObject? = throw CalendarFailure("NOT_AVAILABLE")
+  fun inspectRecurring(token: String, calendar: OwnedCalendar, event: org.json.JSONObject): org.json.JSONObject = event
   fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
 }

@@ -83,6 +83,32 @@ class GoogleCalendarTransportTest {
     assertTrue(response.url.query.contains("singleEvents=true")); assertTrue(response.url.query.contains("orderBy=startTime"))
     assertTrue(response.url.query.contains("maxResults=100")); assertTrue(response.url.query.contains("pageToken=next%2Bpage"))
   }
+  @Test fun incrementalPagesKeepTheExactCollectionQueryWithoutForbiddenFilters() {
+    val requests = mutableListOf<Response>()
+    val transport = GoogleCalendarTransport { url -> Response(url).also(requests::add) }
+    transport.syncEvents("synthetic", "source", "original+token", null)
+    transport.syncEvents("synthetic", "source", "original+token", "page+two")
+    val first = requests[0].url.query; val second = requests[1].url.query
+    assertEquals(first + "&pageToken=page%2Btwo", second)
+    assertTrue(first.contains("singleEvents=false")); assertTrue(first.contains("showDeleted=true")); assertTrue(first.contains("maxResults=100"))
+    assertTrue(first.contains("syncToken=original%2Btoken"))
+    for (forbidden in listOf("timeMin", "timeMax", "orderBy", "q=", "extendedProperty", "eventTypes")) assertFalse(first.contains(forbidden))
+    assertTrue(requests.all { it.requestMethod == "GET" && it.sent.size() == 0 })
+  }
+  @Test fun incremental410InvalidatesOnlyTheCursorAndNeverEstablishesDeletion() {
+    val transport = GoogleCalendarTransport { url -> Response(url, 410) }
+    try { transport.syncEvents("synthetic", "source", "expired", null); fail("Expired cursor") }
+    catch (failure: CalendarFailure) { assertEquals("SYNC_TOKEN_EXPIRED", failure.code) }
+    try { transport.lookup("synthetic", "source", "event"); fail("Ambiguous resource") }
+    catch (failure: CalendarFailure) { assertEquals("REMOTE_UNAVAILABLE", failure.code) }
+  }
+  @Test fun instanceLookupUsesOriginalStartAndReturnsTheObservedIdentity() {
+    lateinit var response: Response
+    val transport = GoogleCalendarTransport { url -> Response(url, body = """{"items":[{"id":"observed-instance","recurringEventId":"master","originalStartTime":{"dateTime":"2027-01-04T09:00:00Z"}}]}""").also { response = it } }
+    val actual = transport.instance("synthetic", "source", "master", "2027-01-04T09:00:00Z")!!
+    assertEquals("observed-instance", actual.getString("id")); assertTrue(response.url.query.contains("originalStart=2027-01-04T09%3A00%3A00Z"))
+    assertTrue(response.url.path.endsWith("/events/master/instances")); assertEquals(0, response.sent.size())
+  }
   @Test fun savedMinutePrecisionPayloadIsReencodedWithoutChangingContentDestinationOrIdentity() {
     val payload = JSONObject("""{"id":"00112233445566778899aabbccddeeff","summary":"Original title","description":"Original notes","start":{"dateTime":"2026-10-12T12:00-07:00","timeZone":"America/Los_Angeles"},"end":{"dateTime":"2026-10-12T12:30-07:00","timeZone":"America/Los_Angeles"},"visibility":"private","transparency":"opaque","reminders":{"useDefault":false,"overrides":[]},"extendedProperties":{"private":{"remiloPublication":"00112233445566778899aabbccddeeff"}}}""")
     val captured = payload.toString()
