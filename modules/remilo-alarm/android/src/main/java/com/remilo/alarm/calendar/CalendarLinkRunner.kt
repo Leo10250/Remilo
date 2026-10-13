@@ -12,6 +12,7 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
   private val background: Boolean = false) {
   fun run(id: String, token: String, executionRevision: Long? = null) {
     var observation: CalendarObservationGuard? = null
+    var writing = false
     try {
       var job = state.links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
       if (job.state in CalendarLinkStore.terminal || job.erased) return
@@ -74,6 +75,7 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
       observation = state.links { it.guard(job.occurrenceId) }
       if (job.patch == "{}") { complete(event); return }
       job = state.links(true) { it.permit(id, revision) }
+      writing = true
       val result = transport.patch(token, job.calendarId, job.eventId, job.etag, job.patch)
       if (result.optString("id") != job.eventId || job.origin == "Published" && !CalendarMapper.matching(result, job.eventId))
         throw CalendarFailure("FOREIGN_IDENTITY")
@@ -85,7 +87,7 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
         try { state.links(true) { it.observedFailure(guard.id, error.code, guard, background) } }
         catch (_: CalendarFailure) { /* Lifecycle/connection changed: discard the stale observation. */ }
       }
-      state.links(true) { it.fail(id, error.code, background) }
+      state.links(true) { it.fail(id, error.code, background, writing) }
     }
     catch (_: IllegalArgumentException) { state.links(true) { it.fail(id, "INVALID_INPUT", background) } }
     catch (_: Exception) { state.links(true) { it.fail(id, "NETWORK", background) } }

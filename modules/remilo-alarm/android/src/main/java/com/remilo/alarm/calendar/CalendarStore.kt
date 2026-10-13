@@ -249,7 +249,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   }
   fun resourceOutcome(job: CalendarResourceJob, code: String) {
     publicationJobs(job.operationId).firstOrNull { it.resourceId == job.resourceId }?.takeUnless { it.erased || it.confirmed }?.let {
-      db.calendarResources().update(it.copy(outcome = code, attempted = if (code in setOf("STALE_REMOTE", "AUTH", "FORBIDDEN", "RETRY", "BAD_REQUEST")) false else it.attempted))
+      db.calendarResources().update(it.copy(outcome = code, attempted = it.attempted && job.attempted))
     }
   }
   fun fail(id: String, code: String) {

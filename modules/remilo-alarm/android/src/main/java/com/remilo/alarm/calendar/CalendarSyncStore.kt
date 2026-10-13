@@ -112,15 +112,14 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
     if (dao.guard(job.operationId) == null) return
     val value = state(job.occurrenceId)
     if (value.operationId != job.operationId) return
-    val uncertain = job.remoteAttempted && !job.mainConfirmed && code !in setOf("AUTH", "FORBIDDEN", "RETRY", "BAD_REQUEST", "STALE_REMOTE") ||
-      links.resourceJobs(job.operationId).any { it.attempted && !it.confirmed && it.outcome in setOf("NETWORK", "UNCONFIRMED_RESOURCE") }
+    val uncertain = job.remoteAttempted && !job.mainConfirmed || links.resourceJobs(job.operationId).any { it.attempted && !it.confirmed }
     when {
       code == "RINGING_DEFERRED" -> {
         if (!job.remoteAttempted) db.links().update(job.copy(state = "Cancelled", patch = "", draft = ""))
         dao.put(value.copy(status = "Deferred", pauseReason = "Ringing", operationId = "", retryAtMs = now() + 60_000))
       }
       uncertain -> issue(job.occurrenceId, "UnconfirmedWrite", background, "Unconfirmed")
-      code in setOf("NETWORK", "RETRY", "NOT_AVAILABLE", "STORAGE_ERROR") -> dao.put(value.copy(status = "UpdatePending", failures = value.failures + 1,
+      code in setOf("NETWORK", "RETRY", "NOT_AVAILABLE", "STORAGE_ERROR", "BUDGET") -> dao.put(value.copy(status = "UpdatePending", failures = value.failures + 1,
         attemptedAtMs = now(), retryAtMs = now() + minOf(3_600_000L, 60_000L * (1L shl minOf(value.failures, 6)))))
       code in setOf("STALE_PREVIEW", "STALE_REMOTE") -> {
         if (dao.guard(job.operationId)?.automatic == true) {

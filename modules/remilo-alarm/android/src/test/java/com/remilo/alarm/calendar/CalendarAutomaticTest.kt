@@ -32,6 +32,8 @@ class CalendarAutomaticTest {
   private var loseReply = false
   private var applyPatch = true
   private var rejectPatch = false
+  private var exhaustWriteBudget = false
+  private var exhaustReadBudget = false
   private var pages: ((String?, String?) -> JSONObject)? = null
   private val queries = mutableListOf<Pair<String?, String?>>()
   private val access = object : CalendarAutomaticAccess {
@@ -45,7 +47,10 @@ class CalendarAutomaticTest {
     override fun account(token: String) = CalendarAccount("subject", "private@example.test")
     override fun calendars(token: String, cursor: String?) = CalendarPage(listOf(calendar), null)
     override fun calendar(token: String, id: String) = calendar
-    override fun event(token: String, calendarId: String, eventId: String) = events[eventId]?.let { JSONObject(it.toString()) }
+    override fun event(token: String, calendarId: String, eventId: String): JSONObject? {
+      if (exhaustReadBudget) throw CalendarFailure("BUDGET")
+      return events[eventId]?.let { JSONObject(it.toString()) }
+    }
     override fun instance(token: String, calendarId: String, masterId: String, originalStart: String): JSONObject {
       val id = "instance-" + CalendarMapper.hash(originalStart).take(16)
       events[id]?.let { return JSONObject(it.toString()) }
@@ -59,6 +64,7 @@ class CalendarAutomaticTest {
     }
     override fun insert(token: String, calendarId: String, payload: String): JSONObject = throw AssertionError("A linked event must not be recreated")
     override fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): JSONObject {
+      if (exhaustWriteBudget) throw CalendarFailure("BUDGET")
       patches.add(JSONObject(payload))
       val event = events[eventId]!!
       if (rejectPatch) { rejectPatch = false; event.put("etag", "unrelated-version").put("location", "Unrelated location"); throw CalendarFailure("STALE_REMOTE") }
@@ -145,6 +151,21 @@ class CalendarAutomaticTest {
     assertEquals("Keep location", events["event"]!!.getString("location")); assertEquals(setOf("description"), patches.single().keys().asSequence().toSet())
     assertEquals("Confirmed", calendar { it.sync.state(job.occurrenceId).status })
   }
+  @Test fun automaticCaptureRevalidatesTheNativeComparisonRatherThanTrustingSelections() {
+    val id = imported().occurrenceId; edit(id, mapOf("title" to "Local title"))
+    events["event"]!!.put("summary", "Remote title")
+    fun rejected(code: String) {
+      val preview = calendar { it.links.preview(calendar, events["event"]!!, id, emptyMap(), 0) }
+      try {
+        calendar { it.links.capture(mapOf("kind" to "AutomaticCalendarTransfer", "operationId" to UUID.randomUUID().toString(), "previewId" to preview["previewId"],
+          "selections" to mapOf("title" to "google", "notes" to "remilo", "schedule" to "remilo"))) }
+        fail("Automatic capture must enforce native comparison")
+      } catch (error: CalendarFailure) { assertEquals(code, error.code) }
+    }
+    rejected("RESOLUTION_REQUIRED")
+    events["event"]!!.put("summary", "Original title"); rejected("INVALID_INPUT")
+    assertTrue(patches.isEmpty()); assertEquals("Local title", native { engine.occurrence(id)!! }["title"])
+  }
   @Test fun genuineConflictPersistsAcrossRestartWithoutOverwritingEitherCopy() {
     val job = imported(); edit(job.occurrenceId, mapOf("title" to "Local title"))
     events["event"]!!.put("summary", "Remote title").put("etag", "conflict-version")
@@ -172,6 +193,26 @@ class CalendarAutomaticTest {
     val job = imported(); edit(job.occurrenceId, mapOf("notes" to "Unconfirmed notes")); applyPatch = false; loseReply = true
     run(); run(job.occurrenceId); engine.close(); open(); run(job.occurrenceId)
     assertEquals(1, patches.size); assertEquals("Unconfirmed", calendar { it.sync.state(job.occurrenceId).status })
+  }
+  @Test fun budgetExpiryBeforeHttpWriteRetainsTheSameOperationForDurableRetry() {
+    val id = imported().occurrenceId; edit(id, mapOf("notes" to "Budgeted update"))
+    exhaustWriteBudget = true; run()
+    val state = calendar { it.sync.state(id) }; val job = calendar { it.links.operation(state.operationId)!! }
+    assertEquals("UpdatePending", state.status); assertEquals(now + 60_000, state.retryAtMs)
+    assertFalse(job.remoteAttempted); assertTrue(patches.isEmpty()); assertTrue(calendar { it.sync.actionableIssues().isEmpty() })
+    exhaustWriteBudget = false; now += 60_001; run()
+    assertEquals(1, patches.size); assertEquals("Confirmed", calendar { it.links.operation(job.operationId)!!.state })
+    assertEquals("Budgeted update", events["event"]!!.getString("description"))
+  }
+  @Test fun failedInspectionCannotClearAnEarlierUnconfirmedSentMarker() {
+    val id = imported().occurrenceId; edit(id, mapOf("notes" to "Unconfirmed update"))
+    loseReply = true; applyPatch = false; run()
+    val operation = calendar { it.sync.state(id).operationId }
+    assertTrue(calendar { it.links.operation(operation)!!.remoteAttempted })
+    exhaustReadBudget = true; run()
+    assertTrue(calendar { it.links.operation(operation)!!.remoteAttempted }); assertEquals(1, patches.size)
+    exhaustReadBudget = false; run()
+    assertEquals(1, patches.size); assertEquals("Unconfirmed", calendar { it.sync.state(id).status })
   }
   @Test fun metadataTransferDoesNotRescheduleOrChangeAlarmGeneration() {
     val job = imported(mode = "Alarm"); val before = native { engine.occurrence(job.occurrenceId)!! }

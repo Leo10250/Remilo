@@ -41,6 +41,7 @@ class CalendarResourceRunner(private val state: CalendarResourceAccess, private 
   fun run(operationId: String, token: String, zone: String): Boolean {
     for (captured in state.jobs(operationId)) {
       var job = captured
+      var writing = false
       if (job.erased) return false
       if (job.confirmed) continue
       try {
@@ -66,11 +67,17 @@ class CalendarResourceRunner(private val state: CalendarResourceAccess, private 
         }
         if (transport.calendar(token, job.calendarId).accessRole != "owner") throw CalendarFailure("NOT_OWNER")
         val permitted = state.permit(job) ?: return false
+        job = permitted
+        writing = true
         val result = if (permitted.insert) transport.insert(token, permitted.calendarId, permitted.payload)
           else transport.patch(token, permitted.calendarId, permitted.eventId, permitted.etag, permitted.payload)
         if (!matches(permitted, result, zone)) throw CalendarFailure("UNCONFIRMED_RESOURCE")
         state.acknowledge(permitted, result)
-      } catch (error: CalendarFailure) { state.outcome(job, error.code); return false }
+      } catch (error: CalendarFailure) {
+        // A failed inspection cannot erase the sent marker of an earlier request.
+        val rejected = writing && error.code in setOf("AUTH", "FORBIDDEN", "RETRY", "BAD_REQUEST", "STALE_REMOTE", "BUDGET", "NOT_AVAILABLE")
+        state.outcome(if (rejected) job.copy(attempted = false) else job, error.code); return false
+      }
       catch (_: Exception) { state.outcome(job, "NETWORK"); return false }
     }
     return true

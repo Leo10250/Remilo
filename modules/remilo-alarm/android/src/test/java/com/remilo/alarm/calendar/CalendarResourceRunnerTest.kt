@@ -21,7 +21,7 @@ class CalendarResourceRunnerTest {
     override fun jobs(operationId: String) = listOf(job)
     override fun permit(job: CalendarResourceJob): CalendarResourceJob? = if (!permission) null else job.copy(attempted = true).also { this@CalendarResourceRunnerTest.job = it }
     override fun acknowledge(job: CalendarResourceJob, event: JSONObject) { this@CalendarResourceRunnerTest.job = this@CalendarResourceRunnerTest.job.copy(confirmed = true, outcome = "Confirmed") }
-    override fun outcome(job: CalendarResourceJob, code: String) { this@CalendarResourceRunnerTest.job = this@CalendarResourceRunnerTest.job.copy(outcome = code) }
+    override fun outcome(job: CalendarResourceJob, code: String) { this@CalendarResourceRunnerTest.job = this@CalendarResourceRunnerTest.job.copy(outcome = code, attempted = job.attempted) }
   }
   private val transport = object : CalendarTransport {
     override fun account(token: String) = CalendarAccount("subject", "test@example.test")

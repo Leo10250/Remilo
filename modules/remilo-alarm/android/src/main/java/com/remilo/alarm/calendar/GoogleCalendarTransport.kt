@@ -13,7 +13,8 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
   private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false, method: String = "POST", etag: String? = null, inspect: Boolean = false, incremental: Boolean = false): JSONObject? {
     val remaining = if (deadlineElapsedMs == Long.MAX_VALUE) Long.MAX_VALUE else deadlineElapsedMs - android.os.SystemClock.elapsedRealtime()
     if (remaining <= 0) throw CalendarFailure("BUDGET")
-    val connection = openConnection(URL(url))
+    val connection = try { openConnection(URL(url)) } catch (_: Exception) { throw CalendarFailure("NOT_AVAILABLE") }
+    var writeStarted = false
     try {
       connection.connectTimeout = minOf(10_000L, maxOf(1L, remaining / 2)).toInt()
       connection.readTimeout = minOf(20_000L, maxOf(1L, remaining / 2)).toInt(); connection.instanceFollowRedirects = false
@@ -30,6 +31,7 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
         }
         connection.doOutput = true
         connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        writeStarted = true // Conservatively retain uncertainty once obtaining the output stream can issue HTTP.
         connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
       }
       val status = connection.responseCode
@@ -56,7 +58,7 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
       if (bytes.size > 2_000_000) throw CalendarFailure("RESPONSE_LIMIT")
       return JSONObject(String(bytes, Charsets.UTF_8))
     } catch (error: CalendarFailure) { throw error }
-    catch (_: Exception) { throw CalendarFailure("NETWORK") }
+    catch (_: Exception) { throw CalendarFailure(if (payload != null && !writeStarted) "NOT_AVAILABLE" else "NETWORK") }
     finally { connection.disconnect() }
   }
   override fun account(token: String): CalendarAccount {

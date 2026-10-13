@@ -204,7 +204,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (job.erased || job.confirmed) return
     // A definitive rejection proves no child write; lost replies retain the sent marker.
     db.calendarResources().update(job.copy(outcome = code,
-      attempted = if (code in setOf("AUTH", "FORBIDDEN", "RETRY", "BAD_REQUEST", "STALE_REMOTE")) false else job.attempted))
+      attempted = job.attempted && captured.attempted))
   }
   private fun sourceView(subject: String, calendarId: String, eventId: String, current: CalendarConnection): Map<String, String>? =
     current.takeIf { it.connected && it.subject == subject }?.let { mapOf("calendarId" to calendarId, "eventId" to eventId) }
@@ -399,6 +399,11 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
         val side = selection[field] ?: throw CalendarFailure("RESOLUTION_REQUIRED")
         if (side !in setOf("remilo", "google")) throw CalendarFailure("INVALID_INPUT")
         desired.put(field, if (side == "remilo") local.get(field) else remote.get(field))
+      }
+      if (kind == "AutomaticCalendarTransfer") {
+        val comparison = CalendarComparison.compare(local, remote, comparisonBaseline(p.occurrenceId))
+        if (comparison.conflicts.isNotEmpty()) throw CalendarFailure("RESOLUTION_REQUIRED")
+        if (!CalendarLinkMapper.equal(desired, comparison.desired)) throw CalendarFailure("INVALID_INPUT")
       }
     }
     val options = JSONObject(p.choices)
@@ -633,17 +638,17 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       sync.confirmed(job, fields, event.optString("updated"))
     }
   }
-  fun fail(id: String, code: String, background: Boolean = false) {
+  fun fail(id: String, code: String, background: Boolean = false, writing: Boolean = false) {
     val job = operation(id) ?: return
     if (job.state in setOf("Confirmed", "Cancelled") || job.erased) return
     val state = when (code) {
       "AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH", "STALE_CONNECTION", "STALE_AUTHORIZATION" -> "NeedsAccess"
-      "NETWORK", "RETRY", "NOT_AVAILABLE", "STORAGE_ERROR", "UNCONFIRMED_WRITE", "UNCONFIRMED_RESOURCE", "RINGING_DEFERRED" -> "Unconfirmed"
+      "NETWORK", "RETRY", "NOT_AVAILABLE", "BUDGET", "STORAGE_ERROR", "UNCONFIRMED_WRITE", "UNCONFIRMED_RESOURCE", "RINGING_DEFERRED" -> "Unconfirmed"
       "ALERT_BLOCKED" -> "Blocked"
       "STALE_REMOTE", "STALE_PREVIEW", "INELIGIBLE", "REMOTE_REMOVED", "REMOTE_DELETED", "REMOTE_UNAVAILABLE", "NOT_FOUND" -> "Conflict"
       else -> "Failed"
     }
-    val failed = job.copy(state = state, remoteAttempted = if (!job.mainConfirmed && code in setOf("AUTH", "FORBIDDEN", "RETRY", "BAD_REQUEST", "STALE_REMOTE")) false else job.remoteAttempted,
+    val failed = job.copy(state = state, remoteAttempted = if (writing && !job.mainConfirmed && code in setOf("AUTH", "FORBIDDEN", "RETRY", "BAD_REQUEST", "STALE_REMOTE", "BUDGET", "NOT_AVAILABLE")) false else job.remoteAttempted,
       message = (if (job.localApplied) "Local changes saved. " else "Local change not applied. ") + when (state) {
       "NeedsAccess" -> "Authorize the original Google account and retry this operation."
       "Blocked" -> "Google reminders remain. Resolve Remilo alert readiness, then retry explicitly."
