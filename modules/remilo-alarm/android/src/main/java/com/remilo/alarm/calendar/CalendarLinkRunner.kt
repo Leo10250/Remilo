@@ -8,7 +8,8 @@ interface CalendarLinkAccess {
 }
 
 /** One approved operation; all network waits are outside the engine worker. */
-class CalendarLinkRunner(private val state: CalendarLinkAccess, private val transport: CalendarTransport) {
+class CalendarLinkRunner(private val state: CalendarLinkAccess, private val transport: CalendarTransport, private val inspectRecurring: Boolean = false,
+  private val background: Boolean = false) {
   fun run(id: String, token: String, executionRevision: Long? = null) {
     var observation: CalendarObservationGuard? = null
     try {
@@ -23,19 +24,47 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
       val calendar = transport.calendar(token, job.calendarId)
       if (calendar.accessRole != "owner") throw CalendarFailure("NOT_OWNER")
       val lookup = transport.lookup(token, job.calendarId, job.eventId)
-      observation?.let { guard -> state.links(true) { it.observe(guard, calendar, lookup) } }
-      val event = when (lookup) {
+      val rawEvent = when (lookup) {
         is CalendarEventLookup.Found -> lookup.event
         CalendarEventLookup.Missing -> throw CalendarFailure("REMOTE_UNAVAILABLE")
         CalendarEventLookup.Deleted -> throw CalendarFailure("REMOTE_DELETED")
       }
+      var event = if (inspectRecurring && rawEvent.has("recurrence")) transport.inspectRecurring(token, calendar, rawEvent) else rawEvent
+      event = state.links { it.normalizeEvent(job.occurrenceId, event) }
+      if (inspectRecurring && event.has("recurrence")) {
+        val children = state.links { it.resources(job.occurrenceId).filter { row -> row.resourceId != "master" && row.nominalSlot.isEmpty() } }
+        val snapshots = children.map { child ->
+          val found = (transport.lookup(token, child.calendarId, child.eventId) as? CalendarEventLookup.Found)?.event ?: throw CalendarFailure("REMOTE_UNAVAILABLE")
+          if (!CalendarMapper.matching(found, child.eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
+          CalendarLinkMapper.fields(transport.inspectRecurring(token, calendar, found), calendar.zoneId)
+        }.sortedBy { it.getJSONObject("schedule").getLong("eventStartMs") }
+        event.put("remiloSegments", org.json.JSONArray(snapshots))
+      }
+      observation?.let { guard -> state.links(true) { it.observe(guard, calendar, CalendarEventLookup.Found(event), background) } }
       if (event.optString("id") != job.eventId) throw CalendarFailure("FOREIGN_IDENTITY")
       if (job.origin == "Published" && !CalendarMapper.matching(event, job.eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
       val remote = CalendarLinkMapper.fields(event, calendar.zoneId)
+      val resources = CalendarResourceRunner(object : CalendarResourceAccess {
+        override fun jobs(operationId: String) = state.links { it.resourceJobs(operationId) }
+        override fun permit(job: CalendarResourceJob) = state.links(true) { it.permitResource(job, revision) }
+        override fun acknowledge(job: CalendarResourceJob, event: JSONObject) = state.links(true) { it.acknowledgeResource(job, event) }
+        override fun outcome(job: CalendarResourceJob, code: String) = state.links(true) { it.resourceOutcome(job, code) }
+        override fun bind(job: CalendarResourceJob, event: JSONObject, zone: String) = state.links(true) { it.bindResource(job, event, zone, revision) }
+        override fun rebase(job: CalendarResourceJob, event: JSONObject) = state.links(true) { it.rebaseResource(job, event, revision) }
+      }, transport)
+      fun complete(result: JSONObject) {
+        state.links(true) { it.acknowledgeMain(id, result) }
+        if (!resources.run(id, token, calendar.zoneId)) {
+          state.links(true) { store -> store.fail(id, store.resourceJobs(id).firstOrNull { !it.confirmed }?.outcome ?: "UNCONFIRMED_RESOURCE", background) }
+          return
+        }
+        state.links(true) { it.complete(id, result) }
+      }
       // A lost PATCH reply is acknowledged by the intended fields, never by etag alone.
       if (job.localApplied && job.remoteAttempted && matches(job, event, remote)) {
-        state.links(true) { it.complete(id, event) }; return
+        complete(event); return
       }
+      if (job.remoteAttempted) throw CalendarFailure("UNCONFIRMED_WRITE")
       if (job.patch.isBlank()) throw CalendarFailure("INELIGIBLE")
       if (event.optString("etag") != job.etag) throw CalendarFailure("STALE_REMOTE")
       if (!CalendarLinkMapper.equal(remote, JSONObject(job.remote))) throw CalendarFailure("STALE_REMOTE")
@@ -43,27 +72,27 @@ class CalendarLinkRunner(private val state: CalendarLinkAccess, private val tran
       state.local(id, revision)
       job = state.links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
       observation = state.links { it.guard(job.occurrenceId) }
-      if (job.patch == "{}") { state.links(true) { it.complete(id, event) }; return }
+      if (job.patch == "{}") { complete(event); return }
       job = state.links(true) { it.permit(id, revision) }
       val result = transport.patch(token, job.calendarId, job.eventId, job.etag, job.patch)
       if (result.optString("id") != job.eventId || job.origin == "Published" && !CalendarMapper.matching(result, job.eventId))
         throw CalendarFailure("FOREIGN_IDENTITY")
       val fields = CalendarLinkMapper.fields(result, calendar.zoneId)
-      if (!matches(job, result, fields)) throw CalendarFailure("STALE_REMOTE")
-      state.links(true) { it.complete(id, result) }
+      if (!matches(job, result, fields)) throw CalendarFailure("UNCONFIRMED_WRITE")
+      complete(result)
     } catch (error: CalendarFailure) {
       observation?.let { guard ->
-        try { state.links(true) { it.observedFailure(guard.id, error.code, guard) } }
+        try { state.links(true) { it.observedFailure(guard.id, error.code, guard, background) } }
         catch (_: CalendarFailure) { /* Lifecycle/connection changed: discard the stale observation. */ }
       }
-      state.links(true) { it.fail(id, error.code) }
+      state.links(true) { it.fail(id, error.code, background) }
     }
-    catch (_: IllegalArgumentException) { state.links(true) { it.fail(id, "INVALID_INPUT") } }
-    catch (_: Exception) { state.links(true) { it.fail(id, "NETWORK") } }
+    catch (_: IllegalArgumentException) { state.links(true) { it.fail(id, "INVALID_INPUT", background) } }
+    catch (_: Exception) { state.links(true) { it.fail(id, "NETWORK", background) } }
   }
   private fun matches(job: CalendarLinkOperation, event: JSONObject, fields: JSONObject): Boolean {
-    val target = JSONObject(if (job.kind == "ImportCalendarEvent") job.remote else job.desired)
-    return CalendarLinkMapper.equal(fields, target) && (!job.disableReminders ||
+    val target = state.links { it.agreementTarget(job) }
+    return CalendarLinkMapper.equal(CalendarLinkMapper.mainFields(fields), CalendarLinkMapper.mainFields(target)) && (!job.disableReminders ||
       event.optJSONObject("reminders")?.let { !it.optBoolean("useDefault", true) && (it.optJSONArray("overrides")?.length() ?: 0) == 0 } == true)
   }
 }

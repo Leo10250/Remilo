@@ -29,6 +29,9 @@ class CalendarLinkTest {
   private val now = 1_800_000_000_000L
   private var event = JSONObject()
   private var patches = 0
+  private val resourceEvents = mutableMapOf<String, JSONObject>()
+  private var allowInsert = false
+  private var inserts = 0
   private var loseReply = false
   private var patchFailure: String? = null
   private var beforeEvent: (() -> Unit)? = null
@@ -44,20 +47,25 @@ class CalendarLinkTest {
     override fun calendar(token: String, id: String) = calendar
     override fun event(token: String, calendarId: String, eventId: String): JSONObject? {
       beforeEvent?.invoke()
-      return JSONObject(event.toString())
+      return (if (eventId == event.optString("id")) event else resourceEvents[eventId])?.let { JSONObject(it.toString()) }
     }
     override fun lookup(token: String, calendarId: String, eventId: String): CalendarEventLookup =
-      lookupResult ?: CalendarEventLookup.Found(event(token, calendarId, eventId)!!)
-    override fun insert(token: String, calendarId: String, payload: String): JSONObject = throw AssertionError("Import never inserts in Google")
+      lookupResult ?: event(token, calendarId, eventId)?.let { CalendarEventLookup.Found(it) } ?: CalendarEventLookup.Missing
+    override fun insert(token: String, calendarId: String, payload: String): JSONObject {
+      check(allowInsert) { "Import never inserts in Google" }
+      inserts++; val result = JSONObject(payload).put("etag", "insert-$inserts")
+      resourceEvents[result.getString("id")] = result; return JSONObject(result.toString())
+    }
     override fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): JSONObject {
       patches++
       patchFailure?.let { throw CalendarFailure(it) }
-      if (event.getString("etag") != etag) throw CalendarFailure("STALE_REMOTE")
+      val target = if (eventId == event.optString("id")) event else resourceEvents[eventId] ?: throw CalendarFailure("REMOTE_UNAVAILABLE")
+      if (target.getString("etag") != etag) throw CalendarFailure("STALE_REMOTE")
       val patch = JSONObject(payload)
-      patch.keys().forEach { event.put(it, patch.get(it)) }
-      event.put("etag", "after-$patches")
+      patch.keys().forEach { target.put(it, patch.get(it)) }
+      target.put("etag", "after-$patches")
       if (loseReply) { loseReply = false; throw CalendarFailure("NETWORK") }
-      return JSONObject(event.toString())
+      return JSONObject(target.toString())
     }
   }
   @Before fun setup() {
@@ -80,7 +88,7 @@ class CalendarLinkTest {
       override fun canSchedule() = allowed
       override fun register(alert: AlertRecord) {}
       override fun cancel(alert: AlertRecord) {}
-    }, { now }, calendarCheckpoint = { point -> if (checkpoint == point) { checkpoint = null; throw IllegalStateException("synthetic crash") } })
+    }, { now }, calendarCheckpoint = { point -> if (checkpoint == point) { checkpoint = null; throw IllegalStateException("synthetic crash") } }, calendarOpportunity = {})
   }
   @After fun teardown() { engine.close() }
   private fun <T> native(block: () -> T): T {
@@ -94,7 +102,7 @@ class CalendarLinkTest {
     try { return future.get(10, TimeUnit.SECONDS) } catch (e: ExecutionException) { throw e.cause!! }
   }
   private fun importCommand(mode: String = "None", suppress: Boolean = false): Map<String, Any?> {
-    val preview = store { it.preview(calendar, event, null, mapOf("mode" to mode, "disableReminders" to suppress), 0) }
+    val preview = store { it.preview(calendar, event, null, mapOf("mode" to mode, "disableReminders" to suppress, "automaticSync" to false), 0) }
     return mapOf("kind" to "ImportCalendarEvent", "operationId" to UUID.randomUUID().toString(), "previewId" to preview["previewId"])
   }
   private fun capture(command: Map<String, Any?>): CalendarLinkOperation {
@@ -112,6 +120,11 @@ class CalendarLinkTest {
       mapOf("previewId" to next["previewId"], "choices" to mapOf("mode" to mode))))
   }
   private fun occurrence(id: String) = native { engine.occurrence(id)!! }
+  private fun assertSuspendedWithoutLocalChange(before: Map<String, Any?>, id: String) {
+    val after = occurrence(id)
+    val suspension = mapOf("kind" to "CalendarSuspended", "atMs" to now, "targetMs" to null, "groups" to emptyList<String>())
+    assertEquals(before + mapOf("history" to ((before["history"] as List<*>) + suspension)), after)
+  }
   private fun update(id: String, selection: Map<String, String> = mapOf("title" to "google", "notes" to "remilo", "schedule" to "google")): CalendarLinkOperation {
     val gen = (occurrence(id)["generation"] as Number).toLong()
     val preview = store { it.preview(calendar, event, id, emptyMap(), gen) }
@@ -122,6 +135,77 @@ class CalendarLinkTest {
     val revision = occurrence(id)["revision"]
     native { engine.apply(fields + mapOf("kind" to "Edit", "operationId" to UUID.randomUUID().toString(), "occurrenceId" to id, "expectedRevision" to revision)) }
   }
+  @Test fun recurringImportUsesNativeSeriesAndRetainedFamilyIdentity() {
+    event.put("recurrence", JSONArray().put("RRULE:FREQ=DAILY;COUNT=4"))
+    val job = capture(importCommand("Alarm")); run(job)
+    assertEquals("Confirmed", store { it.operation(job.operationId)!!.state })
+    val initial = native { engine.getSeries(job.occurrenceId)!! }
+    assertEquals(3, (initial["upcoming"] as List<*>).size)
+    assertEquals(1, native { engine.queryRepeatFamilies().size })
+    event.put("summary", "Google family title")
+    val preview = store { it.preview(calendar, event, job.occurrenceId, emptyMap(), 0) }
+    val edit = capture(mapOf("kind" to "ApplyCalendarResolution", "operationId" to "family-title", "previewId" to preview["previewId"],
+      "selections" to mapOf("title" to "google", "notes" to "google", "schedule" to "google")))
+    run(edit)
+    assertEquals("Google family title", store { it.record(job.occurrenceId)!!.title })
+    assertEquals(initial["id"], native { engine.getSeries(job.occurrenceId)!!["id"] })
+    assertEquals(1, native { engine.queryRepeatFamilies().size }); assertEquals(0, patches)
+  }
+  @Test fun movedRecurringInstanceUsesOriginalIdentityAndAtomicSchedulingOutbox() {
+    event.put("recurrence", JSONArray().put("RRULE:FREQ=DAILY;COUNT=4"))
+    val nominal = java.time.LocalDateTime.ofInstant(Instant.ofEpochMilli(now + 3_600_000), java.time.ZoneOffset.UTC).toString()
+    val moved = JSONObject(event.toString()).also { it.remove("recurrence") }.put("summary", "Moved instance")
+    moved.getJSONObject("start").put("dateTime", Instant.ofEpochMilli(now + 7_200_000).toString())
+    moved.getJSONObject("end").put("dateTime", Instant.ofEpochMilli(now + 9_000_000).toString())
+    event.put("remiloInstances", JSONArray().put(JSONObject().put("eventId", "actual-instance").put("etag", "instance-etag")
+      .put("nominalSlot", nominal).put("fields", CalendarLinkMapper.fields(moved, "UTC"))))
+    val review = store { it.preview(calendar, event, null, emptyMap(), 0) }
+    assertEquals(now + 7_200_000, ((review["upcoming"] as List<*>).first() as Map<*, *>)["eventStartMs"])
+    val job = capture(importCommand("Alarm")); checkpoint = "afterLocalCommit"; run(job)
+    assertTrue(store { it.operation(job.operationId)!!.localApplied })
+    engine.close(); open(); run(job)
+    assertEquals("Confirmed", store { it.operation(job.operationId)!!.state })
+    val id = UUID.nameUUIDFromBytes("remilo:${job.occurrenceId}:$nominal".toByteArray()).toString()
+    val row = occurrence(id)
+    assertEquals(nominal, row["nominalSlot"]); assertEquals("Moved instance", row["title"])
+    assertEquals(now + 7_200_000, row["nextAlertMs"]); assertEquals("Scheduled", row["deliveryState"])
+    assertEquals(1, native { engine.queryRepeatFamilies().size }); assertEquals(0, patches)
+  }
+  @Test fun cancellingExistingRecurringInstancePreservesItsLocalContentAndDelivery() {
+    event.put("recurrence", JSONArray().put("RRULE:FREQ=DAILY;COUNT=4"))
+    val job = capture(importCommand("Alarm")); run(job)
+    val nominal = java.time.LocalDateTime.ofInstant(Instant.ofEpochMilli(now + 3_600_000), java.time.ZoneOffset.UTC).toString()
+    val id = UUID.nameUUIDFromBytes("remilo:${job.occurrenceId}:$nominal".toByteArray()).toString()
+    val before = occurrence(id)
+    event.put("remiloInstances", JSONArray().put(JSONObject().put("eventId", "cancelled-instance").put("nominalSlot", nominal).put("cancelled", true)))
+    val preview = store { it.preview(calendar, event, job.occurrenceId, emptyMap(), 0) }
+    val update = capture(mapOf("kind" to "ApplyCalendarResolution", "operationId" to "cancelled-instance-review", "previewId" to preview["previewId"],
+      "selections" to mapOf("title" to "google", "notes" to "google", "schedule" to "google")))
+    run(update)
+    assertSuspendedWithoutLocalChange(before, id); assertFalse(store { it.operation(update.operationId)!!.localApplied }); assertEquals(0, patches)
+  }
+  @Test fun followingEditCapturesSeparateMastersAndRecoversParentAcknowledgementOnce() {
+    event.put("recurrence", JSONArray().put("RRULE:FREQ=DAILY;COUNT=4"))
+    val original = capture(importCommand("Alarm")); run(original)
+    val next = now + 3_600_000 + 86_400_000
+    val nominal = java.time.LocalDateTime.ofInstant(Instant.ofEpochMilli(next), java.time.ZoneOffset.UTC).toString()
+    val series = native { engine.getSeries(original.occurrenceId)!! }
+    val changed = native { engine.apply(mapOf("kind" to "EditFollowing", "operationId" to "following-local", "segmentId" to original.occurrenceId,
+      "expectedRevision" to series["revision"], "nominalSlot" to nominal, "eventStartMs" to next + 1_800_000,
+      "eventEndMs" to next + 3_600_000, "recurrence" to mapOf("frequency" to "daily", "count" to 3, "zoneMode" to "pinned"))) }
+    assertNotEquals("Rejected", changed["status"])
+    val preview = store { it.preview(calendar, event, original.occurrenceId, emptyMap(), 0) }
+    val job = capture(mapOf("kind" to "ApplyCalendarResolution", "operationId" to "following-google", "previewId" to preview["previewId"],
+      "selections" to mapOf("title" to "remilo", "notes" to "remilo", "schedule" to "remilo")))
+    assertEquals(1, store { it.resourceJobs(job.operationId).size })
+    allowInsert = true; loseReply = true; run(job); assertFalse(store { it.operation(job.operationId)!!.state == "Confirmed" })
+    engine.close(); open(); run(job)
+    assertEquals("Confirmed", store { it.operation(job.operationId)!!.state })
+    assertEquals(1, patches); assertEquals(1, inserts)
+    assertTrue(store { it.resourceJobs(job.operationId).single().confirmed })
+    assertEquals(1, native { engine.queryRepeatFamilies().size })
+    assertEquals(2, store { it.resources(original.occurrenceId).count { row -> row.nominalSlot.isEmpty() } })
+  }
   @Test fun confirmedCancellationKeepsExactAlarmSnoozeAndContentAcrossRestartAndFailedCheck() {
     val job = capture(importCommand("Alarm")); run(job); val id = job.occurrenceId
     val generation = occurrence(id)["generation"]
@@ -130,12 +214,12 @@ class CalendarLinkTest {
     val before = occurrence(id)
     val deleted = JSONObject().put("id", job.eventId).put("status", "cancelled")
     store { it.observe(it.guard(id), calendar, CalendarEventLookup.Found(deleted)) }
-    assertEquals(before, occurrence(id)); assertEquals(0, patches)
+    assertSuspendedWithoutLocalChange(before, id); assertEquals(0, patches)
     engine.close(); open()
     assertEquals("Deleted", store { it.link(id)!!.availability })
     store { it.observedFailure(id, "NETWORK", it.guard(id)) }
     assertEquals("Deleted", store { it.link(id)!!.availability }); assertEquals("NETWORK", store { it.link(id)!!.lastCheckErrorCode })
-    assertEquals(before, occurrence(id))
+    assertSuspendedWithoutLocalChange(before, id)
   }
   @Test fun ambiguousMissingAndUnsupportedEventsNeverBecomeDeletionNotices() {
     val id = imported().occurrenceId; val before = occurrence(id)
@@ -144,7 +228,7 @@ class CalendarLinkTest {
     val meeting = JSONObject(event.toString()).put("attendees", JSONArray().put(JSONObject().put("email", "guest@example.test")))
     store { it.observe(it.guard(id), calendar, CalendarEventLookup.Found(meeting)) }
     assertEquals("Unsupported", store { it.link(id)!!.availability }); assertEquals("MEETING_EVENT", store { it.link(id)!!.availabilityReason })
-    assertEquals(before, occurrence(id))
+    assertSuspendedWithoutLocalChange(before, id)
   }
   @Test fun remoteRestorationRequiresFreshResolutionAndDoesNotAdvanceBaselineOnCheckOrPreview() {
     val id = imported().occurrenceId; val baseline = store { it.link(id)!!.baseline }
@@ -191,13 +275,13 @@ class CalendarLinkTest {
     val id = imported().occurrenceId; edit(id, mapOf("notes" to "Local notes")); val job = update(id)
     event = JSONObject().put("id", job.eventId).put("status", "cancelled")
     val before = occurrence(id); run(job)
-    assertEquals("Deleted", store { it.link(id)!!.availability }); assertEquals(before, occurrence(id)); assertEquals(0, patches)
+    assertEquals("Deleted", store { it.link(id)!!.availability }); assertSuspendedWithoutLocalChange(before, id); assertEquals(0, patches)
     assertEquals("Cancelled", store { it.operation(job.operationId)!!.state })
   }
   @Test fun runnerMissingResponseSuspendsWithoutDeletingOrApplyingLocalFields() {
     val id = imported().occurrenceId; event.put("summary", "Unseen Google title"); val job = update(id)
     val before = occurrence(id); lookupResult = CalendarEventLookup.Missing; run(job)
-    assertEquals("Unavailable", store { it.link(id)!!.availability }); assertEquals(before, occurrence(id)); assertEquals(0, patches)
+    assertEquals("Unavailable", store { it.link(id)!!.availability }); assertSuspendedWithoutLocalChange(before, id); assertEquals(0, patches)
   }
   @Test fun deletionDuringConditionalPatchPreservesApprovedLocalPhaseAndRecordsCancellation() {
     val id = imported().occurrenceId; event.put("summary", "Google changed")

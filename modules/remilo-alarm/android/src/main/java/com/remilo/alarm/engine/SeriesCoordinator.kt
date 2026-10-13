@@ -14,6 +14,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   private val operational: OperationalDatabase, private val scheduler: AlarmRegistrar,
   private val now: () -> Long, private val register: (AlertRecord) -> AlertRecord) {
   private val alerts get() = operational.records()
+  data class CalendarUpdate(val segment: SeriesRecord, val record: ReminderRecord, val rule: RecurrenceRule)
   private fun unlocked() = context.getSystemService(UserManager::class.java).isUserUnlocked
   private fun zone() = ZoneId.systemDefault()
   private fun scheduledAt(slot: ResolvedSlot, mode: String): Long =
@@ -64,6 +65,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     }.toList()
   }
   private fun occurrenceId(segment: String, nominal: String) = UUID.nameUUIDFromBytes("remilo:$segment:$nominal".toByteArray()).toString()
+  fun calendarOccurrence(segmentId: String, nominal: String): ReminderRecord =
+    resolveRecord(requireNotNull(db().records().series(segmentId)), nominal, occurrenceId(segmentId, nominal))
   private fun resolveRecord(segment: SeriesRecord, nominal: String, id: String, resolvedZone: String = ""): ReminderRecord {
     val original = template(segment)
     val rule = RuleCodec.decode(segment.rule)
@@ -147,18 +150,20 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     return mapOf("template" to BackupCodec.record(editTemplate(id, nominal)),
       "remainingCount" to rule.count?.let { it - selected!!.index + 1 })
   }
-  fun create(operation: String, record: ReminderRecord, spec: Map<String, Any?>): Map<String, Any?> {
+  fun create(operation: String, record: ReminderRecord, spec: Map<String, Any?>, allocatedId: String? = null,
+    checkpoint: () -> Unit = {}, afterCommit: () -> Unit = {}, calendarRule: RecurrenceRule? = null): Map<String, Any?> {
     val dao = db().records()
     dao.receipt(operation)?.let {
       require(it.kind == "CreateSeries"); recover(); return mapOf("status" to "Applied", "segmentId" to it.occurrenceId)
     }
-    val rule = rule(record, spec)
+    val rule = rule(record, spec).let { if (calendarRule == null) it else it.copy(endExclusive = calendarRule.endExclusive) }
     require(Recurrence.future(rule, now(), zone(), record.mode).any()) { "No future occurrences. Change the rule or its ending." }
-    val id = UUID.randomUUID().toString()
+    val id = allocatedId ?: UUID.randomUUID().toString()
     val series = SeriesRecord(id, id, encodeTemplate(record), RuleCodec.encode(rule), createdAtMs = now())
     db().runInTransaction {
-      dao.series(series); dao.pendingSeries(PendingSeries(operation, id)); dao.receipt(CreationReceipt(operation, id, "CreateSeries"))
+      dao.series(series); dao.pendingSeries(PendingSeries(operation, id)); dao.receipt(CreationReceipt(operation, id, "CreateSeries")); checkpoint()
     }
+    afterCommit()
     recover()
     return response(id)
   }
@@ -167,6 +172,39 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       alerts.all().any { it.segmentId == id && it.state == "Scheduled" } -> "Scheduled"
       else -> "Applied" },
     "segmentId" to id)
+  fun calendarStatus(id: String): Map<String, Any?> = response(id)
+  /** Calendar keeps its original segment/nominal identities when editing a master. */
+  fun calendarSchedule(operation: String, segment: SeriesRecord, record: ReminderRecord,
+    rule: RecurrenceRule, checkpoint: () -> Unit, afterCommit: () -> Unit,
+    additional: List<CalendarUpdate> = emptyList()): Map<String, Any?> {
+    val updates = listOf(CalendarUpdate(segment, record, rule)) + additional
+    updates.forEach { update -> require(Recurrence.future(update.rule, now(), zone(), update.record.mode).any()) { "No future occurrences." } }
+    updates.forEach { update ->
+      if (update.segment.rule != RuleCodec.encode(update.rule) ||
+        !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(template(update.segment)).get("schedule"),
+          com.remilo.alarm.calendar.CalendarLinkMapper.fields(update.record).get("schedule"))) fence(update.segment)
+    }
+    db().runInTransaction {
+      updates.forEach { update ->
+        db().records().series(update.segment.copy(template = encodeTemplate(update.record), rule = RuleCodec.encode(update.rule), revision = update.segment.revision + 1))
+        db().records().pendingSeries(PendingSeries("$operation:${update.segment.id}", update.segment.id))
+      }
+      db().records().receipt(CreationReceipt(operation, segment.id, "CalendarSeriesSchedule")); checkpoint()
+    }
+    afterCommit(); recover(); return response(segment.id)
+  }
+  fun calendarMetadata(operation: String, segment: SeriesRecord, record: ReminderRecord,
+    checkpoint: () -> Unit, afterCommit: () -> Unit): Map<String, Any?> {
+    val dao = db().records()
+    db().runInTransaction {
+      dao.series(segment.copy(template = encodeTemplate(record), revision = segment.revision + 1))
+      dao.all().filter { it.segmentId == segment.id && !it.exception && !it.completed && !it.deleted && !it.skipped }.forEach {
+        dao.update(it.copy(title = record.title, notes = record.notes, revision = it.revision + 1))
+      }
+      dao.receipt(CreationReceipt(operation, segment.id, "CalendarSeriesMetadata")); checkpoint()
+    }
+    afterCommit(); return response(segment.id)
+  }
   private fun fence(series: SeriesRecord, from: LocalDateTime? = null) {
     alerts.plan(series.id)?.let { alerts.plan(it.copy(state = "Changing")) }
     val rule = RuleCodec.decode(series.rule)
@@ -177,7 +215,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       try { scheduler.cancel(alert) } catch (_: Exception) { /* fenced */ }
     }
   }
-  fun mutate(operation: String, command: Map<String, Any?>, record: ReminderRecord? = null): Map<String, Any?> {
+  fun mutate(operation: String, command: Map<String, Any?>, record: ReminderRecord? = null,
+    checkpoint: () -> Unit = {}, afterCommit: () -> Unit = {}): Map<String, Any?> {
     val dao = db().records()
     val kind = command["kind"] as String
     val id = command["segmentId"] as? String ?: error("Choose a series.")
@@ -209,7 +248,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       }
       related.forEach { dao.pendingSeries(PendingSeries("$operation:${it.id}", it.id)) }
       dao.receipt(CreationReceipt(operation, nextId, kind, id))
+      checkpoint()
     }
+    afterCommit()
     recover(); return response(nextId)
   }
   /** Recover CE intents when unlocked; protected rules remain sufficient when locked. */
@@ -235,7 +276,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
             private.vibration, (dao.settings() ?: SettingsRecord()).snoozeMinutes, rule.zone(zone()).id,
             alerts.plan(id)?.materializedThrough))
           alerts.all().filter { it.segmentId == id && it.state == "SeriesChanging" }.forEach { alert ->
-            val replaced = series.state == "Archived" || (rule.endExclusive != null && LocalDateTime.parse(alert.nominalSlot) >= rule.endExclusive)
+            val nominal = LocalDateTime.parse(alert.nominalSlot)
+            val belongs = Recurrence.future(rule, now(), zone(), private.mode).takeWhile { it.nominal <= nominal }.any { it.nominal == nominal }
+            val replaced = series.state == "Archived" || !belongs || (rule.endExclusive != null && nominal >= rule.endExclusive)
             alerts.put(alert.copy(state = when { replaced -> "Replaced"; series.state == "Paused" -> "Paused"; else -> "Pending" }, previousState = null))
           }
         }

@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 
-/** Optional process-lifetime I/O adapter, created only from unlocked foreground requests. */
-class CalendarRuntime private constructor(private val context: Context, private val engine: AlarmEngine) : CalendarStateAccess, CalendarLinkAccess {
+/** Application-context I/O adapter shared by foreground actions and unlocked native workers. */
+class CalendarRuntime private constructor(private val context: Context, private val engine: AlarmEngine) : CalendarAutomaticAccess {
   private val io = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-calendar-io") }
   private val transport = GoogleCalendarTransport()
   private val authorization = GoogleCalendarAuthorization(context)
@@ -21,7 +21,60 @@ class CalendarRuntime private constructor(private val context: Context, private 
     private set
   private val running = ConcurrentHashMap.newKeySet<String>()
   private val cursors = linkedMapOf<String, Pair<String, String>>()
+  private val syncFlights = mutableMapOf<String, CompletableFuture<CalendarRunSummary>>()
+  @Synchronized fun synchronize(background: Boolean, id: String? = null): CompletableFuture<CalendarRunSummary> {
+    val key = id ?: "all"
+    syncFlights[key]?.let { return it }
+    val future = CompletableFuture<CalendarRunSummary>(); syncFlights[key] = future
+    io.execute {
+      try {
+        transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
+        val connection = access { it.connection() }
+        val result = authorized(connection.email) { token -> CalendarAutomaticRunner(this, transport).run(token, background, id) }
+        future.complete(result)
+      } catch (error: Exception) {
+        val code = (error as? CalendarFailure)?.code ?: "NETWORK"
+        if (code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) access(true) { store ->
+          store.links.links().filter { it["syncMode"] == "Automatic" }.forEach { store.sync.issue(it["occurrenceId"] as String, code, background, "Paused") }
+        }
+        future.completeExceptionally(CalendarFailure(code))
+      } finally {
+        transport.deadlineElapsedMs = Long.MAX_VALUE
+        synchronized(this) { syncFlights.remove(key) }
+        access { it.sync.notifications(CalendarReviewNotifications(context)) }
+        CalendarWork.reconcile(context)
+      }
+    }
+    return future
+  }
+  fun activation(ids: List<String>, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
+    io.execute {
+      try {
+        if (ids.isEmpty() || ids.size > 500 || ids.distinct().size != ids.size) throw CalendarFailure("INVALID_INPUT")
+        val connection = access { it.connection() }
+        val items = authorized(connection.email) { token ->
+          if (transport.account(token).subject != connection.subject) throw CalendarFailure("ACCOUNT_MISMATCH")
+          val runner = CalendarAutomaticRunner(this, transport)
+          ids.map { id ->
+            val saved = links { store -> mapOf("title" to store.record(id)?.title, "calendarName" to store.link(id)?.calendarName, "email" to store.link(id)?.accountEmail) }
+            try {
+            val preview = runner.preview(token, id, true)
+            @Suppress("UNCHECKED_CAST") val selections = preview["selections"] as Map<String, String?>
+            val reason = if (selections.values.any { it == null }) "ChangesNeedReview" else preflight(preview["previewId"] as String, selections)
+            saved + mapOf("occurrenceId" to id, "preview" to preview, "excludedReason" to reason?.let { code -> access { it.sync.reason(code) } })
+          }
+            catch (error: CalendarFailure) { saved + mapOf("occurrenceId" to id, "preview" to null, "excludedReason" to access { it.sync.reason(error.code) }) } }
+        }
+        resolve(mapOf("items" to items))
+      } catch (error: Exception) { reject((error as? CalendarFailure)?.code ?: "NETWORK") }
+    }
+  }
   override fun <T> links(write: Boolean, block: (CalendarLinkStore) -> T): T = access(write) { block(it.links) }
+  override fun preflight(previewId: String, selections: Map<String, String?>): String? {
+    val result = CompletableFuture<String?>()
+    engine.request({ engine.calendarPreflight(previewId, selections) }, { result.complete(it as? String) }, { result.completeExceptionally(CalendarFailure(it)) })
+    return result.get(15, TimeUnit.SECONDS)
+  }
   override fun local(operationId: String, connectionRevision: Long): Map<String, Any?> {
     val result = CompletableFuture<Map<String, Any?>>()
     engine.request({ engine.calendarLocal(operationId, connectionRevision) }, { @Suppress("UNCHECKED_CAST") result.complete(it as Map<String, Any?>) },
@@ -29,9 +82,9 @@ class CalendarRuntime private constructor(private val context: Context, private 
     try { return result.get(15, TimeUnit.SECONDS) }
     catch (error: ExecutionException) { throw (error.cause as? CalendarFailure ?: CalendarFailure("NOT_AVAILABLE")) }
   }
-  private fun snapshot(id: String): Map<*, *> {
+  override fun context(id: String): Map<*, *> {
     val result = CompletableFuture<Map<*, *>>()
-    engine.request({ engine.occurrence(id) }, { result.complete(it as? Map<*, *> ?: emptyMap<String, Any>()) },
+    engine.request({ engine.calendarContext(id) }, { result.complete(it as? Map<*, *> ?: emptyMap<String, Any>()) },
       { result.completeExceptionally(CalendarFailure("NOT_FOUND")) })
     return result.get(15, TimeUnit.SECONDS)
   }
@@ -58,7 +111,7 @@ class CalendarRuntime private constructor(private val context: Context, private 
             val queryKey = org.json.JSONArray(listOf(connection.revision, calendarId, from, until, range.first, range.second)).toString()
             val cursor = input["cursor"] as? String
             val pageToken = cursor?.let { cursors[it]?.takeIf { pair -> pair.first == queryKey }?.second ?: throw CalendarFailure("STALE_CURSOR") }
-            val page = transport.events(token, calendarId, range.first, range.second, pageToken)
+            val page = transport.recurringEvents(token, calendarId, range.first, range.second, pageToken)
             val events = page.optJSONArray("items") ?: org.json.JSONArray()
             val items = (0 until events.length()).map { index ->
               val event = events.getJSONObject(index)
@@ -79,7 +132,9 @@ class CalendarRuntime private constructor(private val context: Context, private 
           } else {
             val eventId = old?.eventId ?: publicationJob?.eventId ?: CalendarStore.string(input, "eventId")
             if (id != null && old == null && publicationJob?.state != "Published") throw CalendarFailure("INELIGIBLE")
-            val lookup = transport.lookup(token, calendarId, eventId)
+            val rawLookup = transport.lookup(token, calendarId, eventId)
+            val lookup = if (rawLookup is CalendarEventLookup.Found && rawLookup.event.has("recurrence"))
+              CalendarEventLookup.Found(transport.inspectRecurring(token, calendar, rawLookup.event)) else rawLookup
             if (action == "check") {
               return@authorized links(true) { it.observe(observation ?: throw CalendarFailure("INELIGIBLE"), calendar, lookup) }
             }
@@ -89,10 +144,42 @@ class CalendarRuntime private constructor(private val context: Context, private 
               CalendarEventLookup.Missing -> throw CalendarFailure("REMOTE_UNAVAILABLE")
               CalendarEventLookup.Deleted -> throw CalendarFailure("REMOTE_DELETED")
             }
+            if (id != null && event.has("recurrence")) {
+              val children = links { it.resources(id).filter { resource -> resource.resourceId != "master" && resource.nominalSlot.isEmpty() } }
+              val fields = org.json.JSONArray(); val sources = org.json.JSONArray()
+              children.sortedBy { it.segmentId }.forEach { resource ->
+                val child = (transport.lookup(token, resource.calendarId, resource.eventId) as? CalendarEventLookup.Found)?.event ?: throw CalendarFailure("REMOTE_UNAVAILABLE")
+                if (!CalendarMapper.matching(child, resource.eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
+                val inspectedChild = transport.inspectRecurring(token, calendar, child)
+                val snapshot = CalendarLinkMapper.fields(inspectedChild, calendar.zoneId)
+                fields.put(snapshot); sources.put(org.json.JSONObject().put("segmentId", resource.segmentId).put("eventId", resource.eventId).put("etag", child.getString("etag")).put("fields", snapshot)
+                  .put("instances", inspectedChild.optJSONArray("remiloInstances") ?: org.json.JSONArray()))
+              }
+              val sorted = (0 until fields.length()).map { fields.getJSONObject(it) }.sortedBy { it.getJSONObject("schedule").getLong("eventStartMs") }
+              event.put("remiloSegments", org.json.JSONArray(sorted)).put("remiloSegmentSources", sources)
+            }
             if (event.optString("id") != eventId) throw CalendarFailure("FOREIGN_IDENTITY")
             if (publicationJob != null && !CalendarMapper.matching(event, eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
+            if (id != null && event.has("recurrence")) {
+              val schedule = links { it.fields(id).getJSONObject("schedule") }
+              val nativeInstances = schedule.optJSONArray("exceptions") ?: org.json.JSONArray()
+              val inspected = event.optJSONArray("remiloInstances") ?: org.json.JSONArray()
+              val known = (0 until inspected.length()).map { inspected.getJSONObject(it).getString("nominalSlot") }.toSet()
+              for (index in 0 until nativeInstances.length()) {
+                val nominal = nativeInstances.getJSONObject(index).getString("nominalSlot")
+                if (nominal in known) continue
+                val slot = java.time.LocalDateTime.parse(nominal)
+                val original = if (schedule.getBoolean("allDay")) slot.toLocalDate().toString()
+                  else slot.atZone(java.time.ZoneId.of(schedule.getString("zoneId"))).toInstant().toString()
+                val instance = transport.instance(token, calendar.id, eventId, original) ?: throw CalendarFailure("INSTANCE_REQUIRES_REVIEW")
+                if (instance.optString("recurringEventId") != eventId || CalendarRecurrence.originalSlot(instance, schedule.getString("zoneId")).toString() != nominal)
+                  throw CalendarFailure("FOREIGN_IDENTITY")
+                inspected.put(CalendarRecurringReview(transport).descriptor(instance, schedule.getString("zoneId"), false))
+              }
+              event.put("remiloInstances", inspected)
+            }
             @Suppress("UNCHECKED_CAST") val choices = input["choices"] as? Map<String, Any?> ?: emptyMap()
-            val snapshot = id?.let(::snapshot)
+            val snapshot = id?.let(::context)
             val gen = (snapshot?.get("generation") as? Number)?.toLong() ?: 0
             links(true) {
               if (it.connection().revision != connection.revision) throw CalendarFailure("STALE_CONNECTION")
@@ -124,11 +211,11 @@ class CalendarRuntime private constructor(private val context: Context, private 
         if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("NEEDS_ACCESS")
         if (!retry && connection.revision != job.expectedConnectionRevision) throw CalendarFailure("STALE_CONNECTION")
         authorized(connection.email) { token ->
-          CalendarLinkRunner(this, transport).run(id, token, connection.revision)
+          CalendarLinkRunner(this, transport, inspectRecurring = true).run(id, token, connection.revision)
           if (links { it.operation(id)?.state } == "NeedsAccess") try { authorization.clear(token) } catch (_: Exception) { /* Visible recovery. */ }
         }
       } catch (error: Exception) { links(true) { it.fail(id, (error as? CalendarFailure)?.code ?: "NEEDS_ACCESS") } }
-      finally { running.remove(id) }
+      finally { running.remove(id); CalendarWork.reconcile(context, opportunity = true) }
     }
   }
   override fun <T> access(write: Boolean, block: (CalendarStore) -> T): T {
@@ -159,7 +246,7 @@ class CalendarRuntime private constructor(private val context: Context, private 
           if (linkJob != null) {
             if (account.subject != linkJob.subject) throw CalendarFailure("ACCOUNT_MISMATCH")
             access(true) { it.connect(account, expectedRevision) }
-            CalendarLinkRunner(this, transport).run(publicationId, token, links { it.connection().revision })
+            CalendarLinkRunner(this, transport, inspectRecurring = true).run(publicationId, token, links { it.connection().revision })
             done(true); return@execute
           }
           val job = access { it.operation(publicationId) } ?: throw CalendarFailure("NOT_FOUND")

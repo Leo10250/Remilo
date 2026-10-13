@@ -29,7 +29,8 @@ data class CalendarLinkOperation(@PrimaryKey val operationId: String, val occurr
   val draft: String, val patch: String, val disableReminders: Boolean, val state: String = "Waiting",
   val localApplied: Boolean = false, val remoteAttempted: Boolean = false,
   val localStatus: String = "", val message: String = "Confirmed request saved. Continue this operation.",
-  val erased: Boolean = false, val htmlLink: String = "")
+  val erased: Boolean = false, val htmlLink: String = "",
+  @ColumnInfo(defaultValue = "0") val mainConfirmed: Boolean = false)
 
 @Dao interface CalendarLinkDao {
   @Query("SELECT * FROM calendar_links") fun links(): List<CalendarLink>

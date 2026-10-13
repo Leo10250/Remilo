@@ -36,7 +36,8 @@ class AlarmEngine internal constructor(private val context: Context,
   private val completionCheckpoint: (String) -> Unit = {},
   private val bulkSnoozeCheckpoint: (String) -> Unit = {},
   private val purgeCheckpoint: (String) -> Unit = {},
-  private val calendarCheckpoint: (String) -> Unit = {}) {
+  private val calendarCheckpoint: (String) -> Unit = {},
+  private val calendarOpportunity: (() -> Unit)? = null) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
@@ -123,7 +124,21 @@ class AlarmEngine internal constructor(private val context: Context,
       }
     } catch (_: RejectedExecutionException) { finished() /* detached native callback after close */ }
   }
-  private fun changed() { listeners.forEach { try { it() } catch (_: Exception) { /* detached bridge */ } } }
+  private fun changed(calendarOpportunity: Boolean = false) {
+    listeners.forEach { try { it() } catch (_: Exception) { /* detached bridge */ } }
+    if (unlocked()) calendarStore?.sync?.notifications(com.remilo.alarm.calendar.CalendarReviewNotifications(context))
+    if (calendarOpportunity) calendarStore?.let { store -> store.sync.wakeDeferred { id ->
+      alerts.find(id)?.sessionId != null || alerts.all().any { it.segmentId in store.links.segments(id).map { segment -> segment.id } && it.sessionId != null }
+    } }
+    if (calendarOpportunity) this.calendarOpportunity?.invoke() ?: com.remilo.alarm.calendar.CalendarWork.reconcile(context, opportunity = true, owner = this)
+    else if (this.calendarOpportunity == null && unlocked() && calendarStore != null)
+      com.remilo.alarm.calendar.CalendarWork.reconcile(context, owner = this)
+  }
+  private fun calendarFieldsChanged(old: ReminderRecord, updated: ReminderRecord): Boolean = runCatching {
+    !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old),
+      com.remilo.alarm.calendar.CalendarLinkMapper.fields(updated))
+  }.getOrElse { old.title != updated.title || old.notes != updated.notes || old.eventStartMs != updated.eventStartMs ||
+    old.eventEndMs != updated.eventEndMs || old.allDay != updated.allDay || old.zoneId != updated.zoneId }
   fun observe(listener: () -> Unit): AutoCloseable {
     listeners.add(listener)
     return AutoCloseable { listeners.remove(listener) }
@@ -226,9 +241,23 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun occurrence(id: String): Map<String, Any?>? {
     val db = prepareContentActions()
-    return db.records().find(id)?.let { view(it) + ("history" to db.records().history(id).map { history ->
-      mapOf("kind" to history.kind, "atMs" to history.occurredAtMs, "targetMs" to history.targetMs)
-    }) }
+    return db.records().find(id)?.let { record ->
+      val family = record.segmentId?.let { db.records().series(it)?.seriesId }
+      val association = db.links().links().firstOrNull { it.occurrenceId == id || family != null && calendarStore().links.currentSeries(it.occurrenceId)?.seriesId == family }?.occurrenceId ?: id
+      val history = db.records().history(id).map { mapOf<String, Any?>("kind" to it.kind, "atMs" to it.occurredAtMs, "targetMs" to it.targetMs) } + calendarStore().sync.activity(association)
+      view(record) + ("history" to history.sortedBy { (it["atMs"] as Number).toLong() })
+    }
+  }
+  fun calendarContext(id: String): Map<String, Any?>? {
+    occurrence(id)?.let { return it }
+    val store = calendarStore().links
+    val segment = store.currentSeries(id) ?: return null
+    val record = store.record(id) ?: return null
+    val segments = content().records().series().filter { it.seriesId == segment.seriesId }.map { it.id }.toSet()
+    val deliveries = alerts.all().filter { it.segmentId in segments && it.state !in setOf("Completed", "Deleted", "Skipped", "Replaced") }
+    val target = deliveries.filter { it.targetMs > now() }.minByOrNull { it.targetMs }
+    return view(record) + mapOf("calendarSeriesId" to segment.seriesId, "history" to calendarStore().sync.activity(id), "nextAlertMs" to target?.targetMs,
+      "alarmAtMs" to (target?.targetMs ?: record.definedAlarmAtMs), "deliveryState" to (target?.state ?: if (segment.state == "Paused") "Paused" else "NoAlert"))
   }
   private fun collectionKind(record: ReminderRecord): String? =
     when { record.deleted -> "Delete"; record.completed -> "Done"; record.skipped -> "Skip"; else -> null }
@@ -264,6 +293,7 @@ class AlarmEngine internal constructor(private val context: Context,
       "vibration" to record.vibration, "overdue" to overdue(record, queryNow), "overdueAtMs" to overdueAt(record),
       "quickSnoozeMinutes" to (alert?.snoozeMinutes ?: (content().records().settings() ?: SettingsRecord()).snoozeMinutes),
       "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
+      "seriesId" to segment?.seriesId,
       "seriesState" to segment?.state, "repeatSummary" to repeat, "repeatRule" to repeatRule,
       "alertAdjustment" to when (adjustment) { "Snooze" -> "Snoozed"; "Postpone" -> "Postponed"; else -> null },
       "agendaGroup" to com.remilo.alarm.core.Agenda.group(agendaAt(record, alert), overdueAt(record), record.completed,
@@ -377,13 +407,14 @@ class AlarmEngine internal constructor(private val context: Context,
     if (!affectsDelivery) {
       db.runInTransaction {
         db.records().update(record)
+        if (kind == "Edit" && !preserveAdjustment && calendarFieldsChanged(old, record)) calendarStore().sync.authored(id)
         db.records().receipt(CreationReceipt(operation, id, kind))
         db.records().history(HistoryRecord(operation, id, kind, now(), previous?.generation ?: 0))
         checkpoint()
       }
       previous?.sessionId?.let { RingingService.refresh(context, it) }
       if (record.segmentId != null) { previous?.let { alerts.put(it.copy(exception = record.exception)) }; series.replenish(); series.materialize() }
-      afterCommit(); changed(); return result(id)
+      afterCommit(); changed(calendarOpportunity = !preserveAdjustment && kind == "Edit" && calendarFieldsChanged(old, record)); return result(id)
     }
     val generation = maxOf(previous?.generation ?: 0, db.records().pending().filter { it.occurrenceId == id }.maxOfOrNull { it.generation } ?: 0) + 1
     // Fence first. If the CE commit is interrupted, Changing is recovered from
@@ -396,8 +427,10 @@ class AlarmEngine internal constructor(private val context: Context,
     }
     db.runInTransaction {
       db.records().update(record)
+      if (kind == "Edit" && !preserveAdjustment && calendarFieldsChanged(old, record)) calendarStore().sync.authored(id)
       if (kind == "Delete") calendarStore().removed(id, false)
       if (kind in setOf("Done", "Skip")) calendarStore().links.terminal(id)
+      if (kind in setOf("UndoDelete", "Reopen")) calendarStore().links.restored(id)
       db.records().pending(projection(operation, record, generation).copy(
         targetMs = if (preserveAdjustment && previous != null && previous.targetMs > now() &&
           previous.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)) previous.targetMs
@@ -408,7 +441,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
     afterCommit()
     AlarmNotifications(context).clearAttention(id)
-    applyPending(db); series.replenish(); series.materialize(); changed()
+    applyPending(db); series.replenish(); series.materialize(); changed(calendarOpportunity = !preserveAdjustment && kind == "Edit" && calendarFieldsChanged(old, record))
     return result(id)
   }
   private fun purge(operation: String, command: Map<String, Any?>): Map<String, Any?> {
@@ -724,16 +757,23 @@ class AlarmEngine internal constructor(private val context: Context,
         if (command["kind"] == "EditFollowing") validate(command["nominalSlot"] is String,
           "nominalSlot", "Choose an original occurrence.")
         try {
+          var calendarEdited = false
           val result = when (command["kind"]) {
             "CreateSeries" -> series.create(operationId, draft(command, "template"), command["recurrence"] as Map<String, Any?>)
             "EditSeries", "EditFollowing" -> {
               val old = series.editTemplate(command["segmentId"] as String,
                 if (command["kind"] == "EditFollowing") command["nominalSlot"] as String else null)
-              series.mutate(operationId, command, draft(command, "template", old))
+              val id = command["segmentId"] as String
+              val prior = runCatching { calendarStore().links.fields(id) }.getOrNull()
+              series.mutate(operationId, command, draft(command, "template", old), checkpoint = {
+                val current = runCatching { calendarStore().links.fields(id) }.getOrNull()
+                calendarEdited = !com.remilo.alarm.calendar.CalendarLinkMapper.equal(prior, current)
+                if (calendarEdited) calendarStore().sync.authored(id)
+              })
             }
             else -> series.mutate(operationId, command)
           }
-          changed(); result
+          changed(calendarOpportunity = calendarEdited); result
         } catch (error: InputError) { throw error }
         catch (_: IllegalArgumentException) { mapOf("status" to "Rejected", "errorCode" to "INVALID_RECURRENCE", "errorField" to "recurrence",
           "errorMessage" to "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.") }
@@ -767,6 +807,56 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   fun testAlarm(operationId: String): Map<String, Any?> = apply(mapOf(
     "kind" to "Create", "operationId" to operationId, "title" to "Remilo test alarm", "alarmAtMs" to now() + 15_000L))
+  fun calendarCapture(command: Map<String, Any?>): Map<String, Any?> {
+    prepareContentActions()
+    val store = calendarStore().links
+    val generation = { id: String -> alerts.find(id)?.generation ?: 0L }
+    val result = if (command["kind"] == "ActivateCalendarLinks") store.captureActivationBatch(command, generation, ::calendarPreflight)
+      else { store.validateGeneration(command, generation); store.capture(command) }
+    changed(); return result
+  }
+  fun calendarPreflight(previewId: String, selections: Map<String, String?>): String? = try {
+    prepareContentActions()
+    val (preview, desired) = calendarStore().links.proposed(previewId, selections)
+    val old = calendarStore().links.record(preview.occurrenceId) ?: throw CalendarFailure("NOT_FOUND")
+    calendarStore().links.active(old)
+    val target = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(desired)), old.id, old)
+    val timingChanged = !com.remilo.alarm.calendar.CalendarLinkMapper.equal(desired.get("schedule"), calendarStore().links.fields(old.id).get("schedule"))
+    if (timingChanged) {
+      val segment = calendarStore().links.currentSeries(old.id)
+      if (alerts.find(old.id)?.sessionId != null || segment != null && alerts.all().any { it.segmentId in calendarStore().links.segments(old.id).map { row -> row.id } && it.sessionId != null }) throw CalendarFailure("RINGING_DEFERRED")
+      val recurring = desired.getJSONObject("schedule").optJSONArray("recurrence")
+      if (recurring == null) {
+        if (target.mode != "None" && target.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
+      } else {
+        val rule = com.remilo.alarm.calendar.CalendarRecurrence.decode(recurring,
+          Instant.ofEpochMilli(target.eventStartMs).atZone(ZoneId.of(target.zoneId)).toLocalDateTime(), target.zoneId, target.allDay,
+          if (target.allDay) 86_400_000 else target.eventEndMs - target.eventStartMs)
+        if (!Recurrence.future(rule, now(), ZoneId.of(target.zoneId), target.mode).any()) throw CalendarFailure("ELAPSED_ALERT")
+        val options = org.json.JSONObject(preview.choices)
+        val job = com.remilo.alarm.calendar.CalendarLinkOperation("preview", old.id, "", "ApplyCalendarResolution", "", preview.subject,
+          preview.calendar.id, preview.eventId, preview.calendar.name, preview.origin, old.revision, preview.generation, preview.linkRevision,
+          preview.connectionRevision, preview.etag, preview.remote, desired.toString(), org.json.JSONObject().put("calendarInstances", options.optJSONArray("instances")).toString(), "{}", false)
+        calendarInstances(job, segment?.id ?: old.id, target, series.rule(target, com.remilo.alarm.calendar.CalendarRecurrence.spec(rule)).copy(endExclusive = rule.endExclusive))
+        val children = options.optJSONArray("resources") ?: org.json.JSONArray()
+        val targets = desired.getJSONObject("schedule").optJSONArray("segments") ?: org.json.JSONArray()
+        for (index in 0 until children.length()) {
+          val source = children.getJSONObject(index); val fields = source.getJSONObject("fields")
+          if (!(0 until targets.length()).any { com.remilo.alarm.calendar.CalendarLinkMapper.equal(targets.get(it), fields) }) continue
+          val child = content().records().series(source.getString("segmentId")) ?: throw CalendarFailure("STALE_PREVIEW")
+          val childTarget = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(fields)), child.id, series.template(child))
+          val schedule = fields.getJSONObject("schedule")
+          val childRule = com.remilo.alarm.calendar.CalendarRecurrence.decode(schedule.getJSONArray("recurrence"),
+            Instant.ofEpochMilli(childTarget.eventStartMs).atZone(ZoneId.of(childTarget.zoneId)).toLocalDateTime(), childTarget.zoneId, childTarget.allDay,
+            if (childTarget.allDay) 86_400_000 else childTarget.eventEndMs - childTarget.eventStartMs)
+          if (!Recurrence.future(childRule, now(), ZoneId.of(childTarget.zoneId), childTarget.mode).any()) throw CalendarFailure("ELAPSED_ALERT")
+          calendarInstances(job.copy(desired = fields.toString(), draft = org.json.JSONObject().put("calendarInstances", source.optJSONArray("instances")).toString()), child.id, childTarget,
+            series.rule(childTarget, com.remilo.alarm.calendar.CalendarRecurrence.spec(childRule)).copy(endExclusive = childRule.endExclusive))
+        }
+      }
+    }
+    null
+  } catch (error: CalendarFailure) { error.code } catch (_: IllegalArgumentException) { "INVALID_INPUT" }
   /** Called only through request(), on the native mutation worker. */
   fun calendarLocal(operationId: String, executionRevision: Long? = null): Map<String, Any?> {
     prepareContentActions()
@@ -774,15 +864,79 @@ class AlarmEngine internal constructor(private val context: Context,
     val job = store.operation(operationId) ?: throw CalendarFailure("NOT_FOUND")
     store.check(job, executionRevision)
     if (job.localApplied) {
+      store.currentSeries(job.occurrenceId)?.let { segment ->
+        applyPending(content()); series.recover(); return series.calendarStatus(segment.id).also { store.localStatus(operationId, it["status"] as String) }
+      }
       applyPending(content())
       return result(job.occurrenceId).also { store.localStatus(operationId, it["status"] as String) }
     }
     if (job.kind != "ImportCalendarEvent") {
       val alert = alerts.find(job.occurrenceId)
-      if ((alert?.generation ?: 0) != job.expectedGeneration || alert?.sessionId != null) throw CalendarFailure("STALE_PREVIEW")
+      if ((alert?.generation ?: 0) != job.expectedGeneration) throw CalendarFailure("STALE_PREVIEW")
+      if (alert?.sessionId != null && !com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule")))
+        throw CalendarFailure("RINGING_DEFERRED")
     }
-    val draft = com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(job.draft))
+    val preparedDraft = com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(job.draft))
     val record = store.record(job.occurrenceId)
+    val recurring = org.json.JSONObject(job.desired).getJSONObject("schedule").optJSONArray("recurrence")
+    if (recurring != null) {
+      val segment = store.currentSeries(job.occurrenceId)
+      if (job.kind != "ImportCalendarEvent" && segment == null) throw CalendarFailure("RECURRENCE_CHANGE_REQUIRES_REVIEW")
+      if (segment != null && !com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule")) &&
+        alerts.all().any { it.segmentId in store.segments(job.occurrenceId).map { row -> row.id } && it.sessionId != null }) throw CalendarFailure("RINGING_DEFERRED")
+      val start = (preparedDraft["eventStartMs"] as Number).toLong()
+      val zone = ZoneId.of(preparedDraft["zoneId"] as String)
+      val rule = com.remilo.alarm.calendar.CalendarRecurrence.decode(recurring,
+        java.time.Instant.ofEpochMilli(start).atZone(zone).toLocalDateTime(), zone.id, preparedDraft["allDay"] == true,
+        if (preparedDraft["allDay"] == true) 86_400_000 else (preparedDraft["eventEndMs"] as Number).toLong() - start)
+      val spec = com.remilo.alarm.calendar.CalendarRecurrence.spec(rule)
+      val target = draft(preparedDraft, segment?.id ?: job.occurrenceId, segment?.let(series::template))
+      val effectiveRule = series.rule(target, spec).copy(endExclusive = rule.endExclusive)
+      val additions = mutableListOf<SeriesCoordinator.CalendarUpdate>()
+      val instances = calendarInstances(job, segment?.id ?: job.occurrenceId, target, effectiveRule).toMutableList()
+      val childSources = org.json.JSONObject(job.draft).optJSONArray("calendarResources") ?: org.json.JSONArray()
+      val childTargets = org.json.JSONObject(job.desired).getJSONObject("schedule").optJSONArray("segments") ?: org.json.JSONArray()
+      if (segment != null && !com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule"))) {
+        for (index in 0 until childSources.length()) {
+          val source = childSources.getJSONObject(index)
+          val childFields = source.getJSONObject("fields")
+          // Only native-captured source identities can receive inbound changes.
+          if (!(0 until childTargets.length()).any { com.remilo.alarm.calendar.CalendarLinkMapper.equal(childTargets.get(it), childFields) }) continue
+          val child = content().records().series(source.getString("segmentId")) ?: throw CalendarFailure("STALE_PREVIEW")
+          val childDraft = com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(childFields))
+          val childRecord = draft(childDraft, child.id, series.template(child))
+          val childSchedule = childFields.getJSONObject("schedule")
+          val childRule = com.remilo.alarm.calendar.CalendarRecurrence.decode(childSchedule.getJSONArray("recurrence"),
+            Instant.ofEpochMilli(childRecord.eventStartMs).atZone(ZoneId.of(childRecord.zoneId)).toLocalDateTime(), childRecord.zoneId, childRecord.allDay,
+            if (childRecord.allDay) 86_400_000 else childRecord.eventEndMs - childRecord.eventStartMs)
+          val appliedRule = series.rule(childRecord, com.remilo.alarm.calendar.CalendarRecurrence.spec(childRule)).copy(endExclusive = childRule.endExclusive)
+          additions.add(SeriesCoordinator.CalendarUpdate(child, childRecord, appliedRule))
+          instances.addAll(calendarInstances(job.copy(desired = childFields.toString(), draft = org.json.JSONObject().put("calendarInstances", source.optJSONArray("instances")).toString()), child.id, childRecord, appliedRule))
+        }
+      }
+      val checkpoint = {
+        instances.forEach { (row, generation) ->
+          val old = content().records().find(row.id)
+          val alert = alerts.find(row.id)
+          val postponed = old != null && alert != null && alert.targetMs > now() && alert.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)
+          if (content().records().find(row.id) == null) content().records().insert(row) else content().records().update(row)
+          if (generation > 0) content().records().pending(projection("$operationId:instance:${row.nominalSlot}", row, generation)
+            .let { if (postponed) it.copy(targetMs = alert!!.targetMs) else it })
+        }
+        store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit")
+      }
+      val after = { calendarCheckpoint("afterLocalCommit"); applyPending(content()) }
+      val result = if (segment == null) series.create(operationId, target, spec, job.occurrenceId, checkpoint, after, rule)
+      else if (com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId), org.json.JSONObject(job.desired))) {
+        content().runInTransaction { content().records().receipt(CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey)); checkpoint() }
+        after(); mapOf("status" to "Applied")
+      } else if (com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule")))
+        series.calendarMetadata(operationId, segment, target, checkpoint, after)
+      else series.calendarSchedule(operationId, segment, target, effectiveRule, checkpoint, after, additions)
+      if (result["status"] == "Rejected") throw CalendarFailure("STALE_PREVIEW")
+      store.localStatus(operationId, result["status"] as String); changed(); return result
+    }
+    if (store.currentSeries(job.occurrenceId) != null) throw CalendarFailure("RECURRENCE_CHANGE_REQUIRES_REVIEW")
     val result = if (record != null && com.remilo.alarm.calendar.CalendarLinkMapper.equal(
         com.remilo.alarm.calendar.CalendarLinkMapper.fields(record), org.json.JSONObject(job.desired))) {
       content().runInTransaction {
@@ -791,14 +945,56 @@ class AlarmEngine internal constructor(private val context: Context,
       }
       calendarCheckpoint("afterLocalCommit")
       result(job.occurrenceId)
-    } else if (job.kind == "ImportCalendarEvent") create(operationId, draft, job.occurrenceId,
+    } else if (job.kind == "ImportCalendarEvent") create(operationId, preparedDraft, job.occurrenceId,
       { calendarCheckpoint("afterLocalCommit") }) { store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit") }
-      else modify(operationId, draft + mapOf("kind" to "Edit", "occurrenceId" to job.occurrenceId,
+      else modify(operationId, preparedDraft + mapOf("kind" to "Edit", "occurrenceId" to job.occurrenceId,
         "expectedRevision" to job.expectedRevision), true,
         { calendarCheckpoint("afterLocalCommit") }) { store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit") }
     if (result["status"] == "Rejected") throw CalendarFailure("STALE_PREVIEW")
     store.localStatus(operationId, result["status"] as String)
     return result
+  }
+  /** Preflight every instance before any CE write or alarm fencing. Delivery-only adjustments remain local. */
+  private fun calendarInstances(job: com.remilo.alarm.calendar.CalendarLinkOperation, segmentId: String,
+    template: ReminderRecord, rule: com.remilo.alarm.core.RecurrenceRule): List<Pair<ReminderRecord, Long>> {
+    val schedule = org.json.JSONObject(job.desired).getJSONObject("schedule")
+    val desired = schedule.optJSONArray("exceptions") ?: org.json.JSONArray()
+    val source = org.json.JSONObject(job.draft).optJSONArray("calendarInstances") ?: org.json.JSONArray()
+    val targets = (0 until desired.length()).map { desired.getJSONObject(it) }.associateBy { it.getString("nominalSlot") }.toMutableMap()
+    content().records().all().filter { it.segmentId == segmentId && it.exception && !it.completed && !it.deleted && !it.skipped &&
+      (it.eventStartMs > now() || (it.definedAlarmAtMs ?: 0) > now()) }.forEach { row ->
+      val nominal = row.nominalSlot ?: return@forEach
+      if (nominal !in targets) {
+        val slot = Recurrence.resolve(rule, java.time.LocalDateTime.parse(nominal), ZoneId.of(template.zoneId))
+        targets[nominal] = org.json.JSONObject().put("nominalSlot", nominal).put("fields", com.remilo.alarm.calendar.CalendarLinkMapper.fields(
+          template.copy(eventStartMs = slot.eventStartMs, eventEndMs = slot.eventEndMs, zoneId = slot.zoneId)))
+      }
+    }
+    for (index in 0 until source.length()) {
+      val row = source.getJSONObject(index); val nominal = row.getString("nominalSlot")
+      if (row.optBoolean("cancelled") && job.kind != "ImportCalendarEvent" && content().records().all().any { it.segmentId == segmentId && it.nominalSlot == nominal && !it.completed && !it.deleted && !it.skipped })
+        throw CalendarFailure("REMOTE_DELETED")
+      if (row.optBoolean("cancelled") && job.kind == "ImportCalendarEvent") targets[nominal] = row
+    }
+    return targets.mapNotNull { (nominal, item) ->
+      val slot = Recurrence.resolve(rule, java.time.LocalDateTime.parse(nominal), ZoneId.of(template.zoneId))
+      val id = UUID.nameUUIDFromBytes("remilo:$segmentId:$nominal".toByteArray()).toString()
+      if (content().records().purged(id) != null) return@mapNotNull null
+      val old = content().records().find(id)
+      if (old?.let { it.completed || it.deleted || it.skipped } == true) return@mapNotNull null
+      val normal = template.copy(id = id, eventStartMs = slot.eventStartMs, eventEndMs = slot.eventEndMs,
+        dueAtMs = slot.dueAtMs, definedAlarmAtMs = slot.alarmAtMs, segmentId = segmentId, nominalSlot = nominal, exception = true)
+      val incoming = if (item.optBoolean("cancelled")) normal.copy(skipped = true) else
+        draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(item.getJSONObject("fields"))), id, old ?: normal)
+          .copy(segmentId = segmentId, nominalSlot = nominal, exception = true)
+      if (old != null && com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old), com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming))) return@mapNotNull null
+      val alert = alerts.find(id)
+      val timingChanged = old == null || !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old).get("schedule"),
+        com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming).get("schedule"))
+      if (timingChanged && alert?.sessionId != null) throw CalendarFailure("RINGING_DEFERRED")
+      if (timingChanged && !incoming.skipped && incoming.mode != "None" && incoming.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
+      incoming to if (timingChanged) (alert?.generation ?: 0) + 1 else 0L
+    }
   }
   private fun create(operationId: String, command: Map<String, Any?>, allocatedId: String? = null,
     afterCommit: () -> Unit = {}, checkpoint: () -> Unit = {}): Map<String, Any?> {
@@ -1242,7 +1438,7 @@ class AlarmEngine internal constructor(private val context: Context,
       }
     }
     members.forEach { AlarmNotifications(context).unresolved(alerts.find(it.occurrenceId)!!) }
-    changed()
+    changed(calendarOpportunity = true)
   }
   fun sessionMembers(sessionId: String, callback: (List<Pair<AlertRecord, String>>) -> Unit) = submit {
     callback(memberViews(sessionId))
@@ -1273,8 +1469,8 @@ class AlarmEngine internal constructor(private val context: Context,
     alerts.all().filter { it.mode == "None" && it.state == "Missed" }.forEach { alerts.put(it.copy(state = "NoAlert")) }
     if (unlocked()) {
       val db = prepareContentActions()
-      series.recover()
       applyPending(db)
+      series.recover()
       alerts.all().filter { it.state == "Changing" }.forEach { alert ->
         db.records().find(alert.occurrenceId)?.let { record ->
           val eligible = !record.completed && !record.deleted && !record.skipped && (alert.previousState == null ||

@@ -73,8 +73,18 @@ class RemiloAlarmModule : Module() {
             @Suppress("UNCHECKED_CAST") val jobs = result["operations"] as List<Map<String, Any?>>
             jobs.forEach { runtime.startLink(CalendarStore.string(it, "operationId"), result["retry"] == true) }
           }, reject)
-        "ImportCalendarEvent", "EnableCalendarLink", "ApplyCalendarResolution" -> engine().calendarRequest(true,
-          { it.links.capture(command) }, { result -> promise.resolve(result); runtime.startLink(CalendarStore.string(command, "operationId")) }, reject)
+        "ImportCalendarEvent", "EnableCalendarLink", "ApplyCalendarResolution", "EnableAutomaticCalendarSync", "ActivateCalendarLinks" -> {
+          val owner = engine()
+          owner.request({ owner.calendarCapture(command) }, { value ->
+            @Suppress("UNCHECKED_CAST") val result = value as Map<String, Any?>
+            promise.resolve(result)
+            if (command["kind"] == "ActivateCalendarLinks") {
+              @Suppress("UNCHECKED_CAST") val jobs = result["operations"] as List<Map<String, Any?>>
+              jobs.forEach { runtime.startLink(CalendarStore.string(it, "operationId"), result["retry"] == true) }
+            } else runtime.startLink(CalendarStore.string(command, "operationId"))
+          }, reject)
+        }
+        "SetCalendarReviewNotifications" -> engine().calendarRequest(true, { it.sync.preference(command) }, { promise.resolve(it) }, reject)
         "RetryCalendarOperation" -> engine().calendarRequest(block = {
           it.links.operation(CalendarStore.string(command, "operationId"))?.let(it.links::view) ?: throw CalendarFailure("NOT_FOUND")
         }, resolve = { promise.resolve(it); runtime.startLink(CalendarStore.string(command, "operationId"), true) }, reject = reject)
@@ -114,6 +124,21 @@ class RemiloAlarmModule : Module() {
     }
     AsyncFunction("getCalendarLinks") { promise: Promise ->
       engine().calendarRequest(block = { it.links.links() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar links unavailable: $it", null) })
+    }
+    AsyncFunction("getCalendarContext") { id: String, promise: Promise -> dispatch(promise) { it.calendarContext(id) } }
+    AsyncFunction("getCalendarSyncSummary") { promise: Promise ->
+      engine().calendarRequest(block = { it.sync.summary() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("getCalendarReviewIssues") { cursor: String?, promise: Promise ->
+      engine().calendarRequest(block = { it.sync.issues(cursor) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewCalendarActivation") { ids: List<String>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).activation(ids, { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("syncCalendarNow") { id: String?, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).synchronize(false, id).whenComplete { result, error ->
+        if (error == null) promise.resolve(result.view()) else { val code = ((error.cause ?: error) as? CalendarFailure)?.code ?: "NETWORK"; promise.reject(code, code, null) }
+      }
     }
     AsyncFunction("getCalendarOperations") { promise: Promise ->
       engine().calendarRequest(block = { it.links.operations() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar operations unavailable: $it", null) })

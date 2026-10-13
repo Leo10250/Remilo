@@ -95,14 +95,38 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
 }
 @Database(entities = [ReminderRecord::class, PendingSchedule::class, CreationReceipt::class,
   HistoryRecord::class, SettingsRecord::class, SeriesRecord::class, PendingSeries::class, ListRecord::class, PurgedOccurrence::class,
-  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class, CalendarLink::class, CalendarLinkOperation::class], version = 9, exportSchema = true)
+  CalendarConnection::class, CalendarBinding::class, CalendarOperation::class, CalendarLink::class, CalendarLinkOperation::class,
+  CalendarResource::class, CalendarResourceJob::class, CalendarSyncState::class, CalendarSyncGuard::class,
+  CalendarSyncCursor::class, CalendarSyncSnapshot::class, CalendarReviewIssue::class, CalendarReviewPreferences::class,
+  CalendarActivity::class, CalendarSavedRun::class], version = 11, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun calendar(): CalendarDao
   abstract fun links(): CalendarLinkDao
+  abstract fun calendarResources(): CalendarResourceDao
+  abstract fun sync(): CalendarSyncDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11).build()
+    val MIGRATION_10_11 = object : Migration(10, 11) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE calendar_link_operations ADD COLUMN mainConfirmed INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_sync_state (associationId TEXT NOT NULL PRIMARY KEY, mode TEXT NOT NULL, activationRevision INTEGER NOT NULL, baselineVersion INTEGER NOT NULL, dirtyRevision INTEGER NOT NULL, authoredAtMs INTEGER, successfulAtMs INTEGER, attemptedAtMs INTEGER, remoteUpdated TEXT NOT NULL, status TEXT NOT NULL, pauseReason TEXT NOT NULL, operationId TEXT NOT NULL, retryAtMs INTEGER NOT NULL, failures INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_sync_guards (operationId TEXT NOT NULL PRIMARY KEY, associationId TEXT NOT NULL, activationRevision INTEGER NOT NULL, baselineVersion INTEGER NOT NULL, connectionRevision INTEGER NOT NULL, localRevision INTEGER NOT NULL, localFingerprint TEXT NOT NULL, baseline TEXT NOT NULL, automatic INTEGER NOT NULL, previousMode TEXT NOT NULL, previousStatus TEXT NOT NULL, localFields TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_sync_cursors (`key` TEXT NOT NULL PRIMARY KEY, subject TEXT NOT NULL, calendarId TEXT NOT NULL, queryVersion INTEGER NOT NULL, generation INTEGER NOT NULL, syncToken TEXT NOT NULL, startingToken TEXT NOT NULL, pageToken TEXT NOT NULL, paging INTEGER NOT NULL, checkedAtMs INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_sync_cache (associationId TEXT NOT NULL, eventId TEXT NOT NULL, calendarId TEXT NOT NULL, generation INTEGER NOT NULL, event TEXT NOT NULL, pending INTEGER NOT NULL, PRIMARY KEY(associationId,eventId))")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_review_issues (associationId TEXT NOT NULL PRIMARY KEY, reason TEXT NOT NULL, fingerprint TEXT NOT NULL, discoveredAtMs INTEGER NOT NULL, background INTEGER NOT NULL, notifiedFingerprint TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_review_preferences (id TEXT NOT NULL PRIMARY KEY, revision INTEGER NOT NULL, enabled INTEGER NOT NULL, operationId TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_activity (checkpoint TEXT NOT NULL PRIMARY KEY, associationId TEXT NOT NULL, kind TEXT NOT NULL, groups TEXT NOT NULL, occurredAtMs INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_sync_runs (id TEXT NOT NULL PRIMARY KEY, pages INTEGER NOT NULL, attempted INTEGER NOT NULL, confirmed INTEGER NOT NULL, continuation INTEGER NOT NULL, atMs INTEGER NOT NULL)")
+      }
+    }
+    val MIGRATION_9_10 = object : Migration(9, 10) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_resources (associationId TEXT NOT NULL, resourceId TEXT NOT NULL, calendarId TEXT NOT NULL, eventId TEXT NOT NULL, segmentId TEXT NOT NULL, nominalSlot TEXT NOT NULL, etag TEXT NOT NULL, fields TEXT NOT NULL, availability TEXT NOT NULL, PRIMARY KEY(associationId,resourceId))")
+        db.execSQL("CREATE TABLE IF NOT EXISTS calendar_resource_jobs (operationId TEXT NOT NULL, resourceId TEXT NOT NULL, associationId TEXT NOT NULL, calendarId TEXT NOT NULL, eventId TEXT NOT NULL, etag TEXT NOT NULL, desired TEXT NOT NULL, payload TEXT NOT NULL, `insert` INTEGER NOT NULL, attempted INTEGER NOT NULL, confirmed INTEGER NOT NULL, erased INTEGER NOT NULL, outcome TEXT NOT NULL, lookupMaster TEXT NOT NULL, originalStart TEXT NOT NULL, remote TEXT NOT NULL, PRIMARY KEY(operationId,resourceId))")
+      }
+    }
     val MIGRATION_8_9 = object : Migration(8, 9) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE calendar_links ADD COLUMN accountEmail TEXT NOT NULL DEFAULT ''")

@@ -11,7 +11,10 @@ class RecoveryReceiver : BroadcastReceiver() {
     if (intent.action !in ACTIONS) return
     Log.i("Remilo", "Recovery received: ${intent.action}")
     val pending = goAsync()
-    try { AlarmEngine.get(context).recover { pending.finish() } }
+    try { AlarmEngine.get(context).recover {
+      if (intent.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) com.remilo.alarm.calendar.CalendarWork.reconcile(context, opportunity = true)
+      pending.finish()
+    } }
     catch (_: Exception) { pending.finish() }
   }
   companion object {
