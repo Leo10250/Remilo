@@ -5,6 +5,11 @@ P4-A sign-off. Task status belongs only in [backlog.md](backlog.md).
 [P4-A publishing](calendar-publishing.md) continues to create deliberate copies;
 existing copies do not become linked automatically.
 
+[P4-C recurrence](calendar-recurrence.md) and [P4-D synchronization](calendar-sync.md)
+extend this contract. The manual comparison and recovery rules below remain
+available for retained manual links; new confirmed import/link reviews default to
+automatic sync, with an explicit opt-out and separate Google-reminder consent.
+
 ## User contract
 
 Settings → Google Calendar → Import from Google Calendar browses one owned source
@@ -30,9 +35,9 @@ until a future time or No alert is explicitly chosen. Large sets require narrowi
 the range rather than silently importing a partial list; one review is bounded
 to 500 eligible events. The row browser's Load more does not limit Import all.
 
-Each imported entry is a personal, non-recurring event without attendees. Timed and
-single-day all-day events are supported. Meetings/incomplete attendee data,
-recurring masters/instances, locked/private-copy/special/cancelled events,
+Each imported entry is a personal event without attendees. Timed, single-day
+all-day and supported recurring masters are supported. Meetings/incomplete attendee data,
+standalone recurring instances, unsupported recurrence, locked/private-copy/special/cancelled events,
 unspecified ends, multi-day all-day ranges, malformed dates and incompatible or
 unsupported zones cannot be imported. Oversized titles/notes require correction
 in Google, rather than silent truncation. A missing title is Required and may be
@@ -162,11 +167,9 @@ Host/domain/transport/migration tests and fixture renders supplement identified
 signed-device acceptance. They do not prove Google OAuth, actual conditional
 writes/reminder suppression, physical audibility, Android pickers/Back/TalkBack or
 OEM behavior. Use the consolidated [owner checklist](device-acceptance.md).
-P4-C recurrence and [P4-D automatic synchronization](calendar-sync.md) remain
-separate. The owner's 12 October follow-up moves automatic ordinary updates,
-baseline conflict/uncertain-outcome review, precise sync wording, action emphasis,
-review notifications and user Activity refinements into P4-D. The manual behavior
-documented here remains the P4-B runtime contract until that phase is delivered.
+The recurrence and automatic-update extensions are defined by
+[P4-C](calendar-recurrence.md) and [P4-D](calendar-sync.md). Historical manual
+operations retain their recovery semantics and do not gain background permission.
 
 - [Google event listing](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)
 - [Conditional resource modifications](https://developers.google.com/workspace/calendar/api/guides/version-resources)

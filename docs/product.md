@@ -67,28 +67,30 @@ A genuine unscoped, unconstrained empty All Agenda offers Create a reminder in
 place of the floating +. Native repeat boundaries and retained history stay intact.
 
 Optional [P4-A Google Calendar publishing](calendar-publishing.md) is manual per
-saved unfinished one-off after native review and confirmation. Connecting publishes
+saved unfinished reminder or supported recurring family after native review and confirmation. Connecting publishes
 nothing; existing reminders are never backfilled. One account and an owned default
 calendar are supported. Google receives title, notes and authored event range with
 its Calendar reminders disabled; local alarms/actions remain authoritative. Durable
-native jobs recover by the same event identity, without remote updates or deletion.
+native jobs recover by the same event identity. Publishing alone grants no linked update permission.
 [P4-B imports and linked updates](calendar-linking.md) add explicit individual
 or reviewed all-event imports from owned calendars and per-field manually
 confirmed resolution. The owner's follow-up makes the Start/End dates inclusive,
 keeps them ordered, and removes associated/pending sources from the browser.
 Import review defaults to Alarm while keeping Google reminders unless explicitly
-disabled; personal timed/single-day all-day events only. Existing published copies
-require deliberate linking. Recurrence publishing and ongoing synchronization
-remain later phases.
+disabled; personal timed/single-day all-day events and the
+[native recurrence subset](calendar-recurrence.md) are supported. Existing
+published copies require deliberate linking.
 
 The owner's 12 October follow-up assigns automatic updates and the related status,
 button, review-notice and history refinements to [P4-D](calendar-sync.md), after
-P4-C recurrence mapping. Its target transfers ordinary compatible-field edits in
+P4-C recurrence mapping. It transfers ordinary compatible-field edits in
 both directions automatically, using the last confirmed common values; genuine
 conflicts and unresolved outcomes require manual review. Event-wide timestamps
 are context, not a latest-edit-wins rule. Deliberate activation, independent local
 alerts/Trash and truthful native background opportunities remain explicit. This
-future contract does not change P4-B's current manual checks and confirmations.
+implementation retains historical manual links until explicit activation.
+New import/link reviews select automatic sync by default and permit opting out.
+Native hourly connected work is an opportunity, with Android determining execution.
 
 The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
 places a compact Calendar entry after the reminder's local Details information.

@@ -721,3 +721,45 @@ Observe on an identified signed bundled build in the consolidated owner run.
   rotate without losing state. Remove animations retains the direct blend with
   no timer or spring; 200% text and constrained height use opaque compact chrome.
   TalkBack sees one heading and one instance of each action, with retained focus.
+
+### Calendar recurrence and automatic synchronization — P4-C/P4-D
+
+Record the installed signed APK hash, signer, source revision and device before
+these observations. Use owned personal calendars and deliberately linked test
+reminders. Retain P4-B and CAL-03 cases above.
+
+- Confirm migrated links stay manual, new import/link reviews default to automatic
+  with working opt-out, and individual/bulk activation reviews show ordinary
+  transfers and excluded links. Cancel changes nothing; a lost acknowledgement
+  retries the same captured batch without duplicate reminders or permissions.
+- Edit Title, clear Notes, and change only time in each direction. Ordinary changes
+  transfer after documented opportunities; changes to different groups merge.
+  Different edits to the same group require review without overwriting either.
+  Unrelated Google changes and misleading updated times never choose a winner.
+- Compare daily, weekly, monthly and yearly recurrence through DST, supported
+  moved instances and following splits. Confirm original nominal identity, local
+  Done/Skip/Trash, future Snooze, independent Due/Alarm and local sound survive.
+  An elapsed proposal needs review; a ringing Schedule waits without changing the
+  session and compares again after timeout or completion. Metadata does not alter
+  delivery. Observe Blocked and Pending separately from alert mode.
+- Observe native work with the app process cold and JavaScript absent, foreground
+  return and Sync now. Record actual elapsed time and constraints; hourly work is
+  an opportunity rather than a freshness promise. Offline recovery, denied or
+  revoked access, reboot/unlock and battery restrictions retain local alarms.
+  Consent recovery opens only from an explicit foreground action.
+- Exercise a conditional-write race and lost reply, including a newer local edit
+  and partial recurring resources. Confirm same-operation inspection and truthful
+  unknown-result recovery without blind resend or rollback of confirmed phases.
+  Test expired-token rebuilding without local deletion or automatic import.
+- Delete and restore Google resources, complete/Skip/Trash locally, Unlink/Relink,
+  disconnect/change account and Purge during outstanding reads/writes. Both copies
+  remain independent; terminal or purged content cannot be revived by late results.
+  Restore/Reopen/restoration/Relink requires fresh review.
+- Observe persistent unfiltered Agenda counts, family scope, Details local alert
+  consequences and origin return while retaining filters. Review notification
+  permission denial, dismissal, restart, preference off/on and stale taps. Public
+  content is generic, quiet and has no alarm/full-screen behavior; unchanged issues
+  do not repost. Resolution updates/removes the summary and Activity records once.
+- Review all eight atmosphere/brightness pairs, narrow portrait, landscape, 200%
+  text, long English/Chinese and reduced motion. Measure 48 dp secondary/56 dp
+  review targets and test wrapping, Android Back/keyboard ordering and TalkBack.

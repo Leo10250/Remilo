@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 9/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 11/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -54,15 +54,25 @@ events suspend transfers. Trash/Unlink fence unsent work; a sent outcome may be
 acknowledged without reactivating the association. Restore and remote availability
 do not clear required review. Old message text never supplies an inferred observation.
 
-The owner's [P4-D target](calendar-sync.md) reuses common compatible-field values
-for automatic one-sided transfers and manual true-conflict recovery. Future
-native background adapters dispatch authorization/HTTPS outside the alarm worker;
+CE 9→10 adds recurrence master/instance/following identities and immutable scoped
+resource jobs. CE 10→11 adds automatic activation/revisions, common-baseline
+versions, dirty authored revisions, operation provenance, allowlisted cursors and
+snapshots, persistent review issues and delivery fingerprints, notification
+preferences, saved run summaries and separate Calendar Activity. Historical links
+remain manual; neither migration performs network work or grants automatic permission.
+
+[P4-D](calendar-sync.md) reuses common compatible-field values for automatic
+one-sided transfers and manual true-conflict recovery. The application-context
+adapter dispatches authorization/HTTPS outside the alarm worker;
 immutable job capture, activation/version fencing, local scheduling checkpoints,
 observations and confirmed baselines stay on the serialized worker. Incremental
 tokens/cache and synchronization records stay CE-only. Expired-token recovery
-rebuilds the remote cache without clearing reminder data. This future scope does
-not activate background work, migrate manual permissions or select a new schema
-version in the current P4-B implementation.
+rebuilds the remote cache without clearing reminder data. One on-demand
+WorkManager 2.12.0 hourly connected request and unique pending work offer bounded
+native opportunities without an Activity, Expo module or JavaScript. Direct Boot
+does not initialize WorkManager or Calendar storage. Calendar Activity is merged
+into the local Activity projection, separately from portable history. Confirmed
+partial resource outcomes remain visible and cannot roll local changes back.
 
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured

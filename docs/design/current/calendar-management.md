@@ -11,24 +11,31 @@ Details order is Title, primary alert time, local operational state/permissions,
 conditional concise Calendar exception, Event/Due, Repeat, List/Notes, Schedule
 details, then a compact Google Calendar navigation row. Existing persistent local
 actions retain their behavior. The row uses shared neutral icon/chevron geometry;
-normal status says Linked with the last actual observation, never Synced.
+normal status distinguishes Linked · Manual updates and Linked · Automatic sync.
+Successful sync, remote observation and failed attempts remain separate facts.
 
 The separate compact Calendar management page shows the reminder context, original
-account/calendar, last observation and later failed attempt, manual review policy,
-current outcomes and an initially collapsed operation history. Opening it performs
-local reads only. Check is explicit and may be abandoned; Back ignores late UI
+account/calendar, last successful sync, last observation and later failed attempt,
+the shared sync policy and current problems. Opening it performs local reads only.
+Foreground synchronization is independent of navigation. Check is explicit for
+manual/read-only context and may be abandoned; Back ignores late UI
 results. Review performs its own fresh native preview. Terminal records permit
 checks without editing or reopening. Unlink is a visible neutral action here and
 remains a shortcut in Reminder actions. Unknown mutations retain captured recovery.
 
-The owner's later 12 October decision assigns the discussed automatic-sync
-wording, action hierarchy, review notices and Activity/history refinements to
-[P4-D](../../calendar-sync.md#status-buttons-and-review-notices). This page retains
-the current manual P4-B contract. P4-D will explicitly distinguish Not linked from
-Linked · Automatic sync, keep neutral Unlink separate, reduce the visual emphasis
-of external navigation, and replace the technical Previous Calendar operations
-section with concise user history in Activity. Do not imply automatic behavior
-before that capability is delivered.
+[P4-D](../../calendar-sync.md#status-buttons-and-review-notices) distinguishes
+Not linked, manual links, automatic links, pending work, true conflicts, paused
+relationships and unknown sent writes. Review changes is prominent when needed;
+Sync now and Check update result have phase-specific meanings. Neutral outlined
+Unlink with an unlink symbol occupies its own lower group. Open in Google Calendar
+is a wrapping external-link text action near source information, with at least
+48 dp height. Review confirmations retain 56 dp targets. Management has no
+Previous Calendar operations section; confirmed user history appears in Activity.
+
+Agenda retains its filters while an unfiltered count opens a secondary Calendar
+review queue. A repeating family counts once, with affected occurrence scopes
+and current local alert consequences. Quiet grouped review notifications open the
+current queue and never apply a resolution. Dismissal does not clear saved issues.
 
 ## Independent copies and cancellation
 

@@ -6,8 +6,9 @@ incremental/background opportunities and review-notice/action/history checks.
 Its eventual evidence must cover time-only updates without review, timestamp
 misordering, conditional-write races, cursor/410 recovery, preserved local alerts
 and terminal states, notification permissions/deduplication, and accurate status.
-This documentation update supplies no new runtime, build or device evidence;
-current P4-B procedures below remain applicable until P4-D is implemented.
+The [P4-C/P4-D implementation evidence](evidence/2026-10-13-calendar-sync.md)
+records actual host checks and the signed artifact separately from the remaining
+device observations. Current P4-B procedures below remain regression requirements.
 
 The Calendar management follow-up requires CE 8→9 migration, structured remote
 observations, explicit check isolation and lifecycle-fenced late replies. Verify

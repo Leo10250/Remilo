@@ -5,7 +5,8 @@ existing reminders. Connecting publishes nothing. One confirmed account and one
 default owned calendar; no imports, automatic backfill, recurring publication,
 linked updates or background synchronization in this publication contract.
 [P4-B](calendar-linking.md) adds separately reviewed import and linking behavior;
-recurrence and background opportunities remain P4-C–P4-D.
+[P4-C](calendar-recurrence.md) extends publication to supported recurring families;
+[P4-D](calendar-sync.md) adds separately activated linked automatic updates.
 
 ## Product and privacy contract
 

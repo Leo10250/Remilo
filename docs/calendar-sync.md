@@ -6,10 +6,9 @@ owner selected automatic application of ordinary edits, with manual review for
 conflicts or uncertain outcomes. Task status and the P4-C approval record belong
 only in [the backlog](backlog.md).
 
-This is the target P4-D contract. [P4-B](calendar-linking.md) continues to use
-explicit checks and confirmed resolutions until this behavior is delivered.
-Do not describe the current runtime as automatic or change its buttons to imply
-that it performs automatic writes.
+This contract governs the native P4-D implementation. Historical P4-B links
+retain manual permission until an individual or bulk activation is confirmed.
+Signed-device/live Google acceptance is tracked separately in the backlog.
 
 ## Relationship, activation and scope
 
@@ -144,8 +143,20 @@ guards before every commit/write. Account changes, Unlink, terminal actions,
 Restore, Relink and Purge invalidate old permissions. A default destination change
 never retargets an existing association. All Calendar tokens, cursors, snapshots,
 jobs and account labels stay out of DP storage and portable backups. Audit CE
-migration needs during implementation; do not change schema or backup versions
-merely to record this future scope.
+migration needs during implementation. CE 9→10 retains recurrence resource
+identities and per-resource checkpoints. CE 10→11 adds automatic permission,
+dirty revisions, provenance guards, cursors/cache, review issues/preferences,
+notification fingerprints, saved run summaries and separate Calendar Activity.
+DP remains 6 and portable backup remains 4. Migration grants no automatic permission.
+
+One unique hourly WorkManager request uses connected-network constraints and a
+15-minute flex window. Unique one-time work covers pending transfers and durable
+continuations. A run has a two-minute I/O budget, at most ten collection pages
+and fifty association attempts; continuation rotates calendars by their saved
+checkpoints. Unsent transient requests back off from one minute to one hour.
+WorkManager 2.12.0 is initialized on demand through Configuration.Provider;
+locked boot never initializes Calendar work or opens CE storage. Background
+authorization reuses the existing account and never opens consent UI.
 
 ## Status, buttons and review notices
 
