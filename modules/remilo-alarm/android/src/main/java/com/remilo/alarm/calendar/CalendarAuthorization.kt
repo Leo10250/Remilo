@@ -7,19 +7,24 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.RevokeAccessRequest
 import com.google.android.gms.tasks.Tasks
 import java.util.concurrent.TimeUnit
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.common.api.Scope
 
 /** Injected authorization seam; access tokens never become durable publication data. */
 interface CalendarAuthorization {
   fun token(email: String): String
+  fun tokenForCalendarCreation(email: String): String = throw CalendarFailure("NEEDS_ACCESS")
   fun clear(token: String)
   fun revoke(email: String)
 }
 class GoogleCalendarAuthorization(private val context: Context) : CalendarAuthorization {
-  override fun token(email: String): String {
+  override fun token(email: String): String = token(email, false)
+  override fun tokenForCalendarCreation(email: String): String = token(email, true)
+  private fun token(email: String, createCalendar: Boolean): String {
     if (email.isBlank()) throw CalendarFailure("NEEDS_ACCESS")
-    val result = Tasks.await(Identity.getAuthorizationClient(context).authorize(CalendarRuntime.request(email)), 30, TimeUnit.SECONDS)
+    val result = Tasks.await(Identity.getAuthorizationClient(context).authorize(request(email, createCalendar)), 30, TimeUnit.SECONDS)
     if (result.hasResolution()) throw CalendarFailure("NEEDS_ACCESS")
-    CalendarConsent.requireGranted(result.grantedScopes)
+    CalendarConsent.requireGranted(result.grantedScopes, createCalendar)
     return result.accessToken ?: throw CalendarFailure("AUTH")
   }
   override fun clear(token: String) {
@@ -27,7 +32,12 @@ class GoogleCalendarAuthorization(private val context: Context) : CalendarAuthor
   }
   override fun revoke(email: String) {
     Tasks.await(Identity.getAuthorizationClient(context).revokeAccess(RevokeAccessRequest.builder()
-      .setAccount(Account(email, "com.google")).setScopes(CalendarRuntime.scopes).build()), 30, TimeUnit.SECONDS)
+      .setAccount(Account(email, "com.google")).setScopes(CalendarConsent.requiredFor(true).map(::Scope)).build()), 30, TimeUnit.SECONDS)
+  }
+  companion object {
+    fun request(email: String? = null, createCalendar: Boolean = false): AuthorizationRequest = AuthorizationRequest.builder()
+      .setRequestedScopes(CalendarConsent.requiredFor(createCalendar).map(::Scope))
+      .also { if (email != null) it.setAccount(Account(email, "com.google")) else it.setPrompt(AuthorizationRequest.Prompt.SELECT_ACCOUNT) }.build()
   }
 }
 

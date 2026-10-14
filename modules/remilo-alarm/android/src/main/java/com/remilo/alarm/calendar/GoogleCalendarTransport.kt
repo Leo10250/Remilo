@@ -8,9 +8,11 @@ import javax.net.ssl.HttpsURLConnection
 
 class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }) : CalendarTransport {
   internal var deadlineElapsedMs = Long.MAX_VALUE
+  internal var cancelled: () -> Boolean = { false }
   private fun path(id: String) = URLEncoder.encode(id, "UTF-8").replace("+", "%20")
   private val base = "https://www.googleapis.com/calendar/v3"
-  private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false, method: String = "POST", etag: String? = null, inspect: Boolean = false, incremental: Boolean = false): JSONObject? {
+  private fun request(token: String, url: String, payload: String? = null, allowMissing: Boolean = false, method: String = "POST", etag: String? = null, inspect: Boolean = false, incremental: Boolean = false, calendarCreation: Boolean = false): JSONObject? {
+    if (cancelled()) throw CalendarFailure("CANCELLED")
     val remaining = if (deadlineElapsedMs == Long.MAX_VALUE) Long.MAX_VALUE else deadlineElapsedMs - android.os.SystemClock.elapsedRealtime()
     if (remaining <= 0) throw CalendarFailure("BUDGET")
     val connection = try { openConnection(URL(url)) } catch (_: Exception) { throw CalendarFailure("NOT_AVAILABLE") }
@@ -22,6 +24,7 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
       connection.setRequestProperty("Accept", "application/json")
       if (etag != null) connection.setRequestProperty("If-Match", etag)
       if (payload != null) {
+        if (cancelled()) throw CalendarFailure("CANCELLED")
         try { connection.requestMethod = method }
         catch (error: java.net.ProtocolException) {
           if (method != "PATCH") throw error
@@ -34,9 +37,12 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
         writeStarted = true // Conservatively retain uncertainty once obtaining the output stream can issue HTTP.
         connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
       }
+      if (!writeStarted && cancelled()) throw CalendarFailure("CANCELLED")
       val status = connection.responseCode
       if (allowMissing && status == 404) return null
       if (status !in 200..299) {
+        // A server failure can follow creation. This endpoint has no idempotency key.
+        if (calendarCreation && status in 500..599) throw CalendarFailure("NETWORK")
         // Parse only bounded error codes, never retain or log the response body.
         val reason = if (status == 403 || status == 410 && inspect) try {
           val bytes = connection.errorStream?.use { it.readNBytes(16_384) }
@@ -63,7 +69,7 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
   }
   override fun account(token: String): CalendarAccount {
     val value = request(token, "https://openidconnect.googleapis.com/v1/userinfo")!!
-    return CalendarAccount(value.getString("sub"), value.getString("email"))
+    return CalendarAccount(value.getString("sub"), value.getString("email"), value.optBoolean("email_verified"))
   }
   override fun calendars(token: String, cursor: String?): CalendarPage {
     val value = request(token, "$base/users/me/calendarList?minAccessRole=owner&maxResults=100&showHidden=true" +
@@ -74,14 +80,23 @@ class GoogleCalendarTransport(private val openConnection: (URL) -> HttpsURLConne
     val rows = value.optJSONArray("items") ?: org.json.JSONArray()
     val items = (0 until rows.length()).map { rows.getJSONObject(it) }.filter {
       it.optString("accessRole") == "owner" && !it.optBoolean("deleted")
-    }.map { OwnedCalendar(it.getString("id"), it.optString("summaryOverride", it.optString("summary")), it.optString("timeZone")) }
+    }.map(::calendarMetadata)
     return CalendarPage(items, value.optString("nextPageToken").takeIf { it.isNotBlank() })
   }
   override fun calendar(token: String, id: String): OwnedCalendar {
     val value = request(token, "$base/users/me/calendarList/${path(id)}")!!
     if (value.optString("accessRole") != "owner" || value.optBoolean("deleted")) throw CalendarFailure("NOT_OWNER")
-    return OwnedCalendar(value.getString("id"), value.optString("summaryOverride", value.optString("summary")), value.optString("timeZone"),
-      hasDefaultReminders = (value.optJSONArray("defaultReminders")?.length() ?: 0) > 0)
+    return calendarMetadata(value)
+  }
+  private fun calendarMetadata(value: JSONObject, created: Boolean = false): OwnedCalendar = OwnedCalendar(value.getString("id"),
+    value.optString("summaryOverride").takeIf { it.isNotBlank() } ?: value.optString("summary"), value.optString("timeZone"),
+    value.optString("accessRole", if (created) "owner" else ""), (value.optJSONArray("defaultReminders")?.length() ?: 0) > 0,
+    value.optString("summary"), value.optString("description"), value.optString("dataOwner"), value.optBoolean("primary"), value.optBoolean("deleted"))
+  override fun createCalendar(token: String, name: String, zoneId: String, description: String): OwnedCalendar {
+    if (name.isBlank() || zoneId !in java.time.ZoneId.getAvailableZoneIds()) throw CalendarFailure("INVALID_INPUT")
+    val payload = JSONObject().put("summary", name).put("timeZone", zoneId).put("description", description).toString()
+    // calendars.insert has no client-chosen ID or idempotency key. Its owner must be verified again before binding.
+    return calendarMetadata(request(token, "$base/calendars", payload, calendarCreation = true)!!, created = true)
   }
   override fun event(token: String, calendarId: String, eventId: String): JSONObject? =
     request(token, "$base/calendars/${path(calendarId)}/events/${path(eventId)}", allowMissing = true)

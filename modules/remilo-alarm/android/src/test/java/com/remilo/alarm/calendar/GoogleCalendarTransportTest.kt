@@ -153,4 +153,46 @@ class GoogleCalendarTransportTest {
     try { GoogleCalendarTransport { response }.calendars("synthetic-token", null); fail("Expected HTTP 400 rejection") }
     catch (error: CalendarFailure) { assertEquals("BAD_REQUEST", error.code); assertEquals("BAD_REQUEST", error.message) }
   }
+  @Test fun managedDiscoveryRetainsCanonicalNameOwnerAndMarkerWithoutTreatingDisplayOverrideAsIdentity() {
+    val page = GoogleCalendarTransport().page(JSONObject("""{"items":[{"id":"secondary","summary":"Remilo","summaryOverride":"My reminders","description":"visible provenance","timeZone":"UTC","dataOwner":"verified@example.test","accessRole":"owner","defaultReminders":[]},{"id":"primary","summary":"Remilo","timeZone":"UTC","primary":true,"accessRole":"owner"},{"id":"foreign","summary":"Remilo","accessRole":"reader"}],"nextPageToken":"continuation"}"""))
+    assertEquals(2, page.items.size)
+    val calendar = page.items.first()
+    assertEquals("My reminders", calendar.name); assertEquals("Remilo", calendar.canonicalName)
+    assertEquals("verified@example.test", calendar.dataOwner); assertEquals("visible provenance", calendar.description)
+    assertFalse(calendar.hasDefaultReminders); assertTrue(page.items.last().primary)
+    assertEquals("continuation", page.nextCursor)
+  }
+  @Test fun calendarCreationSendsOnlyReviewedMetadataAndNeverInventsClientCalendarId() {
+    lateinit var response: Response
+    val description = CalendarManagedDiscovery.marker("00112233-4455-6677-8899-aabbccddeeff")
+    val calendar = GoogleCalendarTransport { url -> Response(url, body = """{"id":"created@calendar","summary":"Remilo","description":"visible provenance","timeZone":"America/Los_Angeles","dataOwner":"verified@example.test"}""").also { response = it } }
+      .createCalendar("synthetic", "Remilo", "America/Los_Angeles", description)
+    assertEquals("POST", response.requestMethod); assertEquals("/calendar/v3/calendars", response.url.path)
+    assertNull(response.url.query); assertNull(response.getRequestProperty("If-Match"))
+    assertEquals(mapOf("summary" to "Remilo", "timeZone" to "America/Los_Angeles", "description" to description), content(JSONObject(response.sent.toString("UTF-8"))))
+    assertEquals("created@calendar", calendar.id); assertEquals("owner", calendar.accessRole)
+    assertEquals("verified@example.test", calendar.dataOwner); assertFalse(calendar.primary)
+  }
+  @Test fun invalidCalendarCreationZoneFailsBeforeOpeningAnyConnection() {
+    var opened = false
+    val transport = GoogleCalendarTransport { url -> opened = true; Response(url) }
+    try { transport.createCalendar("synthetic", "Remilo", "+04:00", "description"); fail("Unsupported fixed offset") }
+    catch (failure: CalendarFailure) { assertEquals("INVALID_INPUT", failure.code) }
+    assertFalse(opened)
+  }
+  @Test fun calendarCreationServerFailureRequiresInspectionWhereRateLimitIsARejection() {
+    for ((status, expected) in listOf(503 to "NETWORK", 429 to "RETRY")) {
+      val transport = GoogleCalendarTransport { url -> Response(url, status) }
+      try { transport.createCalendar("synthetic", "Remilo", "UTC", "reviewed"); fail("Expected rejected or uncertain creation") }
+      catch (error: CalendarFailure) { assertEquals(expected, error.code) }
+    }
+  }
+  @Test fun cancelledOpportunityDoesNotOpenAnotherConnection() {
+    var opened = false
+    val transport = GoogleCalendarTransport { url -> opened = true; Response(url) }
+    transport.cancelled = { true }
+    try { transport.syncEvents("synthetic", "source", null, null); fail("Expected cancellation") }
+    catch (error: CalendarFailure) { assertEquals("CANCELLED", error.code) }
+    assertFalse(opened)
+  }
 }
