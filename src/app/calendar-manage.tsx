@@ -7,6 +7,7 @@ import type { CalendarCommand, Occurrence } from '../../modules/remilo-alarm/src
 import { calendarCaptureRejected, unsupportedCalendarReason } from '../domain/calendar-link';
 import { calendarError } from '../domain/calendar';
 import { calendarCheckFailure, calendarReviewReason, calendarSummary, currentCalendarOperations } from '../domain/calendar-presentation';
+import { calendarDispositionLabel } from '../domain/calendar-managed';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Icon, Page, QueryState } from '../ui/components';
 import { useAppearanceConfirmation } from '../ui/confirmation';
@@ -26,10 +27,13 @@ export default function CalendarManagement() {
   const links = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(), enabled: nativeAvailable });
   const publications = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
   const operations = useQuery({ queryKey: ['calendar', 'operations'], queryFn: () => engine().getCalendarOperations(), enabled: nativeAvailable });
+  const disposition = useQuery({ queryKey: ['calendar', 'disposition', id], queryFn: () => engine().getCalendarReminderDisposition(id), enabled: nativeAvailable });
+  const managed = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable });
   const item = reminder.data, link = links.data?.find(value => value.occurrenceId === id), publication = publications.data?.find(value => value.occurrenceId === id);
   const jobs = operations.data?.filter(value => value.occurrenceId === id) || [], current = currentCalendarOperations(jobs);
   const live = useRef(true), ticket = useRef(0), checkRunning = useRef(false), captured = useRef<CalendarCommand | null>(null);
   const [checking, setChecking] = useState(false), [unlinkBusy, setUnlinkBusy] = useState(false), [unlinkUnknown, setUnlinkUnknown] = useState(false), [error, setError] = useState('');
+  const [preferenceAction, setPreferenceAction] = useState(false);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   useEffect(() => { const reads = ticket; live.current = true; return () => { live.current = false; reads.current++; }; }, [id]);
   const trash = useCapturedCommand((job, result) => {
@@ -76,9 +80,18 @@ export default function CalendarManagement() {
     finally { setUnlinkBusy(false); }
   };
   const confirmUnlink = () => confirm('Unlink from Google Calendar?',
-    'Keep the local ' + (item?.calendarSeriesId ? 'repeating family and its alerts' : 'reminder and its alert') + '. Stop linked updates. Any Google copies and their reminder settings remain unchanged.' +
+    'Keep the local ' + (item?.calendarSeriesId || disposition.data?.seriesId ? 'repeating family and its alerts' : 'reminder and its alert') + '. Stop linked updates. Any Google copies and their reminder settings remain unchanged.' +
     (current.some(job => job.remoteAttempted) ? '\n\nA previously sent Google update may still finish.' : ''),
     [{ text: 'Cancel', style: 'cancel' }, { text: 'Unlink', onPress: () => void unlink() }]);
+  const makeLocalOnly = async () => {
+    if (!disposition.data && !captured.current || unlinkBusy || trash.isGuarded()) return;
+    captured.current ??= { kind: 'SetCalendarReminderDisposition', operationId: engine().createOperationId(), occurrenceId: disposition.data!.occurrenceId,
+      expectedRevision: disposition.data!.revision, disposition: 'LocalOnly' };
+    setPreferenceAction(true); setUnlinkBusy(true); setError('');
+    try { await engine().applyCalendarCommand(captured.current); captured.current = null; setUnlinkUnknown(false); await client.invalidateQueries({ queryKey: ['calendar'] }); }
+    catch (e) { if (calendarCaptureRejected(e)) { captured.current = null; setUnlinkUnknown(false); } else setUnlinkUnknown(true); setError(calendarError(e)); }
+    finally { setUnlinkBusy(false); }
+  };
   const active = !!item && !item.deleted && !item.completed && !item.skipped && !link?.readOnly;
   const supported = !link || ['Unknown', 'Available'].includes(link.availability);
   return <Page compact title="Google Calendar" scrollKey={'calendar-manage:' + id}
@@ -87,7 +100,16 @@ export default function CalendarManagement() {
       empty={!reminder.isLoading && !item} emptyMessage="This reminder is unavailable." onRetry={() => void client.invalidateQueries()} />
     {item && <>
       <Copy heading>{item.title}</Copy><Copy muted>{alertPresentation(item).label}</Copy>
-      <Copy>{link?.syncMode === 'Automatic' ? 'Ordinary edits transfer automatically. Conflicts and unsafe timing need review.' : 'Linked changes require review. You can enable automatic sync after a fresh review.'}</Copy>
+      <Copy>{link?.syncMode === 'Automatic' ? 'Ordinary edits transfer automatically. Conflicts and unsafe timing need review.' : link && link.state !== 'Detached' ? 'Linked changes require review. You can enable automatic sync after a fresh review.' : 'Your local reminder and alerts work independently. Calendar adoption requires review.'}</Copy>
+      {(!link || link.state === 'Detached') && disposition.data && <ConnectedGroup title="Calendar preference"><View key="preference" style={{ padding: 16, gap: 12 }}>
+        <Copy heading>{calendarDispositionLabel(disposition.data)}</Copy><Copy muted>{disposition.data.message}</Copy>
+        {disposition.data.calendarName && <Copy>{disposition.data.calendarName}</Copy>}
+        {active && disposition.data.state === 'LocalOnly' && managed.data?.calendarId && <Button label="Review Calendar sync" variant="secondary" disabled={guarded}
+          onPress={() => router.push({ pathname: '/calendar-managed', params: { mode: 'setup', adoptOccurrenceId: disposition.data!.occurrenceId, ...origin } } as Href)} />}
+        {active && disposition.data.state !== 'LocalOnly' && <Button label={unlinkUnknown ? 'Retry same Calendar preference' : 'Keep Local only'} variant="outlined" icon="link_off" disabled={unlinkBusy || trash.guarded}
+          onPress={unlinkUnknown ? () => void makeLocalOnly() : () => confirm('Keep Local only?', 'Keep this ' + (item.calendarSeriesId || disposition.data?.seriesId ? 'whole repeating family' : 'reminder') + ' and its local alerts. Stop its queued automatic publication. Any request already sent may still finish.',
+            [{ text: 'Cancel', style: 'cancel' }, { text: 'Local only', onPress: () => void makeLocalOnly() }])} />}
+      </View></ConnectedGroup>}
       {link && <ConnectedGroup title="Connection"><View key="source" style={{ padding: 16, gap: 12 }}>
         <Copy heading>{calendarSummary(link, publication, jobs)}</Copy>
         <Copy>{link.accountEmail || 'Original Google account'}</Copy><Copy>{link.calendarName || 'Original source calendar'}</Copy>
@@ -108,6 +130,7 @@ export default function CalendarManagement() {
         </Pressable>}
       </View></ConnectedGroup>}
       {!!error && <ActionFeedback message={error} tone="warning" />}
+      {unlinkUnknown && preferenceAction && <Button label="Retry same Calendar preference" variant="secondary" disabled={unlinkBusy} onPress={() => void makeLocalOnly()} />}
       {checking && <ActionFeedback loading message={link?.syncMode === 'Automatic' && !link.readOnly ? 'Syncing compatible Calendar changes…' : 'Checking Google Calendar…'} />}
       {link && <Button label={link.syncStatus === 'Unconfirmed' ? 'Check update result' : link.syncMode === 'Automatic' && active && !link.requiresReview && link.syncStatus !== 'Paused' && link.syncStatus !== 'Review' ? 'Sync now' : 'Check for changes'} variant="secondary" disabled={checking || guarded}
         onPress={() => void (link.syncStatus === 'Unconfirmed' || link.syncMode === 'Automatic' && active && !link.requiresReview && link.syncStatus !== 'Paused' && link.syncStatus !== 'Review' ? sync() : check())} />}

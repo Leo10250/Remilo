@@ -1,5 +1,5 @@
 /** Synthetic, memory-only visual-review adapter. Never a scheduler or Android verification. */
-import type { AppSettings, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage,
+import type { AppSettings, CalendarCreationDisposition, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage,
   ListRecord, RecurrenceDraft, RepeatFamily, ResolvedReminderDraft, SchedulePreview, Series, SoundPreviewSnapshot, TimeConversion, TimeConversionInput, TimeZoneOption } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
@@ -100,6 +100,7 @@ if (review.get('reviewText') === 'long') {
   });
 }
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+let onCalendarCreation: ((id: string, disposition?: CalendarCreationDisposition) => void) | undefined, applyingCalendarImport = false;
 const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
 let soundPreview: SoundPreviewSnapshot | null = null;
@@ -336,6 +337,7 @@ function apply(command: Command): CommandResult {
     if (command.listId && !lists.has(command.listId)) return { status: 'Rejected', errorField: 'listId', errorMessage: 'This list was removed. Choose an existing list or No list.' };
     const value = draft(command), segment = command.kind === 'CreateSeries' ? createSeries(nextId(), value, command.recurrence) : undefined;
     const item = addOccurrence(value, segment);
+    if (!applyingCalendarImport) onCalendarCreation?.(item.id, command.calendarDisposition);
     result = { status: value.mode === 'None' ? 'Applied' : 'Scheduled', occurrence: view(item), ...(segment ? { segmentId: segment.id } : {}) };
   } else if ('occurrenceId' in command) {
     const item = items.find((row) => row.id === command.occurrenceId);
@@ -397,17 +399,22 @@ function apply(command: Command): CommandResult {
   receipts.set(command.operationId, clone(result)); changed(); return clone(result);
 }
 if (review.get('reviewAgenda') === 'empty') items.splice(0, items.length);
-const preview = {
-  ...previewCalendar(review, (id) => items.find((item) => item.id === id), changed, (fields, choices, operationId, id) => {
+const calendarBridge = previewCalendar(review, (id) => items.find((item) => item.id === id), changed, (fields, choices, operationId, id) => {
     const existing = id ? items.find(item => item.id === id) : null;
     const target = existing?.alertAdjustment ? existing.nextAlertMs : null;
-    const result = apply({ ...fields.schedule, title: fields.title, notes: fields.notes,
-      ...(id ? { kind: 'Edit', occurrenceId: id, expectedRevision: existing!.revision } : { ...choices, kind: 'Create' }), operationId });
+    let result: CommandResult;
+    applyingCalendarImport = true;
+    try { result = apply({ ...fields.schedule, title: fields.title, notes: fields.notes,
+      ...(id ? { kind: 'Edit', occurrenceId: id, expectedRevision: existing!.revision } : { ...choices, kind: 'Create' }), operationId }); }
+    finally { applyingCalendarImport = false; }
     const item = result.occurrence || (id ? items.find(item => item.id === id) : items.at(-1));
     if (!item) throw new Error('Synthetic creation unavailable');
     if (target && existing) { existing.nextAlertMs = target; item.nextAlertMs = target; }
     return item;
-  }),
+  });
+onCalendarCreation = calendarBridge.captureCalendarCreation;
+const preview = {
+  ...calendarBridge,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => ({ uses24HourClock: review.get('reviewClock') === '24', localeTag: review.get('reviewLocale') ?? 'en-US' }),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {

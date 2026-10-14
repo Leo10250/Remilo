@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { publicationCommand } from './calendar';
+import { calendarError, publicationCommand } from './calendar';
 import { previewCalendar } from '../../verification/ui/preview-calendar';
 import type { CalendarPublicationPreview, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { readFileSync } from 'node:fs';
 
 describe('Calendar publication boundary', () => {
+  it('gives phase-specific recovery for uncertain creation, incomplete discovery and ownership', () => {
+    expect(calendarError({ code: 'CREATION_UNCONFIRMED' })).toContain('original request result');
+    expect(calendarError({ code: 'DISCOVERY_INCOMPLETE' })).toContain('discovery is incomplete');
+    expect(calendarError({ code: 'OWNERSHIP_UNKNOWN' })).toContain('ownership');
+    expect(calendarError({ code: 'MEETING_EVENT' })).toContain('Google event is kept');
+  });
   it('sends native guards and identity without accepting replacement private content', () => {
     const preview = { occurrenceId: 'one', reminderRevision: 3, connectionRevision: 4, fingerprint: 'hash', title: 'Private', notes: 'Secret' } as CalendarPublicationPreview;
     expect(publicationCommand(preview, 'operation')).toEqual({ kind: 'PublishOneOff', operationId: 'operation', occurrenceId: 'one', expectedRevision: 3, expectedConnectionRevision: 4, fingerprint: 'hash' });

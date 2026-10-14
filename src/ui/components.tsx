@@ -107,9 +107,9 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
         borderWidth: c || round ? 2 : 0,
         flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed && !round ? 0.7 : 1 }];
     }}>
-    {(icon || busy) && <View style={{ width: 20, height: 20 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
+    {(icon || busy) && <View style={{ width: 20, height: 20, flexShrink: 0 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
     <Text style={{ color: foreground, lineHeight: c ? typography.body * scale * 1.4 : undefined,
-      flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+      minWidth: 0, flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
   </Pressable>;
   return button;
 }
@@ -482,7 +482,7 @@ export function formatTime(value: number | null | undefined, zoneId?: string) {
 export const styles = StyleSheet.create({
   page: { padding: space.gutter, gap: space.gutter, maxWidth: 720, width: '100%', alignSelf: 'center', paddingBottom: space.xl },
   card: { padding: space.gutter, borderRadius: shape.group, gap: space.sm },
-  button: { paddingHorizontal: space.gutter, paddingVertical: space.md, borderRadius: shape.action, minHeight: 56, justifyContent: 'center' },
+  button: { paddingHorizontal: space.gutter, paddingVertical: space.md, borderRadius: shape.action, minHeight: 56, minWidth: 0, maxWidth: '100%', flexShrink: 1, justifyContent: 'center' },
   input: { borderWidth: 1, borderRadius: shape.field, paddingHorizontal: space.md, paddingVertical: 10, fontSize: typography.body, textAlignVertical: 'top' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

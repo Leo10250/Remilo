@@ -94,7 +94,8 @@ export default function Backup() {
         <Copy muted size={14}>Whole backup · new entries are included automatically. Choices below only add copies of existing identities.</Copy>
         <Copy muted size={14}>Preview timing does not confirm delivery. Alerts are checked after restore.</Copy>
         {preview.items.slice(0, previewLimit).map((item) => <View key={item.id} style={{ paddingVertical: 12, gap: 8 }}>
-          <Copy heading>{item.title}</Copy><Copy muted size={14}>{item.conflict ? 'Already on this device' : 'New entry · Included automatically'}</Copy>
+          <Copy heading>{item.title}</Copy><Copy muted size={14}>{item.calendarCollision ? 'Exact Calendar copy already recovered · Keep current work by default' : item.conflict ? 'Already on this device' : 'New entry · Included automatically'}</Copy>
+          {item.calendarCollision && <Copy muted>A separate restored copy stays Local only and keeps its own alerts. It is not linked to the recovered Calendar event.</Copy>}
           <Copy muted size={14}>{item.futureAlert ? 'Future time indicated' : 'No future time indicated'}</Copy>
           {item.conflict && (busy || uncertain ? <Copy>{copies.includes(item.id) ? 'Add a separate copy' : 'Keep existing'}</Copy> : <View accessibilityRole="radiogroup" accessibilityLabel={`Restore choices for ${item.title}`}>
             <Choice label="Keep existing" selected={!copies.includes(item.id)} onPress={() => setCopies((current) => current.filter((id) => id !== item.id))} />

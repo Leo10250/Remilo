@@ -17,13 +17,17 @@ import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 
 export default function CalendarReview() {
-  const params = useLocalSearchParams<OriginParams & { id?: string; calendarId?: string; eventId?: string; automatic?: string }>(), origin = retainedOriginParams(params);
+  const params = useLocalSearchParams<OriginParams & { id?: string; calendarId?: string; eventId?: string; automatic?: string; candidateId?: string; candidateRevision?: string; managedHistory?: string }>(), origin = retainedOriginParams(params);
   const imported = !params.id, client = useQueryClient(), confirm = useAppearanceConfirmation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
-  const [preview, setPreview] = useState<CalendarLinkPreview | null>(null), [choices, setChoices] = useState<CalendarImportChoices>({});
+  const [preview, setPreview] = useState<CalendarLinkPreview | null>(null), [choices, setChoices] = useState<CalendarImportChoices>(params.managedHistory === 'true' ? { mode: 'None' } : {});
+  const adopting = imported && !!params.candidateId && !!preview?.local;
   const [selections, setSelections] = useState<CalendarSelections>({ title: null, notes: null, schedule: null });
   const [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false), [uncertain, setUncertain] = useState(false), [error, setError] = useState('');
+  const [capturing, setCapturing] = useState(false), [candidateRevision, setCandidateRevision] = useState<number | null>(() => params.candidateRevision ? Number(params.candidateRevision) : null);
+  const [sourceUnavailable, setSourceUnavailable] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
+  const [ignored, setIgnored] = useState(false);
   const captured = useRef<CalendarCommand | null>(null), running = useRef(false), live = useRef(true);
   const [now, setNow] = useState(Date.now);
   const readTicket = useRef(0);
@@ -35,20 +39,21 @@ export default function CalendarReview() {
   const enable = !link || link.state === 'Detached';
   const activating = params.automatic === 'true';
   useAppearanceHold(busy || uncertain);
-  usePreventRemove(busy || uncertain, () => confirm('Calendar request not confirmed', 'Wait for this request or retry the same captured action before leaving.'));
+  usePreventRemove(capturing || uncertain, () => confirm('Calendar request not confirmed', 'Wait for this request or retry the same captured action before leaving.'));
   const load = useCallback(async () => {
     if (running.current || captured.current) return; running.current = true; setBusy(true); setError('');
     const ticket = ++readTicket.current;
     try {
       const activation = activating ? await engine().previewCalendarActivation([params.id!]) : null;
-      const next = activation ? activation.items[0]?.preview : imported ? await engine().previewCalendarImport({ calendarId: params.calendarId!, eventId: params.eventId! }, choices) :
+      const next = activation ? activation.items[0]?.preview : params.candidateId ? await engine().previewManagedCalendarCandidate(params.candidateId, choices) : imported ? await engine().previewCalendarImport({ calendarId: params.calendarId!, eventId: params.eventId! }, choices) :
         enable ? await engine().previewCalendarLink(params.id!) : await engine().previewCalendarUpdate(params.id!);
       if (!next) throw new Error(activation?.items[0]?.excludedReason || 'This link needs a fresh individual review.');
       if (!live.current || ticket !== readTicket.current) return;
       setPreview(next); setSelections(next.selections || { title: null, notes: null, schedule: null }); setDirty(false);
-    } catch (e) { if (live.current) setError(calendarError(e)); }
+      if ('candidateRevision' in next && typeof next.candidateRevision === 'number') setCandidateRevision(next.candidateRevision);
+    } catch (e) { if (live.current) { setError(calendarError(e)); setSourceUnavailable(!!e && typeof e === 'object' && 'code' in e && ['NOT_FOUND', 'ALREADY_IMPORTED'].some(code => String(e.code).includes(code))); } }
     finally { running.current = false; if (live.current) setBusy(false); }
-  }, [choices, imported, enable, activating, params.calendarId, params.eventId, params.id]);
+  }, [choices, imported, enable, activating, params.calendarId, params.eventId, params.id, params.candidateId]);
   const loadRef = useRef(load);
   useEffect(() => { loadRef.current = load; }, [load]);
   useEffect(() => {
@@ -56,20 +61,31 @@ export default function CalendarReview() {
     live.current = true;
     void Promise.resolve().then(() => { if (live.current) return loadRef.current(); });
     return () => { live.current = false; tickets.current++; };
-  }, [params.id, params.eventId, params.calendarId]);
+  }, [params.id, params.eventId, params.calendarId, params.candidateId]);
   const change = (next: CalendarImportChoices) => { if (busy || captured.current || operationId) return; setChoices(old => ({ ...old, ...next })); setDirty(true); };
   const apply = async () => {
-    if (running.current || !preview) return;
+    if (running.current || !preview && !captured.current) return;
     if (dirty && !captured.current) { await load(); return; }
-    captured.current ??= { kind: imported ? 'ImportCalendarEvent' : activating ? 'EnableAutomaticCalendarSync' : enable ? 'EnableCalendarLink' : 'ApplyCalendarResolution',
-      operationId: engine().createOperationId(), previewId: preview.previewId, automaticSync: choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating), ...(imported ? {} : { selections: { ...selections } }) };
-    running.current = true; setBusy(true); setError('');
+    captured.current ??= params.candidateId ? { kind: 'ImportManagedCalendarCandidate', operationId: engine().createOperationId(), previewId: preview!.previewId, automaticSync: true,
+      ...(adopting ? { selections: { ...selections } } : {}) } :
+      { kind: imported ? 'ImportCalendarEvent' : activating ? 'EnableAutomaticCalendarSync' : enable ? 'EnableCalendarLink' : 'ApplyCalendarResolution',
+        operationId: engine().createOperationId(), previewId: preview!.previewId, automaticSync: choices.automaticSync ?? preview!.choices.automaticSync ?? (imported || enable || activating), ...(imported ? {} : { selections: { ...selections } }) };
+    running.current = true; setBusy(true); setCapturing(true); setError('');
     try {
+      const ignoring = captured.current.kind === 'IgnoreManagedCalendarCandidate';
       const result = await engine().applyCalendarCommand(captured.current);
-      if ('operationId' in result) setOperationId(result.operationId);
+      if ('operationId' in result && typeof result.operationId === 'string') setOperationId(result.operationId);
+      if (ignoring) setIgnored(true);
       captured.current = null; setUncertain(false); await client.invalidateQueries();
     } catch (e) { if (calendarCaptureRejected(e)) { captured.current = null; setUncertain(false); } else setUncertain(true); setError(calendarError(e)); }
-    finally { running.current = false; setBusy(false); }
+    finally { running.current = false; setBusy(false); setCapturing(false); }
+  };
+  const ignore = () => {
+    if (!params.candidateId || candidateRevision === null || running.current || captured.current) return;
+    confirm('Ignore this Calendar event?', 'Keep the Google event. Do not automatically import this event into Remilo. You can deliberately review it again later.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Ignore', onPress: () => {
+      captured.current = { kind: 'IgnoreManagedCalendarCandidate', operationId: engine().createOperationId(), candidateId: params.candidateId!, expectedRevision: candidateRevision };
+      void apply();
+    } }]);
   };
   const mode = choices.mode || preview?.choices.mode || 'Alarm';
   const alarm = choices.alarmAtMs ?? preview?.choices.alarmAtMs;
@@ -86,28 +102,33 @@ export default function CalendarReview() {
       (schedule.recurrence ? ' · Repeating schedule, exceptions and following segments' : '');
   };
   const recurring = !!preview?.recurrence;
-  const invalid = imported ? !title.trim() || (recurring ? !preview?.upcoming?.length : mode !== 'None' && (!alarm || alarm <= now)) : !resolved || elapsedChange;
-  const back = () => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin));
-  return <Page compact title={imported ? 'Review Calendar import' : activating ? 'Enable automatic sync' : enable ? 'Enable linked updates' : 'Review Calendar changes'} onBack={back}
+  const invalid = imported && !adopting ? !title.trim() || (recurring ? !preview?.upcoming?.length : mode !== 'None' && (!alarm || alarm <= now)) : !resolved || elapsedChange;
+  const back = useCallback(() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin)), [origin]);
+  useEffect(() => { if (ignored && !busy && !uncertain) back(); }, [ignored, busy, uncertain, back]);
+  return <Page compact title={adopting ? 'Review existing Calendar copy' : imported ? 'Review Calendar import' : activating ? 'Enable automatic sync' : enable ? 'Enable linked updates' : 'Review Calendar changes'} onBack={back}
     footer={!operationId && preview ? <BottomActionBar>
-      <Button label={uncertain ? 'Retry same captured action' : dirty ? 'Review import' : imported ? 'Import reminder' : 'Apply resolution'}
+      <Button label={uncertain ? 'Retry same captured action' : dirty ? 'Refresh review' : imported && !adopting ? 'Import reminder' : 'Apply resolution'}
         disabled={busy || !uncertain && !dirty && invalid} onPress={() => void apply()} />
       <Button label="Cancel" variant="secondary" disabled={busy || uncertain} onPress={back} />
     </BottomActionBar> : undefined}>
-    <Copy muted>{imported ? 'Only this event is imported. Review its local alarm and Google reminder choices.' : 'Choose the values to keep. Confirmation applies the shown changes to Remilo and Google; each outcome is recorded separately.'}</Copy>
-    {imported && <Copy muted>{calendarImportIndependence}</Copy>}
+    <Copy muted>{adopting ? 'This Google event matches an existing local copy. Review the values to keep before linking them. Your current local alert settings stay independent.' : imported ? 'Only this event is imported. Review its local alarm and Google reminder choices.' : 'Choose the values to keep. Confirmation applies the shown changes to Remilo and Google; each outcome is recorded separately.'}</Copy>
+    {imported && !adopting && <Copy muted>{calendarImportIndependence}</Copy>}
+    {params.candidateId && !adopting && <Copy muted>No Remilo alert exists for this incoming event yet.</Copy>}
     {!!error && <ActionFeedback message={error} tone="warning" />}
     {busy && <ActionFeedback loading message="Checking the captured Calendar review…" />}
-    {!preview && !busy && <Button label="Retry review" variant="secondary" onPress={() => void load()} />}
+    {!preview && !busy && !sourceUnavailable && <Button label="Retry review" variant="secondary" disabled={!nativeAvailable} onPress={() => void load()} />}
+    {sourceUnavailable && <Button label="Open current Calendar review" variant="secondary" onPress={() => router.replace({ pathname: '/calendar-reviews', params: origin })} />}
+    {!preview && uncertain && <Button label="Retry same captured action" disabled={busy} onPress={() => void apply()} />}
+    {params.candidateId && candidateRevision !== null && !operationId && !sourceUnavailable && <Button label="Ignore this event" variant="secondary" disabled={busy || uncertain} onPress={ignore} />}
     {preview && !operationId && <>
       <ConnectedGroup title="Source"><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
         <Copy muted>Checked {scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
       <ConnectedGroup title="Linked updates"><View key="sync" style={{ padding: 16, gap: 12 }}>
-        <Toggle label="Automatic sync" value={choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating)} disabled={busy || uncertain || activating}
+        <Toggle label="Automatic sync" value={params.candidateId ? true : choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating)} disabled={busy || uncertain || activating || !!params.candidateId}
           onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />
         <Copy muted>After confirmation, ordinary Title, Notes and Schedule edits transfer between both copies. Conflicts and unsafe timing need review. Local alerts, completion, Trash and postponement remain independent.</Copy>
       </View></ConnectedGroup>
-      {imported ? <>
+      {imported && !adopting ? <>
         <ConnectedGroup title="Calendar event"><View key="event" style={{ padding: 16, gap: 12 }}>
           <Copy heading>{preview.remote.title || 'Untitled event'}</Copy><Copy>{preview.remote.notes || 'No notes'}</Copy>
           <Copy>{fieldText('schedule', preview.remote)}</Copy></View></ConnectedGroup>

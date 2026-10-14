@@ -57,7 +57,14 @@ class RemiloAlarmModule : Module() {
     }
     AsyncFunction("authorizeCalendar") { publicationId: String? ->
       val activity = requireNotNull(appContext.currentActivity) { "Open Calendar settings after unlocking." }
-      activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java).putExtra("publicationId", publicationId))
+      engine().calendarRequest(block = { store ->
+        val managed = publicationId?.let { store.managed.setupOperation(it) }
+        val recover = managed != null && (managed.phase == "Fenced" || !store.connection().connected)
+        Triple(if (recover) null else publicationId, managed?.kind == "Create" && !recover, recover)
+      }, resolve = { saved -> activity.runOnUiThread {
+        if (!activity.isFinishing) activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java)
+          .putExtra("publicationId", saved.first).putExtra("managedCalendarCreation", saved.second))
+      } }, reject = { /* Saved Settings keeps access recovery available. */ })
     }
     AsyncFunction("listOwnedCalendars") { cursor: String?, promise: Promise ->
       CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).list(cursor,
@@ -67,6 +74,9 @@ class RemiloAlarmModule : Module() {
       val runtime = CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext)
       val reject: (String) -> Unit = { promise.reject(it, "Calendar action could not be confirmed: $it", null) }
       when (command["kind"]) {
+        "ConfirmManagedCalendarSetup", "ApplyManagedCalendarPolicy", "PauseManagedCalendar", "DisableManagedCalendar", "ResumeManagedCalendar",
+        "ImportManagedCalendarCandidate", "IgnoreManagedCalendarCandidate", "RetryManagedCalendarOperation", "SetCalendarReminderDisposition", "EnableRecoveredCalendarAlerts" ->
+          runtime.managedCommand(command, { promise.resolve(it) }, reject)
         "ImportCalendarEvents" -> engine().calendarRequest(true,
           { it.links.captureBatch(command) }, { result ->
             promise.resolve(result)
@@ -128,6 +138,32 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("getCalendarContext") { id: String, promise: Promise -> dispatch(promise) { it.calendarContext(id) } }
     AsyncFunction("getCalendarSyncSummary") { promise: Promise ->
       engine().calendarRequest(block = { it.sync.summary() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("getManagedCalendarState") { promise: Promise ->
+      engine().calendarRequest(block = { it.managed.view() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("getCalendarReminderDisposition") { id: String, promise: Promise ->
+      engine().calendarRequest(block = { it.managed.disposition(id) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarSetup") { choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("setup", choices,
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarPolicyChange") { choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("policy", choices,
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarResume") { promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("resume", emptyMap(),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarCandidate") { id: String, choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("candidate", mapOf("candidateId" to id, "choices" to choices),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarRecoveredAlerts") { ids: List<String>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("recovered", mapOf("ids" to ids),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
     }
     AsyncFunction("getCalendarReviewIssues") { cursor: String?, promise: Promise ->
       engine().calendarRequest(block = { it.sync.issues(cursor) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })

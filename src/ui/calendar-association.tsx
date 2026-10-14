@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import type { CalendarLink, CalendarLinkedOperation, CalendarPublication, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import type { OriginParams } from '../domain/navigation';
 import { calendarCancellation, calendarReviewReason, calendarRowNotice, calendarSummary } from '../domain/calendar-presentation';
+import { calendarDispositionLabel } from '../domain/calendar-managed';
 import { engine, nativeAvailable } from './native';
 import { Button, ConnectedGroup, Copy, SettingRow } from './components';
 import { useTimeFormatting } from './time-display';
@@ -15,8 +16,9 @@ export function useCalendarAssociation(ids: readonly string[], enabled = true) {
 }
 export function CalendarSummaryRow({ id, link, publication, jobs, origin, disabled = false }: { id: string; link?: CalendarLink; publication?: CalendarPublication; jobs: CalendarLinkedOperation[]; origin: OriginParams; disabled?: boolean }) {
   const { scheduleDateTime } = useTimeFormatting();
-  if (!link && !publication && !jobs.length) return null;
-  const summary = calendarSummary(link, publication, jobs);
+  const disposition = useQuery({ queryKey: ['calendar', 'disposition', id], queryFn: () => engine().getCalendarReminderDisposition(id), enabled: nativeAvailable });
+  if (!link && !publication && !jobs.length && !disposition.data) return null;
+  const summary = (!link || link.state === 'Detached') && disposition.data ? calendarDispositionLabel(disposition.data) : calendarSummary(link, publication, jobs);
   return <ConnectedGroup><SettingRow icon="event" label="Google Calendar" disabled={disabled}
     description={summary + (link?.successfulAtMs != null ? ' · Last successful sync ' + scheduleDateTime(link.successfulAtMs) : '')}
     onPress={() => router.push({ pathname: '/calendar-manage', params: { id: link?.occurrenceId ?? id, ...origin, originReminderId: id } } as Href)} /></ConnectedGroup>;

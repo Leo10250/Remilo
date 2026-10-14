@@ -202,7 +202,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + '. Open Settings'} disabled={guarded}
       onPress={() => router.push({ pathname: '/settings', params: originParams(destination) })} style={{ paddingHorizontal: 16, paddingVertical: 8, minHeight: 48 }}>
       <Status label={warning} tone={!caps?.exactAlarms || !caps?.notifications || !caps?.channelEnabled ? 'danger' : 'warning'} /></Pressable>}
-    {!scoped && !!calendarSummary.data?.reviewCount && <SettingRow icon="event" label={calendarSummary.data.reviewCount + ' Calendar reminder' + (calendarSummary.data.reviewCount === 1 ? '' : 's') + ' need review'}
+    {!scoped && !!calendarSummary.data?.reviewCount && <SettingRow icon="event" label={'Calendar review · ' + calendarSummary.data.reviewCount + ' item' + (calendarSummary.data.reviewCount === 1 ? '' : 's')}
       description="All unfinished reminders · independent of current filters" minHeight={56} disabled={guarded}
       onPress={() => router.push({ pathname: '/calendar-reviews', params: originParams(destination) })} />}
     {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

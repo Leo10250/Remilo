@@ -19,10 +19,10 @@ import { useAppearanceConfirmation } from '../ui/confirmation';
 
 type Entry = { eventId: string; preview: CalendarLinkPreview };
 export default function CalendarImportAll() {
-  const params = useLocalSearchParams<OriginParams & { calendarId: string; from: string; until: string }>(), origin = retainedOriginParams(params);
+  const params = useLocalSearchParams<OriginParams & { calendarId: string; from: string; until: string; managedHistory?: string }>(), origin = retainedOriginParams(params);
   const client = useQueryClient(), confirm = useAppearanceConfirmation(), { scheduleDateTime, formatDate } = useTimeFormatting();
   const [entries, setEntries] = useState<Entry[]>([]), [overrides, setOverrides] = useState<Record<string, CalendarImportChoices>>({});
-  const [mode, setMode] = useState<'Alarm' | 'Notification' | 'None'>('Alarm'), [listId, setListId] = useState<string | null>(null), [suppress, setSuppress] = useState(false);
+  const [mode, setMode] = useState<'Alarm' | 'Notification' | 'None'>(params.managedHistory === 'true' ? 'None' : 'Alarm'), [listId, setListId] = useState<string | null>(null), [suppress, setSuppress] = useState(false);
   const [automaticSync, setAutomaticSync] = useState(true);
   const [reading, setReading] = useState(false), [busy, setBusy] = useState(false), [uncertain, setUncertain] = useState(false), [ready, setReady] = useState(false);
   const [message, setMessage] = useState(''), [error, setError] = useState(''), [selected, setSelected] = useState<string | null>(null);

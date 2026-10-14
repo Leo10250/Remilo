@@ -4,7 +4,7 @@ import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, TextInput, View } from 'react-native';
-import type { Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarCreationDisposition, Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { changeCalendarAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState, type TimedDraftSnapshot } from '../domain/editor-draft';
 import { saveFeedback, type SaveContext } from '../domain/save-feedback';
 
@@ -86,6 +86,8 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const [review, setReview] = useState<Review | null>(null), [reviewOpen, setReviewOpen] = useState(false), [scopeChanged, setScopeChanged] = useState(false);
   const editingId = saveAsNew ? undefined : id, editingSeries = saveAsNew ? undefined : loadedSeries;
   const creation = !editingId && !editingSeries;
+  const managed = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable && creation });
+  const [calendarDisposition, setCalendarDisposition] = useState<CalendarCreationDisposition>('Default');
   const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(),
     enabled: nativeAvailable && !!editingId && !editingSeries });
   // An unavailable publication read must not let a coincident published event move.
@@ -93,7 +95,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     enabled: nativeAvailable && !!editingId && !editingSeries });
   const hasCalendarContext = calendar.data?.some(item => item.occurrenceId === editingId) || calendarLinks.data?.some(item => item.occurrenceId === editingId);
   const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || !calendarLinks.data || !!calendarLinks.error || !!hasCalendarContext);
-  const dirty = saveAsNew || JSON.stringify(state) !== JSON.stringify(baseline);
+  const dirty = saveAsNew || calendarDisposition !== 'Default' || JSON.stringify(state) !== JSON.stringify(baseline);
   const busy = preparing || command.isPending || reviewLoading;
   usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
     if (retrySave || pendingSave.current || command.isPending) { confirm('Save not confirmed', 'Retry save before leaving.'); return; }
@@ -201,8 +203,8 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
           kind: followingScope ? 'EditFollowing' : 'EditSeries', segmentId: editingSeries.id, expectedRevision: editingSeries.revision,
           nominalSlot: followingScope, operationId: engine().createOperationId() }
           : editingId ? { ...payload, kind: 'Edit', occurrenceId: editingId, expectedRevision: loadedRevision!, operationId: engine().createOperationId() }
-          : recurrence ? { ...payload, recurrence: cleanRepeat(recurrence), kind: 'CreateSeries', operationId: engine().createOperationId() }
-          : { ...payload, kind: 'Create', operationId: engine().createOperationId() }) as Command;
+          : recurrence ? { ...payload, recurrence: cleanRepeat(recurrence), kind: 'CreateSeries', calendarDisposition, operationId: engine().createOperationId() }
+          : { ...payload, kind: 'Create', calendarDisposition, operationId: engine().createOperationId() }) as Command;
       }
       const captured = pendingSave.current;
       savedContext.current = { kind: captured.kind, mode: 'mode' in captured ? captured.mode : draft.mode };
@@ -290,8 +292,16 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       <Disclosure title="Notes (optional)" initial={!!draft.notes} forceOpen={!!invalid(['notes'])}>
         <Field label="Notes" inputRef={notesInput} value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
       </Disclosure>
+      {creation && managed.data?.calendarId && managed.data.mode !== 'Disabled' && <ConnectedGroup title="Google Calendar" footer={<Copy muted>{managed.data.mode === 'Paused' ? 'Calendar sync is paused. Selected reminders wait for a reviewed resume; local alerts work normally.' : 'Local alerts and saving remain independent. Repeating families use one Calendar preference.'}</Copy>}>
+        <Toggle key="sync" label="Sync with Remilo calendar" value={calendarDisposition === 'Managed' || calendarDisposition === 'Default' && managed.data.policy.exportNewReminders}
+          disabled={frozen} onChange={value => setCalendarDisposition(value ? 'Managed' : 'LocalOnly')} />
+        <Copy muted>{calendarDisposition === 'LocalOnly' ? 'Local only' : managed.data.calendarName}</Copy>
+        {recurrence?.zoneMode === 'floating' && calendarDisposition !== 'LocalOnly' && <Copy muted>This floating repeat will be pinned to {zone} when published. Later phone time-zone changes do not move its Calendar schedule.</Copy>}
+        {draft.allDay && managed.data.calendarZone !== zone && calendarDisposition !== 'LocalOnly' && <Copy muted>The all-day event uses {zone}; the Calendar uses {managed.data.calendarZone}. Publication needs timing review. Your local alert is preserved.</Copy>}
+      </ConnectedGroup>}
+      {creation && managed.error && <ActionFeedback message="Calendar preferences could not be displayed. Your saved native Calendar preference still applies; local saving does not wait for Google." tone="warning" />}
       <Disclosure title="Calendar event (optional)" icon="event" summary={calendarSummary} forceOpen={!noAlert && !!invalid(['eventStartMs', 'allDay', 'eventEndMs']) || !!invalid(['eventEndMs'])}>
-        <Copy muted size={13}>Publishing to Google Calendar is a separate action.</Copy>
+        <Copy muted size={13}>{creation && managed.data?.calendarId && managed.data.mode !== 'Disabled' && calendarDisposition !== 'LocalOnly' ? 'These authored event details are used for Calendar sync. Local alert settings stay independent.' : 'Manual publishing to Google Calendar is a separate action.'}</Copy>
         <ConnectedGroup footer={invalid(['eventStartMs', 'allDay', 'eventEndMs']) ? <Status label={message} tone="danger" /> : undefined}>
           {!noAlert && <View key="start"><RowSupport><Copy muted size={14}>Event time</Copy></RowSupport>
             <DateTimeFields labelPrefix="Event" value={resolvedDraft.eventStartMs} zoneId={zone} allDay={!!draft.allDay}

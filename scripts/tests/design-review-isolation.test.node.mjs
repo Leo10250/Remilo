@@ -95,7 +95,8 @@ function loadPreview(search) {
   return compile('verification/ui/preview-engine.ts', {
     '../../src/domain/time': time,
     '../../src/domain/repeat': compile('src/domain/repeat.ts'),
-    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time, './preview-calendar-links': linked }),
+    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time, './preview-calendar-links': linked,
+      './preview-calendar-managed': compile('verification/ui/preview-calendar-managed.ts') }),
   }, { URLSearchParams, ...(search == null ? {} : { window: { location: { search } } }) }).default;
 }
 

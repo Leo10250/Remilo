@@ -14,6 +14,7 @@ import { typography } from '../ui/tokens';
 
 const events: Record<string, { label: string; icon: IconName; tone: Tone }> = {
   CalendarActivated: { label: 'Automatic Calendar sync enabled', icon: 'event', tone: 'muted' },
+  CalendarRecoveredAlertsEnabled: { label: 'Recovered Calendar alerts enabled', icon: 'alarm', tone: 'muted' },
   CalendarUpdatedGoogle: { label: 'Updated Google Calendar', icon: 'upload', tone: 'muted' },
   CalendarUpdatedRemilo: { label: 'Updated from Google Calendar', icon: 'download', tone: 'muted' },
   CalendarResolved: { label: 'Calendar changes reviewed', icon: 'check', tone: 'muted' },

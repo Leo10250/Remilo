@@ -1,7 +1,8 @@
 /** Synthetic Calendar adapter: memory only, with no native authorization or HTTP capability. */
-import type { CalendarCommand, CalendarConnection, CalendarPublication, CalendarPublicationPreview, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarCommand, CalendarConnection, CalendarLegacyCommand, CalendarPublication, CalendarPublicationPreview, ManagedCalendarCommand, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { deviceZone } from '../../src/domain/time';
 import { previewCalendarLinks } from './preview-calendar-links';
+import { previewManagedCalendar } from './preview-calendar-managed';
 import type { CalendarFields, CalendarImportChoices } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function previewCalendar(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
@@ -13,6 +14,16 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
     calendarName: ['disconnected', 'no-calendar'].includes(state) ? '' : 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
   const jobs = new Map<string, CalendarPublication>(), captures = new Map<string, CalendarCommand>();
   const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision, () => connection.connected);
+  const adoptionPreviewIds = new Set<string>();
+  const managed = previewManagedCalendar(review, find, changed, () => connection.revision, () => connection.connected,
+    async (candidateId, choices) => {
+      const preview = review.get('reviewManaged') === 'adoption' ? await linked.previewCalendarLink('review') : await linked.previewCalendarImport({ calendarId: 'fixture-managed-calendar', eventId: 'personal' }, choices);
+      if (preview.local) adoptionPreviewIds.add(preview.previewId);
+      return { ...preview, candidateId, candidateRevision: 1 };
+    },
+    async (previewId, operationId, selections) => { try { return await linked.applyCalendarLinked({ kind: adoptionPreviewIds.has(previewId) ? 'EnableCalendarLink' : 'ImportCalendarEvent', previewId, operationId, automaticSync: true,
+      ...(selections ? { selections } : {}) }); }
+      catch (error) { const captured = (await linked.getCalendarOperations()).find(item => item.operationId === operationId); if (captured) return captured; throw error; } });
   const error = (code: string): never => { throw Object.assign(new Error('Synthetic Calendar: ' + code), { code }); };
   const preview = (id: string): CalendarPublicationPreview => {
     const item = find(id);
@@ -32,6 +43,18 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
   }
   return {
     ...linked,
+    ...managed,
+    getCalendarSyncSummary: async () => {
+      const summary = await linked.getCalendarSyncSummary(), extras = managed.getManagedCalendarIssues();
+      const reviewCounts = { reminders: summary.reviewCount, candidates: extras.filter(issue => issue.kind === 'Candidate').length,
+        setup: extras.filter(issue => issue.kind === 'Setup').length, total: summary.reviewCount + extras.length };
+      return { ...summary, reviewCount: reviewCounts.total, reviewCounts };
+    },
+    getCalendarReviewIssues: async (cursor: string | null) => {
+      const page = await linked.getCalendarReviewIssues(cursor), items = [...page.items, ...managed.getManagedCalendarIssues()];
+      return { ...page, items, count: items.length, counts: { reminders: items.filter(issue => issue.kind === 'Association').length,
+        candidates: items.filter(issue => issue.kind === 'Candidate').length, setup: items.filter(issue => issue.kind === 'Setup').length, total: items.length } };
+    },
     getCalendarConnection: async () => clone(connection),
     getCalendarPublications: async () => clone([...jobs.values()]),
     previewCalendarPublication: async (id: string) => clone(preview(id)),
@@ -45,7 +68,8 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
       items: state === 'empty' ? [] : [{ id: cursor ? 'fixture-calendar-2' : 'fixture-calendar', name: cursor ? 'Another owned calendar' : 'Synthetic owned calendar / 测试日历', zoneId: 'America/Los_Angeles' }],
       nextCursor: !cursor && state !== 'empty' ? 'fixture-page-2' : null }),
     applyCalendarCommand: async (command: CalendarCommand): Promise<unknown> => {
-      if (!['PublishOneOff', 'RetryPublication', 'SelectCalendar', 'DisconnectCalendar'].includes(command.kind)) return linked.applyCalendarLinked(command);
+      if (['ConfirmManagedCalendarSetup', 'ApplyManagedCalendarPolicy', 'ResumeManagedCalendar', 'EnableRecoveredCalendarAlerts', 'PauseManagedCalendar', 'DisableManagedCalendar', 'SetCalendarReminderDisposition', 'ImportManagedCalendarCandidate', 'IgnoreManagedCalendarCandidate', 'RetryManagedCalendarOperation'].includes(command.kind)) return managed.applyManagedCalendarCommand(command as ManagedCalendarCommand);
+      if (!['PublishOneOff', 'RetryPublication', 'SelectCalendar', 'DisconnectCalendar'].includes(command.kind)) return linked.applyCalendarLinked(command as CalendarLegacyCommand);
       if (command.kind === 'RetryPublication') {
         const job = jobs.get(command.operationId); if (!job) return error('NOT_FOUND');
         if (review.get('reviewCalendarOffline') !== '1') jobs.set(job.operationId, { ...job, state: 'Published', message: 'Synthetic publication confirmed.' });

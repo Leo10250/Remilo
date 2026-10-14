@@ -1,5 +1,5 @@
 /** Memory-only Calendar fixtures. No authorization, HTTPS, durable storage or native scheduler. */
-import type { CalendarCommand, CalendarFields, CalendarImportChoices, CalendarLink, CalendarLinkedOperation, CalendarLinkPreview, CalendarEventQuery, CalendarEventRef, CalendarSelections, Occurrence, CalendarActivationReview, CalendarReviewPage } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarLegacyCommand, CalendarFields, CalendarImportChoices, CalendarLink, CalendarLinkedOperation, CalendarLinkPreview, CalendarEventQuery, CalendarEventRef, CalendarSelections, Occurrence, CalendarActivationReview, CalendarReviewPage } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { resolvedCalendarFields } from '../../src/domain/calendar-link';
 
 export function previewCalendarLinks(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
@@ -61,7 +61,7 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
       pendingCount: syncScenario === 'pending' ? 1 : 0, reviewCount: [...links.values()].filter(link => ['Review', 'Paused', 'Unconfirmed'].includes(link.syncStatus || '') && link.state !== 'Detached' && syncScenario !== 'read-only' && !find(link.occurrenceId)?.completed && !find(link.occurrenceId)?.deleted && !find(link.occurrenceId)?.skipped).length,
       notifications: clone(notificationPreference) }),
     getCalendarReviewIssues: async (_cursor: string | null): Promise<CalendarReviewPage> => {
-      const items = [...links.values()].filter(link => ['Review', 'Paused', 'Unconfirmed'].includes(link.syncStatus || '') && link.state !== 'Detached' && !link.readOnly && syncScenario !== 'read-only' && !find(link.occurrenceId)?.completed && !find(link.occurrenceId)?.deleted && !find(link.occurrenceId)?.skipped).map(link => ({ occurrenceId: link.occurrenceId,
+      const items = [...links.values()].filter(link => ['Review', 'Paused', 'Unconfirmed'].includes(link.syncStatus || '') && link.state !== 'Detached' && !link.readOnly && syncScenario !== 'read-only' && !find(link.occurrenceId)?.completed && !find(link.occurrenceId)?.deleted && !find(link.occurrenceId)?.skipped).map(link => ({ kind: 'Association' as const, issueId: 'association:' + link.occurrenceId, occurrenceId: link.occurrenceId,
         seriesId: link.seriesId ?? null, title: find(link.occurrenceId)?.title || 'Synthetic reminder', reason: link.pauseReason || 'ReviewRequired' as const, discoveredAtMs: Date.now() }));
       return clone({ items, count: items.length, nextCursor: null });
     },
@@ -98,7 +98,7 @@ export function previewCalendarLinks(review: URLSearchParams, find: (id: string)
     previewCalendarImport: async (event: CalendarEventRef, choices: CalendarImportChoices) => preview(null, choices, event),
     previewCalendarLink: async (id: string) => preview(id),
     previewCalendarUpdate: async (id: string) => preview(id),
-    applyCalendarLinked: async function applyLinked(command: CalendarCommand): Promise<unknown> {
+    applyCalendarLinked: async function applyLinked(command: CalendarLegacyCommand): Promise<unknown> {
       if (command.kind === 'SetCalendarReviewNotifications') {
         if (command.expectedRevision !== notificationPreference.revision) return error('STALE_REVISION');
         notificationPreference = { enabled: command.enabled, revision: notificationPreference.revision + 1 }; changed(); return clone(notificationPreference);
