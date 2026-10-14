@@ -92,6 +92,17 @@ implementation retains historical manual links until explicit activation.
 New import/link reviews select automatic sync by default and permit opting out.
 Native hourly connected work is an opportunity, with Android determining execution.
 
+The owner's next iteration, [P4-E managed Calendar sync](calendar-managed-sync.md),
+adds a confirmed calendar-level setup: reuse an eligible known/named Remilo
+secondary calendar or create one, automatically import ongoing/upcoming supported
+events and publish eligible new reminders with a Local only override. Existing
+reminders require reviewed selection; historical links keep their sources. The
+continuing imported-alert default is Alarm. Initial recovery from an existing
+calendar on a fresh installation uses No alert; an existing installation or a
+newly created calendar uses its reviewed policy. Ownership, interrupted creation,
+deduplication and saved removal decisions remain explicit. Ordinary local actions
+and delivery retain P4-D's independent authority.
+
 The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
 places a compact Calendar entry after the reminder's local Details information.
 Its separate management page reads saved status until an explicit Check or review.

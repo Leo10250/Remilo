@@ -763,3 +763,59 @@ reminders. Retain P4-B and CAL-03 cases above.
 - Review all eight atmosphere/brightness pairs, narrow portrait, landscape, 200%
   text, long English/Chinese and reduced motion. Measure 48 dp secondary/56 dp
   review targets and test wrapping, Android Back/keyboard ordering and TalkBack.
+
+### Managed Calendar setup and recovery — P4-E
+
+Record the exact installed signed APK hash, signer, source relationship and phone
+before observing these cases. These extend P4-B/C/D; they do not replace those
+regressions or imply that unperformed cases passed.
+
+- Review setup without confirmation: no calendar, reminder, publication or link
+  appears. Connecting alone grants no managed permission. Verify a saved renamed
+  source is preferred, canonical name differs from display override, multiple
+  eligible matches need selection, incomplete discovery cannot imply no match,
+  and primary/shared/unknown-data-owner sources are excluded.
+- Reuse an eligible calendar and separately create one with incremental creation
+  consent. Denial preserves manual/local use. Observe a lost create reply and
+  delayed CalendarList propagation: inspect the saved identity/exact setup marker,
+  never blindly create again. Zero/multiple matches remain reviewable. A separately
+  reviewed replacement keeps previous calendars; two installations may create
+  separate calendars without coordination.
+- Compare existing-installation initial Alarm with fresh-installation quiet
+  recovery, including restart/pagination and a changed continuing default during
+  the initial cohort. Newly created calendars use the normal policy. Later new
+  events use continuing defaults. Ongoing elapsed alerts need review, ended events
+  stay outside automatic import, and all-day alerts use the reviewed source-zone
+  time. Blocked permission retains Alarm mode.
+- Import recurrence with DST/end rules, instances before masters, supported moved
+  or cancelled exceptions, following resources and future-exception-only work.
+  Interrupt a large audit and resume it. Change an exception between capture and
+  application; stale captured work must not create an unsafe local target.
+- Create genuine local reminders/families with default sync and Local only. Saving
+  and local alarms work offline. Existing reminders, backup restore, test alarms,
+  recurrence materialization and Reopen do not become new publication intent.
+  Confirm all recurring publication resources before automatic linking; a lost
+  reply reuses the same operation/event identities.
+- Pause, create/edit queued work, then review Resume including past unfinished
+  outbound dates. Only selected ready work executes; unselected work stays held.
+  A new Pause fences unsent batch phases. Explicit confirmed manual actions stay
+  available. Other calendars retain their independent automatic permissions.
+  Disable/reconnect/account changes never silently backfill or retarget work.
+- Exercise both backup/recovery orders, exact published-copy adoption, copied or
+  moved markers, Ignore, whole-family Local only, terminal actions, Unlink and
+  Purge. Exact collisions default to current work; deliberately separate restored
+  copies get new identities and remain Local only. Title/time similarity never
+  merges work. Late results cannot recreate erased content or permissions.
+- Keep Google reminders on incoming events by default. Separately consented
+  suppression requires actual local alert readiness; quiet recovery never
+  suppresses. New Remilo publications disclose disabled Google reminders. Review
+  recovered future alerts separately; completion, Snooze, sound and local state
+  cannot be recovered from Google.
+- Observe empty-calendar native polling with JavaScript absent, bounded page/
+  candidate work, cancellation, offline backoff, revoked access and Direct Boot.
+  Local alarm actions remain responsive while Calendar I/O waits. Observe generic
+  quiet review notifications, stale taps, dismissal and durable fingerprints.
+- Review setup, policy, creation/access recovery, initial import, queued export,
+  Resume and all three review targets across eight pairs, narrow/landscape, long
+  English/Chinese, 200% text and reduced motion. Verify 48 dp/56 dp targets, origin
+  return, keyboard/Android Back ordering and TalkBack on the identified build.

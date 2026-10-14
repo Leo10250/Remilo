@@ -13,7 +13,10 @@ and explains independent deletion with Agenda/Details cancellation notices.
 The owner's later 12 October [P4-D target contract](../../calendar-sync.md)
 assigns automatic synchronization, clearer relationship/action wording, review
 notices, compact external navigation and Activity history to that later phase.
-The current P4-B runtime continues to use explicit checks and confirmed updates.
+Historical manual links retain explicit checks until confirmed activation.
+The owner's next [P4-E managed-calendar contract](../../calendar-managed-sync.md)
+adds confirmed calendar-level setup, automatic incoming/outgoing eligibility and
+saved removal decisions while preserving reminder-first presentation.
 
 The owner's [11 October browsing-header correction](header-scroll-research.md)
 replaces the abrupt toolbar surface switch with a continuous scroll blend and

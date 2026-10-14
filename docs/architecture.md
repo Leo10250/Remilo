@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 11/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 12/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -73,6 +73,18 @@ native opportunities without an Activity, Expo module or JavaScript. Direct Boot
 does not initialize WorkManager or Calendar storage. Calendar Activity is merged
 into the local Activity projection, separately from portable history. Confirmed
 partial resource outcomes remain visible and cannot roll local changes back.
+
+[P4-E](calendar-managed-sync.md) adds CE 11→12 installation provenance, a reviewed
+managed secondary-calendar binding/policy, setup previews and immutable operations,
+incoming candidates/cache, outbound captures, local dispositions, minimal source
+suppression, issues and receipts. Migration grants no Calendar-level permission.
+The I/O adapter performs complete bounded discovery and feature-scoped creation
+authorization; page, sent/result and permission checkpoints use the engine worker.
+Calendar creation has no caller-specified Google ID, so uncertain sent attempts
+inspect their exact visible operation marker and cannot blindly create again.
+Managed import/export reuses P4-C resource identity and P4-D phased mutation owners.
+Fresh-install initial recovery is quiet; installation provenance is CE-only and
+not portable backup history. DP and backup versions remain 6 and 4.
 
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured

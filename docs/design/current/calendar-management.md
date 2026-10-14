@@ -37,6 +37,17 @@ review queue. A repeating family counts once, with affected occurrence scopes
 and current local alert consequences. Quiet grouped review notifications open the
 current queue and never apply a resolution. Dismissal does not clear saved issues.
 
+The [P4-E managed-calendar extension](../../calendar-managed-sync.md) adds explicit
+setup and policy review before automatic calendar creation/import/publication.
+Settings shows the bound calendar and actual setup phase, selected import/export
+behavior and initial recovery alert consequences. Existing calendar candidates,
+unknown creation results and access/ownership problems receive specific recovery
+actions. The review queue distinguishes incoming events that have not yet become
+reminders from existing reminder problems; a recurring family counts once.
+Captured work and confirmed outcomes remain separate. Local only preserves both
+copies and delivery while stopping applicable transfers/re-adoption. This adds no
+full administrative block before Details' primary local reminder information.
+
 ## Independent copies and cancellation
 
 Google deletion never stops Remilo delivery. Once observed, active Agenda rows

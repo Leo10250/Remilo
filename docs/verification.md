@@ -1,5 +1,21 @@
 # Verification and release evidence
 
+The [P4-E managed Calendar contract](calendar-managed-sync.md) adds CE 11→12
+origin/permission migration, strict CalendarList ownership, deliberate setup,
+incremental creation consent and same-request creation inspection. Retain the
+P4-B/C/D regressions. Check quiet initial recovery against continuing Alarm
+defaults, bounded recurring audits and captured-resource revalidation, exact
+publication/backup collisions, Local only, selected Resume batches and independent
+local alert readiness. Candidate, association and setup issues must remain
+distinct and private. A successful collection observation is not a confirmed
+field transfer or a successful local alarm.
+
+Use the consolidated P4-E section of [the owner checklist](device-acceptance.md)
+for signed-phone/live Google observations. Host checks and memory-only production
+fixtures cannot close P4-E acceptance or G4. Preserve the identified artifact,
+source relationship, signer and actual outcomes; do not install or distribute
+through build preparation.
+
 The [P4-D target contract](calendar-sync.md#required-evidence) adds automatic
 ordinary transfers, common-baseline conflict detection, unknown-outcome recovery,
 incremental/background opportunities and review-notice/action/history checks.

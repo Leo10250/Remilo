@@ -9,6 +9,9 @@ only in [the backlog](backlog.md).
 This contract governs the native P4-D implementation. Historical P4-B links
 retain manual permission until an individual or bulk activation is confirmed.
 Signed-device/live Google acceptance is tracked separately in the backlog.
+The separate [P4-E managed-calendar contract](calendar-managed-sync.md) extends
+this baseline only after calendar-level setup confirmation; it does not grant
+automatic discovery/import/publication permissions to historical P4-D links.
 
 ## Relationship, activation and scope
 
