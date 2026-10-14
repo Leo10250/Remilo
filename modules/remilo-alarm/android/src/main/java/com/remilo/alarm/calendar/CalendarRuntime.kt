@@ -11,6 +11,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
+import org.json.JSONObject
 
 /** Application-context I/O adapter shared by foreground actions and unlocked native workers. */
 class CalendarRuntime private constructor(private val context: Context, private val engine: AlarmEngine) : CalendarAutomaticAccess {
@@ -22,23 +23,116 @@ class CalendarRuntime private constructor(private val context: Context, private 
   private val running = ConcurrentHashMap.newKeySet<String>()
   private val cursors = linkedMapOf<String, Pair<String, String>>()
   private val syncFlights = mutableMapOf<String, CompletableFuture<CalendarRunSummary>>()
+  fun managedRequest(action: String, input: Map<String, Any?>, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
+    if (action == "recovered") {
+      engine.request({ engine.calendarRecoveredPreview((input["ids"] as? List<*>)?.map { it as String } ?: emptyList()) }, resolve, reject)
+      return
+    }
+    io.execute {
+      try {
+        transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
+        val coordinator = CalendarManagedCoordinator(this, transport, authorization)
+        resolve(when (action) {
+          "setup" -> coordinator.setupPreview(input)
+          "policy" -> access(true) { it.managed.previewPolicyChange(input) }
+          "resume" -> coordinator.resumePreview()
+          "candidate" -> { @Suppress("UNCHECKED_CAST") val choices = input["choices"] as? Map<String, Any?> ?: emptyMap()
+            coordinator.candidatePreview(CalendarStore.string(input, "candidateId"), choices) }
+          else -> throw CalendarFailure("INVALID_INPUT")
+        })
+      } catch (error: Exception) { reject((error as? CalendarFailure)?.code ?: "NETWORK") }
+      finally { transport.deadlineElapsedMs = Long.MAX_VALUE }
+    }
+  }
+  fun managedCommand(command: Map<String, Any?>, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
+    if (command["kind"] == "EnableRecoveredCalendarAlerts") {
+      engine.request({ engine.calendarRecoveredCapture(command) }, resolve, reject); return
+    }
+    engine.calendarRequest(true, { it.captureManagedCommand(command) }, { result ->
+      resolve(result)
+      val operationId = CalendarStore.string(command, "operationId")
+      when (command["kind"]) {
+        "ConfirmManagedCalendarSetup", "RetryManagedCalendarOperation" -> startManaged(operationId)
+        "ImportManagedCalendarCandidate" -> startLink(operationId, true)
+        "ResumeManagedCalendar" -> {
+          @Suppress("UNCHECKED_CAST") val jobs = result["operations"] as? List<String> ?: emptyList()
+          jobs.forEach { startLink(it, true) }; synchronize(false)
+        }
+      }
+      CalendarWork.reconcile(context, opportunity = true)
+    }, reject)
+  }
+  fun startManaged(id: String, suppliedToken: String? = null) {
+    if (!running.add("managed:$id")) return
+    io.execute {
+      try {
+        transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
+        val setup = access { it.managed.setupOperation(id) }
+        if (setup != null) {
+          CalendarManagedSetupRunner(this, transport, authorization).run(id, suppliedToken, transport.deadlineElapsedMs)
+          if (access { it.managed.setupOperation(id)?.phase } == "Confirmed") access(true) { it.releaseManagedSetupChildren(id) }
+        } else inspectManagedPublication(id, suppliedToken)
+      } catch (error: Exception) { access(true) { it.managed.issue("Setup", id, (error as? CalendarFailure)?.code ?: "NETWORK", false) } }
+      finally { transport.deadlineElapsedMs = Long.MAX_VALUE; running.remove("managed:$id"); CalendarWork.reconcile(context, opportunity = true) }
+    }
+  }
+  fun managedAuthenticated(token: String, expectedRevision: Long, done: (Boolean) -> Unit) {
+    io.execute {
+      try {
+        val connection = access { it.connection() }; val account = transport.account(token)
+        if (!connection.connected || connection.revision != expectedRevision || connection.subject != account.subject || !account.emailVerified)
+          throw CalendarFailure("STALE_CONNECTION")
+        val id = access { it.managed.binding().operationId }
+        if (id.isBlank()) throw CalendarFailure("NOT_FOUND")
+        done(true); startManaged(id, token)
+      } catch (_: Exception) { done(false) }
+    }
+  }
+  private fun inspectManagedPublication(id: String, suppliedToken: String?) {
+    val job = access { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
+    val connection = access { it.connection() }
+    if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("ACCOUNT_MISMATCH")
+    val token = suppliedToken ?: authorization.token(connection.email)
+    val calendar = transport.calendar(token, job.calendarId)
+    CalendarManagedDiscovery.requireEligible(calendar, connection.email)
+    val remote = (transport.lookup(token, job.calendarId, job.eventId) as? CalendarEventLookup.Found)?.event ?: throw CalendarFailure("UNCONFIRMED_RESOURCE")
+    if (!CalendarMapper.matching(remote, job.eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
+    if (job.payload.isNotBlank() && !CalendarLinkMapper.equal(CalendarLinkMapper.mainFields(CalendarLinkMapper.fields(JSONObject(job.payload), job.zoneId)),
+        CalendarLinkMapper.mainFields(CalendarLinkMapper.fields(remote, job.zoneId)))) throw CalendarFailure("RESOURCE_CONFLICT")
+    for (child in access { it.publicationJobs(id) }) {
+      if (child.confirmed || !child.attempted || child.eventId.isBlank()) continue
+      val actual = (transport.lookup(token, child.calendarId, child.eventId) as? CalendarEventLookup.Found)?.event ?: throw CalendarFailure("UNCONFIRMED_RESOURCE")
+      if (!CalendarLinkMapper.equal(CalendarLinkMapper.fields(JSONObject(actual.toString()).also { it.remove("recurringEventId") }, job.zoneId), JSONObject(child.desired)))
+        throw CalendarFailure("RESOURCE_CONFLICT")
+      access(true) { it.acknowledgeResource(child, actual) }
+    }
+    if (access { it.publicationJobs(id).all { it.confirmed } }) access(true) { it.confirm(id, remote) }
+  }
   @Synchronized fun synchronize(background: Boolean, id: String? = null): CompletableFuture<CalendarRunSummary> {
     val key = id ?: "all"
     syncFlights[key]?.let { return it }
     val future = CompletableFuture<CalendarRunSummary>(); syncFlights[key] = future
     io.execute {
       try {
+        transport.cancelled = { future.isCancelled }
         transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
         val connection = access { it.connection() }
-        val result = authorized(connection.email) { token -> CalendarAutomaticRunner(this, transport).run(token, background, id) }
+        val pendingSetup = access { store -> store.managed.binding().operationId.takeIf { key -> key.isNotBlank() && store.managed.operationActive(key) &&
+          store.managed.setupOperation(key)!!.let { job -> job.phase !in setOf("AccessRequired", "OwnershipUnknown", "Reviewing") && job.retryAtMs <= System.currentTimeMillis() } } }
+        val setupPages = if (pendingSetup != null) CalendarManagedSetupRunner(this, transport, authorization).run(pendingSetup, deadlineElapsedMs = transport.deadlineElapsedMs).pages else 0
+        access(true) { store -> store.managed.binding().operationId.takeIf(String::isNotBlank)?.let(store::releaseManagedSetupChildren) }
+        val result = authorized(connection.email) { token -> CalendarAutomaticRunner(this, transport).run(token, background, id, transport.deadlineElapsedMs, setupPages) }
         future.complete(result)
       } catch (error: Exception) {
         val code = (error as? CalendarFailure)?.code ?: "NETWORK"
+        if (future.isCancelled) return@execute
+        if (access { it.managed.binding().calendarId.isNotEmpty() }) access(true) { it.managed.failedAttempt() }
         if (code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) access(true) { store ->
           store.links.links().filter { it["syncMode"] == "Automatic" }.forEach { store.sync.issue(it["occurrenceId"] as String, code, background, "Paused") }
         }
         future.completeExceptionally(CalendarFailure(code))
       } finally {
+        transport.cancelled = { false }
         transport.deadlineElapsedMs = Long.MAX_VALUE
         synchronized(this) { syncFlights.remove(key) }
         access { it.sync.notifications(CalendarReviewNotifications(context)) }
@@ -77,7 +171,10 @@ class CalendarRuntime private constructor(private val context: Context, private 
   }
   override fun local(operationId: String, connectionRevision: Long): Map<String, Any?> {
     val result = CompletableFuture<Map<String, Any?>>()
-    engine.request({ engine.calendarLocal(operationId, connectionRevision) }, { @Suppress("UNCHECKED_CAST") result.complete(it as Map<String, Any?>) },
+    engine.request({
+      if (transport.cancelled()) throw CalendarFailure("CANCELLED")
+      engine.calendarLocal(operationId, connectionRevision)
+    }, { @Suppress("UNCHECKED_CAST") result.complete(it as Map<String, Any?>) },
       { result.completeExceptionally(CalendarFailure(it)) })
     try { return result.get(15, TimeUnit.SECONDS) }
     catch (error: ExecutionException) { throw (error.cause as? CalendarFailure ?: CalendarFailure("NOT_AVAILABLE")) }
@@ -205,26 +302,36 @@ class CalendarRuntime private constructor(private val context: Context, private 
     if (!running.add(id)) return
     io.execute {
       try {
+        transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
         val job = links { it.operation(id) } ?: throw CalendarFailure("NOT_FOUND")
         if (job.state in CalendarLinkStore.terminal || job.erased) return@execute
         val connection = links { it.connection() }
         if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("NEEDS_ACCESS")
         if (!retry && connection.revision != job.expectedConnectionRevision) throw CalendarFailure("STALE_CONNECTION")
         authorized(connection.email) { token ->
-          CalendarLinkRunner(this, transport, inspectRecurring = true).run(id, token, connection.revision)
+          val managedImport = job.kind == "ImportCalendarEvent" && access { it.managed.dao.candidates().any { candidate -> candidate.operationId == id } }
+          if (managedImport) {
+            val transfers = CalendarManagedTransfers(this, transport, { if (android.os.SystemClock.elapsedRealtime() >= transport.deadlineElapsedMs) throw CalendarFailure("BUDGET") })
+            if (!transfers.verifyCapturedImport(token, id)) return@authorized
+            CalendarLinkRunner(this, transfers.capturedImportTransport(id)).run(id, token, connection.revision)
+          } else CalendarLinkRunner(this, transport, inspectRecurring = true).run(id, token, connection.revision)
           if (links { it.operation(id)?.state } == "NeedsAccess") try { authorization.clear(token) } catch (_: Exception) { /* Visible recovery. */ }
         }
       } catch (error: Exception) { links(true) { it.fail(id, (error as? CalendarFailure)?.code ?: "NEEDS_ACCESS") } }
-      finally { running.remove(id); CalendarWork.reconcile(context, opportunity = true) }
+      finally { transport.deadlineElapsedMs = Long.MAX_VALUE; running.remove(id); CalendarWork.reconcile(context, opportunity = true) }
     }
   }
   override fun <T> access(write: Boolean, block: (CalendarStore) -> T): T {
     val result = CompletableFuture<T>()
-    engine.calendarRequest(write, block, { result.complete(it) }, { result.completeExceptionally(CalendarFailure(it)) })
+    engine.calendarRequest(write, { store ->
+      if (write && transport.cancelled()) throw CalendarFailure("CANCELLED")
+      block(store)
+    }, { result.complete(it) }, { result.completeExceptionally(CalendarFailure(it)) })
     try { return result.get(15, TimeUnit.SECONDS) }
     catch (error: ExecutionException) { throw (error.cause as? CalendarFailure ?: CalendarFailure("NOT_AVAILABLE")) }
   }
   private fun token(email: String): String {
+    if (transport.cancelled()) throw CalendarFailure("CANCELLED")
     if (revoking) throw CalendarFailure("NEEDS_ACCESS")
     return authorization.token(email)
   }
@@ -242,6 +349,16 @@ class CalendarRuntime private constructor(private val context: Context, private 
         val account = transport.account(token)
         if (publicationId == null) access(true) { it.connect(account, expectedRevision) }
         else {
+          val managed = access { it.managed.setupOperation(publicationId) }
+          if (managed != null) {
+            if (managed.subject != account.subject || !account.emailVerified) throw CalendarFailure("ACCOUNT_MISMATCH")
+            access(true) { store ->
+              if (!store.managed.operationActive(publicationId)) throw CalendarFailure("STALE_AUTHORIZATION")
+              store.connect(account, expectedRevision)
+              store.managed.reauthorize(publicationId, expectedRevision, store.connection().revision)
+            }
+            done(true); startManaged(publicationId, token); return@execute
+          }
           val linkJob = links { it.operation(publicationId) }
           if (linkJob != null) {
             if (account.subject != linkJob.subject) throw CalendarFailure("ACCOUNT_MISMATCH")

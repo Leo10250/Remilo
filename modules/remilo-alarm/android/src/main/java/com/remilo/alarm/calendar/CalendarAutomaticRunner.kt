@@ -8,8 +8,10 @@ interface CalendarAutomaticAccess : CalendarStateAccess, CalendarLinkAccess {
   fun context(id: String): Map<*, *>
   fun preflight(previewId: String, selections: Map<String, String?>): String? = null
 }
-data class CalendarRunSummary(val pages: Int, val attempted: Int, val confirmed: Int, val continuation: Boolean) {
-  fun view() = mapOf("pages" to pages, "attempted" to attempted, "confirmed" to confirmed, "continuation" to continuation)
+data class CalendarRunSummary(val pages: Int, val attempted: Int, val confirmed: Int, val continuation: Boolean,
+  val imported: Int = 0, val published: Int = 0, val adopted: Int = 0, val deferred: Int = 0, val excluded: Int = 0, val review: Int = 0) {
+  fun view() = mapOf("pages" to pages, "attempted" to attempted, "confirmed" to confirmed, "continuation" to continuation,
+    "imported" to imported, "published" to published, "adopted" to adopted, "deferred" to deferred, "excluded" to excluded, "review" to review)
 }
 
 /** All I/O runs on Calendar's executor; short access() commits yield to alarm actions. */
@@ -18,19 +20,34 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
   private var deadline = Long.MAX_VALUE
   private var backgroundRun = false
   private fun budget() { if (elapsed() >= deadline) throw CalendarFailure("BUDGET") }
-  fun run(token: String, background: Boolean, associationId: String? = null): CalendarRunSummary {
-    deadline = elapsed() + 120_000
+  fun run(token: String, background: Boolean, associationId: String? = null, deadlineElapsedMs: Long = elapsed() + 120_000,
+    initialPages: Int = 0): CalendarRunSummary {
+    deadline = deadlineElapsedMs
     backgroundRun = background
     val connection = state.access { it.connection() }
     if (!connection.connected) throw CalendarFailure("NEEDS_ACCESS")
-    if (transport.account(token).subject != connection.subject) throw CalendarFailure("ACCOUNT_MISMATCH")
-    var pages = 0; var attempted = 0; var confirmed = 0; var continuation = false
+    if (state.access { it.managed.active() }) state.access(true) { it.managed.attempted() }
+    val account = transport.account(token)
+    if (account.subject != connection.subject) throw CalendarFailure("ACCOUNT_MISMATCH")
+    if (state.access { it.managed.active() } && !account.emailVerified) throw CalendarFailure("OWNERSHIP_UNKNOWN")
+    var pages = initialPages; var attempted = 0; var confirmed = 0; var continuation = false
+    var imported = 0; var published = 0; var adopted = 0; var deferred = 0; var excluded = 0; var review = 0
     val rebuilding = mutableSetOf<String>()
-    for (operationId in state.access { it.sync.pending() }.take(50)) {
+    val activationWork = state.access { it.sync.pending() }
+    if (activationWork.size > 10) continuation = true
+    for (operationId in activationWork.take(10)) {
       budget()
       val job = state.links { it.operation(operationId) } ?: continue
       if (state.access { it.sync.state(job.occurrenceId).mode } != "Pending") continue
       attempted++
+      if (job.kind == "ImportCalendarEvent" && state.access { it.managed.dao.candidates().any { candidate -> candidate.operationId == operationId } }) {
+        val transfers = CalendarManagedTransfers(state, transport, ::budget, now)
+        if (!transfers.verifyCapturedImport(token, operationId, background)) { continuation = true; continue }
+        CalendarLinkRunner(state, transfers.capturedImportTransport(operationId), background = backgroundRun).run(operationId, token, connection.revision)
+        if (!job.localApplied && state.links { it.operation(operationId)?.localApplied } == true) imported++
+        if (state.links { it.operation(operationId)?.state } == "Confirmed") confirmed++
+        continue
+      }
       val bounded = object : CalendarTransport by transport {
         override fun inspectRecurring(token: String, calendar: OwnedCalendar, event: JSONObject): JSONObject {
           // Pending activation permits recovery of its reviewed resources, not a new collection scan.
@@ -56,12 +73,26 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
         }
       }
       CalendarLinkRunner(state, bounded, inspectRecurring = true, background = backgroundRun).run(operationId, token, connection.revision)
-      if (state.links { it.operation(operationId)?.state } == "Confirmed") confirmed++
+      if (state.links { it.operation(operationId)?.state } == "Confirmed") {
+        confirmed++
+        if (job.kind == "EnableCalendarLink") adopted++
+      }
     }
     val calendars = state.access { it.incremental.calendars() }
     for (calendarId in calendars) {
       if (pages >= 10 || elapsed() >= deadline) { continuation = true; break }
-      val calendar = transport.calendar(token, calendarId)
+      val calendar = try { transport.calendar(token, calendarId) } catch (error: CalendarFailure) {
+        if (!state.access { it.managed.binding().let { binding -> binding.subject == connection.subject && binding.calendarId == calendarId } } ||
+          error.code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH", "BUDGET", "CANCELLED")) throw error
+        if (error.code in setOf("NETWORK", "RETRY", "NOT_AVAILABLE")) {
+          state.access(true) { it.managed.failedAttempt() }; continuation = true
+        } else state.access(true) { it.managed.accessChanged(error.code); it.managed.issue("Setup", it.managed.binding().operationId, error.code, background) }
+        continue
+      }
+      if (state.access { it.managed.permitsCalendar(connection.subject, calendarId) }) {
+        try { state.access(true) { it.refreshManagedCalendar(calendar) } }
+        catch (error: CalendarFailure) { state.access(true) { it.managed.accessChanged(error.code); it.managed.issue("Setup", it.managed.binding().operationId, error.code, background) }; continue }
+      }
       if (calendar.accessRole != "owner") {
         state.access(true) { store -> store.links.links().filter { it["source"]?.let { source -> (source as? Map<*, *>)?.get("calendarId") } == calendarId }
           .forEach { store.sync.issue(it["occurrenceId"] as String, "NOT_OWNER", background, "Paused") } }
@@ -72,7 +103,7 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
         if (pages >= 10 || elapsed() >= deadline) { continuation = true; break }
         try {
           val page = transport.syncEvents(token, calendarId, cursor.startingToken.takeIf(String::isNotBlank), cursor.pageToken.takeIf(String::isNotBlank))
-          cursor = state.access(true) { it.incremental.page(cursor, connection.revision, page, calendar.zoneId) }; pages++
+          cursor = state.access(true) { it.incremental.page(cursor, connection.revision, page, calendar.zoneId, calendar, background) }; pages++
         } catch (error: CalendarFailure) {
           if (error.code != "SYNC_TOKEN_EXPIRED") throw error
           cursor = state.access(true) { it.incremental.expired(cursor, connection.revision) }
@@ -80,6 +111,32 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
           continuation = true; break
         }
       } while (cursor.paging)
+    }
+    if (associationId == null) {
+      val transfers = CalendarManagedTransfers(state, transport, ::budget, now)
+      val importWork = state.access { it.managed.candidates() }
+      if (importWork.size > 10) continuation = true
+      for (candidate in importWork.take(10)) {
+        if (attempted >= 50 || elapsed() >= deadline) { continuation = true; break }
+        attempted++
+        when (transfers.importCandidate(token, candidate, background)) {
+          "Imported" -> { imported++; confirmed++ }; "Excluded" -> excluded++; "Review" -> review++
+          else -> { deferred++; continuation = true }
+        }
+        state.access(true) { store -> store.managed.candidate(candidate.candidateId)?.let { current ->
+          store.managed.dao.candidate(current.copy(observedAtMs = now()))
+        } }
+      }
+      val exportWork = state.access { it.managed.pendingIntents() }
+      if (exportWork.size > 10) continuation = true
+      for (intent in exportWork.take(10)) {
+        if (attempted >= 50 || elapsed() >= deadline) { continuation = true; break }
+        attempted++
+        when (transfers.publish(token, intent, background)) {
+          "Published" -> { published++; confirmed++ }; "Excluded" -> excluded++; "Review" -> review++
+          else -> { deferred++; continuation = true }
+        }
+      }
     }
     val candidates = state.access { store -> store.links.links().map { it["occurrenceId"] as String }
       .filter { associationId == null || it == associationId }
@@ -134,7 +191,9 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
       }
     }
     continuation = continuation || state.access { store -> store.sync.nextRetryMs() != null || store.incremental.calendars().any { store.incremental.cursor(it).paging } }
-    return CalendarRunSummary(pages, attempted, confirmed, continuation).also { value -> state.access(true) { it.sync.saveRun(value) } }
+    continuation = continuation || state.access { it.managed.nextRetryMs() != null }
+    return CalendarRunSummary(pages, attempted, confirmed, continuation, imported = imported, published = published, adopted = adopted,
+      deferred = deferred, excluded = excluded, review = review).also { value -> state.access(true) { it.sync.saveRun(value) } }
   }
   fun preview(token: String, id: String, activation: Boolean): Map<String, Any?> {
     budget()

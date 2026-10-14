@@ -151,13 +151,14 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       "remainingCount" to rule.count?.let { it - selected!!.index + 1 })
   }
   fun create(operation: String, record: ReminderRecord, spec: Map<String, Any?>, allocatedId: String? = null,
-    checkpoint: () -> Unit = {}, afterCommit: () -> Unit = {}, calendarRule: RecurrenceRule? = null): Map<String, Any?> {
+    checkpoint: () -> Unit = {}, afterCommit: () -> Unit = {}, calendarRule: RecurrenceRule? = null,
+    calendarFutureWork: Boolean = false): Map<String, Any?> {
     val dao = db().records()
     dao.receipt(operation)?.let {
       require(it.kind == "CreateSeries"); recover(); return mapOf("status" to "Applied", "segmentId" to it.occurrenceId)
     }
     val rule = rule(record, spec).let { if (calendarRule == null) it else it.copy(endExclusive = calendarRule.endExclusive) }
-    require(Recurrence.future(rule, now(), zone(), record.mode).any()) { "No future occurrences. Change the rule or its ending." }
+    require(Recurrence.future(rule, now(), zone(), record.mode).any() || calendarRule != null && calendarFutureWork) { "No future occurrences. Change the rule or its ending." }
     val id = allocatedId ?: UUID.randomUUID().toString()
     val series = SeriesRecord(id, id, encodeTemplate(record), RuleCodec.encode(rule), createdAtMs = now())
     db().runInTransaction {

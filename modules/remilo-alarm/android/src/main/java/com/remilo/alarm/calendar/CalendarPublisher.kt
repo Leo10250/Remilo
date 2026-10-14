@@ -15,6 +15,8 @@ class CalendarPublisher(private val state: CalendarStateAccess, private val tran
       active(job)
       val existing = transport.event(token, job.calendarId, job.eventId)
       if (existing != null) { complete(job, token, existing); return }
+      if (job.attempted && state.access { it.managed.intent(job.occurrenceId)?.operationId == job.operationId })
+        throw CalendarFailure("UNCONFIRMED_RESOURCE")
       if (job.readOnly || job.payload.isBlank()) throw CalendarFailure("REMOTE_REMOVED")
       val permitted = state.access(true) { it.permitInsert(job.operationId) } ?: throw CalendarFailure("NEEDS_ACCESS")
       val result = try { transport.insert(token, permitted.calendarId, permitted.payload) }
@@ -29,6 +31,11 @@ class CalendarPublisher(private val state: CalendarStateAccess, private val tran
   private fun complete(job: CalendarOperation, token: String, event: org.json.JSONObject) {
     if (!CalendarMapper.matching(event, job.eventId) || event.optString("status") == "cancelled") {
       state.access(true) { it.confirm(job.operationId, event) }; return
+    }
+    if (state.access { it.managed.intent(job.occurrenceId)?.operationId == job.operationId } && job.payload.isNotBlank()) {
+      val intended = CalendarLinkMapper.mainFields(CalendarLinkMapper.fields(org.json.JSONObject(job.payload), job.zoneId))
+      val actual = CalendarLinkMapper.mainFields(CalendarLinkMapper.fields(event, job.zoneId))
+      if (!CalendarLinkMapper.equal(intended, actual)) throw CalendarFailure("RESOURCE_CONFLICT")
     }
     val resources = CalendarResourceRunner(object : CalendarResourceAccess {
       override fun jobs(operationId: String) = state.access { it.publicationJobs(operationId) }

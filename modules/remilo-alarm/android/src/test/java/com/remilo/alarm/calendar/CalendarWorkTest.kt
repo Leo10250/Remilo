@@ -17,11 +17,12 @@ import java.util.concurrent.CompletableFuture
 class CalendarWorkTest {
   private val context: Context get() = RuntimeEnvironment.getApplication()
   private var calls = 0
+  private var onSynchronize: () -> Unit = {}
   private var outcome: CompletableFuture<CalendarRunSummary> = CompletableFuture.completedFuture(CalendarRunSummary(0, 0, 0, false))
   private fun worker() = TestWorkerBuilder.from(context, CalendarSyncWorker::class.java, java.util.concurrent.Executor { it.run() })
     .setWorkerFactory(object : WorkerFactory() {
       override fun createWorker(appContext: Context, workerClassName: String, parameters: WorkerParameters): ListenableWorker =
-        CalendarSyncWorker(appContext, parameters) { calls++; outcome }
+        CalendarSyncWorker(appContext, parameters) { calls++; onSynchronize(); outcome }
     }).build() as CalendarSyncWorker
   @Test fun coldNativeWorkerCompletesWithoutJavaScriptAndContinuesDurableWork() {
     Shadows.shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
@@ -50,5 +51,27 @@ class CalendarWorkTest {
     val pending = CalendarWork.pending(120_000).workSpec
     assertEquals(120_000L, pending.initialDelay); assertTrue(pending.input.keyValueMap.isEmpty())
     assertEquals(NetworkType.CONNECTED, pending.constraints.requiredNetworkType)
+  }
+  @Test fun stoppedWorkerCannotStartAnotherNativeOpportunity() {
+    Shadows.shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    outcome = CompletableFuture()
+    val current = worker()
+    current.onStopped()
+    assertEquals(ListenableWorker.Result.success(), current.doWork())
+    assertEquals(0, calls)
+  }
+  @Test fun stoppingAnInFlightWorkerCancelsItsNativeOpportunity() {
+    Shadows.shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    outcome = CompletableFuture()
+    val started = java.util.concurrent.CountDownLatch(1)
+    onSynchronize = { started.countDown() }
+    val current = worker(); val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+    try {
+      val result = executor.submit<ListenableWorker.Result> { current.doWork() }
+      assertTrue(started.await(5, java.util.concurrent.TimeUnit.SECONDS))
+      current.onStopped()
+      assertEquals(ListenableWorker.Result.success(), result.get(5, java.util.concurrent.TimeUnit.SECONDS))
+      assertTrue(outcome.isCancelled)
+    } finally { executor.shutdownNow() }
   }
 }

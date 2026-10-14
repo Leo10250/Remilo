@@ -355,7 +355,10 @@ class AlarmEngine internal constructor(private val context: Context,
     validate(end > start, "eventEndMs", "Event end must follow event start.")
     val defaultDue = if (allDay && dueLinked) end else old?.let { if (dueLinked) it.dueAtMs + start - it.eventStartMs else it.dueAtMs } ?: start
     val due = epoch(command["dueAtMs"] ?: defaultDue, "dueAtMs")
-    val defaultAlarm = if (allDay && alarmLinked) day.atTime(9, 0).atZone(zone).toInstant().toEpochMilli()
+    val allDayTime = old?.takeIf { it.allDay && it.alarmLinked }?.definedAlarmAtMs?.let {
+      Instant.ofEpochMilli(it).atZone(ZoneId.of(old.zoneId)).toLocalTime()
+    } ?: java.time.LocalTime.of(9, 0)
+    val defaultAlarm = if (allDay && alarmLinked) day.atTime(allDayTime).atZone(zone).toInstant().toEpochMilli()
       else old?.let { (it.definedAlarmAtMs ?: it.eventStartMs) + if (alarmLinked) due - it.dueAtMs else 0 } ?: due
     val alarm = explicitAlarm ?: epoch(defaultAlarm, "alarmAtMs")
     val sound = text(command, "sound", old?.sound ?: settings.sound, 20)
@@ -604,12 +607,19 @@ class AlarmEngine internal constructor(private val context: Context,
     val dao = prepareContentActions().records()
     val families = bundle.series.groupBy { it.seriesId }
     val localFamilies = dao.series().map { it.seriesId }.toSet()
+    val calendarCollisions = calendarStore().backupCollisions(bundle.records.filter { it.segmentId == null }.map { it.id } +
+      families.keys + bundle.series.map { it.id })
     val items = bundle.records.filter { it.segmentId == null }.map {
-      mapOf("id" to it.id, "title" to it.title, "conflict" to (dao.find(it.id) != null || dao.purged(it.id) != null),
+      val calendarTargets = calendarCollisions[it.id].orEmpty()
+      mapOf("id" to it.id, "title" to it.title, "conflict" to (dao.find(it.id) != null || dao.purged(it.id) != null || calendarTargets.isNotEmpty()),
+        "calendarCollision" to calendarTargets.isNotEmpty(), "currentOccurrenceIds" to calendarTargets,
         "futureAlert" to (!it.completed && it.mode != "None" && (bundle.nextAlerts[it.id] ?: it.definedAlarmAtMs!!) > now()))
     } + families.map { (id, segments) ->
       val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
-      mapOf("id" to id, "title" to "${series.template(segment).title} (series)", "conflict" to (id in localFamilies || segments.any { dao.series(it.id) != null }),
+      val calendarTargets = (calendarCollisions[id].orEmpty() + segments.flatMap { calendarCollisions[it.id].orEmpty() }).distinct().sorted()
+      mapOf("id" to id, "title" to "${series.template(segment).title} (series)",
+        "conflict" to (id in localFamilies || segments.any { dao.series(it.id) != null } || calendarTargets.isNotEmpty()),
+        "calendarCollision" to calendarTargets.isNotEmpty(), "currentOccurrenceIds" to calendarTargets,
         "futureAlert" to segments.any { current -> val mode = series.template(current).mode
           current.state == "Active" && mode != "None" && Recurrence.future(RuleCodec.decode(current.rule), now(), ZoneId.systemDefault(), mode).any() })
     }
@@ -658,17 +668,22 @@ class AlarmEngine internal constructor(private val context: Context,
     val bundle = BackupCodec.decode(json) // Entire new import is validated before writing anything.
     val families = bundle.series.groupBy { it.seriesId }
     val localFamilies = db.records().series().map { it.seriesId }.toSet()
-    val conflicts = families.filter { (id, segments) -> id in localFamilies || segments.any { db.records().series(it.id) != null } }.keys
+    val calendarCollisions = calendarStore().backupCollisions(bundle.records.filter { it.segmentId == null }.map { it.id } +
+      families.keys + bundle.series.map { it.id })
+    val conflicts = families.filter { (id, segments) -> id in localFamilies || id in calendarCollisions ||
+      segments.any { db.records().series(it.id) != null || it.id in calendarCollisions } }.keys
+    val recordConflicts = bundle.records.filter { it.segmentId == null &&
+      (db.records().find(it.id) != null || db.records().purged(it.id) != null || it.id in calendarCollisions) }.map { it.id }.toSet()
     validate(copyIds.all { id -> bundle.records.any { it.segmentId == null && it.id == id } || id in families }, "copyIds", "Choose conflicts from this backup.")
     val acceptedFamilies = families.filter { (id, _) -> id !in conflicts || id in copyIds }
     val segments = acceptedFamilies.values.flatten()
     val segmentMap = segments.associate { it.id to if (it.seriesId !in conflicts) it.id
       else UUID.nameUUIDFromBytes("$operation:segment:${it.id}".toByteArray()).toString() }
     val accepted = bundle.records.filter { if (it.segmentId != null) it.segmentId in segmentMap
-      else db.records().find(it.id) == null && db.records().purged(it.id) == null || it.id in copyIds }
+      else it.id !in recordConflicts || it.id in copyIds }
     val mapped = accepted.associate { record -> record.id to
       if (record.segmentId != null) UUID.nameUUIDFromBytes("remilo:${segmentMap.getValue(record.segmentId)}:${record.nominalSlot}".toByteArray()).toString()
-      else if (db.records().find(record.id) == null && db.records().purged(record.id) == null) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
+      else if (record.id !in recordConflicts) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
     val (listMap, newLists) = restoredLists(bundle)
     mutationStarted = true
     db.runInTransaction {
@@ -680,6 +695,7 @@ class AlarmEngine internal constructor(private val context: Context,
         val list = template.listId?.let { listMap.getValue(it) }
         db.records().series(source.copy(id = id, seriesId = family,
           template = org.json.JSONObject(BackupCodec.record(template.copy(listId = list?.id, listName = list?.name.orEmpty()))).toString()))
+        if (source.seriesId in conflicts) { calendarStore().managed.localOnly(id); calendarStore().managed.localOnly(family) }
         db.records().pendingSeries(PendingSeries("$operation:series:$id", id))
       }
       bundle.purged.filter { it.segmentId in segmentMap }.forEach { source ->
@@ -693,6 +709,7 @@ class AlarmEngine internal constructor(private val context: Context,
           listId = source.listId?.let { listMap.getValue(it).id }, listName = source.listId?.let { listMap.getValue(it).name }.orEmpty(),
           title = if (id == source.id || source.segmentId != null) source.title else "${source.title.take(193)} (copy)")
         db.records().insert(record)
+        if (source.segmentId == null && source.id in recordConflicts) calendarStore().managed.localOnly(id)
         db.records().pending(projection("$operation:$id", record, 1).copy(
           targetMs = bundle.nextAlerts[source.id] ?: record.definedAlarmAtMs!!,
           eligible = !record.completed && !record.deleted && !record.skipped && (record.mode == "None" || bundle.nextAlerts[source.id] != null)))
@@ -759,7 +776,14 @@ class AlarmEngine internal constructor(private val context: Context,
         try {
           var calendarEdited = false
           val result = when (command["kind"]) {
-            "CreateSeries" -> series.create(operationId, draft(command, "template"), command["recurrence"] as Map<String, Any?>)
+            "CreateSeries" -> {
+              validate(command["calendarDisposition"] == null || command["calendarDisposition"] in setOf("Default", "Managed", "LocalOnly"),
+                "calendarDisposition", "Choose a Calendar option.")
+              series.create(operationId, draft(command, "template"), command["recurrence"] as Map<String, Any?>, checkpoint = {
+                val id = content().records().receipt(operationId)!!.occurrenceId
+                calendarStore().managed.authored(id, content().records().series(id)!!.revision, command["calendarDisposition"] as? String ?: "Default")
+              })
+            }
             "EditSeries", "EditFollowing" -> {
               val old = series.editTemplate(command["segmentId"] as String,
                 if (command["kind"] == "EditFollowing") command["nominalSlot"] as String else null)
@@ -773,7 +797,7 @@ class AlarmEngine internal constructor(private val context: Context,
             }
             else -> series.mutate(operationId, command)
           }
-          changed(calendarOpportunity = calendarEdited); result
+          changed(calendarOpportunity = calendarEdited || command["kind"] == "CreateSeries"); result
         } catch (error: InputError) { throw error }
         catch (_: IllegalArgumentException) { mapOf("status" to "Rejected", "errorCode" to "INVALID_RECURRENCE", "errorField" to "recurrence",
           "errorMessage" to "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.") }
@@ -806,7 +830,91 @@ class AlarmEngine internal constructor(private val context: Context,
     }
   }
   fun testAlarm(operationId: String): Map<String, Any?> = apply(mapOf(
-    "kind" to "Create", "operationId" to operationId, "title" to "Remilo test alarm", "alarmAtMs" to now() + 15_000L))
+    "kind" to "Create", "operationId" to operationId, "title" to "Remilo test alarm", "alarmAtMs" to now() + 15_000L, "calendarDisposition" to "LocalOnly"))
+  fun calendarRecoveredPreview(ids: List<String>): Map<String, Any?> {
+    prepareContentActions()
+    val store = calendarStore(); val rows = org.json.JSONArray()
+    val recovered = store.managed.dao.candidates().filter { candidate -> candidate.state == "Imported" &&
+      candidate.policySnapshot.takeIf(String::isNotBlank)?.let { org.json.JSONObject(it).optBoolean("initialRecovery") } == true &&
+      (ids.isEmpty() || candidate.localId in ids) }
+    recovered.forEach { candidate ->
+      val id = candidate.localId; val record = store.links.record(id)
+      val row = org.json.JSONObject().put("itemId", "recovered:$id").put("kind", "RecoveredAlert").put("occurrenceId", id)
+        .put("title", record?.title.orEmpty()).put("ready", false).put("alertMode", "Alarm")
+      if (record != null && !record.completed && !record.deleted && !record.skipped && record.mode == "None") {
+        val segments = store.links.segments(id)
+        val pending = content().records().all().filter { it.segmentId in segments.map { segment -> segment.id } && !it.completed && !it.deleted && !it.skipped }
+        val ringing = alerts.find(id)?.sessionId != null || pending.any { alerts.find(it.id)?.sessionId != null }
+        val future = if (segments.isEmpty()) listOfNotNull(record.definedAlarmAtMs).filter { it > now() }
+          else segments.flatMap { segment -> Recurrence.future(RuleCodec.decode(segment.rule), now(), ZoneId.of(record.zoneId), "Alarm")
+            .filter { slot -> pending.none { it.segmentId == segment.id && it.nominalSlot == slot.nominal.toString() && it.exception } }
+            .take(3).map { it.alarmAtMs }.toList() } + pending.filter { it.exception && it.definedAlarmAtMs!! > now() }.map { it.definedAlarmAtMs!! }
+        val elapsedOngoing = pending.any { it.eventEndMs > now() && it.definedAlarmAtMs!! <= now() }
+        if (!ringing && !elapsedOngoing && future.isNotEmpty()) {
+          row.put("ready", true).put("alertAtMs", future.min()).put("revision", record.revision)
+            .put("generation", alerts.find(id)?.generation ?: 0)
+            .put("segmentRevisions", org.json.JSONArray(segments.map { org.json.JSONObject().put("id", it.id).put("revision", it.revision) }))
+            .put("recordRevisions", org.json.JSONArray(pending.map { org.json.JSONObject().put("id", it.id).put("revision", it.revision)
+              .put("generation", alerts.find(it.id)?.generation ?: 0) }))
+        } else row.put("reason", if (ringing) "Ringing" else "ElapsedAlert")
+      } else row.put("reason", "LocalTerminal")
+      rows.put(row)
+    }
+    return store.managed.preview("RecoveredAlerts", org.json.JSONObject().put("items", rows).put("warnings", org.json.JSONArray())
+      .put("policy", org.json.JSONObject(store.managed.policyView())).put("complete", true))
+  }
+  fun calendarRecoveredCapture(command: Map<String, Any?>): Map<String, Any?> {
+    val db = prepareContentActions(); val store = calendarStore(); val op = CalendarStore.string(command, "operationId")
+    val selected = command["selectedItemIds"] as? List<*> ?: throw CalendarFailure("INVALID_INPUT")
+    if (selected.size > 500 || selected.distinct().size != selected.size) throw CalendarFailure("INVALID_INPUT")
+    val key = org.json.JSONArray(listOf(command["kind"], command["previewId"], org.json.JSONArray(selected.sortedBy { it as String }))).toString()
+    store.managed.dao.receipt(op)?.let {
+      if (it.requestKey != key) throw CalendarFailure("OPERATION_REUSED")
+      applyPending(db); series.recover(); return com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(it.result))
+    }
+    if (db.records().receipt(op) != null || db.calendar().operation(op) != null || db.links().operation(op) != null) throw CalendarFailure("OPERATION_REUSED")
+    val preview = store.managed.reviewed(CalendarStore.string(command, "previewId"), "RecoveredAlerts")
+    val items = org.json.JSONObject(preview.payload).getJSONArray("items")
+    val approved = selected.map { itemId -> (0 until items.length()).map(items::getJSONObject).firstOrNull { it.getString("itemId") == itemId && it.getBoolean("ready") }
+      ?: throw CalendarFailure("STALE_PREVIEW") }
+    for (item in approved) {
+      val id = item.getString("occurrenceId"); val record = store.links.record(id) ?: throw CalendarFailure("NOT_FOUND")
+      if (record.revision != item.getLong("revision") || record.mode != "None" || (alerts.find(id)?.generation ?: 0) != item.getLong("generation") ||
+        alerts.find(id)?.sessionId != null || record.completed || record.deleted || record.skipped) throw CalendarFailure("STALE_PREVIEW")
+      val segments = item.getJSONArray("segmentRevisions")
+      for (index in 0 until segments.length()) { val row = segments.getJSONObject(index)
+        if (db.records().series(row.getString("id"))?.revision != row.getLong("revision")) throw CalendarFailure("STALE_PREVIEW") }
+      val records = item.getJSONArray("recordRevisions")
+      for (index in 0 until records.length()) { val row = records.getJSONObject(index); val local = db.records().find(row.getString("id")) ?: throw CalendarFailure("STALE_PREVIEW")
+        val alert = alerts.find(local.id)
+        if (local.revision != row.getLong("revision") || (alert?.generation ?: 0) != row.getLong("generation") || alert?.sessionId != null) throw CalendarFailure("STALE_PREVIEW") }
+    }
+    val result = mapOf("captured" to true, "operationId" to op, "count" to approved.size)
+    db.runInTransaction {
+      approved.forEach { item ->
+        val id = item.getString("occurrenceId"); val record = store.links.record(id)!!; val segments = store.links.segments(id)
+        if (segments.isEmpty()) {
+          val changed = record.copy(mode = "Alarm", revision = record.revision + 1)
+          if (changed.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
+          db.records().update(changed); db.records().pending(projection("$op:$id", changed, (alerts.find(id)?.generation ?: 0) + 1))
+        } else {
+          segments.forEach { segment ->
+            val template = series.template(segment).copy(mode = "Alarm")
+            db.records().series(segment.copy(template = org.json.JSONObject(BackupCodec.record(template)).toString(), revision = segment.revision + 1))
+            db.records().pendingSeries(PendingSeries("$op:${segment.id}", segment.id))
+          }
+          db.records().all().filter { it.segmentId in segments.map { segment -> segment.id } && !it.completed && !it.deleted && !it.skipped &&
+            (it.definedAlarmAtMs ?: 0) > now() }.forEach { local ->
+            val updated = local.copy(mode = "Alarm", revision = local.revision + 1)
+            db.records().update(updated); db.records().pending(projection("$op:${local.id}", updated, (alerts.find(local.id)?.generation ?: 0) + 1))
+          }
+        }
+        store.sync.activity("$op:recovery:$id", id, "RecoveredAlertsEnabled", "")
+      }
+      store.managed.dao.receipt(com.remilo.alarm.calendar.CalendarManagedReceipt(op, "EnableRecoveredCalendarAlerts", key, org.json.JSONObject(result).toString()))
+    }
+    applyPending(db); series.recover(); changed(); return result
+  }
   fun calendarCapture(command: Map<String, Any?>): Map<String, Any?> {
     prepareContentActions()
     val store = calendarStore().links
@@ -815,9 +923,10 @@ class AlarmEngine internal constructor(private val context: Context,
       else { store.validateGeneration(command, generation); store.capture(command) }
     changed(); return result
   }
-  fun calendarPreflight(previewId: String, selections: Map<String, String?>): String? = try {
+  fun calendarPreflight(previewId: String, selections: Map<String, String?>): String? { return try {
     prepareContentActions()
     val (preview, desired) = calendarStore().links.proposed(previewId, selections)
+    if (preview.occurrenceId.isEmpty()) return calendarIncomingPreflight(preview, desired)
     val old = calendarStore().links.record(preview.occurrenceId) ?: throw CalendarFailure("NOT_FOUND")
     calendarStore().links.active(old)
     val target = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(desired)), old.id, old)
@@ -856,7 +965,30 @@ class AlarmEngine internal constructor(private val context: Context,
       }
     }
     null
-  } catch (error: CalendarFailure) { error.code } catch (_: IllegalArgumentException) { "INVALID_INPUT" }
+  } catch (error: CalendarFailure) { error.code } catch (_: IllegalArgumentException) { "INVALID_INPUT" } }
+  private fun calendarIncomingPreflight(preview: com.remilo.alarm.calendar.CalendarLinkPreview, desired: org.json.JSONObject): String? {
+    val options = org.json.JSONObject(preview.choices)
+    val input = com.remilo.alarm.calendar.CalendarLinkMapper.draft(desired)
+    input.put("title", options.getString("title"))
+    for (field in listOf("mode", "alarmAtMs", "dueAtMs", "dueLinked", "alarmLinked", "sound", "vibration", "listId")) input.put(field, options.get(field))
+    val target = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(input), "calendar-import-preview")
+    val recurrence = desired.getJSONObject("schedule").optJSONArray("recurrence")
+    if (recurrence == null) {
+      if (target.mode != "None" && target.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
+    } else {
+      val decoded = com.remilo.alarm.calendar.CalendarRecurrence.decode(recurrence,
+        Instant.ofEpochMilli(target.eventStartMs).atZone(ZoneId.of(target.zoneId)).toLocalDateTime(), target.zoneId, target.allDay,
+        if (target.allDay) 86_400_000 else target.eventEndMs - target.eventStartMs)
+      val rule = series.rule(target, com.remilo.alarm.calendar.CalendarRecurrence.spec(decoded)).copy(endExclusive = decoded.endExclusive)
+      val job = com.remilo.alarm.calendar.CalendarLinkOperation("preview", target.id, "", "ImportCalendarEvent", "", preview.subject,
+        preview.calendar.id, preview.eventId, preview.calendar.name, preview.origin, 0, 0, 0, preview.connectionRevision,
+        preview.etag, preview.remote, desired.toString(), org.json.JSONObject().put("calendarInstances", options.optJSONArray("instances")).toString(), "{}", false)
+      val exceptions = calendarInstances(job, target.id, target, rule)
+      if (!Recurrence.future(rule, now(), ZoneId.of(target.zoneId), target.mode).any() &&
+        exceptions.none { !it.first.skipped && it.first.eventEndMs > now() }) throw CalendarFailure("NO_UPCOMING_WORK")
+    }
+    return null
+  }
   /** Called only through request(), on the native mutation worker. */
   fun calendarLocal(operationId: String, executionRevision: Long? = null): Map<String, Any?> {
     prepareContentActions()
@@ -926,7 +1058,8 @@ class AlarmEngine internal constructor(private val context: Context,
         store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit")
       }
       val after = { calendarCheckpoint("afterLocalCommit"); applyPending(content()) }
-      val result = if (segment == null) series.create(operationId, target, spec, job.occurrenceId, checkpoint, after, rule)
+      val result = if (segment == null) series.create(operationId, target, spec, job.occurrenceId, checkpoint, after, rule,
+        instances.any { (row, _) -> !row.skipped && !row.completed && !row.deleted && (if (row.mode == "None") row.eventEndMs else row.definedAlarmAtMs!!) > now() })
       else if (com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId), org.json.JSONObject(job.desired))) {
         content().runInTransaction { content().records().receipt(CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey)); checkpoint() }
         after(); mapOf("status" to "Applied")
@@ -975,6 +1108,14 @@ class AlarmEngine internal constructor(private val context: Context,
       if (row.optBoolean("cancelled") && job.kind != "ImportCalendarEvent" && content().records().all().any { it.segmentId == segmentId && it.nominalSlot == nominal && !it.completed && !it.deleted && !it.skipped })
         throw CalendarFailure("REMOTE_DELETED")
       if (row.optBoolean("cancelled") && job.kind == "ImportCalendarEvent") targets[nominal] = row
+      // Quiet recovery retains an ongoing ordinary occurrence even though lazy future
+      // materialization starts after now. Its original nominal identity stays ordinary.
+      if (job.kind == "ImportCalendarEvent" && template.mode == "None" && !row.optBoolean("cancelled") && !row.optBoolean("exception", true)) {
+        val fields = row.optJSONObject("fields") ?: continue
+        val timing = fields.getJSONObject("schedule")
+        if (timing.getLong("eventStartMs") <= now() && timing.getLong("eventEndMs") > now())
+          targets.putIfAbsent(nominal, org.json.JSONObject(row.toString()).put("ordinary", true))
+      }
     }
     return targets.mapNotNull { (nominal, item) ->
       val slot = Recurrence.resolve(rule, java.time.LocalDateTime.parse(nominal), ZoneId.of(template.zoneId))
@@ -983,10 +1124,10 @@ class AlarmEngine internal constructor(private val context: Context,
       val old = content().records().find(id)
       if (old?.let { it.completed || it.deleted || it.skipped } == true) return@mapNotNull null
       val normal = template.copy(id = id, eventStartMs = slot.eventStartMs, eventEndMs = slot.eventEndMs,
-        dueAtMs = slot.dueAtMs, definedAlarmAtMs = slot.alarmAtMs, segmentId = segmentId, nominalSlot = nominal, exception = true)
+        dueAtMs = slot.dueAtMs, definedAlarmAtMs = slot.alarmAtMs, segmentId = segmentId, nominalSlot = nominal, exception = !item.optBoolean("ordinary"))
       val incoming = if (item.optBoolean("cancelled")) normal.copy(skipped = true) else
         draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(item.getJSONObject("fields"))), id, old ?: normal)
-          .copy(segmentId = segmentId, nominalSlot = nominal, exception = true)
+          .copy(segmentId = segmentId, nominalSlot = nominal, exception = !item.optBoolean("ordinary"))
       if (old != null && com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old), com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming))) return@mapNotNull null
       val alert = alerts.find(id)
       val timingChanged = old == null || !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old).get("schedule"),
@@ -1005,17 +1146,20 @@ class AlarmEngine internal constructor(private val context: Context,
       return result(it.occurrenceId)
     }
     val id = allocatedId ?: UUID.randomUUID().toString()
+    validate(command["calendarDisposition"] == null || command["calendarDisposition"] in setOf("Default", "Managed", "LocalOnly"),
+      "calendarDisposition", "Choose a Calendar option.")
     val record = draft(command, id)
     validate(record.mode == "None" || record.definedAlarmAtMs!! > now(), "alarmAtMs", "Choose an alarm time in the future.")
     db.runInTransaction {
       db.records().insert(record)
       db.records().pending(projection(operationId, record, 1))
       db.records().receipt(CreationReceipt(operationId, id))
+      if (allocatedId == null) calendarStore().managed.authored(id, record.revision, command["calendarDisposition"] as? String ?: "Default")
       checkpoint()
     }
     afterCommit()
     applyPending(db)
-    changed()
+    changed(calendarOpportunity = allocatedId == null)
     return result(id)
   }
   private fun result(id: String): Map<String, Any?> {

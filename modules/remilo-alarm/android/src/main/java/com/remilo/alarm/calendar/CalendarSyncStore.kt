@@ -13,11 +13,14 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
       "baselineVersion" to value.baselineVersion, "authoredAtMs" to value.authoredAtMs, "successfulAtMs" to value.successfulAtMs,
       "attemptedAtMs" to value.attemptedAtMs, "googleUpdated" to value.remoteUpdated, "pauseReason" to value.pauseReason)
   }
-  fun summary(): Map<String, Any?> = mapOf("reviewCount" to actionableIssues().size, "automaticCount" to dao.states().count { eligible(it.associationId) },
+  fun summary(): Map<String, Any?> = mapOf("reviewCount" to reviewCounts().getValue("total"), "automaticCount" to dao.states().count { eligible(it.associationId) },
+    "reviewCounts" to reviewCounts(),
     "pendingCount" to dao.states().count { it.mode != "Manual" && it.status == "UpdatePending" },
     "notifications" to preferenceView(), "connected" to links.connection().connected,
-    "lastRun" to dao.run()?.let { mapOf("pages" to it.pages, "attempted" to it.attempted, "confirmed" to it.confirmed, "continuation" to it.continuation, "atMs" to it.atMs) })
-  fun saveRun(value: CalendarRunSummary) = dao.run(CalendarSavedRun(pages = value.pages, attempted = value.attempted, confirmed = value.confirmed, continuation = value.continuation, atMs = now()))
+    "lastRun" to dao.run()?.let { mapOf("pages" to it.pages, "attempted" to it.attempted, "confirmed" to it.confirmed, "continuation" to it.continuation, "atMs" to it.atMs,
+      "imported" to it.imported, "published" to it.published, "adopted" to it.adopted, "deferred" to it.deferred, "excluded" to it.excluded, "review" to it.review) })
+  fun saveRun(value: CalendarRunSummary) = dao.run(CalendarSavedRun(pages = value.pages, attempted = value.attempted, confirmed = value.confirmed, continuation = value.continuation, atMs = now(),
+    imported = value.imported, published = value.published, adopted = value.adopted, deferred = value.deferred, excluded = value.excluded, review = value.review))
   fun pending(): List<String> = dao.states().filter { it.mode != "Manual" && it.operationId.isNotEmpty() && it.status == "UpdatePending" && it.retryAtMs <= now() }
     .map { it.operationId }
   fun defer(id: String) { val value = state(id); dao.put(value.copy(status = "Deferred", pauseReason = "Ringing", retryAtMs = now() + 60_000)) }
@@ -36,9 +39,11 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
     val value = state(id); val link = links.link(id) ?: return false; val record = links.record(id) ?: return false
     val connection = links.connection()
     return value.mode == "Automatic" && value.status !in setOf("Review", "Unconfirmed", "Paused") && connection.connected &&
+      CalendarManagedStore(db, now).automaticAllowed(link.subject, link.calendarId) &&
       connection.subject == link.subject && link.state == "Linked" && !link.requiresReview && !link.erased && !record.deleted && !record.completed && !record.skipped
   }
   fun authored(id: String) {
+    CalendarManagedStore(db, now).updated(id, links.record(id)?.revision ?: 0)
     val family = db.records().series(id)?.seriesId ?: db.records().find(id)?.segmentId?.let { segment -> db.records().series(segment)?.seriesId }
     val affected = db.links().links().filter { it.occurrenceId == id || family != null && links.currentSeries(it.occurrenceId)?.seriesId == family }
     affected.forEach { link ->
@@ -169,22 +174,50 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
   fun actionableIssues() = dao.issues().filter { issue -> links.link(issue.associationId)?.let { !it.erased && it.state != "Detached" } == true &&
     links.record(issue.associationId)?.let { !it.deleted && !it.completed && !it.skipped } == true }
   fun issues(cursor: String?): Map<String, Any?> {
-    val items = actionableIssues(); val version = CalendarMapper.hash(JSONArray(items.map { it.fingerprint }).toString())
-    val start = if (cursor == null) 0 else cursor.substringAfter(':').toIntOrNull()?.takeIf { cursor.substringBefore(':') == version && it in 0..items.size } ?: throw CalendarFailure("STALE_CURSOR")
-    val page = items.drop(start).take(50)
-    return mapOf("items" to page.map { issue -> mapOf("occurrenceId" to issue.associationId, "reason" to issue.reason,
+    val association = actionableIssues().distinctBy { links.currentSeries(it.associationId)?.seriesId ?: it.associationId }.map { issue -> mapOf<String, Any?>(
+      "kind" to "Association", "issueId" to ("association:" + issue.associationId), "revision" to (links.link(issue.associationId)?.revision ?: 0),
+      "fingerprint" to issue.fingerprint, "occurrenceId" to issue.associationId, "reason" to issue.reason,
       "title" to links.record(issue.associationId)?.title, "seriesId" to links.currentSeries(issue.associationId)?.seriesId,
       "affectedScopes" to links.resources(issue.associationId).filter { it.availability == "Deleted" && it.nominalSlot.isNotEmpty() }.map { it.nominalSlot },
-      "discoveredAtMs" to issue.discoveredAtMs) }, "nextCursor" to (start + page.size).takeIf { it < items.size }?.let { "$version:$it" }, "count" to items.size)
+      "discoveredAtMs" to issue.discoveredAtMs) }
+    val managed = CalendarManagedStore(db, now)
+    val additions = db.managedCalendar().issues().map { issue ->
+      val candidate = managed.candidate(issue.targetId)
+      mapOf<String, Any?>("kind" to (if (issue.targetKind == "Export") "Association" else issue.targetKind), "issueId" to issue.issueId,
+        "revision" to (candidate?.revision ?: managed.binding().revision), "fingerprint" to issue.fingerprint,
+        "candidateId" to issue.targetId.takeIf { issue.targetKind == "Candidate" },
+        "occurrenceId" to issue.targetId.takeIf { issue.targetKind == "Export" },
+        "operationId" to issue.targetId.takeIf { issue.targetKind == "Setup" }, "reason" to reason(issue.reason),
+        "title" to (candidate?.title ?: issue.targetId.takeIf { issue.targetKind == "Export" }?.let { links.record(it)?.title } ?: "Calendar setup needs review"),
+        "calendarName" to (candidate?.calendarId?.let { managed.binding().calendarName } ?: managed.binding().calendarName),
+        "seriesId" to issue.targetId.takeIf { issue.targetKind == "Export" }?.let { links.currentSeries(it)?.seriesId },
+        "discoveredAtMs" to issue.discoveredAtMs)
+    }
+    val items = (association + additions).sortedWith(compareBy<Map<String, Any?>> { (it["discoveredAtMs"] as Number).toLong() }.thenBy { it["issueId"] as String })
+    val version = CalendarMapper.hash(JSONArray(items.map { it["fingerprint"] }).toString())
+    val start = if (cursor == null) 0 else cursor.substringAfter(':').toIntOrNull()?.takeIf { cursor.substringBefore(':') == version && it in 0..items.size } ?: throw CalendarFailure("STALE_CURSOR")
+    val page = items.drop(start).take(50)
+    return mapOf("items" to page, "nextCursor" to (start + page.size).takeIf { it < items.size }?.let { "$version:$it" }, "count" to items.size, "counts" to reviewCounts())
+  }
+  private fun reviewCounts(): Map<String, Int> {
+    val extra = db.managedCalendar().issues()
+    val reminders = (actionableIssues().map { it.associationId } + extra.filter { it.targetKind == "Export" }.map { it.targetId })
+      .distinctBy { links.currentSeries(it)?.seriesId ?: it }.size
+    val candidates = extra.count { it.targetKind == "Candidate" }; val setup = extra.count { it.targetKind == "Setup" }
+    return mapOf("reminders" to reminders, "candidates" to candidates, "setup" to setup, "total" to reminders + candidates + setup)
   }
   fun preferenceView() = (dao.preference() ?: CalendarReviewPreferences()).let { mapOf("revision" to it.revision, "enabled" to it.enabled) }
   fun notifications(presenter: CalendarReviewNotifications) {
     val issues = actionableIssues()
+    val managed = db.managedCalendar().issues()
     val enabled = (dao.preference() ?: CalendarReviewPreferences()).enabled && presenter.allowed()
-    val newlyDiscovered = enabled && issues.any { it.background && it.notifiedFingerprint != it.fingerprint }
+    val newlyDiscovered = enabled && (issues.any { it.background && it.notifiedFingerprint != it.fingerprint } || managed.any { it.background && it.notifiedFingerprint != it.fingerprint })
     // Persist delivery intent first, so a restart cannot repost an unchanged issue.
-    if (newlyDiscovered) db.runInTransaction { issues.filter { it.background }.forEach { dao.issue(it.copy(notifiedFingerprint = it.fingerprint)) } }
-    presenter.present(if (enabled) issues.size else 0, newlyDiscovered)
+    if (newlyDiscovered) db.runInTransaction {
+      issues.filter { it.background }.forEach { dao.issue(it.copy(notifiedFingerprint = it.fingerprint)) }
+      managed.filter { it.background }.forEach { db.managedCalendar().issue(it.copy(notifiedFingerprint = it.fingerprint)) }
+    }
+    presenter.present(if (enabled) reviewCounts().getValue("total") else 0, newlyDiscovered)
   }
   fun preference(command: Map<String, Any?>): Map<String, Any?> {
     val id = CalendarStore.string(command, "operationId"); val old = dao.preference() ?: CalendarReviewPreferences()
@@ -195,6 +228,7 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
       dao.preference(old.copy(revision = old.revision + 1, enabled = enabled, operationId = id))
       // Existing issues become seen when toggling; enabling never reposts them.
       dao.issues().forEach { dao.issue(it.copy(notifiedFingerprint = it.fingerprint)) }
+      db.managedCalendar().issues().forEach { db.managedCalendar().issue(it.copy(notifiedFingerprint = it.fingerprint)) }
       db.records().receipt(CreationReceipt(id, "calendar", "CalendarNotifications", enabled.toString()))
     }
     return preferenceView()
@@ -202,6 +236,9 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
   fun reason(code: String): String = when (code) {
     "ChangesNeedReview", "UnconfirmedWrite", "Ringing", "LocalTerminal", "LocalRemoved", "Unlinked", "ReviewRequired" -> code
     "RESOURCE_CONFLICT" -> "ChangesNeedReview"
+    "UNCONFIRMED_RESOURCE", "CREATION_UNCONFIRMED" -> "UnconfirmedWrite"
+    "ADOPTION_REQUIRED", "SELECTION_REQUIRED" -> "ReviewRequired"
+    "OWNERSHIP_UNKNOWN" -> "NotOwner"
     "ELAPSED_ALERT" -> "ElapsedAlert"
     "AUTH", "NEEDS_ACCESS", "STALE_CONNECTION" -> "AccessRequired"
     "ACCOUNT_MISMATCH" -> "AccountChanged"

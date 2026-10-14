@@ -288,8 +288,10 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       if (mode !in setOf("Alarm", "Notification", "None")) throw CalendarFailure("INVALID_INPUT")
       if (choices.containsKey("disableReminders") && choices["disableReminders"] !is Boolean) throw CalendarFailure("INVALID_INPUT")
       val schedule = remote.getJSONObject("schedule")
+      val minutes = (choices["allDayAlarmMinutes"] as? Number)?.toInt() ?: 540
+      if (minutes !in 0..1439) throw CalendarFailure("INVALID_INPUT")
       val alarm = if (schedule.getBoolean("allDay")) Instant.ofEpochMilli(schedule.getLong("eventStartMs"))
-        .atZone(ZoneId.of(schedule.getString("zoneId"))).toLocalDate().atTime(9, 0)
+        .atZone(ZoneId.of(schedule.getString("zoneId"))).toLocalDate().atTime(minutes / 60, minutes % 60)
         .atZone(ZoneId.of(schedule.getString("zoneId"))).toInstant().toEpochMilli() else schedule.getLong("eventStartMs")
       options.put("mode", mode).put("alarmAtMs", choices["alarmAtMs"]?.let { CalendarStore.number(choices, "alarmAtMs") } ?: alarm)
         .put("dueAtMs", if (schedule.getBoolean("allDay")) schedule.getLong("eventEndMs") else schedule.getLong("eventStartMs"))
@@ -351,7 +353,8 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       val due = if (!record.dueLinked) record.dueAtMs else if (schedule.getBoolean("allDay")) schedule.getLong("eventEndMs")
         else record.dueAtMs + start - record.eventStartMs
       val alarm = if (!record.alarmLinked) record.definedAlarmAtMs ?: record.eventStartMs else if (schedule.getBoolean("allDay"))
-        Instant.ofEpochMilli(start).atZone(ZoneId.of(schedule.getString("zoneId"))).toLocalDate().atTime(9, 0)
+        Instant.ofEpochMilli(start).atZone(ZoneId.of(schedule.getString("zoneId"))).toLocalDate().atTime(
+          Instant.ofEpochMilli(record.definedAlarmAtMs ?: record.eventStartMs).atZone(ZoneId.of(record.zoneId)).toLocalTime())
           .atZone(ZoneId.of(schedule.getString("zoneId"))).toInstant().toEpochMilli()
         else (record.definedAlarmAtMs ?: record.eventStartMs) + due - record.dueAtMs
       return mapOf("mode" to record.mode, "dueAtMs" to due, "alarmAtMs" to alarm)
@@ -366,7 +369,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       "recurrence" to recurrence?.let(CalendarRecurrence::spec), "upcoming" to upcoming,
       "timings" to if (local == null) null else mapOf("remilo" to timing(local), "google" to timing(remote)))
   }
-  fun capture(command: Map<String, Any?>): Map<String, Any?> {
+  fun capture(command: Map<String, Any?>, allocatedId: String? = null): Map<String, Any?> {
     val op = CalendarStore.string(command, "operationId")
     val kind = CalendarStore.string(command, "kind")
     val previewId = CalendarStore.string(command, "previewId")
@@ -417,7 +420,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (imported) for (field in listOf("mode", "alarmAtMs", "dueAtMs", "dueLinked", "alarmLinked", "sound", "vibration", "listId")) draft.put(field, options.get(field))
     val suppress = imported && options.optBoolean("disableReminders")
     val patch = if (imported && !automaticSync) CalendarLinkMapper.patch(remote, remote, suppress) else CalendarLinkMapper.patch(remote, desired, suppress)
-    val job = CalendarLinkOperation(op, p.occurrenceId.ifEmpty { UUID.randomUUID().toString() }, key, kind, requestKey,
+    val job = CalendarLinkOperation(op, p.occurrenceId.ifEmpty { allocatedId ?: UUID.randomUUID().toString() }, key, kind, requestKey,
       p.subject, p.calendar.id, p.eventId, p.calendar.name, p.origin, p.revision, p.generation, p.linkRevision,
       p.connectionRevision, p.etag, p.remote, desired.toString(), draft.toString(), patch.toString(), suppress, htmlLink = p.htmlLink)
     db.runInTransaction {
@@ -563,6 +566,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     return mapOf("operationId" to id, "operations" to captured.map { view(operation(it)!!) })
   }
   fun check(job: CalendarLinkOperation, executionRevision: Long? = null) {
+    CalendarManagedStore(db, now).guardOperation(job.operationId)
     sync.guard(job, beforeLocal = !job.localApplied, beforeSend = false)
     val connection = connection()
     if (!connection.connected || connection.subject != job.subject) throw CalendarFailure("NEEDS_ACCESS")
@@ -592,6 +596,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       remoteDiffers = old?.baseline?.takeIf(String::isNotBlank)?.let { !CalendarLinkMapper.equal(JSONObject(job.remote), JSONObject(it)) } ?: false,
       requiresReview = old?.requiresReview ?: false))
     dao.update(job.copy(localApplied = true, localStatus = "Pending", state = "Waiting", message = "Local change committed; scheduling outcome pending."))
+    CalendarManagedStore(db, now).finishCandidate(id)
   }
   fun localStatus(id: String, status: String) { operation(id)?.let { dao.update(it.copy(localStatus = status)) } }
   fun permit(id: String, executionRevision: Long? = null): CalendarLinkOperation {
@@ -741,11 +746,14 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       }
       db.records().receipt(CreationReceipt(op, id, "CalendarUnlink", key))
       sync.fenced(id, false, "Unlinked")
+      CalendarManagedStore(db, now).suppress(old.remoteKey, "Unlinked", id)
+      CalendarManagedStore(db, now).retireIntent(id, "Unlinked")
       sync.activity(op + ":unlink", id, "Unlinked", "")
     }
     return mapOf("unlinked" to true)
   }
   fun removed(id: String, purge: Boolean) {
+    CalendarManagedStore(db, now).removed(id, purge)
     retireInstanceNotice(id)
     if (purge) db.records().find(id)?.segmentId?.let { segmentId ->
       val family = db.records().series(segmentId)?.seriesId
@@ -780,6 +788,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     }
   }
   fun terminal(id: String) {
+    CalendarManagedStore(db, now).terminal(id)
     retireInstanceNotice(id)
     sync.fenced(id, false, "LocalTerminal")
     link(id)?.takeUnless { it.erased }?.let { dao.put(it.copy(revision = it.revision + 1,

@@ -14,6 +14,7 @@ class CalendarAuthorizationActivity : ComponentActivity() {
   private var revision = 0L
   private var awaitingResult = false
   private val publicationId get() = intent.getStringExtra("publicationId")
+  private val managedCalendarCreation get() = intent.getBooleanExtra("managedCalendarCreation", false)
   private val launcher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
     if (result.resultCode != RESULT_OK || result.data == null) finish()
     else try { accept(Identity.getAuthorizationClient(this).getAuthorizationResultFromIntent(result.data)) }
@@ -30,9 +31,10 @@ class CalendarAuthorizationActivity : ComponentActivity() {
     if (CalendarRuntime.get(applicationContext).revoking) { failed(); return }
     AlarmEngine.get(applicationContext).calendarRequest(block = { store ->
       revision = store.connection().revision
-      store.authorizationEmail(publicationId)
+      if (managedCalendarCreation) store.connection().takeIf { it.connected }?.email ?: throw CalendarFailure("NEEDS_ACCESS")
+      else store.authorizationEmail(publicationId)
     }, resolve = { email -> runOnUiThread {
-      Identity.getAuthorizationClient(this).authorize(CalendarRuntime.request(email))
+      Identity.getAuthorizationClient(this).authorize(GoogleCalendarAuthorization.request(email, managedCalendarCreation))
         .addOnSuccessListener { result ->
           if (isDestroyed || isFinishing) return@addOnSuccessListener
           if (result.hasResolution()) { awaitingResult = true; launcher.launch(IntentSenderRequest.Builder(result.pendingIntent!!.intentSender).build()) }
@@ -43,13 +45,15 @@ class CalendarAuthorizationActivity : ComponentActivity() {
   override fun onSaveInstanceState(outState: Bundle) { outState.putLong("revision", revision); outState.putBoolean("awaitingResult", awaitingResult); super.onSaveInstanceState(outState) }
   private fun accept(result: AuthorizationResult) {
     awaitingResult = false
-    try { CalendarConsent.requireGranted(result.grantedScopes) }
+    try { CalendarConsent.requireGranted(result.grantedScopes, managedCalendarCreation) }
     catch (_: CalendarFailure) { Toast.makeText(this, "Google access was not fully granted. Your confirmed connection is unchanged.", Toast.LENGTH_LONG).show(); finish(); return }
     val token = result.accessToken
     if (token == null) { failed(); return }
-    CalendarRuntime.get(applicationContext).authenticated(token, revision, publicationId) { success ->
+    val done: (Boolean) -> Unit = { success ->
       runOnUiThread { if (!success) Toast.makeText(this, "Google access was not confirmed. Return to Calendar settings to retry.", Toast.LENGTH_LONG).show(); finish() }
     }
+    if (managedCalendarCreation) CalendarRuntime.get(applicationContext).managedAuthenticated(token, revision, done)
+    else CalendarRuntime.get(applicationContext).authenticated(token, revision, publicationId, done)
   }
   private fun failed() { Toast.makeText(this, "Google access could not be opened. Check Google Play services and OAuth setup.", Toast.LENGTH_LONG).show(); finish() }
 }

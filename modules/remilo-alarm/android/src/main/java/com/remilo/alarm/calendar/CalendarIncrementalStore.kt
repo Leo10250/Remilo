@@ -9,9 +9,10 @@ class CalendarIncrementalStore(private val db: ContentDatabase, private val now:
   fun calendars(): List<String> {
     val connection = links.connection()
     val authorized = db.links().links().filter { link -> link.subject == connection.subject && !link.erased && link.state != "Detached" &&
-      dao.state(link.occurrenceId)?.mode == "Automatic" }
+      dao.state(link.occurrenceId)?.let { it.mode == "Automatic" && it.status != "Paused" } == true }
     val order = dao.cursors().associate { it.calendarId to it.checkedAtMs }
-    return authorized.map { it.calendarId }.distinct().sortedWith(compareBy<String> { order[it] ?: 0L }.thenBy { it })
+    val managed = CalendarManagedStore(db, now).enabledCalendarIds()
+    return (authorized.map { it.calendarId } + managed).distinct().sortedWith(compareBy<String> { order[it] ?: 0L }.thenBy { it })
   }
   fun cursor(calendarId: String): CalendarSyncCursor {
     if (calendarId !in calendars()) throw CalendarFailure("INELIGIBLE")
@@ -24,7 +25,8 @@ class CalendarIncrementalStore(private val db: ContentDatabase, private val now:
     if (captured.paging) return captured
     return captured.copy(startingToken = captured.syncToken, pageToken = "", paging = true).also(dao::cursor)
   }
-  fun page(captured: CalendarSyncCursor, connectionRevision: Long, page: JSONObject, calendarZone: String = "UTC"): CalendarSyncCursor {
+  fun page(captured: CalendarSyncCursor, connectionRevision: Long, page: JSONObject, calendarZone: String = "UTC",
+    calendar: OwnedCalendar? = null, background: Boolean = false): CalendarSyncCursor {
     validate(captured, connectionRevision)
     val continuing = page.optString("nextPageToken")
     val replacement = page.optString("nextSyncToken")
@@ -33,6 +35,8 @@ class CalendarIncrementalStore(private val db: ContentDatabase, private val now:
       !it.erased && it.state != "Detached" && dao.state(it.occurrenceId)?.mode == "Automatic" }
     val items = page.optJSONArray("items") ?: JSONArray()
     db.runInTransaction {
+      if (calendar != null && CalendarManagedStore(db, now).permitsCalendar(captured.subject, captured.calendarId))
+        CalendarManagedStore(db, now).page(captured, items, calendar, background)
       for (index in 0 until items.length()) {
         val event = items.getJSONObject(index); val id = event.optString("id")
         if (id.isEmpty()) continue
@@ -55,6 +59,8 @@ class CalendarIncrementalStore(private val db: ContentDatabase, private val now:
       val next = if (continuing.isNotEmpty()) captured.copy(pageToken = continuing, checkedAtMs = now())
         else captured.copy(syncToken = replacement, startingToken = "", pageToken = "", paging = false, checkedAtMs = now())
       dao.cursor(next)
+      if (!next.paging && CalendarManagedStore(db, now).permitsCalendar(next.subject, next.calendarId))
+        CalendarManagedStore(db, now).collectionCompleted(next)
     }
     return dao.cursor(captured.key)!!
   }

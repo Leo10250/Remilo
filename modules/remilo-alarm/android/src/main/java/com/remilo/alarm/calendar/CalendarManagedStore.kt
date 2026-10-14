@@ -404,7 +404,8 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     val saved = binding()
     if (saved.subject.isEmpty()) return
     val next = saved.copy(revision = saved.revision + 1, authEpoch = saved.authEpoch + 1,
-      phase = if (reason == "NOT_OWNER") "OwnershipUnknown" else "AccessRequired", message = "Calendar access needs review.")
+      phase = when (reason) { "NOT_OWNER", "OWNERSHIP_UNKNOWN" -> "OwnershipUnknown"
+        "NOT_FOUND", "REMOTE_UNAVAILABLE", "REMOTE_DELETED" -> "CalendarUnavailable"; else -> "AccessRequired" }, message = "Calendar access needs review.")
     db.runInTransaction {
       dao.binding(next); dao.clearPreviews(); fenceHeld(next, "Paused")
       issue("Setup", saved.operationId.ifEmpty { "connection" }, reason, false)
