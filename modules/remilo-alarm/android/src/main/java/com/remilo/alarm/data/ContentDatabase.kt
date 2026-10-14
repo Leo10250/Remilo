@@ -98,16 +98,27 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   CalendarConnection::class, CalendarBinding::class, CalendarOperation::class, CalendarLink::class, CalendarLinkOperation::class,
   CalendarResource::class, CalendarResourceJob::class, CalendarSyncState::class, CalendarSyncGuard::class,
   CalendarSyncCursor::class, CalendarSyncSnapshot::class, CalendarReviewIssue::class, CalendarReviewPreferences::class,
-  CalendarActivity::class, CalendarSavedRun::class], version = 11, exportSchema = true)
+  CalendarActivity::class, CalendarSavedRun::class, CalendarInstallationOrigin::class, CalendarManagedBinding::class,
+  CalendarManagedPolicy::class, CalendarManagedPreview::class, CalendarManagedSetupOperation::class,
+  CalendarManagedCandidate::class, CalendarManagedCache::class, CalendarManagedExport::class,
+  CalendarManagedDisposition::class, CalendarManagedSuppression::class, CalendarManagedIssue::class,
+  CalendarManagedReceipt::class], version = 12, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun calendar(): CalendarDao
   abstract fun links(): CalendarLinkDao
   abstract fun calendarResources(): CalendarResourceDao
   abstract fun sync(): CalendarSyncDao
+  abstract fun managedCalendar(): CalendarManagedDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11).build()
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+      .addCallback(object : RoomDatabase.Callback() {
+        override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
+      }).build()
+    val MIGRATION_11_12 = object : Migration(11, 12) {
+      override fun migrate(db: SupportSQLiteDatabase) { CalendarManagedSchema.create(db) }
+    }
     val MIGRATION_10_11 = object : Migration(10, 11) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE calendar_link_operations ADD COLUMN mainConfirmed INTEGER NOT NULL DEFAULT 0")

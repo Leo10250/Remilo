@@ -32,7 +32,10 @@ data class CalendarActivity(@PrimaryKey val checkpoint: String, val associationI
   val groups: String, val occurredAtMs: Long)
 @Entity(tableName = "calendar_sync_runs")
 data class CalendarSavedRun(@PrimaryKey val id: String = "calendar", val pages: Int, val attempted: Int,
-  val confirmed: Int, val continuation: Boolean, val atMs: Long)
+  val confirmed: Int, val continuation: Boolean, val atMs: Long, @ColumnInfo(defaultValue = "0") val imported: Int = 0,
+  @ColumnInfo(defaultValue = "0") val published: Int = 0, @ColumnInfo(defaultValue = "0") val adopted: Int = 0,
+  @ColumnInfo(defaultValue = "0") val deferred: Int = 0, @ColumnInfo(defaultValue = "0") val excluded: Int = 0,
+  @ColumnInfo(defaultValue = "0") val review: Int = 0)
 
 @Dao interface CalendarSyncDao {
   @Query("SELECT * FROM calendar_sync_runs WHERE id = 'calendar'") fun run(): CalendarSavedRun?

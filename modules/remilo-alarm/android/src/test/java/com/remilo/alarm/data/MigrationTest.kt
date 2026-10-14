@@ -15,6 +15,43 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class MigrationTest {
+  @Test fun managedMigrationRecordsExistingInstallationWithoutGrantingPermission() {
+    val context = RuntimeEnvironment.getApplication()
+    legacy(context, "com.remilo.alarm.data.ContentDatabase", "managed-migration.db", 11).use { db ->
+      db.execSQL("INSERT INTO calendar_connection VALUES ('google',5,1,'subject','owner@example.test','owned','Owned','UTC','Retained')")
+      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Local title',1000,2000,1500,500,0,7,'Retained notes')")
+    }
+    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "managed-migration.db").allowMainThreadQueries()
+      .addMigrations(ContentDatabase.MIGRATION_11_12).build()
+    try {
+      assertEquals("ExistingInstallation", db.managedCalendar().installation()!!.origin)
+      val installationId = db.managedCalendar().installation()!!.installationId
+      assertEquals(installationId, java.util.UUID.fromString(installationId).toString())
+      assertEquals(installationId, db.managedCalendar().installation()!!.installationId)
+      assertNull(db.managedCalendar().binding()); assertNull(db.managedCalendar().policy())
+      assertTrue(db.managedCalendar().candidates().isEmpty()); assertTrue(db.managedCalendar().exports().isEmpty())
+      assertEquals(5L, db.calendar().connection()!!.revision); assertEquals("Retained notes", db.records().find("one")!!.notes)
+      db.close()
+      val reopened = Room.databaseBuilder(context, ContentDatabase::class.java, "managed-migration.db").allowMainThreadQueries().build()
+      try { assertEquals(installationId, reopened.managedCalendar().installation()!!.installationId) } finally { reopened.close() }
+    } finally { db.close(); context.deleteDatabase("managed-migration.db") }
+  }
+  @Test fun newManagedSchemaRecordsFreshOrigin() {
+    val context = RuntimeEnvironment.getApplication(); context.deleteDatabase("remilo-content.db")
+    val db = ContentDatabase.open(context)
+    try {
+      db.openHelper.writableDatabase.query("SELECT origin FROM calendar_installation_origin").use { cursor -> assertTrue(cursor.moveToFirst()); assertEquals("FreshInstallation", cursor.getString(0)) }
+      val installationId = db.openHelper.writableDatabase.query("SELECT installationId FROM calendar_installation_origin").use { cursor -> assertTrue(cursor.moveToFirst()); cursor.getString(0) }
+      assertEquals(installationId, java.util.UUID.fromString(installationId).toString())
+      db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM calendar_managed_binding").use { cursor -> assertTrue(cursor.moveToFirst()); assertEquals(0, cursor.getInt(0)) }
+      db.close()
+      val reopened = ContentDatabase.open(context)
+      try { reopened.openHelper.writableDatabase.query("SELECT installationId FROM calendar_installation_origin").use { cursor ->
+        assertTrue(cursor.moveToFirst()); assertEquals(installationId, cursor.getString(0))
+      } } finally { reopened.close() }
+    }
+    finally { db.close(); context.deleteDatabase("remilo-content.db") }
+  }
   @Test fun observationMigrationPreservesLinksAndDoesNotInferRemoteDeletionFromOldMessages() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "observations-migration.db", 8).use { db ->
@@ -24,7 +61,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO calendar_links (occurrenceId,remoteKey,subject,calendarId,eventId,calendarName,origin,baseline,etag,state,message,htmlLink,revision,erased,checkedAtMs) VALUES ('other','other-identity','other-subject','other','event','Other','Imported','other values','other etag','Detached','Unlinked','',2,0,2345)")
       db.execSQL("INSERT INTO pending_schedules (operationId,occurrenceId,targetMs,generation) VALUES ('pending','one',9000,8)")
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "observations-migration.db").allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "observations-migration.db").allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       val link = db.links().link("one")!!
       assertEquals("Unknown", link.availability); assertNull(link.observedAtMs); assertEquals(1234L, link.lastCheckAttemptAtMs)
@@ -47,7 +84,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO calendar_publications VALUES ('one','publish')")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "links-migration.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+      .addMigrations(ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       assertEquals(5L, db.calendar().connection()!!.revision)
       assertEquals("stable-id", db.calendar().operation("publish")!!.eventId)
@@ -67,7 +104,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO purged_occurrences VALUES ('purged',NULL,NULL)")
       db.execSQL("INSERT INTO pending_schedules (operationId,occurrenceId,targetMs,generation) VALUES ('pending','one',9000,8)")
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "calendar-migration.db").allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "calendar-migration.db").allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       assertEquals("Retained", db.records().find("one")!!.notes); assertEquals(7L, db.records().find("one")!!.revision)
       assertEquals("Done", db.records().history("one").single().kind); assertEquals("night", db.records().settings()!!.atmosphere)
@@ -85,7 +122,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO lists VALUES ('empty','Empty','empty',3,500)")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v5-purge.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+      .addMigrations(ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       assertEquals("Keep until confirmed", db.records().find("old")!!.notes)
       assertTrue(db.records().find("old")!!.deleted); assertEquals(7L, db.records().find("old")!!.revision)
@@ -123,7 +160,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO history VALUES ('action', 'old', 'Snooze', 900, 3)")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-migration.db")
-      .allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_1_2, ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+      .allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_1_2, ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       val record = db.records().find("old")!!
       assertEquals("Migration probe", record.title)
@@ -159,7 +196,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO settings VALUES ('app',4,15,600,840,1020,'system',1,'dark','preferences')")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v2.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+      .addMigrations(ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       assertEquals(1800L, db.records().find("v2")!!.definedAlarmAtMs)
       assertEquals("Retained", db.records().find("v2")!!.notes)
@@ -193,7 +230,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO series VALUES ('old','family',?,'{}',5,'Archived',500)", arrayOf(JSONObject(BackupCodec.record(spaced)).toString()))
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v3-lists.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+      .addMigrations(ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       assertEquals(setOf("Work", "work", " Work "), db.records().lists().map { it.name }.toSet())
       assertEquals(3, db.records().lists().map { it.id }.toSet().size)
@@ -215,7 +252,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision) VALUES ('old','Private',1000,2000,1500,500,0,7)")
     }
     val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v4-appearance.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11).build()
+      .addMigrations(ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12).build()
     try {
       val settings = db.records().settings()!!
       assertEquals("automatic", settings.atmosphere); assertEquals("dark", settings.theme)
