@@ -430,13 +430,20 @@ export function SelectRow<T extends string | number>({ label, value, choices, on
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }
 export function Disclosure({ title, summary, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; summary?: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
-  const colors = useTheme();
+  const colors = useTheme(), corners = useContext(ConnectedRowContext);
   const [selected, setOpen] = useState(initial);
+  const [focused, setFocused] = useState(false);
   const open = selected || forceOpen;
-  return <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
-    style={{ minHeight: 48, flexDirection: 'row', paddingHorizontal: space.xs, alignItems: 'center', gap: space.sm }}>
-    {icon && <Icon name={icon}/>}<View style={{ flex: 1, paddingVertical: summary ? space.sm : 0, gap: space.xs }}><Copy>{title}</Copy>{!open && summary && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} />
-  </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
+  const headerCorners = corners && { ...corners, ...(open ? { borderBottomLeftRadius: shape.connectedInner, borderBottomRightRadius: shape.connectedInner } : {}) };
+  return <View style={!corners && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}><Pressable accessibilityRole="button" aria-expanded={open} accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...headerCorners, minHeight: corners ? 56 : 48, flexDirection: 'row',
+      paddingHorizontal: corners ? space.gutter : space.xs, paddingVertical: corners ? space.md : 0,
+      alignItems: 'center', gap: corners ? space.md : space.sm, backgroundColor: pressed ? colors.soft : 'transparent' })}>
+    {icon && (corners ? <View style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 16, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}><Icon name={icon} /></View> : <Icon name={icon} />)}
+    <View style={{ flex: 1, minWidth: 0, paddingVertical: !corners && summary ? space.sm : 0, gap: space.xs }}><Copy>{title}</Copy>{summary && (corners || !open) && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} size={corners ? 20 : 24} />
+    {headerCorners && focused && <RowFocus corners={headerCorners} />}
+  </Pressable>{open && <View style={{ paddingHorizontal: corners ? space.gutter : space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
 export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {
   const colors = useTheme(), scale = useFontScaleOverride();

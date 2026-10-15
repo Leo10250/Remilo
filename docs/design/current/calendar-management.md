@@ -165,6 +165,12 @@ problems/ringing priorities and Agenda filters. Ordinary reminder cards are unch
 
 The overview keeps global Sync now secondary. Its explicit progress/result stays
 inside the leading status card; unresolved current issues outrank old success.
+Connected Calendar disclosures, including Sync controls and Sync details, use
+the surrounding settings rows' 16dp inset, 40dp neutral icon container and label
+alignment. Keep a supplied summary visible in both states so expanding or
+collapsing changes only the chevron and revealed content, without moving the
+header icon. Expanded content stays padded inside its parent surface; omit the
+standalone disclosure's bottom rule and clip press/focus feedback to the item.
 Pending/held counts appear only when nonzero. Required sync permission is static
 **Automatic sync included/on** information; an editable switch appears only when
 the choice is supported. Ordinary unimported candidates retain **No Remilo alert
