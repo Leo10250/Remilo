@@ -18,6 +18,11 @@ The owner's next [P4-E managed-calendar contract](../../calendar-managed-sync.md
 adds confirmed calendar-level setup, automatic incoming/outgoing eligibility and
 saved removal decisions while preserving reminder-first presentation.
 
+The owner's 14 October [Calendar UX correction](calendar-management.md#calendar-setup-and-feedback--14-october-2026)
+uses one compact setup page, contextual status/actions, explicit authorization and
+operation outcomes, surfaced alert controls and checkbox bulk selection. It
+supersedes earlier Calendar setup copy and layout while preserving native safety.
+
 The owner's [11 October browsing-header correction](header-scroll-research.md)
 replaces the abrupt toolbar surface switch with a continuous scroll blend and
 stable foreground colors, including reduced-motion mode. Artwork remains fixed.

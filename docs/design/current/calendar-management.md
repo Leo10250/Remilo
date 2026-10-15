@@ -48,6 +48,68 @@ Captured work and confirmed outcomes remain separate. Local only preserves both
 copies and delivery while stopping applicable transfers/re-adoption. This adds no
 full administrative block before Details' primary local reminder information.
 
+## Calendar setup and feedback — 14 October 2026
+
+The owner approved a compact guided page and the dedicated Remilo calendar.
+The Google Calendar overview leads with one status card containing the problem,
+consequence and next action. Account/source identity follows, then preferences,
+review/linked reminders and Advanced manual tools. An owned manual publication
+destination remains a separate permission and is not a setup prerequisite.
+
+Setup shows the account and a source tile for the found or proposed Remilo
+calendar. Multiple matches open a single-choice picker; incomplete discovery
+cannot justify creation. An unavailable saved source requires access recovery or
+a separate explicit replacement review. Time zone belongs beside proposed
+creation. Settings navigation reads saved state; explicit setup/check actions
+may prepare fresh native previews.
+
+Two directional choices say Add Google events to Remilo and Add new Remilo
+reminders to Google. An Alert type disclosure and surfaced All-day alert time
+row share the imported-alert group. The clock row uses the chosen display format,
+a clock icon, chevron, at least 48 dp and a calendar-zone subtitle. Fresh quiet
+recovery is explained separately from subsequent Alarm defaults. Google reminder
+suppression remains separate explicit consent, initially off. Essential alert and
+creation consequences remain visible; detailed recurrence/local-action rules use
+contextual disclosures.
+
+Changes coalesce into a new native preview. Checking settings is explicit and
+prevents submitting an older preview; obsolete responses cannot replace newer
+choices. Turn on sync actually captures the reviewed operation on that press.
+After acknowledgement, replace the form with saved progress/results rather than
+a disabled-color form. Calendar verification, initial scan completion, imports,
+local scheduling and remaining remote work are separate facts. Show counts where
+known, never invented percentages or a sample as a full total. A native Ready
+phase closes the collection scan, not necessarily its pending imports.
+
+Authorization launch is not connection success. Accepted/cancelled/failed results
+are request-correlated and saved without credentials. Confirmed reconnection of a
+fenced source returns to review, not automatic permission. Unknown creation uses
+same-request inspection. Internal navigation says Back to Calendar; Android
+settings labels refer only to actual OS destinations.
+
+Sync linked reminders separates Ready to turn on from Needs review. Independent
+selection uses checkboxes; blocked rows have a reason and contextual review action
+without a disabled radio. The title, source, explanation and action form one
+padded unit. Returning from individual review preserves existing selections and
+does not silently select newly eligible work. Resume/recovered-alert reviews use
+the same anatomy. Incoming candidates say No Remilo alert yet.
+
+Use the existing opaque atmosphere surfaces, neutral information glyphs and
+semantic warning icon/text. Keep 16 dp insets, connected corners/seams, clipped
+press/focus feedback, 48 dp secondary and 56 dp primary/review targets. Apple
+hierarchy/feedback principles do not authorize iOS-specific control styling.
+
+The research basis is [Structured's continuous setup](https://help.structured.app/en/articles/329730),
+[Todoist's distinct sync directions](https://www.todoist.com/help/todoist/integrations/use-the-calendar-integration-rCqwLCt3G),
+[Google communication guidance](https://codelabs.developers.google.com/codelabs/material-communication-guidance),
+[Apple feedback](https://developer.apple.com/design/human-interface-guidelines/feedback),
+[USENIX 2021 permission explanations](https://www.usenix.org/system/files/sec21-elbitar.pdf),
+[CHI 2025 permission rationales](https://trouge.net/papers/permission_rationales_chi2025.pdf)
+and [CHI 2026 visual hierarchy research](https://research.google/pubs/usability-hasnt-peaked-exploring-how-expressive-design-overcomes-the-usability-plateau/).
+These inform design choices; they do not establish Remilo usability or physical
+acceptance. Vendor workflows are not pixel specifications and web findings are
+not Android authorization experiments.
+
 ## Independent copies and cancellation
 
 Google deletion never stops Remilo delivery. Once observed, active Agenda rows

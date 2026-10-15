@@ -66,6 +66,13 @@ bar uses a current-destination Go to sheet when full scaled labels cannot fit.
 A genuine unscoped, unconstrained empty All Agenda offers Create a reminder in
 place of the floating +. Native repeat boundaries and retained history stay intact.
 
+Calendar setup follows the [compact setup and feedback contract](design/current/calendar-management.md#calendar-setup-and-feedback--14-october-2026):
+account and dedicated source stay together, directional choices explain what is
+added, and problems own their next action. All-day alert time is a surfaced
+interactive row. Submitted setup shows saved progress and actual outcomes;
+authorization launch and finished collection scanning do not mean all reminders
+are synchronized. Advanced manual tools retain a separate publishing destination.
+
 Optional [P4-A Google Calendar publishing](calendar-publishing.md) is manual per
 saved unfinished reminder or supported recurring family after native review and confirmation. Connecting publishes
 nothing; existing reminders are never backfilled. One account and an owned default

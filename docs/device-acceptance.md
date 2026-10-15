@@ -819,3 +819,32 @@ regressions or imply that unperformed cases passed.
   Resume and all three review targets across eight pairs, narrow/landscape, long
   English/Chinese, 200% text and reduced motion. Verify 48 dp/56 dp targets, origin
   return, keyboard/Android Back ordering and TalkBack on the identified build.
+
+## Calendar setup and feedback follow-up (CAL-04)
+
+On the identified signed build, observe a compact setup with its Google account
+and dedicated Remilo source together. Exercise one/multiple/renamed calendars,
+incomplete discovery, missing saved source and explicit replacement review. Check
+the surfaced All-day alert time at 12/24-hour display formats and a different
+calendar zone. Existing reminders and fresh quiet recovery retain their policy.
+
+Cancel, deny and accept Google authorization. Opening its Activity must not claim
+connection success. Return to the correct setup/progress context; a fenced bound
+source needs reviewed Resume after reconnection. Exercise required creation
+authorization and unknown sent creation without another blind create request.
+
+Submit after changing a setting: Check settings and Turn on sync must not be
+confused. Observe progress after navigation/restart, including a finished scan
+with pending imports, partial outcomes, review issues and Blocked/Pending local
+save results. Internal Back to Calendar must return to the overview. Only actual
+OS destinations may say Open Android settings.
+
+Bulk activation uses checkboxes for ready reminders and separate reason/actions
+for exclusions. Resolve an item, return and confirm other selections persist while
+newly eligible items are not silently selected. Test Resume and recovered alerts
+with the same behavior, and retain No Remilo alert yet on unimported candidates.
+
+Review all eight pairs, narrow portrait, landscape, 200% text, long English/Chinese
+and reduced motion. Verify clipped press/focus, wrapping, 48/56 dp targets, TalkBack
+announcements, IME/Back order and origin return. Review is pending until actually
+observed; host/fixture checks do not replace signed-device/live Google acceptance.

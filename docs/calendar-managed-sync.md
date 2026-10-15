@@ -8,6 +8,15 @@ separate evidence.
 
 ## Setup, policy and defaults
 
+The [14 October Calendar UX correction](design/current/calendar-management.md#calendar-setup-and-feedback--14-october-2026)
+keeps account/source selection, directional defaults and imported alerts in one
+compact review. Contextual status cards own their recovery actions. Confirmation
+leads to durable progress/results; neither launching Google authorization nor
+acknowledging a captured operation is reported as completed synchronization.
+Ready links use checkboxes and excluded links have separate actionable reasons.
+The manual publication destination remains under Advanced manual tools and does
+not configure the dedicated automatic source.
+
 Local use continues without Google. Connecting an account alone neither creates
 a calendar nor authorizes automatic import/publication. An explicit managed-sync
 setup review identifies the account, the existing calendar or proposed creation,

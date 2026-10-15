@@ -86,6 +86,24 @@ Managed import/export reuses P4-C resource identity and P4-D phased mutation own
 Fresh-install initial recovery is quiet; installation provenance is CE-only and
 not portable backup history. DP and backup versions remain 6 and 4.
 
+The Calendar UX correction extends CE 12 projections without a schema migration.
+CalendarStatusStore reads existing setup jobs, binding-scoped candidates/exports,
+association jobs and receipts. Scan completion, imports, pending/held/review work
+and recorded local-save outcomes stay separate; Ready alone cannot prove all work
+finished. New managed receipts retain immutable logical selections and scope
+epochs for delayed publication correlation. Historical incomplete receipts use
+conservative review rather than invented batch completion. Erased jobs cannot
+expose titles or recreate work through the read API.
+
+Authorization has a request UUID and an immutable launch receipt. A separate
+deterministic outcome receipt records Authorized, Cancelled or Failed on the
+serialized worker and emits onChange. Launch acknowledgement grants nothing.
+The Activity confirms Google scopes/account through the existing I/O owner before
+reporting Authorized; no token is persisted. A lost launch reply reads that same
+request. Confirmed access to a fenced bound scope returns to Reviewing; fresh
+Resume remains required. Existing manual authorization entrypoints delegate to
+the same implementation.
+
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured
 minute-only strings without rewriting durable jobs, content, destination or

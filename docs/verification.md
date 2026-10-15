@@ -1,5 +1,12 @@
 # Verification and release evidence
 
+The [14 October Calendar UX observations](evidence/2026-10-14-calendar-ux.md)
+record saved authorization/progress projections, compact setup and grouped
+recovery/selection presentation. They identify the checked source and signed
+local artifact. The [CAL-04 follow-up](device-acceptance.md#calendar-setup-and-feedback-follow-up-cal-04)
+retains signed-device authorization, native picker, navigation and accessibility
+observations; these checks do not close P4-D/P4-E acceptance or G4.
+
 The [P4-E managed Calendar contract](calendar-managed-sync.md) adds CE 11→12
 origin/permission migration, strict CalendarList ownership, deliberate setup,
 incremental creation consent and same-request creation inspection. Retain the
