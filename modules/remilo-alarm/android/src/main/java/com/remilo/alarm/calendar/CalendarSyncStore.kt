@@ -23,6 +23,21 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
       "imported" to it.imported, "published" to it.published, "adopted" to it.adopted, "deferred" to it.deferred, "excluded" to it.excluded, "review" to it.review) })
   fun saveRun(value: CalendarRunSummary) = dao.run(CalendarSavedRun(pages = value.pages, attempted = value.attempted, confirmed = value.confirmed, continuation = value.continuation, atMs = now(),
     imported = value.imported, published = value.published, adopted = value.adopted, deferred = value.deferred, excluded = value.excluded, review = value.review))
+  fun failedRun(expected: CalendarConnection, expectedEpoch: Long, code: String, background: Boolean) {
+    val current = links.connection(); val managed = CalendarManagedStore(db, now); val binding = managed.binding()
+    if (current.revision != expected.revision || current.subject != expected.subject || binding.authEpoch != expectedEpoch) return
+    db.runInTransaction {
+      if (binding.subject == expected.subject && binding.calendarId.isNotEmpty()) managed.failedAttempt()
+      if (code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) {
+        db.links().links().filter { !it.erased && it.subject == expected.subject && state(it.occurrenceId).mode == "Automatic" }
+          .forEach { issue(it.occurrenceId, code, background, "Paused") }
+        if (binding.subject == expected.subject && binding.calendarId.isNotEmpty()) {
+          managed.accessChanged(code)
+          managed.issue("Setup", binding.operationId.ifEmpty { "connection" }, code, background)
+        }
+      }
+    }
+  }
   fun pending(): List<String> = dao.states().filter { it.mode != "Manual" && it.operationId.isNotEmpty() && it.status == "UpdatePending" && it.retryAtMs <= now() }
     .map { it.operationId }
   fun defer(id: String) { val value = state(id); dao.put(value.copy(status = "Deferred", pauseReason = "Ringing", retryAtMs = now() + 60_000)) }

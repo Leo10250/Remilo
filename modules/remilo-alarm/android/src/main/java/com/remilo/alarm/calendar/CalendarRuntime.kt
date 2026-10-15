@@ -129,6 +129,8 @@ class CalendarRuntime private constructor(private val context: Context, private 
     val future = CompletableFuture<CalendarRunSummary>(); syncFlights[key] = future
     io.execute {
       var explicit: String? = requestId
+      var scopeConnection: CalendarConnection? = null
+      var scopeEpoch = 0L
       try {
         if (explicit == null && background) explicit = access { CalendarSyncRequests(it.database(), System::currentTimeMillis).nextReady() }
         val requested = explicit
@@ -138,7 +140,8 @@ class CalendarRuntime private constructor(private val context: Context, private 
         val target = requested?.let { op -> access { CalendarSyncRequests(it.database(), System::currentTimeMillis).association(op) } } ?: id
         transport.cancelled = { future.isCancelled }
         transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
-        val connection = access { it.connection() }
+        val snapshot = access { it.connection() to it.managed.binding().authEpoch }
+        val connection = snapshot.first; scopeConnection = connection; scopeEpoch = snapshot.second
         val pendingSetup = access { store -> store.managed.binding().operationId.takeIf { key -> key.isNotBlank() && store.managed.operationActive(key) &&
           store.managed.setupOperation(key)!!.let { job -> job.phase !in setOf("AccessRequired", "OwnershipUnknown", "Reviewing") && job.retryAtMs <= System.currentTimeMillis() } } }
         val setupPages = if (pendingSetup != null) CalendarManagedSetupRunner(this, transport, authorization).run(pendingSetup, deadlineElapsedMs = transport.deadlineElapsedMs).pages else 0
@@ -154,10 +157,7 @@ class CalendarRuntime private constructor(private val context: Context, private 
         val code = (error as? CalendarFailure)?.code ?: "NETWORK"
         explicit?.let { op -> access(true) { CalendarSyncRequests(it.database(), System::currentTimeMillis).finish(op, error = code) } }
         if (future.isCancelled) return@execute
-        if (access { it.managed.binding().calendarId.isNotEmpty() }) access(true) { it.managed.failedAttempt() }
-        if (code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) access(true) { store ->
-          store.links.links().filter { it["syncMode"] == "Automatic" }.forEach { store.sync.issue(it["occurrenceId"] as String, code, background, "Paused") }
-        }
+        scopeConnection?.let { expected -> access(true) { it.sync.failedRun(expected, scopeEpoch, code, background) } }
         future.completeExceptionally(CalendarFailure(code))
       } finally {
         transport.cancelled = { false }

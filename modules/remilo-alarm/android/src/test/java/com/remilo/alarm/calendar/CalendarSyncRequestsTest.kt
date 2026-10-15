@@ -140,4 +140,17 @@ class CalendarSyncRequestsTest {
     repeat(10) { now = requests.nextRetryMs()!!; requests.begin(id); requests.finish(id, error = "NETWORK") }
     assertEquals(now + 3_600_000, requests.nextRetryMs())
   }
+  @Test fun emptyManagedAccessFailureIsActionableAndLateAccountFailuresAreIgnored() {
+    val connection = db.calendar().connection()!!
+    val binding = CalendarManagedBinding(subject = connection.subject, calendarId = "empty", mode = "Enabled", phase = "Ready", authEpoch = 4)
+    db.managedCalendar().binding(binding)
+    val sync = CalendarSyncStore(db, { now }, CalendarLinkStore(db, { now }, recoverInterrupted = false))
+    db.calendar().connection(connection.copy(revision = connection.revision + 1))
+    sync.failedRun(connection, 4, "AUTH", true)
+    assertEquals(binding, db.managedCalendar().binding()); assertTrue(db.managedCalendar().issues().isEmpty())
+    db.calendar().connection(connection)
+    sync.failedRun(connection, 4, "AUTH", true)
+    assertEquals("AccessRequired", db.managedCalendar().binding()!!.phase)
+    assertEquals(1, sync.summary()["reviewCount"]); assertEquals("danger", sync.attention()["tone"])
+  }
 }
