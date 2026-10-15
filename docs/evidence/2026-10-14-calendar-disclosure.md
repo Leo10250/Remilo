@@ -56,3 +56,16 @@ Android touch/TalkBack acceptance remain separate; the large-text observation
 above covers only Sky Light at the observed desktop viewport. No Android assembly,
 installation, distribution, live Google action or new physical acceptance was
 performed. Existing P4-D/P4-E/G4 acceptance requirements are retained.
+
+## Owner device approval — 15 October 2026
+
+Following the Sync controls fix and confirmation that its shared treatment also
+applies to Sync details padding, the owner reported: "I verified on device and
+approve the results" on 15 October 2026 (America/Los_Angeles).
+
+This is owner-attested acceptance of the disclosure styling and collapse alignment
+correction implemented in `b79e9d5`. The installed APK identity, hash, device model
+and individual appearance, text-scale or TalkBack scenarios were not supplied;
+no exact installed-source attribution or unreported coverage is inferred.
+The earlier host/render observations remain as recorded. This approval does not
+close CAL-05, P4-D/P4-E or G4 synchronization and consolidated acceptance gates.
