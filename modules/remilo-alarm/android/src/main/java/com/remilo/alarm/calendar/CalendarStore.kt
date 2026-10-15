@@ -17,6 +17,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   val sync = CalendarSyncStore(db, now, links)
   val incremental = CalendarIncrementalStore(db, now, links)
   val managed = CalendarManagedStore(db, now)
+  internal fun database() = db
   fun snapshots(id: String) = db.sync().snapshots(id)
   fun captureManagedImport(candidate: CalendarManagedCandidate, operationId: String, previewId: String, automatic: Boolean = true): Map<String, Any?> =
     db.runInTransaction<Map<String, Any?>> {
@@ -280,7 +281,8 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
       calendarName = if (old.subject == account.subject) old.calendarName else "",
       calendarZone = if (old.subject == account.subject) old.calendarZone else "",
       message = if (old.subject == account.subject && old.calendarId.isNotBlank()) "Ready to publish. Each task needs your confirmation."
-        else "Google account connected. Choose a publishing calendar to finish setup."))
+        else "Google account connected. Review Calendar setup to continue."))
+    managed.accessReviewed(account.subject)
   }
   fun connectionMessage(message: String, expectedRevision: Long) {
     val old = connection()

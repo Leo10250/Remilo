@@ -28,6 +28,8 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getCalendarContext(id: string): Promise<import('./RemiloAlarm.types').Occurrence & { calendarSeriesId?: string } | null>;
   getCalendarSyncSummary(): Promise<import('./RemiloAlarm.types').CalendarSyncSummary>;
   getManagedCalendarState(): Promise<import('./RemiloAlarm.types').ManagedCalendarState>;
+  getCalendarOperationStatus(operationId: string): Promise<import('./RemiloAlarm.types').CalendarOperationStatus | null>;
+  beginCalendarAuthorization(requestId: string, operationId: string | null): Promise<{ operationId: string; launched: boolean }>;
   getCalendarReminderDisposition(id: string): Promise<import('./RemiloAlarm.types').CalendarReminderDisposition | null>;
   previewManagedCalendarSetup(choices: import('./RemiloAlarm.types').ManagedCalendarSetupChoices): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
   previewManagedCalendarPolicyChange(choices: import('./RemiloAlarm.types').ManagedCalendarPolicyChoices): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;

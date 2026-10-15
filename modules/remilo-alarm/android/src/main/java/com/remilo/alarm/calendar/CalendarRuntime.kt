@@ -377,7 +377,7 @@ class CalendarRuntime private constructor(private val context: Context, private 
       } catch (error: Exception) {
         val code = (error as? CalendarFailure)?.code ?: "AUTH"
         if (code == "AUTH") try { authorization.clear(token) } catch (_: Exception) { /* No token persistence. */ }
-        if (publicationId != null) access(true) { if (it.links.operation(publicationId) != null) it.links.fail(publicationId, code) else it.fail(publicationId, code) }
+        if (publicationId != null) access(true) { if (it.managed.setupOperation(publicationId) != null) it.managed.setupFailed(publicationId, code) else if (it.links.operation(publicationId) != null) it.links.fail(publicationId, code) else it.fail(publicationId, code) }
         else access(true) { it.connectionMessage("Google connection was not confirmed. Check setup and try Connect again.", expectedRevision) }
         done(false)
       }

@@ -137,11 +137,16 @@ export type CalendarLinkedOperation = { operationId: string; occurrenceId: strin
 export type CalendarImportBatchResult = { operationId: string; operations: CalendarLinkedOperation[] };
 export type ManagedCalendarPolicy = { revision: number; automaticImport: boolean; exportNewReminders: boolean; importMode: 'Alarm' | 'Notification' | 'None'; allDayAlarmMinutes: number; disableGoogleReminders: boolean };
 export type ManagedCalendarMode = 'Enabled' | 'Paused' | 'Disabled';
+export type CalendarRecoveryAction = 'None' | 'Connect' | 'Authorize' | 'ReviewSetup' | 'InspectCreation' | 'ReviewItems' | 'Resume' | 'Retry';
+export type CalendarSavedProgress = { scanComplete: boolean; imported: number; pending: number; held: number; review: number; localBlocked: number; localPending: number };
+export type CalendarOperationStatus = { operationId: string; kind: string; stage: 'Waiting' | 'PreparingCalendar' | 'CreatingCalendar' | 'CheckingCalendar' | 'CheckingEvents' | 'AddingReminders' | 'Confirmed' | 'NeedsReview' | 'NeedsAccess' | 'Unconfirmed' | 'Paused' | 'Cancelled' | 'AwaitingAuthorization' | 'Authorized' | 'Failed';
+  reason: string; action: CalendarRecoveryAction; confirmed: number; pending: number; review: number; held: number; children: string[]; progress?: CalendarSavedProgress; currentScope: boolean; correlationComplete?: boolean };
 export type ManagedCalendarPhase = 'NotConfigured' | 'Reviewing' | 'PreparingCalendar' | 'InitialImport' | 'Ready' | 'AccessRequired' | 'CalendarUnavailable' | 'OwnershipUnknown' | 'CreationUnconfirmed';
 export type ManagedCalendarState = { revision: number; authEpoch: number; mode: ManagedCalendarMode; phase: ManagedCalendarPhase;
   subject: string; calendarId: string; calendarName: string; calendarZone: string; policy: ManagedCalendarPolicy; initialMode: 'Alarm' | 'Notification' | 'None';
   bootstrapGeneration: number; initialRecoveryComplete: boolean; candidateCount: number; pendingExportCount: number; heldExportCount: number;
-  reviewCount: number; pendingChangeCount?: number; recoveryCount?: number; lastObservedAtMs: number | null; successfulAtMs?: number | null; attemptedAtMs?: number | null; failedAtMs?: number | null; message: string; operationId?: string | null };
+  reviewCount: number; pendingChangeCount?: number; recoveryCount?: number; lastObservedAtMs: number | null; successfulAtMs?: number | null; attemptedAtMs?: number | null; failedAtMs?: number | null; message: string; operationId?: string | null;
+  progress?: CalendarSavedProgress; problem?: { reason: string; action: CalendarRecoveryAction } | null };
 export type ManagedCalendarReviewItem = { itemId: string; kind: 'Import' | 'Publish' | 'Transfer' | 'RecoveredAlert' | 'Adopt'; title: string;
   occurrenceId?: string; candidateId?: string; calendarName?: string; ready: boolean; reason?: string; alertMode?: 'Alarm' | 'Notification' | 'None'; alertAtMs?: number;
   localStatus?: string; inbound?: string[]; outbound?: string[]; scope?: string };
@@ -149,7 +154,7 @@ export type ManagedCalendarPreview = { previewId: string; kind: 'Setup' | 'Polic
   sample?: { inspectedCount: number; complete: boolean; items: { title: string; description: string }[] } | null;
   expiresAtMs: number; policy: ManagedCalendarPolicy; initialMode: 'Alarm' | 'Notification' | 'None'; calendarCandidates: (OwnedCalendar & { recognition?: 'Bound' | 'Recognized' | 'NameOnly' })[];
   selectedCalendarId: string; calendarZone?: string; createCalendar: boolean; items: ManagedCalendarReviewItem[]; warnings: string[]; complete: boolean };
-export type ManagedCalendarSetupChoices = { selectedCalendarId?: string; calendarZone?: string; policy?: Partial<Omit<ManagedCalendarPolicy, 'revision'>>; adoptOccurrenceIds?: string[] };
+export type ManagedCalendarSetupChoices = { selectedCalendarId?: string; calendarZone?: string; policy?: Partial<Omit<ManagedCalendarPolicy, 'revision'>>; adoptOccurrenceIds?: string[]; replacement?: boolean };
 export type ManagedCalendarPolicyChoices = Partial<Omit<ManagedCalendarPolicy, 'revision'>> & { expectedRevision: number };
 export type ManagedCalendarCandidatePreview = CalendarLinkPreview & { candidateId: string; candidateRevision: number };
 export type CalendarReminderDisposition = { occurrenceId: string; seriesId?: string | null; revision: number; disposition: CalendarCreationDisposition;

@@ -25,6 +25,7 @@ class CalendarManagedCoordinator(private val state: CalendarAutomaticAccess, pri
       CalendarManagedDiscovery.requireEligible(bound, connection.email)
       candidates.put(bound.managedJson().put("recognition", "Bound"))
     } catch (error: CalendarFailure) {
+      if (choices["replacement"] != true) throw CalendarFailure(if (error.code in setOf("AUTH", "NEEDS_ACCESS", "OWNERSHIP_UNKNOWN", "NOT_OWNER")) error.code else "REMOTE_UNAVAILABLE")
       warnings.put("The saved calendar is unavailable. A replacement requires this new review; existing links keep their original source.")
     }
     val discovery = state.access(true) { store ->

@@ -22,6 +22,31 @@ class RemiloAlarmModule : Module() {
     val owner = engine()
     owner.request({ body(owner) }, { promise.resolve(it) }, { promise.reject(it, "Native operation failed: $it", null) })
   }
+  private fun authorize(requestId: String, publicationId: String?, promise: Promise? = null) {
+    val activity = appContext.currentActivity
+    if (activity == null) { promise?.reject("NEEDS_ACCESS", "Open Calendar after unlocking.", null); return }
+    engine().calendarRequest(true, { store ->
+      val launch = CalendarStatusStore(store.database(), System::currentTimeMillis).beginAuthorization(requestId, publicationId)
+      val managed = publicationId?.let { store.managed.setupOperation(it) }
+      val recover = managed != null && (managed.phase in setOf("Fenced", "Cancelled", "Confirmed") || managed.authEpoch != store.managed.binding().authEpoch || !store.connection().connected)
+      Triple(if (recover) null else publicationId, managed?.kind == "Create" && !recover, launch)
+    }, { saved -> activity.runOnUiThread {
+      if (!saved.third) promise?.resolve(mapOf("operationId" to requestId, "launched" to false))
+      else if (!activity.isFinishing) {
+        try {
+          activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java).putExtra("requestId", requestId)
+            .putExtra("publicationId", saved.first).putExtra("managedCalendarCreation", saved.second))
+          promise?.resolve(mapOf("operationId" to requestId, "launched" to true))
+        } catch (_: Exception) {
+          engine().calendarRequest(true, { CalendarStatusStore(it.database(), System::currentTimeMillis).finishAuthorization(requestId, "Failed") }, {}, {})
+          promise?.reject("NOT_AVAILABLE", "Google authorization could not open.", null)
+        }
+      } else {
+        engine().calendarRequest(true, { CalendarStatusStore(it.database(), System::currentTimeMillis).finishAuthorization(requestId, "Failed") }, {}, {})
+        promise?.reject("NOT_AVAILABLE", "Google authorization could not open.", null)
+      }
+    } }, { promise?.reject(it, "Google authorization could not open.", null) })
+  }
   override fun definition() = ModuleDefinition {
     Name("RemiloAlarm")
     Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
@@ -55,16 +80,11 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("previewCalendarPublication") { id: String, promise: Promise ->
       engine().calendarRequest(block = { it.preview(id) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar preview unavailable: $it", null) })
     }
-    AsyncFunction("authorizeCalendar") { publicationId: String? ->
-      val activity = requireNotNull(appContext.currentActivity) { "Open Calendar settings after unlocking." }
-      engine().calendarRequest(block = { store ->
-        val managed = publicationId?.let { store.managed.setupOperation(it) }
-        val recover = managed != null && (managed.phase == "Fenced" || !store.connection().connected)
-        Triple(if (recover) null else publicationId, managed?.kind == "Create" && !recover, recover)
-      }, resolve = { saved -> activity.runOnUiThread {
-        if (!activity.isFinishing) activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java)
-          .putExtra("publicationId", saved.first).putExtra("managedCalendarCreation", saved.second))
-      } }, reject = { /* Saved Settings keeps access recovery available. */ })
+    AsyncFunction("authorizeCalendar") { publicationId: String? -> authorize(UUID.randomUUID().toString(), publicationId) }
+    AsyncFunction("beginCalendarAuthorization") { requestId: String, publicationId: String?, promise: Promise -> authorize(requestId, publicationId, promise) }
+    AsyncFunction("getCalendarOperationStatus") { id: String, promise: Promise ->
+      engine().calendarRequest(block = { CalendarStatusStore(it.database(), System::currentTimeMillis).operation(id) },
+        resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
     }
     AsyncFunction("listOwnedCalendars") { cursor: String?, promise: Promise ->
       CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).list(cursor,

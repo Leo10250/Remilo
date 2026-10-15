@@ -31,6 +31,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       "recoveryCount" to dao.candidates().count { it.state == "Imported" && it.subject == saved.subject && it.calendarId == saved.calendarId &&
         runCatching { JSONObject(it.policySnapshot).optBoolean("initialRecovery") && CalendarLinkStore(db, now).record(it.localId)?.mode == "None" }.getOrDefault(false) },
       "operationId" to saved.operationId, "message" to saved.message,
+      "progress" to CalendarStatusStore(db, now).progress(), "problem" to CalendarStatusStore(db, now).problem(),
       "candidateCount" to dao.candidates().count { it.subject == saved.subject && it.calendarId == saved.calendarId && it.state in setOf("Pending", "Review", "Captured", "Held") },
       "pendingExportCount" to dao.exports().count { it.subject == saved.subject && it.calendarId == saved.calendarId && it.state in setOf("Pending", "Captured") },
       "heldExportCount" to dao.exports().count { it.subject == saved.subject && it.calendarId == saved.calendarId && it.state == "Held" }, "reviewCount" to dao.issues().size)
@@ -159,7 +160,15 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   fun recordReceipt(command: Map<String, Any?>, result: Map<String, Any?>): Map<String, Any?> = acknowledge(command, result)
   private fun acknowledge(command: Map<String, Any?>, result: Map<String, Any?>): Map<String, Any?> {
     val id = CalendarStore.string(command, "operationId")
-    val serialized = JSONObject(result).toString()
+    val selected = (command["selectedItemIds"] as? List<*>)?.map(Any?::toString)?.toSet() ?: emptySet()
+    val preview = (command["previewId"] as? String)?.let(dao::preview)?.let { JSONObject(it.payload).optJSONArray("items") } ?: JSONArray()
+    val refs = JSONArray()
+    for (index in 0 until preview.length()) {
+      val item = preview.getJSONObject(index)
+      if (item.optString("itemId") in selected) refs.put(JSONObject().put("kind", item.optString("kind"))
+        .put("localId", item.optString("occurrenceId")).put("candidateId", item.optString("candidateId")))
+    }
+    val serialized = JSONObject(result).put("selectionRefs", refs).put("scopeEpoch", binding().authEpoch).toString()
     dao.receipt(CalendarManagedReceipt(id, CalendarStore.string(command, "kind"), requestKey(command), serialized))
     return CalendarLinkMapper.map(JSONObject(serialized))
   }
@@ -410,6 +419,12 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       dao.binding(next); dao.clearPreviews(); fenceHeld(next, "Paused")
       issue("Setup", saved.operationId.ifEmpty { "connection" }, reason, false)
     }
+  }
+  /** Confirming account access never restores transfer permission; a bound scope returns to review. */
+  fun accessReviewed(subject: String) {
+    val saved = binding()
+    if (saved.subject == subject && saved.calendarId.isNotBlank() && saved.phase == "AccessRequired")
+      dao.binding(saved.copy(phase = "Reviewing", message = "Review current Calendar work before resuming."))
   }
   fun cachePage(subject: String, calendarId: String, generation: Long, events: JSONArray) {
     if (!permitsCalendar(subject, calendarId)) throw CalendarFailure("STALE_AUTHORIZATION")

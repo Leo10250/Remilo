@@ -13,10 +13,12 @@ import com.remilo.alarm.engine.AlarmEngine
 class CalendarAuthorizationActivity : ComponentActivity() {
   private var revision = 0L
   private var awaitingResult = false
+  private var completed = false
+  private val requestId get() = intent.getStringExtra("requestId")
   private val publicationId get() = intent.getStringExtra("publicationId")
   private val managedCalendarCreation get() = intent.getBooleanExtra("managedCalendarCreation", false)
   private val launcher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-    if (result.resultCode != RESULT_OK || result.data == null) finish()
+    if (result.resultCode != RESULT_OK || result.data == null) complete("Cancelled")
     else try { accept(Identity.getAuthorizationClient(this).getAuthorizationResultFromIntent(result.data)) }
     catch (_: Exception) { failed() }
   }
@@ -25,7 +27,7 @@ class CalendarAuthorizationActivity : ComponentActivity() {
     revision = savedInstanceState?.getLong("revision") ?: 0L
     awaitingResult = savedInstanceState?.getBoolean("awaitingResult") ?: false
     if (savedInstanceState != null) {
-      if (!awaitingResult) finish() // No token persistence: retry interrupted setup from Settings.
+      if (!awaitingResult) complete("Failed") // No token persistence: retry interrupted setup from Calendar.
       return // Android restores an outstanding Activity Result.
     }
     if (CalendarRuntime.get(applicationContext).revoking) { failed(); return }
@@ -46,14 +48,23 @@ class CalendarAuthorizationActivity : ComponentActivity() {
   private fun accept(result: AuthorizationResult) {
     awaitingResult = false
     try { CalendarConsent.requireGranted(result.grantedScopes, managedCalendarCreation) }
-    catch (_: CalendarFailure) { Toast.makeText(this, "Google access was not fully granted. Your confirmed connection is unchanged.", Toast.LENGTH_LONG).show(); finish(); return }
+    catch (_: CalendarFailure) { complete("Failed"); return }
     val token = result.accessToken
     if (token == null) { failed(); return }
     val done: (Boolean) -> Unit = { success ->
-      runOnUiThread { if (!success) Toast.makeText(this, "Google access was not confirmed. Return to Calendar settings to retry.", Toast.LENGTH_LONG).show(); finish() }
+      runOnUiThread { complete(if (success) "Authorized" else "Failed") }
     }
     if (managedCalendarCreation) CalendarRuntime.get(applicationContext).managedAuthenticated(token, revision, done)
     else CalendarRuntime.get(applicationContext).authenticated(token, revision, publicationId, done)
   }
-  private fun failed() { Toast.makeText(this, "Google access could not be opened. Check Google Play services and OAuth setup.", Toast.LENGTH_LONG).show(); finish() }
+  private fun complete(stage: String) {
+    if (completed) return
+    completed = true
+    val id = requestId
+    if (id == null) { finish(); return }
+    AlarmEngine.get(applicationContext).calendarRequest(true,
+      { CalendarStatusStore(it.database(), System::currentTimeMillis).finishAuthorization(id, stage) },
+      { runOnUiThread { finish() } }, { runOnUiThread { finish() } })
+  }
+  private fun failed() { if (requestId == null) Toast.makeText(this, "Google access could not be opened.", Toast.LENGTH_LONG).show(); complete("Failed") }
 }
