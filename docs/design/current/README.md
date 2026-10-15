@@ -22,6 +22,9 @@ The owner's 14 October [Calendar UX correction](calendar-management.md#calendar-
 uses one compact setup page, contextual status/actions, explicit authorization and
 operation outcomes, surfaced alert controls and checkbox bulk selection. It
 supersedes earlier Calendar setup copy and layout while preserving native safety.
+The subsequent [attention and sync-details refinement](calendar-management.md#calendar-attention-and-sync-details--14-october-2026)
+keeps local reminder timing prominent, makes review actionable and moves optional
+timestamps, per-reminder checks and history into collapsed details.
 
 The owner's [11 October browsing-header correction](header-scroll-research.md)
 replaces the abrupt toolbar surface switch with a continuous scroll blend and

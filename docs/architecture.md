@@ -87,6 +87,17 @@ Fresh-install initial recovery is quiet; installation provenance is CE-only and
 not portable backup history. DP and backup versions remain 6 and 4.
 
 The Calendar UX correction extends CE 12 projections without a schema migration.
+Explicit synchronization requests use immutable CalendarSyncRequest JSON receipts
+and separate CalendarSyncProgress checkpoints in the existing CE receipt table.
+Native confirmed commits update deduplicated checked/changed/imported/published
+family sets; scope guards fence identity/permission changes. Saved reads use
+non-recovering link-store adapters so an active Sending write is not mistaken for
+an interrupted process. Root store startup retains interruption recovery. The
+existing serialized runtime/worker resumes bounded pending requests. No new
+synchronization owner, Room entity, DP state or portable backup field is added.
+Run failures carry their connection revision/subject and authorization epoch;
+late failures cannot alter a replacement scope. An enabled empty managed source
+uses the existing access-recovery issue/fence even when no linked reminder exists.
 CalendarStatusStore reads existing setup jobs, binding-scoped candidates/exports,
 association jobs and receipts. Scan completion, imports, pending/held/review work
 and recorded local-save outcomes stay separate; Ready alone cannot prove all work

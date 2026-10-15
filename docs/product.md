@@ -110,6 +110,13 @@ newly created calendar uses its reviewed policy. Ownership, interrupted creation
 deduplication and saved removal decisions remain explicit. Ordinary local actions
 and delivery retain P4-D's independent authority.
 
+The Calendar attention refinement keeps healthy permission quiet, puts actual
+local reminder timing first and shows review as a surfaced home action. Optional
+per-reminder Sync now and recorded Calendar-only history live in collapsed Sync
+details. Explicit checks show durable scoped outcomes; an unchanged agreement is
+not an update, authorization is not completed synchronization, and routine
+background success does not interrupt. Current issues outrank old success.
+
 The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
 places a compact Calendar entry after the reminder's local Details information.
 Its separate management page reads saved status until an explicit Check or review.

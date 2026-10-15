@@ -15,8 +15,8 @@ normal status distinguishes Linked · Manual updates and Linked · Automatic syn
 Successful sync, remote observation and failed attempts remain separate facts.
 
 The separate compact Calendar management page shows the reminder context, original
-account/calendar, last successful sync, last observation and later failed attempt,
-the shared sync policy and current problems. Opening it performs local reads only.
+account/calendar, concise sync status and current problems. Optional observation
+and attempt timestamps belong in collapsed Sync details. Opening performs local reads only.
 Foreground synchronization is independent of navigation. Check is explicit for
 manual/read-only context and may be abandoned; Back ignores late UI
 results. Review performs its own fresh native preview. Terminal records permit
@@ -132,6 +132,52 @@ or Google reminder restoration is introduced.
 Individual and all-event import explain that the reminder has its own alert and
 that deleting Google does not stop it. Default Alarm, future-time validation,
 explicit Google reminder consent and per-side outcome reporting are unchanged.
+
+## Calendar attention and Sync details — 14 October 2026
+
+Calendar management orders the 24sp semibold title, actual local alert context
+(18sp semibold value), current synchronization status/recovery, compact source,
+collapsed Sync details and lower neutral Unlink group. Body/supporting text is
+16/14sp and scales/wraps. Actual timing uses the shared native-derived local
+presentation, including Snooze/Postpone, No alert, intended Blocked/Pending and
+terminal timing. Google event time never substitutes for a local alert.
+
+Healthy automatic permission is neutral **Automatic sync on**, with at most one
+Last synced line. Successful explicit checks use a green check plus truthful
+wording. Current review/uncertainty is amber; current access/blocking failures are
+red. Pending, intentional Pause and Local only remain neutral. Color supplements
+text/icons, and historical failure timestamps do not make a current error.
+
+Sync details contains source/zone, agreement/observation/Google-update/check
+timestamps, field/local-only explanation, optional per-reminder Sync now or
+read-only Check for changes, and **Recent Calendar changes**. It retains its open
+state during refresh and stays open during an interaction within it. Current
+Review changes, Reconnect Google and Check update result remain outside it.
+Recent Calendar changes filters the existing Activity projection by Calendar
+entries, retains family/origin context and shows recorded field groups without
+inventing values. General Activity entrypoints remain unchanged.
+
+Agenda displays a single surfaced, inset 16dp **Calendar items need review** action
+with icon, consequence, global count, Review N items and a chevron. It includes
+reminders, incoming candidates and setup issues, deduplicates families and uses
+native severity across the full issue set. Hide it at zero; preserve local alarm
+problems/ringing priorities and Agenda filters. Ordinary reminder cards are unchanged.
+
+The overview keeps global Sync now secondary. Its explicit progress/result stays
+inside the leading status card; unresolved current issues outrank old success.
+Pending/held counts appear only when nonzero. Required sync permission is static
+**Automatic sync included/on** information; an editable switch appears only when
+the choice is supported. Ordinary unimported candidates retain **No Remilo alert
+yet**. Identity/adoption issues direct existing-copy review without claiming an
+already existing local reminder has no alert.
+
+Explicit actions show progress and confirmed, scoped outcomes. Capture is not
+completion, agreement is not a content update, and incomplete inspection cannot
+say No changes found. A lost acknowledgement retains the same request identity.
+Routine background success stays quiet. Inline feedback is preferred; an action
+that removes its context may use the existing accessible snackbar. External link
+failure has an inline explanation. Secondary targets remain 48dp and review/
+primary actions 56dp, with clipped press/focus response and wrapping labels.
 
 ## Appearance, accessibility and rationale
 

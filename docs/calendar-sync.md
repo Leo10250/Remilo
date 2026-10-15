@@ -219,6 +219,32 @@ from Google Calendar** or **Google Calendar unlinked**. Preserve internal durabl
 records for recovery/diagnostics; historical resolved failures are not current
 warnings. Do not expose operation IDs or raw native error codes as product history.
 
+## Explicit synchronization opportunities and feedback
+
+`RequestCalendarSync` captures an immutable UUID and AllAuthorized or Association
+scope before execution. Existing CE JSON receipts hold identity/permission guards;
+a separate progress receipt holds durable stages and sets of checked/changed/
+imported/published logical families. Agreement without a content change counts as
+checked only. Multiple resources or fields do not inflate those counts. Existing
+`confirmed` remains legacy agreement data and is not a count of updated reminders.
+
+The existing runtime executes the opportunity under existing permissions and
+budgets. It cannot activate manual links, override Pause/review or retarget fenced
+work. Pending requests resume the same identity; uncertain writes still require
+inspection before another write. Same UUID/different scope is OPERATION_REUSED.
+The compatibility Sync now API uses this same capture and execution path.
+
+Saved request status distinguishes Checking, NoChanges, Synced, Pending,
+NeedsReview, AccessRequired, Unconfirmed, Paused, Failed, ScopeChanged and
+NotChecked. NoChanges requires complete relevant inspection, including a checked
+empty collection; no eligible work or interrupted pagination alone cannot prove
+it. New current problems supersede an older success. Item success does not clear
+unrelated global issues. Purge redacts private item progress/references and late
+results cannot recreate them. Reads, disclosure expansion and navigation never
+dispatch network work. Schema versions remain CE12/DP6/backup4.
+
+Presentation follows the current [attention/details contract](design/current/calendar-management.md#calendar-attention-and-sync-details--14-october-2026).
+
 ## Required evidence
 
 Cover every comparison-table case, different-group merges, time-only automatic

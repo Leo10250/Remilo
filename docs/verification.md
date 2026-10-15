@@ -1,5 +1,13 @@
 # Verification and release evidence
 
+The [Calendar attention/scoped-check evidence](evidence/2026-10-14-calendar-refinement.md)
+records CAL-05 outcome tests and a tracked production-component fixture matrix.
+Agreement and confirmed changes require separate counts. Completed empty scans,
+partial coverage, offline/ringing continuation, access and uncertain writes must
+produce different scoped results. Verify same-request recovery after navigation/
+restart and native aggregate severity across all issue targets/pages. Unobserved
+visual/device cases remain explicit; existing physical gates are unchanged.
+
 The [14 October Calendar UX observations](evidence/2026-10-14-calendar-ux.md)
 record saved authorization/progress projections, compact setup and grouped
 recovery/selection presentation. They identify the checked source and signed

@@ -848,3 +848,28 @@ Review all eight pairs, narrow portrait, landscape, 200% text, long English/Chin
 and reduced motion. Verify clipped press/focus, wrapping, 48/56 dp targets, TalkBack
 announcements, IME/Back order and origin return. Review is pending until actually
 observed; host/fixture checks do not replace signed-device/live Google acceptance.
+
+## Calendar attention and scoped checks (CAL-05)
+
+On the identified signed build, find the home review action with mixed reminder,
+incoming-event and setup issues. Confirm the global family count is independent
+of Agenda filters and that local alarm-permission/ringing controls retain priority.
+Identify the reminder and actual next local alert, including Snooze/Postpone,
+No alert, intended Blocked/Pending and terminal timing. Check title/time hierarchy
+and semantic text/icons in all eight atmosphere/brightness pairs.
+
+Open Sync details without triggering network work. Exercise optional per-reminder
+and global Sync now: no changes, real changes, empty calendar, partial pagination,
+offline/backoff, ringing deferral, pending suppression and access recovery. A
+single-reminder success must not clear unrelated overview issues. Leave/restart
+after acknowledgement, retry a lost acknowledgement with the same identity, and
+fence execution through Pause/account/terminal/Unlink/Purge changes. Uncertain
+writes require inspection. Routine background success must remain quiet.
+
+Find Recent Calendar changes inside details; verify Calendar-only recorded field
+labels, empty history and origin/family return. Required automatic sync must read
+as static information; only supported opt-in is editable. Exercise all explicit
+actions for progress and outcomes, including authorization cancellation and
+failed external navigation. Verify native TalkBack announcements, Back/IME,
+pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
+reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.
