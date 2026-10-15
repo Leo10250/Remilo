@@ -50,6 +50,13 @@ alert-first browsing, stationary covers and splash requirements.
 
 ## Required behavior
 
+- Interface language is System default, English or Simplified Chinese. New
+  installations follow supported phone languages; upgrades retain English until
+  changed. Manual choice persists and synchronizes with Android's per-app language.
+  All app-owned presentation, native alarms and notifications are localized offline.
+  Authored/imported content, device clock preferences and durable scheduling/work
+  semantics remain independent. See the [language contract](design/current/localization.md).
+
 The owner's 11 October wording correction labels every work-completion action
 **Mark as done**, and captured group completion **Mark all as done (N)**, across
 app pages, row/swipe accessibility actions, native alarms and private/public

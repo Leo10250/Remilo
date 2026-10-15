@@ -52,14 +52,16 @@ class RemiloAlarmModule : Module() {
     Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
     OnCreate {
       val context = requireNotNull(appContext.reactContext).applicationContext
-      timeObservation = runCatching { TimeDisplayPreferences.observe(context) { sendEvent("onTimeDisplayPreferencesChanged", TimeDisplayPreferences.read(context)) } }.getOrNull()
+      timeObservation = runCatching { TimeDisplayPreferences.observe(context) { engine().presentationChanged { sendEvent("onTimeDisplayPreferencesChanged", TimeDisplayPreferences.read(context)) } } }.getOrNull()
       val owner = engine()
-      observation = owner.observe { sendEvent("onChange", emptyMap<String, Any>()) }
+      observation = owner.observe { sendEvent("onChange", emptyMap<String, Any>()); sendEvent("onTimeDisplayPreferencesChanged", owner.presentationSnapshot()) }
       previewObservation = owner.observeSoundPreview { sendEvent("onSoundPreviewState", it) }
       owner.recover()
     }
     OnDestroy { observation?.close(); observation = null; previewObservation?.close(); previewObservation = null; timeObservation?.close(); timeObservation = null }
-    AsyncFunction("getTimeDisplayPreferences") { TimeDisplayPreferences.read(requireNotNull(appContext.reactContext).applicationContext) }
+    AsyncFunction("getTimeDisplayPreferences") { promise: Promise ->
+      val owner = engine(); owner.presentationChanged { promise.resolve(owner.presentationSnapshot()) }
+    }
     Function("createOperationId") { UUID.randomUUID().toString() }
     AsyncFunction("getCapabilities") { promise: Promise -> dispatch(promise) { it.capabilities() } }
     AsyncFunction("queryReminders") { filter: Map<String, Any?>, cursor: String?, promise: Promise ->

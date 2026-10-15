@@ -6,8 +6,9 @@ import androidx.room.*
 @Entity(tableName = "calendar_connection")
 data class CalendarConnection(@PrimaryKey val id: String = "google", val revision: Long = 0,
   val connected: Boolean = false, val subject: String = "", val email: String = "",
-  val calendarId: String = "", val calendarName: String = "", val calendarZone: String = "",
-  val message: String = "")
+  val calendarId: String = "", val calendarName: String = "", val calendarZone: String = "", val message: String = "",
+  @ColumnInfo(defaultValue = "''") val messageKey: String = com.remilo.alarm.presentation.L10n.calendarDescriptor(message)?.key.orEmpty(),
+  @ColumnInfo(defaultValue = "'{}'") val messageArgs: String = com.remilo.alarm.presentation.L10n.argsJson(com.remilo.alarm.presentation.L10n.calendarDescriptor(message)))
 
 @Entity(tableName = "calendar_publications")
 data class CalendarBinding(@PrimaryKey val occurrenceId: String, val operationId: String)
@@ -17,9 +18,10 @@ data class CalendarOperation(@PrimaryKey val operationId: String, val occurrence
   val requestKey: String, val reminderRevision: Long, val connectionRevision: Long,
   val subject: String, val email: String, val calendarId: String, val calendarName: String,
   val zoneId: String, val eventId: String, val fingerprint: String, val payload: String,
-  val state: String = "Waiting", val attempted: Boolean = false, val readOnly: Boolean = false,
-  val message: String = "Ready to publish. Retry to continue.", val htmlLink: String = "",
-  val etag: String = "", val publishedAtMs: Long? = null)
+  val state: String = "Waiting", val attempted: Boolean = false, val readOnly: Boolean = false, val message: String = "Ready to publish. Retry to continue.", val htmlLink: String = "",
+  val etag: String = "", val publishedAtMs: Long? = null,
+  @ColumnInfo(defaultValue = "''") val messageKey: String = com.remilo.alarm.presentation.L10n.calendarDescriptor(message)?.key.orEmpty(),
+  @ColumnInfo(defaultValue = "'{}'") val messageArgs: String = com.remilo.alarm.presentation.L10n.argsJson(com.remilo.alarm.presentation.L10n.calendarDescriptor(message)))
 
 @Dao interface CalendarDao {
   @Query("SELECT * FROM calendar_connection WHERE id = 'google'") fun connection(): CalendarConnection?

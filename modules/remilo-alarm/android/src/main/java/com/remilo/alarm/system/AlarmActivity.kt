@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import com.remilo.alarm.core.SessionRefreshGuard
 import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.core.DeliverySnapshot
@@ -21,6 +22,10 @@ import android.widget.Toast
 
 /** Native-only controls. Empty loading state must never dismiss a live session. */
 class AlarmActivity : ComponentActivity() {
+  override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+    super.onConfigurationChanged(newConfig)
+    engine.presentationChanged()
+  }
   private val snapshot = mutableStateOf<AlarmEngine.SessionSnapshot?>(null)
   private val error = mutableStateOf<String?>(null)
   private val refreshError = mutableStateOf<String?>(null)
@@ -105,7 +110,7 @@ class AlarmActivity : ComponentActivity() {
           val message = if (outcomes != null) "$scheduled of ${outcomes.size} reminders snoozed. Review alert problems in Remilo."
             else "Could not schedule Snooze. Review alert problems in Remilo."
           error.value = message
-          Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+          Toast.makeText(this, com.remilo.alarm.presentation.L10n.text(this, message), Toast.LENGTH_LONG).show()
         }
         if (status?.get("status") == "Pending") {
           pendingCommand = command; unconfirmed.value = true
@@ -169,7 +174,7 @@ class AlarmActivity : ComponentActivity() {
         }
       }
       val baseType = Typography()
-      val type = Typography(
+      val englishType = Typography(
         // The larger single-alarm headline remains a deliberate native hierarchy.
         headlineLarge = baseType.headlineLarge.copy(fontSize = 28.sp, lineHeight = 36.sp),
         headlineMedium = baseType.headlineMedium.copy(fontSize = AtmosphereTokens.typeTitle.sp, lineHeight = AtmosphereTokens.spaceXl.sp),
@@ -182,8 +187,19 @@ class AlarmActivity : ComponentActivity() {
         labelMedium = baseType.labelMedium.copy(fontSize = AtmosphereTokens.typeLabel.sp, lineHeight = 20.sp),
         labelSmall = baseType.labelSmall.copy(fontSize = AtmosphereTokens.typeLabel.sp, lineHeight = 20.sp)
       )
+      val type = if (com.remilo.alarm.system.PresentationLanguage.language != "zh-Hans") englishType else englishType.copy(
+        headlineLarge = englishType.headlineLarge.copy(fontSize = AtmosphereTokens.chineseDisplaySize.sp, lineHeight = AtmosphereTokens.chineseDisplayLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseDisplayWeight), letterSpacing = 0.sp),
+        headlineMedium = englishType.headlineMedium.copy(fontSize = AtmosphereTokens.chineseTitleSize.sp, lineHeight = AtmosphereTokens.chineseTitleLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseTitleWeight), letterSpacing = 0.sp),
+        titleLarge = englishType.titleLarge.copy(fontSize = AtmosphereTokens.chineseAppBarSize.sp, lineHeight = AtmosphereTokens.chineseAppBarLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseAppBarWeight), letterSpacing = 0.sp),
+        titleMedium = englishType.titleMedium.copy(fontSize = AtmosphereTokens.chineseHeadingSize.sp, lineHeight = AtmosphereTokens.chineseHeadingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseHeadingWeight), letterSpacing = 0.sp),
+        bodyLarge = englishType.bodyLarge.copy(fontSize = AtmosphereTokens.chineseBodySize.sp, lineHeight = AtmosphereTokens.chineseBodyLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseBodyWeight), letterSpacing = 0.sp),
+        bodyMedium = englishType.bodyMedium.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp),
+        bodySmall = englishType.bodySmall.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp),
+        labelLarge = englishType.labelLarge.copy(fontSize = AtmosphereTokens.chineseBodySize.sp, lineHeight = AtmosphereTokens.chineseBodyLineHeight.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.sp),
+        labelMedium = englishType.labelMedium.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp),
+        labelSmall = englishType.labelSmall.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp))
       MaterialTheme(colorScheme = scheme, typography = type) {
-        AlarmControlsScreen(current, busy.value, error.value, ::act, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
+        AlarmControlsScreen(current, busy.value, error.value, { action, record -> act(action.commandKind, record) }, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
       }
     }
   }

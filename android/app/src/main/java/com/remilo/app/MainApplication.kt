@@ -56,6 +56,7 @@ class MainApplication : Application(), ReactApplication, WorkConfiguration.Provi
 
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
+    com.remilo.alarm.engine.AlarmEngine.get(this).presentationChanged()
     if (uiInitialized) ApplicationLifecycleDispatcher.onConfigurationChanged(this, newConfig)
   }
 }

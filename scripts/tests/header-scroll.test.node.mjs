@@ -13,6 +13,7 @@ function compile(file, dependencies = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   runInNewContext(code, { module, exports: module.exports, require: name => {
+    if (name === '../localization/react') return { useLocale: () => 'en' };
     if (!(name in dependencies)) throw new Error('Unexpected chrome dependency: ' + name);
     return dependencies[name];
   } }, { filename: file });

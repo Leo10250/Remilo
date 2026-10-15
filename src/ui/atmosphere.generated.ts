@@ -279,5 +279,44 @@ export const presentation = {
       "inverseInk": "#202A39",
       "inverseAction": "#244D9A"
     }
+  },
+  "localeTypography": {
+    "zh-Hans": {
+      "display": {
+        "size": 32,
+        "lineHeight": 42,
+        "weight": 600
+      },
+      "title": {
+        "size": 24,
+        "lineHeight": 34,
+        "weight": 600
+      },
+      "appBar": {
+        "size": 22,
+        "lineHeight": 30,
+        "weight": 500
+      },
+      "heading": {
+        "size": 18,
+        "lineHeight": 26,
+        "weight": 500
+      },
+      "body": {
+        "size": 16,
+        "lineHeight": 24,
+        "weight": 400
+      },
+      "supporting": {
+        "size": 14,
+        "lineHeight": 22,
+        "weight": 400
+      },
+      "label": {
+        "size": 14,
+        "lineHeight": 22,
+        "weight": 400
+      }
+    }
   }
 } as const;

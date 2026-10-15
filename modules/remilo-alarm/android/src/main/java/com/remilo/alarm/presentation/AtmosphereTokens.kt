@@ -14,6 +14,27 @@ object AtmosphereTokens {
       "night-dark" -> Roles(0xFF121B2AL, 0xFF1F2B3CL, 0xFFECF1FCL, 0xFFB8C5DDL, 0xFFB2C3FFL, 0xFF182B53L, 0xFF2B3A53L, 0xFF869ABCL, 0xFFFFB4ABL, 0xFFF3CC83L, 0xFF87D5A3L, 0xFF363D48L, 0xFFC5C9D2L, 0xFFE8EDF5L, 0xFF202A39L, 0xFF244D9AL, 0xFFB2C3FFL, 0xFF2B3A53L, 0xFFB2C3FFL, 0xFFB2C3FFL, 0xFF182B53L, 0xFF2B3A53L, 0xFFB2C3FFL, 0xFFFFB4ABL, 0xFF690005L, 0xFFF0A29AL, 0xFFFFFFFFL, 0xFF000000L, 0.54f, "remilo_scene_night_dark_v2", 0.5f, 0.500534f, 0.5f, 0.43016f)
       else -> colors("night", "light")
   }
+  const val chineseDisplaySize = 32
+  const val chineseDisplayLineHeight = 42
+  const val chineseDisplayWeight = 600
+  const val chineseTitleSize = 24
+  const val chineseTitleLineHeight = 34
+  const val chineseTitleWeight = 600
+  const val chineseAppBarSize = 22
+  const val chineseAppBarLineHeight = 30
+  const val chineseAppBarWeight = 500
+  const val chineseHeadingSize = 18
+  const val chineseHeadingLineHeight = 26
+  const val chineseHeadingWeight = 500
+  const val chineseBodySize = 16
+  const val chineseBodyLineHeight = 24
+  const val chineseBodyWeight = 400
+  const val chineseSupportingSize = 14
+  const val chineseSupportingLineHeight = 22
+  const val chineseSupportingWeight = 400
+  const val chineseLabelSize = 14
+  const val chineseLabelLineHeight = 22
+  const val chineseLabelWeight = 400
   const val home = 200
   const val secondary = 96
   const val toolbar = 56

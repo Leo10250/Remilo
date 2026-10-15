@@ -1,3 +1,5 @@
+import { useLocalizedState, useTranslation } from '../localization/react';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,6 +20,8 @@ import { TimeZoneField } from '../ui/time-zone';
 import { RootNotice } from '../ui/navigation';
 
 export default function ManagedCalendar() {
+  'use no memo';
+  const t = useTranslation();
   const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<OriginParams & { mode?: string; adoptOccurrenceId?: string; replacement?: string; operationId?: string }>();
   const mode = params.mode || 'setup', origin = retainedOriginParams(params), client = useQueryClient(), confirm = useAppearanceConfirmation();
@@ -25,7 +29,7 @@ export default function ManagedCalendar() {
   const connection = useQuery({ queryKey: ['calendar', 'connection'], queryFn: () => engine().getCalendarConnection(), enabled: nativeAvailable });
   const [preview, setPreview] = useState<ManagedCalendarPreview | null>(null), [draft, setDraft] = useState<ManagedCalendarSetupChoices>({});
   const [selected, setSelected] = useState<string[]>([]), [checking, setChecking] = useState(false), [capturing, setCapturing] = useState(false);
-  const [unknown, setUnknown] = useState(false), [resultId, setResultId] = useState<string | null>(null), [error, setError] = useState(''), [reason, setReason] = useState(''), [refresh, setRefresh] = useState(0);
+  const [unknown, setUnknown] = useState(false), [resultId, setResultId] = useState<string | null>(null), [error, setError] = useLocalizedState(''), [reason, setReason] = useLocalizedState(''), [refresh, setRefresh] = useState(0);
   const [sheet, setSheet] = useState<'calendar' | 'alerts' | 'google' | null>(null);
   const [zoneAtMs] = useState(Date.now);
   const pending = useRef<ManagedCalendarCommand | null>(null), initialized = useRef(false), ticket = useRef(0), busy = useRef(false), focused = useRef(false);
@@ -34,7 +38,7 @@ export default function ManagedCalendar() {
   const back = () => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin));
   const auth = useCalendarAuthorization(() => { setRefresh(value => value + 1); });
   useAppearanceHold(capturing || unknown || !!sheet);
-  usePreventRemove(capturing || unknown, () => confirm('Request not confirmed', 'Check or retry this same request before leaving.'));
+  usePreventRemove(capturing || unknown, () => confirm(t('m_fb77f71f37c4'), t('m_af68edd919f9')));
   useFocusEffect(useCallback(() => { if (focused.current) setRefresh(value => value + 1); focused.current = true; }, []));
   useEffect(() => {
     if (!nativeAvailable || !connection.data?.connected || operationId || mode === 'progress' || pending.current) return;
@@ -53,11 +57,11 @@ export default function ManagedCalendar() {
       })().catch(e => { if (current === ticket.current) { setError(calendarError(e)); setReason(e && typeof e === 'object' && 'code' in e ? String(e.code) : ''); } }).finally(() => { if (current === ticket.current) setChecking(false); });
     }, 250);
     return () => { clearTimeout(timer); tickets.current++; };
-  }, [draft, mode, connection.data?.connected, connection.data?.revision, refresh, params.adoptOccurrenceId, params.replacement, operationId]);
+  }, [draft, mode, connection.data?.connected, connection.data?.revision, refresh, params.adoptOccurrenceId, params.replacement, operationId, setError, setReason]);
   const policy = { ...(preview?.policy || saved.data?.policy), ...draft.policy } as ManagedCalendarPolicy;
   const updatePolicy = (patch: Partial<ManagedCalendarPolicy>) => setDraft(old => ({ ...old, policy: { ...(preview?.policy || saved.data?.policy), ...old.policy, ...patch } }));
   const apply = async () => {
-    if (!preview || busy.current || checking || !preview.complete || !unknown && Date.now() >= preview.expiresAtMs) { setError('These settings need another check before confirming.'); setRefresh(v => v + 1); return; }
+    if (!preview || busy.current || checking || !preview.complete || !unknown && Date.now() >= preview.expiresAtMs) { setError(t('m_9357bdd53345')); setRefresh(v => v + 1); return; }
     pending.current ??= managedCalendarCapture(preview, engine().createOperationId(), selected);
     const command = pending.current; busy.current = true; setCapturing(true); setError('');
     try { await calendarAction.submit(command); pending.current = null; setUnknown(false); setResultId(command.operationId); await client.invalidateQueries({ queryKey: ['calendar'] }); }
@@ -75,81 +79,81 @@ export default function ManagedCalendar() {
     }
     router.replace({ pathname: '/calendar', params: origin });
   };
-  const title = operationId || mode === 'progress' ? 'Calendar sync' : mode === 'resume' ? 'Review and resume sync' : mode === 'policy' ? 'Calendar sync preferences' : mode === 'recovered' ? 'Turn on recovered alerts' : 'Set up Calendar sync';
-  const action = mode === 'resume' ? 'Resume and apply reviewed work' : mode === 'policy' ? 'Save preferences' : mode === 'recovered' ? `Turn on ${selected.length} alerts` : preview?.createCalendar ? 'Create calendar and turn on sync' : 'Turn on sync';
+  const title = operationId || mode === 'progress' ? t('m_f2cef547cca3') : mode === 'resume' ? t('m_5e506c8d2951') : mode === 'policy' ? t('m_e506da94ceb4') : mode === 'recovered' ? t('m_111b11a90779') : t('m_79d5acd6c240');
+  const action = mode === 'resume' ? t('m_8c64c5f3e836') : mode === 'policy' ? t('m_089e57e38f93') : mode === 'recovered' ? t('m_d65bb73f593c', { arg0: String(selected.length) }) : preview?.createCalendar ? t('m_6bbfee7bfcdf') : t('m_e62e9fadeb09');
   const locked = capturing || unknown || auth.waiting;
   const allDayTime = new Date(zoneAtMs); allDayTime.setHours(Math.floor((policy.allDayAlarmMinutes ?? 540) / 60), (policy.allDayAlarmMinutes ?? 540) % 60, 0, 0);
   const source = preview?.calendarCandidates.find(value => value.id === (draft.selectedCalendarId || preview.selectedCalendarId));
   const zone = preview?.createCalendar ? draft.calendarZone || preview.calendarZone || deviceZone() : source?.zoneId || saved.data?.calendarZone || deviceZone();
   const zoneLabel = zone.split('/').pop()?.replaceAll('_', ' ') || zone;
-  return <Page compact title={title} onBack={back} footer={<><RootNotice />{!operationId && preview && mode !== 'progress' ? <BottomActionBar><Button label={unknown ? 'Retry same request' : checking ? 'Checking settings…' : action}
+  return <Page compact title={title} onBack={back} footer={<><RootNotice />{!operationId && preview && mode !== 'progress' ? <BottomActionBar><Button label={unknown ? t('m_16003a1a9190') : checking ? t('m_c8ee7ecafaed') : action}
     busy={capturing} disabled={auth.waiting || checking || !unknown && (!preview.complete || !!error || mode === 'recovered' && !selected.length)} onPress={() => void apply()} /></BottomActionBar> : null}</>}>
-    {!nativeAvailable && <Copy>Use the Android app to set up Calendar sync.</Copy>}
+    {!nativeAvailable && <Copy>{t('m_329ba71a3adb')}</Copy>}
     {operationId ? <><CalendarOperationProgress operationId={operationId} onAction={status => void recover(status)} />
       {!!auth.message && <ActionFeedback message={auth.message} tone={auth.tone} loading={auth.waiting} />}
       {!!error && <ActionFeedback message={error} tone="warning" />}
-      <Button label="Back to Calendar" variant="secondary" disabled={capturing || unknown} onPress={() => router.replace({ pathname: '/calendar', params: origin })} />
+      <Button label={t('m_db7318c55879')} variant="secondary" disabled={capturing || unknown} onPress={() => router.replace({ pathname: '/calendar', params: origin })} />
     </> : <>
-      <Copy muted>{mode === 'resume' ? 'Local alerts continue. Review what will sync when you resume.' : mode === 'recovered' ? 'These recovered reminders have No alert. Choose which future alerts to turn on.' : mode === 'policy' ? 'Changes apply to future imports and new reminders.' : 'Sync reminders with a dedicated Remilo calendar.'}</Copy>
-      {mode === 'setup' && <ConnectedGroup title="Account and calendar">
-        <SettingRow icon="event" label="Google account" value={connection.data?.connected ? connection.data.email : 'Not connected'} description={connection.data?.connected ? undefined : 'Allow access to find your Remilo calendar.'} />
-        <SettingRow icon="event" label="Remilo calendar" value={source?.name || (preview?.createCalendar ? 'Create a new Remilo calendar' : saved.data?.calendarName || (connection.data?.connected ? checking ? 'Checking calendars…' : 'Choose a Remilo calendar' : 'Choose after connecting'))}
-          description={preview?.createCalendar ? 'Created only after you confirm below.' : source ? 'Found in your Google account' : preview?.calendarCandidates.length ? 'Choose which Remilo calendar to use.' : 'Your automatic import and export source.'}
+      <Copy muted>{mode === 'resume' ? t('m_b3654a56ff8e') : mode === 'recovered' ? t('m_46c4b1c0a26e') : mode === 'policy' ? t('m_0e641191fb8f') : t('m_173329670273')}</Copy>
+      {mode === 'setup' && <ConnectedGroup title={t('m_4daf4f599e5c')}>
+        <SettingRow icon="event" label={t('m_7da2bcb6bb6b')} value={connection.data?.connected ? connection.data.email : t('m_0303e1824670')} description={connection.data?.connected ? undefined : t('m_e3b0eada86d6')} />
+        <SettingRow icon="event" label={t('m_d1f78591d052')} value={source?.name || (preview?.createCalendar ? t('m_23c9159672e0') : saved.data?.calendarName || (connection.data?.connected ? checking ? t('m_453d0743c738') : t('m_c45aab93dad2') : t('m_88cd4e78a673')))}
+          description={preview?.createCalendar ? t('m_f8b9614ab2a4') : source ? t('m_869ef35dc892') : preview?.calendarCandidates.length ? t('m_180f8f916659') : t('m_08fcf92a3a86')}
           disabled={locked || !preview?.calendarCandidates.length} onPress={preview?.calendarCandidates.length ? () => setSheet('calendar') : undefined} />
         {preview?.createCalendar && <TimeZoneField value={zone} atMs={zoneAtMs} disabled={locked} onChange={calendarZone => setDraft(old => ({ ...old, calendarZone }))} />}
       </ConnectedGroup>}
-      {!connection.data?.connected && nativeAvailable && <CalendarStatusCard title="Connect Google Calendar" description="Remilo needs access to find your dedicated calendar. Connecting alone doesn’t add reminders or turn on sync." label="Connect Google" busy={auth.waiting} action={() => void auth.start()} />}
+      {!connection.data?.connected && nativeAvailable && <CalendarStatusCard title={t('m_c04f9d6a937e')} description={t('m_afc14f4556c4')} label={t('m_2035e3f9baed')} busy={auth.waiting} action={() => void auth.start()} />}
       {!!auth.message && <ActionFeedback message={auth.message} tone={auth.tone} loading={auth.waiting} />}
-      {!!error && <CalendarStatusCard title="Setup needs attention" description={error} warning label={['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? 'Reconnect Google' : 'Check settings again'} busy={auth.waiting || checking}
+      {!!error && <CalendarStatusCard title={t('m_39d845bcc1d7')} description={error} warning label={['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? t('m_b724411569e0') : t('m_b6d6badae487')} busy={auth.waiting || checking}
         action={() => ['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? void auth.start(saved.data?.problem?.action === 'Authorize' ? saved.data.operationId || null : null) : setRefresh(v => v + 1)} />}
-      {checking && <ActionFeedback loading message="Checking settings…" />}
+      {checking && <ActionFeedback loading message={t('m_c8ee7ecafaed')} />}
       {preview && <>
-        {params.replacement === 'true' && <ActionFeedback tone="warning" message="This replacement keeps existing Google calendars and links. An earlier creation request may still appear in Google." />}
-        {mode === 'setup' && policy.automaticImport && preview.initialMode === 'None' && <CalendarStatusCard title="Existing events will have No alert" description="You can review and turn on their alerts afterward. Later new events use your alert preference below." />}
+        {params.replacement === 'true' && <ActionFeedback tone="warning" message={t('m_8f6d58101a14')} />}
+        {mode === 'setup' && policy.automaticImport && preview.initialMode === 'None' && <CalendarStatusCard title={t('m_3fc2499adb77')} description={t('m_93653909d982')} />}
         {(mode === 'setup' || mode === 'policy') && <>
-          <ConnectedGroup title="What syncs" footer={<Copy muted size={14}>Linked titles, notes and event times stay in sync.</Copy>}>
-            <View><Toggle label="Add Google events to Remilo" value={policy.automaticImport} disabled={locked} onChange={automaticImport => updatePolicy({ automaticImport })} />
-              <RowSupport><Copy muted size={14}>Ongoing and upcoming events become reminders. Some events need review.</Copy></RowSupport></View>
-            <View><Toggle label="Add new Remilo reminders to Google" value={policy.exportNewReminders} disabled={locked} onChange={exportNewReminders => updatePolicy({ exportNewReminders })} />
-              <RowSupport><Copy muted size={14}>Choose Local only when creating a reminder. Google alerts are off for events Remilo creates.</Copy></RowSupport></View>
+          <ConnectedGroup title={t('m_9843997116c5')} footer={<Copy muted size={14}>{t('m_ca0cf58f35be')}</Copy>}>
+            <View><Toggle label={t('m_4dd42f73fe9a')} value={policy.automaticImport} disabled={locked} onChange={automaticImport => updatePolicy({ automaticImport })} />
+              <RowSupport><Copy muted size={14}>{t('m_d2437c145abd')}</Copy></RowSupport></View>
+            <View><Toggle label={t('m_2cf933c6fed9')} value={policy.exportNewReminders} disabled={locked} onChange={exportNewReminders => updatePolicy({ exportNewReminders })} />
+              <RowSupport><Copy muted size={14}>{t('m_338b804f1e94')}</Copy></RowSupport></View>
           </ConnectedGroup>
-          {policy.automaticImport && <ConnectedGroup title="Alerts for imported events" footer={<Copy muted size={14}>Timed alerts use the event start. Past alert times need review; they never ring immediately.</Copy>}>
-            <SettingRow icon="alarm" label="Alert type" value={policy.importMode === 'None' ? 'No alert' : policy.importMode} disabled={locked} onPress={() => setSheet('alerts')} />
-            {policy.importMode !== 'None' && <View><DateField label="All-day alert time" timeOnly value={allDayTime.getTime()} disabled={locked} onError={setError}
+          {policy.automaticImport && <ConnectedGroup title={t('m_9727cce5dbc9')} footer={<Copy muted size={14}>{t('m_b3ccc50b119d')}</Copy>}>
+            <SettingRow icon="alarm" label={t('m_ab30d609b7e2')} value={policy.importMode === 'None' ? t('m_d1af410eb4d0') : policy.importMode} disabled={locked} onPress={() => setSheet('alerts')} />
+            {policy.importMode !== 'None' && <View><DateField label={t('m_54eb2244b919')} timeOnly value={allDayTime.getTime()} disabled={locked} onError={setError}
               onChange={value => { const date = new Date(value); updatePolicy({ allDayAlarmMinutes: date.getHours() * 60 + date.getMinutes() }); }} />
-              <RowSupport><Copy muted size={14}>{zoneLabel} time · for new all-day imports</Copy></RowSupport></View>}
+              <RowSupport><Copy muted size={14}>{zoneLabel} {t('m_b76eb494eaa2')}</Copy></RowSupport></View>}
           </ConnectedGroup>}
-          <ConnectedGroup><SettingRow icon="notifications" label="Google event reminders" value={policy.disableGoogleReminders ? 'Turn off after Remilo alerts are ready' : 'Keep Google reminders'}
-            description={policy.disableGoogleReminders ? 'No alert imports keep their Google reminders.' : 'Both apps may alert.'} disabled={locked} onPress={() => setSheet('google')} /></ConnectedGroup>
-          <ConnectedGroup><Disclosure title="How Calendar sync works" summary="Supported events, repeating reminders and local alerts" icon="info">
-            <Copy muted size={14}>Existing local reminders aren’t sent to Google unless you select them in a review. Repeating reminders use one Calendar choice for the family.</Copy>
-            <Copy muted size={14}>Repeats without a fixed zone use the calendar’s named time zone when published. Done, Skip, Snooze and local alert settings stay in Remilo. Each phone has its own alerts.</Copy>
-            <Copy muted size={14}>Meetings and unsupported schedules need individual review. Deleting a Google event keeps its local reminder and alert.</Copy>
+          <ConnectedGroup><SettingRow icon="notifications" label={t('m_2d7a7719bc44')} value={policy.disableGoogleReminders ? t('m_372ce595191c') : t('m_2856380acc3a')}
+            description={policy.disableGoogleReminders ? t('m_a57bf69e8e1b') : t('m_0e928a7cd037')} disabled={locked} onPress={() => setSheet('google')} /></ConnectedGroup>
+          <ConnectedGroup><Disclosure title={t('m_4a2622a4fb47')} summary={t('m_aff37c4e6bf2')} icon="info">
+            <Copy muted size={14}>{t('m_f4f325445050')}</Copy>
+            <Copy muted size={14}>{t('m_9ae6d0712049')}</Copy>
+            <Copy muted size={14}>{t('m_792c239fef79')}</Copy>
           </Disclosure></ConnectedGroup>
         </>}
         {preview.warnings.map((warning, index) => <ActionFeedback key={index} message={warning} tone="warning" />)}
-        {preview.sample && <ConnectedGroup><Disclosure title="Preview existing events" summary="A sample, not the full import total" icon="event">
-          <Copy muted size={14}>{preview.sample.inspectedCount} calendar resources checked{preview.sample.complete ? '' : ' · More pages remain'}. Full processing begins after confirmation.</Copy>
+        {preview.sample && <ConnectedGroup><Disclosure title={t('m_00be07b6af5f')} summary={t('m_edb8aa2ad379')} icon="event">
+          <Copy muted size={14}>{preview.sample.inspectedCount} {t('m_2f864cdf5f58')}{preview.sample.complete ? '' : t('m_ac95e19bb3d7')}{t('m_1dcbdf25a32f')}</Copy>
           {preview.sample.items.map((item, index) => <View key={index} style={{ gap: 4 }}><Copy>{item.title}</Copy><Copy muted size={14}>{item.description}</Copy></View>)}
-          {!preview.sample.items.length && <Copy muted size={14}>No upcoming events appear in this sample.</Copy>}
+          {!preview.sample.items.length && <Copy muted size={14}>{t('m_4229b0412297')}</Copy>}
         </Disclosure></ConnectedGroup>}
-        {!preview.complete && <ActionFeedback message="Choose a Remilo calendar before continuing." tone="warning" />}
+        {!preview.complete && <ActionFeedback message={t('m_605389b55e6d')} tone="warning" />}
         <CalendarReviewItems items={preview.items} selected={selected} disabled={locked || checking} onToggle={id => setSelected(old => old.includes(id) ? old.filter(value => value !== id) : [...old, id])}
           onReview={item => router.push(item.candidateId ? { pathname: '/calendar-review', params: { candidateId: item.candidateId, ...origin } } : { pathname: '/calendar-manage', params: { id: item.occurrenceId!, ...origin } })} />
-        {mode === 'resume' && <Copy muted size={14}>Publishing a past unfinished reminder doesn’t replay its alert. Unselected items stay held or available for review.</Copy>}
+        {mode === 'resume' && <Copy muted size={14}>{t('m_e495356194d3')}</Copy>}
       </>}
     </>}
-    <Sheet visible={sheet === 'calendar'} title="Choose your Remilo calendar" onClose={() => setSheet(null)}>
-      <Copy muted>Use an existing dedicated Remilo calendar. Other calendars remain available in advanced manual tools.</Copy>
-      <ConnectedGroup>{preview?.calendarCandidates.map(candidate => <Choice key={candidate.id} label={candidate.name} description={candidate.zoneId + (candidate.recognition === 'NameOnly' ? ' · Matching calendar name' : '')}
+    <Sheet visible={sheet === 'calendar'} title={t('m_52b3ea7b7158')} onClose={() => setSheet(null)}>
+      <Copy muted>{t('m_383e35928dfb')}</Copy>
+      <ConnectedGroup>{preview?.calendarCandidates.map(candidate => <Choice key={candidate.id} label={candidate.name} description={candidate.zoneId + (candidate.recognition === 'NameOnly' ? t('m_3bc2cb91a7dc') : '')}
         selected={candidate.id === (draft.selectedCalendarId || preview.selectedCalendarId)} onPress={() => { setDraft(old => ({ ...old, selectedCalendarId: candidate.id })); setSheet(null); }} />)}</ConnectedGroup>
     </Sheet>
-    <Sheet visible={sheet === 'alerts'} title="Alerts for new Google events" onClose={() => setSheet(null)}><ConnectedGroup>
-      {(['Alarm', 'Notification', 'None'] as const).map(importMode => <Choice key={importMode} label={importMode === 'None' ? 'No alert' : importMode} selected={policy.importMode === importMode} onPress={() => { updatePolicy({ importMode }); setSheet(null); }} />)}
-    </ConnectedGroup><Copy muted>Existing reminders keep their alert settings. Android alert permissions remain separate.</Copy></Sheet>
-    <Sheet visible={sheet === 'google'} title="Google event reminders" onClose={() => setSheet(null)}><ConnectedGroup>
-      <Choice label="Keep Google reminders" description="Both apps may alert." selected={!policy.disableGoogleReminders} onPress={() => { updatePolicy({ disableGoogleReminders: false }); setSheet(null); }} />
-      <Choice label="Turn off after Remilo alerts are ready" description="Applies to new imports with a ready Remilo alert. No alert imports keep Google reminders." selected={policy.disableGoogleReminders} onPress={() => { updatePolicy({ disableGoogleReminders: true }); setSheet(null); }} />
+    <Sheet visible={sheet === 'alerts'} title={t('m_3c4de8d775a1')} onClose={() => setSheet(null)}><ConnectedGroup>
+      {(['Alarm', 'Notification', 'None'] as const).map(importMode => <Choice key={importMode} label={importMode === 'None' ? t('m_d1af410eb4d0') : importMode} selected={policy.importMode === importMode} onPress={() => { updatePolicy({ importMode }); setSheet(null); }} />)}
+    </ConnectedGroup><Copy muted>{t('m_9f932430c760')}</Copy></Sheet>
+    <Sheet visible={sheet === 'google'} title={t('m_2d7a7719bc44')} onClose={() => setSheet(null)}><ConnectedGroup>
+      <Choice label={t('m_2856380acc3a')} description={t('m_0e928a7cd037')} selected={!policy.disableGoogleReminders} onPress={() => { updatePolicy({ disableGoogleReminders: false }); setSheet(null); }} />
+      <Choice label={t('m_372ce595191c')} description={t('m_91a8d427878c')} selected={policy.disableGoogleReminders} onPress={() => { updatePolicy({ disableGoogleReminders: true }); setSheet(null); }} />
     </ConnectedGroup></Sheet>
   </Page>;
 }

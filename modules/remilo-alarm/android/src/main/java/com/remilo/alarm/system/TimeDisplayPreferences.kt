@@ -8,13 +8,10 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.text.format.DateFormat
 
-/** Device presentation only. No engine, private content, storage, or scheduling. */
+/** Bridge observation of the native-owned presentation snapshot; no scheduling. */
 object TimeDisplayPreferences {
-  fun read(context: Context): Map<String, Any> = mapOf(
-    "uses24HourClock" to DateFormat.is24HourFormat(context),
-    "localeTag" to context.resources.configuration.locales[0].toLanguageTag())
+  fun read(context: Context): Map<String, Any> = com.remilo.alarm.engine.AlarmEngine.get(context).presentationSnapshot()
 
   fun observe(context: Context, changed: () -> Unit): AutoCloseable {
     val owner = context.applicationContext

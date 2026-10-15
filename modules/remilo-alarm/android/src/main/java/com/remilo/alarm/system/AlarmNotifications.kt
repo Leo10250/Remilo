@@ -1,5 +1,10 @@
 package com.remilo.alarm.system
 
+import com.remilo.alarm.presentation.NativeMessages
+
+import com.remilo.alarm.presentation.L10n
+
+
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -20,12 +25,13 @@ import com.remilo.alarm.R
 class AlarmNotifications(private val context: Context) {
   private val manager = context.getSystemService(NotificationManager::class.java)
   init {
-    manager.createNotificationChannel(NotificationChannel(RINGING_CHANNEL, "Ringing alarms",
-      NotificationManager.IMPORTANCE_HIGH).apply { setSound(null, null); enableVibration(false) })
-    manager.createNotificationChannel(NotificationChannel(ATTENTION_CHANNEL, "Unresolved reminders",
-      NotificationManager.IMPORTANCE_LOW).apply { setSound(null, null); enableVibration(false) })
-    manager.createNotificationChannel(NotificationChannel(NOTIFICATION_CHANNEL, "Notification reminders",
+    manager.createNotificationChannel(NotificationChannel(RINGING_CHANNEL, L10n.text(NativeMessages.m_377476ef4835()),
+      NotificationManager.IMPORTANCE_HIGH).apply { description = L10n.text(NativeMessages.m_9add6a759fe0()); setSound(null, null); enableVibration(false) })
+    manager.createNotificationChannel(NotificationChannel(ATTENTION_CHANNEL, L10n.text(NativeMessages.m_723c336ac598()),
+      NotificationManager.IMPORTANCE_LOW).apply { description = L10n.text(NativeMessages.m_0c7e2c463f6b()); setSound(null, null); enableVibration(false) })
+    manager.createNotificationChannel(NotificationChannel(NOTIFICATION_CHANNEL, L10n.text(NativeMessages.m_76706ab78dd6()),
       NotificationManager.IMPORTANCE_DEFAULT).apply {
+      description = L10n.text(NativeMessages.m_3cf400513c5b())
       setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
     })
@@ -34,26 +40,26 @@ class AlarmNotifications(private val context: Context) {
     return ringingVariant(sessionId, members, appearance, false)
   }
   private fun ringingVariant(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved, public: Boolean): Notification {
-    require(members.isNotEmpty()) { "Ringing notifications need actionable members" }
+    require(members.isNotEmpty()) { L10n.text(NativeMessages.m_a3e18f7210d9()) }
     val open = PendingIntent.getActivity(context, 0,
       Intent(context, AlarmActivity::class.java).setData(Uri.parse("remilo-alarm://session/$sessionId"))
         .putExtra("sessionId", sessionId).putExtra("atmosphere", appearance.atmosphere)
         .putExtra("brightness", appearance.brightness), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     val builder = Notification.Builder(context, RINGING_CHANNEL)
-      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(if (members.size == 1) if (public) "Reminder" else members.first().second else "${members.size} reminders ringing")
-      .setContentText("Remilo · alarm ringing")
+      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(if (members.size == 1) if (public) L10n.text(NativeMessages.m_31757bbfa17e()) else members.first().second else L10n.text("${members.size} reminders ringing"))
+      .setContentText(L10n.text(NativeMessages.m_924db4369164()))
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setCategory(Notification.CATEGORY_ALARM).setOngoing(true).setOnlyAlertOnce(true)
       .setVisibility(if (public) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE).setContentIntent(open)
     if (manager.canUseFullScreenIntent()) builder.setFullScreenIntent(open, true)
     if (members.size == 1) {
       val record = members.first().first
-      builder.addAction(Notification.Action.Builder(null, "Mark as done", AlarmScheduler.capturedAction(context, "done", record)).build())
-      builder.addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
+      builder.addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.m_62aa4b87cc52()), AlarmScheduler.capturedAction(context, "done", record)).build())
+      builder.addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
     } else {
       val records = members.map { it.first }
-      builder.addAction(Notification.Action.Builder(null, "Mark all as done (${members.size})", AlarmScheduler.capturedGroup(context, "doneall", sessionId, records)).build())
-      builder.addAction(Notification.Action.Builder(null, "Snooze all · ${records.first().snoozeMinutes} min", AlarmScheduler.capturedGroup(context, "snoozeall", sessionId, records)).build())
+      builder.addAction(Notification.Action.Builder(null, L10n.text("Mark all as done (${members.size})"), AlarmScheduler.capturedGroup(context, "doneall", sessionId, records)).build())
+      builder.addAction(Notification.Action.Builder(null, L10n.text("Snooze all · ${records.first().snoozeMinutes} min"), AlarmScheduler.capturedGroup(context, "snoozeall", sessionId, records)).build())
     }
     if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, appearance, true))
     return builder.build()
@@ -64,31 +70,31 @@ class AlarmNotifications(private val context: Context) {
   fun unresolved(record: AlertRecord) {
     if (!allowed()) return
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, ATTENTION_CHANNEL)
-      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Unfinished reminder")
-      .setContentText(when (record.state) { "Stopped" -> "Alarm stopped"; "TimedOut" -> "Alarm ended after five minutes";
-        "Missed" -> if (record.mode == "Notification") "Notification delivery missed" else "Alarm missed";
-        "Interrupted" -> "Alarm interrupted"; else -> if (record.mode == "Notification") "Notification could not be scheduled" else "Alarm could not ring" }).setOnlyAlertOnce(true)
+      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(L10n.text(NativeMessages.m_a59e55ab8cc8()))
+      .setContentText(when (record.state) { "Stopped" -> L10n.text(NativeMessages.m_f36a51f323bf()); "TimedOut" -> L10n.text(NativeMessages.m_794eac3761f4());
+        "Missed" -> if (record.mode == "Notification") L10n.text(NativeMessages.m_e634611aa858()) else L10n.text(NativeMessages.m_5c12863b4f4d());
+        "Interrupted" -> L10n.text(NativeMessages.m_a48a8f6a3fa3()); else -> if (record.mode == "Notification") L10n.text(NativeMessages.m_08ec04b9786b()) else L10n.text(NativeMessages.m_8d4ce3c39c9c()) }).setOnlyAlertOnce(true)
       .setVisibility(Notification.VISIBILITY_PRIVATE)
       .setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
+      .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
       .build())
   }
   fun regular(record: AlertRecord, title: String, appearance: AppearancePolicy.Resolved, onlyAlertOnce: Boolean = false) {
     if (!allowed()) return
     val public = Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
-      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle("Reminder")
-      .setContentText("Reminder · tap to review").setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
+      .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(L10n.text(NativeMessages.m_31757bbfa17e()))
+      .setContentText(L10n.text(NativeMessages.m_8e9b539451c6())).setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PUBLIC).setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Mark as done", AlarmScheduler.capturedAction(context, "done", record)).build())
-      .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build()).build()
+      .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.m_62aa4b87cc52()), AlarmScheduler.capturedAction(context, "done", record)).build())
+      .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build()).build()
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(title)
-      .setContentText("Reminder · tap to review").setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
+      .setContentText(L10n.text(NativeMessages.m_8e9b539451c6())).setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(public).setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, "Mark as done", AlarmScheduler.capturedAction(context, "done", record)).build())
-      .addAction(Notification.Action.Builder(null, "Snooze · ${record.snoozeMinutes} min", AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
+      .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.m_62aa4b87cc52()), AlarmScheduler.capturedAction(context, "done", record)).build())
+      .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
       .build())
   }
   private fun openReminder(id: String): PendingIntent = PendingIntent.getActivity(context, 0,

@@ -1,3 +1,6 @@
+import { chineseTextMetrics, lineHeightFor, fontWeightFor, typography, space, shape } from './tokens';
+import { useLocalizedState, useLocale, useTranslation } from '../localization/react';
+import { t, ownedMessage, currentLanguage, type LocalizedMessage } from '../localization';
 import { useTimeFormatting, useTimeDisplay } from './time-display';
 
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -8,7 +11,6 @@ import { Children, createContext, isValidElement, useCallback, useContext, useEf
 import { AccessibilityInfo, ActivityIndicator, Animated, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType, type TextInputProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PresentationProvider, useAppearanceHold, useAtmosphere, useFoundationStyle, usePresentationState, useFontScaleOverride, useTheme } from './theme';
-import { typography, space, shape } from './tokens';
 import { civilAt, deviceZone, mergeCivil, pickerCivil } from '../domain/time';
 import { engine } from './native';
 import type { Tone } from '../domain/actions';
@@ -23,6 +25,8 @@ type ConnectedCorners = Pick<ViewStyle, 'borderTopLeftRadius' | 'borderTopRightR
 const ConnectedRowContext = createContext<ConnectedCorners | null>(null);
 
 function RowFocus({ corners }: { corners: ConnectedCorners }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   return <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={[StyleSheet.absoluteFill, corners, { borderWidth: 2, borderColor: colors.accent }]} />;
@@ -32,9 +36,11 @@ export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'a
   'check' | 'check_circle' | 'radio_button_unchecked' | 'remove_circle_outline' | 'expand_more' | 'expand_less' | 'chevron_right' |
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
   'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop' |
-  'menu' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important' |
+  'menu' | 'language' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important' |
   'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home' | 'link_off' | 'open_in_new';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   return <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, flexShrink: 0 }}>
     {Platform.OS === 'android' ? <AndroidSymbol name={name} color={color ?? colors.muted} size={size} /> :
@@ -44,6 +50,8 @@ export function Icon({ name, color, size = 24 }: { name: IconName; color?: strin
 const symbolImages = new Map<string, Promise<ImageSourcePropType | null>>();
 const ScenicChrome = createContext(false);
 function AndroidSymbol({ name, color, size }: { name: IconName; color: string; size: number }) {
+  'use no memo';
+  useLocale();
   // SDK 57 SymbolView uses a scaling Text inside a fixed frame. Render the same
   // bundled Material glyph as an image so 200% text does not clip navigation icons.
   const key = name + ':' + color + ':' + size;
@@ -62,6 +70,8 @@ function AndroidSymbol({ name, color, size }: { name: IconName; color: string; s
     <SymbolView name={{ android: name }} tintColor={color} size={size} style={{ width: size, height: size }} />;
 }
 export function IconButton({ icon, label, onPress, disabled = false, variant = 'standard', expanded, buttonRef }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; variant?: 'standard' | 'outlined'; expanded?: boolean; buttonRef?: Ref<View> }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   const foundation = useFoundationStyle(), state = usePresentationState(), scenic = useContext(ScenicChrome), [focused, setFocused] = useState(false);
   const c = foundation?.colors;
@@ -74,17 +84,23 @@ export function IconButton({ icon, label, onPress, disabled = false, variant = '
   </Pressable>;
 }
 export function Copy({ children, muted = false, size = typography.body, heading = false }: PropsWithChildren<{ muted?: boolean; size?: number; heading?: boolean }>) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
-  return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size * scale, lineHeight: size * scale * 1.4, fontWeight: heading ? '600' : undefined }}>{children}</Text>;
+  return <Text accessibilityRole={heading ? 'header' : undefined} style={{ color: muted ? colors.muted : colors.ink, fontSize: size * scale, lineHeight: lineHeightFor(size, 1.4) * scale, fontWeight: heading ? fontWeightFor(size, '600') : undefined, ...chineseTextMetrics(size, scale, heading ? fontWeightFor(size, '600') : undefined) }}>{children}</Text>;
 }
 export function Heading({ children }: PropsWithChildren) {
+  'use no memo';
+  useLocale();
   const scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
-  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? typography.heading * scale * 1.4 : undefined, fontWeight: '600' }}>{children}</Text>;
+  return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? lineHeightFor(typography.heading, 1.4) * scale : undefined, fontWeight: '600', ...chineseTextMetrics(typography.heading, scale, '600') }}>{children}</Text>;
 }
 export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint }: {
   label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
 }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
@@ -108,15 +124,19 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
         flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed && !round ? 0.7 : 1 }];
     }}>
     {(icon || busy) && <View style={{ width: 20, height: 20, flexShrink: 0 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
-    <Text style={{ color: foreground, lineHeight: c ? typography.body * scale * 1.4 : undefined,
-      minWidth: 0, flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+    <Text style={{ color: foreground, lineHeight: c ? lineHeightFor(typography.body, 1.4) * scale : undefined,
+      minWidth: 0, flexShrink: 1, fontSize: typography.body * scale, fontWeight: fontWeightFor(typography.body, '600'), textAlign: 'center', ...chineseTextMetrics(typography.body, scale, fontWeightFor(typography.body, '600')) }}>{label}</Text>
   </Pressable>;
   return button;
 }
 export function Card({ children }: PropsWithChildren) {
+  'use no memo';
+  useLocale();
   return <View style={[styles.card, { backgroundColor: useTheme().surface }]}>{children}</View>;
 }
-export function Field({ label, error, inputRef, compactMultiline = false, required = false, ...props }: TextInputProps & { label: string; error?: string; inputRef?: Ref<TextInput>; compactMultiline?: boolean; required?: boolean }) {
+export function Field({ label, error, inputRef, compactMultiline = false, required = false, ...props }: TextInputProps & { label: string; error?: string | LocalizedMessage; inputRef?: Ref<TextInput>; compactMultiline?: boolean; required?: boolean }) {
+  'use no memo';
+  const t = useTranslation();
   const colors = useTheme(), scale = useFontScaleOverride();
   const { fontScale } = useWindowDimensions();
   const foundation = useFoundationStyle(), [focused, setFocused] = useState(false);
@@ -131,20 +151,22 @@ export function Field({ label, error, inputRef, compactMultiline = false, requir
   }, [onContentSizeChange]);
   const titleHeight = Math.max(48, Math.min(contentHeight || 48, typography.body * scale * fontScale * 1.4 * 3 + 22));
   return <View ref={wrapper} style={{ gap: space.xs }}><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'baseline' }}>
-    <Copy muted size={typography.supporting}>{label}</Copy>{required && <Text aria-hidden accessibilityElementsHidden importantForAccessibility="no" style={{ color: colors.muted, fontSize: typography.supporting * scale }}>Required</Text>}
-    </View><TextInput ref={inputRef} accessibilityLabel={required ? label + ', required' : label}
+    <Copy muted size={typography.supporting}>{label}</Copy>{required && <Text aria-hidden accessibilityElementsHidden importantForAccessibility="no" style={{ color: colors.muted, fontSize: typography.supporting * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{t('m_4850b174b713')}</Text>}
+    </View><TextInput ref={inputRef} accessibilityLabel={required ? label + t('m_815117e98a1c') : label}
     placeholderTextColor={colors.muted} selectionColor={colors.accent} cursorColor={colors.accent} {...props}
     onContentSizeChange={props.multiline && (foundation || compactMultiline) ? resize : props.onContentSizeChange}
     onFocus={event => { setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
       borderRadius: foundation?.tokens.shape.field ?? shape.field,
       backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: compactMultiline ? 48 : props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
-      ...(compactMultiline ? { height: titleHeight, lineHeight: typography.body * scale * 1.4 } : {}),
-      fontSize: typography.body * scale }, props.style]} />
-    {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
+      ...(compactMultiline ? { height: titleHeight, lineHeight: lineHeightFor(typography.body, 1.4) * scale } : {}),
+      fontSize: typography.body * scale, ...chineseTextMetrics(typography.body, scale) }, props.style]} />
+    {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? lineHeightFor(typography.supporting, 1.4) * scale : undefined }}>{ownedMessage(error)}</Text>}</View>;
 }
 export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, prominent = false, accessibilityLabel }: PropsWithChildren<{
   label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean; prominent?: boolean; accessibilityLabel?: string;
 }>) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
   const corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
@@ -153,7 +175,7 @@ export function SettingRow({ label, value, icon, onPress, children, description,
   const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight,
     paddingVertical: compact ? space.sm : space.md, paddingHorizontal: compact ? space.md : space.gutter }}>
     {icon && <View style={{width:compact?32:40,height:compact?32:40,borderRadius:compact?12:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} size={compact?20:24} /></View>}
-    <View style={{ flex: 1, gap: space.xs }}><Copy heading={prominent} size={prominent ? typography.heading : typography.body}>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
+    <View style={{ flex: 1, gap: space.xs }}><Copy heading={prominent} size={prominent ? typography.heading : typography.body}>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:lineHeightFor(typography.supporting, 1.4) * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
     {!stackedStatus && children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
@@ -164,12 +186,16 @@ export function SettingRow({ label, value, icon, onPress, children, description,
     </Pressable> : body;
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
-  return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.heading * scale, lineHeight:typography.heading*scale*1.4, fontWeight: '600' }}>{title}</Text>}
+  return <View style={{ gap: space.sm }}>{title && <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.heading * scale, lineHeight:lineHeightFor(typography.heading, 1.4) * scale, fontWeight: fontWeightFor(typography.heading, '600'), ...chineseTextMetrics(typography.heading, scale, fontWeightFor(typography.heading, '600')) }}>{title}</Text>}
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 
 export function InformationRow({ label, value, supporting, icon, onPress, prominent = false }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void; prominent?: boolean }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
   const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
     <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
@@ -185,10 +211,12 @@ export function InformationRow({ label, value, supporting, icon, onPress, promin
 
 /** Direct, stable-keyed children are units; fragments remain one composite unit. */
 export function ConnectedGroup({ title, children, footer }: PropsWithChildren<{ title?: string; footer?: ReactNode }>) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
   const items = Children.toArray(children);
   return <View style={{ gap: space.sm }}>
-    {title && <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.heading * scale, lineHeight: typography.heading * scale * 1.4, fontWeight: '600' }}>{title}</Text>}
+    {title && <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: typography.heading * scale, lineHeight: lineHeightFor(typography.heading, 1.4) * scale, fontWeight: '600', ...chineseTextMetrics(typography.heading, scale, '600') }}>{title}</Text>}
     <View style={{ gap: space.connected }}>
       {items.map((item, index) => {
         const corners: ConnectedCorners = {
@@ -208,20 +236,26 @@ export function ConnectedGroup({ title, children, footer }: PropsWithChildren<{ 
 
 /** Supporting content inside a unit keeps the same inset as ordinary rows. */
 export function RowSupport({ children }: PropsWithChildren) {
+  'use no memo';
+  useLocale();
   return <View style={{ paddingHorizontal: space.gutter, paddingBottom: space.md, gap: space.sm }}>{children}</View>;
 }
 export function SectionHeader({ title, count, expanded, onPress, overdue = false }: {
   title: string; count: number; expanded: boolean; onPress: () => void; overdue?: boolean;
 }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
   return <Pressable accessibilityRole="button" accessibilityLabel={title + ', ' + count}
     accessibilityState={{ expanded }} onPress={onPress} style={{ paddingHorizontal: 16, minHeight: 48, paddingVertical: 8,
       flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.background }}>
-    <Text accessibilityRole="header" style={{ color: overdue ? colors.warning : colors.ink, fontSize: typography.heading * scale, fontWeight: '600', flex: 1 }}>{title}</Text>
-    <Text style={{ color: colors.muted, fontSize: typography.supporting * scale }}>{count}</Text><Icon name={expanded ? 'expand_less' : 'expand_more'} size={18} />
+    <Text accessibilityRole="header" style={{ color: overdue ? colors.warning : colors.ink, fontSize: typography.heading * scale, fontWeight: '600', flex: 1, ...chineseTextMetrics(typography.heading, scale, '600') }}>{title}</Text>
+    <Text style={{ color: colors.muted, fontSize: typography.supporting * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{count}</Text><Icon name={expanded ? 'expand_less' : 'expand_more'} size={18} />
   </Pressable>;
 }
 export function Toggle({ label, value, onChange, icon, disabled = false }: { label: string; value: boolean; onChange: (value: boolean) => void; icon?: IconName; disabled?: boolean }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   const foundation = useFoundationStyle(), [focused,setFocused]=useState(false);
   const corners = useContext(ConnectedRowContext);
@@ -245,10 +279,12 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
   label: string; value: number; onChange: (value: number) => void; timeOnly?: boolean; dateOnly?: boolean;
   zoneId?: string; onError?: (message: string) => void; disabled?: boolean; compact?: boolean; accessibilityLabel?: string;
 }) {
+  'use no memo';
+  const t = useTranslation();
   const { shortTime, shortDateTime } = useTimeFormatting();
   const timeDisplay = useTimeDisplay();
   const connected = useContext(ConnectedRowContext) !== null;
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useLocalizedState('');
   const [picking, setPicking] = useState(false);
   useAppearanceHold(picking);
   const live = useRef(true), ticket = useRef(0);
@@ -258,7 +294,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     const current = ++ticket.current;
     setPicking(true);
     setMessage('');
-    const fail = () => { if (live.current && current === ticket.current) { setPicking(false); const text = 'Could not choose this time. Try again.'; setMessage(text); onError?.(text); } };
+    const fail = () => { if (live.current && current === ticket.current) { setPicking(false); const text = t('m_67a437769493'); setMessage(text); onError?.(text); } };
     const open = (mode: 'date' | 'time', instant: number, local: string) => {
       DateTimePickerAndroid.open({ value: new Date(instant), timeZoneName: zoneId, mode,
         ...(timeDisplay.uses24HourClock == null ? {} : { is24Hour: timeDisplay.uses24HourClock }),
@@ -268,7 +304,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
             const resolved = await engine().convertTime({ zoneId, local: mergeCivil(local, selected, mode) });
             if (!live.current || current !== ticket.current) return;
             if (mode === 'date' && !dateOnly) open('time', resolved.instantMs, resolved.local);
-            else { setPicking(false); onChange(resolved.instantMs); if (resolved.adjustment !== 'none') setMessage(resolved.adjustment === 'gapForward' ? 'Adjusted forward for the clock change.' : 'Uses the earlier time during the clock change.'); }
+            else { setPicking(false); onChange(resolved.instantMs); if (resolved.adjustment !== 'none') setMessage(resolved.adjustment === 'gapForward' ? t('m_d242331f3d81') : t('m_9365adde07dc')); }
           })().catch(fail);
         } });
     };
@@ -280,13 +316,15 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     {!!message && (connected ? <RowSupport><ActionFeedback message={message} tone="muted" /></RowSupport> : <ActionFeedback message={message} tone="muted" />)}</>;
 }
 export function AppBar({ title, back = true, onBack, actions, leading, scenic = false, home = false }: { title: string; back?: boolean; onBack?: () => void; actions?: ReactNode; leading?: ReactNode; scenic?: boolean; home?:boolean }) {
+  'use no memo';
+  const t = useTranslation();
   const colors = useTheme(), scale = useFontScaleOverride();
   const { fontScale } = useWindowDimensions();
   const separateActions = !!actions && Math.max(scale, fontScale) >= 1.6;
   return <View style={{ paddingHorizontal: back ? 4 : 16, backgroundColor: scenic ? 'transparent' : colors.background }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56 }}>
-      <View>{leading ?? (back && <IconButton icon="arrow_back" label="Back" onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />)}</View>
-      <View style={{flex:1}}><Text accessibilityRole="header" style={{ color: colors.ink, fontSize: (home?typography.display:typography.appBar) * scale, lineHeight:(home?typography.display:typography.appBar)*scale*1.3, fontWeight:home?'700':'600',backgroundColor:'transparent' }}>{title}</Text></View>
+      <View>{leading ?? (back && <IconButton icon="arrow_back" label={t('m_76900f1bfd16')} onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/'))} />)}</View>
+      <View style={{flex:1}}><Text accessibilityRole="header" style={{ color: colors.ink, fontSize: (home?typography.display:typography.appBar) * scale, lineHeight:(home?typography.display:typography.appBar)*scale*1.3, fontWeight:fontWeightFor(home?typography.display:typography.appBar, home?'700':'600'),backgroundColor:'transparent', ...chineseTextMetrics((home?typography.display:typography.appBar), scale, fontWeightFor(home?typography.display:typography.appBar, home?'700':'600')) }}>{title}</Text></View>
       {!separateActions && <View style={{flexDirection:'row'}}>{actions}</View>}
     </View>
     {separateActions && <View style={{ flexDirection: 'row', justifyContent: 'flex-end', minHeight: 48 }}>{actions}</View>}
@@ -303,6 +341,8 @@ const scenes = {
   'night-dark': require('../../assets/atmospheres/night-dark-v2.webp'),
 };
 export function SceneArt({ home = false }: { home?: boolean }) {
+  'use no memo';
+  useLocale();
   const {scene,brightness}=useAtmosphere(), key=`${scene}-${brightness}` as keyof typeof scenes;
   const [bounds,setBounds]=useState({width:0,height:0}), [failed,setFailed]=useState<string>();
   const focal=home?presentation.pairs[key].heroFocal:presentation.pairs[key].compactFocal;
@@ -317,6 +357,8 @@ export function SceneArt({ home = false }: { home?: boolean }) {
 export function AtmosphericHeader({ title, home = false, subtitle, actions, leading, back = true, onBack }: {
   title: string; home?: boolean; subtitle?: string; actions?: ReactNode; leading?: ReactNode; back?: boolean; onBack?: () => void;
 }) {
+  'use no memo';
+  useLocale();
   const colors=useTheme(), {height,width,fontScale}=useWindowDimensions(), reviewScale=useFontScaleOverride(), [localToolbar,setToolbar]=useState<number>(presentation.geometry.toolbar);
   const [subtitleBounds, setSubtitleBounds] = useState<{ label: string; scale: number; fontScale: number; width: number; height: number }>();
   const chromeState = useScrollChrome(), toolbar = chromeState?.toolbar ?? localToolbar;
@@ -349,6 +391,8 @@ export function AtmosphericHeader({ title, home = false, subtitle, actions, lead
 export function Page({ title, subtitle, children, back = true, actions, onBack, footer, leading, scrollKey, scrollReady = true, scrollResetToken, header, compact = false }: PropsWithChildren<{
   title: string; subtitle?: string; back?: boolean; actions?: ReactNode; onBack?: () => void; footer?: ReactNode; leading?: ReactNode; scrollKey?: string; scrollReady?: boolean; scrollResetToken?: number; header?: ReactNode; compact?: boolean;
 }>) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), chrome = usePageChrome(scrollKey,compact);
   return <SafeAreaView edges={['top','left','right']} style={{ flex: 1, backgroundColor: colors.background }}>
     <ScrollChromeProvider value={chrome}><View style={{flex:1}}>
@@ -362,6 +406,8 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
   </SafeAreaView>;
 }
 export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef, returnFocusWhen }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean }>) {
+  'use no memo';
+  const t = useTranslation();
   const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
   // Modals retain React context, including scenic header foreground overrides.
   const colors = foundation?.colors ?? inheritedColors;
@@ -382,13 +428,13 @@ export function Sheet({ title, visible, onClose, onBack, children, footer, retur
   return <PresentationProvider colors={colors}><ScenicChrome.Provider value={false}><ConnectedRowContext.Provider value={null}><ScrollChromeProvider value={null}><Modal visible={visible} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onBack ?? onClose}
     onShow={() => { if (Platform.OS === 'android' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus'); }}>
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-      <Pressable accessibilityLabel="Dismiss" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
+      <Pressable accessibilityLabel={t('m_48845bff334a')} accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
         <View style={{ flex: 1, backgroundColor: '#00000066' }} />
       </Pressable>
       <View accessibilityViewIsModal style={{ maxHeight: '88%', flexShrink:1, backgroundColor: colors.surface, borderTopLeftRadius: shape.sheet, borderTopRightRadius: shape.sheet }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 4 }}>
-          <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar * scale, fontWeight: '600' }}>{title}</Text>
-          <IconButton icon="close" label={'Close ' + title} onPress={onClose} />
+          <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar * scale, fontWeight: '600', ...chineseTextMetrics(typography.appBar, scale, '600') }}>{title}</Text>
+          <IconButton icon="close" label={t('m_79c84b48c2f0') + title} onPress={onClose} />
         </View>
         <FormViewport fill={false} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
       </View>
@@ -396,6 +442,8 @@ export function Sheet({ title, visible, onClose, onBack, children, footer, retur
   </Modal></ScrollChromeProvider></ConnectedRowContext.Provider></ScenicChrome.Provider></PresentationProvider>;
 }
 export function Choice({ label, description, selected, onPress, disabled = false, icon }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean; icon?: IconName }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   return <Pressable disabled={disabled} accessibilityRole="radio" aria-checked={selected} accessibilityState={{ checked: selected, disabled }} onPress={onPress}
     style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16,paddingVertical:12 }}>
@@ -408,6 +456,8 @@ export function Choice({ label, description, selected, onPress, disabled = false
 }
 /** Independent selection; radio Choice remains reserved for one-of-many controls. */
 export function CheckRow({ label, description, selected, onPress, disabled = false }: { label: string; description?: string; selected: boolean; onPress: () => void; disabled?: boolean }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
   return <Pressable accessibilityRole="checkbox" aria-checked={selected} accessibilityLabel={[label, description].filter(Boolean).join(', ')}
     accessibilityState={{ checked: selected, disabled }} disabled={disabled} onPress={onPress}
@@ -424,12 +474,16 @@ export function CheckRow({ label, description, selected, onPress, disabled = fal
 export function SelectRow<T extends string | number>({ label, value, choices, onChange, icon }: {
   label: string; value: T; choices: { value: T; label: string }[]; onChange: (value: T) => void; icon?: IconName;
 }) {
+  'use no memo';
+  useLocale();
   const [open, setOpen] = useState(false);
   return <><SettingRow label={label} icon={icon} value={choices.find((choice) => choice.value === value)?.label ?? String(value)} onPress={() => setOpen(true)} />
     <Sheet title={label} visible={open} onClose={() => setOpen(false)}>{choices.map((choice) => <Choice key={choice.value}
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }
 export function Disclosure({ title, summary, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; summary?: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), corners = useContext(ConnectedRowContext);
   const [selected, setOpen] = useState(initial);
   const [focused, setFocused] = useState(false);
@@ -446,13 +500,17 @@ export function Disclosure({ title, summary, children, initial = false, forceOpe
   </Pressable>{open && <View style={{ paddingHorizontal: corners ? space.gutter : space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
 export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
     <Icon name={icon ?? (tone === 'success' ? 'check_circle' : tone === 'danger' ? 'error' : tone === 'warning' ? 'warning' : 'info')} color={colors[tone]} size={16} />
-    <Text style={{ color: colors[tone], fontSize: typography.supporting * scale, flexShrink: 1 }}>{label}</Text>
+    <Text style={{ color: colors[tone], fontSize: typography.supporting * scale, flexShrink: 1, ...chineseTextMetrics(typography.supporting, scale) }}>{label}</Text>
   </View>;
 }
-export function Snackbar({ message, action, onAction, onClose, persistent = false, actionDisabled = false }: { message: string; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean; actionDisabled?: boolean }) {
+export function Snackbar({ message, action, onAction, onClose, persistent = false, actionDisabled = false }: { message: string | LocalizedMessage; action?: string; onAction?: () => void; onClose: () => void; persistent?: boolean; actionDisabled?: boolean }) {
+  'use no memo';
+  const t = useTranslation();
   const colors = useTheme(), scale = useFontScaleOverride();
   const c = useFoundationStyle()?.colors;
   const close = useRef(onClose);
@@ -468,38 +526,44 @@ export function Snackbar({ message, action, onAction, onClose, persistent = fals
   return <View accessibilityLiveRegion="polite" onTouchStart={() => setInteracting(true)} onTouchEnd={() => setInteracting(false)} onTouchCancel={() => setInteracting(false)}
     style={{ margin: 12, paddingLeft: 14, borderRadius: 12, backgroundColor: c?.inverseSurface ?? colors.ink,
     flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-    <Text style={{ color: c?.inverseInk ?? colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md }}>{message}</Text>
+    <Text style={{ color: c?.inverseInk ?? colors.surface, flex: 1, fontSize: typography.supporting * scale, paddingVertical: space.md, ...chineseTextMetrics(typography.supporting, scale) }}>{ownedMessage(message)}</Text>
     {action && <Pressable accessibilityRole="button" disabled={actionDisabled} accessibilityState={{ disabled: actionDisabled }} onPress={onAction} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center', opacity: actionDisabled ? 0.5 : 1 }}>
-      <Text style={{ color: c?.inverseAction ?? colors.surface, fontSize: typography.supporting * scale, fontWeight: '700' }}>{action}</Text></Pressable>}
-    <Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={onClose} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: c?.inverseAction ?? colors.surface, fontSize: typography.supporting * scale, fontWeight: '700', ...chineseTextMetrics(typography.supporting, scale, '700') }}>{action}</Text></Pressable>}
+    <Pressable accessibilityRole="button" accessibilityLabel={t('m_e8722f00fcd5')} onPress={onClose} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
       <Icon name="close" color={c?.inverseInk ?? colors.surface} size={20} /></Pressable>
   </View>;
 }
-export function ActionFeedback({ message, tone = 'muted', loading = false }: { message?: string; tone?: Tone; loading?: boolean }) {
+export function ActionFeedback({ message, tone = 'muted', loading = false }: { message?: string | LocalizedMessage; tone?: Tone; loading?: boolean }) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   if (!message && !loading) return null;
   return <View accessibilityLiveRegion="polite" style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
-    {loading && <ActivityIndicator color={colors.accent} />}{message && <View style={{ flex: 1 }}><Status label={message} tone={tone} /></View>}
+    {loading && <ActivityIndicator color={colors.accent} />}{message && <View style={{ flex: 1 }}><Status label={ownedMessage(message)} tone={tone} /></View>}
   </View>;
 }
-export function QueryState({ loading, error, empty = false, emptyMessage = 'Nothing here yet.', onRetry }: {
+export function QueryState({ loading, error, empty = false, emptyMessage = t('m_2de5247a982a'), onRetry }: {
   loading: boolean; error?: unknown; empty?: boolean; emptyMessage?: string; onRetry?: () => void;
 }) {
-  if (loading) return <ActionFeedback loading message="Loading…" />;
-  if (error) return <View style={{ gap: 8 }}><ActionFeedback tone="danger" message="Could not load this view." />
-    {onRetry && <Button label="Retry" variant="secondary" onPress={onRetry} />}</View>;
+  'use no memo';
+  const t = useTranslation();
+  if (loading) return <ActionFeedback loading message={t('m_ba3bbbe10d8b')} />;
+  if (error) return <View style={{ gap: 8 }}><ActionFeedback tone="danger" message={t('m_45e0434567cb')} />
+    {onRetry && <Button label={t('m_942087cc2d41')} variant="secondary" onPress={onRetry} />}</View>;
   return empty ? <View style={{ padding: 16 }}><Copy muted>{emptyMessage}</Copy></View> : null;
 }
 export function BottomActionBar({ children }: PropsWithChildren) {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   return <View style={{ paddingHorizontal: space.gutter, paddingVertical: space.sm, gap: space.sm,
     flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface }}>{children}</View>;
 }
-export function shortTime(value: number, zoneId?: string) { return new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: zoneId }); }
-export function shortDate(value: number, zoneId?: string) { return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: zoneId }); }
-export function shortDateTime(value: number, zoneId?: string) { return new Date(value).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zoneId }); }
+export function shortTime(value: number, zoneId?: string) { return new Date(value).toLocaleTimeString(currentLanguage(), { hour: 'numeric', minute: '2-digit', timeZone: zoneId }); }
+export function shortDate(value: number, zoneId?: string) { return new Date(value).toLocaleDateString(currentLanguage(), { month: 'short', day: 'numeric', timeZone: zoneId }); }
+export function shortDateTime(value: number, zoneId?: string) { return new Date(value).toLocaleString(currentLanguage(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zoneId }); }
 export function formatTime(value: number | null | undefined, zoneId?: string) {
-  return value == null ? 'No alarm scheduled' : new Date(value).toLocaleString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zoneId });
+  return value == null ? t('m_29605b40c59d') : new Date(value).toLocaleString(currentLanguage(), { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zoneId });
 }
 export const styles = StyleSheet.create({
   page: { padding: space.gutter, gap: space.gutter, maxWidth: 720, width: '100%', alignSelf: 'center', paddingBottom: space.xl },

@@ -1,3 +1,4 @@
+import { t, ownedMessage } from '../localization';
 import type { CommandResult, ContentCommand, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export type BulkKind = 'Reopen' | 'Delete' | 'UndoDelete' | 'Purge';
@@ -9,13 +10,13 @@ export type BulkProgress = { total: number; confirmed: number; rejected: number;
 /** Capture only this collection's eligible, loaded occurrences before any mutation. */
 export function captureBulk(kind: BulkKind, items: readonly Occurrence[], id: () => string): BulkJob {
   const unique = [...new Map(items.map(item => [item.id, item])).values()];
-  if (!unique.length) throw new Error('Select at least one reminder.');
+  if (!unique.length) throw new Error(t('m_26893cdf630d'));
   if (unique.some(item => kind === 'UndoDelete' || kind === 'Purge' ? !item.deleted : item.deleted || !item.completed && !item.skipped))
-    throw new Error('The selection changed. Refresh and select the reminders again.');
+    throw new Error(t('m_1babc510c7d1'));
   const identifiers = new Set<string>();
   const nextId = () => {
     const value = id();
-    if (!value.trim() || value.length > 200 || identifiers.has(value)) throw new Error('Could not identify this action. Try again.');
+    if (!value.trim() || value.length > 200 || identifiers.has(value)) throw new Error(t('m_41dc300e7f45'));
     identifiers.add(value); return value;
   };
   const jobId = nextId();
@@ -61,10 +62,10 @@ export class BulkOperation {
 }
 
 export function bulkSummary(job: BulkJob, progress: BulkProgress) {
-  const verb = job.kind === 'Purge' ? 'permanently deleted' : job.kind === 'Delete' ? 'moved to Trash' : job.kind === 'UndoDelete' ? 'restored' : 'reopened';
-  let message = `${progress.pending ? 'Confirmed: ' : ''}${progress.confirmed} of ${progress.total} ${verb}.`;
-  if (progress.rejected) message += ` ${progress.rejected} could not be changed. Select them again after reviewing the results.`;
-  if (progress.pending) message += ` ${progress.pending} not yet confirmed.`;
-  if (progress.deliveryProblems) message += ` ${progress.deliveryProblems} alert registrations need attention.`;
+  const verb = job.kind === 'Purge' ? t('m_5ff691eab766') : job.kind === 'Delete' ? t('m_0513da39748f') : job.kind === 'UndoDelete' ? 'restored' : 'reopened';
+  let message = t('m_273aa84c5997', { arg0: String(progress.pending ? t('m_7ac31405dcef') : ''), arg1: String(progress.confirmed), arg2: String(progress.total), arg3: String(ownedMessage(verb)) });
+  if (progress.rejected) message += t('m_e1537036b472', { arg0: String(progress.rejected) });
+  if (progress.pending) message += t('m_edc575259835', { arg0: String(progress.pending) });
+  if (progress.deliveryProblems) message += t('m_32cacee293c2', { arg0: String(progress.deliveryProblems) });
   return message;
 }

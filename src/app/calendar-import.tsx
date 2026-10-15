@@ -1,3 +1,5 @@
+import { useLocalizedState, useTranslation } from '../localization/react';
+
 import { useQuery } from '@tanstack/react-query';
 import { router, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -12,6 +14,8 @@ import { engine, nativeAvailable } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
 
 export default function CalendarImportBrowser() {
+  'use no memo';
+  const t = useTranslation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
   const rawParams = useLocalSearchParams<OriginParams & { managedHistory?: string; calendarId?: string }>(), params = retainedOriginParams(rawParams);
   const connection = useQuery({ queryKey: ['calendar', 'connection'], queryFn: () => engine().getCalendarConnection(), enabled: nativeAvailable });
@@ -30,7 +34,7 @@ export default function CalendarImportBrowser() {
   const [from, setFrom] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); if (rawParams.managedHistory === 'true') d.setDate(d.getDate() - 30); return d.getTime(); });
   const [end, setEnd] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + (rawParams.managedHistory === 'true' ? -1 : 29)); return d.getTime(); });
   const [rows, setRows] = useState<CalendarEventPage['items']>([]), [cursor, setCursor] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false), [error, setError] = useState('');
+  const [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false), [error, setError] = useLocalizedState('');
   const range = calendarImportRange(from, end, deviceZone());
   const filterKey = JSON.stringify([calendar?.id, range.from, range.until, connection.data?.revision]);
   const [resultKey, setResultKey] = useState('');
@@ -65,35 +69,35 @@ export default function CalendarImportBrowser() {
   const changeDate = (which: 'start' | 'end', value: number) => {
     const dates = orderedCalendarImportDates(from, end, which, value); setFrom(dates.start); setEnd(dates.end);
   };
-  return <Page title="Import from Google Calendar" scrollKey="calendar-import" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(params))}>
-    <Copy muted>Choose a personal event or import all eligible events in these dates. Imported and pending events are removed from this list.</Copy>
-    {rawParams.managedHistory === 'true' && <Copy muted>Historical imports default to No alert. Past alerts never replay.</Copy>}
-    {!connection.data?.connected && <Button label="Open Calendar settings" onPress={() => router.push({ pathname: '/calendar', params })} />}
-    <ConnectedGroup title="Source and dates">
-      <SettingRow key="account" label="Google account" value={connection.data?.email || 'Not connected'} />
-      <SettingRow key="calendar" label="Source calendar" value={calendar?.name || 'Choose an owned calendar'} disabled={busy || !connection.data?.connected} onPress={() => void loadCalendars()} />
-      <DateField key="from" label="Start date" dateOnly value={from} disabled={busy} onChange={value => changeDate('start', value)} onError={setError} />
-      <DateField key="end" label="End date" dateOnly value={end} disabled={busy} onChange={value => changeDate('end', value)} onError={setError} />
+  return <Page title={t('m_357bcb0ce661')} scrollKey="calendar-import" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(params))}>
+    <Copy muted>{t('m_0c6c8e7982cd')}</Copy>
+    {rawParams.managedHistory === 'true' && <Copy muted>{t('m_e921a8b153e9')}</Copy>}
+    {!connection.data?.connected && <Button label={t('m_3b9b76bc9d82')} onPress={() => router.push({ pathname: '/calendar', params })} />}
+    <ConnectedGroup title={t('m_3a7d9a6a0b83')}>
+      <SettingRow key="account" label={t('m_7da2bcb6bb6b')} value={connection.data?.email || t('m_0303e1824670')} />
+      <SettingRow key="calendar" label={t('m_cd51d907caec')} value={calendar?.name || t('m_28d7adf0d759')} disabled={busy || !connection.data?.connected} onPress={() => void loadCalendars()} />
+      <DateField key="from" label={t('m_8169693101a4')} dateOnly value={from} disabled={busy} onChange={value => changeDate('start', value)} onError={setError} />
+      <DateField key="end" label={t('m_14303aa0c4a0')} dateOnly value={end} disabled={busy} onChange={value => changeDate('end', value)} onError={setError} />
     </ConnectedGroup>
-    <Copy muted>Both dates are included. Choose up to 366 days. Browsing leaves your publishing destination unchanged.</Copy>
-    {!range.valid && <ActionFeedback tone="warning" message="Choose a date range of up to 366 days." />}
-    <Button label="Browse events" disabled={busy || !calendar || !connection.data?.connected || !range.valid} onPress={() => void load()} />
-    {calendar && loaded && resultKey === filterKey && <Button label="Import all" variant="secondary" disabled={busy || !range.valid || !connection.data?.connected}
+    <Copy muted>{t('m_84b365775dfd')}</Copy>
+    {!range.valid && <ActionFeedback tone="warning" message={t('m_58f5140118ac')} />}
+    <Button label={t('m_8d71009f1092')} disabled={busy || !calendar || !connection.data?.connected || !range.valid} onPress={() => void load()} />
+    {calendar && loaded && resultKey === filterKey && <Button label={t('m_3843add32c04')} variant="secondary" disabled={busy || !range.valid || !connection.data?.connected}
       onPress={() => router.push({ pathname: '/calendar-import-all', params: { ...params, calendarId: calendar.id, from: range.from, until: range.until, managedHistory: rawParams.managedHistory } } as Href)} />}
     {!!error && <ActionFeedback message={error} tone="warning" />}
-    {busy && <ActionFeedback loading message="Reading Google Calendar…" />}
-    {loaded && resultKey === filterKey && visibleRows.length === 0 && <Copy>No new events on this page.{visibleCursor ? ' Load more or use Import all to check the remaining dates.' : ' Imported events are already in Remilo.'}</Copy>}
-    {!!visibleRows.length && <ConnectedGroup title="Events">{visibleRows.map((event) => <SettingRow key={event.eventId} icon="event" label={event.title || 'Untitled event'}
+    {busy && <ActionFeedback loading message={t('m_5136714ef7f2')} />}
+    {loaded && resultKey === filterKey && visibleRows.length === 0 && <Copy>{t('m_7474f431c818')}{visibleCursor ? t('m_c0da945b464e') : t('m_df0e214cb7cf')}</Copy>}
+    {!!visibleRows.length && <ConnectedGroup title={t('m_8d14f6e72de8')}>{visibleRows.map((event) => <SettingRow key={event.eventId} icon="event" label={event.title || t('m_a79be2403a6c')}
       description={event.unsupportedReason ? unsupportedCalendarReason(event.unsupportedReason) : event.fields ?
-        (event.fields.schedule.allDay ? formatDate(event.fields.schedule.eventStartMs, event.fields.schedule.zoneId) + ' · All day' : scheduleDateTime(event.fields.schedule.eventStartMs, event.fields.schedule.zoneId)) : 'Review this event before importing'}
+        (event.fields.schedule.allDay ? formatDate(event.fields.schedule.eventStartMs, event.fields.schedule.zoneId) + t('m_b3d544d5d55c') : scheduleDateTime(event.fields.schedule.eventStartMs, event.fields.schedule.zoneId)) : t('m_0d1b5bcb4091')}
       disabled={busy || !!event.unsupportedReason}
       onPress={() => router.push({ pathname: '/calendar-review', params: { ...params, calendarId: calendar!.id, eventId: event.eventId, managedHistory: rawParams.managedHistory } } as Href)} />)}</ConnectedGroup>}
-    {visibleCursor && <Button label="Load more" variant="secondary" disabled={busy} onPress={() => void load(visibleCursor)} />}
-    <Sheet title="Choose source calendar" visible={selecting} onClose={() => { if (!busy) setSelecting(false); }}>
-      <Copy muted>Only calendars you own. This does not change your publishing calendar.</Copy>
+    {visibleCursor && <Button label={t('m_ac8991ef0101')} variant="secondary" disabled={busy} onPress={() => void load(visibleCursor)} />}
+    <Sheet title={t('m_f2b326341a44')} visible={selecting} onClose={() => { if (!busy) setSelecting(false); }}>
+      <Copy muted>{t('m_8c7cc2cc4d98')}</Copy>
       <ConnectedGroup>{calendars.map(row => <SettingRow key={row.id} label={row.name} description={row.zoneId} disabled={busy} onPress={() => { setCalendar(row); setSourceRevision(connection.data!.revision); setSelecting(false); }} />)}</ConnectedGroup>
-      {calendarCursor && <Button label="Load more calendars" variant="secondary" disabled={busy} onPress={() => void loadCalendars(calendarCursor)} />}
-      {!calendars.length && !busy && <Copy>No owned calendars found.</Copy>}
+      {calendarCursor && <Button label={t('m_bea5fb6b1e61')} variant="secondary" disabled={busy} onPress={() => void loadCalendars(calendarCursor)} />}
+      {!calendars.length && !busy && <Copy>{t('m_0e913a16bf22')}</Copy>}
       {!!error && <ActionFeedback message={error} tone="warning" />}
     </Sheet>
   </Page>;

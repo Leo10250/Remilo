@@ -1,5 +1,14 @@
 # Verification and release evidence
 
+Language checks cover catalog parity/escaping/placeholders, script-aware resolution,
+CE12→13/DP6→7 preservation, bootstrap before unlock, manual/system synchronization,
+exact retries, unchanged scheduling/content, retained feedback and device clock
+format. Review production components in both languages across eight pairs, 360 dp
+and 100–200% text. Signed-phone IME, TalkBack, ringing and pre-unlock observations
+remain in the consolidated language checklist; host/browser evidence cannot close them.
+The [15 October localization evidence](evidence/2026-10-15-localization.md) records
+the final commands, signed artifact identity and the exact limits of fixture review.
+
 The [Calendar attention/scoped-check evidence](evidence/2026-10-14-calendar-refinement.md)
 records CAL-05 outcome tests and a tracked production-component fixture matrix.
 Agreement and confirmed changes require separate counts. Completed empty scans,

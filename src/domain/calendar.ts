@@ -1,3 +1,4 @@
+import { t } from '../localization';
 import type { CalendarCommand, CalendarPublication, CalendarPublicationPreview } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function publicationCommand(preview: CalendarPublicationPreview, operationId: string): CalendarCommand {
@@ -9,27 +10,27 @@ export function canRetryPublication(publication: CalendarPublication) {
 }
 export function calendarError(error: unknown): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
-  if (code.includes('CREATION_UNCONFIRMED')) return 'Calendar creation has not been confirmed. Check the original request result before reviewing a replacement.';
-  if (code.includes('DISCOVERY_INCOMPLETE')) return 'Calendar discovery hasn’t finished. Check again before choosing or creating a calendar.';
-  if (code.includes('SELECTION_REQUIRED')) return 'Choose the Remilo calendar to use before confirming setup.';
-  if (code.includes('OWNERSHIP_UNKNOWN')) return 'Google hasn’t confirmed this calendar’s ownership. Check access with the account that owns it.';
-  if (code.includes('NOT_OWNER')) return 'The source calendar must be owned by the connected Google account.';
-  if (code.includes('UNSUPPORTED_RECURRENCE')) return 'This repeat cannot be imported safely. The Google event is kept.';
-  if (code.includes('MEETING_EVENT')) return 'Events with attendees are not supported for automatic import. The Google event is kept.';
-  if (code.includes('REVIEW_REQUIRED')) return 'Review this Calendar relationship before granting automatic update permission.';
-  if (code.includes('STALE_CURSOR')) return 'The account or date range changed. Browse events again before loading another page.';
-  if (code.includes('STALE')) return 'This reminder or Google Calendar version changed. Refresh the review before confirming.';
-  if (code.includes('OPERATION_PENDING')) return 'This event has an unresolved operation. Continue its saved request before reviewing another change.';
-  if (code.includes('ALREADY_IMPORTED')) return 'This event is already in Remilo. Refresh the list or review to remove it.';
-  if (code.includes('TITLE_REQUIRED')) return 'Enter a title before importing this event.';
-  if (code.includes('ELAPSED_ALERT')) return 'An alert has elapsed. Review a future alert time or explicitly choose No alert.';
-  if (code.includes('IMPORT_LIMIT')) return 'There are too many events to review together. Narrow the date range and try again.';
-  if (code.includes('INVALID_RANGE')) return 'Choose an end date after the start, with a range of at most 366 days.';
-  if (code.includes('RESOLUTION_REQUIRED')) return 'Choose Remilo or Google values for each field before confirming.';
-  if (code.includes('NEEDS_CONNECTION')) return 'Publishing needs both a connected Google account and a selected calendar. Open Calendar settings to finish setup.';
-  if (code.includes('NEEDS') || code.includes('AUTH')) return 'Google access couldn’t be confirmed. Reconnect the Google account used for this calendar.';
-  if (code.includes('INELIGIBLE')) return 'This item is not eligible for the requested Calendar action. Keep terminal reminders as local records and review current Calendar status.';
-  if (code.includes('INVALID_ZONE')) return 'Choose a named time zone for this reminder and refresh its publication preview.';
-  if (code.includes('ALREADY')) return 'This reminder already has a captured publication. Open its Calendar status to continue.';
-  return 'Calendar could not confirm this request. Check its saved status before retrying the same action.';
+  if (code.includes('CREATION_UNCONFIRMED')) return t('m_3d41a331cd10');
+  if (code.includes('DISCOVERY_INCOMPLETE')) return t('m_f6b15efa47ca');
+  if (code.includes('SELECTION_REQUIRED')) return t('m_554f1772bde5');
+  if (code.includes('OWNERSHIP_UNKNOWN')) return t('m_eda8439b5f60');
+  if (code.includes('NOT_OWNER')) return t('m_25751f99b6ab');
+  if (code.includes('UNSUPPORTED_RECURRENCE')) return t('m_f436bbd0fd75');
+  if (code.includes('MEETING_EVENT')) return t('m_7f5cfcf6b956');
+  if (code.includes('REVIEW_REQUIRED')) return t('m_83247b835e54');
+  if (code.includes('STALE_CURSOR')) return t('m_f78f4fc6af87');
+  if (code.includes('STALE')) return t('m_601dc414a533');
+  if (code.includes('OPERATION_PENDING')) return t('m_0a8739d15b5a');
+  if (code.includes('ALREADY_IMPORTED')) return t('m_d6e970618b8f');
+  if (code.includes('TITLE_REQUIRED')) return t('m_acf167bd0281');
+  if (code.includes('ELAPSED_ALERT')) return t('m_ba9f77b2ffd9');
+  if (code.includes('IMPORT_LIMIT')) return t('m_b5f04921f0d2');
+  if (code.includes('INVALID_RANGE')) return t('m_d84a7bff4fba');
+  if (code.includes('RESOLUTION_REQUIRED')) return t('m_e7ff061cb4f9');
+  if (code.includes('NEEDS_CONNECTION')) return t('m_60bac12b7cf2');
+  if (code.includes('NEEDS') || code.includes('AUTH')) return t('m_326e71c82f32');
+  if (code.includes('INELIGIBLE')) return t('m_f7e8af2c017b');
+  if (code.includes('INVALID_ZONE')) return t('m_b5946340deb0');
+  if (code.includes('ALREADY')) return t('m_afa72b693f9d');
+  return t('m_e33334fb25a7');
 }

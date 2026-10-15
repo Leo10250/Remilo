@@ -1,5 +1,7 @@
 package com.remilo.alarm.engine
 
+import com.remilo.alarm.presentation.NativeMessages
+
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -37,10 +39,61 @@ class AlarmEngine internal constructor(private val context: Context,
   private val bulkSnoozeCheckpoint: (String) -> Unit = {},
   private val purgeCheckpoint: (String) -> Unit = {},
   private val calendarCheckpoint: (String) -> Unit = {},
-  private val calendarOpportunity: (() -> Unit)? = null) {
+  private val calendarOpportunity: (() -> Unit)? = null,
+  private val beforeLanguageProjection: () -> Unit = {}) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
+  private val languages = LanguageCoordinator(context, alerts, beforeProjection = beforeLanguageProjection)
+  @Volatile private var presentationRevision: Long = 0
+  @Volatile private var presentation: Map<String, Any> = mapOf("languagePreference" to "en", "resolvedLanguage" to "en", "localeTag" to "en", "uses24HourClock" to false)
+  fun presentationSnapshot(): Map<String, Any> = presentation
+  private fun defaultSettings() = SettingsRecord(language = languages.reconcile().preference)
+  private fun reconcileLanguage() {
+    val language = languages.reconcile()
+    if (unlocked()) {
+      val dao = content().records()
+      val saved = dao.settings()
+      if (language.externalPending || saved == null) {
+        val next = (saved ?: defaultSettings()).let { if (it.language == language.preference) it else it.copy(language = language.preference, revision = it.revision + 1, lastOperationId = "") }
+        dao.settings(next); languages.imported(next.revision)
+      } else if (saved.language != language.preference) languages.commit(saved.language, saved.revision)
+    }
+    val nextPresentation = languages.snapshot()
+    if (nextPresentation != presentation) presentationRevision++
+    presentation = nextPresentation
+  }
+  private fun reconcileDeliveryPresentation() {
+    try { reconcileLanguage() }
+    catch (error: Exception) {
+      // Locale projection is retryable presentation work. It cannot fence an
+      // already durable alarm or prevent protected completion/recovery.
+      Log.w("Remilo", "Language projection deferred: ${error.javaClass.simpleName}")
+      val cached = languages.cachedSnapshot()
+      if (cached != presentation) presentationRevision++
+      presentation = cached
+    }
+  }
+  fun presentationChanged(finished: () -> Unit = {}) = submit {
+    try {
+      reconcileLanguage()
+      val notifications = AlarmNotifications(context)
+      com.remilo.alarm.calendar.CalendarReviewNotifications(context).refreshPresentation()
+      val active = context.getSystemService(NotificationManager::class.java).activeNotifications
+      for (posted in active) {
+        if (posted.id == AlarmNotifications.FOREGROUND_ID) continue
+        val record = posted.tag?.let { alerts.find(it) } ?: continue
+        if (record.state in setOf("Stopped", "TimedOut", "Missed", "Interrupted", "Blocked")) notifications.unresolved(record)
+        else if (record.mode == "Notification") notifications.regular(record, if (unlocked()) content().records().find(record.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()) else com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()), resolveAppearance(), true)
+      }
+      // Text-only refresh: never enters the audio-start path.
+      alerts.activeSession()?.let { session ->
+        val members = alerts.members(session.id).map { it to if (unlocked()) content().records().find(it.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()) else com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()) }
+        if (members.isNotEmpty()) notifications.update(session.id, members, AppearancePolicy.captured(session.resolvedAtmosphere, session.resolvedBrightness))
+      }
+      listeners.forEach { try { it() } catch (_: Exception) {} }
+    } finally { finished() }
+  }
   private var content: ContentDatabase? = null
   private var calendarStore: CalendarStore? = null
   private fun calendarStore(): CalendarStore = calendarStore ?: CalendarStore(content(), now)
@@ -72,11 +125,12 @@ class AlarmEngine internal constructor(private val context: Context,
   init {
     AlarmNotifications(context)
     submit {
+      reconcileDeliveryPresentation()
       // A surviving row from a prior process is evidence of interruption, not a
       // request to restart playback. Monotonic values never cross process recovery.
       alerts.activeSession()?.let { endSession(it.id, "Interrupted") }
       alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
-      if (unlocked()) try { mirrorAppearance(prepareContentActions().records().settings() ?: SettingsRecord()) }
+      if (unlocked()) try { mirrorAppearance(prepareContentActions().records().settings() ?: defaultSettings()) }
       catch (_: Exception) { /* Presentation recovery must not block autonomous delivery. */ }
     }
   }
@@ -291,7 +345,7 @@ class AlarmEngine internal constructor(private val context: Context,
       "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id }, "dueLinked" to record.dueLinked,
       "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
       "vibration" to record.vibration, "overdue" to overdue(record, queryNow), "overdueAtMs" to overdueAt(record),
-      "quickSnoozeMinutes" to (alert?.snoozeMinutes ?: (content().records().settings() ?: SettingsRecord()).snoozeMinutes),
+      "quickSnoozeMinutes" to (alert?.snoozeMinutes ?: (content().records().settings() ?: defaultSettings()).snoozeMinutes),
       "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
       "seriesId" to segment?.seriesId,
       "seriesState" to segment?.state, "repeatSummary" to repeat, "repeatRule" to repeatRule,
@@ -336,7 +390,7 @@ class AlarmEngine internal constructor(private val context: Context,
     return number.toInt()
   }
   private fun draft(command: Map<String, Any?>, id: String, old: ReminderRecord? = null): ReminderRecord {
-    val settings = content().records().settings() ?: SettingsRecord()
+    val settings = content().records().settings() ?: defaultSettings()
     val title = text(command, "title", old?.title ?: "", 200).trim()
     validate(title.isNotEmpty(), "title", "Enter a title of 1–200 characters.")
     val mode = text(command, "mode", old?.mode ?: "Alarm", 20)
@@ -376,7 +430,7 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   private fun projection(operation: String, record: ReminderRecord, generation: Long): PendingSchedule =
     PendingSchedule(operation, record.id, record.definedAlarmAtMs ?: record.eventStartMs, generation,
-      record.mode, record.sound, record.vibration, (content().records().settings() ?: SettingsRecord()).snoozeMinutes,
+      record.mode, record.sound, record.vibration, (content().records().settings() ?: defaultSettings()).snoozeMinutes,
       !record.completed && !record.deleted && !record.skipped)
   private fun modify(operation: String, command: Map<String, Any?>, preserveAdjustment: Boolean = false,
     afterCommit: () -> Unit = {}, checkpoint: () -> Unit = {}): Map<String, Any?> {
@@ -475,11 +529,11 @@ class AlarmEngine internal constructor(private val context: Context,
     return mapOf("status" to "Applied")
   }
   fun settings(): Map<String, Any> {
-    val settings = prepareContentActions().records().settings() ?: SettingsRecord()
+    val settings = prepareContentActions().records().settings() ?: defaultSettings()
     return mapOf("revision" to settings.revision, "snoozeMinutes" to settings.snoozeMinutes,
       "tomorrowMorning" to settings.tomorrowMorning, "tomorrowAfternoon" to settings.tomorrowAfternoon,
       "tomorrowEvening" to settings.tomorrowEvening, "sound" to settings.sound,
-      "vibration" to settings.vibration, "theme" to settings.theme, "atmosphere" to AppearancePolicy.selection(settings.atmosphere))
+      "vibration" to settings.vibration, "theme" to settings.theme, "atmosphere" to AppearancePolicy.selection(settings.atmosphere), "language" to settings.language)
   }
   private fun listView(list: ListRecord): Map<String, Any> = listView(list, now())
   private fun listView(list: ListRecord, queryNow: Long): Map<String, Any> = mapOf("id" to list.id, "name" to list.name,
@@ -544,13 +598,17 @@ class AlarmEngine internal constructor(private val context: Context,
   fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> { prepareContentActions(); return series.editDraft(id, nominal) }
   private fun updateSettings(operation: String, command: Map<String, Any?>): Map<String, Any?> {
     val db = content()
-    val old = db.records().settings() ?: SettingsRecord()
+    reconcileLanguage()
+    val old = db.records().settings() ?: defaultSettings()
     if (old.lastOperationId == operation) {
-      syncProtectedSettings(old); changed()
+      syncProtectedSettings(old, command.containsKey("language"))
+      if (command.containsKey("language")) presentationChanged() else changed()
       return mapOf("status" to "Applied")
     }
     if (epoch(command["expectedRevision"], "expectedRevision") != old.revision)
       return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION", "errorMessage" to "Refresh settings and try again.")
+    val language = text(command, "language", old.language, 20)
+    validate(language in LanguageCoordinator.selections, "language", "Choose a valid language.")
     val sound = text(command, "sound", old.sound, 20)
     val theme = text(command, "theme", old.theme, 20)
     val atmosphere = if (command.containsKey("atmosphere")) text(command, "atmosphere", "automatic", 20) else old.atmosphere
@@ -562,18 +620,21 @@ class AlarmEngine internal constructor(private val context: Context,
       tomorrowMorning = integer(command["tomorrowMorning"] ?: old.tomorrowMorning, "tomorrowMorning", 0, 1439),
       tomorrowAfternoon = integer(command["tomorrowAfternoon"] ?: old.tomorrowAfternoon, "tomorrowAfternoon", 0, 1439),
       tomorrowEvening = integer(command["tomorrowEvening"] ?: old.tomorrowEvening, "tomorrowEvening", 0, 1439),
-      sound = sound, vibration = flag(command, "vibration", old.vibration), theme = theme, atmosphere = atmosphere, lastOperationId = operation)
+      sound = sound, vibration = flag(command, "vibration", old.vibration), theme = theme, atmosphere = atmosphere, language = language, lastOperationId = operation)
     db.records().settings(next)
     // CE is authority. A failed mirror leaves the same operation retryable; its
     // receipt branch above repairs DP before acknowledging the committed write.
-    syncProtectedSettings(next)
-    changed(); return mapOf("status" to "Applied")
+    syncProtectedSettings(next, command.containsKey("language"))
+    if (command.containsKey("language")) presentationChanged() else changed()
+    return mapOf("status" to "Applied")
   }
   private fun mirrorAppearance(settings: SettingsRecord) {
     val mirror = AppearanceRecord(atmosphere = AppearancePolicy.selection(settings.atmosphere), theme = AppearancePolicy.brightness(settings.theme))
     if (alerts.appearance() != mirror) { beforeAppearanceWrite(); alerts.appearance(mirror) }
   }
-  private fun syncProtectedSettings(settings: SettingsRecord) {
+  private fun syncProtectedSettings(settings: SettingsRecord, languageWrite: Boolean = false) {
+    if (languageWrite) languages.commit(settings.language, settings.revision)
+    presentation = languages.snapshot()
     var snoozeChanged = false
     operational.runInTransaction {
       mirrorAppearance(settings)
@@ -590,7 +651,7 @@ class AlarmEngine internal constructor(private val context: Context,
     catch (_: Exception) { AppearancePolicy.captured(null, null) }
   }
   fun diagnostics(): Map<String, Any> { prepareContentActions(); return mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 6, "operationalSchema" to 6,
+    "contentSchema" to 13, "operationalSchema" to 7,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to (content().records().pending().size + alerts.completions().size)) }
   fun exportBackup(): String {
@@ -744,10 +805,13 @@ class AlarmEngine internal constructor(private val context: Context,
   fun soundPreview(): Map<String, Any>? = preview.snapshot()
   fun beforeAlarmPlayback(ready: () -> Unit) = submit { preview.stop(reason = "AlarmActive", afterStopped = ready) }
   fun apply(command: Map<String, Any?>): Map<String, Any?> {
-    return try { applyValidated(command) } catch (error: InputError) {
+    val result = try { applyValidated(command) } catch (error: InputError) {
       mapOf("status" to "Rejected", "errorCode" to "INVALID_INPUT", "errorField" to error.field,
         "errorMessage" to error.message)
     }
+    val text = result["errorMessage"] as? String
+    val message = text?.let(com.remilo.alarm.presentation.L10n::descriptor)
+    return if (message == null) result else result + mapOf("errorMessageKey" to message.key, "errorMessageArgs" to message.args)
   }
   private fun applyValidated(command: Map<String, Any?>): Map<String, Any?> {
     val operationId = command["operationId"] as? String
@@ -830,7 +894,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
   }
   fun testAlarm(operationId: String): Map<String, Any?> = apply(mapOf(
-    "kind" to "Create", "operationId" to operationId, "title" to "Remilo test alarm", "alarmAtMs" to now() + 15_000L, "calendarDisposition" to "LocalOnly"))
+    "kind" to "Create", "operationId" to operationId, "title" to com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_414c66fb67ec()), "alarmAtMs" to now() + 15_000L, "calendarDisposition" to "LocalOnly"))
   fun calendarRecoveredPreview(ids: List<String>): Map<String, Any?> {
     prepareContentActions()
     val store = calendarStore(); val rows = org.json.JSONArray()
@@ -1207,7 +1271,7 @@ class AlarmEngine internal constructor(private val context: Context,
           else -> "Missed"
         },
         mode = pending.mode, sound = pending.sound, vibration = pending.vibration,
-        snoozeMinutes = (db.records().settings() ?: SettingsRecord()).snoozeMinutes,
+        snoozeMinutes = (db.records().settings() ?: defaultSettings()).snoozeMinutes,
         segmentId = db.records().find(pending.occurrenceId)?.segmentId,
         nominalSlot = db.records().find(pending.occurrenceId)?.nominalSlot,
         exception = db.records().find(pending.occurrenceId)?.exception ?: false,
@@ -1470,6 +1534,7 @@ class AlarmEngine internal constructor(private val context: Context,
   }
 
   fun receive(intent: Intent, finished: () -> Unit) = submit(finished) {
+    reconcileDeliveryPresentation()
     val purpose = intent.action?.substringAfterLast('.')
     if (purpose in setOf("doneall", "snoozeall")) {
       val sessionId = intent.getStringExtra("sessionId") ?: return@submit
@@ -1502,7 +1567,7 @@ class AlarmEngine internal constructor(private val context: Context,
         if (result["status"] == "Rejected") alerts.find(id)?.let { current ->
           current.sessionId?.let { RingingService.refresh(context, it) }
           if (current.mode == "Notification" && current.state == "Notified")
-            AlarmNotifications(context).regular(current, memberContent(id)?.title ?: "Reminder", resolveAppearance(), onlyAlertOnce = true)
+            AlarmNotifications(context).regular(current, memberContent(id)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()), resolveAppearance(), onlyAlertOnce = true)
         }
       }
       "stop", "snooze" -> applyAction(id, generation,
@@ -1522,7 +1587,7 @@ class AlarmEngine internal constructor(private val context: Context,
     series.replenish(); series.materialize()
     if (alert.mode == "Notification") {
       alerts.put(alert.copy(state = "Notified"))
-      val title = memberContent(id)?.title ?: "Reminder"
+      val title = memberContent(id)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())
       AlarmNotifications(context).regular(alert, title, resolveAppearance())
       changed(); return
     }
@@ -1590,17 +1655,18 @@ class AlarmEngine internal constructor(private val context: Context,
   data class SessionMemberContent(val title: String, val eventStartMs: Long, val eventEndMs: Long,
     val dueAtMs: Long, val allDay: Boolean, val zoneId: String, val dueLinked: Boolean)
   data class SessionSnapshot(val id: String, val state: String, val members: List<Pair<AlertRecord, String>>,
-    val theme: String, val atmosphere: String, val content: Map<String, SessionMemberContent> = emptyMap())
+    val theme: String, val atmosphere: String, val content: Map<String, SessionMemberContent> = emptyMap(), val language: String = PresentationLanguage.language, val presentationRevision: Long = 0)
   fun sessionSnapshot(sessionId: String, callback: (SessionSnapshot) -> Unit, failed: (String) -> Unit) = request({
+    reconcileDeliveryPresentation()
     val session = alerts.session(sessionId)
     val appearance = AppearancePolicy.captured(session?.resolvedAtmosphere, session?.resolvedBrightness)
     val members = alerts.members(sessionId)
     val content = members.mapNotNull { record -> memberContent(record.occurrenceId)?.let { record.occurrenceId to it } }.toMap()
-    SessionSnapshot(sessionId, session?.state ?: "Ended", members.map { it to (content[it.occurrenceId]?.title ?: "Reminder") },
-      appearance.brightness, appearance.atmosphere, content)
+    SessionSnapshot(sessionId, session?.state ?: "Ended", members.map { it to (content[it.occurrenceId]?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())) },
+      appearance.brightness, appearance.atmosphere, content, presentationRevision = presentationRevision)
   }, { callback(it as SessionSnapshot) }, failed)
   private fun memberViews(sessionId: String) = alerts.members(sessionId).map { it to
-    (memberContent(it.occurrenceId)?.title ?: "Reminder") }
+    (memberContent(it.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())) }
   private fun memberContent(id: String): SessionMemberContent? {
     if (!unlocked()) return null
     return try { prepareContentActions().records().find(id)?.let {
@@ -1608,6 +1674,7 @@ class AlarmEngine internal constructor(private val context: Context,
     } } catch (_: Exception) { null /* DP actions remain available if private projection is unavailable. */ }
   }
   fun recover(finished: () -> Unit = {}) = submit(finished) {
+    reconcileDeliveryPresentation()
     // Older catch-up rows labeled a reminder with no alert as Missed. Repair only
     // this impossible delivery state, without moving targets or registering alarms.
     alerts.all().filter { it.mode == "None" && it.state == "Missed" }.forEach { alerts.put(it.copy(state = "NoAlert")) }
@@ -1624,7 +1691,7 @@ class AlarmEngine internal constructor(private val context: Context,
         }
       }
       applyPending(db); replayHistory(db)
-      try { syncProtectedSettings(db.records().settings() ?: SettingsRecord()) }
+      try { syncProtectedSettings(db.records().settings() ?: defaultSettings()) }
       catch (_: Exception) { /* Leave mirror repair retryable, never block scheduling recovery. */ }
     }
     alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }

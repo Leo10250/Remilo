@@ -1,3 +1,5 @@
+import { useLocale, useTranslation } from '../localization/react';
+
 import { useTimeFormatting } from '../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -5,7 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, View, type TextInput } from 'react-native';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { collectionKey, creationOrigin, originParams, type DestinationOrigin, type OriginParams } from '../domain/navigation';
-import {  } from '../domain/presentation';
 import { BulkRecovery, useBulkActions } from '../ui/bulk-actions';
 import { ActionFeedback, AtmosphericHeader, Button, Copy, Field, IconButton, Page, QueryState, SettingRow, Sheet } from '../ui/components';
 import { browseFilterChips, browseReminderFilter, commitBrowseFilters, removeBrowseFilter, resetBrowseFilters, type BrowseFilterField, type BrowseFilters } from '../domain/browse-filters';
@@ -18,12 +19,16 @@ import { useRootState } from '../ui/root-state';
 import { useAppearanceHold } from '../ui/theme';
 
 export default function Records() {
+  'use no memo';
+  useLocale();
   const params = useLocalSearchParams<OriginParams & { view?: string }>(), view = params.view === 'deleted' ? 'deleted' : 'completed', origin = creationOrigin(params);
   return <RecordsContent key={collectionKey(view, origin.kind === 'list' ? origin.listId : undefined)} view={view} origin={origin} />;
 }
 function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origin: DestinationOrigin }) {
+  'use no memo';
+  const t = useTranslation();
   const { alertPresentation } = useTimeFormatting();
-  const title = view === 'deleted' ? 'Trash' : 'Completed', scoped = origin.kind === 'list', fixedListId = scoped ? origin.listId : undefined;
+  const title = view === 'deleted' ? t('m_c560122ac470') : t('m_22a970d2e5b1'), scoped = origin.kind === 'list', fixedListId = scoped ? origin.listId : undefined;
   const destination: DestinationOrigin = scoped ? origin : { kind: view === 'deleted' ? 'trash' : 'completed' };
   const key = collectionKey(view, fixedListId);
   const [search, setSearch] = useRootState(key + ':search', ''), [searching, setSearching] = useRootState(key + ':searching', false);
@@ -46,7 +51,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     const restored = result.occurrence;
     if (job.command.kind === 'UndoDelete' && restored && !restored.completed && !restored.skipped && restored.mode !== 'None' &&
       alertPresentation(restored).target === null && restored.deliveryState !== 'Alerting')
-      return 'Reminder restored. No next alert scheduled.';
+      return t('m_67e536f2210c');
   });
   const bulk = useBulkActions(), guarded = action.guarded || bulk.guarded;
   const isGuarded = () => singleRunning.current || action.isGuarded() || bulk.isGuarded();
@@ -73,14 +78,14 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
   }, guarded, scoped ? origin : undefined);
   const guardedBack = () => isGuarded() || back();
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
-  const scopeName = listId === null ? 'No list' : lists.data?.find((list) => list.id === listId)?.name ?? 'List unavailable';
+  const scopeName = listId === null ? t('m_eacd31d849f9') : lists.data?.find((list) => list.id === listId)?.name ?? t('m_e7f6d340d947');
   const chips = browseFilterChips(view, appliedFilters, lists.data, fixedListId);
   const filter = browseReminderFilter(view, appliedFilters, { view, search, fixedListId });
   const query = useInfiniteQuery({ queryKey: ['reminders', filter], enabled: nativeAvailable, initialPageParam: null as string | null,
     queryFn: ({ pageParam }) => engine().queryReminders(filter, pageParam), getNextPageParam: (page) => page.nextCursor });
   const items = useMemo(() => [...new Map(query.data?.pages.flatMap((page) => page.items).map((item) => [item.id, item])).values()], [query.data]);
   const selectedItems = items.filter((item) => selectionIds.includes(item.id));
-  const loadedLabel = items.length === 1 ? 'reminder' : 'reminders';
+  const loadedLabel = items.length === 1 ? t('m_9ce7011ab48f') : t('m_a53ebed84cc8');
   useEffect(() => {
     if (!bulk.job || bulk.busy || bulk.guarded || bulk.progress.pending !== 0 || completedBulk.current === bulk.job.id) return;
     completedBulk.current = bulk.job.id;
@@ -97,8 +102,8 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     singleRunning.current = true;
     setSelected(null);
     void action.execute({ command: { kind, occurrenceId: item.id, expectedRevision: item.revision, operationId }, item,
-      success: kind === 'UndoDelete' ? item.completed ? 'Restored to Completed.' : item.skipped ? 'Skipped occurrence restored.' : 'Reminder restored.'
-        : kind === 'Purge' ? 'Reminder permanently deleted.' : kind === 'Delete' ? 'Moved to Trash' : 'Reminder reopened.' }).finally(() => { singleRunning.current = false; });
+      success: kind === 'UndoDelete' ? item.completed ? t('m_a0cbb012eedf') : item.skipped ? t('m_4dc0768b0761') : t('m_cb9c0f35189c')
+        : kind === 'Purge' ? t('m_ddba37fd352b') : kind === 'Delete' ? t('m_2d65f262cc64') : t('m_8b94105daf2b') }).finally(() => { singleRunning.current = false; });
   };
   const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
   const commitFilters = (draft: BrowseFilters) => {
@@ -133,69 +138,69 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     const captured = purgeItems; setPurgeItems([]);
     if (purgeBulk) bulk.execute('Purge', captured); else update(captured[0], 'Purge');
   };
-  const emptyMessage = !nativeAvailable ? 'Use the Android app to manage reminders.' : search || !scoped && listId !== undefined ? 'No reminders match these filters.' : view === 'deleted' ? 'Trash is empty.' : appliedFilters.includeSkipped ? 'No completed or skipped reminders.' : 'No completed reminders.';
+  const emptyMessage = !nativeAvailable ? t('m_2ff2d9a672c5') : search || !scoped && listId !== undefined ? t('m_75bf15d2c28d') : view === 'deleted' ? t('m_4ff140671613') : appliedFilters.includeSkipped ? t('m_e6d3bf1ca046') : t('m_30a5147eb7de');
   return <Page title={title} back={scoped || selecting} onBack={guardedBack} scrollKey={key} scrollReady={!query.isLoading} scrollResetToken={scrollResetToken}
-    header={<AtmosphericHeader back={scoped || selecting} title={selecting ? selectionIds.length + ' selected' : title} subtitle={selecting ? title + (scoped ? ' · ' + scopeName : '') : scoped ? scopeName : undefined} onBack={guardedBack} actions={<>
-      {!selecting && <IconButton icon="search" label={searching ? 'Exit search' : 'Search ' + title.toLowerCase()} disabled={guarded} onPress={() => {
+    header={<AtmosphericHeader back={scoped || selecting} title={selecting ? selectionIds.length + t('m_97a2e8815acd') : title} subtitle={selecting ? title + (scoped ? ' · ' + scopeName : '') : scoped ? scopeName : undefined} onBack={guardedBack} actions={<>
+      {!selecting && <IconButton icon="search" label={searching ? t('m_1655ed829a84') : t('m_fc9f7623b53e') + title.toLowerCase()} disabled={guarded} onPress={() => {
         if (isGuarded() || selectingRef.current) return; Keyboard.dismiss(); searchFocusRequested.current = !searching;
         if (searching) searchInput.current?.blur(); setSearching(!searching);
       }} />}
       {(view === 'completed' || !scoped) && !selecting && <BrowseFilterButton presentation="icon" count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />}
-      <IconButton icon="more_vert" label={selecting ? 'Selection actions' : title + ' actions'} disabled={guarded} onPress={() => { if (isGuarded()) return; Keyboard.dismiss(); setMenuOpen(true); }} />
+      <IconButton icon="more_vert" label={selecting ? t('m_b847ffdd0a1b') : title + t('m_04d2a6702176')} disabled={guarded} onPress={() => { if (isGuarded()) return; Keyboard.dismiss(); setMenuOpen(true); }} />
     </>} />}
     footer={<><CommandRecovery action={action} />
       {selecting && <View style={{ padding: 16, gap: 8 }}>
-        <Copy muted size={14}>{guarded && bulk.job ? 'Captured batch: ' + bulk.job.entries.length + (bulk.job.entries.length === 1 ? ' reminder.' : ' reminders.') : selectionIds.length + ' selected of ' + items.length + ' loaded ' + loadedLabel + '.'}</Copy>
-        {bulk.guarded && !bulk.busy && <Button label="Retry same batch" onPress={bulk.retry} />}
+        <Copy muted size={14}>{guarded && bulk.job ? t('m_c8e043d904a9') + bulk.job.entries.length + (bulk.job.entries.length === 1 ? t('m_caddc31b6d05') : t('m_b5765ff6882a')) : selectionIds.length + t('m_df16eabb211c') + items.length + t('m_3cded792a06b') + loadedLabel + '.'}</Copy>
+        {bulk.guarded && !bulk.busy && <Button label={t('m_913b0a77f27f')} onPress={bulk.retry} />}
         {!!selectionIds.length && !bulk.guarded && <>
-          <Button label={view === 'deleted' ? 'Restore' : 'Reopen'} accessibilityLabel={view === 'deleted' ? 'Restore selected' : 'Reopen selected'} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
-          {view === 'completed' && <Button label="Move to Trash" accessibilityLabel="Move selected to Trash" variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
-          {view === 'deleted' && <Button label="Delete permanently" accessibilityLabel="Delete selected permanently" variant="danger" disabled={guarded || !selectedItems.length || selectedItems.length !== selectionIds.length} onPress={() => requestPurge(selectedItems, true)} />}
+          <Button label={view === 'deleted' ? t('m_a76e13b98392') : t('m_a886d1dc4f12')} accessibilityLabel={view === 'deleted' ? t('m_536d8b1e30eb') : t('m_380e09bc779d')} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
+          {view === 'completed' && <Button label={t('m_9adcdf33dce1')} accessibilityLabel={t('m_570d20ab666c')} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
+          {view === 'deleted' && <Button label={t('m_280b10c89cc4')} accessibilityLabel={t('m_cee8f4863172')} variant="danger" disabled={guarded || !selectedItems.length || selectedItems.length !== selectionIds.length} onPress={() => requestPurge(selectedItems, true)} />}
         </>}
       </View>}
       <RootNotice disabled={guarded} />{!selecting && <RootNavigation destination={scoped ? 'lists' : view === 'deleted' ? 'trash' : 'completed'} atRoot={!scoped} disabled={guarded} isGuarded={isGuarded} />}</>}>
-    {searching && <View style={{ gap: 8 }}><Field inputRef={searchInput} label={'Search ' + title.toLowerCase()} placeholder="Title or notes" value={search} onChangeText={(value) => { if (!isGuarded() && !selectingRef.current) setSearch(value); }} editable={!guarded && !selecting} />
-      {!!search && <Button label="Clear search" variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}</View>}
-    {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}
-    {scoped && <Copy muted size={14}>{'List: ' + scopeName}</Copy>}
+    {searching && <View style={{ gap: 8 }}><Field inputRef={searchInput} label={t('m_fc9f7623b53e') + title.toLowerCase()} placeholder={t('m_2796b78f7c5e')} value={search} onChangeText={(value) => { if (!isGuarded() && !selectingRef.current) setSearch(value); }} editable={!guarded && !selecting} />
+      {!!search && <Button label={t('m_3b7ea51793e9')} variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}</View>}
+    {!!search && !searching && <SettingRow label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}
+    {scoped && <Copy muted size={14}>{t('m_8e644ee1deea') + scopeName}</Copy>}
     <BrowseFilterChips chips={chips} disabled={guarded || selecting} onRemove={removeFilter} onReset={resetFilters} />
-    {selecting && <Copy muted size={14}>Select reminders using their checkboxes. Select all loaded includes only reminders currently loaded; loading more does not select them.</Copy>}
-    {view === 'deleted' && <Copy muted size={14}>Kept until restored or permanently deleted.</Copy>}
+    {selecting && <Copy muted size={14}>{t('m_6b16b17cf558')}</Copy>}
+    {view === 'deleted' && <Copy muted size={14}>{t('m_8d95dd748021')}</Copy>}
     {selecting && <BulkRecovery action={bulk} />}
-    {!!query.error && !!items.length ? <View style={{ gap: 8 }}><ActionFeedback message="Could not refresh. Showing previously loaded information." tone="danger" /><Button label="Retry" variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) void query.refetch(); }} /></View> :
+    {!!query.error && !!items.length ? <View style={{ gap: 8 }}><ActionFeedback message={t('m_3d982a3fc277')} tone="danger" /><Button label={t('m_942087cc2d41')} variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) void query.refetch(); }} /></View> :
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error} empty={!items.length} emptyMessage={emptyMessage} onRetry={() => { if (!isGuarded()) void query.refetch(); }} />}
-    {!items.length && !!search && <Button label="Clear search" variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}
-    {!items.length && !!chips.length && <Button label="Reset filters" variant="secondary" disabled={guarded || selecting} onPress={resetFilters} />}
+    {!items.length && !!search && <Button label={t('m_3b7ea51793e9')} variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}
+    {!items.length && !!chips.length && <Button label={t('m_10afa98480f2')} variant="secondary" disabled={guarded || selecting} onPress={resetFilters} />}
     {items.map((item) => <ReminderRow key={item.id} item={item} onOpen={() => open(item)}
       onMore={() => { if (!isGuarded()) setSelected(item); }} onTrash={!selecting && view === 'completed' ? () => update(item, 'Delete') : undefined}
       restore={view === 'deleted'} busy={guarded} selection={selecting ? { selected: selectionIds.includes(item.id), onToggle: () => toggleSelection(item.id) } : undefined} />)}
-    {query.hasNextPage && <Button label={query.isFetchingNextPage ? 'Loading more…' : query.isFetchNextPageError ? 'Retry loading more' : 'Load more'} disabled={guarded || query.isFetchingNextPage} variant="secondary" onPress={() => { if (!isGuarded()) void query.fetchNextPage(); }} />}
-    <Sheet title={selecting ? 'Selection actions' : title + ' actions'} visible={menuOpen} onClose={() => { if (!isGuarded()) setMenuOpen(false); }}>
+    {query.hasNextPage && <Button label={query.isFetchingNextPage ? t('m_964e5f88d036') : query.isFetchNextPageError ? t('m_6c13d1198cd5') : t('m_ac8991ef0101')} disabled={guarded || query.isFetchingNextPage} variant="secondary" onPress={() => { if (!isGuarded()) void query.fetchNextPage(); }} />}
+    <Sheet title={selecting ? t('m_b847ffdd0a1b') : title + t('m_04d2a6702176')} visible={menuOpen} onClose={() => { if (!isGuarded()) setMenuOpen(false); }}>
       {selecting ? <>
-        <SettingRow label="Select all loaded" description={'Only the ' + items.length + ' currently loaded ' + loadedLabel + '.'} disabled={guarded || !items.length} onPress={() => { if (isGuarded()) return; setSelectionIds(items.map((item) => item.id)); setMenuOpen(false); bulk.clear(); }} />
-        <SettingRow label="Clear selection" disabled={guarded || !selectionIds.length} onPress={() => { if (isGuarded()) return; setSelectionIds([]); setMenuOpen(false); bulk.clear(); }} />
-        <SettingRow label="Done selecting" disabled={guarded} onPress={exitSelection} />
-      </> : <SettingRow label="Select reminders" icon="checklist" disabled={guarded || !items.length} onPress={startSelection} />}
-      {!selecting && view === 'deleted' && <SettingRow label="About Trash" icon="info" disabled={guarded} onPress={() => {
+        <SettingRow label={t('m_b67fb40d381e')} description={t('m_b6fac3049447') + items.length + t('m_0cba3160436e') + loadedLabel + '.'} disabled={guarded || !items.length} onPress={() => { if (isGuarded()) return; setSelectionIds(items.map((item) => item.id)); setMenuOpen(false); bulk.clear(); }} />
+        <SettingRow label={t('m_cea4d2e010b8')} disabled={guarded || !selectionIds.length} onPress={() => { if (isGuarded()) return; setSelectionIds([]); setMenuOpen(false); bulk.clear(); }} />
+        <SettingRow label={t('m_860e7995708f')} disabled={guarded} onPress={exitSelection} />
+      </> : <SettingRow label={t('m_de3ead6ecd09')} icon="checklist" disabled={guarded || !items.length} onPress={startSelection} />}
+      {!selecting && view === 'deleted' && <SettingRow label={t('m_7739c768203f')} icon="info" disabled={guarded} onPress={() => {
         if (isGuarded()) return; setMenuOpen(false); setTrashHelpOpen(true);
       }} />}
-      {!selecting && <SettingRow label="Settings" icon="settings" disabled={guarded} onPress={() => {
+      {!selecting && <SettingRow label={t('m_74a883a037bc')} icon="settings" disabled={guarded} onPress={() => {
         if (isGuarded()) return; setMenuOpen(false); router.push({ pathname: '/settings', params: originParams(destination) });
       }} />}
     </Sheet>
-    <BrowseFilterSheet title={'Filter ' + title.toLowerCase()} kind={view} draft={filterDraft} disabled={guarded || selecting} lists={lists.data ?? []}
+    <BrowseFilterSheet title={t('m_167cef2f2f60') + title.toLowerCase()} kind={view} draft={filterDraft} disabled={guarded || selecting} lists={lists.data ?? []}
       listsLoading={lists.isLoading && nativeAvailable} listsError={lists.error} onRetryLists={() => void lists.refetch()} fixedListId={fixedListId} fixedListName={scopeName}
       onDraftChange={next => { if (!isGuarded() && !selectingRef.current) setFilterDraft(next); }} onCancel={() => setFilterDraft(null)}
       onApply={() => { if (filterDraft && commitFilters(filterDraft)) setFilterDraft(null); }} />
-    <Sheet title="About Trash" visible={trashHelpOpen} onClose={() => setTrashHelpOpen(false)}>
-      <Copy>Deleted reminders stay here until restored or permanently deleted.</Copy>
-      <Copy muted size={14}>Restore keeps completed or skipped state. Past alerts are not replayed.</Copy>
-      <Copy muted size={14}>One-off reminders in Trash are excluded from backups. Repeating deletion exclusions are retained.</Copy>
+    <Sheet title={t('m_7739c768203f')} visible={trashHelpOpen} onClose={() => setTrashHelpOpen(false)}>
+      <Copy>{t('m_e68ea9b473e4')}</Copy>
+      <Copy muted size={14}>{t('m_6b013f84e5e1')}</Copy>
+      <Copy muted size={14}>{t('m_6a85a9b0418d')}</Copy>
     </Sheet>
-    <Sheet title={selected?.title ?? 'Reminder actions'} visible={!!selected} onClose={() => { if (!isGuarded()) setSelected(null); }}>
-      {view === 'completed' && <SettingRow label="Reopen" icon="undo" disabled={guarded} onPress={() => { if (selected) update(selected, 'Reopen'); }} />}
-      <SettingRow label={view === 'completed' ? 'Move to Trash' : 'Restore'} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
-      {view === 'deleted' && <SettingRow label="Delete permanently" icon="delete_forever" description="Cannot be undone." disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
+    <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => { if (!isGuarded()) setSelected(null); }}>
+      {view === 'completed' && <SettingRow label={t('m_a886d1dc4f12')} icon="undo" disabled={guarded} onPress={() => { if (selected) update(selected, 'Reopen'); }} />}
+      <SettingRow label={view === 'completed' ? t('m_9adcdf33dce1') : t('m_a76e13b98392')} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
+      {view === 'deleted' && <SettingRow label={t('m_280b10c89cc4')} icon="delete_forever" description={t('m_a3e8748f021d')} disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
     </Sheet>
     <PurgeConfirmation items={purgeItems} onCancel={() => setPurgeItems([])} onConfirm={confirmPurge} />
   </Page>;

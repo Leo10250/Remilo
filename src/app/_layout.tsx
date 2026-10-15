@@ -1,3 +1,4 @@
+import { useLocale } from '../localization/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
@@ -13,6 +14,8 @@ import { TimeDisplayProvider } from '../ui/time-display';
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 export default function RootLayout() {
+  'use no memo';
+  useLocale();
   useEffect(() => {
     const refresh = () => void client.invalidateQueries();
     const app = AppState.addEventListener('change', (state) => {
@@ -32,6 +35,8 @@ export default function RootLayout() {
   );
 }
 function Navigation() {
+  'use no memo';
+  useLocale();
   const colors = useTheme();
   return <><StatusBar style={colors.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} /></>;

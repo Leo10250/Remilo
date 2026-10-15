@@ -52,7 +52,14 @@ data class BulkSnoozeReceipt(@PrimaryKey val operationId: String, val sessionId:
 @Entity(tableName = "bulk_snooze_members", primaryKeys = ["operationId", "occurrenceId"])
 data class BulkSnoozeMember(val operationId: String, val occurrenceId: String,
   val expectedGeneration: Long, val generation: Long, val status: String = "Pending")
+/** Language enums and reconciliation metadata only; never content or message arguments. */
+@Entity(tableName = "language_preferences")
+data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: String = "system",
+  val revision: Long = 1, val settingsRevision: Long = 0, val projected: String = "",
+  val pendingProjection: Boolean = false, val externalPending: Boolean = false)
 @Dao interface OperationalDao {
+  @Query("SELECT * FROM language_preferences WHERE id = 'app'") fun language(): LanguageRecord?
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun language(record: LanguageRecord)
   @Query("SELECT * FROM alerts") fun all(): List<AlertRecord>
   @Query("SELECT * FROM alerts WHERE occurrenceId = :id") fun find(id: String): AlertRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun put(record: AlertRecord)
@@ -81,13 +88,19 @@ data class BulkSnoozeMember(val operationId: String, val occurrenceId: String,
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class], version = 6, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class], version = 7, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS language_preferences (id TEXT NOT NULL PRIMARY KEY, preference TEXT NOT NULL, revision INTEGER NOT NULL, settingsRevision INTEGER NOT NULL, projected TEXT NOT NULL, pendingProjection INTEGER NOT NULL, externalPending INTEGER NOT NULL)")
+        db.execSQL("INSERT INTO language_preferences VALUES ('app','en',1,0,'',0,0)")
+      }
+    }
     val MIGRATION_5_6 = object : Migration(5, 6) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE completion_receipts ADD COLUMN snapshotKey TEXT DEFAULT NULL")

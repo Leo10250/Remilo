@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { confirmLanguage } from '../localization';
 import { Preferences } from './preferences';
 import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 const initial: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
-  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'system', atmosphere: 'automatic' };
+  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'system', atmosphere: 'automatic', language: 'system' };
 function fixture() {
   let saved = { ...initial }, count = 0;
   const applied = new Set<string>();
@@ -17,6 +18,7 @@ function fixture() {
   return { controller, read, write, applied, get saved() { return saved; } };
 }
 const settled = async (controller: Preferences) => vi.waitFor(() => expect(controller.snapshot().saving).toBe(false));
+afterEach(() => confirmLanguage('en'));
 describe('serialized preference writes', () => {
   it('coalesces rapid edits and sends only changed fields', async () => {
     const f = fixture(); f.controller.change({ snoozeMinutes: 5 }); f.controller.change({ snoozeMinutes: 15, theme: 'dark' });
@@ -39,7 +41,7 @@ describe('serialized preference writes', () => {
   it('rolls back failed optimistic values and preserves the operation ID on retry', async () => {
     const f = fixture(); f.write.mockRejectedValueOnce(new Error('Storage unavailable'));
     f.controller.change({ theme: 'dark' }); await settled(f.controller);
-    expect(f.controller.snapshot()).toMatchObject({ data: { theme: 'system' }, error: 'Storage unavailable' });
+    expect(f.controller.snapshot()).toMatchObject({ data: { theme: 'system' }, error: 'Could not save this change. Retry.' });
     f.controller.retry(); await settled(f.controller);
     expect(f.write.mock.calls[0][0].operationId).toBe(f.write.mock.calls[1][0].operationId);
     expect(f.saved.theme).toBe('dark');
@@ -77,5 +79,25 @@ describe('serialized preference writes', () => {
     expect(f.controller.snapshot().error).toContain('changed elsewhere');
     f.controller.change({ theme: 'light' }); f.controller.retry(); await settled(f.controller);
     expect(f.saved).toMatchObject({ theme: 'light', sound: 'system', revision: 3 });
+  });
+  it('does not replay a captured language over a newer Android selection', async () => {
+    const f = fixture();
+    await f.write({ revision: 1, operationId: 'android-language', patch: { language: 'en' } });
+    f.controller.change({ language: 'zh-Hans' }); await settled(f.controller);
+    expect(f.controller.snapshot()).toMatchObject({ data: { language: 'en' }, fields: ['language'] });
+    f.controller.retry(); await settled(f.controller);
+    expect(f.saved.language).toBe('en'); expect(f.write).toHaveBeenCalledTimes(2);
+    f.controller.change({ language: 'zh-Hans' }); await settled(f.controller);
+    expect(f.saved.language).toBe('zh-Hans');
+  });
+  it('retains a failed preference message as a descriptor through a language change', async () => {
+    const f = fixture(); f.write.mockRejectedValueOnce(new Error('private platform exception'));
+    f.controller.change({ vibration: false }); await settled(f.controller);
+    const english = f.controller.snapshot().error;
+    confirmLanguage('zh-Hans');
+    expect(f.controller.snapshot().error).not.toBe(english);
+    expect(f.controller.snapshot().error).toMatch(/[\u4e00-\u9fff]/);
+    expect(f.controller.snapshot().error).not.toContain('private platform');
+    expect(f.write).toHaveBeenCalledTimes(1);
   });
 });

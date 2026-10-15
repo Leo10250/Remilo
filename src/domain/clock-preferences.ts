@@ -1,6 +1,7 @@
+import { t } from '../localization';
 import { displayClock, type TimeDisplayOptions } from './time-display';
 function validMinutes(minutes: number) {
-  if (!Number.isInteger(minutes) || minutes < 0 || minutes >= 1440) throw new RangeError('Choose a clock time from 00:00 to 23:59.');
+  if (!Number.isInteger(minutes) || minutes < 0 || minutes >= 1440) throw new RangeError(t('m_827c3aed379e'));
 }
 /** UTC is only a carrier for a clock preference; this date is never scheduled. */
 export function clockPreferenceDate(minutes: number) {
@@ -11,7 +12,7 @@ export function clockPreferenceLabel(minutes: number, locale?: string, options: 
   return displayClock(clockPreferenceDate(minutes).getTime(), 'UTC', { ...options, localeTag: locale ?? options.localeTag });
 }
 export function clockPreferenceFromPicker(timestamp: number, utcOffsetMinutes: number) {
-  if (!Number.isFinite(timestamp) || !Number.isFinite(utcOffsetMinutes)) throw new RangeError('Could not read this clock time.');
+  if (!Number.isFinite(timestamp) || !Number.isFinite(utcOffsetMinutes)) throw new RangeError(t('m_19f0ccc05aad'));
   const clock = new Date(timestamp + utcOffsetMinutes * 60_000);
   const minutes = clock.getUTCHours() * 60 + clock.getUTCMinutes();
   validMinutes(minutes);

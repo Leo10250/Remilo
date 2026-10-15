@@ -1,3 +1,4 @@
+import { t } from '../localization';
 import type { ListRecord, ReminderFilter } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export type BrowseKind = 'agenda' | 'completed' | 'deleted';
@@ -38,11 +39,11 @@ export function removeBrowseFilter(filters: BrowseFilters, field: BrowseFilterFi
 }
 export function browseFilterChips(kind: BrowseKind, filters: BrowseFilters, lists: readonly ListRecord[] = [], fixedListId?: string | null): BrowseFilterChip[] {
   const current = normalizeBrowseFilters(kind, filters, fixedListId), chips: BrowseFilterChip[] = [];
-  if (fixedListId === undefined && current.listId !== undefined) chips.push({ field: 'listId', label: current.listId === null ? 'No list' :
-    'List: ' + (lists.find(list => list.id === current.listId)?.name ?? 'List unavailable') });
-  if (current.overdueOnly) chips.push({ field: 'overdueOnly', label: 'Overdue' });
-  if (current.deliveryIssuesOnly) chips.push({ field: 'deliveryIssuesOnly', label: 'Alert problems' });
-  if (current.includeSkipped) chips.push({ field: 'includeSkipped', label: 'Skipped included' });
+  if (fixedListId === undefined && current.listId !== undefined) chips.push({ field: 'listId', label: current.listId === null ? t('m_eacd31d849f9') :
+    t('m_8e644ee1deea') + (lists.find(list => list.id === current.listId)?.name ?? t('m_e7f6d340d947')) });
+  if (current.overdueOnly) chips.push({ field: 'overdueOnly', label: t('m_d660945bc299') });
+  if (current.deliveryIssuesOnly) chips.push({ field: 'deliveryIssuesOnly', label: t('m_e4a303aaa9c2') });
+  if (current.includeSkipped) chips.push({ field: 'includeSkipped', label: t('m_b43cd4ceac14') });
   return chips;
 }
 export function browseReminderFilter(kind: BrowseKind, filters: BrowseFilters,

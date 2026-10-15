@@ -22,6 +22,7 @@
       </intent-filter>
     </receiver>
     <service android:name=".system.RingingService" android:exported="false" android:directBootAware="true" android:foregroundServiceType="systemExempted" />
-    <activity android:name=".system.AlarmActivity" android:exported="false" android:directBootAware="true" android:showWhenLocked="true" android:turnScreenOn="true" android:excludeFromRecents="true" android:launchMode="singleTask" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+    <receiver android:name=".system.LanguageReceiver" android:exported="false" android:directBootAware="true"><intent-filter><action android:name="android.intent.action.LOCALE_CHANGED" /></intent-filter></receiver>
+    <activity android:configChanges="locale|layoutDirection" android:name=".system.AlarmActivity" android:exported="false" android:directBootAware="true" android:showWhenLocked="true" android:turnScreenOn="true" android:excludeFromRecents="true" android:launchMode="singleTask" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
   </application>
 </manifest>

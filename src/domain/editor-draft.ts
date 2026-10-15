@@ -1,3 +1,4 @@
+import { t, live } from '../localization';
 import type { RecurrenceDraft, ReminderDraft, TimeConversion, TimeConversionInput } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { cleanRepeat } from './repeat';
 import { civilAt, deviceZone } from './time';
@@ -12,7 +13,7 @@ export type DraftConflict = { key: typeof contentFields[number] | 'schedule'; la
 export function reviewChoicesComplete(conflicts: DraftConflict[], choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>>) {
   return conflicts.every((conflict) => choices[conflict.key] === 'yours' || choices[conflict.key] === 'latest');
 }
-const labels: Record<DraftConflict['key'], string> = { title: 'Title', notes: 'Notes', listId: 'List', sound: 'Sound', vibration: 'Vibration', schedule: 'Schedule and repeat' };
+const labels: Record<DraftConflict['key'], string> = live(() => ({ title: t('m_7e8cd2056da7'), notes: t('m_8a7525b1492f'), listId: t('m_6f202f54a7b2'), sound: t('m_46124e023603'), vibration: t('m_59e1fd02f6c2'), schedule: t('m_1bddc4dd8b29') }));
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Only editable content enters a draft; operational occurrence fields stay native. */
@@ -29,7 +30,7 @@ export function schedulePart(state: EditorState) {
 }
 /** Preview reads schedule inputs only, without waiting for or validating private draft content. */
 export function editorPreviewPayload({ draft, recurrence }: EditorState): ReminderDraft & { recurrence?: RecurrenceDraft } {
-  const payload = { title: 'Preview', eventStartMs: draft.eventStartMs, eventEndMs: draft.eventEndMs,
+  const payload = { title: t('m_324b134f57c7'), eventStartMs: draft.eventStartMs, eventEndMs: draft.eventEndMs,
     dueAtMs: draft.allDay && draft.dueLinked ? undefined : draft.dueAtMs,
     alarmAtMs: draft.allDay && draft.alarmLinked ? undefined : draft.alarmAtMs,
     mode: draft.mode, allDay: draft.allDay, zoneId: draft.zoneId, dueLinked: draft.dueLinked, alarmLinked: draft.alarmLinked,
@@ -102,8 +103,8 @@ function shiftedCivil(base: string, from: string, to: string) {
   return new Date(Date.parse(base + 'Z') + Date.parse(to + 'Z') - Date.parse(from + 'Z')).toISOString().slice(0, 19);
 }
 function adjustmentWarnings(values: TimeConversion[]) {
-  const warnings = values.some((value) => value.adjustment === 'gapForward') ? ['A clock change moves a selected time forward. Check the resolved timing below.'] : [];
-  if (values.some((value) => value.adjustment === 'earlierFold')) warnings.push('A repeated clock time uses its earlier offset.');
+  const warnings = values.some((value) => value.adjustment === 'gapForward') ? [t('m_83223dda3625')] : [];
+  if (values.some((value) => value.adjustment === 'earlierFold')) warnings.push(t('m_aaf590016b10'));
   return warnings;
 }
 function civilDifference(from: string, to: string) { return Date.parse(to + 'Z') - Date.parse(from + 'Z'); }

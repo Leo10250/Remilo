@@ -1,3 +1,4 @@
+import { t } from '../localization';
 import type { CommandResult } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export type RestoreJob = { json: string; copies: string[]; operationId: string };
@@ -16,7 +17,7 @@ export class RestoreOperation {
     this.inFlight = this.adapter.restore({ ...job, copies: [...job.copies] }).then((result) => {
       if (result.status === 'Rejected') {
         this.job = undefined;
-        throw new Error(result.errorMessage ?? 'This backup could not be restored. Review the preview and try again.');
+        throw new Error(result.errorMessage ?? t('m_bcfd006179ec'));
       }
       this.job = undefined;
       return result;
