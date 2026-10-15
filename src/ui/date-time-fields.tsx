@@ -1,3 +1,5 @@
+import { useTranslation } from '../localization/react';
+
 import { useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { DateField } from './components';
@@ -9,6 +11,8 @@ export function DateTimeFields({ value, zoneId, allDay, onChange, onError, disab
   value: number; zoneId: string; allDay: boolean; onChange: (value: number) => void;
   onError: (message: string) => void; disabled: boolean; labelPrefix?: string;
 }) {
+  'use no memo';
+  const t = useTranslation();
   const colors = useTheme(), scale = useFontScaleOverride(), { width, fontScale } = useWindowDimensions();
   const [availableWidth, setAvailableWidth] = useState<number | null>(null);
   const textScale = Math.max(scale, fontScale);
@@ -16,11 +20,11 @@ export function DateTimeFields({ value, zoneId, allDay, onChange, onError, disab
   const props = { value, zoneId, onChange, onError, disabled, compact: !stacked };
   return <View onLayout={event => setAvailableWidth(event.nativeEvent.layout.width)}
     style={{ flexDirection: stacked ? 'column' : 'row' }}>
-    <View style={{ flex: stacked ? undefined : 1, minWidth: 0 }}><DateField {...props} label="Date" accessibilityLabel={labelPrefix ? labelPrefix + ' date' : undefined} dateOnly /></View>
+    <View style={{ flex: stacked ? undefined : 1, minWidth: 0 }}><DateField {...props} label={t('m_99c40ab40592')} accessibilityLabel={labelPrefix ? labelPrefix + t('m_6bcf3616a17d') : undefined} dateOnly /></View>
     {!allDay && <>
       {!stacked && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
         style={{ width: 1, marginVertical: space.md, backgroundColor: colors.border }} />}
-      <View style={{ flex: stacked ? undefined : 1, minWidth: 0 }}><DateField {...props} label="Time" accessibilityLabel={labelPrefix ? labelPrefix + ' time' : undefined} timeOnly /></View>
+      <View style={{ flex: stacked ? undefined : 1, minWidth: 0 }}><DateField {...props} label={t('m_33b93476cf59')} accessibilityLabel={labelPrefix ? labelPrefix + t('m_4a8f540240f1') : undefined} timeOnly /></View>
     </>}
   </View>;
 }

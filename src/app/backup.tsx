@@ -1,3 +1,6 @@
+import { errorText } from '../localization';
+import { useLocalizedState, useTranslation } from '../localization/react';
+
 import { useQueryClient } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -14,6 +17,8 @@ import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 
 export default function Backup() {
+  'use no memo';
+  const t = useTranslation();
   const params = useLocalSearchParams<OriginParams>();
   const client = useQueryClient();
   const confirm = useAppearanceConfirmation();
@@ -24,7 +29,7 @@ export default function Backup() {
   const [copies, setCopies] = useState<string[]>([]);
   const [previewLimit, setPreviewLimit] = useState(25);
   const [uncertain, setUncertain] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; tone: 'success' | 'warning' | 'danger' }>();
+  const [feedback, setFeedback] = useLocalizedState<{ message: string; tone: 'success' | 'warning' | 'danger' }>();
   const [operation] = useState(() => new RestoreOperation({
     id: () => engine().createOperationId(),
     restore: (job) => engine().importBackup(job.json, job.copies, job.operationId),
@@ -32,8 +37,8 @@ export default function Backup() {
   const busy = phase !== 'idle';
   useAppearanceHold(busy || uncertain);
   usePreventRemove(busy || uncertain, () => {
-    confirm(phase === 'reading' ? 'Reading backup' : 'Restore not yet confirmed',
-      phase === 'reading' ? 'Wait for the backup preview before leaving.' : 'Wait for this restore, or retry the same restore before leaving.');
+    confirm(phase === 'reading' ? t('m_2fb20e11e66c') : t('m_9e03078b573e'),
+      phase === 'reading' ? t('m_6ec07536b633') : t('m_1eec03248b74'));
   });
   const choose = async () => {
     if (working.current || operation.pending) return;
@@ -42,11 +47,11 @@ export default function Backup() {
       const selected = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, type: ['application/json', 'text/plain', 'application/octet-stream'] });
       if (selected.canceled) return;
       const file = new File(selected.assets[0].uri);
-      if (file.size > 10_000_000) throw new Error('Backup exceeds 10 MB.');
+      if (file.size > 10_000_000) throw new Error(t('m_a9e9b2a1cbd3'));
       const data = await file.text();
       const next = await engine().previewImport(data);
       setJson(data); setPreview(next); setCopies([]); setPreviewLimit(25);
-    } catch { setFeedback({ message: preview ? 'The new file could not be read as a valid Remilo backup. Nothing was imported; the previous preview and copy choices are kept.' : 'This file could not be read as a valid Remilo backup. Nothing was imported.', tone: 'danger' }); }
+    } catch { setFeedback({ message: preview ? t('m_8244869b563b') : t('m_3370f7ef5943'), tone: 'danger' }); }
     finally { working.current = false; setPhase('idle'); }
   };
   const restore = async () => {
@@ -55,61 +60,61 @@ export default function Backup() {
     try {
       const result = await operation.run(json, copies);
       setUncertain(false);
-      setFeedback({ message: result.retry ? 'Your previous restore was confirmed.' :
-        `Restored ${result.added ?? 0}; preserved ${result.preserved ?? 0} existing reminder or series entries.${result.blocked ? ' Some alerts could not be scheduled. Review Alert problems in Agenda.' : ''}`,
+      setFeedback({ message: result.retry ? t('m_3484304627a9') :
+        t('m_a43a0dc77b1e', { arg0: String(result.added ?? 0), arg1: String(result.preserved ?? 0), arg2: String(result.blocked ? t('m_e6230f66090b') : '') }),
       tone: result.blocked ? 'warning' : 'success' });
       setPreview(null); setJson(''); setCopies([]);
       void client.invalidateQueries();
     } catch (error) {
       const pending = operation.pending;
       setUncertain(pending);
-      setFeedback({ message: pending ? 'Restore not confirmed. Retry the same restore; your backup and copy selection are kept.' :
-        error instanceof Error ? error.message : 'This backup could not be restored. Review the preview and try again.', tone: pending ? 'warning' : 'danger' });
+      setFeedback({ message: pending ? t('m_83103fdb49c3') :
+        errorText(error, t('m_bcfd006179ec')), tone: pending ? 'warning' : 'danger' });
     } finally { working.current = false; setPhase('idle'); }
   };
-  return <Page compact title="Restore backup" onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}
+  return <Page compact title={t('m_6da1c554212c')} onBack={() => router.canGoBack() ? router.back() : router.replace({ pathname: '/settings', params: retainedOriginParams(params) })}
     footer={preview ? <BottomActionBar><View style={{ flex: 1, gap: 8 }}>
-      {(phase === 'restoring' || uncertain || feedback) && <ActionFeedback loading={phase === 'restoring'} message={phase === 'restoring' ? 'Restoring backup…' : feedback?.message} tone={phase === 'restoring' ? 'muted' : feedback?.tone} />}
-      <Button label={phase === 'restoring' ? 'Restoring…' : uncertain ? 'Retry same restore' : 'Restore backup'}
+      {(phase === 'restoring' || uncertain || feedback) && <ActionFeedback loading={phase === 'restoring'} message={phase === 'restoring' ? t('m_e9156b17f25a') : feedback?.message} tone={phase === 'restoring' ? 'muted' : feedback?.tone} />}
+      <Button label={phase === 'restoring' ? t('m_5a4918e0201c') : uncertain ? t('m_24be300a8083') : t('m_6da1c554212c')}
         disabled={!nativeAvailable || busy} onPress={() => void restore()} />
-      <Button label="Cancel preview" variant="secondary" disabled={busy || uncertain}
+      <Button label={t('m_f657ed08c403')} variant="secondary" disabled={busy || uncertain}
         onPress={() => { setPreview(null); setJson(''); setCopies([]); setFeedback(undefined); }} />
     </View></BottomActionBar> : undefined}>
-    <Copy muted>Restore reminders and lists from a backup. Existing reminders stay unchanged.</Copy>
-    {!nativeAvailable && <Copy muted>Use the Android app to restore a backup.</Copy>}
-    <Group><SettingRow label={phase === 'reading' ? 'Reading backup…' : preview ? 'Choose another backup' : 'Choose backup file'}
+    <Copy muted>{t('m_1034ca31a970')}</Copy>
+    {!nativeAvailable && <Copy muted>{t('m_fd7ada1a6f59')}</Copy>}
+    <Group><SettingRow label={phase === 'reading' ? t('m_e72fbb36b74a') : preview ? t('m_3d56dc86536d') : t('m_5eba2dbd12f9')}
       icon="download" disabled={!nativeAvailable || busy || uncertain} onPress={() => void choose()} /></Group>
-    {(!preview || phase === 'reading') && <ActionFeedback loading={phase === 'reading'} message={phase === 'reading' ? 'Reading backup…' : feedback?.message}
+    {(!preview || phase === 'reading') && <ActionFeedback loading={phase === 'reading'} message={phase === 'reading' ? t('m_e72fbb36b74a') : feedback?.message}
       tone={phase === 'reading' ? 'muted' : feedback?.tone} />}
     {preview && <>
-      <Copy size={20}>{preview.count} reminders or series</Copy>
-      <Copy muted>New reminders and lists are included. You can add separate copies of reminders already on this device.</Copy>
-      <Copy muted size={14}>Elapsed alarms stay silent.</Copy>
-      {!!preview.lists?.length && <Group title={`Lists · ${preview.lists.length}`}>
-        <Copy muted size={14}>Empty lists are included. Matching list identities keep local names; other name conflicts use the restored names below.</Copy>
+      <Copy size={20}>{preview.count} {t('m_5e9e09782c22')}</Copy>
+      <Copy muted>{t('m_6377003ff6b8')}</Copy>
+      <Copy muted size={14}>{t('m_55163370572c')}</Copy>
+      {!!preview.lists?.length && <Group title={t('m_cd0502b3a59a', { arg0: String(preview.lists.length) })}>
+        <Copy muted size={14}>{t('m_d028075f15ca')}</Copy>
         {preview.lists.map((list) => <SettingRow key={list.id} label={list.name}
-          value={list.restoredName !== list.name ? `Name on restore: ${list.restoredName}` : list.conflict ? 'Keep local list' : 'Add list'} />)}
+          value={list.restoredName !== list.name ? t('m_488e1fe2c9c6', { arg0: String(list.restoredName) }) : list.conflict ? t('m_60ab6223678c') : t('m_e8bf5cca37b0')} />)}
       </Group>}
-      <Group title="Reminders from the selected backup">
-        <Copy muted size={14}>Whole backup · new entries are included automatically. Choices below only add copies of existing identities.</Copy>
-        <Copy muted size={14}>Preview timing does not confirm delivery. Alerts are checked after restore.</Copy>
+      <Group title={t('m_b13d60535b1f')}>
+        <Copy muted size={14}>{t('m_63a3c9c9cac7')}</Copy>
+        <Copy muted size={14}>{t('m_dbcf624f9669')}</Copy>
         {preview.items.slice(0, previewLimit).map((item) => <View key={item.id} style={{ paddingVertical: 12, gap: 8 }}>
-          <Copy heading>{item.title}</Copy><Copy muted size={14}>{item.calendarCollision ? 'Exact Calendar copy already recovered · Keep current work by default' : item.conflict ? 'Already on this device' : 'New entry · Included automatically'}</Copy>
-          {item.calendarCollision && <Copy muted>A separate restored copy stays Local only and keeps its own alerts. It is not linked to the recovered Calendar event.</Copy>}
-          <Copy muted size={14}>{item.futureAlert ? 'Future time indicated' : 'No future time indicated'}</Copy>
-          {item.conflict && (busy || uncertain ? <Copy>{copies.includes(item.id) ? 'Add a separate copy' : 'Keep existing'}</Copy> : <View accessibilityRole="radiogroup" accessibilityLabel={`Restore choices for ${item.title}`}>
-            <Choice label="Keep existing" selected={!copies.includes(item.id)} onPress={() => setCopies((current) => current.filter((id) => id !== item.id))} />
-            <Choice label="Add a separate copy" selected={copies.includes(item.id)} onPress={() => setCopies((current) => current.includes(item.id) ? current : [...current, item.id])} />
+          <Copy heading>{item.title}</Copy><Copy muted size={14}>{item.calendarCollision ? t('m_6bc9b1c63bb2') : item.conflict ? t('m_1a3503399c91') : t('m_9e8f821a26a5')}</Copy>
+          {item.calendarCollision && <Copy muted>{t('m_380f30e3f29a')}</Copy>}
+          <Copy muted size={14}>{item.futureAlert ? t('m_f2131f6ed0be') : t('m_ac8de684100b')}</Copy>
+          {item.conflict && (busy || uncertain ? <Copy>{copies.includes(item.id) ? t('m_e9aae96f529b') : t('m_ff3222a89b5a')}</Copy> : <View accessibilityRole="radiogroup" accessibilityLabel={t('m_6c0ea235fd27', { arg0: String(item.title) })}>
+            <Choice label={t('m_ff3222a89b5a')} selected={!copies.includes(item.id)} onPress={() => setCopies((current) => current.filter((id) => id !== item.id))} />
+            <Choice label={t('m_e9aae96f529b')} selected={copies.includes(item.id)} onPress={() => setCopies((current) => current.includes(item.id) ? current : [...current, item.id])} />
           </View>)}
         </View>)}
       </Group>
-      {previewLimit < preview.items.length && <Button label="Show 25 more preview entries" variant="secondary"
+      {previewLimit < preview.items.length && <Button label={t('m_433dbdeec045')} variant="secondary"
         onPress={() => setPreviewLimit((current) => current + 25)} />}
     </>}
-    <Disclosure title="What's included?">
-      <Copy muted size={14}>A repeating reminder includes its changed occurrences and activity. Empty lists are included.</Copy>
-      <Copy muted size={14}>One-off reminders in Trash are excluded. Repeating deletion exclusions are retained.</Copy>
-      <Copy muted size={14}>Restore adds the whole backup. Existing reminders are kept unless you choose a separate copy.</Copy>
+    <Disclosure title={t('m_6b92feecd7ad')}>
+      <Copy muted size={14}>{t('m_743811479f87')}</Copy>
+      <Copy muted size={14}>{t('m_89abfb77e41f')}</Copy>
+      <Copy muted size={14}>{t('m_4948269089d8')}</Copy>
     </Disclosure>
   </Page>;
 }

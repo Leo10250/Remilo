@@ -1,3 +1,4 @@
+import { useLocale } from '../localization/react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { Animated, Platform, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { readRootSnapshot } from '../domain/navigation';
@@ -17,6 +18,8 @@ export const useScrollChrome = () => useContext(Chrome);
 
 /** Opaque content advances over the scene; only the decorative opening is transparent. */
 export function ScrollReadingPlane() {
+  'use no memo';
+  useLocale();
   const chrome = useScrollChrome(), colors = useTheme();
   if (!chrome) return null;
   const travel = chrome.value.interpolate({inputRange:[0,Math.max(1,chrome.decoration)],outputRange:[0,-chrome.decoration],extrapolate:'clamp'});

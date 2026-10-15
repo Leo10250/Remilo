@@ -175,7 +175,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     val record = publicationRecord(job.occurrenceId) ?: return false
     if (publicationFingerprint(job.occurrenceId, record, record.zoneId.ifEmpty { job.zoneId }) == job.fingerprint) return false
     db.runInTransaction {
-      dao.update(job.copy(state = "Cancelled", payload = "", message = "Unsent publication superseded by a newer local edit."))
+      dao.update(job.copy(state = "Cancelled", payload = "", message = "Unsent publication superseded by a newer local edit.").localizedMessage())
       dao.unbind(job.occurrenceId); db.calendarResources().purge(job.occurrenceId); db.calendarResources().erase(job.occurrenceId)
       managed.intent(job.occurrenceId)?.let { managed.dao.export(it.copy(state = "Pending", operationId = "", localRevision = record.revision)) }
     }
@@ -221,13 +221,13 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   }
   init {
     dao.operations().filter { it.state == "Publishing" }.forEach {
-      dao.update(it.copy(state = "Unconfirmed", message = "Publication was interrupted. Retry the same publication to confirm it."))
+      dao.update(it.copy(state = "Unconfirmed", message = "Publication was interrupted. Retry the same publication to confirm it.").localizedMessage())
     }
   }
   fun connection() = dao.connection() ?: CalendarConnection()
   fun connectionView(): Map<String, Any> = connection().let { mapOf("revision" to it.revision,
     "connected" to it.connected, "email" to it.email, "calendarId" to it.calendarId,
-    "calendarName" to it.calendarName, "message" to it.message) }
+    "calendarName" to it.calendarName, "message" to com.remilo.alarm.presentation.L10n.stored(it.messageKey, it.messageArgs, it.message)) }
   fun operation(id: String) = dao.operation(id)
   fun authorizationEmail(id: String?): String? {
     if (id == null) return null // Connect/change-account explicitly opens account selection.
@@ -267,7 +267,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     val differs = record != null && job.fingerprint.isNotEmpty() && publicationFingerprint(job.occurrenceId, record, record.zoneId.ifEmpty { job.zoneId }) != job.fingerprint
     return mapOf("operationId" to job.operationId, "occurrenceId" to job.occurrenceId,
       "calendarName" to job.calendarName, "email" to job.email, "state" to job.state,
-      "message" to job.message, "htmlLink" to job.htmlLink, "publishedAtMs" to job.publishedAtMs,
+      "message" to com.remilo.alarm.presentation.L10n.stored(job.messageKey, job.messageArgs, job.message), "htmlLink" to job.htmlLink, "publishedAtMs" to job.publishedAtMs,
       "differs" to differs, "readOnly" to (job.readOnly || record == null || record.completed || record.deleted || record.skipped))
   }
   fun connect(account: CalendarAccount, expectedRevision: Long) {
@@ -281,12 +281,12 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
       calendarName = if (old.subject == account.subject) old.calendarName else "",
       calendarZone = if (old.subject == account.subject) old.calendarZone else "",
       message = if (old.subject == account.subject && old.calendarId.isNotBlank()) "Ready to publish. Each task needs your confirmation."
-        else "Google account connected. Review Calendar setup to continue."))
+        else "Google account connected. Review Calendar setup to continue.").localizedMessage())
     managed.accessReviewed(account.subject)
   }
   fun connectionMessage(message: String, expectedRevision: Long) {
     val old = connection()
-    if (old.revision == expectedRevision) dao.connection(old.copy(message = message))
+    if (old.revision == expectedRevision) dao.connection(old.copy(message = message).localizedMessage())
   }
   fun select(operationId: String, expected: Long, subject: String, calendar: OwnedCalendar): Map<String, Any> {
     val key = org.json.JSONArray(listOf(expected, calendar.id)).toString()
@@ -296,7 +296,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     if (calendar.accessRole != "owner") throw CalendarFailure("NOT_OWNER")
     db.runInTransaction {
       dao.connection(old.copy(revision = old.revision + 1, calendarId = calendar.id,
-        calendarName = calendar.name, calendarZone = calendar.zoneId, message = "Calendar selected. Nothing was published."))
+        calendarName = calendar.name, calendarZone = calendar.zoneId, message = "Calendar selected. Nothing was published.").localizedMessage())
       db.records().receipt(CreationReceipt(operationId, "calendar", "CalendarSelect", key))
     }
     return connectionView()
@@ -313,7 +313,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
       links.accessChanged("NEEDS_ACCESS")
       managed.accessChanged("NEEDS_ACCESS")
       dao.connection(old.copy(revision = old.revision + 1, connected = false,
-        message = "Disconnected locally. Previously published events remain. Revoking Google access…"))
+        message = "Disconnected locally. Previously published events remain. Revoking Google access…").localizedMessage())
       db.records().receipt(CreationReceipt(operationId, "calendar", "CalendarDisconnect", expected.toString()))
     }
     return old
@@ -402,7 +402,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     if (!connection.connected || connection.subject != job.subject) {
       fail(id, "NEEDS_ACCESS"); return null
     }
-    val next = job.copy(state = "Publishing", message = "Confirming the captured Calendar publication…")
+    val next = job.copy(state = "Publishing", message = "Confirming the captured Calendar publication…").localizedMessage()
     dao.update(next); return next
   }
   /** Last worker check before POST; deleting/purging/disconnecting can stop an unsent write. */
@@ -419,7 +419,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     val job = dao.operation(id) ?: return
     if (job.state == "Published") return
     if (!CalendarMapper.matching(event, job.eventId) || event.optString("status") == "cancelled") {
-      dao.update(job.copy(state = "Conflict", message = "The Calendar identity conflicts or was removed in Google. No event was overwritten.")); return
+      dao.update(job.copy(state = "Conflict", message = "The Calendar identity conflicts or was removed in Google. No event was overwritten.").localizedMessage()); return
     }
     val erased = job.readOnly && job.zoneId.isBlank()
     if (!erased && managed.intent(job.occurrenceId)?.operationId == id) {
@@ -429,7 +429,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     }
     val link = if (erased) "" else event.optString("htmlLink").takeIf { it.startsWith("https://calendar.google.com/") || it.startsWith("https://www.google.com/calendar/") }.orEmpty()
     dao.update(job.copy(state = "Published", payload = "", message = "Published copy confirmed. Later edits are not synchronized.",
-      htmlLink = link, etag = if (erased) "" else event.optString("etag"), publishedAtMs = now()))
+      htmlLink = link, etag = if (erased) "" else event.optString("etag"), publishedAtMs = now()).localizedMessage())
   }
   fun publicationJobs(id: String) = db.calendarResources().jobs(id)
   fun permitResource(captured: CalendarResourceJob): CalendarResourceJob? {
@@ -483,7 +483,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
       "NETWORK", "RETRY" -> "Publication is not confirmed. Retry the same publication; its content and destination are retained."
       else -> "Calendar could not confirm this publication. Retry the same publication or review Google access."
     }
-    dao.update(job.copy(state = state, message = message))
+    dao.update(job.copy(state = state, message = message).localizedMessage())
   }
   fun removed(id: String, purge: Boolean) {
     if (purge) CalendarSyncRequests(db, now).purge(id)
@@ -505,7 +505,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
         etag = if (purge) "" else job.etag,
         state = if (cancelled) "Cancelled" else job.state,
         message = if (cancelled) "Unsent publication cancelled. No Calendar event was created."
-          else "Local reminder removed. A previously sent Calendar copy remains; recovery only checks its identity."))
+          else "Local reminder removed. A previously sent Calendar copy remains; recovery only checks its identity.").localizedMessage())
       if (cancelled && dao.binding(id)?.operationId == job.operationId) dao.unbind(id)
     }
   }

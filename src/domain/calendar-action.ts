@@ -1,3 +1,4 @@
+import { t } from '../localization';
 import type { CalendarCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarError } from './calendar';
 import { calendarCaptureRejected } from './calendar-link';
@@ -13,7 +14,7 @@ export class CalendarAction {
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private update(patch: Partial<CalendarActionState>) { this.state = { ...this.state, ...patch }; this.listeners.forEach(listener => listener()); }
   async submit(command: CalendarCommand, feedback = ''): Promise<unknown> {
-    if (this.state.busy) throw Object.assign(new Error('Calendar request already running'), { code: 'OPERATION_PENDING' });
+    if (this.state.busy) throw Object.assign(new Error(t('m_4ec31c58bd44')), { code: 'OPERATION_PENDING' });
     this.pending ??= command;
     const captured = this.pending;
     this.update({ busy: true, error: '', feedback: '' });

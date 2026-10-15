@@ -53,11 +53,17 @@ function compile(file, dependencies = {}, globals = {}) {
     }, fileName: file });
     runInNewContext(result.outputText, {
       ...globals, module, exports: module.exports, require: (name) => {
+        if (name === '../localization' || name === '../../src/localization') return localizationFixture();
+        if (name === '../localization/react') return { useLocale: () => localizationFixture().currentLanguage(), useTranslation: () => localizationFixture().createTranslator(localizationFixture().currentLanguage()), useLocalizedState: dependencies.react?.useState ?? ((initial) => [typeof initial === 'function' ? initial() : initial, () => {}]) };
         assert.ok(Object.hasOwn(dependencies, name), 'Unexpected presentation dependency: ' + name);
         return dependencies[name];
       },
     }, { filename: file });
     return module.exports;
+}
+let translations;
+function localizationFixture() {
+  return translations ??= compile('src/localization/index.ts', { './catalog.generated': compile('src/localization/catalog.generated.ts') });
 }
 function loadPresentation() {
   const generated = compile('src/ui/atmosphere.generated.ts');
@@ -165,6 +171,20 @@ test('fixture scene/brightness controls recognize all eight pairs and ignore unk
   }
   const settings = await loadPreview('?reviewScene=automatic&reviewBrightness=system').getSettings();
   assert.equal(settings.atmosphere, 'automatic'); assert.equal(settings.theme, 'system');
+});
+
+test('fixture language changes emit a confirmed snapshot and preserve authored content, clock and receipt identity', async () => {
+  const preview = loadPreview('?reviewSystemLanguages=fr,zh-Hant-TW,zh-SG&reviewClock=24');
+  assert.equal((await preview.getTimeDisplayPreferences()).resolvedLanguage, 'zh-Hans');
+  const before = await preview.getOccurrence('review'), snapshots = [];
+  const listener = preview.addListener('onTimeDisplayPreferencesChanged', value => snapshots.push(value));
+  const command = { kind: 'Settings', expectedRevision: 1, operationId: 'language-command', language: 'en' };
+  await preview.applyCommand(command); await preview.applyCommand(command);
+  assert.equal((await preview.getTimeDisplayPreferences()).resolvedLanguage, 'en');
+  assert.equal((await preview.getTimeDisplayPreferences()).uses24HourClock, true);
+  assert.equal((await preview.getSettings()).revision, 2);
+  assert.ok(snapshots.some(value => value.resolvedLanguage === 'en'));
+  assert.deepEqual(await preview.getOccurrence('review'), before); listener.remove();
 });
 
 test('review fixtures cover empty/single lists and unavailable/blocked permission queries', async () => {
@@ -281,7 +301,8 @@ test('optional presentation inherits scale and motion and preserves an explicit 
 });
 
 test('sheets restore surface foregrounds and controls when opened inside scenic headers in all eight themes', () => {
-  for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
+  for (const language of ['en', 'zh-Hans']) for (const fontScale of [1, 2]) for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
+    localizationFixture().confirmLanguage(language);
     const { theme, colors, contexts } = loadPresentation();
     const palette = colors.atmosphereColors(scene, brightness);
     const generated = compile('src/ui/atmosphere.generated.ts');
@@ -329,19 +350,26 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
       children: jsx(components.SettingRow, { label: 'Settings', icon: 'settings', description: 'App preferences', onPress: () => {} }),
       footer: jsx(components.Copy, { children: 'Footer' }),
     });
-    const header = jsx(theme.PresentationProvider, { colors: { ...palette, ink: '#FFFFFF', muted: '#FFFFFF' }, fontScale: 2, reducedMotion: true, children: content });
+    const header = jsx(theme.PresentationProvider, { colors: { ...palette, ink: '#FFFFFF', muted: '#FFFFFF' }, fontScale, reducedMotion: true, children: content });
     const nodes = collect(render(jsx(theme.FoundationStyleProvider, { foundation: { colors: palette }, children: header })));
     const text = (label) => nodes.find((node) => node.type === 'Text' && node.props.children === label);
     assert.equal(text('More').props.style.color, palette.ink, scene + '/' + brightness);
     assert.equal(text('Settings').props.style.color, palette.ink);
     assert.equal(text('App preferences').props.style.color, palette.muted);
     assert.equal(text('Footer').props.style.color, palette.ink);
-    assert.equal(text('More').props.style.fontSize, tokens.typography.appBar * 2, 'Large-text context survives the boundary.');
+    assert.equal(text('More').props.style.fontSize, tokens.typography.appBar * fontScale, 'Text scale survives the boundary.');
+    if (language === 'zh-Hans') {
+      assert.equal(text('More').props.style.lineHeight, 30 * fontScale);
+      assert.equal(text('More').props.style.fontWeight, '500');
+      assert.equal(text('Settings').props.style.lineHeight, 24 * fontScale);
+      assert.equal(text('App preferences').props.style.lineHeight, 22 * fontScale);
+    }
     assert.equal(nodes.find((node) => node.type === 'Modal').props.animationType, 'none', 'Reduced-motion context survives the boundary.');
-    const close = nodes.find((node) => node.type === 'Pressable' && node.props.accessibilityLabel === 'Close More');
+    const close = nodes.find((node) => node.type === 'Pressable' && node.props.accessibilityLabel === (language === 'zh-Hans' ? '关闭More' : 'Close More'));
     assert.equal(close.props.style({ pressed: false }).borderColor, palette.focus, 'Close uses surface focus treatment rather than scenic white.');
     assert.ok(nodes.some((node) => node.type === 'Glyph' && node.props.name.web === 'settings' && node.props.tintColor === palette.muted));
   }
+  localizationFixture().confirmLanguage('en');
 });
 
 test('ordinary reminder rows expose leading completion independently from opening and use a neutral glyph', () => {
@@ -351,7 +379,8 @@ test('ordinary reminder rows expose leading completion independently from openin
   const binding = component.parameters[0].name;
   const glyph = binding.elements.find((element) => element.name.getText(rowSource) === 'glyph');
   assert.equal(glyph?.initializer?.text, 'event');
-  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf("accessibilityLabel={'Open reminder: ' + summary}");
+  const openingKey = Object.entries(JSON.parse(read('localization/catalog.json')).messages).find(([, value]) => value.en === 'Open reminder: ')[0];
+  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf(`accessibilityLabel={t('${openingKey}') + summary}`);
   assert.ok(completionPosition >= 0 && openingPosition > completionPosition, 'The independent completion control precedes opening the reminder.');
   assert.match(body, /accessibilityRole="checkbox" aria-checked=\{item.completed\} accessibilityLabel=\{actionLabel \+ ': ' \+ summary\}/);
   assert.match(body, /accessibilityState=\{\{ checked: item.completed, disabled: busy \}\} disabled=\{busy\} onPress=\{act\}/);

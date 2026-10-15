@@ -1,3 +1,7 @@
+import { chineseTextMetrics } from '../ui/tokens';
+import { errorText, currentLanguage } from '../localization';
+import { useLocalizedState, useLocale, useTranslation } from '../localization/react';
+
 import { canCreateFromEmptyAgenda } from '../domain/empty-agenda';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useIsFocused, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -27,8 +31,12 @@ import { ScrollChromeProvider, ScrollReadingPlane, useChromeScroll, usePageChrom
 
 type Toast = { message: string; persistent?: boolean; undo?: { id: string; revision: number; operationId: string } };
 type AgendaSection = { key: string; title: string; count: number };
-export default function HomeScreen() { return <AgendaScreen destination={{ kind: 'agenda' }} />; }
+export default function HomeScreen() {
+  'use no memo';
+  useLocale(); return <AgendaScreen destination={{ kind: 'agenda' }} />; }
 export function AgendaScreen({ destination }: { destination: DestinationOrigin }) {
+  'use no memo';
+  const t = useTranslation();
   const params = useLocalSearchParams<OriginParams>(), origin = destination.kind === 'list' && !params.originRoot && !params.originListId && !params.originNoList ? { kind: 'lists' as const } : creationOrigin(params);
   const key = rootKey(destination), scoped = destination.kind === 'list';
   const colors = useTheme(), scale = useFontScaleOverride(), client = useQueryClient(), capabilities = useCapabilities();
@@ -45,7 +53,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const [filterDraft, setFilterDraft] = useState<BrowseFilters | null>(null), [collapsed, setCollapsed] = useRootState<string[]>(key + ':collapsed', []);
   const filterOpen = filterDraft !== null;
   const searchInput = useRef<TextInput>(null), searchFocusRequested = useRef(false);
-  const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useState<Toast | null>(null);
+  const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useLocalizedState<Toast | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
   const [savedScroll] = useState(()=>readRootSnapshot(key + ':scroll', 0));
@@ -95,9 +103,9 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const calendarByReminder = new Map(calendarLinks.data?.map(link => [link.occurrenceId, link]));
   const calendarFor = (item: Occurrence) => calendarByReminder.get(item.id) ?? calendarLinks.data?.find(link => !!item.seriesId && link.seriesId === item.seriesId);
   const currentList = lists.data?.find((item) => item.id === listId);
-  const listName = listId === null ? 'No list' : currentList?.name ?? '';
+  const listName = listId === null ? t('m_eacd31d849f9') : currentList?.name ?? '';
   const missingList = scoped && listId !== null && !!lists.data && !currentList;
-  const title = scoped ? listId === null ? 'No list' : listName || (missingList ? 'List removed' : 'List') : 'Remilo';
+  const title = scoped ? listId === null ? t('m_eacd31d849f9') : listName || (missingList ? t('m_99d8ddda9f1d') : t('m_6f202f54a7b2')) : 'Remilo';
   const chips = browseFilterChips('agenda', appliedFilters, lists.data, fixedListId);
   const filter = browseReminderFilter('agenda', appliedFilters, { view, search, fixedListId });
   const reminders = useInfiniteQuery({ queryKey: ['reminders', filter], enabled: nativeAvailable, initialPageParam: null as string | null,
@@ -123,20 +131,20 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const complete = (item: Occurrence) => {
     if (isGuarded()) return;
     if (notice) dismissNotice(notice.id); setToast(null); animate();
-    void action.execute({ command: { kind: 'Done', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: 'Reminder completed' });
+    void action.execute({ command: { kind: 'Done', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: t('m_1ecfa283c074') });
   };
   const undo = async (captured: NonNullable<Toast['undo']>) => {
     if (isGuarded()) return;
     try {
       const item = await engine().getOccurrence(captured.id), reversal = reopenCompleted(item, captured.revision, captured.operationId);
-      if (!reversal) { setToast({ message: item && !item.completed ? 'Reminder is already open' : 'Reminder changed; this completion can no longer be undone', persistent: !!item?.completed }); return; }
-      setToast(null); animate(); await action.execute({ command: reversal, success: 'Reminder reopened' });
-    } catch (error) { setToast({ message: error instanceof Error ? error.message : 'Could not undo. Try again.', undo: captured, persistent: true }); }
+      if (!reversal) { setToast({ message: item && !item.completed ? t('m_d0a143683c18') : t('m_6d3dc336368d'), persistent: !!item?.completed }); return; }
+      setToast(null); animate(); await action.execute({ command: reversal, success: t('m_3202cb804f79') });
+    } catch (error) { setToast({ message: errorText(error, t('m_1573dcd227e5')), undo: captured, persistent: true }); }
   };
   const deleteItem = (item: Occurrence) => {
     if (isGuarded()) return;
     if (notice) dismissNotice(notice.id); setToast(null);
-    void action.execute({ command: { kind: 'Delete', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: 'Moved to Trash' });
+    void action.execute({ command: { kind: 'Delete', occurrenceId: item.id, expectedRevision: item.revision, operationId: engine().createOperationId() }, item, success: t('m_2d65f262cc64') });
   };
   const trash = (item: Occurrence) => {
     if (isGuarded()) return;
@@ -145,8 +153,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   };
   const removeList = () => {
     if (!currentList || isGuarded()) return;
-    confirm('Remove list?', 'Reminders in “' + currentList.name + '” move to No list. Their schedules and completion stay the same.', [
-      { text: 'Cancel', style: 'cancel' }, { text: 'Remove list', style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: currentList.id, expectedRevision: currentList.revision, operationId: engine().createOperationId() }, success: 'List removed. Reminders moved to No list.' }) }]);
+    confirm(t('m_0c08198f562b'), t('remove_list_confirmation', { name: currentList.name }), [
+      { text: t('m_19766ed6ccb2'), style: 'cancel' }, { text: t('m_669f24b0f91d'), style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: currentList.id, expectedRevision: currentList.revision, operationId: engine().createOperationId() }, success: t('m_3e8157774f26') }) }]);
   };
   const commitFilters = (draft: BrowseFilters) => {
     const next = commitBrowseFilters('agenda', appliedFilters, draft, { fixedListId, guarded: isGuarded() });
@@ -163,8 +171,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const removeFilter = (field: BrowseFilterField) => commitFilters(removeBrowseFilter(appliedFilters, field));
   const resetFilters = () => commitFilters(resetBrowseFilters('agenda', fixedListId));
   const openFilters = () => { if (isGuarded()) return; searchFocusRequested.current = false; searchInput.current?.blur(); Keyboard.dismiss(); setFilterDraft({ ...appliedFilters }); };
-  const caps = capabilities.data, warning = caps ? !caps.exactAlarms ? 'On-time alarms need permission' : !caps.notifications ? 'Notifications are blocked'
-    : !caps.channelEnabled ? 'Alarm notifications are blocked' : !caps.fullScreen ? 'Lock-screen alarms are limited' : '' : '';
+  const caps = capabilities.data, warning = caps ? !caps.exactAlarms ? t('m_7289470d5860') : !caps.notifications ? t('m_8276fc8f3d9a')
+    : !caps.channelEnabled ? t('m_35a1741a1501') : !caps.fullScreen ? t('m_aaeb8e7dbd8f') : '' : '';
   const focused = useIsFocused();
   const activeToast = !focused ? null : toast ?? (notice ? { message: notice.message, persistent: notice.persistent } : null);
   const constrained = searching || filterOpen || guarded;
@@ -172,8 +180,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const onScroll=useChromeScroll(chrome,rememberScroll);
   return <SafeAreaView edges={['top','left','right']} style={{flex:1,backgroundColor:colors.background}}><ScrollChromeProvider value={chrome}><View style={{flex:1}}>
     <View pointerEvents="box-none" style={{position:'absolute',top:0,left:0,right:0,height:chrome.opening}}>
-    <AtmosphericHeader title={title} home={!scoped && !constrained} subtitle={!scoped && !constrained ? new Date(caps?.observedAtMs ?? initialNow).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) : undefined} back={scoped} onBack={back} actions={<>
-      <IconButton icon="search" label={searching ? 'Exit search' : 'Search reminders'} disabled={guarded} onPress={() => { if (isGuarded()) return; if (searching) closeSearch(); else { priorScroll.current = scrollY.current; searchFocusRequested.current = true; animate(); setSearching(true); } }} />
+    <AtmosphericHeader title={title} home={!scoped && !constrained} subtitle={!scoped && !constrained ? new Date(caps?.observedAtMs ?? initialNow).toLocaleDateString(currentLanguage(), { weekday: 'long', month: 'long', day: 'numeric' }) : undefined} back={scoped} onBack={back} actions={<>
+      <IconButton icon="search" label={searching ? t('m_1655ed829a84') : t('m_be16218d3058')} disabled={guarded} onPress={() => { if (isGuarded()) return; if (searching) closeSearch(); else { priorScroll.current = scrollY.current; searchFocusRequested.current = true; animate(); setSearching(true); } }} />
       <RootMore origin={destination} disabled={guarded} listActions={scoped && currentList ? { rename: () => setEditingList(currentList), remove: removeList } : undefined} />
     </>} />
     </View>
@@ -183,77 +191,77 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       <Animated.SectionList<Occurrence, AgendaSection> ref={list} sections={sections} keyExtractor={(item) => item.id} stickySectionHeadersEnabled contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 88, minHeight:listHeight+chrome.decoration }} keyboardShouldPersistTaps="handled"
         contentOffset={contentOffset} onScroll={onScroll} scrollEventThrottle={16} onLayout={event=>setListHeight(event.nativeEvent.layout.height)}
         ListHeaderComponent={<><View style={{height:chrome.decoration}} />    {searching && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: colors.surface }}>
-      <IconButton icon="arrow_back" label="Exit search" onPress={closeSearch} />
-      <TextInput ref={searchInput} accessibilityLabel="Search reminders and notes" value={search} onChangeText={(value) => { if (!isGuarded()) setSearch(value); }} placeholder="Search reminders" editable={!guarded}
-        placeholderTextColor={colors.muted} style={{ flex: 1, minHeight: 48, padding: 8, color: colors.ink, fontSize: 16 * scale }} />
-      {!!search && <IconButton icon="close" label="Clear query" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
+      <IconButton icon="arrow_back" label={t('m_1655ed829a84')} onPress={closeSearch} />
+      <TextInput ref={searchInput} accessibilityLabel={t('m_608e5f5e0f40')} value={search} onChangeText={(value) => { if (!isGuarded()) setSearch(value); }} placeholder={t('m_be16218d3058')} editable={!guarded}
+        placeholderTextColor={colors.muted} style={{ flex: 1, minHeight: 48, padding: 8, color: colors.ink, fontSize: 16 * scale, ...chineseTextMetrics(16, scale) }} />
+      {!!search && <IconButton icon="close" label={t('m_48a1982ccf79')} disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
     </View>}
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}>
       <View accessibilityRole="tablist" style={{ flexGrow: 1, flexBasis: 190, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      {([{ value: 'agenda', label: 'All' }, { value: 'today', label: 'Today' }, { value: 'upcoming', label: 'Upcoming' }] as const).map((tab) =>
+      {([{ value: 'agenda', label: t('m_a52ace420f21') }, { value: 'today', label: t('m_2b065c7c9ce4') }, { value: 'upcoming', label: t('m_5f1a2542e4e4') }] as const).map((tab) =>
         <Pressable key={tab.value} accessibilityRole="tab" aria-selected={view === tab.value} accessibilityState={{ selected: view === tab.value, disabled: guarded }} disabled={guarded} onPress={() => { if (!isGuarded()) setView(tab.value); }}
           style={{ flexGrow: 1, minHeight: 48, paddingHorizontal: 10, paddingVertical: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 24, backgroundColor: view === tab.value ? colors.accent : colors.soft }}>
-          <Text style={{ color: view === tab.value ? colors.accentInk : colors.ink, fontSize: 14 * scale, lineHeight: 14 * scale * 1.4, fontWeight: view === tab.value ? '600' : '400' }}>{tab.label}</Text></Pressable>)}</View>
+          <Text style={{ color: view === tab.value ? colors.accentInk : colors.ink, fontSize: 14 * scale, lineHeight: 14 * scale * 1.4, fontWeight: view === tab.value ? '600' : '400', ...chineseTextMetrics(14, scale, view === tab.value ? '600' : '400') }}>{tab.label}</Text></Pressable>)}</View>
       <BrowseFilterButton count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />
     </View>
     {!!chips.length && <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}><BrowseFilterChips chips={chips} disabled={guarded} onRemove={removeFilter} onReset={resetFilters} /></View>}
-    {!!search && !searching && <SettingRow label={'Search: ' + search} value="Clear search" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
-    {missingList && <View style={{ padding: 16, gap: 8 }}><Copy>This list was removed. Its reminders are in No list.</Copy><Button label="Open No list" disabled={guarded}
+    {!!search && !searching && <SettingRow label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
+    {missingList && <View style={{ padding: 16, gap: 8 }}><Copy>{t('m_1e930ff715ad')}</Copy><Button label={t('m_8055353d4b41')} disabled={guarded}
       onPress={() => router.replace({ pathname: '/lists/[id]', params: { id: 'none', noList: 'true', ...originParams(origin), ...retainedOriginParams(params) } })} /></View>}
-    {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + '. Open Settings'} disabled={guarded}
+    {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + t('m_cd7dac8a7f6b')} disabled={guarded}
       onPress={() => router.push({ pathname: '/settings', params: originParams(destination) })} style={{ paddingHorizontal: 16, paddingVertical: 8, minHeight: 48 }}>
       <Status label={warning} tone={!caps?.exactAlarms || !caps?.notifications || !caps?.channelEnabled ? 'danger' : 'warning'} /></Pressable>}
     {!scoped && !!calendarSummary.data?.reviewCount && <View style={{ marginBottom: 12 }}><CalendarAttentionCard count={calendarSummary.data.reviewCount} tone={calendarSummary.data.attention?.tone} disabled={guarded}
       onPress={() => router.push({ pathname: '/calendar-reviews', params: originParams(destination) })} /></View>}
     {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={'Mark all as done (' + caps.activeSessionActions.members.length + ')'} disabled={guarded}
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={t('m_e0b2d5621800') + caps.activeSessionActions.members.length + ')'} disabled={guarded}
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
           kind: 'DoneAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })), operationId: engine().createOperationId(),
-        }, success: captured.members.length + ' ringing reminders completed.' }); }} /></View>
-      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="snooze" label={'Snooze all · ' + caps.activeSessionActions.snoozeMinutes + ' min'} variant="secondary" disabled={guarded}
+        }, success: captured.members.length + t('m_a6167e44d2cf') }); }} /></View>
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="snooze" label={t('m_1b57fa0b0d9e') + caps.activeSessionActions.snoozeMinutes + t('m_2e75737a6b58')} variant="secondary" disabled={guarded}
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
           kind: 'SnoozeAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })),
           snoozeMinutes: captured.snoozeMinutes, operationId: engine().createOperationId(),
-        }, success: captured.members.length + ' reminders snoozed. Still unfinished.' }); }} /></View>
+        }, success: captured.members.length + t('m_b020b25f9113') }); }} /></View>
     </View>}
-    {!!reminders.error && !!items.length && <View><ActionFeedback message="Could not refresh. Showing previously loaded information." tone="danger" /><Button label="Retry" variant="secondary" onPress={() => void reminders.refetch()} /></View>}
+    {!!reminders.error && !!items.length && <View><ActionFeedback message={t('m_3d982a3fc277')} tone="danger" /><Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void reminders.refetch()} /></View>}
 </>}
-        refreshing={reminders.isRefetching} onRefresh={() => { void engine().reconcile().then(() => client.invalidateQueries()).catch((error: Error) => setToast({ message: error.message, persistent: true })); }}
+        refreshing={reminders.isRefetching} onRefresh={() => { void engine().reconcile().then(() => client.invalidateQueries()).catch((error: Error) => setToast({ message: errorText(error, t('m_1573dcd227e5')), persistent: true })); }}
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
         renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={() => complete(item)} onMore={() => { if (!isGuarded()) setSelected(item); }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
-          emptyMessage={!nativeAvailable ? 'Use the Android app to manage reminders.' : search || chips.length ? 'No reminders match these filters.' : view === 'today' ? 'No reminders today.' : view === 'upcoming' ? 'No reminders from tomorrow onward.' : scoped ? 'No reminders in this list yet.' : 'No reminders yet.'} onRetry={() => void reminders.refetch()} />
-          {emptyCreate && <Button label="Create a reminder" disabled={guarded} onPress={createReminder} />}
-          {!!search && <Button label="Clear search" variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
-          {!!chips.length && <Button label="Reset filters" variant="secondary" disabled={guarded} onPress={resetFilters} />}</View>}
-        ListFooterComponent={reminders.isFetchingNextPage ? <ActionFeedback loading message="Loading more…" /> : reminders.isFetchNextPageError ? <Button label="Retry loading more" variant="secondary" onPress={() => void reminders.fetchNextPage()} /> : null} />
-      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel="Add reminder" accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
+          emptyMessage={!nativeAvailable ? t('m_2ff2d9a672c5') : search || chips.length ? t('m_75bf15d2c28d') : view === 'today' ? t('m_fc926e22caaa') : view === 'upcoming' ? t('m_e22b01420e5f') : scoped ? t('m_284f8a392982') : t('m_057d33f49512')} onRetry={() => void reminders.refetch()} />
+          {emptyCreate && <Button label={t('m_1ee0df0ecf27')} disabled={guarded} onPress={createReminder} />}
+          {!!search && <Button label={t('m_3b7ea51793e9')} variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
+          {!!chips.length && <Button label={t('m_10afa98480f2')} variant="secondary" disabled={guarded} onPress={resetFilters} />}</View>}
+        ListFooterComponent={reminders.isFetchingNextPage ? <ActionFeedback loading message={t('m_964e5f88d036')} /> : reminders.isFetchNextPageError ? <Button label={t('m_6c13d1198cd5')} variant="secondary" onPress={() => void reminders.fetchNextPage()} /> : null} />
+      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel={t('m_cd566803bf39')} accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
         onPress={createReminder}
         style={({ pressed }) => ({ position: 'absolute', right: 16, bottom: 16, width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, elevation: 3, opacity: pressed ? 0.8 : 1 })}>
         <Icon name="add" color={colors.accentInk} size={28} /></Pressable>}
     </View>
     {(action.guarded || action.feedback?.tone === 'danger') && <CommandRecovery action={action} />}
-    {activeToast && !action.guarded && <Snackbar key={toast ? 'local' : notice?.id} message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? 'Undo' : !toast ? notice?.action?.label : undefined}
+    {activeToast && !action.guarded && <Snackbar key={toast ? 'local' : notice?.id} message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? t('m_a8283ade3185') : !toast ? notice?.action?.label : undefined}
       onAction={() => { if (toast?.undo) void undo(toast.undo); else if (notice?.action) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
       onClose={() => { if (toast) setToast(null); else if (notice) dismissNotice(notice.id); }} />}
     {!scoped && <RootNavigation destination="agenda" disabled={guarded} isGuarded={isGuarded} />}
-    <BrowseFilterSheet title="Filter reminders" kind="agenda" draft={filterDraft} disabled={guarded} lists={lists.data ?? []} listsLoading={lists.isLoading && nativeAvailable}
+    <BrowseFilterSheet title={t('m_76d11d556a30')} kind="agenda" draft={filterDraft} disabled={guarded} lists={lists.data ?? []} listsLoading={lists.isLoading && nativeAvailable}
       listsError={lists.error} onRetryLists={() => void lists.refetch()} fixedListId={fixedListId} fixedListName={listName}
       onDraftChange={next => { if (!isGuarded()) setFilterDraft(next); }} onCancel={() => setFilterDraft(null)}
       onApply={() => { if (filterDraft && commitFilters(filterDraft)) setFilterDraft(null); }} />
-    <Sheet title={selected?.title ?? 'Reminder actions'} visible={!!selected} onClose={() => setSelected(null)}>
-      <SettingRow label="Edit reminder" icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
-      {!!selected && canAdjustAlert(selected) && <SettingRow label="Postpone" icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
-      <SettingRow label="Mark as done" icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
-      <SettingRow label="Move to Trash" icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
+    <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => setSelected(null)}>
+      <SettingRow label={t('m_1f1353b055df')} icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
+      {!!selected && canAdjustAlert(selected) && <SettingRow label={t('m_63fb48d94634')} icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
+      <SettingRow label={t('m_62aa4b87cc52')} icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
+      <SettingRow label={t('m_9adcdf33dce1')} icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
       if (!trashItem || guarded) return;
       const captured = trashItem; setTrashItem(null); deleteItem(captured);
     }} />
     {editingList && <ListNameSheet key={editingList.id} visible list={editingList} onGuardChange={setListGuarded} onClose={() => setEditingList(null)}
-      onSaved={() => { setEditingList(null); setToast({ message: 'List renamed.' }); }} />}
+      onSaved={() => { setEditingList(null); setToast({ message: t('m_94586ca1f8c1') }); }} />}
   </WindowGeometryRegion></View></View></ScrollChromeProvider></SafeAreaView>;
 }

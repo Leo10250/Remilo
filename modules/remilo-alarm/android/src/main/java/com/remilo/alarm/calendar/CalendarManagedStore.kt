@@ -30,7 +30,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       "pendingChangeCount" to states.count { it.status == "UpdatePending" || it.dirtyRevision > 0 },
       "recoveryCount" to dao.candidates().count { it.state == "Imported" && it.subject == saved.subject && it.calendarId == saved.calendarId &&
         runCatching { JSONObject(it.policySnapshot).optBoolean("initialRecovery") && CalendarLinkStore(db, now, recoverInterrupted = false).record(it.localId)?.mode == "None" }.getOrDefault(false) },
-      "operationId" to saved.operationId, "message" to saved.message,
+      "operationId" to saved.operationId, "message" to com.remilo.alarm.presentation.L10n.stored(saved.messageKey, saved.messageArgs, saved.message),
       "progress" to CalendarStatusStore(db, now).progress(), "problem" to CalendarStatusStore(db, now).problem(),
       "candidateCount" to dao.candidates().count { it.subject == saved.subject && it.calendarId == saved.calendarId && it.state in setOf("Pending", "Review", "Captured", "Held") },
       "pendingExportCount" to dao.exports().count { it.subject == saved.subject && it.calendarId == saved.calendarId && it.state in setOf("Pending", "Captured") },
@@ -189,7 +189,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     val reviewedItems = JSONArray((0 until items.length()).map(items::getJSONObject).filter { it.optString("itemId") in selectedItems })
     val connected = connection(); val saved = binding(); val next = saved.copy(revision = saved.revision + 1,
       authEpoch = saved.authEpoch + 1, subject = connected.subject, mode = "Disabled", phase = "PreparingCalendar", operationId = op,
-      initialMode = if (create) payload.getJSONObject("policy").getString("importMode") else payload.getString("initialMode"), message = "Calendar setup is captured.")
+      initialMode = if (create) payload.getJSONObject("policy").getString("importMode") else payload.getString("initialMode"), message = "Calendar setup is captured.").localizedMessage()
     val proposed = policyFromJson(payload.getJSONObject("policy")).copy(revision = policy().revision + 1)
     val calendars = payload.getJSONArray("calendarCandidates")
     val calendar = (0 until calendars.length()).map(calendars::getJSONObject).firstOrNull { it.optString("id") == selected }
@@ -211,13 +211,13 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   private fun fencePreviousScope(previous: CalendarManagedBinding) {
     db.links().links().filter { it.subject == previous.subject && it.calendarId == previous.calendarId && !it.erased && it.state != "Detached" }.forEach { link ->
       db.links().put(link.copy(revision = link.revision + 1, state = "Suspended", requiresReview = true,
-        message = "The managed Calendar source changed. Fresh review is required."))
+        message = "The managed Calendar source changed. Fresh review is required.").localizedMessage())
       db.sync().state(link.occurrenceId)?.let { state -> db.sync().put(state.copy(activationRevision = state.activationRevision + 1,
         status = "Paused", pauseReason = "ReviewRequired")) }
       db.links().operations().filter { it.occurrenceId == link.occurrenceId && it.state !in CalendarLinkStore.terminal }.forEach { operation ->
         db.links().update(operation.copy(patch = if (operation.remoteAttempted) operation.patch else "",
           draft = if (operation.remoteAttempted) operation.draft else "", state = if (operation.remoteAttempted) operation.state else "Cancelled",
-          message = "The managed source changed. Only a previously sent outcome may be checked."))
+          message = "The managed source changed. Only a previously sent outcome may be checked.").localizedMessage())
       }
     }
     dao.exports().filter { it.subject == previous.subject && it.calendarId == previous.calendarId && it.state !in setOf("Confirmed", "Cancelled") }
@@ -252,8 +252,8 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       (if (job.kind == "Discovery") saved.revision != job.bindingRevision else saved.operationId != job.operationId) || saved.authEpoch != job.authEpoch ||
       job.phase in setOf("Fenced", "Cancelled", "Confirmed")) throw CalendarFailure("STALE_AUTHORIZATION")
     val phase = if (job.kind == "Discovery") "Reviewing" else if (job.attempted) "CreationUnconfirmed" else "PreparingCalendar"
-    val next = job.copy(connectionRevision = newConnectionRevision, phase = phase, message = "")
-    db.runInTransaction { dao.update(next); if (job.kind != "Discovery") dao.binding(saved.copy(phase = phase, message = "")) }
+    val next = job.copy(connectionRevision = newConnectionRevision, phase = phase, message = "").localizedMessage()
+    db.runInTransaction { dao.update(next); if (job.kind != "Discovery") dao.binding(saved.copy(phase = phase, message = "").localizedMessage()) }
     return next
   }
   fun acknowledgeCalendar(id: String, calendar: OwnedCalendar): CalendarManagedSetupOperation {
@@ -279,7 +279,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       dao.binding(saved.copy(mode = "Enabled", phase = "InitialImport", calendarId = job.resultCalendarId,
         calendarName = job.calendarName, calendarZone = job.calendarZone, bootstrapGeneration = generation,
         initialMode = if (job.kind == "Create") JSONObject(job.policy).getString("importMode") else saved.initialMode,
-        initialRecoveryComplete = false, message = "Importing ongoing and upcoming events."))
+        initialRecoveryComplete = false, message = "Importing ongoing and upcoming events.").localizedMessage())
       dao.update(job.copy(phase = "Confirmed")); dao.resolve("setup")
     }
     return view()
@@ -293,9 +293,9 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     db.runInTransaction {
       val retry = code in setOf("NETWORK", "RETRY", "NOT_AVAILABLE", "BUDGET", "CREATION_UNCONFIRMED")
       dao.update(job.copy(phase = phase, message = code, failures = if (retry) job.failures + 1 else job.failures,
-        retryAtMs = if (retry) now() + minOf(3_600_000L, 60_000L * (1L shl minOf(job.failures, 6))) else 0))
+        retryAtMs = if (retry) now() + minOf(3_600_000L, 60_000L * (1L shl minOf(job.failures, 6))) else 0).localizedMessage())
       if (job.kind != "Discovery") {
-        dao.binding(binding().copy(phase = phase, message = "Calendar setup needs review.", failedAtMs = now()))
+        dao.binding(binding().copy(phase = phase, message = "Calendar setup needs review.", failedAtMs = now()).localizedMessage())
         if (phase != "PreparingCalendar") issue("Setup", id, code, false)
       }
     }
@@ -303,7 +303,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   fun initialComplete(generation: Long) {
     val saved = binding()
     if (!active(saved) || generation != saved.bootstrapGeneration) throw CalendarFailure("STALE_AUTHORIZATION")
-    dao.binding(saved.copy(phase = "Ready", initialRecoveryComplete = true, lastObservedAtMs = now(), message = ""))
+    dao.binding(saved.copy(phase = "Ready", initialRecoveryComplete = true, lastObservedAtMs = now(), message = "").localizedMessage())
   }
   fun pause(command: Map<String, Any?>): Map<String, Any?> = changeMode(command, "Paused")
   fun disable(command: Map<String, Any?>): Map<String, Any?> = changeMode(command, "Disabled")
@@ -313,7 +313,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     if (number(command, "expectedRevision") != saved.revision) throw CalendarFailure("STALE_PREVIEW")
     return db.runInTransaction<Map<String, Any?>> {
       val next = saved.copy(revision = saved.revision + 1, authEpoch = saved.authEpoch + 1, mode = mode,
-        message = if (mode == "Paused") "Automatic Calendar work is paused." else "Managed Calendar sync is disabled.")
+        message = if (mode == "Paused") "Automatic Calendar work is paused." else "Managed Calendar sync is disabled.").localizedMessage()
       dao.binding(next); fenceHeld(next, mode); dao.clearPreviews()
       acknowledge(command, mapOf("captured" to true, "revision" to next.revision, "mode" to mode))
     }
@@ -349,7 +349,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     if (saved.calendarId.isBlank()) throw CalendarFailure("INELIGIBLE")
     return db.runInTransaction<Map<String, Any?>> {
       val next = saved.copy(revision = saved.revision + 1, authEpoch = saved.authEpoch + 1, mode = "Enabled",
-        phase = if (saved.initialRecoveryComplete) "Ready" else "InitialImport", message = "")
+        phase = if (saved.initialRecoveryComplete) "Ready" else "InitialImport", message = "").localizedMessage()
       dao.binding(next)
       val selected = (command["selectedItemIds"] as? List<*>)?.map(Any?::toString)?.toSet() ?: emptySet()
       val items = payload.optJSONArray("items") ?: JSONArray()
@@ -414,7 +414,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     if (saved.subject.isEmpty()) return
     val next = saved.copy(revision = saved.revision + 1, authEpoch = saved.authEpoch + 1,
       phase = when (reason) { "NOT_OWNER", "OWNERSHIP_UNKNOWN" -> "OwnershipUnknown"
-        "NOT_FOUND", "REMOTE_UNAVAILABLE", "REMOTE_DELETED" -> "CalendarUnavailable"; else -> "AccessRequired" }, message = "Calendar access needs review.")
+        "NOT_FOUND", "REMOTE_UNAVAILABLE", "REMOTE_DELETED" -> "CalendarUnavailable"; else -> "AccessRequired" }, message = "Calendar access needs review.").localizedMessage()
     db.runInTransaction {
       dao.binding(next); dao.clearPreviews(); fenceHeld(next, "Paused")
       issue("Setup", saved.operationId.ifEmpty { "connection" }, reason, false)
@@ -424,7 +424,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   fun accessReviewed(subject: String) {
     val saved = binding()
     if (saved.subject == subject && saved.calendarId.isNotBlank() && saved.phase == "AccessRequired")
-      dao.binding(saved.copy(phase = "Reviewing", message = "Review current Calendar work before resuming."))
+      dao.binding(saved.copy(phase = "Reviewing", message = "Review current Calendar work before resuming.").localizedMessage())
   }
   fun cachePage(subject: String, calendarId: String, generation: Long, events: JSONArray) {
     if (!permitsCalendar(subject, calendarId)) throw CalendarFailure("STALE_AUTHORIZATION")

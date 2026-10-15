@@ -58,6 +58,9 @@ implementation units; approval of a synthetic image does not complete one.
 
 ## Page contracts
 
+The owner's [15 October language contract](localization.md) adds English/Simplified
+Chinese selection and Chinese typography across app and native presentation.
+
 | Contract | Reference / review status |
 |---|---|
 | [Agenda and navigation](screens/agenda.md) | R3 homepage accepted; exceptional states still need review. |

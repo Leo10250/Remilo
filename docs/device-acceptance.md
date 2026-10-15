@@ -1,5 +1,23 @@
 # Offline Android acceptance run
 
+## Language follow-up — 15 October 2026
+
+Pending on an identified signed bundled APK. No installation is implied by host checks.
+
+- Check fresh Simplified Chinese/English/unsupported-language installations and an
+  upgrade that retains English, including upgrade followed by reboot before unlock.
+- Switch Language after Appearance through System default, English and 简体中文;
+  repeat through Android's app-language settings, reopen the app and reboot.
+- Preserve open drafts, caret, Chinese IME composition, selection, scroll, sheets and
+  exact uncertain retries while switching language. Check both 12/24-hour settings.
+- Review Agenda, Settings, editor, Details, Lists/Repeats, Completed/Trash, Activity,
+  Calendar and backups at eight atmosphere/brightness pairs and 100–200% text.
+- With JS absent, check localized ringing/grouped controls, notifications and generic
+  locked/pre-unlock content. Switch during ringing: no playback/deadline reset and
+  unchanged captured Done/Snooze membership. Check TalkBack, wrapping and targets.
+- Confirm authored/imported content and all saved schedules are unchanged, and
+  notification-channel identities/settings survive localized name updates.
+
 Run this checklist when convenient. No further interactive phone testing is needed
 while implementation continues. Report results together; a failed step does not
 mean you must finish the rest. Use only test reminders, and retain your normal data.

@@ -14,7 +14,9 @@ data class CalendarLink(@PrimaryKey val occurrenceId: String, val remoteKey: Str
   val observedAtMs: Long? = null, val lastCheckAttemptAtMs: Long? = null,
   @ColumnInfo(defaultValue = "''") val lastCheckErrorCode: String = "",
   val remoteDiffers: Boolean? = null,
-  @ColumnInfo(defaultValue = "0") val requiresReview: Boolean = false)
+  @ColumnInfo(defaultValue = "0") val requiresReview: Boolean = false,
+  @ColumnInfo(defaultValue = "''") val messageKey: String = com.remilo.alarm.presentation.L10n.calendarDescriptor(message)?.key.orEmpty(),
+  @ColumnInfo(defaultValue = "'{}'") val messageArgs: String = com.remilo.alarm.presentation.L10n.argsJson(com.remilo.alarm.presentation.L10n.calendarDescriptor(message)))
 
 /** Captured on the engine worker before I/O; observations cannot cross lifecycle fences. */
 data class CalendarObservationGuard(val id: String, val remoteKey: String, val linkRevision: Long,
@@ -30,7 +32,9 @@ data class CalendarLinkOperation(@PrimaryKey val operationId: String, val occurr
   val localApplied: Boolean = false, val remoteAttempted: Boolean = false,
   val localStatus: String = "", val message: String = "Confirmed request saved. Continue this operation.",
   val erased: Boolean = false, val htmlLink: String = "",
-  @ColumnInfo(defaultValue = "0") val mainConfirmed: Boolean = false)
+  @ColumnInfo(defaultValue = "0") val mainConfirmed: Boolean = false,
+  @ColumnInfo(defaultValue = "''") val messageKey: String = com.remilo.alarm.presentation.L10n.calendarDescriptor(message)?.key.orEmpty(),
+  @ColumnInfo(defaultValue = "'{}'") val messageArgs: String = com.remilo.alarm.presentation.L10n.argsJson(com.remilo.alarm.presentation.L10n.calendarDescriptor(message)))
 
 @Dao interface CalendarLinkDao {
   @Query("SELECT * FROM calendar_links") fun links(): List<CalendarLink>

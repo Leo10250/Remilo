@@ -13,7 +13,9 @@ data class CalendarManagedBinding(@PrimaryKey val id: String = "google", val rev
   val calendarZone: String = "", val mode: String = "Disabled", val phase: String = "NotConfigured",
   val bootstrapGeneration: Long = 0, val initialMode: String = "None", val initialRecoveryComplete: Boolean = false,
   val lastObservedAtMs: Long? = null, val operationId: String = "", val message: String = "",
-  val attemptedAtMs: Long? = null, val failedAtMs: Long? = null)
+  val attemptedAtMs: Long? = null, val failedAtMs: Long? = null,
+  @ColumnInfo(defaultValue = "''") val messageKey: String = com.remilo.alarm.presentation.L10n.calendarDescriptor(message)?.key.orEmpty(),
+  @ColumnInfo(defaultValue = "'{}'") val messageArgs: String = com.remilo.alarm.presentation.L10n.argsJson(com.remilo.alarm.presentation.L10n.calendarDescriptor(message)))
 
 @Entity(tableName = "calendar_managed_policy")
 data class CalendarManagedPolicy(@PrimaryKey val id: String = "google", val revision: Long = 1,
@@ -30,9 +32,10 @@ data class CalendarManagedSetupOperation(@PrimaryKey val operationId: String, va
   val subject: String, val connectionRevision: Long, val bindingRevision: Long, val authEpoch: Long,
   val policy: String, val calendarId: String, val calendarName: String, val calendarZone: String, val marker: String,
   val phase: String = "Reviewing", val discoveryCursor: String = "", val candidates: String = "[]",
-  val discoveryComplete: Boolean = false, val attempted: Boolean = false, val resultCalendarId: String = "",
-  val message: String = "", val createdAtMs: Long, val reviewedItems: String = "[]",
-  val retryAtMs: Long = 0, val failures: Int = 0)
+  val discoveryComplete: Boolean = false, val attempted: Boolean = false, val resultCalendarId: String = "", val message: String = "", val createdAtMs: Long, val reviewedItems: String = "[]",
+  val retryAtMs: Long = 0, val failures: Int = 0,
+  @ColumnInfo(defaultValue = "''") val messageKey: String = com.remilo.alarm.presentation.L10n.calendarDescriptor(message)?.key.orEmpty(),
+  @ColumnInfo(defaultValue = "'{}'") val messageArgs: String = com.remilo.alarm.presentation.L10n.argsJson(com.remilo.alarm.presentation.L10n.calendarDescriptor(message)))
 
 @Entity(tableName = "calendar_managed_candidates", indices = [Index(value = ["remoteKey"], unique = true)])
 data class CalendarManagedCandidate(@PrimaryKey val candidateId: String, val remoteKey: String, val subject: String,

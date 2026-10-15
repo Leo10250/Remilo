@@ -1,3 +1,4 @@
+import { t } from '../localization';
 import type { CalendarFields, CalendarSelections, CalendarLinkedOperation } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function resolvedCalendarFields(local: CalendarFields, remote: CalendarFields, selections: CalendarSelections): CalendarFields | null {
@@ -15,11 +16,11 @@ export function calendarCaptureRejected(error: unknown) {
     'TITLE_REQUIRED', 'ELAPSED_ALERT', 'IMPORT_LIMIT', 'RESOLUTION_REQUIRED', 'CONTENT_LIMIT', 'NOT_FOUND'].some(value => code.includes(value));
 }
 export function unsupportedCalendarReason(code: string) {
-  return ({ RECURRING_EVENT: 'This recurrence is not supported.', UNSUPPORTED_RECURRENCE: 'This repeat rule cannot be represented safely in Remilo.',
-    INSTANCE_REQUIRES_MASTER: 'Import the repeating event rather than a separate instance.', MEETING_EVENT: 'Meetings with attendees are not supported yet.',
-    MULTI_DAY_EVENT: 'Only single-day all-day events are supported.', CONTENT_LIMIT: 'Shorten the title to 200 characters and notes to 10,000 in Google Calendar.',
-    INVALID_ZONE: 'A supported named time zone is required.', INCOMPATIBLE_ZONES: 'Start and end need the same named time zone.',
-    LOCKED_EVENT: 'This event is locked or a private copy.', SPECIAL_EVENT: 'This Calendar event type is not supported.',
-    UNSPECIFIED_END: 'An explicit event end is required.', REMOTE_REMOVED: 'This event was removed or cancelled.',
-    INVALID_EVENT: 'The event dates or fields cannot be imported.' } as Record<string, string>)[code] || 'This event cannot be imported.';
+  return ({ RECURRING_EVENT: t('m_af1bbb9c8c3b'), UNSUPPORTED_RECURRENCE: t('m_c10a19f77db8'),
+    INSTANCE_REQUIRES_MASTER: t('m_a68455fa37bf'), MEETING_EVENT: t('m_8a88e671f5be'),
+    MULTI_DAY_EVENT: t('m_345751491c0e'), CONTENT_LIMIT: t('m_5a5e6bf8bf65'),
+    INVALID_ZONE: t('m_2e62416bce80'), INCOMPATIBLE_ZONES: t('m_e6d6e34ce558'),
+    LOCKED_EVENT: t('m_bcaf61a5d77e'), SPECIAL_EVENT: t('m_5daa6399c5e1'),
+    UNSPECIFIED_END: t('m_c2b2584aed5e'), REMOTE_REMOVED: t('m_38ed5b242f0e'),
+    INVALID_EVENT: t('m_c3ba25ec96bb') } as Record<string, string>)[code] || t('m_701dcf7d3a6b');
 }

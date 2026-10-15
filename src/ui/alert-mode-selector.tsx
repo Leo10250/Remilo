@@ -1,21 +1,25 @@
+import { chineseTextMetrics, lineHeightFor, shape, space, typography } from './tokens';
+import { useTranslation } from '../localization/react';
+import { t, live } from '../localization';
 import { Fragment, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { ReminderDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { Copy, Icon, type IconName } from './components';
 import { useFontScaleOverride, useFoundationStyle, useTheme } from './theme';
-import { shape, space, typography } from './tokens';
 
 type AlertMode = NonNullable<ReminderDraft['mode']>;
-const choices: { value: AlertMode; label: string; icon: IconName; description: string }[] = [
-  { value: 'Alarm', label: 'Alarm', icon: 'alarm', description: 'Rings with sound.' },
-  { value: 'Notification', label: 'Notification', icon: 'notifications', description: 'Shows an Android notification.' },
-  { value: 'None', label: 'No alert', icon: 'alarm_off', description: 'Saves the reminder without sound or a notification.' },
-];
+const choices: { value: AlertMode; label: string; icon: IconName; description: string }[] = live(() => ([
+  { value: 'Alarm', label: t('m_f3b679573579'), icon: 'alarm', description: t('m_f2ea6c52e05d') },
+  { value: 'Notification', label: t('m_7d31b8331399'), icon: 'notifications', description: t('m_8028ab0fb62f') },
+  { value: 'None', label: t('m_d1af410eb4d0'), icon: 'alarm_off', description: t('m_960748eb41fa') },
+]));
 
 /** All three modes stay visible; choosing one changes only the guarded editor draft. */
 export function AlertModeSelector({ value, onChange, disabled = false }: {
   value: AlertMode; onChange: (value: AlertMode) => void; disabled?: boolean;
 }) {
+  'use no memo';
+  const t = useTranslation();
   const colors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
   const { fontScale, width } = useWindowDimensions();
   const [groupWidth, setGroupWidth] = useState<number | null>(null);
@@ -25,8 +29,8 @@ export function AlertModeSelector({ value, onChange, disabled = false }: {
   const [focused, setFocused] = useState<AlertMode | null>(null);
   const disabledInk = foundation?.colors.disabledInk ?? colors.muted;
   return <View style={{ padding: space.gutter, gap: space.sm }}>
-    <Copy muted size={typography.supporting}>Alert</Copy>
-    <View accessibilityRole="radiogroup" accessibilityLabel="Alert" onLayout={(event) => setGroupWidth(event.nativeEvent.layout.width)}
+    <Copy muted size={typography.supporting}>{t('m_44a57b22e03d')}</Copy>
+    <View accessibilityRole="radiogroup" accessibilityLabel={t('m_44a57b22e03d')} onLayout={(event) => setGroupWidth(event.nativeEvent.layout.width)}
       style={{ flexDirection: stacked ? 'column' : 'row',
       borderRadius: shape.field, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
       {choices.map((choice, index) => {
@@ -52,8 +56,8 @@ export function AlertModeSelector({ value, onChange, disabled = false }: {
             backgroundColor: disabled ? foundation?.colors.disabledSurface ?? colors.soft : pressed || selected ? colors.soft : colors.surface })}>
           <Icon name={choice.icon} size={24} color={ink} />
           <Text style={{ flex: 1, flexShrink: 1, color: disabled ? disabledInk : colors.ink,
-            fontSize: typography.body * scale, lineHeight: typography.body * scale * 1.4,
-            fontWeight: selected ? '600' : '400' }}>{choice.label}</Text>
+            fontSize: typography.body * scale, lineHeight: lineHeightFor(typography.body, 1.4) * scale,
+            fontWeight: selected ? '600' : '400', ...chineseTextMetrics(typography.body, scale, selected ? '600' : '400') }}>{choice.label}</Text>
           {radio}
         </Pressable>{index < choices.length - 1 && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
           style={{ width: stacked ? undefined : 1, height: stacked ? 1 : undefined, backgroundColor: colors.border }} />}</Fragment>;

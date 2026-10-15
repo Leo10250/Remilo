@@ -13,7 +13,9 @@ const pairs = Object.entries(source.pairs).map(([key,value]) => {
   roles.headerInk = source.header[key].ink; roles.headerScrim = source.header[key].scrim;
   return `      "${key}" -> Roles(${names.map(name=>`0xFF${roles[name].slice(1)}L`).join(', ')}, ${source.header[key].scrimAlpha}f, "${value.native}", ${value.heroFocal[0]}f, ${value.heroFocal[1]}f, ${value.compactFocal[0]}f, ${value.compactFocal[1]}f)`;
 }).join('\n');
-const constants = Object.entries(source.geometry).map(([name,value])=>`  const val ${name} = ${value}`);
+const constants = Object.entries(source.localeTypography?.['zh-Hans'] ?? {}).flatMap(([name,value]) =>
+  Object.entries(value).map(([metric, amount]) => `  const val chinese${name[0].toUpperCase()+name.slice(1)}${metric[0].toUpperCase()+metric.slice(1)} = ${amount}`));
+constants.push(...Object.entries(source.geometry).map(([name,value])=>`  const val ${name} = ${value}`));
 for (const [group, prefix] of [['typography','type'],['spacing','space'],['shape','shape']]) {
   constants.push(...Object.entries(source[group]).map(([name,value])=>`  const val ${prefix}${name[0].toUpperCase()+name.slice(1)} = ${value}`));
 }

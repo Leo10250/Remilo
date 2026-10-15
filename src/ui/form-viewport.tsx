@@ -1,3 +1,4 @@
+import { useLocale } from '../localization/react';
 import { requireNativeView } from 'expo';
 import { useFocusEffect } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
@@ -13,6 +14,8 @@ const FormFocus = createContext<(top: number, bottom: number) => void>(() => {})
 export const useRevealInput = () => useContext(FormFocus);
 /** Shared usable region for forms and custom virtualized pages such as search. */
 export function WindowGeometryRegion({children,onGeometry,fill=true}:PropsWithChildren<{onGeometry?:(data:Geometry)=>void;fill?:boolean}>) {
+  'use no memo';
+  useLocale();
   const insets=useSafeAreaInsets(),[geometry,setGeometry]=useState({imeVisible:false,overlap:0});
   return <View collapsable={false} style={{...(fill?{flex:1}:{flexShrink:1}),paddingBottom:geometry.imeVisible?geometry.overlap:insets.bottom}}>
     {NativeGeometry && <NativeGeometry pointerEvents="none" style={StyleSheet.absoluteFill} onGeometry={event=>{
@@ -25,6 +28,8 @@ export function WindowGeometryRegion({children,onGeometry,fill=true}:PropsWithCh
 export function FormViewport({ children, footer, scrollKey, scrollReady = true, scrollResetToken, fill = true, contentStyle }: PropsWithChildren<{
   footer?: ReactNode; scrollKey?: string; scrollReady?: boolean; scrollResetToken?: number; fill?: boolean; contentStyle?: ViewProps['style'];
 }>) {
+  'use no memo';
+  useLocale();
   const scroll = useRef<ScrollView>(null), offset = useRef(0), content = useRef(0), viewport = useRef({top:0,height:0});
   const [initialOffset] = useState(()=>scrollKey?readRootSnapshot(scrollKey+':scroll',0):0);
   const targetOffset = useRef(initialOffset), active = useRef(false);

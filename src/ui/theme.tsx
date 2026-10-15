@@ -1,3 +1,4 @@
+import { useLocale } from '../localization/react';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import { AppState, useColorScheme } from 'react-native';
 import Alarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
@@ -24,12 +25,18 @@ const PresentationState = createContext<'default' | 'pressed' | 'focused'>('defa
 export const useFoundationStyle = () => useContext(FoundationStyle);
 export const usePresentationState = () => useContext(PresentationState);
 export function FoundationStyleProvider({ foundation, children }: PropsWithChildren<{ foundation: Foundation }>) {
+  'use no memo';
+  useLocale();
   return <FoundationStyle.Provider value={foundation}><PresentationProvider colors={foundation.colors}>{children}</PresentationProvider></FoundationStyle.Provider>;
 }
 export function PresentationStateProvider({ state, children }: PropsWithChildren<{ state: 'default' | 'pressed' | 'focused' }>) {
+  'use no memo';
+  useLocale();
   return <PresentationState.Provider value={state}>{children}</PresentationState.Provider>;
 }
 export function ThemeProvider({ children }: PropsWithChildren) {
+  'use no memo';
+  useLocale();
   const system = useColorScheme();
   const settings = useSettings().data;
   const selection = normalizeAtmosphere(settings?.atmosphere), setting = settings?.theme ?? 'system';
@@ -62,6 +69,8 @@ export const useTheme = () => useContext(Theme);
 export const useFontScaleOverride = () => useContext(FontScaleOverride);
 export const useReducedMotionOverride = () => useContext(ReducedMotionOverride);
 export function PresentationProvider({ colors, fontScale, reducedMotion, children }: PropsWithChildren<{ colors: Colors; fontScale?: number; reducedMotion?: boolean }>) {
+  'use no memo';
+  useLocale();
   const inheritedScale = useFontScaleOverride(), inheritedMotion = useReducedMotionOverride();
   return <Theme.Provider value={colors}><FontScaleOverride.Provider value={fontScale ?? inheritedScale}><ReducedMotionOverride.Provider value={reducedMotion ?? inheritedMotion}>{children}</ReducedMotionOverride.Provider></FontScaleOverride.Provider></Theme.Provider>;
 }

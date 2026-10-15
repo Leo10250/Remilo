@@ -11,7 +11,7 @@ import java.util.Locale
 /** New choices use ICU's canonical system zones with authoritative java.time offsets.
  * Stored aliases remain valid inputs to CivilTime and are never rewritten by this read. */
 internal object TimeZoneCatalog {
-  fun list(atMs: Long, locale: Locale = Locale.getDefault()): List<Map<String, Any>> {
+  fun list(atMs: Long, locale: Locale = Locale.forLanguageTag(com.remilo.alarm.system.PresentationLanguage.language)): List<Map<String, Any>> {
     val names = TimeZoneNames.getInstance(locale)
     val displayLocale = ULocale.forLocale(locale)
     val instant = Instant.ofEpochMilli(atMs)

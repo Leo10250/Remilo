@@ -1,14 +1,15 @@
+import { t } from '../localization';
 import type { CalendarReminderDisposition, CalendarReviewIssue, ManagedCalendarCommand, ManagedCalendarPreview, ManagedCalendarReviewItem, ManagedCalendarState } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarReviewReason } from './calendar-presentation';
 
 export function managedCalendarStatus(state: ManagedCalendarState) {
-  const phase = ({ NotConfigured: 'Not configured', Reviewing: 'Setup needs review', PreparingCalendar: 'Preparing Remilo calendar', InitialImport: 'Importing Calendar reminders',
-    AccessRequired: 'Google access needed', CalendarUnavailable: 'Remilo calendar unavailable', OwnershipUnknown: 'Calendar ownership needs review', CreationUnconfirmed: 'Calendar creation not confirmed' } as Record<string, string>)[state.phase];
-  return phase || (state.mode === 'Paused' ? 'Automatic sync paused' : state.mode === 'Disabled' ? 'Automatic sync disabled' : 'Remilo calendar · Automatic sync');
+  const phase = ({ NotConfigured: t('m_dd1841d29502'), Reviewing: t('m_30416545a561'), PreparingCalendar: t('m_4e56c840938f'), InitialImport: t('m_77656cdbb15e'),
+    AccessRequired: t('m_2bac957cacfe'), CalendarUnavailable: t('m_de37d8d70a8f'), OwnershipUnknown: t('m_f529881b469c'), CreationUnconfirmed: t('m_c007740d3853') } as Record<string, string>)[state.phase];
+  return phase || (state.mode === 'Paused' ? t('m_bf958954b105') : state.mode === 'Disabled' ? t('m_1f7e4ac3283d') : t('m_4993ca20a7c1'));
 }
 export function calendarDispositionLabel(value: CalendarReminderDisposition) {
-  return ({ LocalOnly: 'Local only', Held: 'Not linked · Waiting to publish · Sync paused', WaitingToPublish: 'Not linked · Waiting to publish', Publishing: 'Google publication pending', Linked: 'Linked · Automatic sync',
-    Ineligible: 'Calendar review needed', Unconfigured: 'Local only · Calendar not configured' } as const)[value.state];
+  return ({ LocalOnly: t('m_c905013aab29'), Held: t('m_ad247578e4d3'), WaitingToPublish: t('m_ec0bf2251136'), Publishing: t('m_6dc57b056357'), Linked: t('m_5c30a92fdc1b'),
+    Ineligible: t('m_8ef0b712ea7e'), Unconfigured: t('m_a23789f19a90') } as const)[value.state];
 }
 export function managedCalendarCapture(preview: ManagedCalendarPreview, operationId: string, selectedItemIds: string[]): Extract<ManagedCalendarCommand, { selectedItemIds: string[] }> {
   const kind = ({ Setup: 'ConfirmManagedCalendarSetup', Policy: 'ApplyManagedCalendarPolicy', Resume: 'ResumeManagedCalendar', RecoveredAlerts: 'EnableRecoveredCalendarAlerts' } as const)[preview.kind];
@@ -21,25 +22,25 @@ export function calendarReviewRoute(issue: CalendarReviewIssue) {
   return { pathname: '/calendar-manage' as const, params: { id: issue.occurrenceId } };
 }
 export function calendarReviewIssueText(issue: CalendarReviewIssue) {
-  if (issue.kind === 'Candidate') return (['ReviewRequired', 'IdentityReview'].includes(issue.reason) ? 'Check the existing Calendar copy' : 'No Remilo alert yet') + (issue.calendarName ? ' · ' + issue.calendarName : '');
-  if (issue.kind === 'Setup') return 'Calendar setup';
-  return issue.affectedScopes?.length ? 'Affected occurrences: ' + issue.affectedScopes.join(', ') : 'Linked reminder';
+  if (issue.kind === 'Candidate') return (['ReviewRequired', 'IdentityReview'].includes(issue.reason) ? t('m_b95ffe008981') : t('m_b89457145742')) + (issue.calendarName ? ' · ' + issue.calendarName : '');
+  if (issue.kind === 'Setup') return t('m_a342c7f38799');
+  return issue.affectedScopes?.length ? t('m_37460427b837') + issue.affectedScopes.join(', ') : t('m_10208d7687ad');
 }
 export function calendarReviewIssueReason(issue: CalendarReviewIssue) {
   if (issue.kind === 'Candidate') {
-    if (issue.reason === 'ElapsedAlert') return 'Choose a future alert or No alert before importing.';
-    if (issue.reason === 'Unsupported') return 'This event is not supported for automatic import.';
-    if (issue.reason === 'ReviewRequired' || issue.reason === 'IdentityReview') return 'Review the source identity before importing or linking a copy.';
-    return 'Review this Google event before creating a Remilo reminder.';
+    if (issue.reason === 'ElapsedAlert') return t('m_abc43a19ee76');
+    if (issue.reason === 'Unsupported') return t('m_100e567db39d');
+    if (issue.reason === 'ReviewRequired' || issue.reason === 'IdentityReview') return t('m_7432f17dcc34');
+    return t('m_3e32d1d5e9be');
   }
   if (issue.kind === 'Setup') {
-    if (['UnconfirmedWrite', 'CreationUnconfirmed', 'CREATION_UNCONFIRMED'].includes(issue.reason)) return 'Calendar creation has not been confirmed. Inspect the original request before creating another calendar.';
-    if (['OwnershipUnknown', 'OWNERSHIP_UNKNOWN'].includes(issue.reason)) return 'Calendar ownership could not be verified. Refresh access before enabling sync.';
+    if (['UnconfirmedWrite', 'CreationUnconfirmed', 'CREATION_UNCONFIRMED'].includes(issue.reason)) return t('m_9475b4627062');
+    if (['OwnershipUnknown', 'OWNERSHIP_UNKNOWN'].includes(issue.reason)) return t('m_ed69948c4fc6');
   }
   return calendarReviewReason(issue.reason);
 }
 export function managedCalendarItemReason(item: Pick<ManagedCalendarReviewItem, 'kind' | 'reason'>) {
-  if (item.kind === 'Import' && item.reason === 'ElapsedAlert') return 'No Remilo alert yet. Choose a future alert or No alert before importing.';
-  if (item.kind === 'RecoveredAlert' && item.reason === 'ElapsedAlert') return 'This recovered reminder still has No alert. Review a future target before enabling an alarm.';
+  if (item.kind === 'Import' && item.reason === 'ElapsedAlert') return t('m_85fe33518840');
+  if (item.kind === 'RecoveredAlert' && item.reason === 'ElapsedAlert') return t('m_686652a7555d');
   return calendarReviewReason(item.reason);
 }

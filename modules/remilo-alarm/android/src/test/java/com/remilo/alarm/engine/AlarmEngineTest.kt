@@ -1390,6 +1390,49 @@ class AlarmEngineTest {
       try { assertTrue(db.records().pending().isEmpty()) } finally { db.close() }
     }
   }
+  @Test fun languageChangePreservesRingingTargetsActionsAndPortableContent() {
+    val reminder = id(create("language-fixture"))
+    now += 60_000; fire(reminder)
+    val session = activeSession(); deliveryNotification(); engine.audioStarted(session, 9_000L)
+    val before = snapshot(session)
+    val rows = protectedRows(); val registrations = os.registered.size
+    val backup = request { engine.exportBackup() }
+    val lifetime = request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().session(session) } finally { db.close() }
+    }
+    val revision = (request { engine.settings() } as Map<*, *>)["revision"]
+    val result = request { engine.apply(mapOf("kind" to "Settings", "expectedRevision" to revision,
+      "operationId" to "switch-language", "language" to "zh-Hans")) } as Map<*, *>
+    assertEquals("Applied", result["status"])
+    val after = snapshot(session)
+    assertEquals("zh-Hans", after.language)
+    assertEquals(before.copy(language = after.language, presentationRevision = after.presentationRevision), after)
+    assertEquals(rows, protectedRows()); assertEquals(registrations, os.registered.size)
+    assertEquals(backup, request { engine.exportBackup() })
+    request {
+      val db = OperationalDatabase.open(context)
+      try { assertEquals(lifetime, db.records().session(session)) } finally { db.close() }
+    }
+    assertEquals("Private title", after.members.single().second)
+    assertEquals("Applied", action(reminder, "Stop", rows.single().generation, "captured-language-done")["status"])
+  }
+  @Test fun localeServiceFailureDoesNotBlockAnExistingAlarmBeforeUnlock() {
+    val reminder = id(create("locale-failure-fixture"))
+    request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().language(LanguageRecord(preference = "en", pendingProjection = true)) } finally { db.close() }
+    }
+    engine.close()
+    context.getSystemService(android.app.LocaleManager::class.java).applicationLocales = android.os.LocaleList.getEmptyLocaleList()
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    engine = AlarmEngine(context, os, { now }, { 10_000L }, beforeLanguageProjection = { throw IllegalStateException("injected") })
+    now += 60_000; fire(reminder)
+    assertEquals("Alerting", protectedRows().single().state)
+    assertEquals("Reminder", snapshot(activeSession()).members.single().second)
+    val notification = deliveryNotification().second
+    assertFalse(notification.extras.toString().contains("Private title"))
+  }
   private class FakeRegistrar : AlarmRegistrar {
     var fail = false
     var allowed = true

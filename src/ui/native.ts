@@ -1,3 +1,4 @@
+import { t, ownedMessage, errorText, type MessageKey } from '../localization';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Alarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
 import type { Command, CommandResult } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -5,15 +6,14 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { Preferences } from '../domain/preferences';
 
 export function engine() {
-  if (!Alarm) throw new Error('Install the Android build to use reminders on this device.');
+  if (!Alarm) throw new Error(t('m_c9da6a4a8999'));
   return Alarm;
 }
 export class CommandError extends Error {
   field?: string;
   code?: string;
   constructor(result: CommandResult) {
-    super(result.errorMessage ?? (result.errorCode?.startsWith('STALE')
-      ? 'This reminder changed. Refresh it and try again.' : 'The action could not be applied. Refresh and try again.'));
+    super(result.errorMessageKey ? ownedMessage({ key: result.errorMessageKey as MessageKey, args: result.errorMessageArgs }) : errorText({ code: result.errorCode, message: result.errorMessage }, t('m_064837cfb680')));
     this.field = result.errorField;
     this.code = result.errorCode;
   }
@@ -32,7 +32,7 @@ export function useSettings() {
   const query = useQuery({ queryKey: ['settings'], queryFn: () => engine().getSettings(), enabled: !!Alarm });
   const state = useSyncExternalStore(preferences.subscribe, preferences.snapshot, preferences.snapshot);
   useEffect(() => { if (query.data) preferences.prime(query.data); }, [query.data]);
-  return { ...query, data: state.data ?? query.data, saving: state.saving, saveError: state.error, preferenceFields: state.fields ?? [] };
+  return { ...query, data: state.data ?? query.data, saving: state.saving, saveError: state.error ? ownedMessage(state.error) : undefined, preferenceFields: state.fields ?? [] };
 }
 export const preferences = new Preferences({
   read: () => engine().getSettings(),

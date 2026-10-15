@@ -12,7 +12,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
   private val sync get() = CalendarSyncStore(db, now, this)
   private val previews = linkedMapOf<String, Pair<Long, CalendarLinkPreview>>()
   init { if (recoverInterrupted) dao.operations().filter { it.state == "Sending" }.forEach {
-    dao.update(it.copy(state = "Unconfirmed", message = "Interrupted. Retry the same operation to check its saved outcome."))
+    dao.update(it.copy(state = "Unconfirmed", message = "Interrupted. Retry the same operation to check its saved outcome.").localizedMessage())
   } }
   fun connection() = db.calendar().connection() ?: CalendarConnection()
   fun link(id: String) = dao.link(id)
@@ -219,7 +219,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
   private fun view(link: CalendarLink, current: CalendarConnection): Map<String, Any?> {
     val record = record(link.occurrenceId)
     return mapOf("occurrenceId" to link.occurrenceId, "revision" to link.revision, "calendarName" to link.calendarName,
-      "state" to link.state, "checkedAtMs" to link.checkedAtMs, "message" to link.message,
+      "state" to link.state, "checkedAtMs" to link.checkedAtMs, "message" to com.remilo.alarm.presentation.L10n.stored(link.messageKey, link.messageArgs, link.message),
       "accountEmail" to link.accountEmail, "availability" to link.availability, "availabilityReason" to link.availabilityReason,
       "observedAtMs" to link.observedAtMs, "lastCheckAttemptAtMs" to link.lastCheckAttemptAtMs,
       "lastCheckErrorCode" to link.lastCheckErrorCode, "remoteDiffers" to link.remoteDiffers, "requiresReview" to link.requiresReview,
@@ -247,7 +247,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
   private fun view(job: CalendarLinkOperation, current: CalendarConnection): Map<String, Any?> = mapOf("operationId" to job.operationId,
     "occurrenceId" to job.occurrenceId, "kind" to job.kind, "calendarName" to job.calendarName,
     "title" to if (job.erased) "" else (record(job.occurrenceId)?.title ?: job.draft.takeIf(String::isNotBlank)?.let { JSONObject(it).optString("title") }.orEmpty()),
-    "state" to job.state, "message" to if (job.state == "Failed") (if (job.localApplied) "Local changes saved. " else "Local change not applied. ") + "The Calendar request could not be completed. Review again." else job.message, "localApplied" to job.localApplied,
+    "state" to job.state, "message" to if (job.state == "Failed") com.remilo.alarm.presentation.L10n.text(if (job.localApplied) "Local changes saved. The Calendar request could not be completed. Review again." else "Local change not applied. The Calendar request could not be completed. Review again.") else com.remilo.alarm.presentation.L10n.stored(job.messageKey, job.messageArgs, job.message), "localApplied" to job.localApplied,
     "recoveryMode" to when {
       job.erased -> "None"
       job.remoteAttempted && (job.patch.isBlank() || record(job.occurrenceId)?.let { it.completed || it.deleted || it.skipped } == true) && job.state !in terminal -> "ConfirmOutcome"
@@ -425,7 +425,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       p.connectionRevision, p.etag, p.remote, desired.toString(), draft.toString(), patch.toString(), suppress, htmlLink = p.htmlLink)
     db.runInTransaction {
       if (resolvingUnknown) unresolved.forEach { dao.update(it.copy(state = "Cancelled", patch = "", draft = "",
-        message = "A fresh confirmed review superseded this update. No further writes are permitted.")) }
+        message = "A fresh confirmed review superseded this update. No further writes are permitted.").localizedMessage()) }
       dao.insert(job)
       captureResources(job, options)
       sync.capture(job, automaticSync, kind == "AutomaticCalendarTransfer")
@@ -595,7 +595,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       availability = "Available", observedAtMs = now(), lastCheckAttemptAtMs = now(),
       remoteDiffers = old?.baseline?.takeIf(String::isNotBlank)?.let { !CalendarLinkMapper.equal(JSONObject(job.remote), JSONObject(it)) } ?: false,
       requiresReview = old?.requiresReview ?: false))
-    dao.update(job.copy(localApplied = true, localStatus = "Pending", state = "Waiting", message = "Local change committed; scheduling outcome pending."))
+    dao.update(job.copy(localApplied = true, localStatus = "Pending", state = "Waiting", message = "Local change committed; scheduling outcome pending.").localizedMessage())
     CalendarManagedStore(db, now).finishCandidate(id)
   }
   fun localStatus(id: String, status: String) { operation(id)?.let { dao.update(it.copy(localStatus = status)) } }
@@ -632,14 +632,14 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (event.optString("id") != job.eventId) { fail(id, "FOREIGN_IDENTITY"); return }
     val fields = agreementTarget(job)
     db.runInTransaction {
-      dao.update(job.copy(state = "Confirmed", message = "Local changes confirmed. Google outcome confirmed.", remote = "", desired = "", draft = "", patch = ""))
+      dao.update(job.copy(state = "Confirmed", message = "Local changes confirmed. Google outcome confirmed.", remote = "", desired = "", draft = "", patch = "").localizedMessage())
       // A sent acknowledgement is truthful even after local removal; it cannot reactivate the link.
       val active = record(job.occurrenceId)?.let { !it.deleted && !it.completed && !it.skipped } == true
       if (old.state != "Detached" && active && job.patch.isNotBlank()) dao.put(old.copy(revision = old.revision + 1, baseline = fields.toString(), etag = event.optString("etag"),
         state = "Linked", availability = "Available", availabilityReason = "", requiresReview = false, remoteDiffers = false,
         observedAtMs = now(), lastCheckAttemptAtMs = now(), lastCheckErrorCode = "",
         checkedAtMs = now(), message = "Confirmed. Check for changes when needed.", htmlLink = event.optString("htmlLink")
-          .takeIf { it.startsWith("https://calendar.google.com/") || it.startsWith("https://www.google.com/calendar/") }.orEmpty()))
+          .takeIf { it.startsWith("https://calendar.google.com/") || it.startsWith("https://www.google.com/calendar/") }.orEmpty()).localizedMessage())
       sync.confirmed(job, fields, event.optString("updated"))
     }
   }
@@ -662,7 +662,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
         "Imported; Google reminder change unconfirmed. Retry the same operation."
         else "Google outcome unconfirmed. Retry the same operation."
       else -> "Request could not be completed. Correct the issue and review again."
-    })
+    }).localizedMessage()
     dao.update(failed)
     sync.failed(failed, code, background)
   }
@@ -704,7 +704,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
         remoteDiffers = fields?.let { old.baseline.takeIf(String::isNotBlank)?.let { baseline -> !CalendarLinkMapper.equal(it, JSONObject(baseline)) } },
         requiresReview = old.requiresReview || suspended, revision = old.revision + if (fence) 1 else 0,
         state = if (old.state == "Detached") "Detached" else if (old.requiresReview || suspended) "Suspended" else "Linked",
-        message = if (suspended) "Calendar updates suspended. Your Remilo reminder is unchanged." else "Checked. Changes require review."))
+        message = if (suspended) "Calendar updates suspended. Your Remilo reminder is unchanged." else "Checked. Changes require review.").localizedMessage())
       if (suspended && old.state != "Detached") fenceOperations(old.occurrenceId, "Calendar event unavailable. No further writes from this operation.")
       if (suspended && old.state != "Detached") sync.issue(old.occurrenceId, reason, background, "Paused")
     }
@@ -712,7 +712,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
   }
   private fun fenceOperations(id: String, message: String) {
     dao.operations().filter { it.occurrenceId == id && it.state !in terminal }.forEach {
-      dao.update(it.copy(state = if (it.remoteAttempted) it.state else "Cancelled", patch = "", draft = "", message = message))
+      dao.update(it.copy(state = if (it.remoteAttempted) it.state else "Cancelled", patch = "", draft = "", message = message).localizedMessage())
     }
   }
   fun observedFailure(id: String, code: String, guard: CalendarObservationGuard? = null, background: Boolean = false): Map<String, Any?>? {
@@ -723,7 +723,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (safe == "REMOTE_DELETED") return saveObservation(old, "Deleted", safe, background = background)
     dao.put(old.copy(lastCheckAttemptAtMs = now(), checkedAtMs = now(), lastCheckErrorCode = safe,
       state = if (old.state == "Detached") "Detached" else if (safe in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) "NeedsAccess" else old.state,
-      message = "The latest check could not finish. Your Remilo reminder is unchanged."))
+      message = "The latest check could not finish. Your Remilo reminder is unchanged.").localizedMessage())
     return view(link(id)!!)
   }
   fun unlink(command: Map<String, Any?>): Map<String, Any?> {
@@ -739,10 +739,10 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     if (old.revision != expected) throw CalendarFailure("STALE_PREVIEW")
     db.runInTransaction {
       if (old.erased) throw CalendarFailure("INELIGIBLE")
-      dao.put(old.copy(revision = old.revision + 1, state = "Detached", message = "Unlinked. Your reminder is kept; Google Calendar was not changed."))
+      dao.put(old.copy(revision = old.revision + 1, state = "Detached", message = "Unlinked. Your reminder is kept; Google Calendar was not changed.").localizedMessage())
       dao.operations().filter { it.occurrenceId == id && it.state !in terminal }.forEach {
         dao.update(it.copy(state = if (it.remoteAttempted) it.state else "Cancelled", patch = "", draft = "",
-          message = if (it.remoteAttempted) "Unlinked. Retry only checks the previously sent outcome; no further writes." else "Unsent changes cancelled by unlink."))
+          message = if (it.remoteAttempted) "Unlinked. Retry only checks the previously sent outcome; no further writes." else "Unsent changes cancelled by unlink.").localizedMessage())
       }
       db.records().receipt(CreationReceipt(op, id, "CalendarUnlink", key))
       sync.fenced(id, false, "Unlinked")
@@ -778,13 +778,13 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
       availabilityReason = if (purge) "" else it.availabilityReason, observedAtMs = if (purge) null else it.observedAtMs,
       lastCheckAttemptAtMs = if (purge) null else it.lastCheckAttemptAtMs, lastCheckErrorCode = if (purge) "" else it.lastCheckErrorCode,
       checkedAtMs = if (purge) null else it.checkedAtMs, remoteDiffers = if (purge) null else it.remoteDiffers, requiresReview = true,
-      erased = purge || it.erased, message = "Local reminder removed. Google Calendar was not changed.")) }
+      erased = purge || it.erased, message = "Local reminder removed. Google Calendar was not changed.").localizedMessage()) }
     dao.operations().filter { it.occurrenceId == id }.forEach {
       dao.update(it.copy(erased = purge || it.erased, remote = if (purge) "" else it.remote,
         desired = if (purge) "" else it.desired, draft = "", patch = "",
         calendarName = if (purge) "" else it.calendarName, htmlLink = if (purge) "" else it.htmlLink,
         state = if (!it.remoteAttempted && it.state !in terminal) "Cancelled" else it.state,
-        message = "Local reminder removed. No further Calendar writes."))
+        message = "Local reminder removed. No further Calendar writes.").localizedMessage())
     }
   }
   fun terminal(id: String) {
@@ -816,7 +816,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
   }
   fun accessChanged(reason: String) {
     dao.operations().filter { it.state !in terminal && !it.remoteAttempted && !it.localApplied && sync.state(it.occurrenceId).mode == "Pending" }.forEach {
-      dao.update(it.copy(state = "Cancelled", patch = "", draft = "", message = "Access changed before activation. Review the event again."))
+      dao.update(it.copy(state = "Cancelled", patch = "", draft = "", message = "Access changed before activation. Review the event again.").localizedMessage())
       sync.fenced(it.occurrenceId, false, "AccessRequired")
     }
     dao.links().filter { !it.erased && it.state != "Detached" }.forEach { old ->

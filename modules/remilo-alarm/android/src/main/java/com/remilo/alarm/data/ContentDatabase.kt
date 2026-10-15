@@ -54,7 +54,8 @@ data class SettingsRecord(@PrimaryKey val id: String = "app", val revision: Long
   val tomorrowAfternoon: Int = 840, val tomorrowEvening: Int = 1020,
   val sound: String = "remilo", val vibration: Boolean = true,
   val theme: String = "system", val lastOperationId: String = "",
-  @ColumnInfo(defaultValue = "'automatic'") val atmosphere: String = "automatic")
+  @ColumnInfo(defaultValue = "'automatic'") val atmosphere: String = "automatic",
+  @ColumnInfo(defaultValue = "'en'") val language: String = "system")
 @Entity(tableName = "history")
 data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: String,
   val kind: String, val occurredAtMs: Long, val generation: Long,
@@ -102,7 +103,7 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   CalendarManagedPolicy::class, CalendarManagedPreview::class, CalendarManagedSetupOperation::class,
   CalendarManagedCandidate::class, CalendarManagedCache::class, CalendarManagedExport::class,
   CalendarManagedDisposition::class, CalendarManagedSuppression::class, CalendarManagedIssue::class,
-  CalendarManagedReceipt::class], version = 12, exportSchema = true)
+  CalendarManagedReceipt::class], version = 13, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun calendar(): CalendarDao
@@ -112,10 +113,25 @@ abstract class ContentDatabase : RoomDatabase() {
   abstract fun managedCalendar(): CalendarManagedDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
       .addCallback(object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
       }).build()
+    val MIGRATION_12_13 = object : Migration(12, 13) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
+        for (table in listOf("calendar_connection", "calendar_operations", "calendar_links", "calendar_link_operations", "calendar_managed_binding", "calendar_managed_operations")) {
+          db.execSQL("ALTER TABLE $table ADD COLUMN messageKey TEXT NOT NULL DEFAULT ''")
+          db.execSQL("ALTER TABLE $table ADD COLUMN messageArgs TEXT NOT NULL DEFAULT '{}'")
+          db.query("SELECT rowid, message FROM $table").use { cursor ->
+            while (cursor.moveToNext()) {
+              val message = com.remilo.alarm.presentation.L10n.calendarDescriptor(cursor.getString(1).orEmpty())
+              if (message != null) db.execSQL("UPDATE $table SET messageKey = ?, messageArgs = ? WHERE rowid = ?", arrayOf(message.key, com.remilo.alarm.presentation.L10n.argsJson(message), cursor.getLong(0)))
+            }
+          }
+        }
+      }
+    }
     val MIGRATION_11_12 = object : Migration(11, 12) {
       override fun migrate(db: SupportSQLiteDatabase) { CalendarManagedSchema.create(db) }
     }

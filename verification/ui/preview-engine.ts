@@ -3,11 +3,13 @@ import type { AppSettings, CalendarCreationDisposition, Command, CommandResult, 
   ListRecord, RecurrenceDraft, RepeatFamily, ResolvedReminderDraft, SchedulePreview, Series, SoundPreviewSnapshot, TimeConversion, TimeConversionInput, TimeZoneOption } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
+import { resolveLanguage } from '../../src/localization';
 import { previewCalendar } from './preview-calendar';
 
 const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
-  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light', atmosphere: 'automatic' };
+  tomorrowEvening: 1020, sound: 'remilo', vibration: true, theme: 'light', atmosphere: 'automatic', language: 'system' };
+if (review.get('reviewLanguage') === 'zh-Hans' || review.get('reviewLanguage') === 'en') settings.language = review.get('reviewLanguage') as 'en' | 'zh-Hans';
 const reviewScene = review.get('reviewScene'), reviewBrightness = review.get('reviewBrightness');
 let capabilityReads = 0;
 if (reviewScene === 'automatic' || reviewScene === 'sunrise' || reviewScene === 'sky' || reviewScene === 'evening' || reviewScene === 'night') settings.atmosphere = reviewScene;
@@ -119,7 +121,12 @@ const queryLists = () => {
     overdueCount: items.filter((item) => item.listId === list.id && !item.completed && !item.deleted && !item.skipped && overdueReference(item) < now).length,
   })).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 };
-const changed = () => listeners.forEach((fn) => fn());
+const changed = () => { listeners.forEach((fn) => fn()); timeListeners.forEach(fn => fn(timePreferences())); };
+const timeListeners = new Set<(value: import('../../modules/remilo-alarm/src/RemiloAlarm.types').TimeDisplayPreferences) => void>();
+const timePreferences = (): import('../../modules/remilo-alarm/src/RemiloAlarm.types').TimeDisplayPreferences => {
+  const resolvedLanguage = settings.language === 'system' ? resolveLanguage((review.get('reviewSystemLanguages') ?? 'en-US').split(',')) : settings.language;
+  return { uses24HourClock: review.get('reviewClock') === '24', localeTag: review.get('reviewLocale') ?? (resolvedLanguage === 'zh-Hans' ? 'zh-Hans' : 'en-US'), languagePreference: settings.language, resolvedLanguage };
+};
 
 /** Intl approximates native civil conversion solely to make the web form interactive. */
 function convert(input: TimeConversionInput): TimeConversion {
@@ -418,9 +425,9 @@ onCalendarCreation = calendarBridge.captureCalendarCreation;
 const preview = {
   ...calendarBridge,
   createOperationId: () => 'preview-operation-' + nextId(),
-  getTimeDisplayPreferences: async () => ({ uses24HourClock: review.get('reviewClock') === '24', localeTag: review.get('reviewLocale') ?? 'en-US' }),
+  getTimeDisplayPreferences: async () => timePreferences(),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
-    if (event === 'onTimeDisplayPreferencesChanged') return { remove: () => {} };
+    if (event === 'onTimeDisplayPreferencesChanged') { const callback = fn as (value: import('../../modules/remilo-alarm/src/RemiloAlarm.types').TimeDisplayPreferences) => void; timeListeners.add(callback); return { remove: () => { timeListeners.delete(callback); } }; }
     if (event === 'onSoundPreviewState') { const callback = fn as (snapshot: SoundPreviewSnapshot) => void; soundListeners.add(callback); return { remove: () => { soundListeners.delete(callback); } }; }
     const callback = fn as () => void; listeners.add(callback); return { remove: () => { listeners.delete(callback); } };
   },

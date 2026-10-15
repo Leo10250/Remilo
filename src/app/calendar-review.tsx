@@ -1,3 +1,6 @@
+import { useLocalizedState, useTranslation } from '../localization/react';
+import { t as currentText } from '../localization';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
@@ -11,6 +14,7 @@ import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, 
 import { useCalendarAction } from '../ui/calendar-sync';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
 import { calendarImportIndependence } from '../domain/calendar-presentation';
+import { modeLabel } from '../domain/presentation';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { engine, nativeAvailable } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
@@ -19,6 +23,8 @@ import { useAppearanceConfirmation } from '../ui/confirmation';
 import { notify } from '../ui/feedback';
 
 export default function CalendarReview() {
+  'use no memo';
+  const t = useTranslation();
   const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<OriginParams & { id?: string; calendarId?: string; eventId?: string; automatic?: string; candidateId?: string; candidateRevision?: string; managedHistory?: string }>(), origin = retainedOriginParams(params);
   const imported = !params.id, client = useQueryClient(), confirm = useAppearanceConfirmation();
@@ -26,7 +32,7 @@ export default function CalendarReview() {
   const [preview, setPreview] = useState<CalendarLinkPreview | null>(null), [choices, setChoices] = useState<CalendarImportChoices>(params.managedHistory === 'true' ? { mode: 'None' } : {});
   const adopting = imported && !!params.candidateId && !!preview?.local;
   const [selections, setSelections] = useState<CalendarSelections>({ title: null, notes: null, schedule: null });
-  const [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false), [uncertain, setUncertain] = useState(false), [error, setError] = useState('');
+  const [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false), [uncertain, setUncertain] = useState(false), [error, setError] = useLocalizedState('');
   const [capturing, setCapturing] = useState(false), [candidateRevision, setCandidateRevision] = useState<number | null>(() => params.candidateRevision ? Number(params.candidateRevision) : null);
   const [sourceUnavailable, setSourceUnavailable] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -42,7 +48,7 @@ export default function CalendarReview() {
   const enable = !link || link.state === 'Detached';
   const activating = params.automatic === 'true';
   useAppearanceHold(busy || uncertain);
-  usePreventRemove(capturing || uncertain, () => confirm('Calendar request not confirmed', 'Wait for this request or retry the same request before leaving.'));
+  usePreventRemove(capturing || uncertain, () => confirm(t('m_12dd26f54ada'), t('m_b6cae41bec3a')));
   const load = useCallback(async () => {
     if (running.current || captured.current) return; running.current = true; setBusy(true); setError('');
     const ticket = ++readTicket.current;
@@ -50,13 +56,13 @@ export default function CalendarReview() {
       const activation = activating ? await engine().previewCalendarActivation([params.id!]) : null;
       const next = activation ? activation.items[0]?.preview : params.candidateId ? await engine().previewManagedCalendarCandidate(params.candidateId, choices) : imported ? await engine().previewCalendarImport({ calendarId: params.calendarId!, eventId: params.eventId! }, choices) :
         enable ? await engine().previewCalendarLink(params.id!) : await engine().previewCalendarUpdate(params.id!);
-      if (!next) throw new Error(activation?.items[0]?.excludedReason || 'This link needs a fresh individual review.');
+      if (!next) throw new Error(activation?.items[0]?.excludedReason || currentText('m_2f283f72b9c9'));
       if (!live.current || ticket !== readTicket.current) return;
       setPreview(next); setSelections(next.selections || { title: null, notes: null, schedule: null }); setDirty(false);
       if ('candidateRevision' in next && typeof next.candidateRevision === 'number') setCandidateRevision(next.candidateRevision);
     } catch (e) { if (live.current) { setError(calendarError(e)); setSourceUnavailable(!!e && typeof e === 'object' && 'code' in e && ['NOT_FOUND', 'ALREADY_IMPORTED'].some(code => String(e.code).includes(code))); } }
     finally { running.current = false; if (live.current) setBusy(false); }
-  }, [choices, imported, enable, activating, params.calendarId, params.eventId, params.id, params.candidateId]);
+  }, [choices, imported, enable, activating, params.calendarId, params.eventId, params.id, params.candidateId, setError]);
   const loadRef = useRef(load);
   useEffect(() => { loadRef.current = load; }, [load]);
   useEffect(() => {
@@ -78,14 +84,14 @@ export default function CalendarReview() {
       const ignoring = captured.current.kind === 'IgnoreManagedCalendarCandidate';
       const result = await calendarAction.submit(captured.current);
       if ('operationId' in result && typeof result.operationId === 'string') setOperationId(result.operationId);
-      if (ignoring) { notify({ message: 'Event ignored.' }); setIgnored(true); }
+      if (ignoring) { notify({ message: t('m_f7ea0cace525') }); setIgnored(true); }
       captured.current = null; setUncertain(false); await client.invalidateQueries();
     } catch (e) { if (calendarCaptureRejected(e)) { captured.current = null; setUncertain(false); } else setUncertain(true); setError(calendarError(e)); }
     finally { running.current = false; setBusy(false); setCapturing(false); }
   };
   const ignore = () => {
     if (!params.candidateId || candidateRevision === null || running.current || captured.current) return;
-    confirm('Ignore this Calendar event?', 'Keep the Google event. Do not automatically import this event into Remilo. You can deliberately review it again later.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Ignore', onPress: () => {
+    confirm(t('m_d1cf051bb145'), t('m_610f37ddbd88'), [{ text: t('m_19766ed6ccb2'), style: 'cancel' }, { text: t('m_fce77c34d3fe'), onPress: () => {
       captured.current = { kind: 'IgnoreManagedCalendarCandidate', operationId: engine().createOperationId(), candidateId: params.candidateId!, expectedRevision: candidateRevision };
       void apply();
     } }]);
@@ -97,92 +103,92 @@ export default function CalendarReview() {
   const timing = selections.schedule ? preview?.timings?.[selections.schedule] : null;
   const elapsedChange = !preview?.recurrence && !!timing && timing.mode !== 'None' && timing.alarmAtMs <= now && timing.alarmAtMs !== preview?.timings?.remilo.alarmAtMs;
   const fieldText = (field: keyof CalendarFields, fields: Partial<CalendarFields>) => {
-    if (fields[field] === undefined) return 'No common value recorded';
-    if (field !== 'schedule') return fields[field] || (field === 'notes' ? 'No notes' : 'Required');
+    if (fields[field] === undefined) return t('m_31893018064e');
+    if (field !== 'schedule') return fields[field] || (field === 'notes' ? t('m_efe1cde67784') : t('m_4850b174b713'));
     const schedule = fields.schedule!;
-    return (schedule.allDay ? formatDate(schedule.eventStartMs, schedule.zoneId) + ' · All day' :
+    return (schedule.allDay ? formatDate(schedule.eventStartMs, schedule.zoneId) + t('m_b3d544d5d55c') :
       scheduleDateTime(schedule.eventStartMs, schedule.zoneId) + ' – ' + scheduleDateTime(schedule.eventEndMs, schedule.zoneId)) + ' · ' + schedule.zoneId +
-      (schedule.recurrence ? ' · Repeating schedule, exceptions and following segments' : '');
+      (schedule.recurrence ? t('m_9e79a8b1aee5') : '');
   };
   const recurring = !!preview?.recurrence;
   const invalid = imported && !adopting ? !title.trim() || (recurring ? !preview?.upcoming?.length : mode !== 'None' && (!alarm || alarm <= now)) : !resolved || elapsedChange;
   const back = useCallback(() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin)), [origin]);
   useEffect(() => { if (ignored && !busy && !uncertain) back(); }, [ignored, busy, uncertain, back]);
-  return <Page compact title={adopting ? 'Review existing Calendar copy' : imported ? 'Review Calendar import' : activating ? 'Sync this reminder' : enable ? 'Link this reminder' : 'Review Calendar changes'} onBack={back}
+  return <Page compact title={adopting ? t('m_a30fc352c641') : imported ? t('m_585d4bab7d3a') : activating ? t('m_020858872d16') : enable ? t('m_45f738fd2ff1') : t('m_9e636d2d17ec')} onBack={back}
     footer={!operationId && preview ? <BottomActionBar>
-      <Button label={uncertain ? 'Retry same request' : dirty ? 'Check choices' : imported && !adopting ? 'Import reminder' : activating ? 'Turn on sync' : 'Apply chosen changes'}
+      <Button label={uncertain ? t('m_16003a1a9190') : dirty ? t('m_ceda88a9a0fd') : imported && !adopting ? t('m_91178678e720') : activating ? t('m_e62e9fadeb09') : t('m_71e50031d9c2')}
         disabled={busy || !uncertain && !dirty && invalid} onPress={() => void apply()} />
-      <Button label="Cancel" variant="secondary" disabled={busy || uncertain} onPress={back} />
+      <Button label={t('m_19766ed6ccb2')} variant="secondary" disabled={busy || uncertain} onPress={back} />
     </BottomActionBar> : undefined}>
-    <Copy muted>{adopting ? 'Review which values to keep before linking this event to its existing Remilo copy.' : imported ? 'Review this event and its alert before adding it to Remilo.' : 'Choose which values to keep in both apps. Your local alert settings stay in Remilo.'}</Copy>
+    <Copy muted>{adopting ? t('m_62b005b2d47b') : imported ? t('m_b0fb1f750602') : t('m_c672ed8175e2')}</Copy>
     {imported && !adopting && <Copy muted>{calendarImportIndependence}</Copy>}
-    {params.candidateId && !adopting && <Copy heading>No Remilo alert yet</Copy>}
+    {params.candidateId && !adopting && <Copy heading>{t('m_b89457145742')}</Copy>}
     {!!error && <ActionFeedback message={error} tone="warning" />}
-    {busy && <ActionFeedback loading message={capturing ? 'Saving your choices…' : 'Checking Calendar changes…'} />}
-    {!preview && !busy && !sourceUnavailable && <Button label="Retry review" variant="secondary" disabled={!nativeAvailable} onPress={() => void load()} />}
-    {sourceUnavailable && <Button label="Open current Calendar review" variant="secondary" onPress={() => router.replace({ pathname: '/calendar-reviews', params: origin })} />}
-    {!preview && uncertain && <Button label="Retry same request" disabled={busy} onPress={() => void apply()} />}
-    {params.candidateId && candidateRevision !== null && !operationId && !sourceUnavailable && <Button label="Ignore this event" variant="secondary" disabled={busy || uncertain} onPress={ignore} />}
+    {busy && <ActionFeedback loading message={capturing ? t('m_57571c98a715') : t('m_9673886fee4f')} />}
+    {!preview && !busy && !sourceUnavailable && <Button label={t('m_ba805b089799')} variant="secondary" disabled={!nativeAvailable} onPress={() => void load()} />}
+    {sourceUnavailable && <Button label={t('m_80c4a2d9d196')} variant="secondary" onPress={() => router.replace({ pathname: '/calendar-reviews', params: origin })} />}
+    {!preview && uncertain && <Button label={t('m_16003a1a9190')} disabled={busy} onPress={() => void apply()} />}
+    {params.candidateId && candidateRevision !== null && !operationId && !sourceUnavailable && <Button label={t('m_b839153e19bb')} variant="secondary" disabled={busy || uncertain} onPress={ignore} />}
     {preview && !operationId && <>
-      <ConnectedGroup title="Source"><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
-        <Copy muted>Checked {scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
-      <ConnectedGroup title="Linked updates"><View key="sync">
-        {activating || params.candidateId ? <SettingRow icon="event" label="Automatic sync included" description="Confirming this review keeps both copies up to date." /> :
-          <Toggle label="Automatic sync" value={choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable)} disabled={busy || uncertain}
+      <ConnectedGroup title={t('m_0e570ca6fabe')}><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
+        <Copy muted>{t('m_0efd92a33590')}{scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
+      <ConnectedGroup title={t('m_b97900d1be7c')}><View key="sync">
+        {activating || params.candidateId ? <SettingRow icon="event" label={t('m_41a8bf8da139')} description={t('m_bf02ddb833cf')} /> :
+          <Toggle label={t('m_23a71272299e')} value={choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable)} disabled={busy || uncertain}
             onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />}
-        <RowSupport><Copy muted size={14}>Titles, notes and event times stay in sync. Conflicts and unsafe alert times need review. Local alerts and completion stay in Remilo.</Copy></RowSupport>
+        <RowSupport><Copy muted size={14}>{t('m_1e631f4fb0c8')}</Copy></RowSupport>
       </View></ConnectedGroup>
       {imported && !adopting ? <>
-        <ConnectedGroup title="Calendar event"><View key="event" style={{ padding: 16, gap: 12 }}>
-          <Copy heading>{preview.remote.title || 'Untitled event'}</Copy><Copy>{preview.remote.notes || 'No notes'}</Copy>
+        <ConnectedGroup title={t('m_f74c0be05e82')}><View key="event" style={{ padding: 16, gap: 12 }}>
+          <Copy heading>{preview.remote.title || t('m_a79be2403a6c')}</Copy><Copy>{preview.remote.notes || t('m_efe1cde67784')}</Copy>
           <Copy>{fieldText('schedule', preview.remote)}</Copy></View></ConnectedGroup>
-        <Field label="Title" required multiline compactMultiline value={title} editable={!busy && !uncertain} maxLength={200} onChangeText={value => change({ title: value })} />
-        <ConnectedGroup title="Remilo alert"><View key="mode" style={{ padding: 16 }}>
-          {(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={value === 'None' ? 'No alert' : value} selected={mode === value}
+        <Field label={t('m_7e8cd2056da7')} required multiline compactMultiline value={title} editable={!busy && !uncertain} maxLength={200} onChangeText={value => change({ title: value })} />
+        <ConnectedGroup title={t('m_34ddba84ee3c')}><View key="mode" style={{ padding: 16 }}>
+          {(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={modeLabel(value)} selected={mode === value}
             disabled={busy || uncertain} onPress={() => change({ mode: value })} />)}
         </View>
         {mode !== 'None' && alarm !== undefined && !recurring && <DateTimeFields key="time" value={alarm} zoneId={preview.remote.schedule.zoneId} allDay={false}
-          disabled={busy || uncertain} onError={setError} onChange={value => change({ alarmAtMs: value })} labelPrefix="Import alert" />}
+          disabled={busy || uncertain} onError={setError} onChange={value => change({ alarmAtMs: value })} labelPrefix={t('m_33cc28980e08')} />}
         </ConnectedGroup>
-        {recurring && <View key="repeat" style={{ padding: 16, gap: 8 }}><Copy heading>Repeating event · Next dates</Copy>
+        {recurring && <View key="repeat" style={{ padding: 16, gap: 8 }}><Copy heading>{t('m_235d9592dab2')}</Copy>
           {preview.upcoming?.map(slot => <Copy key={slot.eventStartMs}>{scheduleDateTime(mode === 'None' ? slot.eventStartMs : slot.alarmAtMs, preview.remote.schedule.zoneId)}</Copy>)}
-          <Copy muted>The repeat stays pinned to its event time zone. Individual alerts and completion stay in Remilo.</Copy></View>}
-        {!recurring && mode !== 'None' && alarm !== undefined && alarm <= now && <ActionFeedback tone="warning" message="Choose a future alert time or No alert. This event's alert has elapsed." />}
-        {choices.alarmAtMs !== undefined && <Button label="Use event's default alert" variant="secondary" disabled={busy || uncertain} onPress={() => change({ alarmAtMs: undefined })} />}
-        {!busy && !uncertain && <SelectRow label="List" value={choices.listId || ''} choices={[{ value: '', label: 'No list' }, ...(lists.data || []).map(row => ({ value: row.id, label: row.name }))]}
+          <Copy muted>{t('m_9b75e12ec2d4')}</Copy></View>}
+        {!recurring && mode !== 'None' && alarm !== undefined && alarm <= now && <ActionFeedback tone="warning" message={t('m_eb809c6cb1c2')} />}
+        {choices.alarmAtMs !== undefined && <Button label={t('m_32bf22f0aec3')} variant="secondary" disabled={busy || uncertain} onPress={() => change({ alarmAtMs: undefined })} />}
+        {!busy && !uncertain && <SelectRow label={t('m_6f202f54a7b2')} value={choices.listId || ''} choices={[{ value: '', label: t('m_eacd31d849f9') }, ...(lists.data || []).map(row => ({ value: row.id, label: row.name }))]}
           onChange={value => change({ listId: value || null })} />}
-        <ConnectedGroup title="Google reminders"><Toggle key="suppress" label="Disable this event's Google reminders" value={choices.disableReminders || false}
+        <ConnectedGroup title={t('m_381bba430663')}><Toggle key="suppress" label={t('m_99ee4355f56a')} value={choices.disableReminders || false}
           disabled={busy || uncertain} onChange={value => change({ disableReminders: value })} /></ConnectedGroup>
-        <Copy muted>{preview.googleReminders ? mode === 'None' ? 'Google reminders are enabled unless you explicitly disable them. Remilo sends no alert.' : 'Google reminders are enabled. Both apps may alert unless you explicitly disable Google reminders.' : 'No Google reminders are currently configured for this event.'}</Copy>
-        <Copy muted>Remilo saves first. Google reminder changes are separate and wait if the local alert is blocked or pending.</Copy>
-        {dirty && <ActionFeedback message="Refresh the review to capture these choices before importing." tone="warning" />}
+        <Copy muted>{preview.googleReminders ? mode === 'None' ? t('m_1cfe6b952cb6') : t('m_08c3cea793a9') : t('m_f798f7a243db')}</Copy>
+        <Copy muted>{t('m_e65ddfec7900')}</Copy>
+        {dirty && <ActionFeedback message={t('m_eba734df0aa9')} tone="warning" />}
       </> : preview.local && <>
-        {(['title', 'notes', 'schedule'] as const).map(field => <ConnectedGroup key={field} title={field === 'title' ? 'Title' : field === 'notes' ? 'Notes' : 'Schedule'}>
+        {(['title', 'notes', 'schedule'] as const).map(field => <ConnectedGroup key={field} title={field === 'title' ? t('m_7e8cd2056da7') : field === 'notes' ? t('m_8a7525b1492f') : t('m_f4830a1dae29')}>
           <View key="choices" style={{ padding: 16, gap: 8 }}>
-            {preview.baseline && <Copy muted>Last confirmed: {fieldText(field, preview.baseline)}</Copy>}
-            <Choice label="Use Remilo" description={fieldText(field, preview.local!)} selected={selections[field] === 'remilo'} disabled={busy || uncertain} onPress={() => setSelections(old => ({ ...old, [field]: 'remilo' }))} />
-            <Choice label="Use Google Calendar" description={fieldText(field, preview.remote)} selected={selections[field] === 'google'} disabled={busy || uncertain} onPress={() => setSelections(old => ({ ...old, [field]: 'google' }))} />
-            {!selections[field] && <Copy muted>Both copies differ. Choose the value to keep.</Copy>}
+            {preview.baseline && <Copy muted>{t('m_90550f10b09d')}{fieldText(field, preview.baseline)}</Copy>}
+            <Choice label={t('m_ab4821c44cdf')} description={fieldText(field, preview.local!)} selected={selections[field] === 'remilo'} disabled={busy || uncertain} onPress={() => setSelections(old => ({ ...old, [field]: 'remilo' }))} />
+            <Choice label={t('m_c017c30b1471')} description={fieldText(field, preview.remote)} selected={selections[field] === 'google'} disabled={busy || uncertain} onPress={() => setSelections(old => ({ ...old, [field]: 'google' }))} />
+            {!selections[field] && <Copy muted>{t('m_52f9493747f8')}</Copy>}
           </View></ConnectedGroup>)}
-        {resolved && <ConnectedGroup title="Resolution to apply"><View key="resolution" style={{ padding: 16, gap: 12 }}>
-          <Copy heading>{resolved.title}</Copy><Copy>{resolved.notes || 'No notes'}</Copy><Copy>{fieldText('schedule', resolved)}</Copy>
-          {timing && <><Copy>Due: {scheduleDateTime(timing.dueAtMs, resolved.schedule.zoneId)}</Copy>
-            <Copy>{timing.mode === 'None' ? 'No alert' : timing.mode + ': ' + scheduleDateTime(timing.alarmAtMs, resolved.schedule.zoneId)}</Copy></>}
+        {resolved && <ConnectedGroup title={t('m_3b8981de73a5')}><View key="resolution" style={{ padding: 16, gap: 12 }}>
+          <Copy heading>{resolved.title}</Copy><Copy>{resolved.notes || t('m_efe1cde67784')}</Copy><Copy>{fieldText('schedule', resolved)}</Copy>
+          {timing && <><Copy>{t('m_df5b477708b5')}{scheduleDateTime(timing.dueAtMs, resolved.schedule.zoneId)}</Copy>
+            <Copy>{timing.mode === 'None' ? t('m_d1af410eb4d0') : timing.mode + ': ' + scheduleDateTime(timing.alarmAtMs, resolved.schedule.zoneId)}</Copy></>}
         </View></ConnectedGroup>}
-        <Copy muted>Completion, list, sound, alert mode and independent times stay local. Linked Due and authored Alert follow the chosen schedule.</Copy>
-        {elapsedChange && <ActionFeedback tone="warning" message="This schedule would move the authored alert into the past. Choose the Remilo schedule or adjust its alert in the editor, then refresh this review." />}
-        {preview.nextAlertMs !== null && <Copy>Current Snooze/Postpone target is retained: {scheduleDateTime(preview.nextAlertMs)}.</Copy>}
-        <Copy muted>Local changes save first. Google uses the version you reviewed. A changed version requires a new review; partial changes are not rolled back.</Copy>
+        <Copy muted>{t('m_32af1909c259')}</Copy>
+        {elapsedChange && <ActionFeedback tone="warning" message={t('m_8d7bb691765b')} />}
+        {preview.nextAlertMs !== null && <Copy>{t('m_4c0b9ea1de89')}{scheduleDateTime(preview.nextAlertMs)}.</Copy>}
+        <Copy muted>{t('m_b2ab1c6e45a0')}</Copy>
       </>}
-      {!busy && !uncertain && <Button label="Refresh review" variant="secondary" onPress={() => void load()} />}
+      {!busy && !uncertain && <Button label={t('m_962d33506a8f')} variant="secondary" onPress={() => void load()} />}
     </>}
     {job && <><CalendarOperationStatus operation={job} />
-      {job.localApplied && <Button label="Open reminder" variant="secondary" onPress={() => router.push({ pathname: '/reminder/[id]', params: { id: job.occurrenceId, ...origin } })} />}
-      {['Conflict', 'Failed'].includes(job.state) && <Button label="Review again" variant="secondary" onPress={() => {
+      {job.localApplied && <Button label={t('m_40ed00ddaacf')} variant="secondary" onPress={() => router.push({ pathname: '/reminder/[id]', params: { id: job.occurrenceId, ...origin } })} />}
+      {['Conflict', 'Failed'].includes(job.state) && <Button label={t('m_d4ea61c79c9b')} variant="secondary" onPress={() => {
         if (job.localApplied) router.replace({ pathname: '/calendar-review', params: { id: job.occurrenceId, ...origin } } as Href);
         else { setOperationId(null); setPreview(null); void load(); }
       }} />}
     </>}
-    {operationId && !job && <ActionFeedback loading message="Your request is saved. Checking its result…" />}
+    {operationId && !job && <ActionFeedback loading message={t('m_83743f87492a')} />}
   </Page>;
 }

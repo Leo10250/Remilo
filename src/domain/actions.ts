@@ -1,30 +1,32 @@
+import { t, ownedMessage, errorText, type MessageKey } from '../localization';
 import type { CommandResult, Occurrence, ContentCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 export type Tone = 'success' | 'warning' | 'danger' | 'muted' | 'accent';
 export function recoveryPresentation(kind?: string) {
   const action = ({ Create: 'save', Edit: 'save', CreateSeries: 'save', EditSeries: 'save', EditFollowing: 'save',
     Done: 'completion', CompleteDelivery: 'completion', Stop: 'completion', UndoDelete: 'restoration', Reopen: 'reopening',
-    Postpone: 'postponement', Snooze: 'snooze', Delete: 'move to Trash', Purge: 'permanent deletion', CreateList: 'save', RenameList: 'save' } as Record<string, string>)[kind ?? ''] ?? 'change';
-  return { message: `${action[0].toUpperCase() + action.slice(1)} not confirmed. Retry before leaving.`, retry: `Retry ${action}`,
-    progress: action === 'completion' ? 'Completing reminder…' : action === 'restoration' ? 'Restoring reminder…' : action === 'save' ? 'Saving…' : `Applying ${action}…` };
+    Postpone: 'postponement', Snooze: 'snooze', Delete: t('m_c2e4d9d387bc'), Purge: t('m_082b6b51d6d1'), CreateList: 'save', RenameList: 'save' } as Record<string, string>)[kind ?? ''] ?? 'change';
+  const localizedAction = ownedMessage(action);
+  return { message: t('m_563dc1862d65', { arg0: String(localizedAction[0].toUpperCase() + localizedAction.slice(1)) }), retry: t('m_f28163c407f6', { arg0: String(localizedAction) }),
+    progress: action === 'completion' ? t('m_23ce4bcfcd5a') : action === 'restoration' ? t('m_464cb8565def') : action === 'save' ? t('m_23e39291d613') : t('m_91d9c6284054', { arg0: String(localizedAction) }) };
 }
 export function commandFeedback(result: CommandResult, success: string): { message: string; tone: Tone } {
-  if (result.status === 'Rejected') return { message: result.errorMessage ?? 'That action could not be applied. Refresh and retry.', tone: 'danger' };
+  if (result.status === 'Rejected') return { message: result.errorMessageKey ? ownedMessage({ key: result.errorMessageKey as MessageKey, args: result.errorMessageArgs }) : errorText({ code: result.errorCode, message: result.errorMessage }, t('m_42c3c72f8482')), tone: 'danger' };
   if (result.memberResults && result.status !== 'Applied' && result.status !== 'Scheduled') {
     const members = result.memberResults;
     const scheduled = members.filter((member) => member.status === 'Scheduled').length;
     const counts = [
-      ['Blocked', 'blocked'], ['Pending', 'pending'], ['Superseded', 'changed since this action'], ['Missed', 'elapsed without replay'],
+      ['Blocked', 'blocked'], ['Pending', 'pending'], ['Superseded', t('m_a9cc3c625a57')], ['Missed', t('m_18dbe1385428')],
     ] as const;
     const remaining = counts.map(([status, label]) => {
       const count = members.filter((member) => member.status === status).length;
-      return count ? `${count} ${label}` : '';
+      return count ? `${count} ${ownedMessage(label)}` : '';
     }).filter(Boolean).join(', ');
-    return { message: `${scheduled} of ${members.length} alerts scheduled${remaining ? '; ' + remaining : ''}. Reminders remain unfinished. Review their alert status.`,
+    return { message: t('m_704282cd7491', { arg0: String(scheduled), arg1: String(members.length), arg2: String(remaining ? '; ' + remaining : '') }),
       tone: result.status === 'Blocked' ? 'danger' : 'warning' };
   }
-  if (result.status === 'Partial') return { message: 'Some alerts could not be scheduled. Reminders remain unfinished. Review their alert status.', tone: 'warning' };
-  if (result.status === 'Blocked') return { message: 'Saved; alert blocked. Review Alert problems in Agenda.', tone: 'danger' };
-  if (result.status === 'Pending') return { message: 'Saved; scheduling pending. Check the next alert status.', tone: 'warning' };
+  if (result.status === 'Partial') return { message: t('m_55015da1f2cf'), tone: 'warning' };
+  if (result.status === 'Blocked') return { message: t('m_d54a4a35c90d'), tone: 'danger' };
+  if (result.status === 'Pending') return { message: t('m_1c9c30174e74'), tone: 'warning' };
   return { message: success, tone: 'success' };
 }
 export function reopenCompleted(item: Occurrence | null, completedRevision: number, operationId: string): ContentCommand | null {

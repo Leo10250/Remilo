@@ -7,6 +7,7 @@ import { androidTools, checkSigning, configuredVersions, inspectApk, validateApk
 export async function verifyShared({ json = false } = {}) {
   const checks = [];
   const tasks = [
+    ['localization catalogs', [join(root, 'scripts/localization.mjs'), '--check']],
     ['design implementation and preserved evidence', [join(root, 'scripts/verify-design.mjs')]],
     ['typecheck', [join(root, 'node_modules/typescript/bin/tsc'), '--noEmit']],
     ['lint', [join(root, 'node_modules/eslint/bin/eslint.js'), '.']],

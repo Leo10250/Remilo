@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 12/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 13/7/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -133,11 +133,32 @@ recoverable independently of their bridge promise. Receivers/services never load
 
 ## ADR 002: Storage protection and authority
 
-UX-25 adds a read-only device presentation method/event (`uses24HourClock`,
-`localeTag`). UI-owned Android clock/locale observers and foreground refresh feed
-one explicit frontend formatting context; native alarm rendering reads the same
-preference. There is no stored data, command or scheduler dependency. Reading
-non-private device preferences before unlock is permitted; observer teardown
+Language adds CE schema 13 and DP schema 7; portable backup format remains 4.
+CE settings mirror only allowlisted language enums/reconciliation metadata to DP.
+Existing migrations default to English; native bootstrap distinguishes fresh,
+empty-settings and unopened upgraded installations. Explicit Android pre-launch
+choices are respected. The serialized native owner projects app choices to
+LocaleManager and imports external selections with revision checks. Pending
+projection survives acknowledgement loss; observed newer choices invalidate stale
+writes. Native locale observation requires no activity, Expo instance, JS or network.
+
+The device-presentation snapshot/event adds language preference, resolved language
+and formatting locale. Clock reads use explicit device settings or system locales,
+ignoring app-language overrides. Native rendering shares the confirmed snapshot.
+Text refresh retains delivery identities/deadlines and existing notification channels.
+An unavailable locale service leaves its projection pending and uses the last
+confirmed protected presentation for autonomous delivery; it cannot prevent an
+already durable alarm, protected completion or recovery. Settings writes still
+require reconciliation and retain their captured retry until acknowledged.
+The canonical offline catalog generates TS/native resources. Calendar message
+keys/arguments remain CE-only; recognized historical prose maps without changing
+original prose or outcomes. Unknown historical copy uses a neutral localized fallback.
+
+The original UX-25 method/event names are retained. Its clock observation remains
+read-only; the language extension adds the persisted selection described above.
+Native locale observation, clock observers and foreground reconciliation feed one
+frontend formatting context; native alarms use the same snapshot. Reading
+non-private device preferences before unlock is permitted. Observer teardown
 never cancels a captured engine operation.
 
 Credential-protected Room owns content, event/due timing, completion and history.
@@ -160,7 +181,8 @@ removal and a revision-bound receipt in one CE transaction. Trash already fenced
 delivery; protected terminal records and old command receipts remain operational
 guards. Series materialization and private history/completion replay skip purged
 identities. Restored recurring exclusions project Deleted into DP before protected
-replenishment. DP remains version 6 and never gains private content.
+replenishment. The later language migration extends DP to version 7 with only
+allowlisted presentation metadata; it never gains private content.
 
 Backup format 4 carries only recurring purge exclusions, separate from reminder
 content/history. It prevents an older importer silently ignoring them; readers

@@ -1,3 +1,4 @@
+import { t } from '../localization';
 import type { CalendarEventPage, CalendarEventQuery, CalendarLink, CalendarLinkedOperation } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt } from './time';
 
@@ -29,16 +30,16 @@ export async function collectCalendarImports(query: CalendarEventQuery, revision
   const events = new Map<string, CalendarEventPage['items'][number]>(), cursors = new Set<string>();
   let cursor: string | null = null;
   do {
-    if (!active()) throw Object.assign(new Error('Review cancelled'), { code: 'CANCELLED' });
+    if (!active()) throw Object.assign(new Error(t('m_519921d54110')), { code: 'CANCELLED' });
     const page = await list({ ...query, cursor });
-    if (!active()) throw Object.assign(new Error('Review cancelled'), { code: 'CANCELLED' });
-    if (page.connectionRevision !== revision) throw Object.assign(new Error('Account changed'), { code: 'STALE_CONNECTION' });
+    if (!active()) throw Object.assign(new Error(t('m_519921d54110')), { code: 'CANCELLED' });
+    if (page.connectionRevision !== revision) throw Object.assign(new Error(t('m_ee6c6ad65095')), { code: 'STALE_CONNECTION' });
     for (const event of remainingCalendarImports(page.items, excluded)) if (!event.unsupportedReason) events.set(event.eventId, event);
-    if (events.size > 500) throw Object.assign(new Error('Narrow the dates to review these imports together.'), { code: 'IMPORT_LIMIT' });
+    if (events.size > 500) throw Object.assign(new Error(t('m_5177d17292cf')), { code: 'IMPORT_LIMIT' });
     progress(events.size);
     cursor = page.nextCursor;
     if (cursor) {
-      if (cursors.has(cursor) || cursors.size >= 1000) throw Object.assign(new Error('Event listing changed'), { code: 'STALE_CURSOR' });
+      if (cursors.has(cursor) || cursors.size >= 1000) throw Object.assign(new Error(t('m_8a9efb1c03d6')), { code: 'STALE_CURSOR' });
       cursors.add(cursor);
     }
   } while (cursor);

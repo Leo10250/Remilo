@@ -1,5 +1,10 @@
 package com.remilo.alarm.system
 
+import com.remilo.alarm.presentation.NativeMessages
+
+import com.remilo.alarm.presentation.L10n
+
+
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -46,11 +51,15 @@ import java.util.Date
 import java.util.TimeZone
 import kotlin.math.roundToInt
 
+internal enum class AlarmControlAction(val commandKind: String) {
+  CompleteDelivery("CompleteDelivery"), Snooze("Snooze"), DoneAll("DoneAll"), SnoozeAll("SnoozeAll")
+}
+
 /** Rendering only. Native observation, guarded actions and confirmed dismissal stay in the activity. */
 @Composable
 internal fun AlarmControlsScreen(
   current: AlarmEngine.SessionSnapshot?, busy: Boolean, error: String?,
-  onAction: (String, AlertRecord?) -> Unit, onRetry: () -> Unit,
+  onAction: (AlarmControlAction, AlertRecord?) -> Unit, onRetry: () -> Unit,
   roles: AtmosphereTokens.Roles, progress: String? = null, refreshError: String? = null, unconfirmed: Boolean = false
 ) {
   val density = LocalDensity.current
@@ -90,35 +99,35 @@ internal fun AlarmControlsScreen(
 
 @Composable
 private fun AlarmBody(current: AlarmEngine.SessionSnapshot?, busy: Boolean, roles: AtmosphereTokens.Roles,
-  artHeight: androidx.compose.ui.unit.Dp, onAction: (String, AlertRecord?) -> Unit, refreshError: String?, onRetry: () -> Unit) {
+  artHeight: androidx.compose.ui.unit.Dp, onAction: (AlarmControlAction, AlertRecord?) -> Unit, refreshError: String?, onRetry: () -> Unit) {
   val timeFormat = rememberDeviceTimeFormat()
   val members = current?.members.orEmpty()
   Column(Modifier.fillMaxWidth()) {
-    val stateHeading = if (members.size > 1) if (current?.state == "Active") "${members.size} alarms ringing" else "Starting ${members.size} alarms…" else null
+    val stateHeading = if (members.size > 1) if (current?.state == "Active") L10n.text("${members.size} alarms ringing") else L10n.text("Starting ${members.size} alarms…") else null
     AlarmHeader(stateHeading, roles, artHeight)
     Column(Modifier.fillMaxWidth().padding(AtmosphereTokens.spaceGutter.dp), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
     refreshError?.let { RefreshBanner(it, busy, roles, onRetry) }
     if (current == null) {
-      CircularProgressIndicator(); Text("Loading alarm controls…")
-    } else if (members.isEmpty()) Text("Updating alarm controls…")
+      CircularProgressIndicator(); Text(L10n.text(NativeMessages.m_ef3765955e59()))
+    } else if (members.isEmpty()) Text(L10n.text(NativeMessages.m_79527b2274c6()))
     else members.forEach { (record, title) -> key(record.occurrenceId) {
       Surface(shape = RoundedCornerShape(AtmosphereTokens.shapeGroup.dp), color = Color(roles.surface)) {
         Column(Modifier.fillMaxWidth().padding(AtmosphereTokens.spaceGutter.dp), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceSm.dp)) {
-          val state = if (current.state == "Active") "Alarm ringing" else "Starting alarm…"
+          val state = if (current.state == "Active") L10n.text(NativeMessages.m_1ce1890d9f80()) else L10n.text(NativeMessages.m_aa3e565dfaa9())
           if (members.size == 1) Text(state, style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant))
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
             ReminderGlyph(Color(roles.onSurfaceVariant))
-            Text(title, style = if (members.size == 1) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.titleLarge,
+            Text(title, style = if (members.size == 1) MaterialTheme.typography.headlineLarge else if (PresentationLanguage.language == "zh-Hans") MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
               fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f).semantics { heading() })
           }
           val time = timeFormat.format(Date(record.targetMs))
           if (members.size == 1) {
-            Text("Alarm time", style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant))
+            Text(L10n.text(NativeMessages.m_eaf9eb2fb8f9()), style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant))
             Text(time, fontSize = AtmosphereTokens.typeDisplay.sp,
-              lineHeight = (AtmosphereTokens.typeDisplay + AtmosphereTokens.spaceSm).sp, fontWeight = FontWeight.SemiBold)
+              lineHeight = (if (PresentationLanguage.language == "zh-Hans") AtmosphereTokens.chineseDisplayLineHeight else AtmosphereTokens.typeDisplay + AtmosphereTokens.spaceSm).sp, fontWeight = FontWeight.SemiBold)
           } else {
             Text(state, style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant))
-            TimingRow("Alarm time", time, roles)
+            TimingRow(L10n.text(NativeMessages.m_eaf9eb2fb8f9()), time, roles)
           }
           current.content[record.occurrenceId]?.let { TimingContext(it, roles) }
           if (members.size > 1) AlarmActions(record, title, current.state, busy, roles, AtmosphereTokens.nativeMember, onAction)
@@ -166,16 +175,16 @@ private fun RefreshBanner(message: String, busy: Boolean, roles: AtmosphereToken
   Surface(shape = RoundedCornerShape(AtmosphereTokens.shapeGroup.dp), color = Color(roles.surface),
     border = androidx.compose.foundation.BorderStroke(1.dp, Color(roles.error))) {
     Column(Modifier.fillMaxWidth().padding(AtmosphereTokens.spaceGutter.dp), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      Text(message, color = Color(roles.error), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+      Text(L10n.text(message), color = Color(roles.error), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
       OutlinedButton(onClick = onRetry, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
-        modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text("Refresh controls") }
+        modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text(L10n.text(NativeMessages.m_24873c1de2a9())) }
     }
   }
 }
 
 @Composable
 private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, error: String?, progress: String?,
-  roles: AtmosphereTokens.Roles, onAction: (String, AlertRecord?) -> Unit, onRetry: () -> Unit, modifier: Modifier, unconfirmed: Boolean) {
+  roles: AtmosphereTokens.Roles, onAction: (AlarmControlAction, AlertRecord?) -> Unit, onRetry: () -> Unit, modifier: Modifier, unconfirmed: Boolean) {
   Surface(color = Color(roles.surface), modifier = modifier.fillMaxWidth()) {
     Column(Modifier.padding(AtmosphereTokens.spaceGutter.dp), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
       val members = current?.members.orEmpty()
@@ -183,20 +192,20 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
         val (record, title) = members.single()
         AlarmActions(record, title, current!!.state, busy || unconfirmed, roles, AtmosphereTokens.nativeSingle, onAction)
       } else if (members.size > 1) {
-        FilledAlarmButton("Mark all as done (${members.size})", "Mark all ${members.size} shown reminders as done", busy || unconfirmed, roles,
-          AtmosphereTokens.nativeSingle, checkmark = true) { onAction("DoneAll", null) }
-        SnoozeGroupButton(members.first().first.snoozeMinutes, members.size, busy || unconfirmed, roles) { onAction("SnoozeAll", null) }
+        FilledAlarmButton(L10n.text("Mark all as done (${members.size})"), L10n.text("Mark all ${members.size} shown reminders as done"), busy || unconfirmed, roles,
+          AtmosphereTokens.nativeSingle, checkmark = true) { onAction(AlarmControlAction.DoneAll, null) }
+        SnoozeGroupButton(members.first().first.snoozeMinutes, members.size, busy || unconfirmed, roles) { onAction(AlarmControlAction.SnoozeAll, null) }
       }
       // Reserve one scalable status line so starting an action cannot move its
       // targets. The full member remains readable in the retained information card.
-      Text(progress ?: " ", color = Color(roles.onSurfaceVariant), maxLines = 1,
+      Text(progress?.let(L10n::text) ?: " ", color = Color(roles.onSurfaceVariant), maxLines = 1,
         overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().semantics {
-          if (progress != null) { contentDescription = progress; liveRegion = LiveRegionMode.Polite }
+          if (progress != null) { contentDescription = L10n.text(progress); liveRegion = LiveRegionMode.Polite }
         })
       error?.let {
-        Text(it, color = Color(roles.error))
+        Text(L10n.text(it), color = Color(roles.error))
         OutlinedButton(onClick = onRetry, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
-          modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text(if (unconfirmed) "Retry action" else "Refresh controls") }
+          modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text(if (unconfirmed) L10n.text(NativeMessages.m_94d292cade49()) else L10n.text(NativeMessages.m_24873c1de2a9())) }
       }
     }
   }
@@ -204,18 +213,18 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
 
 @Composable
 private fun AlarmActions(record: AlertRecord, title: String, state: String, busy: Boolean, roles: AtmosphereTokens.Roles,
-  minimum: Int, onAction: (String, AlertRecord?) -> Unit) {
-  val stateLabel = if (state == "Active") "alarm ringing" else "starting alarm"
+  minimum: Int, onAction: (AlarmControlAction, AlertRecord?) -> Unit) {
+  val stateLabel = if (state == "Active") L10n.text(NativeMessages.m_b22fd07a194a()) else L10n.text(NativeMessages.m_1827590dc0e9())
   val density = LocalDensity.current
   BoxWithConstraints(Modifier.fillMaxWidth()) {
     // The approved member row is compact at ordinary text size. Stack when text
     // or usable width needs more room, retaining both measured action minimums.
     val inline = minimum == AtmosphereTokens.nativeMember && maxWidth >= 280.dp && density.fontScale <= 1.15f
     if (inline) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Mark as done", "Mark as done, $title, $stateLabel", busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, checkmark = true) { onAction("CompleteDelivery", record) }
+      FilledAlarmButton(L10n.text(NativeMessages.m_62aa4b87cc52()), L10n.text("Mark as done, $title, $stateLabel"), busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, checkmark = true) { onAction(AlarmControlAction.CompleteDelivery, record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, onAction = onAction)
     } else Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
-      FilledAlarmButton("Mark as done", "Mark as done, $title, $stateLabel", busy, roles, minimum, checkmark = true) { onAction("CompleteDelivery", record) }
+      FilledAlarmButton(L10n.text(NativeMessages.m_62aa4b87cc52()), L10n.text("Mark as done, $title, $stateLabel"), busy, roles, minimum, checkmark = true) { onAction(AlarmControlAction.CompleteDelivery, record) }
       SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, onAction = onAction)
     }
   }
@@ -223,14 +232,14 @@ private fun AlarmActions(record: AlertRecord, title: String, state: String, busy
 
 @Composable
 private fun SnoozeAlarmButton(record: AlertRecord, title: String, stateLabel: String, busy: Boolean, roles: AtmosphereTokens.Roles,
-  minimum: Int, modifier: Modifier = Modifier, compact: Boolean = false, onAction: (String, AlertRecord?) -> Unit) {
-  OutlinedButton(onClick = { onAction("Snooze", record) }, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
+  minimum: Int, modifier: Modifier = Modifier, compact: Boolean = false, onAction: (AlarmControlAction, AlertRecord?) -> Unit) {
+  OutlinedButton(onClick = { onAction(AlarmControlAction.Snooze, record) }, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(roles.primary), disabledContentColor = Color(roles.disabledInk)),
     border = androidx.compose.foundation.BorderStroke(1.dp, Color(if (busy) roles.disabledInk else roles.primary)),
     contentPadding = PaddingValues(horizontal = (if (compact) AtmosphereTokens.spaceSm else AtmosphereTokens.spaceGutter).dp,
       vertical = AtmosphereTokens.spaceSm.dp), modifier = modifier.fillMaxWidth().heightIn(min = minimum.dp)
-      .semantics { contentDescription = "Snooze ${record.snoozeMinutes} minutes, $title, $stateLabel" }) {
-    Text("Snooze · ${record.snoozeMinutes} min", fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
+      .semantics { contentDescription = L10n.text("Snooze ${record.snoozeMinutes} minutes, $title, $stateLabel") }) {
+    Text(L10n.text("Snooze · ${record.snoozeMinutes} min"), fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
   }
 }
 
@@ -241,8 +250,8 @@ private fun SnoozeGroupButton(minutes: Int, count: Int, busy: Boolean, roles: At
     border = androidx.compose.foundation.BorderStroke(1.dp, Color(if (busy) roles.disabledInk else roles.primary)),
     contentPadding = PaddingValues(horizontal = AtmosphereTokens.spaceGutter.dp, vertical = AtmosphereTokens.spaceSm.dp),
     modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.nativeSingle.dp)
-      .semantics { contentDescription = "Snooze all $count shown reminders for $minutes minutes" }) {
-    Text("Snooze all · $minutes min", fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
+      .semantics { contentDescription = L10n.text("Snooze all $count shown reminders for $minutes minutes") }) {
+    Text(L10n.text("Snooze all · $minutes min"), fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
   }
 }
 
@@ -263,7 +272,8 @@ private fun FilledAlarmButton(label: String, description: String, busy: Boolean,
       }
       Spacer(Modifier.width(AtmosphereTokens.spaceSm.dp))
     }
-    Text(label, fontSize = AtmosphereTokens.typeHeading.sp, lineHeight = (AtmosphereTokens.typeHeading + AtmosphereTokens.spaceSm).sp)
+    Text(label, fontSize = (if (PresentationLanguage.language == "zh-Hans") AtmosphereTokens.typeBody else AtmosphereTokens.typeHeading).sp,
+      lineHeight = (if (PresentationLanguage.language == "zh-Hans") AtmosphereTokens.chineseBodyLineHeight else AtmosphereTokens.typeHeading + AtmosphereTokens.spaceSm).sp)
   }
 }
 
@@ -271,12 +281,12 @@ private fun FilledAlarmButton(label: String, description: String, busy: Boolean,
 private fun TimingContext(content: AlarmEngine.SessionMemberContent, roles: AtmosphereTokens.Roles) {
   val zone = TimeZone.getTimeZone(content.zoneId.ifEmpty { TimeZone.getDefault().id })
   val time = rememberDeviceTimeFormat(zone)
-  val date = DateFormat.getDateInstance(DateFormat.MEDIUM).apply { timeZone = zone }
-  val shortDate = DateFormat.getDateInstance(DateFormat.SHORT).apply { timeZone = zone }
+  val date = DateFormat.getDateInstance(DateFormat.MEDIUM, java.util.Locale.forLanguageTag(PresentationLanguage.localeTag)).apply { timeZone = zone }
+  val shortDate = DateFormat.getDateInstance(DateFormat.SHORT, java.util.Locale.forLanguageTag(PresentationLanguage.localeTag)).apply { timeZone = zone }
   val dateTime: (Date) -> String = { shortDate.format(it) + " · " + time.format(it) }
   val startDate = date.format(Date(content.eventStartMs))
   val lastDate = date.format(Date(content.eventEndMs - 1)) // All-day end is exclusive.
-  val event = if (content.allDay) "All day · $startDate" + if (startDate == lastDate) "" else " – $lastDate"
+  val event = if (content.allDay) L10n.text("All day · $startDate") + if (startDate == lastDate) "" else " – $lastDate"
     else "${dateTime(Date(content.eventStartMs))} – ${dateTime(Date(content.eventEndMs))}"
   TimingRow("Event", event, roles)
   if (!content.dueLinked || content.dueAtMs != (if (content.allDay) content.eventEndMs else content.eventStartMs))
@@ -286,7 +296,7 @@ private fun TimingContext(content: AlarmEngine.SessionMemberContent, roles: Atmo
 @Composable
 private fun TimingRow(label: String, value: String, roles: AtmosphereTokens.Roles) {
   Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceSm.dp), verticalAlignment = Alignment.Top) {
-    Text(label, style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant), modifier = Modifier.width(80.dp))
+    Text(L10n.text(label), style = MaterialTheme.typography.bodyMedium, color = Color(roles.onSurfaceVariant), modifier = Modifier.width(80.dp))
     Text(value, style = MaterialTheme.typography.bodyLarge, color = Color(roles.onSurface), modifier = Modifier.weight(1f))
   }
 }
@@ -346,8 +356,12 @@ private fun rememberDeviceTimeFormat(zone: TimeZone = TimeZone.getDefault()): ja
   val context = LocalContext.current
   var observation by remember { mutableIntStateOf(0) }
   DisposableEffect(context) {
-    val subscription = runCatching { TimeDisplayPreferences.observe(context) { observation++ } }.getOrNull()
+    val subscription = runCatching { TimeDisplayPreferences.observe(context) {
+      AlarmEngine.get(context).presentationChanged {
+        android.os.Handler(android.os.Looper.getMainLooper()).post { observation++ }
+      }
+    } }.getOrNull()
     onDispose { subscription?.close() }
   }
-  return remember(context, observation, zone.id) { android.text.format.DateFormat.getTimeFormat(context).apply { timeZone = zone } }
+  return remember(context, observation, zone.id, PresentationLanguage.localeTag, TimeDisplayPreferences.read(context)["uses24HourClock"]) { java.text.SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(java.util.Locale.forLanguageTag(PresentationLanguage.localeTag), if (TimeDisplayPreferences.read(context)["uses24HourClock"] == true) "Hm" else "hm"), java.util.Locale.forLanguageTag(PresentationLanguage.localeTag)).apply { timeZone = zone } }
 }

@@ -1,5 +1,7 @@
 export type SoundPreviewSnapshot = { requestId: string; sound: 'remilo' | 'system'; state: 'Starting' | 'Playing' | 'Ended' | 'Interrupted' | 'Failed'; actualSound?: 'remilo' | 'system'; reason?: string };
-export type TimeDisplayPreferences = { uses24HourClock: boolean; localeTag: string };
+export type LanguagePreference = 'system' | 'en' | 'zh-Hans';
+export type SupportedLanguage = 'en' | 'zh-Hans';
+export type TimeDisplayPreferences = { uses24HourClock: boolean; localeTag: string; languagePreference?: LanguagePreference; resolvedLanguage?: SupportedLanguage };
 export type RemiloAlarmModuleEvents = { onChange: (params: Record<string, never>) => void; onSoundPreviewState: (snapshot: SoundPreviewSnapshot) => void;
   onTimeDisplayPreferencesChanged: (preferences: TimeDisplayPreferences) => void };
 export type ListRecord = { id: string; name: string; revision: number; overdueCount: number };
@@ -51,7 +53,7 @@ export type ContentCommand = Partial<ReminderDraft> & {
 export type AtmosphereSelection = 'automatic' | 'sunrise' | 'sky' | 'evening' | 'night';
 export type AppSettings = {
   revision: number; snoozeMinutes: number; tomorrowMorning: number; tomorrowAfternoon: number;
-  tomorrowEvening: number; sound: 'remilo' | 'system'; vibration: boolean; theme: 'system' | 'light' | 'dark'; atmosphere: AtmosphereSelection;
+  tomorrowEvening: number; sound: 'remilo' | 'system'; vibration: boolean; theme: 'system' | 'light' | 'dark'; atmosphere: AtmosphereSelection; language: LanguagePreference;
 };
 export type RecurrenceDraft = {
   frequency: 'daily' | 'weekly' | 'monthlyDay' | 'monthlyOrdinal' | 'lastWeekday' | 'yearly';
@@ -86,7 +88,7 @@ export type Command = CreateCommand | DeliveryCommand | ContentCommand | SeriesC
 export type CommandResult = {
   status: 'Scheduled' | 'Blocked' | 'Pending' | 'Partial' | 'Applied' | 'Rejected';
   occurrence?: Occurrence; segmentId?: string; generation?: number; errorCode?: string;
-  errorField?: string; errorMessage?: string; count?: number; added?: number; preserved?: number; blocked?: number; retry?: boolean; list?: ListRecord | null;
+  errorField?: string; errorMessage?: string; errorMessageKey?: string; errorMessageArgs?: Record<string, string | number>; count?: number; added?: number; preserved?: number; blocked?: number; retry?: boolean; list?: ListRecord | null;
   memberResults?: { occurrenceId: string; generation: number; status: 'Scheduled' | 'Blocked' | 'Pending' | 'Superseded' | 'Missed'; targetMs?: number }[];
 };
 export type SchedulePreview = { eventStartMs: number; eventEndMs: number; dueAtMs: number; alarmAtMs: number; warnings: string[];

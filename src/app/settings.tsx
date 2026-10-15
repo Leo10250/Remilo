@@ -1,4 +1,6 @@
-import { useTimeFormatting } from '../ui/time-display';
+import { errorText, t } from '../localization';
+import { useLocalizedState, useTranslation } from '../localization/react';
+import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -7,7 +9,6 @@ import { View } from 'react-native';
 import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import type { Tone } from '../domain/actions';
 import { normalizeAtmosphere } from '../domain/appearance';
-import {  } from '../domain/clock-preferences';
 import { creationOrigin, retainedOriginParams, rootKey, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { atmosphereNames, permissionSummary, preferenceRecoveryOwner, type preferenceGroups } from '../domain/settings-presentation';
 import type { HandoffTicket } from '../domain/handoff';
@@ -21,14 +22,17 @@ import { space } from '../ui/tokens';
 
 type Feedback = { message: string; tone: Tone };
 function appearanceSummary(settings: AppSettings) {
-  return `${atmosphereNames[normalizeAtmosphere(settings.atmosphere)]} · ${settings.theme === 'system' ? 'Match device' : settings.theme === 'light' ? 'Light' : 'Dark'}`;
+  return `${atmosphereNames[normalizeAtmosphere(settings.atmosphere)]} · ${settings.theme === 'system' ? t('m_5e4aca65d4a4') : settings.theme === 'light' ? t('m_dbcd5e7bb7a0') : t('m_60acc53f13a5')}`;
 }
 export default function Settings() {
+  'use no memo';
+  const t = useTranslation();
   const { shortDateTime, clockPreferenceLabel } = useTimeFormatting();
+  const presentation = useTimeDisplay();
   const params = useLocalSearchParams<OriginParams>(), origin = creationOrigin(params), routeParams = retainedOriginParams(params);
   const query = useSettings(), caps = useCapabilities(), settings = query.data;
-  const [snoozePicker, setSnoozePicker] = useState(false), [shortcuts, setShortcuts] = useState(false), [backupInfo, setBackupInfo] = useState(false);
-  const [minutes, setMinutes] = useState('10'), [feedback, setFeedback] = useState<Feedback>(), [pending, setPending] = useState(false);
+  const [languagePicker, setLanguagePicker] = useState(false), [snoozePicker, setSnoozePicker] = useState(false), [shortcuts, setShortcuts] = useState(false), [backupInfo, setBackupInfo] = useState(false);
+  const [minutes, setMinutes] = useState('10'), [feedback, setFeedback] = useLocalizedState<Feedback>(), [pending, setPending] = useState(false);
   const running = useRef(false), mounted = useRef(true), [preparedExport, setPreparedExport] = useState<File>();
   const handoff = usePageHandoff(() => setPending(running.current));
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -38,7 +42,7 @@ export default function Settings() {
     if (!handoff.scope.canLaunch(ticket)) return;
     running.current = true; setPending(true); setFeedback(undefined);
     try { const result = await task(ticket); if (result) handoff.commit(ticket, () => setFeedback(result)); }
-    catch (error) { handoff.commit(ticket, () => setFeedback({ message: error instanceof Error ? error.message : 'Could not export this backup. Try again.', tone: 'danger' })); }
+    catch (error) { handoff.commit(ticket, () => setFeedback({ message: errorText(error, t('m_ce0a2a599e4d')), tone: 'danger' })); }
     finally { running.current = false; if (mounted.current && handoff.scope.active()) setPending(false); }
   };
   const save = (patch: Partial<AppSettings>) => { if (!pending) preferences.change(patch); };
@@ -46,11 +50,11 @@ export default function Settings() {
     try {
       const available = await Sharing.isAvailableAsync();
       if (!handoff.scope.canLaunch(ticket)) return;
-      if (!available) return { message: 'Backup prepared. Sharing is unavailable on this device. You can retry sharing this file.', tone: 'warning' };
+      if (!available) return { message: t('m_0798a52ef16b'), tone: 'warning' };
       if (!handoff.scope.markOpened(ticket)) return;
-      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Save Remilo backup' });
-      return { message: 'Backup prepared for sharing.', tone: 'muted' };
-    } catch { return { message: 'Backup prepared, but the share sheet could not be opened. Retry sharing this file.', tone: 'danger' }; }
+      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: t('m_746212ed7cd6') });
+      return { message: t('m_c764a0c6727b'), tone: 'muted' };
+    } catch { return { message: t('m_81d4cad2c628'), tone: 'danger' }; }
   };
   const exportFile = () => void runExport(async ticket => {
     const data = await engine().exportBackup();
@@ -68,68 +72,74 @@ export default function Settings() {
   const permission = permissionSummary(caps.data, !!caps.error);
   const openAlarmCheck = () => { if (!running.current) router.push({ pathname: '/alarm-check', params: routeParams }); };
   const permissionRefresh = caps.data && (caps.error || caps.isFetching)
-    ? `Last checked ${shortDateTime(caps.data.observedAtMs)}; ${caps.error ? 'couldn’t refresh.' : 'refreshing…'}` : undefined;
-  return <Page title="Settings" scrollKey={`settings:${rootKey(origin)}`} scrollReady={!!settings || !query.isLoading}
+    ? t('m_c56e51fc430f', { arg0: String(shortDateTime(caps.data.observedAtMs)), arg1: String(caps.error ? t('m_d6d1cdc660d1') : t('m_eb50add3d378')) }) : undefined;
+  return <Page title={t('m_74a883a037bc')} scrollKey={`settings:${rootKey(origin)}`} scrollReady={!!settings || !query.isLoading}
     onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}>
     <View style={{ gap: space.md }}>
       <QueryState loading={!settings && query.isLoading && nativeAvailable} error={!settings ? query.error : undefined} empty={!settings && !query.isLoading}
-        emptyMessage={nativeAvailable ? 'Settings are unavailable.' : 'Use the Android app to manage settings.'} onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
+        emptyMessage={nativeAvailable ? t('m_de367fa1d4a6') : t('m_eb0582ac36eb')} onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
       {nativeAvailable && permission.needsAttention && <ConnectedGroup>
         <View><RowSupport><ActionFeedback message={permission.message} tone={permission.tone} />
           {permissionRefresh && <Copy muted size={14}>{permissionRefresh}</Copy>}
-          <Button label="Review alert permissions" variant="secondary" disabled={pending} onPress={openAlarmCheck} />
+          <Button label={t('m_0146bbb12bf3')} variant="secondary" disabled={pending} onPress={openAlarmCheck} />
         </RowSupport></View>
       </ConnectedGroup>}
       {!!settings && <>
-        <ConnectedGroup title="Sound & vibration" footer={<><Copy muted size={14}>For new reminders.</Copy>{preferenceFeedback('defaults')}</>}>
+        <ConnectedGroup title={t('m_5fb7b58aa419')} footer={<><Copy muted size={14}>{t('m_0cd7c6a99c15')}</Copy>{preferenceFeedback('defaults')}</>}>
           <SoundPicker key="sound" value={settings.sound} onChange={sound => save({ sound })} disabled={pending} />
-          <Toggle key="vibration" icon="vibration" label="Vibration" value={settings.vibration} disabled={pending} onChange={vibration => save({ vibration })} />
+          <Toggle key="vibration" icon="vibration" label={t('m_59e1fd02f6c2')} value={settings.vibration} disabled={pending} onChange={vibration => save({ vibration })} />
         </ConnectedGroup>
-        <ConnectedGroup title="Snooze & postpone" footer={preferenceFeedback('postponement')}>
-          <SettingRow key="snooze" icon="snooze" label="Snooze duration" value={settings.snoozeMinutes + ' minutes'} disabled={pending}
+        <ConnectedGroup title={t('m_f21ec393fe6b')} footer={preferenceFeedback('postponement')}>
+          <SettingRow key="snooze" icon="snooze" label={t('m_3f030a6921b9')} value={t('m_1c3c36c66261', { count: settings.snoozeMinutes })} disabled={pending}
             onPress={() => { setMinutes(String(settings.snoozeMinutes)); setSnoozePicker(true); }} />
-          <SettingRow key="shortcuts" icon="schedule" label="Tomorrow shortcuts"
+          <SettingRow key="shortcuts" icon="schedule" label={t('m_9b0f67429df4')}
             value={[settings.tomorrowMorning, settings.tomorrowAfternoon, settings.tomorrowEvening].map(value => clockPreferenceLabel(value)).join(' · ')}
             disabled={pending} onPress={() => setShortcuts(true)} />
         </ConnectedGroup>
-        <ConnectedGroup footer={preferenceFeedback('appearance')}><SettingRow key="appearance" icon="palette" label="Appearance" value={appearanceSummary(settings)} disabled={pending}
+        <ConnectedGroup footer={preferenceFeedback('appearance')}><SettingRow key="appearance" icon="palette" label={t('m_3907fa7f8072')} value={appearanceSummary(settings)} disabled={pending}
           onPress={() => router.push({ pathname: '/appearance', params: routeParams })} /></ConnectedGroup>
+        <ConnectedGroup footer={preferenceFeedback('language')}><SettingRow key="language" icon="language" label={t('m_a4fe65264ef7')} value={settings.language === 'system' ? t('m_b0459211f9f7') : settings.language === 'en' ? 'English' : '简体中文'} disabled={pending} onPress={() => setLanguagePicker(true)} /></ConnectedGroup>
       </>}
-      <ConnectedGroup><SettingRow key="permissions" icon="alarm" label="Permissions & alarm check" value={nativeAvailable ? permission.message : 'Available in the Android app'}
+      <ConnectedGroup><SettingRow key="permissions" icon="alarm" label={t('m_b7902c54f3ec')} value={nativeAvailable ? permission.message : t('m_9abfcd6cc71c')}
         description={permissionRefresh} disabled={pending} onPress={openAlarmCheck} /></ConnectedGroup>
-      <ConnectedGroup><SettingRow key="google-calendar" icon="event" label="Google Calendar" description="Optional, manual one-off publishing" disabled={pending}
+      <ConnectedGroup><SettingRow key="google-calendar" icon="event" label={t('m_b074310e911f')} description={t('m_e75d471ec00e')} disabled={pending}
         onPress={() => router.push({ pathname: '/calendar', params: routeParams })} /></ConnectedGroup>
-      <ConnectedGroup title="Backups" footer={<><Copy muted size={14}>Includes titles, notes, lists and reminders.</Copy>
-        <Button label="What’s included?" variant="secondary" disabled={pending} onPress={() => setBackupInfo(true)} /></>}>
-        <View key="export"><SettingRow icon="upload" label="Export backup" disabled={pending || !nativeAvailable} onPress={exportFile} />
+      <ConnectedGroup title={t('m_3334fee2c77f')} footer={<><Copy muted size={14}>{t('m_a7b215af0d49')}</Copy>
+        <Button label={t('m_95365d0f81ab')} variant="secondary" disabled={pending} onPress={() => setBackupInfo(true)} /></>}>
+        <View key="export"><SettingRow icon="upload" label={t('m_d6dfd0f08280')} disabled={pending || !nativeAvailable} onPress={exportFile} />
           {(pending || feedback || preparedExport) && <RowSupport>
-            {(pending || feedback) && <ActionFeedback loading={pending} message={pending ? 'Preparing backup…' : feedback?.message} tone={feedback?.tone} />}
-            {preparedExport && <Button label="Share prepared backup again" variant="secondary" disabled={pending} onPress={() => void runExport(ticket => sharePrepared(preparedExport, ticket))} />}
+            {(pending || feedback) && <ActionFeedback loading={pending} message={pending ? t('m_580447a9d871') : feedback?.message} tone={feedback?.tone} />}
+            {preparedExport && <Button label={t('m_6b88c0d8044d')} variant="secondary" disabled={pending} onPress={() => void runExport(ticket => sharePrepared(preparedExport, ticket))} />}
           </RowSupport>}
         </View>
-        <SettingRow key="restore" icon="download" label="Restore backup" disabled={pending} onPress={() => router.push({ pathname: '/backup', params: routeParams })} />
+        <SettingRow key="restore" icon="download" label={t('m_6da1c554212c')} disabled={pending} onPress={() => router.push({ pathname: '/backup', params: routeParams })} />
       </ConnectedGroup>
-      <ConnectedGroup title="Help" footer={<><Copy>Remilo</Copy><Copy muted size={14}>0.4.0 · Android</Copy></>}>
-        <SettingRow key="diagnostics" icon="info" label="Diagnostics" disabled={pending} onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })} />
+      <ConnectedGroup title={t('m_b79cac926e0b')} footer={<><Copy>{t('m_f65890724d03')}</Copy><Copy muted size={14}>{t('m_cf96192a609d')}</Copy></>}>
+        <SettingRow key="diagnostics" icon="info" label={t('m_268f14bbfe11')} disabled={pending} onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })} />
       </ConnectedGroup>
-      <Sheet title="Snooze duration" visible={snoozePicker} onClose={() => setSnoozePicker(false)} footer={<BottomActionBar><View style={{ flex: 1 }}>
-        <Button label="Use custom duration" disabled={!snoozeValid || pending} onPress={() => { save({ snoozeMinutes: Number(minutes) }); setSnoozePicker(false); }} />
-      </View></BottomActionBar>}>
-        <Copy muted size={14}>Used when you tap Snooze.</Copy>
-        {[5, 10, 15, 30].map(duration => <Choice key={duration} label={duration + ' minutes'} selected={settings?.snoozeMinutes === duration}
-          disabled={pending} onPress={() => { save({ snoozeMinutes: duration }); setSnoozePicker(false); }} />)}
-        <Field label="Custom minutes (1–1440)" value={minutes} keyboardType="number-pad" onChangeText={setMinutes} error={!snoozeValid ? 'Enter a whole number from 1 to 1440.' : undefined} />
+      <Sheet title={t('m_a4fe65264ef7')} visible={languagePicker} onClose={() => setLanguagePicker(false)}>
+        <Choice label={t('m_b0459211f9f7')} description={settings?.language === 'system' ? t('m_515c527078e9', { arg0: presentation.resolvedLanguage === 'zh-Hans' ? '简体中文' : 'English' }) : undefined} selected={settings?.language === 'system'} disabled={pending} onPress={() => { save({ language: 'system' }); setLanguagePicker(false); }} />
+        <Choice label="English" selected={settings?.language === 'en'} disabled={pending} onPress={() => { save({ language: 'en' }); setLanguagePicker(false); }} />
+        <Choice label="简体中文" selected={settings?.language === 'zh-Hans'} disabled={pending} onPress={() => { save({ language: 'zh-Hans' }); setLanguagePicker(false); }} />
       </Sheet>
-      <Sheet title="Tomorrow shortcuts" visible={shortcuts} onClose={() => setShortcuts(false)}>
-        <Copy muted size={14}>Shown when you postpone an alert to tomorrow.</Copy>
+      <Sheet title={t('m_3f030a6921b9')} visible={snoozePicker} onClose={() => setSnoozePicker(false)} footer={<BottomActionBar><View style={{ flex: 1 }}>
+        <Button label={t('m_27c124be1e8d')} disabled={!snoozeValid || pending} onPress={() => { save({ snoozeMinutes: Number(minutes) }); setSnoozePicker(false); }} />
+      </View></BottomActionBar>}>
+        <Copy muted size={14}>{t('m_608a77cbf8bc')}</Copy>
+        {[5, 10, 15, 30].map(duration => <Choice key={duration} label={t('m_1c3c36c66261', { count: duration })} selected={settings?.snoozeMinutes === duration}
+          disabled={pending} onPress={() => { save({ snoozeMinutes: duration }); setSnoozePicker(false); }} />)}
+        <Field label={t('m_518075e750af')} value={minutes} keyboardType="number-pad" onChangeText={setMinutes} error={!snoozeValid ? t('m_da461edf6be4') : undefined} />
+      </Sheet>
+      <Sheet title={t('m_9b0f67429df4')} visible={shortcuts} onClose={() => setShortcuts(false)}>
+        <Copy muted size={14}>{t('m_c03efc02ebc8')}</Copy>
         {!!settings && <ConnectedGroup>{(['tomorrowMorning', 'tomorrowAfternoon', 'tomorrowEvening'] as const).map(key =>
           <ClockPreferenceRow key={key} minutes={settings[key]} disabled={pending} onChange={value => save({ [key]: value })} />)}</ConnectedGroup>}
         <PreferenceFeedback fields={['tomorrowMorning', 'tomorrowAfternoon', 'tomorrowEvening']} />
       </Sheet>
-      <Sheet title="What’s included in backups" visible={backupInfo} onClose={() => setBackupInfo(false)}>
-        <Copy>Titles, notes, lists and reminders are included in a plain-text JSON file.</Copy>
-        <Copy>One-off reminders in Trash are excluded. Repeating deletion exclusions are kept.</Copy>
-        <Copy>App settings, appearance and Google Calendar connection/publication data are excluded.</Copy>
+      <Sheet title={t('m_417b6c80d6e4')} visible={backupInfo} onClose={() => setBackupInfo(false)}>
+        <Copy>{t('m_03588484b7c5')}</Copy>
+        <Copy>{t('m_a9a1a38b9395')}</Copy>
+        <Copy>{t('m_6d3b4ca3720b')}</Copy>
       </Sheet>
     </View>
   </Page>;

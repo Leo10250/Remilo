@@ -56,7 +56,9 @@
     "preview:ui": "node scripts/preview-ui.mjs",
     "verify:all": "node scripts/prepare.mjs verify",
     "release:prepare": "node scripts/prepare.mjs release",
-    "test:tooling": "node scripts/tooling-tests.mjs"
+    "test:tooling": "node scripts/tooling-tests.mjs",
+    "localization:generate": "node scripts/localization.mjs",
+    "verify:localization": "node scripts/localization.mjs --check"
   },
   "private": true,
   "overrides": {
