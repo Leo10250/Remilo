@@ -100,7 +100,7 @@ export default function CalendarManagement() {
       empty={!reminder.isLoading && !item} emptyMessage="This reminder is unavailable." onRetry={() => void client.invalidateQueries()} />
     {item && <>
       <Copy heading>{item.title}</Copy><Copy muted>{alertPresentation(item).label}</Copy>
-      <Copy>{link?.syncMode === 'Automatic' ? 'Ordinary edits transfer automatically. Conflicts and unsafe timing need review.' : link && link.state !== 'Detached' ? 'Linked changes require review. You can enable automatic sync after a fresh review.' : 'Your local reminder and alerts work independently. Calendar adoption requires review.'}</Copy>
+      <Copy muted>{link?.syncMode === 'Automatic' ? 'Titles, notes and event times stay in sync. Changes that need your choice appear here.' : link && link.state !== 'Detached' ? 'Updates are manual. Review both copies to turn on automatic sync.' : 'Your reminder and alerts work independently of Google.'}</Copy>
       {(!link || link.state === 'Detached') && disposition.data && <ConnectedGroup title="Calendar preference"><View key="preference" style={{ padding: 16, gap: 12 }}>
         <Copy heading>{calendarDispositionLabel(disposition.data)}</Copy><Copy muted>{disposition.data.message}</Copy>
         {disposition.data.calendarName && <Copy>{disposition.data.calendarName}</Copy>}
@@ -134,7 +134,7 @@ export default function CalendarManagement() {
       {checking && <ActionFeedback loading message={link?.syncMode === 'Automatic' && !link.readOnly ? 'Syncing compatible Calendar changes…' : 'Checking Google Calendar…'} />}
       {link && <Button label={link.syncStatus === 'Unconfirmed' ? 'Check update result' : link.syncMode === 'Automatic' && active && !link.requiresReview && link.syncStatus !== 'Paused' && link.syncStatus !== 'Review' ? 'Sync now' : 'Check for changes'} variant="secondary" disabled={checking || guarded}
         onPress={() => void (link.syncStatus === 'Unconfirmed' || link.syncMode === 'Automatic' && active && !link.requiresReview && link.syncStatus !== 'Paused' && link.syncStatus !== 'Review' ? sync() : check())} />}
-      {link && active && link.syncMode !== 'Automatic' && link.state !== 'Detached' && !current.length && <Button label="Enable automatic sync" variant="secondary" disabled={checking || guarded}
+      {link && active && link.syncMode !== 'Automatic' && link.state !== 'Detached' && !current.length && <Button label="Turn on sync for this reminder" variant="secondary" disabled={checking || guarded}
         onPress={() => router.push({ pathname: '/calendar-review', params: { id, automatic: 'true', ...origin, originReminderId: id } } as Href)} />}
       {link && (link.state === 'NeedsAccess' || link.source === null) && <Button label="Review Calendar connection" variant="secondary" disabled={guarded}
         onPress={() => router.push({ pathname: '/calendar', params: { ...origin, originReminderId: id } })} />}

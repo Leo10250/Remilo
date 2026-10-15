@@ -1,6 +1,6 @@
 /** Synthetic managed Calendar adapter: memory only, without platform access or remote capabilities. */
 import type { CalendarCreationDisposition, CalendarImportChoices, CalendarReminderDisposition, CalendarReviewIssue, ManagedCalendarCandidatePreview, ManagedCalendarCommand,
-  CalendarSelections, ManagedCalendarPolicy, ManagedCalendarPolicyChoices, ManagedCalendarPreview, ManagedCalendarSetupChoices, ManagedCalendarState, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+  CalendarSelections, CalendarOperationStatus, ManagedCalendarPolicy, ManagedCalendarPolicyChoices, ManagedCalendarPreview, ManagedCalendarSetupChoices, ManagedCalendarState, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function previewManagedCalendar(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void, connectionRevision: () => number, connected: () => boolean,
   importPreview: (candidateId: string, choices: CalendarImportChoices) => Promise<ManagedCalendarCandidatePreview>, importCandidate: (previewId: string, operationId: string, selections?: CalendarSelections) => Promise<unknown>) {
@@ -14,7 +14,7 @@ export function previewManagedCalendar(review: URLSearchParams, find: (id: strin
     policy: { revision: 1, automaticImport: true, exportNewReminders: true, importMode: 'Alarm', allDayAlarmMinutes: 540, disableGoogleReminders: false }, initialMode: fresh ? 'None' : 'Alarm',
     bootstrapGeneration: 1, initialRecoveryComplete: configured && !['unknown', 'initial-import'].includes(scenario), candidateCount: ['candidate', 'unsupported', 'copied'].includes(scenario) ? 1 : scenario === 'initial-import' ? 450 : 0, pendingExportCount: scenario === 'waiting' || scenario === 'partial' ? 1 : 0,
     heldExportCount: scenario === 'paused' ? 2 : 0, reviewCount: ['candidate', 'unsupported', 'unknown', 'access', 'unavailable'].includes(scenario) ? 1 : 0, lastObservedAtMs: configured ? Date.now() - 60_000 : null,
-    message: 'Synthetic setup and policy. No external operations can run.', operationId: scenario === 'unknown' ? 'synthetic-calendar-creation' : null };
+    message: 'Synthetic setup and policy. No external operations can run.', operationId: scenario === 'unknown' ? 'synthetic-calendar-creation' : configured ? 'synthetic-managed-setup' : null };
   const previews = new Map<string, ManagedCalendarPreview>(), receipts = new Map<string, { input: string; result: unknown }>(), dispositions = new Map<string, CalendarReminderDisposition>();
   let counter = 0, ignored = false;
   const savedDisposition = (id: string, disposition: CalendarCreationDisposition, status: CalendarReminderDisposition['state']) => {
@@ -66,7 +66,15 @@ export function previewManagedCalendar(review: URLSearchParams, find: (id: strin
     return issues;
   };
   return {
-    getManagedCalendarState: async () => clone(state),
+    getManagedCalendarState: async (): Promise<ManagedCalendarState> => clone({ ...state, problem: state.phase === 'AccessRequired' ? { reason: 'NEEDS_ACCESS', action: 'Authorize' as const } : null, progress: { scanComplete: state.initialRecoveryComplete, imported: fresh && configured ? 3 : 0,
+      pending: (scenario === 'initial-import' ? state.candidateCount : 0) + state.pendingExportCount, held: state.heldExportCount, review: state.reviewCount, localBlocked: 0, localPending: 0 } }),
+    getManagedCalendarOperationStatus: async (operationId: string): Promise<CalendarOperationStatus | null> => {
+      if (!receipts.has(operationId) && state.operationId !== operationId) return null;
+      const pending = (scenario === 'initial-import' ? state.candidateCount : 0) + state.pendingExportCount;
+      return { operationId, kind: 'Setup', stage: state.phase === 'CreationUnconfirmed' ? 'Unconfirmed' : state.phase === 'AccessRequired' ? 'NeedsAccess' : state.phase === 'InitialImport' ? 'CheckingEvents' : pending ? 'AddingReminders' : state.reviewCount ? 'NeedsReview' : 'Confirmed',
+        reason: '', action: state.phase === 'CreationUnconfirmed' ? 'InspectCreation' : state.phase === 'AccessRequired' ? 'Authorize' : state.reviewCount ? 'ReviewItems' : 'None', confirmed: 0, pending, review: state.reviewCount, held: state.heldExportCount, children: [], currentScope: true,
+        progress: { scanComplete: state.initialRecoveryComplete, imported: fresh && configured ? 3 : 0, pending, held: state.heldExportCount, review: state.reviewCount, localBlocked: 0, localPending: 0 } };
+    },
     getCalendarReminderDisposition: async (id: string) => clone(dispositions.get(id) ?? null),
     previewManagedCalendarSetup: async (choices: ManagedCalendarSetupChoices) => basePreview('Setup', choices),
     previewManagedCalendarPolicyChange: async (choices: ManagedCalendarPolicyChoices) => { if (choices.expectedRevision !== state.policy.revision) return error('STALE_REVISION'); return basePreview('Policy', choices); },
@@ -103,7 +111,7 @@ export function previewManagedCalendar(review: URLSearchParams, find: (id: strin
         if (!preview.complete || command.selectedItemIds.some(id => !preview.items.some(item => item.itemId === id && item.ready))) return error('INVALID_INPUT');
         if (command.kind === 'ConfirmManagedCalendarSetup' && command.selectedCalendarId !== preview.selectedCalendarId) return error('STALE_PREVIEW');
         state = { ...state, revision: state.revision + 1, policy: { ...preview.policy, revision: state.policy.revision + 1 },
-          ...(command.kind === 'ConfirmManagedCalendarSetup' ? { mode: 'Enabled', phase: 'Ready', calendarId: preview.selectedCalendarId || 'fixture-created-calendar', calendarName: 'Remilo', initialMode: preview.initialMode, initialRecoveryComplete: true } : {}),
+          ...(command.kind === 'ConfirmManagedCalendarSetup' ? { mode: 'Enabled', phase: 'Ready', calendarId: preview.selectedCalendarId || 'fixture-created-calendar', calendarName: 'Remilo', initialMode: preview.initialMode, initialRecoveryComplete: true, operationId: command.operationId } : {}),
           ...(command.kind === 'ResumeManagedCalendar' ? { mode: 'Enabled', phase: 'Ready' } : {}) };
         if (command.kind === 'ResumeManagedCalendar') for (const [id, disposition] of dispositions) if (disposition.state === 'Held' && command.selectedItemIds.includes('export:' + id)) dispositions.set(id, { ...disposition, state: 'WaitingToPublish' });
         state.heldExportCount = [...dispositions.values()].filter(value => value.state === 'Held').length;

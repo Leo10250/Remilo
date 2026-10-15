@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 describe('Calendar publication boundary', () => {
   it('gives phase-specific recovery for uncertain creation, incomplete discovery and ownership', () => {
     expect(calendarError({ code: 'CREATION_UNCONFIRMED' })).toContain('original request result');
-    expect(calendarError({ code: 'DISCOVERY_INCOMPLETE' })).toContain('discovery is incomplete');
+    expect(calendarError({ code: 'DISCOVERY_INCOMPLETE' })).toBe('Calendar discovery hasn’t finished. Check again before choosing or creating a calendar.');
     expect(calendarError({ code: 'OWNERSHIP_UNKNOWN' })).toContain('ownership');
     expect(calendarError({ code: 'MEETING_EVENT' })).toContain('Google event is kept');
   });

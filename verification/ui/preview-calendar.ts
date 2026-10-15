@@ -3,7 +3,7 @@ import type { CalendarCommand, CalendarConnection, CalendarLegacyCommand, Calend
 import { deviceZone } from '../../src/domain/time';
 import { previewCalendarLinks } from './preview-calendar-links';
 import { previewManagedCalendar } from './preview-calendar-managed';
-import type { CalendarFields, CalendarImportChoices } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarFields, CalendarImportChoices, CalendarOperationStatus } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function previewCalendar(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
   save?: (fields: CalendarFields, choices: CalendarImportChoices, operationId: string, id?: string) => Occurrence) {
@@ -13,6 +13,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
     calendarId: ['disconnected', 'no-calendar'].includes(state) ? '' : 'fixture-calendar',
     calendarName: ['disconnected', 'no-calendar'].includes(state) ? '' : 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
   const jobs = new Map<string, CalendarPublication>(), captures = new Map<string, CalendarCommand>();
+  const authorizations = new Map<string, { target: string | null; status: CalendarOperationStatus['stage'] }>();
   const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision, () => connection.connected);
   const adoptionPreviewIds = new Set<string>();
   const managed = previewManagedCalendar(review, find, changed, () => connection.revision, () => connection.connected,
@@ -56,6 +57,24 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
         candidates: items.filter(issue => issue.kind === 'Candidate').length, setup: items.filter(issue => issue.kind === 'Setup').length, total: items.length } };
     },
     getCalendarConnection: async () => clone(connection),
+    beginCalendarAuthorization: async (requestId: string, operationId: string | null) => {
+      const prior = authorizations.get(requestId); if (prior) { if (prior.target !== operationId) return error('OPERATION_REUSED'); return { operationId: requestId, launched: false }; }
+      const status = review.get('reviewCalendarConsent') === 'cancel' ? 'Cancelled' : review.get('reviewCalendarConsent') === 'denied' ? 'Failed' : review.get('reviewCalendarConsent') === 'waiting' ? 'AwaitingAuthorization' : 'Authorized';
+      authorizations.set(requestId, { target: operationId, status });
+      if (status === 'Authorized') connection = { ...connection, connected: true, revision: connection.revision + 1 };
+      changed(); return { operationId: requestId, launched: true };
+    },
+    getCalendarOperationStatus: async (operationId: string): Promise<CalendarOperationStatus | null> => {
+      const auth = authorizations.get(operationId);
+      if (auth) return { operationId, kind: 'Authorization', stage: auth.status, reason: '', action: auth.status === 'Failed' ? 'Connect' : 'None', confirmed: 0, pending: 0, review: 0, held: 0, children: [], currentScope: true };
+      const children = linked.getCalendarLinkedBatchChildren(operationId);
+      if (children) {
+        const jobs = (await linked.getCalendarOperations()).filter(job => children.includes(job.operationId));
+        const confirmed = jobs.filter(job => job.state === 'Confirmed').length, remaining = jobs.length - confirmed;
+        return { operationId, kind: 'Activation', stage: remaining ? 'NeedsReview' : 'Confirmed', reason: '', action: remaining ? 'ReviewItems' : 'None', confirmed, pending: 0, review: remaining, held: 0, children, currentScope: true };
+      }
+      return managed.getManagedCalendarOperationStatus(operationId);
+    },
     getCalendarPublications: async () => clone([...jobs.values()]),
     previewCalendarPublication: async (id: string) => clone(preview(id)),
     authorizeCalendar: async (_publicationId: string | null) => {

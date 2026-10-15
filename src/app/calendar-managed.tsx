@@ -1,128 +1,153 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import type { ManagedCalendarCommand, ManagedCalendarPolicy, ManagedCalendarPreview, ManagedCalendarSetupChoices } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarOperationStatus, ManagedCalendarCommand, ManagedCalendarPolicy, ManagedCalendarPreview, ManagedCalendarSetupChoices } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarError } from '../domain/calendar';
 import { calendarCaptureRejected } from '../domain/calendar-link';
-import { managedCalendarCapture, managedCalendarItemReason } from '../domain/calendar-managed';
+import { managedCalendarCapture } from '../domain/calendar-managed';
 import { deviceZone } from '../domain/time';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Page, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Page, RowSupport, SettingRow, Sheet, Toggle } from '../ui/components';
+import { CalendarOperationProgress, CalendarReviewItems, CalendarStatusCard, useCalendarAuthorization } from '../ui/calendar-sync';
 import { useAppearanceConfirmation } from '../ui/confirmation';
-import { engine, nativeAvailable } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
-import { useTimeFormatting } from '../ui/time-display';
+import { engine, nativeAvailable } from '../ui/native';
 import { TimeZoneField } from '../ui/time-zone';
 
-export default function ManagedCalendarReview() {
-  const params = useLocalSearchParams<OriginParams & { mode?: 'setup' | 'policy' | 'resume' | 'recovered'; adoptOccurrenceId?: string; replacement?: string }>(), origin = retainedOriginParams(params);
-  const mode = params.mode || 'setup', client = useQueryClient(), confirm = useAppearanceConfirmation(), { scheduleDateTime } = useTimeFormatting();
-  const [preview, setPreview] = useState<ManagedCalendarPreview | null>(null), [policy, setPolicy] = useState<ManagedCalendarPolicy | null>(null);
-  const [selected, setSelected] = useState<string[]>([]), [calendarId, setCalendarId] = useState<string | undefined>();
-  const [calendarZone, setCalendarZone] = useState(deviceZone), [zoneAtMs] = useState(Date.now);
-  const [dirty, setDirty] = useState(false), [busy, setBusy] = useState(false), [capturing, setCapturing] = useState(false), [unknown, setUnknown] = useState(false), [captured, setCaptured] = useState(false), [error, setError] = useState('');
-  const pending = useRef<ManagedCalendarCommand | null>(null), live = useRef(true), running = useRef(false);
-  useAppearanceHold(busy || unknown);
-  usePreventRemove(capturing || unknown, () => confirm('Calendar request not confirmed', 'Wait or retry the same captured request before leaving.'));
+export default function ManagedCalendar() {
+  const params = useLocalSearchParams<OriginParams & { mode?: string; adoptOccurrenceId?: string; replacement?: string; operationId?: string }>();
+  const mode = params.mode || 'setup', origin = retainedOriginParams(params), client = useQueryClient(), confirm = useAppearanceConfirmation();
+  const saved = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable });
+  const connection = useQuery({ queryKey: ['calendar', 'connection'], queryFn: () => engine().getCalendarConnection(), enabled: nativeAvailable });
+  const [preview, setPreview] = useState<ManagedCalendarPreview | null>(null), [draft, setDraft] = useState<ManagedCalendarSetupChoices>({});
+  const [selected, setSelected] = useState<string[]>([]), [checking, setChecking] = useState(false), [capturing, setCapturing] = useState(false);
+  const [unknown, setUnknown] = useState(false), [resultId, setResultId] = useState<string | null>(null), [error, setError] = useState(''), [reason, setReason] = useState(''), [refresh, setRefresh] = useState(0);
+  const [sheet, setSheet] = useState<'calendar' | 'alerts' | 'google' | null>(null);
+  const [zoneAtMs] = useState(Date.now);
+  const pending = useRef<ManagedCalendarCommand | null>(null), initialized = useRef(false), ticket = useRef(0), busy = useRef(false), focused = useRef(false);
+  const pendingSetup = saved.data && (['PreparingCalendar', 'InitialImport', 'CreationUnconfirmed'].includes(saved.data.phase) || saved.data.phase === 'AccessRequired' && saved.data.problem?.action === 'Authorize');
+  const operationId = resultId || params.operationId || (mode === 'progress' || mode === 'setup' && pendingSetup && params.replacement !== 'true' && !params.adoptOccurrenceId ? saved.data?.operationId : null);
   const back = () => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin));
-  const load = async (selection?: string) => {
-    if (!nativeAvailable || running.current || pending.current) return;
-    running.current = true; setBusy(true); setError('');
-    try {
-      const current = await engine().getManagedCalendarState();
-      const choices: ManagedCalendarSetupChoices = { selectedCalendarId: selection ?? calendarId, calendarZone,
-        ...(policy ? { policy } : {}), ...(params.adoptOccurrenceId ? { adoptOccurrenceIds: [params.adoptOccurrenceId] } : {}) };
-      const next = mode === 'resume' ? await engine().previewManagedCalendarResume() : mode === 'recovered' ? await engine().previewManagedCalendarRecoveredAlerts([]) :
-        mode === 'policy' ? await engine().previewManagedCalendarPolicyChange({ ...policy || current.policy, expectedRevision: current.policy.revision }) : await engine().previewManagedCalendarSetup(choices);
-      if (!live.current) return;
-      setPreview(next); setPolicy(next.policy); setCalendarId(next.selectedCalendarId || undefined); setDirty(false);
-      if (next.calendarZone) setCalendarZone(next.calendarZone);
-      setSelected(old => next.items.filter(item => item.ready && (preview ? old.includes(item.itemId) : mode !== 'setup' || item.occurrenceId === params.adoptOccurrenceId || !['Adopt', 'Publish'].includes(item.kind))).map(item => item.itemId));
-    } catch (e) { if (live.current) setError(calendarError(e)); }
-    finally { running.current = false; if (live.current) setBusy(false); }
-  };
-  const loadRef = useRef(load); useEffect(() => { loadRef.current = load; });
-  useEffect(() => { live.current = true; void Promise.resolve().then(() => loadRef.current()); return () => { live.current = false; }; }, [mode]);
-  const updatePolicy = (patch: Partial<ManagedCalendarPolicy>) => { if (!busy && !unknown && !captured) { setPolicy(old => old ? { ...old, ...patch } : old); setDirty(true); } };
+  const auth = useCalendarAuthorization(() => { setRefresh(value => value + 1); });
+  useAppearanceHold(capturing || unknown || !!sheet);
+  usePreventRemove(capturing || unknown, () => confirm('Request not confirmed', 'Check or retry this same request before leaving.'));
+  useFocusEffect(useCallback(() => { if (focused.current) setRefresh(value => value + 1); focused.current = true; }, []));
+  useEffect(() => {
+    if (!nativeAvailable || !connection.data?.connected || operationId || mode === 'progress' || pending.current) return;
+    const tickets = ticket, current = ++tickets.current;
+    setChecking(true); setError(''); setReason('');
+    const timer = setTimeout(() => {
+      void (async () => {
+        const state = await engine().getManagedCalendarState();
+        const choices: ManagedCalendarSetupChoices = { ...draft, replacement: params.replacement === 'true', ...(params.adoptOccurrenceId ? { adoptOccurrenceIds: [params.adoptOccurrenceId] } : {}) };
+        const next = mode === 'resume' ? await engine().previewManagedCalendarResume() : mode === 'recovered' ? await engine().previewManagedCalendarRecoveredAlerts([]) :
+          mode === 'policy' ? await engine().previewManagedCalendarPolicyChange({ ...(draft.policy || state.policy), expectedRevision: state.policy.revision }) : await engine().previewManagedCalendarSetup(choices);
+        if (current !== ticket.current) return;
+        setPreview(next);
+        const first = !initialized.current; initialized.current = true;
+        setSelected(old => next.items.filter(item => item.ready && (!first ? old.includes(item.itemId) : mode !== 'setup' || !['Adopt', 'Publish'].includes(item.kind) || item.occurrenceId === params.adoptOccurrenceId)).map(item => item.itemId));
+      })().catch(e => { if (current === ticket.current) { setError(calendarError(e)); setReason(e && typeof e === 'object' && 'code' in e ? String(e.code) : ''); } }).finally(() => { if (current === ticket.current) setChecking(false); });
+    }, 250);
+    return () => { clearTimeout(timer); tickets.current++; };
+  }, [draft, mode, connection.data?.connected, connection.data?.revision, refresh, params.adoptOccurrenceId, params.replacement, operationId]);
+  const policy = { ...(preview?.policy || saved.data?.policy), ...draft.policy } as ManagedCalendarPolicy;
+  const updatePolicy = (patch: Partial<ManagedCalendarPolicy>) => setDraft(old => ({ ...old, policy: { ...(preview?.policy || saved.data?.policy), ...old.policy, ...patch } }));
   const apply = async () => {
-    if (!preview || running.current) return;
-    if (dirty && !pending.current) { await load(); return; }
+    if (!preview || busy.current || checking || !preview.complete || !unknown && Date.now() >= preview.expiresAtMs) { setError('These settings need another check before confirming.'); setRefresh(v => v + 1); return; }
     pending.current ??= managedCalendarCapture(preview, engine().createOperationId(), selected);
-    running.current = true; setBusy(true); setCapturing(true); setError('');
-    try {
-      await engine().applyCalendarCommand(pending.current); pending.current = null; setUnknown(false); setCaptured(true);
-      await client.invalidateQueries({ queryKey: ['calendar'] });
-    } catch (e) { if (calendarCaptureRejected(e)) { pending.current = null; setUnknown(false); } else setUnknown(true); setError(calendarError(e)); }
-    finally { running.current = false; setBusy(false); setCapturing(false); }
+    const command = pending.current; busy.current = true; setCapturing(true); setError('');
+    try { await engine().applyCalendarCommand(command); pending.current = null; setUnknown(false); setResultId(command.operationId); await client.invalidateQueries({ queryKey: ['calendar'] }); }
+    catch (e) { if (calendarCaptureRejected(e)) { pending.current = null; setUnknown(false); setRefresh(v => v + 1); } else setUnknown(true); setError(calendarError(e)); }
+    finally { busy.current = false; setCapturing(false); }
   };
-  const title = mode === 'resume' ? 'Review queued Calendar work' : mode === 'policy' ? 'Calendar defaults' : mode === 'recovered' ? 'Review recovered alerts' : 'Set up Remilo calendar';
-  const action = mode === 'resume' ? 'Resume and apply reviewed work' : mode === 'policy' ? 'Save reviewed defaults' : mode === 'recovered' ? 'Enable selected alarms' : 'Enable Remilo calendar sync';
-  const locked = busy || unknown || captured;
-  const allDayTime = new Date(); allDayTime.setHours(Math.floor((policy?.allDayAlarmMinutes ?? 540) / 60), (policy?.allDayAlarmMinutes ?? 540) % 60, 0, 0);
-  return <Page compact title={title} onBack={back} footer={preview && !captured ? <BottomActionBar>
-    <Button label={unknown ? 'Retry same captured request' : dirty ? 'Refresh review' : action} disabled={busy || !unknown && (!preview.complete || mode === 'recovered' && !selected.length)} onPress={() => void apply()} />
-    <Button label="Cancel" variant="secondary" disabled={busy || unknown} onPress={back} />
-  </BottomActionBar> : undefined}>
-    <Copy muted>{mode === 'resume' ? 'Your local alerts continue while sync is paused. Confirmation resumes automatic work in the Remilo calendar and applies the selected ready items. Other Calendar sources keep their own permissions.' :
-      mode === 'recovered' ? 'Recovered reminders currently have No alert. Select the future alarms to enable. Completion, Snooze and other local settings cannot be recovered from Google Calendar.' :
-      'Remilo uses one owned calendar. Supported ongoing and upcoming events become linked reminders. Ordinary Title, Notes and Schedule changes transfer automatically; conflicts and unsafe timing require review.'}</Copy>
-    {!nativeAvailable && <ActionFeedback message="Use the Android app to set up managed Calendar sync." />}
-    {params.replacement === 'true' && <ActionFeedback tone="warning" message="This is a separately reviewed replacement setup. The earlier creation request may still appear in Google. Confirmation never deletes an existing calendar." />}
-    {!!error && <ActionFeedback message={error} tone="warning" />}{busy && <ActionFeedback loading message={capturing ? 'Capturing the reviewed Calendar work…' : 'Preparing the native Calendar review…'} />}
-    {!preview && !busy && <Button label="Retry review" disabled={!nativeAvailable} onPress={() => void load()} />}
-    {preview && <>
-      {mode === 'setup' && <ConnectedGroup title="Remilo calendar">
-        {preview.calendarCandidates.map(candidate => <Choice key={candidate.id} label={candidate.name} description={candidate.zoneId + (candidate.recognition === 'NameOnly' ? ' · Matching name; adoption requires confirmation' : '')}
-          selected={preview.selectedCalendarId === candidate.id} disabled={locked} onPress={() => { setCalendarId(candidate.id); void load(candidate.id); }} />)}
-        {preview.createCalendar && <Copy>A new owned calendar named Remilo will be created after confirmation.</Copy>}
-        {!preview.createCalendar && !preview.selectedCalendarId && <Copy>Choose which Remilo calendar to use.</Copy>}
+  const recover = async (status: CalendarOperationStatus) => {
+    if (status.action === 'Connect' || status.action === 'Authorize') { await auth.start(status.action === 'Authorize' ? status.operationId : null); return; }
+    if (status.action === 'ReviewItems') { router.push({ pathname: '/calendar-reviews', params: origin }); return; }
+    if (status.action === 'InspectCreation') {
+      if (busy.current) return; busy.current = true; setCapturing(true);
+      try { await engine().applyCalendarCommand({ kind: 'RetryManagedCalendarOperation', operationId: status.operationId }); await client.invalidateQueries({ queryKey: ['calendar'] }); }
+      catch (e) { setError(calendarError(e)); } finally { busy.current = false; setCapturing(false); }
+      return;
+    }
+    router.replace({ pathname: '/calendar', params: origin });
+  };
+  const title = operationId || mode === 'progress' ? 'Calendar sync' : mode === 'resume' ? 'Review and resume sync' : mode === 'policy' ? 'Calendar sync preferences' : mode === 'recovered' ? 'Turn on recovered alerts' : 'Set up Calendar sync';
+  const action = mode === 'resume' ? 'Resume and apply reviewed work' : mode === 'policy' ? 'Save preferences' : mode === 'recovered' ? `Turn on ${selected.length} alerts` : preview?.createCalendar ? 'Create calendar and turn on sync' : 'Turn on sync';
+  const locked = capturing || unknown || auth.waiting;
+  const allDayTime = new Date(zoneAtMs); allDayTime.setHours(Math.floor((policy.allDayAlarmMinutes ?? 540) / 60), (policy.allDayAlarmMinutes ?? 540) % 60, 0, 0);
+  const source = preview?.calendarCandidates.find(value => value.id === (draft.selectedCalendarId || preview.selectedCalendarId));
+  const zone = preview?.createCalendar ? draft.calendarZone || preview.calendarZone || deviceZone() : source?.zoneId || saved.data?.calendarZone || deviceZone();
+  const zoneLabel = zone.split('/').pop()?.replaceAll('_', ' ') || zone;
+  return <Page compact title={title} onBack={back} footer={!operationId && preview && mode !== 'progress' ? <BottomActionBar><Button label={unknown ? 'Retry same request' : checking ? 'Checking settings…' : action}
+    busy={capturing} disabled={auth.waiting || checking || !unknown && (!preview.complete || !!error || mode === 'recovered' && !selected.length)} onPress={() => void apply()} /></BottomActionBar> : undefined}>
+    {!nativeAvailable && <Copy>Use the Android app to set up Calendar sync.</Copy>}
+    {operationId ? <><CalendarOperationProgress operationId={operationId} onAction={status => void recover(status)} />
+      {!!auth.message && <ActionFeedback message={auth.message} loading={auth.waiting} />}
+      {!!error && <ActionFeedback message={error} tone="warning" />}
+      <Button label="Back to Calendar" variant="secondary" disabled={capturing || unknown} onPress={() => router.replace({ pathname: '/calendar', params: origin })} />
+    </> : <>
+      <Copy muted>{mode === 'resume' ? 'Local alerts continue. Review what will sync when you resume.' : mode === 'recovered' ? 'These recovered reminders have No alert. Choose which future alerts to turn on.' : mode === 'policy' ? 'Changes apply to future imports and new reminders.' : 'Sync reminders with a dedicated Remilo calendar.'}</Copy>
+      {mode === 'setup' && <ConnectedGroup title="Account and calendar">
+        <SettingRow icon="event" label="Google account" value={connection.data?.connected ? connection.data.email : 'Not connected'} description={connection.data?.connected ? undefined : 'Allow access to find your Remilo calendar.'} />
+        <SettingRow icon="event" label="Remilo calendar" value={source?.name || (preview?.createCalendar ? 'Create a new Remilo calendar' : saved.data?.calendarName || (connection.data?.connected ? checking ? 'Checking calendars…' : 'Choose a Remilo calendar' : 'Choose after connecting'))}
+          description={preview?.createCalendar ? 'Created only after you confirm below.' : source ? 'Found in your Google account' : preview?.calendarCandidates.length ? 'Choose which Remilo calendar to use.' : 'Your automatic import and export source.'}
+          disabled={locked || !preview?.calendarCandidates.length} onPress={preview?.calendarCandidates.length ? () => setSheet('calendar') : undefined} />
+        {preview?.createCalendar && <TimeZoneField value={zone} atMs={zoneAtMs} disabled={locked} onChange={calendarZone => setDraft(old => ({ ...old, calendarZone }))} />}
       </ConnectedGroup>}
-      {mode === 'setup' && preview.createCalendar && <ConnectedGroup title="New calendar time zone">
-        <TimeZoneField value={calendarZone} atMs={zoneAtMs} disabled={locked} onChange={zone => { setCalendarZone(zone); setDirty(true); }} />
-      </ConnectedGroup>}
-      {preview.initialMode === 'None' && mode === 'setup' && <ActionFeedback tone="warning" message="An existing calendar is being recovered on this installation. Initial recovered reminders have No alert. Review them before enabling alarms; later new events use your normal import default." />}
-      {policy && (mode === 'setup' || mode === 'policy') && <>
-        <ConnectedGroup title="Automatic behavior">
-          <Toggle key="import" label="Import new supported events automatically" value={policy.automaticImport} disabled={locked} onChange={value => updatePolicy({ automaticImport: value })} />
-          <Toggle key="export" label="Sync new Remilo reminders" value={policy.exportNewReminders} disabled={locked} onChange={value => updatePolicy({ exportNewReminders: value })} />
-        </ConnectedGroup>
-        <Copy muted>New reminders can be Local only. Repeating families use one Calendar preference. Changing defaults preserves existing alert settings and captured work.</Copy>
-        <Copy muted>New Google events published by Remilo have Google reminders disabled. This does not change reminder settings on events already in Google.</Copy>
-        <ConnectedGroup title="New imported alerts">{(['Alarm', 'Notification', 'None'] as const).map(value => <Choice key={value} label={value === 'None' ? 'No alert' : value} selected={policy.importMode === value}
-          disabled={locked} onPress={() => updatePolicy({ importMode: value })} />)}</ConnectedGroup>
-        <Copy muted>Timed alerts use the event start. Elapsed targets require review and never ring immediately. Alert permissions remain separate.</Copy>
-        {policy.importMode !== 'None' && <DateField label="All-day alert time" timeOnly value={allDayTime.getTime()} disabled={locked} onError={setError}
-          onChange={value => { const date = new Date(value); updatePolicy({ allDayAlarmMinutes: date.getHours() * 60 + date.getMinutes() }); }} />}
-        <Copy muted>All-day alerts use the named time zone of the calendar.</Copy>
-        <Copy muted>Floating repeats selected for sync are pinned to a named time zone. Calendar and Remilo completion remain independent. Each phone has its own local alerts.</Copy>
-        <ConnectedGroup title="Google reminders"><Toggle key="suppress" label="Disable Google reminders on new imports" value={policy.disableGoogleReminders} disabled={locked}
-          onChange={value => updatePolicy({ disableGoogleReminders: value })} /></ConnectedGroup>
-        <Copy muted>Google reminders stay enabled unless you separately select suppression. Both apps may alert. Suppression waits for the requested local alert to be ready.</Copy>
-        {policy.importMode === 'None' && <Copy muted>Imports with No alert keep their Google reminders. This suppression preference applies when future imports request a ready Remilo alert.</Copy>}
+      {!connection.data?.connected && nativeAvailable && <CalendarStatusCard title="Connect Google Calendar" description="Remilo needs access to find your dedicated calendar. Connecting alone doesn’t add reminders or turn on sync." label="Connect Google" busy={auth.waiting} action={() => void auth.start()} />}
+      {!!auth.message && <ActionFeedback message={auth.message} loading={auth.waiting} />}
+      {!!error && <CalendarStatusCard title="Setup needs attention" description={error} warning label={['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? 'Reconnect Google' : 'Check settings again'} busy={auth.waiting || checking}
+        action={() => ['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? void auth.start(saved.data?.problem?.action === 'Authorize' ? saved.data.operationId || null : null) : setRefresh(v => v + 1)} />}
+      {checking && <ActionFeedback loading message="Checking settings…" />}
+      {preview && <>
+        {params.replacement === 'true' && <ActionFeedback tone="warning" message="This replacement keeps existing Google calendars and links. An earlier creation request may still appear in Google." />}
+        {mode === 'setup' && policy.automaticImport && preview.initialMode === 'None' && <CalendarStatusCard title="Existing events will have No alert" description="You can review and turn on their alerts afterward. Later new events use your alert preference below." />}
+        {(mode === 'setup' || mode === 'policy') && <>
+          <ConnectedGroup title="What syncs" footer={<Copy muted size={14}>Linked titles, notes and event times stay in sync.</Copy>}>
+            <View><Toggle label="Add Google events to Remilo" value={policy.automaticImport} disabled={locked} onChange={automaticImport => updatePolicy({ automaticImport })} />
+              <RowSupport><Copy muted size={14}>Ongoing and upcoming events become reminders. Some events need review.</Copy></RowSupport></View>
+            <View><Toggle label="Add new Remilo reminders to Google" value={policy.exportNewReminders} disabled={locked} onChange={exportNewReminders => updatePolicy({ exportNewReminders })} />
+              <RowSupport><Copy muted size={14}>Choose Local only when creating a reminder. Google alerts are off for events Remilo creates.</Copy></RowSupport></View>
+          </ConnectedGroup>
+          {policy.automaticImport && <ConnectedGroup title="Alerts for imported events" footer={<Copy muted size={14}>Timed alerts use the event start. Past alert times need review; they never ring immediately.</Copy>}>
+            <SettingRow icon="alarm" label="Alert type" value={policy.importMode === 'None' ? 'No alert' : policy.importMode} disabled={locked} onPress={() => setSheet('alerts')} />
+            {policy.importMode !== 'None' && <View><DateField label="All-day alert time" timeOnly value={allDayTime.getTime()} disabled={locked} onError={setError}
+              onChange={value => { const date = new Date(value); updatePolicy({ allDayAlarmMinutes: date.getHours() * 60 + date.getMinutes() }); }} />
+              <RowSupport><Copy muted size={14}>{zoneLabel} time · for new all-day imports</Copy></RowSupport></View>}
+          </ConnectedGroup>}
+          <ConnectedGroup><SettingRow icon="notifications" label="Google event reminders" value={policy.disableGoogleReminders ? 'Turn off after Remilo alerts are ready' : 'Keep Google reminders'}
+            description={policy.disableGoogleReminders ? 'No alert imports keep their Google reminders.' : 'Both apps may alert.'} disabled={locked} onPress={() => setSheet('google')} /></ConnectedGroup>
+          <ConnectedGroup><Disclosure title="How Calendar sync works" summary="Supported events, repeating reminders and local alerts" icon="info">
+            <Copy muted size={14}>Existing local reminders aren’t sent to Google unless you select them in a review. Repeating reminders use one Calendar choice for the family.</Copy>
+            <Copy muted size={14}>Repeats without a fixed zone use the calendar’s named time zone when published. Done, Skip, Snooze and local alert settings stay in Remilo. Each phone has its own alerts.</Copy>
+            <Copy muted size={14}>Meetings and unsupported schedules need individual review. Deleting a Google event keeps its local reminder and alert.</Copy>
+          </Disclosure></ConnectedGroup>
+        </>}
+        {preview.warnings.map((warning, index) => <ActionFeedback key={index} message={warning} tone="warning" />)}
+        {preview.sample && <ConnectedGroup><Disclosure title="Preview existing events" summary="A sample, not the full import total" icon="event">
+          <Copy muted size={14}>{preview.sample.inspectedCount} calendar resources checked{preview.sample.complete ? '' : ' · More pages remain'}. Full processing begins after confirmation.</Copy>
+          {preview.sample.items.map((item, index) => <View key={index} style={{ gap: 4 }}><Copy>{item.title}</Copy><Copy muted size={14}>{item.description}</Copy></View>)}
+          {!preview.sample.items.length && <Copy muted size={14}>No upcoming events appear in this sample.</Copy>}
+        </Disclosure></ConnectedGroup>}
+        {!preview.complete && <ActionFeedback message="Choose a Remilo calendar before continuing." tone="warning" />}
+        <CalendarReviewItems items={preview.items} selected={selected} disabled={locked || checking} onToggle={id => setSelected(old => old.includes(id) ? old.filter(value => value !== id) : [...old, id])}
+          onReview={item => router.push(item.candidateId ? { pathname: '/calendar-review', params: { candidateId: item.candidateId, ...origin } } : { pathname: '/calendar-manage', params: { id: item.occurrenceId!, ...origin } })} />
+        {mode === 'resume' && <Copy muted size={14}>Publishing a past unfinished reminder doesn’t replay its alert. Unselected items stay held or available for review.</Copy>}
       </>}
-      {preview.warnings.map((warning, index) => <ActionFeedback key={index} message={warning} tone="warning" />)}
-      {preview.sample && <ConnectedGroup title="Existing Calendar contents · sample">
-        <Copy muted>{preview.sample.inspectedCount} resources inspected in one page{preview.sample.complete ? '' : ' · More pages remain'}. This is a read-only sample, not an import total. Full processing starts after confirmation.</Copy>
-        {preview.sample.items.map((item, index) => <View key={index}><Copy heading>{item.title}</Copy><Copy muted>{item.description}</Copy></View>)}
-        {!preview.sample.items.length && <Copy muted>No ongoing or upcoming master events appear in this sample.</Copy>}
-      </ConnectedGroup>}
-      {!preview.complete && <ActionFeedback message="The review is incomplete. Continue refreshing before confirming." tone="warning" />}
-      {preview.items.length > 0 && <Copy heading>{preview.items.filter(item => item.ready).length} ready items · {preview.items.filter(item => !item.ready).length} need review</Copy>}
-      {preview.items.map(item => <ConnectedGroup key={item.itemId}>
-        <Choice label={item.title} description={[item.kind === 'RecoveredAlert' ? 'Enable Alarm' : item.kind, item.calendarName, item.scope].filter(Boolean).join(' · ')} selected={selected.includes(item.itemId)} disabled={locked || !item.ready}
-          onPress={() => setSelected(old => old.includes(item.itemId) ? old.filter(id => id !== item.itemId) : [...old, item.itemId])} />
-        {item.ready ? <><Copy muted>{item.alertMode === 'None' ? 'No alert' : item.alertAtMs ? (item.alertMode || 'Alarm') + ': ' + scheduleDateTime(item.alertAtMs) : ''}</Copy>
-          {(item.inbound?.length || item.outbound?.length) ? <Copy muted>To Remilo: {item.inbound?.join(', ') || 'None'} · To Google: {item.outbound?.join(', ') || 'None'}</Copy> : null}
-          {item.localStatus && <Copy muted>Local scheduling: {item.localStatus}</Copy>}</> : <Copy muted>{managedCalendarItemReason(item)}</Copy>}
-        {!item.ready && item.occurrenceId && <Button label="Review reminder" variant="secondary" disabled={locked} onPress={() => router.push({ pathname: '/calendar-manage', params: { id: item.occurrenceId!, ...origin } })} />}
-        {!item.ready && item.candidateId && <Button label="Review incoming event" variant="secondary" disabled={locked} onPress={() => router.push({ pathname: '/calendar-review', params: { candidateId: item.candidateId!, ...origin } })} />}
-      </ConnectedGroup>)}
-      {mode === 'resume' && <Copy muted>Past unfinished reminders can be published through this review. Publication does not replay their local alerts. Completed, trashed and Local only work is excluded.</Copy>}
-      {!locked && <Button label={dirty ? 'Refresh with these choices' : 'Refresh review'} variant="secondary" onPress={() => void load()} />}
-      {captured && <><ActionFeedback message="The reviewed work is captured. Check saved Calendar status for each outcome; captured work does not mean every transfer has finished." />
-        <Button label="Open Calendar settings" variant="secondary" onPress={() => router.replace({ pathname: '/calendar', params: origin })} /></>}
     </>}
+    <Sheet visible={sheet === 'calendar'} title="Choose your Remilo calendar" onClose={() => setSheet(null)}>
+      <Copy muted>Use an existing dedicated Remilo calendar. Other calendars remain available in advanced manual tools.</Copy>
+      <ConnectedGroup>{preview?.calendarCandidates.map(candidate => <Choice key={candidate.id} label={candidate.name} description={candidate.zoneId + (candidate.recognition === 'NameOnly' ? ' · Matching calendar name' : '')}
+        selected={candidate.id === (draft.selectedCalendarId || preview.selectedCalendarId)} onPress={() => { setDraft(old => ({ ...old, selectedCalendarId: candidate.id })); setSheet(null); }} />)}</ConnectedGroup>
+    </Sheet>
+    <Sheet visible={sheet === 'alerts'} title="Alerts for new Google events" onClose={() => setSheet(null)}><ConnectedGroup>
+      {(['Alarm', 'Notification', 'None'] as const).map(importMode => <Choice key={importMode} label={importMode === 'None' ? 'No alert' : importMode} selected={policy.importMode === importMode} onPress={() => { updatePolicy({ importMode }); setSheet(null); }} />)}
+    </ConnectedGroup><Copy muted>Existing reminders keep their alert settings. Android alert permissions remain separate.</Copy></Sheet>
+    <Sheet visible={sheet === 'google'} title="Google event reminders" onClose={() => setSheet(null)}><ConnectedGroup>
+      <Choice label="Keep Google reminders" description="Both apps may alert." selected={!policy.disableGoogleReminders} onPress={() => { updatePolicy({ disableGoogleReminders: false }); setSheet(null); }} />
+      <Choice label="Turn off after Remilo alerts are ready" description="Applies to new imports with a ready Remilo alert. No alert imports keep Google reminders." selected={policy.disableGoogleReminders} onPress={() => { updatePolicy({ disableGoogleReminders: true }); setSheet(null); }} />
+    </ConnectedGroup></Sheet>
   </Page>;
 }

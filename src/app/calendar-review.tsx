@@ -7,7 +7,7 @@ import type { CalendarCommand, CalendarFields, CalendarImportChoices, CalendarLi
 import { calendarError } from '../domain/calendar';
 import { calendarCaptureRejected, resolvedCalendarFields } from '../domain/calendar-link';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, SelectRow, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, RowSupport, SelectRow, Toggle } from '../ui/components';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
 import { calendarImportIndependence } from '../domain/calendar-presentation';
 import { DateTimeFields } from '../ui/date-time-fields';
@@ -105,15 +105,15 @@ export default function CalendarReview() {
   const invalid = imported && !adopting ? !title.trim() || (recurring ? !preview?.upcoming?.length : mode !== 'None' && (!alarm || alarm <= now)) : !resolved || elapsedChange;
   const back = useCallback(() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin)), [origin]);
   useEffect(() => { if (ignored && !busy && !uncertain) back(); }, [ignored, busy, uncertain, back]);
-  return <Page compact title={adopting ? 'Review existing Calendar copy' : imported ? 'Review Calendar import' : activating ? 'Enable automatic sync' : enable ? 'Enable linked updates' : 'Review Calendar changes'} onBack={back}
+  return <Page compact title={adopting ? 'Review existing Calendar copy' : imported ? 'Review Calendar import' : activating ? 'Sync this reminder' : enable ? 'Link this reminder' : 'Review Calendar changes'} onBack={back}
     footer={!operationId && preview ? <BottomActionBar>
-      <Button label={uncertain ? 'Retry same captured action' : dirty ? 'Refresh review' : imported && !adopting ? 'Import reminder' : 'Apply resolution'}
+      <Button label={uncertain ? 'Retry same request' : dirty ? 'Check choices' : imported && !adopting ? 'Import reminder' : activating ? 'Turn on sync' : 'Apply chosen changes'}
         disabled={busy || !uncertain && !dirty && invalid} onPress={() => void apply()} />
       <Button label="Cancel" variant="secondary" disabled={busy || uncertain} onPress={back} />
     </BottomActionBar> : undefined}>
-    <Copy muted>{adopting ? 'This Google event matches an existing local copy. Review the values to keep before linking them. Your current local alert settings stay independent.' : imported ? 'Only this event is imported. Review its local alarm and Google reminder choices.' : 'Choose the values to keep. Confirmation applies the shown changes to Remilo and Google; each outcome is recorded separately.'}</Copy>
+    <Copy muted>{adopting ? 'Review which values to keep before linking this event to its existing Remilo copy.' : imported ? 'Review this event and its alert before adding it to Remilo.' : 'Choose which values to keep in both apps. Your local alert settings stay in Remilo.'}</Copy>
     {imported && !adopting && <Copy muted>{calendarImportIndependence}</Copy>}
-    {params.candidateId && !adopting && <Copy muted>No Remilo alert exists for this incoming event yet.</Copy>}
+    {params.candidateId && !adopting && <Copy heading>No Remilo alert yet</Copy>}
     {!!error && <ActionFeedback message={error} tone="warning" />}
     {busy && <ActionFeedback loading message="Checking the captured Calendar review…" />}
     {!preview && !busy && !sourceUnavailable && <Button label="Retry review" variant="secondary" disabled={!nativeAvailable} onPress={() => void load()} />}
@@ -123,10 +123,10 @@ export default function CalendarReview() {
     {preview && !operationId && <>
       <ConnectedGroup title="Source"><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
         <Copy muted>Checked {scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
-      <ConnectedGroup title="Linked updates"><View key="sync" style={{ padding: 16, gap: 12 }}>
-        <Toggle label="Automatic sync" value={params.candidateId ? true : choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating)} disabled={busy || uncertain || activating || !!params.candidateId}
+      <ConnectedGroup title="Linked updates"><View key="sync">
+        <Toggle label="Keep both copies up to date" value={params.candidateId ? true : choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating)} disabled={busy || uncertain || activating || !!params.candidateId}
           onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />
-        <Copy muted>After confirmation, ordinary Title, Notes and Schedule edits transfer between both copies. Conflicts and unsafe timing need review. Local alerts, completion, Trash and postponement remain independent.</Copy>
+        <RowSupport><Copy muted size={14}>Titles, notes and event times stay in sync. Conflicts and unsafe alert times need review. Local alerts and completion stay in Remilo.</Copy></RowSupport>
       </View></ConnectedGroup>
       {imported && !adopting ? <>
         <ConnectedGroup title="Calendar event"><View key="event" style={{ padding: 16, gap: 12 }}>

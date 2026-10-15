@@ -406,6 +406,21 @@ export function Choice({ label, description, selected, onPress, disabled = false
     <View style={{ flex: 1,gap:4 }}><Copy>{label}</Copy>{description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
   </Pressable>;
 }
+/** Independent selection; radio Choice remains reserved for one-of-many controls. */
+export function CheckRow({ label, description, selected, onPress, disabled = false }: { label: string; description?: string; selected: boolean; onPress: () => void; disabled?: boolean }) {
+  const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
+  return <Pressable accessibilityRole="checkbox" aria-checked={selected} accessibilityLabel={[label, description].filter(Boolean).join(', ')}
+    accessibilityState={{ checked: selected, disabled }} disabled={disabled} onPress={onPress}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...corners, minHeight: 56, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? colors.soft : 'transparent' })}>
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 5, borderWidth: 2,
+      borderColor: selected ? colors.accent : colors.muted, backgroundColor: selected ? colors.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+      {selected && <Icon name="check" size={18} color={colors.accentInk} />}
+    </View>
+    <View style={{ flex: 1, gap: 4 }}><Copy>{label}</Copy>{description && <Copy muted size={14}>{description}</Copy>}</View>
+    {corners && focused && <RowFocus corners={corners} />}
+  </Pressable>;
+}
 export function SelectRow<T extends string | number>({ label, value, choices, onChange, icon }: {
   label: string; value: T; choices: { value: T; label: string }[]; onChange: (value: T) => void; icon?: IconName;
 }) {

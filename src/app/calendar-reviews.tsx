@@ -12,7 +12,7 @@ export default function CalendarReviews() {
   const issues = [...new Map((query.data?.pages.flatMap(page => page.items) ?? []).map(issue => [issue.issueId, issue])).values()];
   const counts = query.data?.pages[0]?.counts;
   return <Page compact title="Calendar review" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin))}>
-    <Copy muted>Linked reminder reviews preserve your current local alerts. Incoming events are reviewed before a Remilo copy is created or linked. Setup problems and repeating families appear once.</Copy>
+    <Copy muted>Choose an item to see what needs attention. Your current local alerts are kept.</Copy>
     {counts && <Copy muted>{counts.reminders} reminders · {counts.candidates} incoming events · {counts.setup} setup issues</Copy>}
     <QueryState loading={query.isLoading && nativeAvailable} error={query.error} empty={!issues.length} emptyMessage={nativeAvailable ? 'No Calendar changes need review.' : 'Use the Android app to review Calendar sync.'} onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
     {!!issues.length && <ConnectedGroup>{issues.map(issue => <SettingRow key={issue.issueId} icon="event" label={issue.title || (issue.kind === 'Setup' ? 'Remilo calendar setup' : 'Calendar item')}

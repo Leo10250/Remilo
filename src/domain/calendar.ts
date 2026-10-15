@@ -10,9 +10,9 @@ export function canRetryPublication(publication: CalendarPublication) {
 export function calendarError(error: unknown): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (code.includes('CREATION_UNCONFIRMED')) return 'Calendar creation has not been confirmed. Check the original request result before reviewing a replacement.';
-  if (code.includes('DISCOVERY_INCOMPLETE')) return 'Calendar discovery is incomplete. Refresh the review before choosing or creating a calendar.';
+  if (code.includes('DISCOVERY_INCOMPLETE')) return 'Calendar discovery hasn’t finished. Check again before choosing or creating a calendar.';
   if (code.includes('SELECTION_REQUIRED')) return 'Choose the Remilo calendar to use before confirming setup.';
-  if (code.includes('OWNERSHIP_UNKNOWN')) return 'Google did not confirm calendar ownership. Refresh access before enabling automatic sync.';
+  if (code.includes('OWNERSHIP_UNKNOWN')) return 'Google hasn’t confirmed this calendar’s ownership. Check access with the account that owns it.';
   if (code.includes('NOT_OWNER')) return 'The source calendar must be owned by the connected Google account.';
   if (code.includes('UNSUPPORTED_RECURRENCE')) return 'This repeat cannot be imported safely. The Google event is kept.';
   if (code.includes('MEETING_EVENT')) return 'Events with attendees are not supported for automatic import. The Google event is kept.';
@@ -27,7 +27,7 @@ export function calendarError(error: unknown): string {
   if (code.includes('INVALID_RANGE')) return 'Choose an end date after the start, with a range of at most 366 days.';
   if (code.includes('RESOLUTION_REQUIRED')) return 'Choose Remilo or Google values for each field before confirming.';
   if (code.includes('NEEDS_CONNECTION')) return 'Publishing needs both a connected Google account and a selected calendar. Open Calendar settings to finish setup.';
-  if (code.includes('NEEDS') || code.includes('AUTH')) return 'Connect or authorize Google Calendar, choose a calendar you own, and try again.';
+  if (code.includes('NEEDS') || code.includes('AUTH')) return 'Google access couldn’t be confirmed. Reconnect the Google account used for this calendar.';
   if (code.includes('INELIGIBLE')) return 'This item is not eligible for the requested Calendar action. Keep terminal reminders as local records and review current Calendar status.';
   if (code.includes('INVALID_ZONE')) return 'Choose a named time zone for this reminder and refresh its publication preview.';
   if (code.includes('ALREADY')) return 'This reminder already has a captured publication. Open its Calendar status to continue.';
