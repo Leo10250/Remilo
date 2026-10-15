@@ -64,7 +64,9 @@ if (calendarLocal) {
   if (calendarLocal === 'pending') item.deliveryState = 'Pending';
   if (calendarLocal === 'ringing') item.deliveryState = 'Alerting';
   if (calendarLocal === 'postponed') { item.nextAlertMs = today.getTime() + dayMs; item.agendaAtMs = item.nextAlertMs; item.alertAdjustment = 'Postponed'; }
+  if (calendarLocal === 'snoozed') { item.nextAlertMs = Date.now() + 600_000; item.agendaAtMs = item.nextAlertMs; item.alertAdjustment = 'Snoozed'; }
 }
+if (review.get('reviewText') === 'long') items.find(item => item.id === 'review')!.title = 'Review the complete project proposal and all supporting materials / 审阅完整项目计划及全部支持材料';
 if (review.get('reviewCards') === 'states') {
   const now = Date.now(), zone = 'America/Los_Angeles', localStart = civilAt(now, zone).slice(0, 10) + 'T00:00:00';
   const allDayStart = convert({ zoneId: zone, local: localStart }).instantMs;

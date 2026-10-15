@@ -6,9 +6,9 @@ import type { CalendarCommand, ManagedCalendarCommand, OwnedCalendar } from '../
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { calendarError } from '../domain/calendar';
 import { calendarCaptureRejected } from '../domain/calendar-link';
-import { calendarStatusPresentation } from '../domain/calendar-ux';
+import { calendarStatusPresentation, calendarSyncOutcome } from '../domain/calendar-ux';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Disclosure, Page, QueryState, RowSupport, SettingRow, Sheet, Toggle } from '../ui/components';
-import { CalendarStatusCard, useCalendarAuthorization } from '../ui/calendar-sync';
+import { CalendarStatusCard, useCalendarAuthorization, useCalendarSync, useCalendarAction } from '../ui/calendar-sync';
 import { engine, nativeAvailable } from '../ui/native';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
@@ -17,6 +17,7 @@ import { useAppearanceConfirmation } from '../ui/confirmation';
 import { useTimeFormatting } from '../ui/time-display';
 
 export default function CalendarSettings() {
+  const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<OriginParams>(), origin = retainedOriginParams(params), client = useQueryClient(), confirm = useAppearanceConfirmation();
   const { scheduleDateTime } = useTimeFormatting();
   const connection = useQuery({ queryKey: ['calendar', 'connection'], queryFn: () => engine().getCalendarConnection(), enabled: nativeAvailable });
@@ -25,13 +26,14 @@ export default function CalendarSettings() {
   const links = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(), enabled: nativeAvailable });
   const sync = useQuery({ queryKey: ['calendar', 'sync-summary'], queryFn: () => engine().getCalendarSyncSummary(), enabled: nativeAvailable });
   const managed = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable });
+  const syncRequest = useCalendarSync({ kind: 'AllAuthorized' }, sync.data?.syncRequestId);
   const [selecting, setSelecting] = useState(false), [busy, setBusy] = useState(false), [feedback, setFeedback] = useState('');
   const [rows, setRows] = useState<OwnedCalendar[]>([]), [cursor, setCursor] = useState<string | null>(null), [loaded, setLoaded] = useState(false);
   const selection = useRef<CalendarCommand | null>(null), capture = useRef<ManagedCalendarCommand | null>(null), running = useRef(false);
   const [selectionPending, setSelectionPending] = useState(false), [unknown, setUnknown] = useState(false);
   const auth = useCalendarAuthorization(() => { setRows([]); setLoaded(false); setCursor(null); });
   useAppearanceHold(busy || selecting || unknown);
-  usePreventRemove(unknown || selectionPending, () => confirm('Calendar action not confirmed', 'Retry the same request before leaving.'));
+  usePreventRemove(unknown || selectionPending || calendarAction.unknown || syncRequest.unknown || syncRequest.busy, () => confirm('Calendar action not confirmed', 'Retry the same request before leaving.'));
   const refresh = () => client.invalidateQueries({ queryKey: ['calendar'] });
   const run = async (task: () => Promise<void>) => {
     if (running.current) return; running.current = true; setBusy(true); setFeedback('');
@@ -40,7 +42,9 @@ export default function CalendarSettings() {
   const managedAction = (command?: ManagedCalendarCommand) => run(async () => {
     capture.current ??= command ?? null;
     if (!capture.current) return;
-    try { await engine().applyCalendarCommand(capture.current); capture.current = null; setUnknown(false); }
+    try { const kind = capture.current.kind; await calendarAction.submit(capture.current); capture.current = null; setUnknown(false);
+      if (kind === 'PauseManagedCalendar') setFeedback('Sync paused. Local alerts continue.');
+      if (kind === 'DisableManagedCalendar') setFeedback('Sync turned off. Both copies and local alerts are kept.'); }
     catch (error) { if (calendarCaptureRejected(error)) { capture.current = null; setUnknown(false); } else setUnknown(true); throw error; }
   });
   const load = (next: string | null) => run(async () => {
@@ -54,11 +58,14 @@ export default function CalendarSettings() {
     selection.current ??= calendar ? { kind: 'SelectCalendar', operationId: engine().createOperationId(), calendarId: calendar.id, expectedConnectionRevision: connection.data.revision } : null;
     if (!selection.current) return;
     setSelectionPending(true);
-    try { await engine().applyCalendarCommand(selection.current); selection.current = null; setSelectionPending(false); setSelecting(false); }
+    try { await calendarAction.submit(selection.current); selection.current = null; setSelectionPending(false); setSelecting(false); }
     catch (error) { if (calendarCaptureRejected(error)) { selection.current = null; setSelectionPending(false); } throw error; }
   });
   const setup = (mode = 'setup', extra: Record<string, string> = {}) => router.push({ pathname: '/calendar-managed', params: { ...origin, mode, ...extra } });
-  const presentation = connection.data && managed.data ? calendarStatusPresentation(connection.data, managed.data) : null;
+  const base = connection.data && managed.data ? calendarStatusPresentation(connection.data, managed.data) : null;
+  const result = syncRequest.showResult && syncRequest.status?.syncResult ? calendarSyncOutcome(syncRequest.status) : null;
+  const presentation = base && ['Sync', 'Progress'].includes(base.action) && (sync.data?.reviewCount ?? 0) > 0 ? { ...base, title: 'Calendar items need review', description: 'Review these items. Other authorized work can continue.', label: 'Review items', action: 'ReviewItems' as const, tone: sync.data?.attention?.tone || 'warning' as const } :
+    base?.action === 'Sync' && result ? { ...base, ...result, ...(syncRequest.status?.syncResult?.outcome === 'AccessRequired' ? { label: 'Reconnect Google', action: 'Connect' as const } : syncRequest.status?.syncResult?.outcome === 'NeedsReview' || syncRequest.status?.syncResult?.outcome === 'Unconfirmed' ? { label: 'Review items', action: 'ReviewItems' as const } : {}) } : base;
   const mainAction = () => {
     if (!presentation || !managed.data) return;
     if (presentation.action === 'Connect' || presentation.action === 'Authorize') { void auth.start(presentation.action === 'Authorize' ? managed.data.operationId || null : null); return; }
@@ -66,7 +73,7 @@ export default function CalendarSettings() {
     if (presentation.action === 'Resume') { setup('resume'); return; }
     if (presentation.action === 'Progress') { setup('progress', managed.data.operationId ? { operationId: managed.data.operationId } : {}); return; }
     if (presentation.action === 'InspectCreation' && managed.data.operationId) { void managedAction({ kind: 'RetryManagedCalendarOperation', operationId: managed.data.operationId }); return; }
-    if (presentation.action === 'Sync') { void run(async () => { const result = await engine().syncCalendarNow(null); setFeedback(result.continuation ? 'Calendar checked. More work is queued.' : 'Calendar check finished. Review the saved results below.'); }); return; }
+    if (presentation.action === 'Sync') { void syncRequest.start(); return; }
     setup();
   };
   const changeMode = (kind: 'PauseManagedCalendar' | 'DisableManagedCalendar') => {
@@ -78,20 +85,24 @@ export default function CalendarSettings() {
   const disconnect = () => {
     if (!connection.data) return;
     confirm('Disconnect Google Calendar?', 'Google events and local reminders are kept. Future automatic work stops.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Disconnect', onPress: () => void run(async () => {
-      await engine().applyCalendarCommand({ kind: 'DisconnectCalendar', operationId: engine().createOperationId(), expectedConnectionRevision: connection.data!.revision }); setRows([]); setLoaded(false);
+      await calendarAction.submit({ kind: 'DisconnectCalendar', operationId: engine().createOperationId(), expectedConnectionRevision: connection.data!.revision }); setRows([]); setLoaded(false);
     }) }]);
   };
   const manualCount = links.data?.filter(link => link.syncMode !== 'Automatic' && link.state !== 'Detached').length ?? 0;
-  const locked = busy || unknown || selectionPending || auth.waiting;
+  const locked = busy || unknown || selectionPending || auth.waiting || calendarAction.unknown || syncRequest.busy || syncRequest.unknown;
   return <Page title="Google Calendar" scrollKey="calendar-settings" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin))}>
     <QueryState loading={connection.isLoading && nativeAvailable} error={connection.error || managed.error} empty={!nativeAvailable} emptyMessage="Use the Android app to connect Google Calendar." onRetry={() => void refresh()} />
-    {presentation && <CalendarStatusCard title={presentation.title} description={presentation.description} warning={presentation.warning}
-      label={presentation.label} busy={locked} action={connection.data?.available === false ? undefined : mainAction}>
+    {presentation && <CalendarStatusCard title={presentation.title} description={presentation.description} warning={presentation.warning} tone={presentation.tone}
+      announce={!!syncRequest.operationId}
+      label={presentation.label} secondary={presentation.action === 'Sync'} busy={locked || syncRequest.working} action={connection.data?.available === false ? undefined : mainAction}>
       {!!feedback && <ActionFeedback message={feedback} />}
-      {!!auth.message && <ActionFeedback message={auth.message} loading={auth.waiting} />}
+      {!feedback && !!calendarAction.error && <ActionFeedback message={calendarAction.error} tone="warning" />}
+      {calendarAction.unknown && !unknown && !selectionPending && <Button label="Retry same request" variant="secondary" onPress={() => void calendarAction.retry()} />}
+      {!!auth.message && <ActionFeedback message={auth.message} tone={auth.tone} loading={auth.waiting} />}
+      {!!syncRequest.error && <ActionFeedback message={syncRequest.error} tone="warning" />}
+      {syncRequest.unknown && <Button label="Retry same request" variant="secondary" onPress={() => void syncRequest.start()} />}
       {connection.data?.available === false && <ActionFeedback message="Google Play services is unavailable or needs updating before authorization can open." tone="warning" />}
-      {managed.data?.successfulAtMs && <Copy muted size={14}>Last successful sync {scheduleDateTime(managed.data.successfulAtMs)}</Copy>}
-      {!!managed.data?.failedAtMs && <Copy muted size={14}>Last failed attempt {scheduleDateTime(managed.data.failedAtMs)}</Copy>}
+      {!!managed.data?.successfulAtMs && presentation.action === 'Sync' && <Copy muted size={14}>Last synced {scheduleDateTime(managed.data.successfulAtMs)}</Copy>}
       {unknown && <Button label="Retry same request" variant="secondary" onPress={() => void managedAction()} />}
     </CalendarStatusCard>}
     {managed.data && connection.data?.connected && <ConnectedGroup title="Account and calendar">
@@ -110,10 +121,18 @@ export default function CalendarSettings() {
         <Copy muted size={14}>Local reminders and alerts continue. Other calendars keep their own link permissions.</Copy>
       </Disclosure>
     </ConnectedGroup>}
+    {managed.data?.calendarId && <ConnectedGroup><Disclosure title="Sync details" icon="info">
+      <Copy muted size={14}>{managed.data.calendarName} · {connection.data?.email}</Copy><Copy muted size={14}>{managed.data.calendarZone}</Copy>
+      {managed.data.lastObservedAtMs != null && <Copy muted size={14}>Last Google observation {scheduleDateTime(managed.data.lastObservedAtMs)}</Copy>}
+      {managed.data.successfulAtMs != null && <Copy muted size={14}>Last successful agreement {scheduleDateTime(managed.data.successfulAtMs)}</Copy>}
+      {managed.data.attemptedAtMs != null && <Copy muted size={14}>Latest attempt {scheduleDateTime(managed.data.attemptedAtMs)}</Copy>}
+      {managed.data.failedAtMs != null && <Copy muted size={14}>Last failed attempt {scheduleDateTime(managed.data.failedAtMs)}</Copy>}
+      <Copy muted size={14}>Background checks are requested hourly. Android may delay them. Local alerts remain independent.</Copy>
+    </Disclosure></ConnectedGroup>}
     <ConnectedGroup title="Review and linked reminders">
       <SettingRow icon="event" label="Calendar review" value={`${sync.data?.reviewCount ?? 0} ${sync.data?.reviewCount === 1 ? 'item' : 'items'}`} description="Reminders, incoming events and setup issues" onPress={() => router.push({ pathname: '/calendar-reviews', params: origin })} />
       {!!manualCount && <SettingRow icon="refresh" label="Sync linked reminders" value={`${manualCount} with manual updates`} description="Choose existing links to keep up to date in both apps." disabled={locked || !connection.data?.connected} onPress={() => router.push({ pathname: '/calendar-activate', params: origin })} />}
-      {sync.data && <Toggle label="Quiet review notifications" value={sync.data.notifications.enabled} disabled={locked} onChange={enabled => void run(async () => { await engine().applyCalendarCommand({ kind: 'SetCalendarReviewNotifications', operationId: engine().createOperationId(), expectedRevision: sync.data!.notifications.revision, enabled }); })} />}
+      {sync.data && <Toggle label="Quiet review notifications" value={sync.data.notifications.enabled} disabled={locked} onChange={enabled => void run(async () => { await calendarAction.submit({ kind: 'SetCalendarReviewNotifications', operationId: engine().createOperationId(), expectedRevision: sync.data!.notifications.revision, enabled }); })} />}
     </ConnectedGroup>
     <ConnectedGroup><Disclosure title="Advanced manual tools" summary="Import history, publish to other calendars and account controls" icon="settings">
       <Copy muted size={14}>These manual tools use separate reviews. The publishing destination below doesn’t change your automatic Remilo calendar.</Copy>
@@ -137,5 +156,6 @@ export default function CalendarSettings() {
   </Page>;
 }
 function ViewSummary({ pending, held }: { pending: number; held: number }) {
-  return <RowSupport><Copy muted size={14}>{pending} {pending === 1 ? 'update' : 'updates'} waiting{held ? ` · ${held} held for review` : ''}</Copy></RowSupport>;
+  if (!pending && !held) return null;
+  return <RowSupport><Copy muted size={14}>{[pending ? `${pending} ${pending === 1 ? 'update' : 'updates'} waiting` : '', held ? `${held} held for review` : ''].filter(Boolean).join(' · ')}</Copy></RowSupport>;
 }

@@ -3,7 +3,7 @@ import type { CalendarCommand, CalendarConnection, CalendarLegacyCommand, Calend
 import { deviceZone } from '../../src/domain/time';
 import { previewCalendarLinks } from './preview-calendar-links';
 import { previewManagedCalendar } from './preview-calendar-managed';
-import type { CalendarFields, CalendarImportChoices, CalendarOperationStatus } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarFields, CalendarImportChoices, CalendarOperationStatus, CalendarSyncResult } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export function previewCalendar(review: URLSearchParams, find: (id: string) => Occurrence | undefined, changed: () => void,
   save?: (fields: CalendarFields, choices: CalendarImportChoices, operationId: string, id?: string) => Occurrence) {
@@ -14,6 +14,9 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
     calendarName: ['disconnected', 'no-calendar'].includes(state) ? '' : 'Synthetic owned calendar / 测试日历', message: 'Synthetic preview. No Google requests can be sent.' };
   const jobs = new Map<string, CalendarPublication>(), captures = new Map<string, CalendarCommand>();
   const authorizations = new Map<string, { target: string | null; status: CalendarOperationStatus['stage'] }>();
+  const syncRequests = new Map<string, { input: string; revision: number; status: CalendarOperationStatus }>();
+  const latestSync = (id?: string) => [...syncRequests.values()].reverse().find(value => value.revision === connection.revision &&
+    (value.status.syncResult?.scope?.kind === 'Association' ? value.status.syncResult.scope.occurrenceId === id : !id))?.status.operationId;
   const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision, () => connection.connected);
   const adoptionPreviewIds = new Set<string>();
   const managed = previewManagedCalendar(review, find, changed, () => connection.revision, () => connection.connected,
@@ -45,11 +48,13 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
   return {
     ...linked,
     ...managed,
+    getCalendarLinks: async () => (await linked.getCalendarLinks()).map(link => ({ ...link, syncRequestId: latestSync(link.occurrenceId) })),
     getCalendarSyncSummary: async () => {
       const summary = await linked.getCalendarSyncSummary(), extras = managed.getManagedCalendarIssues();
       const reviewCounts = { reminders: summary.reviewCount, candidates: extras.filter(issue => issue.kind === 'Candidate').length,
         setup: extras.filter(issue => issue.kind === 'Setup').length, total: summary.reviewCount + extras.length };
-      return { ...summary, reviewCount: reviewCounts.total, reviewCounts };
+      const blocking = extras.filter(issue => ['NEEDS_ACCESS', 'AccessRequired', 'AUTH'].includes(issue.reason)).length;
+      return { ...summary, reviewCount: reviewCounts.total, reviewCounts, attention: { blocking, tone: blocking ? 'danger' as const : 'warning' as const }, syncRequestId: latestSync() };
     },
     getCalendarReviewIssues: async (cursor: string | null) => {
       const page = await linked.getCalendarReviewIssues(cursor), items = [...page.items, ...managed.getManagedCalendarIssues()];
@@ -65,6 +70,8 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
       changed(); return { operationId: requestId, launched: true };
     },
     getCalendarOperationStatus: async (operationId: string): Promise<CalendarOperationStatus | null> => {
+      const request = syncRequests.get(operationId);
+      if (request) return clone(request.revision === connection.revision ? request.status : { ...request.status, stage: 'Cancelled', currentScope: false, syncResult: { ...request.status.syncResult!, outcome: 'ScopeChanged' } });
       const auth = authorizations.get(operationId);
       if (auth) return { operationId, kind: 'Authorization', stage: auth.status, reason: '', action: auth.status === 'Failed' ? 'Connect' : 'None', confirmed: 0, pending: 0, review: 0, held: 0, children: [], currentScope: true };
       const children = linked.getCalendarLinkedBatchChildren(operationId);
@@ -87,6 +94,19 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
       items: state === 'empty' ? [] : [{ id: cursor ? 'fixture-calendar-2' : 'fixture-calendar', name: cursor ? 'Another owned calendar' : 'Synthetic owned calendar / 测试日历', zoneId: 'America/Los_Angeles' }],
       nextCursor: !cursor && state !== 'empty' ? 'fixture-page-2' : null }),
     applyCalendarCommand: async (command: CalendarCommand): Promise<unknown> => {
+      if (command.kind === 'RequestCalendarSync') {
+        const previous = syncRequests.get(command.operationId), input = JSON.stringify(command);
+        if (previous) { if (previous.input !== input) return error('OPERATION_REUSED'); return { operationId: command.operationId }; }
+        const outcome = (review.get('reviewSyncOutcome') || (review.get('reviewCalendarOffline') === '1' ? 'Pending' : review.get('reviewCalendarSync') === 'conflict' ? 'NeedsReview' : 'NoChanges')) as CalendarSyncResult['outcome'];
+        const stages: Partial<Record<CalendarSyncResult['outcome'], CalendarOperationStatus['stage']>> = { Checking: 'CheckingEvents', Pending: 'Waiting', AccessRequired: 'NeedsAccess', NeedsReview: 'NeedsReview', Unconfirmed: 'Unconfirmed', Paused: 'Paused', Failed: 'Failed', ScopeChanged: 'Cancelled' };
+        const stage = stages[outcome] || 'Confirmed';
+        syncRequests.set(command.operationId, { input, revision: connection.revision, status: { operationId: command.operationId, kind: 'Sync', stage, reason: outcome === 'Pending' ? 'NETWORK' : '', action: outcome === 'AccessRequired' ? 'Connect' : outcome === 'NeedsReview' || outcome === 'Unconfirmed' ? 'ReviewItems' : 'None',
+          currentScope: true, children: [], confirmed: outcome === 'NoChanges' || outcome === 'Synced' ? 1 : 0, pending: outcome === 'Pending' ? 1 : 0, review: outcome === 'NeedsReview' ? 1 : 0, held: 0,
+          syncResult: { scope: command.scope, outcome, checked: outcome === 'NoChanges' || outcome === 'Synced' ? 1 : 0, changed: outcome === 'Synced' ? 1 : 0, imported: 0, published: 0, startedAtMs: Date.now(), finishedAtMs: outcome === 'Checking' ? null : Date.now() } } });
+        changed();
+        if (review.get('reviewLostReply') === '1') throw new Error('Synthetic sync reply lost after capture.');
+        return { operationId: command.operationId };
+      }
       if (['ConfirmManagedCalendarSetup', 'ApplyManagedCalendarPolicy', 'ResumeManagedCalendar', 'EnableRecoveredCalendarAlerts', 'PauseManagedCalendar', 'DisableManagedCalendar', 'SetCalendarReminderDisposition', 'ImportManagedCalendarCandidate', 'IgnoreManagedCalendarCandidate', 'RetryManagedCalendarOperation'].includes(command.kind)) return managed.applyManagedCalendarCommand(command as ManagedCalendarCommand);
       if (!['PublishOneOff', 'RetryPublication', 'SelectCalendar', 'DisconnectCalendar'].includes(command.kind)) return linked.applyCalendarLinked(command as CalendarLegacyCommand);
       if (command.kind === 'RetryPublication') {

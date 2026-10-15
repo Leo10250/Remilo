@@ -21,7 +21,7 @@ export function calendarReviewRoute(issue: CalendarReviewIssue) {
   return { pathname: '/calendar-manage' as const, params: { id: issue.occurrenceId } };
 }
 export function calendarReviewIssueText(issue: CalendarReviewIssue) {
-  if (issue.kind === 'Candidate') return (['ReviewRequired', 'IdentityReview'].includes(issue.reason) ? 'Calendar source needs linking review' : 'No Remilo alert yet') + (issue.calendarName ? ' · ' + issue.calendarName : '');
+  if (issue.kind === 'Candidate') return (['ReviewRequired', 'IdentityReview'].includes(issue.reason) ? 'Check the existing Calendar copy' : 'No Remilo alert yet') + (issue.calendarName ? ' · ' + issue.calendarName : '');
   if (issue.kind === 'Setup') return 'Calendar setup';
   return issue.affectedScopes?.length ? 'Affected occurrences: ' + issue.affectedScopes.join(', ') : 'Linked reminder';
 }

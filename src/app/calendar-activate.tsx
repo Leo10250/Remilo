@@ -9,12 +9,13 @@ import { calendarCaptureRejected } from '../domain/calendar-link';
 import { calendarTransferText } from '../domain/calendar-ux';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { ActionFeedback, BottomActionBar, Button, CheckRow, ConnectedGroup, Copy, Page, RowSupport, SettingRow } from '../ui/components';
-import { CalendarOperationProgress } from '../ui/calendar-sync';
+import { CalendarOperationProgress, CalendarReviewTiming, useCalendarAction } from '../ui/calendar-sync';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { useAppearanceHold } from '../ui/theme';
 import { engine, nativeAvailable } from '../ui/native';
 
 export default function CalendarActivation() {
+  const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<OriginParams & { operationId?: string }>(), origin = retainedOriginParams(params), client = useQueryClient(), confirm = useAppearanceConfirmation();
   const [review, setReview] = useState<CalendarActivationReview | null>(null), [selected, setSelected] = useState<string[]>([]), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [unknown, setUnknown] = useState(false), [resultId, setResultId] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function CalendarActivation() {
     captured.current ??= { kind: 'ActivateCalendarLinks', operationId: engine().createOperationId(), previewIds: review.items.filter(item => selected.includes(item.occurrenceId) && item.preview && !item.excludedReason).map(item => item.preview!.previewId) };
     const command = captured.current; running.current = true; setBusy(true); setCapturing(true); setError('');
     try {
-      await engine().applyCalendarCommand(command); setResultId(command.operationId); router.setParams({ operationId: command.operationId }); captured.current = null; setUnknown(false);
+      await calendarAction.submit(command); setResultId(command.operationId); router.setParams({ operationId: command.operationId }); captured.current = null; setUnknown(false);
       await client.invalidateQueries({ queryKey: ['calendar'] });
     } catch (e) { if (calendarCaptureRejected(e)) { captured.current = null; setUnknown(false); } else setUnknown(true); setError(calendarError(e)); }
     finally { running.current = false; setBusy(false); setCapturing(false); }
@@ -59,12 +60,12 @@ export default function CalendarActivation() {
       {ready.map(item => <ConnectedGroup key={item.occurrenceId}><View>
         <CheckRow label={item.preview!.local?.title || item.title || 'Linked reminder'} description={[item.preview!.calendarName, item.preview!.email].filter(Boolean).join(' · ')}
           selected={selected.includes(item.occurrenceId)} disabled={busy || unknown} onPress={() => setSelected(old => old.includes(item.occurrenceId) ? old.filter(id => id !== item.occurrenceId) : [...old, item.occurrenceId])} />
-        <RowSupport><Copy muted size={14}>{calendarTransferText(item.preview!.transfers.inbound, item.preview!.transfers.outbound, item.preview!.equal)}</Copy></RowSupport>
+        <RowSupport><CalendarReviewTiming id={item.occurrenceId} /><Copy muted size={14}>{calendarTransferText(item.preview!.transfers.inbound, item.preview!.transfers.outbound, item.preview!.equal)}</Copy></RowSupport>
       </View></ConnectedGroup>)}
       {!!attention.length && <Copy heading>Needs review · {attention.length}</Copy>}
       {attention.map(item => <ConnectedGroup key={item.occurrenceId}><View>
-        <SettingRow label={item.preview?.local?.title || item.title || 'Linked reminder'} description={[item.calendarName, item.email].filter(Boolean).join(' · ')} />
-        <RowSupport><Copy muted size={14}>{item.excludedReason || 'Check both copies before turning on sync.'}</Copy>
+        <SettingRow prominent label={item.preview?.local?.title || item.title || 'Linked reminder'} description={[item.calendarName, item.email].filter(Boolean).join(' · ')} />
+        <RowSupport><CalendarReviewTiming id={item.occurrenceId} /><Copy muted size={14}>{item.excludedReason || 'Check both copies before turning on sync.'}</Copy>
           <Button label="Review changes" variant="secondary" disabled={busy || unknown} onPress={() => router.push({ pathname: '/calendar-manage', params: { id: item.occurrenceId, ...origin } })} /></RowSupport>
       </View></ConnectedGroup>)}
       {review && !review.items.length && <Copy>No linked reminders need activation.</Copy>}

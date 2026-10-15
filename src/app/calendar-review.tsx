@@ -7,7 +7,8 @@ import type { CalendarCommand, CalendarFields, CalendarImportChoices, CalendarLi
 import { calendarError } from '../domain/calendar';
 import { calendarCaptureRejected, resolvedCalendarFields } from '../domain/calendar-link';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, RowSupport, SelectRow, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, Field, Page, RowSupport, SelectRow, SettingRow, Toggle } from '../ui/components';
+import { useCalendarAction } from '../ui/calendar-sync';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
 import { calendarImportIndependence } from '../domain/calendar-presentation';
 import { DateTimeFields } from '../ui/date-time-fields';
@@ -15,8 +16,10 @@ import { engine, nativeAvailable } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
+import { notify } from '../ui/feedback';
 
 export default function CalendarReview() {
+  const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<OriginParams & { id?: string; calendarId?: string; eventId?: string; automatic?: string; candidateId?: string; candidateRevision?: string; managedHistory?: string }>(), origin = retainedOriginParams(params);
   const imported = !params.id, client = useQueryClient(), confirm = useAppearanceConfirmation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
@@ -39,7 +42,7 @@ export default function CalendarReview() {
   const enable = !link || link.state === 'Detached';
   const activating = params.automatic === 'true';
   useAppearanceHold(busy || uncertain);
-  usePreventRemove(capturing || uncertain, () => confirm('Calendar request not confirmed', 'Wait for this request or retry the same captured action before leaving.'));
+  usePreventRemove(capturing || uncertain, () => confirm('Calendar request not confirmed', 'Wait for this request or retry the same request before leaving.'));
   const load = useCallback(async () => {
     if (running.current || captured.current) return; running.current = true; setBusy(true); setError('');
     const ticket = ++readTicket.current;
@@ -73,9 +76,9 @@ export default function CalendarReview() {
     running.current = true; setBusy(true); setCapturing(true); setError('');
     try {
       const ignoring = captured.current.kind === 'IgnoreManagedCalendarCandidate';
-      const result = await engine().applyCalendarCommand(captured.current);
+      const result = await calendarAction.submit(captured.current);
       if ('operationId' in result && typeof result.operationId === 'string') setOperationId(result.operationId);
-      if (ignoring) setIgnored(true);
+      if (ignoring) { notify({ message: 'Event ignored.' }); setIgnored(true); }
       captured.current = null; setUncertain(false); await client.invalidateQueries();
     } catch (e) { if (calendarCaptureRejected(e)) { captured.current = null; setUncertain(false); } else setUncertain(true); setError(calendarError(e)); }
     finally { running.current = false; setBusy(false); setCapturing(false); }
@@ -115,17 +118,18 @@ export default function CalendarReview() {
     {imported && !adopting && <Copy muted>{calendarImportIndependence}</Copy>}
     {params.candidateId && !adopting && <Copy heading>No Remilo alert yet</Copy>}
     {!!error && <ActionFeedback message={error} tone="warning" />}
-    {busy && <ActionFeedback loading message="Checking the captured Calendar review…" />}
+    {busy && <ActionFeedback loading message={capturing ? 'Saving your choices…' : 'Checking Calendar changes…'} />}
     {!preview && !busy && !sourceUnavailable && <Button label="Retry review" variant="secondary" disabled={!nativeAvailable} onPress={() => void load()} />}
     {sourceUnavailable && <Button label="Open current Calendar review" variant="secondary" onPress={() => router.replace({ pathname: '/calendar-reviews', params: origin })} />}
-    {!preview && uncertain && <Button label="Retry same captured action" disabled={busy} onPress={() => void apply()} />}
+    {!preview && uncertain && <Button label="Retry same request" disabled={busy} onPress={() => void apply()} />}
     {params.candidateId && candidateRevision !== null && !operationId && !sourceUnavailable && <Button label="Ignore this event" variant="secondary" disabled={busy || uncertain} onPress={ignore} />}
     {preview && !operationId && <>
       <ConnectedGroup title="Source"><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
         <Copy muted>Checked {scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
       <ConnectedGroup title="Linked updates"><View key="sync">
-        <Toggle label="Keep both copies up to date" value={params.candidateId ? true : choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable || activating)} disabled={busy || uncertain || activating || !!params.candidateId}
-          onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />
+        {activating || params.candidateId ? <SettingRow icon="event" label="Automatic sync included" description="Confirming this review keeps both copies up to date." /> :
+          <Toggle label="Automatic sync" value={choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable)} disabled={busy || uncertain}
+            onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />}
         <RowSupport><Copy muted size={14}>Titles, notes and event times stay in sync. Conflicts and unsafe alert times need review. Local alerts and completion stay in Remilo.</Copy></RowSupport>
       </View></ConnectedGroup>
       {imported && !adopting ? <>
@@ -179,6 +183,6 @@ export default function CalendarReview() {
         else { setOperationId(null); setPreview(null); void load(); }
       }} />}
     </>}
-    {operationId && !job && <ActionFeedback message="The operation is captured. Refresh its saved status before taking another action." tone="warning" />}
+    {operationId && !job && <ActionFeedback loading message="Your request is saved. Checking its result…" />}
   </Page>;
 }

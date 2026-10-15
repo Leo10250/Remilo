@@ -10,13 +10,15 @@ import { managedCalendarCapture } from '../domain/calendar-managed';
 import { deviceZone } from '../domain/time';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Page, RowSupport, SettingRow, Sheet, Toggle } from '../ui/components';
-import { CalendarOperationProgress, CalendarReviewItems, CalendarStatusCard, useCalendarAuthorization } from '../ui/calendar-sync';
+import { CalendarOperationProgress, CalendarReviewItems, CalendarStatusCard, useCalendarAuthorization, useCalendarAction } from '../ui/calendar-sync';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { useAppearanceHold } from '../ui/theme';
 import { engine, nativeAvailable } from '../ui/native';
 import { TimeZoneField } from '../ui/time-zone';
+import { RootNotice } from '../ui/navigation';
 
 export default function ManagedCalendar() {
+  const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<OriginParams & { mode?: string; adoptOccurrenceId?: string; replacement?: string; operationId?: string }>();
   const mode = params.mode || 'setup', origin = retainedOriginParams(params), client = useQueryClient(), confirm = useAppearanceConfirmation();
   const saved = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable });
@@ -58,7 +60,7 @@ export default function ManagedCalendar() {
     if (!preview || busy.current || checking || !preview.complete || !unknown && Date.now() >= preview.expiresAtMs) { setError('These settings need another check before confirming.'); setRefresh(v => v + 1); return; }
     pending.current ??= managedCalendarCapture(preview, engine().createOperationId(), selected);
     const command = pending.current; busy.current = true; setCapturing(true); setError('');
-    try { await engine().applyCalendarCommand(command); pending.current = null; setUnknown(false); setResultId(command.operationId); await client.invalidateQueries({ queryKey: ['calendar'] }); }
+    try { await calendarAction.submit(command); pending.current = null; setUnknown(false); setResultId(command.operationId); await client.invalidateQueries({ queryKey: ['calendar'] }); }
     catch (e) { if (calendarCaptureRejected(e)) { pending.current = null; setUnknown(false); setRefresh(v => v + 1); } else setUnknown(true); setError(calendarError(e)); }
     finally { busy.current = false; setCapturing(false); }
   };
@@ -67,7 +69,7 @@ export default function ManagedCalendar() {
     if (status.action === 'ReviewItems') { router.push({ pathname: '/calendar-reviews', params: origin }); return; }
     if (status.action === 'InspectCreation') {
       if (busy.current) return; busy.current = true; setCapturing(true);
-      try { await engine().applyCalendarCommand({ kind: 'RetryManagedCalendarOperation', operationId: status.operationId }); await client.invalidateQueries({ queryKey: ['calendar'] }); }
+      try { await calendarAction.submit({ kind: 'RetryManagedCalendarOperation', operationId: status.operationId }); await client.invalidateQueries({ queryKey: ['calendar'] }); }
       catch (e) { setError(calendarError(e)); } finally { busy.current = false; setCapturing(false); }
       return;
     }
@@ -80,11 +82,11 @@ export default function ManagedCalendar() {
   const source = preview?.calendarCandidates.find(value => value.id === (draft.selectedCalendarId || preview.selectedCalendarId));
   const zone = preview?.createCalendar ? draft.calendarZone || preview.calendarZone || deviceZone() : source?.zoneId || saved.data?.calendarZone || deviceZone();
   const zoneLabel = zone.split('/').pop()?.replaceAll('_', ' ') || zone;
-  return <Page compact title={title} onBack={back} footer={!operationId && preview && mode !== 'progress' ? <BottomActionBar><Button label={unknown ? 'Retry same request' : checking ? 'Checking settings…' : action}
-    busy={capturing} disabled={auth.waiting || checking || !unknown && (!preview.complete || !!error || mode === 'recovered' && !selected.length)} onPress={() => void apply()} /></BottomActionBar> : undefined}>
+  return <Page compact title={title} onBack={back} footer={<><RootNotice />{!operationId && preview && mode !== 'progress' ? <BottomActionBar><Button label={unknown ? 'Retry same request' : checking ? 'Checking settings…' : action}
+    busy={capturing} disabled={auth.waiting || checking || !unknown && (!preview.complete || !!error || mode === 'recovered' && !selected.length)} onPress={() => void apply()} /></BottomActionBar> : null}</>}>
     {!nativeAvailable && <Copy>Use the Android app to set up Calendar sync.</Copy>}
     {operationId ? <><CalendarOperationProgress operationId={operationId} onAction={status => void recover(status)} />
-      {!!auth.message && <ActionFeedback message={auth.message} loading={auth.waiting} />}
+      {!!auth.message && <ActionFeedback message={auth.message} tone={auth.tone} loading={auth.waiting} />}
       {!!error && <ActionFeedback message={error} tone="warning" />}
       <Button label="Back to Calendar" variant="secondary" disabled={capturing || unknown} onPress={() => router.replace({ pathname: '/calendar', params: origin })} />
     </> : <>
@@ -97,7 +99,7 @@ export default function ManagedCalendar() {
         {preview?.createCalendar && <TimeZoneField value={zone} atMs={zoneAtMs} disabled={locked} onChange={calendarZone => setDraft(old => ({ ...old, calendarZone }))} />}
       </ConnectedGroup>}
       {!connection.data?.connected && nativeAvailable && <CalendarStatusCard title="Connect Google Calendar" description="Remilo needs access to find your dedicated calendar. Connecting alone doesn’t add reminders or turn on sync." label="Connect Google" busy={auth.waiting} action={() => void auth.start()} />}
-      {!!auth.message && <ActionFeedback message={auth.message} loading={auth.waiting} />}
+      {!!auth.message && <ActionFeedback message={auth.message} tone={auth.tone} loading={auth.waiting} />}
       {!!error && <CalendarStatusCard title="Setup needs attention" description={error} warning label={['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? 'Reconnect Google' : 'Check settings again'} busy={auth.waiting || checking}
         action={() => ['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? void auth.start(saved.data?.problem?.action === 'Authorize' ? saved.data.operationId || null : null) : setRefresh(v => v + 1)} />}
       {checking && <ActionFeedback loading message="Checking settings…" />}

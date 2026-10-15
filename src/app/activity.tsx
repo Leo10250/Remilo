@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { View, useWindowDimensions } from 'react-native';
 import type { Tone } from '../domain/actions';
 import { calendarDate } from '../domain/presentation';
+import { calendarActivityLabel } from '../domain/calendar-ux';
 import { deviceZone } from '../domain/time';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { ActionFeedback, Button, Copy, Group, Icon, Page, QueryState, type IconName } from '../ui/components';
@@ -35,22 +36,23 @@ const events: Record<string, { label: string; icon: IconName; tone: Tone }> = {
 };
 export default function Activity() {
   const { shortTime } = useTimeFormatting();
-  const params = useLocalSearchParams<OriginParams & { id: string }>(), { id } = params;
+  const params = useLocalSearchParams<OriginParams & { id: string; filter?: string }>(), { id } = params;
+  const calendarOnly = params.filter === 'calendar';
   const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getCalendarContext(id), enabled: nativeAvailable });
   const colors = useTheme(), zone = deviceZone(), scale = useFontScaleOverride();
   const { fontScale } = useWindowDimensions();
   const labelHeight = Math.max(24, typography.body * scale * fontScale * 1.4);
-  const entries = [...query.data?.history ?? []].sort((a, b) => b.atMs - a.atMs);
-  return <Page title="Activity" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute({ ...retainedOriginParams(params), originReminderId: id }))}>
+  const entries = [...query.data?.history ?? []].filter(entry => !calendarOnly || entry.kind.startsWith('Calendar')).sort((a, b) => b.atMs - a.atMs);
+  return <Page title={calendarOnly ? 'Recent Calendar changes' : 'Activity'} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute({ ...retainedOriginParams(params), originReminderId: id }))}>
     <QueryState loading={query.isLoading && nativeAvailable && !query.data} error={!query.data ? query.error : undefined} empty={!query.data && !query.isLoading}
       emptyMessage="This reminder is unavailable." onRetry={() => void query.refetch()} />
     {query.data && <>
       {query.error && <><ActionFeedback message="Could not refresh activity. Showing previously recorded entries." tone="warning" />
         <Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <Copy heading size={typography.title}>{query.data.title}</Copy>
-      <Copy muted size={typography.supporting}>Recorded actions for this occurrence. Changes to the whole repeat and individual edited fields are not recorded here.</Copy>
+      <Copy muted size={typography.supporting}>{calendarOnly ? 'Confirmed Calendar changes for this reminder or linked repeat. Routine checks and retries aren’t listed.' : 'Recorded actions for this occurrence, including confirmed linked Calendar changes.'}</Copy>
       {!!entries.length && <ZoneSummary zoneId={zone} atMs={entries[0].atMs} prefix="Times shown in " />}
-      {!entries.length && <Copy muted>No recorded activity.</Copy>}
+      {!entries.length && <Copy muted>{calendarOnly ? 'No recorded Calendar changes.' : 'No recorded activity.'}</Copy>}
       {!!entries.length && <Group>{entries.map((entry, index) => {
         const event = events[entry.kind] ?? { label: 'Other recorded action', icon: 'history' as const, tone: 'muted' as const };
         const day = calendarDate(entry.atMs, zone), previousDay = index ? calendarDate(entries[index - 1].atMs, zone) : null;
@@ -62,7 +64,7 @@ export default function Activity() {
               {index < entries.length - 1 && <View aria-hidden style={{ width: 1, flex: 1, minHeight: 12, backgroundColor: colors.border }} />}
             </View>
             <View style={{ flex: 1, gap: 4 }}>
-              <View style={{ minHeight: labelHeight, justifyContent: 'center' }}><Copy>{event.label}</Copy></View><Copy muted size={typography.label}>{shortTime(entry.atMs, zone)}</Copy>
+              <View style={{ minHeight: labelHeight, justifyContent: 'center' }}><Copy>{calendarActivityLabel(entry.kind, entry.groups) || event.label}</Copy></View><Copy muted size={typography.label}>{shortTime(entry.atMs, zone)}</Copy>
               {entry.targetMs != null && ['Snooze', 'Postpone'].includes(entry.kind) && <Copy muted size={typography.supporting}>
                 Alert moved to {calendarDate(entry.targetMs, zone)} · {shortTime(entry.targetMs, zone)}
               </Copy>}

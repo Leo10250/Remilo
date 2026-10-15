@@ -22,6 +22,7 @@ import { useAppearanceConfirmation } from '../ui/confirmation';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
 import { calendarCancellation, calendarRowNotice } from '../domain/calendar-presentation';
+import { CalendarAttentionCard } from '../ui/calendar-sync';
 import { ScrollChromeProvider, ScrollReadingPlane, useChromeScroll, usePageChrome } from '../ui/scroll-chrome';
 
 type Toast = { message: string; persistent?: boolean; undo?: { id: string; revision: number; operationId: string } };
@@ -202,9 +203,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + '. Open Settings'} disabled={guarded}
       onPress={() => router.push({ pathname: '/settings', params: originParams(destination) })} style={{ paddingHorizontal: 16, paddingVertical: 8, minHeight: 48 }}>
       <Status label={warning} tone={!caps?.exactAlarms || !caps?.notifications || !caps?.channelEnabled ? 'danger' : 'warning'} /></Pressable>}
-    {!scoped && !!calendarSummary.data?.reviewCount && <SettingRow icon="event" label={'Calendar review · ' + calendarSummary.data.reviewCount + ' item' + (calendarSummary.data.reviewCount === 1 ? '' : 's')}
-      description="All unfinished reminders · independent of current filters" minHeight={56} disabled={guarded}
-      onPress={() => router.push({ pathname: '/calendar-reviews', params: originParams(destination) })} />}
+    {!scoped && !!calendarSummary.data?.reviewCount && <View style={{ marginBottom: 12 }}><CalendarAttentionCard count={calendarSummary.data.reviewCount} tone={calendarSummary.data.attention?.tone} disabled={guarded}
+      onPress={() => router.push({ pathname: '/calendar-reviews', params: originParams(destination) })} /></View>}
     {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={'Mark all as done (' + caps.activeSessionActions.members.length + ')'} disabled={guarded}
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
