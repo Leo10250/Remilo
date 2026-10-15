@@ -66,13 +66,64 @@ bar uses a current-destination Go to sheet when full scaled labels cannot fit.
 A genuine unscoped, unconstrained empty All Agenda offers Create a reminder in
 place of the floating +. Native repeat boundaries and retained history stay intact.
 
+Calendar setup follows the [compact setup and feedback contract](design/current/calendar-management.md#calendar-setup-and-feedback--14-october-2026):
+account and dedicated source stay together, directional choices explain what is
+added, and problems own their next action. All-day alert time is a surfaced
+interactive row. Submitted setup shows saved progress and actual outcomes;
+authorization launch and finished collection scanning do not mean all reminders
+are synchronized. Advanced manual tools retain a separate publishing destination.
+
 Optional [P4-A Google Calendar publishing](calendar-publishing.md) is manual per
-saved unfinished one-off after native review and confirmation. Connecting publishes
+saved unfinished reminder or supported recurring family after native review and confirmation. Connecting publishes
 nothing; existing reminders are never backfilled. One account and an owned default
 calendar are supported. Google receives title, notes and authored event range with
 its Calendar reminders disabled; local alarms/actions remain authoritative. Durable
-native jobs recover by the same event identity, without remote updates or deletion.
-Import, recurrence publishing and ongoing synchronization remain later phases.
+native jobs recover by the same event identity. Publishing alone grants no linked update permission.
+[P4-B imports and linked updates](calendar-linking.md) add explicit individual
+or reviewed all-event imports from owned calendars and per-field manually
+confirmed resolution. The owner's follow-up makes the Start/End dates inclusive,
+keeps them ordered, and removes associated/pending sources from the browser.
+Import review defaults to Alarm while keeping Google reminders unless explicitly
+disabled; personal timed/single-day all-day events and the
+[native recurrence subset](calendar-recurrence.md) are supported. Existing
+published copies require deliberate linking.
+
+The owner's 12 October follow-up assigns automatic updates and the related status,
+button, review-notice and history refinements to [P4-D](calendar-sync.md), after
+P4-C recurrence mapping. It transfers ordinary compatible-field edits in
+both directions automatically, using the last confirmed common values; genuine
+conflicts and unresolved outcomes require manual review. Event-wide timestamps
+are context, not a latest-edit-wins rule. Deliberate activation, independent local
+alerts/Trash and truthful native background opportunities remain explicit. This
+implementation retains historical manual links until explicit activation.
+New import/link reviews select automatic sync by default and permit opting out.
+Native hourly connected work is an opportunity, with Android determining execution.
+
+The owner's next iteration, [P4-E managed Calendar sync](calendar-managed-sync.md),
+adds a confirmed calendar-level setup: reuse an eligible known/named Remilo
+secondary calendar or create one, automatically import ongoing/upcoming supported
+events and publish eligible new reminders with a Local only override. Existing
+reminders require reviewed selection; historical links keep their sources. The
+continuing imported-alert default is Alarm. Initial recovery from an existing
+calendar on a fresh installation uses No alert; an existing installation or a
+newly created calendar uses its reviewed policy. Ownership, interrupted creation,
+deduplication and saved removal decisions remain explicit. Ordinary local actions
+and delivery retain P4-D's independent authority.
+
+The Calendar attention refinement keeps healthy permission quiet, puts actual
+local reminder timing first and shows review as a surfaced home action. Optional
+per-reminder Sync now and recorded Calendar-only history live in collapsed Sync
+details. Explicit checks show durable scoped outcomes; an unchanged agreement is
+not an update, authorization is not completed synchronization, and routine
+background success does not interrupt. Current issues outrank old success.
+
+The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
+places a compact Calendar entry after the reminder's local Details information.
+Its separate management page reads saved status until an explicit Check or review.
+Confirmed Google deletion keeps the local alert, with Agenda/Details cancellation
+notices and a local Trash action. Local Trash/Unlink never changes Google; restoring
+either copy never reopens the other or reauthorizes old writes. A fresh reviewed
+resolution is required before a suspended link resumes.
 
 - Principal UI: React Native / TypeScript / Expo. Autonomous Kotlin engine and Room.
 - Local use needs no account, network, server, Metro or active JavaScript.

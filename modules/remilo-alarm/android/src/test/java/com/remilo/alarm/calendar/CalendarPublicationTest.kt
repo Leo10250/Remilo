@@ -214,6 +214,67 @@ class CalendarPublicationTest {
     override fun clear(token: String) { cleared++ }
     override fun revoke(email: String) {}
   }
+  @Test fun familyPublicationCapturesFollowingMastersAndMovedInstancesAndRecoversEachPhase() {
+    val anchor = Instant.ofEpochMilli(clock + 3_600_000).atZone(java.time.ZoneId.of("UTC")).toLocalDateTime()
+    val firstRule = com.remilo.alarm.core.RecurrenceRule(anchor, "daily", zoneId = "UTC", count = 3, endExclusive = anchor.plusDays(1), endOffsetMs = 1_800_000)
+    val secondRule = firstRule.copy(anchor = anchor.plusDays(1), endExclusive = null, count = 2)
+    fun segment(id: String, rule: com.remilo.alarm.core.RecurrenceRule): SeriesRecord {
+      val start = rule.anchor.atZone(java.time.ZoneId.of("UTC")).toInstant().toEpochMilli()
+      return SeriesRecord(id, "family", JSONObject(BackupCodec.record(record.copy(id = id, notes = "Family notes", zoneId = "UTC", eventStartMs = start, eventEndMs = start + 1_800_000))).toString(), RuleCodec.encode(rule), createdAtMs = clock)
+    }
+    db.records().series(segment("root", firstRule)); db.records().series(segment("following", secondRule))
+    val nominal = secondRule.anchor.toString(); val moved = clock + 86_400_000 + 7_200_000
+    db.records().insert(record.copy(id = "moved", segmentId = "following", nominalSlot = nominal, exception = true,
+      zoneId = "UTC", eventStartMs = moved, eventEndMs = moved + 1_800_000, title = "Moved instance", notes = "Instance notes"))
+    val preview = store.preview("root")
+    store.capture(mapOf("operationId" to "family-publication", "occurrenceId" to "root", "expectedRevision" to preview["reminderRevision"],
+      "expectedConnectionRevision" to preview["connectionRevision"], "fingerprint" to preview["fingerprint"]))
+    assertEquals(2, store.publicationJobs("family-publication").size)
+    val remote = mutableMapOf<String, JSONObject>(); var inserts = 0; var patches = 0; var lost = true
+    val transport = object : CalendarTransport {
+      override fun account(token: String) = CalendarAccount("subject", "tester@example.test")
+      override fun calendars(token: String, cursor: String?) = CalendarPage(emptyList(), null)
+      override fun calendar(token: String, id: String) = OwnedCalendar(id, "Test", "UTC")
+      override fun event(token: String, calendarId: String, eventId: String) = remote[eventId]?.let { JSONObject(it.toString()) }
+      override fun insert(token: String, calendarId: String, payload: String): JSONObject {
+        inserts++; val value = JSONObject(payload).put("etag", "insert-$inserts"); remote[value.getString("id")] = value; return JSONObject(value.toString())
+      }
+      override fun instance(token: String, calendarId: String, masterId: String, originalStart: String): JSONObject {
+        val master = remote[masterId]!!; val id = "actual-google-instance"
+        return remote.getOrPut(id) { JSONObject(master.toString()).also { it.remove("recurrence"); it.remove("extendedProperties") }
+          .put("id", id).put("recurringEventId", masterId).put("originalStartTime", JSONObject().put("dateTime", originalStart)) }
+      }
+      override fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): JSONObject {
+        patches++; val value = remote[eventId]!!; assertEquals(value.getString("etag"), etag)
+        val patch = JSONObject(payload); patch.keys().forEach { value.put(it, patch.get(it)) }; value.put("etag", "patched")
+        if (lost) { lost = false; throw CalendarFailure("NETWORK") }; return JSONObject(value.toString())
+      }
+    }
+    val publisher = CalendarPublisher(access, transport)
+    publisher.publish(store.begin("family-publication")!!, "synthetic")
+    assertNotEquals("Published", store.operation("family-publication")!!.state)
+    publisher.publish(store.begin("family-publication")!!, "synthetic")
+    assertEquals("Published", store.operation("family-publication")!!.state); assertEquals(2, inserts); assertEquals(1, patches)
+    assertEquals("Moved instance", remote["actual-google-instance"]!!.getString("summary"))
+    assertTrue(store.publicationJobs("family-publication").all { it.confirmed })
+    assertNull(store.links.link("root")) // Publishing does not adopt or authorize synchronization.
+  }
+  @Test fun floatingFamilyPublicationPinsEverySegmentInTheCaptureTransaction() {
+    val anchor = Instant.ofEpochMilli(clock + 3_600_000).atZone(java.time.ZoneId.of("America/Los_Angeles")).toLocalDateTime()
+    val rule = com.remilo.alarm.core.RecurrenceRule(anchor, "daily", count = 3, endOffsetMs = 1_800_000)
+    for ((id, value) in listOf("root" to rule.copy(endExclusive = anchor.plusDays(1)), "following" to rule.copy(anchor = anchor.plusDays(1), count = 2))) {
+      db.records().series(SeriesRecord(id, "family", JSONObject(BackupCodec.record(record.copy(id = id, zoneId = "", notes = "Family notes"))).toString(), RuleCodec.encode(value), createdAtMs = clock))
+    }
+    val preview = store.preview("root"); assertEquals(true, preview["pinsZone"])
+    store.capture(mapOf("operationId" to "floating-family", "occurrenceId" to "root", "expectedRevision" to preview["reminderRevision"],
+      "expectedConnectionRevision" to preview["connectionRevision"], "fingerprint" to preview["fingerprint"]))
+    for (id in listOf("root", "following")) {
+      val segment = db.records().series(id)!!
+      assertEquals("America/Los_Angeles", RuleCodec.decode(segment.rule).zoneId)
+      assertEquals("America/Los_Angeles", BackupCodec.decodeRecord(JSONObject(segment.template)).zoneId)
+    }
+    assertEquals(2, db.records().pendingSeries().size)
+  }
   private class FakeTransport : CalendarTransport {
     var remote: JSONObject? = null; var posts = 0; var reads = 0; var subject = "subject"; var role = "owner"
     var loseReply = false; var duplicate = false; var error: String? = null; var sentCalendar = ""

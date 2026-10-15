@@ -1,5 +1,5 @@
 /** Synthetic, memory-only visual-review adapter. Never a scheduler or Android verification. */
-import type { AppSettings, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage,
+import type { AppSettings, CalendarCreationDisposition, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage,
   ListRecord, RecurrenceDraft, RepeatFamily, ResolvedReminderDraft, SchedulePreview, Series, SoundPreviewSnapshot, TimeConversion, TimeConversionInput, TimeZoneOption } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
@@ -52,6 +52,21 @@ const items: Occurrence[] = [
     history: [{ kind: 'Delete', atMs: today.getTime() - 1_800_000, targetMs: null }] }),
   make('paused', 'Stretch and take a break', dayMs, { segmentId: 'paused-series', seriesState: 'Paused', deliveryState: 'Paused', nextAlertMs: null, repeatSummary: 'Every day' }),
 ];
+const calendarLocal = review.get('reviewCalendarLocal');
+if (calendarLocal) {
+  const item = items.find(item => item.id === 'review')!;
+  if (calendarLocal === 'notification') item.mode = 'Notification';
+  if (calendarLocal === 'none') { item.mode = 'None'; item.deliveryState = 'NoAlert'; item.nextAlertMs = null; }
+  if (calendarLocal === 'completed') { item.completed = true; item.deliveryState = 'Completed'; item.nextAlertMs = null; }
+  if (calendarLocal === 'trash') { item.deleted = true; item.deliveryState = 'Deleted'; item.nextAlertMs = null; }
+  if (calendarLocal === 'skipped') { item.skipped = true; item.deliveryState = 'Skipped'; item.nextAlertMs = null; }
+  if (calendarLocal === 'blocked') item.deliveryState = 'Blocked';
+  if (calendarLocal === 'pending') item.deliveryState = 'Pending';
+  if (calendarLocal === 'ringing') item.deliveryState = 'Alerting';
+  if (calendarLocal === 'postponed') { item.nextAlertMs = today.getTime() + dayMs; item.agendaAtMs = item.nextAlertMs; item.alertAdjustment = 'Postponed'; }
+  if (calendarLocal === 'snoozed') { item.nextAlertMs = Date.now() + 600_000; item.agendaAtMs = item.nextAlertMs; item.alertAdjustment = 'Snoozed'; }
+}
+if (review.get('reviewText') === 'long') items.find(item => item.id === 'review')!.title = 'Review the complete project proposal and all supporting materials / 审阅完整项目计划及全部支持材料';
 if (review.get('reviewCards') === 'states') {
   const now = Date.now(), zone = 'America/Los_Angeles', localStart = civilAt(now, zone).slice(0, 10) + 'T00:00:00';
   const allDayStart = convert({ zoneId: zone, local: localStart }).instantMs;
@@ -87,6 +102,7 @@ if (review.get('reviewText') === 'long') {
   });
 }
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+let onCalendarCreation: ((id: string, disposition?: CalendarCreationDisposition) => void) | undefined, applyingCalendarImport = false;
 const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
 let soundPreview: SoundPreviewSnapshot | null = null;
@@ -323,6 +339,7 @@ function apply(command: Command): CommandResult {
     if (command.listId && !lists.has(command.listId)) return { status: 'Rejected', errorField: 'listId', errorMessage: 'This list was removed. Choose an existing list or No list.' };
     const value = draft(command), segment = command.kind === 'CreateSeries' ? createSeries(nextId(), value, command.recurrence) : undefined;
     const item = addOccurrence(value, segment);
+    if (!applyingCalendarImport) onCalendarCreation?.(item.id, command.calendarDisposition);
     result = { status: value.mode === 'None' ? 'Applied' : 'Scheduled', occurrence: view(item), ...(segment ? { segmentId: segment.id } : {}) };
   } else if ('occurrenceId' in command) {
     const item = items.find((row) => row.id === command.occurrenceId);
@@ -384,8 +401,22 @@ function apply(command: Command): CommandResult {
   receipts.set(command.operationId, clone(result)); changed(); return clone(result);
 }
 if (review.get('reviewAgenda') === 'empty') items.splice(0, items.length);
+const calendarBridge = previewCalendar(review, (id) => items.find((item) => item.id === id), changed, (fields, choices, operationId, id) => {
+    const existing = id ? items.find(item => item.id === id) : null;
+    const target = existing?.alertAdjustment ? existing.nextAlertMs : null;
+    let result: CommandResult;
+    applyingCalendarImport = true;
+    try { result = apply({ ...fields.schedule, title: fields.title, notes: fields.notes,
+      ...(id ? { kind: 'Edit', occurrenceId: id, expectedRevision: existing!.revision } : { ...choices, kind: 'Create' }), operationId }); }
+    finally { applyingCalendarImport = false; }
+    const item = result.occurrence || (id ? items.find(item => item.id === id) : items.at(-1));
+    if (!item) throw new Error('Synthetic creation unavailable');
+    if (target && existing) { existing.nextAlertMs = target; item.nextAlertMs = target; }
+    return item;
+  });
+onCalendarCreation = calendarBridge.captureCalendarCreation;
 const preview = {
-  ...previewCalendar(review, (id) => items.find((item) => item.id === id), changed),
+  ...calendarBridge,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => ({ uses24HourClock: review.get('reviewClock') === '24', localeTag: review.get('reviewLocale') ?? 'en-US' }),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
@@ -409,6 +440,7 @@ const preview = {
   getTimeZones: async (atMs: number) => zones(atMs), convertTime: async (input: TimeConversionInput) => convert(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),
   getOccurrence: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },
+  getCalendarContext: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },
   getLists: async () => clone(queryLists()), queryLists: async () => clone(queryLists()),
   querySeries: async () => [...series.values()].filter((value) => value.state !== 'Archived').map(seriesView),
   queryRepeatFamilies: async () => clone(familyViews()),

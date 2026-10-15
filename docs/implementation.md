@@ -182,3 +182,31 @@ physical scenarios against that commit, record outcomes/limitations, then distri
 only after the milestone passes and distribution is authorized. Never restore past
 alerts or active sessions on upgrade/reopen. Estimate the next milestone using
 evidence from the preceding one; no completion date is assumed.
+
+## Calendar outcome projection additions
+
+The CE 12 Calendar bridge adds `beginCalendarAuthorization(requestId, operationId)`
+and read-only `getCalendarOperationStatus(operationId)`. The first acknowledges
+launch only; the second returns typed saved stages/actions and safe counts for
+authorization, setup, activation and Resume. `Authorized` follows scope/account
+verification. `Cancelled`/`Failed` do not change a previously confirmed connection.
+The existing authorization entrypoint remains supported.
+
+`ManagedCalendarState.progress` separates scan completion, imported records,
+pending, held, review and recorded local-save scheduling outcomes. `problem`
+provides a native saved reason and recovery action. Optional correlation metadata
+on new receipt results contains logical IDs/epoch, no arbitrary JS payloads.
+Missing historical correlation must not be displayed as successful batch work.
+All changes remain CE-only, outside DP/portable backups; versions stay 12/6/4.
+
+`CalendarCommand.RequestCalendarSync` adds an operation UUID and tagged scope:
+`AllAuthorized` or `Association { occurrenceId }`. `applyCalendarCommand`
+acknowledges capture. `getCalendarOperationStatus` returns kind Sync with scope,
+typed outcome, safe action/reason, timestamps and checked/changed/imported/
+published counts. The acknowledged receipt is immutable; progress is separate.
+Saved summary/link projections expose the latest applicable explicit request ID.
+The compatibility `syncCalendarNow` creates a request through the same native
+owner and returns optional checked/changed counts; legacy confirmed means agreement.
+Missing historical correlation is never reconstructed from timestamp differences.
+The shared frontend action controller retains the exact request through uncertain
+acknowledgement and discards prior scope presentation when navigation changes it.

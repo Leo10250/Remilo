@@ -34,27 +34,53 @@ data class CalendarOperation(@PrimaryKey val operationId: String, val occurrence
   @Query("DELETE FROM calendar_publications WHERE occurrenceId = :id") fun unbind(id: String)
 }
 
-data class OwnedCalendar(val id: String, val name: String, val zoneId: String, val accessRole: String = "owner") {
+data class OwnedCalendar(val id: String, val name: String, val zoneId: String, val accessRole: String = "owner", val hasDefaultReminders: Boolean = true,
+  val canonicalName: String = name, val description: String = "", val dataOwner: String = "", val primary: Boolean = false, val deleted: Boolean = false) {
   fun view(): Map<String, Any> = mapOf("id" to id, "name" to name, "zoneId" to zoneId)
+  /** Private setup checkpoints retain metadata, never credentials or arbitrary Calendar event bodies. */
+  fun managedJson(): org.json.JSONObject = org.json.JSONObject().put("id", id).put("name", name).put("zoneId", zoneId)
+    .put("accessRole", accessRole).put("hasDefaultReminders", hasDefaultReminders).put("canonicalName", canonicalName)
+    .put("description", description).put("dataOwner", dataOwner).put("primary", primary).put("deleted", deleted)
+  companion object {
+    fun managedJson(value: org.json.JSONObject) = OwnedCalendar(value.getString("id"), value.getString("name"), value.getString("zoneId"),
+      value.optString("accessRole"), value.optBoolean("hasDefaultReminders"), value.optString("canonicalName", value.getString("name")),
+      value.optString("description"), value.optString("dataOwner"), value.optBoolean("primary"), value.optBoolean("deleted"))
+  }
 }
-data class CalendarAccount(val subject: String, val email: String)
+data class CalendarAccount(val subject: String, val email: String, val emailVerified: Boolean = true)
 data class CalendarPage(val items: List<OwnedCalendar>, val nextCursor: String?)
 class CalendarFailure(val code: String) : Exception(code)
 
 object CalendarConsent {
+  const val calendarCreation = "https://www.googleapis.com/auth/calendar.app.created"
   val required = setOf("https://www.googleapis.com/auth/calendar.calendarlist.readonly",
     "https://www.googleapis.com/auth/calendar.events.owned", "openid", "email")
-  fun requireGranted(granted: List<String>) {
+  fun requiredFor(createCalendar: Boolean = false) = if (createCalendar) required + calendarCreation else required
+  fun requireGranted(granted: List<String>, createCalendar: Boolean = false) {
     val normalized = granted.map { if (it == "https://www.googleapis.com/auth/userinfo.email") "email" else it }.toSet()
-    if (!normalized.containsAll(required)) throw CalendarFailure("NEEDS_ACCESS")
+    if (!normalized.containsAll(requiredFor(createCalendar))) throw CalendarFailure("NEEDS_ACCESS")
   }
 }
 
 /** Transport errors never carry server response text or private content. */
+sealed class CalendarEventLookup {
+  data class Found(val event: org.json.JSONObject) : CalendarEventLookup()
+  data object Missing : CalendarEventLookup()
+  data object Deleted : CalendarEventLookup()
+}
 interface CalendarTransport {
   fun account(token: String): CalendarAccount
   fun calendars(token: String, cursor: String?): CalendarPage
   fun calendar(token: String, id: String): OwnedCalendar
+  fun createCalendar(token: String, name: String, zoneId: String, description: String): OwnedCalendar = throw CalendarFailure("NOT_AVAILABLE")
   fun event(token: String, calendarId: String, eventId: String): org.json.JSONObject?
+  fun lookup(token: String, calendarId: String, eventId: String): CalendarEventLookup =
+    event(token, calendarId, eventId)?.let { CalendarEventLookup.Found(it) } ?: CalendarEventLookup.Missing
   fun insert(token: String, calendarId: String, payload: String): org.json.JSONObject
+  fun events(token: String, calendarId: String, from: String, until: String, cursor: String?): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
+  fun recurringEvents(token: String, calendarId: String, from: String, until: String, cursor: String?): org.json.JSONObject = events(token, calendarId, from, until, cursor)
+  fun syncEvents(token: String, calendarId: String, syncToken: String?, pageToken: String?): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
+  fun instance(token: String, calendarId: String, masterId: String, originalStart: String): org.json.JSONObject? = throw CalendarFailure("NOT_AVAILABLE")
+  fun inspectRecurring(token: String, calendar: OwnedCalendar, event: org.json.JSONObject): org.json.JSONObject = event
+  fun patch(token: String, calendarId: String, eventId: String, etag: String, payload: String): org.json.JSONObject = throw CalendarFailure("NOT_AVAILABLE")
 }

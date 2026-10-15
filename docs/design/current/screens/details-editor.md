@@ -1,5 +1,13 @@
 # Reminder details and editor
 
+The owner's [Calendar management correction](../calendar-management.md) places
+compact Calendar context after local information and Schedule details. Its separate
+page owns explicit Check/review, Google link and visible Unlink; More retains its
+shortcut. Active cancellation notices follow local alert state. Terminal reminders retain read-only
+context. Existing published copies require explicit adoption. Compact import/
+resolution reviews keep Title/Notes/Schedule choices distinct and show the
+retained postponed target, local outcome and separate Google recovery.
+
 The [10 October UX refinement](../ux-refinement.md) supersedes earlier hierarchy,
 preview, all-day transitions and keyboard handoff below. Details leads with alert
 time; Event appears for Calendar publication context, with other event ranges in

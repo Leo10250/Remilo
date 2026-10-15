@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 7/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 12/6/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -28,6 +28,92 @@ singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
 portable backup format 4.
+
+[P4-B linking](calendar-linking.md) adds CE 7→8 links and immutable phased
+operations. Local import/edit, link checkpoints, receipts and scheduling outbox
+commit together through the existing worker; the internal Calendar edit policy
+preserves current future Snooze/Postpone targets. Remote writes use sparse
+If-Match patches, including Google's method-override fallback where needed,
+with local/remote outcomes acknowledged separately. Preview checks are manual;
+startup never resumes network work. Existing publications require explicit adoption.
+
+Reviewed all-event import reuses those per-event jobs. One CE transaction captures
+every child and a hash/child-ID batch receipt before dispatch; a lost parent reply
+returns the same allocated jobs. Child saves/scheduling/remote phases remain
+independent and manually recoverable. No schema/version change is needed.
+Current-account source references in native link/job views let cached browser rows
+hide associated and pending events without requiring Google reads on navigation.
+
+CE 8→9 adds typed remote availability, original account labels, observed/attempt
+times, remote comparisons and a required-review flag to Calendar links. This data
+stays outside DP/portable backups. An explicit Check uses the I/O executor and
+then validates the captured connection, source, link and reminder revisions on
+the serialized worker; it changes no reminder fields or scheduling projections.
+Confirmed cancellation preserves local alarms, while unavailable/unsupported
+events suspend transfers. Trash/Unlink fence unsent work; a sent outcome may be
+acknowledged without reactivating the association. Restore and remote availability
+do not clear required review. Old message text never supplies an inferred observation.
+
+CE 9→10 adds recurrence master/instance/following identities and immutable scoped
+resource jobs. CE 10→11 adds automatic activation/revisions, common-baseline
+versions, dirty authored revisions, operation provenance, allowlisted cursors and
+snapshots, persistent review issues and delivery fingerprints, notification
+preferences, saved run summaries and separate Calendar Activity. Historical links
+remain manual; neither migration performs network work or grants automatic permission.
+
+[P4-D](calendar-sync.md) reuses common compatible-field values for automatic
+one-sided transfers and manual true-conflict recovery. The application-context
+adapter dispatches authorization/HTTPS outside the alarm worker;
+immutable job capture, activation/version fencing, local scheduling checkpoints,
+observations and confirmed baselines stay on the serialized worker. Incremental
+tokens/cache and synchronization records stay CE-only. Expired-token recovery
+rebuilds the remote cache without clearing reminder data. One on-demand
+WorkManager 2.12.0 hourly connected request and unique pending work offer bounded
+native opportunities without an Activity, Expo module or JavaScript. Direct Boot
+does not initialize WorkManager or Calendar storage. Calendar Activity is merged
+into the local Activity projection, separately from portable history. Confirmed
+partial resource outcomes remain visible and cannot roll local changes back.
+
+[P4-E](calendar-managed-sync.md) adds CE 11→12 installation provenance, a reviewed
+managed secondary-calendar binding/policy, setup previews and immutable operations,
+incoming candidates/cache, outbound captures, local dispositions, minimal source
+suppression, issues and receipts. Migration grants no Calendar-level permission.
+The I/O adapter performs complete bounded discovery and feature-scoped creation
+authorization; page, sent/result and permission checkpoints use the engine worker.
+Calendar creation has no caller-specified Google ID, so uncertain sent attempts
+inspect their exact visible operation marker and cannot blindly create again.
+Managed import/export reuses P4-C resource identity and P4-D phased mutation owners.
+Fresh-install initial recovery is quiet; installation provenance is CE-only and
+not portable backup history. DP and backup versions remain 6 and 4.
+
+The Calendar UX correction extends CE 12 projections without a schema migration.
+Explicit synchronization requests use immutable CalendarSyncRequest JSON receipts
+and separate CalendarSyncProgress checkpoints in the existing CE receipt table.
+Native confirmed commits update deduplicated checked/changed/imported/published
+family sets; scope guards fence identity/permission changes. Saved reads use
+non-recovering link-store adapters so an active Sending write is not mistaken for
+an interrupted process. Root store startup retains interruption recovery. The
+existing serialized runtime/worker resumes bounded pending requests. No new
+synchronization owner, Room entity, DP state or portable backup field is added.
+Run failures carry their connection revision/subject and authorization epoch;
+late failures cannot alter a replacement scope. An enabled empty managed source
+uses the existing access-recovery issue/fence even when no linked reminder exists.
+CalendarStatusStore reads existing setup jobs, binding-scoped candidates/exports,
+association jobs and receipts. Scan completion, imports, pending/held/review work
+and recorded local-save outcomes stay separate; Ready alone cannot prove all work
+finished. New managed receipts retain immutable logical selections and scope
+epochs for delayed publication correlation. Historical incomplete receipts use
+conservative review rather than invented batch completion. Erased jobs cannot
+expose titles or recreate work through the read API.
+
+Authorization has a request UUID and an immutable launch receipt. A separate
+deterministic outcome receipt records Authorized, Cancelled or Failed on the
+serialized worker and emits onChange. Launch acknowledgement grants nothing.
+The Activity confirms Google scopes/account through the existing I/O owner before
+reporting Authorized; no token is persisted. A lost launch reply reads that same
+request. Confirmed access to a fenced bound scope returns to Reviewing; fresh
+Resume remains required. Existing manual authorization entrypoints delegate to
+the same implementation.
 
 Calendar timed payloads encode instants as RFC 3339 UTC timestamps with seconds
 and retain the captured IANA zone. The HTTPS adapter reencodes older captured

@@ -33,7 +33,7 @@ export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'a
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
   'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop' |
   'menu' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important' |
-  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home';
+  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home' | 'link_off' | 'open_in_new';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
   const colors = useTheme();
   return <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, flexShrink: 0 }}>
@@ -107,9 +107,9 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
         borderWidth: c || round ? 2 : 0,
         flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: c ? 1 : blocked ? 0.45 : pressed && !round ? 0.7 : 1 }];
     }}>
-    {(icon || busy) && <View style={{ width: 20, height: 20 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
+    {(icon || busy) && <View style={{ width: 20, height: 20, flexShrink: 0 }}>{busy ? <ActivityIndicator color={foreground} size={20} /> : icon && <Icon name={icon} color={foreground} size={20} />}</View>}
     <Text style={{ color: foreground, lineHeight: c ? typography.body * scale * 1.4 : undefined,
-      flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+      minWidth: 0, flexShrink: 1, fontSize: typography.body * scale, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
   </Pressable>;
   return button;
 }
@@ -142,8 +142,8 @@ export function Field({ label, error, inputRef, compactMultiline = false, requir
       fontSize: typography.body * scale }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? typography.supporting * scale * 1.4 : undefined }}>{error}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, accessibilityLabel }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean; accessibilityLabel?: string;
+export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, prominent = false, accessibilityLabel }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean; prominent?: boolean; accessibilityLabel?: string;
 }>) {
   const colors = useTheme(), scale = useFontScaleOverride();
   const foundation = useFoundationStyle();
@@ -153,7 +153,7 @@ export function SettingRow({ label, value, icon, onPress, children, description,
   const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight,
     paddingVertical: compact ? space.sm : space.md, paddingHorizontal: compact ? space.md : space.gutter }}>
     {icon && <View style={{width:compact?32:40,height:compact?32:40,borderRadius:compact?12:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} size={compact?20:24} /></View>}
-    <View style={{ flex: 1, gap: space.xs }}><Copy>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
+    <View style={{ flex: 1, gap: space.xs }}><Copy heading={prominent} size={prominent ? typography.heading : typography.body}>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:typography.supporting*scale*1.4}}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
     {!stackedStatus && children}{onPress && <Icon name="chevron_right" size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
@@ -406,6 +406,21 @@ export function Choice({ label, description, selected, onPress, disabled = false
     <View style={{ flex: 1,gap:4 }}><Copy>{label}</Copy>{description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
   </Pressable>;
 }
+/** Independent selection; radio Choice remains reserved for one-of-many controls. */
+export function CheckRow({ label, description, selected, onPress, disabled = false }: { label: string; description?: string; selected: boolean; onPress: () => void; disabled?: boolean }) {
+  const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
+  return <Pressable accessibilityRole="checkbox" aria-checked={selected} accessibilityLabel={[label, description].filter(Boolean).join(', ')}
+    accessibilityState={{ checked: selected, disabled }} disabled={disabled} onPress={onPress}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...corners, minHeight: 56, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? colors.soft : 'transparent' })}>
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 5, borderWidth: 2,
+      borderColor: selected ? colors.accent : colors.muted, backgroundColor: selected ? colors.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+      {selected && <Icon name="check" size={18} color={colors.accentInk} />}
+    </View>
+    <View style={{ flex: 1, gap: 4 }}><Copy heading size={typography.heading}>{label}</Copy>{description && <Copy muted size={14}>{description}</Copy>}</View>
+    {corners && focused && <RowFocus corners={corners} />}
+  </Pressable>;
+}
 export function SelectRow<T extends string | number>({ label, value, choices, onChange, icon }: {
   label: string; value: T; choices: { value: T; label: string }[]; onChange: (value: T) => void; icon?: IconName;
 }) {
@@ -415,13 +430,20 @@ export function SelectRow<T extends string | number>({ label, value, choices, on
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }
 export function Disclosure({ title, summary, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; summary?: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
-  const colors = useTheme();
+  const colors = useTheme(), corners = useContext(ConnectedRowContext);
   const [selected, setOpen] = useState(initial);
+  const [focused, setFocused] = useState(false);
   const open = selected || forceOpen;
-  return <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
-    style={{ minHeight: 48, flexDirection: 'row', paddingHorizontal: space.xs, alignItems: 'center', gap: space.sm }}>
-    {icon && <Icon name={icon}/>}<View style={{ flex: 1, paddingVertical: summary ? space.sm : 0, gap: space.xs }}><Copy>{title}</Copy>{!open && summary && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} />
-  </Pressable>{open && <View style={{ paddingHorizontal: space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
+  const headerCorners = corners && { ...corners, ...(open ? { borderBottomLeftRadius: shape.connectedInner, borderBottomRightRadius: shape.connectedInner } : {}) };
+  return <View style={!corners && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}><Pressable accessibilityRole="button" aria-expanded={open} accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={({ pressed }) => ({ ...headerCorners, minHeight: corners ? 56 : 48, flexDirection: 'row',
+      paddingHorizontal: corners ? space.gutter : space.xs, paddingVertical: corners ? space.md : 0,
+      alignItems: 'center', gap: corners ? space.md : space.sm, backgroundColor: pressed ? colors.soft : 'transparent' })}>
+    {icon && (corners ? <View style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 16, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}><Icon name={icon} /></View> : <Icon name={icon} />)}
+    <View style={{ flex: 1, minWidth: 0, paddingVertical: !corners && summary ? space.sm : 0, gap: space.xs }}><Copy>{title}</Copy>{summary && (corners || !open) && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} size={corners ? 20 : 24} />
+    {headerCorners && focused && <RowFocus corners={headerCorners} />}
+  </Pressable>{open && <View style={{ paddingHorizontal: corners ? space.gutter : space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }
 export function Status({ label, tone = 'muted', icon }: { label: string; tone?: Tone; icon?: IconName }) {
   const colors = useTheme(), scale = useFontScaleOverride();
@@ -482,7 +504,7 @@ export function formatTime(value: number | null | undefined, zoneId?: string) {
 export const styles = StyleSheet.create({
   page: { padding: space.gutter, gap: space.gutter, maxWidth: 720, width: '100%', alignSelf: 'center', paddingBottom: space.xl },
   card: { padding: space.gutter, borderRadius: shape.group, gap: space.sm },
-  button: { paddingHorizontal: space.gutter, paddingVertical: space.md, borderRadius: shape.action, minHeight: 56, justifyContent: 'center' },
+  button: { paddingHorizontal: space.gutter, paddingVertical: space.md, borderRadius: shape.action, minHeight: 56, minWidth: 0, maxWidth: '100%', flexShrink: 1, justifyContent: 'center' },
   input: { borderWidth: 1, borderRadius: shape.field, paddingHorizontal: space.md, paddingVertical: 10, fontSize: typography.body, textAlignVertical: 'top' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

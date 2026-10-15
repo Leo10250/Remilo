@@ -1,5 +1,70 @@
 # Verification and release evidence
 
+The [Calendar attention/scoped-check evidence](evidence/2026-10-14-calendar-refinement.md)
+records CAL-05 outcome tests and a tracked production-component fixture matrix.
+Agreement and confirmed changes require separate counts. Completed empty scans,
+partial coverage, offline/ringing continuation, access and uncertain writes must
+produce different scoped results. Verify same-request recovery after navigation/
+restart and native aggregate severity across all issue targets/pages. Unobserved
+visual/device cases remain explicit; existing physical gates are unchanged.
+
+The [14 October Calendar UX observations](evidence/2026-10-14-calendar-ux.md)
+record saved authorization/progress projections, compact setup and grouped
+recovery/selection presentation. They identify the checked source and signed
+local artifact. The [CAL-04 follow-up](device-acceptance.md#calendar-setup-and-feedback-follow-up-cal-04)
+retains signed-device authorization, native picker, navigation and accessibility
+observations; these checks do not close P4-D/P4-E acceptance or G4.
+
+The [P4-E managed Calendar contract](calendar-managed-sync.md) adds CE 11→12
+origin/permission migration, strict CalendarList ownership, deliberate setup,
+incremental creation consent and same-request creation inspection. Retain the
+P4-B/C/D regressions. Check quiet initial recovery against continuing Alarm
+defaults, bounded recurring audits and captured-resource revalidation, exact
+publication/backup collisions, Local only, selected Resume batches and independent
+local alert readiness. Candidate, association and setup issues must remain
+distinct and private. A successful collection observation is not a confirmed
+field transfer or a successful local alarm.
+
+Use the consolidated P4-E section of [the owner checklist](device-acceptance.md)
+for signed-phone/live Google observations. Host checks and memory-only production
+fixtures cannot close P4-E acceptance or G4. Preserve the identified artifact,
+source relationship, signer and actual outcomes; do not install or distribute
+through build preparation.
+
+The [P4-D target contract](calendar-sync.md#required-evidence) adds automatic
+ordinary transfers, common-baseline conflict detection, unknown-outcome recovery,
+incremental/background opportunities and review-notice/action/history checks.
+Its eventual evidence must cover time-only updates without review, timestamp
+misordering, conditional-write races, cursor/410 recovery, preserved local alerts
+and terminal states, notification permissions/deduplication, and accurate status.
+The [P4-C/P4-D implementation evidence](evidence/2026-10-13-calendar-sync.md)
+records actual host checks and the signed artifact separately from the remaining
+device observations. Current P4-B procedures below remain regression requirements.
+
+The Calendar management follow-up requires CE 8→9 migration, structured remote
+observations, explicit check isolation and lifecycle-fenced late replies. Verify
+cancelled/explicit-deleted responses versus ambiguous 404/410, unchanged local
+generation/target/postponement, restart/offline persistence, read-only terminal
+checks, and restored availability that still requires review. Inspect the compact
+Details row, separate management/history, Agenda/Details notices, unlink and local
+Trash/Purge wording across eight pairs and accessibility constraints. Identified
+signed-device/live Google observations remain part of the owner checklist.
+
+[P4-B Calendar imports/linking](calendar-linking.md) require duplicate-free
+native import, CE 7→8 migration, conditional patch and phased retry evidence.
+Check future/default alert validation, blocked suppression, conflict choices,
+preserved independent/postponed timings, removed/terminal states, backup/DP
+privacy and a responsive native worker under blocked Calendar I/O. Host and
+fixture results do not close signed-device Google or Android acceptance.
+
+The import-browser follow-up adds inclusive civil-day range/DST checks, removal
+of retained and pending sources from cached rows, and all-page collection through
+unsupported-only pages. Verify atomic child-job capture, immutable parent replay,
+rollback of invalid/duplicate input, restart recovery and independent partial
+outcomes. Named job titles must disappear on purge; source references are scoped
+to the connected original account. Batch receipts contain hashes/IDs only and
+remain outside portable backup/DP. No batch network work runs on startup.
+
 The [10 October UX refinement](design/current/ux-refinement.md) requires active-source
 tests for All day combinations/round trips/relink/conflict/conversion failure,
 DST civil timing, schedule-only preview, original/current/intended/previous timing,

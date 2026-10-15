@@ -6,13 +6,21 @@ Owner instruction, 4 October 2026: complete offline Android development now and
 consolidate physical checks for a later acceptance run. The later
 [9 October owner attestation](evidence/2026-10-09-owner-g1-g3-attestation.md) accepts
 G1–G3 on its identified APK; unreported individual observations remain unclaimed.
-Known failures still require fixes, and new Calendar acceptance remains pending.
+Known failures still require fixes. The owner's
+[11 October P4-A sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md)
+accepts one-off Google Calendar publishing. P4-B implementation has host/build
+evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| CAL-06 | Consistent Calendar disclosure tiles and stable collapse alignment | owner 14 October correction; CAL-05 | verified | [Owner's 15 October device approval](evidence/2026-10-14-calendar-disclosure.md#owner-device-approval--15-october-2026), with 271 source/91 tooling checks and representative render measurements; approval covers Sync controls/Sync details styling and collapse alignment; installed artifact and individual matrix/TalkBack scenarios were not supplied; broader Calendar gates remain open |
+| CAL-05 | Calendar attention hierarchy, scoped Sync now feedback and quiet details/history | owner-approved Calendar UX refinement; CAL-04 | implemented/unverified | [271 source/91 tooling/448 native tests, lint and identified signed assembly](evidence/2026-10-14-calendar-refinement.md); scoped durable requests, checked/changed distinction, empty-source access recovery, surfaced home review and collapsed controls/history; partial two-pair fixture observations; remaining visual matrix and P4-D/P4-E/G4 signed-device acceptance retained |
+| CAL-04 | Compact Calendar setup, contextual recovery and durable outcome feedback | owner 14 October approved redesign; P4-C/D/E | implemented/unverified | [263 source/91 tooling checks, 432 native tests, signed assembly and focused production fixtures](evidence/2026-10-14-calendar-ux.md); saved authorization/progress, visible source, surfaced all-day clock and grouped checkbox review; remaining visual matrix, signed-phone/live Google and G4 acceptance retained |
 | UX-30 | Continuous canvas-surface browsing-header blend with stable foreground | owner 11 October approved plan; BETA-02 | implemented/unverified | [223 source/84 tooling checks, signed Android assembly and eight-pair Agenda/Settings fixtures](evidence/2026-10-11-header-transition.md); continuous native opacity, restoration, sheets, reduced motion and compact fallbacks; cached 222 native reports retained; U36 signed-device gestures/contrast/TalkBack remain |
 | UX-29 | Consistent Mark as done completion wording on app/native surfaces | owner 11 October request | implemented/unverified | [216 source, 82 tooling and 222 native tests; module lint, source audit and narrow/200% fixtures](evidence/2026-10-11-completion-wording.md); single/group and spoken completion labels updated; existing action identities preserved; updated signed-device wrapping/TalkBack remains required |
 | CAL-01 | Explicit account/calendar setup and RFC 3339 timed publication/retry repair | owner 11 October report; P4-A | implemented/unverified | [216 source, 82 tooling and 222 native tests; module lint and focused setup/review fixtures](evidence/2026-10-11-calendar-repair.md); exact-minute defect reproduced before repair; saved retries retain identity/content; updated signed-device timed retry remains required |
+| CAL-02 | Ordered inclusive import dates, associated-event removal and reviewed Import all | owner 12 October import-browser feedback; P4-B | implemented/unverified | [236 shared/90 tooling/261 native tests, focused fixtures and identified signed ARM64 build](evidence/2026-10-12-calendar-import-ux.md); whole date range across pages, explicit per-event consent and duplicate-safe recovery; [owner checklist](device-acceptance.md) expanded; not installed/distributed; physical/live Google observations remain separate |
+| CAL-03 | Calendar hierarchy, explicit management and independent Trash | owner 12 October implementation instruction; P4-B | implemented/unverified | [241 shared/91 tooling/275 native checks and identified signed ARM64 artifact](evidence/2026-10-12-calendar-management.md); schema 9 observations, local-only opening, cancellation and protected unlink/restore; focused three-pair fixtures observed; broader visual automation stalled; [consolidated owner checklist](device-acceptance.md) retains full visual/physical/live Google requirements; not installed/distributed |
 | UX-21 | Alarm-first custom-repeat preview, contextual explanations and selection | approved follow-up; UX-25 | implemented/unverified | [Follow-up host/build and fixture evidence](evidence/2026-10-10-ux-followup.md); Schedule-only preview, native rules retained; U32 pending |
 | UX-22 | Plain repeating-edit scope with authored occurrence identity | approved follow-up; UX-25 | implemented/unverified | [Follow-up host/build and fixture evidence](evidence/2026-10-10-ux-followup.md); Original nominal boundary and earlier reminders retained; U32 pending |
 | UX-23 | Truthful save confirmation and specific captured recovery | approved follow-up; UX-25 | implemented/unverified | [Follow-up host/build and fixture evidence](evidence/2026-10-10-ux-followup.md); Native eligibility and exact retry identity retained; U33 pending |
@@ -92,11 +100,33 @@ Known failures still require fixes, and new Calendar acceptance remains pending.
 | TD-05 | Static Classic branding | approved Classic source/A01 | implemented/unverified | [TD-05 handoff](handoffs/redesign-td-05.md); all six circle-centered Classic v2 exports approved/integrated; copier/hash and [signed assembly checks pass](handoffs/redesign-td-06.md). Actual OEM masks/splash/notification acceptance remains pending. |
 | TD-06 | Consolidated acceptance | TD-03, TD-04, TD-05; TD-01/02 integrated | implemented/unverified | [TD-06 handoff](handoffs/redesign-td-06.md); latest sequential release preparation passed 9 October 2026 at 17:18:00.718 UTC after final composition 05 presentation/wording corrections: 115 shared and 75 tooling tests, unchanged 120-test native results/lint, signed bundled ARM64 0.4.0/code 4 with current APK hash recorded. Earlier 17:01 pass preserved as history. [Owner composition 05 approval](design/r9-runtime-composition-approval-v5.json) closes R9 review. No install/publish; consolidated phone/G1/G2/G3 acceptance remains pending. |
 | FUT-ICON | Optional dynamic/themed launcher icons | separate future scope decision | pending | One static Classic identity ships first; no alias/worker feature or current acceptance dependency |
-| P4-A | Optional Google connection and one-off publishing | G3 | implemented/unverified | [378 shared, 82 tooling and 216 native tests; signed bundled assembly and fixture review](evidence/2026-10-09-calendar-publishing.md); [manual publishing contract/setup](calendar-publishing.md), CE 7 / DP 6 / backup 4, immutable identity recovery; designated signed-device OAuth/publishing/local-alarm acceptance remains pending |
-| P4-B | Explicit import and protected linked updates | P4-A | pending | unrelated events untouched; visible conflicts |
-| P4-C | Recurrence mapping and differential tests | P4-B | pending | standard rules, exceptions and splits |
-| P4-D | Incremental/native background opportunities | P4-C | pending | allowlist, pagination, retries, 410 recovery |
-| G4 | Calendar release gate | P4-A/B/C/D | pending | both directions after documented sync opportunity |
+| P4-A | Optional Google connection and one-off publishing | G3 | verified | [Owner's 11 October publishing sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md); [host/build evidence](evidence/2026-10-09-calendar-publishing.md) and [timed publication repair](evidence/2026-10-11-calendar-repair.md) retained; owner attestation without supplied accepted APK identity or individual scenario coverage; P4-B–P4-D/G4 remain pending |
+| P4-B | Explicit import and protected linked updates | P4-A | implemented/unverified | [230 shared/89 tooling/254 native tests, lint, fixture observations and identified signed artifact](evidence/2026-10-12-calendar-linking.md); [owner-approved contract](calendar-linking.md); signed-device/live Google acceptance remains separate |
+| P4-B01 | Import/linking contract and isolated fixtures | owner 12 October implementation instruction; P4-A | implemented/unverified | [Contract and strict memory-only fixture evidence](evidence/2026-10-12-calendar-linking.md); independent source calendar and explicit consent, including No alert |
+| P4-B02 | Native event mapping, browsing and conditional patches | P4-B01 | implemented/unverified | [Mapping/transport evidence](evidence/2026-10-12-calendar-linking.md); owned scopes, bounded ordered pagination, sparse If-Match patches and safe 412 outcomes |
+| P4-B03 | CE 7→8 identity, atomic import and local scheduling recovery | P4-B02 | implemented/unverified | [Migration/transaction/crash/privacy evidence](evidence/2026-10-12-calendar-linking.md); DP 6/backup 4 retained; one allocated occurrence/source and serialized checkpoints |
+| P4-B04 | Reviewed linked resolution, consent and durable partial recovery | P4-B03 | implemented/unverified | [Conflict/retry/removal evidence](evidence/2026-10-12-calendar-linking.md); common baseline, independent timing and postponement preserved; obsolete operations fenced |
+| P4-B05 | Browser, compact review, Details status and scoped recovery | P4-B04 | implemented/unverified | [Eight-pair and focused large-text/landscape fixture observations](evidence/2026-10-12-calendar-linking.md); full state matrix and Android Back/keyboard/TalkBack remain for consolidated acceptance |
+| P4-B06 | Host/native/render checks, signed artifact and consolidated acceptance | P4-B05 | implemented/unverified | [Signed ARM64 0.4.0 (4), hash/signer/source relationship and host checks](evidence/2026-10-12-calendar-linking.md); [owner checklist](device-acceptance.md) extended; not installed or distributed; physical/live Google observations pending |
+| P4-C | Recurrence mapping and differential tests | P4-B; owner 12 October approval | implemented/unverified | [Native recurrence/resource evidence](evidence/2026-10-13-calendar-sync.md); existing kernel, canonical master/instance/following identity, reviewed exceptions and scoped partial recovery; [supported subset](calendar-recurrence.md); signed-device/live Google acceptance remains |
+| P4-D | Automatic two-way Calendar synchronization and clear management | P4-C; owner 12 October scope decision | implemented/unverified | [Implementation and actual evidence](evidence/2026-10-13-calendar-sync.md); reviewed permissions, ordinary transfers, persistent conflicts, independent local delivery, incremental work and clear management; visual matrix/accessibility and signed-device/live Google acceptance remain |
+| P4-D01 | Automatic activation, compatible fields and baseline comparison | P4-C; P4-B | implemented/unverified | [Native comparison/activation evidence](evidence/2026-10-13-calendar-sync.md); five cases, cross-group merges, fresh individual/bulk previews, atomic immutable receipts, default opt-out and manual migration; no timestamp winner |
+| P4-D02 | Incremental transport, pagination and expired-token recovery | P4-D01 | implemented/unverified | [Cursor/transport evidence](evidence/2026-10-13-calendar-sync.md); consistent queries, durable empty/page continuations, allowlisted snapshots, 410 cache rebuild and 412 fresh comparison |
+| P4-D03 | Durable automatic jobs, timing and lifecycle recovery | P4-D01/02 | implemented/unverified | [Operation/timing/privacy evidence](evidence/2026-10-13-calendar-sync.md); per-resource checkpoints, provenance, unknown inspection, newer dirty edits, ringing deferral, independent/postponed timing and lifecycle fences |
+| P4-D04 | Foreground and native background synchronization opportunities | P4-D03 | implemented/unverified | [Worker evidence](evidence/2026-10-13-calendar-sync.md); WorkManager 2.12.0, hourly network/flex request, native bounded continuations/backoff, application context and unlocked on-demand initialization; actual Android background timing remains |
+| P4-D05 | Consistent status/actions and compact Calendar management | P4-D03/04 | implemented/unverified | [Projection/component evidence](evidence/2026-10-13-calendar-sync.md); shared states, saved-only opening, Sync now/read-only Check, separate neutral Unlink, external 48 dp action and CE Activity; full visual/accessibility acceptance remains |
+| P4-D06 | Persistent review notices and quiet grouped notifications | P4-D03/05 | implemented/unverified | [Review/notification evidence](evidence/2026-10-13-calendar-sync.md); family queue/count, generic low-importance channel, durable fingerprints, dismissal/preference/restart behavior and stale safe navigation; signed-device observations remain |
+| P4-D07 | Integrated automatic-sync regressions and signed acceptance | P4-D01–06 | in progress | [242 shared/91 tooling/329 native checks, lint and identified signed ARM64 artifact](evidence/2026-10-13-calendar-sync.md); [consolidated checklist](device-acceptance.md); browser navigation/focus deadlines limited fixture review; full eight-pair/accessibility review and signed-phone/live Google observations remain |
+| P4-E | Managed Calendar setup and automatic reminder import | P4-C/D; owner 13 October implementation instruction | implemented/unverified | [Host/build evidence](evidence/2026-10-14-calendar-managed-sync.md), [representative production fixtures](evidence/2026-10-14-calendar-managed-visual.md) and [contract](calendar-managed-sync.md); P4-D07/P4-E08 signed-phone/live Google acceptance and G4 remain open |
+| P4-E01 | Foundation, source identity and CE migration | P4-D | implemented/unverified | [Native evidence](evidence/2026-10-14-calendar-managed-sync.md); CE 11→12 stable installation identity, scoped guards/reservations, quiet fresh recovery, unchanged DP 6/backup 4 and no migrated permission |
+| P4-E02 | Discovery, authorization and setup review | P4-E01 | implemented/unverified | [Native/UI evidence](evidence/2026-10-14-calendar-managed-sync.md); saved renamed ID, strict secondary/data owner, canonical name, complete bounded discovery, multiple selection, read-only sample and incremental creation consent |
+| P4-E03 | Durable calendar creation and uncertain-result recovery | P4-E02 | implemented/unverified | [Recovery evidence](evidence/2026-10-14-calendar-managed-sync.md); immutable receipts, sent/result checkpoints, CalendarList verification, exact-marker inspection and no blind uncertain POST retry |
+| P4-E04 | Incremental candidates and automatic imports | P4-E03 | implemented/unverified | [Import evidence](evidence/2026-10-14-calendar-managed-sync.md); shared cursor, frozen initial cohort, ongoing/future timing, lazy families, bounded resumable audits and captured exception checks |
+| P4-E05 | New-reminder export and reviewed adoption | P4-E04 | implemented/unverified | [Publication/backup evidence](evidence/2026-10-14-calendar-managed-sync.md); atomic genuine-create intent, family Local only, stable resource recovery, reviewed adoption and exact restore collision protection |
+| P4-E06 | Policy, Pause, reviewed Resume and lifecycle recovery | P4-E05 | implemented/unverified | [Native recovery evidence](evidence/2026-10-14-calendar-managed-sync.md); future-only defaults, selected immutable resume batches, held intent, separate manual authority, recovered-alert review and source/terminal/Purge fences |
+| P4-E07 | Settings, editor, management and generalized review | P4-E06 | implemented/unverified | [Projection evidence](evidence/2026-10-14-calendar-managed-sync.md), [fixture observations](evidence/2026-10-14-calendar-managed-visual.md); reminder-first controls, saved phases/counts, candidate/setup routing, quiet issues and Activity |
+| P4-E08 | Integrated regressions, visual evidence and signed acceptance | P4-E01–07 | in progress | [257 shared/91 tooling/423 native checks, lint and identified signed ARM64 artifact](evidence/2026-10-14-calendar-managed-sync.md); representative eight-pair/large-text fixtures; [consolidated signed-phone/live Google and Android accessibility observations](device-acceptance.md) remain |
+| G4 | Calendar release gate | P4-A/B/C/D/E | pending | Managed discovery/reuse/creation and recovery, both directions after documented opportunities, protected conflicts/unknown writes, recurrence, independent deletion and quiet review notices on an identified signed build |
 | RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | pending | different days have different checklists; plan survives daily completion |
 | RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | pending | per-exercise Done/Undo tracked by local date; yesterday/tomorrow do not leak into today |
 | RW-03 | Readable Android home-screen Today widget | RW-02 | pending | today's plan/reminders update across midnight, edits, reboot and completion without opening React Native |
@@ -106,9 +136,50 @@ Known failures still require fixes, and new Calendar acceptance remains pending.
 | AI-03 | Optional assistant-specific discovery/registration where actually supported | AI-01/02 | pending | test real Pixel and Samsung providers; unsupported assistants degrade gracefully; no universal-routing claim |
 | AI-04 | Optional local natural-language drafting enhancement | AI-02 | pending | deterministic/offline parser remains usable; AI is opt-in, capability-gated and never bypasses confirmation |
 | G-AND-EXT | Android daily-workflow and external-action acceptance gate | RW-01/02/03/04, AI-02 | pending | signed-phone date/permission/restart/widget/digest/intent checks; AI-03/04 optional and non-blocking |
+| FUT-TASK-ICON | Optional task classification and category icons | G4, G-AND-EXT; separate later design/implementation review | pending | Low priority; automatic suggestions with preset correction and neutral fallback; [scope and acceptance](#future-task-category-icons-fut-task-icon); does not block current release, cloud or iOS feasibility |
 | P5 | Optional Android cloud/primary-device coordination | G4 | pending | foreground/manual Supabase sync and honest handoff |
 | G5 | Android cloud gate | P5 | pending | two Android installations converge |
 | P6 | Optional iOS feasibility and complete port | G5, G-AND-EXT | pending | final phase only, after Android expansion; real iPhone capability evidence |
+
+## Future task category icons (FUT-TASK-ICON)
+
+The owner's 14 October direction records a later optional enhancement, separate
+from FUT-ICON's launcher icons. Consider it after Calendar acceptance and the
+Android routines, Today/widget/digest and baseline assistant-action work (G4 and
+G-AND-EXT). It introduces no new dependency for current release acceptance, cloud
+work or iOS feasibility.
+
+- Use a curated set of recognizable category icons matching Remilo's existing
+  icon family, weight, size and soft containers. Automatically suggest a category
+  from task text, allow correction through preset categories, preserve explicit
+  corrections and retain the neutral reminder icon when uncertain.
+- Explore restrained category colors across all four atmospheres and both
+  brightness modes. Titles and actual local alert timing remain dominant;
+  category color must remain distinct from selection, overdue, failure and
+  successful scheduling. Meaning must also be available through shape and
+  accessible category text, without relying on color alone.
+- Keep classification local by default and independent of saving, scheduling and
+  alarm delivery. This does not reintroduce per-reminder themes or task-specific
+  alarm scenes. The current neutral reminder glyph remains active until this
+  feature receives its own design and implementation review.
+- Define the category catalog and classifier technology in that later plan;
+  recording this item does not select a model or authorize classifier integration.
+
+Design inputs: [Google's icon-style consistency guidance](https://developer.android.com/design/ui/mobile/guides/styles/themes),
+[Apple's inclusive and consistent color guidance](https://developer.apple.com/design/human-interface-guidelines/color),
+[EvIcon (2023)](https://arxiv.org/abs/2305.17609) and
+[icon search/recognition research (2024)](https://www.sciencedirect.com/science/article/pii/S014193822400177X).
+These support testing semantic fit, familiarity and distinguishability; they do
+not prove that colorful categories universally improve usability. The 2024
+study's small, young sample and differing search/recall results limit transfer
+to Remilo's audience and reminder lists.
+
+Required acceptance compares recognition and scanning with the current neutral
+icon baseline, including wrong suggestions, correction persistence, uncertain
+classification, English/Chinese and ambiguous descriptions. Review all eight
+atmosphere/brightness pairs, grayscale, color-vision differences and screen-reader
+output. Retain color only where it improves recognition without competing with
+urgent information; verify that classification cannot delay or alter alarm work.
 
 ## Task verification contracts
 

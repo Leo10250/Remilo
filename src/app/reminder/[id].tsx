@@ -1,11 +1,11 @@
 import { RootNotice, notifyTrash } from '../../ui/navigation';
 import { useTimeFormatting } from '../../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
-import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams, type Href } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import type { ContentCommand, DeliveryCommand, Occurrence } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarCommand, ContentCommand, DeliveryCommand, Occurrence } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { recoveryPresentation, commandFeedback, type Tone } from '../../domain/actions';
 
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
@@ -21,7 +21,9 @@ import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/them
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
-import { CalendarPublicationStatus } from '../../ui/calendar-publication';
+import { CalendarExceptionNotice, CalendarSummaryRow } from '../../ui/calendar-association';
+import { calendarCaptureRejected } from '../../domain/calendar-link';
+import { calendarError } from '../../domain/calendar';
 
 const activity: Record<string, string> = { Purge: 'Reminder permanently deleted.', TimedOut: 'Alarm timed out', UndoDelete: 'Restored', Delete: 'Moved to Trash', Reopen: 'Reopened', Done: 'Completed',
   Stop: 'Alarm stopped', StopAll: 'Ringing stopped', Snooze: 'Snoozed', Postpone: 'Postponed', Skip: 'Occurrence skipped', Edit: 'Edited', Create: 'Created',
@@ -37,6 +39,11 @@ export default function ReminderDetails() {
   const item = query.data, settings = useSettings(), command = useCommand(), colors = useTheme();
   const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
   const publication = calendar.data?.find((value) => value.occurrenceId === id);
+  const calendarLinks = useQuery({ queryKey: ['calendar', 'links'], queryFn: () => engine().getCalendarLinks(), enabled: nativeAvailable });
+  const calendarOperations = useQuery({ queryKey: ['calendar', 'operations'], queryFn: () => engine().getCalendarOperations(), enabled: nativeAvailable });
+  const calendarLink = calendarLinks.data?.find(value => value.occurrenceId === id || !!item?.seriesId && value.seriesId === item.seriesId);
+  const unlinkCommand = useRef<CalendarCommand | null>(null);
+  const [unlinkBusy, setUnlinkBusy] = useState(false), [unlinkUncertain, setUnlinkUncertain] = useState(false);
   const scale = useFontScaleOverride(), { fontScale } = useWindowDimensions();
   const confirm = useAppearanceConfirmation();
   const itemId = item?.id, segmentId = item?.segmentId;
@@ -55,7 +62,7 @@ export default function ReminderDetails() {
   const [recoveryKind, setRecoveryKind] = useState<string>();
   const [postponeResult, setPostponeResult] = useState(false), [selection, setSelection] = useState('15');
   useAppearanceHold(command.isPending || uncertain);
-  usePreventRemove(command.isPending || uncertain, () => {
+  usePreventRemove(command.isPending || uncertain || unlinkBusy || unlinkUncertain, () => {
     confirm('Change not yet confirmed', 'Wait for this change, or retry it before leaving.');
   });
   useEffect(() => { if (action !== 'edit' || !itemId) return;
@@ -118,13 +125,21 @@ export default function ReminderDetails() {
   const openPostpone = () => { const current = Date.now(); setNow(current); setTarget(current + 900_000); setSelection('15'); setSheetFeedback(null); setPostponeResult(false); setPostpone(true); };
   const tomorrow = (minutes: number) => { const date = new Date(); date.setDate(date.getDate() + 1); date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0); setTarget(date.getTime()); setSheetFeedback(null); };
   const active = item && !item.deleted && !item.completed && !item.skipped;
+  const unlink = async () => {
+    if (unlinkBusy || !calendarLink) return;
+    unlinkCommand.current ??= { kind: 'UnlinkCalendar', occurrenceId: calendarLink.occurrenceId, operationId: engine().createOperationId(), expectedLinkRevision: calendarLink.revision };
+    setUnlinkBusy(true);
+    try { await engine().applyCalendarCommand(unlinkCommand.current); unlinkCommand.current = null; setUnlinkUncertain(false); await calendarLinks.refetch(); await calendarOperations.refetch(); }
+    catch (error) { if (calendarCaptureRejected(error)) { unlinkCommand.current = null; setUnlinkUncertain(false); } else setUnlinkUncertain(true); setFeedback({ message: calendarError(error), tone: 'warning' }); }
+    finally { setUnlinkBusy(false); }
+  };
   const adjust = item && canAdjustAlert(item), completion = recordedCompletionTime(item?.history);
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
   const recovery = recoveryPresentation(recoveryKind);
   const frozenPostpone = command.isPending || uncertain || postponeResult;
   const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
-  return <Page title="Reminder" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
+  return <Page title="Reminder" scrollKey={'reminder:' + id} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
     actions={item ? <>{!item.deleted && <IconButton icon="edit" label="Edit reminder" buttonRef={scopeTrigger} disabled={command.isPending || uncertain} onPress={edit} />}
     <IconButton icon="more_vert" label="Reminder actions" disabled={command.isPending || uncertain} onPress={() => setMenu(true)} /></> : undefined}
     footer={<><RootNotice disabled={command.isPending || uncertain} />{item && (active || item.completed || item.skipped || item.deleted) ? <BottomActionBar>
@@ -146,7 +161,6 @@ export default function ReminderDetails() {
       <Button label={recovery.retry} variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
     {command.isPending && <ActionFeedback loading message="Applying change…" />}
     {item && <>
-      {publication && <CalendarPublicationStatus publication={publication} />}
       {query.error && <><ActionFeedback message="Could not refresh. Showing the previous reminder." tone="warning" /><Button label="Retry" variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
       <SchedulePrimary item={item} />
@@ -160,7 +174,10 @@ export default function ReminderDetails() {
       {item.deliveryState === 'Blocked' && active && <Button icon="settings" label="Review alert permissions" variant="secondary" disabled={command.isPending || uncertain} onPress={() => {
         if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } });
       }} />}
-      <Schedule item={item} details={false} connected occurrence hasPublication={!!publication} />
+      <CalendarExceptionNotice item={item} link={calendarLink} jobs={calendarOperations.data?.filter(operation => operation.occurrenceId === id) || []}
+        disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain} onTrash={moveToTrash}
+        onManage={() => router.push({ pathname: '/calendar-manage', params: { id: calendarLink?.occurrenceId ?? id, ...routeParams, originReminderId: id } } as Href)} />
+      <Schedule item={item} details={false} connected occurrence hasPublication={!!publication || !!calendarLink} />
       {item.segmentId && <ConnectedGroup title="Repeat" footer={series.isLoading || series.error || series.data?.state === 'Archived' ? <>
         <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
         {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>This occurrence belongs to a previous schedule. Repeat details shows the current schedule.</Copy>}
@@ -177,12 +194,18 @@ export default function ReminderDetails() {
         }} />
         {!!item.notes && <InformationRow key="notes" icon="notes" label="Notes" value={item.notes} />}
       </ConnectedGroup>
-      <ScheduleDetails item={item} occurrence hasPublication={!!publication} />
+      <ScheduleDetails item={item} occurrence hasPublication={!!publication || !!calendarLink} />
+      <CalendarSummaryRow id={id} link={calendarLink} publication={publication} jobs={calendarOperations.data?.filter(operation => operation.occurrenceId === id) || []} origin={routeParams} disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain} />
+      {unlinkUncertain && <Button label="Retry same unlink" variant="secondary" disabled={unlinkBusy} onPress={() => void unlink()} />}
     </>}
     <Sheet title="Reminder actions" visible={menu} onClose={() => setMenu(false)}>
       {item && !item.deleted && <SettingRow icon="edit" label="Edit" onPress={edit} />}
-      {active && !item.segmentId && (!publication || publication.state === 'Cancelled') && <SettingRow icon="event" label="Publish to Google Calendar" disabled={command.isPending || uncertain}
+      {active && !item.segmentId && !calendarLink && (!publication || publication.state === 'Cancelled') && <SettingRow icon="event" label="Publish to Google Calendar" disabled={command.isPending || uncertain}
         onPress={() => { setMenu(false); router.push({ pathname: '/calendar-publish', params: { id, ...routeParams, originReminderId: id } }); }} />}
+      {calendarLink && calendarLink.state !== 'Detached' && <SettingRow icon="close" label="Unlink from Google Calendar" disabled={unlinkBusy || unlinkUncertain}
+        onPress={() => { setMenu(false); confirm('Unlink from Google Calendar?', 'Keep this reminder and the Google event. Stop linked updates between them. Google reminder settings will not be changed.' +
+          (calendarOperations.data?.some(operation => operation.occurrenceId === id && operation.remoteAttempted && !['Confirmed', 'Cancelled', 'Conflict', 'Failed'].includes(operation.state)) ? '\n\nA previously sent Google update may still finish.' : ''),
+          [{ text: 'Cancel', style: 'cancel' }, { text: 'Unlink', onPress: () => void unlink() }]); }} />}
       <SettingRow icon="content_copy" label="Duplicate" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }); }} />
       <SettingRow icon="history" label="Activity" disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/activity', params: { id, ...routeParams, originReminderId: id } }); }} />
       {adjust && item?.deliveryState !== 'Alerting' && <SettingRow icon="snooze" label={'Snooze · ' + item.quickSnoozeMinutes + ' min'} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void delivery('Snooze'); }} />}

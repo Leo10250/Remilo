@@ -22,6 +22,31 @@ class RemiloAlarmModule : Module() {
     val owner = engine()
     owner.request({ body(owner) }, { promise.resolve(it) }, { promise.reject(it, "Native operation failed: $it", null) })
   }
+  private fun authorize(requestId: String, publicationId: String?, promise: Promise? = null) {
+    val activity = appContext.currentActivity
+    if (activity == null) { promise?.reject("NEEDS_ACCESS", "Open Calendar after unlocking.", null); return }
+    engine().calendarRequest(true, { store ->
+      val launch = CalendarStatusStore(store.database(), System::currentTimeMillis).beginAuthorization(requestId, publicationId)
+      val managed = publicationId?.let { store.managed.setupOperation(it) }
+      val recover = managed != null && (managed.phase in setOf("Fenced", "Cancelled", "Confirmed") || managed.authEpoch != store.managed.binding().authEpoch || !store.connection().connected)
+      Triple(if (recover) null else publicationId, managed?.kind == "Create" && !recover, launch)
+    }, { saved -> activity.runOnUiThread {
+      if (!saved.third) promise?.resolve(mapOf("operationId" to requestId, "launched" to false))
+      else if (!activity.isFinishing) {
+        try {
+          activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java).putExtra("requestId", requestId)
+            .putExtra("publicationId", saved.first).putExtra("managedCalendarCreation", saved.second))
+          promise?.resolve(mapOf("operationId" to requestId, "launched" to true))
+        } catch (_: Exception) {
+          engine().calendarRequest(true, { CalendarStatusStore(it.database(), System::currentTimeMillis).finishAuthorization(requestId, "Failed") }, {}, {})
+          promise?.reject("NOT_AVAILABLE", "Google authorization could not open.", null)
+        }
+      } else {
+        engine().calendarRequest(true, { CalendarStatusStore(it.database(), System::currentTimeMillis).finishAuthorization(requestId, "Failed") }, {}, {})
+        promise?.reject("NOT_AVAILABLE", "Google authorization could not open.", null)
+      }
+    } }, { promise?.reject(it, "Google authorization could not open.", null) })
+  }
   override fun definition() = ModuleDefinition {
     Name("RemiloAlarm")
     Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
@@ -55,9 +80,11 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("previewCalendarPublication") { id: String, promise: Promise ->
       engine().calendarRequest(block = { it.preview(id) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar preview unavailable: $it", null) })
     }
-    AsyncFunction("authorizeCalendar") { publicationId: String? ->
-      val activity = requireNotNull(appContext.currentActivity) { "Open Calendar settings after unlocking." }
-      activity.startActivity(Intent(activity, CalendarAuthorizationActivity::class.java).putExtra("publicationId", publicationId))
+    AsyncFunction("authorizeCalendar") { publicationId: String? -> authorize(UUID.randomUUID().toString(), publicationId) }
+    AsyncFunction("beginCalendarAuthorization") { requestId: String, publicationId: String?, promise: Promise -> authorize(requestId, publicationId, promise) }
+    AsyncFunction("getCalendarOperationStatus") { id: String, promise: Promise ->
+      engine().calendarRequest(block = { CalendarStatusStore(it.database(), System::currentTimeMillis).operation(id) },
+        resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
     }
     AsyncFunction("listOwnedCalendars") { cursor: String?, promise: Promise ->
       CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).list(cursor,
@@ -67,6 +94,32 @@ class RemiloAlarmModule : Module() {
       val runtime = CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext)
       val reject: (String) -> Unit = { promise.reject(it, "Calendar action could not be confirmed: $it", null) }
       when (command["kind"]) {
+        "RequestCalendarSync" -> runtime.requestSync(command, { promise.resolve(it) }, reject)
+        "ConfirmManagedCalendarSetup", "ApplyManagedCalendarPolicy", "PauseManagedCalendar", "DisableManagedCalendar", "ResumeManagedCalendar",
+        "ImportManagedCalendarCandidate", "IgnoreManagedCalendarCandidate", "RetryManagedCalendarOperation", "SetCalendarReminderDisposition", "EnableRecoveredCalendarAlerts" ->
+          runtime.managedCommand(command, { promise.resolve(it) }, reject)
+        "ImportCalendarEvents" -> engine().calendarRequest(true,
+          { it.links.captureBatch(command) }, { result ->
+            promise.resolve(result)
+            @Suppress("UNCHECKED_CAST") val jobs = result["operations"] as List<Map<String, Any?>>
+            jobs.forEach { runtime.startLink(CalendarStore.string(it, "operationId"), result["retry"] == true) }
+          }, reject)
+        "ImportCalendarEvent", "EnableCalendarLink", "ApplyCalendarResolution", "EnableAutomaticCalendarSync", "ActivateCalendarLinks" -> {
+          val owner = engine()
+          owner.request({ owner.calendarCapture(command) }, { value ->
+            @Suppress("UNCHECKED_CAST") val result = value as Map<String, Any?>
+            promise.resolve(result)
+            if (command["kind"] == "ActivateCalendarLinks") {
+              @Suppress("UNCHECKED_CAST") val jobs = result["operations"] as List<Map<String, Any?>>
+              jobs.forEach { runtime.startLink(CalendarStore.string(it, "operationId"), result["retry"] == true) }
+            } else runtime.startLink(CalendarStore.string(command, "operationId"))
+          }, reject)
+        }
+        "SetCalendarReviewNotifications" -> engine().calendarRequest(true, { it.sync.preference(command) }, { promise.resolve(it) }, reject)
+        "RetryCalendarOperation" -> engine().calendarRequest(block = {
+          it.links.operation(CalendarStore.string(command, "operationId"))?.let(it.links::view) ?: throw CalendarFailure("NOT_FOUND")
+        }, resolve = { promise.resolve(it); runtime.startLink(CalendarStore.string(command, "operationId"), true) }, reject = reject)
+        "UnlinkCalendar" -> engine().calendarRequest(true, { it.links.unlink(command) }, { promise.resolve(it) }, reject)
         "SelectCalendar" -> runtime.select(command, { promise.resolve(it) }, reject)
         "PublishOneOff" -> engine().calendarRequest(true, { it.capture(command) }, { result ->
           promise.resolve(result); runtime.start(CalendarStore.string(command, "operationId"))
@@ -79,6 +132,73 @@ class RemiloAlarmModule : Module() {
         }, { old -> promise.resolve(mapOf("disconnected" to true)); if (old != null) runtime.revoke(old) }, reject)
         else -> reject("INVALID_INPUT")
       }
+    }
+    AsyncFunction("listCalendarEvents") { query: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("list", query,
+        { promise.resolve(it) }, { promise.reject(it, "Calendar events unavailable: $it", null) })
+    }
+    AsyncFunction("previewCalendarImport") { event: Map<String, Any?>, choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("import", event + mapOf("choices" to choices),
+        { promise.resolve(it) }, { promise.reject(it, "Calendar import review unavailable: $it", null) })
+    }
+    AsyncFunction("previewCalendarLink") { id: String, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("link", mapOf("occurrenceId" to id),
+        { promise.resolve(it) }, { promise.reject(it, "Calendar link review unavailable: $it", null) })
+    }
+    AsyncFunction("checkCalendarLink") { id: String, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("check", mapOf("occurrenceId" to id),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewCalendarUpdate") { id: String, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).linkRequest("update", mapOf("occurrenceId" to id),
+        { promise.resolve(it) }, { promise.reject(it, "Calendar changes unavailable: $it", null) })
+    }
+    AsyncFunction("getCalendarLinks") { promise: Promise ->
+      engine().calendarRequest(block = { it.links.links() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar links unavailable: $it", null) })
+    }
+    AsyncFunction("getCalendarContext") { id: String, promise: Promise -> dispatch(promise) { it.calendarContext(id) } }
+    AsyncFunction("getCalendarSyncSummary") { promise: Promise ->
+      engine().calendarRequest(block = { it.sync.summary() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("getManagedCalendarState") { promise: Promise ->
+      engine().calendarRequest(block = { it.managed.view() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("getCalendarReminderDisposition") { id: String, promise: Promise ->
+      engine().calendarRequest(block = { it.managed.disposition(id) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarSetup") { choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("setup", choices,
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarPolicyChange") { choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("policy", choices,
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarResume") { promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("resume", emptyMap(),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarCandidate") { id: String, choices: Map<String, Any?>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("candidate", mapOf("candidateId" to id, "choices" to choices),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewManagedCalendarRecoveredAlerts") { ids: List<String>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).managedRequest("recovered", mapOf("ids" to ids),
+        { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("getCalendarReviewIssues") { cursor: String?, promise: Promise ->
+      engine().calendarRequest(block = { it.sync.issues(cursor) }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, it, null) })
+    }
+    AsyncFunction("previewCalendarActivation") { ids: List<String>, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).activation(ids, { promise.resolve(it) }, { promise.reject(it, it, null) })
+    }
+    AsyncFunction("syncCalendarNow") { id: String?, promise: Promise ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).syncNow(id).whenComplete { result, error ->
+        if (error == null) promise.resolve(result.view()) else { val code = ((error.cause ?: error) as? CalendarFailure)?.code ?: "NETWORK"; promise.reject(code, code, null) }
+      }
+    }
+    AsyncFunction("getCalendarOperations") { promise: Promise ->
+      engine().calendarRequest(block = { it.links.operations() }, resolve = { promise.resolve(it) }, reject = { promise.reject(it, "Calendar operations unavailable: $it", null) })
     }
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("queryLists") { promise: Promise -> dispatch(promise) { it.lists() } }

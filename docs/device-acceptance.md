@@ -11,6 +11,42 @@ those earlier observations do not establish results for this new build.
 
 ## Optional Calendar acceptance
 
+P4-A has [owner sign-off](evidence/2026-10-11-owner-calendar-publishing-attestation.md);
+its unspecified individual observations and accepted-build identity remain
+unclaimed. For [P4-B](calendar-linking.md), use an identified updated signed build
+and only the designated test account/calendar. Record each actual outcome:
+
+1. Import one timed event and one single-day all-day event. Confirm exact range/
+   zone, default Alarm, No list and exactly one reminder after repeated actions.
+   Change source calendar without changing the publishing destination.
+2. Keep Google reminders by default; deliberately disable them for a separate
+   import. Check both remote configuration and local scheduling. With Remilo
+   blocked, confirm Google suppression waits for explicit recovery.
+3. Change title/notes/schedule in either app; check without applying. Review
+   mixed field choices and confirm both outcomes. Edit Google after review and
+   verify conflict handling preserves that newer edit.
+4. Preserve independent Due/Alarm and future Snooze/Postpone while accepting
+   an event move. Elapsed new alerts require correction or No alert. Existing
+   local delivery works offline without an active React UI.
+5. Interrupt connectivity/request replies and reopen. Continue the saved
+   operation without a duplicate reminder or repeated acknowledged local phase.
+   Report local success and unknown Google outcome separately.
+6. Upgrade a P4-A build, explicitly enable a published copy's link, Unlink/
+   relink, revoke ownership, change/disconnect accounts and remove a remote event.
+   Local completion/Trash/Restore remain local; no remote replacement/deletion.
+7. Observe compact review/browser layout, 200% text, TalkBack, date/time
+   pickers, keyboard/Back and reachable persistent confirmation controls.
+8. Check inclusive Start/End dates, earlier-date ordering and an event on the end
+   date. Import all over multiple result pages, including unsupported-only pages.
+   Review common/per-event alert choices and reminder consent; an elapsed alert
+   requires a future time or explicit No alert. Confirm exactly one local reminder
+   per eligible event, named individual outcomes, and imported/pending rows absent
+   on return without browsing again. Interrupt the batch reply and resume its
+   same saved children. Unlink/Trash/Purge sources remain excluded from reimport.
+
+Host/fixture results do not establish these device/Google observations. Retain
+CAL-01's timed-retry observation and the existing consolidated alarm cases.
+
 The [P4-A publishing procedure](calendar-publishing.md#signed-device-acceptance-procedure)
 is a separate signed-device run using the owner-designated account and
 **Remilo Reminders** calendar. Connecting alone publishes nothing. Record the new
@@ -648,6 +684,29 @@ Observe on an identified signed bundled build; host/fixture results do not pass 
   selection/focus return, guarded navigation and retained search/filter/scroll;
   genuine empty Agenda has one Add action and opens the normal focused editor.
 
+### Calendar management and independent Trash follow-up — CAL-03
+
+Use the identified signed bundled follow-up build and the original connected
+Google account. Host/fixture observations do not establish these device results.
+
+- Open a linked reminder: Title and local alert lead, ordinary information follows,
+  and the compact Calendar row is last. Open management and return to the same
+  Details scroll/origin. Opening either page performs no Google check.
+- Explicitly check a deleted owned event. Confirm the cancellation appears in
+  Agenda and Details while the exact local alarm/notification/postponement stays.
+  Repeat offline and after app restart. No alert and terminal wording must remain
+  truthful. An unavailable account/event must not be labelled deleted.
+- From the cancellation notice, cancel local Trash, then confirm it: Remilo
+  delivery stops, Google remains unchanged, and the originating collection shows
+  revision-safe Undo. Restore does not replay elapsed delivery or old Google work.
+- Unlink from both entry points. Confirm local content/alert and Google settings
+  remain, cancellation metadata clears, and relinking requires fresh review.
+  Previously sent updates may finish; uncertain replies use the original operation.
+- Restore the Google event and Check: the cancellation notice clears but updates
+  remain suspended until reviewed. Completed/skipped/trashed work never reopens.
+- Exercise interrupted Check, unlink/Trash while a read is outstanding, 200% text,
+  English/Chinese, keyboard/Back, TalkBack and reduced motion on actual Android.
+
 ### Continuous browsing-header follow-up — U36
 
 Observe on an identified signed bundled build in the consolidated owner run.
@@ -662,3 +721,155 @@ Observe on an identified signed bundled build in the consolidated owner run.
   rotate without losing state. Remove animations retains the direct blend with
   no timer or spring; 200% text and constrained height use opaque compact chrome.
   TalkBack sees one heading and one instance of each action, with retained focus.
+
+### Calendar recurrence and automatic synchronization — P4-C/P4-D
+
+Record the installed signed APK hash, signer, source revision and device before
+these observations. Use owned personal calendars and deliberately linked test
+reminders. Retain P4-B and CAL-03 cases above.
+
+- Confirm migrated links stay manual, new import/link reviews default to automatic
+  with working opt-out, and individual/bulk activation reviews show ordinary
+  transfers and excluded links. Cancel changes nothing; a lost acknowledgement
+  retries the same captured batch without duplicate reminders or permissions.
+- Edit Title, clear Notes, and change only time in each direction. Ordinary changes
+  transfer after documented opportunities; changes to different groups merge.
+  Different edits to the same group require review without overwriting either.
+  Unrelated Google changes and misleading updated times never choose a winner.
+- Compare daily, weekly, monthly and yearly recurrence through DST, supported
+  moved instances and following splits. Confirm original nominal identity, local
+  Done/Skip/Trash, future Snooze, independent Due/Alarm and local sound survive.
+  An elapsed proposal needs review; a ringing Schedule waits without changing the
+  session and compares again after timeout or completion. Metadata does not alter
+  delivery. Observe Blocked and Pending separately from alert mode.
+- Observe native work with the app process cold and JavaScript absent, foreground
+  return and Sync now. Record actual elapsed time and constraints; hourly work is
+  an opportunity rather than a freshness promise. Offline recovery, denied or
+  revoked access, reboot/unlock and battery restrictions retain local alarms.
+  Consent recovery opens only from an explicit foreground action.
+- Exercise a conditional-write race and lost reply, including a newer local edit
+  and partial recurring resources. Confirm same-operation inspection and truthful
+  unknown-result recovery without blind resend or rollback of confirmed phases.
+  Test expired-token rebuilding without local deletion or automatic import.
+- Delete and restore Google resources, complete/Skip/Trash locally, Unlink/Relink,
+  disconnect/change account and Purge during outstanding reads/writes. Both copies
+  remain independent; terminal or purged content cannot be revived by late results.
+  Restore/Reopen/restoration/Relink requires fresh review.
+- Observe persistent unfiltered Agenda counts, family scope, Details local alert
+  consequences and origin return while retaining filters. Review notification
+  permission denial, dismissal, restart, preference off/on and stale taps. Public
+  content is generic, quiet and has no alarm/full-screen behavior; unchanged issues
+  do not repost. Resolution updates/removes the summary and Activity records once.
+- Review all eight atmosphere/brightness pairs, narrow portrait, landscape, 200%
+  text, long English/Chinese and reduced motion. Measure 48 dp secondary/56 dp
+  review targets and test wrapping, Android Back/keyboard ordering and TalkBack.
+
+### Managed Calendar setup and recovery — P4-E
+
+Record the exact installed signed APK hash, signer, source relationship and phone
+before observing these cases. These extend P4-B/C/D; they do not replace those
+regressions or imply that unperformed cases passed.
+
+- Review setup without confirmation: no calendar, reminder, publication or link
+  appears. Connecting alone grants no managed permission. Verify a saved renamed
+  source is preferred, canonical name differs from display override, multiple
+  eligible matches need selection, incomplete discovery cannot imply no match,
+  and primary/shared/unknown-data-owner sources are excluded.
+- Reuse an eligible calendar and separately create one with incremental creation
+  consent. Denial preserves manual/local use. Observe a lost create reply and
+  delayed CalendarList propagation: inspect the saved identity/exact setup marker,
+  never blindly create again. Zero/multiple matches remain reviewable. A separately
+  reviewed replacement keeps previous calendars; two installations may create
+  separate calendars without coordination.
+- Compare existing-installation initial Alarm with fresh-installation quiet
+  recovery, including restart/pagination and a changed continuing default during
+  the initial cohort. Newly created calendars use the normal policy. Later new
+  events use continuing defaults. Ongoing elapsed alerts need review, ended events
+  stay outside automatic import, and all-day alerts use the reviewed source-zone
+  time. Blocked permission retains Alarm mode.
+- Import recurrence with DST/end rules, instances before masters, supported moved
+  or cancelled exceptions, following resources and future-exception-only work.
+  Interrupt a large audit and resume it. Change an exception between capture and
+  application; stale captured work must not create an unsafe local target.
+- Create genuine local reminders/families with default sync and Local only. Saving
+  and local alarms work offline. Existing reminders, backup restore, test alarms,
+  recurrence materialization and Reopen do not become new publication intent.
+  Confirm all recurring publication resources before automatic linking; a lost
+  reply reuses the same operation/event identities.
+- Pause, create/edit queued work, then review Resume including past unfinished
+  outbound dates. Only selected ready work executes; unselected work stays held.
+  A new Pause fences unsent batch phases. Explicit confirmed manual actions stay
+  available. Other calendars retain their independent automatic permissions.
+  Disable/reconnect/account changes never silently backfill or retarget work.
+- Exercise both backup/recovery orders, exact published-copy adoption, copied or
+  moved markers, Ignore, whole-family Local only, terminal actions, Unlink and
+  Purge. Exact collisions default to current work; deliberately separate restored
+  copies get new identities and remain Local only. Title/time similarity never
+  merges work. Late results cannot recreate erased content or permissions.
+- Keep Google reminders on incoming events by default. Separately consented
+  suppression requires actual local alert readiness; quiet recovery never
+  suppresses. New Remilo publications disclose disabled Google reminders. Review
+  recovered future alerts separately; completion, Snooze, sound and local state
+  cannot be recovered from Google.
+- Observe empty-calendar native polling with JavaScript absent, bounded page/
+  candidate work, cancellation, offline backoff, revoked access and Direct Boot.
+  Local alarm actions remain responsive while Calendar I/O waits. Observe generic
+  quiet review notifications, stale taps, dismissal and durable fingerprints.
+- Review setup, policy, creation/access recovery, initial import, queued export,
+  Resume and all three review targets across eight pairs, narrow/landscape, long
+  English/Chinese, 200% text and reduced motion. Verify 48 dp/56 dp targets, origin
+  return, keyboard/Android Back ordering and TalkBack on the identified build.
+
+## Calendar setup and feedback follow-up (CAL-04)
+
+On the identified signed build, observe a compact setup with its Google account
+and dedicated Remilo source together. Exercise one/multiple/renamed calendars,
+incomplete discovery, missing saved source and explicit replacement review. Check
+the surfaced All-day alert time at 12/24-hour display formats and a different
+calendar zone. Existing reminders and fresh quiet recovery retain their policy.
+
+Cancel, deny and accept Google authorization. Opening its Activity must not claim
+connection success. Return to the correct setup/progress context; a fenced bound
+source needs reviewed Resume after reconnection. Exercise required creation
+authorization and unknown sent creation without another blind create request.
+
+Submit after changing a setting: Check settings and Turn on sync must not be
+confused. Observe progress after navigation/restart, including a finished scan
+with pending imports, partial outcomes, review issues and Blocked/Pending local
+save results. Internal Back to Calendar must return to the overview. Only actual
+OS destinations may say Open Android settings.
+
+Bulk activation uses checkboxes for ready reminders and separate reason/actions
+for exclusions. Resolve an item, return and confirm other selections persist while
+newly eligible items are not silently selected. Test Resume and recovered alerts
+with the same behavior, and retain No Remilo alert yet on unimported candidates.
+
+Review all eight pairs, narrow portrait, landscape, 200% text, long English/Chinese
+and reduced motion. Verify clipped press/focus, wrapping, 48/56 dp targets, TalkBack
+announcements, IME/Back order and origin return. Review is pending until actually
+observed; host/fixture checks do not replace signed-device/live Google acceptance.
+
+## Calendar attention and scoped checks (CAL-05)
+
+On the identified signed build, find the home review action with mixed reminder,
+incoming-event and setup issues. Confirm the global family count is independent
+of Agenda filters and that local alarm-permission/ringing controls retain priority.
+Identify the reminder and actual next local alert, including Snooze/Postpone,
+No alert, intended Blocked/Pending and terminal timing. Check title/time hierarchy
+and semantic text/icons in all eight atmosphere/brightness pairs.
+
+Open Sync details without triggering network work. Exercise optional per-reminder
+and global Sync now: no changes, real changes, empty calendar, partial pagination,
+offline/backoff, ringing deferral, pending suppression and access recovery. A
+single-reminder success must not clear unrelated overview issues. Leave/restart
+after acknowledgement, retry a lost acknowledgement with the same identity, and
+fence execution through Pause/account/terminal/Unlink/Purge changes. Uncertain
+writes require inspection. Routine background success must remain quiet.
+
+Find Recent Calendar changes inside details; verify Calendar-only recorded field
+labels, empty history and origin/family return. Required automatic sync must read
+as static information; only supported opt-in is editable. Exercise all explicit
+actions for progress and outcomes, including authorization cancellation and
+failed external navigation. Verify native TalkBack announcements, Back/IME,
+pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
+reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.

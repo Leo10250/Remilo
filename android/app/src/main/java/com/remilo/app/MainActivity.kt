@@ -11,6 +11,10 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
+  override fun onResume() {
+    super.onResume()
+    com.remilo.alarm.calendar.CalendarWork.reconcile(applicationContext, opportunity = true)
+  }
   override fun onCreate(savedInstanceState: Bundle?) {
     (application as MainApplication).initializeUi()
     // Set the theme to AppTheme BEFORE onCreate to support

@@ -21,12 +21,13 @@ function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; ic
   </View>;
 }
 
-export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context }: {
+export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
   compact?: boolean; editorial?: boolean; glyph?: IconName; nowMs?: number;
   presentation?: 'row' | 'tile';
   showActionDate?: boolean;
   context?: CardContext;
+  calendarNotice?: string;
   selection?: { selected: boolean; onToggle: () => void };
 }) {
   const { alertPresentation, reminderBrowsingPresentation, scheduleDateTime } = useTimeFormatting();
@@ -65,7 +66,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
   const terminalState = (browsing.status?.label ?? '') + (showActionDate && !active && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : '');
   const summary = [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
-    item.listName, !ordinaryDue(item) ? 'Due ' + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? 'Changed occurrence' : ''].filter(Boolean).join('. ');
+    item.listName, !ordinaryDue(item) ? 'Due ' + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? 'Changed occurrence' : '', calendarNotice].filter(Boolean).join('. ');
   const actionLabel = restore ? 'Restore' : item.completed || item.skipped ? 'Reopen' : 'Mark as done';
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
@@ -130,6 +131,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
         <MetadataLine label={browsing.timing + (item.listName ? ' · ' + item.listName : '')}
           icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
           color={active && delivery.changed ? colors.accent : colors.muted} />
+        {!!calendarNotice && <MetadataLine icon="warning" label={calendarNotice} />}
         {!!consequence && <MetadataLine icon="schedule" label={consequence} />}
         {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? ' · changed occurrence' : '')} />}
         {!!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}

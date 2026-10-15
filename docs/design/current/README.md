@@ -6,6 +6,26 @@ repository cleanup authorized by [A37](../approved-design-cleanup.json), and
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
+The owner's [12 October Calendar management correction](calendar-management.md)
+keeps reminder information first, moves Calendar administration to a separate page
+and explains independent deletion with Agenda/Details cancellation notices.
+
+The owner's later 12 October [P4-D target contract](../../calendar-sync.md)
+assigns automatic synchronization, clearer relationship/action wording, review
+notices, compact external navigation and Activity history to that later phase.
+Historical manual links retain explicit checks until confirmed activation.
+The owner's next [P4-E managed-calendar contract](../../calendar-managed-sync.md)
+adds confirmed calendar-level setup, automatic incoming/outgoing eligibility and
+saved removal decisions while preserving reminder-first presentation.
+
+The owner's 14 October [Calendar UX correction](calendar-management.md#calendar-setup-and-feedback--14-october-2026)
+uses one compact setup page, contextual status/actions, explicit authorization and
+operation outcomes, surfaced alert controls and checkbox bulk selection. It
+supersedes earlier Calendar setup copy and layout while preserving native safety.
+The subsequent [attention and sync-details refinement](calendar-management.md#calendar-attention-and-sync-details--14-october-2026)
+keeps local reminder timing prominent, makes review actionable and moves optional
+timestamps, per-reminder checks and history into collapsed details.
+
 The owner's [11 October browsing-header correction](header-scroll-research.md)
 replaces the abrupt toolbar surface switch with a continuous scroll blend and
 stable foreground colors, including reduced-motion mode. Artwork remains fixed.

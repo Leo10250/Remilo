@@ -7,7 +7,9 @@ Read [AGENTS.md](AGENTS.md) before changing this repository.
 
 Optional [Google Calendar publishing](docs/calendar-publishing.md) reviews and
 manually publishes unfinished one-offs into an owned calendar. Local alarms remain
-independent. Calendar imports, linked updates and recurrence publishing are later work.
+independent. [Calendar imports and linked updates](docs/calendar-linking.md) review
+one personal event or per-field resolution at a time. Recurrence publishing and
+automatic synchronization remain later work.
 
 ## Deploy to your phone
 
@@ -61,7 +63,8 @@ npm run android
 Use an Expo **development build**, not Expo Go. `android/` is tracked, owned
 source. **Never rerun Prebuild**: edit native files directly and rebuild after
 native changes. A development build uses Metro; release builds bundle JavaScript.
-No OTA updates, backend, Calendar, or iOS implementation are enabled.
+No OTA updates, backend, automatic Calendar synchronization or iOS implementation
+are enabled. Calendar access remains optional and explicitly reviewed.
 
 Create a local beta signing identity once:
 
@@ -200,8 +203,9 @@ Git history preserves them. Accepted R3–R10 reference bundles remain intact.
 The offline app provides separate event/due/alert timing, native actions and grouped
 ringing, settings, management/search/history, backups, recurrence, series actions
 and protected replenishment. See [offline build evidence](docs/evidence/2026-10-04-offline.md)
-for automated results and the APK identity. Calendar, cloud and iOS remain later
-gated milestones; no integration scaffolding is included.
+for that historical artifact's automated results and identity. Current optional
+Calendar publishing/import/linking has separate contracts and acceptance; cloud
+and iOS remain later gated milestones.
 
 The redesigned **0.4.0 / versionCode 4** build uses one event-date agenda, categorized
 automatic settings, inline permissions and native alarm controls that close only

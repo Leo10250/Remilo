@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.res.Configuration
 import android.os.UserManager
 import android.util.Log
+import androidx.work.Configuration as WorkConfiguration
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -16,7 +17,9 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
-class MainApplication : Application(), ReactApplication {
+class MainApplication : Application(), ReactApplication, WorkConfiguration.Provider {
+  override val workManagerConfiguration: WorkConfiguration
+    get() = WorkConfiguration.Builder().setMinimumLoggingLevel(Log.ERROR).build()
 
   private var uiInitialized = false
   override val reactHost: ReactHost by lazy {
