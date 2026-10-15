@@ -18,7 +18,12 @@ defines the shared layer and restoration behavior.
   separately targeted browsing/management actions. No name-based classifier or
   custom-icon picker applies.
 - Reminder rows and details use one neutral `event` glyph. Semantic categories,
-  category classification and per-reminder appearance remain deferred.
+  category classification and per-reminder appearance remain deferred. The owner's
+  14 October [future task-category icon direction](../../backlog.md#future-task-category-icons-fut-task-icon)
+  records automatic preset suggestions with user correction, neutral fallback and
+  restrained color exploration for a later review. It does not activate a
+  classifier or change the current neutral-icon rule, and does not reintroduce
+  per-reminder themes or task-specific alarm scenes.
 - Reopen clears both completed and skipped state for the occurrence, preserving
   revision/generation guards and recurrence exception identity. Elapsed alerts
   remain silent. Restore still preserves the skipped state.

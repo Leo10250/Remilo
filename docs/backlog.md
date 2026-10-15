@@ -135,9 +135,50 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 | AI-03 | Optional assistant-specific discovery/registration where actually supported | AI-01/02 | pending | test real Pixel and Samsung providers; unsupported assistants degrade gracefully; no universal-routing claim |
 | AI-04 | Optional local natural-language drafting enhancement | AI-02 | pending | deterministic/offline parser remains usable; AI is opt-in, capability-gated and never bypasses confirmation |
 | G-AND-EXT | Android daily-workflow and external-action acceptance gate | RW-01/02/03/04, AI-02 | pending | signed-phone date/permission/restart/widget/digest/intent checks; AI-03/04 optional and non-blocking |
+| FUT-TASK-ICON | Optional task classification and category icons | G4, G-AND-EXT; separate later design/implementation review | pending | Low priority; automatic suggestions with preset correction and neutral fallback; [scope and acceptance](#future-task-category-icons-fut-task-icon); does not block current release, cloud or iOS feasibility |
 | P5 | Optional Android cloud/primary-device coordination | G4 | pending | foreground/manual Supabase sync and honest handoff |
 | G5 | Android cloud gate | P5 | pending | two Android installations converge |
 | P6 | Optional iOS feasibility and complete port | G5, G-AND-EXT | pending | final phase only, after Android expansion; real iPhone capability evidence |
+
+## Future task category icons (FUT-TASK-ICON)
+
+The owner's 14 October direction records a later optional enhancement, separate
+from FUT-ICON's launcher icons. Consider it after Calendar acceptance and the
+Android routines, Today/widget/digest and baseline assistant-action work (G4 and
+G-AND-EXT). It introduces no new dependency for current release acceptance, cloud
+work or iOS feasibility.
+
+- Use a curated set of recognizable category icons matching Remilo's existing
+  icon family, weight, size and soft containers. Automatically suggest a category
+  from task text, allow correction through preset categories, preserve explicit
+  corrections and retain the neutral reminder icon when uncertain.
+- Explore restrained category colors across all four atmospheres and both
+  brightness modes. Titles and actual local alert timing remain dominant;
+  category color must remain distinct from selection, overdue, failure and
+  successful scheduling. Meaning must also be available through shape and
+  accessible category text, without relying on color alone.
+- Keep classification local by default and independent of saving, scheduling and
+  alarm delivery. This does not reintroduce per-reminder themes or task-specific
+  alarm scenes. The current neutral reminder glyph remains active until this
+  feature receives its own design and implementation review.
+- Define the category catalog and classifier technology in that later plan;
+  recording this item does not select a model or authorize classifier integration.
+
+Design inputs: [Google's icon-style consistency guidance](https://developer.android.com/design/ui/mobile/guides/styles/themes),
+[Apple's inclusive and consistent color guidance](https://developer.apple.com/design/human-interface-guidelines/color),
+[EvIcon (2023)](https://arxiv.org/abs/2305.17609) and
+[icon search/recognition research (2024)](https://www.sciencedirect.com/science/article/pii/S014193822400177X).
+These support testing semantic fit, familiarity and distinguishability; they do
+not prove that colorful categories universally improve usability. The 2024
+study's small, young sample and differing search/recall results limit transfer
+to Remilo's audience and reminder lists.
+
+Required acceptance compares recognition and scanning with the current neutral
+icon baseline, including wrong suggestions, correction persistence, uncertain
+classification, English/Chinese and ambiguous descriptions. Review all eight
+atmosphere/brightness pairs, grayscale, color-vision differences and screen-reader
+output. Retain color only where it improves recognition without competing with
+urgent information; verify that classification cannot delay or alter alarm work.
 
 ## Task verification contracts
 
