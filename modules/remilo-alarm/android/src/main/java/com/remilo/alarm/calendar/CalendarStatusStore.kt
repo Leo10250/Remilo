@@ -39,7 +39,7 @@ class CalendarStatusStore(private val db: ContentDatabase, private val now: () -
     // A candidate's link job also appears among associations. Count it once.
     val candidateJobs = candidates.filter { it.state in setOf("Pending", "Captured") }.map { it.operationId }.filter(String::isNotBlank).toSet()
     val pendingChanges = states.count { (it.status == "UpdatePending" || it.dirtyRevision > 0) && it.operationId !in candidateJobs }
-    val records = links.mapNotNull { CalendarLinkStore(db, now).record(it.occurrenceId) }
+    val records = links.mapNotNull { CalendarLinkStore(db, now, recoverInterrupted = false).record(it.occurrenceId) }
     val localJobs = db.links().operations().filter { !it.erased && it.localApplied }.distinctBy { it.occurrenceId }.associateBy { it.occurrenceId }
     val reviewIds = candidates.filter { it.state == "Review" }.map { it.localId.ifBlank { it.candidateId } }.toSet() +
       exports.filter { it.state == "Review" }.map { it.localId } + states.filter { it.status in setOf("Review", "Unconfirmed") }.map { it.associationId }
@@ -60,6 +60,7 @@ class CalendarStatusStore(private val db: ContentDatabase, private val now: () -
     return mapOf("reason" to reason, "action" to if (binding.phase == "Reviewing") "ReviewSetup" else action(reason, resumableSetup))
   }
   fun operation(id: String): Map<String, Any?>? {
+    CalendarSyncRequests(db, now).view(id)?.let { return it }
     val receipt = managed.receipt(id)
     if (receipt?.kind == "CalendarAuthorization") {
       val stage = managed.receipt(outcomeId(id))?.let { JSONObject(it.result).optString("stage") } ?: "AwaitingAuthorization"

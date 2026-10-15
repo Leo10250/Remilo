@@ -116,12 +116,14 @@ export type CalendarLink = { occurrenceId: string; revision: number; calendarNam
   accountEmail: string; availability: 'Unknown' | 'Available' | 'Deleted' | 'Unavailable' | 'Unsupported'; availabilityReason: string;
   observedAtMs: number | null; lastCheckAttemptAtMs: number | null; lastCheckErrorCode: string; remoteDiffers: boolean | null; requiresReview: boolean;
   cancelledInstances?: { segmentId: string; nominalSlot: string }[]; syncMode?: CalendarSyncMode; syncStatus?: CalendarSyncStatus; activationRevision?: number; baselineVersion?: number; authoredAtMs?: number | null;
-  successfulAtMs?: number | null; attemptedAtMs?: number | null; googleUpdated?: string; pauseReason?: CalendarPauseReason };
+  successfulAtMs?: number | null; attemptedAtMs?: number | null; googleUpdated?: string; pauseReason?: CalendarPauseReason; syncRequestId?: string | null };
 export type CalendarSyncMode = 'Manual' | 'Pending' | 'Automatic';
 export type CalendarSyncStatus = 'Confirmed' | 'UpdatePending' | 'Review' | 'Paused' | 'Unconfirmed' | 'Deferred';
 export type CalendarPauseReason = '' | 'Ringing' | 'ChangesNeedReview' | 'UnconfirmedWrite' | 'ElapsedAlert' | 'AccessRequired' | 'AccountChanged' | 'NotOwner' | 'RemoteDeleted' | 'RemoteUnavailable' | 'Unsupported' | 'LocalTerminal' | 'LocalRemoved' | 'Unlinked' | 'StaleAuthorization' | 'InvalidTiming' | 'ContentRequired' | 'ReviewRequired';
 export type CalendarReviewCounts = { reminders: number; candidates: number; setup: number; total: number };
-export type CalendarSyncSummary = { connected: boolean; automaticCount: number; pendingCount: number; reviewCount: number; reviewCounts?: CalendarReviewCounts; notifications: { enabled: boolean; revision: number }; lastRun?: CalendarRunSummary & { atMs: number } | null };
+export type CalendarSyncSummary = { connected: boolean; automaticCount: number; pendingCount: number; reviewCount: number; reviewCounts?: CalendarReviewCounts; attention?: { blocking: number; tone: 'warning' | 'danger' }; syncRequestId?: string | null; notifications: { enabled: boolean; revision: number }; lastRun?: CalendarRunSummary & { atMs: number } | null };
+export type CalendarSyncScope = { kind: 'AllAuthorized' } | { kind: 'Association'; occurrenceId: string };
+export type CalendarSyncResult = { scope: CalendarSyncScope | null; outcome: 'Checking' | 'NoChanges' | 'Synced' | 'Pending' | 'NeedsReview' | 'AccessRequired' | 'Unconfirmed' | 'Paused' | 'Failed' | 'ScopeChanged' | 'NotChecked'; checked: number; changed: number; imported: number; published: number; startedAtMs: number | null; finishedAtMs: number | null };
 export type CalendarReviewIssue =
   { kind: 'Association'; issueId: string; occurrenceId: string; seriesId: string | null; revision?: number; fingerprint?: string; title: string; reason: CalendarPauseReason; discoveredAtMs: number; affectedScopes?: string[] } |
   { kind: 'Candidate'; issueId: string; candidateId: string; revision: number; fingerprint?: string; title: string; reason: string; discoveredAtMs: number; calendarName: string; affectedScopes?: string[] } |
@@ -129,7 +131,7 @@ export type CalendarReviewIssue =
 export type CalendarReviewPage = { items: CalendarReviewIssue[]; count: number; counts?: CalendarReviewCounts; nextCursor: string | null };
 export type CalendarActivationPreview = CalendarLinkPreview & { automaticSync: boolean; activation: boolean; equal: boolean; transfers: { inbound: string[]; outbound: string[] } };
 export type CalendarActivationReview = { items: { occurrenceId: string; title?: string | null; calendarName?: string | null; email?: string | null; preview: CalendarActivationPreview | null; excludedReason: string | null }[] };
-export type CalendarRunSummary = { pages: number; attempted: number; confirmed: number; continuation: boolean; imported?: number; published?: number; adopted?: number; deferred?: number; excluded?: number; review?: number };
+export type CalendarRunSummary = { pages: number; attempted: number; confirmed: number; continuation: boolean; checked?: number; changed?: number; imported?: number; published?: number; adopted?: number; deferred?: number; excluded?: number; review?: number };
 export type CalendarLinkedOperation = { operationId: string; occurrenceId: string; kind: string; calendarName: string; title?: string;
   state: 'Waiting' | 'Sending' | 'Unconfirmed' | 'NeedsAccess' | 'Blocked' | 'Conflict' | 'Failed' | 'Cancelled' | 'Confirmed';
   recoveryMode: 'Retry' | 'ConfirmOutcome' | 'ReviewAgain' | 'None';
@@ -140,7 +142,7 @@ export type ManagedCalendarMode = 'Enabled' | 'Paused' | 'Disabled';
 export type CalendarRecoveryAction = 'None' | 'Connect' | 'Authorize' | 'ReviewSetup' | 'InspectCreation' | 'ReviewItems' | 'Resume' | 'Retry';
 export type CalendarSavedProgress = { scanComplete: boolean; imported: number; pending: number; held: number; review: number; localBlocked: number; localPending: number };
 export type CalendarOperationStatus = { operationId: string; kind: string; stage: 'Waiting' | 'PreparingCalendar' | 'CreatingCalendar' | 'CheckingCalendar' | 'CheckingEvents' | 'AddingReminders' | 'Confirmed' | 'NeedsReview' | 'NeedsAccess' | 'Unconfirmed' | 'Paused' | 'Cancelled' | 'AwaitingAuthorization' | 'Authorized' | 'Failed';
-  reason: string; action: CalendarRecoveryAction; confirmed: number; pending: number; review: number; held: number; children: string[]; progress?: CalendarSavedProgress; currentScope: boolean; correlationComplete?: boolean };
+  reason: string; action: CalendarRecoveryAction; confirmed: number; pending: number; review: number; held: number; children: string[]; progress?: CalendarSavedProgress; currentScope: boolean; correlationComplete?: boolean; syncResult?: CalendarSyncResult };
 export type ManagedCalendarPhase = 'NotConfigured' | 'Reviewing' | 'PreparingCalendar' | 'InitialImport' | 'Ready' | 'AccessRequired' | 'CalendarUnavailable' | 'OwnershipUnknown' | 'CreationUnconfirmed';
 export type ManagedCalendarState = { revision: number; authEpoch: number; mode: ManagedCalendarMode; phase: ManagedCalendarPhase;
   subject: string; calendarId: string; calendarName: string; calendarZone: string; policy: ManagedCalendarPolicy; initialMode: 'Alarm' | 'Notification' | 'None';
@@ -177,4 +179,4 @@ export type CalendarLegacyCommand = { kind: 'PublishOneOff'; operationId: string
   { kind: 'ImportCalendarEvents'; operationId: string; items: { previewId: string; choices: CalendarImportChoices }[] } |
   { kind: 'UnlinkCalendar'; operationId: string; occurrenceId: string; expectedLinkRevision: number } |
   { kind: 'RetryCalendarOperation'; operationId: string };
-export type CalendarCommand = CalendarLegacyCommand | ManagedCalendarCommand;
+export type CalendarCommand = CalendarLegacyCommand | ManagedCalendarCommand | { kind: 'RequestCalendarSync'; operationId: string; scope: CalendarSyncScope };

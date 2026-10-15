@@ -9,9 +9,11 @@ interface CalendarAutomaticAccess : CalendarStateAccess, CalendarLinkAccess {
   fun preflight(previewId: String, selections: Map<String, String?>): String? = null
 }
 data class CalendarRunSummary(val pages: Int, val attempted: Int, val confirmed: Int, val continuation: Boolean,
-  val imported: Int = 0, val published: Int = 0, val adopted: Int = 0, val deferred: Int = 0, val excluded: Int = 0, val review: Int = 0) {
+  val imported: Int = 0, val published: Int = 0, val adopted: Int = 0, val deferred: Int = 0, val excluded: Int = 0, val review: Int = 0,
+  val checked: Int? = null, val changed: Int? = null, val collectionPages: Int = pages) {
   fun view() = mapOf("pages" to pages, "attempted" to attempted, "confirmed" to confirmed, "continuation" to continuation,
-    "imported" to imported, "published" to published, "adopted" to adopted, "deferred" to deferred, "excluded" to excluded, "review" to review)
+    "imported" to imported, "published" to published, "adopted" to adopted, "deferred" to deferred, "excluded" to excluded, "review" to review) +
+    (checked?.let { mapOf("checked" to it, "changed" to (changed ?: 0)) } ?: emptyMap())
 }
 
 /** All I/O runs on Calendar's executor; short access() commits yield to alarm actions. */
@@ -33,7 +35,7 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
     var pages = initialPages; var attempted = 0; var confirmed = 0; var continuation = false
     var imported = 0; var published = 0; var adopted = 0; var deferred = 0; var excluded = 0; var review = 0
     val rebuilding = mutableSetOf<String>()
-    val activationWork = state.access { it.sync.pending() }
+    val activationWork = state.access { store -> store.sync.pending().filter { associationId == null || store.links.operation(it)?.occurrenceId == associationId } }
     if (activationWork.size > 10) continuation = true
     for (operationId in activationWork.take(10)) {
       budget()
@@ -78,7 +80,7 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
         if (job.kind == "EnableCalendarLink") adopted++
       }
     }
-    val calendars = state.access { it.incremental.calendars() }
+    val calendars = state.access { store -> store.incremental.calendars().filter { associationId == null || store.links.link(associationId)?.calendarId == it } }
     for (calendarId in calendars) {
       if (pages >= 10 || elapsed() >= deadline) { continuation = true; break }
       val calendar = try { transport.calendar(token, calendarId) } catch (error: CalendarFailure) {
@@ -160,6 +162,7 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
           continue
         }
         val preview = preview(token, id, activation = false)
+        state.access(true) { CalendarSyncRequests(it.database(), now).checkpoint(id) }
         @Suppress("UNCHECKED_CAST") val selections = preview["selections"] as Map<String, String?>
         if (selections.values.any { it == null }) { state.access(true) { it.sync.issue(id, "ChangesNeedReview", background, content = preview["fingerprint"] as String) }; continue }
         val unsafe = state.preflight(preview["previewId"] as String, selections)
@@ -190,10 +193,10 @@ class CalendarAutomaticRunner(private val state: CalendarAutomaticAccess, privat
         }
       }
     }
-    continuation = continuation || state.access { store -> store.sync.nextRetryMs() != null || store.incremental.calendars().any { store.incremental.cursor(it).paging } }
-    continuation = continuation || state.access { it.managed.nextRetryMs() != null }
+    continuation = continuation || state.access { store -> (if (associationId == null) store.sync.nextRetryMs() != null else store.sync.state(associationId).status in setOf("UpdatePending", "Deferred")) || store.incremental.calendars().filter { it in calendars }.any { store.incremental.cursor(it).paging } }
+    continuation = continuation || associationId == null && state.access { it.managed.nextRetryMs() != null }
     return CalendarRunSummary(pages, attempted, confirmed, continuation, imported = imported, published = published, adopted = adopted,
-      deferred = deferred, excluded = excluded, review = review).also { value -> state.access(true) { it.sync.saveRun(value) } }
+      deferred = deferred, excluded = excluded, review = review, collectionPages = pages - initialPages).also { value -> state.access(true) { it.sync.saveRun(value) } }
   }
   fun preview(token: String, id: String, activation: Boolean): Map<String, Any?> {
     budget()

@@ -486,6 +486,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     dao.update(job.copy(state = state, message = message))
   }
   fun removed(id: String, purge: Boolean) {
+    if (purge) CalendarSyncRequests(db, now).purge(id)
     if (purge) db.records().find(id)?.segmentId?.let { segmentId ->
       val family = db.records().series(segmentId)?.seriesId
       dao.operations().filter { links.currentSeries(it.occurrenceId)?.seriesId == family }.forEach {

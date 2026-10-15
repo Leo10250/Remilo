@@ -94,6 +94,7 @@ class RemiloAlarmModule : Module() {
       val runtime = CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext)
       val reject: (String) -> Unit = { promise.reject(it, "Calendar action could not be confirmed: $it", null) }
       when (command["kind"]) {
+        "RequestCalendarSync" -> runtime.requestSync(command, { promise.resolve(it) }, reject)
         "ConfirmManagedCalendarSetup", "ApplyManagedCalendarPolicy", "PauseManagedCalendar", "DisableManagedCalendar", "ResumeManagedCalendar",
         "ImportManagedCalendarCandidate", "IgnoreManagedCalendarCandidate", "RetryManagedCalendarOperation", "SetCalendarReminderDisposition", "EnableRecoveredCalendarAlerts" ->
           runtime.managedCommand(command, { promise.resolve(it) }, reject)
@@ -192,7 +193,7 @@ class RemiloAlarmModule : Module() {
       CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).activation(ids, { promise.resolve(it) }, { promise.reject(it, it, null) })
     }
     AsyncFunction("syncCalendarNow") { id: String?, promise: Promise ->
-      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).synchronize(false, id).whenComplete { result, error ->
+      CalendarRuntime.get(requireNotNull(appContext.reactContext).applicationContext).syncNow(id).whenComplete { result, error ->
         if (error == null) promise.resolve(result.view()) else { val code = ((error.cause ?: error) as? CalendarFailure)?.code ?: "NETWORK"; promise.reject(code, code, null) }
       }
     }

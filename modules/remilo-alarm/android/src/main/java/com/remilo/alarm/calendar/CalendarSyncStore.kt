@@ -11,10 +11,12 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
     val value = state(id)
     return mapOf("syncMode" to value.mode, "syncStatus" to value.status, "activationRevision" to value.activationRevision,
       "baselineVersion" to value.baselineVersion, "authoredAtMs" to value.authoredAtMs, "successfulAtMs" to value.successfulAtMs,
-      "attemptedAtMs" to value.attemptedAtMs, "googleUpdated" to value.remoteUpdated, "pauseReason" to value.pauseReason)
+      "attemptedAtMs" to value.attemptedAtMs, "googleUpdated" to value.remoteUpdated, "pauseReason" to value.pauseReason,
+      "syncRequestId" to CalendarSyncRequests(db, now).latest(id))
   }
   fun summary(): Map<String, Any?> = mapOf("reviewCount" to reviewCounts().getValue("total"), "automaticCount" to dao.states().count { eligible(it.associationId) },
-    "reviewCounts" to reviewCounts(),
+    "reviewCounts" to reviewCounts(), "syncRequestId" to CalendarSyncRequests(db, now).latest(),
+    "attention" to attention(),
     "pendingCount" to dao.states().count { it.mode != "Manual" && it.status == "UpdatePending" },
     "notifications" to preferenceView(), "connected" to links.connection().connected,
     "lastRun" to dao.run()?.let { mapOf("pages" to it.pages, "attempted" to it.attempted, "confirmed" to it.confirmed, "continuation" to it.continuation, "atMs" to it.atMs,
@@ -98,6 +100,7 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
     val outbound = groups.filter { desired.has(it) && !CalendarLinkMapper.equal(prior.opt(it), desired.opt(it)) }
     val original = guard.localFields.takeIf(String::isNotBlank)?.let(::JSONObject)
     val changed = groups.filter { desired.has(it) && original != null && !CalendarLinkMapper.equal(original.opt(it), desired.opt(it)) }
+    CalendarSyncRequests(db, now).checkpoint(job.occurrenceId, changed = (changed + outbound).isNotEmpty())
     outbound.forEach { activity(job.operationId + ":outbound:$it", job.occurrenceId, "UpdatedGoogle", it) }
     changed.forEach { activity(job.operationId + ":inbound:$it", job.occurrenceId, "UpdatedRemilo", it) }
     if (!guard.automatic && guard.previousStatus in setOf("Review", "Paused", "Unconfirmed") && (changed + outbound).isNotEmpty()) activity(job.operationId + ":resolution", job.occurrenceId, "Resolved", (changed + outbound).distinct().joinToString(","))
@@ -111,6 +114,7 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
       db.links().put(link.copy(baseline = fields.toString(), etag = remote.getString("etag"), remoteDiffers = false))
       dao.put(value.copy(baselineVersion = value.baselineVersion + 1, successfulAtMs = now(), attemptedAtMs = now(), dirtyRevision = 0,
         status = "Confirmed", retryAtMs = 0, failures = 0, remoteUpdated = remote.optString("updated")))
+      CalendarSyncRequests(db, now).checkpoint(id)
     }
   }
   fun failed(job: CalendarLinkOperation, code: String, background: Boolean) {
@@ -173,6 +177,11 @@ class CalendarSyncStore(private val db: ContentDatabase, private val now: () -> 
     "groups" to it.groups.split(',').filter(String::isNotBlank)) }
   fun actionableIssues() = dao.issues().filter { issue -> links.link(issue.associationId)?.let { !it.erased && it.state != "Detached" } == true &&
     links.record(issue.associationId)?.let { !it.deleted && !it.completed && !it.skipped } == true }
+  fun attention(): Map<String, Any> {
+    val reasons = actionableIssues().map { it.reason } + db.managedCalendar().issues().map { it.reason }
+    val blocking = reasons.count { it in setOf("AccessRequired", "AccountChanged", "AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH", "STORAGE_ERROR") }
+    return mapOf("blocking" to blocking, "tone" to if (blocking > 0) "danger" else "warning")
+  }
   fun issues(cursor: String?): Map<String, Any?> {
     val association = actionableIssues().distinctBy { links.currentSeries(it.associationId)?.seriesId ?: it.associationId }.map { issue -> mapOf<String, Any?>(
       "kind" to "Association", "issueId" to ("association:" + issue.associationId), "revision" to (links.link(issue.associationId)?.revision ?: 0),

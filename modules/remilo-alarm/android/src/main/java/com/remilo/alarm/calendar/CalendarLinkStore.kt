@@ -7,11 +7,11 @@ import java.time.*
 import java.util.UUID
 
 /** CE only, always called on the existing engine worker. No network or React ownership. */
-class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> Long) {
+class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> Long, recoverInterrupted: Boolean = true) {
   private val dao = db.links()
   private val sync get() = CalendarSyncStore(db, now, this)
   private val previews = linkedMapOf<String, Pair<Long, CalendarLinkPreview>>()
-  init { dao.operations().filter { it.state == "Sending" }.forEach {
+  init { if (recoverInterrupted) dao.operations().filter { it.state == "Sending" }.forEach {
     dao.update(it.copy(state = "Unconfirmed", message = "Interrupted. Retry the same operation to check its saved outcome."))
   } }
   fun connection() = db.calendar().connection() ?: CalendarConnection()

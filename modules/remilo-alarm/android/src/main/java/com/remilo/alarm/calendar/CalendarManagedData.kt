@@ -111,6 +111,7 @@ data class CalendarManagedReceipt(@PrimaryKey val operationId: String, val kind:
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun issue(value: CalendarManagedIssue)
   @Query("DELETE FROM calendar_managed_issues WHERE issueId = :id") fun resolve(id: String)
   @Query("SELECT * FROM calendar_managed_receipts WHERE operationId = :id") fun receipt(id: String): CalendarManagedReceipt?
+  @Query("SELECT * FROM calendar_managed_receipts WHERE kind = :kind ORDER BY rowid") fun receipts(kind: String): List<CalendarManagedReceipt>
   @Insert fun receipt(value: CalendarManagedReceipt)
   @Update fun replaceReceipt(value: CalendarManagedReceipt)
 }

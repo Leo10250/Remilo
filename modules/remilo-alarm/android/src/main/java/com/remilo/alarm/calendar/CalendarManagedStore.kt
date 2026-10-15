@@ -29,7 +29,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       "successfulAtMs" to states.mapNotNull { it.successfulAtMs }.maxOrNull(), "attemptedAtMs" to saved.attemptedAtMs, "failedAtMs" to saved.failedAtMs,
       "pendingChangeCount" to states.count { it.status == "UpdatePending" || it.dirtyRevision > 0 },
       "recoveryCount" to dao.candidates().count { it.state == "Imported" && it.subject == saved.subject && it.calendarId == saved.calendarId &&
-        runCatching { JSONObject(it.policySnapshot).optBoolean("initialRecovery") && CalendarLinkStore(db, now).record(it.localId)?.mode == "None" }.getOrDefault(false) },
+        runCatching { JSONObject(it.policySnapshot).optBoolean("initialRecovery") && CalendarLinkStore(db, now, recoverInterrupted = false).record(it.localId)?.mode == "None" }.getOrDefault(false) },
       "operationId" to saved.operationId, "message" to saved.message,
       "progress" to CalendarStatusStore(db, now).progress(), "problem" to CalendarStatusStore(db, now).problem(),
       "candidateCount" to dao.candidates().count { it.subject == saved.subject && it.calendarId == saved.calendarId && it.state in setOf("Pending", "Review", "Captured", "Held") },
@@ -451,7 +451,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
         if (!suppressed(parentKey) && !purgedInstance(event, cursor.subject, cursor.calendarId) && futureException(event, calendar.zoneId)) retained.put(event)
         continue
       }
-      if (CalendarLinkStore(db, now).source(key) != null) {
+      if (CalendarLinkStore(db, now, recoverInterrupted = false).source(key) != null) {
         retainPublicationProof(key, event)
         continue
       }
@@ -596,6 +596,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     val candidate = dao.candidates().firstOrNull { it.operationId == operationId } ?: return
     db.runInTransaction {
       guardOperation(operationId); dao.candidate(candidate.copy(state = "Imported", event = "", audit = "")); dao.resolve("candidate:${candidate.candidateId}")
+      CalendarSyncRequests(db, now).checkpoint(candidate.localId, imported = true)
     }
   }
   fun candidateFailed(candidateId: String, reason: String, background: Boolean) {
@@ -659,6 +660,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   fun publicationConfirmed(operationId: String) {
     val value = dao.exports().firstOrNull { it.operationId == operationId } ?: return
     guardPublication(operationId); dao.export(value.copy(state = "Confirmed")); dao.resolve("export:${value.localId}")
+    CalendarSyncRequests(db, now).checkpoint(value.localId, published = true)
   }
   fun publicationFailed(localId: String, reason: String, background: Boolean) {
     val value = intent(localId) ?: return
@@ -692,7 +694,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
         localOnly(requested)
         db.links().links().filter { it.occurrenceId in ids && !it.erased && it.state != "Detached" }.forEach { link ->
           val child = UUID.nameUUIDFromBytes((CalendarStore.string(command, "operationId") + ":unlink:" + link.occurrenceId).toByteArray(Charsets.UTF_8)).toString()
-          CalendarLinkStore(db, now).unlink(mapOf("operationId" to child, "occurrenceId" to link.occurrenceId, "expectedLinkRevision" to link.revision))
+          CalendarLinkStore(db, now, recoverInterrupted = false).unlink(mapOf("operationId" to child, "occurrenceId" to link.occurrenceId, "expectedLinkRevision" to link.revision))
         }
       } else dao.disposition(CalendarManagedDisposition(id, (old?.revision ?: 0) + 1, choice))
       acknowledge(command, disposition(requested))
@@ -756,7 +758,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   private fun purgedInstance(event: JSONObject, subject: String, calendarId: String): Boolean {
     if (!event.has("originalStartTime")) return false
     val master = event.optString("recurringEventId")
-    val links = CalendarLinkStore(db, now)
+    val links = CalendarLinkStore(db, now, recoverInterrupted = false)
     val source = links.source(CalendarLinkMapper.key(subject, calendarId, master)) ?: return false
     val segments = links.segments(source.occurrenceId).map { it.id }.toSet()
     val resource = db.calendarResources().resources(source.occurrenceId).firstOrNull { it.eventId == master && it.nominalSlot.isEmpty() }
@@ -784,7 +786,7 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
       val item = (0 until items.length()).map(items::getJSONObject).firstOrNull { it.optString("itemId") == id && it.optBoolean("ready") }
         ?: throw CalendarFailure("STALE_PREVIEW")
       val local = item.optString("occurrenceId")
-      if (item.has("localRevision") && CalendarLinkStore(db, now).record(local)?.revision != item.getLong("localRevision")) throw CalendarFailure("STALE_PREVIEW")
+      if (item.has("localRevision") && CalendarLinkStore(db, now, recoverInterrupted = false).record(local)?.revision != item.getLong("localRevision")) throw CalendarFailure("STALE_PREVIEW")
       if (item.has("candidateRevision")) {
         val candidateId = item.optString("candidateId").ifEmpty { item.optString("itemId").removePrefix("candidate:") }
         if (candidate(candidateId)?.revision != item.getLong("candidateRevision")) throw CalendarFailure("STALE_PREVIEW")

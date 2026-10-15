@@ -108,12 +108,34 @@ class CalendarRuntime private constructor(private val context: Context, private 
     }
     if (access { it.publicationJobs(id).all { it.confirmed } }) access(true) { it.confirm(id, remote) }
   }
-  @Synchronized fun synchronize(background: Boolean, id: String? = null): CompletableFuture<CalendarRunSummary> {
-    val key = id ?: "all"
+  fun requestSync(command: Map<String, Any?>, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
+    engine.calendarRequest(true, { CalendarSyncRequests(it.database(), System::currentTimeMillis).capture(command) }, { result ->
+      resolve(result)
+      synchronize(false, requestId = CalendarStore.string(command, "operationId"))
+    }, reject)
+  }
+  fun syncNow(id: String?): CompletableFuture<CalendarRunSummary> {
+    val result = CompletableFuture<CalendarRunSummary>()
+    val operationId = java.util.UUID.randomUUID().toString()
+    val command = mapOf("operationId" to operationId, "scope" to if (id == null) mapOf("kind" to "AllAuthorized") else mapOf("kind" to "Association", "occurrenceId" to id))
+    engine.calendarRequest(true, { CalendarSyncRequests(it.database(), System::currentTimeMillis).capture(command) }, {
+      synchronize(false, requestId = operationId).whenComplete { summary, error -> if (error == null) result.complete(summary) else result.completeExceptionally(error) }
+    }, { result.completeExceptionally(CalendarFailure(it)) })
+    return result
+  }
+  @Synchronized fun synchronize(background: Boolean, id: String? = null, requestId: String? = null): CompletableFuture<CalendarRunSummary> {
+    val key = requestId ?: id ?: "all"
     syncFlights[key]?.let { return it }
     val future = CompletableFuture<CalendarRunSummary>(); syncFlights[key] = future
     io.execute {
+      var explicit: String? = requestId
       try {
+        if (explicit == null && background) explicit = access { CalendarSyncRequests(it.database(), System::currentTimeMillis).nextReady() }
+        val requested = explicit
+        if (requested != null && !access(true) { CalendarSyncRequests(it.database(), System::currentTimeMillis).begin(requested) }) {
+          future.complete(CalendarRunSummary(0, 0, 0, access { CalendarSyncRequests(it.database(), System::currentTimeMillis).pending().isNotEmpty() })); return@execute
+        }
+        val target = requested?.let { op -> access { CalendarSyncRequests(it.database(), System::currentTimeMillis).association(op) } } ?: id
         transport.cancelled = { future.isCancelled }
         transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
         val connection = access { it.connection() }
@@ -121,10 +143,16 @@ class CalendarRuntime private constructor(private val context: Context, private 
           store.managed.setupOperation(key)!!.let { job -> job.phase !in setOf("AccessRequired", "OwnershipUnknown", "Reviewing") && job.retryAtMs <= System.currentTimeMillis() } } }
         val setupPages = if (pendingSetup != null) CalendarManagedSetupRunner(this, transport, authorization).run(pendingSetup, deadlineElapsedMs = transport.deadlineElapsedMs).pages else 0
         access(true) { store -> store.managed.binding().operationId.takeIf(String::isNotBlank)?.let(store::releaseManagedSetupChildren) }
-        val result = authorized(connection.email) { token -> CalendarAutomaticRunner(this, transport).run(token, background, id, transport.deadlineElapsedMs, setupPages) }
-        future.complete(result)
+        val result = authorized(connection.email) { token -> CalendarAutomaticRunner(this, transport).run(token, background, target, transport.deadlineElapsedMs, setupPages) }
+        val counts = requested?.let { op -> access(true) {
+          val requests = CalendarSyncRequests(it.database(), System::currentTimeMillis)
+          requests.finish(op, result); requests.view(op)?.get("syncResult") as? Map<*, *>
+        } }
+        future.complete(if (counts != null) result.copy(checked = counts["checked"] as? Int, changed = counts["changed"] as? Int,
+          continuation = result.continuation || counts["outcome"] == "Pending") else result)
       } catch (error: Exception) {
         val code = (error as? CalendarFailure)?.code ?: "NETWORK"
+        explicit?.let { op -> access(true) { CalendarSyncRequests(it.database(), System::currentTimeMillis).finish(op, error = code) } }
         if (future.isCancelled) return@execute
         if (access { it.managed.binding().calendarId.isNotEmpty() }) access(true) { it.managed.failedAttempt() }
         if (code in setOf("AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH")) access(true) { store ->

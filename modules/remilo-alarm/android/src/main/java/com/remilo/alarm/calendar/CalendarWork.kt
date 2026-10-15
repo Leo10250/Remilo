@@ -15,8 +15,8 @@ object CalendarWork {
     if (!unlocked(context)) return
     val app = context.applicationContext
     (owner ?: AlarmEngine.get(app)).calendarRequest(block = { store -> Triple(store.connection().connected,
-      (store.sync.summary()["automaticCount"] as Int) > 0 || store.sync.pending().isNotEmpty() || store.managed.hasWork(),
-        listOfNotNull(store.sync.nextRetryMs(), store.managed.nextRetryMs()).minOrNull() ?:
+      (store.sync.summary()["automaticCount"] as Int) > 0 || store.sync.pending().isNotEmpty() || store.managed.hasWork() || CalendarSyncRequests(store.database(), System::currentTimeMillis).pending().isNotEmpty(),
+        listOfNotNull(store.sync.nextRetryMs(), store.managed.nextRetryMs(), CalendarSyncRequests(store.database(), System::currentTimeMillis).nextRetryMs()).minOrNull() ?:
         System.currentTimeMillis().takeIf { store.incremental.calendars().any { store.incremental.cursor(it).paging } }) }, resolve = { saved ->
       if (!saved.first || !saved.second) {
         // Avoid initializing WorkManager for alarm-only startup unless it already exists.
