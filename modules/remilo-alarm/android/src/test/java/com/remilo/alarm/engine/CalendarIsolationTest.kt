@@ -63,7 +63,7 @@ class CalendarIsolationTest {
   }
   @Test fun portableBackupKeepsCalendarStateOutOfFormatFive() {
     val id = create(); val job = capture(id); val backup = request { engine.exportBackup() }
-    assertEquals(6, JSONObject(backup).getInt("version"))
+    assertEquals(7, JSONObject(backup).getInt("version"))
     listOf("PRIVATE SUBJECT", "private@example.test", "PRIVATE CALENDAR", job.operationId, job.eventId, "calendar_operations", "accessToken").forEach { assertFalse(backup.contains(it)) }
     assertTrue(backup.contains("PRIVATE NOTES")) // Reminder content remains ordinary portable data.
   }

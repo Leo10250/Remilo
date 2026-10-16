@@ -32,6 +32,17 @@ appearance holds and modal accessibility behavior.
 
 ## Color roles shared by every screen
 
+The owner's 16 October routine/widget refinement makes row accessories semantic:
+right chevrons indicate hierarchical navigation, picker arrows indicate choosing a
+value, disclosures retain their expansion indicators, and radios/checks/switches
+retain selection state. Context-menu commands, including Settings, Move to Trash,
+Restore, Duplicate, Pause and Refresh, have no generic trailing chevron. A true
+submenu may retain its submenu indicator. Same-screen exercise selection uses a
+visible selected state. Shared clickable rows declare their intent explicitly;
+ordinary hit areas, keyboard focus and pressed feedback remain intact.
+This follows [Apple's hierarchy/selection guidance](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables?changes=_5)
+and [Google's menu anatomy](https://developer.android.com/develop/ui/compose/components/menu).
+
 Use one shared role mapping in RN and native components. Appearance changes the
 role values and artwork, not which role an otherwise identical icon receives.
 

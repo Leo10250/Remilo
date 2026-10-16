@@ -73,7 +73,7 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
   const recordedAt = item.deleted ? item.history?.filter((entry) => entry.kind === 'Delete').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) :
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
   const terminalState = (browsing.status?.label ?? '') + (showActionDate && !active && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : '');
-  const summary = [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
+  const summary = item.routineFamily ? [item.title, t('routine_in_trash'), t('routine_trash_days', { count: item.routineFamily.recordedDays })].join('. ') : [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
     item.listName, item.routine ? t('routine_progress', { done: item.routine.completedCount, total: item.routine.totalCount }) : '', !ordinaryDue(item) ? t('m_2d52d03bbb9a') + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? t('m_57a9b5958b87') : '', calendarNotice].filter(Boolean).join('. ');
   const actionLabel = restore ? t('m_a76e13b98392') : item.completed || item.skipped ? t('m_a886d1dc4f12') : t('m_62aa4b87cc52');
   const act = () => { settle(false); onDone?.(); };
@@ -135,6 +135,7 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
         onPress={() => { if (revealed) settle(false); else onOpen(); }} onLongPress={busy || selection ? undefined : onMore}
         style={{ flex: 1, gap: space.xs, minHeight: 48, justifyContent: 'flex-start', paddingTop: titleInset }}>
         {title}
+        {item.routineFamily ? <><MetadataLine label={t('routine_in_trash')} /><MetadataLine label={t('routine_trash_days', { count: item.routineFamily.recordedDays })} /></> : <>
         {browsing.status?.label === 'Ringing' && <MetadataLine icon="alarm" label={t('m_426a858eacbb')} color={colors.accent} />}
         <MetadataLine label={browsing.timing + (item.listName ? ' · ' + item.listName : '')}
           icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
@@ -147,7 +148,7 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
         {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')} />}
         {(!item.routine || terminal) && !!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}
           label={active ? browsing.status.label : terminalState} color={colors[browsing.status.tone]} />}
-        {!item.routine && !!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}
+        {!item.routine && !!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}</>}
       </Pressable>
       {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton icon="more_vert" label={t('m_05d82d5eb6ee') + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
     </Animated.View></GestureDetector>

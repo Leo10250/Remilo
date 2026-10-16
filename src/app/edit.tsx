@@ -14,7 +14,9 @@ import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel } from '../domain/presentation';
 import { civilAt, deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, Page, QueryState, RowSupport, SettingRow, Sheet, Status, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, IconButton, Page, QueryState, RowSupport, SettingRow, Sheet, Status, Toggle } from '../ui/components';
+import { RoutineActions } from '../ui/routine-actions';
+import { useExerciseImageLeases } from '../ui/exercise-images';
 import { ReminderTypeSelector, RoutineChangeReview, RoutineWeekFields, routineDayKeys } from '../ui/routine-editor';
 import { canChangeReminderType, changeRoutineClock, routinePayload, switchReminderDraftType, validRoutineDays, weeklyEditorDraft, type ReminderType, type WeeklyEditorDraft } from '../domain/routine-editor-draft';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
@@ -93,6 +95,8 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
   const [weekly, setWeekly] = useState<WeeklyEditorDraft>(() => weeklyEditorDraft(seed.state.draft, seed.routinePlan, duplicate));
   const [baselineWeekly, setBaselineWeekly] = useState(weekly), [baselineType] = useState(editorType);
   const [loadedRoutine, setLoadedRoutine] = useState(duplicate ? undefined : seed.routinePlan);
+  const [routineMenu, setRoutineMenu] = useState(false);
+  useExerciseImageLeases(weekly.days.flatMap(day => day.exercises));
   const [routineReviewOpen, setRoutineReviewOpen] = useState(false);
   const routine = editorType === 'Routine';
   const routineWeekdays = weekly.days.flatMap((day, index) => day.type === 'Exercises' ? [t(routineDayKeys[index])] : []).join(' · ');
@@ -111,6 +115,8 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
     titleInput.current?.blur(); notesInput.current?.blur(); Keyboard.dismiss();
   }, []);
   const [retrySave, setRetrySave] = useState(false), [saved, setSaved] = useState<CommandResult | null>(null);
+  const [removed, setRemoved] = useState(false);
+  useEffect(() => { if (removed) { if (router.canGoBack()) router.back(); else router.replace('/routines'); } }, [removed]);
   const [preparing, setPreparing] = useState(false), [reviewLoading, setReviewLoading] = useState(false);
   const [review, setReview] = useState<Review | null>(null), [reviewOpen, setReviewOpen] = useState(false), [scopeChanged, setScopeChanged] = useState(false);
   const editingId = saveAsNew || routine ? undefined : id, editingSeries = saveAsNew || routine ? undefined : loadedSeries;
@@ -130,7 +136,7 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
   const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || !calendarLinks.data || !!calendarLinks.error || !!hasCalendarContext);
   const dirty = saveAsNew || calendarDisposition !== 'Default' || JSON.stringify(state) !== JSON.stringify(baseline) || editorType !== baselineType || JSON.stringify(weekly) !== JSON.stringify(baselineWeekly);
   const busy = preparing || command.isPending || reviewLoading;
-  usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
+  usePreventRemove(!removed && !saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
     if (retrySave || pendingSave.current || command.isPending) { confirm(t('m_31442c166f10'), t('m_341b6b4fb929')); return; }
     if (preparing) { confirm(t('m_d8eb10e04288'), t('m_27b05dc65c32')); return; }
     confirm(t('m_85bcf41666a5'), t('m_2a6bb39d73ff'), [{ text: t('m_e76fd2add010'), style: 'cancel' },
@@ -310,6 +316,7 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
     setLoadedRoutine(latestRoutine); setRoutineReviewOpen(false); setMessage(''); setFieldError(undefined); command.reset();
   };
   return <Page compact title={routine ? t(creation ? 'routine_editor_new' : 'routine_editor_edit') : creation ? t('m_70f22f445886') : editingSeries ? followingScope ? t('m_3e60c726a1d3') : t('m_3ca78b60c94f') : t('m_1f1353b055df')}
+    actions={loadedRoutine ? <IconButton icon="more_vert" label={t('routine_more')} disabled={frozen} onPress={() => setRoutineMenu(true)} /> : undefined}
     onBack={() => {
       if (!dirty && !retrySave && !busy) finishEditing();
       if (router.canGoBack()) router.back(); else router.replace(secondaryOriginRoute(originParams));
@@ -321,6 +328,7 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
       <Button label={command.isPending ? t('m_23e39291d613') : preparing ? t('m_dfe40efe921f') : reviewLoading ? t('m_fcc53388888f') : retrySave ? t('m_71fdfa790e50') : t('m_1509f561f241')}
         accessibilityHint={!draft.title.trim() ? t('m_8b71decd932a') : undefined} busy={busy} disabled={disabled} onPress={() => void save()} />
     </View></BottomActionBar>}>
+    {loadedRoutine && <RoutineActions target={routineMenu ? { id: loadedRoutine.id } : null} onClose={() => setRoutineMenu(false)} onRemoved={() => { finishEditing(); setRemoved(true); }} />}
     {scopeChanged && <Group title={t('m_f5f54f060066')}><View style={{ padding: 14, gap: 12 }}>
       <Status label={t('m_2ebc23f04668')} tone="warning" />
       <Button label={t('m_0daa33738c8e')} variant="secondary" onPress={() => {
@@ -339,13 +347,15 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
         multiline compactMultiline submitBehavior="blurAndSubmit" enterKeyHint="done" onSubmitEditing={() => titleInput.current?.blur()}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <ConnectedGroup>
-        {typeEditable ? <ReminderTypeSelector key="type" value={editorType} disabled={frozen} onChange={chooseType} /> : <SettingRow key="type" label={t('routine_type_label')} value={t(routine ? 'routine_type_weekly' : 'routine_type_reminder')} />}
+        {typeEditable ? <ReminderTypeSelector key="type" value={editorType} disabled={frozen} onChange={chooseType} /> : <SettingRow intent="action" key="type" label={t('routine_type_label')} value={t(routine ? 'routine_type_weekly' : 'routine_type_reminder')} />}
         {(!routine || !loadedRoutine || !noAlert) && <View key="timing">
           {(!routine || !noAlert) && <RowSupport><Copy muted size={14}>{routine ? t('routine_shared_time') : timingLabel}</Copy></RowSupport>}
           {routine ? <>
-            {!loadedRoutine && <DateField label={t('routine_starts')} value={new Date(weekly.startsOn + 'T12:00:00').getTime()} dateOnly disabled={frozen}
-              onError={dateError} onChange={value => setWeekly(current => ({ ...current, startsOn: civilAt(value).slice(0, 10) }))} />}
-            {!noAlert && <DateField label={t('m_33b93476cf59')} value={draft.alarmAtMs} zoneId={zone} timeOnly disabled={frozen} onError={dateError}
+            {!loadedRoutine && <DateTimeFields dateLabel={t('routine_starts')} dateZoneId={deviceZone()} dateValue={new Date(weekly.startsOn + 'T12:00:00').getTime()}
+              value={draft.alarmAtMs} zoneId={zone} allDay={noAlert} disabled={frozen} onError={dateError}
+              onDateChange={value => setWeekly(current => ({ ...current, startsOn: civilAt(value).slice(0, 10) }))}
+              onChange={value => setState(current => ({ ...current, draft: changeRoutineClock(current.draft, value) }))} />}
+            {loadedRoutine && !noAlert && <DateField label={t('m_33b93476cf59')} value={draft.alarmAtMs} zoneId={zone} timeOnly disabled={frozen} onError={dateError}
               onChange={value => setState(current => ({ ...current, draft: changeRoutineClock(current.draft, value) }))} />}
           </> : <DateTimeFields labelPrefix={noAlert ? t('m_4724f344c1c0') : modeLabel(draft.mode)} value={noAlert ? resolvedDraft.eventStartMs : resolvedDraft.alarmAtMs} zoneId={zone} allDay={noAlert && !!draft.allDay}
             onError={dateError} onChange={noAlert ? moveEvent : moveAlert} disabled={frozen || !preview.data} />}
@@ -356,7 +366,7 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
           {invalid(['alarmAtMs']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}
         <View key="alert"><AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} /></View>
-        {routine ? <SettingRow key="repeat" label={t('routine_repeat_label')} icon="repeat" value={routineWeekdays ? t('routine_repeat', { days: routineWeekdays }) : t('routine_repeat_empty')} /> : !editingId && <View key="repeat">
+        {routine ? <SettingRow intent="action" key="repeat" label={t('routine_repeat_label')} icon="repeat" value={routineWeekdays ? t('routine_repeat', { days: routineWeekdays }) : t('routine_repeat_empty')} /> : !editingId && <View key="repeat">
           <RepeatForm disabled={frozen} value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={hasCalendarContext} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}

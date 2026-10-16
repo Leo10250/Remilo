@@ -22,6 +22,8 @@ export type ReminderDraft = {
 export type HistoryEntry = { kind: string; atMs: number; targetMs: number | null; groups?: string[] };
 export type ResolvedReminderDraft = Omit<Required<ReminderDraft>, 'listId'> & Pick<ReminderDraft, 'listId'>;
 export type Occurrence = ResolvedReminderDraft & {
+  kind?: 'RoutineFamily';
+  routineFamily?: RoutinePlan & { recordedDays: number; trashedAtMs: number };
   id: string; completed: boolean; deleted: boolean; revision: number; nextAlertMs: number | null;
   generation: number; deliveryState: string; overdue: boolean; history?: HistoryEntry[];
   segmentId: string | null; nominalSlot: string | null; exception: boolean; skipped: boolean;
@@ -39,7 +41,8 @@ export type Occurrence = ResolvedReminderDraft & {
   quickSnoozeMinutes: number;
 };
 export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listId?: string | null; listName?: string; deliveryIssuesOnly?: boolean; overdueOnly?: boolean; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
-export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
+export type RoutineTrashRow = Occurrence & { kind: 'RoutineFamily'; routineFamily: RoutinePlan & { recordedDays: number; trashedAtMs: number } };
+export type ReminderPage = { items: (Occurrence | RoutineTrashRow)[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
 /** Creation consent; Calendar policy is operational state and never part of portable reminder content. */
 export type CalendarCreationDisposition = 'Default' | 'Managed' | 'LocalOnly';
 export type CreateCommand = ReminderDraft & { kind: 'Create'; operationId: string; alarmAtMs?: number; calendarDisposition?: CalendarCreationDisposition };
@@ -84,12 +87,13 @@ export type SeriesCommand =
 export type ListCommand = { kind: 'CreateList'; name: string; operationId: string } |
   { kind: 'RenameList'; listId: string; name: string; expectedRevision: number; operationId: string } |
   { kind: 'RemoveList'; listId: string; expectedRevision: number; operationId: string };
-export type RoutineExercise = { id: string; name: string; target: string; notes: string; illustration?: string };
+export type RoutineExercise = { id: string; name: string; target: string; notes: string; illustration?: string; customImageId?: string };
+export type ExercisePhoto = { id: string; uri: string; width: number; height: number; lease?: string };
 export type RoutineDay = { type: 'Rest' | 'Exercises'; exercises: RoutineExercise[] };
 export type RoutineDraft = { title: string; minutes: number; mode: 'Alarm' | 'Notification' | 'None'; listId: string | null; days: RoutineDay[];
   notes?: string; sound?: 'remilo' | 'system'; vibration?: boolean };
 export type RoutinePlan = RoutineDraft & { notes: string; sound: 'remilo' | 'system'; vibration: boolean;
-  id: string; revision: number; state: 'Active' | 'Paused'; startsOn: string; effectiveDate: string };
+  id: string; revision: number; state: 'Active' | 'Paused' | 'Trashed'; startsOn: string; effectiveDate: string };
 export type RoutineProgress = { routineId: string; date: string; revision: number; ended: boolean; endsAtMs?: number; completedCount: number; totalCount: number;
   changes?: { id: string; kind: string; stepId: string | null; completed: boolean | null; atMs: number }[];
   skipped: boolean; completed: boolean; state: 'Rest' | 'Paused' | 'Upcoming' | 'Ready' | 'InProgress' | 'Completed' | 'Skipped' | 'NotCompleted' | 'PartiallyCompleted';
@@ -99,7 +103,7 @@ export type RoutineSession = RoutineProgress & { occurrenceId?: string; title: s
 export type RoutineCommand =
   (RoutineDraft & { kind: 'CreateRoutine'; startsOn: string; operationId: string }) |
   (RoutineDraft & { kind: 'EditRoutine'; routineId: string; expectedRevision: number; operationId: string }) |
-  { kind: 'PauseRoutine' | 'ResumeRoutine'; routineId: string; expectedRevision: number; operationId: string } |
+  { kind: 'PauseRoutine' | 'ResumeRoutine' | 'TrashRoutine' | 'RestoreRoutine' | 'PurgeRoutine'; routineId: string; expectedRevision: number; operationId: string } |
   { kind: 'SetRoutineExercise' | 'CorrectRoutineExercise' | 'SkipRoutineDay' | 'UndoSkipRoutineDay'; occurrenceId: string; date: string;
     expectedRevision: number; operationId: string; stepId?: string; completed?: boolean };
 export type RoutineAlarmCommand = { occurrenceId: string; date: string; expectedGeneration: number; expectedSessionId: string; operationId: string } &

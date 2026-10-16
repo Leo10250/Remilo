@@ -45,6 +45,7 @@ class AlarmEngine internal constructor(private val context: Context,
   private val routineCheckpoint: (String) -> Unit = {},
   private val routineAlertCheckpoint: (String) -> Unit = {}) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
+  private var lastMediaSweep = -3_600_000L
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
   private val languages = LanguageCoordinator(context, alerts, beforeProjection = beforeLanguageProjection)
@@ -162,9 +163,14 @@ class AlarmEngine internal constructor(private val context: Context,
         db.records().receipt(CreationReceipt(receipt.operationId, receipt.occurrenceId, "RoutineAlarmDelivery", receipt.fingerprint))
     }
     closeProtectedRoutineDays()
+    routines.recoverOperations()
     if (db.routines().plans().isNotEmpty()) series.recover()
     series.materialize()
     routines.reconcile()
+    if (elapsed() - lastMediaSweep >= 3_600_000L) {
+      lastMediaSweep = elapsed()
+      runCatching { ExerciseImages(context).clean(db) }
+    }
     for (completion in alerts.completions()) {
       if (db.records().purged(completion.occurrenceId) != null) {
         alerts.acknowledgeCompletion(completion.operationId)
@@ -262,10 +268,34 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   private fun routineReady(mode: String = "Notification"): Boolean = if (mode == "Alarm") ready("Alarm") else capabilities().let { it["notifications"] == true && it["routineChannelEnabled"] == true }
   fun queryRoutines(): List<Map<String, Any?>> { prepareContentActions(); return routines.plans() }
+  fun stageExerciseImage(image: ExerciseImage, lease: String): Map<String, Any> {
+    val db = content(); val media = ExerciseImages(context)
+    require(media.file(image.id).isFile); db.routines().image(image); media.lease(image.id, lease)
+    return mapOf("id" to image.id, "uri" to android.net.Uri.fromFile(media.file(image.id)).toString(), "width" to image.width, "height" to image.height, "lease" to lease)
+  }
+  fun exerciseImage(id: String, lease: String?): Map<String, Any>? {
+    val db = content(); val media = ExerciseImages(context)
+    val image = db.routines().image(id) ?: return null
+    if (!media.file(id).isFile) return null
+    lease?.let { media.lease(id, it) }
+    return mapOf("id" to id, "uri" to android.net.Uri.fromFile(media.file(id)).toString(), "width" to image.width, "height" to image.height)
+  }
+  fun releaseExerciseImage(lease: String) { val images = ExerciseImages(context); images.release(lease); images.clean(content()) }
+  fun captureBackupFile(lease: String): Pair<String, List<ExerciseImage>> {
+    val json = exportBackup(); val bundle = BackupCodec.decode(json)
+    bundle.images.forEach { ExerciseImages(context).lease(it.id, "$lease:${it.id}") }
+    return json to bundle.images
+  }
+  fun releaseBackupFile(lease: String, images: List<ExerciseImage>) { images.forEach { ExerciseImages(context).release("$lease:${it.id}") } }
+  fun preparedImportReplay(operation: String, fingerprint: String): Map<String, Any?>? {
+    val receipt = content().records().receipt(operation) ?: return null
+    require(receipt.kind == "Import" && receipt.sourceId == fingerprint) { "This operation was already used. Refresh and try again." }
+    return importBackup("", emptyList(), operation, fingerprint)
+  }
   private val widgets by lazy { com.remilo.alarm.widget.WidgetCoordinator(context, now, ::resolveAppearance,
     { routineSession(it, null) }, { query(mapOf("view" to "widget"), null) }, ::liveWidgetRoutine,
     ::apply, { content().routines().operation(it)?.applied == true }) }
-  private fun liveWidgetRoutine(id: String): Boolean = content().records().series().any {
+  private fun liveWidgetRoutine(id: String): Boolean = !routines.trashed(id) && content().records().series().any {
     it.seriesId == id && it.state != "Deleted" && org.json.JSONObject(it.template).optString("routineId") == id &&
       !org.json.JSONObject(it.template).optBoolean("deleted")
   }
@@ -317,7 +347,9 @@ class AlarmEngine internal constructor(private val context: Context,
         (filter["deliveryIssuesOnly"] != true || (record.mode != "None" && alerts.find(record.id)?.state in
           setOf("Missed", "TimedOut", "Interrupted", "Blocked", "Failed"))) &&
         (filter["overdueOnly"] != true || overdue(record, queryNow))
-    val records = db.records().all().filter { record ->
+    val familyRows = if (filter["view"] == "deleted") routines.trashRows().toMap() else emptyMap()
+    val candidates = db.records().all().filter { !routines.trashed(it.routineId) } + familyRows.keys
+    val records = candidates.filter { record ->
       val alert = alerts.find(record.id)
       val selected = when (filter["view"]) {
         "deleted" -> record.deleted
@@ -338,7 +370,7 @@ class AlarmEngine internal constructor(private val context: Context,
     val collectionTimes = if (historical) {
       val activity = db.records().collectionHistory().groupBy { it.occurrenceId to it.kind }
         .mapValues { (_, entries) -> entries.maxOf { it.occurredAtMs } }
-      records.associate { it.id to (activity[it.id to collectionKind(it)] ?: it.eventStartMs) }
+      records.associate { it.id to ((familyRows[it]?.get("trashedAtMs") as? Number)?.toLong() ?: activity[it.id to collectionKind(it)] ?: it.eventStartMs) }
     } else emptyMap()
     val ordered = if (filter["view"] in setOf("agenda", "overdue", "today", "upcoming", "attention", "widget")) records.sortedWith(
       compareBy<ReminderRecord> { com.remilo.alarm.core.Agenda.rank(agendaGroup(it, queryNow, zone)) }
@@ -349,14 +381,14 @@ class AlarmEngine internal constructor(private val context: Context,
     val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
     val page = ordered.drop(offset).take(50)
     val groups = ordered.groupingBy { agendaGroup(it, queryNow, zone) }.eachCount()
-    val completedCount = db.records().all().count { !it.deleted && it.completed && matches(it) }
-    return mapOf("items" to page.map { view(it, queryNow, zone) },
+    val completedCount = db.records().all().count { !routines.trashed(it.routineId) && !it.deleted && it.completed && matches(it) }
+    return mapOf("items" to page.map { record -> view(record, queryNow, zone) + (familyRows[record]?.let { mapOf<String, Any?>("kind" to "RoutineFamily", "routineFamily" to it, "collectionAtMs" to it["trashedAtMs"]) } ?: emptyMap<String, Any?>()) },
       "nextCursor" to if (offset + page.size < ordered.size) (offset + page.size).toString() else null,
       "total" to ordered.size, "groups" to groups, "completedCount" to completedCount)
   }
   fun occurrence(id: String): Map<String, Any?>? {
     val db = prepareContentActions()
-    return db.records().find(id)?.let { record ->
+    return db.records().find(id)?.takeUnless { routines.trashed(it.routineId) }?.let { record ->
       val family = record.segmentId?.let { db.records().series(it)?.seriesId }
       val association = db.links().links().firstOrNull { it.occurrenceId == id || family != null && calendarStore().links.currentSeries(it.occurrenceId)?.seriesId == family }?.occurrenceId ?: id
       val history = db.records().history(id).map { mapOf<String, Any?>("kind" to it.kind, "atMs" to it.occurredAtMs, "targetMs" to it.targetMs) } + calendarStore().sync.activity(association)
@@ -506,6 +538,7 @@ class AlarmEngine internal constructor(private val context: Context,
       applyPending(db); return result(id)
     }
     val old = db.records().find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
+    if (routines.trashed(old.routineId)) return mapOf("status" to "Rejected", "errorCode" to "IN_TRASH")
     if (old.routineId != null && kind !in setOf("Delete", "UndoDelete"))
       return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
     val expected = epoch(command["expectedRevision"], "expectedRevision")
@@ -662,7 +695,11 @@ class AlarmEngine internal constructor(private val context: Context,
     return if (input.containsKey("instantMs")) CivilTime.fromInstant(id, epoch(input["instantMs"], "instantMs"))
       else CivilTime.fromLocal(id, input["local"] as? String ?: throw IllegalArgumentException("Choose a valid local time."))
   }
-  fun getSeries(id: String): Map<String, Any?>? { prepareContentActions(); return series.get(id) }
+  fun getSeries(id: String): Map<String, Any?>? {
+    val db = prepareContentActions()
+    if (routines.trashed(db.records().series(id)?.let { series.template(it).routineId })) return null
+    return series.get(id)
+  }
   fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> { prepareContentActions(); return series.editDraft(id, nominal) }
   private fun updateSettings(operation: String, command: Map<String, Any?>): Map<String, Any?> {
     val db = content()
@@ -719,7 +756,7 @@ class AlarmEngine internal constructor(private val context: Context,
     catch (_: Exception) { AppearancePolicy.captured(null, null) }
   }
   fun diagnostics(): Map<String, Any> { prepareContentActions(); return mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 14, "operationalSchema" to 8,
+    "contentSchema" to ContentDatabase.VERSION, "operationalSchema" to OperationalDatabase.VERSION,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to (content().records().pending().size + alerts.completions().size)) }
   fun exportBackup(): String {
@@ -729,7 +766,7 @@ class AlarmEngine internal constructor(private val context: Context,
       if (!record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused")) alert.targetMs else null
     } }
     return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series(), db.records().lists(),
-      db.records().purged().filter { it.segmentId != null }, db.routines().plans(), db.routines().versions(), db.routines().sessions().filter { s -> records.any { it.id == s.occurrenceId } })
+      db.records().purged().filter { it.segmentId != null && db.records().series(it.segmentId) != null }, db.routines().plans(), db.routines().versions(), db.routines().sessions().filter { s -> records.any { it.id == s.occurrenceId } }, db.routines().images().filter { it.id in ExerciseImages(context).referenced(db) }, db.routines().purged())
   }
   fun previewImport(json: String): Map<String, Any> {
     val bundle = BackupCodec.decode(json)
@@ -747,7 +784,7 @@ class AlarmEngine internal constructor(private val context: Context,
       val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
       val calendarTargets = (calendarCollisions[id].orEmpty() + segments.flatMap { calendarCollisions[it.id].orEmpty() }).distinct().sorted()
       mapOf("id" to id, "title" to "${series.template(segment).title} (series)",
-        "conflict" to (id in localFamilies || segments.any { dao.series(it.id) != null } || calendarTargets.isNotEmpty()),
+        "conflict" to (id in localFamilies || content().routines().purged(id) != null || segments.any { dao.series(it.id) != null } || calendarTargets.isNotEmpty()),
         "calendarCollision" to calendarTargets.isNotEmpty(), "currentOccurrenceIds" to calendarTargets,
         "futureAlert" to segments.any { current -> val mode = series.template(current).mode
           current.state == "Active" && mode != "None" && Recurrence.future(RuleCodec.decode(current.rule), now(), ZoneId.systemDefault(), mode).any() })
@@ -779,7 +816,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
     return mapping to rows
   }
-  fun importBackup(json: String, copyIds: List<String>, operation: String): Map<String, Any?> {
+  fun importBackup(json: String, copyIds: List<String>, operation: String, requestFingerprint: String? = null): Map<String, Any?> {
     var mutationStarted = false
     return try {
     validate(operation.isNotBlank() && operation.length <= 200, "operationId", "Try this import again.")
@@ -788,6 +825,7 @@ class AlarmEngine internal constructor(private val context: Context,
     validate(alerts.completionReceipt(operation) == null, "operationId", "This operation was already used.")
     db.records().receipt(operation)?.let { receipt ->
       validate(receipt.kind == "Import", "operationId", "This operation was already used.")
+      validate(receipt.sourceId == requestFingerprint, "operationId", "This operation was already used.")
       // The receipt proves this operation already committed. Replay failure is
       // uncertain even when its exception resembles input validation.
       mutationStarted = true
@@ -796,11 +834,13 @@ class AlarmEngine internal constructor(private val context: Context,
     }
     prepareContentActions()
     val bundle = BackupCodec.decode(json) // Entire new import is validated before writing anything.
+    require(requestFingerprint != null || bundle.images.isEmpty()) { "Use a prepared archive to restore exercise photos." }
+    bundle.images.forEach { image -> require(ExerciseImages(context).file(image.id).let { it.isFile && it.length() == image.bytes }) }
     val families = bundle.series.groupBy { it.seriesId }
     val localFamilies = db.records().series().map { it.seriesId }.toSet()
     val calendarCollisions = calendarStore().backupCollisions(bundle.records.filter { it.segmentId == null }.map { it.id } +
       families.keys + bundle.series.map { it.id })
-    val conflicts = families.filter { (id, segments) -> id in localFamilies || id in calendarCollisions ||
+    val conflicts = families.filter { (id, segments) -> id in localFamilies || db.routines().purged(id) != null || id in calendarCollisions ||
       segments.any { db.records().series(it.id) != null || it.id in calendarCollisions } }.keys
     val recordConflicts = bundle.records.filter { it.segmentId == null &&
       (db.records().find(it.id) != null || db.records().purged(it.id) != null || it.id in calendarCollisions) }.map { it.id }.toSet()
@@ -819,6 +859,8 @@ class AlarmEngine internal constructor(private val context: Context,
       if (it.id !in conflicts) it.id else UUID.nameUUIDFromBytes("$operation:family:${it.id}".toByteArray()).toString() }
     mutationStarted = true
     db.runInTransaction {
+      bundle.images.forEach { image -> require(ExerciseImages(context).file(image.id).isFile); db.routines().image(image) }
+      bundle.purgedRoutines.forEach { if (db.routines().plan(it.id) == null) db.routines().purge(it) }
       newLists.forEach(db.records()::insertList)
       bundle.routines.filter { it.id in routineMap }.forEach { db.routines().plan(it.copy(id = routineMap.getValue(it.id))) }
       bundle.routineVersions.filter { it.routineId in routineMap }.forEach { db.routines().version(it.copy(routineId = routineMap.getValue(it.routineId), listId = it.listId?.let { id -> listMap.getValue(id).id })) }
@@ -855,7 +897,7 @@ class AlarmEngine internal constructor(private val context: Context,
       }
       bundle.routineSessions.filter { it.occurrenceId in mapped }.forEach { s -> db.routines().session(s.copy(
         occurrenceId = mapped.getValue(s.occurrenceId), routineId = routineMap.getValue(s.routineId))) }
-      db.records().receipt(CreationReceipt(operation, "import", "Import"))
+      db.records().receipt(CreationReceipt(operation, "import", "Import", requestFingerprint))
     }
     applyPending(db); series.recover(); routines.reconcile(); changed()
     val blocked = mapped.values.count { alerts.find(it)?.state == "Blocked" }
@@ -901,11 +943,11 @@ class AlarmEngine internal constructor(private val context: Context,
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       if (alerts.completionReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-      if (content().routines().operation(operationId) != null && command["kind"] !in setOf("CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "SetRoutineExercise", "CorrectRoutineExercise", "SkipRoutineDay", "UndoSkipRoutineDay"))
+      if (content().routines().operation(operationId) != null && command["kind"] !in setOf("TrashRoutine", "RestoreRoutine", "PurgeRoutine", "CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "SetRoutineExercise", "CorrectRoutineExercise", "SkipRoutineDay", "UndoSkipRoutineDay"))
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     }
     return when (command["kind"]) {
-      "CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "SetRoutineExercise", "CorrectRoutineExercise", "SkipRoutineDay", "UndoSkipRoutineDay" -> {
+      "TrashRoutine", "RestoreRoutine", "PurgeRoutine", "CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "SetRoutineExercise", "CorrectRoutineExercise", "SkipRoutineDay", "UndoSkipRoutineDay" -> {
         val result = try { routines.command(command) } catch (error: IllegalArgumentException) { throw InputError("routine", error.message ?: "Choose a routine day.") }
         changed(); result
       }

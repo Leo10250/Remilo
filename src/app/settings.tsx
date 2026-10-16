@@ -2,7 +2,7 @@ import { errorText, t } from '../localization';
 import { useLocalizedState, useTranslation } from '../localization/react';
 import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Directory, File, Paths } from 'expo-file-system';
+import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -53,16 +53,14 @@ export default function Settings() {
       if (!handoff.scope.canLaunch(ticket)) return;
       if (!available) return { message: t('m_0798a52ef16b'), tone: 'warning' };
       if (!handoff.scope.markOpened(ticket)) return;
-      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: t('m_746212ed7cd6') });
+      await Sharing.shareAsync(file.uri, { mimeType: 'application/zip', dialogTitle: t('m_746212ed7cd6') });
       return { message: t('m_c764a0c6727b'), tone: 'muted' };
     } catch { return { message: t('m_81d4cad2c628'), tone: 'danger' }; }
   };
   const exportFile = () => void runExport(async ticket => {
-    const data = await engine().exportBackup();
+    const prepared = await engine().prepareBackupExport();
     if (!handoff.scope.canLaunch(ticket)) return;
-    const directory = new Directory(Paths.cache, 'remilo-exports');
-    directory.create({ idempotent: true, intermediates: true });
-    const file = new File(directory, 'remilo-' + Date.now() + '.json'); file.create(); file.write(data);
+    const file = new File(prepared.uri);
     if (mounted.current) setPreparedExport(file);
     return sharePrepared(file, ticket);
   });
@@ -91,33 +89,33 @@ export default function Settings() {
           <Toggle key="vibration" icon="vibration" label={t('m_59e1fd02f6c2')} value={settings.vibration} disabled={pending} onChange={vibration => save({ vibration })} />
         </ConnectedGroup>
         <ConnectedGroup title={t('m_f21ec393fe6b')} footer={preferenceFeedback('postponement')}>
-          <SettingRow key="snooze" icon="snooze" label={t('m_3f030a6921b9')} value={t('m_1c3c36c66261', { count: settings.snoozeMinutes })} disabled={pending}
+          <SettingRow intent="picker" key="snooze" icon="snooze" label={t('m_3f030a6921b9')} value={t('m_1c3c36c66261', { count: settings.snoozeMinutes })} disabled={pending}
             onPress={() => { setMinutes(String(settings.snoozeMinutes)); setSnoozePicker(true); }} />
-          <SettingRow key="shortcuts" icon="schedule" label={t('m_9b0f67429df4')}
+          <SettingRow intent="navigation" key="shortcuts" icon="schedule" label={t('m_9b0f67429df4')}
             value={[settings.tomorrowMorning, settings.tomorrowAfternoon, settings.tomorrowEvening].map(value => clockPreferenceLabel(value)).join(' · ')}
             disabled={pending} onPress={() => setShortcuts(true)} />
         </ConnectedGroup>
-        <ConnectedGroup footer={preferenceFeedback('appearance')}><SettingRow key="appearance" icon="palette" label={t('m_3907fa7f8072')} value={appearanceSummary(settings)} disabled={pending}
+        <ConnectedGroup footer={preferenceFeedback('appearance')}><SettingRow intent="navigation" key="appearance" icon="palette" label={t('m_3907fa7f8072')} value={appearanceSummary(settings)} disabled={pending}
           onPress={() => router.push({ pathname: '/appearance', params: routeParams })} /></ConnectedGroup>
-        <ConnectedGroup footer={preferenceFeedback('language')}><SettingRow key="language" icon="language" label={t('m_a4fe65264ef7')} value={settings.language === 'system' ? t('m_b0459211f9f7') : settings.language === 'en' ? 'English' : '简体中文'} disabled={pending} onPress={() => setLanguagePicker(true)} /></ConnectedGroup>
+        <ConnectedGroup footer={preferenceFeedback('language')}><SettingRow intent="picker" key="language" icon="language" label={t('m_a4fe65264ef7')} value={settings.language === 'system' ? t('m_b0459211f9f7') : settings.language === 'en' ? 'English' : '简体中文'} disabled={pending} onPress={() => setLanguagePicker(true)} /></ConnectedGroup>
       </>}
       <ConnectedGroup><WidgetSetupRow disabled={pending} /></ConnectedGroup>
-      <ConnectedGroup><SettingRow key="permissions" icon="alarm" label={t('m_b7902c54f3ec')} value={nativeAvailable ? permission.message : t('m_9abfcd6cc71c')}
+      <ConnectedGroup><SettingRow intent="navigation" key="permissions" icon="alarm" label={t('m_b7902c54f3ec')} value={nativeAvailable ? permission.message : t('m_9abfcd6cc71c')}
         description={permissionRefresh} disabled={pending} onPress={openAlarmCheck} /></ConnectedGroup>
-      <ConnectedGroup><SettingRow key="google-calendar" icon="event" label={t('m_b074310e911f')} description={t('m_e75d471ec00e')} disabled={pending}
+      <ConnectedGroup><SettingRow intent="navigation" key="google-calendar" icon="event" label={t('m_b074310e911f')} description={t('m_e75d471ec00e')} disabled={pending}
         onPress={() => router.push({ pathname: '/calendar', params: routeParams })} /></ConnectedGroup>
       <ConnectedGroup title={t('m_3334fee2c77f')} footer={<><Copy muted size={14}>{t('m_a7b215af0d49')}</Copy>
         <Button label={t('m_95365d0f81ab')} variant="secondary" disabled={pending} onPress={() => setBackupInfo(true)} /></>}>
-        <View key="export"><SettingRow icon="upload" label={t('m_d6dfd0f08280')} disabled={pending || !nativeAvailable} onPress={exportFile} />
+        <View key="export"><SettingRow intent="action" icon="upload" label={t('m_d6dfd0f08280')} disabled={pending || !nativeAvailable} onPress={exportFile} />
           {(pending || feedback || preparedExport) && <RowSupport>
             {(pending || feedback) && <ActionFeedback loading={pending} message={pending ? t('m_580447a9d871') : feedback?.message} tone={feedback?.tone} />}
             {preparedExport && <Button label={t('m_6b88c0d8044d')} variant="secondary" disabled={pending} onPress={() => void runExport(ticket => sharePrepared(preparedExport, ticket))} />}
           </RowSupport>}
         </View>
-        <SettingRow key="restore" icon="download" label={t('m_6da1c554212c')} disabled={pending} onPress={() => router.push({ pathname: '/backup', params: routeParams })} />
+        <SettingRow intent="navigation" key="restore" icon="download" label={t('m_6da1c554212c')} disabled={pending} onPress={() => router.push({ pathname: '/backup', params: routeParams })} />
       </ConnectedGroup>
       <ConnectedGroup title={t('m_b79cac926e0b')} footer={<><Copy>{t('m_f65890724d03')}</Copy><Copy muted size={14}>{t('m_cf96192a609d')}</Copy></>}>
-        <SettingRow key="diagnostics" icon="info" label={t('m_268f14bbfe11')} disabled={pending} onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })} />
+        <SettingRow intent="navigation" key="diagnostics" icon="info" label={t('m_268f14bbfe11')} disabled={pending} onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })} />
       </ConnectedGroup>
       <Sheet title={t('m_a4fe65264ef7')} visible={languagePicker} onClose={() => setLanguagePicker(false)}>
         <Choice label={t('m_b0459211f9f7')} description={settings?.language === 'system' ? t('m_515c527078e9', { arg0: presentation.resolvedLanguage === 'zh-Hans' ? '简体中文' : 'English' }) : undefined} selected={settings?.language === 'system'} disabled={pending} onPress={() => { save({ language: 'system' }); setLanguagePicker(false); }} />

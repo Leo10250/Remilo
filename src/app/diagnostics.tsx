@@ -59,23 +59,23 @@ export default function Diagnostics() {
       <Group title={t('m_1adbb2ee4d86')}>
         <Copy muted size={14}>{t('m_62c5c0e4db3f')}</Copy>
         {!stateOrder.length && <Copy muted>{t('m_fedeca67dfed')}</Copy>}
-        {stateOrder.map((state) => <SettingRow key={state} label={stateNames[state] ?? state} value={String(counts![state])} />)}
-        <SettingRow label={t('m_99d490c3f215')} value={String(report.data.pendingOperations ?? '—')} />
+        {stateOrder.map((state) => <SettingRow intent="action" key={state} label={stateNames[state] ?? state} value={String(counts![state])} />)}
+        <SettingRow intent="action" label={t('m_99d490c3f215')} value={String(report.data.pendingOperations ?? '—')} />
         <Copy muted size={14}>{t('m_573a58a1e38d')}</Copy>
       </Group>
       {caps && <Group title={t('m_9794e36a7e73')}>
         {typeof caps.observedAtMs === 'number' && <Copy muted size={14}>{t('m_fa28a8a6b6bf')}{shortDateTime(caps.observedAtMs)}</Copy>}
-        <SettingRow label={t('m_142c2ae8d0bb')} value={capability('exactAlarms')} />
-        <SettingRow label={t('m_31d7ae351725')} value={capability('notifications')} />
-        <SettingRow label={t('m_aa3c57bf2387')} value={capability('channelEnabled')} />
-        <SettingRow label={t('m_c2728d07deea')} value={capability('notificationChannelEnabled')} />
-        <SettingRow label={t('m_66b41af0ba4b')} value={capability('fullScreen', true)} />
-        <SettingRow label={t('m_de5a4fcc9fd1')} value={caps.unlocked === true ? t('m_531c7b28abf2') : caps.unlocked === false ? t('m_a424e33d9093') : t('m_ca1844969742')} />
+        <SettingRow intent="action" label={t('m_142c2ae8d0bb')} value={capability('exactAlarms')} />
+        <SettingRow intent="action" label={t('m_31d7ae351725')} value={capability('notifications')} />
+        <SettingRow intent="action" label={t('m_aa3c57bf2387')} value={capability('channelEnabled')} />
+        <SettingRow intent="action" label={t('m_c2728d07deea')} value={capability('notificationChannelEnabled')} />
+        <SettingRow intent="action" label={t('m_66b41af0ba4b')} value={capability('fullScreen', true)} />
+        <SettingRow intent="action" label={t('m_de5a4fcc9fd1')} value={caps.unlocked === true ? t('m_531c7b28abf2') : caps.unlocked === false ? t('m_a424e33d9093') : t('m_ca1844969742')} />
       </Group>}
-      <Group title={t('m_fc7383580184')}><SettingRow label={t('m_e3ba2b050694')} value={String(report.data.contentSchema ?? '—')} />
-        <SettingRow label={t('m_1fb397289be3')} value={String(report.data.operationalSchema ?? '—')} /></Group>
+      <Group title={t('m_fc7383580184')}><SettingRow intent="action" label={t('m_e3ba2b050694')} value={String(report.data.contentSchema ?? '—')} />
+        <SettingRow intent="action" label={t('m_1fb397289be3')} value={String(report.data.operationalSchema ?? '—')} /></Group>
     </>}
-    <Group><SettingRow label={t('m_a209f4b78d70')} icon="upload"
+    <Group><SettingRow intent="action" label={t('m_a209f4b78d70')} icon="upload"
       description={t('m_c593c4c6d04c')} disabled={!report.data || sharing}
       onPress={() => void share()} /><ActionFeedback message={sharing ? t('m_7f84c3c63516') : shareFeedback?.message} loading={sharing} tone={shareFeedback?.tone} /></Group>
   </Page>;

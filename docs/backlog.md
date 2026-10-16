@@ -131,9 +131,9 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 | P4-E07 | Settings, editor, management and generalized review | P4-E06 | implemented/unverified | [Projection evidence](evidence/2026-10-14-calendar-managed-sync.md), [fixture observations](evidence/2026-10-14-calendar-managed-visual.md); reminder-first controls, saved phases/counts, candidate/setup routing, quiet issues and Activity |
 | P4-E08 | Integrated regressions, visual evidence and signed acceptance | P4-E01–07 | in progress | [257 shared/91 tooling/423 native checks, lint and identified signed ARM64 artifact](evidence/2026-10-14-calendar-managed-sync.md); representative eight-pair/large-text fixtures; [consolidated signed-phone/live Google and Android accessibility observations](device-acceptance.md) remain |
 | G4 | Calendar release gate | P4-A/B/C/D/E | pending | Managed discovery/reuse/creation and recovery, both directions after documented opportunities, protected conflicts/unknown writes, recurrence, independent deletion and quiet review notices on an identified signed build |
-| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | implemented/unverified | [Current correction evidence](evidence/2026-10-15-routine-ui-correction.md): shared editor, seven visible days, all three Alert modes, shared Notes, immutable CE15 revisions/DP9/backup6 and native Start/Snooze/Dismiss; final 310 shared/97 tooling/511 native tests, 2,078 messages, lint and identified signed ARM64 assembly passed; consolidated phone acceptance pending |
-| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | implemented/unverified | [Current correction evidence](evidence/2026-10-15-routine-ui-correction.md): illustrated Focus, visible Agenda progress, named Undo/history and irreversible date ownership; 17 approved/promoted illustrations, portable audit, fresh browser fixture loading and exact APK export bytes verified; final host checks/signed assembly passed; consolidated physical acceptance pending |
-| RW-03 | Readable Android home-screen Today widget | RW-02 | implemented/unverified | [Current correction evidence](evidence/2026-10-15-routine-ui-correction.md): native Focus/Today, progress bar, readable completion/Undo/Retry and 12 retained measured EN/ZH action renders; final native suite, module/app lint and signed assembly passed; launcher/TalkBack/signed-phone acceptance pending |
+| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): shared date/time and required labels, three Alert modes, clearer exercise fields, contained photos, CE16/DP9 family Trash and format-7 photo archives; prior [routine/Alarm evidence](evidence/2026-10-15-routine-ui-correction.md) retained; consolidated phone acceptance pending |
+| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): stable complete exercise list, selected Viewing state, named Undo, origin-preserving menus and native dated/history/media ownership; 17 existing approved illustrations retained; consolidated physical acceptance pending |
+| RW-03 | Readable Android home-screen Today widget | RW-02 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): compact opaque Focus/Today with primary Resume plus separate Done/Refresh, exact exercise links, adaptive text/sizes, named Undo/Retry and production-composition previews; launcher/TalkBack/signed-phone acceptance pending |
 | RW-04 | Optional daily Today/agenda digest notification | RW-02 | pending | configurable local time, opt-in and quiet dismissal; no duplicate or alarm-channel behavior |
 | AI-01 | Android assistant/intent compatibility research and action contract | G3 | pending | current official support matrix for Android intents, Gemini/AppFunctions, Samsung/Bixby, versions and limits |
 | AI-02 | Safe external create-reminder/alarm actions and supported Android entry points | AI-01 | pending | voice/deep-link/shortcut intent drafts previewed, explicitly confirmed and saved once through native engine |
@@ -277,6 +277,26 @@ urgent information; verify that classification cannot delay or alter alarm work.
     captures passed, including full Chinese Retry copy and unclipped action bounds.
     Final native verification, module/app lint and signed assembly passed;
     launcher/TalkBack/physical acceptance pending. No illustrations added to widgets.
+
+- Owner's 16 October routine refinement (RW-01/RW-02/RW-03): implemented/unverified;
+  [311 shared/97 tooling/525 native tests, 2,118 messages, lint and signed ARM64
+  preparation passed](evidence/2026-10-16-routine-refinement.md). Physical gates and
+  the broader app/launcher review matrix remain. Latest contracts supersede the
+  earlier Focus-list, widget layout and backup transport descriptions above.
+  - RW-01f: explicit shared row interaction semantics, required labels and shared
+    start-date/time controls; clearer exercise examples and contained-photo chooser.
+  - RW-02f: stable complete exercise sequence with selected state, native-confirmed
+    advance/Undo, contextual menus on their origin and discoverable family Trash.
+  - RW-01g: CE16 journaled family Trash/Restore/Purge, typed mixed Trash queries,
+    preserved child/history states and DP9 delivery fences.
+  - RW-01h: immutable CE photos, draft/export leases, tomorrow-effective references
+    and history-aware cleanup; single-image Photo Picker without broad permissions.
+  - RW-01i: native prepared format-7 ZIP export/import, media integrity/size checks,
+    legacy JSON 1–6 readers and receipt-stable apply retries.
+  - RW-03e: 4×2 preferred composition, adaptive summary/Focus/list, primary Resume
+    plus separate Done, named Undo and exact date/exercise links; setup previews
+    share production composition. Signed-phone picker, launcher and accessibility
+    observations remain pending; no installation/distribution accompanies this work.
 
 - RW-04: digest is explicitly opt-in with editable delivery time and off switch.
   Show only authorized local data (plus opted-in linked Calendar events when

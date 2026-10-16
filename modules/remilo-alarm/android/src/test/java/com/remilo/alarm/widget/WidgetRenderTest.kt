@@ -107,6 +107,28 @@ class WidgetRenderTest {
       render(context(language,1.5f),previewSnapshot().copy(undoToken = "undo",undoName = "Bird-dog"),300,440,"$language-undo-150")
     }
   }
+  @Test fun routineFocusUsesCompactResumeDoneAndExpandedUpcomingWithoutAnEmptyActionGap() {
+    val sample=previewSnapshot().copy(configuration = WidgetConfiguration("Routine","preview"),session=previewSnapshot().session!! + ("title" to "Core & intervals"))
+    val compact=render(context("en",1f),sample,300,240,"routine-focus-compact")
+    assertActionFullyVisible(compact,"Resume"); assertActionFullyVisible(compact,"Done")
+    assertTrue(text(compact).any { it.contains("Next: Side plank") }); assertFalse(text(compact).contains("Widget settings"))
+    val expanded=render(context("en",1f),sample,300,440,"routine-focus-expanded")
+    assertTrue(text(expanded).contains("Side plank")); assertTrue(text(expanded).contains("Intervals"))
+  }
+  @OptIn(ExperimentalGlanceApi::class)
+  @Test fun inertPreviewPreservesProductionLabelsAndRefreshAffordance() {
+    val ctx=context("en",1f)
+    val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"))
+    fun root(preview: Boolean): View {
+      val remote=runBlocking { WidgetRender(sample,preview).compose(ctx,size=DpSize(300.dp,240.dp)) }
+      return remote.apply(ctx,FrameLayout(ctx))
+    }
+    fun descriptions(view: View): List<String> = listOfNotNull(view.contentDescription?.toString()) +
+      if(view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
+    val production=root(false); val preview=root(true)
+    assertEquals(text(production),text(preview))
+    assertTrue(descriptions(production).contains("Refresh")); assertTrue(descriptions(preview).contains("Refresh"))
+  }
   private fun assertActionFullyVisible(root: View, label: String) {
     val matches = textViews(root).filter { it.text.toString().equals(label, ignoreCase = true) }
     assertEquals("Expected one action named $label; rendered ${text(root)}", 1, matches.size)
@@ -145,7 +167,7 @@ class WidgetRenderTest {
     }
   }
   @Test fun completionAndUndoLabelsRemainFullyVisibleAtNormalAndLargeText() {
-    for (language in listOf("en", "zh-Hans")) for ((height, scale) in listOf(280 to 1f, 440 to 1.5f)) {
+    for (language in listOf("en", "zh-Hans")) for ((height, scale) in listOf(240 to 1f, 440 to 1.5f)) {
       val ctx = context(language, scale)
       for (mode in listOf("continue", "final", "retry")) {
         val final = mode == "final"
@@ -157,10 +179,10 @@ class WidgetRenderTest {
         val sample = previewSnapshot().copy(undoToken = "undo", undoName = "Bird-dog", retryToken = if (mode == "retry") "retry" else null,
           session = previewSnapshot().session!! + mapOf("steps" to steps, "completedCount" to if (final) 3 else 1))
         val root = render(ctx, sample, 300, height, "$language-actions-$height-${(scale * 100).toInt()}-$mode")
-        val label = when (mode) { "retry" -> "Retry the same action"; "final" -> "Complete exercise"; else -> "Complete & continue" }
-        if (language == "zh-Hans" && mode == "retry") assertEquals("\u91cd\u8bd5\u540c\u4e00\u64cd\u4f5c", L10n.text(ctx, label))
+        val label = if (mode == "retry") "Retry" else "Done"
         assertActionFullyVisible(root, L10n.text(ctx, label))
-        assertActionFullyVisible(root, L10n.text(ctx, "Undo"))
+        assertActionFullyVisible(root, L10n.text(ctx, "Resume"))
+        assertActionFullyVisible(root, L10n.text(ctx, "Undo Bird-dog"))
       }
     }
   }
@@ -174,8 +196,7 @@ class WidgetRenderTest {
     for (language in listOf("en","zh-Hans")) for (state in listOf("Rest","Paused","Skipped","Completed")) {
       val compact = render(context(language,2f),rest.copy(session = rest.session!! + ("state" to state)),180,110,"$language-$state-compact-200")
       assertTrue(text(compact).contains("Routine"))
-      val date = textViews(compact).single { it.text.toString() == "10/12" }
-      assertEquals(0,date.layout.getEllipsisCount(0))
+      assertFalse(text(compact).contains(L10n.text(ctx, "Done")))
     }
     PresentationLanguage.update(ctx,"en")
     val unavailable = render(ctx,WidgetSnapshot(1,WidgetConfiguration("Routine","removed")),180,110,"unavailable")

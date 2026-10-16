@@ -1890,8 +1890,8 @@ export const catalogs = {
     "routine_progress": "{done} of {total} completed",
     "routine_add_exercise": "Add exercise",
     "routine_name": "Exercise name",
-    "routine_target": "Target (optional)",
-    "routine_guidance": "Guidance (optional)",
+    "routine_target": "Sets, reps or time",
+    "routine_guidance": "How to do it",
     "routine_edit_exercise": "Edit exercise",
     "routine_move_up": "Move up",
     "routine_move_down": "Move down",
@@ -1916,7 +1916,7 @@ export const catalogs = {
     "routine_day_ended": "This day has ended. Corrections update history only.",
     "routine_deleted": "This session is in Trash. Restore it there before making corrections.",
     "routine_focus": "Focus",
-    "routine_sequence": "Completed & upcoming",
+    "routine_sequence": "Exercises",
     "routine_done": "Mark as done",
     "routine_undo_completion": "Undo completion",
     "routine_next": "Next exercise",
@@ -1945,7 +1945,7 @@ export const catalogs = {
     "routine_history_changes": "Changes to this session",
     "routine_correction_at": "Corrected {time}",
     "routine_select_exercise": "Choose an exercise below",
-    "routine_starts": "Starts",
+    "routine_starts": "Starts on",
     "routine_empty": "No routines yet",
     "routine_instructions_fallback": "Follow your saved target and guidance.",
     "routine_attached_hint": "Optional exercise progress with a different plan for each weekday.",
@@ -1988,7 +1988,7 @@ export const catalogs = {
     "widget_description": "See daily routine progress and today’s reminders.",
     "widget_unlock": "Unlock to view Remilo.",
     "widget_add": "Add to Home screen",
-    "widget_done": "Mark as done",
+    "widget_done": "Done",
     "widget_preview_title": "Front plank",
     "widget_preview_target": "3 × 40 s",
     "widget_settings": "Widget settings",
@@ -2045,8 +2045,8 @@ export const catalogs = {
     "exercise_front_plank_description": "Side view of a person holding a forearm plank on a mat, supported by forearms and toes.",
     "routine_correct_checkmarks": "Correct checkmarks",
     "routine_mark_named": "Mark {name} as done",
-    "routine_illustration": "Illustration",
-    "routine_no_illustration": "No illustration",
+    "routine_illustration": "Exercise image",
+    "routine_no_illustration": "No image",
     "routine_illustration_unavailable": "Illustration unavailable",
     "routine_exercise_editor_title": "Exercise",
     "routine_alarm_start": "Start routine",
@@ -2105,7 +2105,47 @@ export const catalogs = {
     "exercise_one_arm_dumbbell_row_description": "A person supported on a bench, drawing one dumbbell toward the hip.",
     "routine_editor_new": "New weekly routine",
     "routine_editor_edit": "Edit weekly routine",
-    "routine_undo_capacity_hint": "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day."
+    "routine_undo_capacity_hint": "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day.",
+    "field_required_label": "{label} (required)",
+    "routine_viewing": "Viewing",
+    "routine_viewing_position": "Viewing exercise · {current} of {total}",
+    "routine_exercise_name": "Exercise name",
+    "routine_name_example": "Front plank",
+    "routine_target_example": "3 × 40 seconds",
+    "routine_target_help": "Include weight, incline or intervals when needed.",
+    "routine_guidance_example": "Complete all three holds, then continue.",
+    "routine_guidance_help": "Add setup tips or technique reminders.",
+    "routine_image_help": "Choose a library illustration or add your own photo.",
+    "routine_add_photo": "Add your photo",
+    "routine_replace_photo": "Replace photo",
+    "routine_use_photo": "Use photo",
+    "routine_choose_another_photo": "Choose another photo",
+    "routine_remove_image": "Remove image",
+    "routine_photo_for": "Photo for {name}",
+    "routine_view_image": "View image",
+    "routine_image_unavailable": "Image unavailable",
+    "routine_photo_error": "Could not add this photo. Choose a still image under 50 MiB.",
+    "routine_photo_source_large": "This photo is larger than 50 MiB. Choose a smaller image.",
+    "routine_photo_output_large": "This photo is still too large after resizing. Choose a simpler or smaller image.",
+    "routine_photo_unsupported": "Choose a still photo. Animated images are not supported.",
+    "routine_photo_unreadable": "This image could not be read. Try another photo.",
+    "routine_photo_storage_full": "There is not enough storage to add this photo. Free some space and try again.",
+    "routine_trash_hint": "Moves this weekly routine and its recorded days to Trash.",
+    "routine_trashed": "Weekly routine moved to Trash",
+    "routine_restored": "Weekly routine restored",
+    "routine_purged": "Weekly routine permanently deleted",
+    "routine_in_trash": "Routine in Trash",
+    "routine_trash_days": "{count} recorded days",
+    "widget_resume": "Resume",
+    "widget_next": "Next: {name}",
+    "widget_done_count": "{done} of {total} done",
+    "backup_photos": "Includes {count} exercise photos",
+    "backup_photo_hint": "Backups include saved exercise photos and routine history. Older JSON backups can also be restored.",
+    "widget_preview_progress": "1 of 4 done",
+    "widget_preview_next": "Next: Side plank",
+    "widget_refresh": "Refresh",
+    "widget_preview_compact": "Compact",
+    "widget_preview_expanded": "Expanded"
   },
   "zh-Hans": {
     "m_bf4156d6b15c": "已启用日历自动同步",
@@ -3988,8 +4028,8 @@ export const catalogs = {
     "routine_progress": "已完成 {done}/{total} 项",
     "routine_add_exercise": "添加练习",
     "routine_name": "练习名称",
-    "routine_target": "目标（可选）",
-    "routine_guidance": "说明（可选）",
+    "routine_target": "组数、次数或时长",
+    "routine_guidance": "练习说明",
     "routine_edit_exercise": "编辑练习",
     "routine_move_up": "上移",
     "routine_move_down": "下移",
@@ -4014,7 +4054,7 @@ export const catalogs = {
     "routine_day_ended": "这一天已结束。更正仅更新历史记录。",
     "routine_deleted": "此记录已移至废纸篓。请先恢复再进行更正。",
     "routine_focus": "专注练习",
-    "routine_sequence": "已完成与待完成",
+    "routine_sequence": "练习",
     "routine_done": "标记为完成",
     "routine_undo_completion": "撤销完成",
     "routine_next": "下一项练习",
@@ -4086,7 +4126,7 @@ export const catalogs = {
     "widget_description": "查看每日训练进度和今天的提醒。",
     "widget_unlock": "解锁后查看 Remilo。",
     "widget_add": "添加到主屏幕",
-    "widget_done": "标记为完成",
+    "widget_done": "完成",
     "widget_preview_title": "平板支撑",
     "widget_preview_target": "3 组 × 40 秒",
     "widget_settings": "小组件设置",
@@ -4143,8 +4183,8 @@ export const catalogs = {
     "exercise_front_plank_description": "侧视图：一人用前臂和脚尖支撑身体，在垫上保持平板支撑。",
     "routine_correct_checkmarks": "更正完成标记",
     "routine_mark_named": "将{name}标记为完成",
-    "routine_illustration": "示意图",
-    "routine_no_illustration": "无示意图",
+    "routine_illustration": "练习图片",
+    "routine_no_illustration": "无图片",
     "routine_illustration_unavailable": "示意图不可用",
     "routine_exercise_editor_title": "动作",
     "routine_alarm_start": "开始训练",
@@ -4203,7 +4243,47 @@ export const catalogs = {
     "exercise_one_arm_dumbbell_row_description": "一人用手和膝盖支撑在训练凳上，将另一只手中的哑铃拉向髋部。",
     "routine_editor_new": "新建每周计划",
     "routine_editor_edit": "编辑每周计划",
-    "routine_undo_capacity_hint": "每天最多可添加100项动作。在完成当天编辑前，会为撤销保留一个位置。"
+    "routine_undo_capacity_hint": "每天最多可添加100项动作。在完成当天编辑前，会为撤销保留一个位置。",
+    "field_required_label": "{label}（必填）",
+    "routine_viewing": "正在查看",
+    "routine_viewing_position": "正在查看 · 第 {current} 项，共 {total} 项",
+    "routine_exercise_name": "练习名称",
+    "routine_name_example": "平板支撑",
+    "routine_target_example": "3 组 × 40 秒",
+    "routine_target_help": "需要时可填写重量、坡度或间歇安排。",
+    "routine_guidance_example": "完成全部三组后继续下一项。",
+    "routine_guidance_help": "添加准备步骤或动作要点。",
+    "routine_image_help": "选择内置插图或添加自己的照片。",
+    "routine_add_photo": "添加自己的照片",
+    "routine_replace_photo": "更换照片",
+    "routine_use_photo": "使用照片",
+    "routine_choose_another_photo": "选择另一张照片",
+    "routine_remove_image": "移除图片",
+    "routine_photo_for": "{name}的照片",
+    "routine_view_image": "查看图片",
+    "routine_image_unavailable": "图片不可用",
+    "routine_photo_error": "无法添加此照片。请选择小于 50 MiB 的静态图片。",
+    "routine_photo_source_large": "此照片大于 50 MiB。请选择较小的图片。",
+    "routine_photo_output_large": "此照片缩小后仍然过大。请选择更简单或更小的图片。",
+    "routine_photo_unsupported": "请选择静态照片。不支持动态图像。",
+    "routine_photo_unreadable": "无法读取此图片。请尝试其他照片。",
+    "routine_photo_storage_full": "存储空间不足，无法添加此照片。请释放一些空间后重试。",
+    "routine_trash_hint": "将此每周日程及其已记录的日期移至废纸篓。",
+    "routine_trashed": "每周日程已移至废纸篓",
+    "routine_restored": "每周日程已恢复",
+    "routine_purged": "每周日程已永久删除",
+    "routine_in_trash": "日程位于废纸篓",
+    "routine_trash_days": "已记录 {count} 天",
+    "widget_resume": "继续",
+    "widget_next": "下一项：{name}",
+    "widget_done_count": "已完成 {done}/{total}",
+    "backup_photos": "包含 {count} 张练习照片",
+    "backup_photo_hint": "备份包含保存的练习照片和日程历史，也支持恢复旧版 JSON 备份。",
+    "widget_preview_progress": "已完成 1/4",
+    "widget_preview_next": "下一项：侧平板支撑",
+    "widget_refresh": "刷新",
+    "widget_preview_compact": "紧凑",
+    "widget_preview_expanded": "展开"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -6286,4 +6366,44 @@ export interface MessageArguments {
   routine_editor_new: Record<string, never>;
   routine_editor_edit: Record<string, never>;
   routine_undo_capacity_hint: Record<string, never>;
+  field_required_label: { label: string };
+  routine_viewing: Record<string, never>;
+  routine_viewing_position: { current: number; total: number };
+  routine_exercise_name: Record<string, never>;
+  routine_name_example: Record<string, never>;
+  routine_target_example: Record<string, never>;
+  routine_target_help: Record<string, never>;
+  routine_guidance_example: Record<string, never>;
+  routine_guidance_help: Record<string, never>;
+  routine_image_help: Record<string, never>;
+  routine_add_photo: Record<string, never>;
+  routine_replace_photo: Record<string, never>;
+  routine_use_photo: Record<string, never>;
+  routine_choose_another_photo: Record<string, never>;
+  routine_remove_image: Record<string, never>;
+  routine_photo_for: { name: string };
+  routine_view_image: Record<string, never>;
+  routine_image_unavailable: Record<string, never>;
+  routine_photo_error: Record<string, never>;
+  routine_photo_source_large: Record<string, never>;
+  routine_photo_output_large: Record<string, never>;
+  routine_photo_unsupported: Record<string, never>;
+  routine_photo_unreadable: Record<string, never>;
+  routine_photo_storage_full: Record<string, never>;
+  routine_trash_hint: Record<string, never>;
+  routine_trashed: Record<string, never>;
+  routine_restored: Record<string, never>;
+  routine_purged: Record<string, never>;
+  routine_in_trash: Record<string, never>;
+  routine_trash_days: { count: number };
+  widget_resume: Record<string, never>;
+  widget_next: { name: string };
+  widget_done_count: { done: number; total: number };
+  backup_photos: { count: number };
+  backup_photo_hint: Record<string, never>;
+  widget_preview_progress: Record<string, never>;
+  widget_preview_next: Record<string, never>;
+  widget_refresh: Record<string, never>;
+  widget_preview_compact: Record<string, never>;
+  widget_preview_expanded: Record<string, never>;
 }

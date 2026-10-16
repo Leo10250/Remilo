@@ -5,7 +5,8 @@ import { useTranslation } from '../localization/react';
 import { Button, Choice, ConnectedGroup, Copy, Disclosure, Field, SettingRow, Sheet } from './components';
 import { useAppearanceConfirmation } from './confirmation';
 import { engine } from './native';
-import { exerciseIllustrations, getExerciseIllustration } from './exercise-illustrations';
+import { ExerciseImageChooser, useExerciseImageLeases } from './exercise-images';
+import { getExerciseIllustration } from './exercise-illustrations';
 import { canAddRoutineExercise, changedRoutineDays, MAX_ROUTINE_EXERCISES_PER_DAY, type ReminderType } from '../domain/routine-editor-draft';
 import { modeLabel } from '../domain/presentation';
 import { chineseTextMetrics, lineHeightFor, shape, space, typography } from './tokens';
@@ -71,7 +72,7 @@ export function RoutineWeekFields({ days, onChange, disabled = false }: { days: 
   const t = useTranslation(), [selected, setSelected] = useState<number | null>(null);
   return <>
     <ConnectedGroup title={t('routine_exercises_by_day')} footer={<Copy muted size={14}>{t(days.every(day => day.type === 'Rest') ? 'routine_first_exercise_hint' : 'routine_day_fresh_hint')}</Copy>}>
-      {days.map((day, index) => <SettingRow key={index} label={t(routineDayKeys[index])} disabled={disabled}
+      {days.map((day, index) => <SettingRow intent="navigation" key={index} label={t(routineDayKeys[index])} disabled={disabled}
         value={day.type === 'Rest' ? t('routine_day_rest_summary') : t('routine_exercise_count', { count: day.exercises.length })}
         description={day.type === 'Exercises' ? day.exercises.length > 2 ? t('routine_day_names_more', { names: day.exercises.slice(0, 2).map(exercise => exercise.name).filter(Boolean).join(' · '), count: day.exercises.length - 2 }) : day.exercises.map(exercise => exercise.name).filter(Boolean).join(' · ') : undefined}
         onPress={() => { Keyboard.dismiss(); setSelected(index); }} />)}
@@ -110,6 +111,7 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
     exercises.splice(editing.position, 0, editing.value);
     setDraft({ type: 'Exercises', exercises }); setEditing(null); Keyboard.dismiss();
   };
+  useExerciseImageLeases([...draft.exercises, ...(editing ? [editing.value] : [])]);
   const illustration = editing ? getExerciseIllustration(editing.value.illustration) : undefined;
   return <Sheet title={t(editing ? 'routine_exercise_editor_title' : 'routine_day_editor_title', editing ? undefined : { day: t(routineDayKeys[index]) })}
     visible onClose={close} onBack={close} footer={<View style={{ padding: 16, gap: 8 }}>
@@ -121,16 +123,18 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
     <Copy muted size={14}>{t('routine_plan_local_hint')}</Copy>
     {editing ? <View style={{ gap: 12 }}>
       <View accessibilityLiveRegion="polite"><Copy muted size={14}>{t('routine_ordinal', { current: editing.position + 1, total: draft.exercises.length + (editing.isNew ? 1 : 0) })}</Copy></View>
-      <Field label={t('routine_name')} required value={editing.value.name} maxLength={200} multiline compactMultiline onChangeText={name => patchExercise({ name })} />
-      <Field label={t('routine_target')} value={editing.value.target} maxLength={1000} multiline compactMultiline onChangeText={target => patchExercise({ target })} />
-      <Field label={t('routine_guidance')} value={editing.value.notes} maxLength={10000} multiline compactMultiline onChangeText={notes => patchExercise({ notes })} />
-      {(exerciseIllustrations.length > 0 || !!editing.value.illustration) && <ConnectedGroup><SettingRow label={t('routine_illustration')}
-        value={illustration ? t(illustration.labelKey) : editing.value.illustration ? t('routine_illustration_unavailable') : t('routine_no_illustration')}
-        onPress={() => { Keyboard.dismiss(); setIllustrationOpen(true); }} /></ConnectedGroup>}
+      <Field label={t('routine_exercise_name')} placeholder={t('routine_name_example')} required value={editing.value.name} maxLength={200} multiline compactMultiline onChangeText={name => patchExercise({ name })} />
+      <Field label={t('routine_target')} placeholder={t('routine_target_example')} value={editing.value.target} maxLength={1000} multiline compactMultiline onChangeText={target => patchExercise({ target })} />
+      <Copy muted size={14}>{t('routine_target_help')}</Copy>
+      <Field label={t('routine_guidance')} placeholder={t('routine_guidance_example')} value={editing.value.notes} maxLength={10000} multiline compactMultiline onChangeText={notes => patchExercise({ notes })} />
+      <Copy muted size={14}>{t('routine_guidance_help')}</Copy>
+      <ConnectedGroup><SettingRow intent="picker" label={t('routine_illustration')}
+        value={editing.value.customImageId ? t('routine_photo_for', { name: editing.value.name }) : illustration ? t(illustration.labelKey) : editing.value.illustration ? t('routine_illustration_unavailable') : t('routine_no_illustration')}
+        onPress={() => { Keyboard.dismiss(); setIllustrationOpen(true); }} /></ConnectedGroup>
       {!editing.isNew && <ConnectedGroup>
-        <SettingRow key="up" label={t('routine_move_up')} disabled={editing.position === 0} onPress={() => setEditing({ ...editing, position: editing.position - 1 })} />
-        <SettingRow key="down" label={t('routine_move_down')} disabled={editing.position >= draft.exercises.length - 1} onPress={() => setEditing({ ...editing, position: editing.position + 1 })} />
-        <SettingRow key="remove" label={t('routine_remove_exercise')} icon="remove_circle_outline" onPress={() => {
+        <SettingRow intent="action" key="up" label={t('routine_move_up')} disabled={editing.position === 0} onPress={() => setEditing({ ...editing, position: editing.position - 1 })} />
+        <SettingRow intent="action" key="down" label={t('routine_move_down')} disabled={editing.position >= draft.exercises.length - 1} onPress={() => setEditing({ ...editing, position: editing.position + 1 })} />
+        <SettingRow intent="action" key="remove" label={t('routine_remove_exercise')} icon="remove_circle_outline" onPress={() => {
           const position = draft.exercises.findIndex(exercise => exercise.id === editing.value.id);
           setRemoved({ exercise: draft.exercises[position], index: position });
           setDraft({ ...draft, exercises: draft.exercises.filter(exercise => exercise.id !== editing.value.id) }); setEditing(null);
@@ -143,7 +147,7 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
         <Choice key="rest" label={t('routine_rest')} selected={draft.type === 'Rest'} onPress={() => setDraft({ ...draft, type: 'Rest' })} />
       </ConnectedGroup>
       {draft.type === 'Exercises' && <>
-        <ConnectedGroup>{draft.exercises.map((exercise, position) => <SettingRow key={exercise.id} label={`${position + 1}. ${exercise.name}`}
+        <ConnectedGroup>{draft.exercises.map((exercise, position) => <SettingRow intent="navigation" key={exercise.id} label={`${position + 1}. ${exercise.name}`}
           value={exercise.target || undefined} onPress={() => beginExercise(exercise, position)} />)}</ConnectedGroup>
         {removed && <View accessibilityLiveRegion="polite"><Copy>{t('routine_exercise_removed_named', { name: removed.exercise.name })}</Copy>
           <Button label={t('routine_undo_removed_named', { name: removed.exercise.name })} icon="undo" variant="secondary" onPress={() => {
@@ -154,10 +158,6 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
         {!canAdd && !!removed && canAddRoutineExercise(draft.exercises.length) && <Copy muted size={14}>{t('routine_undo_capacity_hint')}</Copy>}
       </>}
     </View>}
-    <Sheet title={t('routine_illustration')} visible={illustrationOpen} onClose={() => setIllustrationOpen(false)}>
-      <Choice label={t('routine_no_illustration')} selected={!editing?.value.illustration} onPress={() => { patchExercise({ illustration: '' }); setIllustrationOpen(false); }} />
-      {exerciseIllustrations.map(entry => <Choice key={entry.id} label={t(entry.labelKey)} description={t(entry.descriptionKey)} selected={editing?.value.illustration === entry.id}
-        onPress={() => { patchExercise({ illustration: entry.id }); setIllustrationOpen(false); }} />)}
-    </Sheet>
+    {illustrationOpen && editing && <ExerciseImageChooser key={editing.value.id} exercise={editing.value} onChange={patchExercise} onClose={() => setIllustrationOpen(false)} />}
   </Sheet>;
 }

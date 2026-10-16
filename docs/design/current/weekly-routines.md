@@ -56,8 +56,12 @@ it Complete exercise. View previous exercise changes selection only. Advance
 after native confirmation, keeping the card anchor and accessibility focus;
 show named completion feedback and Undo above the card, including after the last
 exercise. Completed exercise views have an explicit Undo completion action.
-The compact Completed & upcoming connected sequence omits the currently displayed
-exercise and preserves original ordinals. Overall Notes is a separate disclosure
+The connected Exercises sequence includes every exercise, including the displayed
+one, and preserves original ordinals and stable keys. Selected rows use the soft
+surface, accent ordinal/check badge, visible Viewing text and accessible selected
+state; completed rows retain Done. Selection changes the card, never checks, and
+has no navigation chevron. Completion advances to the first unfinished exercise
+after native acknowledgement. Overall Notes is a separate disclosure
 after that sequence. Final completion shows a compact summary and checked rows.
 Skip today and Undo Skip today operate on the dated session.
 Ended history can be corrected without reopening the day or delivery.
@@ -66,6 +70,12 @@ The library is within Lists. Preserve Agenda / Lists / Completed / Trash and
 repeat-family navigation. Use shared connected-item seams/corners, opaque reading
 surfaces, atmospheric browsing chrome, 16/14 sp text, scaling, 56 dp primary and
 48 dp other targets. Both English and Simplified Chinese use the same anatomy.
+New routine Starts on/time reuses the ordinary editor's responsive two-column
+date/time anatomy and independent pickers. Required labels use one localized
+Title (required) label. Exercise fields are Exercise name, Sets, reps or time,
+How to do it and Exercise image, with empty-field examples and persistent help.
+All scoped edits still require the one parent Save.
+
 Approved exercise illustrations are explicitly selected, immutable versioned IDs.
 Do not infer equipment or bind artwork from exercise names. Unknown references
 retain authored text and omit the image region. Center transparent contained
@@ -74,6 +84,19 @@ most 180 dp, radius 16 dp. The whole frame opens the enlarged view; a visible
 upper-right zoom glyph avoids covering the plank's foot contact. Give the frame
 an accessible description.
 At font scale 1.6+ or usable height below 640 dp use View illustration instead.
+Custom photos use the same contained/enlarge treatment and View image fallback.
+The chooser starts with Add your photo/Replace photo, previews the full frame,
+offers Use photo/Choose another photo, then the illustrated library and Remove
+image. One still photo per exercise; no crop, camera, animation or URL editor.
+Photos stay private/offline and enter tomorrow-effective immutable revisions.
+
+Routine More opens a shared contextual sheet over its originating Agenda,
+library, editor or Focus screen. Only an explicitly chosen destination navigates.
+Move to Trash affects the whole weekly family and recorded days, has named Undo,
+and is last/destructive. Trash shows one family with its weekly definition;
+Restore preserves child states and prior Active/Paused state. Purge requires the
+existing permanent-deletion confirmation. Neither Restore nor backup replays
+elapsed prompts or reopens closed history.
 The separate [exercise asset profile](../production-assets/exercises/profile-v2.json)
 does not inherit historical scenic reference pixels. Each asset requires its own
 artwork and activation approval before entering the static Metro asset map.

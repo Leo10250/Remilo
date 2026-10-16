@@ -3,7 +3,7 @@ import type { Tone } from '../domain/actions';
 import type { OriginParams } from '../domain/navigation';
 import { captureFeedback, presentFeedback, subscribeLanguage } from '../localization';
 export type Notice = { message: string; tone?: Tone; persistent?: boolean;
-  action?: { label: string; occurrenceId?: string; segmentId?: string; origin?: OriginParams; alarmCheck?: OriginParams; undoDelete?: { id: string; revision: number; operationId: string } }; id: number };
+  action?: { label: string; occurrenceId?: string; segmentId?: string; origin?: OriginParams; alarmCheck?: OriginParams; undoRoutineTrash?: { id: string; revision: number; operationId: string }; undoDelete?: { id: string; revision: number; operationId: string } }; id: number };
 let notice: Notice | null = null;
 let retainedNotice: unknown;
 let sequence = 0;

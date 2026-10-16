@@ -596,3 +596,24 @@ normal alarm/overdue reminder use. Record task success, errors, help required an
 misunderstandings, then refine observed problems. Include actual Android IME,
 TalkBack, 200% text, narrow/landscape, both languages and all eight pairs. Host
 tests and web fixtures cannot complete these physical gates or authorize distribution.
+
+## Routine/photo/widget refinement — 16 October 2026
+
+Exercise selection must preserve every row/key/ordinal, keep a visible selected
+state and never change checks. Verify native-confirmed advance and Undo after
+final completion, contextual menu route/scroll preservation, shared date/time
+geometry, examples and semantic chevrons. Review EN/ZH and 100–200% text.
+
+Verify CE15→16 migration; whole-family Trash/Restore/Purge at journal checkpoints;
+preserved child states; stale app/widget delivery guards; no retroactive dates or
+catch-up prompts; purge exclusions against old backups; and accurate mixed Trash
+pagination/counts. Photo tests cover full frame, alpha/orientation/downsampling,
+cancel/replace/draft leases, future-only snapshots and referenced-file retention.
+Archive tests cover images, legacy JSON, corruption, missing assets, safe entries,
+size limits, copy conflicts and uncertain receipt replay.
+
+Review actual Glance RemoteViews at 300×240 and 300×440 plus summary/large text,
+eight appearance pairs and both languages. Resume/Done/Undo labels and targets
+must fit, with no giant spacer or nested routine card. Signed-phone picker,
+launcher resizing/reconfiguration, TalkBack, IME and end-to-end observations remain
+in the consolidated acceptance run; native/browser host captures do not close them.

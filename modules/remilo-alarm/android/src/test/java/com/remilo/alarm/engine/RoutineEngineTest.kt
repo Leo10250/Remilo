@@ -84,6 +84,93 @@ class RoutineEngineTest {
   private fun draft(mode: String = "None") = mapOf("title" to "My private weekly routine", "minutes" to 540, "mode" to mode, "listId" to null, "days" to week())
 
   private fun widget(number: Int = 1) = request { engine.widgetSnapshot(number) }
+  private fun family(id: String, kind: String, revision: Long, operation: String = "$kind:$revision") = command(mapOf(
+    "kind" to kind, "routineId" to id, "expectedRevision" to revision, "operationId" to operation))
+  @Test fun familyTrashHidesAllNormalCollectionsPreservesChecksAndRestoresAsOneRow() {
+    val id = create(); val monday = read(id); command(action(monday)); widgetConfigure(id); val stale = widget().doneToken!!
+    val beforeTrash = read(id)
+    val deleted = family(id,"TrashRoutine",1)
+    assertEquals("Applied",deleted["status"]); assertTrue(rows().none { (it["routine"] as? Map<*,*>)?.get("routineId") == id })
+    assertTrue(request { engine.queryRoutines() }.isEmpty()); assertNull(request { engine.routineSession(id,null) })
+    val trash = rows("deleted"); assertEquals(1,trash.size); assertEquals("RoutineFamily",trash.single()["kind"])
+    assertEquals(1,(trash.single()["routineFamily"] as Map<*,*>)["recordedDays"])
+    assertEquals("Rejected",widgetAct(stale)["status"]); assertNull(widget().doneToken)
+    assertEquals("IN_TRASH",command(action(monday,operation="stale-app"))["errorCode"])
+    family(id,"RestoreRoutine",2)
+    assertEquals(1,read(id)["completedCount"]); assertTrue(rows("deleted").isEmpty())
+    assertEquals("STALE_REVISION",command(action(beforeTrash,index=1,operation="stale-after-restore"))["errorCode"])
+    assertEquals("Rejected",widgetAct(stale)["status"]); assertEquals(1,read(id)["completedCount"])
+    assertEquals("Applied",family(id,"TrashRoutine",1)["status"]) // Receipt retry cannot trash the restored family.
+    assertEquals(1,read(id)["completedCount"])
+  }
+  @Test fun restorePreservesChildTrashAndPausedStateAndNeverCreatesDaysSpentInTrash() {
+    val id = create(); val monday = read(id)
+    command(mapOf("kind" to "Delete","operationId" to "child-trash","occurrenceId" to monday["occurrenceId"],"expectedRevision" to 1))
+    family(id,"PauseRoutine",1); family(id,"TrashRoutine",2)
+    now = instant("2026-10-15T12:00:00Z"); restart(); family(id,"RestoreRoutine",3)
+    assertEquals("Paused",request { engine.queryRoutines() }.single()["state"])
+    assertEquals(true,read(id,"2026-10-12")["deleted"])
+    val history = request { engine.routineHistory(id,null) }["items"] as List<*>
+    assertTrue(history.isEmpty())
+    family(id,"ResumeRoutine",4); assertEquals("2026-10-15",read(id)["date"])
+    assertFalse(read(id)["ended"] as Boolean)
+    assertTrue((request { engine.routineHistory(id,null) }["items"] as List<*>).isEmpty())
+  }
+  @Test fun familyTrashRecoveryIsReceiptStableAtEveryCheckpoint() {
+    for(stage in listOf("family-captured","family-fenced","family-before-commit","family-committed")) {
+      val id = create(operation="create-$stage"); val job=mapOf("kind" to "TrashRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "trash-$stage")
+      failAt = stage; runCatching { command(job) }; restart()
+      assertEquals("Applied",command(job)["status"])
+      assertTrue(rows("deleted").any { it["id"] == id }); assertTrue(request { engine.queryRoutines() }.none { it["id"] == id })
+    }
+  }
+  @Test fun purgedRoutineCannotReturnFromAnOldBackupWithoutExplicitCopy() {
+    val id = create(); val json = request { engine.exportBackup() }
+    family(id,"TrashRoutine",1); family(id,"PurgeRoutine",2)
+    assertEquals(listOf(id),BackupCodec.decode(request { engine.exportBackup() }).purgedRoutines.map { it.id })
+    assertTrue(rows("deleted").isEmpty()); restart()
+    val preview = request { engine.previewImport(json) }["items"] as List<Map<String,Any?>>
+    assertEquals(true,preview.single()["conflict"])
+    request { engine.importBackup(json,emptyList(),"preserve-erased") }
+    assertTrue(request { engine.queryRoutines() }.isEmpty())
+    request { engine.importBackup(json,listOf(id),"copy-erased") }
+    assertNotEquals(id,request { engine.queryRoutines() }.single()["id"])
+  }
+  @Test @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+  fun customPhotoRevisionsAndBackupPreserveHistoryAndReferencedAssets() {
+    val store=ExerciseImages(context)
+    fun image(color: Int, lease: String): ExerciseImage {
+      val source=java.io.File(context.cacheDir,"$lease.png")
+      val bitmap=android.graphics.Bitmap.createBitmap(80,120,android.graphics.Bitmap.Config.ARGB_8888); bitmap.eraseColor(color)
+      source.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }; bitmap.recycle()
+      val photo=store.normalize(android.net.Uri.fromFile(source)); request { engine.stageExerciseImage(photo,lease) }; return photo
+    }
+    val old=image(android.graphics.Color.BLUE,"old-photo")
+    val replacement=image(android.graphics.Color.GREEN,"new-photo")
+    fun days(photo: ExerciseImage) = week().map { day -> day + ("exercises" to (day["exercises"] as List<Map<String,Any?>>).map { it + ("customImageId" to photo.id) }) }
+    val created=command(draft() + mapOf("kind" to "CreateRoutine","operationId" to "photo-plan","startsOn" to "2026-10-12","days" to days(old)))
+    val id=(created["routine"] as Map<*,*>)["id"] as String
+    command(draft() + mapOf("kind" to "EditRoutine","operationId" to "photo-edit","routineId" to id,"expectedRevision" to 1,"days" to days(replacement)))
+    assertEquals(old.id,steps(read(id)).first()["customImageId"])
+    now=instant("2026-10-13T12:00:00Z"); assertEquals(replacement.id,steps(read(id)).first()["customImageId"])
+    assertEquals(old.id,steps(read(id,"2026-10-12")).first()["customImageId"])
+    val bundle=BackupCodec.decode(request { engine.exportBackup() }); assertEquals(setOf(old.id,replacement.id),bundle.images.map { it.id }.toSet())
+    for(photo in listOf(old,replacement)) store.file(photo.id).setLastModified(System.currentTimeMillis()-172_800_000)
+    request { engine.releaseExerciseImage("old-photo"); engine.releaseExerciseImage("new-photo") }
+    assertTrue(store.file(old.id).isFile); assertTrue(store.file(replacement.id).isFile)
+    family(id,"TrashRoutine",2); assertTrue(store.file(old.id).isFile)
+    family(id,"PurgeRoutine",3); request { engine.releaseExerciseImage("cleanup") }
+    assertFalse(store.file(old.id).exists()); assertFalse(store.file(replacement.id).exists())
+  }
+  @Test fun familyTrashRoundTripsAndRestoresItsPreviousProgress() {
+    val id = create(); command(action(read(id))); family(id,"TrashRoutine",1)
+    val json = request { engine.exportBackup() }; val bundle=BackupCodec.decode(json)
+    assertEquals("Trashed",bundle.routines.single().state)
+    request { engine.importBackup(json,listOf(id),"copy-trash") }
+    val all=rows("deleted"); assertEquals(2,all.size)
+    val copied=all.first { it["id"] != id }; family(copied["id"] as String,"RestoreRoutine",(copied["revision"] as Number).toLong())
+    assertEquals(1,read(copied["id"] as String)["completedCount"])
+  }
   private fun widgetAct(token: String, number: Int = 1) = request { engine.widgetAction(number, token) }
   private fun widgetConfigure(id: String?, mode: String = "Routine", number: Int = 1, revision: Long = 0) = request { engine.configureWidget(number, mode, id, revision) }
 
@@ -263,7 +350,7 @@ class RoutineEngineTest {
   @Test fun backupCopyAndPurgeKeepWholeFamilyIdentityAndProgress() {
     val id = create(); command(action(read(id)))
     val json = request { engine.exportBackup() }; val decoded = BackupCodec.decode(json)
-    assertEquals(6, JSONObject(json).getInt("version")); assertEquals(1, decoded.routineSessions.size)
+    assertEquals(7, JSONObject(json).getInt("version")); assertEquals(1, decoded.routineSessions.size)
     val restore = request { engine.importBackup(json,listOf(id),"restore-copy") }; assertEquals("Applied",restore["status"])
     assertEquals("Applied", request { engine.importBackup(json,listOf(id),"restore-copy") }["status"])
     val plans = request { engine.queryRoutines() }; assertEquals(2,plans.size)
@@ -457,7 +544,7 @@ class RoutineEngineTest {
       "expectedRevision" to 1, "notes" to "Tomorrow instructions", "sound" to "remilo", "vibration" to false))
     assertEquals("Original instructions", read(id)["notes"]); assertEquals("Alarm",read(id)["mode"])
     val backup = request { engine.exportBackup() }; val decoded = BackupCodec.decode(backup)
-    assertEquals(6,JSONObject(backup).getInt("version")); assertEquals("Original instructions",decoded.routineVersions.first().notes)
+    assertEquals(7,JSONObject(backup).getInt("version")); assertEquals("Original instructions",decoded.routineVersions.first().notes)
     now = instant("2026-10-13T08:00:00Z"); assertEquals("Tomorrow instructions",read(id)["notes"])
     assertEquals("Original instructions",read(id,"2026-10-12")["notes"])
   }

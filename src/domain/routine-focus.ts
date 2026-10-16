@@ -6,9 +6,8 @@ export function routineFocusStep(session: Pick<RoutineSession, 'steps'>, selecte
 }
 
 /** Advance only from the native confirmed result, including an earlier unfinished item. */
-export function nextRoutineFocus(session: Pick<RoutineSession, 'steps'>, completedId: string) {
-  const index = session.steps.findIndex(step => step.id === completedId);
-  return session.steps.slice(index + 1).find(step => !step.completed)?.id ?? session.steps.find(step => !step.completed)?.id;
+export function nextRoutineFocus(session: Pick<RoutineSession, 'steps'>, _completedId: string) {
+  return session.steps.find(step => !step.completed)?.id;
 }
 
 export function routineDayEnded(session: Pick<RoutineSession, 'ended' | 'endsAtMs'>, nowMs: number) {

@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 15/9/6. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 16/9/7. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -27,7 +27,7 @@ preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
-portable backup format 6.
+portable backup format 7 (legacy JSON readers 1–6).
 
 [P4-B linking](calendar-linking.md) adds CE 7→8 links and immutable phased
 operations. Local import/edit, link checkpoints, receipts and scheduling outbox
@@ -723,3 +723,35 @@ workers and exercise callbacks reload through the native worker before publishin
 A process-local native projection epoch rejects late older query results, while
 language/clock/zone/font presentation changes invalidate the view. This cache
 never validates commands or stores progress durably and is pruned with instances.
+
+## Routine refinement: CE16, media and portable archives
+
+CE15→16 adds routine prior-state/Trash interval metadata, immutable exercise image
+metadata and family purge exclusions. DP9 remains unchanged. A captured journaled
+Trash/Restore/Purge operation fences each family's DP plans/alert generations,
+then commits CE ownership and its receipt on the existing serialized worker.
+Recovery settles captured family operations before series replenishment. Queries
+exclude trashed children before counts/order/pagination and emit one typed
+RoutineFamily Trash projection. Restore never uses occurrence UndoDelete and
+retains preexisting child deletion, completion, skip and ended states.
+Trash and Restore advance occurrence/session revisions without changing those
+states, so an uncommitted cached command cannot revive after ownership is restored.
+
+The bridge launches a transient Photo Picker transport; the engine holds no
+Activity/React reference. Bounded decoding/I/O runs separately. Full-frame,
+orientation-correct, metadata-free WebP files (2048 px long edge, <=4 MiB) live in
+CE files under immutable SHA-256 IDs; source selection is capped at 50 MiB.
+Only metadata, references and draft leases mutate on the engine worker. GC keeps
+all plan revisions, frozen sessions, Trash, draft and export leases; abandoned
+unreferenced images and interrupted source copies become eligible for cleanup
+after 24 hours. Unlocked engine reads offer cleanup at most hourly; referenced
+history never expires. Durable content contains no picker URI.
+
+Portable format 7 is a streaming .remilo ZIP: content.json (existing 10 MB bound)
+plus media/<hash>.webp, with a 200 MiB archive/expanded bound. Validate entry paths,
+uniqueness, manifest, hashes, dimensions and decodability before installing files
+and atomically committing content references. Prepared CE import handles replace
+raw JSON in the UI; receipt-first retries bind the same handle/copy choices.
+Legacy JSON versions 1–6 remain readable. Widgets, OS handles, generations and
+private operational sessions remain excluded. Widget progress/actions retain
+native authority; Resume adds an exact exercise ID to the dated deep link.

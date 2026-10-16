@@ -10,7 +10,7 @@ object BackupCodec {
   data class Bundle(val records: List<ReminderRecord>, val nextAlerts: Map<String, Long?>,
     val history: List<HistoryRecord>, val series: List<SeriesRecord> = emptyList(), val lists: List<ListRecord> = emptyList(),
     val purged: List<PurgedOccurrence> = emptyList(), val routines: List<RoutinePlan> = emptyList(),
-    val routineVersions: List<RoutineVersion> = emptyList(), val routineSessions: List<RoutineSession> = emptyList())
+    val routineVersions: List<RoutineVersion> = emptyList(), val routineSessions: List<RoutineSession> = emptyList(), val images: List<ExerciseImage> = emptyList(), val purgedRoutines: List<PurgedRoutine> = emptyList())
   fun record(record: ReminderRecord): Map<String, Any?> = mapOf(
     "id" to record.id, "title" to record.title, "notes" to record.notes, "listName" to record.listName, "listId" to record.listId,
     "eventStartMs" to record.eventStartMs, "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs,
@@ -22,11 +22,13 @@ object BackupCodec {
     "exception" to record.exception, "skipped" to record.skipped, "deleted" to record.deleted, "routineId" to record.routineId)
   fun encode(records: List<ReminderRecord>, nextAlerts: Map<String, Long?>, history: List<HistoryRecord>, now: Long,
     series: List<SeriesRecord> = emptyList(), lists: List<ListRecord> = emptyList(), purged: List<PurgedOccurrence> = emptyList(),
-    routines: List<RoutinePlan> = emptyList(), routineVersions: List<RoutineVersion> = emptyList(), routineSessions: List<RoutineSession> = emptyList()): String {
+    routines: List<RoutinePlan> = emptyList(), routineVersions: List<RoutineVersion> = emptyList(), routineSessions: List<RoutineSession> = emptyList(), images: List<ExerciseImage> = emptyList(), purgedRoutines: List<PurgedRoutine> = emptyList()): String {
     if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000 || purged.size > 10_000 ||
       routines.size > 10_000 || routineVersions.size > 10_000 || routineSessions.size > 10_000) throw BackupLimitException()
-    val json = JSONObject(mapOf("format" to "Remilo", "version" to 6, "exportedAtMs" to now,
-      "routines" to routines.map { mapOf("id" to it.id, "revision" to it.revision, "startsOn" to it.startsOn, "state" to it.state, "pauses" to JSONArray(it.pauses)) },
+    val json = JSONObject(mapOf("format" to "Remilo", "version" to 7, "exportedAtMs" to now,
+      "images" to images.map { mapOf("id" to it.id, "mime" to it.mime, "width" to it.width, "height" to it.height, "bytes" to it.bytes) },
+      "purgedRoutines" to purgedRoutines.map { it.id },
+      "routines" to routines.map { mapOf("id" to it.id, "revision" to it.revision, "startsOn" to it.startsOn, "state" to it.state, "pauses" to JSONArray(it.pauses), "priorState" to it.priorState, "trashedAtMs" to it.trashedAtMs, "trashIntervals" to JSONArray(it.trashIntervals)) },
       "routineVersions" to routineVersions.map { mapOf("routineId" to it.routineId, "revision" to it.revision, "effectiveDate" to it.effectiveDate, "title" to it.title,
         "minutes" to it.minutes, "mode" to it.mode, "notes" to it.notes, "sound" to it.sound, "vibration" to it.vibration, "listId" to it.listId, "days" to JSONArray(it.days)) },
       "routineSessions" to routineSessions.map { mapOf("occurrenceId" to it.occurrenceId, "routineId" to it.routineId, "date" to it.date,
@@ -86,8 +88,21 @@ object BackupCodec {
   fun decode(json: String): Bundle {
     require(json.toByteArray(Charsets.UTF_8).size <= 10_000_000) { "Backup exceeds 10 MB." }
     val root = JSONObject(json)
-    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6)) { "Unsupported backup format/version." }
+    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6, 7)) { "Unsupported backup format/version." }
     val version = root.getInt("version")
+    val media = if (version >= 7) root.getJSONArray("images") else JSONArray()
+    require(media.length() <= 10_000)
+    val mediaIds = mutableSetOf<String>()
+    val images = (0 until media.length()).map { i -> val o = media.getJSONObject(i)
+      val id = text(o, "id", 64); require(id.matches(Regex("[a-f0-9]{64}")) && mediaIds.add(id))
+      val width = time(o,"width"); val height = time(o,"height"); val bytes = time(o,"bytes")
+      require(text(o,"mime",20) == "image/webp" && width in 1..2048 && height in 1..2048 && bytes in 1..4L*1024*1024)
+      ExerciseImage(id,"image/webp",width.toInt(),height.toInt(),bytes)
+    }
+    val erased = if (version >= 7) root.getJSONArray("purgedRoutines") else JSONArray()
+    require(erased.length() <= 10_000)
+    val purgedRoutines = (0 until erased.length()).map { PurgedRoutine(erased.getString(it).also { value -> require(value.isNotBlank() && value.length <= 200) }) }
+    require(purgedRoutines.distinct().size == purgedRoutines.size)
     val listItems = if (version >= 3) root.getJSONArray("lists") else JSONArray()
     require(listItems.length() <= 10_000) { "Backup contains too many lists." }
     val listIds = mutableSetOf<String>(); val listNames = mutableSetOf<String>()
@@ -178,19 +193,20 @@ object BackupCodec {
     val routineIds = mutableSetOf<String>()
     val routines = (0 until plans.length()).map { i -> val o = plans.getJSONObject(i)
       val id = text(o, "id", 200); require(id.isNotBlank() && routineIds.add(id) && series.any { it.seriesId == id })
-      val state = text(o, "state", 20); require(state in setOf("Active", "Paused"))
+      val state = text(o, "state", 20); require(state in if (version >= 7) setOf("Active", "Paused", "Trashed") else setOf("Active", "Paused"))
       val pauses = o.getJSONArray("pauses"); require(pauses.length() <= 10_000)
       // Wall-clock corrections can make actual action times run backwards.
       for (p in 0 until pauses.length()) { val pause = pauses.getJSONObject(p); time(pause, "from")
         if (!pause.isNull("until")) time(pause, "until") }
-      RoutinePlan(id, revision = if (version >= 6) time(o,"revision").also { require(it >= 1) } else 1, startsOn = date(o, "startsOn"), state = state, pauses = pauses.toString())
+      RoutinePlan(id, revision = if (version >= 6) time(o,"revision").also { require(it >= 1) } else 1, startsOn = date(o, "startsOn"), state = state, pauses = pauses.toString(), priorState = if (version >= 7) text(o,"priorState",20).also { require(it in setOf("Active","Paused")) } else state, trashedAtMs = if(version >= 7) time(o,"trashedAtMs") else 0, trashIntervals = if(version >= 7) o.getJSONArray("trashIntervals").also { intervals -> require(intervals.length() <= 10_000); for(n in 0 until intervals.length()) { val row=intervals.getJSONObject(n); time(row,"from"); if(!row.isNull("until")) time(row,"until") } }.toString() else "[]")
     }
     fun steps(a: JSONArray): Set<String> {
       require(a.length() <= 100); val found = mutableSetOf<String>()
       for (i in 0 until a.length()) { val s = a.getJSONObject(i); val id = text(s, "id", 200)
         require(id.isNotBlank() && found.add(id) && text(s, "name", 200).isNotBlank())
         text(s, "target", 1000); text(s, "notes", 10_000)
-        require(text(s, "illustration", 80, true).matches(Regex("[a-z0-9-]*"))) }
+        val illustration = text(s, "illustration", 80, true); require(illustration.matches(Regex("[a-z0-9-]*")))
+        val image = text(s,"customImageId",64,true); require(image.isEmpty() || version >= 7 && image in mediaIds && illustration.isEmpty()) }
       return found
     }
     val versionIds = mutableSetOf<Pair<String,Long>>()
@@ -216,6 +232,7 @@ object BackupCodec {
         if (version >= 6) text(o, "sound", 20).also { require(it in setOf("remilo", "system")) } else "remilo",
         if (version >= 6) boolean(o, "vibration") else false, revision)
     }
+    require(purgedRoutines.none { it.id in routineIds || series.any { s -> s.seriesId == it.id } })
     routines.forEach { p -> require(routineVersions.any { it.routineId == p.id && it.effectiveDate == p.startsOn }) }
     val restoredRoutines = routines.map { p ->
       val latest = routineVersions.filter { it.routineId == p.id }.maxOf { it.revision }
@@ -250,6 +267,6 @@ object BackupCodec {
         time(change,"atMs"); if (!change.isNull("stepId")) { require(text(change,"stepId",200) in stepIds); boolean(change,"completed") } }
       RoutineSession(occurrence,id,day,v,snapshot.toString(),done.toString(),boolean(o,"ended"),changes = changes.toString(), versionRevision = revision)
     }
-    return Bundle(records, nextAlerts, history, series, lists, purged, restoredRoutines, routineVersions, routineSessions)
+    return Bundle(records, nextAlerts, history, series, lists, purged, restoredRoutines, routineVersions, routineSessions, images, purgedRoutines)
   }
 }

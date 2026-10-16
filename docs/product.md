@@ -317,7 +317,7 @@ See the [routine design contract](design/current/weekly-routines.md).
 
 The Android home-screen widget supports independent Routine Focus and Today
 configurations. Focus offers the first unfinished exercise, target, daily count,
-Complete & continue (Complete exercise for the last unfinished item) and named
+Resume, separate guarded Done and named
 Undo through the existing native session. Today places an
 optional pinned Focus above today's and overdue ordinary reminders from all lists;
 reminder rows open their existing Details. Rest days remain informational and
@@ -406,8 +406,9 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   retry receipts. Local recovery and older backup imports into the same installation
   cannot resurrect that identity by default; an explicitly requested backup copy
   has a separate identity. Existing
-  exported files are unchanged. Backup format 6 retains minimal repeating exclusions
-  and adds weekly plans, dated progress and correction history. Versions 1–4 remain
+  exported files are unchanged. Backup format 7 retains minimal repeating exclusions,
+  weekly plans, dated progress and correction history, and adds private exercise
+  photos plus whole-routine Trash. JSON versions 1–6 remain
   readable. Unknown replies keep the existing command/batch
   guards; retry uses the same operation, and batches report confirmed partial results.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
@@ -486,3 +487,19 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   owns popup layout and expansion. Channel identities and audio deadlines remain.
 - The owned geometric R and notification cue supply adaptive, monochrome, legacy, notification
   and splash variants. Application ID and signing identity remain unchanged.
+
+## Routine refinement — 16 October 2026
+
+The illustrated Focus card keeps every exercise visible below it, with a selected
+Viewing state. Shared creation date/time controls and clear exercise examples
+match ordinary reminders. Contextual More stays over its originating screen.
+Whole-routine Trash hides the plan and all recorded days; Restore preserves prior
+states and progress, and permanent deletion retains identity exclusions.
+
+An optional custom still photo is chosen through Android Photo Picker, previewed
+without cropping and stored privately as an immutable normalized image. The full
+composition is retained, with bounded resolution and metadata removed. Photo
+changes apply tomorrow and history retains its original image. Portable format 7
+archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
+The widget prefers compact wide placement and uses Resume + Done, explicit date,
+numeric progress, eligible named Undo and native stale-action protection.

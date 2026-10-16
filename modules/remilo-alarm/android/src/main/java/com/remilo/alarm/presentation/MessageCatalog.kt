@@ -5,7 +5,7 @@ import com.remilo.alarm.R
 
 object MessageCatalog {
   data class Entry(val resource: Int, val plural: Boolean, val args: List<String>, val english: String, val calendarStatus: Boolean)
-  val entries: Map<String, Entry> by lazy { buildMap { putAll(chunk0()); putAll(chunk1()); putAll(chunk2()); putAll(chunk3()); putAll(chunk4()); putAll(chunk5()); putAll(chunk6()); putAll(chunk7()); putAll(chunk8()); putAll(chunk9()); putAll(chunk10()); putAll(chunk11()); putAll(chunk12()); putAll(chunk13()); putAll(chunk14()); putAll(chunk15()); putAll(chunk16()); putAll(chunk17()); putAll(chunk18()); putAll(chunk19()); putAll(chunk20()); putAll(chunk21()); putAll(chunk22()); putAll(chunk23()); putAll(chunk24()); putAll(chunk25()); } }
+  val entries: Map<String, Entry> by lazy { buildMap { putAll(chunk0()); putAll(chunk1()); putAll(chunk2()); putAll(chunk3()); putAll(chunk4()); putAll(chunk5()); putAll(chunk6()); putAll(chunk7()); putAll(chunk8()); putAll(chunk9()); putAll(chunk10()); putAll(chunk11()); putAll(chunk12()); putAll(chunk13()); putAll(chunk14()); putAll(chunk15()); putAll(chunk16()); putAll(chunk17()); putAll(chunk18()); putAll(chunk19()); putAll(chunk20()); putAll(chunk21()); putAll(chunk22()); putAll(chunk23()); putAll(chunk24()); putAll(chunk25()); putAll(chunk26()); } }
   private fun chunk0(): Map<String, Entry> = mapOf(
     "m_bf4156d6b15c" to Entry(R.string.l10n_m_bf4156d6b15c, false, listOf(), "Automatic Calendar sync enabled", false),
     "m_8089865e173e" to Entry(R.string.l10n_m_8089865e173e, false, listOf(), "Recovered Calendar alerts enabled", false),
@@ -1915,8 +1915,8 @@ object MessageCatalog {
     "routine_progress" to Entry(R.string.l10n_routine_progress, false, listOf("done", "total"), "{done} of {total} completed", false),
     "routine_add_exercise" to Entry(R.string.l10n_routine_add_exercise, false, listOf(), "Add exercise", false),
     "routine_name" to Entry(R.string.l10n_routine_name, false, listOf(), "Exercise name", false),
-    "routine_target" to Entry(R.string.l10n_routine_target, false, listOf(), "Target (optional)", false),
-    "routine_guidance" to Entry(R.string.l10n_routine_guidance, false, listOf(), "Guidance (optional)", false),
+    "routine_target" to Entry(R.string.l10n_routine_target, false, listOf(), "Sets, reps or time", false),
+    "routine_guidance" to Entry(R.string.l10n_routine_guidance, false, listOf(), "How to do it", false),
     "routine_edit_exercise" to Entry(R.string.l10n_routine_edit_exercise, false, listOf(), "Edit exercise", false),
     "routine_move_up" to Entry(R.string.l10n_routine_move_up, false, listOf(), "Move up", false),
     "routine_move_down" to Entry(R.string.l10n_routine_move_down, false, listOf(), "Move down", false),
@@ -1941,7 +1941,7 @@ object MessageCatalog {
     "routine_day_ended" to Entry(R.string.l10n_routine_day_ended, false, listOf(), "This day has ended. Corrections update history only.", false),
     "routine_deleted" to Entry(R.string.l10n_routine_deleted, false, listOf(), "This session is in Trash. Restore it there before making corrections.", false),
     "routine_focus" to Entry(R.string.l10n_routine_focus, false, listOf(), "Focus", false),
-    "routine_sequence" to Entry(R.string.l10n_routine_sequence, false, listOf(), "Completed & upcoming", false),
+    "routine_sequence" to Entry(R.string.l10n_routine_sequence, false, listOf(), "Exercises", false),
     "routine_done" to Entry(R.string.l10n_routine_done, false, listOf(), "Mark as done", false),
     "routine_undo_completion" to Entry(R.string.l10n_routine_undo_completion, false, listOf(), "Undo completion", false),
     "routine_next" to Entry(R.string.l10n_routine_next, false, listOf(), "Next exercise", false),
@@ -1970,7 +1970,7 @@ object MessageCatalog {
     "routine_history_changes" to Entry(R.string.l10n_routine_history_changes, false, listOf(), "Changes to this session", false),
     "routine_correction_at" to Entry(R.string.l10n_routine_correction_at, false, listOf("time"), "Corrected {time}", false),
     "routine_select_exercise" to Entry(R.string.l10n_routine_select_exercise, false, listOf(), "Choose an exercise below", false),
-    "routine_starts" to Entry(R.string.l10n_routine_starts, false, listOf(), "Starts", false),
+    "routine_starts" to Entry(R.string.l10n_routine_starts, false, listOf(), "Starts on", false),
     "routine_empty" to Entry(R.string.l10n_routine_empty, false, listOf(), "No routines yet", false),
     "routine_instructions_fallback" to Entry(R.string.l10n_routine_instructions_fallback, false, listOf(), "Follow your saved target and guidance.", false)
   )
@@ -2015,7 +2015,7 @@ object MessageCatalog {
     "widget_description" to Entry(R.string.l10n_widget_description, false, listOf(), "See daily routine progress and today’s reminders.", false),
     "widget_unlock" to Entry(R.string.l10n_widget_unlock, false, listOf(), "Unlock to view Remilo.", false),
     "widget_add" to Entry(R.string.l10n_widget_add, false, listOf(), "Add to Home screen", false),
-    "widget_done" to Entry(R.string.l10n_widget_done, false, listOf(), "Mark as done", false),
+    "widget_done" to Entry(R.string.l10n_widget_done, false, listOf(), "Done", false),
     "widget_preview_title" to Entry(R.string.l10n_widget_preview_title, false, listOf(), "Front plank", false),
     "widget_preview_target" to Entry(R.string.l10n_widget_preview_target, false, listOf(), "3 × 40 s", false),
     "widget_settings" to Entry(R.string.l10n_widget_settings, false, listOf(), "Widget settings", false),
@@ -2074,8 +2074,8 @@ object MessageCatalog {
     "exercise_front_plank_description" to Entry(R.string.l10n_exercise_front_plank_description, false, listOf(), "Side view of a person holding a forearm plank on a mat, supported by forearms and toes.", false),
     "routine_correct_checkmarks" to Entry(R.string.l10n_routine_correct_checkmarks, false, listOf(), "Correct checkmarks", false),
     "routine_mark_named" to Entry(R.string.l10n_routine_mark_named, false, listOf("name"), "Mark {name} as done", false),
-    "routine_illustration" to Entry(R.string.l10n_routine_illustration, false, listOf(), "Illustration", false),
-    "routine_no_illustration" to Entry(R.string.l10n_routine_no_illustration, false, listOf(), "No illustration", false),
+    "routine_illustration" to Entry(R.string.l10n_routine_illustration, false, listOf(), "Exercise image", false),
+    "routine_no_illustration" to Entry(R.string.l10n_routine_no_illustration, false, listOf(), "No image", false),
     "routine_illustration_unavailable" to Entry(R.string.l10n_routine_illustration_unavailable, false, listOf(), "Illustration unavailable", false),
     "routine_exercise_editor_title" to Entry(R.string.l10n_routine_exercise_editor_title, false, listOf(), "Exercise", false),
     "routine_alarm_start" to Entry(R.string.l10n_routine_alarm_start, false, listOf(), "Start routine", false),
@@ -2134,6 +2134,48 @@ object MessageCatalog {
     "exercise_one_arm_dumbbell_row_description" to Entry(R.string.l10n_exercise_one_arm_dumbbell_row_description, false, listOf(), "A person supported on a bench, drawing one dumbbell toward the hip.", false),
     "routine_editor_new" to Entry(R.string.l10n_routine_editor_new, false, listOf(), "New weekly routine", false),
     "routine_editor_edit" to Entry(R.string.l10n_routine_editor_edit, false, listOf(), "Edit weekly routine", false),
-    "routine_undo_capacity_hint" to Entry(R.string.l10n_routine_undo_capacity_hint, false, listOf(), "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day.", false)
+    "routine_undo_capacity_hint" to Entry(R.string.l10n_routine_undo_capacity_hint, false, listOf(), "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day.", false),
+    "field_required_label" to Entry(R.string.l10n_field_required_label, false, listOf("label"), "{label} (required)", false),
+    "routine_viewing" to Entry(R.string.l10n_routine_viewing, false, listOf(), "Viewing", false)
+  )
+  private fun chunk26(): Map<String, Entry> = mapOf(
+    "routine_viewing_position" to Entry(R.string.l10n_routine_viewing_position, false, listOf("current", "total"), "Viewing exercise · {current} of {total}", false),
+    "routine_exercise_name" to Entry(R.string.l10n_routine_exercise_name, false, listOf(), "Exercise name", false),
+    "routine_name_example" to Entry(R.string.l10n_routine_name_example, false, listOf(), "Front plank", false),
+    "routine_target_example" to Entry(R.string.l10n_routine_target_example, false, listOf(), "3 × 40 seconds", false),
+    "routine_target_help" to Entry(R.string.l10n_routine_target_help, false, listOf(), "Include weight, incline or intervals when needed.", false),
+    "routine_guidance_example" to Entry(R.string.l10n_routine_guidance_example, false, listOf(), "Complete all three holds, then continue.", false),
+    "routine_guidance_help" to Entry(R.string.l10n_routine_guidance_help, false, listOf(), "Add setup tips or technique reminders.", false),
+    "routine_image_help" to Entry(R.string.l10n_routine_image_help, false, listOf(), "Choose a library illustration or add your own photo.", false),
+    "routine_add_photo" to Entry(R.string.l10n_routine_add_photo, false, listOf(), "Add your photo", false),
+    "routine_replace_photo" to Entry(R.string.l10n_routine_replace_photo, false, listOf(), "Replace photo", false),
+    "routine_use_photo" to Entry(R.string.l10n_routine_use_photo, false, listOf(), "Use photo", false),
+    "routine_choose_another_photo" to Entry(R.string.l10n_routine_choose_another_photo, false, listOf(), "Choose another photo", false),
+    "routine_remove_image" to Entry(R.string.l10n_routine_remove_image, false, listOf(), "Remove image", false),
+    "routine_photo_for" to Entry(R.string.l10n_routine_photo_for, false, listOf("name"), "Photo for {name}", false),
+    "routine_view_image" to Entry(R.string.l10n_routine_view_image, false, listOf(), "View image", false),
+    "routine_image_unavailable" to Entry(R.string.l10n_routine_image_unavailable, false, listOf(), "Image unavailable", false),
+    "routine_photo_error" to Entry(R.string.l10n_routine_photo_error, false, listOf(), "Could not add this photo. Choose a still image under 50 MiB.", false),
+    "routine_photo_source_large" to Entry(R.string.l10n_routine_photo_source_large, false, listOf(), "This photo is larger than 50 MiB. Choose a smaller image.", false),
+    "routine_photo_output_large" to Entry(R.string.l10n_routine_photo_output_large, false, listOf(), "This photo is still too large after resizing. Choose a simpler or smaller image.", false),
+    "routine_photo_unsupported" to Entry(R.string.l10n_routine_photo_unsupported, false, listOf(), "Choose a still photo. Animated images are not supported.", false),
+    "routine_photo_unreadable" to Entry(R.string.l10n_routine_photo_unreadable, false, listOf(), "This image could not be read. Try another photo.", false),
+    "routine_photo_storage_full" to Entry(R.string.l10n_routine_photo_storage_full, false, listOf(), "There is not enough storage to add this photo. Free some space and try again.", false),
+    "routine_trash_hint" to Entry(R.string.l10n_routine_trash_hint, false, listOf(), "Moves this weekly routine and its recorded days to Trash.", false),
+    "routine_trashed" to Entry(R.string.l10n_routine_trashed, false, listOf(), "Weekly routine moved to Trash", false),
+    "routine_restored" to Entry(R.string.l10n_routine_restored, false, listOf(), "Weekly routine restored", false),
+    "routine_purged" to Entry(R.string.l10n_routine_purged, false, listOf(), "Weekly routine permanently deleted", false),
+    "routine_in_trash" to Entry(R.string.l10n_routine_in_trash, false, listOf(), "Routine in Trash", false),
+    "routine_trash_days" to Entry(R.string.l10n_routine_trash_days, false, listOf("count"), "{count} recorded days", false),
+    "widget_resume" to Entry(R.string.l10n_widget_resume, false, listOf(), "Resume", false),
+    "widget_next" to Entry(R.string.l10n_widget_next, false, listOf("name"), "Next: {name}", false),
+    "widget_done_count" to Entry(R.string.l10n_widget_done_count, false, listOf("done", "total"), "{done} of {total} done", false),
+    "backup_photos" to Entry(R.string.l10n_backup_photos, false, listOf("count"), "Includes {count} exercise photos", false),
+    "backup_photo_hint" to Entry(R.string.l10n_backup_photo_hint, false, listOf(), "Backups include saved exercise photos and routine history. Older JSON backups can also be restored.", false),
+    "widget_preview_progress" to Entry(R.string.l10n_widget_preview_progress, false, listOf(), "1 of 4 done", false),
+    "widget_preview_next" to Entry(R.string.l10n_widget_preview_next, false, listOf(), "Next: Side plank", false),
+    "widget_refresh" to Entry(R.string.l10n_widget_refresh, false, listOf(), "Refresh", false),
+    "widget_preview_compact" to Entry(R.string.l10n_widget_preview_compact, false, listOf(), "Compact", false),
+    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false)
   )
 }

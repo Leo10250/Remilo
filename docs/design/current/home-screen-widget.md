@@ -16,8 +16,8 @@ rows with the accurate total and View Agenda. Rows open existing Details.
 
 Focus shows the selected routine, explicit date, numerical daily progress, first
 unfinished exercise and its target, with a 4 dp segmented (up to 12 exercises) or
-continuous bar alongside the numeric count. Complete & continue (Complete exercise
-for one remaining item) binds that exact exercise/date;
+continuous bar alongside the numeric count. Resume opens that exact date and displayed exercise. A separate Done action
+binds that exact exercise/date;
 advance only after native acknowledgement. Show the most recent widget-completed
 exercise's name beside an explicitly labelled Undo, including after the final
 exercise. The app retains all other corrections and Skip/Pause/history actions.
@@ -32,19 +32,28 @@ items retain 2 dp seams and 16/4 dp corners, with opaque themed surfaces. Native
 setup uses compact chrome, one persistent Save and a production-composition preview
 with inert controls. Cancellation never commits configuration or exercise checks.
 
-The default footprint is 4×4, with responsive 180×110, 300×280 and 300×440 dp
-compositions. The compact summary opens Remilo; interactive sizes provide Refresh,
-Settings and guarded exercise actions. At font scale 1.6 and above, use summary
-content rather than shrink text or touch targets. Primary targets remain at least
-56 dp and other controls at least 48 dp. English and Simplified Chinese share the
-same structure; authored exercises, targets and reminder names remain unchanged.
-Between 1.2 and 1.6, an expanded widget with a routine prioritizes its Focus and
-full-width stacked completion/Undo actions. Omit the secondary reminder list and
-keep exercise/target summaries to one line; the Remilo · Today header opens
-Agenda. Avoid a clipped list with targets smaller than 48 dp. At ordinary text
-sizes, reserve 88 dp for Undo and give the remaining width to completion.
-Compact summaries retain the selected routine's visible name, date and progress
-or outcome so independent routine widgets remain distinguishable.
+The preferred footprint is 4×2. Actual available dp, not launcher cell labels,
+selects 180×110 summary, 300×240 interactive and 300×440 expanded compositions.
+Use a single opaque reading surface, system outer corners and 12 dp internal
+padding. No nested routine card or weighted gap above a bottom action.
+
+The compact hierarchy is Classic/Remilo plus weekday/date (14 sp), routine title
+(22 sp), segmented progress and numeric count (14 sp), exercise (18 sp) and target
+(14 sp). Resume is the 56 dp primary action to the exercise's right, with current
+16 dp button corners. The 48 dp footer contains Next, neutral Refresh and a
+separate Done action. Eligible named Undo replaces compact Next, including after
+final completion. Expanded Routine mode adds upcoming exercises; expanded Today
+adds the native reminder list. Compact Today keeps an accurate Agenda link/count.
+
+Summary sizes and font scale 1.6+ open the exact dated session instead of squeezing
+controls. At 1.2–1.6, interactive Focus requires expanded height and omits secondary
+lists. Scale actions/text, keep 56/48 dp targets, and prioritize identity/outcome
+in very small summaries. No text shrinking. EN/ZH use the same anatomy.
+
+Reconfiguration uses the launcher's Edit/Configure affordance; remove the Settings
+gear from routine content. Setup and picker previews render this actual Glance
+composition with inert actions. Missing/trashed selections stay explicit and
+never switch to another plan. No exercise art or new scenery in the widget.
 
 ## Freshness and privacy
 

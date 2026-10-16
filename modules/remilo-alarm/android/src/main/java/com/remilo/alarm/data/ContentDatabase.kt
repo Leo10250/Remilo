@@ -79,6 +79,7 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("DELETE FROM lists WHERE id = :id") fun removeList(id: String)
   @Query("SELECT * FROM series ORDER BY createdAtMs") fun series(): List<SeriesRecord>
   @Query("SELECT * FROM series WHERE id = :id") fun series(id: String): SeriesRecord?
+  @Query("DELETE FROM series WHERE seriesId = :id") fun purgeSeriesFamily(id: String)
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun series(record: SeriesRecord)
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun pendingSeries(record: PendingSeries)
   @Query("SELECT * FROM pending_series") fun pendingSeries(): List<PendingSeries>
@@ -104,7 +105,8 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   CalendarManagedPolicy::class, CalendarManagedPreview::class, CalendarManagedSetupOperation::class,
   CalendarManagedCandidate::class, CalendarManagedCache::class, CalendarManagedExport::class,
   CalendarManagedDisposition::class, CalendarManagedSuppression::class, CalendarManagedIssue::class,
-  CalendarManagedReceipt::class, RoutinePlan::class, RoutineVersion::class, RoutineSession::class, RoutineOperation::class], version = 15, exportSchema = true)
+  CalendarManagedReceipt::class, RoutinePlan::class, RoutineVersion::class, RoutineSession::class, RoutineOperation::class,
+  ExerciseImage::class, PurgedRoutine::class], version = ContentDatabase.VERSION, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun routines(): RoutineDao
@@ -114,11 +116,21 @@ abstract class ContentDatabase : RoomDatabase() {
   abstract fun sync(): CalendarSyncDao
   abstract fun managedCalendar(): CalendarManagedDao
   companion object {
+    const val VERSION = 16
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
       .addCallback(object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
       }).build()
+    val MIGRATION_15_16 = object : Migration(15, 16) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE routine_plans ADD COLUMN priorState TEXT NOT NULL DEFAULT 'Active'")
+        db.execSQL("ALTER TABLE routine_plans ADD COLUMN trashedAtMs INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE routine_plans ADD COLUMN trashIntervals TEXT NOT NULL DEFAULT '[]'")
+        db.execSQL("CREATE TABLE exercise_images (id TEXT NOT NULL PRIMARY KEY, mime TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE purged_routines (id TEXT NOT NULL PRIMARY KEY)")
+      }
+    }
     val MIGRATION_14_15 = object : Migration(14, 15) {
       override fun migrate(db: SupportSQLiteDatabase) {
         // Old effective dates are not identities: clock travel can make an edit reuse one.

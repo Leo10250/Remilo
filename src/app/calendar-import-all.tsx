@@ -123,7 +123,7 @@ export default function CalendarImportAll() {
           onChange={value => { setSuppress(value); setOverrides(old => Object.fromEntries(Object.entries(old).map(([id, values]) => { const { disableReminders: _disable, ...rest } = values; return [id, rest]; }))); }} /></ConnectedGroup>
         <Copy muted>{t('m_514c71c7cda7')}{entries.some(entry => choices(entry).mode !== 'None') ? t('m_0e928a7cd037') : t('m_59a98c6d525c')} {t('m_566d757c1ea8')}</Copy>
         {!!invalid.length && <ActionFeedback tone="warning" message={invalid.length + t('m_b00778eb0515')} />}
-        <ConnectedGroup title={t('m_cde20fd4af8a')}>{entries.map(entry => <SettingRow key={entry.eventId} label={title(entry) || t('m_c9a0236cbef6')} disabled={locked}
+        <ConnectedGroup title={t('m_cde20fd4af8a')}>{entries.map(entry => <SettingRow intent="action" key={entry.eventId} label={title(entry) || t('m_c9a0236cbef6')} disabled={locked}
           description={(entry.preview.remote.schedule.allDay ? formatDate(entry.preview.remote.schedule.eventStartMs, entry.preview.remote.schedule.zoneId) + t('m_b3d544d5d55c') : scheduleDateTime(entry.preview.remote.schedule.eventStartMs, entry.preview.remote.schedule.zoneId)) + ' · ' +
             (choices(entry).mode === 'None' ? t('m_d1af410eb4d0') : choices(entry).mode + ' ' + scheduleDateTime(alert(entry), entry.preview.remote.schedule.zoneId)) + ' · ' + entry.preview.remote.schedule.zoneId + (invalid.includes(entry) ? t('m_54d1fff3c636') : '')}
           onPress={() => setSelected(entry.eventId)} />)}</ConnectedGroup>

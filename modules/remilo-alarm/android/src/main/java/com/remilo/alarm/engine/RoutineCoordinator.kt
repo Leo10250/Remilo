@@ -49,8 +49,10 @@ internal class RoutineCoordinator(private val context: Context, private val data
     at >= (it["from"] as Number).toLong() && (it["until"] == null || at < (it["until"] as Number).toLong())
   }
   fun isRoutine(record: ReminderRecord) = record.routineId != null
+  fun trashed(id: String?) = id != null && (dao.plan(id)?.state == "Trashed" || dao.purged(id) != null)
   fun visible(record: ReminderRecord): Boolean {
     if (!isRoutine(record)) return true
+    if (trashed(record.routineId)) return false
     if (alerts.find(record.id)?.state == "Replaced") return false
     val date = nominalDate(record)
     if (dao.dated(record.routineId!!, date)?.occurrenceId?.let { it != record.id } == true) return false
@@ -75,7 +77,12 @@ internal class RoutineCoordinator(private val context: Context, private val data
       "changes" to saved?.let { rows(it.changes) }.orEmpty(),
       "steps" to steps.map { it + ("completed" to (it["id"] in done)) })
   }
-  fun plans(): List<Map<String, Any?>> = dao.plans().map { planView(it) }
+  fun plans(): List<Map<String, Any?>> = dao.plans().filter { it.state != "Trashed" }.map { planView(it) }
+  fun trashRows(): List<Pair<ReminderRecord, Map<String, Any?>>> = dao.plans().filter { it.state == "Trashed" }.map { plan ->
+    val v = dao.versions(plan.id).maxBy { it.revision }
+    template(v).copy(id = plan.id, routineId = null, deleted = true, revision = plan.revision, createdAtMs = plan.trashedAtMs) to
+      (planView(plan) + ("recordedDays" to dao.sessions().count { it.routineId == plan.id }) + ("trashedAtMs" to plan.trashedAtMs))
+  }
   fun preview(input: Map<String, Any?>): Map<String, Any?> {
     val owner = (input["routineId"] as? String)?.let { dao.plan(it) ?: throw IllegalArgumentException("Choose a routine day.") }
     val date = if (owner != null) maxOf(today().plusDays(1), LocalDate.parse(owner.startsOn)).toString()
@@ -94,6 +101,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
   }
   fun session(id: String, date: String?): Map<String, Any?>? {
     val plan = dao.plan(id) ?: return null
+    if (plan.state == "Trashed") return null
     val day = date?.let(LocalDate::parse) ?: today()
     val saved = dao.dated(id, day.toString())
     if (saved != null) return db.records().find(saved.occurrenceId)?.let {
@@ -107,6 +115,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       "ended" to (day < today()), "steps" to steps, "completedCount" to 0, "totalCount" to steps.size)
   }
   fun history(id: String, cursor: String?): Map<String, Any?> {
+    if (trashed(id)) return mapOf("items" to emptyList<Any>(), "total" to 0, "nextCursor" to null)
     val all = dao.sessions().filter { it.routineId == id && (it.ended || db.records().find(it.occurrenceId)?.let { r -> r.completed || r.skipped } == true) }
       .mapNotNull { saved -> db.records().find(saved.occurrenceId)?.takeIf { !it.deleted }?.let { r ->
         mapOf("occurrenceId" to r.id, "title" to r.title, "deleted" to false) + projection(r)!! } }
@@ -146,9 +155,12 @@ internal class RoutineCoordinator(private val context: Context, private val data
         val stepId = checkedText(step["id"], 200, true)
         require(ids.add(stepId)) { "Exercise identities must be unique." }
         val illustration = checkedText(step["illustration"], 80)
+        val image = checkedText(step["customImageId"], 64)
+        require(image.isEmpty() || image.matches(Regex("[a-f0-9]{64}")) && dao.image(image) != null && ExerciseImages(context).file(image).isFile) { "Choose an available exercise photo." }
+        require(image.isEmpty() || illustration.isEmpty()) { "Choose one exercise image." }
         require(illustration.isEmpty() || illustration.matches(Regex("[a-z0-9-]+"))) { "Choose an approved illustration reference." }
         mapOf("id" to stepId, "name" to checkedText(step["name"], 200, true), "target" to checkedText(step["target"], 1000),
-          "notes" to checkedText(step["notes"], 10_000), "illustration" to illustration)
+          "notes" to checkedText(step["notes"], 10_000), "illustration" to illustration, "customImageId" to image)
       })
     }
     require(validated.any { it["type"] == "Exercises" }) { "Add at least one workout day, or pause the routine." }
@@ -175,6 +187,15 @@ internal class RoutineCoordinator(private val context: Context, private val data
       return map(dao.operation(operation)!!.result)
     }
     require(db.records().receipt(operation) == null) { "This operation was already used. Refresh and try again." }
+    if (kind in setOf("TrashRoutine", "RestoreRoutine", "PurgeRoutine")) {
+      val plan = dao.plan(command["routineId"] as? String ?: "") ?: return rejected("NOT_FOUND")
+      if ((command["expectedRevision"] as? Number)?.toDouble() != plan.revision.toDouble()) return rejected("STALE_REVISION")
+      if ((kind == "TrashRoutine") == (plan.state == "Trashed")) return rejected("NOT_ELIGIBLE")
+      val payload = JSONObject().put("family", plan.id).put("kind", kind).put("atMs", now()).put("revision", plan.revision + 1)
+      val pending = RoutineOperation(operation, fingerprint, null, payload.toString())
+      dao.operation(pending); checkpoint("family-captured"); settle(pending)
+      reconcile(); return map(dao.operation(operation)!!.result)
+    }
     if (kind == "CreateRoutine") {
       val date = checkedDate(command["startsOn"])
       require(date >= today()) { "Choose today or a future start date." }
@@ -189,6 +210,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
     }
     if (kind in setOf("EditRoutine", "PauseRoutine", "ResumeRoutine")) {
       val plan = dao.plan(command["routineId"] as? String ?: "") ?: return rejected("NOT_FOUND")
+      if (plan.state == "Trashed") return rejected("IN_TRASH")
       if ((command["expectedRevision"] as? Number)?.toDouble() != plan.revision.toDouble()) return rejected("STALE_REVISION")
       val segments = db.records().series().filter { it.seriesId == plan.id && it.state != "Archived" }
       if (kind == "EditRoutine") {
@@ -215,7 +237,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
     }
     val record = db.records().find(command["occurrenceId"] as? String ?: "") ?: return rejected("NOT_FOUND")
     val session = dao.session(record.id) ?: return rejected("NOT_FOUND")
-    if (record.deleted) return rejected("IN_TRASH")
+    if (record.deleted || trashed(record.routineId)) return rejected("IN_TRASH")
     if (command["date"] != session.date) return rejected("STALE_DATE")
     val actionAt = now()
     val historical = kind == "CorrectRoutineExercise"
@@ -250,6 +272,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       else -> null
     })
   private fun settle(operation: RoutineOperation) {
+    if (JSONObject(operation.payload).has("family")) { settleFamily(operation); return }
     val id = operation.occurrenceId ?: return
     val record = db.records().find(id) ?: run { dao.purgeOperations(id); return }
     val session = dao.session(id) ?: return
@@ -288,7 +311,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
     val oldSession = alert.sessionId
     if (!alert.dayStarted) { alert = alert.copy(dayStarted = true); alerts.put(alert) }
     if (session.ended && !alert.dayEnded) { alert = alert.copy(dayEnded = true); alerts.put(alert) }
-    val terminal = when { record.deleted -> "Deleted"; record.skipped -> "Skipped"; record.completed -> "Completed"; session.ended -> "Expired"; else -> null }
+    val terminal = when { record.deleted || trashed(record.routineId) -> "Deleted"; record.skipped -> "Skipped"; record.completed -> "Completed"; session.ended -> "Expired"; else -> null }
     if (terminal != null) {
       if (alert.state != terminal) {
         alerts.put(alert.copy(state = terminal, generation = alert.generation + 1, previousState = null, sessionId = null))
@@ -299,7 +322,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       alerts.put(alert.copy(state = "Paused", generation = alert.generation + 1, previousState = null, sessionId = null))
       try { scheduler.cancel(alert) } catch (_: Exception) { }
       AlarmNotifications(context).clearAttention(record.id)
-    } else if (alert.state in setOf("Changing", "Completed", "Skipped", "Expired") && dao.plan(session.routineId)?.state == "Active") {
+    } else if (alert.state in setOf("Changing", "Completed", "Skipped", "Expired", "Deleted") && dao.plan(session.routineId)?.state == "Active") {
       register(alert.copy(state = "Pending", generation = alert.generation + 1, previousState = null))
     }
     if (oldSession != null && alerts.find(record.id)?.sessionId != oldSession) deliveryChanged(oldSession)
@@ -324,14 +347,20 @@ internal class RoutineCoordinator(private val context: Context, private val data
     }
     if (date > today().toString() || alerts.find(record.id)?.state == "Replaced") return
     val plan = dao.plan(planId) ?: return
+    if (plan.state == "Trashed" || rows(plan.trashIntervals).any { interval ->
+        val dateStart = LocalDate.parse(date).atStartOfDay(zone()).toInstant().toEpochMilli()
+        val dateEnd = RoutinePolicy.end(LocalDate.parse(date), zone())
+        (interval["from"] as Number).toLong() <= dateStart && (interval["until"] == null || (interval["until"] as Number).toLong() >= dateEnd)
+      }) return
     val v = version(planId, date) ?: return
     if (date == today().toString() && plan.state == "Paused" || date < today().toString() && pausedAt(plan, record.definedAlarmAtMs!!)) return
     val day = LocalDate.parse(date)
     if (rest(v, day)) return
     dao.session(RoutineSession(record.id, planId, date, v.effectiveDate, JSONArray(exercises(v, day)).toString(), ended = day < today() || alerts.find(record.id)?.dayEnded == true, versionRevision = v.revision))
   }
+  fun recoverOperations() { dao.pending().forEach { settle(it) } }
   fun reconcile() {
-    dao.pending().forEach { settle(it) }
+    recoverOperations()
     // The two future alarm registrations do not guarantee a slot for an elapsed
     // notification today. Resolve that date explicitly, using the same identity.
     for (plan in dao.plans().filter { it.state == "Active" && it.startsOn <= today().toString() }) {
@@ -366,6 +395,51 @@ internal class RoutineCoordinator(private val context: Context, private val data
     }
   }
   fun purge(id: String) { dao.purgeSession(id); dao.purgeOperations(id) }
+  private fun settleFamily(operation: RoutineOperation) {
+    val payload = JSONObject(operation.payload); val id = payload.getString("family"); val kind = payload.getString("kind")
+    val plan = dao.plan(id) ?: return
+    val segments = db.records().series().filter { it.seriesId == id }
+    // Publish a content-free DP fence before changing private family ownership.
+    segments.forEach { segment -> alerts.plan(segment.id)?.let { alerts.plan(it.copy(state = "Paused")) } }
+    val deliveries = alerts.all().filter { a -> a.segmentId in segments.map { it.id } }
+    deliveries.forEach { alert ->
+      alerts.put(alert.copy(state = "Deleted", generation = alert.generation + 1, sessionId = null, previousState = null))
+      try { scheduler.cancel(alert) } catch (_: Exception) { /* generation already fenced */ }
+      AlarmNotifications(context).clearAttention(alert.occurrenceId)
+      alert.sessionId?.let(deliveryChanged)
+    }
+    checkpoint("family-fenced")
+    db.runInTransaction {
+      if (kind == "PurgeRoutine") {
+        db.records().all().filter { it.routineId == id }.forEach { record ->
+          if (db.records().purged(record.id) == null) db.records().purge(PurgedOccurrence(record.id, record.segmentId, record.nominalSlot))
+          db.records().purgePending(record.id); db.records().purgeHistory(record.id); db.records().purgeReminder(record.id); purge(record.id)
+        }
+        dao.purge(PurgedRoutine(id)); dao.removeVersions(id); dao.removePlan(id); db.records().purgeSeriesFamily(id)
+      } else {
+        // Ownership transitions fence cached app/widget commands even when a
+        // Restore returns to the same date with identical exercise checkmarks.
+        db.records().all().filter { it.routineId == id }.forEach { db.records().update(it.copy(revision = it.revision + 1)) }
+        dao.sessions().filter { it.routineId == id }.forEach { dao.session(it.copy(revision = it.revision + 1)) }
+        val intervals = JSONArray(plan.trashIntervals)
+        if (kind == "TrashRoutine") intervals.put(JSONObject().put("from", payload.getLong("atMs")).put("until", JSONObject.NULL))
+        else if (intervals.length() > 0) intervals.getJSONObject(intervals.length() - 1).put("until", payload.getLong("atMs"))
+        val state = if (kind == "TrashRoutine") "Trashed" else plan.priorState
+        dao.plan(plan.copy(state = state, priorState = if (kind == "TrashRoutine") plan.state else plan.priorState,
+          revision = payload.getLong("revision"), trashedAtMs = if (kind == "TrashRoutine") payload.getLong("atMs") else 0, trashIntervals = intervals.toString()))
+        segments.forEach { segment ->
+          val segmentState = if (segment.state == "Archived") "Archived" else if (state == "Active") "Active" else "Paused"
+          db.records().series(segment.copy(state = segmentState, revision = segment.revision + 1))
+          db.records().pendingSeries(PendingSeries("${operation.operationId}:${segment.id}", segment.id))
+        }
+      }
+      val result = mapOf("status" to "Applied", "routine" to dao.plan(id)?.let(::planView))
+      dao.operation(operation.copy(applied = true, result = JSONObject(result).toString()))
+      db.records().receipt(CreationReceipt(operation.operationId, id, kind))
+      checkpoint("family-before-commit")
+    }
+    checkpoint("family-committed"); series.recover()
+  }
   fun removeList(id: String) {
     val affected = dao.versions().filter { it.listId == id }
     dao.clearVersionList(id)

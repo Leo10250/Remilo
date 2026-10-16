@@ -104,10 +104,11 @@ data class RoutineAlertReceipt(@PrimaryKey val operationId: String, val kind: St
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class, RoutineAlertReceipt::class], version = 9, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class, RoutineAlertReceipt::class], version = OperationalDatabase.VERSION, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
+    const val VERSION = 9
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
       "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build()

@@ -85,7 +85,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
   };
   const unit = rule.frequency === 'daily' ? t('m_ab51004e9d71') : rule.frequency === 'weekly' ? t('m_eb0d2375b518') : rule.frequency === 'yearly' ? t('m_1c50993b009c') : t('m_168374334431');
   return <>
-    <SettingRow icon="repeat" label={t('m_b6b7a0065808')} value={repeatLabel(value)} disabled={disabled || busy} onPress={() => { if (disabled || busy) return; setCustom(false); setMessage(''); setOpen(true); }} />
+    <SettingRow intent="picker" icon="repeat" label={t('m_b6b7a0065808')} value={repeatLabel(value)} disabled={disabled || busy} onPress={() => { if (disabled || busy) return; setCustom(false); setMessage(''); setOpen(true); }} />
     <Sheet title={custom ? t('m_78f1813922c0') : t('m_b6b7a0065808')} visible={open} onClose={close} onBack={() => { if (!busy) { if (custom) setCustom(false); else close(); } }}
       footer={custom ? <BottomActionBar><View style={{ flex: 1, gap: 8 }}>
         {busy && <ActionFeedback loading message={t('m_29080326dd40')} />}{!!message && <ActionFeedback message={message} tone="danger" />}

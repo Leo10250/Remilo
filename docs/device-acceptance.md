@@ -922,3 +922,42 @@ actions for progress and outcomes, including authorization cancellation and
 failed external navigation. Verify native TalkBack announcements, Back/IME,
 pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
 reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.
+
+## Routine, photos and compact widget refinement (16 October)
+
+On the identified signed build, record task success, errors, assistance and any
+misunderstanding for these cases. Host tests/captures cannot supply observations.
+
+- Select every exercise, including checked ones, and confirm the ordered list
+  never loses a row. Complete the last exercise, Undo it and correct an earlier
+  check. Verify the Focus heading/selected state and TalkBack announcements.
+- Open/close routine More in filtered, scrolled Agenda and the library. Confirm
+  origin retention, clear Trash discovery, named Undo, paused-family Restore and
+  destructive confirmation for permanent deletion. Keep an ordinary alarm ringing
+  while removing a routine member and verify only that member stops.
+- Compare the routine's creation timing controls with an ordinary reminder at
+  narrow/landscape widths and 200% text. Verify three Alert choices, No alert's
+  hidden clock, required labels, examples, keyboard, Back and scoped draft Cancel.
+- Pick, cancel and replace portrait/wide/transparent/EXIF-rotated still photos.
+  Preserve the full frame, test unreadable/oversized/animated files and low storage,
+  interrupt the picker/import and reopen Remilo. No saved image changes on Cancel.
+  After a saved change, today/history retain the old photo and tomorrow uses the
+  replacement. Missing media retains readable exercise text and usable actions.
+- Export and restore a `.remilo` archive with shared photos, historical revisions,
+  trashed routines and prior individually deleted dates. Verify copies, uncertain
+  Retry, old JSON import and rejection of corrupt archives without partial content.
+- Place independent Focus/Today widgets, including a 4×2 allocation too small for
+  controls. Resize through summary/interactive/expanded layouts. Resume opens the
+  exact exercise/date, Done changes one exercise, Undo survives final completion,
+  repeated Resume links select that exercise on an already open screen,
+  duplicate/stale taps never advance another date and reconfiguration Cancel holds.
+- Verify Sunday Rest, Skip, pause/resume, midnight/travel/reboot, first-unlock
+  privacy, missing/trashed selection, manual Refresh and deferred background work.
+  Normal reminders retain overdue/postponement and their existing alarm actions.
+- Review actual app and launcher surfaces across all eight appearance pairs,
+  English/Chinese, long authored content, reduced motion and text through 200%.
+  Compare identical content/dimensions/themes in setup previews and placed widgets;
+  reject clipped actions, weak progress contrast or unexplained large empty gaps.
+
+Installation and distribution require their separate authorization. These cases
+remain unobserved until the consolidated physical run is recorded.

@@ -431,6 +431,14 @@ const calendarBridge = previewCalendar(review, (id) => items.find((item) => item
 onCalendarCreation = calendarBridge.captureCalendarCreation;
 const preview = {
   ...calendarBridge,
+  getWidgetSupport: async () => ({ pinSupported: false, instanceCount: 0 }),
+  openWidgetSetup: async () => { throw new Error('Widget placement requires the Android app.'); },
+  chooseExercisePhoto: async () => { throw new Error('Photo selection requires the Android app.'); },
+  getExerciseImage: async () => null, releaseExerciseImage: async () => true,
+  prepareBackupExport: async () => { throw new Error('Photo-inclusive backup requires the Android app.'); },
+  prepareBackupImport: async () => { throw new Error('File restoration requires the Android app.'); },
+  releasePreparedImport: async () => true,
+  applyPreparedImport: async (): Promise<CommandResult> => ({ status: 'Rejected', errorMessage: 'File restoration requires the Android app.' }),
   queryRoutines: routines.queryRoutines, getRoutineSession: routines.getRoutineSession, queryRoutineHistory: routines.queryRoutineHistory, previewRoutine: routines.previewRoutine,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => timePreferences(),

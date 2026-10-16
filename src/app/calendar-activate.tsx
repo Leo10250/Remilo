@@ -68,7 +68,7 @@ export default function CalendarActivation() {
       </View></ConnectedGroup>)}
       {!!attention.length && <Copy heading>{t('m_33071713d5e1')}{attention.length}</Copy>}
       {attention.map(item => <ConnectedGroup key={item.occurrenceId}><View>
-        <SettingRow prominent label={item.preview?.local?.title || item.title || t('m_10208d7687ad')} description={[item.calendarName, item.email].filter(Boolean).join(' · ')} />
+        <SettingRow intent="action" prominent label={item.preview?.local?.title || item.title || t('m_10208d7687ad')} description={[item.calendarName, item.email].filter(Boolean).join(' · ')} />
         <RowSupport><CalendarReviewTiming id={item.occurrenceId} /><Copy muted size={14}>{item.excludedReason || t('m_497da54032fc')}</Copy>
           <Button label={t('m_6a47708f4e14')} variant="secondary" disabled={busy || unknown} onPress={() => router.push({ pathname: '/calendar-manage', params: { id: item.occurrenceId, ...origin } })} /></RowSupport>
       </View></ConnectedGroup>)}

@@ -61,12 +61,12 @@ export default function SeriesDetails() {
       {state !== 'Active' && <Copy muted size={typography.supporting}>{state === 'Paused' ? t('m_6a458b78ef8b') : t('m_16ec9a74e6b4')} {t('m_521080947082')}</Copy>}
       <QueryState loading={families.isLoading} error={families.error} onRetry={() => void families.refetch()} />
       <Group title={t('m_f4830a1dae29')}>
-        <SettingRow icon="event" label={t('m_4e1f49a9c8ae')} description={eventRange(series.template)} />
-        {(series.template.dueLinked === false || series.template.dueAtMs !== series.template.eventStartMs) && <SettingRow icon="schedule" label={t('m_9071738f1459')} description={series.template.allDay && series.template.dueLinked ? t('m_6a189ba7d0ac') : shortDateTime(series.template.dueAtMs, series.rule.zoneId ?? undefined) + (series.template.dueLinked === false ? t('m_cc458db246e8') : t('m_6b6f701f5cec'))} />}
-        <SettingRow icon={series.template.mode === 'Alarm' ? 'alarm' : series.template.mode === 'Notification' ? 'notifications' : 'alarm_off'} label={modeLabel(series.template.mode)} description={series.template.mode === 'None' ? t('m_d1af410eb4d0') : shortDateTime(series.template.alarmAtMs, series.rule.zoneId ?? undefined) + (series.template.alarmLinked === false ? t('m_f443449e9958') : t('m_1d9f1a6a9399'))} />
-        {series.rule.zoneId ? <ZoneSummary zoneId={series.rule.zoneId} atMs={series.template.eventStartMs} prefix={t('m_93cc39bcfd10')} /> : <SettingRow label={t('m_b9fe1464783e')} value={t('m_394d31d5bfb3')} />}
-        <SettingRow icon="repeat" label={t('m_e98982c9f2ba')} value={series.rule.count ? t('m_76348b77ee9b', { arg0: String(series.rule.count) }) : series.rule.until ?? t('m_64d389ab5222')} />
-        {!!series.template.listName && <SettingRow icon="checklist" label={t('m_6f202f54a7b2')} value={series.template.listName} />}
+        <SettingRow intent="action" icon="event" label={t('m_4e1f49a9c8ae')} description={eventRange(series.template)} />
+        {(series.template.dueLinked === false || series.template.dueAtMs !== series.template.eventStartMs) && <SettingRow intent="action" icon="schedule" label={t('m_9071738f1459')} description={series.template.allDay && series.template.dueLinked ? t('m_6a189ba7d0ac') : shortDateTime(series.template.dueAtMs, series.rule.zoneId ?? undefined) + (series.template.dueLinked === false ? t('m_cc458db246e8') : t('m_6b6f701f5cec'))} />}
+        <SettingRow intent="action" icon={series.template.mode === 'Alarm' ? 'alarm' : series.template.mode === 'Notification' ? 'notifications' : 'alarm_off'} label={modeLabel(series.template.mode)} description={series.template.mode === 'None' ? t('m_d1af410eb4d0') : shortDateTime(series.template.alarmAtMs, series.rule.zoneId ?? undefined) + (series.template.alarmLinked === false ? t('m_f443449e9958') : t('m_1d9f1a6a9399'))} />
+        {series.rule.zoneId ? <ZoneSummary zoneId={series.rule.zoneId} atMs={series.template.eventStartMs} prefix={t('m_93cc39bcfd10')} /> : <SettingRow intent="action" label={t('m_b9fe1464783e')} value={t('m_394d31d5bfb3')} />}
+        <SettingRow intent="action" icon="repeat" label={t('m_e98982c9f2ba')} value={series.rule.count ? t('m_76348b77ee9b', { arg0: String(series.rule.count) }) : series.rule.until ?? t('m_64d389ab5222')} />
+        {!!series.template.listName && <SettingRow intent="action" icon="checklist" label={t('m_6f202f54a7b2')} value={series.template.listName} />}
       </Group>
       {series.state !== 'Archived' && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {state !== 'Ended' && <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon={state === 'Paused' ? 'play_arrow' : 'pause'} label={state === 'Paused' ? t('m_89b7b9146715') : t('m_7c5238809996')}
@@ -76,15 +76,15 @@ export default function SeriesDetails() {
       </View>}
       <Group title={state === 'Paused' ? t('m_9b4aef8693f9') : t('m_2cc2a7090f66')}>{upcoming.slice(0, 3).map((slot) => {
         const paused = (slot.state ?? state) === 'Paused', mode = slot.mode ?? series.template.mode;
-        return <SettingRow key={slot.segmentId + ':' + slot.nominalSlot} icon="event"
+        return <SettingRow intent="action" key={slot.segmentId + ':' + slot.nominalSlot} icon="event"
         label={shortDateTime(slot.eventStartMs, slot.zoneId ?? series.rule.zoneId ?? undefined)}
         description={mode === 'None' ? t('m_d1af410eb4d0') : (paused ? t('m_f04891cf0248') : '') + modeLabel(mode) + ' · ' +
           shortDateTime(slot.alarmAtMs, slot.zoneId ?? series.rule.zoneId ?? undefined) + (paused ? ' · ' + t('m_e159b06187d3') : '')}>
           {(slot.zoneId ?? series.rule.zoneId) && (slot.zoneId ?? series.rule.zoneId) !== deviceZone() && <ZoneSummary zoneId={(slot.zoneId ?? series.rule.zoneId)!} atMs={slot.eventStartMs} />}
         </SettingRow>;
       })}
-        {!upcoming.length && !families.isLoading && !families.error && <SettingRow label={t('m_c4aba4adaad7')} />}</Group>
-      <Group><SettingRow icon="event" label={t('m_b074310e911f')} description={calendarLink ? t('m_464c52392b11') : publication ? t('m_f24802b28eb5') : t('m_645b7e55ef96')} disabled={action.guarded}
+        {!upcoming.length && !families.isLoading && !families.error && <SettingRow intent="action" label={t('m_c4aba4adaad7')} />}</Group>
+      <Group><SettingRow intent="navigation" icon="event" label={t('m_b074310e911f')} description={calendarLink ? t('m_464c52392b11') : publication ? t('m_f24802b28eb5') : t('m_645b7e55ef96')} disabled={action.guarded}
         onPress={() => router.push({ pathname: calendarLink || publication ? '/calendar-manage' : '/calendar-publish', params: { id: calendarLink?.occurrenceId ?? seriesId ?? series.id, ...familyOriginParams(params, seriesId ?? series.seriesId, series.id) } })} /></Group>
       {!!upcoming.length && upcoming.length < 3 && <Copy muted size={14}>{t('m_de7aab2159df')}</Copy>}
       <Disclosure title={t('m_8be36e9d25fb')} initial>

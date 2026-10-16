@@ -13,6 +13,7 @@ describe('dated routine Focus navigation', () => {
     expect(nextRoutineFocus({ steps: [step('bird', true), step('plank', true), step('side')] }, 'plank')).toBe('side');
   });
   it('returns to an earlier unfinished exercise and gives final completion a summary', () => {
+    expect(nextRoutineFocus({ steps: [step('bird'), step('plank', true), step('side')] }, 'plank')).toBe('bird');
     expect(nextRoutineFocus({ steps: [step('bird'), step('plank', true), step('side', true)] }, 'side')).toBe('bird');
     const finished = { steps: [step('bird', true), step('plank', true)] };
     expect(nextRoutineFocus(finished, 'plank')).toBeUndefined();

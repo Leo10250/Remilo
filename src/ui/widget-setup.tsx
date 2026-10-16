@@ -9,7 +9,7 @@ export function WidgetSetupRow({ routineId, disabled = false, onOpen }: { routin
   const t = useTranslation(), live = useRef(true), running = useRef(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState<string>();
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  return <View><SettingRow label={t(routineId ? 'widget_add' : 'widget_name')} icon="event" disabled={disabled || busy || !nativeAvailable}
+  return <View><SettingRow intent={routineId ? 'action' : 'navigation'} label={t(routineId ? 'widget_add' : 'widget_name')} icon="event" disabled={disabled || busy || !nativeAvailable}
     onPress={() => { if (running.current) return; running.current = true; setBusy(true); setError(undefined);
       void Promise.resolve().then(() => engine().openWidgetSetup(routineId ?? null)).then(() => { if (live.current) onOpen?.(); })
         .catch(e => { if (live.current) setError(errorText(e, t('widget_setup_open_error'))); })

@@ -48,7 +48,7 @@ export function routinePreview(enabled: boolean, emit: () => void, options: { pr
     return updateState(saved);
   };
   return {
-    queryRoutines: async () => structuredClone(plans), getRoutineSession: async (id: string, date: string | null) => structuredClone(session(id, date)),
+    queryRoutines: async () => structuredClone(plans.filter(p => p.state !== 'Trashed')), getRoutineSession: async (id: string, date: string | null) => plans.find(p => p.id === id)?.state === 'Trashed' ? null : structuredClone(session(id, date)),
     queryRoutineHistory: async (id: string, cursor: string | null = null) => {
       const history = [...sessions.values()].map(updateState).filter(value => value.routineId === id && value.occurrenceId && (value.ended || value.completed || value.skipped)).sort((a, b) => b.date.localeCompare(a.date));
       const offset = Number(cursor ?? 0);
@@ -68,10 +68,16 @@ export function routinePreview(enabled: boolean, emit: () => void, options: { pr
     },
     progress: enabled ? session('weekly', null) : null,
     apply(command: Command): CommandResult | null {
-      if (!['CreateRoutine', 'EditRoutine', 'PauseRoutine', 'ResumeRoutine', 'SetRoutineExercise', 'CorrectRoutineExercise', 'SkipRoutineDay', 'UndoSkipRoutineDay'].includes(command.kind)) return null;
+      if (!['TrashRoutine', 'RestoreRoutine', 'PurgeRoutine', 'CreateRoutine', 'EditRoutine', 'PauseRoutine', 'ResumeRoutine', 'SetRoutineExercise', 'CorrectRoutineExercise', 'SkipRoutineDay', 'UndoSkipRoutineDay'].includes(command.kind)) return null;
       if (receipts.has(command.operationId)) return structuredClone(receipts.get(command.operationId)!);
       let result: CommandResult;
-      if (command.kind === 'CreateRoutine' || command.kind === 'EditRoutine') {
+      if (command.kind === 'TrashRoutine' || command.kind === 'RestoreRoutine' || command.kind === 'PurgeRoutine') {
+        const p = plans.find(p => p.id === command.routineId);
+        if (!p || p.revision !== command.expectedRevision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
+        p.state = command.kind === 'TrashRoutine' ? 'Trashed' : 'Active'; p.revision++;
+        result = { status: 'Applied', routine: structuredClone(p) };
+        if (command.kind === 'PurgeRoutine') plans.splice(plans.indexOf(p),1);
+      } else if (command.kind === 'CreateRoutine' || command.kind === 'EditRoutine') {
         const p: RoutinePlan = command.kind === 'CreateRoutine' ? { notes: '', sound: 'remilo', vibration: false, ...command, id: 'weekly-' + plans.length, revision: 1, state: 'Active', effectiveDate: command.startsOn } : { ...plans.find(p => p.id === command.routineId)!, ...command, revision: command.expectedRevision + 1 };
         const index = plans.findIndex(row => row.id === p.id); if (index < 0) plans.push(p); else plans[index] = p;
         result = { status: 'Applied', routine: p };

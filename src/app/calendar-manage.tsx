@@ -158,7 +158,7 @@ export default function CalendarManagement() {
         {link.availability === 'Unsupported' && <Copy muted size={14}>{unsupportedCalendarReason(link.availabilityReason)}</Copy>}
         <Button label={link.syncMode === 'Automatic' && active && supported ? t('m_885e8f48bd70') : t('m_5da755d1690f')} variant="secondary" disabled={checking || guarded || syncRequest.working}
           onPress={() => void (link.syncMode === 'Automatic' && active && supported ? syncRequest.start() : check())} />
-        <SettingRow icon="history" label={t('m_215ccf52f5f3')} onPress={() => router.push({ pathname: '/activity', params: { id, filter: 'calendar', ...origin } })} />
+        <SettingRow intent="navigation" icon="history" label={t('m_215ccf52f5f3')} onPress={() => router.push({ pathname: '/activity', params: { id, filter: 'calendar', ...origin } })} />
       </Disclosure></ConnectedGroup>}
       {link?.state === 'Detached' && active && <Button label={t('m_1b01ea836cde')} variant="secondary" disabled={guarded} onPress={review} />}
       {!link && publication && <CalendarPublicationStatus publication={publication} routeParams={{ ...origin, originReminderId: id }} />}

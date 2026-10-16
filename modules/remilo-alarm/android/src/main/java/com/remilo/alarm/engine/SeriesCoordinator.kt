@@ -19,6 +19,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   private fun zone() = ZoneId.systemDefault()
   private fun routineDateEligible(routineId: String?, occurrenceId: String, nominal: String): Boolean {
     if (routineId == null) return true
+    if (db().routines().plan(routineId)?.state == "Trashed" || db().routines().purged(routineId) != null) return false
     if (alerts.find(occurrenceId)?.dayEnded == true) return false
     val saved = db().routines().dated(routineId, nominal.substringBefore('T')) ?: return true
     return saved.occurrenceId == occurrenceId && !saved.ended
@@ -114,14 +115,14 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       "pending" to rows.count { !it.exception && it.state == "Blocked" && it.targetMs > now() },
       "upcoming" to future.map { mapOf("nominalSlot" to it.nominal.toString(), "eventStartMs" to it.eventStartMs, "alarmAtMs" to it.alarmAtMs) })
   }
-  fun list(): List<Map<String, Any?>> = db().records().series().filter { it.state != "Archived" }.mapNotNull { get(it.id) }
+  fun list(): List<Map<String, Any?>> = db().records().series().filter { it.state != "Archived" && db().routines().plan(it.seriesId)?.state != "Trashed" }.mapNotNull { get(it.id) }
   /** Family identity survives splits and replacement; this projection never registers an alert. */
   fun families(): List<Map<String, Any?>> {
     val dao = db().records()
     val records = dao.all().associateBy { it.id }
     val deliveries = alerts.all().associateBy { it.occurrenceId }
     val at = now()
-    return dao.series().groupBy { it.seriesId }.map { (familyId, segments) ->
+    return dao.series().filter { db().routines().plan(it.seriesId)?.state != "Trashed" }.groupBy { it.seriesId }.map { (familyId, segments) ->
       val ordinary = segments.filter { it.state != "Archived" }
       val representative = (ordinary.ifEmpty { segments }).sortedWith(
         compareByDescending<SeriesRecord> { it.createdAtMs }.thenBy { it.id }).first()

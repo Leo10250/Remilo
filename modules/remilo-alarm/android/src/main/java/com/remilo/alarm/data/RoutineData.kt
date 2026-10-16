@@ -6,7 +6,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 /** Authored plans, exercise snapshots and progress are credential-protected only. */
 @Entity(tableName = "routine_plans")
 data class RoutinePlan(@PrimaryKey val id: String, val revision: Long = 1,
-  val startsOn: String, val state: String = "Active", val pauses: String = "[]")
+  val startsOn: String, val state: String = "Active", val pauses: String = "[]",
+  @ColumnInfo(defaultValue = "'Active'") val priorState: String = "Active",
+  @ColumnInfo(defaultValue = "0") val trashedAtMs: Long = 0,
+  @ColumnInfo(defaultValue = "'[]'") val trashIntervals: String = "[]")
+@Entity(tableName = "exercise_images")
+data class ExerciseImage(@PrimaryKey val id: String, val mime: String, val width: Int, val height: Int, val bytes: Long)
+@Entity(tableName = "purged_routines")
+data class PurgedRoutine(@PrimaryKey val id: String)
 @Entity(tableName = "routine_versions", primaryKeys = ["routineId", "revision"])
 data class RoutineVersion(val routineId: String, val effectiveDate: String, val title: String,
   val minutes: Int, val mode: String, val listId: String?, val days: String,
@@ -24,6 +31,15 @@ data class RoutineSession(@PrimaryKey val occurrenceId: String, val routineId: S
 data class RoutineOperation(@PrimaryKey val operationId: String, val fingerprint: String,
   val occurrenceId: String?, val payload: String, val applied: Boolean = false, val result: String = "{}")
 @Dao interface RoutineDao {
+  @Query("SELECT * FROM exercise_images") fun images(): List<ExerciseImage>
+  @Query("SELECT * FROM exercise_images WHERE id = :id") fun image(id: String): ExerciseImage?
+  @Insert(onConflict = OnConflictStrategy.IGNORE) fun image(value: ExerciseImage)
+  @Query("DELETE FROM exercise_images WHERE id = :id") fun removeImage(id: String)
+  @Query("SELECT * FROM purged_routines") fun purged(): List<PurgedRoutine>
+  @Query("SELECT * FROM purged_routines WHERE id = :id") fun purged(id: String): PurgedRoutine?
+  @Insert(onConflict = OnConflictStrategy.IGNORE) fun purge(value: PurgedRoutine)
+  @Query("DELETE FROM routine_plans WHERE id = :id") fun removePlan(id: String)
+  @Query("DELETE FROM routine_versions WHERE routineId = :id") fun removeVersions(id: String)
   @Query("SELECT * FROM routine_plans ORDER BY id") fun plans(): List<RoutinePlan>
   @Query("SELECT * FROM routine_plans WHERE id = :id") fun plan(id: String): RoutinePlan?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun plan(value: RoutinePlan)

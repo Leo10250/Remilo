@@ -15,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +58,9 @@ class WidgetConfigureActivity : ComponentActivity() {
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var renderedPreview by remember { mutableStateOf<android.widget.RemoteViews?>(null) }
+    var expandedPreview by rememberSaveable { mutableStateOf(false) }
+    var previewWidth by remember { mutableStateOf(300.dp) }
+    val previewDensity = LocalDensity.current
     var appearance by remember { mutableStateOf<com.remilo.alarm.core.AppearancePolicy.Resolved?>(null) }
     androidx.activity.compose.BackHandler(enabled = busy) { /* Save retains its captured configuration until acknowledged. */ }
     fun text(value: String) = L10n.text(this, value)
@@ -75,7 +80,7 @@ class WidgetConfigureActivity : ComponentActivity() {
       } catch (_: Exception) { loaded = plans.isNotEmpty(); error = "Could not load the widget. Refresh to try again." }
     }
     LaunchedEffect(mode, routineId, loaded) { if (loaded) try { refresh() } catch (_: Exception) { error = "This view changed. Review the refreshed routine." } }
-    LaunchedEffect(preview) { renderedPreview = preview?.let { runCatching { WidgetRender(it).compose(this@WidgetConfigureActivity, size = DpSize(300.dp,280.dp)) }.getOrNull() } }
+    LaunchedEffect(preview,expandedPreview,previewWidth) { renderedPreview = preview?.let { runCatching { WidgetRender(it).compose(this@WidgetConfigureActivity, size = DpSize(previewWidth,if(expandedPreview)440.dp else 240.dp)) }.getOrNull() } }
     val roles = (preview?.appearance ?: appearance)?.let { AtmosphereTokens.colors(it.atmosphere, it.brightness) }
       ?: AtmosphereTokens.colors("sky", if ((resources.configuration.uiMode and 48) == 32) "dark" else "light")
     val dark = (preview?.appearance ?: appearance)?.brightness == "dark" || appearance == null && (resources.configuration.uiMode and 48) == 32
@@ -151,7 +156,11 @@ class WidgetConfigureActivity : ComponentActivity() {
           } }
           }
           Text(text("Preview"), fontSize = 16.sp)
-          renderedPreview?.let { remote -> AndroidView(modifier = Modifier.fillMaxWidth().height(280.dp),
+          Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = !expandedPreview,onClick = { expandedPreview = false },enabled = !busy,label = { Text(text("Compact")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
+            FilterChip(selected = expandedPreview,onClick = { expandedPreview = true },enabled = !busy,label = { Text(text("Expanded")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
+          }
+          renderedPreview?.let { remote -> AndroidView(modifier = Modifier.fillMaxWidth().height(if(expandedPreview)440.dp else 240.dp).onSizeChanged { previewWidth = with(previewDensity) { it.width.toDp() } },
             factory = { android.widget.FrameLayout(it).apply { isEnabled = false; importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS } },
             update = { host -> host.removeAllViews(); host.addView(remote.apply(host.context, host));
               fun inert(view: android.view.View) { view.isEnabled = false; view.isClickable = false; if (view is android.view.ViewGroup) for (i in 0 until view.childCount) inert(view.getChildAt(i)) }; inert(host)

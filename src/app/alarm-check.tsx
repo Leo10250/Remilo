@@ -94,9 +94,9 @@ export default function AlarmCheck() {
         message={pending === 'permissions' ? t('m_e824800717b4') : feedback.permissions?.message} tone={feedback.permissions?.tone} />}
       {notificationDenied && <Button label={t('m_c6885c8ebcb2')} variant="secondary" disabled={frozen} onPress={() => openPermission('notifications', false)} />}
     </>}>
-      <SettingRow key="exact" icon="schedule" label={t('m_142c2ae8d0bb')} description={caps.data?.exactAlarms === false ? t('m_9ac9a33b0a76') : undefined}
+      <SettingRow intent="action" key="exact" icon="schedule" label={t('m_142c2ae8d0bb')} description={caps.data?.exactAlarms === false ? t('m_9ac9a33b0a76') : undefined}
         disabled={frozen || !nativeAvailable} statusLabel={permissionLabel(caps.data?.exactAlarms)} onPress={() => access('exact')}>{permission(caps.data?.exactAlarms)}</SettingRow>
-      <View key="notifications"><SettingRow icon="notifications" label={t('m_788011833a5a')} description={notificationBlocked ? t('m_07607efa8ec3') : undefined}
+      <View key="notifications"><SettingRow intent="action" icon="notifications" label={t('m_788011833a5a')} description={notificationBlocked ? t('m_07607efa8ec3') : undefined}
         disabled={frozen || !nativeAvailable} statusLabel={permissionLabel(caps.data ? caps.data.notifications && caps.data.channelEnabled && caps.data.notificationChannelEnabled : undefined)} onPress={() => access('notifications')}>
         {permission(caps.data ? caps.data.notifications && caps.data.channelEnabled && caps.data.notificationChannelEnabled : undefined)}
       </SettingRow>
@@ -107,18 +107,18 @@ export default function AlarmCheck() {
             </View>)}
         </Disclosure></RowSupport>}
       </View>
-      <SettingRow key="lock-screen" icon="lock" label={t('m_66b41af0ba4b')} description={caps.data?.fullScreen === false ? t('m_69bbfaef0807') : undefined}
+      <SettingRow intent="action" key="lock-screen" icon="lock" label={t('m_66b41af0ba4b')} description={caps.data?.fullScreen === false ? t('m_69bbfaef0807') : undefined}
         disabled={frozen || !nativeAvailable} statusLabel={permissionLabel(caps.data?.fullScreen, true)} onPress={() => access('fullScreen')}>{permission(caps.data?.fullScreen, true)}</SettingRow>
     </ConnectedGroup>
     <ConnectedGroup title={t('m_94ff0d164e2e')} footer={<Copy muted size={14}>{t('m_cf04d66fee50')}</Copy>}>
-      <View key="test"><SettingRow icon="alarm" label={test && !uncertainTest ? t('m_95e37a41ce17') : t('m_a16e4f038ad7')} description={t('m_076475e48b36')}
+      <View key="test"><SettingRow intent="action" icon="alarm" label={test && !uncertainTest ? t('m_95e37a41ce17') : t('m_a16e4f038ad7')} description={t('m_076475e48b36')}
         disabled={frozen || !nativeAvailable} onPress={scheduleTest} />
         {(pending === 'test' || feedback.test || uncertainTest) && <RowSupport>
           {(pending === 'test' || feedback.test) && <ActionFeedback loading={pending === 'test'} message={pending === 'test' ? t('m_617e1821a820') : feedback.test?.message} tone={feedback.test?.tone} />}
           {uncertainTest && <Button label={t('m_1a57cd6677a5')} variant="secondary" disabled={busy} onPress={scheduleTest} />}
         </RowSupport>}
       </View>
-      {test?.occurrence && !uncertainTest && <SettingRow key="view-test" label={t('m_e3193f30edce')} disabled={frozen} onPress={() => {
+      {test?.occurrence && !uncertainTest && <SettingRow intent="navigation" key="view-test" label={t('m_e3193f30edce')} disabled={frozen} onPress={() => {
         if (running.current || frozen) return;
         router.push({ pathname: '/reminder/[id]', params: { id: test.occurrence!.id, ...routeParams } });
       }} />}

@@ -144,7 +144,7 @@ export function CalendarReviewItems({ items, selected, onToggle, disabled = fals
     </View></ConnectedGroup>)}
     {!!review.length && <Copy heading>{t('m_33071713d5e1')}{review.length}</Copy>}
     {review.map(item => <ConnectedGroup key={item.itemId}><View>
-      <SettingRow prominent label={item.title} description={[item.calendarName, item.scope].filter(Boolean).join(' · ')} />
+      <SettingRow intent="action" prominent label={item.title} description={[item.calendarName, item.scope].filter(Boolean).join(' · ')} />
       <RowSupport><Copy muted size={14}>{managedCalendarItemReason(item)}</Copy>
         {(item.occurrenceId || item.candidateId) && <Button label={item.reason === 'ElapsedAlert' ? t('m_2d2f0c2ff330') : t('m_6a47708f4e14')} variant="secondary" disabled={disabled} onPress={() => onReview(item)} />}</RowSupport>
     </View></ConnectedGroup>)}

@@ -45,7 +45,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const remove = (list: ListRecord) => { setSelected(null); confirm(t('m_0c08198f562b'), t('remove_list_confirmation', { name: list.name }), [
     { text: t('m_19766ed6ccb2'), style: 'cancel' }, { text: t('m_669f24b0f91d'), style: 'destructive', onPress: () => void action.execute({ command: { kind: 'RemoveList', listId: list.id, expectedRevision: list.revision, operationId: engine().createOperationId() }, success: t('m_3e8157774f26') }) }]); };
   const row = (name: string, id: string | null, count: number, record?: ListRecord) => <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <View style={{ flex: 1 }}><SettingRow label={name} icon="checklist" minHeight={72} disabled={guarded || !nativeAvailable}
+    <View style={{ flex: 1 }}><SettingRow intent="action" label={name} icon="checklist" minHeight={72} disabled={guarded || !nativeAvailable}
       statusLabel={count ? count + t('m_ca72dba87f89') : undefined} supporting={count > 0 ? <Status label={count + t('m_c907a3d4b61b')} tone="warning" /> : undefined}
       onPress={() => open(id)} /></View>
     {record && <IconButton icon="more_vert" label={t('m_05d82d5eb6ee') + name} disabled={guarded || !nativeAvailable} onPress={() => setSelected(record)} />}
@@ -57,12 +57,12 @@ function ListLibrary({ management = false }: { management?: boolean }) {
       <View style={{ gap: space.md }}>
       {management && <><Copy muted>{t('m_6395ef0c2432')}</Copy>
         <Button label={t('m_3fb9aa9bdbb5')} icon="add" disabled={!nativeAvailable || guarded} onPress={() => setEditing('create')} /></>}
-      {!management && <ConnectedGroup title={t('m_ff3b424445ad')}><SettingRow key="repeats" label={t('m_92ee0233f013')} icon="repeat" description={t('m_baa6cb3b3dc6')} disabled={guarded || !nativeAvailable}
+      {!management && <ConnectedGroup title={t('m_ff3b424445ad')}><SettingRow intent="navigation" key="repeats" label={t('m_92ee0233f013')} icon="repeat" description={t('m_baa6cb3b3dc6')} disabled={guarded || !nativeAvailable}
         onPress={() => router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })} />
-        <SettingRow key="routines" label={t('routine_library')} icon="fitness_center" description={t('routine_library_hint')} disabled={guarded || !nativeAvailable} onPress={() => router.push('/routines')} /></ConnectedGroup>}
+        <SettingRow intent="navigation" key="routines" label={t('routine_library')} icon="fitness_center" description={t('routine_library_hint')} disabled={guarded || !nativeAvailable} onPress={() => router.push('/routines')} /></ConnectedGroup>}
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error}
         empty={!nativeAvailable || management && !query.data?.length} emptyMessage={!nativeAvailable ? t('m_76edd8d2cf44') : t('m_230fe389ffc2')} onRetry={() => void query.refetch()} />
-      {management ? <ConnectedGroup footer={groupFeedback}>{query.data?.map((list) => <SettingRow key={list.id} label={list.name} icon="checklist" minHeight={72} disabled={guarded} onPress={() => setSelected(list)} />)}</ConnectedGroup> :
+      {management ? <ConnectedGroup footer={groupFeedback}>{query.data?.map((list) => <SettingRow intent="action" key={list.id} label={list.name} icon="checklist" minHeight={72} disabled={guarded} onPress={() => setSelected(list)} />)}</ConnectedGroup> :
         <ConnectedGroup title={t('m_b3d21ebfbaf7')} footer={groupFeedback}>{row(t('m_eacd31d849f9'), null, noList.data?.total ?? 0)}{query.data?.map((list) => row(list.name, list.id, list.overdueCount, list))}</ConnectedGroup>}
       {!management && <View style={{ height: 88 }} />}
       </View>
@@ -71,8 +71,8 @@ function ListLibrary({ management = false }: { management?: boolean }) {
       onPress={() => setEditing('create')} style={{ position: 'absolute', right: 16, bottom: footerHeight + insets.bottom + 16, width: 56, height: 56, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', elevation: 3 }}>
       <Icon name="add" color={colors.accentInk} size={28} /></Pressable>}
     <Sheet title={selected?.name ?? t('m_abc46aaef9ad')} visible={!!selected} onClose={() => setSelected(null)}>
-      <SettingRow label={t('m_e01205cfdbd9')} icon="edit" disabled={guarded} onPress={() => { setEditing(selected); setSelected(null); }} />
-      <SettingRow label={t('m_669f24b0f91d')} icon="delete" disabled={guarded} onPress={() => { if (selected) remove(selected); }} />
+      <SettingRow intent="action" label={t('m_e01205cfdbd9')} icon="edit" disabled={guarded} onPress={() => { setEditing(selected); setSelected(null); }} />
+      <SettingRow intent="action" label={t('m_669f24b0f91d')} icon="delete" disabled={guarded} onPress={() => { if (selected) remove(selected); }} />
     </Sheet>
     {!!editing && <ListNameSheet key={editing === 'create' ? 'create' : editing.id} visible list={editing === 'create' ? undefined : editing} onGuardChange={setFormGuarded}
       onClose={() => setEditing(null)} onSaved={(id) => { const created = editing === 'create'; setEditing(null); if (created && !management) open(id); }} />}

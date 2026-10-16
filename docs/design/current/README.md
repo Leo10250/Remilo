@@ -67,6 +67,10 @@ mockup pixels do not authorize a different page style.
 
 The owner's [15 October widget contract](home-screen-widget.md) adds configurable
 Routine Focus/Today home-screen presentation using the same native authority.
+The owner's 16 October refinement keeps the complete selected exercise sequence,
+shared date/time controls, contextual routine menus and whole-family Trash, adds
+full-frame custom photos with portable backup, and gives the widget compact
+Resume + Done presentation. Shared row chevrons now follow interaction semantics.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

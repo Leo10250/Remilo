@@ -4,6 +4,13 @@ import { type TimeDisplayPreferences, type CalendarConnection, type CalendarPubl
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
+  chooseExercisePhoto(request: string): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
+  getExerciseImage(id: string, lease: string | null): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
+  releaseExerciseImage(lease: string): Promise<boolean>;
+  prepareBackupExport(): Promise<{ uri: string; imageCount: number; bytes: number }>;
+  prepareBackupImport(uri: string): Promise<ImportPreview & { handle: string; imageCount: number }>;
+  applyPreparedImport(handle: string, copies: string[], operation: string): Promise<CommandResult>;
+  releasePreparedImport(handle: string): Promise<boolean>;
   getWidgetSupport(): Promise<{ pinSupported: boolean; instanceCount: number }>;
   openWidgetSetup(routineId: string | null): Promise<{ opened: boolean }>;
   getTimeDisplayPreferences(): Promise<TimeDisplayPreferences>;

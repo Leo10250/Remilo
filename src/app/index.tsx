@@ -23,6 +23,7 @@ import { creationOrigin, listOriginParams, originParams, readRootSnapshot, retai
 import { activateNotice, CommandRecovery, ListNameSheet, notifyTrash, RootMore, RootNavigation, useCapturedCommand, useDestinationNavigation } from '../ui/navigation';
 import { useRootState } from '../ui/root-state';
 import { useAppearanceConfirmation } from '../ui/confirmation';
+import { RoutineActions, type RoutineActionTarget } from '../ui/routine-actions';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
 import { calendarCancellation, calendarRowNotice } from '../domain/calendar-presentation';
@@ -54,6 +55,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const filterOpen = filterDraft !== null;
   const searchInput = useRef<TextInput>(null), searchFocusRequested = useRef(false);
   const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useLocalizedState<Toast | null>(null);
+  const [routineMenu, setRoutineMenu] = useState<RoutineActionTarget | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
   const [savedScroll] = useState(()=>readRootSnapshot(key + ':scroll', 0));
@@ -205,7 +207,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       <BrowseFilterButton count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />
     </View>
     {!!chips.length && <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}><BrowseFilterChips chips={chips} disabled={guarded} onRemove={removeFilter} onReset={resetFilters} /></View>}
-    {!!search && !searching && <SettingRow label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
+    {!!search && !searching && <SettingRow intent="action" label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
     {missingList && <View style={{ padding: 16, gap: 8 }}><Copy>{t('m_1e930ff715ad')}</Copy><Button label={t('m_8055353d4b41')} disabled={guarded}
       onPress={() => router.replace({ pathname: '/lists/[id]', params: { id: 'none', noList: 'true', ...originParams(origin), ...retainedOriginParams(params) } })} /></View>}
     {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + t('m_cd7dac8a7f6b')} disabled={guarded}
@@ -230,7 +232,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
-        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={item.routine ? undefined : () => complete(item)} onMore={() => { if (!isGuarded()) { if (item.routine) router.push({ pathname: '/routine-session', params: { id: item.routine.routineId, date: item.routine.date, menu: '1' } }); else setSelected(item); } }} busy={guarded} />}
+        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={item.routine ? undefined : () => complete(item)} onMore={() => { if (!isGuarded()) { if (item.routine) setRoutineMenu({ id: item.routine.routineId, date: item.routine.date }); else setSelected(item); } }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? t('m_2ff2d9a672c5') : search || chips.length ? t('m_75bf15d2c28d') : view === 'today' ? t('m_fc926e22caaa') : view === 'upcoming' ? t('m_e22b01420e5f') : scoped ? t('m_284f8a392982') : t('m_057d33f49512')} onRetry={() => void reminders.refetch()} />
           {emptyCreate && <Button label={t('m_1ee0df0ecf27')} disabled={guarded} onPress={createReminder} />}
@@ -252,11 +254,12 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       onDraftChange={next => { if (!isGuarded()) setFilterDraft(next); }} onCancel={() => setFilterDraft(null)}
       onApply={() => { if (filterDraft && commitFilters(filterDraft)) setFilterDraft(null); }} />
     <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => setSelected(null)}>
-      <SettingRow label={t('m_1f1353b055df')} icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
-      {!!selected && canAdjustAlert(selected) && <SettingRow label={t('m_63fb48d94634')} icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
-      <SettingRow label={t('m_62aa4b87cc52')} icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
-      <SettingRow label={t('m_9adcdf33dce1')} icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
+      <SettingRow intent="action" label={t('m_1f1353b055df')} icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
+      {!!selected && canAdjustAlert(selected) && <SettingRow intent="action" label={t('m_63fb48d94634')} icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
+      <SettingRow intent="action" label={t('m_62aa4b87cc52')} icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
+      <SettingRow intent="action" label={t('m_9adcdf33dce1')} icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
+    <RoutineActions target={routineMenu} onClose={() => setRoutineMenu(null)} />
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
       if (!trashItem || guarded) return;
       const captured = trashItem; setTrashItem(null); deleteItem(captured);
