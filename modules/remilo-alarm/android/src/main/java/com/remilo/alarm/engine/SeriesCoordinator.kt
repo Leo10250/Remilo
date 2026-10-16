@@ -134,7 +134,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         "upcoming" to candidates.take(3).map { (segment, slot) -> mapOf("segmentId" to segment.id,
           "nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs, "alarmAtMs" to slot.alarmAtMs,
           "zoneId" to slot.zoneId, "mode" to template(segment).mode, "state" to segment.state) },
-        "unfinishedCount" to records.values.count { it.segmentId in ids && !it.completed && !it.deleted && !it.skipped })
+        "unfinishedCount" to records.values.count { it.segmentId in ids && !it.completed && !it.deleted && !it.skipped &&
+          (it.routineId == null || it.nominalSlot!!.substringBefore('T') >= RoutinePolicy.date(at, zone()).toString() && db().routines().session(it.id)?.ended != true) })
     }.sortedBy { it["seriesId"] as String }
   }
   fun editTemplate(id: String, nominal: String?): ReminderRecord {
@@ -255,6 +256,31 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     recover(); return response(nextId)
   }
   /** Recover CE intents when unlocked; protected rules remain sufficient when locked. */
+  fun replaceRoutine(operation: String, family: String, record: ReminderRecord, spec: Map<String, Any?>,
+    boundary: LocalDateTime, checkpoint: () -> Unit) {
+    val dao = db().records()
+    dao.receipt(operation)?.let { recover(); return }
+    val old = dao.series().filter { it.seriesId == family && it.state != "Archived" }
+    require(old.isNotEmpty())
+    val nextRule = rule(record, spec)
+    val nextId = UUID.nameUUIDFromBytes(operation.toByteArray()).toString()
+    old.forEach { fence(it, boundary) }
+    db().runInTransaction {
+      old.forEach { segment ->
+        val prior = RuleCodec.decode(segment.rule)
+        dao.series(segment.copy(state = if (prior.anchor >= boundary) "Archived" else segment.state,
+          rule = RuleCodec.encode(prior.copy(endExclusive = minOf(prior.endExclusive ?: boundary, boundary))), revision = segment.revision + 1))
+        dao.pendingSeries(PendingSeries("$operation:${segment.id}", segment.id))
+      }
+      dao.series(SeriesRecord(nextId, family, encodeTemplate(record), RuleCodec.encode(nextRule),
+        state = old.last().state, createdAtMs = now()))
+      dao.pendingSeries(PendingSeries(operation, nextId))
+      dao.receipt(CreationReceipt(operation, nextId, "RoutineReplace", family))
+      checkpoint()
+    }
+    recover()
+  }
+  /** Recover CE intents when unlocked; protected rules remain sufficient when locked. */
   fun recover() {
     if (unlocked()) {
       val dao = db().records()
@@ -275,7 +301,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         operational.runInTransaction {
           alerts.plan(SeriesPlan(id, RuleCodec.encode(rule), series.state, private.mode, private.sound,
             private.vibration, (dao.settings() ?: SettingsRecord()).snoozeMinutes, rule.zone(zone()).id,
-            alerts.plan(id)?.materializedThrough))
+            alerts.plan(id)?.materializedThrough, if (private.routineId != null) RoutinePolicy.PROFILE else "Reminder"))
           alerts.all().filter { it.segmentId == id && it.state == "SeriesChanging" }.forEach { alert ->
             val nominal = LocalDateTime.parse(alert.nominalSlot)
             val belongs = Recurrence.future(rule, now(), zone(), private.mode).takeWhile { it.nominal <= nominal }.any { it.nominal == nominal }
@@ -302,21 +328,23 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
           .takeWhile { scheduledAt(it, plan.mode) <= now() }.toList()
         operational.runInTransaction { elapsedSlots.forEach { slot ->
           val id = occurrenceId(plan.id, slot.nominal.toString())
-          if (alerts.find(id) == null) alerts.put(AlertRecord(id, slot.alarmAtMs, 1, if (plan.mode == "None") "NoAlert" else "Missed", mode = plan.mode,
+          if (alerts.find(id) == null) alerts.put(AlertRecord(id, slot.alarmAtMs, 1, if (plan.mode == "None") "NoAlert" else if (plan.profile == RoutinePolicy.PROFILE) "Available" else "Missed", mode = plan.mode,
             sound = plan.sound, vibration = plan.vibration, snoozeMinutes = plan.snoozeMinutes,
-            segmentId = plan.id, nominalSlot = slot.nominal.toString(), resolvedZone = slot.zoneId))
+            segmentId = plan.id, nominalSlot = slot.nominal.toString(), resolvedZone = slot.zoneId,
+            profile = plan.profile, expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(slot.zoneId)) else 0))
         } }
       }
       val rows = alerts.all().filter { it.segmentId == plan.id }
       // Elapsed delivery is never revived by travel/recovery. The receiver itself
       // may still handle its ordinary callback within the lateness window.
       rows.filter { !it.exception && scheduledAt(it, rule) <= now() && it.state in setOf("Paused") }.forEach {
-        alerts.put(it.copy(state = if (it.mode == "None") "NoAlert" else "Missed", generation = it.generation + 1))
+        alerts.put(it.copy(state = if (it.mode == "None") "NoAlert" else if (it.profile == RoutinePolicy.PROFILE) "Available" else "Missed", generation = it.generation + 1))
       }
       if (plan.resolvedZone != resolvedZone) {
         rows.filter { !it.exception && scheduledAt(it, rule) > now() && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->
           val slot = Recurrence.resolve(rule, LocalDateTime.parse(old.nominalSlot), zone())
-          alerts.put(old.copy(targetMs = slot.alarmAtMs, resolvedZone = resolvedZone, generation = old.generation + 1, state = "Pending"))
+          alerts.put(old.copy(targetMs = slot.alarmAtMs, resolvedZone = resolvedZone, generation = old.generation + 1, state = "Pending",
+            expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(resolvedZone)) else 0))
           try { scheduler.cancel(old) } catch (_: Exception) { /* old callback fenced */ }
         }
         alerts.plan(plan.copy(resolvedZone = resolvedZone))
@@ -332,7 +360,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         val old = alerts.find(id)
         val desired = old ?: AlertRecord(id, slot.alarmAtMs, 1, "Pending", mode = plan.mode,
           sound = plan.sound, vibration = plan.vibration, snoozeMinutes = plan.snoozeMinutes,
-          segmentId = plan.id, nominalSlot = nominal, resolvedZone = slot.zoneId)
+          segmentId = plan.id, nominalSlot = nominal, resolvedZone = slot.zoneId, profile = plan.profile,
+          expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(slot.zoneId)) else 0)
         if (desired.state != "Scheduled" && desired.state != "NoAlert") register(desired.copy(state = "Pending"))
       }
       val latest = alerts.all().filter { it.segmentId == plan.id }.mapNotNull { it.nominalSlot }.maxOrNull()

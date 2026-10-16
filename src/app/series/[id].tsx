@@ -5,6 +5,7 @@ import { RootNotice, CommandRecovery, useCapturedCommand, useDestinationNavigati
 import { useTimeFormatting } from '../../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { modeLabel } from '../../domain/presentation';
 import { creationOrigin, familyBackRoute, familyOriginParams, type OriginParams } from '../../domain/navigation';
@@ -30,6 +31,8 @@ export default function SeriesDetails() {
   const familyId = requestedFamily ?? query.data?.seriesId;
   const family = families.data?.find((item) => item.seriesId === familyId || item.current.id === id);
   const series = family?.current ?? query.data;
+  const routineId = (series?.template as { routineId?: string } | undefined)?.routineId;
+  useEffect(() => { if (routineId) router.replace({ pathname: '/edit', params: { routineId } }); }, [routineId]);
   const seriesId = family?.seriesId ?? series?.seriesId;
   const calendarLink = links.data?.find(item => item.seriesId === seriesId || item.occurrenceId === seriesId);
   const publication = publications.data?.find(item => item.occurrenceId === seriesId);

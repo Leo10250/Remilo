@@ -61,9 +61,9 @@ class CalendarIsolationTest {
     val dp = context.createDeviceProtectedStorageContext().getDatabasePath("remilo-operational.db").readBytes().toString(Charsets.ISO_8859_1)
     listOf("PRIVATE SUBJECT", "private@example.test", "PRIVATE CALENDAR", "PRIVATE NOTES", "transient-token").forEach { assertFalse(dp.contains(it)) }
   }
-  @Test fun portableBackupKeepsFormatFourWithoutConnectionJobsOrBinding() {
+  @Test fun portableBackupKeepsCalendarStateOutOfFormatFive() {
     val id = create(); val job = capture(id); val backup = request { engine.exportBackup() }
-    assertEquals(4, JSONObject(backup).getInt("version"))
+    assertEquals(5, JSONObject(backup).getInt("version"))
     listOf("PRIVATE SUBJECT", "private@example.test", "PRIVATE CALENDAR", job.operationId, job.eventId, "calendar_operations", "accessToken").forEach { assertFalse(backup.contains(it)) }
     assertTrue(backup.contains("PRIVATE NOTES")) // Reminder content remains ordinary portable data.
   }

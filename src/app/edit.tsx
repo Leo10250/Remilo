@@ -13,8 +13,9 @@ import { saveFeedback, type SaveContext } from '../domain/save-feedback';
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel } from '../domain/presentation';
-import { deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, Page, QueryState, RowSupport, Sheet, Status, Toggle } from '../ui/components';
+import { civilAt, deviceZone } from '../domain/time';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, Page, QueryState, RowSupport, SettingRow, Sheet, Status, Toggle } from '../ui/components';
+import { RoutineEditorForm, RoutineEditorRoute } from '../ui/routine-editor';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
@@ -27,12 +28,13 @@ import { SoundPicker } from '../ui/sound-picker';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { space } from '../ui/tokens';
 
-type Seed = { state: EditorState; revision?: number; series?: Series };
+type Seed = { state: EditorState; revision?: number; series?: Series; routineId?: string };
 async function readSeed(id?: string, segmentId?: string, following?: string): Promise<Seed> {
-  let draft: EditorDraft, recurrence: RecurrenceDraft | undefined, revision: number | undefined, series: Series | undefined;
+  let draft: EditorDraft, recurrence: RecurrenceDraft | undefined, revision: number | undefined, series: Series | undefined, routineId: string | undefined;
   if (segmentId) {
     series = await engine().getSeries(segmentId) ?? undefined;
     if (!series) throw new Error(t('m_c32e5d8380a5'));
+    routineId = (series.template as { routineId?: string }).routineId;
     const source = following ? await engine().getSeriesDraft(segmentId, following) : undefined;
     draft = editorDraft(source?.template ?? series.template);
     recurrence = cleanRepeat({ ...series.rule, zoneMode: series.rule.zoneId ? 'pinned' : 'floating',
@@ -41,20 +43,23 @@ async function readSeed(id?: string, segmentId?: string, following?: string): Pr
   } else if (id) {
     const record = await engine().getOccurrence(id);
     if (!record) throw new Error(t('m_7f00c5392527'));
+    routineId = record.routine?.routineId;
     draft = editorDraft(record); revision = record.revision;
   } else draft = editorDraft();
-  return { state: { draft, recurrence }, revision, series };
+  return { state: { draft, recurrence }, revision, series, routineId };
 }
 export default function Editor() {
   'use no memo';
   const t = useTranslation();
-  const params = useLocalSearchParams<OriginParams & { id?: string; duplicate?: string; segmentId?: string; following?: string }>();
+  const params = useLocalSearchParams<OriginParams & { id?: string; duplicate?: string; segmentId?: string; following?: string; routine?: string; routineId?: string; copyRoutine?: string }>();
   const id = params.id ?? params.duplicate, editing = !!id || !!params.segmentId;
   const source = useQuery({ queryKey: ['editor-source', id, params.segmentId, params.following], enabled: nativeAvailable && editing,
     queryFn: () => readSeed(id, params.segmentId, params.following) });
   if (!nativeAvailable) return <Page compact title={t('m_31757bbfa17e')}><Copy>{t('m_00b26ac6b4a0')}</Copy></Page>;
+  if (params.routine || params.routineId || params.copyRoutine) return <RoutineEditorRoute id={params.routineId ?? params.copyRoutine} duplicate={!!params.copyRoutine} listId={params.originListId} />;
   if (editing && !source.data) return <Page compact title={t('m_1f1353b055df')} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(retainedOriginParams(params)))}><QueryState loading={source.isLoading} error={source.error}
     empty={false} onRetry={() => void source.refetch()} /></Page>;
+  if (source.data?.routineId) return <RoutineEditorRoute id={source.data.routineId} duplicate={!!params.duplicate} />;
   const origin = creationOrigin(params);
   const seed = source.data ?? { state: { draft: editorDraft({ title: '', listId: origin.kind === 'list' ? origin.listId : null }) } };
   return <EditorForm key={id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={!!params.duplicate} following={params.following} originParams={retainedOriginParams(params)} />;
@@ -73,6 +78,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     title: duplicate ? seed.state.draft.title.slice(0, 193) + t('m_d75612450689') : seed.state.draft.title } }));
   const { draft, recurrence } = state, zone = draft.zoneId ?? deviceZone();
   const [baseline, setBaseline] = useState(state);
+  const [attachedRoutine, setAttachedRoutine] = useState(false);
   const [loadedRevision, setLoadedRevision] = useState(seed.revision), [loadedSeries, setLoadedSeries] = useState(seed.series);
   const [followingScope, setFollowingScope] = useState(following), [saveAsNew, setSaveAsNew] = useState(false);
   const [message, setMessage] = useLocalizedState(''), [fieldError, setFieldError] = useState<string | undefined>(), [zoneWarning, setZoneWarning] = useState('');
@@ -103,7 +109,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || !calendarLinks.data || !!calendarLinks.error || !!hasCalendarContext);
   const dirty = saveAsNew || calendarDisposition !== 'Default' || JSON.stringify(state) !== JSON.stringify(baseline);
   const busy = preparing || command.isPending || reviewLoading;
-  usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
+  usePreventRemove(!attachedRoutine && !saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
     if (retrySave || pendingSave.current || command.isPending) { confirm(t('m_31442c166f10'), t('m_341b6b4fb929')); return; }
     if (preparing) { confirm(t('m_d8eb10e04288'), t('m_27b05dc65c32')); return; }
     confirm(t('m_85bcf41666a5'), t('m_2a6bb39d73ff'), [{ text: t('m_e76fd2add010'), style: 'cancel' },
@@ -246,6 +252,11 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
   const timingLabel = noAlert ? t('m_75ba69e3a8b7') : modeLabel(draft.mode) + t('m_4a8f540240f1');
   const calendarSummary = hasSeparateEvent(resolvedDraft) || preserveEvent ? eventRange(resolvedDraft) : undefined;
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
+  if (attachedRoutine) {
+    const local = civilAt(draft.alarmAtMs ?? draft.eventStartMs);
+    return <RoutineEditorForm initial={{ title: draft.title, startsOn: local.slice(0, 10), minutes: Number(local.slice(11, 13)) * 60 + Number(local.slice(14, 16)), listId: draft.listId ?? null,
+      mode: draft.mode === 'None' ? 'None' : 'Notification' }} inheritedDirty={dirty} onRemove={() => setAttachedRoutine(false)} />;
+  }
   return <Page compact title={creation ? t('m_70f22f445886') : editingSeries ? followingScope ? t('m_3e60c726a1d3') : t('m_3ca78b60c94f') : t('m_1f1353b055df')}
     onBack={() => {
       if (!dirty && !retrySave && !busy) finishEditing();
@@ -291,6 +302,8 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
           <RepeatForm disabled={frozen} value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={hasCalendarContext} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}
+        {creation && <SettingRow key="routine" label={t('routine_title')} icon="fitness_center" value={t('routine_attach')} description={t('routine_attached_hint')} disabled={frozen}
+          onPress={() => { finishEditing(); setAttachedRoutine(true); }} />}
         <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
           {invalid(['listId']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>

@@ -268,13 +268,44 @@ resolution is required before a suspended link resumes.
   Series conflicts are preserved as a whole family unless explicitly restored as
   a separate copy. Editing a paused series keeps its future ordinary alerts paused.
 
-## Planned Android daily workflows (after the reminder core, before iOS)
+## Android weekly routines
 
-- Workout plans are reusable weekly templates, with a different ordered exercise
-  checklist for each selected day. Per-exercise completion, Undo/skip and history
-  belong to a dated occurrence; checking an exercise never deletes the plan or
-  changes the next week's exercises. Reuse the existing recurrence/identity kernel
-  if suitable instead of creating a competing scheduler.
+Routines are optional in the existing reminder editor. One owning recurring
+reminder supplies one shared clock time; its versioned weekly plan supplies
+ordered exercises for each weekday or an explicit Rest day. Existing ordinary
+reminders cannot be converted in v1. Duplication creates independent identities.
+Notification uses a separate quiet channel, or the owner can choose No alert.
+Android controls channel settings after creation; this is not loud Alarm delivery.
+
+Every workout is available throughout its device-local date, even before its
+notification time or when created after that time. A late creation/resume/recovery
+does not replay elapsed prompts. Rest days create neither actionable Agenda work
+nor notifications. The UI derives repeat weekdays from the non-rest definitions.
+
+Each dated snapshot freezes exercise names, free-text targets, guidance and stable
+identities. Mark as done checks one exercise and advances Focus; selecting previous
+exercises changes only the view. Explicit Undo completion remains available after
+the final exercise. Skip today retains partial checks and has an explicit Undo
+while the day is open. Notification opening/dismissal never changes progress.
+
+Local midnight ends the session without making unfinished work overdue. Native
+reads/actions/recovery enforce closure without requiring a midnight wake-up.
+Completed sessions can appear in Completed; skips follow Show skipped. Unfinished
+ended work belongs only in routine history. History corrections retain their actual
+action timestamps and never reopen Agenda or delivery. Plan and shared-time edits
+apply from tomorrow, preserving today's snapshot and past targets. Pause suppresses
+new dates and prompts while an existing today session can still finish.
+
+The routine library lives within Lists. Agenda uses one ordinary compact surface
+per dated routine and informational exercise counts, with no whole-workout Done
+or completion swipe. Calendar publication/linking is unavailable for routines.
+All authored content, progress and correction records remain credential-protected.
+Text is the exercise-guidance fallback until individually approved bundled
+illustrations exist. No personal workout is automatically seeded on installation.
+See the [routine design contract](design/current/weekly-routines.md).
+
+## Planned Android daily workflows (before iOS)
+
 - A calm, date-aware Today presentation shows that day's workout and relevant
   reminders; a compact Android home-screen widget can show today's checklist
   and safe quick actions. A new permanent tab is optional, not required.
@@ -355,8 +386,9 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   retry receipts. Local recovery and older backup imports into the same installation
   cannot resurrect that identity by default; an explicitly requested backup copy
   has a separate identity. Existing
-  exported files are unchanged. Backup format 4 carries minimal repeating exclusions,
-  and versions 1–3 remain readable. Unknown replies keep the existing command/batch
+  exported files are unchanged. Backup format 5 retains minimal repeating exclusions
+  and adds weekly plans, dated progress and correction history. Versions 1–4 remain
+  readable. Unknown replies keep the existing command/batch
   guards; retry uses the same operation, and batches report confirmed partial results.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only

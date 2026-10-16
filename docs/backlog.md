@@ -131,8 +131,8 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 | P4-E07 | Settings, editor, management and generalized review | P4-E06 | implemented/unverified | [Projection evidence](evidence/2026-10-14-calendar-managed-sync.md), [fixture observations](evidence/2026-10-14-calendar-managed-visual.md); reminder-first controls, saved phases/counts, candidate/setup routing, quiet issues and Activity |
 | P4-E08 | Integrated regressions, visual evidence and signed acceptance | P4-E01–07 | in progress | [257 shared/91 tooling/423 native checks, lint and identified signed ARM64 artifact](evidence/2026-10-14-calendar-managed-sync.md); representative eight-pair/large-text fixtures; [consolidated signed-phone/live Google and Android accessibility observations](device-acceptance.md) remain |
 | G4 | Calendar release gate | P4-A/B/C/D/E | pending | Managed discovery/reuse/creation and recovery, both directions after documented opportunities, protected conflicts/unknown writes, recurrence, independent deletion and quiet review notices on an identified signed build |
-| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | pending | different days have different checklists; plan survives daily completion |
-| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | pending | per-exercise Done/Undo tracked by local date; yesterday/tomorrow do not leak into today |
+| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | implemented/unverified | [Host evidence](evidence/2026-10-15-weekly-routines.md); versioned drafts, rest days, shared quiet prompt, tomorrow-effective edits and format-5 backup; phone acceptance pending |
+| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | implemented/unverified | [Host evidence](evidence/2026-10-15-weekly-routines.md); native dated progress, Focus/Agenda/history, Done/Undo/Skip, midnight closure and ordinary overdue isolation; phone acceptance pending |
 | RW-03 | Readable Android home-screen Today widget | RW-02 | pending | today's plan/reminders update across midnight, edits, reboot and completion without opening React Native |
 | RW-04 | Optional daily Today/agenda digest notification | RW-02 | pending | configurable local time, opt-in and quiet dismissal; no duplicate or alarm-channel behavior |
 | AI-01 | Android assistant/intent compatibility research and action contract | G3 | pending | current official support matrix for Android intents, Gemini/AppFunctions, Samsung/Bixby, versions and limits |
@@ -225,6 +225,18 @@ urgent information; verify that classification cannot delay or alter alarm work.
   device's local date/time zone and calendar-day rollover, even across process
   death and travel. Design a focused Today presentation, not a general task manager
   or mandatory bottom-navigation redesign.
+  - RW-01a: versioned CE plan/session schema and nullable ordinary-reminder
+    association implemented; CE14/DP8 migrations and format-5 portable content.
+  - RW-01b: existing editor attachment, weekly/day drafts, stable exercise edits,
+    rest days, future-only review and independent duplication implemented.
+  - RW-01c: content-free quiet delivery profile, day expiry, pause/resume and
+    Calendar exclusion implemented. Signed-phone delivery/permissions pending.
+  - RW-02a: serialized exercise journal, retry receipts, aggregate completion,
+    whole-day Skip/Undo and actual-timestamp history correction implemented.
+  - RW-02b: native filtering/counting/pagination isolation, shared Agenda rows,
+    Focus sequence, library and history navigation implemented.
+  - RW-02c: host lifecycle/recovery/compatibility checks and actual-component
+    fixture review passed; consolidated signed-phone/TalkBack gates pending.
 - RW-03: use a supported Android widget mechanism and native read/action path;
   React Native/Metro/network must not be required for refresh or completion.
   Show no private content before unlock without permission, and test stale widgets,

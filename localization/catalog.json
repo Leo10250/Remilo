@@ -13201,6 +13201,845 @@
       },
       "context": "Count-based Calendar presentation; Chinese has no English plural suffix",
       "calendarStatus": false
+    },
+    "routine_title": {
+      "en": "Routine",
+      "zh-Hans": "日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_library": {
+      "en": "Routines",
+      "zh-Hans": "日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_library_hint": {
+      "en": "Weekly plans with progress for each day",
+      "zh-Hans": "每周计划，每天独立记录进度",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_new": {
+      "en": "Add a routine",
+      "zh-Hans": "添加日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_attach": {
+      "en": "Add weekly routine",
+      "zh-Hans": "添加每周计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_remove": {
+      "en": "Remove routine from this draft",
+      "zh-Hans": "从草稿中移除日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_weekly": {
+      "en": "Weekly plan",
+      "zh-Hans": "每周计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_exercises": {
+      "en": "Exercises",
+      "zh-Hans": "练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_rest": {
+      "en": "Rest day",
+      "zh-Hans": "休息日",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_today_only": {
+      "en": "Today only",
+      "zh-Hans": "仅限当天",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_today_only_hint": {
+      "en": "Available all day. Unfinished exercises stay in history at midnight and never become overdue.",
+      "zh-Hans": "全天可用。未完成的练习在午夜转入历史记录，不会逾期。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_quiet": {
+      "en": "Quiet notification",
+      "zh-Hans": "静默通知",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_no_alert": {
+      "en": "No alert",
+      "zh-Hans": "无提醒",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_shared_time": {
+      "en": "One time for every workout day",
+      "zh-Hans": "所有锻炼日共用一个时间",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_weekly_hint": {
+      "en": "Workout days follow this plan. Rest days have no notification or Agenda entry.",
+      "zh-Hans": "锻炼日由此计划决定。休息日不会发送通知，也不会出现在日程中。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_from_tomorrow": {
+      "en": "Changes apply from tomorrow. Today and history keep their exercises and progress.",
+      "zh-Hans": "修改从明天起生效。今天和历史记录中的练习与进度保持不变。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_change_review": {
+      "en": "Review changes",
+      "zh-Hans": "检查更改",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_changed_day": {
+      "en": "Changed: {day}",
+      "zh-Hans": "已修改：{day}",
+      "args": {
+        "day": "string"
+      },
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_repeat": {
+      "en": "Every week · {days}",
+      "zh-Hans": "每周 · {days}",
+      "args": {
+        "days": "string"
+      },
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_exercise_count": {
+      "en": {
+        "one": "{count} exercise",
+        "other": "{count} exercises"
+      },
+      "zh-Hans": {
+        "other": "{count} 项练习"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_progress": {
+      "en": "{done} of {total} completed",
+      "zh-Hans": "已完成 {done}/{total} 项",
+      "args": {
+        "done": "number",
+        "total": "number"
+      },
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_add_exercise": {
+      "en": "Add exercise",
+      "zh-Hans": "添加练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_name": {
+      "en": "Exercise name",
+      "zh-Hans": "练习名称",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_target": {
+      "en": "Target (optional)",
+      "zh-Hans": "目标（可选）",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_guidance": {
+      "en": "Guidance (optional)",
+      "zh-Hans": "说明（可选）",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_edit_exercise": {
+      "en": "Edit exercise",
+      "zh-Hans": "编辑练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_move_up": {
+      "en": "Move up",
+      "zh-Hans": "上移",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_move_down": {
+      "en": "Move down",
+      "zh-Hans": "下移",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_remove_exercise": {
+      "en": "Remove exercise",
+      "zh-Hans": "移除练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_removed": {
+      "en": "Exercise removed",
+      "zh-Hans": "已移除练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_undo": {
+      "en": "Undo",
+      "zh-Hans": "撤销",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_use_day": {
+      "en": "Use this day",
+      "zh-Hans": "使用此日计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_validation": {
+      "en": "Add a named exercise on every workout day, or choose Rest day.",
+      "zh-Hans": "请为每个锻炼日添加有名称的练习，或将其设为休息日。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_saved": {
+      "en": "Routine saved",
+      "zh-Hans": "已保存日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_back_reminder": {
+      "en": "Back to reminder",
+      "zh-Hans": "返回提醒",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_history": {
+      "en": "Routine history",
+      "zh-Hans": "日常计划历史",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_skip": {
+      "en": "Skip today",
+      "zh-Hans": "跳过今天",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_undo_skip": {
+      "en": "Undo Skip today",
+      "zh-Hans": "撤销跳过今天",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_skipped": {
+      "en": "Skipped",
+      "zh-Hans": "已跳过",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_completed": {
+      "en": "Completed",
+      "zh-Hans": "已完成",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_ready": {
+      "en": "Ready for today",
+      "zh-Hans": "今日计划已准备好",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_in_progress": {
+      "en": "In progress",
+      "zh-Hans": "进行中",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_not_completed": {
+      "en": "Not completed",
+      "zh-Hans": "未完成",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_partial": {
+      "en": "Partially completed",
+      "zh-Hans": "部分完成",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_paused": {
+      "en": "Paused",
+      "zh-Hans": "已暂停",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_upcoming": {
+      "en": "Upcoming",
+      "zh-Hans": "即将到来",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_day_ended": {
+      "en": "This day has ended. Corrections update history only.",
+      "zh-Hans": "这一天已结束。更正仅更新历史记录。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_deleted": {
+      "en": "This session is in Trash. Restore it there before making corrections.",
+      "zh-Hans": "此记录已移至废纸篓。请先恢复再进行更正。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_focus": {
+      "en": "Focus",
+      "zh-Hans": "专注练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_sequence": {
+      "en": "Exercises",
+      "zh-Hans": "练习列表",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_done": {
+      "en": "Mark as done",
+      "zh-Hans": "标记为完成",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_undo_completion": {
+      "en": "Undo completion",
+      "zh-Hans": "撤销完成",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_next": {
+      "en": "Next exercise",
+      "zh-Hans": "下一项练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_previous": {
+      "en": "Previous exercise",
+      "zh-Hans": "上一项练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_correction_done": {
+      "en": "Mark completed in history",
+      "zh-Hans": "在历史中标记为已完成",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_correction_saved": {
+      "en": "History corrected",
+      "zh-Hans": "已更正历史记录",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_progress_saved": {
+      "en": "Progress saved",
+      "zh-Hans": "已保存进度",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_skipped_saved": {
+      "en": "Today skipped",
+      "zh-Hans": "已跳过今天",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_skip_undone": {
+      "en": "Today restored",
+      "zh-Hans": "已恢复今日计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_open_today": {
+      "en": "Open today",
+      "zh-Hans": "打开今日计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_empty_history": {
+      "en": "No routine history yet",
+      "zh-Hans": "暂无日常计划历史记录",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_edit": {
+      "en": "Edit weekly routine",
+      "zh-Hans": "编辑每周计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_duplicate": {
+      "en": "Duplicate routine",
+      "zh-Hans": "复制日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_pause": {
+      "en": "Pause routine",
+      "zh-Hans": "暂停日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_resume": {
+      "en": "Resume routine",
+      "zh-Hans": "恢复日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_plan": {
+      "en": "View weekly plan",
+      "zh-Hans": "查看每周计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_rest_hint": {
+      "en": "Rest today. No exercises or notification to complete.",
+      "zh-Hans": "今天休息。没有需要完成的练习或通知。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_paused_hint": {
+      "en": "Future days and notifications are paused. An existing session can still be completed.",
+      "zh-Hans": "未来的计划与通知已暂停。已有的当日记录仍可完成。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_load_error": {
+      "en": "Could not load this routine. Try again.",
+      "zh-Hans": "无法加载此日常计划。请重试。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_more": {
+      "en": "Routine actions",
+      "zh-Hans": "日常计划操作",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_notification_warning": {
+      "en": "Notifications are unavailable. Exercises remain available in Agenda.",
+      "zh-Hans": "通知不可用，练习仍可在日程中查看。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_channel_changed": {
+      "en": "Android controls this channel. Review its current sound and vibration settings.",
+      "zh-Hans": "此通知渠道由 Android 控制。请检查当前的声音和振动设置。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_channel_settings": {
+      "en": "Routine notification settings",
+      "zh-Hans": "日常计划通知设置",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_next_prompt": {
+      "en": "Next notification: {time}",
+      "zh-Hans": "下次通知：{time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_no_catchup": {
+      "en": "If today’s time has passed, today stays available without a catch-up notification.",
+      "zh-Hans": "若今天的提醒时间已过，今日计划仍可用，但不会补发通知。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_history_changes": {
+      "en": "Changes to this session",
+      "zh-Hans": "此日记录的更改",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_correction_at": {
+      "en": "Corrected {time}",
+      "zh-Hans": "更正于 {time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_select_exercise": {
+      "en": "Choose an exercise below",
+      "zh-Hans": "请在下方选择练习",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_starts": {
+      "en": "Starts",
+      "zh-Hans": "开始日期",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_empty": {
+      "en": "No routines yet",
+      "zh-Hans": "暂无日常计划",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_instructions_fallback": {
+      "en": "Follow your saved target and guidance.",
+      "zh-Hans": "请按照保存的目标和说明进行练习。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_attached_hint": {
+      "en": "Optional exercise progress with a different plan for each weekday.",
+      "zh-Hans": "可选练习进度，每个工作日可设不同计划。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_saved_changes": {
+      "en": "Routine updated. Changes start tomorrow.",
+      "zh-Hans": "已更新日常计划，修改从明天起生效。",
+      "args": {},
+      "context": "Weekly routines",
+      "calendarStatus": false
+    },
+    "routine_day_0": {
+      "en": "Monday",
+      "zh-Hans": "星期一",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_day_1": {
+      "en": "Tuesday",
+      "zh-Hans": "星期二",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_day_2": {
+      "en": "Wednesday",
+      "zh-Hans": "星期三",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_day_3": {
+      "en": "Thursday",
+      "zh-Hans": "星期四",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_day_4": {
+      "en": "Friday",
+      "zh-Hans": "星期五",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_day_5": {
+      "en": "Saturday",
+      "zh-Hans": "星期六",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_day_6": {
+      "en": "Sunday",
+      "zh-Hans": "星期日",
+      "args": {},
+      "context": "Routine weekdays",
+      "calendarStatus": false
+    },
+    "routine_channel": {
+      "en": "Routine reminders",
+      "zh-Hans": "日常计划提醒",
+      "args": {},
+      "context": "Native routine notification",
+      "calendarStatus": false
+    },
+    "routine_channel_desc": {
+      "en": "Quiet prompts for today's routine",
+      "zh-Hans": "今日计划的静默提醒",
+      "args": {},
+      "context": "Native routine notification",
+      "calendarStatus": false
+    },
+    "routine_notification_title": {
+      "en": "Today's routine",
+      "zh-Hans": "今日计划",
+      "args": {},
+      "context": "Native routine notification",
+      "calendarStatus": false
+    },
+    "routine_notification_body": {
+      "en": "Your exercises are ready for today.",
+      "zh-Hans": "今日练习已准备好。",
+      "args": {},
+      "context": "Native routine notification",
+      "calendarStatus": false
+    },
+    "routine_repeat_label": {
+      "en": "Repeat",
+      "zh-Hans": "重复",
+      "args": {},
+      "context": "Routine editor",
+      "calendarStatus": false
+    },
+    "routine_keep_draft": {
+      "en": "Keep my draft after review",
+      "zh-Hans": "检查后保留我的草稿",
+      "args": {},
+      "context": "Routine guarded actions",
+      "calendarStatus": false
+    },
+    "routine_load_latest": {
+      "en": "Load the latest plan",
+      "zh-Hans": "加载最新计划",
+      "args": {},
+      "context": "Routine guarded actions",
+      "calendarStatus": false
+    },
+    "routine_day_open_error": {
+      "en": "Use today's exercise controls while this day is open.",
+      "zh-Hans": "当天尚未结束，请使用今日练习控件。",
+      "args": {},
+      "context": "Routine guarded actions",
+      "calendarStatus": false
+    },
+    "routine_stale_date": {
+      "en": "This routine date changed. Open the dated session again.",
+      "zh-Hans": "此计划的日期已更改，请重新打开对应日期的记录。",
+      "args": {},
+      "context": "Routine guarded actions",
+      "calendarStatus": false
+    },
+    "routine_action_required": {
+      "en": "Open the routine to update exercise progress.",
+      "zh-Hans": "请打开日常计划来更新练习进度。",
+      "args": {},
+      "context": "Routine guarded actions",
+      "calendarStatus": false
+    },
+    "routine_validation_0": {
+      "en": "Enter valid routine text.",
+      "zh-Hans": "请输入有效的计划文本。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_1": {
+      "en": "Enter the required routine name or exercise.",
+      "zh-Hans": "请输入必填的计划名称或练习名称。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_2": {
+      "en": "Choose a notification time.",
+      "zh-Hans": "请选择通知时间。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_3": {
+      "en": "Routines support Notification or No alert.",
+      "zh-Hans": "日常计划支持通知或不提醒。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_4": {
+      "en": "Choose seven routine days.",
+      "zh-Hans": "请设置一周七天的计划。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_5": {
+      "en": "Choose a routine day.",
+      "zh-Hans": "请选择计划中的一天。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_6": {
+      "en": "Choose Exercises or Rest day.",
+      "zh-Hans": "请选择练习或休息日。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_7": {
+      "en": "Add an exercise or choose Rest day.",
+      "zh-Hans": "请添加练习或选择休息日。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_8": {
+      "en": "Choose an exercise.",
+      "zh-Hans": "请选择一项练习。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_9": {
+      "en": "Exercise identities must be unique.",
+      "zh-Hans": "练习标识必须唯一。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_10": {
+      "en": "Choose an approved illustration reference.",
+      "zh-Hans": "请选择已批准的插图。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_11": {
+      "en": "Add at least one workout day, or pause the routine.",
+      "zh-Hans": "请至少添加一个锻炼日，或暂停计划。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_12": {
+      "en": "Choose today or a future start date.",
+      "zh-Hans": "请选择今天或将来的日期作为开始日期。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_13": {
+      "en": "Undo Skip today before changing exercises.",
+      "zh-Hans": "请先撤销跳过今天，再更改练习。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_14": {
+      "en": "Choose an exercise from this session.",
+      "zh-Hans": "请选择此记录中的一项练习。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_validation_15": {
+      "en": "Choose the exercise completion state.",
+      "zh-Hans": "请选择练习完成状态。",
+      "args": {},
+      "context": "Native routine validation",
+      "calendarStatus": false
+    },
+    "routine_next_after_changes": {
+      "en": "First notification with these changes: {time}",
+      "zh-Hans": "修改生效后的首次通知：{time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Tomorrow-effective routine preview",
+      "calendarStatus": false
     }
   }
 }

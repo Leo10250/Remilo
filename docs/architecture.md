@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 13/7/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 14/8/5. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -27,7 +27,7 @@ preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
-portable backup format 4.
+portable backup format 5.
 
 [P4-B linking](calendar-linking.md) adds CE 7→8 links and immutable phased
 operations. Local import/edit, link checkpoints, receipts and scheduling outbox
@@ -596,3 +596,50 @@ alarm-check page owns captured Test recovery; lifetime preference ownership stay
 in the existing singleton. UTC carrier dates adapt minutes-of-day picker values
 without converting a shortcut into a dated alarm. No engine/bridge/database/
 backup version, eligibility or overdue authority changes in this refinement.
+
+## Weekly routine lifecycle and durable progress
+
+The 15 October owner-approved routine extension adds a nullable `routineId` to
+CE reminders (default null), keeping ordinary reminders' overdue and delivery
+semantics intact. CE14 adds plans, effective-date versions, dated snapshots and
+routine operation receipts. Each snapshot freezes ordered exercise content and
+stores explicit completed IDs, an independent irreversible `ended` flag, revision
+and correction history. Local dates use the recurrence kernel's Monday=1 convention.
+Rest is authored plan data; only workout weekdays enter weekly floating recurrence.
+
+`RoutineCoordinator` runs only on `AlarmEngine`'s serialized mutation worker.
+It resolves today's slot with the existing segment/nominal identity even after
+the notification time. Reads, actions and recovery settle pending operations and
+close past dates before projecting results. Ended routines are excluded before
+active filtering/sorting/counting/pagination; they have no overdue boundary.
+Ordinary Done/Reopen/Snooze and series mutations reject routine targets. Dedicated
+exercise commands bind operation ID, date, occurrence, stable step ID and expected
+session revision. Committed receipts are checked before revision validation.
+
+Progress first captures a CE operation containing the desired explicit state and
+actual action timestamp. Aggregate completion/skip changes fence the DP generation
+and cancel delivery, then snapshot/header/history/receipt commit in one CE
+transaction. Reconciliation finishes interrupted operations before generic schedule
+recovery. A history correction can change completion without clearing `ended` or
+registering delivery. Plan/shared-time edits replace recurrence from tomorrow and
+retain today's snapshot. Pause intervals exclude newly materialized paused dates;
+an existing session can still finish. Resume never replays elapsed prompts.
+
+DP8 adds only a content-free `RoutineQuiet` profile on plans/alerts, an alert
+day-expiry instant and irreversible day-ended/prompted delivery flags. It contains
+no routine titles, exercise definitions, checks or
+correction history. The existing scheduler/receiver handles routine Notification
+with approximate fallback. A registered delayed callback may deliver once within
+its original date; recovery does not post elapsed targets. The separate low-importance
+channel defaults to no sound/vibration and remains user-controlled. Posted prompts
+have a remaining-day timeout and reconciliation cancellation, no Done/Snooze
+controls, and generic public/pre-unlock text. Deep links retain occurrence identity.
+
+Portable format 5 includes plans, applicable revisions, snapshots and action history,
+but no routine operation receipts, Android generations/handles, alarm sessions or
+Calendar state. Readers retain formats 1–4. Restore remaps plan/family/segment/date
+identities together for conflict copies, restores purge exclusions first and
+preserves retry-stable imports. Routine authored data is excluded by native Calendar
+publication/link/export guards. The deferred widget must use these same queries
+and guarded commands; React state and presentation refresh timers have no durable
+progress or scheduling authority.

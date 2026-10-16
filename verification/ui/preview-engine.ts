@@ -5,6 +5,7 @@ import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
 import { resolveLanguage } from '../../src/localization';
 import { previewCalendar } from './preview-calendar';
+import { routinePreview } from './preview-routines';
 
 const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
@@ -104,6 +105,9 @@ if (review.get('reviewText') === 'long') {
   });
 }
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+const routines = routinePreview(review.get('reviewRoutine') === '1', () => listeners.forEach(fn => fn()));
+if (routines.progress) items.push(make(routines.progress.occurrenceId!, 'Weekly workout', 0, { mode: 'Notification', vibration: false,
+  routine: routines.progress, overdue: false, overdueAtMs: null }));
 let onCalendarCreation: ((id: string, disposition?: CalendarCreationDisposition) => void) | undefined, applyingCalendarImport = false;
 const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
@@ -254,9 +258,9 @@ function familyViews(): RepeatFamily[] {
 function view(item: Occurrence, now=Date.now()): Occurrence {
   const value = clone(item);
   value.listName = value.listId ? lists.get(value.listId)?.name ?? '' : '';
-  value.overdueAtMs = overdueReference(value);
+  value.overdueAtMs = value.routine ? null : overdueReference(value);
   value.quickSnoozeMinutes = settings.snoozeMinutes;
-  value.overdue = !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
+  value.overdue = value.overdueAtMs != null && !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
   value.agendaAtMs = value.mode === 'None' ? value.eventStartMs : value.nextAlertMs ?? value.alarmAtMs;
   const eventDay = civilAt(value.agendaAtMs,deviceZone()).slice(0,10), currentDay=civilAt(now,deviceZone()).slice(0,10);
   value.agendaGroup = value.completed || value.skipped ? 'completed' : value.overdue ? 'overdue' : eventDay < currentDay ? 'earlier' : eventDay;
@@ -282,7 +286,7 @@ function query(filter: ReminderFilter, cursor: string | null): ReminderPage {
     (filter.view !== 'today' || item.agendaAtMs >= start.getTime() && item.agendaAtMs < end.getTime()) &&
     (filter.view !== 'upcoming' || item.agendaAtMs >= end.getTime()));
   const rank = (item: Occurrence) => item.agendaGroup === 'overdue' ? 0 : item.agendaGroup === 'earlier' ? 1 : 2;
-  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs : item.agendaAtMs;
+  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs ?? item.agendaAtMs : item.agendaAtMs;
   rows.sort((a, b) => ['completed', 'history', 'deleted'].includes(filter.view) ? (b.collectionAtMs ?? b.eventStartMs) - (a.collectionAtMs ?? a.eventStartMs) || b.eventStartMs - a.eventStartMs || a.id.localeCompare(b.id) :
     (['agenda','overdue','today','upcoming','attention'].includes(filter.view) ? rank(a)-rank(b) || activeAnchor(a)-activeAnchor(b) : a.eventStartMs-b.eventStartMs) || a.id.localeCompare(b.id));
   const groups: Record<string, number> = {}; rows.forEach((row) => { groups[row.agendaGroup] = (groups[row.agendaGroup] ?? 0) + 1; });
@@ -297,6 +301,7 @@ function addOccurrence(value: ResolvedReminderDraft, segment?: StoredSeries): Oc
   items.push(item); return item;
 }
 function apply(command: Command): CommandResult {
+  const routine = routines.apply(command); if (routine) return routine;
   const receipt = receipts.get(command.operationId); if (receipt) return clone(receipt);
   let result: CommandResult = { status: 'Applied' };
   if (command.kind === 'Settings') {
@@ -424,6 +429,7 @@ const calendarBridge = previewCalendar(review, (id) => items.find((item) => item
 onCalendarCreation = calendarBridge.captureCalendarCreation;
 const preview = {
   ...calendarBridge,
+  queryRoutines: routines.queryRoutines, getRoutineSession: routines.getRoutineSession, queryRoutineHistory: routines.queryRoutineHistory, previewRoutine: routines.previewRoutine,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => timePreferences(),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
@@ -440,7 +446,7 @@ const preview = {
     const allowed = permissionFixture !== 'blocked';
     return { exactAlarms: allowed && permissionFixture !== 'exact' && permissionFixture !== 'mixed',
       notifications: allowed && permissionFixture !== 'app', channelEnabled: allowed && permissionFixture !== 'alarm-channel',
-      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed',
+      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed', routineChannelEnabled: allowed, routineChannelQuiet: true,
       fullScreen: allowed && permissionFixture !== 'full-screen' && permissionFixture !== 'mixed', unlocked: true,
       observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
   },

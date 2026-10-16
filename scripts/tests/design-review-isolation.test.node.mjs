@@ -99,6 +99,7 @@ function loadPreview(search) {
     '../../src/domain/calendar-link': compile('src/domain/calendar-link.ts'),
   });
   return compile('verification/ui/preview-engine.ts', {
+    './preview-routines': compile('verification/ui/preview-routines.ts', { '../../src/domain/time': time }, { structuredClone }),
     '../../src/domain/time': time,
     '../../src/domain/repeat': compile('src/domain/repeat.ts'),
     './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time, './preview-calendar-links': linked,

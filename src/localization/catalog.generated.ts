@@ -1863,7 +1863,127 @@ export const catalogs = {
     "calendar_review_notification": {
       "one": "{count} unfinished reminder needs review.",
       "other": "{count} unfinished reminders need review."
-    }
+    },
+    "routine_title": "Routine",
+    "routine_library": "Routines",
+    "routine_library_hint": "Weekly plans with progress for each day",
+    "routine_new": "Add a routine",
+    "routine_attach": "Add weekly routine",
+    "routine_remove": "Remove routine from this draft",
+    "routine_weekly": "Weekly plan",
+    "routine_exercises": "Exercises",
+    "routine_rest": "Rest day",
+    "routine_today_only": "Today only",
+    "routine_today_only_hint": "Available all day. Unfinished exercises stay in history at midnight and never become overdue.",
+    "routine_quiet": "Quiet notification",
+    "routine_no_alert": "No alert",
+    "routine_shared_time": "One time for every workout day",
+    "routine_weekly_hint": "Workout days follow this plan. Rest days have no notification or Agenda entry.",
+    "routine_from_tomorrow": "Changes apply from tomorrow. Today and history keep their exercises and progress.",
+    "routine_change_review": "Review changes",
+    "routine_changed_day": "Changed: {day}",
+    "routine_repeat": "Every week · {days}",
+    "routine_exercise_count": {
+      "one": "{count} exercise",
+      "other": "{count} exercises"
+    },
+    "routine_progress": "{done} of {total} completed",
+    "routine_add_exercise": "Add exercise",
+    "routine_name": "Exercise name",
+    "routine_target": "Target (optional)",
+    "routine_guidance": "Guidance (optional)",
+    "routine_edit_exercise": "Edit exercise",
+    "routine_move_up": "Move up",
+    "routine_move_down": "Move down",
+    "routine_remove_exercise": "Remove exercise",
+    "routine_removed": "Exercise removed",
+    "routine_undo": "Undo",
+    "routine_use_day": "Use this day",
+    "routine_validation": "Add a named exercise on every workout day, or choose Rest day.",
+    "routine_saved": "Routine saved",
+    "routine_back_reminder": "Back to reminder",
+    "routine_history": "Routine history",
+    "routine_skip": "Skip today",
+    "routine_undo_skip": "Undo Skip today",
+    "routine_skipped": "Skipped",
+    "routine_completed": "Completed",
+    "routine_ready": "Ready for today",
+    "routine_in_progress": "In progress",
+    "routine_not_completed": "Not completed",
+    "routine_partial": "Partially completed",
+    "routine_paused": "Paused",
+    "routine_upcoming": "Upcoming",
+    "routine_day_ended": "This day has ended. Corrections update history only.",
+    "routine_deleted": "This session is in Trash. Restore it there before making corrections.",
+    "routine_focus": "Focus",
+    "routine_sequence": "Exercises",
+    "routine_done": "Mark as done",
+    "routine_undo_completion": "Undo completion",
+    "routine_next": "Next exercise",
+    "routine_previous": "Previous exercise",
+    "routine_correction_done": "Mark completed in history",
+    "routine_correction_saved": "History corrected",
+    "routine_progress_saved": "Progress saved",
+    "routine_skipped_saved": "Today skipped",
+    "routine_skip_undone": "Today restored",
+    "routine_open_today": "Open today",
+    "routine_empty_history": "No routine history yet",
+    "routine_edit": "Edit weekly routine",
+    "routine_duplicate": "Duplicate routine",
+    "routine_pause": "Pause routine",
+    "routine_resume": "Resume routine",
+    "routine_plan": "View weekly plan",
+    "routine_rest_hint": "Rest today. No exercises or notification to complete.",
+    "routine_paused_hint": "Future days and notifications are paused. An existing session can still be completed.",
+    "routine_load_error": "Could not load this routine. Try again.",
+    "routine_more": "Routine actions",
+    "routine_notification_warning": "Notifications are unavailable. Exercises remain available in Agenda.",
+    "routine_channel_changed": "Android controls this channel. Review its current sound and vibration settings.",
+    "routine_channel_settings": "Routine notification settings",
+    "routine_next_prompt": "Next notification: {time}",
+    "routine_no_catchup": "If today’s time has passed, today stays available without a catch-up notification.",
+    "routine_history_changes": "Changes to this session",
+    "routine_correction_at": "Corrected {time}",
+    "routine_select_exercise": "Choose an exercise below",
+    "routine_starts": "Starts",
+    "routine_empty": "No routines yet",
+    "routine_instructions_fallback": "Follow your saved target and guidance.",
+    "routine_attached_hint": "Optional exercise progress with a different plan for each weekday.",
+    "routine_saved_changes": "Routine updated. Changes start tomorrow.",
+    "routine_day_0": "Monday",
+    "routine_day_1": "Tuesday",
+    "routine_day_2": "Wednesday",
+    "routine_day_3": "Thursday",
+    "routine_day_4": "Friday",
+    "routine_day_5": "Saturday",
+    "routine_day_6": "Sunday",
+    "routine_channel": "Routine reminders",
+    "routine_channel_desc": "Quiet prompts for today's routine",
+    "routine_notification_title": "Today's routine",
+    "routine_notification_body": "Your exercises are ready for today.",
+    "routine_repeat_label": "Repeat",
+    "routine_keep_draft": "Keep my draft after review",
+    "routine_load_latest": "Load the latest plan",
+    "routine_day_open_error": "Use today's exercise controls while this day is open.",
+    "routine_stale_date": "This routine date changed. Open the dated session again.",
+    "routine_action_required": "Open the routine to update exercise progress.",
+    "routine_validation_0": "Enter valid routine text.",
+    "routine_validation_1": "Enter the required routine name or exercise.",
+    "routine_validation_2": "Choose a notification time.",
+    "routine_validation_3": "Routines support Notification or No alert.",
+    "routine_validation_4": "Choose seven routine days.",
+    "routine_validation_5": "Choose a routine day.",
+    "routine_validation_6": "Choose Exercises or Rest day.",
+    "routine_validation_7": "Add an exercise or choose Rest day.",
+    "routine_validation_8": "Choose an exercise.",
+    "routine_validation_9": "Exercise identities must be unique.",
+    "routine_validation_10": "Choose an approved illustration reference.",
+    "routine_validation_11": "Add at least one workout day, or pause the routine.",
+    "routine_validation_12": "Choose today or a future start date.",
+    "routine_validation_13": "Undo Skip today before changing exercises.",
+    "routine_validation_14": "Choose an exercise from this session.",
+    "routine_validation_15": "Choose the exercise completion state.",
+    "routine_next_after_changes": "First notification with these changes: {time}"
   },
   "zh-Hans": {
     "m_bf4156d6b15c": "已启用日历自动同步",
@@ -3720,7 +3840,126 @@ export const catalogs = {
     },
     "calendar_review_notification": {
       "other": "{count} 项未完成提醒需要查看。"
-    }
+    },
+    "routine_title": "日常计划",
+    "routine_library": "日常计划",
+    "routine_library_hint": "每周计划，每天独立记录进度",
+    "routine_new": "添加日常计划",
+    "routine_attach": "添加每周计划",
+    "routine_remove": "从草稿中移除日常计划",
+    "routine_weekly": "每周计划",
+    "routine_exercises": "练习",
+    "routine_rest": "休息日",
+    "routine_today_only": "仅限当天",
+    "routine_today_only_hint": "全天可用。未完成的练习在午夜转入历史记录，不会逾期。",
+    "routine_quiet": "静默通知",
+    "routine_no_alert": "无提醒",
+    "routine_shared_time": "所有锻炼日共用一个时间",
+    "routine_weekly_hint": "锻炼日由此计划决定。休息日不会发送通知，也不会出现在日程中。",
+    "routine_from_tomorrow": "修改从明天起生效。今天和历史记录中的练习与进度保持不变。",
+    "routine_change_review": "检查更改",
+    "routine_changed_day": "已修改：{day}",
+    "routine_repeat": "每周 · {days}",
+    "routine_exercise_count": {
+      "other": "{count} 项练习"
+    },
+    "routine_progress": "已完成 {done}/{total} 项",
+    "routine_add_exercise": "添加练习",
+    "routine_name": "练习名称",
+    "routine_target": "目标（可选）",
+    "routine_guidance": "说明（可选）",
+    "routine_edit_exercise": "编辑练习",
+    "routine_move_up": "上移",
+    "routine_move_down": "下移",
+    "routine_remove_exercise": "移除练习",
+    "routine_removed": "已移除练习",
+    "routine_undo": "撤销",
+    "routine_use_day": "使用此日计划",
+    "routine_validation": "请为每个锻炼日添加有名称的练习，或将其设为休息日。",
+    "routine_saved": "已保存日常计划",
+    "routine_back_reminder": "返回提醒",
+    "routine_history": "日常计划历史",
+    "routine_skip": "跳过今天",
+    "routine_undo_skip": "撤销跳过今天",
+    "routine_skipped": "已跳过",
+    "routine_completed": "已完成",
+    "routine_ready": "今日计划已准备好",
+    "routine_in_progress": "进行中",
+    "routine_not_completed": "未完成",
+    "routine_partial": "部分完成",
+    "routine_paused": "已暂停",
+    "routine_upcoming": "即将到来",
+    "routine_day_ended": "这一天已结束。更正仅更新历史记录。",
+    "routine_deleted": "此记录已移至废纸篓。请先恢复再进行更正。",
+    "routine_focus": "专注练习",
+    "routine_sequence": "练习列表",
+    "routine_done": "标记为完成",
+    "routine_undo_completion": "撤销完成",
+    "routine_next": "下一项练习",
+    "routine_previous": "上一项练习",
+    "routine_correction_done": "在历史中标记为已完成",
+    "routine_correction_saved": "已更正历史记录",
+    "routine_progress_saved": "已保存进度",
+    "routine_skipped_saved": "已跳过今天",
+    "routine_skip_undone": "已恢复今日计划",
+    "routine_open_today": "打开今日计划",
+    "routine_empty_history": "暂无日常计划历史记录",
+    "routine_edit": "编辑每周计划",
+    "routine_duplicate": "复制日常计划",
+    "routine_pause": "暂停日常计划",
+    "routine_resume": "恢复日常计划",
+    "routine_plan": "查看每周计划",
+    "routine_rest_hint": "今天休息。没有需要完成的练习或通知。",
+    "routine_paused_hint": "未来的计划与通知已暂停。已有的当日记录仍可完成。",
+    "routine_load_error": "无法加载此日常计划。请重试。",
+    "routine_more": "日常计划操作",
+    "routine_notification_warning": "通知不可用，练习仍可在日程中查看。",
+    "routine_channel_changed": "此通知渠道由 Android 控制。请检查当前的声音和振动设置。",
+    "routine_channel_settings": "日常计划通知设置",
+    "routine_next_prompt": "下次通知：{time}",
+    "routine_no_catchup": "若今天的提醒时间已过，今日计划仍可用，但不会补发通知。",
+    "routine_history_changes": "此日记录的更改",
+    "routine_correction_at": "更正于 {time}",
+    "routine_select_exercise": "请在下方选择练习",
+    "routine_starts": "开始日期",
+    "routine_empty": "暂无日常计划",
+    "routine_instructions_fallback": "请按照保存的目标和说明进行练习。",
+    "routine_attached_hint": "可选练习进度，每个工作日可设不同计划。",
+    "routine_saved_changes": "已更新日常计划，修改从明天起生效。",
+    "routine_day_0": "星期一",
+    "routine_day_1": "星期二",
+    "routine_day_2": "星期三",
+    "routine_day_3": "星期四",
+    "routine_day_4": "星期五",
+    "routine_day_5": "星期六",
+    "routine_day_6": "星期日",
+    "routine_channel": "日常计划提醒",
+    "routine_channel_desc": "今日计划的静默提醒",
+    "routine_notification_title": "今日计划",
+    "routine_notification_body": "今日练习已准备好。",
+    "routine_repeat_label": "重复",
+    "routine_keep_draft": "检查后保留我的草稿",
+    "routine_load_latest": "加载最新计划",
+    "routine_day_open_error": "当天尚未结束，请使用今日练习控件。",
+    "routine_stale_date": "此计划的日期已更改，请重新打开对应日期的记录。",
+    "routine_action_required": "请打开日常计划来更新练习进度。",
+    "routine_validation_0": "请输入有效的计划文本。",
+    "routine_validation_1": "请输入必填的计划名称或练习名称。",
+    "routine_validation_2": "请选择通知时间。",
+    "routine_validation_3": "日常计划支持通知或不提醒。",
+    "routine_validation_4": "请设置一周七天的计划。",
+    "routine_validation_5": "请选择计划中的一天。",
+    "routine_validation_6": "请选择练习或休息日。",
+    "routine_validation_7": "请添加练习或选择休息日。",
+    "routine_validation_8": "请选择一项练习。",
+    "routine_validation_9": "练习标识必须唯一。",
+    "routine_validation_10": "请选择已批准的插图。",
+    "routine_validation_11": "请至少添加一个锻炼日，或暂停计划。",
+    "routine_validation_12": "请选择今天或将来的日期作为开始日期。",
+    "routine_validation_13": "请先撤销跳过今天，再更改练习。",
+    "routine_validation_14": "请选择此记录中的一项练习。",
+    "routine_validation_15": "请选择练习完成状态。",
+    "routine_next_after_changes": "修改生效后的首次通知：{time}"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -5564,4 +5803,121 @@ export interface MessageArguments {
   calendar_review_count: { count: number };
   pending_updates: { count: number };
   calendar_review_notification: { count: number };
+  routine_title: Record<string, never>;
+  routine_library: Record<string, never>;
+  routine_library_hint: Record<string, never>;
+  routine_new: Record<string, never>;
+  routine_attach: Record<string, never>;
+  routine_remove: Record<string, never>;
+  routine_weekly: Record<string, never>;
+  routine_exercises: Record<string, never>;
+  routine_rest: Record<string, never>;
+  routine_today_only: Record<string, never>;
+  routine_today_only_hint: Record<string, never>;
+  routine_quiet: Record<string, never>;
+  routine_no_alert: Record<string, never>;
+  routine_shared_time: Record<string, never>;
+  routine_weekly_hint: Record<string, never>;
+  routine_from_tomorrow: Record<string, never>;
+  routine_change_review: Record<string, never>;
+  routine_changed_day: { day: string };
+  routine_repeat: { days: string };
+  routine_exercise_count: { count: number };
+  routine_progress: { done: number; total: number };
+  routine_add_exercise: Record<string, never>;
+  routine_name: Record<string, never>;
+  routine_target: Record<string, never>;
+  routine_guidance: Record<string, never>;
+  routine_edit_exercise: Record<string, never>;
+  routine_move_up: Record<string, never>;
+  routine_move_down: Record<string, never>;
+  routine_remove_exercise: Record<string, never>;
+  routine_removed: Record<string, never>;
+  routine_undo: Record<string, never>;
+  routine_use_day: Record<string, never>;
+  routine_validation: Record<string, never>;
+  routine_saved: Record<string, never>;
+  routine_back_reminder: Record<string, never>;
+  routine_history: Record<string, never>;
+  routine_skip: Record<string, never>;
+  routine_undo_skip: Record<string, never>;
+  routine_skipped: Record<string, never>;
+  routine_completed: Record<string, never>;
+  routine_ready: Record<string, never>;
+  routine_in_progress: Record<string, never>;
+  routine_not_completed: Record<string, never>;
+  routine_partial: Record<string, never>;
+  routine_paused: Record<string, never>;
+  routine_upcoming: Record<string, never>;
+  routine_day_ended: Record<string, never>;
+  routine_deleted: Record<string, never>;
+  routine_focus: Record<string, never>;
+  routine_sequence: Record<string, never>;
+  routine_done: Record<string, never>;
+  routine_undo_completion: Record<string, never>;
+  routine_next: Record<string, never>;
+  routine_previous: Record<string, never>;
+  routine_correction_done: Record<string, never>;
+  routine_correction_saved: Record<string, never>;
+  routine_progress_saved: Record<string, never>;
+  routine_skipped_saved: Record<string, never>;
+  routine_skip_undone: Record<string, never>;
+  routine_open_today: Record<string, never>;
+  routine_empty_history: Record<string, never>;
+  routine_edit: Record<string, never>;
+  routine_duplicate: Record<string, never>;
+  routine_pause: Record<string, never>;
+  routine_resume: Record<string, never>;
+  routine_plan: Record<string, never>;
+  routine_rest_hint: Record<string, never>;
+  routine_paused_hint: Record<string, never>;
+  routine_load_error: Record<string, never>;
+  routine_more: Record<string, never>;
+  routine_notification_warning: Record<string, never>;
+  routine_channel_changed: Record<string, never>;
+  routine_channel_settings: Record<string, never>;
+  routine_next_prompt: { time: string };
+  routine_no_catchup: Record<string, never>;
+  routine_history_changes: Record<string, never>;
+  routine_correction_at: { time: string };
+  routine_select_exercise: Record<string, never>;
+  routine_starts: Record<string, never>;
+  routine_empty: Record<string, never>;
+  routine_instructions_fallback: Record<string, never>;
+  routine_attached_hint: Record<string, never>;
+  routine_saved_changes: Record<string, never>;
+  routine_day_0: Record<string, never>;
+  routine_day_1: Record<string, never>;
+  routine_day_2: Record<string, never>;
+  routine_day_3: Record<string, never>;
+  routine_day_4: Record<string, never>;
+  routine_day_5: Record<string, never>;
+  routine_day_6: Record<string, never>;
+  routine_channel: Record<string, never>;
+  routine_channel_desc: Record<string, never>;
+  routine_notification_title: Record<string, never>;
+  routine_notification_body: Record<string, never>;
+  routine_repeat_label: Record<string, never>;
+  routine_keep_draft: Record<string, never>;
+  routine_load_latest: Record<string, never>;
+  routine_day_open_error: Record<string, never>;
+  routine_stale_date: Record<string, never>;
+  routine_action_required: Record<string, never>;
+  routine_validation_0: Record<string, never>;
+  routine_validation_1: Record<string, never>;
+  routine_validation_2: Record<string, never>;
+  routine_validation_3: Record<string, never>;
+  routine_validation_4: Record<string, never>;
+  routine_validation_5: Record<string, never>;
+  routine_validation_6: Record<string, never>;
+  routine_validation_7: Record<string, never>;
+  routine_validation_8: Record<string, never>;
+  routine_validation_9: Record<string, never>;
+  routine_validation_10: Record<string, never>;
+  routine_validation_11: Record<string, never>;
+  routine_validation_12: Record<string, never>;
+  routine_validation_13: Record<string, never>;
+  routine_validation_14: Record<string, never>;
+  routine_validation_15: Record<string, never>;
+  routine_next_after_changes: { time: string };
 }

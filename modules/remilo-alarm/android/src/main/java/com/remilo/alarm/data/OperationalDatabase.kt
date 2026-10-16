@@ -16,11 +16,16 @@ data class AlertRecord(@PrimaryKey val occurrenceId: String, val targetMs: Long,
   @ColumnInfo(defaultValue = "NULL") val segmentId: String? = null,
   @ColumnInfo(defaultValue = "NULL") val nominalSlot: String? = null,
   @ColumnInfo(defaultValue = "0") val exception: Boolean = false,
-  @ColumnInfo(defaultValue = "''") val resolvedZone: String = "")
+  @ColumnInfo(defaultValue = "''") val resolvedZone: String = "",
+  @ColumnInfo(defaultValue = "'Reminder'") val profile: String = "Reminder",
+  @ColumnInfo(defaultValue = "0") val expiresAtMs: Long = 0,
+  @ColumnInfo(defaultValue = "0") val dayEnded: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val prompted: Boolean = false)
 @Entity(tableName = "series_plans")
 data class SeriesPlan(@PrimaryKey val id: String, val rule: String, val state: String,
   val mode: String, val sound: String, val vibration: Boolean, val snoozeMinutes: Int,
-  val resolvedZone: String, val materializedThrough: String? = null)
+  val resolvedZone: String, val materializedThrough: String? = null,
+  @ColumnInfo(defaultValue = "'Reminder'") val profile: String = "Reminder")
 @Entity(tableName = "sessions")
 data class SessionRecord(@PrimaryKey val id: String, val state: String,
   val startedElapsedMs: Long = 0, val deadlineElapsedMs: Long = 0,
@@ -88,13 +93,22 @@ data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: St
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class], version = 7, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class], version = 8, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE alerts ADD COLUMN profile TEXT NOT NULL DEFAULT 'Reminder'")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN expiresAtMs INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN dayEnded INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN prompted INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE series_plans ADD COLUMN profile TEXT NOT NULL DEFAULT 'Reminder'")
+      }
+    }
     val MIGRATION_6_7 = object : Migration(6, 7) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS language_preferences (id TEXT NOT NULL PRIMARY KEY, preference TEXT NOT NULL, revision INTEGER NOT NULL, settingsRevision INTEGER NOT NULL, projected TEXT NOT NULL, pendingProjection INTEGER NOT NULL, externalPending INTEGER NOT NULL)")

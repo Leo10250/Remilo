@@ -39,6 +39,7 @@ export default function ReminderDetails() {
   const routeParams = useMemo(() => ({ ...originParams(origin), originCollection: params.originCollection, originFamily: params.originFamily,
     originSegmentId: params.originSegmentId, originReminderId: params.originReminderId }), [origin, params.originCollection, params.originFamily, params.originSegmentId, params.originReminderId]);
   const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getOccurrence(id), enabled: nativeAvailable });
+  useEffect(() => { const routine = query.data?.routine; if (routine && !query.data?.deleted) router.replace({ pathname: '/routine-session', params: { id: routine.routineId, date: routine.date } }); }, [query.data]);
   const item = query.data, settings = useSettings(), command = useCommand(), colors = useTheme();
   const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
   const publication = calendar.data?.find((value) => value.occurrenceId === id);

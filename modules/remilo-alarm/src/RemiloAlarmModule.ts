@@ -10,6 +10,10 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getOccurrence(id: string): Promise<Occurrence | null>;
   previewSchedule(draft: ReminderDraft & { recurrence?: RecurrenceDraft }): Promise<SchedulePreview>;
   querySeries(): Promise<Series[]>;
+  queryRoutines(): Promise<import('./RemiloAlarm.types').RoutinePlan[]>;
+  previewRoutine(input: import('./RemiloAlarm.types').RoutineDraft & { startsOn: string; routineId?: string }): Promise<{ nextAlertMs: number | null; today: string; effectiveDate: string }>;
+  getRoutineSession(id: string, date: string | null): Promise<import('./RemiloAlarm.types').RoutineSession | null>;
+  queryRoutineHistory(id: string, cursor: string | null): Promise<{ items: import('./RemiloAlarm.types').RoutineSession[]; total: number; nextCursor: string | null }>;
   queryRepeatFamilies(): Promise<RepeatFamily[]>;
   getTimeZones(atMs: number): Promise<TimeZoneOption[]>;
   convertTime(input: TimeConversionInput): Promise<TimeConversion>;
@@ -55,7 +59,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   previewImport(json: string): Promise<ImportPreview>;
   importBackup(json: string, copyIds: string[], operationId: string): Promise<CommandResult>;
   reconcile(): Promise<void>;
-  openSettings(kind: 'exact' | 'notifications' | 'fullScreen'): Promise<void>;
+  openSettings(kind: 'exact' | 'notifications' | 'fullScreen' | 'routineChannel'): Promise<void>;
 }
 
 export default requireOptionalNativeModule<RemiloAlarmModule>('RemiloAlarm');

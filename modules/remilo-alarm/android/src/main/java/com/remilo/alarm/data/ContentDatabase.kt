@@ -24,7 +24,8 @@ data class ReminderRecord(@PrimaryKey val id: String, val title: String, val eve
   @ColumnInfo(defaultValue = "NULL") val nominalSlot: String? = null,
   @ColumnInfo(defaultValue = "0") val exception: Boolean = false,
   @ColumnInfo(defaultValue = "0") val skipped: Boolean = false,
-  @ColumnInfo(defaultValue = "NULL") val listId: String? = null)
+  @ColumnInfo(defaultValue = "NULL") val listId: String? = null,
+  @ColumnInfo(defaultValue = "NULL") val routineId: String? = null)
 @Entity(tableName = "lists", indices = [Index(value = ["normalizedName"])])
 data class ListRecord(@PrimaryKey val id: String, val name: String, val normalizedName: String,
   val revision: Long = 1, val createdAtMs: Long)
@@ -103,9 +104,10 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   CalendarManagedPolicy::class, CalendarManagedPreview::class, CalendarManagedSetupOperation::class,
   CalendarManagedCandidate::class, CalendarManagedCache::class, CalendarManagedExport::class,
   CalendarManagedDisposition::class, CalendarManagedSuppression::class, CalendarManagedIssue::class,
-  CalendarManagedReceipt::class], version = 13, exportSchema = true)
+  CalendarManagedReceipt::class, RoutinePlan::class, RoutineVersion::class, RoutineSession::class, RoutineOperation::class], version = 14, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
+  abstract fun routines(): RoutineDao
   abstract fun calendar(): CalendarDao
   abstract fun links(): CalendarLinkDao
   abstract fun calendarResources(): CalendarResourceDao
@@ -113,10 +115,16 @@ abstract class ContentDatabase : RoomDatabase() {
   abstract fun managedCalendar(): CalendarManagedDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
       .addCallback(object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
       }).build()
+    val MIGRATION_13_14 = object : Migration(13, 14) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE reminders ADD COLUMN routineId TEXT DEFAULT NULL")
+        RoutineSchema.create(db)
+      }
+    }
     val MIGRATION_12_13 = object : Migration(12, 13) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")

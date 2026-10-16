@@ -1,0 +1,346 @@
+package com.remilo.alarm.engine
+
+import android.content.Context
+import com.remilo.alarm.core.*
+import com.remilo.alarm.data.*
+import com.remilo.alarm.system.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.time.*
+import java.util.UUID
+
+/** Owned exclusively by AlarmEngine's serialized worker. No second timer or state owner. */
+internal class RoutineCoordinator(private val context: Context, private val database: () -> ContentDatabase,
+  private val operational: OperationalDatabase, private val series: SeriesCoordinator,
+  private val scheduler: AlarmRegistrar, private val now: () -> Long,
+  private val register: (AlertRecord) -> AlertRecord, private val checkpoint: (String) -> Unit = {}) {
+  private val db get() = database()
+  private val dao get() = db.routines()
+  private val alerts get() = operational.records()
+  private fun zone() = ZoneId.systemDefault()
+  private fun today() = RoutinePolicy.date(now(), zone())
+  private fun checkedDate(value: Any?): LocalDate = (value as? String)?.takeIf { it.length == 10 }
+    ?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: throw IllegalArgumentException("Choose today or a future start date.")
+  private fun id(seed: String) = UUID.nameUUIDFromBytes(seed.toByteArray()).toString()
+  private fun json(value: Any?): Any? = when (value) {
+    JSONObject.NULL -> null
+    is JSONObject -> value.keys().asSequence().associateWith { json(value.get(it)) }
+    is JSONArray -> (0 until value.length()).map { json(value.get(it)) }
+    else -> value
+  }
+  @Suppress("UNCHECKED_CAST") private fun map(value: String) = json(JSONObject(value)) as Map<String, Any?>
+  @Suppress("UNCHECKED_CAST") private fun rows(value: String) = json(JSONArray(value)) as List<Map<String, Any?>>
+  private fun strings(value: String): Set<String> = JSONArray(value).let { a -> (0 until a.length()).map { a.getString(it) }.toSet() }
+  private fun fingerprint(value: Any?): String = when (value) {
+    is Map<*, *> -> value.entries.sortedBy { it.key.toString() }.joinToString(",", "{", "}") { JSONObject.quote(it.key.toString()) + ":" + fingerprint(it.value) }
+    is List<*> -> value.joinToString(",", "[", "]") { fingerprint(it) }
+    null -> "null"
+    is String -> JSONObject.quote(value)
+    else -> value.toString()
+  }
+  private fun version(id: String, date: String) = dao.versions(id).lastOrNull { it.effectiveDate <= date }
+  private fun nominalDate(record: ReminderRecord) = record.nominalSlot!!.substringBefore('T')
+  private fun completed(session: RoutineSession) = strings(session.done).size == rows(session.steps).size
+  private fun rest(version: RoutineVersion, date: LocalDate) = rows(version.days)[date.dayOfWeek.value - 1]["type"] == "Rest"
+  @Suppress("UNCHECKED_CAST") private fun exercises(version: RoutineVersion, date: LocalDate) =
+    rows(version.days)[date.dayOfWeek.value - 1]["exercises"] as List<Map<String, Any?>>
+  private fun pausedAt(plan: RoutinePlan, at: Long): Boolean = rows(plan.pauses).any {
+    at >= (it["from"] as Number).toLong() && (it["until"] == null || at < (it["until"] as Number).toLong())
+  }
+  fun isRoutine(record: ReminderRecord) = record.routineId != null
+  fun visible(record: ReminderRecord): Boolean {
+    if (!isRoutine(record)) return true
+    if (alerts.find(record.id)?.state == "Replaced") return false
+    val date = nominalDate(record)
+    val session = dao.session(record.id)
+    return date >= today().toString() && session?.ended != true &&
+      (date == today().toString() && session != null || dao.plan(record.routineId!!)?.state == "Active")
+  }
+  fun anchor(record: ReminderRecord): Long = LocalDateTime.parse(record.nominalSlot).atZone(zone()).toInstant().toEpochMilli()
+  fun projection(record: ReminderRecord): Map<String, Any?>? {
+    val planId = record.routineId ?: return null
+    val date = nominalDate(record)
+    val saved = dao.session(record.id)
+    val v = version(planId, date) ?: return null
+    val steps = saved?.let { rows(it.steps) } ?: exercises(v, LocalDate.parse(date))
+    val done = saved?.let { strings(it.done) }.orEmpty()
+    val ended = saved?.ended == true || date < today().toString()
+    return mapOf("routineId" to planId, "date" to date, "revision" to (saved?.revision ?: 0),
+      "ended" to ended, "endsAtMs" to RoutinePolicy.end(LocalDate.parse(date), zone()), "completedCount" to done.size, "totalCount" to steps.size,
+      "skipped" to record.skipped, "completed" to record.completed,
+      "state" to when { record.skipped -> "Skipped"; record.completed -> "Completed"; ended -> if (done.isEmpty()) "NotCompleted" else "PartiallyCompleted"; done.isEmpty() -> "Ready"; else -> "InProgress" },
+      "changes" to saved?.let { rows(it.changes) }.orEmpty(),
+      "steps" to steps.map { it + ("completed" to (it["id"] in done)) })
+  }
+  fun plans(): List<Map<String, Any?>> = dao.plans().map { planView(it) }
+  fun preview(input: Map<String, Any?>): Map<String, Any?> {
+    val owner = (input["routineId"] as? String)?.let { dao.plan(it) ?: throw IllegalArgumentException("Choose a routine day.") }
+    val date = if (owner != null) maxOf(today().plusDays(1), LocalDate.parse(owner.startsOn)).toString()
+      else if (input["startsOn"] == null) today().toString() else checkedDate(input["startsOn"]).toString()
+    val v = checkedVersion(input + ("title" to ((input["title"] as? String)?.takeIf { it.isNotBlank() } ?: "Routine")), "preview", date)
+    val r = series.rule(template(v), rule(v))
+    return mapOf("nextAlertMs" to if (v.mode == "None") null else Recurrence.future(r, now(), zone(), v.mode).firstOrNull()?.alarmAtMs,
+      "today" to today().toString(), "effectiveDate" to today().plusDays(1).toString())
+  }
+  fun planView(plan: RoutinePlan): Map<String, Any?> {
+    val v = dao.versions(plan.id).last()
+    return mapOf("id" to plan.id, "revision" to plan.revision, "state" to plan.state,
+      "startsOn" to plan.startsOn, "effectiveDate" to v.effectiveDate, "title" to v.title,
+      "minutes" to v.minutes, "mode" to v.mode, "listId" to v.listId, "days" to rows(v.days))
+  }
+  fun session(id: String, date: String?): Map<String, Any?>? {
+    val plan = dao.plan(id) ?: return null
+    val day = date?.let(LocalDate::parse) ?: today()
+    val saved = dao.dated(id, day.toString())
+    if (saved != null) return db.records().find(saved.occurrenceId)?.let {
+      mapOf("occurrenceId" to it.id, "title" to it.title, "deleted" to it.deleted) + projection(it)!!
+    }
+    val v = version(id, day.toString()) ?: return null
+    val steps = if (rest(v, day)) emptyList() else exercises(v, day).map { it + ("completed" to false) }
+    return mapOf("routineId" to id, "date" to day.toString(), "title" to v.title,
+      "state" to if (rest(v, day)) "Rest" else if (plan.state == "Paused") "Paused" else "Upcoming",
+      "ended" to (day < today()), "steps" to steps, "completedCount" to 0, "totalCount" to steps.size)
+  }
+  fun history(id: String, cursor: String?): Map<String, Any?> {
+    val all = dao.sessions().filter { it.routineId == id && (it.ended || db.records().find(it.occurrenceId)?.let { r -> r.completed || r.skipped } == true) }
+      .mapNotNull { saved -> db.records().find(saved.occurrenceId)?.takeIf { !it.deleted }?.let { r ->
+        mapOf("occurrenceId" to r.id, "title" to r.title, "deleted" to false) + projection(r)!! } }
+    val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+    return mapOf("items" to all.drop(offset).take(50), "total" to all.size,
+      "nextCursor" to if (offset + 50 < all.size) (offset + 50).toString() else null)
+  }
+  private fun checkedText(value: Any?, max: Int, required: Boolean = false): String {
+    require(value == null || value is String) { "Enter valid routine text." }
+    val text = (value as? String).orEmpty()
+    require(text.length <= max && (!required || text.isNotBlank())) { "Enter the required routine name or exercise." }
+    return if (required) text.trim() else text
+  }
+  @Suppress("UNCHECKED_CAST") private fun checkedVersion(command: Map<String, Any?>, id: String, date: String): RoutineVersion {
+    val title = checkedText(command["title"], 200, true)
+    val number = command["minutes"] as? Number ?: error("Choose a notification time.")
+    require(number.toDouble().isFinite() && number.toDouble() % 1 == 0.0 && number.toInt() in 0..1439) { "Choose a notification time." }
+    val mode = command["mode"] as? String ?: "Notification"
+    require(mode in setOf("Notification", "None")) { "Routines support Notification or No alert." }
+    val list = command["listId"] as? String
+    require(list == null || db.records().list(list) != null) { "This list no longer exists." }
+    val days = command["days"] as? List<*> ?: error("Choose seven routine days.")
+    require(days.size == 7) { "Choose seven routine days." }
+    val ids = mutableSetOf<String>()
+    val validated = days.map { raw ->
+      val day = raw as? Map<String, Any?> ?: error("Choose a routine day.")
+      require(day["type"] in setOf("Rest", "Exercises")) { "Choose Exercises or Rest day." }
+      val steps = day["exercises"] as? List<*> ?: emptyList<Any>()
+      require(steps.size <= 100 && (day["type"] != "Exercises" || steps.isNotEmpty())) { "Add an exercise or choose Rest day." }
+      mapOf("type" to day["type"], "exercises" to if (day["type"] == "Rest") emptyList<Any>() else steps.map { rawStep ->
+        val step = rawStep as? Map<String, Any?> ?: error("Choose an exercise.")
+        val stepId = checkedText(step["id"], 200, true)
+        require(ids.add(stepId)) { "Exercise identities must be unique." }
+        val illustration = checkedText(step["illustration"], 80)
+        require(illustration.isEmpty() || illustration.matches(Regex("[a-z0-9-]+"))) { "Choose an approved illustration reference." }
+        mapOf("id" to stepId, "name" to checkedText(step["name"], 200, true), "target" to checkedText(step["target"], 1000),
+          "notes" to checkedText(step["notes"], 10_000), "illustration" to illustration)
+      })
+    }
+    require(validated.any { it["type"] == "Exercises" }) { "Add at least one workout day, or pause the routine." }
+    return RoutineVersion(id, date, title, number.toInt(), mode, list, JSONArray(validated).toString())
+  }
+  private fun template(v: RoutineVersion): ReminderRecord {
+    val start = LocalDate.parse(v.effectiveDate).atTime(v.minutes / 60, v.minutes % 60).atZone(zone()).toInstant().toEpochMilli()
+    return ReminderRecord("template", v.title, start, start + 1_800_000, start, now(),
+      mode = v.mode, definedAlarmAtMs = start, zoneId = zone().id, vibration = false, listId = v.listId, routineId = v.routineId)
+  }
+  private fun rule(v: RoutineVersion): Map<String, Any?> = mapOf("frequency" to "weekly", "interval" to 1,
+    "weekdays" to rows(v.days).mapIndexedNotNull { i, d -> if (d["type"] == "Exercises") i + 1 else null }, "zoneMode" to "floating")
+  private fun response(planId: String): Map<String, Any?> = mapOf("status" to when {
+    alerts.all().any { a -> a.segmentId in db.records().series().filter { it.seriesId == planId }.map { it.id } && a.state == "Blocked" } -> "Blocked"
+    else -> "Applied" }, "routine" to planView(dao.plan(planId)!!), "segmentId" to planId)
+
+  fun command(command: Map<String, Any?>): Map<String, Any?> {
+    val operation = command["operationId"] as String
+    val kind = command["kind"] as String
+    val fingerprint = fingerprint(command)
+    dao.operation(operation)?.let { saved ->
+      require(saved.fingerprint == fingerprint) { "This operation was already used. Refresh and try again." }
+      if (!saved.applied) settle(saved)
+      return map(dao.operation(operation)!!.result)
+    }
+    require(db.records().receipt(operation) == null) { "This operation was already used. Refresh and try again." }
+    if (kind == "CreateRoutine") {
+      val date = checkedDate(command["startsOn"])
+      require(date >= today()) { "Choose today or a future start date." }
+      val planId = id("remilo-routine:$operation")
+      val v = checkedVersion(command, planId, date.toString())
+      series.create("routine-series:$operation", template(v), rule(v), allocatedId = planId, checkpoint = {
+        dao.plan(RoutinePlan(planId, startsOn = date.toString())); dao.version(v)
+        db.records().receipt(CreationReceipt(operation, planId, kind))
+        dao.operation(RoutineOperation(operation, fingerprint, null, "{}", true, JSONObject(response(planId)).toString()))
+      })
+      reconcile(); return response(planId).also { dao.operation(dao.operation(operation)!!.copy(result = JSONObject(it).toString())) }
+    }
+    if (kind in setOf("EditRoutine", "PauseRoutine", "ResumeRoutine")) {
+      val plan = dao.plan(command["routineId"] as? String ?: "") ?: return rejected("NOT_FOUND")
+      if ((command["expectedRevision"] as? Number)?.toDouble() != plan.revision.toDouble()) return rejected("STALE_REVISION")
+      val segments = db.records().series().filter { it.seriesId == plan.id && it.state != "Archived" }
+      if (kind == "EditRoutine") {
+        val date = maxOf(today().plusDays(1), LocalDate.parse(plan.startsOn))
+        val v = checkedVersion(command, plan.id, date.toString())
+        series.replaceRoutine("routine-series:$operation", plan.id, template(v), rule(v), date.atStartOfDay(), checkpoint = {
+          dao.version(v); dao.plan(plan.copy(revision = plan.revision + 1))
+          db.records().receipt(CreationReceipt(operation, plan.id, kind))
+          dao.operation(RoutineOperation(operation, fingerprint, null, "{}", true, JSONObject(response(plan.id)).toString()))
+        })
+      } else {
+        val segment = segments.maxByOrNull { it.createdAtMs } ?: return rejected("NOT_FOUND")
+        val intervals = JSONArray(plan.pauses)
+        if (kind == "PauseRoutine" && plan.state != "Paused") intervals.put(JSONObject().put("from", now()).put("until", JSONObject.NULL))
+        if (kind == "ResumeRoutine" && plan.state == "Paused" && intervals.length() > 0) intervals.getJSONObject(intervals.length() - 1).put("until", now())
+        series.mutate("routine-series:$operation", mapOf("kind" to if (kind == "PauseRoutine") "PauseSeries" else "ResumeSeries",
+          "segmentId" to segment.id, "expectedRevision" to segment.revision), checkpoint = {
+          dao.plan(plan.copy(state = if (kind == "PauseRoutine") "Paused" else "Active", revision = plan.revision + 1, pauses = intervals.toString()))
+          db.records().receipt(CreationReceipt(operation, plan.id, kind))
+          dao.operation(RoutineOperation(operation, fingerprint, null, "{}", true, JSONObject(response(plan.id)).toString()))
+        })
+      }
+      reconcile(); return response(plan.id).also { dao.operation(dao.operation(operation)!!.copy(result = JSONObject(it).toString())) }
+    }
+    val record = db.records().find(command["occurrenceId"] as? String ?: "") ?: return rejected("NOT_FOUND")
+    val session = dao.session(record.id) ?: return rejected("NOT_FOUND")
+    if (record.deleted) return rejected("IN_TRASH")
+    if (command["date"] != session.date) return rejected("STALE_DATE")
+    val actionAt = now()
+    val historical = kind == "CorrectRoutineExercise"
+    if (!historical && !RoutinePolicy.open(session.date, session.ended, actionAt, zone())) return rejected("DAY_ENDED")
+    if (historical && !session.ended) return rejected("DAY_NOT_ENDED")
+    if ((command["expectedRevision"] as? Number)?.toDouble() != session.revision.toDouble()) return rejected("STALE_REVISION")
+    var skipped = record.skipped
+    val done = strings(session.done).toMutableSet()
+    if (kind in setOf("SetRoutineExercise", "CorrectRoutineExercise")) {
+      require(!record.skipped || historical) { "Undo Skip today before changing exercises." }
+      val stepId = command["stepId"] as? String ?: error("Choose an exercise.")
+      require(rows(session.steps).any { it["id"] == stepId }) { "Choose an exercise from this session." }
+      require(command["completed"] is Boolean) { "Choose the exercise completion state." }
+      if (command["completed"] == true) done.add(stepId) else done.remove(stepId)
+    } else if (kind == "SkipRoutineDay") { if (record.completed) return rejected("NOT_ELIGIBLE"); skipped = true }
+    else if (kind == "UndoSkipRoutineDay") skipped = false
+    else return rejected("UNSUPPORTED_COMMAND")
+    val payload = JSONObject().put("done", JSONArray(done.toList())).put("skipped", skipped)
+      .put("atMs", actionAt).put("kind", kind).put("stepId", command["stepId"] ?: JSONObject.NULL)
+      .put("revision", session.revision + 1).put("recordRevision", record.revision + 1)
+      .put("generation", (alerts.find(record.id)?.generation ?: 0) + 1)
+    val pending = RoutineOperation(operation, fingerprint, record.id, payload.toString())
+    dao.operation(pending); checkpoint("captured")
+    settle(pending)
+    return map(dao.operation(operation)!!.result)
+  }
+  private fun rejected(code: String): Map<String, Any?> = mapOf("status" to "Rejected", "errorCode" to code,
+    "errorMessage" to when (code) {
+      "DAY_ENDED" -> "This day has ended. Corrections update history only."
+      "DAY_NOT_ENDED" -> "Use today's exercise controls while this day is open."
+      "STALE_DATE" -> "This routine date changed. Open the dated session again."
+      else -> null
+    })
+  private fun settle(operation: RoutineOperation) {
+    val id = operation.occurrenceId ?: return
+    val record = db.records().find(id) ?: run { dao.purgeOperations(id); return }
+    val session = dao.session(id) ?: return
+    val payload = JSONObject(operation.payload)
+    val changes = JSONArray(session.changes).put(JSONObject().put("id", operation.operationId)
+      .put("kind", payload.getString("kind")).put("stepId", payload.opt("stepId"))
+      .put("completed", if (payload.isNull("stepId")) JSONObject.NULL else strings(payload.getJSONArray("done").toString()).contains(payload.getString("stepId")))
+      .put("atMs", payload.getLong("atMs")))
+    val updated = session.copy(done = payload.getJSONArray("done").toString(), revision = payload.getLong("revision"), changes = changes.toString())
+    val skipped = payload.getBoolean("skipped")
+    val finished = completed(updated) && !skipped
+    val changesDelivery = finished != record.completed || skipped != record.skipped
+    val alert = alerts.find(id)
+    if (changesDelivery && alert != null && alert.generation < payload.getLong("generation")) {
+      alerts.put(alert.copy(generation = payload.getLong("generation"), state = "Changing", previousState = alert.state))
+      try { scheduler.cancel(alert) } catch (_: Exception) { /* fenced */ }
+      AlarmNotifications(context).clearAttention(id)
+    }
+    checkpoint("fenced")
+    db.runInTransaction {
+      dao.session(updated)
+      db.records().update(record.copy(completed = finished, skipped = skipped, revision = payload.getLong("recordRevision")))
+      db.records().history(HistoryRecord(operation.operationId, id, payload.getString("kind"), payload.getLong("atMs"), payload.getLong("generation")))
+      if (finished && !record.completed) db.records().history(HistoryRecord(operation.operationId + ":aggregate", id, "Done", payload.getLong("atMs"), payload.getLong("generation")))
+      if (skipped && !record.skipped) db.records().history(HistoryRecord(operation.operationId + ":skip", id, "Skip", payload.getLong("atMs"), payload.getLong("generation")))
+      val response = mapOf("status" to "Applied", "routineSession" to (mapOf("occurrenceId" to id, "title" to record.title, "deleted" to record.deleted) + projection(db.records().find(id)!!)!!))
+      dao.operation(operation.copy(applied = true, result = JSONObject(response).toString()))
+      checkpoint("before-commit")
+    }
+    checkpoint("committed")
+    syncDelivery(db.records().find(id)!!, updated)
+  }
+  private fun syncDelivery(record: ReminderRecord, session: RoutineSession) {
+    var alert = alerts.find(record.id) ?: return
+    if (session.ended && !alert.dayEnded) { alert = alert.copy(dayEnded = true); alerts.put(alert) }
+    val terminal = when { record.deleted -> "Deleted"; record.skipped -> "Skipped"; record.completed -> "Completed"; session.ended -> "Expired"; else -> null }
+    if (terminal != null) {
+      if (alert.state != terminal) {
+        alerts.put(alert.copy(state = terminal, generation = alert.generation + 1, previousState = null))
+        try { scheduler.cancel(alert) } catch (_: Exception) { /* fenced */ }
+      }
+      AlarmNotifications(context).clearAttention(record.id)
+    } else if (dao.plan(session.routineId)?.state == "Paused" && alert.state != "Paused") {
+      alerts.put(alert.copy(state = "Paused", generation = alert.generation + 1, previousState = null))
+      try { scheduler.cancel(alert) } catch (_: Exception) { }
+      AlarmNotifications(context).clearAttention(record.id)
+    } else if (alert.state in setOf("Changing", "Completed", "Skipped", "Expired") && dao.plan(session.routineId)?.state == "Active") {
+      register(alert.copy(state = "Pending", generation = alert.generation + 1, previousState = null))
+    }
+  }
+  private fun ensureSession(record: ReminderRecord) {
+    if (dao.session(record.id) != null || db.records().purged(record.id) != null) return
+    val planId = record.routineId ?: return
+    val date = nominalDate(record)
+    if (dao.dated(planId, date) != null || date > today().toString() || alerts.find(record.id)?.state == "Replaced") return
+    val plan = dao.plan(planId) ?: return
+    val v = version(planId, date) ?: return
+    if (date == today().toString() && plan.state == "Paused" || date < today().toString() && pausedAt(plan, record.definedAlarmAtMs!!)) return
+    val day = LocalDate.parse(date)
+    if (rest(v, day)) return
+    dao.session(RoutineSession(record.id, planId, date, v.effectiveDate, JSONArray(exercises(v, day)).toString(), ended = day < today() || alerts.find(record.id)?.dayEnded == true))
+  }
+  fun reconcile() {
+    dao.pending().forEach { settle(it) }
+    // The two future alarm registrations do not guarantee a slot for an elapsed
+    // notification today. Resolve that date explicitly, using the same identity.
+    for (plan in dao.plans().filter { it.state == "Active" && it.startsOn <= today().toString() }) {
+      if (dao.dated(plan.id, today().toString()) == null) {
+        val segment = db.records().series().filter { it.seriesId == plan.id && it.state != "Archived" }.firstOrNull { segment ->
+          val r = RuleCodec.decode(segment.rule)
+          val nominal = today().atTime(r.anchor.toLocalTime())
+          nominal >= r.anchor && (r.endExclusive == null || nominal < r.endExclusive) && today().dayOfWeek.value in r.weekdays
+        }
+        if (segment != null) {
+          val rule = RuleCodec.decode(segment.rule)
+          val nominal = today().atTime(rule.anchor.toLocalTime()).toString()
+          val record = series.calendarOccurrence(segment.id, nominal)
+          if (db.records().purged(record.id) == null) {
+            if (db.records().find(record.id) == null) db.records().insert(record)
+            if (alerts.find(record.id) == null) register(AlertRecord(record.id, record.definedAlarmAtMs!!, 1, "Pending", mode = record.mode,
+              segmentId = segment.id, nominalSlot = nominal, resolvedZone = zone().id, profile = RoutinePolicy.PROFILE,
+              expiresAtMs = RoutinePolicy.end(today(), zone())))
+          }
+        }
+      }
+    }
+    db.records().all().filter { it.routineId != null }.forEach { ensureSession(it) }
+    dao.sessions().forEach { saved ->
+      val ended = saved.ended || saved.date < today().toString() || alerts.find(saved.occurrenceId)?.dayEnded == true
+      val session = if (ended != saved.ended) saved.copy(ended = ended, revision = saved.revision + 1).also { dao.session(it) } else saved
+      if (!session.ended && session.date == today().toString()) alerts.find(session.occurrenceId)?.let { alert ->
+        val expiry = RoutinePolicy.end(today(), zone())
+        if (alert.expiresAtMs != expiry && alert.state != "Expired") alerts.put(alert.copy(expiresAtMs = expiry))
+      }
+      db.records().find(session.occurrenceId)?.let { syncDelivery(it, session) }
+    }
+  }
+  fun purge(id: String) { dao.purgeSession(id); dao.purgeOperations(id) }
+  fun removeList(id: String) {
+    val affected = dao.versions().filter { it.listId == id }
+    affected.forEach { dao.version(it.copy(listId = null)) }
+    affected.map { it.routineId }.distinct().forEach { planId -> dao.plan(planId)?.let { dao.plan(it.copy(revision = it.revision + 1)) } }
+  }
+}

@@ -29,6 +29,8 @@ class AlarmNotifications(private val context: Context) {
       NotificationManager.IMPORTANCE_HIGH).apply { description = L10n.text(NativeMessages.m_9add6a759fe0()); setSound(null, null); enableVibration(false) })
     manager.createNotificationChannel(NotificationChannel(ATTENTION_CHANNEL, L10n.text(NativeMessages.m_723c336ac598()),
       NotificationManager.IMPORTANCE_LOW).apply { description = L10n.text(NativeMessages.m_0c7e2c463f6b()); setSound(null, null); enableVibration(false) })
+    manager.createNotificationChannel(NotificationChannel(ROUTINE_CHANNEL, L10n.text("Routine reminders"),
+      NotificationManager.IMPORTANCE_LOW).apply { description = L10n.text("Quiet prompts for today's routine"); setSound(null, null); enableVibration(false) })
     manager.createNotificationChannel(NotificationChannel(NOTIFICATION_CHANNEL, L10n.text(NativeMessages.m_76706ab78dd6()),
       NotificationManager.IMPORTANCE_DEFAULT).apply {
       description = L10n.text(NativeMessages.m_3cf400513c5b())
@@ -97,6 +99,20 @@ class AlarmNotifications(private val context: Context) {
       .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
       .build())
   }
+  fun routine(record: AlertRecord, title: String?, appearance: AppearancePolicy.Resolved, atMs: Long, onlyAlertOnce: Boolean = false) {
+    if (!allowed() || record.expiresAtMs <= atMs) return
+    fun variant(public: Boolean): Notification = Notification.Builder(context, ROUTINE_CHANNEL)
+      .setSmallIcon(R.drawable.ic_remilo_notification)
+      .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
+      .setContentTitle(if (public || title == null) L10n.text("Today's routine") else title)
+      .setContentText(L10n.text("Your exercises are ready for today."))
+      .setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
+      .setVisibility(if (public) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE)
+      .setContentIntent(openReminder(record.occurrenceId)).setAutoCancel(true)
+      .setTimeoutAfter(record.expiresAtMs - atMs).build()
+    val private = Notification.Builder.recoverBuilder(context, variant(false)).setPublicVersion(variant(true)).build()
+    manager.notify(record.occurrenceId, 1, private)
+  }
   private fun openReminder(id: String): PendingIntent = PendingIntent.getActivity(context, 0,
     Intent(Intent.ACTION_VIEW, Uri.Builder().scheme("remilo").authority("reminder").appendPath(id).build())
       .setPackage(context.packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -107,6 +123,7 @@ class AlarmNotifications(private val context: Context) {
     const val RINGING_CHANNEL = "remilo-ringing-v1"
     const val ATTENTION_CHANNEL = "remilo-attention-v1"
     const val NOTIFICATION_CHANNEL = "remilo-notification-v1"
+    const val ROUTINE_CHANNEL = "remilo-routines-v1"
     const val FOREGROUND_ID = 100
   }
 }

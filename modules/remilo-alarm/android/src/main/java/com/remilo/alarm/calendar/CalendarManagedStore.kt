@@ -618,6 +618,8 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   fun pendingIntents(): List<CalendarManagedExport> = if (!active()) emptyList() else dao.exports().filter {
     it.subject == binding().subject && it.calendarId == binding().calendarId && it.state in setOf("Pending", "Captured") && it.retryAtMs <= now() }
   fun authored(id: String, revision: Long, choice: String = "Default") {
+    val local = CalendarLinkStore(db, now, recoverInterrupted = false).record(id)
+    if (local?.routineId != null) { localOnly(id); return }
     if (choice !in setOf("Default", "Managed", "LocalOnly")) throw CalendarFailure("INVALID_INPUT")
     if (choice == "LocalOnly") { dao.disposition(CalendarManagedDisposition(id, (dao.disposition(id)?.revision ?: 0) + 1, "LocalOnly")); retireIntent(id, "LocalOnly"); return }
     if (choice == "Managed") dao.disposition(CalendarManagedDisposition(id, (dao.disposition(id)?.revision ?: 0) + 1, "Managed"))

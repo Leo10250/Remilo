@@ -25,7 +25,7 @@ function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; ic
   </View>;
 }
 
-export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice }: {
+export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
   compact?: boolean; editorial?: boolean; glyph?: IconName; nowMs?: number;
   presentation?: 'row' | 'tile';
@@ -36,6 +36,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
 }) {
   'use no memo';
   const t = useTranslation();
+  const onDone = item.routine && !restore ? undefined : suppliedOnDone;
   const { alertPresentation, reminderBrowsingPresentation, scheduleDateTime } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride(), reducedMotion = useReducedMotion();
   const { fontScale } = useWindowDimensions();
@@ -54,7 +55,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const selecting = !!selection;
   useEffect(() => { if (selecting && current.current !== 0) settle(false); }, [selecting, settle]);
   const swipeTrash = !!onTrash && (item.completed || item.skipped);
-  const canSwipe = !selection && !busy && !restore && !item.deleted && (swipeTrash || !!onDone && !item.completed && !item.skipped);
+  const canSwipe = !selection && !busy && !restore && !item.deleted && (swipeTrash || !item.routine && !!onDone && !item.completed && !item.skipped);
   const begin = useCallback((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => { origin.current = current.current; eligible.current = I18nManager.isRTL ? event.x < width.current - 24 : event.x > 24; }, []);
   const update = useCallback((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => { if (eligible.current) setShift(direction * Math.min(88, Math.max(0, direction * (origin.current + event.translationX)))); }, [direction, setShift]);
   const end = useCallback(() => { if (eligible.current) settle(direction * current.current > 44); }, [direction, settle]);
@@ -138,11 +139,12 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
           icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
           color={active && delivery.changed ? colors.accent : colors.muted} />
         {!!calendarNotice && <MetadataLine icon="warning" label={calendarNotice} />}
-        {!!consequence && <MetadataLine icon="schedule" label={consequence} />}
+        {!!item.routine && <MetadataLine icon="fitness_center" label={t('routine_progress', { done: item.routine.completedCount, total: item.routine.totalCount })} />}
+        {!item.routine && !!consequence && <MetadataLine icon="schedule" label={consequence} />}
         {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')} />}
-        {!!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}
+        {(!item.routine || terminal) && !!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}
           label={active ? browsing.status.label : terminalState} color={colors[browsing.status.tone]} />}
-        {!!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}
+        {!item.routine && !!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}
       </Pressable>
       {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton icon="more_vert" label={t('m_05d82d5eb6ee') + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
     </Animated.View></GestureDetector>

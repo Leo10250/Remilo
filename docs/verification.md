@@ -532,3 +532,20 @@ feedback, required-title, device-format, measured navigation and genuine-empty
 behavior checks. Review production components in eight pairs at 360 dp/100–200%,
 landscape, long English/Chinese and reduced motion. U32–U35 are pending signed
 device observations; no installation/distribution accompanies implementation.
+
+Weekly routines add an exact 21-exercise fixture (including Friday's unspecified
+row weight and Sunday Rest) in host tests and the isolated component preview.
+Verify separate dates, completion/explicit Undo after the final step, Skip/Undo,
+midnight rejection, old-day correction timestamps, tomorrow-effective edits,
+pause/resume and elapsed-prompt suppression, notification permissions/channel,
+Direct Boot privacy, crash-journal boundaries, Trash/Restore/Purge, mixed query
+pages/counts and backup/migration compatibility. Ordinary Alarm/Notification/No
+alert overdue, recurrence and recovery tests remain required.
+
+Consolidated signed-phone acceptance must demonstrate creating the week, predicting
+Sunday, Done/Undo including the final exercise, leaving Monday unfinished and
+opening Tuesday without overdue work, correcting Monday without delivery, and
+normal alarm/overdue reminder use. Record task success, errors, help required and
+misunderstandings, then refine observed problems. Include actual Android IME,
+TalkBack, 200% text, narrow/landscape, both languages and all eight pairs. Host
+tests and web fixtures cannot complete these physical gates or authorize distribution.

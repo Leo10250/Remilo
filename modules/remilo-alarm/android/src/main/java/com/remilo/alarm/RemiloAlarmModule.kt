@@ -205,6 +205,10 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("queryLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("querySeries") { promise: Promise -> dispatch(promise) { it.querySeries() } }
+    AsyncFunction("queryRoutines") { promise: Promise -> dispatch(promise) { it.queryRoutines() } }
+    AsyncFunction("previewRoutine") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.previewRoutine(input) } }
+    AsyncFunction("getRoutineSession") { id: String, date: String?, promise: Promise -> dispatch(promise) { it.routineSession(id, date) } }
+    AsyncFunction("queryRoutineHistory") { id: String, cursor: String?, promise: Promise -> dispatch(promise) { it.routineHistory(id, cursor) } }
     AsyncFunction("queryRepeatFamilies") { promise: Promise -> dispatch(promise) { it.queryRepeatFamilies() } }
     AsyncFunction("getTimeZones") { atMs: Double, promise: Promise -> dispatch(promise) { it.timeZones(atMs) } }
     AsyncFunction("convertTime") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.convertTime(input) } }
@@ -226,6 +230,8 @@ class RemiloAlarmModule : Module() {
         "exact" -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
         "fullScreen" -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))
         "notifications" -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        "routineChannel" -> Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+          .putExtra(Settings.EXTRA_CHANNEL_ID, com.remilo.alarm.system.AlarmNotifications.ROUTINE_CHANNEL)
         else -> throw IllegalArgumentException("Unknown settings destination")
       }
       context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

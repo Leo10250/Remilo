@@ -326,7 +326,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   }
   fun preview(id: String, destination: OwnedCalendar? = null): Map<String, Any> {
     val record = publicationRecord(id) ?: throw CalendarFailure("NOT_FOUND")
-    if (record.deleted || record.completed || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
+    if (record.routineId != null || record.deleted || record.completed || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
     if (dao.binding(id) != null) throw CalendarFailure("ALREADY_PUBLISHED")
     if (links.link(id) != null) throw CalendarFailure("ALREADY_IMPORTED")
     val connection = connection()

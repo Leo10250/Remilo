@@ -105,7 +105,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
       success: kind === 'UndoDelete' ? item.completed ? t('m_a0cbb012eedf') : item.skipped ? t('m_4dc0768b0761') : t('m_cb9c0f35189c')
         : kind === 'Purge' ? t('m_ddba37fd352b') : kind === 'Delete' ? t('m_2d65f262cc64') : t('m_8b94105daf2b') }).finally(() => { singleRunning.current = false; });
   };
-  const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
+  const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); if (item.routine && !item.deleted) router.push({ pathname: '/routine-session', params: { id: item.routine.routineId, date: item.routine.date } }); else router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
   const commitFilters = (draft: BrowseFilters) => {
     const next = commitBrowseFilters(view, appliedFilters, draft, { fixedListId, guarded: isGuarded(), selecting: selectingRef.current });
     if (!next) return false;
@@ -153,7 +153,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
         <Copy muted size={14}>{guarded && bulk.job ? t('m_c8e043d904a9') + bulk.job.entries.length + (bulk.job.entries.length === 1 ? t('m_caddc31b6d05') : t('m_b5765ff6882a')) : selectionIds.length + t('m_df16eabb211c') + items.length + t('m_3cded792a06b') + loadedLabel + '.'}</Copy>
         {bulk.guarded && !bulk.busy && <Button label={t('m_913b0a77f27f')} onPress={bulk.retry} />}
         {!!selectionIds.length && !bulk.guarded && <>
-          <Button label={view === 'deleted' ? t('m_a76e13b98392') : t('m_a886d1dc4f12')} accessibilityLabel={view === 'deleted' ? t('m_536d8b1e30eb') : t('m_380e09bc779d')} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
+          <Button label={view === 'deleted' ? t('m_a76e13b98392') : t('m_a886d1dc4f12')} accessibilityLabel={view === 'deleted' ? t('m_536d8b1e30eb') : t('m_380e09bc779d')} variant="secondary" disabled={guarded || !selectedItems.length || view !== 'deleted' && selectedItems.some(item => !!item.routine)} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
           {view === 'completed' && <Button label={t('m_9adcdf33dce1')} accessibilityLabel={t('m_570d20ab666c')} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
           {view === 'deleted' && <Button label={t('m_280b10c89cc4')} accessibilityLabel={t('m_cee8f4863172')} variant="danger" disabled={guarded || !selectedItems.length || selectedItems.length !== selectionIds.length} onPress={() => requestPurge(selectedItems, true)} />}
         </>}
@@ -198,7 +198,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
       <Copy muted size={14}>{t('m_6a85a9b0418d')}</Copy>
     </Sheet>
     <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => { if (!isGuarded()) setSelected(null); }}>
-      {view === 'completed' && <SettingRow label={t('m_a886d1dc4f12')} icon="undo" disabled={guarded} onPress={() => { if (selected) update(selected, 'Reopen'); }} />}
+      {view === 'completed' && <SettingRow label={selected?.routine ? t('routine_title') : t('m_a886d1dc4f12')} icon={selected?.routine ? 'fitness_center' : 'undo'} disabled={guarded} onPress={() => { if (selected?.routine) { const item = selected; setSelected(null); open(item); } else if (selected) update(selected, 'Reopen'); }} />}
       <SettingRow label={view === 'completed' ? t('m_9adcdf33dce1') : t('m_a76e13b98392')} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
       {view === 'deleted' && <SettingRow label={t('m_280b10c89cc4')} icon="delete_forever" description={t('m_a3e8748f021d')} disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
     </Sheet>
