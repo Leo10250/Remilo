@@ -1,5 +1,34 @@
 # Offline Android acceptance run
 
+## Weekly routine editor, Focus and widget follow-up — 15 October 2026
+
+Observe these together on an identified signed bundled APK when the owner resumes
+the consolidated run. Host checks do not establish these outcomes.
+
+- Create the exact 21-exercise week through the shared editor. Switch new-draft
+  Type both ways and retain title, Alert, clock, List and Notes. Check all three
+  Alert modes, seven visible weekdays, child Done/Cancel and unsaved Back guards.
+  Set Sunday to Rest and correctly predict its lack of Agenda work or delivery.
+- Open today's dated Focus from Agenda. Inspect its illustration and enlarged
+  view, full target and guidance. Complete and Undo exercises, including the last,
+  inspect completed/upcoming rows, and distinguish View previous from Undo.
+  Verify numeric/bar progress agrees across Agenda, Focus and independent widgets.
+- Leave Monday incomplete across midnight. Keep its screen open, open Tuesday
+  elsewhere and return: Monday stays ended, Tuesday has fresh exercises, and stale
+  actions cannot change Tuesday. Correct Monday's history without reopening it.
+  Exercise Skip/Undo today, pause/resume and tomorrow-effective plan/Alert edits.
+- Ring a routine Alarm alone and beside an ordinary alarm. Start routine opens
+  that exact date after unlock; Dismiss changes no checks; Snooze stays within the
+  day. Final completion, Skip, Pause and midnight stop only the routine member.
+  Confirm ordinary Done, overdue, Snooze, timeout and pre-unlock privacy still work.
+- Review editor, Focus, Agenda and widget in both languages, all eight appearance
+  pairs, narrow/landscape, 200% text and reduced motion. Check native IME/Back,
+  TalkBack announcements/focus, 56/48 dp targets, launcher resizing, Refresh,
+  duplicate/stale widget taps and native operation with JavaScript absent.
+
+Record success, mistakes, assistance and misunderstandings. Installation and
+distribution remain separate actions; artwork approval does not close these gates.
+
 ## Language follow-up — 15 October 2026
 
 Pending on an identified signed bundled APK. No installation is implied by host checks.
@@ -597,7 +626,9 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 ## F. Alert experience and card consistency
 
 - **F1 — visible alert choices:** the editor continuously shows Alarm,
-  Notification and No alert. Alarm is the default. Switch among them: hidden
+  Notification and No alert. Alarm is the ordinary-reminder default; direct
+  new-routine entry defaults to Notification under the [weekly routine contract](design/current/weekly-routines.md).
+  Switch among them: hidden
   authored timing and Alarm options survive; sound/vibration appear only for
   Alarm. At 200% text all three choices remain visible in a stacked group. Check
   selected/checked TalkBack announcements and the IME-aware Save footer.

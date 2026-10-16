@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T06:55:00.415094+00:00",
+  "assetId": "cable-triceps-pushdown",
+  "candidate": 1,
+  "candidateSha256": "5815389465ac7564fc23f9b27d29fa41fa88d17284a7cd0f1e91c676ea4ca751",
+  "reviewSha256": "eef13bc177744706a48c3c4042f270e9575f23e866d074b49f0cc01a805f7de9",
+  "reviewRecordSha256": "e5cc65bb7e5cdc3006a8fed7b0009bebe6f4b1acbede8c0d2055564796925668",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

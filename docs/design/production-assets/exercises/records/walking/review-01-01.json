@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "walking",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T05:43:56.816931+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/walking/prepared-01.json",
+    "sha256": "7846f0ae630e894be5bd5991d4cd8f74e68485d01f91c8b4ab6288a76cd505e4"
+  },
+  "candidateSha256": "514227092f789472203a44ea4a1a04d6ac342539a35bcd6487c0fa8dfb1a6b50",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01.png",
+    "sha256": "61750649eaeb37e9783e568d4a9ab1793c8c71d7d2ee5cdaec61675984609669"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/01.png",
+      "sha256": "e96dfb52208321161c7c4781da0443d57420c6bece21bb925bd091daaec02c87",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/02.png",
+      "sha256": "50e2eb2dcd94ee7f1609be86f4e02f97bb088f0fcffd7b27c5b280dcfbb0ffbb",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/03.png",
+      "sha256": "3fa3aeba160e3e65c2e0b9b294268dbb1d1b5ca43124f97f7efe0761ba3bdc8b",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/04.png",
+      "sha256": "403d2b597df0b84daca1df64df4665a00c100f6c7e2d06cead611987c0c93c0e",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/05.png",
+      "sha256": "eb491fd45ebe291084c3ae7c0f2040023ce5455a48ac8c18bddc73939571d6b7",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/06.png",
+      "sha256": "015c91acd2a475d21d76038ec601df1f0d994d087635cc8af5124ede64b60b82",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/07.png",
+      "sha256": "cbc2141001efdc1572abca2388a831499b6b7bec0a15b13942a7685aab900968",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/08.png",
+      "sha256": "54182fb557dc2d87bc70d478cfd7df1355f51990658793ec5942a51772dfede8",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/09.png",
+      "sha256": "1f459b4ca7b7f1b921815d7bbaf4bba32e94c596382b725b04c0819a13d53dfe",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/10.png",
+      "sha256": "42e9bf8af438a0c71a5f280b98ed8a9c5fb1c089c83803409a484057e0bbed91",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/11.png",
+      "sha256": "30d75d2653ea3eee5c52142ec693ba76542e826d6612ef441f59ba805e31510c",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/walking/candidate-01/review-01-panels/12.png",
+      "sha256": "38647a9e0f5660dd093960c5d2fc9edac68e701d25544f30194f677594dbf905",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "57c63080693eedab028f89ea250f581ba2a97e382c113a6abd542e446387ff08"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

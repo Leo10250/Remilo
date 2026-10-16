@@ -1,0 +1,9 @@
+Use case: scientific-educational
+Asset/use: Remilo bundled exercise illustration; a transparent figure in a 16:9 frame up to 320 x 180 dp.
+Primary request: One adult demonstrating a full side forearm plank on a simple muted exercise mat.
+Input 1: Approved Front plank illustration for the same person, clothing, softly shaded educational style and muted colors only. Change pose to a side plank.
+Posture: Three-quarter side view that makes the stacked torso visible. Supporting forearm flat on mat with elbow beneath shoulder, hips lifted, torso and legs straight, feet stacked and supported at the outer edge of the lower foot. Free hand rests on upper hip; head aligned with spine. Clearly show shoulder, supporting elbow, lifted hips, feet and mat contact. Natural anatomy, full person in frame.
+Style: Soft educational shading, blue-gray top and muted terracotta leggings, restrained outlines and no visual clutter. Match the approved pilot's person and finish.
+Composition: Wide landscape 16:9 with comfortable transparent margin. Person faces the viewer at a gentle three-quarter angle, legs extending toward the right. Both feet and supporting forearm visible, no clipped contours.
+Output target: Transparent PNG at least 960 x 540 pixels, genuinely transparent surroundings with subtle contact shadow on the mat only.
+Exclude: Text, labels, arrows, numbers, logos, watermark, phone UI, scenery, extra people/equipment or alternate poses. This is an illustration asset, not a mockup.

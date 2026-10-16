@@ -32,10 +32,28 @@ class LanguageCoordinatorTest {
     assertEquals("en", LanguageCoordinator.resolve(emptyList()))
   }
   @Test fun translatedAlarmCopyCannotChangeCapturedCommandKinds() {
-    val english = AlarmControlAction.entries.map { it.commandKind }
+    val expected = mapOf(
+      AlarmControlAction.CompleteDelivery to "CompleteDelivery",
+      AlarmControlAction.StartRoutine to "StartRoutine",
+      AlarmControlAction.DismissRoutine to "DismissRoutineAlarm",
+      AlarmControlAction.RoutineSnooze to "SnoozeRoutineAlarm",
+      AlarmControlAction.Snooze to "Snooze",
+      AlarmControlAction.DoneAll to "DoneAll",
+      AlarmControlAction.SnoozeAll to "SnoozeAll")
+    PresentationLanguage.update(context, "en")
+    val english = AlarmControlAction.entries.associateWith { it.commandKind }
+    assertEquals(expected, english)
+    assertEquals("Start routine", L10n.text(context, "Start routine"))
+    assertEquals("Dismiss alarm", L10n.text(context, "Dismiss alarm"))
     PresentationLanguage.update(context, "zh-Hans")
-    assertEquals(listOf("CompleteDelivery", "Snooze", "DoneAll", "SnoozeAll"), english)
-    assertEquals(english, AlarmControlAction.entries.map { it.commandKind })
+    assertEquals(expected, AlarmControlAction.entries.associateWith { it.commandKind })
+    assertEquals(english, AlarmControlAction.entries.associateWith { it.commandKind })
+    assertEquals("\u5f00\u59cb\u8bad\u7ec3", L10n.text(context, "Start routine"))
+    assertEquals("\u5173\u95ed\u95f9\u949f", L10n.text(context, "Dismiss alarm"))
+    assertNotEquals(L10n.text(context, "Start routine"), AlarmControlAction.StartRoutine.commandKind)
+    assertNotEquals(L10n.text(context, "Dismiss alarm"), AlarmControlAction.DismissRoutine.commandKind)
+    assertNotEquals(AlarmControlAction.CompleteDelivery.commandKind, AlarmControlAction.StartRoutine.commandKind)
+    assertNotEquals(AlarmControlAction.CompleteDelivery.commandKind, AlarmControlAction.DismissRoutine.commandKind)
     assertEquals("稍后提醒", L10n.text(context, "Snooze"))
     for (count in listOf(1, 2)) assertEquals("$count 项未完成提醒需要查看。", L10n.text(com.remilo.alarm.presentation.NativeMessages.calendar_review_notification(count)))
   }

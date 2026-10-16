@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "machine-shoulder-press",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T06:38:12.131284+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/machine-shoulder-press/prepared-01.json",
+    "sha256": "9632faf1ca6945300635fc88c2b3d731962a37001328c610acc8c28023c4dd08"
+  },
+  "candidateSha256": "44d3d3822d5c4d61bc559fcb9a4ba6387f199f221fecc1032ff80a75a7ad009a",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01.png",
+    "sha256": "455287e6f7d4e6d68e0704b41194bd678d2fcb44beca5c6dd3aad94b474ae297"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/01.png",
+      "sha256": "7cee845c8c85adc765dc18e046923eeeaf9448183b1eaeaf303bd87ee0272d5c",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/02.png",
+      "sha256": "c60f029137deba56dcf4f81e52acb980de01bb358b90e97c9d9041e13486993f",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/03.png",
+      "sha256": "4ce2ccd3ffd733584c3f59bfd4e935de78d65dd35bd2a8cf719cf2d9b5c78bff",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/04.png",
+      "sha256": "e67ff7171d532e02366d5c58ac47ae7fe80c156d19f6610fafc3de980ee3493b",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/05.png",
+      "sha256": "60d9b5d6c3584b2a6d6f88dca78b3174fac20b86c84522d8e6066670af02f74b",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/06.png",
+      "sha256": "96b8ccf5b77607f60a7dd880dfa4e6c0046b1dad2789c66d0531c54da3946286",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/07.png",
+      "sha256": "c81d9dcb37bbe05537e3fb4e775ffb1de8a65bd3ad8f8ea61f0ba794a11f1995",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/08.png",
+      "sha256": "0fb4bd24a240cada4a3283476c20c68ed38c2dc7054694ed80a1f4cfc56f0bcd",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/09.png",
+      "sha256": "3eb5d6e39327397aab3d66ac7c598139bd28dbc43dc969f53d57c32625ed35b3",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/10.png",
+      "sha256": "c76dbf6a4ccbddd2a83e4f24c669f6694bd70cd36284b7fae207783bdd2aecf1",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/11.png",
+      "sha256": "22146d21a68e173fc08687d4e3dc7bad11585700698a840598516edc987164be",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/review-01-panels/12.png",
+      "sha256": "cb0b009068c01f3073fd229a41226aa8802a1b75cd61dcacb74fa16a57bbac69",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "3467855c8e68a12eb20d3377a9776dac9aeea913611e4b143f2d44e14da06aef"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

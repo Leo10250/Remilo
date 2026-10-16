@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "assetId": "running",
+  "version": 1,
+  "state": "committed",
+  "recordedAtUtc": "2026-10-16T05:34:43.235506+00:00",
+  "decisionSha256": "544a90b2ddf56ac7558b5f5c524391aba00c864c3ce10d7b3124fefaea9f54b7",
+  "preparedSha256": "fa330a600e9dd50dbab3b41ca5a546051c40ff5fa213423da3b3df15a0f1f4da",
+  "reviewSha256": "bb8ff3517a71d348595ebc4db97fe7977c9548059f9bce4768b79f560a2dcc10",
+  "previousRegistrySha256": "7e80be76a9ea70fecdc003b848b6b035f51312c9b75e9f5df458b7a0f06a1547",
+  "newRegistrySha256": "736666d0dbf87609a6d5ca4e96818d8c55a1b609c047ea4d398a97add055d03d",
+  "approvalSha256": "a4b2bc8c4237a9cab4fc8ebf33d5092b655b8f0a55a64219fe1cd2584d24bb80",
+  "files": [
+    {
+      "sha256": "8971ac8c783219c4151c9ba2b68c88e339503de5aea967c0604aa523fc54a309",
+      "width": 1672,
+      "height": 941,
+      "size": [
+        1672,
+        941
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": false,
+      "iccSha256": null,
+      "iccDescription": null,
+      "iccValid": null,
+      "exifOrientation": 1,
+      "displaySize": [
+        1672,
+        941
+      ],
+      "role": "source",
+      "path": "assets/exercises/masters/running-v1.png",
+      "bytesPreserved": true
+    },
+    {
+      "sha256": "e205a3336e61cceb456f51214c1ffb886cc34e6126c5b8f000cc89c780b50bef",
+      "role": "runtime",
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "transform": {
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "sourceDisplaySize": [
+          1672,
+          941
+        ],
+        "targetSize": [
+          960,
+          540
+        ],
+        "contentRectPx": [
+          0,
+          0,
+          959,
+          540
+        ],
+        "fit": "contain",
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "upscaled": false,
+        "resizeFilter": "Lanczos",
+        "mask": null,
+        "colorPolicy": "Untagged pixels interpreted as sRGB; no measured color-space assertion",
+        "orientationApplied": true,
+        "addedSourceDetail": false
+      },
+      "exportSpec": {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "11.1.0",
+        "libwebpVersion": "1.3.2",
+        "losslessScope": "Exact transformed pixels, all channels verified"
+      },
+      "path": "assets/exercises/running-v1.webp",
+      "cropProfiles": {
+        "focus-narrow": {
+          "viewportDp": [
+            256,
+            144
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        },
+        "focus-wide": {
+          "viewportDp": [
+            320,
+            180
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        }
+      },
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    }
+  ]
+}

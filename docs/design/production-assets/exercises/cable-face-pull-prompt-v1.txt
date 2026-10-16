@@ -1,0 +1,9 @@
+Use case: scientific-educational
+Asset/use: Remilo exercise library transparent illustration in a 16:9 frame up to 320 x 180 dp, with optional enlarged view.
+Primary request: One adult performing a standing cable face pull using a rope attachment from a high pulley, shown at the pulled position.
+Input 1: Approved Front plank artwork supplies the same adult woman, natural anatomy, softly shaded educational style, blue-gray top and muted terracotta leggings. Add plain gray shoes. Reuse person/style only.
+Posture: Standing facing the pulley station, feet planted in a modest split stance, soft knees, neutral upright trunk. Both hands visibly hold separate rope ends beside the temples, pulling the rope toward upper face with high bent elbows. Forearms align with rope ends; elbows stay naturally below or around shoulder height. Rope and cable stay in front of the face, no rope through the body.
+Equipment: One simple complete unbranded gray cable tower beside the person. A high pulley connects to one continuous taut cable, metal clip and bifurcated rope with two rounded ends. No numbers, labels or logos. Clearly coherent hand/rope/cable contacts.
+Composition: Gentle three-quarter side view showing both hands, rope, face, stance and complete tower. Full person and equipment inside a wide 16:9 canvas with generous clear margins; no unnecessary machine parts or bench.
+Style/output: Restrained educational shading, muted gray equipment and clear readable silhouette, transparent PNG at least 960 x 540 pixels, genuine transparency surrounding subject.
+Exclude: Gym/scenery, text, arrows, labels, numbers, logos, watermark, UI, muscle overlays, extra people, extra limbs or alternate poses. One illustration only.

@@ -1,0 +1,9 @@
+Use case: scientific-educational
+Asset/use: Remilo bundled exercise illustration; transparent cutout in a 16:9 frame up to 320 x 180 dp.
+Primary request: One adult demonstrating the bird-dog exercise, with left arm reaching forward and right leg extended backward, balanced on the other hand and knee on a simple mat.
+Input 1: Individually approved Front plank illustration. Use it ONLY as the consistent person, clothing, softly shaded educational illustration style and muted palette reference. Change the posture to bird-dog; do not reuse plank posture.
+Posture: Clear side three-quarter view facing left. Supporting palm beneath shoulder and supporting knee beneath hip. Opposite arm and leg extended roughly parallel to the floor. Level trunk and hips, neutral neck and gaze down. Both supporting contact points visible; all limbs natural and distinguishable. Entire person and mat visible.
+Style: Softly shaded educational illustration, natural proportions, restrained outlines, blue-gray top and muted terracotta leggings, visually consistent with approved pilot.
+Composition: Wide 16:9 landscape, centered with comfortable transparent margin, no clipped fingers or toes. Readable at 256 x 144 dp.
+Output target: Transparent PNG at least 960 x 540 pixels. Genuinely transparent area around person and mat, subtle contact shading only on mat.
+Exclude: Text, numbers, arrows, labels, logos, branding, watermark, app controls, scenery, extra people, exercise equipment or alternate poses. This is an asset, not a UI mockup.

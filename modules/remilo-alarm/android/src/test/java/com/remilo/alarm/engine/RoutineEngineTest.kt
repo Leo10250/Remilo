@@ -30,13 +30,15 @@ class RoutineEngineTest {
   private lateinit var originalZone: TimeZone
   private var now = instant("2026-10-12T07:00:00Z") // Monday
   private var failAt: String? = null
+  private var exactAllowed = true
+  private var registrationFails = false
   private val registrations = mutableListOf<AlertRecord>()
   private fun instant(s: String) = Instant.parse(s).toEpochMilli()
   private fun newEngine() = AlarmEngine(context, object : AlarmRegistrar {
-    override fun canSchedule() = true
-    override fun register(alert: AlertRecord) { registrations.add(alert) }
+    override fun canSchedule() = exactAllowed
+    override fun register(alert: AlertRecord) { if (registrationFails) throw IllegalStateException("registration unavailable"); registrations.add(alert) }
     override fun cancel(alert: AlertRecord) { }
-  }, { now }, { 10000L }, routineCheckpoint = { stage -> if (failAt == stage) { failAt = null; throw IllegalStateException("Simulated process death: $stage") } })
+  }, { now }, { 10000L }, routineCheckpoint = { stage -> if (failAt == stage) { failAt = null; throw IllegalStateException("Simulated process death: $stage") } }, routineAlertCheckpoint = { stage -> if (failAt == stage) { failAt = null; throw IllegalStateException("Simulated process death: $stage") } })
   @Before fun setup() {
     originalZone = TimeZone.getDefault(); TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
     context = RuntimeEnvironment.getApplication()
@@ -261,7 +263,7 @@ class RoutineEngineTest {
   @Test fun backupCopyAndPurgeKeepWholeFamilyIdentityAndProgress() {
     val id = create(); command(action(read(id)))
     val json = request { engine.exportBackup() }; val decoded = BackupCodec.decode(json)
-    assertEquals(5, JSONObject(json).getInt("version")); assertEquals(1, decoded.routineSessions.size)
+    assertEquals(6, JSONObject(json).getInt("version")); assertEquals(1, decoded.routineSessions.size)
     val restore = request { engine.importBackup(json,listOf(id),"restore-copy") }; assertEquals("Applied",restore["status"])
     assertEquals("Applied", request { engine.importBackup(json,listOf(id),"restore-copy") }["status"])
     val plans = request { engine.queryRoutines() }; assertEquals(2,plans.size)
@@ -417,7 +419,7 @@ class RoutineEngineTest {
   @Test fun invalidRoutineDraftsRejectBeforeCreatingAnyState() {
     val invalid = listOf(draft() + ("startsOn" to "2026-13-12"), draft() + ("startsOn" to 123),
       draft() + mapOf("startsOn" to "2026-10-12", "days" to week().mapIndexed { i, d -> if(i == 0) mapOf("type" to "Exercises","exercises" to emptyList<Any>()) else d }),
-      draft() + mapOf("startsOn" to "2026-10-12", "mode" to "Alarm"))
+      draft() + mapOf("startsOn" to "2026-10-12", "mode" to "Invalid"))
     invalid.forEachIndexed { index, value -> assertEquals("Rejected",command(value + mapOf("kind" to "CreateRoutine", "operationId" to "invalid:$index"))["status"]) }
     assertTrue(request { engine.queryRoutines() }.isEmpty()); assertTrue(protectedRows().isEmpty())
   }
@@ -435,4 +437,287 @@ class RoutineEngineTest {
     assertTrue(context.getSystemService(NotificationManager::class.java).activeNotifications.isEmpty())
     assertEquals(0,read(id)["completedCount"])
   }
+  private fun fireRoutine(alert: AlertRecord) {
+    val done = CompletableFuture<Unit>()
+    engine.receive(AlarmScheduler.intent(context, "fire", alert.occurrenceId, alert.generation)) { done.complete(Unit) }
+    done.get(20, TimeUnit.SECONDS)
+  }
+  private fun deliveryCommand(alert: AlertRecord, kind: String, operation: String) = mapOf(
+    "kind" to kind, "operationId" to operation, "occurrenceId" to alert.occurrenceId,
+    "date" to alert.nominalSlot!!.substringBefore('T'), "expectedGeneration" to alert.generation,
+    "expectedSessionId" to alert.sessionId,
+    "expectedSnoozeMinutes" to if (kind == "SnoozeRoutineAlarm") alert.snoozeMinutes else null)
+
+  @Test fun alarmSettingsAndNotesAreVersionedWithDatedContentAndBackupSix() {
+    val result = command(draft("Alarm") + mapOf("kind" to "CreateRoutine", "operationId" to "alarm-fields", "startsOn" to "2026-10-12",
+      "notes" to "Original instructions", "sound" to "system", "vibration" to true))
+    val id = (result["routine"] as Map<*, *>)["id"] as String
+    assertEquals("Original instructions", read(id)["notes"]); assertEquals("system", read(id)["sound"]); assertEquals(true,read(id)["vibration"])
+    command(draft("Notification") + mapOf("kind" to "EditRoutine", "operationId" to "edit-fields", "routineId" to id,
+      "expectedRevision" to 1, "notes" to "Tomorrow instructions", "sound" to "remilo", "vibration" to false))
+    assertEquals("Original instructions", read(id)["notes"]); assertEquals("Alarm",read(id)["mode"])
+    val backup = request { engine.exportBackup() }; val decoded = BackupCodec.decode(backup)
+    assertEquals(6,JSONObject(backup).getInt("version")); assertEquals("Original instructions",decoded.routineVersions.first().notes)
+    now = instant("2026-10-13T08:00:00Z"); assertEquals("Tomorrow instructions",read(id)["notes"])
+    assertEquals("Original instructions",read(id,"2026-10-12")["notes"])
+  }
+  @Test fun routineAlarmDismissIsDeliveryOnlyAndReceiptSurvivesLockedRestart() {
+    val id = create("Alarm"); val session = read(id)
+    var alert = protectedRows().single { it.occurrenceId == session["occurrenceId"] }; now = alert.targetMs; fireRoutine(alert)
+    alert = protectedRows().single { it.occurrenceId == alert.occurrenceId }; assertEquals("Alerting",alert.state)
+    val dismiss = deliveryCommand(alert,"DismissRoutineAlarm","dismiss-once")
+    assertEquals("Applied",command(dismiss)["status"]); assertEquals("Applied",command(dismiss)["status"])
+    assertEquals(0,read(id)["completedCount"]); assertEquals("Available",protectedRows().single { it.occurrenceId == alert.occurrenceId }.state)
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false); restart()
+    assertEquals("Applied",command(dismiss)["status"])
+    assertEquals("Rejected",command(dismiss + ("operationId" to "stale-dismiss"))["status"])
+    assertEquals("Rejected",command(mapOf("kind" to "Settings","operationId" to "dismiss-once"))["status"])
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    assertEquals(0,read(id)["completedCount"])
+  }
+  @Test fun explicitRoutineSnoozeRearmsCapturedTargetWithoutCompletingExercises() {
+    val id = create("Alarm"); val session = read(id)
+    var alert = protectedRows().single { it.occurrenceId == session["occurrenceId"] }; now = alert.targetMs; fireRoutine(alert)
+    alert = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+    val snoozeCommand = deliveryCommand(alert,"SnoozeRoutineAlarm","routine-snooze")
+    assertEquals("Applied",command(snoozeCommand)["status"])
+    val snoozed = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+    assertEquals("Scheduled",snoozed.state); assertFalse(snoozed.prompted); assertEquals(now + 600000,snoozed.targetMs)
+    now += 1000; assertEquals("Applied",command(snoozeCommand)["status"])
+    assertEquals(snoozed.targetMs,protectedRows().single { it.occurrenceId == alert.occurrenceId }.targetMs)
+    now = snoozed.targetMs; fireRoutine(snoozed)
+    assertEquals("Alerting",protectedRows().single { it.occurrenceId == alert.occurrenceId }.state)
+    assertEquals(0,read(id)["completedCount"])
+  }
+  @Test fun mixedAlarmGroupRejectsWholeWorkoutCompletionAndDetachesOnlyFinishedRoutine() {
+    val id = create("Alarm"); val session = read(id)
+    val initial = protectedRows().single { it.occurrenceId == session["occurrenceId"] }
+    val normal = command(mapOf("kind" to "Create","operationId" to "mixed-alarm","title" to "Ordinary alarm","mode" to "Alarm", "alarmAtMs" to initial.targetMs))
+    val normalId = (normal["occurrence"] as Map<*, *>)["id"] as String
+    now = initial.targetMs; fireRoutine(initial); fireRoutine(protectedRows().single { it.occurrenceId == normalId })
+    val active = protectedRows().filter { it.state == "Alerting" }; assertEquals(2,active.size)
+    assertEquals("Rejected",command(mapOf("kind" to "StopAll","operationId" to "mixed-stop", "expectedSessionId" to active.first().sessionId))["status"])
+    assertEquals("Rejected",command(mapOf("kind" to "DoneAll","operationId" to "mixed-done", "expectedSessionId" to active.first().sessionId,
+      "members" to active.map { mapOf("occurrenceId" to it.occurrenceId,"expectedGeneration" to it.generation) }))["status"])
+    for (i in 0..3) command(action(read(id),index=i,operation="finish-mixed:$i"))
+    assertEquals("Completed",protectedRows().single { it.occurrenceId == initial.occurrenceId }.state)
+    assertEquals("Alerting",protectedRows().single { it.occurrenceId == normalId }.state)
+    assertEquals(4,read(id)["completedCount"])
+  }
+  @Test fun midnightExpiresOnlyRoutineMemberAndOldSnoozeCannotReachTuesday() {
+    val id = create("Alarm"); val session = read(id)
+    var routine = protectedRows().single { it.occurrenceId == session["occurrenceId"] }
+    val normal = command(mapOf("kind" to "Create","operationId" to "midnight-ordinary","title" to "Ordinary alarm","mode" to "Alarm", "alarmAtMs" to routine.targetMs))
+    val normalId = (normal["occurrence"] as Map<*, *>)["id"] as String
+    now = routine.targetMs; fireRoutine(routine); fireRoutine(protectedRows().single { it.occurrenceId == normalId })
+    routine = protectedRows().single { it.occurrenceId == routine.occurrenceId }
+    val snooze = deliveryCommand(routine,"SnoozeRoutineAlarm","midnight-snooze")
+    now = instant("2026-10-12T23:55:00Z")
+    assertEquals("DAY_ENDED",command(snooze)["errorCode"])
+    now = instant("2026-10-13T00:00:00Z"); engine.expireRoutineDeliveries(); request { Unit }
+    assertEquals("Expired",protectedRows().single { it.occurrenceId == routine.occurrenceId }.state)
+    assertEquals("Alerting",protectedRows().single { it.occurrenceId == normalId }.state)
+    assertEquals("Rejected",command(snooze)["status"])
+    assertEquals(0,read(id)["completedCount"]); assertEquals("Incline walk",steps(read(id)).single()["name"])
+  }
+  @Test fun routineAlarmLateCallbackNeverRingsOrTurnsWorkoutOverdue() {
+    val id = create("Alarm"); val monday = read(id)
+    val alert = protectedRows().single { it.occurrenceId == monday["occurrenceId"] }
+    now = alert.targetMs + 600000; fireRoutine(alert)
+    assertEquals("Available",protectedRows().single { it.occurrenceId == alert.occurrenceId }.state)
+    assertEquals(0,page("overdue")["total"]); assertEquals("Ready",read(id)["state"])
+  }
+
+  @Test fun interruptedRoutineSnoozeUsesOneFrozenIntentAcrossRecoveryCheckpoints() {
+    for (stage in listOf("routine-alert-committed", "routine-alert-detached", "routine-alert-registered")) {
+      val id = create("Alarm", "uncertain:$stage"); val session = read(id)
+      var alert = protectedRows().single { it.occurrenceId == session["occurrenceId"] }; now = alert.targetMs; fireRoutine(alert)
+      alert = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+      val snooze = deliveryCommand(alert,"SnoozeRoutineAlarm","uncertain-snooze:$stage")
+      val originalTarget = now + alert.snoozeMinutes * 60_000L
+      failAt = stage
+      try { command(snooze); fail("Expected an uncertain native outcome at $stage") } catch (error: java.util.concurrent.ExecutionException) { assertTrue(error.cause is IllegalStateException) }
+      now += 1000; restart()
+      assertEquals("Applied",command(snooze)["status"])
+      val current = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+      assertEquals(originalTarget,current.targetMs); assertEquals("Scheduled",current.state)
+      assertEquals(0,read(id)["completedCount"])
+      // Silence that captured future delivery so each iteration starts independently.
+      command(action(read(id),"SkipRoutineDay",operation="uncertain-skip:$stage"))
+      now = instant("2026-10-12T07:00:00Z")
+    }
+  }
+  @Test fun alarmNeverFallsBackToNotificationAndReceiptOutcomeStaysStable() {
+    exactAllowed = false
+    val id = create("Alarm"); val session = read(id)
+    assertEquals("Blocked",protectedRows().single { it.occurrenceId == session["occurrenceId"] }.state)
+    assertTrue(registrations.none { it.mode == "Alarm" })
+    exactAllowed = true; recover()
+    var alert = protectedRows().single { it.occurrenceId == session["occurrenceId"] }; now = alert.targetMs; fireRoutine(alert)
+    alert = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+    val snooze = deliveryCommand(alert,"SnoozeRoutineAlarm","blocked-routine-snooze")
+    registrationFails = true
+    assertEquals("Blocked",command(snooze)["status"])
+    registrationFails = false; recover()
+    assertEquals("Scheduled",protectedRows().single { it.occurrenceId == alert.occurrenceId }.state)
+    assertEquals("Blocked",command(snooze)["status"])
+    now = instant("2026-10-13T00:00:00Z"); recover()
+    assertEquals("Blocked",command(snooze)["status"])
+    assertEquals(0,read(id)["completedCount"])
+  }
+  @Test fun legacyBackupFiveSuppliesEmptyNotesAndOriginalAlertDefaults() {
+    create("Notification")
+    val legacy = JSONObject(request { engine.exportBackup() }).put("version",5)
+    val versions = legacy.getJSONArray("routineVersions")
+    for (i in 0 until versions.length()) { versions.getJSONObject(i).remove("notes"); versions.getJSONObject(i).remove("sound"); versions.getJSONObject(i).remove("vibration") }
+    val decoded = BackupCodec.decode(legacy.toString())
+    assertTrue(decoded.routineVersions.all { it.notes == "" && it.sound == "remilo" && !it.vibration && it.mode == "Notification" })
+  }
+
+  @Test fun travelBackwardAcrossDateReplansFutureMondayAndRejectsOldCallbackOnSunday() {
+    now = instant("2026-10-11T23:00:00Z")
+    val created = command(draft("Alarm") + mapOf("kind" to "CreateRoutine", "operationId" to "travel-alarm", "startsOn" to "2026-10-12", "minutes" to 30))
+    val id = (created["routine"] as Map<*, *>)["id"] as String
+    val old = protectedRows().filter { it.nominalSlot!!.startsWith("2026-10-12") }.single()
+    TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles")); now = instant("2026-10-12T00:30:00Z")
+    fireRoutine(old)
+    assertTrue(protectedRows().none { it.state == "Alerting" })
+    assertNull(request { engine.routineSession(id, null) }) // The routine starts Monday; local Sunday precedes its plan.
+    val moved = protectedRows().single { it.occurrenceId == old.occurrenceId }
+    assertTrue(moved.generation > old.generation); assertEquals(instant("2026-10-12T07:30:00Z"),moved.targetMs)
+    now = moved.targetMs; fireRoutine(moved)
+    assertEquals("Alerting",protectedRows().single { it.occurrenceId == old.occurrenceId }.state)
+    assertEquals(0,read(id)["completedCount"])
+  }
+  @Test fun protectedRoutineDeliveryReservesItsOperationInCalendarNamespace() {
+    val id = create("Alarm"); val session = read(id)
+    var alert = protectedRows().single { it.occurrenceId == session["occurrenceId"] }; now = alert.targetMs; fireRoutine(alert)
+    alert = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+    val operation = java.util.UUID.randomUUID().toString()
+    assertEquals("Applied",command(deliveryCommand(alert,"DismissRoutineAlarm",operation))["status"])
+    val outcome = CompletableFuture<String>()
+    engine.calendarRequest(block = { store -> store.capture(mapOf("operationId" to operation, "occurrenceId" to alert.occurrenceId,
+      "expectedRevision" to 1, "expectedConnectionRevision" to 1, "fingerprint" to "captured")) }, resolve = { outcome.complete("unexpected") }, reject = { outcome.complete(it) })
+    assertEquals("OPERATION_REUSED",outcome.get(20,TimeUnit.SECONDS))
+    assertEquals(0,read(id)["completedCount"])
+  }
+
+  @Test fun backwardDateEndsStartedTuesdayBeforeUnlockWithoutEndingFutureWednesday() {
+    val id = create("Alarm")
+    now = instant("2026-10-13T08:00:00Z")
+    val tuesday = read(id)
+    var alert = protectedRows().single { it.occurrenceId == tuesday["occurrenceId"] }
+    assertTrue(alert.dayStarted)
+    val future = protectedRows().first { it.nominalSlot!!.startsWith("2026-10-14") }
+    assertFalse(future.dayStarted)
+    now = alert.targetMs; fireRoutine(alert)
+    alert = protectedRows().single { it.occurrenceId == alert.occurrenceId }; assertEquals("Alerting",alert.state)
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    now = instant("2026-10-12T09:00:00Z"); engine.expireRoutineDeliveries(); request { Unit }
+    val ended = protectedRows().single { it.occurrenceId == alert.occurrenceId }
+    assertTrue(ended.dayEnded); assertEquals("Expired",ended.state); assertNull(ended.sessionId)
+    val stillFuture = protectedRows().single { it.occurrenceId == future.occurrenceId }
+    assertFalse(stillFuture.dayEnded); assertFalse(stillFuture.dayStarted); assertEquals("Scheduled",stillFuture.state)
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    assertEquals(true,read(id,"2026-10-13")["ended"])
+    now = alert.targetMs; fireRoutine(alert)
+    assertEquals(true,read(id)["ended"]); assertEquals(0,read(id)["completedCount"])
+    assertTrue(protectedRows().none { it.occurrenceId == alert.occurrenceId && it.state == "Alerting" })
+  }
+
+  @Test fun repeatedEffectiveDateAfterClockTravelKeepsImmutableHistoryAndPortableReferences() {
+    val id = create("Notification")
+    val originalWeek = week().mapIndexed { day, value -> if (day != 1) value else mapOf("type" to "Exercises", "exercises" to listOf(
+      mapOf("id" to "1-0", "name" to "Original Tuesday walk", "target" to "35 minutes", "notes" to "Original guidance", "illustration" to ""))) }
+    command(draft("Alarm") + mapOf("kind" to "EditRoutine", "routineId" to id, "expectedRevision" to 1, "operationId" to "immutable-first",
+      "title" to "Original Tuesday", "notes" to "Original overall notes", "minutes" to 600, "sound" to "system", "vibration" to true, "days" to originalWeek))
+    now = instant("2026-10-13T08:00:00Z")
+    val tuesday = read(id); command(action(tuesday,operation="immutable-complete"))
+    now = instant("2026-10-12T08:00:00Z"); assertEquals(true,read(id,"2026-10-13")["ended"])
+    val replacement = week().mapIndexed { day, value -> if (day != 1) value else mapOf("type" to "Exercises", "exercises" to listOf(
+      mapOf("id" to "new-tuesday", "name" to "Replacement Tuesday", "target" to "20 minutes", "notes" to "New guidance", "illustration" to ""))) }
+    val edit = draft("None") + mapOf("kind" to "EditRoutine", "routineId" to id, "expectedRevision" to 2, "operationId" to "immutable-second",
+      "title" to "Replacement plan", "notes" to "Replacement notes", "minutes" to 660, "sound" to "remilo", "vibration" to false, "days" to replacement)
+    assertEquals("Applied",command(edit)["status"]); assertEquals("Applied",command(edit)["status"])
+    restart()
+    val historical = read(id,"2026-10-13")
+    assertEquals("Original Tuesday",historical["title"]); assertEquals("Original overall notes",historical["notes"])
+    assertEquals("Alarm",historical["mode"]); assertEquals(600,historical["minutes"]); assertEquals("system",historical["sound"]); assertEquals(true,historical["vibration"])
+    assertEquals("Original Tuesday walk",steps(historical).single()["name"]); assertEquals(1,historical["completedCount"])
+    val backup = request { engine.exportBackup() }; val decoded = BackupCodec.decode(backup)
+    assertEquals(2,decoded.routineVersions.count { it.routineId == id && it.effectiveDate == "2026-10-13" })
+    val frozen = decoded.routineSessions.single { it.date == "2026-10-13" }
+    assertEquals(2L,frozen.versionRevision); assertEquals(3L,decoded.routines.single().revision)
+    val tampered = JSONObject(backup); val sessions = tampered.getJSONArray("routineSessions")
+    for (index in 0 until sessions.length()) if (sessions.getJSONObject(index).getString("date") == "2026-10-13") sessions.getJSONObject(index).put("versionRevision",3)
+    try { BackupCodec.decode(tampered.toString()); fail("A different immutable revision must not validate against frozen content") } catch (_: IllegalArgumentException) { }
+    assertEquals("Applied",request { engine.importBackup(backup,listOf(id),"immutable-copy") }["status"])
+    assertEquals("Applied",request { engine.importBackup(backup,listOf(id),"immutable-copy") }["status"])
+    val copy = request { engine.queryRoutines() }.single { it["id"] != id }["id"] as String
+    assertEquals("Original overall notes",read(copy,"2026-10-13")["notes"])
+    assertEquals("Applied",command(edit + mapOf("routineId" to copy,"expectedRevision" to 3,"operationId" to "immutable-copy-edit"))["status"])
+    BackupCodec.decode(request { engine.exportBackup() })
+  }
+  @Test fun legacyVersionIdsAreDeterministicDespitePortableArrayOrder() {
+    val id = create()
+    command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "legacy-revision-two"))
+    now = instant("2026-10-13T08:00:00Z"); read(id)
+    command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 2,"operationId" to "legacy-revision-three"))
+    val source = JSONObject(request { engine.exportBackup() }).put("version",5)
+    val definitions = source.getJSONArray("routineVersions")
+    for (index in 0 until definitions.length()) { val value = definitions.getJSONObject(index); for (key in listOf("revision","notes","sound","vibration")) value.remove(key) }
+    val sessions = source.getJSONArray("routineSessions")
+    for (index in 0 until sessions.length()) sessions.getJSONObject(index).remove("versionRevision")
+    source.getJSONArray("routines").getJSONObject(0).remove("revision")
+    val normal = BackupCodec.decode(source.toString())
+    source.put("routineVersions",org.json.JSONArray((definitions.length()-1 downTo 0).map { definitions.getJSONObject(it) }))
+    val reversed = BackupCodec.decode(source.toString())
+    assertEquals(normal.routineVersions.associate { it.effectiveDate to it.revision },reversed.routineVersions.associate { it.effectiveDate to it.revision })
+    assertEquals(normal.routineSessions.map { it.date to it.versionRevision },reversed.routineSessions.map { it.date to it.versionRevision })
+    assertEquals(3L,reversed.routines.single().revision)
+    assertEquals("Applied",request { engine.importBackup(source.toString(),listOf(id),"legacy-immutable-copy") }["status"])
+    val copy = request { engine.queryRoutines() }.single { it["id"] != id }["id"] as String
+    assertEquals("Applied",command(draft() + mapOf("kind" to "EditRoutine","routineId" to copy,"expectedRevision" to 3,"operationId" to "legacy-immutable-edit"))["status"])
+    BackupCodec.decode(request { engine.exportBackup() })
+  }
+
+  @Test fun replacementSegmentCannotReviveAnOwnedDateAfterClockTravelEvenBeforeUnlock() {
+    for (mode in listOf("Alarm", "Notification", "None")) {
+      now = instant("2026-10-12T07:00:00Z")
+      val id = create(mode, "owned-date-$mode")
+      now = instant("2026-10-13T08:00:00Z")
+      val original = read(id)
+      now = instant("2026-10-12T08:00:00Z")
+      assertEquals(true, read(id, "2026-10-13")["ended"])
+      command(draft(mode) + mapOf("kind" to "EditRoutine", "routineId" to id, "expectedRevision" to 1,
+        "operationId" to "owned-date-edit-$mode", "minutes" to 660, "title" to "Replacement $mode"))
+      val candidate = protectedRows().single { it.nominalSlot == "2026-10-13T11:00" && it.mode == mode }
+      assertNotEquals(original["occurrenceId"], candidate.occurrenceId)
+      assertTrue(candidate.dayEnded); assertEquals("Expired", candidate.state)
+      val future = protectedRows().first { it.segmentId == candidate.segmentId && it.nominalSlot!!.startsWith("2026-10-14") }
+      assertFalse(future.dayEnded)
+      assertEquals(if (mode == "None") "NoAlert" else "Scheduled", future.state)
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+      restart()
+      now = instant("2026-10-13T09:30:00Z")
+      fireRoutine(candidate)
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+      val family = request { engine.queryRepeatFamilies() }.single { it["seriesId"] == id }
+      val upcoming = family["upcoming"] as List<Map<String, Any?>>
+      assertTrue(upcoming.none { it["nominalSlot"].toString().startsWith("2026-10-13") })
+      val segmentUpcoming = (family["current"] as Map<String, Any?>)["upcoming"] as List<Map<String, Any?>>
+      assertTrue(segmentUpcoming.none { it["nominalSlot"].toString().startsWith("2026-10-13") })
+      assertEquals(rows().count { (it["routine"] as? Map<*, *>)?.get("routineId") == id }, family["unfinishedCount"])
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+      now = candidate.targetMs
+      fireRoutine(candidate)
+      assertTrue(protectedRows().none { it.occurrenceId == candidate.occurrenceId && it.state in setOf("Alerting", "Notified") })
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+      val retained = read(id)
+      assertEquals(original["occurrenceId"], retained["occurrenceId"]); assertEquals(true, retained["ended"])
+      assertTrue(rows("today").none { (it["routine"] as? Map<*, *>)?.get("routineId") == id })
+      BackupCodec.decode(request { engine.exportBackup() })
+    }
+  }
+
 }

@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:52:40.547512+00:00",
+  "assetId": "lat-pulldown",
+  "candidate": 1,
+  "candidateSha256": "a8c2bad8b373d4d95e5c18036080311dd27571e72fd9db67dc18a91c17023a92",
+  "reviewSha256": "0b7abbf61401856d35c18ef443f00910eaa4bddb6dd6d04fec6c1a62c30b82ed",
+  "reviewRecordSha256": "2250d15b4e059430ad9c37e722fcd73a91983eff42b7eaf732eaba3ef2f60670",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

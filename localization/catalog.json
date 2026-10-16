@@ -13252,8 +13252,8 @@
       "calendarStatus": false
     },
     "routine_exercises": {
-      "en": "Exercises",
-      "zh-Hans": "练习",
+      "en": "Workout day",
+      "zh-Hans": "训练日",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13560,8 +13560,8 @@
       "calendarStatus": false
     },
     "routine_sequence": {
-      "en": "Exercises",
-      "zh-Hans": "练习列表",
+      "en": "Completed & upcoming",
+      "zh-Hans": "已完成与待完成",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -14287,6 +14287,653 @@
         "name": "string"
       },
       "context": "widget Undo context",
+      "calendarStatus": false
+    },
+    "routine_type_label": {
+      "en": "Type",
+      "zh-Hans": "类型",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_type_reminder": {
+      "en": "Reminder",
+      "zh-Hans": "提醒",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_type_weekly": {
+      "en": "Weekly routine",
+      "zh-Hans": "每周计划",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_exercises_by_day": {
+      "en": "Exercises by day",
+      "zh-Hans": "每日动作",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_day_editor_title": {
+      "en": "{day}’s exercises",
+      "zh-Hans": "{day}的动作",
+      "args": {
+        "day": "string"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_day_fresh_hint": {
+      "en": "Rest days have no alerts. Each day starts fresh; unfinished workouts stay in history.",
+      "zh-Hans": "休息日不会提醒。每天独立开始，未完成的训练保留在历史记录中。",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_plan_local_hint": {
+      "en": "Changes are saved when you save the reminder.",
+      "zh-Hans": "保存提醒时才会保存这些更改。",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_child_done": {
+      "en": "Done",
+      "zh-Hans": "完成",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_child_add": {
+      "en": "Add exercise",
+      "zh-Hans": "添加动作",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_child_discard_title": {
+      "en": "Discard changes?",
+      "zh-Hans": "放弃更改？",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_child_discard_hint": {
+      "en": "Your changes on this screen have not been applied.",
+      "zh-Hans": "此页面上的更改尚未应用。",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_day_rest_summary": {
+      "en": "Rest day · No alert",
+      "zh-Hans": "休息日 · 不提醒",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_day_editor_hint": {
+      "en": "Add exercises for this day or make it a rest day.",
+      "zh-Hans": "为这一天添加动作，或将其设为休息日。",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_current_position": {
+      "en": "Current exercise · {current} of {total}",
+      "zh-Hans": "当前动作 · 第 {current} 项，共 {total} 项",
+      "args": {
+        "current": "number",
+        "total": "number"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_completed_named": {
+      "en": "Completed {name}",
+      "zh-Hans": "已完成{name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_undo_named": {
+      "en": "Undo {name} completion",
+      "zh-Hans": "撤销{name}的完成",
+      "args": {
+        "name": "string"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_read_more": {
+      "en": "Read more",
+      "zh-Hans": "展开说明",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_read_less": {
+      "en": "Show less",
+      "zh-Hans": "收起说明",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_view_illustration": {
+      "en": "View illustration",
+      "zh-Hans": "查看动作示意图",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_illustration_title": {
+      "en": "{name} illustration",
+      "zh-Hans": "{name}动作示意图",
+      "args": {
+        "name": "string"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_ordinal": {
+      "en": "Exercise {current} of {total}",
+      "zh-Hans": "第 {current} 项动作，共 {total} 项",
+      "args": {
+        "current": "number",
+        "total": "number"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_daily_finished": {
+      "en": "Today’s exercises completed",
+      "zh-Hans": "今天的动作已全部完成",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_illustrations_pending": {
+      "en": "Illustrations are being prepared. Exercise names, targets and guidance remain available.",
+      "zh-Hans": "动作示意图正在准备中。你仍可查看动作名称、目标和说明。",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "exercise_front_plank": {
+      "en": "Front plank",
+      "zh-Hans": "前平板支撑",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "exercise_front_plank_description": {
+      "en": "Side view of a person holding a forearm plank on a mat, supported by forearms and toes.",
+      "zh-Hans": "侧视图：一人用前臂和脚尖支撑身体，在垫上保持平板支撑。",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_correct_checkmarks": {
+      "en": "Correct checkmarks",
+      "zh-Hans": "更正完成标记",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_mark_named": {
+      "en": "Mark {name} as done",
+      "zh-Hans": "将{name}标记为完成",
+      "args": {
+        "name": "string"
+      },
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_illustration": {
+      "en": "Illustration",
+      "zh-Hans": "示意图",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_no_illustration": {
+      "en": "No illustration",
+      "zh-Hans": "无示意图",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_illustration_unavailable": {
+      "en": "Illustration unavailable",
+      "zh-Hans": "示意图不可用",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_exercise_editor_title": {
+      "en": "Exercise",
+      "zh-Hans": "动作",
+      "args": {},
+      "context": "Routine editor and dated Focus presentation",
+      "calendarStatus": false
+    },
+    "routine_alarm_start": {
+      "en": "Start routine",
+      "zh-Hans": "开始训练",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_alarm_dismiss": {
+      "en": "Dismiss alarm",
+      "zh-Hans": "关闭闹钟",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_snooze_day_end": {
+      "en": "Snooze would pass the end of today.",
+      "zh-Hans": "稍后提醒的时间将超过今天结束时间。",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_mode_validation": {
+      "en": "Choose Alarm, Notification or No alert.",
+      "zh-Hans": "请选择闹钟、通知或不提醒。",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_vibration_validation": {
+      "en": "Choose a vibration setting.",
+      "zh-Hans": "请选择振动设置。",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "widget_retry_same_action": {
+      "en": "Retry the same action",
+      "zh-Hans": "重试同一操作",
+      "args": {},
+      "context": "Widget exact retry of an uncertain native action",
+      "calendarStatus": false
+    },
+    "routine_complete_continue": {
+      "en": "Complete & continue",
+      "zh-Hans": "完成并继续",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_complete_exercise": {
+      "en": "Complete exercise",
+      "zh-Hans": "完成动作",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_view_previous": {
+      "en": "View previous exercise",
+      "zh-Hans": "查看上一个动作",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_completed_exercise": {
+      "en": "Completed exercise",
+      "zh-Hans": "已完成的动作",
+      "args": {},
+      "context": "Routine editor, Focus and native routine alarm actions",
+      "calendarStatus": false
+    },
+    "routine_one_check": {
+      "en": "One check per exercise",
+      "zh-Hans": "每项动作勾选一次",
+      "args": {},
+      "context": "Routine editor and Focus",
+      "calendarStatus": false
+    },
+    "routine_alarm_dismissing": {
+      "en": "Dismissing alarm…",
+      "zh-Hans": "正在关闭闹钟…",
+      "args": {},
+      "context": "Routine editor and Focus",
+      "calendarStatus": false
+    },
+    "routine_dated_title": {
+      "en": "{day}’s routine",
+      "zh-Hans": "{day}的训练",
+      "args": {
+        "day": "string"
+      },
+      "context": "Routine editor and Focus",
+      "calendarStatus": false
+    },
+    "routine_focus_announcement": {
+      "en": "Current exercise: {name}. {position} of {total}.",
+      "zh-Hans": "当前动作：{name}。第 {position} 项，共 {total} 项。",
+      "args": {
+        "name": "string",
+        "position": "number",
+        "total": "number"
+      },
+      "context": "Routine editor and Focus",
+      "calendarStatus": false
+    },
+    "routine_day_names_more": {
+      "en": "{names} · +{count} more",
+      "zh-Hans": "{names} · 另有 {count} 项",
+      "args": {
+        "names": "string",
+        "count": "number"
+      },
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_exercise_removed_named": {
+      "en": "{name} removed",
+      "zh-Hans": "已移除{name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_undo_removed_named": {
+      "en": "Undo removal of {name}",
+      "zh-Hans": "撤销移除{name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_first_exercise_hint": {
+      "en": "Choose a day to add your first exercise.",
+      "zh-Hans": "选择一天，添加第一个动作。",
+      "args": {},
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_change_summary": {
+      "en": "{count} days changed",
+      "zh-Hans": "已更改 {count} 天",
+      "args": {
+        "count": "number"
+      },
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_change_details": {
+      "en": "Review changes",
+      "zh-Hans": "查看更改",
+      "args": {},
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_time_validation": {
+      "en": "Choose a routine time.",
+      "zh-Hans": "请选择训练提醒时间。",
+      "args": {},
+      "context": "Shared reminder and weekly routine editor",
+      "calendarStatus": false
+    },
+    "routine_repeat_empty": {
+      "en": "Every week · Choose workout days",
+      "zh-Hans": "每周 · 选择训练日",
+      "args": {},
+      "context": "Shared editor empty weekly plan",
+      "calendarStatus": false
+    },
+    "exercise_bird_dog": {
+      "en": "Bird-dog",
+      "zh-Hans": "鸟狗式",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_bird_dog_description": {
+      "en": "A person balancing on one hand and knee while extending the opposite arm and leg.",
+      "zh-Hans": "一人用一只手和对侧膝盖支撑，伸展另一侧手臂和腿。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_side_plank": {
+      "en": "Side plank",
+      "zh-Hans": "侧平板支撑",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_side_plank_description": {
+      "en": "A person holding a side plank, supported by one forearm and the sides of the feet.",
+      "zh-Hans": "一人用一侧前臂和双脚侧面支撑身体，保持侧平板支撑。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_running": {
+      "en": "Running",
+      "zh-Hans": "跑步",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_running_description": {
+      "en": "A person running, shown from the side.",
+      "zh-Hans": "一人跑步的侧视示意图。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_incline_treadmill_walking": {
+      "en": "Incline treadmill walk",
+      "zh-Hans": "坡度跑步机行走",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_incline_treadmill_walking_description": {
+      "en": "A person walking on an inclined treadmill.",
+      "zh-Hans": "一人在有坡度的跑步机上行走。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_walking": {
+      "en": "Walking",
+      "zh-Hans": "步行",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_walking_description": {
+      "en": "A person walking, shown from the side.",
+      "zh-Hans": "一人步行的侧视示意图。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_lat_pulldown": {
+      "en": "Lat pulldown",
+      "zh-Hans": "高位下拉",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_lat_pulldown_description": {
+      "en": "A seated person holding a wide bar on a lat pulldown machine.",
+      "zh-Hans": "一人坐在高位下拉器械上，双手握住宽握杆。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_machine_chest_press": {
+      "en": "Machine chest press",
+      "zh-Hans": "器械推胸",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_machine_chest_press_description": {
+      "en": "A seated person pressing the handles of a chest press machine.",
+      "zh-Hans": "一人坐在推胸器械上，向前推动握把。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_cable_face_pull": {
+      "en": "Cable face pull",
+      "zh-Hans": "绳索面拉",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_cable_face_pull_description": {
+      "en": "A standing person pulling a cable rope attachment toward the face.",
+      "zh-Hans": "一人站立，将绳索附件拉向面部。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_dumbbell_shoulder_press": {
+      "en": "Dumbbell shoulder press",
+      "zh-Hans": "哑铃肩推",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_dumbbell_shoulder_press_description": {
+      "en": "A seated person pressing two dumbbells upward.",
+      "zh-Hans": "一人坐姿，将两个哑铃向上推举。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_machine_shoulder_press": {
+      "en": "Machine shoulder press",
+      "zh-Hans": "器械肩推",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_machine_shoulder_press_description": {
+      "en": "A seated person pressing the handles of a shoulder press machine upward.",
+      "zh-Hans": "一人坐在肩推器械上，向上推动握把。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_incline_hammer_curl": {
+      "en": "Incline hammer curl",
+      "zh-Hans": "上斜锤式弯举",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_incline_hammer_curl_description": {
+      "en": "A person on an incline bench curling dumbbells with palms facing inward.",
+      "zh-Hans": "一人倚靠上斜凳，掌心相对地做哑铃弯举。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_cable_triceps_pushdown": {
+      "en": "Cable triceps pushdown",
+      "zh-Hans": "绳索肱三头肌下压",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_cable_triceps_pushdown_description": {
+      "en": "A standing person extending the elbows to push a cable attachment downward.",
+      "zh-Hans": "一人站立，伸直肘部，将绳索附件向下推。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_goblet_squat": {
+      "en": "Goblet squat",
+      "zh-Hans": "高脚杯深蹲",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_goblet_squat_description": {
+      "en": "A person squatting while holding a dumbbell close to the chest.",
+      "zh-Hans": "一人将哑铃举在胸前做深蹲。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_dumbbell_bench_press": {
+      "en": "Dumbbell bench press",
+      "zh-Hans": "哑铃卧推",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_dumbbell_bench_press_description": {
+      "en": "A person lying on a bench and pressing two dumbbells upward.",
+      "zh-Hans": "一人仰卧在训练凳上，将两个哑铃向上推举。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_dumbbell_rdl": {
+      "en": "Dumbbell Romanian deadlift",
+      "zh-Hans": "哑铃罗马尼亚硬拉",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_dumbbell_rdl_description": {
+      "en": "A person hinging forward at the hips while holding dumbbells near the legs.",
+      "zh-Hans": "一人手持哑铃，屈髋前倾，哑铃靠近腿部。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_one_arm_dumbbell_row": {
+      "en": "One-arm dumbbell row",
+      "zh-Hans": "单臂哑铃划船",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "exercise_one_arm_dumbbell_row_description": {
+      "en": "A person supported on a bench, drawing one dumbbell toward the hip.",
+      "zh-Hans": "一人用手和膝盖支撑在训练凳上，将另一只手中的哑铃拉向髋部。",
+      "args": {},
+      "context": "Explicitly selected bundled exercise illustration",
+      "calendarStatus": false
+    },
+    "routine_editor_new": {
+      "en": "New weekly routine",
+      "zh-Hans": "新建每周计划",
+      "args": {},
+      "context": "Shared editor adaptive header",
+      "calendarStatus": false
+    },
+    "routine_editor_edit": {
+      "en": "Edit weekly routine",
+      "zh-Hans": "编辑每周计划",
+      "args": {},
+      "context": "Shared editor adaptive header",
+      "calendarStatus": false
+    },
+    "routine_undo_capacity_hint": {
+      "en": "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day.",
+      "zh-Hans": "每天最多可添加100项动作。在完成当天编辑前，会为撤销保留一个位置。",
+      "args": {},
+      "context": "Exercise draft capacity reserved for an explicit removal Undo",
       "calendarStatus": false
     }
   }

@@ -8,6 +8,11 @@ The [9 October alert experience instruction](../alert-experience.md) supersedes
 Stop labels, group actions and overdue semantics here. Approved scene/reference
 identities remain unchanged; legacy Stop is command/history compatibility only.
 
+The Done/Snooze and group-action rules here describe ordinary reminders.
+[Weekly routines](../weekly-routines.md#native-routine-alarm-presentation) reuse
+the shared native appearance with Start routine / Snooze / Dismiss alarm;
+groups containing a routine use per-member controls instead of bulk completion.
+
 Revision 3, 7 October 2026. A22 accepts seven R6 visual templates and rejects the
 
 Consolidated 8 October 2026 under A36. Use [the current index](../README.md).
@@ -29,11 +34,11 @@ extends those rules to alarm controls and Postpone; it does not replace the
 
 ## Accepted visual direction and implementation boundaries
 
-1. A single native alarm receives a larger scenic opening than Details/Editor,
+1. A single ordinary native alarm receives a larger scenic opening than Details/Editor,
    with a quiet information surface and two large, immediately reachable actions.
-2. Multiple alarms share one scene and a compact header. Each member owns a
+2. Multiple ordinary alarms share one scene and a compact header. Each member owns a
    clearly labeled Done/Snooze pair; Done all and Snooze all stay accessible in a separate footer.
-3. The native surface retains Done and timed quick Snooze. Done completes the
+3. The ordinary native surface retains Done and timed quick Snooze. Done completes the
    occurrence; custom Postpone remains in the app's Reminder Details workflow. Opening an editor or
    picker is not required to silence an alarm.
 4. Postpone uses a themed, opaque, expandable sheet with shortcut selection,
@@ -152,7 +157,7 @@ available consequential Event/Due support, and its own filled `Done` plus outlin
 when labels fit with at least a 12 dp gap; stack at larger text/narrower widths.
 Do not hide the action pair behind a row menu or require opening details first.
 
-The separate, measured footer contains filled `Done all (N)` and outlined
+For ordinary-only groups, the separate, measured footer contains filled `Done all (N)` and outlined
 `Snooze all · X min`, each at least 64 dp high. Done completes and Snooze leaves
 unfinished the exact displayed IDs/generations. Later arrivals are excluded.
 Validate session and every captured member before mutation, without confirmation.
@@ -191,9 +196,9 @@ device state and system policy control how it is presented. Do not draw a custom
 floating bubble, scene-filled OS banner or app-managed overlay. The global theme
 may inform a supported accent; Android controls background, expansion and layout.
 
-- Single ringing delivery retains native Done and duration-labeled Snooze from
+- Single ordinary ringing delivery retains native Done and duration-labeled Snooze from
   its first post and after Snooze re-trigger. Tapping opens native controls.
-- Grouped ringing notification opens native per-member controls and includes
+- An ordinary-only grouped ringing notification opens native per-member controls and includes
   captured Done all and Snooze all actions. Do not invent per-member controls in
   the collapsed system template.
 - Unresolved/timeout notifications stay silent; existing quick Snooze and the

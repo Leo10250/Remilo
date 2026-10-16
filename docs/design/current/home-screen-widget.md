@@ -15,7 +15,9 @@ reminders; the widget never fetches Calendar content. Show at most 20 reminder
 rows with the accurate total and View Agenda. Rows open existing Details.
 
 Focus shows the selected routine, explicit date, numerical daily progress, first
-unfinished exercise and its target. Mark as done binds that exact exercise/date;
+unfinished exercise and its target, with a 4 dp segmented (up to 12 exercises) or
+continuous bar alongside the numeric count. Complete & continue (Complete exercise
+for one remaining item) binds that exact exercise/date;
 advance only after native acknowledgement. Show the most recent widget-completed
 exercise's name beside an explicitly labelled Undo, including after the final
 exercise. The app retains all other corrections and Skip/Pause/history actions.
@@ -36,6 +38,11 @@ Settings and guarded exercise actions. At font scale 1.6 and above, use summary
 content rather than shrink text or touch targets. Primary targets remain at least
 56 dp and other controls at least 48 dp. English and Simplified Chinese share the
 same structure; authored exercises, targets and reminder names remain unchanged.
+Between 1.2 and 1.6, an expanded widget with a routine prioritizes its Focus and
+full-width stacked completion/Undo actions. Omit the secondary reminder list and
+keep exercise/target summaries to one line; the Remilo · Today header opens
+Agenda. Avoid a clipped list with targets smaller than 48 dp. At ordinary text
+sizes, reserve 88 dp for Undo and give the remaining width to completion.
 Compact summaries retain the selected routine's visible name, date and progress
 or outcome so independent routine widgets remain distinguishable.
 

@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "cable-triceps-pushdown",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T06:49:41.580824+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/cable-triceps-pushdown/prepared-01.json",
+    "sha256": "7543eca73d7c76c829920519ff9c18ba3cd6411b7d8ee0d7c26a3a49641bbbcb"
+  },
+  "candidateSha256": "5815389465ac7564fc23f9b27d29fa41fa88d17284a7cd0f1e91c676ea4ca751",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01.png",
+    "sha256": "66999277e9b198773a98777da12dfaf584d9dc3b727fe1704e3b2601af71b120"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/01.png",
+      "sha256": "53a05b896d066c41607fcd7a3e52818412a8c7a5925c8e2724081f744150050f",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/02.png",
+      "sha256": "5ffabeb1c05b2ff85219796c929dc84df128d6b2550ba1cfb17af83059506b25",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/03.png",
+      "sha256": "5c5e37a0a99f101463ebcb72ddc24be220aeb1e62f224c27337eae242a358ebc",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/04.png",
+      "sha256": "8ed840f4d415086f9b90d06cb67eb380cef7dd8476bc02b55d9c87e699f2e27e",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/05.png",
+      "sha256": "6d06051d35f6ebf7dbb80592e1312dc5de24abef50380ba8e767bc0f5425112f",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/06.png",
+      "sha256": "c0e703318bf4b576a58d6641f9f1a25d15eae54f67bc1835a7052527cf562f89",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/07.png",
+      "sha256": "72d14cc62fdfbcf4a1839e10e4ba2e65e7062bdf11a588b024dee0075bf68d9b",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/08.png",
+      "sha256": "c378caaf1628740f2a4923910c063399825ad810daeba4d2a178b2c3a13560b5",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/09.png",
+      "sha256": "5eee0e3a91b58af4c01f1568505195afc29577bb1d8a30f6bee35f429a9ab758",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/10.png",
+      "sha256": "4c5ba55d841e047cd0f37bafc7841e7f6cb46db3d767a842b87356aa10a9577e",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/11.png",
+      "sha256": "eecd04e2c80015b107f0de1f53d7abd7b0d016faaba4bd1e5dabf2bf38a91495",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/cable-triceps-pushdown/candidate-01/review-01-panels/12.png",
+      "sha256": "bdb6d51d50c2c26d8004237cd6c2051f5479fb5320f968d8b07d1ff4f8ed41e0",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "e4efd7937e391776e42c90efb2b2551d461be3fcd83c3d792bf60ba408696a79"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

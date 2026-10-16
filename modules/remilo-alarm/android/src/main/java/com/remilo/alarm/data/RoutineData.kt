@@ -7,13 +7,18 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Entity(tableName = "routine_plans")
 data class RoutinePlan(@PrimaryKey val id: String, val revision: Long = 1,
   val startsOn: String, val state: String = "Active", val pauses: String = "[]")
-@Entity(tableName = "routine_versions", primaryKeys = ["routineId", "effectiveDate"])
+@Entity(tableName = "routine_versions", primaryKeys = ["routineId", "revision"])
 data class RoutineVersion(val routineId: String, val effectiveDate: String, val title: String,
-  val minutes: Int, val mode: String, val listId: String?, val days: String)
+  val minutes: Int, val mode: String, val listId: String?, val days: String,
+  @ColumnInfo(defaultValue = "''") val notes: String = "",
+  @ColumnInfo(defaultValue = "'remilo'") val sound: String = "remilo",
+  @ColumnInfo(defaultValue = "0") val vibration: Boolean = false,
+  @ColumnInfo(defaultValue = "1") val revision: Long = 1)
 @Entity(tableName = "routine_sessions", indices = [Index(value = ["routineId", "date"], unique = true)])
 data class RoutineSession(@PrimaryKey val occurrenceId: String, val routineId: String,
   val date: String, val versionDate: String, val steps: String, val done: String = "[]",
-  val ended: Boolean = false, val revision: Long = 1, val changes: String = "[]")
+  val ended: Boolean = false, val revision: Long = 1, val changes: String = "[]",
+  @ColumnInfo(defaultValue = "0") val versionRevision: Long = 0)
 /** Captured mutation and acknowledgement survive an interrupted bridge or process. */
 @Entity(tableName = "routine_operations")
 data class RoutineOperation(@PrimaryKey val operationId: String, val fingerprint: String,
@@ -22,9 +27,10 @@ data class RoutineOperation(@PrimaryKey val operationId: String, val fingerprint
   @Query("SELECT * FROM routine_plans ORDER BY id") fun plans(): List<RoutinePlan>
   @Query("SELECT * FROM routine_plans WHERE id = :id") fun plan(id: String): RoutinePlan?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun plan(value: RoutinePlan)
-  @Query("SELECT * FROM routine_versions WHERE routineId = :id ORDER BY effectiveDate") fun versions(id: String): List<RoutineVersion>
-  @Query("SELECT * FROM routine_versions ORDER BY routineId, effectiveDate") fun versions(): List<RoutineVersion>
-  @Insert(onConflict = OnConflictStrategy.REPLACE) fun version(value: RoutineVersion)
+  @Query("SELECT * FROM routine_versions WHERE routineId = :id ORDER BY revision") fun versions(id: String): List<RoutineVersion>
+  @Query("SELECT * FROM routine_versions ORDER BY routineId, revision") fun versions(): List<RoutineVersion>
+  @Insert fun version(value: RoutineVersion)
+  @Query("UPDATE routine_versions SET listId = NULL WHERE listId = :id") fun clearVersionList(id: String)
   @Query("SELECT * FROM routine_sessions ORDER BY date DESC, occurrenceId") fun sessions(): List<RoutineSession>
   @Query("SELECT * FROM routine_sessions WHERE occurrenceId = :id") fun session(id: String): RoutineSession?
   @Query("SELECT * FROM routine_sessions WHERE routineId = :id AND date = :date") fun dated(id: String, date: String): RoutineSession?

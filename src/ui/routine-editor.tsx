@@ -1,144 +1,163 @@
-import { useQuery } from '@tanstack/react-query';
-import { router, useNavigation } from 'expo-router';
-import { usePreventRemove } from 'expo-router/react-navigation';
-import { useEffect, useState } from 'react';
-import { Keyboard, View } from 'react-native';
+import { useState } from 'react';
+import { Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { RoutineDay, RoutineDraft, RoutineExercise, RoutinePlan } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { civilAt } from '../domain/time';
 import { useTranslation } from '../localization/react';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Page, QueryState, RowSupport, SettingRow, Sheet } from './components';
+import { Button, Choice, ConnectedGroup, Copy, Disclosure, Field, SettingRow, Sheet } from './components';
 import { useAppearanceConfirmation } from './confirmation';
-import { CommandRecovery, ListPicker, useCapturedCommand } from './navigation';
-import { engine, nativeAvailable, useCapabilities } from './native';
-import { notify } from './feedback';
-import { useAppearanceHold } from './theme';
+import { engine } from './native';
+import { exerciseIllustrations, getExerciseIllustration } from './exercise-illustrations';
+import { canAddRoutineExercise, changedRoutineDays, MAX_ROUTINE_EXERCISES_PER_DAY, type ReminderType } from '../domain/routine-editor-draft';
+import { modeLabel } from '../domain/presentation';
+import { chineseTextMetrics, lineHeightFor, shape, space, typography } from './tokens';
+import { useFontScaleOverride, useFoundationStyle, useTheme } from './theme';
 import { useTimeFormatting } from './time-display';
+export { emptyRoutineDays, validRoutineDays } from '../domain/routine-editor-draft';
 
 export const routineDayKeys = ['routine_day_0', 'routine_day_1', 'routine_day_2', 'routine_day_3', 'routine_day_4', 'routine_day_5', 'routine_day_6'] as const;
-export const emptyRoutineDays = (): RoutineDay[] => Array.from({ length: 7 }, () => ({ type: 'Rest', exercises: [] }));
-export const validRoutineDays = (days: RoutineDay[]) => days.some(d => d.type === 'Exercises') && days.every(d => d.type === 'Rest' || d.exercises.length > 0 && d.exercises.every(e => e.name.trim()));
 
-export function RoutineEditorRoute({ id, duplicate = false, listId }: { id?: string; duplicate?: boolean; listId?: string }) {
-  const t = useTranslation();
-  const [today] = useState(() => civilAt(Date.now()).slice(0, 10));
-  const plans = useQuery({ queryKey: ['routines'], queryFn: () => engine().queryRoutines(), enabled: nativeAvailable });
-  const plan = plans.data?.find(p => p.id === id);
-  if (id && !plan) return <Page compact title={t('routine_edit')}><QueryState loading={plans.isLoading} error={plans.error} empty={!plans.isLoading} onRetry={() => void plans.refetch()} /></Page>;
-  return <RoutineEditorForm key={id ?? 'new'} plan={duplicate ? undefined : plan} initial={plan ? { ...plan, startsOn: duplicate ? today : plan.startsOn, title: duplicate ? plan.title.slice(0, 193) + t('m_d75612450689') : plan.title } : undefined} listId={listId} />;
-}
-
-export function RoutineEditorForm({ plan, initial, listId, onRemove, inheritedDirty = false }: { plan?: RoutinePlan; initial?: Partial<RoutineDraft> & { startsOn?: string }; listId?: string; onRemove?: () => void; inheritedDirty?: boolean }) {
-  const t = useTranslation(), navigation = useNavigation(), confirm = useAppearanceConfirmation(), caps = useCapabilities();
-  const { shortDateTime, formatTime } = useTimeFormatting();
-  const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().getLists(), enabled: nativeAvailable });
-  useAppearanceHold(true);
-  const [draft, setDraft] = useState<RoutineDraft>(() => ({ title: '', minutes: 8 * 60, mode: 'Notification', listId: listId ?? null, days: emptyRoutineDays(), ...initial }));
-  const [startsOn, setStartsOn] = useState(() => initial?.startsOn ?? civilAt(Date.now()).slice(0, 10));
-  const [baseline] = useState(() => JSON.stringify({ draft, startsOn }));
-  const [loadedPlan, setLoadedPlan] = useState(plan), [reviewOpen, setReviewOpen] = useState(false);
-  const [day, setDay] = useState<number | null>(null), [weekOpen, setWeekOpen] = useState(false), [saved, setSaved] = useState(false), [alertOpen, setAlertOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const action = useCapturedCommand((job, result) => { notify({ message: result.status === 'Blocked' ? job.success + ' ' + t('routine_notification_warning') : job.success, tone: result.status === 'Blocked' ? 'warning' : 'success', persistent: result.status === 'Blocked' }); setSaved(true); return false; });
-  const valid = !!draft.title.trim() && validRoutineDays(draft.days), dirty = inheritedDirty || JSON.stringify({ draft, startsOn }) !== baseline;
-  usePreventRemove(!saved && dirty && !action.guarded, ({ data }) => confirm(t('m_85bcf41666a5'), t('m_2a6bb39d73ff'), [
-    { text: t('m_e76fd2add010'), style: 'cancel' }, { text: t('m_eb1a70e39274'), style: 'destructive', onPress: () => navigation.dispatch(data.action) },
-  ]));
-  useEffect(() => { if (saved) { Keyboard.dismiss(); if (router.canGoBack()) router.back(); else router.replace('/routines'); } }, [saved]);
-  const preview = useQuery({ queryKey: ['routine-preview', draft, startsOn, plan?.id], queryFn: () => engine().previewRoutine({ ...draft, startsOn, ...(plan ? { routineId: plan.id } : {}) }),
-    enabled: nativeAvailable && validRoutineDays(draft.days) && !action.guarded });
-  const patch = (value: Partial<RoutineDraft>) => { if (!action.isGuarded()) setDraft(current => ({ ...current, ...value })); };
-  const weekdays = draft.days.map((d, i) => d.type === 'Exercises' ? t(routineDayKeys[i]) : null).filter(Boolean).join(' · ');
-  const changedDays = loadedPlan ? draft.days.map((d, i) => JSON.stringify(d) !== JSON.stringify(loadedPlan.days[i]) ? i : null).filter(i => i !== null) : [];
-  const stale = !!plan && plan.revision !== loadedPlan?.revision;
-  const save = () => { Keyboard.dismiss(); void action.execute({ command: loadedPlan ? { ...draft, kind: 'EditRoutine', routineId: loadedPlan.id, expectedRevision: loadedPlan.revision, operationId: engine().createOperationId() }
-    : { ...draft, kind: 'CreateRoutine', startsOn, operationId: engine().createOperationId() }, success: t(plan ? 'routine_saved_changes' : 'routine_saved') }); };
-  const timeValue = new Date(`${startsOn}T${String(Math.floor(draft.minutes / 60)).padStart(2, '0')}:${String(draft.minutes % 60).padStart(2, '0')}:00`).getTime();
-  return <Page compact title={t(plan ? 'routine_edit' : 'm_70f22f445886')} footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
-    <CommandRecovery action={action} />{!!message && <ActionFeedback message={message} tone="danger" />}
-    <Button label={t('m_1509f561f241')} busy={action.busy} disabled={!valid || stale || action.guarded} onPress={save} />
-  </View></BottomActionBar>}>
-    <View style={{ gap: 12 }} pointerEvents={action.guarded ? 'none' : 'auto'} accessibilityElementsHidden={action.guarded} importantForAccessibility={action.guarded ? 'no-hide-descendants' : 'auto'}>
-      {stale && <><ActionFeedback message={t('m_fe8e0e6d9197')} tone="warning" /><Button label={t('routine_change_review')} variant="secondary" onPress={() => setReviewOpen(true)} /></>}
-      <Field label={t('m_7e8cd2056da7')} value={draft.title} maxLength={200} required multiline compactMultiline onChangeText={title => patch({ title })} />
-      <ConnectedGroup>
-        <View key="time"><RowSupport><Copy muted size={14}>{t('routine_shared_time')}</Copy></RowSupport>
-          {!plan && <DateField label={t('routine_starts')} value={timeValue} dateOnly onError={setMessage} onChange={value => setStartsOn(civilAt(value).slice(0, 10))} />}
-          <DateField label={t('m_33b93476cf59')} value={timeValue} timeOnly onError={setMessage} onChange={value => { const local = civilAt(value); patch({ minutes: Number(local.slice(11, 13)) * 60 + Number(local.slice(14, 16)) }); }} />
-        </View>
-        <SettingRow key="alert" label={t('m_44a57b22e03d')} icon="notifications" value={t(draft.mode === 'Notification' ? 'routine_quiet' : 'routine_no_alert')} onPress={() => { Keyboard.dismiss(); setAlertOpen(true); }} />
-        <SettingRow key="repeat" label={t('routine_repeat_label')} icon="repeat" value={t('routine_repeat', { days: weekdays })} description={t('routine_weekly_hint')} />
-        <View key="routine"><SettingRow label={t('routine_title')} icon="fitness_center" value={t('routine_weekly')} onPress={() => { Keyboard.dismiss(); setWeekOpen(true); }} />
-          <RowSupport><Copy>{t('routine_today_only')}</Copy><Copy muted size={14}>{t('routine_today_only_hint')}</Copy></RowSupport>
-        </View>
-        <ListPicker key="list" value={draft.listId} onChange={listId => patch({ listId })} />
-      </ConnectedGroup>
-      {plan && <ConnectedGroup title={t('routine_change_review')}><View><RowSupport><Copy muted size={14}>{t('routine_from_tomorrow')}</Copy>
-        {changedDays.map(i => <View key={i}><Copy>{t('routine_changed_day', { day: t(routineDayKeys[i]) })}</Copy><Copy muted size={14}>{draft.days[i].type === 'Rest' ? t('routine_rest') : draft.days[i].exercises.map(e => [e.name, e.target].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}
-      </RowSupport></View></ConnectedGroup>}
-      {!validRoutineDays(draft.days) && <Copy muted>{t('routine_validation')}</Copy>}
-      {draft.mode === 'Notification' && <>
-        <Copy muted size={14}>{t('routine_no_catchup')}</Copy>
-        {preview.data?.nextAlertMs != null && <Copy muted>{t(plan ? 'routine_next_after_changes' : 'routine_next_prompt', { time: shortDateTime(preview.data.nextAlertMs) })}</Copy>}
-        {!!preview.error && <Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void preview.refetch()} />}
-        {caps.data && (!caps.data.notifications || !caps.data.routineChannelEnabled) && <ActionFeedback tone="warning" message={t('routine_notification_warning')} />}
-        {caps.data?.routineChannelQuiet === false && <Copy muted>{t('routine_channel_changed')}</Copy>}
-        <Button label={t('routine_channel_settings')} variant="neutral" onPress={() => void engine().openSettings('routineChannel')} />
-      </>}
-      <Disclosure title={t('m_fd7a9893f84d')} icon="settings"><Copy muted>{t('routine_today_only_hint')}</Copy>
-        {onRemove && <Button label={t('routine_remove')} variant="secondary" onPress={onRemove} />}</Disclosure>
+/** Uses the same outlined radio anatomy and state roles as AlertModeSelector. */
+export function ReminderTypeSelector({ value, onChange, disabled = false }: { value: ReminderType; onChange: (type: ReminderType) => void; disabled?: boolean }) {
+  const t = useTranslation(), colors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
+  const { width, fontScale } = useWindowDimensions(), [groupWidth, setGroupWidth] = useState<number | null>(null), [focused, setFocused] = useState<ReminderType | null>(null);
+  const stacked = Math.max(scale, fontScale) >= 1.6 || (groupWidth ?? width - space.gutter * 4) < 360 * Math.max(scale, fontScale);
+  const choices = [{ type: 'Reminder' as const, label: t('routine_type_reminder') }, { type: 'Routine' as const, label: t('routine_type_weekly') }];
+  return <View style={{ padding: 16, gap: 8 }}><Copy muted size={14}>{t('routine_type_label')}</Copy>
+    <View accessibilityRole="radiogroup" accessibilityLabel={t('routine_type_label')} onLayout={event => setGroupWidth(event.nativeEvent.layout.width)}
+      style={{ flexDirection: stacked ? 'column' : 'row', borderRadius: shape.field, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}>
+      {choices.map((choice, index) => {
+        const selected = choice.type === value, ink = disabled ? foundation?.colors.disabledInk ?? colors.muted : selected ? colors.accent : colors.muted;
+        return <Pressable key={choice.type} accessibilityRole="radio" accessibilityLabel={choice.label} aria-checked={selected} accessibilityState={{ checked: selected, disabled }} disabled={disabled}
+          onPress={() => onChange(choice.type)} onFocus={() => setFocused(choice.type)} onBlur={() => setFocused(null)}
+          style={({ pressed }) => ({ flex: stacked ? undefined : 1, minHeight: 56, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8,
+            borderTopLeftRadius: index === 0 ? 15 : 0, borderTopRightRadius: (stacked ? index === 0 : index === 1) ? 15 : 0,
+            borderBottomLeftRadius: (stacked ? index === 1 : index === 0) ? 15 : 0, borderBottomRightRadius: index === 1 ? 15 : 0,
+            borderWidth: 2, borderColor: selected || focused === choice.type ? colors.accent : 'transparent',
+            backgroundColor: disabled ? foundation?.colors.disabledSurface ?? colors.soft : pressed || selected ? colors.soft : colors.surface })}>
+          <Text style={{ flex: 1, flexShrink: 1, color: disabled ? ink : colors.ink, fontSize: typography.body * scale,
+            lineHeight: lineHeightFor(typography.body, 1.4) * scale, fontWeight: selected ? '600' : '400', ...chineseTextMetrics(typography.body, scale, selected ? '600' : '400') }}>{choice.label}</Text>
+          <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: ink, alignItems: 'center', justifyContent: 'center' }}>
+            {selected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ink }} />}
+          </View>
+        </Pressable>;
+      })}
     </View>
-    <Sheet title={t('m_44a57b22e03d')} visible={alertOpen} onClose={() => setAlertOpen(false)}>
-      <Choice label={t('routine_quiet')} selected={draft.mode === 'Notification'} onPress={() => { patch({ mode: 'Notification' }); setAlertOpen(false); }} />
-      <Choice label={t('routine_no_alert')} selected={draft.mode === 'None'} onPress={() => { patch({ mode: 'None' }); setAlertOpen(false); }} />
-    </Sheet>
-    <Sheet title={t('routine_change_review')} visible={reviewOpen} onClose={() => setReviewOpen(false)}>
-      <Copy muted>{t('m_fe8e0e6d9197')}</Copy><Copy>{plan?.title}</Copy>
-      {plan && <><Copy>{formatTime(new Date(`${startsOn}T${String(Math.floor(plan.minutes / 60)).padStart(2, '0')}:${String(plan.minutes % 60).padStart(2, '0')}:00`).getTime())}</Copy>
-        <Copy>{t(plan.mode === 'None' ? 'routine_no_alert' : 'routine_quiet')}</Copy><Copy>{lists.data?.find(list => list.id === plan.listId)?.name ?? t('m_eacd31d849f9')}</Copy></>}
-      {plan?.days.map((value, i) => <View key={i}><Copy heading>{t(routineDayKeys[i])}</Copy><Copy muted>{value.type === 'Rest' ? t('routine_rest') : value.exercises.map(e => [e.name, e.target].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}
-      <Button label={t('routine_keep_draft')} onPress={() => { setLoadedPlan(plan); setReviewOpen(false); }} />
-      <Button label={t('routine_load_latest')} variant="secondary" onPress={() => { if (plan) { setDraft({ ...plan }); setLoadedPlan(plan); } setReviewOpen(false); }} />
-    </Sheet>
-    <Sheet title={t('routine_weekly')} visible={weekOpen && day === null} onClose={() => setWeekOpen(false)} footer={<View style={{ padding: 16 }}><Button label={t('routine_back_reminder')} onPress={() => setWeekOpen(false)} /></View>}>
-      <Copy muted>{t('routine_weekly_hint')}</Copy>
-      <ConnectedGroup>{draft.days.map((value, i) => <SettingRow key={i} label={t(routineDayKeys[i])} value={value.type === 'Rest' ? t('routine_rest') : t('routine_exercise_count', { count: value.exercises.length })}
-        description={value.type === 'Exercises' ? value.exercises.map(e => e.name).filter(Boolean).join(' · ') : undefined} onPress={() => setDay(i)} />)}</ConnectedGroup>
-    </Sheet>
-    {day !== null && <RoutineDayEditor key={day} index={day} day={draft.days[day]} onClose={() => setDay(null)} onChange={value => { patch({ days: draft.days.map((d, i) => i === day ? value : d) }); setDay(null); }} />}
-  </Page>;
+  </View>;
 }
 
+export function RoutineChangeReview({ plan, draft, listName }: { plan: RoutinePlan; draft: RoutineDraft; listName?: string }) {
+  const t = useTranslation(), { shortTime } = useTimeFormatting();
+  const changed = changedRoutineDays(plan.days, draft.days);
+  const fields = [
+    { changed: plan.title !== draft.title, label: t('m_7e8cd2056da7'), value: draft.title },
+    { changed: plan.mode !== draft.mode, label: t('m_44a57b22e03d'), value: modeLabel(draft.mode) },
+    { changed: plan.minutes !== draft.minutes, label: t('m_33b93476cf59'), value: shortTime(new Date(2000, 0, 1, Math.floor(draft.minutes / 60), draft.minutes % 60).getTime()) },
+    { changed: plan.notes !== (draft.notes ?? ''), label: t('m_8a7525b1492f'), value: draft.notes || t('m_dc937b598926') },
+    { changed: plan.sound !== draft.sound, label: t('m_46124e023603'), value: draft.sound === 'system' ? t('m_6a05d9e751b1') : 'Remilo' },
+    { changed: plan.vibration !== draft.vibration, label: t('m_59e1fd02f6c2'), value: t(draft.vibration ? 'm_130011756125' : 'm_ca7981b46ecf') },
+    { changed: plan.listId !== draft.listId, label: t('m_6f202f54a7b2'), value: listName ?? t('m_eacd31d849f9') },
+  ].filter(field => field.changed);
+  const summary = [changed.length ? t('routine_change_summary', { count: changed.length }) : '', ...fields.map(field => field.label)].filter(Boolean).join(' · ');
+  return <View style={{ gap: 8 }}><Copy muted size={14}>{t('routine_from_tomorrow')}</Copy>
+    {!!summary && <Disclosure title={t('routine_change_details')} summary={summary}>
+      {fields.map(field => <View key={field.label}><Copy>{field.label}</Copy>{field.value && <Copy muted size={14}>{field.value}</Copy>}</View>)}
+      {changed.map(index => <View key={index}><Copy>{t(routineDayKeys[index])}</Copy>
+        <Copy muted size={14}>{draft.days[index].type === 'Rest' ? t('routine_rest') : draft.days[index].exercises.map(exercise => [exercise.name, exercise.target].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}
+    </Disclosure>}
+  </View>;
+}
+
+/** Seven visible day rows edit the parent draft; no native write happens here. */
+export function RoutineWeekFields({ days, onChange, disabled = false }: { days: RoutineDay[]; onChange: (days: RoutineDay[]) => void; disabled?: boolean }) {
+  const t = useTranslation(), [selected, setSelected] = useState<number | null>(null);
+  return <>
+    <ConnectedGroup title={t('routine_exercises_by_day')} footer={<Copy muted size={14}>{t(days.every(day => day.type === 'Rest') ? 'routine_first_exercise_hint' : 'routine_day_fresh_hint')}</Copy>}>
+      {days.map((day, index) => <SettingRow key={index} label={t(routineDayKeys[index])} disabled={disabled}
+        value={day.type === 'Rest' ? t('routine_day_rest_summary') : t('routine_exercise_count', { count: day.exercises.length })}
+        description={day.type === 'Exercises' ? day.exercises.length > 2 ? t('routine_day_names_more', { names: day.exercises.slice(0, 2).map(exercise => exercise.name).filter(Boolean).join(' · '), count: day.exercises.length - 2 }) : day.exercises.map(exercise => exercise.name).filter(Boolean).join(' · ') : undefined}
+        onPress={() => { Keyboard.dismiss(); setSelected(index); }} />)}
+    </ConnectedGroup>
+    {selected !== null && <RoutineDayEditor key={selected} index={selected} day={days[selected]} onClose={() => setSelected(null)} onChange={day => {
+      onChange(days.map((value, index) => index === selected ? day : value)); setSelected(null);
+    }} />}
+  </>;
+}
+
+type ExerciseDraft = { value: RoutineExercise; position: number; initial: string; isNew: boolean };
 export function RoutineDayEditor({ index, day, onClose, onChange }: { index: number; day: RoutineDay; onClose: () => void; onChange: (day: RoutineDay) => void }) {
-  const t = useTranslation(), [draft, setDraft] = useState<RoutineDay>(day), [editing, setEditing] = useState<RoutineExercise | null>(null);
+  const t = useTranslation(), confirm = useAppearanceConfirmation();
+  const [draft, setDraft] = useState<RoutineDay>(() => ({ type: day.type, exercises: day.exercises.map(exercise => ({ ...exercise })) }));
+  const [baseline] = useState(() => JSON.stringify(day));
+  const [editing, setEditing] = useState<ExerciseDraft | null>(null), [illustrationOpen, setIllustrationOpen] = useState(false);
   const [removed, setRemoved] = useState<{ exercise: RoutineExercise; index: number } | null>(null);
-  const valid = draft.type === 'Rest' || draft.exercises.length > 0 && draft.exercises.every(e => e.name.trim());
-  const editingIndex = draft.exercises.findIndex(e => e.id === editing?.id);
-  const move = (index: number, delta: number) => { const exercises = [...draft.exercises]; [exercises[index], exercises[index + delta]] = [exercises[index + delta], exercises[index]]; setDraft({ ...draft, exercises }); };
-  return <Sheet title={t(routineDayKeys[index])} visible onClose={() => { if (editing) setEditing(null); else onClose(); }} footer={<View style={{ padding: 16, gap: 8 }}>
-    <Button label={t(editing ? 'm_1509f561f241' : 'routine_use_day')} disabled={editing ? !editing.name.trim() : !valid} onPress={() => {
-      Keyboard.dismiss(); if (editing) { const exists = draft.exercises.some(e => e.id === editing.id); setDraft({ type: 'Exercises', exercises: exists ? draft.exercises.map(e => e.id === editing.id ? editing : e) : [...draft.exercises, editing] }); setEditing(null); }
-      else onChange(draft.type === 'Rest' ? { type: 'Rest', exercises: [] } : draft);
-    }} />
-    <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={() => { Keyboard.dismiss(); if (editing) setEditing(null); else onClose(); }} />
-  </View>}>
+  const valid = draft.type === 'Rest' || draft.exercises.length > 0 && draft.exercises.length <= MAX_ROUTINE_EXERCISES_PER_DAY && draft.exercises.every(exercise => exercise.name.trim());
+  const canAdd = canAddRoutineExercise(draft.exercises.length, !!removed);
+  const discard = (dirty: boolean, close: () => void) => {
+    Keyboard.dismiss();
+    if (!dirty) { close(); return; }
+    confirm(t('routine_child_discard_title'), t('routine_child_discard_hint'), [
+      { text: t('m_e76fd2add010'), style: 'cancel' }, { text: t('m_eb1a70e39274'), style: 'destructive', onPress: close },
+    ]);
+  };
+  const closeExercise = () => { if (editing) discard(JSON.stringify({ value: editing.value, position: editing.position }) !== editing.initial, () => setEditing(null)); };
+  const closeDay = () => discard(JSON.stringify(draft) !== baseline, onClose);
+  const close = () => { if (illustrationOpen) setIllustrationOpen(false); else if (editing) closeExercise(); else closeDay(); };
+  const patchExercise = (value: Partial<RoutineExercise>) => setEditing(current => current ? { ...current, value: { ...current.value, ...value } } : null);
+  const beginExercise = (value: RoutineExercise, position: number, isNew = false) => setEditing({ value: { ...value }, position,
+    initial: JSON.stringify({ value, position }), isNew });
+  const applyExercise = () => {
+    if (!editing?.value.name.trim()) return;
+    const exercises = draft.exercises.filter(exercise => exercise.id !== editing.value.id);
+    exercises.splice(editing.position, 0, editing.value);
+    setDraft({ type: 'Exercises', exercises }); setEditing(null); Keyboard.dismiss();
+  };
+  const illustration = editing ? getExerciseIllustration(editing.value.illustration) : undefined;
+  return <Sheet title={t(editing ? 'routine_exercise_editor_title' : 'routine_day_editor_title', editing ? undefined : { day: t(routineDayKeys[index]) })}
+    visible onClose={close} onBack={close} footer={<View style={{ padding: 16, gap: 8 }}>
+      <Button label={t(editing?.isNew ? 'routine_child_add' : 'routine_child_done')} disabled={editing ? !editing.value.name.trim() : !valid} onPress={() => {
+        Keyboard.dismiss(); if (editing) applyExercise(); else onChange(draft);
+      }} />
+      <Button label={t('m_19766ed6ccb2')} variant="neutral" onPress={editing ? closeExercise : closeDay} />
+    </View>}>
+    <Copy muted size={14}>{t('routine_plan_local_hint')}</Copy>
     {editing ? <View style={{ gap: 12 }}>
-      <Field label={t('routine_name')} required value={editing.name} maxLength={200} multiline compactMultiline onChangeText={name => setEditing({ ...editing, name })} />
-      <Field label={t('routine_target')} value={editing.target} maxLength={1000} multiline compactMultiline onChangeText={target => setEditing({ ...editing, target })} />
-      <Field label={t('routine_guidance')} value={editing.notes} maxLength={10000} multiline compactMultiline onChangeText={notes => setEditing({ ...editing, notes })} />
-      {editingIndex >= 0 && <ConnectedGroup>
-        <SettingRow key="up" label={t('routine_move_up')} disabled={editingIndex === 0} onPress={() => move(editingIndex, -1)} />
-        <SettingRow key="down" label={t('routine_move_down')} disabled={editingIndex === draft.exercises.length - 1} onPress={() => move(editingIndex, 1)} />
-        <SettingRow key="remove" label={t('routine_remove_exercise')} icon="remove_circle_outline" onPress={() => { setRemoved({ exercise: draft.exercises[editingIndex], index: editingIndex }); setDraft({ ...draft, exercises: draft.exercises.filter(e => e.id !== editing.id) }); setEditing(null); }} />
+      <View accessibilityLiveRegion="polite"><Copy muted size={14}>{t('routine_ordinal', { current: editing.position + 1, total: draft.exercises.length + (editing.isNew ? 1 : 0) })}</Copy></View>
+      <Field label={t('routine_name')} required value={editing.value.name} maxLength={200} multiline compactMultiline onChangeText={name => patchExercise({ name })} />
+      <Field label={t('routine_target')} value={editing.value.target} maxLength={1000} multiline compactMultiline onChangeText={target => patchExercise({ target })} />
+      <Field label={t('routine_guidance')} value={editing.value.notes} maxLength={10000} multiline compactMultiline onChangeText={notes => patchExercise({ notes })} />
+      {(exerciseIllustrations.length > 0 || !!editing.value.illustration) && <ConnectedGroup><SettingRow label={t('routine_illustration')}
+        value={illustration ? t(illustration.labelKey) : editing.value.illustration ? t('routine_illustration_unavailable') : t('routine_no_illustration')}
+        onPress={() => { Keyboard.dismiss(); setIllustrationOpen(true); }} /></ConnectedGroup>}
+      {!editing.isNew && <ConnectedGroup>
+        <SettingRow key="up" label={t('routine_move_up')} disabled={editing.position === 0} onPress={() => setEditing({ ...editing, position: editing.position - 1 })} />
+        <SettingRow key="down" label={t('routine_move_down')} disabled={editing.position >= draft.exercises.length - 1} onPress={() => setEditing({ ...editing, position: editing.position + 1 })} />
+        <SettingRow key="remove" label={t('routine_remove_exercise')} icon="remove_circle_outline" onPress={() => {
+          const position = draft.exercises.findIndex(exercise => exercise.id === editing.value.id);
+          setRemoved({ exercise: draft.exercises[position], index: position });
+          setDraft({ ...draft, exercises: draft.exercises.filter(exercise => exercise.id !== editing.value.id) }); setEditing(null);
+        }} />
       </ConnectedGroup>}
     </View> : <View style={{ gap: 12 }}>
-      <ConnectedGroup><Choice key="exercise" label={t('routine_exercises')} selected={draft.type === 'Exercises'} onPress={() => setDraft({ ...draft, type: 'Exercises' })} />
-        <Choice key="rest" label={t('routine_rest')} selected={draft.type === 'Rest'} onPress={() => setDraft({ ...draft, type: 'Rest' })} /></ConnectedGroup>
+      <Copy muted size={14}>{t('routine_day_editor_hint')}</Copy>
+      <ConnectedGroup>
+        <Choice key="exercises" label={t('routine_exercises')} selected={draft.type === 'Exercises'} onPress={() => setDraft({ ...draft, type: 'Exercises' })} />
+        <Choice key="rest" label={t('routine_rest')} selected={draft.type === 'Rest'} onPress={() => setDraft({ ...draft, type: 'Rest' })} />
+      </ConnectedGroup>
       {draft.type === 'Exercises' && <>
-        <ConnectedGroup>{draft.exercises.map(e => <SettingRow key={e.id} label={e.name} value={e.target || undefined} description={e.notes || undefined} onPress={() => setEditing(e)} />)}</ConnectedGroup>
-        {removed && <View accessibilityLiveRegion="polite"><Copy>{t('routine_removed')}</Copy><Button label={t('routine_undo')} icon="undo" variant="secondary" onPress={() => { const exercises = [...draft.exercises]; exercises.splice(removed.index, 0, removed.exercise); setDraft({ ...draft, exercises }); setRemoved(null); }} /></View>}
-        <Button label={t('routine_add_exercise')} icon="add" variant="secondary" disabled={draft.exercises.length >= 100} onPress={() => setEditing({ id: engine().createOperationId(), name: '', target: '', notes: '', illustration: '' })} />
-        {!valid && <Copy muted>{t('routine_validation')}</Copy>}
+        <ConnectedGroup>{draft.exercises.map((exercise, position) => <SettingRow key={exercise.id} label={`${position + 1}. ${exercise.name}`}
+          value={exercise.target || undefined} onPress={() => beginExercise(exercise, position)} />)}</ConnectedGroup>
+        {removed && <View accessibilityLiveRegion="polite"><Copy>{t('routine_exercise_removed_named', { name: removed.exercise.name })}</Copy>
+          <Button label={t('routine_undo_removed_named', { name: removed.exercise.name })} icon="undo" variant="secondary" onPress={() => {
+            const exercises = [...draft.exercises]; exercises.splice(removed.index, 0, removed.exercise); setDraft({ ...draft, exercises }); setRemoved(null);
+          }} /></View>}
+        <Button label={t('routine_add_exercise')} icon="add" variant="secondary" disabled={!canAdd}
+          onPress={() => { if (canAdd) beginExercise({ id: engine().createOperationId(), name: '', target: '', notes: '', illustration: '' }, draft.exercises.length, true); }} />
+        {!canAdd && !!removed && canAddRoutineExercise(draft.exercises.length) && <Copy muted size={14}>{t('routine_undo_capacity_hint')}</Copy>}
       </>}
     </View>}
+    <Sheet title={t('routine_illustration')} visible={illustrationOpen} onClose={() => setIllustrationOpen(false)}>
+      <Choice label={t('routine_no_illustration')} selected={!editing?.value.illustration} onPress={() => { patchExercise({ illustration: '' }); setIllustrationOpen(false); }} />
+      {exerciseIllustrations.map(entry => <Choice key={entry.id} label={t(entry.labelKey)} description={t(entry.descriptionKey)} selected={editing?.value.illustration === entry.id}
+        onPress={() => { patchExercise({ illustration: entry.id }); setIllustrationOpen(false); }} />)}
+    </Sheet>
   </Sheet>;
 }

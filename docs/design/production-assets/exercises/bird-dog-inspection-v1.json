@@ -1,0 +1,64 @@
+{
+  "reviewer": "Assistant after viewing original, approved style input, decoded export, light/dark/checkerboard panels, both usage sizes and all eight current container colors; independent pose/readability observation by second assistant reviewer",
+  "recordedAtUtc": "2026-10-16T05:22:33.068390+00:00",
+  "checks": [
+    {
+      "name": "identity",
+      "status": "pass",
+      "observation": "Viewed original and decoded runtime: one adult on one simple mat, with one hand and one knee/shin supporting, one arm reaching forward and one leg extended backward. No extra person or equipment observed."
+    },
+    {
+      "name": "style-consistency",
+      "status": "pass",
+      "observation": "Compared with the actual approved front-plank master. The blue-gray top, muted terracotta leggings, hair bun, restrained contours, soft fabric/body shading and mat remain visually consistent while posture changes."
+    },
+    {
+      "name": "pose-readability",
+      "status": "pass",
+      "observation": "The supported palm and bent knee/shin contact are visible; forward arm and backward leg form a readable roughly horizontal silhouette with a downward gaze. No obvious disconnected limb, extra/missing limb or impossible bend observed. A second independent reviewer agreed it reads as a plausible bird-dog. Exact anatomical left/right laterality is not certified from the overlapping side-view attachment points; see limitations."
+    },
+    {
+      "name": "alpha-and-decoded-edges",
+      "status": "pass",
+      "observation": "Viewed source and decoded export on light/dark composites, export checkerboard and all eight current container colors. Surrounding area is transparent, with no visible rectangular backdrop, colored fringe or opaque halo at the reviewed sizes. Mat and contact shading remain visible."
+    },
+    {
+      "name": "usage-framing",
+      "status": "pass",
+      "observation": "Viewed actual 256x144 and 320x180 source/export panels and all eight 320x180 current-container composites. Complete hand, foot and mat remain within contain bounds; supporting contacts and extended silhouette are readable. The narrow horizontal end margins are about 3px at 320px width, with no observed clipping."
+    },
+    {
+      "name": "interface-remnants",
+      "status": "pass",
+      "observation": "No visible text, numbers, arrows, app controls, phone frame, scenery, logo or watermark observed in the candidate/export."
+    }
+  ],
+  "limitations": [
+    "Visual observation is not clinical or biomechanical validation. Exact left/right laterality cannot be certified from the strict side view; concise guidance should state opposite arm and leg.",
+    "Untagged source pixels are explicitly interpreted as sRGB under the profile, without claiming measured embedded sRGB or a color conversion.",
+    "Usage boards are deterministic illustration composites using current presentation.json container colors, not actual RN/native component renders, text/control contrast measurements or signed-phone acceptance.",
+    "Human artwork and activation approval remain pending; no production promotion performed."
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "32580d7a1aff027044fbd180714aaf32ba863ede1ebc3c357cf5e9d0d05bbb3e"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/source-light-v1.png",
+      "sha256": "cd0ba5be396313c61d9d64222f4751c2f6a1b348d8c41d31a4d196ef74909fde"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/source-dark-v1.png",
+      "sha256": "3881c1686aa3b976097e15854f777475815baf0fe02ed1fb3092c51c7ec0649f"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/export-light-v1.png",
+      "sha256": "e14bd1be0cd6a091833f39e8aaae8bf15be89faade297e1c157ac59acd1fa391"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/export-dark-v1.png",
+      "sha256": "4650335f4b95962aade4b20636ba28bceb86286250a6f9efbcbe71346e33d2c0"
+    }
+  ]
+}

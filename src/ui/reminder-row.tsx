@@ -11,6 +11,7 @@ import { deviceZone } from '../domain/time';
 import { Icon, IconButton, type IconName } from './components';
 import { useReducedMotion } from './motion';
 import { useFoundationStyle, useFontScaleOverride, useTheme } from './theme';
+import { RoutineProgress } from './routine-progress';
 
 function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; icon?: IconName; iconSize?: number; color?: string }) {
   'use no memo';
@@ -73,7 +74,7 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
   const terminalState = (browsing.status?.label ?? '') + (showActionDate && !active && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : '');
   const summary = [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
-    item.listName, !ordinaryDue(item) ? t('m_2d52d03bbb9a') + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? t('m_57a9b5958b87') : '', calendarNotice].filter(Boolean).join('. ');
+    item.listName, item.routine ? t('routine_progress', { done: item.routine.completedCount, total: item.routine.totalCount }) : '', !ordinaryDue(item) ? t('m_2d52d03bbb9a') + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? t('m_57a9b5958b87') : '', calendarNotice].filter(Boolean).join('. ');
   const actionLabel = restore ? t('m_a76e13b98392') : item.completed || item.skipped ? t('m_a886d1dc4f12') : t('m_62aa4b87cc52');
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
@@ -139,7 +140,9 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
           icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
           color={active && delivery.changed ? colors.accent : colors.muted} />
         {!!calendarNotice && <MetadataLine icon="warning" label={calendarNotice} />}
-        {!!item.routine && <MetadataLine icon="fitness_center" label={t('routine_progress', { done: item.routine.completedCount, total: item.routine.totalCount })} />}
+        {!!item.routine && <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ paddingLeft: 26 }}>
+          <RoutineProgress compact accessible={false} done={item.routine.completedCount} total={item.routine.totalCount} />
+        </View>}
         {!item.routine && !!consequence && <MetadataLine icon="schedule" label={consequence} />}
         {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')} />}
         {(!item.routine || terminal) && !!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}

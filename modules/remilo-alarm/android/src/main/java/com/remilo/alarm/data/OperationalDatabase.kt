@@ -20,7 +20,8 @@ data class AlertRecord(@PrimaryKey val occurrenceId: String, val targetMs: Long,
   @ColumnInfo(defaultValue = "'Reminder'") val profile: String = "Reminder",
   @ColumnInfo(defaultValue = "0") val expiresAtMs: Long = 0,
   @ColumnInfo(defaultValue = "0") val dayEnded: Boolean = false,
-  @ColumnInfo(defaultValue = "0") val prompted: Boolean = false)
+  @ColumnInfo(defaultValue = "0") val prompted: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val dayStarted: Boolean = false)
 @Entity(tableName = "series_plans")
 data class SeriesPlan(@PrimaryKey val id: String, val rule: String, val state: String,
   val mode: String, val sound: String, val vibration: Boolean, val snoozeMinutes: Int,
@@ -62,7 +63,17 @@ data class BulkSnoozeMember(val operationId: String, val occurrenceId: String,
 data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: String = "system",
   val revision: Long = 1, val settingsRevision: Long = 0, val projected: String = "",
   val pendingProjection: Boolean = false, val externalPending: Boolean = false)
+/** Content-free delivery intent; retained after CE history acknowledgement for guarded retries. */
+@Entity(tableName = "routine_alert_receipts")
+data class RoutineAlertReceipt(@PrimaryKey val operationId: String, val kind: String,
+  val occurrenceId: String, val date: String, val expectedGeneration: Long, val expectedSessionId: String,
+  val generation: Long, val occurredAtMs: Long, val targetMs: Long?, val snoozeMinutes: Int?, val fingerprint: String, val settled: Boolean = false,
+  @ColumnInfo(defaultValue = "'Pending'") val resultStatus: String = "Pending")
 @Dao interface OperationalDao {
+  @Query("SELECT * FROM routine_alert_receipts WHERE operationId = :id") fun routineAlertReceipt(id: String): RoutineAlertReceipt?
+  @Query("SELECT * FROM routine_alert_receipts") fun routineAlertReceipts(): List<RoutineAlertReceipt>
+  @Query("SELECT * FROM routine_alert_receipts WHERE settled = 0") fun pendingRoutineAlerts(): List<RoutineAlertReceipt>
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun routineAlertReceipt(record: RoutineAlertReceipt)
   @Query("SELECT * FROM language_preferences WHERE id = 'app'") fun language(): LanguageRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun language(record: LanguageRecord)
   @Query("SELECT * FROM alerts") fun all(): List<AlertRecord>
@@ -93,13 +104,19 @@ data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: St
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class], version = 8, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class, RoutineAlertReceipt::class], version = 9, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build()
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE alerts ADD COLUMN dayStarted INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS routine_alert_receipts (operationId TEXT NOT NULL PRIMARY KEY, kind TEXT NOT NULL, occurrenceId TEXT NOT NULL, date TEXT NOT NULL, expectedGeneration INTEGER NOT NULL, expectedSessionId TEXT NOT NULL, generation INTEGER NOT NULL, occurredAtMs INTEGER NOT NULL, targetMs INTEGER, snoozeMinutes INTEGER, fingerprint TEXT NOT NULL, settled INTEGER NOT NULL, resultStatus TEXT NOT NULL DEFAULT 'Pending')")
+      }
+    }
     val MIGRATION_7_8 = object : Migration(7, 8) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE alerts ADD COLUMN profile TEXT NOT NULL DEFAULT 'Reminder'")

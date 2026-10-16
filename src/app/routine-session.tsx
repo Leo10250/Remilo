@@ -1,44 +1,64 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { AppState, View } from 'react-native';
 import type { RoutineCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { nextRoutineFocus, routineDayEnded } from '../domain/routine-focus';
+import { routineSessionQueryKey, RoutineSessionViewDates } from '../domain/routine-session-view';
+import { RoutineSessionContent, type RoutineUndo } from '../ui/routine-focus';
 import { WidgetSetupRow } from '../ui/widget-setup';
 import { useTranslation } from '../localization/react';
-import { ActionFeedback, Button, Card, ConnectedGroup, Copy, Disclosure, IconButton, Page, QueryState, SettingRow, Sheet } from '../ui/components';
+import { ActionFeedback, Button, ConnectedGroup, Copy, Disclosure, IconButton, Page, QueryState, SettingRow, Sheet } from '../ui/components';
 import { CommandRecovery, RootNotice, useCapturedCommand } from '../ui/navigation';
 import { engine, nativeAvailable } from '../ui/native';
-import { useTimeFormatting } from '../ui/time-display';
+import { useTimeDisplay, useTimeFormatting } from '../ui/time-display';
 
 const stateKeys = { Ready: 'routine_ready', InProgress: 'routine_in_progress', Completed: 'routine_completed', Skipped: 'routine_skipped', NotCompleted: 'routine_not_completed',
   PartiallyCompleted: 'routine_partial', Rest: 'routine_rest', Paused: 'routine_paused', Upcoming: 'routine_upcoming' } as const;
 
 export default function RoutineSessionScreen() {
+  'use no memo';
   const t = useTranslation(), { id, date, history: showHistory, menu: showMenu } = useLocalSearchParams<{ id: string; date?: string; history?: string; menu?: string }>(), client = useQueryClient();
   const { shortDateTime, formatDate } = useTimeFormatting();
-  const key = ['routine-session', id, date ?? null];
-  const query = useQuery({ queryKey: key, queryFn: () => engine().getRoutineSession(id, date ?? null), enabled: nativeAvailable });
+  const { localeTag } = useTimeDisplay();
+  const [viewDates] = useState(() => new RoutineSessionViewDates()), [, refreshViewDate] = useState(0), viewId = useId();
+  const request = viewDates.request(id, date), key = routineSessionQueryKey(request, viewId);
+  const query = useQuery({ queryKey: key, queryFn: async () => {
+    const result = await engine().getRoutineSession(request.routineId, request.date);
+    if (result && viewDates.resolve(request, result.date)) {
+      client.setQueryData(['routine-session', request.routineId, result.date], result);
+      refreshViewDate(value => value + 1);
+    }
+    return result;
+  }, enabled: nativeAvailable });
   const plans = useQuery({ queryKey: ['routines'], queryFn: () => engine().queryRoutines(), enabled: nativeAvailable });
   const session = query.data, plan = plans.data?.find(p => p.id === id);
-  const [selected, setSelected] = useState<string>(), [menu, setMenu] = useState(!!showMenu), [history, setHistory] = useState(!!showHistory);
-  const [undo, setUndo] = useState<{ stepId: string; completed: boolean } | null>(null);
+  const historyCorrections = session?.changes?.filter(change => change.kind === 'CorrectRoutineExercise') ?? [];
+  const [selected, setSelected] = useState<{ date: string; stepId: string }>(), [menu, setMenu] = useState(!!showMenu), [history, setHistory] = useState(!!showHistory);
+  const [corrections, setCorrections] = useState(false), [now, setNow] = useState(Date.now);
+  const [undo, setUndo] = useState<RoutineUndo | null>(null);
   const action = useCapturedCommand((job, result) => {
+    if (result.status !== 'Applied') return;
     if (result.routineSession) {
       client.setQueryData(key, result.routineSession);
       const command = job.command;
-      if (command.kind === 'SetRoutineExercise' || command.kind === 'CorrectRoutineExercise') {
-        setUndo({ stepId: command.stepId!, completed: !command.completed });
-        if (command.completed) {
-          const current = result.routineSession.steps.findIndex(s => s.id === command.stepId);
-          setSelected(result.routineSession.steps.slice(current + 1).find(s => !s.completed)?.id ?? command.stepId);
+      if (command.kind === 'SetRoutineExercise') {
+        const confirmed = result.routineSession, step = confirmed.steps.find(value => value.id === command.stepId);
+        if (command.completed && step?.completed) {
+          setUndo({ stepId: step.id, name: step.name, date: confirmed.date });
+          const nextId = nextRoutineFocus(confirmed, step.id);
+          setSelected(nextId ? { date: confirmed.date, stepId: nextId } : undefined);
+          // The named completion and its Undo stay beside the Focus card.
+          return false;
         }
+        if (!command.completed) { setUndo(null); setSelected(step ? { date: confirmed.date, stepId: step.id } : undefined); }
       }
     }
   });
   const refetch = query.refetch;
   useFocusEffect(useCallback(() => { void refetch(); }, [refetch])); // Native resolves midnight/travel on every read.
   useEffect(() => {
-    const refresh = () => { void client.invalidateQueries({ queryKey: ['routine-session'] }); };
+    const refresh = () => { setNow(Date.now()); void client.invalidateQueries({ queryKey: ['routine-session'] }); };
     const subscription = AppState.addEventListener('change', state => { if (state === 'active') refresh(); });
     const remaining = (session?.endsAtMs ?? 0) - Date.now();
     // This timer only refreshes presentation. Native expiry and action guards own correctness.
@@ -47,56 +67,51 @@ export default function RoutineSessionScreen() {
   }, [session?.endsAtMs, client]);
   const historyQuery = useInfiniteQuery({ queryKey: ['routine-history', id], queryFn: ({ pageParam }) => engine().queryRoutineHistory(id, pageParam),
     initialPageParam: null as string | null, getNextPageParam: page => page.nextCursor, enabled: nativeAvailable && history });
-  const current = session?.steps.find(s => s.id === selected) ?? session?.steps.find(s => !s.completed) ?? session?.steps[0];
-  const currentIndex = session?.steps.findIndex(s => s.id === current?.id) ?? -1;
+  const ended = session ? routineDayEnded(session, now) : false;
   const mutate = (kind: Extract<RoutineCommand, { occurrenceId: string }>['kind'], stepId?: string, completed?: boolean) => {
-    if (!session?.occurrenceId || action.isGuarded()) return;
+    if (!session?.occurrenceId || action.isGuarded() || session.deleted) return;
+    const closed = routineDayEnded(session, Date.now());
+    if (kind === 'CorrectRoutineExercise' ? !closed : closed) return;
     void action.execute({ command: { kind, occurrenceId: session.occurrenceId, date: session.date, expectedRevision: session.revision, stepId, completed, operationId: engine().createOperationId() },
       success: t(kind === 'CorrectRoutineExercise' ? 'routine_correction_saved' : kind === 'SkipRoutineDay' ? 'routine_skipped_saved' : kind === 'UndoSkipRoutineDay' ? 'routine_skip_undone' : 'routine_progress_saved') });
   };
-  const changeStep = (stepId: string, completed: boolean) => mutate(session?.ended ? 'CorrectRoutineExercise' : 'SetRoutineExercise', stepId, completed);
-  const openToday = () => { setUndo(null); setSelected(undefined); router.replace({ pathname: '/routine-session', params: { id } }); };
+  const changeStep = (stepId: string, completed: boolean) => mutate('SetRoutineExercise', stepId, completed);
+  const openToday = () => { setUndo(null); setSelected(undefined); viewDates.openToday(id); refreshViewDate(value => value + 1);
+    void client.invalidateQueries({ queryKey: ['routine-session', id, null, viewId] });
+    router.replace({ pathname: '/routine-session', params: { id } }); };
   const openPlan = () => { setMenu(false); router.push({ pathname: '/edit', params: { routineId: id } }); };
-  const state = session?.state ?? 'Upcoming';
-  return <Page title={session?.title ?? t('routine_title')} subtitle={session ? formatDate(new Date(session.date + 'T12:00:00').getTime()) : undefined} footer={<RootNotice disabled={action.guarded} />} actions={<IconButton icon="more_vert" label={t('routine_more')} disabled={action.guarded} onPress={() => setMenu(true)} />}>
+  const title = session ? t('routine_dated_title', { day: new Intl.DateTimeFormat(localeTag, { weekday: 'long' }).format(new Date(session.date + 'T12:00:00')) }) : t('routine_title');
+  return <Page title={title} footer={<RootNotice disabled={action.guarded} />} actions={<IconButton icon="more_vert" label={t('routine_more')} disabled={action.guarded} onPress={() => setMenu(true)} />}>
     <QueryState loading={query.isLoading} error={query.error} empty={!session && !query.isLoading} emptyMessage={t('routine_load_error')} onRetry={() => void query.refetch()} />
     <CommandRecovery action={action} />
     {session && <View style={{ gap: 12 }}>
-      <View accessibilityLiveRegion="polite"><Copy heading>{t(stateKeys[state])}</Copy>
-        {!!session.steps.length && <Copy muted>{t('routine_progress', { done: session.completedCount, total: session.totalCount })}</Copy>}</View>
-      {session.ended && <><Copy muted>{t('routine_day_ended')}</Copy><Button label={t('routine_open_today')} variant="secondary" onPress={openToday} disabled={action.guarded} /></>}
       {session.deleted && <ActionFeedback message={t('routine_deleted')} tone="warning" />}
-      {state === 'Rest' && <Copy muted>{t('routine_rest_hint')}</Copy>}
-      {state === 'Paused' && <Copy muted>{t('routine_paused_hint')}</Copy>}
-      {session.skipped && !session.ended && <Button label={t('routine_undo_skip')} icon="undo" variant="secondary" disabled={action.guarded || session.deleted} onPress={() => mutate('UndoSkipRoutineDay')} />}
-      {current && <Card><View style={{ gap: 12 }}>
-        <Copy muted size={14}>{t('routine_focus')}</Copy><Copy heading>{current.name}</Copy>
-        {!!current.target && <Copy>{current.target}</Copy>}
-        {!!current.notes && <Copy muted>{current.notes}</Copy>}
-        <Button label={t(current.completed ? 'routine_undo_completion' : session.ended ? 'routine_correction_done' : 'routine_done')} icon={current.completed ? 'undo' : 'check'}
-          disabled={action.guarded || !session.occurrenceId || session.deleted || session.skipped && !session.ended || state === 'Upcoming'} onPress={() => changeStep(current.id, !current.completed)} />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <View style={{ flexGrow: 1, flexBasis: 140 }}><Button label={t('routine_previous')} variant="neutral" disabled={currentIndex <= 0 || action.guarded} onPress={() => setSelected(session.steps[currentIndex - 1].id)} /></View>
-          <View style={{ flexGrow: 1, flexBasis: 140 }}><Button label={t('routine_next')} variant="neutral" disabled={currentIndex >= session.steps.length - 1 || action.guarded} onPress={() => setSelected(session.steps[currentIndex + 1].id)} /></View>
-        </View>
-      </View></Card>}
-      {undo && <View accessibilityLiveRegion="polite"><Button label={t('routine_undo')} icon="undo" variant="secondary" disabled={action.guarded || session.deleted || session.skipped && !session.ended}
-        onPress={() => { setSelected(undo.stepId); changeStep(undo.stepId, undo.completed); setUndo(null); }} /></View>}
-      <ConnectedGroup title={t('routine_sequence')}>{session.steps.map(step => <SettingRow key={step.id} label={step.name} description={step.target || undefined}
-        icon={step.completed ? 'check_circle' : 'radio_button_unchecked'} value={step.completed ? t('routine_completed') : undefined} disabled={action.guarded} onPress={() => setSelected(step.id)} />)}</ConnectedGroup>
-      {!!session.changes?.length && <Disclosure title={t('routine_history_changes')} icon="history">{session.changes.filter(c => c.kind === 'CorrectRoutineExercise').map(change => <View key={change.id}>
+      {session.skipped && !ended && <Button label={t('routine_undo_skip')} icon="undo" variant="secondary" disabled={action.guarded || session.deleted} onPress={() => mutate('UndoSkipRoutineDay')} />}
+      <RoutineSessionContent session={session} selectedId={selected?.date === session.date ? selected.stepId : undefined} ended={ended} guarded={action.guarded}
+        onSelect={stepId => setSelected({ date: session.date, stepId })} onChangeStep={changeStep} undo={undo} onUndo={() => { if (undo?.date === session.date) changeStep(undo.stepId, false); }} onOpenToday={openToday} />
+      {historyCorrections.length > 0 && <Disclosure title={t('routine_history_changes')} icon="history">{historyCorrections.map(change => <View key={change.id}>
         <Copy>{session.steps.find(s => s.id === change.stepId)?.name}</Copy><Copy muted size={14}>{t('routine_correction_at', { time: shortDateTime(change.atMs) })}</Copy>
       </View>)}</Disclosure>}
     </View>}
     <Sheet title={t('routine_more')} visible={menu} onClose={() => setMenu(false)}>
       <WidgetSetupRow routineId={id} disabled={action.guarded || session?.deleted} onOpen={() => setMenu(false)} />
-      {session?.occurrenceId && !session.ended && !session.skipped && !session.completed && !session.deleted && <SettingRow label={t('routine_skip')} icon="block" disabled={action.guarded} onPress={() => { setMenu(false); mutate('SkipRoutineDay'); }} />}
+      {session?.occurrenceId && !ended && !session.skipped && !session.completed && !session.deleted && <SettingRow label={t('routine_skip')} icon="block" disabled={action.guarded} onPress={() => { setMenu(false); mutate('SkipRoutineDay'); }} />}
+      {session?.occurrenceId && ended && !session.deleted && <SettingRow label={t('routine_correct_checkmarks')} icon="edit" disabled={action.guarded} onPress={() => { setMenu(false); setCorrections(true); }} />}
       <SettingRow label={t('routine_history')} icon="history" disabled={action.guarded} onPress={() => { setMenu(false); setHistory(true); }} />
       <SettingRow label={t('routine_edit')} icon="edit" disabled={action.guarded} onPress={openPlan} />
       <SettingRow label={t('routine_duplicate')} icon="content_copy" disabled={action.guarded} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { copyRoutine: id } }); }} />
       {plan && <SettingRow label={t(plan.state === 'Paused' ? 'routine_resume' : 'routine_pause')} icon={plan.state === 'Paused' ? 'play_arrow' : 'pause'} disabled={action.guarded} onPress={() => {
         setMenu(false); void action.execute({ command: { kind: plan.state === 'Paused' ? 'ResumeRoutine' : 'PauseRoutine', routineId: id, expectedRevision: plan.revision, operationId: engine().createOperationId() }, success: t(plan.state === 'Paused' ? 'routine_ready' : 'routine_paused') });
       }} />}
+    </Sheet>
+    <Sheet title={t('routine_correct_checkmarks')} visible={corrections} onClose={() => { if (!action.guarded) setCorrections(false); }}>
+      <Copy muted>{t('routine_day_ended')}</Copy>
+      <CommandRecovery action={action} />
+      <ConnectedGroup>{session?.steps.map(step => <View key={step.id} style={{ padding: 16, gap: 8 }}>
+        <Copy>{step.name}</Copy>{!!step.target && <Copy muted size={14}>{step.target}</Copy>}{step.completed && <Copy muted size={14}>{t('routine_completed')}</Copy>}
+        <Button label={t(step.completed ? 'routine_undo_completion' : 'routine_correction_done')} variant="secondary" accessibilityLabel={t(step.completed ? 'routine_undo_named' : 'routine_mark_named', { name: step.name })}
+          disabled={action.guarded || !ended || session.deleted} onPress={() => mutate('CorrectRoutineExercise', step.id, !step.completed)} />
+      </View>)}</ConnectedGroup>
     </Sheet>
     <Sheet title={t('routine_history')} visible={history} onClose={() => setHistory(false)}>
       <QueryState loading={historyQuery.isLoading} error={historyQuery.error} empty={!historyQuery.data?.pages[0]?.items.length} emptyMessage={t('routine_empty_history')} onRetry={() => void historyQuery.refetch()} />

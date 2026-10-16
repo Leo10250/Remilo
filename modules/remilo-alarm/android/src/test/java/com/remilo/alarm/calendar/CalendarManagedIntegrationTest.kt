@@ -606,7 +606,7 @@ class CalendarManagedIntegrationTest {
   @Test fun managedPrivateStateAndDispositionsNeverEnterDirectBootOrPortableBackup() {
     activate(); create(createCommand(disposition = "LocalOnly")); observe(event("private-candidate"))
     calendar { it.managed.issue("Setup", "setup-private-identity", "CREATION_UNCONFIRMED", true) }
-    val backup = native { engine.exportBackup() }; assertEquals(5, JSONObject(backup).getInt("version"))
+    val backup = native { engine.exportBackup() }; assertEquals(6, JSONObject(backup).getInt("version"))
     val dp = context.createDeviceProtectedStorageContext().getDatabasePath("remilo-operational.db").readBytes().toString(Charsets.ISO_8859_1)
     listOf("owner@example.test", "private-candidate", "setup-private-identity", "LocalOnly", "managed_calendar", "PRIVATE GOOGLE NOTES").forEach {
       assertFalse("Calendar state must not enter portable backup: $it", backup.contains(it))

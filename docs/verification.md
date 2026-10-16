@@ -395,6 +395,39 @@ checks real launcher pin/cancel/resize/restore, TalkBack, app/widget updates wit
 React Native, denied notifications, reboot/first unlock and deferred background
 refresh. Do not equate host capture or signed assembly with those observations.
 
+## Shared routine editor, Focus and Alarm correction
+
+Check new-draft Type switching through all three Alert modes, preserving shared
+title, visible clock, List and Notes while caching ordinary timing/Repeat and
+weekly day definitions. Saved and duplicate types are fixed. Child Done applies
+only to the parent draft; exercise/day Back, backdrop and Cancel protect dirty
+changes. Rest toggling is reversible before Save, exercise IDs survive reorder,
+and removal Undo names the exercise. Inspect all seven day summaries and empty
+weekly setup without an initial error flash.
+
+Run the exact 21-exercise week through native-confirmed Complete & continue,
+last-exercise completion, checked-item inspection, named Undo and history
+correction. Confirm numeric plus visual Agenda/Focus/widget progress; unknown
+illustration IDs use text without a broken image. Inspect the actual card, zoom
+sheet, guidance disclosure and shared editor in all eight current appearance
+pairs, English/Chinese, narrow/landscape and 200% text. Long authored intervals
+and targets must wrap intact. Verify focus stays useful after advancement and
+the active screen stays bound to its date until Open today is selected.
+
+Routine Alarm tests must cover Start/Dismiss without exercise completion,
+same-day Snooze with stable targets, duplicate/stale/cross-command operation IDs,
+uncertain acknowledgement at each commit boundary, locked restart and mixed
+ordinary/routine sessions. Final exercise from app or widget, Skip, Pause,
+deletion and midnight must silence only that routine member. Verify no quiet
+fallback when Alarm access is blocked, bounded Alarm lateness, quiet same-day
+callback behavior, no recovery catch-up, and backward/forward date or zone changes
+without revival of an already-opened date. Check CE14→15, DP8→9 and backup1–6
+with frozen dated Notes/mode/time/sound/vibration and unknown artwork references.
+
+Use the same consolidated signed-phone acceptance run for actual alarm audio,
+keyguard Start, launcher actions, keyboard/Back and TalkBack. Host tests and web
+or RemoteViews renders do not establish physical acceptance or distribution.
+
 ## Shipped 0.4.0 UX refinement observations
 
 The layout references in this section describe earlier pending baseline checks.

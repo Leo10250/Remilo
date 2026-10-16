@@ -404,7 +404,22 @@ test('native atmosphere rendering leaves observation, guarded actions and confir
   const activity = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt');
   const controls = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt');
   assert.match(activity, /AtmosphereTokens\.colors\(current\?\.atmosphere/);
-  assert.match(activity, /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value\)\) finish\(\)/);
+  assert.match(activity, /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\) finish\(\)/,
+    'An acknowledged alarm dismissal retains the activity while routine unlock/navigation is pending.');
+  assert.match(activity, /if \(status\?\.get\("status"\) == "Applied" && command\["openRoutine"\] == true\)/,
+    'Only an acknowledged Start routine action opens private routine content.');
+  assert.match(activity, /if \(keyguard\.isKeyguardLocked\) \{\s+navigatingRoutine = true\s+keyguard\.requestDismissKeyguard/,
+    'Retain the activity before requesting unlock, so the ended session cannot discard its continuation.');
+  assert.match(activity, /override fun onDismissSucceeded\(\) \{ navigatingRoutine = false; startActivity\(open\); refresh\(\) \}/,
+    'Successful unlock opens the captured routine and then releases dismissal retention.');
+  for (const callback of ['onDismissCancelled', 'onDismissError']) {
+    const body = activity.match(new RegExp(`override fun ${callback}\\(\\) \\{([^}]+)\\}`))?.[1];
+    assert.ok(body, `${callback} must handle the pending routine continuation.`);
+    assert.match(body, /navigatingRoutine = false; refresh\(\)/,
+      `${callback} releases retention and refreshes the ended session.`);
+    assert.doesNotMatch(body, /startActivity/,
+      `${callback} must not open private content after an unsuccessful unlock.`);
+  }
   assert.match(activity, /if \(!guard\.select\(id, pendingCommand != null, busy\.value, unconfirmed\.value\)\)/);
   assert.match(activity, /deferredIntent = Intent\(intent\)/, 'Later alarm intents are retained while the current action is unresolved.');
   assert.match(activity, /pendingCommand\?\.get\("operationId"\) == command\["operationId"\]/, 'Action responses acknowledge the frozen operation rather than a mutable snapshot.');

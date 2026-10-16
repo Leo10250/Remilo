@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "assetId": "incline-treadmill-walking",
+  "candidate": 1,
+  "recordedAtUtc": "2026-10-16T05:37:24.980083+00:00",
+  "generator": "built-in-imagegen",
+  "promptKind": "generation",
+  "upstreamGenerationProvenance": "provided-by-operator",
+  "source": {
+    "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/original.png",
+    "sha256": "e38368c46a474d8da58f2401f2ecf6cbef4ec22db7223b6705b53f986e440c3a",
+    "width": 1672,
+    "height": 941,
+    "size": [
+      1672,
+      941
+    ],
+    "format": "PNG",
+    "mode": "RGBA",
+    "hasAlpha": true,
+    "opaque": false,
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "iccPresent": false,
+    "iccSha256": null,
+    "iccDescription": null,
+    "iccValid": null,
+    "exifOrientation": 1,
+    "displaySize": [
+      1672,
+      941
+    ]
+  },
+  "prompt": {
+    "path": "docs/design/production-assets/exercises/prompts/incline-treadmill-walking/prepared-01.txt",
+    "sha256": "3e8f543ad58f749940d9863a366e527826c1cab929f83ed49c0c092a82ddeda6"
+  },
+  "inputImages": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/references/01.png",
+      "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0",
+      "role": "style",
+      "influence": "Use only the individually approved person's clothing, muted palette and softly shaded educational illustration style. Replace posture with walking on an inclined unbranded treadmill, add neutral shoes and equipment; exclude mat, background plane, scenery, UI, text and branding.",
+      "inspected": true,
+      "measurements": {
+        "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0",
+        "width": 1672,
+        "height": 941,
+        "size": [
+          1672,
+          941
+        ],
+        "format": "PNG",
+        "mode": "RGBA",
+        "hasAlpha": true,
+        "opaque": false,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "iccPresent": false,
+        "iccSha256": null,
+        "iccDescription": null,
+        "iccValid": null,
+        "exifOrientation": 1,
+        "displaySize": [
+          1672,
+          941
+        ]
+      },
+      "originalReference": {
+        "path": "assets/exercises/masters/front-plank-v1.png",
+        "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+      }
+    }
+  ],
+  "spec": {
+    "route": "generation",
+    "registry": "exercises",
+    "master": {
+      "destination": "assets/exercises/masters/{asset}-v{version}{suffix}",
+      "minimumSize": [
+        960,
+        540
+      ],
+      "format": "PNG",
+      "alpha": "transparent",
+      "colorSpace": "srgb",
+      "allowAssumedSrgb": true
+    },
+    "exports": [
+      {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      }
+    ],
+    "views": [
+      {
+        "name": "focus-narrow",
+        "size": [
+          256,
+          144
+        ],
+        "unit": "dp",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "overlayHeight": 0,
+        "landmarks": []
+      },
+      {
+        "name": "focus-wide",
+        "size": [
+          320,
+          180
+        ],
+        "unit": "dp",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "overlayHeight": 0,
+        "landmarks": []
+      }
+    ]
+  },
+  "specSha256": "ec00015731962a765e064ca8f1ff3bce93039a259e7ce83d0c2f51e0345969ab",
+  "profileSha256": "c496c32f4f16dbb307a4c726b5856f7b450d10c5c8a97808e3eb74ffb03d4e4d",
+  "checks": [
+    {
+      "id": "master-size",
+      "status": "pass",
+      "detail": "Actual [1672, 941]; minimum [960, 540]"
+    },
+    {
+      "id": "master-format",
+      "status": "pass",
+      "detail": "Actual PNG"
+    },
+    {
+      "id": "master-alpha",
+      "status": "pass",
+      "detail": "Alpha extrema [0, 255]"
+    },
+    {
+      "id": "master-color",
+      "status": "pass",
+      "detail": "Untagged source explicitly interpreted as sRGB"
+    },
+    {
+      "id": "export:runtime",
+      "status": "pass",
+      "detail": "Deterministic pixels prepared without undeclared enlargement"
+    }
+  ],
+  "stagedOutputs": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/exports/00-runtime.webp",
+      "sha256": "44cec6446992fbd5b7f29e1fad761b9c8a901531b35711bb3cf4d2c2f8dc294c",
+      "role": "runtime",
+      "destination": "assets/exercises/{asset}-v{version}.webp",
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "transform": {
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "sourceDisplaySize": [
+          1672,
+          941
+        ],
+        "targetSize": [
+          960,
+          540
+        ],
+        "contentRectPx": [
+          0,
+          0,
+          959,
+          540
+        ],
+        "fit": "contain",
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "upscaled": false,
+        "resizeFilter": "Lanczos",
+        "mask": null,
+        "colorPolicy": "Untagged pixels interpreted as sRGB; no measured color-space assertion",
+        "orientationApplied": true,
+        "addedSourceDetail": false
+      },
+      "exportSpec": {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "11.1.0",
+        "libwebpVersion": "1.3.2",
+        "losslessScope": "Exact transformed pixels, all channels verified"
+      }
+    }
+  ],
+  "expectedRegistrySha256": "736666d0dbf87609a6d5ca4e96818d8c55a1b609c047ea4d398a97add055d03d",
+  "requestedDimensionsAreNotMeasuredOutput": true,
+  "visualInspection": {
+    "status": "pending"
+  },
+  "approval": null
+}

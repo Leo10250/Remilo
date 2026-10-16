@@ -25,12 +25,12 @@ object BackupCodec {
     routines: List<RoutinePlan> = emptyList(), routineVersions: List<RoutineVersion> = emptyList(), routineSessions: List<RoutineSession> = emptyList()): String {
     if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000 || purged.size > 10_000 ||
       routines.size > 10_000 || routineVersions.size > 10_000 || routineSessions.size > 10_000) throw BackupLimitException()
-    val json = JSONObject(mapOf("format" to "Remilo", "version" to 5, "exportedAtMs" to now,
-      "routines" to routines.map { mapOf("id" to it.id, "startsOn" to it.startsOn, "state" to it.state, "pauses" to JSONArray(it.pauses)) },
-      "routineVersions" to routineVersions.map { mapOf("routineId" to it.routineId, "effectiveDate" to it.effectiveDate, "title" to it.title,
-        "minutes" to it.minutes, "mode" to it.mode, "listId" to it.listId, "days" to JSONArray(it.days)) },
+    val json = JSONObject(mapOf("format" to "Remilo", "version" to 6, "exportedAtMs" to now,
+      "routines" to routines.map { mapOf("id" to it.id, "revision" to it.revision, "startsOn" to it.startsOn, "state" to it.state, "pauses" to JSONArray(it.pauses)) },
+      "routineVersions" to routineVersions.map { mapOf("routineId" to it.routineId, "revision" to it.revision, "effectiveDate" to it.effectiveDate, "title" to it.title,
+        "minutes" to it.minutes, "mode" to it.mode, "notes" to it.notes, "sound" to it.sound, "vibration" to it.vibration, "listId" to it.listId, "days" to JSONArray(it.days)) },
       "routineSessions" to routineSessions.map { mapOf("occurrenceId" to it.occurrenceId, "routineId" to it.routineId, "date" to it.date,
-        "versionDate" to it.versionDate, "steps" to JSONArray(it.steps), "done" to JSONArray(it.done), "ended" to it.ended,
+        "versionDate" to it.versionDate, "versionRevision" to it.versionRevision, "steps" to JSONArray(it.steps), "done" to JSONArray(it.done), "ended" to it.ended,
         "changes" to JSONArray(it.changes)) },
       "purgedOccurrences" to purged.map { mapOf("id" to it.id, "segmentId" to it.segmentId, "nominalSlot" to it.nominalSlot) },
       "lists" to lists.map { mapOf("id" to it.id, "name" to it.name, "createdAtMs" to it.createdAtMs) },
@@ -86,7 +86,7 @@ object BackupCodec {
   fun decode(json: String): Bundle {
     require(json.toByteArray(Charsets.UTF_8).size <= 10_000_000) { "Backup exceeds 10 MB." }
     val root = JSONObject(json)
-    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5)) { "Unsupported backup format/version." }
+    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6)) { "Unsupported backup format/version." }
     val version = root.getInt("version")
     val listItems = if (version >= 3) root.getJSONArray("lists") else JSONArray()
     require(listItems.length() <= 10_000) { "Backup contains too many lists." }
@@ -183,7 +183,7 @@ object BackupCodec {
       // Wall-clock corrections can make actual action times run backwards.
       for (p in 0 until pauses.length()) { val pause = pauses.getJSONObject(p); time(pause, "from")
         if (!pause.isNull("until")) time(pause, "until") }
-      RoutinePlan(id, startsOn = date(o, "startsOn"), state = state, pauses = pauses.toString())
+      RoutinePlan(id, revision = if (version >= 6) time(o,"revision").also { require(it >= 1) } else 1, startsOn = date(o, "startsOn"), state = state, pauses = pauses.toString())
     }
     fun steps(a: JSONArray): Set<String> {
       require(a.length() <= 100); val found = mutableSetOf<String>()
@@ -193,36 +193,53 @@ object BackupCodec {
         require(text(s, "illustration", 80, true).matches(Regex("[a-z0-9-]*"))) }
       return found
     }
-    val versionIds = mutableSetOf<Pair<String,String>>()
+    val versionIds = mutableSetOf<Pair<String,Long>>()
+    val legacyDates = mutableSetOf<Pair<String,String>>()
     val routineVersions = (0 until versions.length()).map { i -> val o = versions.getJSONObject(i)
       val id = text(o, "routineId", 200); val effective = date(o, "effectiveDate")
-      require(id in routineIds && versionIds.add(id to effective) && effective >= routines.first { it.id == id }.startsOn)
+      val revision = if (version >= 6) time(o,"revision").also { require(it >= 1) } else {
+        require(legacyDates.add(id to effective))
+        (0 until versions.length()).count { n -> val item = versions.getJSONObject(n); item.getString("routineId") == id && item.getString("effectiveDate") <= effective }.toLong()
+      }
+      require(id in routineIds && versionIds.add(id to revision) && effective >= routines.first { it.id == id }.startsOn)
       val title = text(o, "title", 200); require(title.isNotBlank())
       val minutes = time(o, "minutes"); require(minutes in 0..1439)
-      val mode = text(o, "mode", 20); require(mode in setOf("Notification", "None"))
+      val mode = text(o, "mode", 20); require(mode in setOf("Alarm", "Notification", "None"))
       val list = if (o.isNull("listId")) null else text(o, "listId", 200).also { require(it in listIds) }
       val days = o.getJSONArray("days"); require(days.length() == 7); val exerciseIds = mutableSetOf<String>(); var active = false
       for (d in 0..6) { val day = days.getJSONObject(d); val type = text(day, "type", 20); require(type in setOf("Rest", "Exercises"))
         val ids = steps(day.getJSONArray("exercises")); require(if (type == "Rest") ids.isEmpty() else ids.isNotEmpty())
         require(ids.all { exerciseIds.add(it) }); if (type == "Exercises") active = true }
       require(active)
-      RoutineVersion(id, effective, title, minutes.toInt(), mode, list, days.toString())
+      RoutineVersion(id, effective, title, minutes.toInt(), mode, list, days.toString(),
+        if (version >= 6) text(o, "notes", 10_000) else "",
+        if (version >= 6) text(o, "sound", 20).also { require(it in setOf("remilo", "system")) } else "remilo",
+        if (version >= 6) boolean(o, "vibration") else false, revision)
     }
-    routines.forEach { p -> require(versionIds.contains(p.id to p.startsOn)) }
+    routines.forEach { p -> require(routineVersions.any { it.routineId == p.id && it.effectiveDate == p.startsOn }) }
+    val restoredRoutines = routines.map { p ->
+      val latest = routineVersions.filter { it.routineId == p.id }.maxOf { it.revision }
+      if (version >= 6) { require(p.revision >= latest); p } else p.copy(revision = latest)
+    }
     series.forEach { s -> val template = decodeRecord(JSONObject(s.template))
-      require(template.routineId == null || template.routineId == s.seriesId && s.seriesId in routineIds && template.mode != "Alarm")
+      require(template.routineId == null || template.routineId == s.seriesId && s.seriesId in routineIds)
       require(s.seriesId !in routineIds || template.routineId == s.seriesId) }
     records.forEach { r -> require(r.routineId == null || r.segmentId != null && r.routineId in routineIds &&
-      decodeRecord(JSONObject(series.first { it.id == r.segmentId }.template)).routineId == r.routineId && r.mode != "Alarm") }
+      decodeRecord(JSONObject(series.first { it.id == r.segmentId }.template)).routineId == r.routineId) }
     records.filter { it.segmentId != null }.forEach { r -> require(decodeRecord(JSONObject(series.first { it.id == r.segmentId }.template)).routineId == r.routineId) }
     val sessionIds = mutableSetOf<String>(); val datedIds = mutableSetOf<Pair<String,String>>()
     val routineSessions = (0 until sessions.length()).map { i -> val o = sessions.getJSONObject(i)
       val occurrence = text(o, "occurrenceId", 200); val id = text(o, "routineId", 200); val day = date(o, "date"); val v = date(o, "versionDate")
       val r = records.firstOrNull { it.id == occurrence } ?: error("Unknown routine session.")
       require(r.routineId == id && sessionIds.add(occurrence) && datedIds.add(id to day) && r.nominalSlot!!.substringBefore('T') == day)
-      require(versionIds.contains(id to v) && routineVersions.filter { it.routineId == id && it.effectiveDate <= day }.maxOf { it.effectiveDate } == v)
+      val revision = if (version >= 6) time(o,"versionRevision") else routineVersions.single { it.routineId == id && it.effectiveDate == v }.revision
+      val definition = routineVersions.singleOrNull { it.routineId == id && it.revision == revision } ?: error("Unknown routine revision.")
+      require(definition.effectiveDate == v && v <= day)
+      require(r.title == definition.title && r.mode == definition.mode && r.notes == definition.notes && r.sound == definition.sound && r.vibration == definition.vibration)
+      val nominalTime = java.time.LocalDateTime.parse(r.nominalSlot)
+      require(nominalTime.hour * 60 + nominalTime.minute == definition.minutes)
       val snapshot = o.getJSONArray("steps"); val stepIds = steps(snapshot); require(stepIds.isNotEmpty())
-      val expectedSteps = JSONArray(routineVersions.first { it.routineId == id && it.effectiveDate == v }.days)
+      val expectedSteps = JSONArray(definition.days)
         .getJSONObject(java.time.LocalDate.parse(day).dayOfWeek.value - 1).getJSONArray("exercises")
       require(snapshot.toString() == expectedSteps.toString())
       val done = o.getJSONArray("done"); val checks = (0 until done.length()).map { done.getString(it) }
@@ -231,8 +248,8 @@ object BackupCodec {
       for (c in 0 until changes.length()) { val change = changes.getJSONObject(c)
         require(changeIds.add(text(change,"id",200)) && text(change,"kind",50) in setOf("SetRoutineExercise","CorrectRoutineExercise","SkipRoutineDay","UndoSkipRoutineDay"))
         time(change,"atMs"); if (!change.isNull("stepId")) { require(text(change,"stepId",200) in stepIds); boolean(change,"completed") } }
-      RoutineSession(occurrence,id,day,v,snapshot.toString(),done.toString(),boolean(o,"ended"),changes = changes.toString())
+      RoutineSession(occurrence,id,day,v,snapshot.toString(),done.toString(),boolean(o,"ended"),changes = changes.toString(), versionRevision = revision)
     }
-    return Bundle(records, nextAlerts, history, series, lists, purged, routines, routineVersions, routineSessions)
+    return Bundle(records, nextAlerts, history, series, lists, purged, restoredRoutines, routineVersions, routineSessions)
   }
 }

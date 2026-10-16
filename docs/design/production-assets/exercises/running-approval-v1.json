@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:34:42.349682+00:00",
+  "assetId": "running",
+  "candidate": 1,
+  "candidateSha256": "8971ac8c783219c4151c9ba2b68c88e339503de5aea967c0604aa523fc54a309",
+  "reviewSha256": "bf1bb58c2f13548642d133eb3f9a897e6be50570d9304f2034abdf178b2202a4",
+  "reviewRecordSha256": "bb8ff3517a71d348595ebc4db97fe7977c9548059f9bce4768b79f560a2dcc10",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

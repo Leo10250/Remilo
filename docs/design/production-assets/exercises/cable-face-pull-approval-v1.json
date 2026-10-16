@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T06:31:02.049342+00:00",
+  "assetId": "cable-face-pull",
+  "candidate": 3,
+  "candidateSha256": "e3806779a7cc698eb8ad0ef019968bb6b455280fc60124214bd7610b875b0beb",
+  "reviewSha256": "31ad85396cd9c2fa5bc0ddd35aae6e48df289f9b8ccec7fc89b8f68e9951e939",
+  "reviewRecordSha256": "48b5edbcdf6060a32b976f6270774e56f6b5dc13e63c4dcdf85fcd42c406efff",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:45:51.366254+00:00",
+  "assetId": "walking",
+  "candidate": 1,
+  "candidateSha256": "514227092f789472203a44ea4a1a04d6ac342539a35bcd6487c0fa8dfb1a6b50",
+  "reviewSha256": "0f40ac80ad39449534bf2654ab8f953265f195039ac2292723a6a1b32268d81e",
+  "reviewRecordSha256": "cc381bb7e8ad8697470aaed993a9b55188157cb220933f874855b2b1fe493b8e",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

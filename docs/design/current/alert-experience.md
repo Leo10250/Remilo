@@ -6,10 +6,15 @@ outlined terminal-row More controls. Accepted images, frozen submissions, approv
 records and past verification remain provenance. This contract extends TD-03,
 TD-04 and TD-06; task status belongs only in the backlog.
 
+The completion, overdue and native Done/Snooze rules below apply to ordinary
+reminders. [Weekly routines](weekly-routines.md) reuse the shared presentation
+and Alert control, with exercise completion, Start routine / Snooze / Dismiss
+alarm and Notification as the direct new-routine default.
+
 ## Completion and postponement
 
 The owner's 11 October wording correction uses **Mark as done** for every single
-work-completion control and **Mark all as done (N)** for captured group completion.
+ordinary-reminder completion control and **Mark all as done (N)** for captured group completion.
 Apply this to Details, Agenda/list menus, row/swipe spoken actions, native alarm
 member/single/group controls and private/public notification actions, including
 pre-unlock variants. This wording supersedes Done labels in earlier contracts and
@@ -23,7 +28,7 @@ Snooze means later and leaves work unfinished. No response, timeout, interruptio
 notification posting and notification dismissal never complete work. Historical
 Stopped outcomes remain unfinished; sound-preview Stop is still preview-only.
 
-Native controls use filled Mark as done with a checkmark and outlined Snooze · X min.
+Ordinary native controls use filled Mark as done with a checkmark and outlined Snooze · X min.
 Prominent single/group actions are at least 64 dp; member actions are at least
 56 dp. Preserve captured atmosphere/brightness, first-member sound, the original
 five-minute deadline, generic pre-unlock content and confirmed-terminal dismissal.
@@ -71,7 +76,7 @@ Apply predicates, counts and ordering before pagination.
 ## Editor and reminder rows
 
 The shared editor shows Alarm / Notification / No alert inline, with Alarm the
-default. Use a connected single-selection group and a concise description of the
+ordinary-reminder default. Use a connected single-selection group and a concise description of the
 selected mode; all targets are at least 48 dp. Place each mode icon immediately left
 of its label, with the checked indicator at the trailing edge. Selected/focused
 outlines follow the group's rounded outer corners. Stack visible choices whenever
@@ -109,8 +114,8 @@ captured retries, Reopen clearing both work states and Restore preserving them.
 
 ## Notifications and acceptance
 
-Single alarm and ordinary Notification posts include Mark as done and Snooze · X min in
-private and generic/public variants. Group ringing posts include both captured
+Single ordinary alarm and ordinary Notification posts include Mark as done and Snooze · X min in
+private and generic/public variants. Ordinary-only group ringing posts include both captured
 group actions and open individual native controls through content tap. Android
 owns layout/expansion. Preserve channel identities and notification audio; ordinary
 Notification never starts alarm service/audio/full-screen controls.

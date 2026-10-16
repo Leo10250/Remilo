@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "incline-hammer-curl",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T06:44:19.512034+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/incline-hammer-curl/prepared-01.json",
+    "sha256": "550dbb96a240749640665833a06cd72258f10c483a611dd2ccb2828512969bdf"
+  },
+  "candidateSha256": "eac103fb809f914cc71e06b7ceaa72ca78694ba5404c2bbeb482c7af6fe102af",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01.png",
+    "sha256": "a331c1642fe7d2b522dc97a1b94025090772825359f007273bd0469bd42b5abf"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/01.png",
+      "sha256": "3f297856519333c708517d44dc8ee7e28b0f3ac62f23aafe5a9b6b5b04db94f4",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/02.png",
+      "sha256": "883f2d1dfb4db399bdb5009bedd5022d844a1ac3cd57fd9975631b8a1ec6b435",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/03.png",
+      "sha256": "d588687514d6594bdf3a824a247f50352b5bf56f7c84028be33572c53d9be464",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/04.png",
+      "sha256": "4731b23df8673dc8521fcf3675d903a0a3e91ca6927acb816b47c1bc0afeeaf6",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/05.png",
+      "sha256": "8b2976c44b93b62965ac9fdbf20e4d604b3fa47f6b11c0fa669e5672e89bed48",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/06.png",
+      "sha256": "2242f88ed07558b960f3e2e7c8a9d0218da188d96556c36c368bab06040893e7",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/07.png",
+      "sha256": "5ee1ea99358d7e9282400276ee6f0fec97ea321f06e87ada6132c42aaa44fb90",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/08.png",
+      "sha256": "53f604bf99e129c1222e621797fc8a4969afbc5a9c85cc5ea40d623958447f19",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/09.png",
+      "sha256": "954c4b7e39b8e0c1f0d00deff41d8657d298a7f8d5bba5cd68d72270085cd7c4",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/10.png",
+      "sha256": "cb62c2a0ea954c75b673c225e97135eabe89d3d218c6b58d7459f61f7ce70122",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/11.png",
+      "sha256": "9b86af8d154fbe698610df6589c3bda6650f7ceb31c153a2df13c221b13c1c6a",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/review-01-panels/12.png",
+      "sha256": "f896e8d3cf4e1a657bd34c0e9ab638c970cf24e0b1047c78ec25881b9bc6758e",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "be5e4c6f6e45a24942282bdb7fc5403fbb438ea3a3ac50eed1513751aa513850"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

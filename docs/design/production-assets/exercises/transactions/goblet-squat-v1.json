@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "assetId": "goblet-squat",
+  "version": 1,
+  "state": "committed",
+  "recordedAtUtc": "2026-10-16T06:59:20.781075+00:00",
+  "decisionSha256": "aeaac1ec874f915064ee74ce02ba5c7b57bb9267f247c99044a8f7a7aeca2705",
+  "preparedSha256": "77e1f3c9f7c0fedf77573f5f019c7c2a6280847cade445bb4399c2837832fb76",
+  "reviewSha256": "1ed03914f10609cb19a0af2543665ef395bc0d6419cae1c2c4f09e3f4250d0f4",
+  "previousRegistrySha256": "4693b6ce66e442dda93fdae0fb34699b7a717eda84d37aa1ff4993ebcdcf7cfb",
+  "newRegistrySha256": "59d797a3c7b9adf2eafdbe11088058c74beacf2c8e869e937c7a857e2c449d87",
+  "approvalSha256": "6e7023cb67d8d46d7e5572024cf80cfcd936309b5d0f762e08da7e8bb355ec0a",
+  "files": [
+    {
+      "sha256": "ff3b30c39f343c7daee37f7cce041817a3aa3f8bdd7de531dffa5bf5355ea125",
+      "width": 1672,
+      "height": 941,
+      "size": [
+        1672,
+        941
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": false,
+      "iccSha256": null,
+      "iccDescription": null,
+      "iccValid": null,
+      "exifOrientation": 1,
+      "displaySize": [
+        1672,
+        941
+      ],
+      "role": "source",
+      "path": "assets/exercises/masters/goblet-squat-v1.png",
+      "bytesPreserved": true
+    },
+    {
+      "sha256": "a80b2315c0dba4da7b9a8ac09c4147c237a48018ca342beb6e85a18d04b3271d",
+      "role": "runtime",
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "transform": {
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "sourceDisplaySize": [
+          1672,
+          941
+        ],
+        "targetSize": [
+          960,
+          540
+        ],
+        "contentRectPx": [
+          0,
+          0,
+          959,
+          540
+        ],
+        "fit": "contain",
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "upscaled": false,
+        "resizeFilter": "Lanczos",
+        "mask": null,
+        "colorPolicy": "Untagged pixels interpreted as sRGB; no measured color-space assertion",
+        "orientationApplied": true,
+        "addedSourceDetail": false
+      },
+      "exportSpec": {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "11.1.0",
+        "libwebpVersion": "1.3.2",
+        "losslessScope": "Exact transformed pixels, all channels verified"
+      },
+      "path": "assets/exercises/goblet-squat-v1.webp",
+      "cropProfiles": {
+        "focus-narrow": {
+          "viewportDp": [
+            256,
+            144
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        },
+        "focus-wide": {
+          "viewportDp": [
+            320,
+            180
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        }
+      },
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    }
+  ]
+}

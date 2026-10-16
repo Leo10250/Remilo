@@ -104,7 +104,7 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   CalendarManagedPolicy::class, CalendarManagedPreview::class, CalendarManagedSetupOperation::class,
   CalendarManagedCandidate::class, CalendarManagedCache::class, CalendarManagedExport::class,
   CalendarManagedDisposition::class, CalendarManagedSuppression::class, CalendarManagedIssue::class,
-  CalendarManagedReceipt::class, RoutinePlan::class, RoutineVersion::class, RoutineSession::class, RoutineOperation::class], version = 14, exportSchema = true)
+  CalendarManagedReceipt::class, RoutinePlan::class, RoutineVersion::class, RoutineSession::class, RoutineOperation::class], version = 15, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
   abstract fun routines(): RoutineDao
@@ -115,10 +115,22 @@ abstract class ContentDatabase : RoomDatabase() {
   abstract fun managedCalendar(): CalendarManagedDao
   companion object {
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
       .addCallback(object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
       }).build()
+    val MIGRATION_14_15 = object : Migration(14, 15) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        // Old effective dates are not identities: clock travel can make an edit reuse one.
+        // Preserve authored insertion order when assigning legacy immutable identities.
+        db.execSQL("CREATE TABLE routine_versions_new (routineId TEXT NOT NULL, effectiveDate TEXT NOT NULL, title TEXT NOT NULL, minutes INTEGER NOT NULL, mode TEXT NOT NULL, listId TEXT, days TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', sound TEXT NOT NULL DEFAULT 'remilo', vibration INTEGER NOT NULL DEFAULT 0, revision INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(routineId,revision))")
+        db.execSQL("INSERT INTO routine_versions_new (routineId,effectiveDate,title,minutes,mode,listId,days,revision) SELECT v.routineId,v.effectiveDate,v.title,v.minutes,v.mode,v.listId,v.days,(SELECT COUNT(*) FROM routine_versions old WHERE old.routineId=v.routineId AND old.rowid<=v.rowid) FROM routine_versions v")
+        db.execSQL("DROP TABLE routine_versions")
+        db.execSQL("ALTER TABLE routine_versions_new RENAME TO routine_versions")
+        db.execSQL("ALTER TABLE routine_sessions ADD COLUMN versionRevision INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE routine_sessions SET versionRevision = (SELECT v.revision FROM routine_versions v WHERE v.routineId=routine_sessions.routineId AND v.effectiveDate=routine_sessions.versionDate)")
+      }
+    }
     val MIGRATION_13_14 = object : Migration(13, 14) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE reminders ADD COLUMN routineId TEXT DEFAULT NULL")

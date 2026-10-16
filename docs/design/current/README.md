@@ -60,6 +60,10 @@ implementation units; approval of a synthetic image does not complete one.
 
 The owner's [15 October weekly routine contract](weekly-routines.md) adds optional
 weekly plans and date-scoped exercise progress within the existing reminder model.
+The subsequent owner-approved correction unifies the editor, exposes all three
+Alert modes and adds illustrated Focus plus visible Agenda/widget progress.
+Use current shared components/tokens and active assets for this work; historical
+mockup pixels do not authorize a different page style.
 
 The owner's [15 October widget contract](home-screen-widget.md) adds configurable
 Routine Focus/Today home-screen presentation using the same native authority.

@@ -105,7 +105,9 @@ if (review.get('reviewText') === 'long') {
   });
 }
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
-const routines = routinePreview(review.get('reviewRoutine') === '1', () => listeners.forEach(fn => fn()));
+const routines = routinePreview(review.get('reviewRoutine') === '1', () => listeners.forEach(fn => fn()), {
+  progress: review.get('reviewRoutineProgress') === '1', illustration: review.get('reviewExerciseArt') === 'front-plank',
+});
 if (routines.progress) items.push(make(routines.progress.occurrenceId!, 'Weekly workout', 0, { mode: 'Notification', vibration: false,
   routine: routines.progress, overdue: false, overdueAtMs: null }));
 let onCalendarCreation: ((id: string, disposition?: CalendarCreationDisposition) => void) | undefined, applyingCalendarImport = false;

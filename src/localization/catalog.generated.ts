@@ -1871,7 +1871,7 @@ export const catalogs = {
     "routine_attach": "Add weekly routine",
     "routine_remove": "Remove routine from this draft",
     "routine_weekly": "Weekly plan",
-    "routine_exercises": "Exercises",
+    "routine_exercises": "Workout day",
     "routine_rest": "Rest day",
     "routine_today_only": "Today only",
     "routine_today_only_hint": "Available all day. Unfinished exercises stay in history at midnight and never become overdue.",
@@ -1916,7 +1916,7 @@ export const catalogs = {
     "routine_day_ended": "This day has ended. Corrections update history only.",
     "routine_deleted": "This session is in Trash. Restore it there before making corrections.",
     "routine_focus": "Focus",
-    "routine_sequence": "Exercises",
+    "routine_sequence": "Completed & upcoming",
     "routine_done": "Mark as done",
     "routine_undo_completion": "Undo completion",
     "routine_next": "Next exercise",
@@ -2017,7 +2017,95 @@ export const catalogs = {
     "widget_next_alert": "Next alert: {time}",
     "widget_setup_open_error": "Widget setup could not open.",
     "widget_unlock_open": "Open Remilo after unlocking.",
-    "widget_completed_name": "Completed: {name}"
+    "widget_completed_name": "Completed: {name}",
+    "routine_type_label": "Type",
+    "routine_type_reminder": "Reminder",
+    "routine_type_weekly": "Weekly routine",
+    "routine_exercises_by_day": "Exercises by day",
+    "routine_day_editor_title": "{day}’s exercises",
+    "routine_day_fresh_hint": "Rest days have no alerts. Each day starts fresh; unfinished workouts stay in history.",
+    "routine_plan_local_hint": "Changes are saved when you save the reminder.",
+    "routine_child_done": "Done",
+    "routine_child_add": "Add exercise",
+    "routine_child_discard_title": "Discard changes?",
+    "routine_child_discard_hint": "Your changes on this screen have not been applied.",
+    "routine_day_rest_summary": "Rest day · No alert",
+    "routine_day_editor_hint": "Add exercises for this day or make it a rest day.",
+    "routine_current_position": "Current exercise · {current} of {total}",
+    "routine_completed_named": "Completed {name}",
+    "routine_undo_named": "Undo {name} completion",
+    "routine_read_more": "Read more",
+    "routine_read_less": "Show less",
+    "routine_view_illustration": "View illustration",
+    "routine_illustration_title": "{name} illustration",
+    "routine_ordinal": "Exercise {current} of {total}",
+    "routine_daily_finished": "Today’s exercises completed",
+    "routine_illustrations_pending": "Illustrations are being prepared. Exercise names, targets and guidance remain available.",
+    "exercise_front_plank": "Front plank",
+    "exercise_front_plank_description": "Side view of a person holding a forearm plank on a mat, supported by forearms and toes.",
+    "routine_correct_checkmarks": "Correct checkmarks",
+    "routine_mark_named": "Mark {name} as done",
+    "routine_illustration": "Illustration",
+    "routine_no_illustration": "No illustration",
+    "routine_illustration_unavailable": "Illustration unavailable",
+    "routine_exercise_editor_title": "Exercise",
+    "routine_alarm_start": "Start routine",
+    "routine_alarm_dismiss": "Dismiss alarm",
+    "routine_snooze_day_end": "Snooze would pass the end of today.",
+    "routine_mode_validation": "Choose Alarm, Notification or No alert.",
+    "routine_vibration_validation": "Choose a vibration setting.",
+    "widget_retry_same_action": "Retry the same action",
+    "routine_complete_continue": "Complete & continue",
+    "routine_complete_exercise": "Complete exercise",
+    "routine_view_previous": "View previous exercise",
+    "routine_completed_exercise": "Completed exercise",
+    "routine_one_check": "One check per exercise",
+    "routine_alarm_dismissing": "Dismissing alarm…",
+    "routine_dated_title": "{day}’s routine",
+    "routine_focus_announcement": "Current exercise: {name}. {position} of {total}.",
+    "routine_day_names_more": "{names} · +{count} more",
+    "routine_exercise_removed_named": "{name} removed",
+    "routine_undo_removed_named": "Undo removal of {name}",
+    "routine_first_exercise_hint": "Choose a day to add your first exercise.",
+    "routine_change_summary": "{count} days changed",
+    "routine_change_details": "Review changes",
+    "routine_time_validation": "Choose a routine time.",
+    "routine_repeat_empty": "Every week · Choose workout days",
+    "exercise_bird_dog": "Bird-dog",
+    "exercise_bird_dog_description": "A person balancing on one hand and knee while extending the opposite arm and leg.",
+    "exercise_side_plank": "Side plank",
+    "exercise_side_plank_description": "A person holding a side plank, supported by one forearm and the sides of the feet.",
+    "exercise_running": "Running",
+    "exercise_running_description": "A person running, shown from the side.",
+    "exercise_incline_treadmill_walking": "Incline treadmill walk",
+    "exercise_incline_treadmill_walking_description": "A person walking on an inclined treadmill.",
+    "exercise_walking": "Walking",
+    "exercise_walking_description": "A person walking, shown from the side.",
+    "exercise_lat_pulldown": "Lat pulldown",
+    "exercise_lat_pulldown_description": "A seated person holding a wide bar on a lat pulldown machine.",
+    "exercise_machine_chest_press": "Machine chest press",
+    "exercise_machine_chest_press_description": "A seated person pressing the handles of a chest press machine.",
+    "exercise_cable_face_pull": "Cable face pull",
+    "exercise_cable_face_pull_description": "A standing person pulling a cable rope attachment toward the face.",
+    "exercise_dumbbell_shoulder_press": "Dumbbell shoulder press",
+    "exercise_dumbbell_shoulder_press_description": "A seated person pressing two dumbbells upward.",
+    "exercise_machine_shoulder_press": "Machine shoulder press",
+    "exercise_machine_shoulder_press_description": "A seated person pressing the handles of a shoulder press machine upward.",
+    "exercise_incline_hammer_curl": "Incline hammer curl",
+    "exercise_incline_hammer_curl_description": "A person on an incline bench curling dumbbells with palms facing inward.",
+    "exercise_cable_triceps_pushdown": "Cable triceps pushdown",
+    "exercise_cable_triceps_pushdown_description": "A standing person extending the elbows to push a cable attachment downward.",
+    "exercise_goblet_squat": "Goblet squat",
+    "exercise_goblet_squat_description": "A person squatting while holding a dumbbell close to the chest.",
+    "exercise_dumbbell_bench_press": "Dumbbell bench press",
+    "exercise_dumbbell_bench_press_description": "A person lying on a bench and pressing two dumbbells upward.",
+    "exercise_dumbbell_rdl": "Dumbbell Romanian deadlift",
+    "exercise_dumbbell_rdl_description": "A person hinging forward at the hips while holding dumbbells near the legs.",
+    "exercise_one_arm_dumbbell_row": "One-arm dumbbell row",
+    "exercise_one_arm_dumbbell_row_description": "A person supported on a bench, drawing one dumbbell toward the hip.",
+    "routine_editor_new": "New weekly routine",
+    "routine_editor_edit": "Edit weekly routine",
+    "routine_undo_capacity_hint": "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day."
   },
   "zh-Hans": {
     "m_bf4156d6b15c": "已启用日历自动同步",
@@ -3882,7 +3970,7 @@ export const catalogs = {
     "routine_attach": "添加每周计划",
     "routine_remove": "从草稿中移除日常计划",
     "routine_weekly": "每周计划",
-    "routine_exercises": "练习",
+    "routine_exercises": "训练日",
     "routine_rest": "休息日",
     "routine_today_only": "仅限当天",
     "routine_today_only_hint": "全天可用。未完成的练习在午夜转入历史记录，不会逾期。",
@@ -3926,7 +4014,7 @@ export const catalogs = {
     "routine_day_ended": "这一天已结束。更正仅更新历史记录。",
     "routine_deleted": "此记录已移至废纸篓。请先恢复再进行更正。",
     "routine_focus": "专注练习",
-    "routine_sequence": "练习列表",
+    "routine_sequence": "已完成与待完成",
     "routine_done": "标记为完成",
     "routine_undo_completion": "撤销完成",
     "routine_next": "下一项练习",
@@ -4027,7 +4115,95 @@ export const catalogs = {
     "widget_next_alert": "下次提醒：{time}",
     "widget_setup_open_error": "无法打开小组件设置。",
     "widget_unlock_open": "解锁后打开 Remilo。",
-    "widget_completed_name": "已完成：{name}"
+    "widget_completed_name": "已完成：{name}",
+    "routine_type_label": "类型",
+    "routine_type_reminder": "提醒",
+    "routine_type_weekly": "每周计划",
+    "routine_exercises_by_day": "每日动作",
+    "routine_day_editor_title": "{day}的动作",
+    "routine_day_fresh_hint": "休息日不会提醒。每天独立开始，未完成的训练保留在历史记录中。",
+    "routine_plan_local_hint": "保存提醒时才会保存这些更改。",
+    "routine_child_done": "完成",
+    "routine_child_add": "添加动作",
+    "routine_child_discard_title": "放弃更改？",
+    "routine_child_discard_hint": "此页面上的更改尚未应用。",
+    "routine_day_rest_summary": "休息日 · 不提醒",
+    "routine_day_editor_hint": "为这一天添加动作，或将其设为休息日。",
+    "routine_current_position": "当前动作 · 第 {current} 项，共 {total} 项",
+    "routine_completed_named": "已完成{name}",
+    "routine_undo_named": "撤销{name}的完成",
+    "routine_read_more": "展开说明",
+    "routine_read_less": "收起说明",
+    "routine_view_illustration": "查看动作示意图",
+    "routine_illustration_title": "{name}动作示意图",
+    "routine_ordinal": "第 {current} 项动作，共 {total} 项",
+    "routine_daily_finished": "今天的动作已全部完成",
+    "routine_illustrations_pending": "动作示意图正在准备中。你仍可查看动作名称、目标和说明。",
+    "exercise_front_plank": "前平板支撑",
+    "exercise_front_plank_description": "侧视图：一人用前臂和脚尖支撑身体，在垫上保持平板支撑。",
+    "routine_correct_checkmarks": "更正完成标记",
+    "routine_mark_named": "将{name}标记为完成",
+    "routine_illustration": "示意图",
+    "routine_no_illustration": "无示意图",
+    "routine_illustration_unavailable": "示意图不可用",
+    "routine_exercise_editor_title": "动作",
+    "routine_alarm_start": "开始训练",
+    "routine_alarm_dismiss": "关闭闹钟",
+    "routine_snooze_day_end": "稍后提醒的时间将超过今天结束时间。",
+    "routine_mode_validation": "请选择闹钟、通知或不提醒。",
+    "routine_vibration_validation": "请选择振动设置。",
+    "widget_retry_same_action": "重试同一操作",
+    "routine_complete_continue": "完成并继续",
+    "routine_complete_exercise": "完成动作",
+    "routine_view_previous": "查看上一个动作",
+    "routine_completed_exercise": "已完成的动作",
+    "routine_one_check": "每项动作勾选一次",
+    "routine_alarm_dismissing": "正在关闭闹钟…",
+    "routine_dated_title": "{day}的训练",
+    "routine_focus_announcement": "当前动作：{name}。第 {position} 项，共 {total} 项。",
+    "routine_day_names_more": "{names} · 另有 {count} 项",
+    "routine_exercise_removed_named": "已移除{name}",
+    "routine_undo_removed_named": "撤销移除{name}",
+    "routine_first_exercise_hint": "选择一天，添加第一个动作。",
+    "routine_change_summary": "已更改 {count} 天",
+    "routine_change_details": "查看更改",
+    "routine_time_validation": "请选择训练提醒时间。",
+    "routine_repeat_empty": "每周 · 选择训练日",
+    "exercise_bird_dog": "鸟狗式",
+    "exercise_bird_dog_description": "一人用一只手和对侧膝盖支撑，伸展另一侧手臂和腿。",
+    "exercise_side_plank": "侧平板支撑",
+    "exercise_side_plank_description": "一人用一侧前臂和双脚侧面支撑身体，保持侧平板支撑。",
+    "exercise_running": "跑步",
+    "exercise_running_description": "一人跑步的侧视示意图。",
+    "exercise_incline_treadmill_walking": "坡度跑步机行走",
+    "exercise_incline_treadmill_walking_description": "一人在有坡度的跑步机上行走。",
+    "exercise_walking": "步行",
+    "exercise_walking_description": "一人步行的侧视示意图。",
+    "exercise_lat_pulldown": "高位下拉",
+    "exercise_lat_pulldown_description": "一人坐在高位下拉器械上，双手握住宽握杆。",
+    "exercise_machine_chest_press": "器械推胸",
+    "exercise_machine_chest_press_description": "一人坐在推胸器械上，向前推动握把。",
+    "exercise_cable_face_pull": "绳索面拉",
+    "exercise_cable_face_pull_description": "一人站立，将绳索附件拉向面部。",
+    "exercise_dumbbell_shoulder_press": "哑铃肩推",
+    "exercise_dumbbell_shoulder_press_description": "一人坐姿，将两个哑铃向上推举。",
+    "exercise_machine_shoulder_press": "器械肩推",
+    "exercise_machine_shoulder_press_description": "一人坐在肩推器械上，向上推动握把。",
+    "exercise_incline_hammer_curl": "上斜锤式弯举",
+    "exercise_incline_hammer_curl_description": "一人倚靠上斜凳，掌心相对地做哑铃弯举。",
+    "exercise_cable_triceps_pushdown": "绳索肱三头肌下压",
+    "exercise_cable_triceps_pushdown_description": "一人站立，伸直肘部，将绳索附件向下推。",
+    "exercise_goblet_squat": "高脚杯深蹲",
+    "exercise_goblet_squat_description": "一人将哑铃举在胸前做深蹲。",
+    "exercise_dumbbell_bench_press": "哑铃卧推",
+    "exercise_dumbbell_bench_press_description": "一人仰卧在训练凳上，将两个哑铃向上推举。",
+    "exercise_dumbbell_rdl": "哑铃罗马尼亚硬拉",
+    "exercise_dumbbell_rdl_description": "一人手持哑铃，屈髋前倾，哑铃靠近腿部。",
+    "exercise_one_arm_dumbbell_row": "单臂哑铃划船",
+    "exercise_one_arm_dumbbell_row_description": "一人用手和膝盖支撑在训练凳上，将另一只手中的哑铃拉向髋部。",
+    "routine_editor_new": "新建每周计划",
+    "routine_editor_edit": "编辑每周计划",
+    "routine_undo_capacity_hint": "每天最多可添加100项动作。在完成当天编辑前，会为撤销保留一个位置。"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -6022,4 +6198,92 @@ export interface MessageArguments {
   widget_setup_open_error: Record<string, never>;
   widget_unlock_open: Record<string, never>;
   widget_completed_name: { name: string };
+  routine_type_label: Record<string, never>;
+  routine_type_reminder: Record<string, never>;
+  routine_type_weekly: Record<string, never>;
+  routine_exercises_by_day: Record<string, never>;
+  routine_day_editor_title: { day: string };
+  routine_day_fresh_hint: Record<string, never>;
+  routine_plan_local_hint: Record<string, never>;
+  routine_child_done: Record<string, never>;
+  routine_child_add: Record<string, never>;
+  routine_child_discard_title: Record<string, never>;
+  routine_child_discard_hint: Record<string, never>;
+  routine_day_rest_summary: Record<string, never>;
+  routine_day_editor_hint: Record<string, never>;
+  routine_current_position: { current: number; total: number };
+  routine_completed_named: { name: string };
+  routine_undo_named: { name: string };
+  routine_read_more: Record<string, never>;
+  routine_read_less: Record<string, never>;
+  routine_view_illustration: Record<string, never>;
+  routine_illustration_title: { name: string };
+  routine_ordinal: { current: number; total: number };
+  routine_daily_finished: Record<string, never>;
+  routine_illustrations_pending: Record<string, never>;
+  exercise_front_plank: Record<string, never>;
+  exercise_front_plank_description: Record<string, never>;
+  routine_correct_checkmarks: Record<string, never>;
+  routine_mark_named: { name: string };
+  routine_illustration: Record<string, never>;
+  routine_no_illustration: Record<string, never>;
+  routine_illustration_unavailable: Record<string, never>;
+  routine_exercise_editor_title: Record<string, never>;
+  routine_alarm_start: Record<string, never>;
+  routine_alarm_dismiss: Record<string, never>;
+  routine_snooze_day_end: Record<string, never>;
+  routine_mode_validation: Record<string, never>;
+  routine_vibration_validation: Record<string, never>;
+  widget_retry_same_action: Record<string, never>;
+  routine_complete_continue: Record<string, never>;
+  routine_complete_exercise: Record<string, never>;
+  routine_view_previous: Record<string, never>;
+  routine_completed_exercise: Record<string, never>;
+  routine_one_check: Record<string, never>;
+  routine_alarm_dismissing: Record<string, never>;
+  routine_dated_title: { day: string };
+  routine_focus_announcement: { name: string; position: number; total: number };
+  routine_day_names_more: { names: string; count: number };
+  routine_exercise_removed_named: { name: string };
+  routine_undo_removed_named: { name: string };
+  routine_first_exercise_hint: Record<string, never>;
+  routine_change_summary: { count: number };
+  routine_change_details: Record<string, never>;
+  routine_time_validation: Record<string, never>;
+  routine_repeat_empty: Record<string, never>;
+  exercise_bird_dog: Record<string, never>;
+  exercise_bird_dog_description: Record<string, never>;
+  exercise_side_plank: Record<string, never>;
+  exercise_side_plank_description: Record<string, never>;
+  exercise_running: Record<string, never>;
+  exercise_running_description: Record<string, never>;
+  exercise_incline_treadmill_walking: Record<string, never>;
+  exercise_incline_treadmill_walking_description: Record<string, never>;
+  exercise_walking: Record<string, never>;
+  exercise_walking_description: Record<string, never>;
+  exercise_lat_pulldown: Record<string, never>;
+  exercise_lat_pulldown_description: Record<string, never>;
+  exercise_machine_chest_press: Record<string, never>;
+  exercise_machine_chest_press_description: Record<string, never>;
+  exercise_cable_face_pull: Record<string, never>;
+  exercise_cable_face_pull_description: Record<string, never>;
+  exercise_dumbbell_shoulder_press: Record<string, never>;
+  exercise_dumbbell_shoulder_press_description: Record<string, never>;
+  exercise_machine_shoulder_press: Record<string, never>;
+  exercise_machine_shoulder_press_description: Record<string, never>;
+  exercise_incline_hammer_curl: Record<string, never>;
+  exercise_incline_hammer_curl_description: Record<string, never>;
+  exercise_cable_triceps_pushdown: Record<string, never>;
+  exercise_cable_triceps_pushdown_description: Record<string, never>;
+  exercise_goblet_squat: Record<string, never>;
+  exercise_goblet_squat_description: Record<string, never>;
+  exercise_dumbbell_bench_press: Record<string, never>;
+  exercise_dumbbell_bench_press_description: Record<string, never>;
+  exercise_dumbbell_rdl: Record<string, never>;
+  exercise_dumbbell_rdl_description: Record<string, never>;
+  exercise_one_arm_dumbbell_row: Record<string, never>;
+  exercise_one_arm_dumbbell_row_description: Record<string, never>;
+  routine_editor_new: Record<string, never>;
+  routine_editor_edit: Record<string, never>;
+  routine_undo_capacity_hint: Record<string, never>;
 }

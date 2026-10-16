@@ -50,8 +50,12 @@ class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = 
 }
 
 internal fun previewSnapshot() = WidgetSnapshot(-1, WidgetConfiguration("Today", "preview"), "2026-10-12",
-  session = mapOf("title" to "Routine", "state" to "Ready", "date" to "2026-10-12", "completedCount" to 1, "totalCount" to 4,
-    "steps" to listOf(mapOf("name" to "Front plank", "target" to "3 × 40 s", "completed" to false))), doneToken = "preview")
+  session = mapOf("title" to "Routine", "state" to "InProgress", "date" to "2026-10-12", "completedCount" to 1, "totalCount" to 4,
+    "steps" to listOf(
+      mapOf("name" to "Bird-dog", "target" to "3 × 10", "completed" to true),
+      mapOf("name" to "Front plank", "target" to "3 × 40 s", "completed" to false),
+      mapOf("name" to "Side plank", "target" to "3 × 25 s / side", "completed" to false),
+      mapOf("name" to "Intervals", "target" to "8 intervals", "completed" to false))), doneToken = "preview")
 
 /** Same production composition for setup and host render verification, with inert controls. */
 internal class WidgetRender(private val snapshot: WidgetSnapshot, private val preview: Boolean = true) : GlanceAppWidget() {
@@ -141,11 +145,18 @@ internal fun WidgetContent(snapshot: WidgetSnapshot, preview: Boolean = false, f
             }
             if (session != null) {
               val state = session["state"] as? String
+              val total = (session["totalCount"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
+              val completed = ((session["completedCount"] as? Number)?.toInt() ?: 0).coerceIn(0, total)
+              if (total > 0 && state !in setOf("Rest", "Paused", "Skipped")) {
+                Spacer(GlanceModifier.height(8.dp))
+                WidgetRoutineProgress(completed, total, primary, ColorProvider(Color(roles.container)))
+                Spacer(GlanceModifier.height(8.dp))
+              }
               if (state in setOf("Rest","Paused","Skipped","Completed","Upcoming")) copy(label(when(state) { "Rest" -> "Rest day"; "Paused" -> "Paused"; "Skipped" -> "Skipped today"; "Completed" -> "Completed today"; else -> "Not started yet" }), true, 1)
               @Suppress("UNCHECKED_CAST") val step = (session["steps"] as? List<Map<String, Any?>>)?.firstOrNull { it["completed"] != true }
               if (step != null && state !in setOf("Paused","Skipped","Rest")) {
-                copy(step["name"] as? String ?: "", lines = if (size.height >= 440.dp) 2 else 1)
-                (step["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true,if(size.height >= 440.dp) 2 else 1) }
+                copy(step["name"] as? String ?: "", lines = if (size.height >= 440.dp && fontScale <= 1.2f) 2 else 1)
+                (step["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true,if(size.height >= 440.dp && fontScale <= 1.2f) 2 else 1) }
               }
             }
           }
@@ -166,7 +177,9 @@ internal fun WidgetContent(snapshot: WidgetSnapshot, preview: Boolean = false, f
           }
         }
         @Composable fun viewAgenda() { Text(label(if(snapshot.total > 20) "View Agenda (${snapshot.total})" else "View Agenda"),GlanceModifier.fillMaxWidth().height(48.dp).padding(vertical = 8.dp).clickable(openAgenda),TextStyle(color = primary,fontSize = 16.sp)) }
-        if (snapshot.configuration.mode == "Today") {
+        // Keep a usable Focus/action area at enlarged text. The Today header
+        // still opens Agenda; a sliver of a clipped list is not an action target.
+        if (snapshot.configuration.mode == "Today" && !(fontScale > 1.2f && session != null)) {
           if (size.height >= 440.dp || session == null) Text(label("Today's reminders"),GlanceModifier.padding(top = 8.dp,bottom = 4.dp),TextStyle(color = supporting,fontSize = 14.sp))
           if (staticCollections) Column(GlanceModifier.fillMaxWidth().defaultWeight().padding(top = 2.dp)) {
             snapshot.reminders.take(if(size.height >= 440.dp) 2 else 1).forEachIndexed { index, row -> reminderRow(index,row) }
@@ -181,25 +194,52 @@ internal fun WidgetContent(snapshot: WidgetSnapshot, preview: Boolean = false, f
         val token = snapshot.retryToken ?: snapshot.doneToken
         if (snapshot.undoToken != null) Text(label("Completed: ${snapshot.undoName.orEmpty()}"), style = TextStyle(color = supporting, fontSize = 14.sp), maxLines = 1)
         if (token != null || snapshot.undoToken != null) {
-          Row(GlanceModifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.Vertical.CenterVertically) {
-            if (token != null) Box(GlanceModifier.defaultWeight().height((56 * fontScale.coerceAtLeast(1f)).dp)
+          @Composable fun completion(modifier: GlanceModifier) {
+            if (token != null) Box(modifier.height((56 * fontScale.coerceAtLeast(1f)).dp)
               .background(ImageProvider(com.remilo.alarm.R.drawable.widget_row_single), colorFilter = ColorFilter.tint(primary))) {
-              Button(label(if (snapshot.retryToken != null) "Retry the same action" else "Mark as done"),
+              @Suppress("UNCHECKED_CAST") val unfinished = (session?.get("steps") as? List<Map<String, Any?>>)?.count { it["completed"] != true } ?: 0
+              Button(label(if (snapshot.retryToken != null) "Retry the same action" else if (unfinished == 1) "Complete exercise" else "Complete & continue"),
                 if (preview) openRoutine else actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token)),
                 GlanceModifier.fillMaxSize().cornerRadius(16.dp), style = TextStyle(fontSize = 16.sp), maxLines = 2,
                 colors = ButtonDefaults.buttonColors(backgroundColor = ColorProvider(Color.Transparent), contentColor = onPrimary))
             }
-            if (token != null && snapshot.undoToken != null) Spacer(GlanceModifier.width(4.dp))
-            if (snapshot.undoToken != null) Box(GlanceModifier.defaultWeight().height((56 * fontScale.coerceAtLeast(1f)).dp)
+          }
+          @Composable fun undo(modifier: GlanceModifier) {
+            if (snapshot.undoToken != null) Box(modifier.height((56 * fontScale.coerceAtLeast(1f)).dp)
               .background(ImageProvider(com.remilo.alarm.R.drawable.widget_row_single),colorFilter = ColorFilter.tint(ColorProvider(Color(roles.surface))))) {
               Button(label("Undo"), actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to snapshot.undoToken)),
                 GlanceModifier.fillMaxSize().cornerRadius(16.dp).semantics { contentDescription = label("Undo ${snapshot.undoName.orEmpty()}") }, style = TextStyle(fontSize = 16.sp), maxLines = 2,
                 colors = ButtonDefaults.buttonColors(backgroundColor = ColorProvider(Color.Transparent), contentColor = primary))
             }
           }
+          if (fontScale > 1.2f && token != null && snapshot.undoToken != null) {
+            Column(GlanceModifier.fillMaxWidth().padding(top = 8.dp)) {
+              completion(GlanceModifier.fillMaxWidth())
+              Spacer(GlanceModifier.height(4.dp))
+              undo(GlanceModifier.fillMaxWidth())
+            }
+          } else Row(GlanceModifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.Vertical.CenterVertically) {
+            completion(GlanceModifier.defaultWeight())
+            if (token != null && snapshot.undoToken != null) Spacer(GlanceModifier.width(4.dp))
+            undo(if (token != null) GlanceModifier.width(88.dp) else GlanceModifier.fillMaxWidth())
+          }
         }
       }
     }
+  }
+}
+
+/** Count units, not ordinal step positions. Numeric progress remains in the header. */
+@Composable
+private fun WidgetRoutineProgress(completed: Int, total: Int, fill: ColorProvider, track: ColorProvider) {
+  if (total <= 12) Row(GlanceModifier.fillMaxWidth().height(4.dp)) {
+    repeat(total) { index ->
+      if (index > 0) Spacer(GlanceModifier.width(2.dp))
+      Box(GlanceModifier.defaultWeight().height(4.dp).cornerRadius(2.dp).background(if (index < completed) fill else track)) {}
+    }
+  } else Row(GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp).background(track)) {
+    // Use the native progress component for arbitrary totals without extra RemoteViews.
+    LinearProgressIndicator(progress = completed.toFloat() / total, modifier = GlanceModifier.fillMaxWidth().height(4.dp), color = fill, backgroundColor = track)
   }
 }
 

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "assetId": "cable-face-pull",
+  "candidate": 2,
+  "disposition": "Rejected artwork candidate; never approved or activated",
+  "recordedAtUtc": "2026-10-16T06:43:11.704168+00:00",
+  "reason": [
+    "Far rope branch disappears behind the forehead and does not visibly reach the far gripping hand.",
+    "Required six-percent vertical margins were not achieved."
+  ],
+  "archiveReason": "Unchanged rejected evidence contains original repository-relative references to ignored local generation artifacts. Archive original bytes and retain this durable hash ledger; do not rewrite bound records or treat local evidence as a portable live resource.",
+  "source": {
+    "localArtifactPath": "verification/local/artwork/exercises/cable-face-pull/candidate-02/original.png",
+    "sha256": "cf5609c0b5118e055e9f79a3a3df4fc56941f50d416fc22f35eb64b213026d44"
+  },
+  "archivedRecords": [
+    {
+      "originalRecordIdentifier": "docs/design/production-assets/exercises/cable-face-pull-inputs-v2.json",
+      "localArtifactPath": "verification/local/artwork/exercises/cable-face-pull/candidate-02/provenance-archive-v1/cable-face-pull-inputs-v2.json",
+      "sha256": "e75e828dcc661adca7414e00a494997a9fdfc96572da30bf351b3474ca49ebe7"
+    },
+    {
+      "originalRecordIdentifier": "docs/design/production-assets/exercises/records/cable-face-pull/prepared-02.json",
+      "localArtifactPath": "verification/local/artwork/exercises/cable-face-pull/candidate-02/provenance-archive-v1/prepared-02.json",
+      "sha256": "5a68dfda832497a54c006ac57df7129118c4b2c7e59061b1cc770fe50fb86b9b"
+    },
+    {
+      "originalRecordIdentifier": "docs/design/production-assets/exercises/records/cable-face-pull/review-02-01.json",
+      "localArtifactPath": "verification/local/artwork/exercises/cable-face-pull/candidate-02/provenance-archive-v1/review-02-01.json",
+      "sha256": "13f0a312cc54bd1fb563c087395c647ac249c6fe3966bc9e0a3d2f80fd3ed55f"
+    },
+    {
+      "originalRecordIdentifier": "docs/design/production-assets/exercises/records/cable-face-pull/review-02-02.json",
+      "localArtifactPath": "verification/local/artwork/exercises/cable-face-pull/candidate-02/provenance-archive-v1/review-02-02.json",
+      "sha256": "63b246412d1c6c0ebf525b564d3ec3f88a8b670dfa7dd50d5655404151b7888c"
+    }
+  ],
+  "retainedRecords": [
+    {
+      "path": "docs/design/production-assets/exercises/cable-face-pull-prompt-v2.txt",
+      "sha256": "96f7b909dd647792d8ea5da28d50849e9cd0944ca0deeba1e6843ccb098f71cf"
+    },
+    {
+      "path": "docs/design/production-assets/exercises/prompts/cable-face-pull/prepared-02.txt",
+      "sha256": "96f7b909dd647792d8ea5da28d50849e9cd0944ca0deeba1e6843ccb098f71cf"
+    },
+    {
+      "path": "docs/design/production-assets/exercises/cable-face-pull-inspection-v2.json",
+      "sha256": "4e10f789f023048d297ad0d244cca6a791c026e9ffb4046b240d52a95629769e"
+    }
+  ],
+  "preservation": "All four archived metadata files retain exact original bytes and SHA256 values. Approved candidate3 preparation/reviews, approval, source/runtime artwork and registry entry were checked unchanged. Original path strings inside archived records remain historical identifiers, not relocated live links."
+}

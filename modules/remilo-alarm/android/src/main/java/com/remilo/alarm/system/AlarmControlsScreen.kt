@@ -52,7 +52,7 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 
 internal enum class AlarmControlAction(val commandKind: String) {
-  CompleteDelivery("CompleteDelivery"), Snooze("Snooze"), DoneAll("DoneAll"), SnoozeAll("SnoozeAll")
+  CompleteDelivery("CompleteDelivery"), StartRoutine("StartRoutine"), DismissRoutine("DismissRoutineAlarm"), RoutineSnooze("SnoozeRoutineAlarm"), Snooze("Snooze"), DoneAll("DoneAll"), SnoozeAll("SnoozeAll")
 }
 
 /** Rendering only. Native observation, guarded actions and confirmed dismissal stay in the activity. */
@@ -130,7 +130,7 @@ private fun AlarmBody(current: AlarmEngine.SessionSnapshot?, busy: Boolean, role
             TimingRow(L10n.text(NativeMessages.m_eaf9eb2fb8f9()), time, roles)
           }
           current.content[record.occurrenceId]?.let { TimingContext(it, roles) }
-          if (members.size > 1) AlarmActions(record, title, current.state, busy, roles, AtmosphereTokens.nativeMember, onAction)
+          if (members.size > 1) AlarmActions(record, title, current.state, busy, roles, AtmosphereTokens.nativeMember, onAction, current.observedAtMs)
         }
       }
     } }
@@ -190,8 +190,8 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
       val members = current?.members.orEmpty()
       if (members.size == 1) {
         val (record, title) = members.single()
-        AlarmActions(record, title, current!!.state, busy || unconfirmed, roles, AtmosphereTokens.nativeSingle, onAction)
-      } else if (members.size > 1) {
+        AlarmActions(record, title, current!!.state, busy || unconfirmed, roles, AtmosphereTokens.nativeSingle, onAction, current.observedAtMs)
+      } else if (members.size > 1 && members.none { it.first.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }) {
         FilledAlarmButton(L10n.text("Mark all as done (${members.size})"), L10n.text("Mark all ${members.size} shown reminders as done"), busy || unconfirmed, roles,
           AtmosphereTokens.nativeSingle, checkmark = true) { onAction(AlarmControlAction.DoneAll, null) }
         SnoozeGroupButton(members.first().first.snoozeMinutes, members.size, busy || unconfirmed, roles) { onAction(AlarmControlAction.SnoozeAll, null) }
@@ -213,7 +213,21 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
 
 @Composable
 private fun AlarmActions(record: AlertRecord, title: String, state: String, busy: Boolean, roles: AtmosphereTokens.Roles,
-  minimum: Int, onAction: (AlarmControlAction, AlertRecord?) -> Unit) {
+  minimum: Int, onAction: (AlarmControlAction, AlertRecord?) -> Unit, observedAtMs: Long = System.currentTimeMillis()) {
+  if (record.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
+      FilledAlarmButton(L10n.text("Start routine"), L10n.text("Start routine"), busy, roles, minimum) { onAction(AlarmControlAction.StartRoutine, record) }
+      val snoozeAllowed = observedAtMs + record.snoozeMinutes * 60_000L < record.expiresAtMs
+      OutlinedButton(onClick = { onAction(AlarmControlAction.RoutineSnooze, record) }, enabled = !busy && snoozeAllowed,
+        shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp), modifier = Modifier.fillMaxWidth().heightIn(min = minimum.dp)) {
+        Text(L10n.text("Snooze · ${record.snoozeMinutes} min"))
+      }
+      if (!snoozeAllowed) Text(L10n.text("Snooze would pass the end of today."), color = Color(roles.onSurfaceVariant), style = MaterialTheme.typography.bodyMedium)
+      TextButton(onClick = { onAction(AlarmControlAction.DismissRoutine, record) }, enabled = !busy,
+        modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.target.dp)) { Text(L10n.text("Dismiss alarm")) }
+    }
+    return
+  }
   val stateLabel = if (state == "Active") L10n.text(NativeMessages.m_b22fd07a194a()) else L10n.text(NativeMessages.m_1827590dc0e9())
   val density = LocalDensity.current
   BoxWithConstraints(Modifier.fillMaxWidth()) {

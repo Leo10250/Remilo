@@ -17,6 +17,12 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
   data class CalendarUpdate(val segment: SeriesRecord, val record: ReminderRecord, val rule: RecurrenceRule)
   private fun unlocked() = context.getSystemService(UserManager::class.java).isUserUnlocked
   private fun zone() = ZoneId.systemDefault()
+  private fun routineDateEligible(routineId: String?, occurrenceId: String, nominal: String): Boolean {
+    if (routineId == null) return true
+    if (alerts.find(occurrenceId)?.dayEnded == true) return false
+    val saved = db().routines().dated(routineId, nominal.substringBefore('T')) ?: return true
+    return saved.occurrenceId == occurrenceId && !saved.ended
+  }
   private fun scheduledAt(slot: ResolvedSlot, mode: String): Long =
     if (mode == "None") slot.eventStartMs else slot.alarmAtMs
   private fun scheduledAt(alert: AlertRecord, rule: RecurrenceRule): Long {
@@ -99,7 +105,9 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     val rule = RuleCodec.decode(series.rule)
     val rows = alerts.all().filter { it.segmentId == id }
     val original = template(series)
-    val future = Recurrence.future(rule, now(), zone(), original.mode).take(3).toList()
+    val future = Recurrence.future(rule, now(), zone(), original.mode).filter {
+      routineDateEligible(original.routineId, occurrenceId(id, it.nominal.toString()), it.nominal.toString())
+    }.take(3).toList()
     mapOf("id" to series.id, "seriesId" to series.seriesId, "revision" to series.revision,
       "state" to series.state, "exhausted" to future.isEmpty(), "template" to BackupCodec.record(original),
       "rule" to RuleCodec.map(rule), "registered" to rows.count { !it.exception && it.state == "Scheduled" && it.targetMs > now() },
@@ -118,13 +126,15 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       val representative = (ordinary.ifEmpty { segments }).sortedWith(
         compareByDescending<SeriesRecord> { it.createdAtMs }.thenBy { it.id }).first()
       val candidates = ordinary.flatMap { segment ->
-        Recurrence.future(RuleCodec.decode(segment.rule), at, zone(), template(segment).mode).filter { slot ->
+        val original = template(segment)
+        Recurrence.future(RuleCodec.decode(segment.rule), at, zone(), original.mode).filter { slot ->
           val id = occurrenceId(segment.id, slot.nominal.toString())
           val record = records[id]
           val delivery = deliveries[id]
           record?.completed != true && record?.deleted != true && record?.skipped != true &&
             record?.exception != true && delivery?.exception != true &&
-            delivery?.state !in setOf("Completed", "Deleted", "Skipped", "Replaced")
+            delivery?.state !in setOf("Completed", "Deleted", "Skipped", "Replaced") &&
+            routineDateEligible(original.routineId, id, slot.nominal.toString())
         }.take(3).map { slot -> segment to slot }.toList()
       }.sortedWith(compareBy<Pair<SeriesRecord, ResolvedSlot>> { it.second.eventStartMs }
         .thenBy { it.first.id }.thenBy { it.second.nominal })
@@ -135,7 +145,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
           "nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs, "alarmAtMs" to slot.alarmAtMs,
           "zoneId" to slot.zoneId, "mode" to template(segment).mode, "state" to segment.state) },
         "unfinishedCount" to records.values.count { it.segmentId in ids && !it.completed && !it.deleted && !it.skipped &&
-          (it.routineId == null || it.nominalSlot!!.substringBefore('T') >= RoutinePolicy.date(at, zone()).toString() && db().routines().session(it.id)?.ended != true) })
+          (it.routineId == null || it.nominalSlot!!.substringBefore('T') >= RoutinePolicy.date(at, zone()).toString() &&
+            routineDateEligible(it.routineId, it.id, it.nominalSlot!!)) })
     }.sortedBy { it["seriesId"] as String }
   }
   fun editTemplate(id: String, nominal: String?): ReminderRecord {
@@ -299,6 +310,30 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         val private = template(series)
         val rule = RuleCodec.decode(series.rule)
         operational.runInTransaction {
+          if (private.routineId != null) {
+            // Fence already-owned dates before publishing a replacement's DP
+            // rule. A crash before registration must not let Direct Boot revive
+            // a different occurrence for an existing dated session.
+            db().routines().sessions().filter { it.routineId == private.routineId }.forEach { saved ->
+              val nominal = LocalDate.parse(saved.date).atTime(rule.anchor.toLocalTime())
+              if (nominal >= rule.anchor && (rule.endExclusive == null || nominal < rule.endExclusive) &&
+                nominal.dayOfWeek.value in rule.weekdays) {
+                val occurrence = occurrenceId(id, nominal.toString())
+                if (occurrence != saved.occurrenceId) {
+                  val prior = alerts.find(occurrence)
+                  val slot = Recurrence.resolve(rule, nominal, zone())
+                  if (prior == null) alerts.put(AlertRecord(occurrence, slot.alarmAtMs, 1, "Expired", mode = private.mode,
+                    sound = private.sound, vibration = private.vibration, segmentId = id, nominalSlot = nominal.toString(),
+                    resolvedZone = slot.zoneId, profile = RoutinePolicy.PROFILE,
+                    expiresAtMs = RoutinePolicy.end(nominal.toLocalDate(), zone()), dayEnded = true))
+                  else if (!prior.dayEnded) {
+                    alerts.put(prior.copy(state = "Expired", dayEnded = true, generation = prior.generation + 1))
+                    try { scheduler.cancel(prior) } catch (_: Exception) { }
+                  }
+                }
+              }
+            }
+          }
           alerts.plan(SeriesPlan(id, RuleCodec.encode(rule), series.state, private.mode, private.sound,
             private.vibration, (dao.settings() ?: SettingsRecord()).snoozeMinutes, rule.zone(zone()).id,
             alerts.plan(id)?.materializedThrough, if (private.routineId != null) RoutinePolicy.PROFILE else "Reminder"))
@@ -341,7 +376,7 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         alerts.put(it.copy(state = if (it.mode == "None") "NoAlert" else if (it.profile == RoutinePolicy.PROFILE) "Available" else "Missed", generation = it.generation + 1))
       }
       if (plan.resolvedZone != resolvedZone) {
-        rows.filter { !it.exception && scheduledAt(it, rule) > now() && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->
+        rows.filter { !it.exception && (scheduledAt(it, rule) > now() || it.profile == RoutinePolicy.PROFILE && !it.dayEnded && it.nominalSlot!!.substringBefore('T') > RoutinePolicy.date(now(), zone()).toString()) && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->
           val slot = Recurrence.resolve(rule, LocalDateTime.parse(old.nominalSlot), zone())
           alerts.put(old.copy(targetMs = slot.alarmAtMs, resolvedZone = resolvedZone, generation = old.generation + 1, state = "Pending",
             expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(resolvedZone)) else 0))

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Rect
 import android.os.LocaleList
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.runComposition
 import androidx.glance.ExperimentalGlanceApi
 import com.remilo.alarm.core.AppearancePolicy
+import com.remilo.alarm.presentation.L10n
 import com.remilo.alarm.system.PresentationLanguage
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CompletableDeferred
@@ -103,6 +105,63 @@ class WidgetRenderTest {
       assertTrue(text(largeText).contains("Routine")); assertTrue(text(largeText).contains("1/4"))
       render(context(language,1f),previewSnapshot(),300,280,"$language-focus")
       render(context(language,1.5f),previewSnapshot().copy(undoToken = "undo",undoName = "Bird-dog"),300,440,"$language-undo-150")
+    }
+  }
+  private fun assertActionFullyVisible(root: View, label: String) {
+    val matches = textViews(root).filter { it.text.toString().equals(label, ignoreCase = true) }
+    assertEquals("Expected one action named $label; rendered ${text(root)}", 1, matches.size)
+    val button = matches.single()
+    assertEquals("Action must be visible: $label", View.VISIBLE, button.visibility)
+    val layout = button.layout ?: throw AssertionError("Action has no measured text layout: $label")
+    val transformed = button.transformationMethod?.getTransformation(button.text, button)?.toString() ?: button.text.toString()
+    assertEquals("Text transformation must preserve the whole label: $label", transformed, layout.text.toString())
+    assertTrue("Action has no visible text lines: $label", layout.lineCount > 0)
+    assertEquals("Final label characters must not be hidden: $label", transformed.length, layout.getLineEnd(layout.lineCount - 1))
+    val availableWidth = button.width - button.compoundPaddingLeft - button.compoundPaddingRight
+    for (line in 0 until layout.lineCount) {
+      assertEquals("Action label must not ellipsize: $label, line $line", 0, layout.getEllipsisCount(line))
+      assertTrue("Action label exceeds its text width: $label, line $line", layout.getLineMax(line) <= availableWidth + 1f)
+      val ink = Rect()
+      button.paint.getTextBounds(transformed, layout.getLineStart(line), layout.getLineVisibleEnd(line), ink)
+      val baseline = button.totalPaddingTop + layout.getLineBaseline(line)
+      assertTrue("Action glyphs exceed their text viewport: $label, line $line ($ink / ${button.height})",
+        baseline + ink.top >= button.extendedPaddingTop && baseline + ink.bottom <= button.height - button.extendedPaddingBottom)
+    }
+    // Check every measured clipping ancestor, not only the final host bounds.
+    var child: View = button
+    val bounds = Rect(0, 0, button.width, button.height)
+    while (child.parent is ViewGroup) {
+      val parent = child.parent as ViewGroup
+      bounds.offset(child.left - parent.scrollX, child.top - parent.scrollY)
+      if (parent.clipChildren) {
+        val left = if (parent.clipToPadding) parent.paddingLeft else 0
+        val top = if (parent.clipToPadding) parent.paddingTop else 0
+        val right = parent.width - if (parent.clipToPadding) parent.paddingRight else 0
+        val bottom = parent.height - if (parent.clipToPadding) parent.paddingBottom else 0
+        assertTrue("Action is clipped by ${parent.javaClass.simpleName}: $label ($bounds / $left,$top,$right,$bottom)",
+          bounds.left >= left && bounds.top >= top && bounds.right <= right && bounds.bottom <= bottom)
+      }
+      child = parent
+    }
+  }
+  @Test fun completionAndUndoLabelsRemainFullyVisibleAtNormalAndLargeText() {
+    for (language in listOf("en", "zh-Hans")) for ((height, scale) in listOf(280 to 1f, 440 to 1.5f)) {
+      val ctx = context(language, scale)
+      for (mode in listOf("continue", "final", "retry")) {
+        val final = mode == "final"
+        val steps = listOf(
+          mapOf("name" to "Bird-dog", "target" to "3 x 10", "completed" to true),
+          mapOf("name" to "Front plank", "target" to "3 x 40 s", "completed" to false),
+          mapOf("name" to "Side plank", "target" to "3 x 25 s", "completed" to final),
+          mapOf("name" to "Intervals", "target" to "8 intervals", "completed" to final))
+        val sample = previewSnapshot().copy(undoToken = "undo", undoName = "Bird-dog", retryToken = if (mode == "retry") "retry" else null,
+          session = previewSnapshot().session!! + mapOf("steps" to steps, "completedCount" to if (final) 3 else 1))
+        val root = render(ctx, sample, 300, height, "$language-actions-$height-${(scale * 100).toInt()}-$mode")
+        val label = when (mode) { "retry" -> "Retry the same action"; "final" -> "Complete exercise"; else -> "Complete & continue" }
+        if (language == "zh-Hans" && mode == "retry") assertEquals("\u91cd\u8bd5\u540c\u4e00\u64cd\u4f5c", L10n.text(ctx, label))
+        assertActionFullyVisible(root, L10n.text(ctx, label))
+        assertActionFullyVisible(root, L10n.text(ctx, "Undo"))
+      }
     }
   }
   @Test fun lockedAndRestStatesExposeNoCompletion() {
