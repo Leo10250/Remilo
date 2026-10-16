@@ -14040,6 +14040,254 @@
       },
       "context": "Tomorrow-effective routine preview",
       "calendarStatus": false
+    },
+    "widget_name": {
+      "en": "Home-screen widget",
+      "zh-Hans": "主屏幕小组件",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_description": {
+      "en": "See daily routine progress and today’s reminders.",
+      "zh-Hans": "查看每日训练进度和今天的提醒。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_unlock": {
+      "en": "Unlock to view Remilo.",
+      "zh-Hans": "解锁后查看 Remilo。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_add": {
+      "en": "Add to Home screen",
+      "zh-Hans": "添加到主屏幕",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_done": {
+      "en": "Mark as done",
+      "zh-Hans": "标记为完成",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_preview_title": {
+      "en": "Front plank",
+      "zh-Hans": "平板支撑",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_preview_target": {
+      "en": "3 × 40 s",
+      "zh-Hans": "3 组 × 40 秒",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_settings": {
+      "en": "Widget settings",
+      "zh-Hans": "小组件设置",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_focus": {
+      "en": "Routine Focus",
+      "zh-Hans": "训练焦点",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_choose": {
+      "en": "Choose what to show",
+      "zh-Hans": "选择显示内容",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_remilo_today": {
+      "en": "Remilo · Today",
+      "zh-Hans": "Remilo · 今天",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_remilo_routine": {
+      "en": "Remilo · Routine",
+      "zh-Hans": "Remilo · 训练",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_today_hint": {
+      "en": "Today's and overdue reminders, with an optional routine.",
+      "zh-Hans": "显示今天和已逾期的提醒，并可选择一项训练。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_routine_hint": {
+      "en": "One routine's exercise and daily progress.",
+      "zh-Hans": "显示一项训练的动作和每日进度。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_no_routine": {
+      "en": "No routine",
+      "zh-Hans": "不显示训练",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_no_routine_selected": {
+      "en": "No routine · Selected",
+      "zh-Hans": "不显示训练 · 已选择",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_create_hint": {
+      "en": "Create a routine in Remilo to show its progress.",
+      "zh-Hans": "在 Remilo 中创建训练后，可在此显示进度。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_size_hint": {
+      "en": "The size and text settings determine how much fits. Smaller widgets open Remilo for actions.",
+      "zh-Hans": "显示内容随尺寸和文字设置调整。较小的小组件会打开 Remilo 执行操作。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_load_error": {
+      "en": "Could not load the widget. Refresh to try again.",
+      "zh-Hans": "无法加载小组件，请刷新后重试。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_changed": {
+      "en": "This view changed. Review the refreshed routine.",
+      "zh-Hans": "此视图已更改，请查看刷新后的训练。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_setup_changed": {
+      "en": "This view changed. Close setup and try again.",
+      "zh-Hans": "此视图已更改，请关闭设置后重试。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_pin_fallback": {
+      "en": "Add Remilo from your home screen's Widgets menu.",
+      "zh-Hans": "请从主屏幕的“小组件”菜单添加 Remilo。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_unavailable": {
+      "en": "Routine unavailable",
+      "zh-Hans": "训练不可用",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_not_started": {
+      "en": "Not started yet",
+      "zh-Hans": "尚未开始",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_today_reminders": {
+      "en": "Today's reminders",
+      "zh-Hans": "今天的提醒",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_empty": {
+      "en": "No reminders for today.",
+      "zh-Hans": "今天没有提醒。",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_reminder_count": {
+      "en": "{count} reminders",
+      "zh-Hans": "{count} 个提醒",
+      "args": {
+        "count": "number"
+      },
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_agenda": {
+      "en": "View Agenda",
+      "zh-Hans": "查看日程",
+      "args": {},
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_agenda_count": {
+      "en": "View Agenda ({count})",
+      "zh-Hans": "查看日程（{count}）",
+      "args": {
+        "count": "number"
+      },
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_undo": {
+      "en": "Undo {name}",
+      "zh-Hans": "撤销 {name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_next_alert": {
+      "en": "Next alert: {time}",
+      "zh-Hans": "下次提醒：{time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "widget_setup_open_error": {
+      "en": "Widget setup could not open.",
+      "zh-Hans": "无法打开小组件设置。",
+      "args": {},
+      "context": "widget setup",
+      "calendarStatus": false
+    },
+    "widget_unlock_open": {
+      "en": "Open Remilo after unlocking.",
+      "zh-Hans": "解锁后打开 Remilo。",
+      "args": {},
+      "context": "widget setup",
+      "calendarStatus": false
+    },
+    "widget_completed_name": {
+      "en": "Completed: {name}",
+      "zh-Hans": "已完成：{name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "widget Undo context",
+      "calendarStatus": false
     }
   }
 }

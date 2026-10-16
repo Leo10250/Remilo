@@ -1983,7 +1983,41 @@ export const catalogs = {
     "routine_validation_13": "Undo Skip today before changing exercises.",
     "routine_validation_14": "Choose an exercise from this session.",
     "routine_validation_15": "Choose the exercise completion state.",
-    "routine_next_after_changes": "First notification with these changes: {time}"
+    "routine_next_after_changes": "First notification with these changes: {time}",
+    "widget_name": "Home-screen widget",
+    "widget_description": "See daily routine progress and today’s reminders.",
+    "widget_unlock": "Unlock to view Remilo.",
+    "widget_add": "Add to Home screen",
+    "widget_done": "Mark as done",
+    "widget_preview_title": "Front plank",
+    "widget_preview_target": "3 × 40 s",
+    "widget_settings": "Widget settings",
+    "widget_focus": "Routine Focus",
+    "widget_choose": "Choose what to show",
+    "widget_remilo_today": "Remilo · Today",
+    "widget_remilo_routine": "Remilo · Routine",
+    "widget_today_hint": "Today's and overdue reminders, with an optional routine.",
+    "widget_routine_hint": "One routine's exercise and daily progress.",
+    "widget_no_routine": "No routine",
+    "widget_no_routine_selected": "No routine · Selected",
+    "widget_create_hint": "Create a routine in Remilo to show its progress.",
+    "widget_size_hint": "The size and text settings determine how much fits. Smaller widgets open Remilo for actions.",
+    "widget_load_error": "Could not load the widget. Refresh to try again.",
+    "widget_changed": "This view changed. Review the refreshed routine.",
+    "widget_setup_changed": "This view changed. Close setup and try again.",
+    "widget_pin_fallback": "Add Remilo from your home screen's Widgets menu.",
+    "widget_unavailable": "Routine unavailable",
+    "widget_not_started": "Not started yet",
+    "widget_today_reminders": "Today's reminders",
+    "widget_empty": "No reminders for today.",
+    "widget_reminder_count": "{count} reminders",
+    "widget_agenda": "View Agenda",
+    "widget_agenda_count": "View Agenda ({count})",
+    "widget_undo": "Undo {name}",
+    "widget_next_alert": "Next alert: {time}",
+    "widget_setup_open_error": "Widget setup could not open.",
+    "widget_unlock_open": "Open Remilo after unlocking.",
+    "widget_completed_name": "Completed: {name}"
   },
   "zh-Hans": {
     "m_bf4156d6b15c": "已启用日历自动同步",
@@ -3959,7 +3993,41 @@ export const catalogs = {
     "routine_validation_13": "请先撤销跳过今天，再更改练习。",
     "routine_validation_14": "请选择此记录中的一项练习。",
     "routine_validation_15": "请选择练习完成状态。",
-    "routine_next_after_changes": "修改生效后的首次通知：{time}"
+    "routine_next_after_changes": "修改生效后的首次通知：{time}",
+    "widget_name": "主屏幕小组件",
+    "widget_description": "查看每日训练进度和今天的提醒。",
+    "widget_unlock": "解锁后查看 Remilo。",
+    "widget_add": "添加到主屏幕",
+    "widget_done": "标记为完成",
+    "widget_preview_title": "平板支撑",
+    "widget_preview_target": "3 组 × 40 秒",
+    "widget_settings": "小组件设置",
+    "widget_focus": "训练焦点",
+    "widget_choose": "选择显示内容",
+    "widget_remilo_today": "Remilo · 今天",
+    "widget_remilo_routine": "Remilo · 训练",
+    "widget_today_hint": "显示今天和已逾期的提醒，并可选择一项训练。",
+    "widget_routine_hint": "显示一项训练的动作和每日进度。",
+    "widget_no_routine": "不显示训练",
+    "widget_no_routine_selected": "不显示训练 · 已选择",
+    "widget_create_hint": "在 Remilo 中创建训练后，可在此显示进度。",
+    "widget_size_hint": "显示内容随尺寸和文字设置调整。较小的小组件会打开 Remilo 执行操作。",
+    "widget_load_error": "无法加载小组件，请刷新后重试。",
+    "widget_changed": "此视图已更改，请查看刷新后的训练。",
+    "widget_setup_changed": "此视图已更改，请关闭设置后重试。",
+    "widget_pin_fallback": "请从主屏幕的“小组件”菜单添加 Remilo。",
+    "widget_unavailable": "训练不可用",
+    "widget_not_started": "尚未开始",
+    "widget_today_reminders": "今天的提醒",
+    "widget_empty": "今天没有提醒。",
+    "widget_reminder_count": "{count} 个提醒",
+    "widget_agenda": "查看日程",
+    "widget_agenda_count": "查看日程（{count}）",
+    "widget_undo": "撤销 {name}",
+    "widget_next_alert": "下次提醒：{time}",
+    "widget_setup_open_error": "无法打开小组件设置。",
+    "widget_unlock_open": "解锁后打开 Remilo。",
+    "widget_completed_name": "已完成：{name}"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -5920,4 +5988,38 @@ export interface MessageArguments {
   routine_validation_14: Record<string, never>;
   routine_validation_15: Record<string, never>;
   routine_next_after_changes: { time: string };
+  widget_name: Record<string, never>;
+  widget_description: Record<string, never>;
+  widget_unlock: Record<string, never>;
+  widget_add: Record<string, never>;
+  widget_done: Record<string, never>;
+  widget_preview_title: Record<string, never>;
+  widget_preview_target: Record<string, never>;
+  widget_settings: Record<string, never>;
+  widget_focus: Record<string, never>;
+  widget_choose: Record<string, never>;
+  widget_remilo_today: Record<string, never>;
+  widget_remilo_routine: Record<string, never>;
+  widget_today_hint: Record<string, never>;
+  widget_routine_hint: Record<string, never>;
+  widget_no_routine: Record<string, never>;
+  widget_no_routine_selected: Record<string, never>;
+  widget_create_hint: Record<string, never>;
+  widget_size_hint: Record<string, never>;
+  widget_load_error: Record<string, never>;
+  widget_changed: Record<string, never>;
+  widget_setup_changed: Record<string, never>;
+  widget_pin_fallback: Record<string, never>;
+  widget_unavailable: Record<string, never>;
+  widget_not_started: Record<string, never>;
+  widget_today_reminders: Record<string, never>;
+  widget_empty: Record<string, never>;
+  widget_reminder_count: { count: number };
+  widget_agenda: Record<string, never>;
+  widget_agenda_count: { count: number };
+  widget_undo: { name: string };
+  widget_next_alert: { time: string };
+  widget_setup_open_error: Record<string, never>;
+  widget_unlock_open: Record<string, never>;
+  widget_completed_name: { name: string };
 }

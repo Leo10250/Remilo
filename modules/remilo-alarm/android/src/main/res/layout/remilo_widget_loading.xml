@@ -1,0 +1,3 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/widget_row_single" android:padding="16dp">
+<TextView android:layout_width="match_parent" android:layout_height="match_parent" android:text="@string/l10n_m_ba3bbbe10d8b" android:textColor="#172331" android:textSize="16sp" android:gravity="center" />
+</FrameLayout>

@@ -61,6 +61,9 @@ implementation units; approval of a synthetic image does not complete one.
 The owner's [15 October weekly routine contract](weekly-routines.md) adds optional
 weekly plans and date-scoped exercise progress within the existing reminder model.
 
+The owner's [15 October widget contract](home-screen-widget.md) adds configurable
+Routine Focus/Today home-screen presentation using the same native authority.
+
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.
 

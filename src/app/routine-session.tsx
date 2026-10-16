@@ -3,6 +3,7 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, View } from 'react-native';
 import type { RoutineCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { WidgetSetupRow } from '../ui/widget-setup';
 import { useTranslation } from '../localization/react';
 import { ActionFeedback, Button, Card, ConnectedGroup, Copy, Disclosure, IconButton, Page, QueryState, SettingRow, Sheet } from '../ui/components';
 import { CommandRecovery, RootNotice, useCapturedCommand } from '../ui/navigation';
@@ -88,6 +89,7 @@ export default function RoutineSessionScreen() {
       </View>)}</Disclosure>}
     </View>}
     <Sheet title={t('routine_more')} visible={menu} onClose={() => setMenu(false)}>
+      <WidgetSetupRow routineId={id} disabled={action.guarded || session?.deleted} onOpen={() => setMenu(false)} />
       {session?.occurrenceId && !session.ended && !session.skipped && !session.completed && !session.deleted && <SettingRow label={t('routine_skip')} icon="block" disabled={action.guarded} onPress={() => { setMenu(false); mutate('SkipRoutineDay'); }} />}
       <SettingRow label={t('routine_history')} icon="history" disabled={action.guarded} onPress={() => { setMenu(false); setHistory(true); }} />
       <SettingRow label={t('routine_edit')} icon="edit" disabled={action.guarded} onPress={openPlan} />

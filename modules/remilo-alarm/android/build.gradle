@@ -25,6 +25,9 @@ android {
 expoModule { canBePublished false }
 ksp { arg('room.schemaLocation', "$projectDir/schemas") }
 dependencies {
+  implementation 'androidx.glance:glance-appwidget:1.2.0'
+  implementation 'androidx.glance:glance-material3:1.2.0'
+  testImplementation 'androidx.glance:glance-appwidget-testing:1.2.0'
   implementation 'com.google.android.gms:play-services-auth:22.0.0'
   implementation 'androidx.room:room-runtime:2.8.5'
   implementation 'androidx.work:work-runtime:2.12.0'

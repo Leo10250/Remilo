@@ -381,6 +381,20 @@ G5: disconnected changes/convergence, normal and offline primary handoff, logout
 Calendar writer separate from ringing role. G6: real-iPhone behavior, documented
 limits, widget/countdown integration and visible coverage. No early iOS testing.
 
+## Android home-screen widget acceptance
+
+RW-03 widget checks cover independent Routine Focus/Today instances, configuration
+cancellation/reconfiguration, ID restore, removal, native progress convergence,
+duplicate/concurrent/stale taps, receipt retry and process death around final-step
+completion/Undo. Test exact weekly rest/skip/pause behavior, midnight/DST/clock/zone
+changes, mixed collections beyond 50 entries, accurate pre-limit counts and
+ordinary overdue/postponement. Locked/unsupported hosts must remain generic.
+Review production RemoteViews across eight appearance pairs, English/Chinese,
+compact/interactive/expanded sizes and 200% text. Signed-phone acceptance separately
+checks real launcher pin/cancel/resize/restore, TalkBack, app/widget updates without
+React Native, denied notifications, reboot/first unlock and deferred background
+refresh. Do not equate host capture or signed assembly with those observations.
+
 ## Shipped 0.4.0 UX refinement observations
 
 The layout references in this section describe earlier pending baseline checks.

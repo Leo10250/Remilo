@@ -43,6 +43,7 @@ class RoutineEngineTest {
     shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
     shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
     context.deleteDatabase("remilo-content.db"); context.createDeviceProtectedStorageContext().deleteDatabase("remilo-operational.db")
+    context.getSharedPreferences("remilo-widgets-v1", Context.MODE_PRIVATE).edit().clear().commit()
     engine = newEngine()
   }
   @After fun teardown() { engine.close(); TimeZone.setDefault(originalZone) }
@@ -79,6 +80,106 @@ class RoutineEngineTest {
       mapOf("id" to "$d-$i", "name" to text.substringBefore('|'), "target" to text.substringAfter('|'), "notes" to "", "illustration" to "") }) }
   }
   private fun draft(mode: String = "None") = mapOf("title" to "My private weekly routine", "minutes" to 540, "mode" to mode, "listId" to null, "days" to week())
+
+  private fun widget(number: Int = 1) = request { engine.widgetSnapshot(number) }
+  private fun widgetAct(token: String, number: Int = 1) = request { engine.widgetAction(number, token) }
+  private fun widgetConfigure(id: String?, mode: String = "Routine", number: Int = 1, revision: Long = 0) = request { engine.configureWidget(number, mode, id, revision) }
+
+  @Test fun widgetDoneAdvancesOnceAndUndoSurvivesFinalExerciseAndRestart() {
+    val id = create(); widgetConfigure(id)
+    var previous: String? = null
+    for (i in 0..3) {
+      val snapshot = widget(); assertEquals(i, snapshot.session!!["completedCount"])
+      val token = snapshot.doneToken!!; assertEquals(token, widget().doneToken)
+      assertEquals("Applied", widgetAct(token)["status"])
+      assertEquals("Applied", widgetAct(token)["status"])
+      assertEquals(i+1, widget().session!!["completedCount"]); previous = token
+    }
+    restart(); assertNull(widget().doneToken); assertEquals("Intervals", widget().undoName)
+    assertEquals("Applied", widgetAct(widget().undoToken!!)["status"])
+    assertEquals(3, read(id)["completedCount"]); assertNotNull(widget().doneToken)
+    assertEquals("Applied", widgetAct(previous!!)["status"]); assertEquals(3, read(id)["completedCount"])
+  }
+  @Test fun widgetStaleRevisionAndTwoInstancesNeverCompleteAnotherExercise() {
+    val id = create(); widgetConfigure(id); widgetConfigure(id, number = 2)
+    val first = widget().doneToken!!; val second = widget(2).doneToken!!
+    widgetAct(first); assertEquals("Rejected", widgetAct(second, 2)["status"])
+    assertEquals(1, widget(2).session!!["completedCount"])
+    val stale = widget().doneToken!!
+    command(action(read(id), index = 1, operation = "app:next"))
+    assertEquals("Rejected", widgetAct(stale)["status"]); assertEquals(2, read(id)["completedCount"])
+    assertNull(widget(2).undoToken)
+  }
+  @Test fun widgetMidnightRestSkipPausedAndFutureOnlyEditsUseNativeSession() {
+    val id = create(); widgetConfigure(id); val monday = widget().doneToken!!
+    now = instant("2026-10-13T00:00:00Z")
+    assertEquals("DAY_ENDED", widgetAct(monday)["errorCode"])
+    assertEquals("2026-10-13", widget().date); assertEquals(1, widget().session!!["totalCount"])
+    command(action(read(id), "SkipRoutineDay")); assertNull(widget().doneToken)
+    command(action(read(id), "UndoSkipRoutineDay")); assertNotNull(widget().doneToken)
+    command(mapOf("kind" to "PauseRoutine", "operationId" to "pause-widget", "routineId" to id, "expectedRevision" to 1))
+    assertNotNull(widget().doneToken) // Existing Tuesday can finish.
+    now = instant("2026-10-14T08:00:00Z"); assertNull(widget().doneToken); assertEquals("Paused",widget().session!!["state"])
+    now = instant("2026-10-18T08:00:00Z"); assertEquals("Rest",widget().session!!["state"]); assertNull(widget().doneToken)
+  }
+  @Test fun widgetConfigFencesOldActionsAndRestoresOnlyConfiguration() {
+    val first = create(); val second = create(operation = "another")
+    widgetConfigure(first); val stale = widget().doneToken!!
+    widgetConfigure(second, revision = 1); assertEquals("Rejected", widgetAct(stale)["status"])
+    assertEquals(0, read(first)["completedCount"]); assertEquals(0, read(second)["completedCount"])
+    request { engine.restoreWidget(1, 3) }; assertFalse(widget().configured)
+    assertEquals(second,widget(3).configuration.routineId); assertNull(widget(3).undoToken)
+    assertEquals("Rejected", widgetAct(stale, 3)["status"])
+    val before = widget(3); widgetAct(before.doneToken!!, 3)
+    val current = widget(3); assertNotNull(current.undoToken)
+    request { engine.restoreWidget(3, 3) }
+    val sameId = widget(3)
+    assertEquals(second,sameId.configuration.routineId)
+    assertTrue(sameId.configuration.revision > current.configuration.revision)
+    assertNull(sameId.undoToken); assertNull(sameId.retryToken)
+    assertNotEquals(current.doneToken,sameId.doneToken)
+    assertEquals("Rejected",widgetAct(current.doneToken!!,3)["status"])
+    assertEquals(1,read(second)["completedCount"])
+    request { engine.removeWidget(3) }; assertFalse(widget(3).configured)
+    assertEquals(2, request { engine.queryRoutines() }.size)
+  }
+  @Test fun widgetPendingReceiptRecoversAfterNativeCommitWithoutNewOperation() {
+    val id = create(); widgetConfigure(id); val token = widget().doneToken!!
+    failAt = "committed"
+    try { widgetAct(token); fail("Expected interruption") } catch (_: java.util.concurrent.ExecutionException) { }
+    restart(); val current = widget(); assertEquals(1,current.session!!["completedCount"])
+    assertNull(current.retryToken); assertEquals("Bird-dog",current.undoName)
+    assertEquals("Applied",widgetAct(token)["status"]); assertEquals(1,read(id)["completedCount"])
+  }
+  @Test fun widgetTodayFiltersBeforeLimitingAcrossMoreThanFiftyRecords() {
+    val id = create(); widgetConfigure(id,"Today")
+    for (i in 0..54) command(mapOf("kind" to "Create","operationId" to "widget-normal:$i", "title" to "Reminder $i", "mode" to "None", "eventStartMs" to now + i * 1000L))
+    now = instant("2026-10-13T12:00:00Z")
+    command(mapOf("kind" to "Create","operationId" to "widget-future", "title" to "Tomorrow", "mode" to "None", "eventStartMs" to now + 86_400_000L))
+    val today = widget(); assertEquals(55,today.total); assertEquals(20,today.reminders.size)
+    assertTrue(today.reminders.all { it["routine"] == null && it["overdue"] == true })
+    assertEquals("2026-10-13",today.session!!["date"])
+    widgetConfigure(null,"Today",revision = 1); assertNull(widget().session); assertEquals(55,widget().total)
+  }
+  @Test fun widgetLockedAndUnsupportedHostNeverReadPrivateContentOrAcceptActions() {
+    val id = create(); widgetConfigure(id); val token = widget().doneToken!!
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+    assertTrue(widget().locked); assertNull(widget().session)
+    assertEquals("LOCKED",widgetAct(token)["errorCode"])
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    assertTrue(request { engine.widgetSnapshot(1,false) }.locked)
+    assertEquals("LOCKED", request { engine.widgetAction(1,token,false) }["errorCode"])
+    assertEquals(0, read(id)["completedCount"])
+  }
+  @Test fun widgetDraftPreviewAndCancelledPinNeverWriteConfigurationOrProgress() {
+    val id = create(); assertEquals("preview",request { engine.widgetPreview("Routine",id) }.doneToken)
+    assertFalse(widget().configured); assertEquals(0,read(id)["completedCount"])
+    val pin = request { engine.captureWidgetPin("Routine",id) }
+    assertFalse(widget().configured)
+    assertTrue(request { engine.finishWidgetPin(pin,9) }); assertFalse(request { engine.finishWidgetPin(pin,10) })
+    assertEquals(id,widget(9).configuration.routineId)
+    request { engine.pruneWidgets(emptySet()) }; assertFalse(widget(9).configured)
+  }
 
   @Test fun datesRestAndOverdueStayIndependentOfDelivery() {
     val id = create(); val monday = read(id)

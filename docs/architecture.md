@@ -640,6 +640,41 @@ but no routine operation receipts, Android generations/handles, alarm sessions o
 Calendar state. Readers retain formats 1–4. Restore remaps plan/family/segment/date
 identities together for conflict copies, restores purge exclusions first and
 preserves retry-stable imports. Routine authored data is excluded by native Calendar
-publication/link/export guards. The deferred widget must use these same queries
+publication/link/export guards. The widget uses these same queries
 and guarded commands; React state and presentation refresh timers have no durable
 progress or scheduling authority.
+
+## Native home-screen widget
+
+RW-03 uses Glance 1.2.0 and native Compose configuration inside the owned Android
+module. The bridge only exposes widget support and opening setup. Glance reads
+WidgetSnapshot through AlarmEngine.request; WidgetCoordinator projects the same
+dated routine session and a native Today/overdue ordinary-reminder query. The
+union is selected before ordering/counting/pagination, capped at 20 widget rows.
+No reminder delivery, recurrence or progress authority moves into Glance.
+
+The CE `remilo-widgets-v1` preferences contain versioned per-instance configuration,
+captured command descriptors and a last-widget-action identity. AlarmEngine's
+single worker owns all reads/mutations. Descriptors bind configuration revision,
+date, occurrence, stable exercise ID, expected session revision and operation ID.
+Routine receipts precede stale checks for committed retries. A pending identity
+survives an uncertain outcome; the refreshed widget offers the exact Retry, and a
+committed receipt reconstructs acknowledgement/Undo after process death. No copied
+exercise checks, DP content, database migration or portable backup change is added.
+Widget-ID restore copies configuration only and mints fresh action descriptors.
+
+Native commit/presentation hooks enqueue coalesced WorkManager refreshes without
+depending on bridge observers. Active widgets also retain a 30-minute recovery
+opportunity and a one-time next midnight/atmosphere-boundary request. Final-widget
+removal cancels periodic/boundary work and prunes preferences. WorkManager is not
+initialized before first unlock; the direct-boot path sends generic RemoteViews
+without CE or Glance access. Unsupported hosts receive generic content. Home-screen
+and `not_keyguard` metadata limit placement; Android/launchers retain control of
+cached pixels and refresh timing. Every mutation still checks native date/revision.
+
+An active Glance session collects a discardable StateFlow of native projections;
+`updateAll` alone does not rerun the initial `provideGlance` data load. Refresh
+workers and exercise callbacks reload through the native worker before publishing.
+A process-local native projection epoch rejects late older query results, while
+language/clock/zone/font presentation changes invalidate the view. This cache
+never validates commands or stores progress durably and is pruned with instances.

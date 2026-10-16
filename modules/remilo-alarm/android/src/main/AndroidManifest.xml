@@ -8,6 +8,14 @@
   <uses-permission android:name="android.permission.WAKE_LOCK" />
   <uses-permission android:name="android.permission.VIBRATE" />
   <application>
+    <receiver android:name=".widget.RemiloWidgetReceiver" android:exported="false" android:directBootAware="true" android:label="@string/l10n_widget_name">
+      <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/remilo_widget" />
+    </receiver>
+    <receiver android:name=".widget.WidgetPinReceiver" android:exported="false" />
+    <activity android:name=".widget.WidgetConfigureActivity" android:exported="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:windowSoftInputMode="adjustResize">
+      <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+    </activity>
     <activity android:name=".calendar.CalendarAuthorizationActivity" android:exported="false" android:directBootAware="false" android:excludeFromRecents="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     <receiver android:name=".system.AlarmReceiver" android:exported="false" android:directBootAware="true" />
     <receiver android:name=".system.RecoveryReceiver" android:exported="true" android:directBootAware="true">

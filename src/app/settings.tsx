@@ -6,6 +6,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { WidgetSetupRow } from '../ui/widget-setup';
 import type { AppSettings } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import type { Tone } from '../domain/actions';
 import { normalizeAtmosphere } from '../domain/appearance';
@@ -100,6 +101,7 @@ export default function Settings() {
           onPress={() => router.push({ pathname: '/appearance', params: routeParams })} /></ConnectedGroup>
         <ConnectedGroup footer={preferenceFeedback('language')}><SettingRow key="language" icon="language" label={t('m_a4fe65264ef7')} value={settings.language === 'system' ? t('m_b0459211f9f7') : settings.language === 'en' ? 'English' : '简体中文'} disabled={pending} onPress={() => setLanguagePicker(true)} /></ConnectedGroup>
       </>}
+      <ConnectedGroup><WidgetSetupRow disabled={pending} /></ConnectedGroup>
       <ConnectedGroup><SettingRow key="permissions" icon="alarm" label={t('m_b7902c54f3ec')} value={nativeAvailable ? permission.message : t('m_9abfcd6cc71c')}
         description={permissionRefresh} disabled={pending} onPress={openAlarmCheck} /></ConnectedGroup>
       <ConnectedGroup><SettingRow key="google-calendar" icon="event" label={t('m_b074310e911f')} description={t('m_e75d471ec00e')} disabled={pending}

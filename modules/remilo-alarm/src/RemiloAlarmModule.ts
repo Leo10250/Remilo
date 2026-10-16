@@ -4,6 +4,8 @@ import { type TimeDisplayPreferences, type CalendarConnection, type CalendarPubl
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
+  getWidgetSupport(): Promise<{ pinSupported: boolean; instanceCount: number }>;
+  openWidgetSetup(routineId: string | null): Promise<{ opened: boolean }>;
   getTimeDisplayPreferences(): Promise<TimeDisplayPreferences>;
   getCapabilities(): Promise<Capabilities>;
   queryReminders(filter: ReminderFilter, cursor: string | null): Promise<ReminderPage>;

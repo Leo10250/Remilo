@@ -77,6 +77,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
   }
   fun presentationChanged(finished: () -> Unit = {}) = submit {
+    com.remilo.alarm.widget.WidgetWork.request(context)
     try {
       reconcileLanguage()
       val notifications = AlarmNotifications(context)
@@ -191,6 +192,7 @@ class AlarmEngine internal constructor(private val context: Context,
     } catch (_: RejectedExecutionException) { finished() /* detached native callback after close */ }
   }
   private fun changed(calendarOpportunity: Boolean = false) {
+    com.remilo.alarm.widget.WidgetWork.request(context)
     listeners.forEach { try { it() } catch (_: Exception) { /* detached bridge */ } }
     if (unlocked()) calendarStore?.sync?.notifications(com.remilo.alarm.calendar.CalendarReviewNotifications(context))
     if (calendarOpportunity) calendarStore?.let { store -> store.sync.wakeDeferred { id ->
@@ -252,6 +254,36 @@ class AlarmEngine internal constructor(private val context: Context,
   }
   private fun routineReady(): Boolean = capabilities().let { it["notifications"] == true && it["routineChannelEnabled"] == true }
   fun queryRoutines(): List<Map<String, Any?>> { prepareContentActions(); return routines.plans() }
+  private val widgets by lazy { com.remilo.alarm.widget.WidgetCoordinator(context, now, ::resolveAppearance,
+    { routineSession(it, null) }, { query(mapOf("view" to "widget"), null) }, ::liveWidgetRoutine,
+    ::apply, { content().routines().operation(it)?.applied == true }) }
+  private fun liveWidgetRoutine(id: String): Boolean = content().records().series().any {
+    it.seriesId == id && it.state != "Deleted" && org.json.JSONObject(it.template).optString("routineId") == id &&
+      !org.json.JSONObject(it.template).optBoolean("deleted")
+  }
+  fun widgetPlans(): List<Map<String, Any?>> { prepareContentActions(); return routines.plans().filter { liveWidgetRoutine(it["id"] as String) } }
+  fun widgetConfiguration(id: Int) = widgets.state.configuration(widgets.state.read(id))
+  private var widgetProjectionEpoch = 0L
+  fun configureWidget(id: Int, mode: String, routineId: String?, expected: Long) = widgets.configure(id, mode, routineId, expected)
+  fun widgetSnapshot(id: Int, supportedHost: Boolean = true): com.remilo.alarm.widget.WidgetSnapshot {
+    if (!unlocked() || !supportedHost) return com.remilo.alarm.widget.WidgetSnapshot(id, locked = true, appearance = resolveAppearance())
+    reconcileLanguage(); prepareContentActions(); return widgets.snapshot(id).copy(localeTag = presentation["localeTag"] as? String ?: "en",
+      uses24HourClock = presentation["uses24HourClock"] == true, projectionEpoch = ++widgetProjectionEpoch)
+  }
+  fun widgetPreview(mode: String, routineId: String?): com.remilo.alarm.widget.WidgetSnapshot {
+    prepareContentActions(); widgets.validate(mode, routineId)
+    return widgets.snapshot(-1, com.remilo.alarm.widget.WidgetConfiguration(mode, routineId))
+  }
+  fun widgetAction(id: Int, token: String, supportedHost: Boolean = true): Map<String, Any?> {
+    if (!unlocked() || !supportedHost || context.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked)
+      return mapOf("status" to "Rejected", "errorCode" to "LOCKED")
+    prepareContentActions(); return widgets.act(id, token)
+  }
+  fun removeWidget(id: Int) = widgets.state.remove(id)
+  fun restoreWidget(oldId: Int, newId: Int) = widgets.state.restore(oldId, newId)
+  fun pruneWidgets(active: Set<Int>) = widgets.state.prune(active)
+  fun captureWidgetPin(mode: String, routineId: String?): String { prepareContentActions(); widgets.validate(mode, routineId); return widgets.state.capturePin(mode, routineId, now()) }
+  fun finishWidgetPin(token: String, id: Int) = widgets.state.finishPin(token, id, now())
   fun previewRoutine(input: Map<String, Any?>): Map<String, Any?> { prepareContentActions(); return routines.preview(input) }
   fun routineSession(id: String, date: String?): Map<String, Any?>? { prepareContentActions(); return routines.session(id, date) }
   fun routineHistory(id: String, cursor: String?): Map<String, Any?> { prepareContentActions(); return routines.history(id, cursor) }
@@ -286,6 +318,8 @@ class AlarmEngine internal constructor(private val context: Context,
         "overdue" -> overdue(record, queryNow)
         "attention" -> !record.deleted && !record.completed && !record.skipped && (overdue(record, queryNow) ||
           alert?.state in setOf("Missed", "Stopped", "TimedOut", "Interrupted", "Blocked", "Failed", "Notified", "Changing"))
+        "widget" -> record.routineId == null && !record.deleted && !record.completed && !record.skipped &&
+          (overdue(record, queryNow) || agendaAt(record, alert) in start until end)
         "today" -> !record.deleted && !record.completed && !record.skipped && agendaAt(record, alert) in start until end
         "upcoming" -> !record.deleted && !record.completed && !record.skipped && agendaAt(record, alert) >= end
         else -> !record.deleted && !record.completed && !record.skipped
@@ -298,7 +332,7 @@ class AlarmEngine internal constructor(private val context: Context,
         .mapValues { (_, entries) -> entries.maxOf { it.occurredAtMs } }
       records.associate { it.id to (activity[it.id to collectionKind(it)] ?: it.eventStartMs) }
     } else emptyMap()
-    val ordered = if (filter["view"] in setOf("agenda", "overdue", "today", "upcoming", "attention")) records.sortedWith(
+    val ordered = if (filter["view"] in setOf("agenda", "overdue", "today", "upcoming", "attention", "widget")) records.sortedWith(
       compareBy<ReminderRecord> { com.remilo.alarm.core.Agenda.rank(agendaGroup(it, queryNow, zone)) }
         .thenBy { if (overdue(it, queryNow)) overdueAt(it) else agendaAt(it) }.thenBy { it.id })
       else if (historical) records.sortedWith(

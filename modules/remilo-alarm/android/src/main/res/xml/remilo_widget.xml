@@ -1,0 +1,7 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+ android:minWidth="180dp" android:minHeight="110dp" android:minResizeWidth="180dp" android:minResizeHeight="110dp"
+ android:targetCellWidth="4" android:targetCellHeight="4" android:resizeMode="horizontal|vertical"
+ android:updatePeriodMillis="0" android:initialLayout="@layout/remilo_widget_loading"
+ android:previewLayout="@layout/remilo_widget_preview" android:description="@string/l10n_widget_description"
+ android:configure="com.remilo.alarm.widget.WidgetConfigureActivity" android:widgetFeatures="reconfigurable"
+ android:widgetCategory="home_screen|not_keyguard" />

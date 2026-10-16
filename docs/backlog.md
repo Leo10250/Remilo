@@ -133,7 +133,7 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 | G4 | Calendar release gate | P4-A/B/C/D/E | pending | Managed discovery/reuse/creation and recovery, both directions after documented opportunities, protected conflicts/unknown writes, recurrence, independent deletion and quiet review notices on an identified signed build |
 | RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | implemented/unverified | [Host evidence](evidence/2026-10-15-weekly-routines.md); versioned drafts, rest days, shared quiet prompt, tomorrow-effective edits and format-5 backup; phone acceptance pending |
 | RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | implemented/unverified | [Host evidence](evidence/2026-10-15-weekly-routines.md); native dated progress, Focus/Agenda/history, Done/Undo/Skip, midnight closure and ordinary overdue isolation; phone acceptance pending |
-| RW-03 | Readable Android home-screen Today widget | RW-02 | pending | today's plan/reminders update across midnight, edits, reboot and completion without opening React Native |
+| RW-03 | Readable Android home-screen Today widget | RW-02 | implemented/unverified | [Host evidence](evidence/2026-10-15-home-screen-widget.md); independent Routine Focus/Today, native dated progress/Undo, native setup and coalesced refresh; launcher/TalkBack/signed-phone acceptance pending |
 | RW-04 | Optional daily Today/agenda digest notification | RW-02 | pending | configurable local time, opt-in and quiet dismissal; no duplicate or alarm-channel behavior |
 | AI-01 | Android assistant/intent compatibility research and action contract | G3 | pending | current official support matrix for Android intents, Gemini/AppFunctions, Samsung/Bixby, versions and limits |
 | AI-02 | Safe external create-reminder/alarm actions and supported Android entry points | AI-01 | pending | voice/deep-link/shortcut intent drafts previewed, explicitly confirmed and saved once through native engine |
@@ -241,6 +241,13 @@ urgent information; verify that classification cannot delay or alter alarm work.
   React Native/Metro/network must not be required for refresh or completion.
   Show no private content before unlock without permission, and test stale widgets,
   size variants, midnight/time-zone transitions and device restart.
+  - RW-03a: native per-instance configuration, session/Today projections and
+    receipt-first guarded exercise actions implemented; host checks passed.
+  - RW-03b: Glance layouts, native setup/pinning, localization and app entry points
+    implemented; actual-component host renders reviewed.
+  - RW-03c: refresh/recovery/privacy, actual RemoteViews review and host checks;
+    [host evidence](evidence/2026-10-15-home-screen-widget.md) passed;
+    launcher/TalkBack/signed-phone acceptance remains a separate physical gate.
 - RW-04: digest is explicitly opt-in with editable delivery time and off switch.
   Show only authorized local data (plus opted-in linked Calendar events when
   P4 permits); no silent alarm-mode downgrade, duplicate notifications, or

@@ -49,6 +49,22 @@ class RemiloAlarmModule : Module() {
   }
   override fun definition() = ModuleDefinition {
     Name("RemiloAlarm")
+    AsyncFunction("getWidgetSupport") {
+      val context = requireNotNull(appContext.reactContext).applicationContext
+      mapOf("pinSupported" to android.appwidget.AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported,
+        "instanceCount" to com.remilo.alarm.widget.WidgetWork.ids(context).size)
+    }
+    AsyncFunction("openWidgetSetup") { routineId: String?, promise: Promise ->
+      val activity = appContext.currentActivity
+      if (activity == null) promise.reject("NOT_AVAILABLE", "Open Remilo after unlocking.", null)
+      else activity.runOnUiThread {
+        try {
+          val intent = Intent(activity, com.remilo.alarm.widget.WidgetConfigureActivity::class.java)
+          if (routineId != null) intent.putExtra("routineId", routineId)
+          activity.startActivity(intent); promise.resolve(mapOf("opened" to true))
+        } catch (_: Exception) { promise.reject("NOT_AVAILABLE", "Widget setup could not open.", null) }
+      }
+    }
     Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
     OnCreate {
       val context = requireNotNull(appContext.reactContext).applicationContext

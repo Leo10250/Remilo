@@ -306,10 +306,20 @@ See the [routine design contract](design/current/weekly-routines.md).
 
 ## Planned Android daily workflows (before iOS)
 
-- A calm, date-aware Today presentation shows that day's workout and relevant
-  reminders; a compact Android home-screen widget can show today's checklist
-  and safe quick actions. A new permanent tab is optional, not required.
-  Device-local day changes, time zones and process death must not show stale dates.
+The Android home-screen widget supports independent Routine Focus and Today
+configurations. Focus offers the first unfinished exercise, target, daily count,
+Mark as done and named Undo through the existing native session. Today places an
+optional pinned Focus above today's and overdue ordinary reminders from all lists;
+reminder rows open their existing Details. Rest days remain informational and
+unfinished ended workouts never enter the overdue list. Compact/large-text views
+open Remilo for actions. Settings and routine contextual actions open native setup.
+No React Native process or network is required for refresh/completion. Background
+refresh is an OS-controlled opportunity; explicit dated actions reject stale work
+even when launcher pixels are delayed. Widget IDs/configuration/actions are local
+presentation state outside portable backups. See the [widget contract](design/current/home-screen-widget.md).
+
+- A broader date-aware in-app Today presentation may supplement the widget without
+  requiring a new permanent tab. Native day/zone resolution remains authoritative.
 - An optional configurable daily agenda notification summarizes what is due
   today and any planned workout, without becoming a second alarm. Calendar items
   may be included only after optional scoped Calendar authorization; this is
