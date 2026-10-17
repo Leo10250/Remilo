@@ -8,7 +8,7 @@ import { Linking, Pressable, View } from 'react-native';
 import type { CalendarCommand, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarCaptureRejected, unsupportedCalendarReason } from '../domain/calendar-link';
 import { calendarError } from '../domain/calendar';
-import { calendarCheckFailure, currentCalendarOperations } from '../domain/calendar-presentation';
+import { calendarCheckFailure, calendarReviewReason, currentCalendarOperations } from '../domain/calendar-presentation';
 import { calendarDispositionLabel } from '../domain/calendar-managed';
 import { calendarLinkStatus } from '../domain/calendar-ux';
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
@@ -123,7 +123,7 @@ export default function CalendarManagement() {
         {status.title === 'Automatic sync on' && link?.successfulAtMs != null && <Copy muted size={14}>{t('m_52f55f8ae5c2')}{scheduleDateTime(link.successfulAtMs)}</Copy>}
       </CalendarStatusCard>}
       {(!link || link.state === 'Detached') && disposition.data && <ConnectedGroup title={t('m_dd9b05869601')}><View key="preference" style={{ padding: 16, gap: 12 }}>
-        <Copy heading>{calendarDispositionLabel(disposition.data)}</Copy><Copy muted>{disposition.data.message}</Copy>
+        <Copy heading>{calendarDispositionLabel(disposition.data)}</Copy>{!!disposition.data.message && <Copy muted>{calendarReviewReason(disposition.data.message)}</Copy>}
         {disposition.data.calendarName && <Copy>{disposition.data.calendarName}</Copy>}
         {active && disposition.data.state === 'LocalOnly' && managed.data?.calendarId && <Button label={t('m_657efab6d3ac')} variant="secondary" disabled={guarded}
           onPress={() => router.push({ pathname: '/calendar-managed', params: { mode: 'setup', adoptOccurrenceId: disposition.data!.occurrenceId, ...origin } } as Href)} />}

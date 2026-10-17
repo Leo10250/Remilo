@@ -209,9 +209,7 @@ class RemiloAlarmModule : Module() {
         "PublishOneOff" -> engine().calendarRequest(true, { it.capture(command) }, { result ->
           promise.resolve(result); runtime.start(CalendarStore.string(command, "operationId"))
         }, reject)
-        "RetryPublication" -> engine().calendarRequest(block = {
-          it.operation(CalendarStore.string(command, "operationId"))?.let(it::view) ?: throw CalendarFailure("NOT_FOUND")
-        }, resolve = { promise.resolve(it); runtime.start(CalendarStore.string(command, "operationId")) }, reject = reject)
+        "RetryPublication" -> runtime.checkPublication(CalendarStore.string(command, "operationId"), { promise.resolve(it) }, reject)
         "DisconnectCalendar" -> engine().calendarRequest(true, {
           it.disconnect(CalendarStore.string(command, "operationId"), CalendarStore.number(command, "expectedConnectionRevision"))
         }, { old -> promise.resolve(mapOf("disconnected" to true)); if (old != null) runtime.revoke(old) }, reject)

@@ -44,7 +44,10 @@ class CalendarPublisher(private val state: CalendarStateAccess, private val tran
       override fun acknowledge(job: CalendarResourceJob, event: org.json.JSONObject) = state.access(true) { it.acknowledgeResource(job, event) }
       override fun outcome(job: CalendarResourceJob, code: String) = state.access(true) { it.resourceOutcome(job, code) }
     }, transport)
-    if (resources.run(job.operationId, token, job.zoneId)) state.access(true) { it.confirm(job.operationId, event) }
+    if (resources.run(job.operationId, token, job.zoneId)) state.access(true) {
+      it.confirm(job.operationId, event)
+      it.completeManagedPublication(job.operationId, event)
+    }
     else state.access(true) { store -> store.fail(job.operationId, store.publicationJobs(job.operationId).firstOrNull { !it.confirmed }?.outcome ?: "UNCONFIRMED_RESOURCE") }
   }
   private fun active(job: CalendarOperation) {

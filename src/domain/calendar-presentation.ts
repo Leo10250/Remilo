@@ -27,6 +27,7 @@ export function calendarSummary(link?: CalendarLink, publication?: CalendarPubli
   return t('m_1e31d9596d67');
 }
 export function calendarReviewReason(reason?: string) {
+  if (reason === 'UNCONFIRMED_RESOURCE') return t('m_3b5d1ddaedac');
   return ({ Ringing: t('m_41743fe61505'), ChangesNeedReview: t('m_1608b18fcf6e'), UnconfirmedWrite: t('m_3b5d1ddaedac'),
     ElapsedAlert: t('m_fe7740b9bd3b'), AccessRequired: t('m_8c73f9b49371'), AccountChanged: t('m_6b173b689ab9'),
     NotOwner: t('m_e8c4e555e782'), RemoteDeleted: t('m_136210e056b8'), RemoteUnavailable: t('m_9c2e96e2faec'),

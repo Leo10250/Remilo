@@ -2145,7 +2145,18 @@ export const catalogs = {
     "widget_preview_next": "Next: Side plank",
     "widget_refresh": "Refresh",
     "widget_preview_compact": "Compact",
-    "widget_preview_expanded": "Expanded"
+    "widget_preview_expanded": "Expanded",
+    "publication_checked_confirmed": "Publication checked. The original Google Calendar copy is confirmed.",
+    "publication_checked_cancelled": "Publication was cancelled before it was sent. No Google event was created.",
+    "publication_checked_inactive": "The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.",
+    "publication_checked_unconfirmed": "Google has not confirmed the original publication. Check again later or review the event in Google Calendar.",
+    "publication_inactive_context": "This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.",
+    "publication_checking": "Checking the original publication…",
+    "calendar_review_action_count": {
+      "one": "Review {count} item",
+      "other": "Review {count} items"
+    },
+    "calendar_sync_inactive": "Calendar sync inactive"
   },
   "zh-Hans": {
     "m_bf4156d6b15c": "已启用日历自动同步",
@@ -4283,7 +4294,17 @@ export const catalogs = {
     "widget_preview_next": "下一项：侧平板支撑",
     "widget_refresh": "刷新",
     "widget_preview_compact": "紧凑",
-    "widget_preview_expanded": "展开"
+    "widget_preview_expanded": "展开",
+    "publication_checked_confirmed": "已检查发布结果，确认原 Google 日历副本已发布。",
+    "publication_checked_cancelled": "发布在发送前已取消，未创建 Google 日历活动。",
+    "publication_checked_inactive": "仍无法确认原发布结果。此只读检查不会恢复提醒，也不会创建或更改 Google 日历活动。",
+    "publication_checked_unconfirmed": "Google 尚未确认原发布结果。请稍后再次检查，或在 Google 日历中查看该活动。",
+    "publication_inactive_context": "此发布仅可查看。检查其结果不会恢复提醒，也不会更改 Google 日历。",
+    "publication_checking": "正在检查原发布结果…",
+    "calendar_review_action_count": {
+      "other": "查看 {count} 项"
+    },
+    "calendar_sync_inactive": "日历同步未启用"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -6406,4 +6427,12 @@ export interface MessageArguments {
   widget_refresh: Record<string, never>;
   widget_preview_compact: Record<string, never>;
   widget_preview_expanded: Record<string, never>;
+  publication_checked_confirmed: Record<string, never>;
+  publication_checked_cancelled: Record<string, never>;
+  publication_checked_inactive: Record<string, never>;
+  publication_checked_unconfirmed: Record<string, never>;
+  publication_inactive_context: Record<string, never>;
+  publication_checking: Record<string, never>;
+  calendar_review_action_count: { count: number };
+  calendar_sync_inactive: Record<string, never>;
 }

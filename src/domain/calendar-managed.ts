@@ -8,6 +8,7 @@ export function managedCalendarStatus(state: ManagedCalendarState) {
   return phase || (state.mode === 'Paused' ? t('m_bf958954b105') : state.mode === 'Disabled' ? t('m_1f7e4ac3283d') : t('m_4993ca20a7c1'));
 }
 export function calendarDispositionLabel(value: CalendarReminderDisposition) {
+  if (value.state === 'Ineligible' && ['LocalTerminal', 'Purged'].includes(value.message)) return t('calendar_sync_inactive');
   return ({ LocalOnly: t('m_c905013aab29'), Held: t('m_ad247578e4d3'), WaitingToPublish: t('m_ec0bf2251136'), Publishing: t('m_6dc57b056357'), Linked: t('m_5c30a92fdc1b'),
     Ineligible: t('m_8ef0b712ea7e'), Unconfigured: t('m_a23789f19a90') } as const)[value.state];
 }

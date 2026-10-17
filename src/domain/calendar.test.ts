@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { calendarError, publicationCommand } from './calendar';
+import { calendarError, publicationCommand, publicationCheckFeedback } from './calendar';
 import { previewCalendar } from '../../verification/ui/preview-calendar';
-import type { CalendarPublicationPreview, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarPublication, CalendarPublicationPreview, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { calendarReviewReason } from './calendar-presentation';
+import { calendarDispositionLabel } from './calendar-managed';
 import { readFileSync } from 'node:fs';
 
 describe('Calendar publication boundary', () => {
+  it('explains checked outcomes without claiming a removed reminder remains active', () => {
+    const publication = { state: 'Unconfirmed', readOnly: true, message: '' } as CalendarPublication;
+    expect(publicationCheckFeedback(publication)).toMatchObject({ tone: 'warning' });
+    expect(publicationCheckFeedback(publication).message).toContain('cannot restore a reminder');
+    expect(publicationCheckFeedback({ ...publication, state: 'Published' })).toMatchObject({ tone: 'success' });
+    expect(publicationCheckFeedback({ ...publication, state: 'Cancelled' }).message).toContain('before it was sent');
+    expect(publicationCheckFeedback({ ...publication, readOnly: false, message: 'Original account access required' }).message).toBe('Original account access required');
+    expect(calendarReviewReason('UNCONFIRMED_RESOURCE')).not.toContain('UNCONFIRMED_RESOURCE');
+    expect(calendarDispositionLabel({ occurrenceId: 'removed', revision: 0, disposition: 'Default', state: 'Ineligible',
+      calendarName: 'Synthetic', message: 'LocalTerminal' })).toBe('Calendar sync inactive');
+  });
   it('gives phase-specific recovery for uncertain creation, incomplete discovery and ownership', () => {
     expect(calendarError({ code: 'CREATION_UNCONFIRMED' })).toContain('original request result');
     expect(calendarError({ code: 'DISCOVERY_INCOMPLETE' })).toBe('Calendar discovery hasn’t finished. Check again before choosing or creating a calendar.');

@@ -1,5 +1,14 @@
 # Verification and release evidence
 
+Calendar publication/deletion regressions must cover Trash during lookup (no
+insert), Trash during an insert (preserved Google copy, no relink/reimport), lost
+sent replies, unavailable read-only identity, restart repair of old review rows,
+exact-operation recovery and late failures after confirmed/replaced operations.
+Verify queue count and pages agree and ordinary reminders retain delivery state.
+On the signed phone, create then quickly Trash with automatic publication enabled;
+confirm no stale Agenda review, visible Check publication result progress/outcome,
+and no restored reminder. Live Google checks remain a separate acceptance gate.
+
 Language checks cover catalog parity/escaping/placeholders, script-aware resolution,
 CE12→13/DP6→7 preservation, bootstrap before unlock, manual/system synchronization,
 exact retries, unchanged scheduling/content, retained feedback and device clock

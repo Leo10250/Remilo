@@ -934,6 +934,24 @@ failed external navigation. Verify native TalkBack announcements, Back/IME,
 pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
 reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.
 
+## Publication and quick Trash follow-up (CAL-07)
+
+On an identified signed build, enable the reviewed automatic Calendar publication
+policy. Create an ordinary reminder then quickly move it to Trash before and
+during publication, including a lost/offline reply. Confirm the reminder stays
+in Trash, its alert stays cancelled and no stale review banner remains. Restart
+with a review record from the older build and confirm local reconciliation clears
+that retired export. An already sent Google copy must remain unchanged and must
+not reappear as a new imported reminder.
+
+From retained publication details, Check publication result must show progress
+until the bounded native result, then confirmed or still-unconfirmed feedback.
+Unavailable lookup must not create a replacement or claim confirmed deletion.
+An active eligible managed publication's confirmed original copy clears its own
+review and finishes its link; unrelated reviews remain. Check English/Chinese,
+TalkBack feedback, Back during a check and ordinary alarm delivery. Do not use
+real personal events as fixtures. These observations remain unperformed here.
+
 ## Routine, photos and compact widget refinement (16 October)
 
 On the identified signed build, record task success, errors, assistance and any

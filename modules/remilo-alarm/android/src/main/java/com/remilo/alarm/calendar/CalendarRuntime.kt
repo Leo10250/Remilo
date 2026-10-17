@@ -423,6 +423,18 @@ class CalendarRuntime private constructor(private val context: Context, private 
       } finally { running.remove(id) }
     }
   }
+  /** Resolve an explicit check after its bounded I/O, not merely after dispatch. */
+  fun checkPublication(id: String, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
+    io.execute {
+      try {
+        if (revoking) throw CalendarFailure("NEEDS_ACCESS")
+        transport.deadlineElapsedMs = android.os.SystemClock.elapsedRealtime() + 120_000
+        CalendarRunner(this, transport, authorization).run(id)
+        resolve(access { it.operation(id)?.let(it::view) ?: throw CalendarFailure("NOT_FOUND") })
+      } catch (error: Exception) { reject((error as? CalendarFailure)?.code ?: "NETWORK") }
+      finally { transport.deadlineElapsedMs = Long.MAX_VALUE }
+    }
+  }
   fun list(cursor: String?, resolve: (Map<String, Any?>) -> Unit, reject: (String) -> Unit) {
     io.execute {
       try {

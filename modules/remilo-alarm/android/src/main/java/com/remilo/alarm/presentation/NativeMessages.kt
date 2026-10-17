@@ -2121,4 +2121,12 @@ object NativeMessages {
   fun widget_refresh(): L10n.Message = L10n.Message("widget_refresh")
   fun widget_preview_compact(): L10n.Message = L10n.Message("widget_preview_compact")
   fun widget_preview_expanded(): L10n.Message = L10n.Message("widget_preview_expanded")
+  fun publication_checked_confirmed(): L10n.Message = L10n.Message("publication_checked_confirmed")
+  fun publication_checked_cancelled(): L10n.Message = L10n.Message("publication_checked_cancelled")
+  fun publication_checked_inactive(): L10n.Message = L10n.Message("publication_checked_inactive")
+  fun publication_checked_unconfirmed(): L10n.Message = L10n.Message("publication_checked_unconfirmed")
+  fun publication_inactive_context(): L10n.Message = L10n.Message("publication_inactive_context")
+  fun publication_checking(): L10n.Message = L10n.Message("publication_checking")
+  fun calendar_review_action_count(count: Number): L10n.Message = L10n.Message("calendar_review_action_count", mapOf("count" to count.toString()))
+  fun calendar_sync_inactive(): L10n.Message = L10n.Message("calendar_sync_inactive")
 }

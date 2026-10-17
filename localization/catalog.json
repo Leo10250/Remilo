@@ -15231,6 +15231,69 @@
       "args": {},
       "context": "Native widget preview size",
       "calendarStatus": false
+    },
+    "publication_checked_confirmed": {
+      "en": "Publication checked. The original Google Calendar copy is confirmed.",
+      "zh-Hans": "已检查发布结果，确认原 Google 日历副本已发布。",
+      "args": {},
+      "context": "Calendar publication recovery",
+      "calendarStatus": false
+    },
+    "publication_checked_cancelled": {
+      "en": "Publication was cancelled before it was sent. No Google event was created.",
+      "zh-Hans": "发布在发送前已取消，未创建 Google 日历活动。",
+      "args": {},
+      "context": "Calendar publication recovery",
+      "calendarStatus": false
+    },
+    "publication_checked_inactive": {
+      "en": "The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.",
+      "zh-Hans": "仍无法确认原发布结果。此只读检查不会恢复提醒，也不会创建或更改 Google 日历活动。",
+      "args": {},
+      "context": "Calendar publication recovery",
+      "calendarStatus": false
+    },
+    "publication_checked_unconfirmed": {
+      "en": "Google has not confirmed the original publication. Check again later or review the event in Google Calendar.",
+      "zh-Hans": "Google 尚未确认原发布结果。请稍后再次检查，或在 Google 日历中查看该活动。",
+      "args": {},
+      "context": "Calendar publication recovery",
+      "calendarStatus": true
+    },
+    "publication_inactive_context": {
+      "en": "This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.",
+      "zh-Hans": "此发布仅可查看。检查其结果不会恢复提醒，也不会更改 Google 日历。",
+      "args": {},
+      "context": "Calendar publication recovery",
+      "calendarStatus": false
+    },
+    "publication_checking": {
+      "en": "Checking the original publication…",
+      "zh-Hans": "正在检查原发布结果…",
+      "args": {},
+      "context": "Calendar publication recovery",
+      "calendarStatus": false
+    },
+    "calendar_review_action_count": {
+      "en": {
+        "one": "Review {count} item",
+        "other": "Review {count} items"
+      },
+      "zh-Hans": {
+        "other": "查看 {count} 项"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Calendar attention banner action",
+      "calendarStatus": false
+    },
+    "calendar_sync_inactive": {
+      "en": "Calendar sync inactive",
+      "zh-Hans": "日历同步未启用",
+      "args": {},
+      "context": "Terminal reminder Calendar preference",
+      "calendarStatus": false
     }
   }
 }

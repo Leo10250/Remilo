@@ -13,6 +13,7 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| CAL-07 | Fence publication/deletion races and explain publication checks | owner 16 October report | implemented/unverified | [313 shared/97 tooling/534 native tests, lint and signed assembly](evidence/2026-10-16-calendar-publication-race.md); terminal/operation/read-only fences, old-review reconciliation and visible check outcomes; CAL-07 signed-phone/live Google follow-up remains |
 | BETA-08 | Prevent native form reparenting during reminder Save and Repeat Apply | owner 16 October crash report | implemented/unverified | [Scoped phone crash evidence and focused repair](evidence/2026-10-16-save-crash.md); stable native form parents retain existing interaction/accessibility guards; updated signed-phone Save/Apply confirmation remains required |
 | L10N-01 | Language contract and shared catalog/tooling | owner 15 October instruction | verified | [1,839 catalog pairs, deterministic TS/Android/Kotlin outputs, 292 shared and 97 tooling checks](evidence/2026-10-15-localization.md); no dependency/font/artwork added |
 | L10N-02 | Native bootstrap, preferences and Android synchronization | L10N-01 | implemented/unverified | [CE13/DP7, migration/projection/external-input/locale-failure tests and identified signed assembly](evidence/2026-10-15-localization.md); system-selector and pre-unlock phone observations remain |

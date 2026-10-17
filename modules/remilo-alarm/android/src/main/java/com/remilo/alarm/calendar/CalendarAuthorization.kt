@@ -47,7 +47,14 @@ class CalendarRunner(private val state: CalendarStateAccess, private val transpo
   fun run(id: String) {
     var token: String? = null
     try {
-      val job = state.access(true) { it.begin(id) } ?: return
+      val job = state.access(true) { store ->
+        store.begin(id) ?: store.operation(id)?.takeIf { saved ->
+          // Recover a crash between the remote acknowledgement and managed-link commit.
+          saved.state == "Published" && store.managed.intent(saved.occurrenceId)?.let {
+            it.operationId == id && it.state in setOf("Captured", "Review")
+          } == true
+        }
+      } ?: return
       val email = state.access { it.connection().takeIf { c -> c.subject == job.subject }?.email }?.takeIf { it.isNotBlank() } ?: job.email
       val accessToken = authorization.token(email)
       token = accessToken

@@ -2176,6 +2176,14 @@ object MessageCatalog {
     "widget_preview_next" to Entry(R.string.l10n_widget_preview_next, false, listOf(), "Next: Side plank", false),
     "widget_refresh" to Entry(R.string.l10n_widget_refresh, false, listOf(), "Refresh", false),
     "widget_preview_compact" to Entry(R.string.l10n_widget_preview_compact, false, listOf(), "Compact", false),
-    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false)
+    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false),
+    "publication_checked_confirmed" to Entry(R.string.l10n_publication_checked_confirmed, false, listOf(), "Publication checked. The original Google Calendar copy is confirmed.", false),
+    "publication_checked_cancelled" to Entry(R.string.l10n_publication_checked_cancelled, false, listOf(), "Publication was cancelled before it was sent. No Google event was created.", false),
+    "publication_checked_inactive" to Entry(R.string.l10n_publication_checked_inactive, false, listOf(), "The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.", false),
+    "publication_checked_unconfirmed" to Entry(R.string.l10n_publication_checked_unconfirmed, false, listOf(), "Google has not confirmed the original publication. Check again later or review the event in Google Calendar.", true),
+    "publication_inactive_context" to Entry(R.string.l10n_publication_inactive_context, false, listOf(), "This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.", false),
+    "publication_checking" to Entry(R.string.l10n_publication_checking, false, listOf(), "Checking the original publication…", false),
+    "calendar_review_action_count" to Entry(R.plurals.l10n_calendar_review_action_count, true, listOf("count"), "Review {count} items", false),
+    "calendar_sync_inactive" to Entry(R.string.l10n_calendar_sync_inactive, false, listOf(), "Calendar sync inactive", false)
   )
 }

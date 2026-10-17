@@ -123,6 +123,16 @@ HTTP 400 has a distinct non-private rejection code; response bodies and tokens
 remain excluded from JS, storage and logs. No schema, alarm or backup change is
 introduced by this encoding repair.
 
+Managed publication failures bind to their captured operation identity and cannot
+revive retired exports or downgrade confirmed ones. CalendarStore startup repairs
+older terminal export-review records locally. Retirement preserves suppression of
+captured remote identities so a late Google collection echo cannot recreate the
+deleted reminder. A confirmed publication can finish its eligible managed link
+in the same worker checkpoint; retired copies remain read-only. Explicit
+publication checks acknowledge after bounded native I/O and return the saved
+result rather than treating queue dispatch as completion. No schema/backup/DP
+change is needed for these lifecycle fences.
+
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
 No Prebuild after bootstrap, no OTA, no iOS until the last optional phase.

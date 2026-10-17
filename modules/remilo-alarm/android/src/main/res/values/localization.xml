@@ -2154,4 +2154,15 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_widget_refresh">Refresh</string>
   <string name="l10n_widget_preview_compact">Compact</string>
   <string name="l10n_widget_preview_expanded">Expanded</string>
+  <string name="l10n_publication_checked_confirmed">Publication checked. The original Google Calendar copy is confirmed.</string>
+  <string name="l10n_publication_checked_cancelled">Publication was cancelled before it was sent. No Google event was created.</string>
+  <string name="l10n_publication_checked_inactive">The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.</string>
+  <string name="l10n_publication_checked_unconfirmed">Google has not confirmed the original publication. Check again later or review the event in Google Calendar.</string>
+  <string name="l10n_publication_inactive_context">This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.</string>
+  <string name="l10n_publication_checking">Checking the original publication…</string>
+  <plurals name="l10n_calendar_review_action_count">
+    <item quantity="one">Review %1$s item</item>
+    <item quantity="other">Review %1$s items</item>
+  </plurals>
+  <string name="l10n_calendar_sync_inactive">Calendar sync inactive</string>
 </resources>

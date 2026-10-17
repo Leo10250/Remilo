@@ -38,6 +38,8 @@ class CalendarManagedIntegrationTest {
   private var managedUnavailable = false
   private var loseInsertReply = false
   private var loseInsertAt: Int? = null
+  private var beforeLookup: (() -> Unit)? = null
+  private var afterInsert: (() -> Unit)? = null
   private val source = OwnedCalendar("managed", "Remilo", "UTC", dataOwner = "owner@example.test")
   private val legacy = OwnedCalendar("legacy", "Other calendar", "UTC", dataOwner = "owner@example.test")
   private val remote = mutableMapOf<Pair<String, String>, JSONObject>()
@@ -60,6 +62,7 @@ class CalendarManagedIntegrationTest {
       return if (id == source.id) source else legacy
     }
     override fun event(token: String, calendarId: String, eventId: String): JSONObject? {
+      beforeLookup?.also { beforeLookup = null }?.invoke()
       lookupIds.add(eventId)
       return remote[calendarId to eventId]?.let { JSONObject(it.toString()) }
     }
@@ -87,6 +90,7 @@ class CalendarManagedIntegrationTest {
     override fun insert(token: String, calendarId: String, payload: String): JSONObject {
       val event = JSONObject(payload).put("etag", "inserted-${insertIds.size}").put("htmlLink", "https://calendar.google.com/event?eid=synthetic")
       insertIds.add(event.getString("id")); remote[calendarId to event.getString("id")] = event
+      afterInsert?.also { afterInsert = null }?.invoke()
       if (loseInsertReply || loseInsertAt == insertIds.size) { loseInsertReply = false; loseInsertAt = null; throw CalendarFailure("NETWORK") }
       return JSONObject(event.toString())
     }
@@ -177,6 +181,11 @@ class CalendarManagedIntegrationTest {
     val before = native { engine.occurrence(id)!! }
     val result = native { engine.apply(values + mapOf("kind" to "Edit", "operationId" to operation(), "occurrenceId" to id, "expectedRevision" to before["revision"])) }
     assertNotEquals("Rejected", result["status"])
+  }
+  private fun trash(id: String) {
+    val before = native { engine.occurrence(id)!! }
+    assertNotEquals("Rejected", native { engine.apply(mapOf("kind" to "Delete", "operationId" to operation(),
+      "occurrenceId" to id, "expectedRevision" to before["revision"])) }["status"])
   }
   private fun failure(code: String, block: () -> Unit) {
     try { block(); fail("Expected $code") } catch (error: CalendarFailure) { assertEquals(code, error.code) }
@@ -536,6 +545,149 @@ class CalendarManagedIntegrationTest {
     assertFalse(remote[source.id to insertIds.single()]!!.getJSONObject("reminders").getBoolean("useDefault"))
     CalendarAutomaticRunner(access, transport, { now }, { 0L }).run("synthetic", true)
     assertEquals(1, records().size); assertTrue(calendar { it.managed.candidates().isEmpty() }); assertEquals(1, insertIds.size)
+  }
+
+  @Test fun trashDuringPublicationLookupCancelsUnsentWorkAndLateFailureCannotRecreateReview() {
+    activate(); val id = create(); val intent = calendar { it.managed.intent(id)!! }
+    beforeLookup = { trash(id) }
+    assertEquals("Excluded", transfer().publish("synthetic", intent, true))
+    val job = calendar { it.operation(it.managed.intent(id)!!.operationId)!! }
+    assertEquals("Cancelled", job.state); assertTrue(insertIds.isEmpty())
+    calendar { it.managed.publicationFailed(id, "UNCONFIRMED_RESOURCE", true, job.operationId) }
+    assertEquals("Cancelled", calendar { it.managed.intent(id)!!.state })
+    assertEquals(0, calendar { it.sync.issues(null)["count"] }); assertEquals(0, calendar { it.sync.summary()["reviewCount"] })
+    assertEquals(true, native { engine.occurrence(id)!!["deleted"] })
+  }
+
+  @Test fun trashDuringSentInsertKeepsGoogleCopyAndDoesNotRelinkOrReimportIt() {
+    activate(); val id = create(); val intent = calendar { it.managed.intent(id)!! }
+    afterInsert = { trash(id) }
+    assertEquals("Excluded", transfer().publish("synthetic", intent, true))
+    assertEquals(1, insertIds.size); assertEquals(1, remote.size); assertTrue(patchIds.isEmpty())
+    assertEquals("Cancelled", calendar { it.managed.intent(id)!!.state }); assertNull(calendar { it.links.link(id) })
+    assertEquals(0, calendar { it.sync.summary()["reviewCount"] })
+    CalendarAutomaticRunner(access, transport, { now }, { 0L }).run("synthetic", true)
+    assertEquals(1, records().size); assertTrue(records().single().deleted)
+    assertTrue(calendar { it.managed.candidates().isEmpty() }); assertEquals(1, insertIds.size)
+  }
+
+  @Test fun lostSentReplyAfterTrashCanBeCheckedWithoutRestoringOrWritingAgain() {
+    activate(); val id = create(); val intent = calendar { it.managed.intent(id)!! }
+    afterInsert = { trash(id) }; loseInsertReply = true
+    assertEquals("Excluded", transfer().publish("synthetic", intent, true))
+    val job = calendar { it.operation(it.managed.intent(id)!!.operationId)!! }
+    assertEquals("Unconfirmed", job.state)
+    val authorization = object : CalendarAuthorization {
+      override fun token(email: String) = "synthetic"
+      override fun clear(token: String) {}
+      override fun revoke(email: String) {}
+    }
+    CalendarRunner(access, transport, authorization).run(job.operationId)
+    assertEquals("Published", calendar { it.operation(job.operationId)!!.state })
+    assertEquals("Cancelled", calendar { it.managed.intent(id)!!.state }); assertNull(calendar { it.links.link(id) })
+    assertTrue(records().single().deleted); assertEquals(1, insertIds.size); assertTrue(patchIds.isEmpty())
+    assertEquals(0, calendar { it.sync.issues(null)["count"] })
+  }
+
+  @Test fun restartRepairsReviewLeftByOldLateCallbackWithoutAnyGoogleRequest() {
+    activate(); val id = create(); calendar { it.captureManagedPublication(id, "retired-publication", source) }
+    trash(id)
+    calendar { store ->
+      val retired = store.managed.intent(id)!!
+      store.managed.dao.export(retired.copy(state = "Review", reason = "UNCONFIRMED_RESOURCE"))
+      store.managed.issue("Export", id, "UNCONFIRMED_RESOURCE", true)
+    }
+    assertEquals(1, calendar { it.sync.summary()["reviewCount"] })
+    engine.close(); open()
+    assertEquals("Cancelled", calendar { it.managed.intent(id)!!.state })
+    assertEquals(0, calendar { it.sync.issues(null)["count"] }); assertEquals(0, calendar { it.sync.summary()["reviewCount"] })
+    assertTrue(insertIds.isEmpty()); assertTrue(lookupIds.isEmpty()); assertTrue(queriedCalendars.isEmpty())
+  }
+
+  @Test fun unavailableSentIdentityAfterTrashStaysUnconfirmedWithoutRecreationOrAttention() {
+    activate(); val id = create(); val intent = calendar { it.managed.intent(id)!! }
+    afterInsert = { trash(id) }; loseInsertReply = true
+    transfer().publish("synthetic", intent, true)
+    val job = calendar { it.operation(it.managed.intent(id)!!.operationId)!! }
+    remote.clear() // A missing lookup does not prove whether the original write succeeded.
+    val authorization = object : CalendarAuthorization {
+      override fun token(email: String) = "synthetic"
+      override fun clear(token: String) {}
+      override fun revoke(email: String) {}
+    }
+    CalendarRunner(access, transport, authorization).run(job.operationId)
+    assertEquals("Unconfirmed", calendar { it.operation(job.operationId)!!.state })
+    assertEquals(1, insertIds.size); assertTrue(remote.isEmpty()); assertTrue(patchIds.isEmpty())
+    assertNull(calendar { it.links.link(id) }); assertTrue(records().single().deleted)
+    assertEquals(0, calendar { it.sync.summary()["reviewCount"] })
+  }
+
+  @Test fun restoringLocalReminderDoesNotReauthorizeAnOlderReadOnlyPublication() {
+    activate(); val id = create(); val intent = calendar { it.managed.intent(id)!! }
+    afterInsert = { trash(id) }; loseInsertReply = true
+    transfer().publish("synthetic", intent, true)
+    val job = calendar { it.operation(it.managed.intent(id)!!.operationId)!! }
+    val deleted = native { engine.occurrence(id)!! }
+    assertNotEquals("Rejected", native { engine.apply(mapOf("kind" to "UndoDelete", "operationId" to operation(),
+      "occurrenceId" to id, "expectedRevision" to deleted["revision"])) }["status"])
+    assertFalse(records().single().deleted)
+    // Simulate an older build's late failure after local Restore.
+    calendar { store ->
+      store.managed.dao.export(store.managed.intent(id)!!.copy(state = "Review", reason = "UNCONFIRMED_RESOURCE"))
+      store.managed.issue("Export", id, "UNCONFIRMED_RESOURCE", true)
+    }
+    engine.close(); open()
+    assertEquals("Cancelled", calendar { it.managed.intent(id)!!.state })
+    val authorization = object : CalendarAuthorization {
+      override fun token(email: String) = "synthetic"
+      override fun clear(token: String) {}
+      override fun revoke(email: String) {}
+    }
+    CalendarRunner(access, transport, authorization).run(job.operationId)
+    assertEquals("Published", calendar { it.operation(job.operationId)!!.state })
+    assertNull(calendar { it.links.link(id) }); assertEquals("Cancelled", calendar { it.managed.intent(id)!!.state })
+    assertEquals(0, calendar { it.sync.summary()["reviewCount"] }); assertEquals(1, insertIds.size); assertTrue(patchIds.isEmpty())
+    assertFalse(records().single().deleted)
+  }
+
+  @Test fun exactPublicationRecoveryClearsManagedReviewAndLateFailureCannotDowngradeSuccess() {
+    activate(); val id = create(); val job = calendar { it.captureManagedPublication(id, "checked-publication", source) }
+    loseInsertReply = true
+    CalendarPublisher(access, transport).publish(calendar { it.begin(job.operationId)!! }, "synthetic")
+    calendar { it.managed.publicationFailed(id, "UNCONFIRMED_RESOURCE", true, job.operationId) }
+    assertEquals(1, calendar { it.sync.summary()["reviewCount"] })
+    CalendarPublisher(access, transport).publish(calendar { it.begin(job.operationId)!! }, "synthetic")
+    assertEquals("Confirmed", calendar { it.managed.intent(id)!!.state }); assertNotNull(calendar { it.links.link(id) })
+    calendar { it.managed.publicationFailed(id, "NETWORK", true, job.operationId) }
+    assertEquals("Confirmed", calendar { it.managed.intent(id)!!.state }); assertEquals(0, calendar { it.sync.issues(null)["count"] })
+    assertEquals(1, insertIds.size)
+  }
+
+  @Test fun oldFailureCannotOverwriteReplacementPublicationIntent() {
+    activate(); val id = create(); val job = calendar { it.captureManagedPublication(id, "old-publication", source) }
+    calendar { store ->
+      val previous = store.managed.intent(id)!!
+      store.managed.dao.export(previous.copy(state = "Captured", operationId = "replacement-publication"))
+      store.managed.publicationFailed(id, "UNCONFIRMED_RESOURCE", true, job.operationId)
+    }
+    assertEquals("Captured", calendar { it.managed.intent(id)!!.state }); assertEquals(0, calendar { it.sync.issues(null)["count"] })
+  }
+
+  @Test fun acknowledgedPublicationCanFinishManagedLinkAfterInterruptedCommit() {
+    activate(); val id = create(); val job = calendar { it.captureManagedPublication(id, "acknowledged-publication", source) }
+    val sent = JSONObject(job.payload).put("etag", "acknowledged")
+    remote[source.id to job.eventId] = sent
+    calendar { it.begin(job.operationId); it.permitInsert(job.operationId); it.confirm(job.operationId, sent) }
+    engine.close(); open()
+    assertNull(calendar { it.links.link(id) })
+    val authorization = object : CalendarAuthorization {
+      override fun token(email: String) = "synthetic"
+      override fun clear(token: String) {}
+      override fun revoke(email: String) {}
+    }
+    CalendarRunner(access, transport, authorization).run(job.operationId)
+    assertEquals("Confirmed", calendar { it.managed.intent(id)!!.state }); assertNotNull(calendar { it.links.link(id) })
+    assertTrue(insertIds.isEmpty()); assertTrue(patchIds.isEmpty())
   }
 
   @Test fun lostInsertReplyReconcilesSameOperationAndLeavesNewerLocalContentDirty() {

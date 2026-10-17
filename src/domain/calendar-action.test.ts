@@ -6,6 +6,16 @@ import { previewCalendar } from '../../verification/ui/preview-calendar';
 
 const command = (id: string): Extract<CalendarCommand, { kind: 'RequestCalendarSync' }> => ({ kind: 'RequestCalendarSync', operationId: id, scope: { kind: 'AllAuthorized' } });
 describe('Calendar explicit action feedback', () => {
+  it('keeps publication checking busy until the bounded native check returns its result', async () => {
+    let finish!: (value: unknown) => void;
+    const action = new CalendarAction(() => new Promise(resolve => { finish = resolve; }), async () => null);
+    const checking = action.run({ kind: 'RetryPublication', operationId: 'original-publication' });
+    expect(action.snapshot()).toMatchObject({ busy: true, unknown: false });
+    expect(await action.run({ kind: 'RetryPublication', operationId: 'another' })).toBe(false);
+    finish({ state: 'Unconfirmed' });
+    expect(await checking).toBe(true);
+    expect(action.snapshot()).toMatchObject({ busy: false, operationId: 'original-publication', error: '' });
+  });
   it('recovers a lost acknowledgement without dispatching a second request', async () => {
     const api = previewCalendar(new URLSearchParams('reviewLostReply=1'), () => undefined, () => {});
     const action = new CalendarAction(api.applyCalendarCommand, api.getCalendarOperationStatus);

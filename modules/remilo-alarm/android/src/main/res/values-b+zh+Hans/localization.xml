@@ -2143,4 +2143,14 @@
   <string name="l10n_widget_refresh">刷新</string>
   <string name="l10n_widget_preview_compact">紧凑</string>
   <string name="l10n_widget_preview_expanded">展开</string>
+  <string name="l10n_publication_checked_confirmed">已检查发布结果，确认原 Google 日历副本已发布。</string>
+  <string name="l10n_publication_checked_cancelled">发布在发送前已取消，未创建 Google 日历活动。</string>
+  <string name="l10n_publication_checked_inactive">仍无法确认原发布结果。此只读检查不会恢复提醒，也不会创建或更改 Google 日历活动。</string>
+  <string name="l10n_publication_checked_unconfirmed">Google 尚未确认原发布结果。请稍后再次检查，或在 Google 日历中查看该活动。</string>
+  <string name="l10n_publication_inactive_context">此发布仅可查看。检查其结果不会恢复提醒，也不会更改 Google 日历。</string>
+  <string name="l10n_publication_checking">正在检查原发布结果…</string>
+  <plurals name="l10n_calendar_review_action_count">
+    <item quantity="other">查看 %1$s 项</item>
+  </plurals>
+  <string name="l10n_calendar_sync_inactive">日历同步未启用</string>
 </resources>
