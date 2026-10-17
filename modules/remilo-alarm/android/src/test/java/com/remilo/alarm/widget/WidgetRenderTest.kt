@@ -128,6 +128,9 @@ class WidgetRenderTest {
     val production=root(false); val preview=root(true)
     assertEquals(text(production),text(preview))
     assertTrue(descriptions(production).contains("Refresh")); assertTrue(descriptions(preview).contains("Refresh"))
+    fun clickable(view: View): List<View> = (if(view.hasOnClickListeners())listOf(view) else emptyList()) +
+      if(view is ViewGroup) (0 until view.childCount).flatMap { clickable(view.getChildAt(it)) } else emptyList()
+    assertTrue("Example controls must be inert",clickable(preview).isEmpty())
   }
   private fun assertActionFullyVisible(root: View, label: String) {
     val matches = textViews(root).filter { it.text.toString().equals(label, ignoreCase = true) }
@@ -203,6 +206,64 @@ class WidgetRenderTest {
     assertTrue(text(unavailable).contains("Routine unavailable")); assertFalse(text(unavailable).contains("0 reminders"))
     val failure = render(ctx,WidgetSnapshot(1,failed = true,notice = "Could not load the widget. Refresh to try again."),300,280,"error")
     assertFalse(text(failure).contains("No reminders for today."))
+  }
+  @Test fun setupDefaultsAndExamplePreviewsNeverRetargetAnExistingSelection() {
+    val plans = listOf(mapOf("id" to "first"),mapOf("id" to "second"))
+    assertEquals("first",WidgetSetup.routineSelection("Routine",null,plans))
+    assertNull(WidgetSetup.routineSelection("Today",null,plans))
+    assertNull(WidgetSetup.routineSelection("Routine",null,emptyList()))
+    assertEquals("removed",WidgetSetup.routineSelection("Routine","removed",plans))
+    assertEquals("second",WidgetSetup.routineSelection("Routine","second",plans))
+    val empty = WidgetSnapshot(-1,date = "2026-10-16")
+    assertTrue(WidgetSetup.needsExample(empty,"Today",null))
+    assertTrue(WidgetSetup.needsExample(empty,"Routine",null))
+    assertFalse(WidgetSetup.needsExample(empty,"Routine","removed"))
+    assertFalse(WidgetSetup.needsExample(empty.copy(reminders = listOf(mapOf("title" to "Read"))),"Today",null))
+    for(language in listOf("en","zh-Hans")) for(mode in listOf("Today","Routine")) {
+      val ctx=context(language,1f)
+      val sample=WidgetSetup.example(ctx,mode,empty)
+      assertEquals("2026-10-16",sample.date)
+      val root=render(ctx,sample,300,240,"$language-setup-example-$mode")
+      assertTrue(text(root).contains(L10n.text(ctx,if(mode == "Today") "Water plants" else "Core & intervals")))
+      if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (1)"))
+      else { assertActionFullyVisible(root,L10n.text(ctx,"Resume")); assertActionFullyVisible(root,L10n.text(ctx,"Done")) }
+    }
+  }
+  @Test fun compactTodayFooterNeverOverlapsOrClipsContentAndEmptyStatesAreIntentional() {
+    val reminders=(1..20).map { mapOf("id" to "$it","title" to "Reminder $it","overdue" to true,"overdueAtMs" to 0L) }
+    for(language in listOf("en","zh-Hans")) for(width in listOf(300,360)) {
+      val ctx=context(language,1f)
+      val base=WidgetSnapshot(1,date="2026-10-16",reminders=reminders,total=73)
+      val ordinary=render(ctx,base,width,240,"$language-today-$width")
+      assertTrue(text(ordinary).contains("Reminder 1")); assertFalse(text(ordinary).contains("Reminder 2"))
+      assertActionFullyVisible(ordinary,L10n.text(ctx,"View Agenda (73)"))
+      val focus=render(ctx,previewSnapshot().copy(reminders=reminders,total=73),width,240,"$language-today-focus-$width")
+      for(action in listOf("View Agenda (73)","Resume","Done")) assertActionFullyVisible(focus,L10n.text(ctx,action))
+      val rest=previewSnapshot().copy(session=mapOf("title" to "Workout","state" to "Rest","steps" to emptyList<Any>()),doneToken=null,total=73)
+      val resting=render(ctx,rest,width,240,"$language-today-rest-$width")
+      assertEquals(1,text(resting).count { it == L10n.text(ctx,"Rest day") })
+      assertFalse(text(resting).contains(L10n.text(ctx,"Resume")))
+      assertFalse(text(resting).contains(L10n.text(ctx,"Done")))
+      assertActionFullyVisible(resting,L10n.text(ctx,"View routine")); assertActionFullyVisible(resting,L10n.text(ctx,"View Agenda (73)"))
+      val empty=render(ctx,base.copy(reminders=emptyList(),total=0),width,240,"$language-today-empty-$width")
+      assertTrue(text(empty).contains(L10n.text(ctx,"No reminders for today.")))
+      assertFalse(text(empty).contains(L10n.text(ctx,"Water plants")))
+      assertActionFullyVisible(empty,L10n.text(ctx,"View Agenda (0)"))
+    }
+  }
+  @Test fun compactProductionActionsFitEveryAppearanceAndIntermediateTextScaleFallsBack() {
+    for(language in listOf("en","zh-Hans")) for(scene in listOf("sunrise","sky","evening","night")) for(brightness in listOf("light","dark")) {
+      val ctx=context(language,1f)
+      val sample=previewSnapshot().copy(appearance=AppearancePolicy.Resolved(scene,brightness))
+      val root=render(ctx,sample,300,240,"$language-$scene-$brightness-compact")
+      for(action in listOf("Resume","Done","View Agenda (0)")) assertActionFullyVisible(root,L10n.text(ctx,action))
+    }
+    for(language in listOf("en","zh-Hans")) for(scale in listOf(1.1f,1.2f,1.5f,2f)) {
+      val ctx=context(language,scale)
+      val root=render(ctx,previewSnapshot(),300,240,"$language-summary-${(scale*100).toInt()}")
+      assertFalse(text(root).contains(L10n.text(ctx,"Done")))
+      assertTrue(text(root).contains("1/4"))
+    }
   }
   @Test fun civilRefreshBoundaryUsesLocalMidnightAndDst() {
     val zone = ZoneId.of("America/Los_Angeles")

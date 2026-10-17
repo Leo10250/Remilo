@@ -1008,6 +1008,13 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   English/Chinese, long authored content, reduced motion and text through 200%.
   Compare identical content/dimensions/themes in setup previews and placed widgets;
   reject clipped actions, weak progress contrast or unexplained large empty gaps.
+- Start widget setup with no reminders/routines: a labelled example must remain
+  visible and inert, Today can be added, and Routine Focus explains that a routine
+  is needed. With routines present, switching an unselected draft to Focus picks
+  the first available routine. Cancel preserves saved configuration. A deleted
+  saved selection remains unavailable. Verify real empty widgets, single Rest day
+  wording, one full compact Today row and unclipped View Agenda/Resume/Done at
+  launcher sizes and text scales; previews fill their measured host.
 
 Installation and distribution require their separate authorization. These cases
 remain unobserved until the consolidated physical run is recorded.

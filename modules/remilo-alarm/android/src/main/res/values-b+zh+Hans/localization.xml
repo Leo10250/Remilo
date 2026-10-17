@@ -2152,5 +2152,19 @@
   <plurals name="l10n_calendar_review_action_count">
     <item quantity="other">查看 %1$s 项</item>
   </plurals>
+  <string name="l10n_widget_example_label">示例预览 · 仅含示例内容</string>
+  <string name="l10n_widget_preview_loading">正在加载预览…</string>
+  <string name="l10n_widget_preview_error">无法加载预览。</string>
+  <string name="l10n_widget_empty_help">今天和已逾期的提醒将显示在这里。</string>
+  <string name="l10n_widget_rest_help">今天没有安排练习。</string>
+  <string name="l10n_widget_choose_routine">选择日程</string>
+  <string name="l10n_widget_choose_routine_help">选择一个日程以显示其进度。</string>
+  <string name="l10n_widget_view_routine">查看日程</string>
+  <string name="l10n_widget_example_routine_title">核心与间歇训练</string>
+  <string name="l10n_widget_example_reminder_title">给植物浇水</string>
+  <string name="l10n_widget_example_intervals">间歇训练</string>
+  <string name="l10n_widget_example_reps">3 组 × 10 次</string>
+  <string name="l10n_widget_example_side_target">每侧 3 组 × 25 秒</string>
+  <string name="l10n_widget_example_intervals_target">8 组间歇</string>
   <string name="l10n_calendar_sync_inactive">日历同步未启用</string>
 </resources>

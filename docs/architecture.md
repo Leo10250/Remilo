@@ -734,6 +734,14 @@ A process-local native projection epoch rejects late older query results, while
 language/clock/zone/font presentation changes invalidate the view. This cache
 never validates commands or stores progress durably and is pruned with instances.
 
+WidgetSetup resolves first-routine defaults only inside configuration drafts and
+constructs localized inert example projections when data is absent. It never
+mutates plans or persisted widget state. A missing saved routine remains missing.
+Production uses Glance SizeMode.Exact; setup supplies the measured dp width and
+height to the same composition and fills its RemoteViews host explicitly. Fixed
+footer actions remain outside bounded list content; compact Today renders one
+complete reminder row, while expanded native collections remain scrollable.
+
 ## Routine refinement: CE16, media and portable archives
 
 CE15→16 adds routine prior-state/Trash interval metadata, immutable exercise image

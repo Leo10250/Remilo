@@ -1,7 +1,6 @@
 package com.remilo.alarm.widget
 
 import android.appwidget.AppWidgetManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
@@ -42,105 +41,137 @@ import java.time.format.DateTimeFormatter
   val title = session?.get("title") as? String ?: label(if(snapshot.configuration.routineId != null) "Routine unavailable" else "Today's reminders")
   val total = (session?.get("totalCount") as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
   val done = ((session?.get("completedCount") as? Number)?.toInt() ?: 0).coerceIn(0,total)
-  val outcome = label(when(state) { "Rest" -> "Rest day"; "Paused" -> "Paused"; "Skipped" -> "Skipped today"; "Completed" -> "Completed today"; "Upcoming" -> "Not started yet"; else -> "$done of $total done" })
-  val summary = size.width < 300.dp || size.height < 240.dp || fontScale >= 1.6f || fontScale > 1.2f && size.height < 440.dp
+  val outcome = label(when(state) { "Rest" -> "Rest day"; "Paused" -> "Paused"; "Skipped" -> "Skipped today"; "Completed" -> "Completed today"; "Upcoming" -> "Not started yet"; "NotCompleted" -> "Not completed"; "PartiallyCompleted" -> "Partially completed"; else -> "$done of $total done" })
+  val minimumHeight = (24 + 210*fontScale.coerceAtLeast(1f)).dp
+  val summary = size.width < 300.dp || size.height < maxOf(240.dp,minimumHeight) || fontScale >= 1.6f || fontScale > 1.2f && size.height < 440.dp
   val expanded = size.height >= 440.dp && fontScale <= 1.2f
-  @Composable fun copy(text: String, supporting: Boolean = false, lines: Int = 1, font: Int = if(supporting)14 else 16, modifier: GlanceModifier = GlanceModifier) {
-    Text(text,modifier,TextStyle(color = if(supporting)muted else ink,fontSize = font.sp),maxLines = lines)
+  val selected = snapshot.configuration.routineId != null
+  val activeExercise = step != null && session?.get("ended") != true && state !in setOf("Rest","Skipped","Upcoming","Paused")
+  val actionHeight = (48*fontScale.coerceAtLeast(1f)).dp
+  val primaryHeight = (56*fontScale.coerceAtLeast(1f)).dp
+  @Composable fun copy(text: String, supporting: Boolean = false, lines: Int = 1, font: Int = if(supporting)14 else 16, modifier: GlanceModifier = GlanceModifier, medium: Boolean = false) {
+    Text(text,modifier,TextStyle(color = if(supporting)muted else ink,fontSize = font.sp,fontWeight = if(medium)FontWeight.Medium else FontWeight.Normal),maxLines = lines)
   }
   @Composable fun refresh() {
     if(!snapshot.locked) Image(ImageProvider(com.remilo.alarm.R.drawable.ic_widget_refresh),label("Refresh"),
-      GlanceModifier.size(48.dp).padding(14.dp).then(if(preview)GlanceModifier else GlanceModifier.clickable(actionRunCallback<WidgetRefreshAction>())),colorFilter = ColorFilter.tint(muted))
+      GlanceModifier.size(actionHeight).padding((actionHeight - 20.dp)/2).then(if(preview)GlanceModifier else GlanceModifier.clickable(actionRunCallback<WidgetRefreshAction>())),colorFilter = ColorFilter.tint(muted))
   }
-  @Composable fun action(text: String, callback: Action, modifier: GlanceModifier, primary: Boolean) {
-    Box(modifier.background(ImageProvider(com.remilo.alarm.R.drawable.widget_row_single), colorFilter = ColorFilter.tint(if(primary)accent else ColorProvider(Color(roles.container))))
-      .clickable(callback).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
-      Text(text,style = TextStyle(color = if(primary)onAccent else ink,fontSize = 16.sp,fontWeight = FontWeight.Medium),maxLines = 1)
+  @Composable fun action(text: String, callback: Action, modifier: GlanceModifier, primary: Boolean = false, description: String = text) {
+    // Center an intrinsic-height label; do not stretch a TextView inside the action viewport.
+    Box(modifier.then(if(primary) GlanceModifier.background(ImageProvider(com.remilo.alarm.R.drawable.widget_row_single),colorFilter = ColorFilter.tint(accent)) else GlanceModifier)
+      .then(if(preview)GlanceModifier else GlanceModifier.clickable(callback)).padding(horizontal = 8.dp)
+      .semantics { contentDescription = description },contentAlignment = Alignment.Center) {
+      Text(text,style = TextStyle(color = if(primary)onAccent else accent,fontSize = 16.sp,fontWeight = FontWeight.Medium),maxLines = 1)
+    }
+  }
+  @Composable fun footer() {
+    Row(GlanceModifier.fillMaxWidth().height(actionHeight),verticalAlignment = Alignment.Vertical.CenterVertically) {
+      val undo = snapshot.undoToken
+      val next = steps.dropWhile { it !== step }.drop(1).firstOrNull { it["completed"] != true }
+      Box(GlanceModifier.defaultWeight().fillMaxHeight()
+        .then(when { preview -> GlanceModifier; undo != null -> GlanceModifier.clickable(actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to undo)))
+          snapshot.configuration.mode == "Today" -> GlanceModifier.clickable(agenda); else -> GlanceModifier }),contentAlignment = Alignment.CenterStart) {
+        when {
+          undo != null -> Text(label("Undo ${snapshot.undoName.orEmpty()}"),style = TextStyle(color = accent,fontSize = 14.sp),maxLines = 2)
+          snapshot.configuration.mode == "Today" -> Text(label("View Agenda (${snapshot.total})"),style = TextStyle(color = accent,fontSize = 14.sp),maxLines = 1)
+          snapshot.notice != null -> copy(label(snapshot.notice),true,2)
+          next != null && activeExercise -> copy(label("Next: ${next["name"]}"),true)
+        }
+      }
+      refresh()
+      val token = snapshot.retryToken ?: snapshot.doneToken
+      if(token != null && selected && (activeExercise || snapshot.retryToken != null)) action(label(if(snapshot.retryToken != null)"Retry" else "Done"),
+        actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token)),
+        GlanceModifier.width((64*fontScale.coerceAtLeast(1f)).dp).fillMaxHeight(),
+        description = label(if(snapshot.retryToken != null)"Retry the same action" else "Mark as done") + ": " + (step?.get("name") as? String).orEmpty())
+    }
+  }
+  @Composable fun reminder(row: Map<String,Any?>) {
+    Column(GlanceModifier.fillMaxWidth().height(68.dp).padding(vertical = 8.dp)
+      .then(if(preview)GlanceModifier else GlanceModifier.clickable(actionStartActivity(widgetOpen(context,"reminder/${row["id"]}"))))) {
+      copy(row["title"] as? String ?: "",medium = true)
+      Text(WidgetText.reminder(context,row),style = TextStyle(color = if(row["overdue"] == true)ColorProvider(Color(roles.warning)) else muted,fontSize = 14.sp),maxLines = 1)
     }
   }
   Column(GlanceModifier.fillMaxSize().appWidgetBackground().background(ColorProvider(Color(roles.surface)))
     .cornerRadius(android.R.dimen.system_app_widget_background_radius).padding(if(summary && fontScale >= 1.6f)8.dp else 12.dp)
-    .then(if(summary && snapshot.configured && !snapshot.locked && !snapshot.failed) GlanceModifier.clickable(if(snapshot.configuration.routineId != null)openRoutine else agenda) else GlanceModifier)
-    .semantics { contentDescription = if(snapshot.locked) label("Unlock to view Remilo.") else "$title, $date, $outcome" }) {
+    .then(if(!preview && summary && snapshot.configured && !snapshot.locked && !snapshot.failed) GlanceModifier.clickable(if(selected) if(session == null)setup else openRoutine else agenda) else GlanceModifier)
+    .semantics { contentDescription = if(snapshot.locked) label("Unlock to view Remilo.") else "$title, $date, " + if(selected)outcome else label("${snapshot.total} reminders") }) {
     if(summary && snapshot.configured && !snapshot.locked && !snapshot.failed) {
       if(fontScale < 1.6f) copy(date,true)
-      copy(title,lines = 1)
-      copy(if(session != null) if(state in setOf("Rest","Paused","Skipped","Completed","Upcoming"))outcome else "$done/$total" else if(snapshot.configuration.routineId != null)label("Routine unavailable") else label("${snapshot.total} reminders"),true)
+      copy(title)
+      copy(if(session != null) if(state in setOf("Rest","Paused","Skipped","Completed","Upcoming","NotCompleted","PartiallyCompleted"))outcome else "$done/$total"
+        else if(selected)label("Choose routine") else label(if(snapshot.total == 0)"No reminders for today." else "${snapshot.total} reminders"),true)
     } else {
       Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
         Image(ImageProvider(com.remilo.alarm.R.drawable.ic_remilo_notification),null,GlanceModifier.size(20.dp),colorFilter = ColorFilter.tint(muted))
-        copy("Remilo",true,modifier = GlanceModifier.defaultWeight().padding(start = 6.dp))
-        copy(date,true)
+        copy("Remilo",true,modifier = GlanceModifier.defaultWeight().padding(start = 6.dp)); copy(date,true)
       }
       Spacer(GlanceModifier.height(8.dp))
       when {
         snapshot.locked -> copy(label("Unlock to view Remilo."),lines = 2)
         snapshot.failed -> { copy(label(snapshot.notice ?: "Could not load the widget. Refresh to try again."),lines = 2); refresh() }
-        !snapshot.configured -> Button(label("Choose what to show"),setup,GlanceModifier.fillMaxWidth().height(56.dp))
+        !snapshot.configured -> action(label("Choose what to show"),setup,GlanceModifier.fillMaxWidth().height(primaryHeight),true)
         else -> {
-          if(snapshot.notice != null) copy(label(snapshot.notice),true,2)
-          if(snapshot.configuration.routineId != null) {
-            // Group layout nodes to stay below RemoteViews' ten-child limit;
-            // this adds no second surface or card.
+          if(selected) {
+            // One surface; fixed content followed by a separately measured footer/list region.
             Column(GlanceModifier.fillMaxWidth()) {
-            Text(title,style = TextStyle(color = ink,fontSize = 22.sp,fontWeight = FontWeight.Medium),maxLines = if(expanded)2 else 1)
-            Spacer(GlanceModifier.height(8.dp))
-            if(session == null) { copy(label("Routine unavailable"),true); Button(label("Choose what to show"),setup,GlanceModifier.height(56.dp)); refresh() }
-            else {
-              Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
-                if(total > 0) Box(GlanceModifier.defaultWeight().padding(end = 8.dp)) { WidgetRoutineProgress(done,total,accent,ColorProvider(Color(roles.outline))) }
-                copy(outcome,true)
-              }
+              copy(title,font = 22,medium = true)
               Spacer(GlanceModifier.height(12.dp))
-              Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
-                Column(GlanceModifier.defaultWeight().padding(end = 12.dp).clickable(openRoutine).height((56*fontScale.coerceAtLeast(1f)).dp)) {
-                  Text(step?.get("name") as? String ?: outcome,style = TextStyle(color = ink,fontSize = 18.sp,fontWeight = FontWeight.Medium),maxLines = 1)
-                  (step?.get("target") as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true) }
+              if(session == null) {
+                copy(label("Choose a routine to show its progress."),true,2)
+                Spacer(GlanceModifier.height(16.dp))
+                action(label("Choose routine"),setup,GlanceModifier.fillMaxWidth().height(primaryHeight),true)
+              } else {
+                if(total > 0) {
+                  Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
+                    Box(GlanceModifier.defaultWeight().padding(end = 8.dp)) { WidgetRoutineProgress(done,total,accent,ColorProvider(Color(roles.outline))) }
+                    copy(label("$done of $total done"),true)
+                  }
+                  Spacer(GlanceModifier.height(16.dp))
                 }
-                action(label("Resume"),openRoutine,GlanceModifier.width((104*fontScale.coerceAtLeast(1f)).dp).height((56*fontScale.coerceAtLeast(1f)).dp),true)
+                Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
+                  Column(GlanceModifier.defaultWeight().padding(end = 12.dp)
+                    .then(if(preview)GlanceModifier else GlanceModifier.clickable(openRoutine))) {
+                    copy(if(activeExercise)step!!["name"] as? String ?: "" else outcome,font = 18,medium = true)
+                    if(activeExercise) (step!!["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true) }
+                    else if(state == "Rest") copy(label("No exercises scheduled today."),true,2)
+                  }
+                  action(label(if(activeExercise)"Resume" else "View routine"),openRoutine,
+                    GlanceModifier.width(((if(activeExercise)104 else 128)*fontScale.coerceAtLeast(1f)).dp).height(primaryHeight),activeExercise)
+                }
               }
               Spacer(GlanceModifier.height(8.dp))
-              Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
-                val next = steps.dropWhile { it !== step }.drop(1).firstOrNull { it["completed"] != true }
-                val undo = snapshot.undoToken
-                Box(GlanceModifier.defaultWeight().height((48*fontScale.coerceAtLeast(1f)).dp),contentAlignment = Alignment.CenterStart) {
-                  if(undo != null) Text(label("Undo ${snapshot.undoName.orEmpty()}"),GlanceModifier.fillMaxSize().clickable(if(preview)openRoutine else actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to undo))),TextStyle(color = accent,fontSize = 14.sp),maxLines = 2)
-                  else if(snapshot.configuration.mode == "Today" && !expanded) Text(label("View Agenda (${snapshot.total})"),GlanceModifier.fillMaxSize().clickable(agenda),TextStyle(color = accent,fontSize = 14.sp),maxLines = 2)
-                  else if(next != null) copy(label("Next: ${next["name"]}"),true,2)
-                }
-                refresh()
-                val token = snapshot.retryToken ?: snapshot.doneToken
-                if(token != null) action(label(if(snapshot.retryToken != null)"Retry" else "Done"),if(preview)openRoutine else actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token)),
-                  GlanceModifier.width((80*fontScale.coerceAtLeast(1f)).dp).height((48*fontScale.coerceAtLeast(1f)).dp).semantics { contentDescription = label(if(snapshot.retryToken != null)"Retry the same action" else "Mark as done") + ": " + (step?.get("name") as? String).orEmpty() },false)
-              }
             }
-            }
-          }
-          if((expanded || session == null && snapshot.configuration.routineId == null) && snapshot.configuration.mode == "Today") {
-            Column(GlanceModifier.fillMaxWidth().defaultWeight()) {
-            Spacer(GlanceModifier.height(8.dp)); copy(label("Today's reminders"),true)
-            @Composable fun item(reminder: Map<String,Any?>) {
-              Column(GlanceModifier.fillMaxWidth().height(68.dp).padding(8.dp).clickable(actionStartActivity(widgetOpen(context,"reminder/${reminder["id"]}")))) {
-                copy(reminder["title"] as? String ?: "")
-                Text(WidgetText.reminder(context,reminder),style = TextStyle(color = if(reminder["overdue"] == true)ColorProvider(Color(roles.warning)) else muted,fontSize = 14.sp),maxLines = 1)
-              }
-            }
-            if(staticCollections) Column(GlanceModifier.fillMaxWidth().defaultWeight()) { snapshot.reminders.take(if(session == null)4 else 1).forEach { item(it) } }
-            else androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) { snapshot.reminders.forEach { row -> item { item(row) } } }
-            if(snapshot.reminders.isEmpty()) copy(label("No reminders for today."),true)
-            Row(GlanceModifier.fillMaxWidth()) { Text(label("View Agenda (${snapshot.total})"),GlanceModifier.defaultWeight().height(48.dp).clickable(agenda),TextStyle(color = accent,fontSize = 16.sp)); if(session == null)refresh() }
-            }
-          } else if(expanded && snapshot.configuration.mode == "Routine" && steps.any { it !== step && it["completed"] != true }) {
-            Column(GlanceModifier.fillMaxWidth().defaultWeight()) {
+          } else {
+            copy(title,font = 22,medium = true)
             Spacer(GlanceModifier.height(12.dp))
-            @Composable fun upcoming(row: Map<String,Any?>) {
-              val destination = snapshot.configuration.routineId?.let { id -> actionStartActivity(widgetOpen(context,"routine-session?id=${Uri.encode(id)}&date=${snapshot.date}&stepId=${Uri.encode(row["id"].toString())}")) } ?: openRoutine
-              Column(GlanceModifier.fillMaxWidth().height(64.dp).padding(8.dp).clickable(destination)) { copy(row["name"] as? String ?: ""); copy(row["target"] as? String ?: "",true) }
+          }
+          // List space is bounded ABOVE the footer. Compact Today shows exactly one full row.
+          if(snapshot.configuration.mode == "Today" && (!selected || expanded)) {
+            Column(GlanceModifier.fillMaxWidth().defaultWeight()) {
+              if(selected) copy(label("Today's reminders"),true)
+              if(snapshot.reminders.isEmpty()) {
+                copy(label("No reminders for today."),lines = 2)
+                if(!selected) copy(label("Today's and overdue reminders will appear here."),true,2)
+              } else if(!expanded) reminder(snapshot.reminders.first())
+              else if(staticCollections) Column { snapshot.reminders.take(if(selected)2 else 4).forEach { reminder(it) } }
+              else androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxSize()) { snapshot.reminders.forEach { row -> item { reminder(row) } } }
             }
-            if(staticCollections) Column { steps.filter { it !== step && it["completed"] != true }.take(2).forEach { upcoming(it) } }
-            else androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) { steps.filter { it !== step && it["completed"] != true }.forEach { row -> item { upcoming(row) } } }
+          } else if(expanded && snapshot.configuration.mode == "Routine") {
+            Column(GlanceModifier.fillMaxWidth().defaultWeight()) {
+              @Composable fun upcoming(row: Map<String,Any?>) {
+                val destination = snapshot.configuration.routineId?.let { id -> actionStartActivity(widgetOpen(context,"routine-session?id=${Uri.encode(id)}&date=${snapshot.date}&stepId=${Uri.encode(row["id"].toString())}")) } ?: openRoutine
+                Column(GlanceModifier.fillMaxWidth().height(64.dp).padding(vertical = 8.dp).then(if(preview)GlanceModifier else GlanceModifier.clickable(destination))) {
+                  copy(row["name"] as? String ?: ""); copy(row["target"] as? String ?: "",true)
+                }
+              }
+              val remaining = steps.filter { it !== step && it["completed"] != true }.takeIf { activeExercise }.orEmpty()
+              if(staticCollections) Column { remaining.take(2).forEach { upcoming(it) } }
+              else androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxSize()) { remaining.forEach { row -> item { upcoming(row) } } }
             }
           }
+          footer()
         }
       }
     }

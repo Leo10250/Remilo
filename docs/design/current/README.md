@@ -71,6 +71,9 @@ The owner's 16 October refinement keeps the complete selected exercise sequence,
 shared date/time controls, contextual routine menus and whole-family Trash, adds
 full-frame custom photos with portable backup, and gives the widget compact
 Resume + Done presentation. Shared row chevrons now follow interaction semantics.
+The later 16 October widget correction adds always-visible example/loading/error
+previews, draft-only first-routine defaults, explicit empty/rest states and bounded
+compact content with quieter secondary actions. See the maintained widget contract.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

@@ -15288,6 +15288,63 @@
       "context": "Calendar attention banner action",
       "calendarStatus": false
     },
+    "widget_example_label": {
+      "en": "Example preview · Sample content only",
+      "zh-Hans": "示例预览 · 仅含示例内容",
+      "args": {}, "context": "Widget setup; sample data is never saved", "calendarStatus": false
+    },
+    "widget_preview_loading": {
+      "en": "Loading preview…", "zh-Hans": "正在加载预览…",
+      "args": {}, "context": "Widget setup preview", "calendarStatus": false
+    },
+    "widget_preview_error": {
+      "en": "Could not load the preview.", "zh-Hans": "无法加载预览。",
+      "args": {}, "context": "Widget setup preview", "calendarStatus": false
+    },
+    "widget_empty_help": {
+      "en": "Today's and overdue reminders will appear here.", "zh-Hans": "今天和已逾期的提醒将显示在这里。",
+      "args": {}, "context": "Real empty widget; no example content", "calendarStatus": false
+    },
+    "widget_rest_help": {
+      "en": "No exercises scheduled today.", "zh-Hans": "今天没有安排练习。",
+      "args": {}, "context": "Informational rest day", "calendarStatus": false
+    },
+    "widget_choose_routine": {
+      "en": "Choose routine", "zh-Hans": "选择日程",
+      "args": {}, "context": "Widget unavailable routine recovery", "calendarStatus": false
+    },
+    "widget_choose_routine_help": {
+      "en": "Choose a routine to show its progress.", "zh-Hans": "选择一个日程以显示其进度。",
+      "args": {}, "context": "Widget unavailable routine recovery", "calendarStatus": false
+    },
+    "widget_view_routine": {
+      "en": "View routine", "zh-Hans": "查看日程",
+      "args": {}, "context": "Rest or finished session navigation", "calendarStatus": false
+    },
+    "widget_example_routine_title": {
+      "en": "Core & intervals", "zh-Hans": "核心与间歇训练",
+      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+    },
+    "widget_example_reminder_title": {
+      "en": "Water plants", "zh-Hans": "给植物浇水",
+      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+    },
+    "widget_example_intervals": {
+      "en": "Intervals", "zh-Hans": "间歇训练",
+      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+    },
+    "widget_example_reps": {
+      "en": "3 × 10", "zh-Hans": "3 组 × 10 次",
+      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+    },
+    "widget_example_side_target": {
+      "en": "3 × 25 s / side", "zh-Hans": "每侧 3 组 × 25 秒",
+      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+    },
+    "widget_example_intervals_target": {
+      "en": "8 intervals", "zh-Hans": "8 组间歇",
+      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+    },
     "calendar_sync_inactive": {
       "en": "Calendar sync inactive",
       "zh-Hans": "日历同步未启用",

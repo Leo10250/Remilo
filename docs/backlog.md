@@ -13,6 +13,7 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| UX-32 | Clean widget hierarchy, dependable previews and empty states | owner 16 October widget screenshots | implemented/unverified | [313 shared/97 tooling/537 native tests, actual RemoteViews review, lint and signed assembly](evidence/2026-10-16-widget-preview-cleanup.md); draft-only first-routine defaults, labelled inert examples, explicit empty/rest outcomes and unclipped compact content; native setup/launcher/TalkBack phone gates remain |
 | UX-31 | Align routine Agenda tiles with ordinary reminder rows | owner 16 October tile correction | implemented/unverified | [313 shared/97 tooling/534 native tests, lint and signed assembly](evidence/2026-10-16-routine-tile-alignment.md); shared leading ring/control column and title/More anchors, separated responsive progress footer; browser preview blocked, actual visual/TalkBack acceptance remains |
 | BETA-09 | Keep automatic Agenda refreshes from flashing the pull indicator | owner 16 October report | implemented/unverified | [313 shared/97 tooling checks and controlled refresh repair](evidence/2026-10-16-agenda-refresh.md); background updates stay quiet, manual refresh covers reconciliation/query completion; updated signed-phone observation remains |
 | CAL-07 | Fence publication/deletion races and explain publication checks | owner 16 October report | implemented/unverified | [313 shared/97 tooling/534 native tests, lint and signed assembly](evidence/2026-10-16-calendar-publication-race.md); terminal/operation/read-only fences, old-review reconciliation and visible check outcomes; CAL-07 signed-phone/live Google follow-up remains |
@@ -137,7 +138,7 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 | G4 | Calendar release gate | P4-A/B/C/D/E | pending | Managed discovery/reuse/creation and recovery, both directions after documented opportunities, protected conflicts/unknown writes, recurrence, independent deletion and quiet review notices on an identified signed build |
 | RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): shared date/time and required labels, three Alert modes, clearer exercise fields, contained photos, CE16/DP9 family Trash and format-7 photo archives; prior [routine/Alarm evidence](evidence/2026-10-15-routine-ui-correction.md) retained; consolidated phone acceptance pending |
 | RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): stable complete exercise list, selected Viewing state, named Undo, origin-preserving menus and native dated/history/media ownership; 17 existing approved illustrations retained; consolidated physical acceptance pending |
-| RW-03 | Readable Android home-screen Today widget | RW-02 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): compact opaque Focus/Today with primary Resume plus separate Done/Refresh, exact exercise links, adaptive text/sizes, named Undo/Retry and production-composition previews; launcher/TalkBack/signed-phone acceptance pending |
+| RW-03 | Readable Android home-screen Today widget | RW-02 | implemented/unverified | [Latest 16 October cleanup](evidence/2026-10-16-widget-preview-cleanup.md): compact primary Resume plus text Done, draft defaults, inert example previews, explicit empty/rest outcomes and measured Agenda footer; native progress/Undo/Retry retained; launcher/TalkBack/signed-phone acceptance pending |
 | RW-04 | Optional daily Today/agenda digest notification | RW-02 | pending | configurable local time, opt-in and quiet dismissal; no duplicate or alarm-channel behavior |
 | AI-01 | Android assistant/intent compatibility research and action contract | G3 | pending | current official support matrix for Android intents, Gemini/AppFunctions, Samsung/Bixby, versions and limits |
 | AI-02 | Safe external create-reminder/alarm actions and supported Android entry points | AI-01 | pending | voice/deep-link/shortcut intent drafts previewed, explicitly confirmed and saved once through native engine |
@@ -301,6 +302,9 @@ urgent information; verify that classification cannot delay or alter alarm work.
     plus separate Done, named Undo and exact date/exercise links; setup previews
     share production composition. Signed-phone picker, launcher and accessibility
     observations remain pending; no installation/distribution accompanies this work.
+  - RW-03f: owner’s later clean-widget correction tracked under UX-32: example
+    previews, explicit empty/rest outcomes, draft-only selection defaults and
+    unclipped compact content/actions using the current app presentation roles.
 
 - RW-04: digest is explicitly opt-in with editable delivery time and off switch.
   Show only authorized local data (plus opted-in linked Calendar events when

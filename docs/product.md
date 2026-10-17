@@ -334,6 +334,14 @@ refresh is an OS-controlled opportunity; explicit dated actions reject stale wor
 even when launcher pixels are delayed. Widget IDs/configuration/actions are local
 presentation state outside portable backups. See the [widget contract](design/current/home-screen-widget.md).
 
+Widget setup always presents a preview: clearly labelled inert example content
+when no data is available, visible loading/error feedback otherwise. New Focus
+drafts default to the first available routine; saved unavailable selections never
+retarget automatically. Real empty widgets explain their state and open Agenda.
+Compact Today shows one full reminder row or the selected routine's focused
+exercise, with measured footer space, primary Resume and separate text Done.
+Rest days show one outcome and View routine without exercise completion controls.
+
 - A broader date-aware in-app Today presentation may supplement the widget without
   requiring a new permanent tab. Native day/zone resolution remains authoritative.
 - An optional configurable daily agenda notification summarizes what is due

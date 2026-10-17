@@ -31,7 +31,7 @@ import java.util.Locale
 class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = { context, number ->
   widgetRequest(context) { it.widgetSnapshot(number, WidgetWork.supported(context, number)) }
 }) : GlanceAppWidget() {
-  override val sizeMode = SizeMode.Responsive(setOf(DpSize(180.dp,110.dp), DpSize(300.dp,240.dp), DpSize(300.dp,440.dp)))
+  override val sizeMode = SizeMode.Exact
   override suspend fun provideGlance(context: Context, id: GlanceId) {
     val number = GlanceAppWidgetManager(context).getAppWidgetId(id)
     val snapshot = try { load(context,number) }
@@ -45,8 +45,9 @@ class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = 
   override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(180.dp,110.dp), DpSize(300.dp,240.dp), DpSize(300.dp,440.dp)))
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
     val fontScale = context.resources.configuration.fontScale
-    val appearance = widgetRequest(context) { it.widgetSnapshot(-1,false).appearance }
-    provideContent { WidgetContent(previewSnapshot().copy(appearance = appearance), true, fontScale) }
+    val base = widgetRequest(context) { it.widgetSnapshot(-1,false) }.copy(date = LocalDate.now().toString())
+    val example = WidgetSetup.example(context,"Routine",base)
+    provideContent { WidgetContent(example, true, fontScale) }
   }
 }
 

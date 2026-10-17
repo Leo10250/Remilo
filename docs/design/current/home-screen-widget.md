@@ -32,6 +32,17 @@ items retain 2 dp seams and 16/4 dp corners, with opaque themed surfaces. Native
 setup uses compact chrome, one persistent Save and a production-composition preview
 with inert controls. Cancellation never commits configuration or exercise checks.
 
+The owner's later 16 October widget correction uses the supplied clean reference
+for hierarchy, with current shared colors, 16 dp primary corners and neutral
+Classic mark. A new Routine Focus setup draft selects the first available routine
+when none is selected, including when switching from Today. An explicit existing
+selection, even unavailable, is never replaced. Today retains No routine.
+Without usable content, setup renders a localized, clearly labelled **Example
+preview · Sample content only** using the same production composition. Examples
+never become saved content or action descriptors. Initial loading and failed
+preview rendering have visible feedback and retry rather than a blank region.
+The RemoteViews child fills an explicitly measured preview host in both axes.
+
 The preferred footprint is 4×2. Actual available dp, not launcher cell labels,
 selects 180×110 summary, 300×240 interactive and 300×440 expanded compositions.
 Use a single opaque reading surface, system outer corners and 12 dp internal
@@ -39,15 +50,30 @@ padding. No nested routine card or weighted gap above a bottom action.
 
 The compact hierarchy is Classic/Remilo plus weekday/date (14 sp), routine title
 (22 sp), segmented progress and numeric count (14 sp), exercise (18 sp) and target
-(14 sp). Resume is the 56 dp primary action to the exercise's right, with current
-16 dp button corners. The 48 dp footer contains Next, neutral Refresh and a
-separate Done action. Eligible named Undo replaces compact Next, including after
+(14 sp). Resume is the sole filled 56 dp primary action to the exercise's right,
+with current 16 dp button corners. The 48 dp footer contains one contextual item
+(Next or Today’s accurate View Agenda count), neutral Refresh and a separate text
+Done action. Eligible named Undo replaces the contextual item, including after
 final completion. Expanded Routine mode adds upcoming exercises; expanded Today
 adds the native reminder list. Compact Today keeps an accurate Agenda link/count.
 
+Reserve footer height outside the list's remaining-height region. Center
+intrinsic-height labels in the measured action boxes; never stretch a footer
+TextView to fill a parent. Refresh keeps a 20 dp glyph inside its growing touch
+target at enlarged text sizes. Compact Today without a routine shows one complete
+reminder row; expanded Today retains the scrollable native results. Do not show
+partially obscured rows behind View Agenda. Use 12 dp after the title and 16 dp
+after progress before the exercise/action row. Rest days show Rest day once,
+No exercises scheduled today and a neutral View routine action, without Resume
+or Done. Completed/skipped/ended sessions similarly show their native outcome.
+Real empty Today widgets show No reminders for today, a short explanation and
+View Agenda; no example reminders appear on the home screen.
+
 Summary sizes and font scale 1.6+ open the exact dated session instead of squeezing
 controls. At 1.2–1.6, interactive Focus requires expanded height and omits secondary
-lists. Scale actions/text, keep 56/48 dp targets, and prioritize identity/outcome
+lists. Intermediate text scales also require at least 24 + 210 × fontScale dp
+height for interactive content. Use exact available widget dimensions rather than
+assuming launcher cells provide a particular height. Scale actions/text, keep 56/48 dp targets, and prioritize identity/outcome
 in very small summaries. No text shrinking. EN/ZH use the same anatomy.
 
 Reconfiguration uses the launcher's Edit/Configure affordance; remove the Settings
@@ -76,8 +102,12 @@ receiver replaces it with the generic Unlock message while the user is locked.
   and [quality criteria](https://developer.android.com/docs/quality-guidelines/widget-quality):
   focused use cases, adaptive sizing, accurate previews, readable controls and
   updates after app/widget actions. Android conventions govern implementation.
+  The current quality guidance explicitly requires intentional zero/empty states,
+  accurate previews, no cropped content and at least 48 dp targets. These directly
+  inform the owner's blank-preview and clipping correction.
 - [Apple widget guidance](https://developer.apple.com/design/human-interface-guidelines/widgets?changes=la&language=objc):
-  concise content, simple relevant interactions and contextual deep links.
+  concise content, simple relevant interactions and contextual deep links; avoid
+  both unnecessary density and sparse layouts that communicate no value.
 - [While et al., CHI 2024](https://arxiv.org/abs/2403.12343): age-related differences
   in glanceable smartwatch-chart perception motivate explicit text/counts and
   readability testing; this is not a comparison of these widget layouts.

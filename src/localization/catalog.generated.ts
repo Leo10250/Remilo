@@ -2156,6 +2156,20 @@ export const catalogs = {
       "one": "Review {count} item",
       "other": "Review {count} items"
     },
+    "widget_example_label": "Example preview · Sample content only",
+    "widget_preview_loading": "Loading preview…",
+    "widget_preview_error": "Could not load the preview.",
+    "widget_empty_help": "Today's and overdue reminders will appear here.",
+    "widget_rest_help": "No exercises scheduled today.",
+    "widget_choose_routine": "Choose routine",
+    "widget_choose_routine_help": "Choose a routine to show its progress.",
+    "widget_view_routine": "View routine",
+    "widget_example_routine_title": "Core & intervals",
+    "widget_example_reminder_title": "Water plants",
+    "widget_example_intervals": "Intervals",
+    "widget_example_reps": "3 × 10",
+    "widget_example_side_target": "3 × 25 s / side",
+    "widget_example_intervals_target": "8 intervals",
     "calendar_sync_inactive": "Calendar sync inactive"
   },
   "zh-Hans": {
@@ -4304,6 +4318,20 @@ export const catalogs = {
     "calendar_review_action_count": {
       "other": "查看 {count} 项"
     },
+    "widget_example_label": "示例预览 · 仅含示例内容",
+    "widget_preview_loading": "正在加载预览…",
+    "widget_preview_error": "无法加载预览。",
+    "widget_empty_help": "今天和已逾期的提醒将显示在这里。",
+    "widget_rest_help": "今天没有安排练习。",
+    "widget_choose_routine": "选择日程",
+    "widget_choose_routine_help": "选择一个日程以显示其进度。",
+    "widget_view_routine": "查看日程",
+    "widget_example_routine_title": "核心与间歇训练",
+    "widget_example_reminder_title": "给植物浇水",
+    "widget_example_intervals": "间歇训练",
+    "widget_example_reps": "3 组 × 10 次",
+    "widget_example_side_target": "每侧 3 组 × 25 秒",
+    "widget_example_intervals_target": "8 组间歇",
     "calendar_sync_inactive": "日历同步未启用"
   }
 } as const;
@@ -6434,5 +6462,19 @@ export interface MessageArguments {
   publication_inactive_context: Record<string, never>;
   publication_checking: Record<string, never>;
   calendar_review_action_count: { count: number };
+  widget_example_label: Record<string, never>;
+  widget_preview_loading: Record<string, never>;
+  widget_preview_error: Record<string, never>;
+  widget_empty_help: Record<string, never>;
+  widget_rest_help: Record<string, never>;
+  widget_choose_routine: Record<string, never>;
+  widget_choose_routine_help: Record<string, never>;
+  widget_view_routine: Record<string, never>;
+  widget_example_routine_title: Record<string, never>;
+  widget_example_reminder_title: Record<string, never>;
+  widget_example_intervals: Record<string, never>;
+  widget_example_reps: Record<string, never>;
+  widget_example_side_target: Record<string, never>;
+  widget_example_intervals_target: Record<string, never>;
   calendar_sync_inactive: Record<string, never>;
 }

@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
@@ -58,29 +60,53 @@ class WidgetConfigureActivity : ComponentActivity() {
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var renderedPreview by remember { mutableStateOf<android.widget.RemoteViews?>(null) }
+    var previewFailed by remember { mutableStateOf(false) }
+    var previewAttempt by remember { mutableIntStateOf(0) }
+    var examplePreview by remember { mutableStateOf(false) }
     var expandedPreview by rememberSaveable { mutableStateOf(false) }
     var previewWidth by remember { mutableStateOf(300.dp) }
     val previewDensity = LocalDensity.current
     var appearance by remember { mutableStateOf<com.remilo.alarm.core.AppearancePolicy.Resolved?>(null) }
     androidx.activity.compose.BackHandler(enabled = busy) { /* Save retains its captured configuration until acknowledged. */ }
     fun text(value: String) = L10n.text(this, value)
+    fun chooseMode(value: String) {
+      if(busy) return
+      routineId = WidgetSetup.routineSelection(value,routineId,plans)
+      mode = value
+    }
     suspend fun refresh() {
       plans = widgetRequest(this) { it.widgetPlans() }
-      if (mode == "Routine" && routineId == null) { preview = null; return }
-      preview = widgetRequest(this) { it.widgetPreview(mode, routineId) }
+      routineId = WidgetSetup.routineSelection(mode, routineId, plans)
+      val selectedMode = mode; val selectedRoutine = routineId
+      // A no-routine Focus draft still has a truthful base for its example/appearance.
+      val available = selectedRoutine == null || plans.any { it["id"] == selectedRoutine }
+      val base = widgetRequest(this) { it.widgetPreview(if(selectedRoutine == null || !available) "Today" else selectedMode, selectedRoutine.takeIf { available }) }
+        .let { if(available) it else it.copy(configuration = WidgetConfiguration(selectedMode,selectedRoutine),session = null) }
+      if (mode != selectedMode || routineId != selectedRoutine) return
+      examplePreview = WidgetSetup.needsExample(base, selectedMode, selectedRoutine)
+      preview = if(examplePreview) WidgetSetup.example(this, selectedMode, base) else base
+      error = null
     }
     LaunchedEffect(Unit) {
       try {
         appearance = widgetRequest(this@WidgetConfigureActivity) { it.widgetPreview("Today",null).appearance }
         if (number != AppWidgetManager.INVALID_APPWIDGET_ID && !restored) {
           val config = widgetRequest(this@WidgetConfigureActivity) { it.widgetConfiguration(number) }
-          mode = config.mode; routineId = config.routineId; revision = config.revision
+          if (config.revision > 0) { mode = config.mode; routineId = config.routineId; revision = config.revision }
         }
         refresh(); loaded = true
       } catch (_: Exception) { loaded = plans.isNotEmpty(); error = "Could not load the widget. Refresh to try again." }
     }
-    LaunchedEffect(mode, routineId, loaded) { if (loaded) try { refresh() } catch (_: Exception) { error = "This view changed. Review the refreshed routine." } }
-    LaunchedEffect(preview,expandedPreview,previewWidth) { renderedPreview = preview?.let { runCatching { WidgetRender(it).compose(this@WidgetConfigureActivity, size = DpSize(previewWidth,if(expandedPreview)440.dp else 240.dp)) }.getOrNull() } }
+    LaunchedEffect(mode, routineId, loaded) { if (loaded) try { refresh() }
+      catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+      catch (_: Exception) { error = "This view changed. Review the refreshed routine." } }
+    LaunchedEffect(preview,expandedPreview,previewWidth,previewAttempt) {
+      val snapshot = preview ?: return@LaunchedEffect
+      previewFailed = false
+      try { renderedPreview = WidgetRender(snapshot).compose(this@WidgetConfigureActivity, size = DpSize(previewWidth,if(expandedPreview)440.dp else 240.dp)) }
+      catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+      catch (_: Exception) { renderedPreview = null; previewFailed = true }
+    }
     val roles = (preview?.appearance ?: appearance)?.let { AtmosphereTokens.colors(it.atmosphere, it.brightness) }
       ?: AtmosphereTokens.colors("sky", if ((resources.configuration.uiMode and 48) == 32) "dark" else "light")
     val dark = (preview?.appearance ?: appearance)?.brightness == "dark" || appearance == null && (resources.configuration.uiMode and 48) == 32
@@ -136,9 +162,9 @@ class WidgetConfigureActivity : ComponentActivity() {
           Text(text("Choose what to show"), fontSize = 16.sp)
           Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
           listOf("Today" to "Today's and overdue reminders, with an optional routine.", "Routine" to "One routine's exercise and daily progress.").forEachIndexed { index, (value, description) ->
-            Surface(shape = connectedShape(index,2), color = Color(roles.surface), onClick = { if (!busy) mode = value }) {
+            Surface(shape = connectedShape(index,2), color = Color(roles.surface), onClick = { chooseMode(value) }) {
               Row(Modifier.fillMaxWidth().padding(12.dp)) {
-                RadioButton(selected = mode == value, onClick = { if (!busy) mode = value }, enabled = !busy)
+                RadioButton(selected = mode == value, onClick = { chooseMode(value) }, enabled = !busy)
                 Column(Modifier.weight(1f).padding(start = 8.dp)) { Text(text(if (value == "Routine") "Routine Focus" else "Today"), fontSize = 16.sp); Text(text(description), fontSize = 14.sp, color = Color(roles.onSurfaceVariant)) }
               }
             }
@@ -160,11 +186,21 @@ class WidgetConfigureActivity : ComponentActivity() {
             FilterChip(selected = !expandedPreview,onClick = { expandedPreview = false },enabled = !busy,label = { Text(text("Compact")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
             FilterChip(selected = expandedPreview,onClick = { expandedPreview = true },enabled = !busy,label = { Text(text("Expanded")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
           }
-          renderedPreview?.let { remote -> AndroidView(modifier = Modifier.fillMaxWidth().height(if(expandedPreview)440.dp else 240.dp).onSizeChanged { previewWidth = with(previewDensity) { it.width.toDp() } },
+          if(examplePreview) Text(text("Example preview · Sample content only"),fontSize = 14.sp,color = Color(roles.onSurfaceVariant))
+          Box(Modifier.fillMaxWidth().height(if(expandedPreview)440.dp else 240.dp).onSizeChanged { previewWidth = with(previewDensity) { it.width.toDp() } }
+            .semantics { contentDescription = text("Preview") + ": " + (preview?.session?.get("title") as? String ?: text("Today's reminders")) }) {
+          renderedPreview?.let { remote -> AndroidView(modifier = Modifier.fillMaxSize(),
             factory = { android.widget.FrameLayout(it).apply { isEnabled = false; importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS } },
-            update = { host -> host.removeAllViews(); host.addView(remote.apply(host.context, host));
+            update = { host -> host.removeAllViews(); host.addView(remote.apply(host.context, host),android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,android.view.ViewGroup.LayoutParams.MATCH_PARENT));
               fun inert(view: android.view.View) { view.isEnabled = false; view.isClickable = false; if (view is android.view.ViewGroup) for (i in 0 until view.childCount) inert(view.getChildAt(i)) }; inert(host)
             }) }
+          if(renderedPreview == null) Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),color = Color(roles.surface),modifier = Modifier.fillMaxSize()) {
+            Column(Modifier.padding(16.dp),verticalArrangement = Arrangement.spacedBy(12.dp)) {
+              Text(text(if(previewFailed || error != null) "Could not load the preview." else "Loading preview…"),fontSize = 16.sp)
+              if(previewFailed) TextButton(onClick = { previewAttempt++ }) { Text(text("Refresh")) }
+            }
+          }
+          }
           Text(text("The size and text settings determine how much fits. Smaller widgets open Remilo for actions."), fontSize = 14.sp)
         }
       }

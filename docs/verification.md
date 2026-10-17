@@ -416,6 +416,17 @@ checks real launcher pin/cancel/resize/restore, TalkBack, app/widget updates wit
 React Native, denied notifications, reboot/first unlock and deferred background
 refresh. Do not equate host capture or signed assembly with those observations.
 
+The 16 October widget correction additionally checks first-routine defaults only
+for unselected setup drafts; unavailable selections never retarget. Empty setup
+uses labelled inert examples in both modes/languages, while real widgets show
+truthful empty states. Assert View Agenda, Resume, Done, View routine and named
+Undo text/bounds in actual compact RemoteViews, including Today + Focus, Rest,
+multiple reminders, 300/360 dp width and intermediate/200% font-scale fallback.
+Check rest-day wording appears once. On a signed phone separately review native
+configuration's measured preview host, no-data first setup, switching mode,
+cancellation, launcher resizing and TalkBack. Host layout checks do not establish
+those device observations.
+
 ## Shared routine editor, Focus and Alarm correction
 
 Check new-draft Type switching through all three Alert modes, preserving shared

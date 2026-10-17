@@ -2184,6 +2184,20 @@ object MessageCatalog {
     "publication_inactive_context" to Entry(R.string.l10n_publication_inactive_context, false, listOf(), "This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.", false),
     "publication_checking" to Entry(R.string.l10n_publication_checking, false, listOf(), "Checking the original publication…", false),
     "calendar_review_action_count" to Entry(R.plurals.l10n_calendar_review_action_count, true, listOf("count"), "Review {count} items", false),
+    "widget_example_label" to Entry(R.string.l10n_widget_example_label, false, listOf(), "Example preview · Sample content only", false),
+    "widget_preview_loading" to Entry(R.string.l10n_widget_preview_loading, false, listOf(), "Loading preview…", false),
+    "widget_preview_error" to Entry(R.string.l10n_widget_preview_error, false, listOf(), "Could not load the preview.", false),
+    "widget_empty_help" to Entry(R.string.l10n_widget_empty_help, false, listOf(), "Today's and overdue reminders will appear here.", false),
+    "widget_rest_help" to Entry(R.string.l10n_widget_rest_help, false, listOf(), "No exercises scheduled today.", false),
+    "widget_choose_routine" to Entry(R.string.l10n_widget_choose_routine, false, listOf(), "Choose routine", false),
+    "widget_choose_routine_help" to Entry(R.string.l10n_widget_choose_routine_help, false, listOf(), "Choose a routine to show its progress.", false),
+    "widget_view_routine" to Entry(R.string.l10n_widget_view_routine, false, listOf(), "View routine", false),
+    "widget_example_routine_title" to Entry(R.string.l10n_widget_example_routine_title, false, listOf(), "Core & intervals", false),
+    "widget_example_reminder_title" to Entry(R.string.l10n_widget_example_reminder_title, false, listOf(), "Water plants", false),
+    "widget_example_intervals" to Entry(R.string.l10n_widget_example_intervals, false, listOf(), "Intervals", false),
+    "widget_example_reps" to Entry(R.string.l10n_widget_example_reps, false, listOf(), "3 × 10", false),
+    "widget_example_side_target" to Entry(R.string.l10n_widget_example_side_target, false, listOf(), "3 × 25 s / side", false),
+    "widget_example_intervals_target" to Entry(R.string.l10n_widget_example_intervals_target, false, listOf(), "8 intervals", false),
     "calendar_sync_inactive" to Entry(R.string.l10n_calendar_sync_inactive, false, listOf(), "Calendar sync inactive", false)
   )
 }

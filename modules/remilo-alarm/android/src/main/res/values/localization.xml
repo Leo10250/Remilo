@@ -2164,5 +2164,19 @@ A previously sent Google update may still finish.</string>
     <item quantity="one">Review %1$s item</item>
     <item quantity="other">Review %1$s items</item>
   </plurals>
+  <string name="l10n_widget_example_label">Example preview · Sample content only</string>
+  <string name="l10n_widget_preview_loading">Loading preview…</string>
+  <string name="l10n_widget_preview_error">Could not load the preview.</string>
+  <string name="l10n_widget_empty_help">Today\'s and overdue reminders will appear here.</string>
+  <string name="l10n_widget_rest_help">No exercises scheduled today.</string>
+  <string name="l10n_widget_choose_routine">Choose routine</string>
+  <string name="l10n_widget_choose_routine_help">Choose a routine to show its progress.</string>
+  <string name="l10n_widget_view_routine">View routine</string>
+  <string name="l10n_widget_example_routine_title">Core &amp; intervals</string>
+  <string name="l10n_widget_example_reminder_title">Water plants</string>
+  <string name="l10n_widget_example_intervals">Intervals</string>
+  <string name="l10n_widget_example_reps">3 × 10</string>
+  <string name="l10n_widget_example_side_target">3 × 25 s / side</string>
+  <string name="l10n_widget_example_intervals_target">8 intervals</string>
   <string name="l10n_calendar_sync_inactive">Calendar sync inactive</string>
 </resources>
