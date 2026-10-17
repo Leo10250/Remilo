@@ -214,6 +214,9 @@ resolution is required before a suspended link resumes.
   Collection headers use icon-only Filters beside Search/More, showing an active
   optional-filter count and a complete spoken label. Agenda's content-row Filters
   retains its label, and applied removable chips remain visible on both surfaces.
+  Agenda refreshes cached rows quietly on native changes, foregrounding and its
+  minute-based date/status update. Only a deliberate pull-to-refresh activates
+  the top refresh indicator; initial loading and pagination keep separate feedback.
   Back from a non-Agenda root returns to Agenda; secondary pages return to their origin.
   Search/sheets, draft guards and unconfirmed operations take precedence over root Back.
   Each destination retains its own filters and scroll position, including Completed

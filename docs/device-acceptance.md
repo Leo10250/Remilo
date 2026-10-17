@@ -934,6 +934,15 @@ failed external navigation. Verify native TalkBack announcements, Back/IME,
 pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
 reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.
 
+## Agenda refresh indicator follow-up (BETA-09)
+
+On an identified signed build containing the repair, leave populated Agenda open
+for more than a minute, receive native updates and background/foreground the app.
+Confirm no unsolicited top pull indicator and current rows/date/status. Pull to
+refresh deliberately and repeatedly; confirm one active refresh, completion and
+retained error feedback. Check empty/first-load, pagination and list-scoped Agenda
+independently. The indicator's actual phone behavior remains unobserved here.
+
 ## Publication and quick Trash follow-up (CAL-07)
 
 On an identified signed build, enable the reviewed automatic Calendar publication

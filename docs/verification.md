@@ -1,5 +1,10 @@
 # Verification and release evidence
 
+Agenda's top refresh indicator must remain quiet during minute/status rereads,
+native change notifications and foreground refreshes. Check deliberate pull from
+reconciliation through query completion, rapid repeated gestures, failures with
+cached rows, first loading and pagination on an identified signed phone build.
+
 Calendar publication/deletion regressions must cover Trash during lookup (no
 insert), Trash during an insert (preserved Google copy, no relink/reimport), lost
 sent replies, unavailable read-only identity, restart repair of old review rows,

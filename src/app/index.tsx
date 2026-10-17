@@ -56,6 +56,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const searchInput = useRef<TextInput>(null), searchFocusRequested = useRef(false);
   const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useLocalizedState<Toast | null>(null);
   const [routineMenu, setRoutineMenu] = useState<RoutineActionTarget | null>(null);
+  const [refreshing, setRefreshing] = useState(false), refreshRunning = useRef(false);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
   const [savedScroll] = useState(()=>readRootSnapshot(key + ':scroll', 0));
@@ -82,6 +83,13 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   });
   const guarded = action.guarded || listGuarded;
   const isGuarded = () => action.isGuarded() || listGuarded;
+  const refreshAgenda = async () => {
+    if (refreshRunning.current || isGuarded() || !nativeAvailable) return;
+    refreshRunning.current = true; setRefreshing(true);
+    try { await engine().reconcile(); await client.invalidateQueries(); }
+    catch (error) { setToast({ message: errorText(error, t('m_1573dcd227e5')), persistent: true }); }
+    finally { refreshRunning.current = false; setRefreshing(false); }
+  };
   useAppearanceHold(searching || guarded);
   useEffect(() => {
     if (!searching || !searchFocusRequested.current || guarded) return;
@@ -228,7 +236,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     </View>}
     {!!reminders.error && !!items.length && <View><ActionFeedback message={t('m_3d982a3fc277')} tone="danger" /><Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void reminders.refetch()} /></View>}
 </>}
-        refreshing={reminders.isRefetching} onRefresh={() => { void engine().reconcile().then(() => client.invalidateQueries()).catch((error: Error) => setToast({ message: errorText(error, t('m_1573dcd227e5')), persistent: true })); }}
+        refreshing={refreshing} onRefresh={() => void refreshAgenda()}
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}

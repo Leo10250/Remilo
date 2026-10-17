@@ -53,6 +53,12 @@ Keep retained rows on refresh failure with an honest error and Retry. Show first
 load, action progress, validation and uncertain-command recovery explicitly.
 Uncertain retries retain the captured operation, not a new mutation.
 
+Agenda's pull-to-refresh indicator belongs to the user's refresh gesture and
+covers local reconciliation plus the resulting query refresh. Native change
+events, app foregrounding and the minute-based date/status reread update retained
+content quietly, without activating that indicator. First-load, pagination,
+mutation and retained-error feedback keep their distinct existing treatment.
+
 Named lists, Settings, details and collections return to their invoking origin
 with query/scroll context retained. Editor/details/modal pages hide the root bar.
 The production Browse-root routing is a baseline implementation gap to migrate,
