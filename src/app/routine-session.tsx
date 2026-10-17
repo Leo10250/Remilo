@@ -107,8 +107,9 @@ function RoutineSessionView() {
       {historyCorrections.length > 0 && <Disclosure title={t('routine_history_changes')} icon="history">{historyCorrections.map(change => <View key={change.id}>
         <Copy>{session.steps.find(s => s.id === change.stepId)?.name}</Copy><Copy muted size={14}>{t('routine_correction_at', { time: shortDateTime(change.atMs) })}</Copy>
       </View>)}</Disclosure>}
+      <ConnectedGroup><SettingRow intent="action" label={t('routine_history')} icon="history" disabled={action.guarded} onPress={() => setHistory(true)} /></ConnectedGroup>
     </View>}
-    <RoutineActions target={menu ? { id, date: session?.date ?? date } : null} onClose={() => setMenu(false)} onHistory={() => setHistory(true)} onCorrect={() => setCorrections(true)} onRemoved={() => { if (router.canGoBack()) router.back(); else router.replace('/routines'); }} />
+    <RoutineActions target={menu ? { id, date: session?.date ?? date } : null} onClose={() => setMenu(false)} onCorrect={() => setCorrections(true)} onRemoved={() => { if (router.canGoBack()) router.back(); else router.replace('/routines'); }} />
     <Sheet title={t('routine_correct_checkmarks')} visible={corrections} onClose={() => { if (!action.guarded) setCorrections(false); }}>
       <Copy muted>{t('routine_day_ended')}</Copy>
       <CommandRecovery action={action} />

@@ -1877,7 +1877,7 @@
   <string name="l10n_routine_no_alert">无提醒</string>
   <string name="l10n_routine_shared_time">所有锻炼日共用一个时间</string>
   <string name="l10n_routine_weekly_hint">锻炼日由此计划决定。休息日不会发送通知，也不会出现在日程中。</string>
-  <string name="l10n_routine_from_tomorrow">修改从明天起生效。今天和历史记录中的练习与进度保持不变。</string>
+  <string name="l10n_routine_changes_immediate">保存后立即生效，包括今天。保留已有练习的勾选状态，过去的记录不变。</string>
   <string name="l10n_routine_change_review">检查更改</string>
   <string name="l10n_routine_changed_day">已修改：%1$s</string>
   <string name="l10n_routine_repeat">每周 · %1$s</string>
@@ -1946,7 +1946,7 @@
   <string name="l10n_routine_empty">暂无日常计划</string>
   <string name="l10n_routine_instructions_fallback">请按照保存的目标和说明进行练习。</string>
   <string name="l10n_routine_attached_hint">可选练习进度，每个工作日可设不同计划。</string>
-  <string name="l10n_routine_saved_changes">已更新日常计划，修改从明天起生效。</string>
+  <string name="l10n_routine_saved_changes">已更新日常计划，修改立即生效。</string>
   <string name="l10n_routine_day_0">星期一</string>
   <string name="l10n_routine_day_1">星期二</string>
   <string name="l10n_routine_day_2">星期三</string>

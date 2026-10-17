@@ -51,9 +51,9 @@ object WidgetWork {
       }) }
     }, {})
   }
-  fun request(context: Context) {
+  fun request(context: Context, includePreview: Boolean = false) {
     try {
-      if (ids(context).isEmpty()) return
+      if (ids(context).isEmpty() && !includePreview) return
       if (!unlocked(context)) { generic(context); return }
       if (!queued.compareAndSet(false, true)) return
       WorkManager.getInstance(context).enqueueUniqueWork(REFRESH, ExistingWorkPolicy.APPEND_OR_REPLACE,
@@ -68,6 +68,7 @@ object WidgetWork {
   }
   suspend fun reconcile(context: Context) {
     if (!unlocked(context)) { generic(context); return }
+    WidgetPickerPreview.update(context)
     val active = ids(context).toSet()
     WidgetPresentation.prune(active)
     widgetRequest(context) { it.pruneWidgets(active) }

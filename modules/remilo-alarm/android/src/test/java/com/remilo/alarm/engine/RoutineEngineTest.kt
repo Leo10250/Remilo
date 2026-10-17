@@ -150,8 +150,9 @@ class RoutineEngineTest {
     fun days(photo: ExerciseImage) = week().map { day -> day + ("exercises" to (day["exercises"] as List<Map<String,Any?>>).map { it + ("customImageId" to photo.id) }) }
     val created=command(draft() + mapOf("kind" to "CreateRoutine","operationId" to "photo-plan","startsOn" to "2026-10-12","days" to days(old)))
     val id=(created["routine"] as Map<*,*>)["id"] as String
+    now=instant("2026-10-13T07:00:00Z"); read(id) // Monday is closed before changing its photo.
     command(draft() + mapOf("kind" to "EditRoutine","operationId" to "photo-edit","routineId" to id,"expectedRevision" to 1,"days" to days(replacement)))
-    assertEquals(old.id,steps(read(id)).first()["customImageId"])
+    assertEquals(replacement.id,steps(read(id)).first()["customImageId"])
     now=instant("2026-10-13T12:00:00Z"); assertEquals(replacement.id,steps(read(id)).first()["customImageId"])
     assertEquals(old.id,steps(read(id,"2026-10-12")).first()["customImageId"])
     val bundle=BackupCodec.decode(request { engine.exportBackup() }); assertEquals(setOf(old.id,replacement.id),bundle.images.map { it.id }.toSet())
@@ -319,21 +320,147 @@ class RoutineEngineTest {
     assertTrue(rows().none { it["id"] == ended["occurrenceId"] })
     assertEquals(0, read(id)["completedCount"])
   }
-  @Test fun repeatedFutureEditsPreserveTodayAndStableIdentities() {
+  @Test fun immediateEditsPreserveCheckmarksAndOccurrenceIdentityThroughReorder() {
     val id = create(); command(action(read(id)))
     val original = steps(read(id)); val originalSession = read(id)
     val changedDays = week().toMutableList(); val originalMonday = changedDays[0]["exercises"] as List<Map<String,Any?>>
     changedDays[0] = mapOf("type" to "Exercises", "exercises" to originalMonday.reversed().map { it + ("name" to "Renamed ${it["name"]}") })
     changedDays[1] = mapOf("type" to "Exercises", "exercises" to listOf(mapOf("id" to "1-0", "name" to "Changed walk", "target" to "40 min", "notes" to "", "illustration" to "")))
     val preview = request { engine.previewRoutine(draft("Notification") + mapOf("routineId" to id, "startsOn" to "2026-10-12", "minutes" to 600, "days" to changedDays)) }
-    assertEquals(instant("2026-10-13T10:00:00Z"), preview["nextAlertMs"])
+    assertEquals(instant("2026-10-12T10:00:00Z"), preview["nextAlertMs"])
     fun edit(revision: Int, operation: String) = command(draft() + mapOf("days" to changedDays, "minutes" to 600, "kind" to "EditRoutine", "routineId" to id, "expectedRevision" to revision, "operationId" to operation))
     assertEquals("Applied", edit(1,"edit")["status"]); assertEquals("Applied", edit(2,"edit-again")["status"])
-    assertEquals(original, steps(read(id))); assertEquals(originalSession["revision"], read(id)["revision"])
+    val updated = read(id)
+    assertEquals(originalSession["occurrenceId"],updated["occurrenceId"])
+    assertEquals(original.map { it["id"] }.reversed(),steps(updated).map { it["id"] })
+    assertTrue(steps(updated).single { it["id"] == "0-0" }["completed"] as Boolean)
+    assertTrue((updated["revision"] as Number).toLong() > (originalSession["revision"] as Number).toLong())
     now = instant("2026-10-13T08:00:00Z")
     assertEquals("Changed walk", steps(read(id)).single()["name"])
     assertEquals("40 min", steps(read(id)).single()["target"])
-    assertEquals(original, steps(read(id,"2026-10-12")))
+    assertEquals(steps(updated), steps(read(id,"2026-10-12")))
+  }
+  @Test fun immediateEditReconcilesRestDaysWidgetsAndStaleActionsWithoutCatchup() {
+    val id=create("Notification"); command(action(read(id))); widgetConfigure(id)
+    val original=read(id); val stale=widget().doneToken!!
+    val rest=week().mapIndexed { i, day -> if(i==0) mapOf("type" to "Rest","exercises" to emptyList<Any>()) else day }
+    fun edit(days: List<Map<String,Any?>>, rev: Int, operation: String, minutes: Int=540) = command(draft("Notification") + mapOf(
+      "kind" to "EditRoutine","routineId" to id,"expectedRevision" to rev,"operationId" to operation,"days" to days,"minutes" to minutes))
+    assertEquals("Applied",edit(rest,1,"rest-now")["status"])
+    assertEquals("Rest",read(id)["state"]); assertEquals("Rest",widget().session!!["state"]); assertNull(widget().doneToken)
+    assertTrue(rows("today").isEmpty()); assertEquals("Rejected",widgetAct(stale)["status"])
+    assertEquals("Paused",protectedRows().single { it.occurrenceId==original["occurrenceId"] }.state)
+    BackupCodec.decode(request { engine.exportBackup() })
+    now=instant("2026-10-12T12:00:00Z")
+    assertEquals("Applied",edit(week(),2,"work-now")["status"])
+    assertEquals(original["occurrenceId"],read(id)["occurrenceId"]); assertEquals("Ready",widget().session!!["state"])
+    assertEquals(1,rows("today").size)
+    assertEquals("Available",protectedRows().single { it.occurrenceId==original["occurrenceId"] }.state)
+    assertTrue(protectedRows().none { it.state in setOf("Alerting","Notified") })
+    val snapshot=widget(); val token=snapshot.doneToken!!
+    widgetAct(token); widgetAct(token); assertEquals(1,read(id)["completedCount"])
+    assertEquals("Applied",widgetAct(widget().undoToken!!)["status"]); assertEquals(0,read(id)["completedCount"])
+    BackupCodec.decode(request { engine.exportBackup() }); restart(); assertEquals("Ready",read(id)["state"])
+  }
+  @Test fun addingSaturdayTakesEffectOnSaturdayAcrossAgendaAndWidget() {
+    val oldDays=week().mapIndexed { i, day -> if(i==5) mapOf("type" to "Rest","exercises" to emptyList<Any>()) else day }
+    val created=command(draft("Notification") + mapOf("kind" to "CreateRoutine","operationId" to "before-saturday","startsOn" to "2026-10-12","days" to oldDays))
+    val id=(created["routine"] as Map<*,*>)["id"] as String; widgetConfigure(id)
+    now=instant("2026-10-17T12:00:00Z"); read(id)
+    assertEquals("Rest",widget().session!!["state"])
+    val changed=week().mapIndexed { i, day -> if(i==5) mapOf("type" to "Exercises","exercises" to listOf(
+      mapOf("id" to "sat-new","name" to "New Saturday exercise","target" to "10 minutes"))) else day }
+    command(draft("Notification") + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "saturday-now","days" to changed))
+    assertEquals("New Saturday exercise",steps(read(id)).single()["name"])
+    assertEquals(read(id)["occurrenceId"],widget().session!!["occurrenceId"])
+    assertEquals(1,rows("today").size); assertNotNull(widget().doneToken)
+  }
+  @Test fun extendingCompletedDayUpdatesItsAggregateWhileSkipAndRemovedStepAuditSurvive() {
+    val id=create(); widgetConfigure(id)
+    repeat(4) { widgetAct(widget().doneToken!!) }
+    assertEquals("Completed",read(id)["state"])
+    val addition=mapOf("id" to "added","name" to "Added today","target" to "5 min")
+    val days=week().mapIndexed { i, day -> if(i==0) day + ("exercises" to (day["exercises"] as List<Map<String,Any?>>) + addition) else day }
+    command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "extend-done","days" to days))
+    assertEquals("InProgress",read(id)["state"]); assertEquals(4,read(id)["completedCount"]); assertEquals(5,read(id)["totalCount"])
+    assertNotNull(widget().doneToken); assertEquals(1,rows("today").size)
+    command(action(read(id),kind="SkipRoutineDay",operation="keep-skip"))
+    val removed=days.mapIndexed { i, day -> if(i==0) day + ("exercises" to listOf(addition)) else day }
+    command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 2,"operationId" to "remove-checked","days" to removed))
+    assertEquals("Skipped",read(id)["state"]); assertNull(widget().doneToken); assertEquals(0,read(id)["completedCount"])
+    assertEquals(4,(read(id)["changes"] as List<Map<String,Any?>>).count { it["kind"]=="SetRoutineExercise" })
+    val json=request { engine.exportBackup() }; val decoded=BackupCodec.decode(json)
+    assertEquals(7,JSONObject(json).getInt("version")); assertEquals(3,decoded.routineVersions.size)
+    assertEquals("Applied",request { engine.importBackup(json,listOf(id),"copy-immediate-audit") }["status"])
+  }
+  @Test fun immediateEditJournalRecoversAtEveryBoundaryAndRetainsClosedHistory() {
+    for(stage in listOf("edit-captured","edit-fenced","edit-before-commit","edit-committed")) {
+      now=instant("2026-10-12T07:00:00Z"); val id=create(operation="edit-create-$stage")
+      command(action(read(id),operation="check-$stage")); val original=read(id)
+      val edited=week().mapIndexed { i, day -> if(i==0) mapOf("type" to "Exercises","exercises" to listOf(
+        mapOf("id" to "0-0","name" to "Renamed bird-dog","target" to "3 × 12"),mapOf("id" to "new","name" to "Added exercise","target" to "5 min"))) else day }
+      val job=draft("Alarm") + mapOf("kind" to "EditRoutine","operationId" to stage,"routineId" to id,"expectedRevision" to 1,"days" to edited,"minutes" to 600)
+      failAt=stage; runCatching { command(job) }; restart()
+      assertEquals("Applied",command(job)["status"])
+      val updated=read(id); assertEquals(original["occurrenceId"],updated["occurrenceId"])
+      assertEquals(1,updated["completedCount"]); assertEquals(2,updated["totalCount"]); assertEquals(600,updated["minutes"])
+      assertEquals(instant("2026-10-12T10:00:00Z"),rows("today").single { (it["routine"] as Map<*,*>)["routineId"]==id }["agendaAtMs"])
+      BackupCodec.decode(request { engine.exportBackup() })
+      now=instant("2026-10-13T08:00:00Z"); read(id)
+      command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 2,"operationId" to "closed-$stage"))
+      assertEquals(steps(updated),steps(read(id,"2026-10-12"))); assertEquals(600,read(id,"2026-10-12")["minutes"])
+    }
+  }
+  @Test fun completingAndUndoingAfterEditPreservesExplicitRoutineSnoozeTarget() {
+    val id=create("Alarm")
+    command(draft("Alarm") + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "before-snooze","minutes" to 600))
+    val day=read(id); var alert=protectedRows().single { it.occurrenceId==day["occurrenceId"] }
+    now=instant("2026-10-12T10:00:00Z"); fireRoutine(alert)
+    alert=protectedRows().single { it.occurrenceId==day["occurrenceId"] }
+    assertEquals("Alerting",alert.state)
+    assertEquals("Applied",command(deliveryCommand(alert,"SnoozeRoutineAlarm","snooze-after-edit"))["status"])
+    val snoozed=protectedRows().single { it.occurrenceId==day["occurrenceId"] }.targetMs
+    assertTrue(snoozed>now)
+    repeat(4) { i -> command(action(read(id),index=i,operation="finish-snoozed-$i")) }
+    command(action(read(id),index=3,done=false,operation="undo-snoozed-final"))
+    assertEquals(snoozed,protectedRows().single { it.occurrenceId==day["occurrenceId"] }.targetMs)
+    assertEquals(3,read(id)["completedCount"])
+  }
+  @Test fun editedOpenDayCanDeliverLockedButPauseAndStaleCallbacksRemainFenced() {
+    for(mode in listOf("Alarm","Notification")) {
+      now=instant("2026-10-12T07:00:00Z"); val id=create(mode,"edited-locked-$mode")
+      val before=read(id); val old=protectedRows().single { it.occurrenceId==before["occurrenceId"] }
+      command(draft(mode) + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "edit-locked-$mode","minutes" to 600))
+      val edited=protectedRows().single { it.occurrenceId==before["occurrenceId"] }
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false)
+      now=instant("2026-10-12T09:00:00Z"); fireRoutine(old)
+      assertEquals("Scheduled",protectedRows().single { it.occurrenceId==before["occurrenceId"] }.state)
+      now=instant("2026-10-12T10:00:00Z"); fireRoutine(edited)
+      assertEquals(if(mode=="Alarm")"Alerting" else "Notified",protectedRows().single { it.occurrenceId==before["occurrenceId"] }.state)
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+      family(id,"PauseRoutine",2,"pause-locked-$mode")
+      val paused=protectedRows().single { it.occurrenceId==before["occurrenceId"] }
+      assertEquals("Paused",paused.state)
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false); fireRoutine(edited)
+      assertEquals("Paused",protectedRows().single { it.occurrenceId==before["occurrenceId"] }.state)
+      shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    }
+  }
+  @Test fun immediateTimeEditsAndBackupsUseTheRecurrenceGapAndFoldPolicy() {
+    TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
+    for((date,clock,minutes,expected) in listOf(
+      listOf("2027-03-14","2027-03-14T08:30:00Z","150","2027-03-14T10:30:00Z"),
+      listOf("2026-11-01","2026-11-01T07:30:00Z","90","2026-11-01T08:30:00Z"))) {
+      now=instant(clock)
+      val days=week().mapIndexed { i, day -> if(i==6) mapOf("type" to "Exercises","exercises" to listOf(
+        mapOf("id" to "sunday","name" to "Sunday walk","target" to "30 min"))) else day }
+      val created=command(draft("Notification") + mapOf("kind" to "CreateRoutine","operationId" to "dst-$date","startsOn" to date,"days" to days))
+      val id=(created["routine"] as Map<*,*>)["id"] as String; val original=read(id)
+      command(draft("Notification") + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "edit-dst-$date","minutes" to minutes.toInt(),"days" to days))
+      assertEquals(original["occurrenceId"],read(id)["occurrenceId"])
+      assertEquals(instant(expected),protectedRows().single { it.occurrenceId==original["occurrenceId"] }.targetMs)
+      BackupCodec.decode(request { engine.exportBackup() })
+    }
   }
   @Test fun journalRecoversEveryProgressCommitBoundaryAndRetriesBeforeRevisionChecks() {
     val id = create()
@@ -540,9 +667,10 @@ class RoutineEngineTest {
       "notes" to "Original instructions", "sound" to "system", "vibration" to true))
     val id = (result["routine"] as Map<*, *>)["id"] as String
     assertEquals("Original instructions", read(id)["notes"]); assertEquals("system", read(id)["sound"]); assertEquals(true,read(id)["vibration"])
+    now = instant("2026-10-13T08:00:00Z"); read(id)
     command(draft("Notification") + mapOf("kind" to "EditRoutine", "operationId" to "edit-fields", "routineId" to id,
       "expectedRevision" to 1, "notes" to "Tomorrow instructions", "sound" to "remilo", "vibration" to false))
-    assertEquals("Original instructions", read(id)["notes"]); assertEquals("Alarm",read(id)["mode"])
+    assertEquals("Tomorrow instructions", read(id)["notes"]); assertEquals("Notification",read(id)["mode"])
     val backup = request { engine.exportBackup() }; val decoded = BackupCodec.decode(backup)
     assertEquals(7,JSONObject(backup).getInt("version")); assertEquals("Original instructions",decoded.routineVersions.first().notes)
     now = instant("2026-10-13T08:00:00Z"); assertEquals("Tomorrow instructions",read(id)["notes"])
@@ -732,7 +860,7 @@ class RoutineEngineTest {
     assertEquals("Alarm",historical["mode"]); assertEquals(600,historical["minutes"]); assertEquals("system",historical["sound"]); assertEquals(true,historical["vibration"])
     assertEquals("Original Tuesday walk",steps(historical).single()["name"]); assertEquals(1,historical["completedCount"])
     val backup = request { engine.exportBackup() }; val decoded = BackupCodec.decode(backup)
-    assertEquals(2,decoded.routineVersions.count { it.routineId == id && it.effectiveDate == "2026-10-13" })
+    assertEquals(3,decoded.routineVersions.count { it.routineId == id && it.effectiveDate == "2026-10-12" })
     val frozen = decoded.routineSessions.single { it.date == "2026-10-13" }
     assertEquals(2L,frozen.versionRevision); assertEquals(3L,decoded.routines.single().revision)
     val tampered = JSONObject(backup); val sessions = tampered.getJSONArray("routineSessions")
@@ -747,14 +875,16 @@ class RoutineEngineTest {
   }
   @Test fun legacyVersionIdsAreDeterministicDespitePortableArrayOrder() {
     val id = create()
-    command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "legacy-revision-two"))
     now = instant("2026-10-13T08:00:00Z"); read(id)
+    command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "legacy-revision-two"))
+    now = instant("2026-10-14T08:00:00Z"); read(id)
     command(draft() + mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 2,"operationId" to "legacy-revision-three"))
     val source = JSONObject(request { engine.exportBackup() }).put("version",5)
     val definitions = source.getJSONArray("routineVersions")
     for (index in 0 until definitions.length()) { val value = definitions.getJSONObject(index); for (key in listOf("revision","notes","sound","vibration")) value.remove(key) }
     val sessions = source.getJSONArray("routineSessions")
-    for (index in 0 until sessions.length()) sessions.getJSONObject(index).remove("versionRevision")
+    for (index in 0 until sessions.length()) { val session=sessions.getJSONObject(index); session.remove("versionRevision")
+      val changes=session.getJSONArray("changes"); session.put("changes",org.json.JSONArray((0 until changes.length()).map { changes.getJSONObject(it) }.filter { it.getString("kind") != "EditRoutine" })) }
     source.getJSONArray("routines").getJSONObject(0).remove("revision")
     val normal = BackupCodec.decode(source.toString())
     source.put("routineVersions",org.json.JSONArray((definitions.length()-1 downTo 0).map { definitions.getJSONObject(it) }))

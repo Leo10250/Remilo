@@ -631,8 +631,22 @@ actual action timestamp. Aggregate completion/skip changes fence the DP generati
 and cancel delivery, then snapshot/header/history/receipt commit in one CE
 transaction. Reconciliation finishes interrupted operations before generic schedule
 recovery. A history correction can change completion without clearing `ended` or
-registering delivery. Plan/Alert/time/Notes/sound edits replace recurrence from tomorrow and
-retain today's snapshot. Pause intervals exclude newly materialized paused dates;
+registering delivery. Plan/Alert/time/Notes/sound/photo edits replace recurrence
+from the saved local date. A captured EditRoutine journal fences today's delivery,
+then appends the immutable revision and updates an open today's snapshot/header in
+the same CE transaction. Preserve the original occurrence/nominal identity and
+matching stable-ID checks; revision advances reject cached exercise/widget commands.
+Retain removed-step action audit against previous plan revisions. Rest has an empty
+snapshot, no completion requirement and cancelled delivery. Ended days are never
+rewritten, including after clock travel. Reconciliation suppresses elapsed/already
+posted delivery. Today's edited DP alert is a day-started exception retaining its
+original segment identity. A scheduled, unprompted open-day exception may deliver
+from an Archived segment; Paused/Changing plans do not grant that exception.
+Pause fences the owned day's alert before its CE commit, and Trash fences all
+family members. Generation/date/expiry checks remain mandatory before unlock.
+Updating the plan clock changes that alert's content-free target at the edit
+fence; ordinary completion/Undo preserves explicit Snooze targets.
+Pause intervals exclude newly materialized paused dates;
 an existing session can still finish. Resume never replays elapsed prompts.
 
 DP8 added a content-free `RoutineQuiet` profile on plans/alerts, an alert
@@ -735,17 +749,19 @@ language/clock/zone/font presentation changes invalidate the view. This cache
 never validates commands or stores progress durably and is pruned with instances.
 
 WidgetSetup resolves first-routine defaults only inside configuration drafts and
-constructs localized inert example projections when data is absent. It never
+constructs localized inert example projections for every setup/picker preview. It never
 mutates plans or persisted widget state. A missing saved routine remains missing.
 Production uses Glance SizeMode.Exact; setup supplies the measured dp width and
 height to the same composition and fills its RemoteViews host explicitly. Fixed
 footer actions remain outside bounded list content; compact Today renders one
 complete reminder row, while expanded native collections remain scrollable.
-WidgetSizing shares 200 dp Resume-only and 240 dp selected-routine-footer preview
-heights with the production breakpoints. Healthy Focus has no footer. The current
-composition creates no Done PendingIntent; existing native descriptors/receipts
-remain compatible with previously cached actions, uncertain Retry and eligible
-Undo. Only known failures expose Refresh. Native app completion commits drive
+WidgetSizing shares interactive and selected-routine-footer preview heights with
+production breakpoints and increases setup height for scaled text. Healthy Focus
+has no footer. Done invokes the native callback with its captured descriptor;
+there is no ambiguous Resume navigation button. Compact Focus puts eligible Undo
+in the header in place of branding, preserving a 48 dp target and the interactive
+200 dp footprint after completion. Expanded/Today layouts use the recovery footer.
+Only known failures expose Refresh. Native app/widget completion commits drive
 the same projections; no progress or scheduling ownership changes.
 An explicit successful refresh acknowledges only that instance's saved conflict
 notice through the serialized native worker. It preserves pending operation and
@@ -782,4 +798,9 @@ and atomically committing content references. Prepared CE import handles replace
 raw JSON in the UI; receipt-first retries bind the same handle/copy choices.
 Legacy JSON versions 1–6 remain readable. Widgets, OS handles, generations and
 private operational sessions remain excluded. Widget progress/actions retain
-native authority; Resume adds an exact exercise ID to the dated deep link.
+native authority; exercise navigation retains an exact exercise ID in the dated deep link.
+Format-7 validation accepts immediately edited snapshots whose original nominal
+identity differs from the updated alert time, checking current definition/metadata
+and the original segment identity. Rest snapshots remain empty/uncompleted, and
+removed-step audit references must resolve to retained immutable plan revisions.
+CE16/DP9 and portable version 7 remain unchanged; formats 1–6 retain their readers.

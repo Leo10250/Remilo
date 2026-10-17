@@ -41,7 +41,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
   }
   private fun version(id: String, date: String) = dao.versions(id).filter { it.effectiveDate <= date }.maxByOrNull { it.revision }
   private fun nominalDate(record: ReminderRecord) = record.nominalSlot!!.substringBefore('T')
-  private fun completed(session: RoutineSession) = strings(session.done).size == rows(session.steps).size
+  private fun completed(session: RoutineSession) = rows(session.steps).isNotEmpty() && strings(session.done).size == rows(session.steps).size
   private fun rest(version: RoutineVersion, date: LocalDate) = rows(version.days)[date.dayOfWeek.value - 1]["type"] == "Rest"
   @Suppress("UNCHECKED_CAST") private fun exercises(version: RoutineVersion, date: LocalDate) =
     rows(version.days)[date.dayOfWeek.value - 1]["exercises"] as List<Map<String, Any?>>
@@ -57,10 +57,17 @@ internal class RoutineCoordinator(private val context: Context, private val data
     val date = nominalDate(record)
     if (dao.dated(record.routineId!!, date)?.occurrenceId?.let { it != record.id } == true) return false
     val session = dao.session(record.id)
+    if (session != null && rows(session.steps).isEmpty()) return false
     return date >= today().toString() && session?.ended != true &&
       (date == today().toString() && session != null || dao.plan(record.routineId!!)?.state == "Active")
   }
-  fun anchor(record: ReminderRecord): Long = LocalDateTime.parse(record.nominalSlot).atZone(zone()).toInstant().toEpochMilli()
+  private fun recordVersion(record: ReminderRecord): RoutineVersion? = dao.session(record.id)?.let { saved ->
+    dao.versions(saved.routineId).firstOrNull { it.revision == saved.versionRevision }
+  } ?: record.routineId?.let { version(it,nominalDate(record)) }
+  fun recurrence(record: ReminderRecord): RecurrenceRule? = recordVersion(record)?.let { series.rule(template(it),rule(it)) }
+  fun anchor(record: ReminderRecord): Long = recordVersion(record)?.let { v ->
+    LocalDate.parse(nominalDate(record)).atTime(v.minutes / 60,v.minutes % 60).atZone(zone()).toInstant().toEpochMilli()
+  } ?: LocalDateTime.parse(record.nominalSlot).atZone(zone()).toInstant().toEpochMilli()
   fun projection(record: ReminderRecord): Map<String, Any?>? {
     val planId = record.routineId ?: return null
     val date = nominalDate(record)
@@ -73,7 +80,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       "ended" to ended, "endsAtMs" to RoutinePolicy.end(LocalDate.parse(date), zone()), "completedCount" to done.size, "totalCount" to steps.size,
       "skipped" to record.skipped, "completed" to record.completed,
       "notes" to v.notes, "mode" to v.mode, "minutes" to v.minutes, "sound" to v.sound, "vibration" to v.vibration,
-      "state" to when { record.skipped -> "Skipped"; record.completed -> "Completed"; ended -> if (done.isEmpty()) "NotCompleted" else "PartiallyCompleted"; done.isEmpty() -> "Ready"; else -> "InProgress" },
+      "state" to when { steps.isEmpty() -> "Rest"; record.skipped -> "Skipped"; record.completed -> "Completed"; ended -> if (done.isEmpty()) "NotCompleted" else "PartiallyCompleted"; done.isEmpty() -> "Ready"; else -> "InProgress" },
       "changes" to saved?.let { rows(it.changes) }.orEmpty(),
       "steps" to steps.map { it + ("completed" to (it["id"] in done)) })
   }
@@ -85,12 +92,12 @@ internal class RoutineCoordinator(private val context: Context, private val data
   }
   fun preview(input: Map<String, Any?>): Map<String, Any?> {
     val owner = (input["routineId"] as? String)?.let { dao.plan(it) ?: throw IllegalArgumentException("Choose a routine day.") }
-    val date = if (owner != null) maxOf(today().plusDays(1), LocalDate.parse(owner.startsOn)).toString()
+    val date = if (owner != null) maxOf(today(), LocalDate.parse(owner.startsOn)).toString()
       else if (input["startsOn"] == null) today().toString() else checkedDate(input["startsOn"]).toString()
     val v = checkedVersion(input + ("title" to ((input["title"] as? String)?.takeIf { it.isNotBlank() } ?: "Routine")), "preview", date)
     val r = series.rule(template(v), rule(v))
     return mapOf("nextAlertMs" to if (v.mode == "None") null else Recurrence.future(r, now(), zone(), v.mode).firstOrNull()?.alarmAtMs,
-      "today" to today().toString(), "effectiveDate" to today().plusDays(1).toString())
+      "today" to today().toString(), "effectiveDate" to date)
   }
   fun planView(plan: RoutinePlan): Map<String, Any?> {
     val v = dao.versions(plan.id).maxBy { it.revision }
@@ -214,15 +221,20 @@ internal class RoutineCoordinator(private val context: Context, private val data
       if ((command["expectedRevision"] as? Number)?.toDouble() != plan.revision.toDouble()) return rejected("STALE_REVISION")
       val segments = db.records().series().filter { it.seriesId == plan.id && it.state != "Archived" }
       if (kind == "EditRoutine") {
-        val date = maxOf(today().plusDays(1), LocalDate.parse(plan.startsOn))
-        val v = checkedVersion(command, plan.id, date.toString(), plan.revision + 1)
-        series.replaceRoutine("routine-series:$operation", plan.id, template(v), rule(v), date.atStartOfDay(), checkpoint = {
-          dao.version(v); dao.plan(plan.copy(revision = plan.revision + 1))
-          db.records().receipt(CreationReceipt(operation, plan.id, kind))
-          dao.operation(RoutineOperation(operation, fingerprint, null, "{}", true, JSONObject(response(plan.id)).toString()))
-        })
+        val date = maxOf(today(), LocalDate.parse(plan.startsOn))
+        checkedVersion(command, plan.id, date.toString(), plan.revision + 1)
+        val payload = JSONObject().put("edit", JSONObject(command)).put("date", date.toString()).put("atMs", now())
+        val pending = RoutineOperation(operation, fingerprint, null, payload.toString())
+        dao.operation(pending); checkpoint("edit-captured"); settleEdit(pending)
       } else {
         val segment = segments.maxByOrNull { it.createdAtMs } ?: return rejected("NOT_FOUND")
+        if(kind == "PauseRoutine") dao.dated(plan.id,today().toString())?.takeIf { !it.ended }?.let { saved ->
+          alerts.find(saved.occurrenceId)?.let { alert ->
+            alerts.put(alert.copy(state = "Paused",generation = alert.generation + 1,sessionId = null))
+            try { scheduler.cancel(alert) } catch (_: Exception) { }
+            AlarmNotifications(context).clearAttention(alert.occurrenceId); alert.sessionId?.let(deliveryChanged)
+          }
+        }
         val intervals = JSONArray(plan.pauses)
         if (kind == "PauseRoutine" && plan.state != "Paused") intervals.put(JSONObject().put("from", now()).put("until", JSONObject.NULL))
         if (kind == "ResumeRoutine" && plan.state == "Paused" && intervals.length() > 0) intervals.getJSONObject(intervals.length() - 1).put("until", now())
@@ -238,6 +250,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
     val record = db.records().find(command["occurrenceId"] as? String ?: "") ?: return rejected("NOT_FOUND")
     val session = dao.session(record.id) ?: return rejected("NOT_FOUND")
     if (record.deleted || trashed(record.routineId)) return rejected("IN_TRASH")
+    if (rows(session.steps).isEmpty()) return rejected("NOT_ELIGIBLE")
     if (command["date"] != session.date) return rejected("STALE_DATE")
     val actionAt = now()
     val historical = kind == "CorrectRoutineExercise"
@@ -272,6 +285,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       else -> null
     })
   private fun settle(operation: RoutineOperation) {
+    if (JSONObject(operation.payload).has("edit")) { settleEdit(operation); return }
     if (JSONObject(operation.payload).has("family")) { settleFamily(operation); return }
     val id = operation.occurrenceId ?: return
     val record = db.records().find(id) ?: run { dao.purgeOperations(id); return }
@@ -306,12 +320,52 @@ internal class RoutineCoordinator(private val context: Context, private val data
     checkpoint("committed")
     syncDelivery(db.records().find(id)!!, updated)
   }
+  /** Saved edits update the open civil day in the same CE commit as the plan.
+   * The original occurrence/nominal identity survives; elapsed prompts never replay. */
+  private fun settleEdit(operation: RoutineOperation) {
+    val payload = JSONObject(operation.payload)
+    val input = map(payload.getJSONObject("edit").toString())
+    val plan = dao.plan(input["routineId"] as String) ?: return
+    val date = LocalDate.parse(payload.getString("date"))
+    val v = checkedVersion(input, plan.id, date.toString(), plan.revision + 1)
+    val saved = dao.dated(plan.id,date.toString())?.takeIf { !it.ended && date == today() }
+    saved?.let { session -> alerts.find(session.occurrenceId)?.let { alert ->
+      if (alert.state != "Changing") {
+        val target = date.atTime(v.minutes / 60,v.minutes % 60).atZone(zone()).toInstant().toEpochMilli()
+        alerts.put(alert.copy(state = "Changing", previousState = alert.state, generation = alert.generation + 1, sessionId = null,
+          targetMs = target, mode = v.mode, sound = v.sound, vibration = v.vibration, exception = true))
+        try { scheduler.cancel(alert) } catch (_: Exception) { }
+        AlarmNotifications(context).clearAttention(alert.occurrenceId)
+        alert.sessionId?.let(deliveryChanged)
+      }
+    } }
+    checkpoint("edit-fenced")
+    series.replaceRoutine("routine-series:${operation.operationId}", plan.id, template(v), rule(v), date.atStartOfDay(), checkpoint = {
+      dao.version(v); dao.plan(plan.copy(revision = plan.revision + 1))
+      saved?.let { session -> db.records().find(session.occurrenceId)?.let { record ->
+        val nextSteps = if(rest(v,date)) emptyList() else exercises(v,date)
+        val retained = strings(session.done).intersect(nextSteps.map { it["id"] as String }.toSet())
+        val changes = JSONArray(session.changes).put(JSONObject().put("id",operation.operationId).put("kind","EditRoutine")
+          .put("stepId",JSONObject.NULL).put("atMs",payload.getLong("atMs")))
+        dao.session(session.copy(versionDate = v.effectiveDate, versionRevision = v.revision, steps = JSONArray(nextSteps).toString(),
+          done = JSONArray(retained.toList()).toString(), revision = session.revision + 1, changes = changes.toString()))
+        val target = date.atTime(v.minutes / 60,v.minutes % 60).atZone(zone()).toInstant().toEpochMilli()
+        db.records().update(record.copy(title = v.title, notes = v.notes, mode = v.mode, sound = v.sound, vibration = v.vibration,
+          listId = v.listId, zoneId = zone().id, eventStartMs = target, eventEndMs = target + 1_800_000, dueAtMs = target, definedAlarmAtMs = target,
+          exception = true, completed = nextSteps.isNotEmpty() && retained.size == nextSteps.size && !record.skipped, revision = record.revision + 1))
+      } }
+      db.records().receipt(CreationReceipt(operation.operationId,plan.id,"EditRoutine"))
+      dao.operation(operation.copy(applied = true,result = JSONObject(response(plan.id)).toString()))
+      checkpoint("edit-before-commit")
+    })
+    checkpoint("edit-committed")
+  }
   private fun syncDelivery(record: ReminderRecord, session: RoutineSession) {
     var alert = alerts.find(record.id) ?: return
     val oldSession = alert.sessionId
     if (!alert.dayStarted) { alert = alert.copy(dayStarted = true); alerts.put(alert) }
     if (session.ended && !alert.dayEnded) { alert = alert.copy(dayEnded = true); alerts.put(alert) }
-    val terminal = when { record.deleted || trashed(record.routineId) -> "Deleted"; record.skipped -> "Skipped"; record.completed -> "Completed"; session.ended -> "Expired"; else -> null }
+    val terminal = when { record.deleted || trashed(record.routineId) -> "Deleted"; rows(session.steps).isEmpty() -> if(session.ended) "Expired" else "Paused"; record.skipped -> "Skipped"; record.completed -> "Completed"; session.ended -> "Expired"; else -> null }
     if (terminal != null) {
       if (alert.state != terminal) {
         alerts.put(alert.copy(state = terminal, generation = alert.generation + 1, previousState = null, sessionId = null))
@@ -322,7 +376,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       alerts.put(alert.copy(state = "Paused", generation = alert.generation + 1, previousState = null, sessionId = null))
       try { scheduler.cancel(alert) } catch (_: Exception) { }
       AlarmNotifications(context).clearAttention(record.id)
-    } else if (alert.state in setOf("Changing", "Completed", "Skipped", "Expired", "Deleted") && dao.plan(session.routineId)?.state == "Active") {
+    } else if (alert.state in setOf("Changing", "Completed", "Skipped", "Expired", "Deleted", "Replaced", "Paused") && dao.plan(session.routineId)?.state == "Active") {
       register(alert.copy(state = "Pending", generation = alert.generation + 1, previousState = null))
     }
     if (oldSession != null && alerts.find(record.id)?.sessionId != oldSession) deliveryChanged(oldSession)

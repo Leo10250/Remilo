@@ -9,8 +9,8 @@ import { WidgetSetupRow } from './widget-setup';
 
 export type RoutineActionTarget = { id: string; date?: string };
 /** Mounted by each origin. Opening/closing changes no route or underlying scroll state. */
-export function RoutineActions({ target, onClose, onRemoved, onHistory, onCorrect }: {
-  target: RoutineActionTarget | null; onClose: () => void; onRemoved?: () => void; onHistory?: () => void; onCorrect?: () => void;
+export function RoutineActions({ target, onClose, onRemoved, onCorrect }: {
+  target: RoutineActionTarget | null; onClose: () => void; onRemoved?: () => void; onCorrect?: () => void;
 }) {
   const t = useTranslation();
   const plans = useQuery({ queryKey: ['routines'], queryFn: () => engine().queryRoutines(), enabled: nativeAvailable && !!target });
@@ -33,10 +33,9 @@ export function RoutineActions({ target, onClose, onRemoved, onHistory, onCorrec
     <CommandRecovery action={action} />
     <SettingRow intent="action" label={t('routine_open_today')} disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/routine-session', params: { id: target!.id } }))} />
     <SettingRow intent="action" label={t('routine_edit')} icon="edit" disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/edit', params: { routineId: target!.id } }))} />
-    <SettingRow intent="action" label={t('routine_history')} icon="history" disabled={action.guarded || !plan} onPress={() => navigate(() => onHistory ? onHistory() : router.push({ pathname: '/routine-session', params: { id: target!.id, history: '1' } }))} />
     <WidgetSetupRow routineId={target?.id} disabled={action.guarded || !plan} onOpen={close} />
     <SettingRow intent="action" label={t('routine_duplicate')} icon="content_copy" disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/edit', params: { copyRoutine: target!.id } }))} />
-    {day?.occurrenceId && !day.ended && !day.skipped && !day.completed && !day.deleted && <SettingRow intent="action" label={t('routine_skip')} icon="block" disabled={action.guarded} onPress={() => {
+    {day?.occurrenceId && day.totalCount > 0 && !day.ended && !day.skipped && !day.completed && !day.deleted && <SettingRow intent="action" label={t('routine_skip')} icon="block" disabled={action.guarded} onPress={() => {
       void action.execute({ command: { kind: 'SkipRoutineDay', occurrenceId: day.occurrenceId!, date: day.date, expectedRevision: day.revision, operationId: engine().createOperationId() }, success: t('routine_skipped_saved') });
     }} />}
     {onCorrect && day?.ended && <SettingRow intent="action" label={t('routine_correct_checkmarks')} icon="edit" disabled={action.guarded} onPress={() => navigate(onCorrect)} />}

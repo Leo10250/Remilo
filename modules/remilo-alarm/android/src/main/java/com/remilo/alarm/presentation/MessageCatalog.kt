@@ -1907,7 +1907,7 @@ object MessageCatalog {
     "routine_no_alert" to Entry(R.string.l10n_routine_no_alert, false, listOf(), "No alert", false),
     "routine_shared_time" to Entry(R.string.l10n_routine_shared_time, false, listOf(), "One time for every workout day", false),
     "routine_weekly_hint" to Entry(R.string.l10n_routine_weekly_hint, false, listOf(), "Workout days follow this plan. Rest days have no notification or Agenda entry.", false),
-    "routine_from_tomorrow" to Entry(R.string.l10n_routine_from_tomorrow, false, listOf(), "Changes apply from tomorrow. Today and history keep their exercises and progress.", false),
+    "routine_changes_immediate" to Entry(R.string.l10n_routine_changes_immediate, false, listOf(), "Changes apply when you save, including today. Existing exercises keep their checkmarks. Past days stay unchanged.", false),
     "routine_change_review" to Entry(R.string.l10n_routine_change_review, false, listOf(), "Review changes", false),
     "routine_changed_day" to Entry(R.string.l10n_routine_changed_day, false, listOf("day"), "Changed: {day}", false),
     "routine_repeat" to Entry(R.string.l10n_routine_repeat, false, listOf("days"), "Every week · {days}", false),
@@ -1976,7 +1976,7 @@ object MessageCatalog {
   )
   private fun chunk24(): Map<String, Entry> = mapOf(
     "routine_attached_hint" to Entry(R.string.l10n_routine_attached_hint, false, listOf(), "Optional exercise progress with a different plan for each weekday.", false),
-    "routine_saved_changes" to Entry(R.string.l10n_routine_saved_changes, false, listOf(), "Routine updated. Changes start tomorrow.", false),
+    "routine_saved_changes" to Entry(R.string.l10n_routine_saved_changes, false, listOf(), "Routine updated. Changes are active now.", false),
     "routine_day_0" to Entry(R.string.l10n_routine_day_0, false, listOf(), "Monday", false),
     "routine_day_1" to Entry(R.string.l10n_routine_day_1, false, listOf(), "Tuesday", false),
     "routine_day_2" to Entry(R.string.l10n_routine_day_2, false, listOf(), "Wednesday", false),

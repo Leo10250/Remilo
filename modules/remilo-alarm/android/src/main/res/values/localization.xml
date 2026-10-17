@@ -1887,7 +1887,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_routine_no_alert">No alert</string>
   <string name="l10n_routine_shared_time">One time for every workout day</string>
   <string name="l10n_routine_weekly_hint">Workout days follow this plan. Rest days have no notification or Agenda entry.</string>
-  <string name="l10n_routine_from_tomorrow">Changes apply from tomorrow. Today and history keep their exercises and progress.</string>
+  <string name="l10n_routine_changes_immediate">Changes apply when you save, including today. Existing exercises keep their checkmarks. Past days stay unchanged.</string>
   <string name="l10n_routine_change_review">Review changes</string>
   <string name="l10n_routine_changed_day">Changed: %1$s</string>
   <string name="l10n_routine_repeat">Every week · %1$s</string>
@@ -1957,7 +1957,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_routine_empty">No routines yet</string>
   <string name="l10n_routine_instructions_fallback">Follow your saved target and guidance.</string>
   <string name="l10n_routine_attached_hint">Optional exercise progress with a different plan for each weekday.</string>
-  <string name="l10n_routine_saved_changes">Routine updated. Changes start tomorrow.</string>
+  <string name="l10n_routine_saved_changes">Routine updated. Changes are active now.</string>
   <string name="l10n_routine_day_0">Monday</string>
   <string name="l10n_routine_day_1">Tuesday</string>
   <string name="l10n_routine_day_2">Wednesday</string>

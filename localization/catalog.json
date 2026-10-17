@@ -13307,9 +13307,9 @@
       "context": "Weekly routines",
       "calendarStatus": false
     },
-    "routine_from_tomorrow": {
-      "en": "Changes apply from tomorrow. Today and history keep their exercises and progress.",
-      "zh-Hans": "修改从明天起生效。今天和历史记录中的练习与进度保持不变。",
+    "routine_changes_immediate": {
+      "en": "Changes apply when you save, including today. Existing exercises keep their checkmarks. Past days stay unchanged.",
+      "zh-Hans": "保存后立即生效，包括今天。保留已有练习的勾选状态，过去的记录不变。",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13795,8 +13795,8 @@
       "calendarStatus": false
     },
     "routine_saved_changes": {
-      "en": "Routine updated. Changes start tomorrow.",
-      "zh-Hans": "已更新日常计划，修改从明天起生效。",
+      "en": "Routine updated. Changes are active now.",
+      "zh-Hans": "已更新日常计划，修改立即生效。",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false

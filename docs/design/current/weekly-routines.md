@@ -33,8 +33,14 @@ sends an empty exercise definition for Rest day without mutating the cached draf
 Concurrent edits retain the draft and require review before replacing it.
 
 Repeat days come from the plan. One shared time controls delivery. Plan, Alert,
-time, sound, vibration and overall Notes edits apply tomorrow; show a concise
-review with expandable changed-day/target details. Use the exact shared inline
+time, sound, vibration and overall Notes edits apply immediately on Save; show a concise
+review with expandable changed-day/target details. The 17 October owner correction
+supersedes tomorrow-effective edits: reconcile today's open session to the new
+definition, retaining its occurrence and matching stable-ID checkmarks. Added
+workout weekdays are available today; making today Rest cancels its delivery and
+removes actionable Agenda work. Completed/Skipped aggregates follow the revised
+exercises while an intentional skip stays skipped. Closed days retain their exact
+snapshots, and elapsed or already-posted prompts never replay. Use the exact shared inline
 Alert control and wording: Alarm / Notification / No alert. Alarm uses the normal
 sound/vibration and access checks; it never silently becomes Notification. The
 Notification option uses the dedicated quiet-by-default channel and shows its
@@ -104,10 +110,12 @@ Custom photos use the same contained/enlarge treatment and View image fallback.
 The chooser starts with Add your photo/Replace photo, previews the full frame,
 offers Use photo/Choose another photo, then the illustrated library and Remove
 image. One still photo per exercise; no crop, camera, animation or URL editor.
-Photos stay private/offline and enter tomorrow-effective immutable revisions.
+Photos stay private/offline and enter immediately effective immutable revisions;
+closed historical sessions retain their previous photo references.
 
 Routine More opens a shared contextual sheet over its originating Agenda,
 library, editor or Focus screen. Only an explicitly chosen destination navigates.
+History is a visible row after the exercise content in Focus, outside More.
 Move to Trash affects the whole weekly family and recorded days, has named Undo,
 and is last/destructive. Trash shows one family with its weekly definition;
 Restore preserves child states and prior Active/Paused state. Purge requires the

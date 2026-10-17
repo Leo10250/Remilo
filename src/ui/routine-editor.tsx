@@ -58,7 +58,7 @@ export function RoutineChangeReview({ plan, draft, listName }: { plan: RoutinePl
     { changed: plan.listId !== draft.listId, label: t('m_6f202f54a7b2'), value: listName ?? t('m_eacd31d849f9') },
   ].filter(field => field.changed);
   const summary = [changed.length ? t('routine_change_summary', { count: changed.length }) : '', ...fields.map(field => field.label)].filter(Boolean).join(' · ');
-  return <View style={{ gap: 8 }}><Copy muted size={14}>{t('routine_from_tomorrow')}</Copy>
+  return <View style={{ gap: 8 }}><Copy muted size={14}>{t('routine_changes_immediate')}</Copy>
     {!!summary && <Disclosure title={t('routine_change_details')} summary={summary}>
       {fields.map(field => <View key={field.label}><Copy>{field.label}</Copy>{field.value && <Copy muted size={14}>{field.value}</Copy>}</View>)}
       {changed.map(index => <View key={index}><Copy>{t(routineDayKeys[index])}</Copy>

@@ -98,7 +98,8 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
         alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused", "NoAlert"))
         dao.update(resolved.copy(revision = existing.revision, createdAtMs = existing.createdAtMs,
           completed = existing.completed, deleted = existing.deleted, skipped = existing.skipped))
-      if (alert.state == "Replaced" && existing != null && !existing.skipped)
+      if (alert.state == "Replaced" && existing != null && !existing.skipped &&
+        (existing.routineId == null || db().routines().session(existing.id) == null))
         dao.update(existing.copy(skipped = true, revision = existing.revision + 1))
     }
   }

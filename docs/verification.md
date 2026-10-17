@@ -427,13 +427,18 @@ configuration's measured preview host, no-data first setup, switching mode,
 cancellation, launcher resizing and TalkBack. Host layout checks do not establish
 those device observations.
 
-The later Resume-only correction asserts that healthy compact and expanded
-widgets contain no Done or Refresh, compact contains no Next, and expanded keeps
-Next/upcoming context. Check 300×200 Focus and Today-without-routine, 300×240
+The 17 October correction supersedes Resume-only interaction: Done completes the
+displayed exercise in place; exercise text retains exact app navigation. Check
+native confirmation, duplicate taps, stale revisions after immediate edits,
+uncertain Retry and named Undo including final completion. Compact contains no
+Next/permanent Refresh, and expanded keeps Next/upcoming context. Check 260–300×200
+Focus before/after completion and Today-without-routine, 300×240
 Today-with-Focus/recovery, failed-load Refresh, conflict feedback, tiny failed
-summaries, inert previews and eligible legacy retry/Undo without retargeting.
-Complete exercises inside the app and verify native progress convergence; keep
-legacy mutation safety tests for already captured actions.
+summaries, inert sample previews regardless of private data, and Retry/Undo without
+retargeting. In setup/picker, verify an interactive example instead of a stretched
+summary; inspect current theme, EN/ZH and intermediate font scales. Complete in
+both widget/app and verify convergence without opening React Native. Picker
+generated-preview caching/rate limits require a separate real-launcher observation.
 
 ## Shared routine editor, Focus and Alarm correction
 
@@ -623,7 +628,7 @@ device observations; no installation/distribution accompanies implementation.
 Weekly routines add an exact 21-exercise fixture (including Friday's unspecified
 row weight and Sunday Rest) in host tests and the isolated component preview.
 Verify separate dates, completion/explicit Undo after the final step, Skip/Undo,
-midnight rejection, old-day correction timestamps, tomorrow-effective edits,
+midnight rejection, old-day correction timestamps, immediately effective edits,
 pause/resume and elapsed-prompt suppression, notification permissions/channel,
 Direct Boot privacy, crash-journal boundaries, Trash/Restore/Purge, mixed query
 pages/counts and backup/migration compatibility. Ordinary Alarm/Notification/No
@@ -648,12 +653,20 @@ Verify CE15→16 migration; whole-family Trash/Restore/Purge at journal checkpoi
 preserved child states; stale app/widget delivery guards; no retroactive dates or
 catch-up prompts; purge exclusions against old backups; and accurate mixed Trash
 pagination/counts. Photo tests cover full frame, alpha/orientation/downsampling,
-cancel/replace/draft leases, future-only snapshots and referenced-file retention.
+cancel/replace/draft leases, immediate open-day updates/frozen closed history and referenced-file retention.
 Archive tests cover images, legacy JSON, corruption, missing assets, safe entries,
 size limits, copy conflicts and uncertain receipt replay.
 
 Review actual Glance RemoteViews at 300×200/240 and 300×440 plus summary/large text,
-eight appearance pairs and both languages. Resume and conditional recovery labels/targets
+eight appearance pairs and both languages. Done and conditional recovery labels/targets
 must fit, with no giant spacer or nested routine card. Signed-phone picker,
 launcher resizing/reconfiguration, TalkBack, IME and end-to-end observations remain
 in the consolidated acceptance run; native/browser host captures do not close them.
+
+Immediate-edit regressions additionally cover adding Saturday while it is Saturday,
+Rest/workout transitions, stable occurrence identity and retained matching checks,
+completed-day extension, intentional Skip, removed-step audit, photo/time changes,
+receipt replay and process death at each edit journal boundary. Closed history and
+backward-clock closure stay immutable. Backup format 7 round trips retain edited
+timing/Rest/audit while legacy format readers remain covered. Agenda and widget
+must resolve the same dated revision; saving never posts an elapsed catch-up prompt.

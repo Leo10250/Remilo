@@ -1857,7 +1857,7 @@ object NativeMessages {
   fun routine_no_alert(): L10n.Message = L10n.Message("routine_no_alert")
   fun routine_shared_time(): L10n.Message = L10n.Message("routine_shared_time")
   fun routine_weekly_hint(): L10n.Message = L10n.Message("routine_weekly_hint")
-  fun routine_from_tomorrow(): L10n.Message = L10n.Message("routine_from_tomorrow")
+  fun routine_changes_immediate(): L10n.Message = L10n.Message("routine_changes_immediate")
   fun routine_change_review(): L10n.Message = L10n.Message("routine_change_review")
   fun routine_changed_day(day: String): L10n.Message = L10n.Message("routine_changed_day", mapOf("day" to day.toString()))
   fun routine_repeat(days: String): L10n.Message = L10n.Message("routine_repeat", mapOf("days" to days.toString()))

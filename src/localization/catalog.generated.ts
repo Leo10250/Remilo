@@ -1879,7 +1879,7 @@ export const catalogs = {
     "routine_no_alert": "No alert",
     "routine_shared_time": "One time for every workout day",
     "routine_weekly_hint": "Workout days follow this plan. Rest days have no notification or Agenda entry.",
-    "routine_from_tomorrow": "Changes apply from tomorrow. Today and history keep their exercises and progress.",
+    "routine_changes_immediate": "Changes apply when you save, including today. Existing exercises keep their checkmarks. Past days stay unchanged.",
     "routine_change_review": "Review changes",
     "routine_changed_day": "Changed: {day}",
     "routine_repeat": "Every week · {days}",
@@ -1949,7 +1949,7 @@ export const catalogs = {
     "routine_empty": "No routines yet",
     "routine_instructions_fallback": "Follow your saved target and guidance.",
     "routine_attached_hint": "Optional exercise progress with a different plan for each weekday.",
-    "routine_saved_changes": "Routine updated. Changes start tomorrow.",
+    "routine_saved_changes": "Routine updated. Changes are active now.",
     "routine_day_0": "Monday",
     "routine_day_1": "Tuesday",
     "routine_day_2": "Wednesday",
@@ -4043,7 +4043,7 @@ export const catalogs = {
     "routine_no_alert": "无提醒",
     "routine_shared_time": "所有锻炼日共用一个时间",
     "routine_weekly_hint": "锻炼日由此计划决定。休息日不会发送通知，也不会出现在日程中。",
-    "routine_from_tomorrow": "修改从明天起生效。今天和历史记录中的练习与进度保持不变。",
+    "routine_changes_immediate": "保存后立即生效，包括今天。保留已有练习的勾选状态，过去的记录不变。",
     "routine_change_review": "检查更改",
     "routine_changed_day": "已修改：{day}",
     "routine_repeat": "每周 · {days}",
@@ -4112,7 +4112,7 @@ export const catalogs = {
     "routine_empty": "暂无日常计划",
     "routine_instructions_fallback": "请按照保存的目标和说明进行练习。",
     "routine_attached_hint": "可选练习进度，每个工作日可设不同计划。",
-    "routine_saved_changes": "已更新日常计划，修改从明天起生效。",
+    "routine_saved_changes": "已更新日常计划，修改立即生效。",
     "routine_day_0": "星期一",
     "routine_day_1": "星期二",
     "routine_day_2": "星期三",
@@ -6191,7 +6191,7 @@ export interface MessageArguments {
   routine_no_alert: Record<string, never>;
   routine_shared_time: Record<string, never>;
   routine_weekly_hint: Record<string, never>;
-  routine_from_tomorrow: Record<string, never>;
+  routine_changes_immediate: Record<string, never>;
   routine_change_review: Record<string, never>;
   routine_changed_day: { day: string };
   routine_repeat: { days: string };

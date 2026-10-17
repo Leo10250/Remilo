@@ -291,7 +291,7 @@ notification time or when created after that time. A late creation/resume/recove
 does not replay elapsed prompts. Rest days create neither actionable Agenda work
 nor notifications. The UI derives repeat weekdays from the non-rest definitions.
 
-Each dated snapshot freezes exercise names, free-text targets, guidance, overall
+Each closed dated snapshot freezes exercise names, free-text targets, guidance, overall
 Notes, Alert/time/sound/vibration and stable identities. Each date references an
 immutable plan revision; another edit using the same effective date after a clock
 change cannot rewrite its content or invalidate its backup. Complete & continue checks
@@ -304,8 +304,12 @@ Local midnight ends the session without making unfinished work overdue. Native
 reads/actions/recovery enforce closure without requiring a midnight wake-up.
 Completed sessions can appear in Completed; skips follow Show skipped. Unfinished
 ended work belongs only in routine history. History corrections retain their actual
-action timestamps and never reopen Agenda or delivery. Plan and Alert/time/Notes edits
-apply from tomorrow, preserving today's snapshot and past targets. Pause suppresses
+action timestamps and never reopen Agenda or delivery. The owner's 17 October
+correction makes plan/Alert/time/Notes/photo changes apply immediately on Save.
+Reconcile today's open definition while preserving occurrence identity, matching
+stable-ID checks and intentional Skip; closed dates remain unchanged. Newly added
+workout weekdays are available today; Rest removes today's actionable work.
+An elapsed or already-posted prompt never replays. Pause suppresses
 new dates and prompts while an existing today session can still finish.
 
 The routine library lives within Lists. Agenda uses one ordinary compact surface
@@ -323,23 +327,24 @@ See the [routine design contract](design/current/weekly-routines.md).
 
 The Android home-screen widget supports independent Routine Focus and Today
 configurations. Focus offers the first unfinished exercise, target, daily count,
-Resume into the existing native session; completion happens inside Remilo.
-Previously captured widget actions retain conditional Retry/Undo recovery. Today places an
+one primary Done action that completes the displayed exercise directly in the
+native session, advances after confirmation and offers named Undo. Exercise text
+opens its exact dated details. Uncertain widget actions retain exact Retry. Today places an
 optional pinned Focus above today's and overdue ordinary reminders from all lists;
 reminder rows open their existing Details. Rest days remain informational and
 unfinished ended workouts never enter the overdue list. Compact/large-text views
 open Remilo for actions. Settings and routine contextual actions open native setup.
-No React Native process or network is required for widget refresh or legacy recovery. Background
+No React Native process or network is required for widget refresh, completion or recovery. Background
 refresh is an OS-controlled opportunity; explicit dated actions reject stale work
 even when launcher pixels are delayed. Widget IDs/configuration/actions are local
 presentation state outside portable backups. See the [widget contract](design/current/home-screen-widget.md).
 
 Widget setup always presents a preview: clearly labelled inert example content
-when no data is available, visible loading/error feedback otherwise. New Focus
+regardless of current data, with the real app theme and visible loading/error feedback. New Focus
 drafts default to the first available routine; saved unavailable selections never
 retarget automatically. Real empty widgets explain their state and open Agenda.
 Compact Today shows one full reminder row or the selected routine's focused
-exercise, with primary Resume. Healthy Focus has no action footer, Done or
+exercise, with primary Done. Healthy Focus has no reserved action footer or
 permanent Refresh. Next exercise appears only in expanded layouts; actual failed
 loads/conflicts or captured uncertain actions expose their recovery control.
 Rest days show one outcome and View routine without exercise completion controls.
@@ -515,8 +520,9 @@ states and progress, and permanent deletion retains identity exclusions.
 An optional custom still photo is chosen through Android Photo Picker, previewed
 without cropping and stored privately as an immutable normalized image. The full
 composition is retained, with bounded resolution and metadata removed. Photo
-changes apply tomorrow and history retains its original image. Portable format 7
+changes apply immediately to today's open session and closed history retains its original image. Portable format 7
 archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
-The widget prefers compact wide placement and uses Resume, explicit date,
-numeric progress and native stale-action protection. Completion is inside Remilo;
-legacy named Undo/Retry is conditional recovery, not a new completion shortcut.
+The widget prefers compact wide placement and uses Done, explicit date,
+numeric progress and native stale-action protection. Named Undo/Retry appears
+only after a completion or uncertain action. History is outside routine More,
+as a visible row on the routine screen.

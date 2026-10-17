@@ -254,17 +254,27 @@ object BackupCodec {
       require(definition.effectiveDate == v && v <= day)
       require(r.title == definition.title && r.mode == definition.mode && r.notes == definition.notes && r.sound == definition.sound && r.vibration == definition.vibration)
       val nominalTime = java.time.LocalDateTime.parse(r.nominalSlot)
-      require(nominalTime.hour * 60 + nominalTime.minute == definition.minutes)
-      val snapshot = o.getJSONArray("steps"); val stepIds = steps(snapshot); require(stepIds.isNotEmpty())
+      // An edited open day retains its original occurrence/nominal identity.
+      // Its current prescription and alert metadata bind to the immutable revision below.
+      require(nominalTime.hour * 60 + nominalTime.minute == definition.minutes || version >= 7 &&
+        r.definedAlarmAtMs == java.time.LocalDate.parse(day).atTime(definition.minutes / 60,definition.minutes % 60)
+          .atZone(java.time.ZoneId.of(r.zoneId)).toInstant().toEpochMilli())
+      val snapshot = o.getJSONArray("steps"); val stepIds = steps(snapshot)
       val expectedSteps = JSONArray(definition.days)
         .getJSONObject(java.time.LocalDate.parse(day).dayOfWeek.value - 1).getJSONArray("exercises")
       require(snapshot.toString() == expectedSteps.toString())
+      require(stepIds.isNotEmpty() || version >= 7 && JSONArray(definition.days)
+        .getJSONObject(java.time.LocalDate.parse(day).dayOfWeek.value - 1).getString("type") == "Rest")
       val done = o.getJSONArray("done"); val checks = (0 until done.length()).map { done.getString(it) }
-      require(checks.distinct().size == checks.size && checks.all { it in stepIds } && r.completed == (checks.size == stepIds.size && !r.skipped))
+      require(checks.distinct().size == checks.size && checks.all { it in stepIds } && r.completed == (stepIds.isNotEmpty() && checks.size == stepIds.size && !r.skipped))
+      val historicalStepIds = routineVersions.filter { it.routineId == id && it.revision <= revision }.flatMap { prior ->
+        val days = JSONArray(prior.days); (0 until days.length()).flatMap { d -> val exercises = days.getJSONObject(d).getJSONArray("exercises")
+          (0 until exercises.length()).map { n -> exercises.getJSONObject(n).getString("id") } } }.toSet()
       val changes = o.getJSONArray("changes"); require(changes.length() <= 100_000); val changeIds = mutableSetOf<String>()
       for (c in 0 until changes.length()) { val change = changes.getJSONObject(c)
-        require(changeIds.add(text(change,"id",200)) && text(change,"kind",50) in setOf("SetRoutineExercise","CorrectRoutineExercise","SkipRoutineDay","UndoSkipRoutineDay"))
-        time(change,"atMs"); if (!change.isNull("stepId")) { require(text(change,"stepId",200) in stepIds); boolean(change,"completed") } }
+        require(changeIds.add(text(change,"id",200)) && text(change,"kind",50) in
+          (setOf("SetRoutineExercise","CorrectRoutineExercise","SkipRoutineDay","UndoSkipRoutineDay") + if(version >= 7) setOf("EditRoutine") else emptySet()))
+        time(change,"atMs"); if (!change.isNull("stepId")) { require(text(change,"stepId",200) in if(version >= 7) historicalStepIds else stepIds); boolean(change,"completed") } }
       RoutineSession(occurrence,id,day,v,snapshot.toString(),done.toString(),boolean(o,"ended"),changes = changes.toString(), versionRevision = revision)
     }
     return Bundle(records, nextAlerts, history, series, lists, purged, restoredRoutines, routineVersions, routineSessions, images, purgedRoutines)

@@ -40,15 +40,7 @@ class WidgetConfigureActivity : ComponentActivity() {
     number = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
     if (!WidgetWork.unlocked(this) || number != AppWidgetManager.INVALID_APPWIDGET_ID && !WidgetWork.supported(this, number)) { finish(); return }
     setContent { Setup() }
-    if (android.os.Build.VERSION.SDK_INT >= 35) lifecycleScope.launch {
-      runCatching {
-        val provider = AppWidgetManager.getInstance(this@WidgetConfigureActivity).installedProviders.firstOrNull {
-          it.provider == ComponentName(this@WidgetConfigureActivity, RemiloWidgetReceiver::class.java) }
-        if (provider != null && provider.generatedPreviewCategories and android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN == 0)
-          androidx.glance.appwidget.GlanceAppWidgetManager(this@WidgetConfigureActivity).setWidgetPreviews(
-            RemiloWidgetReceiver::class, androidx.collection.intSetOf(android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN))
-      }
-    }
+    lifecycleScope.launch { WidgetPickerPreview.update(this@WidgetConfigureActivity) }
   }
   @Composable private fun Setup() {
     var loaded by remember { mutableStateOf(false) }
@@ -62,7 +54,6 @@ class WidgetConfigureActivity : ComponentActivity() {
     var renderedPreview by remember { mutableStateOf<android.widget.RemoteViews?>(null) }
     var previewFailed by remember { mutableStateOf(false) }
     var previewAttempt by remember { mutableIntStateOf(0) }
-    var examplePreview by remember { mutableStateOf(false) }
     var expandedPreview by rememberSaveable { mutableStateOf(false) }
     var previewWidth by remember { mutableStateOf(300.dp) }
     val previewDensity = LocalDensity.current
@@ -78,13 +69,11 @@ class WidgetConfigureActivity : ComponentActivity() {
       plans = widgetRequest(this) { it.widgetPlans() }
       routineId = WidgetSetup.routineSelection(mode, routineId, plans)
       val selectedMode = mode; val selectedRoutine = routineId
-      // A no-routine Focus draft still has a truthful base for its example/appearance.
-      val available = selectedRoutine == null || plans.any { it["id"] == selectedRoutine }
-      val base = widgetRequest(this) { it.widgetPreview(if(selectedRoutine == null || !available) "Today" else selectedMode, selectedRoutine.takeIf { available }) }
-        .let { if(available) it else it.copy(configuration = WidgetConfiguration(selectedMode,selectedRoutine),session = null) }
+      // Appearance is real; sample content is deliberately independent of private
+      // titles, today's rest state, and whether this installation has any content.
+      val base = widgetRequest(this) { it.widgetSnapshot(-1,false) }.copy(date = java.time.LocalDate.now().toString())
       if (mode != selectedMode || routineId != selectedRoutine) return
-      examplePreview = WidgetSetup.needsExample(base, selectedMode, selectedRoutine)
-      preview = if(examplePreview) WidgetSetup.example(this, selectedMode, base) else base
+      preview = WidgetSetup.example(this,selectedMode,base,selectedRoutine != null || selectedMode == "Routine")
       error = null
     }
     LaunchedEffect(Unit) {
@@ -100,7 +89,7 @@ class WidgetConfigureActivity : ComponentActivity() {
     LaunchedEffect(mode, routineId, loaded) { if (loaded) try { refresh() }
       catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
       catch (_: Exception) { error = "This view changed. Review the refreshed routine." } }
-    val previewHeight = if(expandedPreview)440 else WidgetSizing.compactHeight(preview)
+    val previewHeight = WidgetSizing.previewHeight(preview,expandedPreview,previewDensity.fontScale)
     LaunchedEffect(preview,previewHeight,previewWidth,previewAttempt) {
       val snapshot = preview ?: return@LaunchedEffect
       previewFailed = false
@@ -113,10 +102,12 @@ class WidgetConfigureActivity : ComponentActivity() {
     val dark = (preview?.appearance ?: appearance)?.brightness == "dark" || appearance == null && (resources.configuration.uiMode and 48) == 32
     val colors = if (dark) darkColorScheme(primary = Color(roles.primary), onPrimary = Color(roles.onPrimary), surface = Color(roles.surface),
       onSurface = Color(roles.onSurface), background = Color(roles.canvas), onBackground = Color(roles.onSurface),
-      onSurfaceVariant = Color(roles.onSurfaceVariant), surfaceVariant = Color(roles.container), outline = Color(roles.outline), error = Color(roles.error))
+      onSurfaceVariant = Color(roles.onSurfaceVariant), surfaceVariant = Color(roles.container), outline = Color(roles.outline), error = Color(roles.error),
+      secondaryContainer = Color(roles.container), onSecondaryContainer = Color(roles.primary))
     else lightColorScheme(primary = Color(roles.primary), onPrimary = Color(roles.onPrimary), surface = Color(roles.surface),
       onSurface = Color(roles.onSurface), background = Color(roles.canvas), onBackground = Color(roles.onSurface),
-      onSurfaceVariant = Color(roles.onSurfaceVariant), surfaceVariant = Color(roles.container), outline = Color(roles.outline), error = Color(roles.error))
+      onSurfaceVariant = Color(roles.onSurfaceVariant), surfaceVariant = Color(roles.container), outline = Color(roles.outline), error = Color(roles.error),
+      secondaryContainer = Color(roles.container), onSecondaryContainer = Color(roles.primary))
     val chinese = com.remilo.alarm.system.PresentationLanguage.language == "zh-Hans"
     val type = Typography(bodyLarge = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = (if (chinese) AtmosphereTokens.chineseBodyLineHeight else 24).sp),
       bodyMedium = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = (if (chinese) AtmosphereTokens.chineseSupportingLineHeight else 20).sp),
@@ -187,7 +178,7 @@ class WidgetConfigureActivity : ComponentActivity() {
             FilterChip(selected = !expandedPreview,onClick = { expandedPreview = false },enabled = !busy,label = { Text(text("Compact")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
             FilterChip(selected = expandedPreview,onClick = { expandedPreview = true },enabled = !busy,label = { Text(text("Expanded")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
           }
-          if(examplePreview) Text(text("Example preview · Sample content only"),fontSize = 14.sp,color = Color(roles.onSurfaceVariant))
+          Text(text("Example preview · Sample content only"),fontSize = 14.sp,color = Color(roles.onSurfaceVariant))
           Box(Modifier.fillMaxWidth().height(previewHeight.dp).onSizeChanged { previewWidth = with(previewDensity) { it.width.toDp() } }
             .semantics { contentDescription = text("Preview") + ": " + (preview?.session?.get("title") as? String ?: text("Today's reminders")) }) {
           renderedPreview?.let { remote -> AndroidView(modifier = Modifier.fillMaxSize(),

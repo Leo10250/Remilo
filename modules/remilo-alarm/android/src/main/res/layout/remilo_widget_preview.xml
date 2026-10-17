@@ -14,6 +14,6 @@
    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/l10n_widget_preview_title" android:textColor="#172331" android:textSize="18sp" android:textStyle="bold" />
    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/l10n_widget_preview_target" android:textColor="#4E6173" android:textSize="14sp" />
   </LinearLayout>
-  <TextView android:layout_width="104dp" android:layout_height="56dp" android:gravity="center" android:text="@string/l10n_widget_resume" android:textColor="#FFFFFF" android:textSize="16sp" android:background="@drawable/widget_preview_action" />
+  <TextView android:layout_width="80dp" android:layout_height="56dp" android:gravity="center" android:text="@string/l10n_widget_done" android:textColor="#FFFFFF" android:textSize="16sp" android:background="@drawable/widget_preview_action" />
  </LinearLayout>
 </LinearLayout>

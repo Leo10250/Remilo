@@ -27,7 +27,7 @@ the consolidated run. Host checks do not establish these outcomes.
 - Leave Monday incomplete across midnight. Keep its screen open, open Tuesday
   elsewhere and return: Monday stays ended, Tuesday has fresh exercises, and stale
   actions cannot change Tuesday. Correct Monday's history without reopening it.
-  Exercise Skip/Undo today, pause/resume and tomorrow-effective plan/Alert edits.
+  Exercise Skip/Undo today, pause/resume and immediately effective plan/Alert edits.
 - Ring a routine Alarm alone and beside an ordinary alarm. Start routine opens
   that exact date after unlock; Dismiss changes no checks; Snooze stays within the
   day. Final completion, Skip, Pause and midnight stop only the routine member.
@@ -991,33 +991,42 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
 - Pick, cancel and replace portrait/wide/transparent/EXIF-rotated still photos.
   Preserve the full frame, test unreadable/oversized/animated files and low storage,
   interrupt the picker/import and reopen Remilo. No saved image changes on Cancel.
-  After a saved change, today/history retain the old photo and tomorrow uses the
-  replacement. Missing media retains readable exercise text and usable actions.
+  After a saved change, today's open session uses the replacement and closed
+  history retains its old photo. Missing media retains readable text and actions.
 - Export and restore a `.remilo` archive with shared photos, historical revisions,
   trashed routines and prior individually deleted dates. Verify copies, uncertain
   Retry, old JSON import and rejection of corrupt archives without partial content.
 - Place independent Focus/Today widgets, including a 4×2 allocation too small for
-  controls. Resize through summary/interactive/expanded layouts. Resume opens the
-  exact exercise/date; complete the exercise inside Remilo and confirm progress
-  updates on the widget. Healthy widgets have no Done or permanent Refresh, and
-  Next appears only when expanded. Earlier captured actions retain exact Retry
-  and eligible named Undo, including after final completion;
-  repeated Resume links select that exercise on an already open screen,
+  controls. Resize through summary/interactive/expanded layouts. Done completes
+  only the displayed exercise without opening Remilo; confirm native progress
+  agrees in both places. Exercise text opens the exact exercise/date. No permanent
+  Refresh or compact Next. Verify named Undo, including after final completion,
+  and exact Retry for uncertain actions. Repeated exercise links select that
+  exercise on an already open screen,
   duplicate/stale taps never advance another date and reconfiguration Cancel holds.
 - Verify Sunday Rest, Skip, pause/resume, midnight/travel/reboot, first-unlock
   privacy, missing/trashed selection, conditional error Refresh and deferred background work.
   Normal reminders retain overdue/postponement and their existing alarm actions.
 - Review actual app and launcher surfaces across all eight appearance pairs,
   English/Chinese, long authored content, reduced motion and text through 200%.
-  Compare identical content/dimensions/themes in setup previews and placed widgets;
+  Compare equivalent dimensions/themes in curated setup samples and placed widgets;
   reject clipped actions, weak progress contrast or unexplained large empty gaps.
 - Start widget setup with no reminders/routines: a labelled example must remain
   visible and inert, Today can be added, and Routine Focus explains that a routine
   is needed. With routines present, switching an unselected draft to Focus picks
   the first available routine. Cancel preserves saved configuration. A deleted
   saved selection remains unavailable. Verify real empty widgets, single Rest day
-  wording, one full compact Today row and unclipped View Agenda/Resume/recovery at
+  wording, one full compact Today row and unclipped View Agenda/Done/recovery at
   launcher sizes and text scales; previews fill their measured host.
+- Setup and launcher picker always show curated examples in the app theme,
+  including when personal content is present or today's routine is Rest. Verify
+  selected real configuration is saved, sample content is inert and never created.
+- Save changes while today is open: add today's weekday, reorder/remove/add
+  exercises, change time/Alert/photo, and switch Rest/workout. Retain matching checks
+  and intentional Skip; completed-day extension updates the aggregate. Closed
+  history stays frozen. Check fresh widget/Agenda agreement, edited future Alarm/
+  Notification callbacks before unlock, Snooze, Pause and stale delivery fencing.
+- Open History from its visible routine-screen row; it is absent from More.
 
 Installation and distribution require their separate authorization. These cases
 remain unobserved until the consolidated physical run is recorded.

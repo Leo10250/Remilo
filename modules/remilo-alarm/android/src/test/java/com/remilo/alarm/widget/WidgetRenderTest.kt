@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.compose
+import androidx.glance.appwidget.composeForPreview
 import androidx.glance.appwidget.runComposition
 import androidx.glance.ExperimentalGlanceApi
 import com.remilo.alarm.core.AppearancePolicy
@@ -53,7 +54,7 @@ class WidgetRenderTest {
     val ctx = context("en",1f)
     val number = CompletableDeferred<Int>()
     val initial = previewSnapshot().copy(configuration = WidgetConfiguration("Routine","example"))
-    val widget = RemiloWidget { _, id -> number.complete(id); initial.copy(id = id) }
+    val widget = RemiloWidget(load = { _, id -> number.complete(id); initial.copy(id = id) })
     val first = CompletableDeferred<Unit>(); val second = CompletableDeferred<Unit>()
     val collection = launch {
       widget.runComposition(ctx,sizes = listOf(DpSize(300.dp,280.dp))).collect { remote ->
@@ -91,8 +92,8 @@ class WidgetRenderTest {
   private fun text(view: View) = textViews(view).map { it.text.toString() }
   private fun descriptions(view: View): List<String> = listOfNotNull(view.contentDescription?.toString()) +
     if(view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
-  private fun assertNoCompletionOrRefresh(root: View, ctx: Context) {
-    assertFalse(text(root).contains(L10n.text(ctx,"Done")))
+  private fun assertNoNavigationOrRefresh(root: View, ctx: Context) {
+    assertFalse(text(root).contains(L10n.text(ctx,"Resume")))
     assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
     assertFalse(descriptions(root).contains(L10n.text(ctx,"Refresh")))
     assertFalse(text(root).contains(L10n.text(ctx,"Refresh")))
@@ -115,18 +116,24 @@ class WidgetRenderTest {
       render(context(language,1.5f),previewSnapshot().copy(undoToken = "undo",undoName = "Bird-dog"),300,440,"$language-undo-150")
     }
   }
-  @Test fun routineFocusHasOnlyResumeInCompactAndNextExerciseOnlyWhenExpanded() {
+  @Test fun routineFocusCompletesInPlaceAndNextExerciseOnlyAppearsExpanded() {
     val sample=previewSnapshot().copy(configuration = WidgetConfiguration("Routine","preview"),session=previewSnapshot().session!! + ("title" to "Core & intervals"))
     val ctx=context("en",1f)
     val compact=render(ctx,sample.copy(doneToken="legacy-unused"),300,200,"routine-focus-compact")
-    assertActionFullyVisible(compact,"Resume"); assertNoCompletionOrRefresh(compact,ctx)
+    assertActionFullyVisible(compact,"Done"); assertNoNavigationOrRefresh(compact,ctx)
     assertFalse(text(compact).any { it.contains("Next:") }); assertFalse(text(compact).contains("Widget settings"))
     val expanded=render(ctx,sample,300,440,"routine-focus-expanded")
     assertTrue(text(expanded).contains("Next: Side plank")); assertTrue(text(expanded).contains("Intervals"))
-    assertActionFullyVisible(expanded,"Resume"); assertNoCompletionOrRefresh(expanded,ctx)
+    assertActionFullyVisible(expanded,"Done"); assertNoNavigationOrRefresh(expanded,ctx)
+    val after=render(ctx,sample.copy(undoToken="undo",undoName="Bird-dog"),300,200,"routine-focus-compact-after-completion")
+    assertActionFullyVisible(after,"Done"); assertActionFullyVisible(after,"Undo Bird-dog")
+    assertFalse(text(after).contains("Resume")); assertFalse(text(after).contains("Refresh"))
+    val final=render(ctx,sample.copy(doneToken=null,undoToken="undo",undoName="Front plank",session=sample.session!! + mapOf("state" to "Completed",
+      "completedCount" to 4,"steps" to (sample.session["steps"] as List<Map<String,Any?>>).map { it + ("completed" to true) })),300,200,"routine-focus-final-undo")
+    assertActionFullyVisible(final,"Undo Front plank"); assertFalse(text(final).contains("Done"))
   }
   @OptIn(ExperimentalGlanceApi::class)
-  @Test fun inertPreviewPreservesResumeOnlyProductionLabels() {
+  @Test fun inertPreviewPreservesDirectCompletionProductionLabels() {
     val ctx=context("en",1f)
     val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"))
     fun root(preview: Boolean): View {
@@ -135,7 +142,7 @@ class WidgetRenderTest {
     }
     val production=root(false); val preview=root(true)
     assertEquals(text(production),text(preview))
-    assertNoCompletionOrRefresh(production,ctx); assertNoCompletionOrRefresh(preview,ctx)
+    assertNoNavigationOrRefresh(production,ctx); assertNoNavigationOrRefresh(preview,ctx)
     fun clickable(view: View): List<View> = (if(view.hasOnClickListeners())listOf(view) else emptyList()) +
       if(view is ViewGroup) (0 until view.childCount).flatMap { clickable(view.getChildAt(it)) } else emptyList()
     assertTrue("Example controls must be inert",clickable(preview).isEmpty())
@@ -177,7 +184,7 @@ class WidgetRenderTest {
       child = parent
     }
   }
-  @Test fun legacyUndoAndUncertainRetryRemainVisibleWithoutNewCompletionControls() {
+  @Test fun undoAndUncertainRetryRemainVisibleWithGuardedCompletion() {
     for (language in listOf("en", "zh-Hans")) for ((height, scale) in listOf(240 to 1f, 440 to 1.5f)) {
       val ctx = context(language, scale)
       for (mode in listOf("continue", "final", "retry")) {
@@ -190,11 +197,11 @@ class WidgetRenderTest {
         val sample = previewSnapshot().copy(undoToken = "undo", undoName = "Bird-dog", retryToken = if (mode == "retry") "retry" else null,
           session = previewSnapshot().session!! + mapOf("steps" to steps, "completedCount" to if (final) 3 else 1))
         val root = render(ctx, sample, 300, height, "$language-actions-$height-${(scale * 100).toInt()}-$mode")
-        assertFalse(text(root).contains(L10n.text(ctx,"Done")))
         assertFalse(text(root).contains(L10n.text(ctx,"Refresh")))
         if (mode == "retry") assertActionFullyVisible(root,L10n.text(ctx,"Retry"))
         else assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
-        assertActionFullyVisible(root, L10n.text(ctx, "Resume"))
+        if(mode != "retry") assertActionFullyVisible(root, L10n.text(ctx, "Done"))
+        else assertFalse(text(root).contains(L10n.text(ctx,"Done")))
         assertActionFullyVisible(root, L10n.text(ctx, "Undo Bird-dog"))
       }
     }
@@ -225,18 +232,41 @@ class WidgetRenderTest {
     assertEquals("removed",WidgetSetup.routineSelection("Routine","removed",plans))
     assertEquals("second",WidgetSetup.routineSelection("Routine","second",plans))
     val empty = WidgetSnapshot(-1,date = "2026-10-16")
-    assertTrue(WidgetSetup.needsExample(empty,"Today",null))
-    assertTrue(WidgetSetup.needsExample(empty,"Routine",null))
-    assertFalse(WidgetSetup.needsExample(empty,"Routine","removed"))
-    assertFalse(WidgetSetup.needsExample(empty.copy(reminders = listOf(mapOf("title" to "Read"))),"Today",null))
+    val privateData=empty.copy(locked=true,configuration=WidgetConfiguration("Routine","real-id"),session=mapOf("title" to "Private title","state" to "Rest"),
+      reminders=listOf(mapOf("title" to "Private reminder")),total=1)
     for(language in listOf("en","zh-Hans")) for(mode in listOf("Today","Routine")) {
       val ctx=context(language,1f)
-      val sample=WidgetSetup.example(ctx,mode,empty)
+      val sample=WidgetSetup.example(ctx,mode,privateData)
       assertEquals("2026-10-16",sample.date)
       val root=render(ctx,sample,300,240,"$language-setup-example-$mode")
+      assertFalse(text(root).any { it.contains("Private") })
       assertTrue(text(root).contains(L10n.text(ctx,if(mode == "Today") "Water plants" else "Core & intervals")))
       if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (1)"))
-      else { assertActionFullyVisible(root,L10n.text(ctx,"Resume")); assertNoCompletionOrRefresh(root,ctx) }
+      else { assertActionFullyVisible(root,L10n.text(ctx,"Done")); assertNoNavigationOrRefresh(root,ctx) }
+    }
+  }
+  @Test fun narrowSetupPreviewShowsTheInteractiveExampleInsteadOfStretchedSummary() {
+    for(language in listOf("en","zh-Hans")) for(width in listOf(260,280,300)) for(scale in listOf(1f,1.1f,1.2f,1.5f)) {
+      val ctx=context(language,scale)
+      val sample=WidgetSetup.example(ctx,"Routine",WidgetSnapshot(-1,date="2026-10-17"))
+      val root=render(ctx,sample,width,WidgetSizing.previewHeight(sample,false,scale),"$language-setup-$width-${(scale*100).toInt()}")
+      assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
+      assertActionFullyVisible(root,L10n.text(ctx,"Done"))
+    }
+  }
+  @OptIn(ExperimentalGlanceApi::class)
+  @Test fun launcherPreviewUsesThemedExampleWithInteractiveContentEvenAtMinimumProviderSize() {
+    for(language in listOf("en","zh-Hans")) {
+      val ctx=context(language,1.2f)
+      val base=WidgetSnapshot(-1,locked=true,appearance=AppearancePolicy.Resolved("night","dark"),
+        session=mapOf("title" to "Private routine","state" to "Rest"))
+      val widget=RemiloWidget(previewBase={ base })
+      val remote=runBlocking { widget.composeForPreview(ctx,android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN,
+        android.appwidget.AppWidgetProviderInfo().apply { minWidth=180; minHeight=110 }) }
+      val root=remote.apply(ctx,FrameLayout(ctx))
+      assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
+      assertTrue(text(root).contains(L10n.text(ctx,"Done")))
+      assertFalse(text(root).contains("Private routine")); assertFalse(text(root).contains(L10n.text(ctx,"Rest day")))
     }
   }
   @Test fun compactTodayFooterNeverOverlapsOrClipsContentAndEmptyStatesAreIntentional() {
@@ -248,8 +278,10 @@ class WidgetRenderTest {
       assertTrue(text(ordinary).contains("Reminder 1")); assertFalse(text(ordinary).contains("Reminder 2"))
       assertActionFullyVisible(ordinary,L10n.text(ctx,"View Agenda (73)"))
       val focus=render(ctx,previewSnapshot().copy(reminders=reminders,total=73),width,240,"$language-today-focus-$width")
-      for(action in listOf("View Agenda (73)","Resume")) assertActionFullyVisible(focus,L10n.text(ctx,action))
-      assertNoCompletionOrRefresh(focus,ctx)
+      for(action in listOf("View Agenda (73)","Done")) assertActionFullyVisible(focus,L10n.text(ctx,action))
+      assertNoNavigationOrRefresh(focus,ctx)
+      val after=render(ctx,previewSnapshot().copy(reminders=reminders,total=73,undoToken="undo",undoName="Bird-dog"),width,240,"$language-today-after-completion-$width")
+      for(action in listOf("View Agenda (73)","Done","Undo Bird-dog")) assertActionFullyVisible(after,L10n.text(ctx,action))
       val rest=previewSnapshot().copy(session=mapOf("title" to "Workout","state" to "Rest","steps" to emptyList<Any>()),doneToken=null,total=73)
       val resting=render(ctx,rest,width,240,"$language-today-rest-$width")
       assertEquals(1,text(resting).count { it == L10n.text(ctx,"Rest day") })
@@ -268,9 +300,9 @@ class WidgetRenderTest {
       for(mode in listOf("Routine","Today")) {
         val sample=previewSnapshot().copy(configuration=WidgetConfiguration(mode,"preview"),appearance=AppearancePolicy.Resolved(scene,brightness))
         val root=render(ctx,sample,300,WidgetSizing.compactHeight(sample),"$language-$scene-$brightness-$mode-compact")
-        assertActionFullyVisible(root,L10n.text(ctx,"Resume"))
+        assertActionFullyVisible(root,L10n.text(ctx,"Done"))
         if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (0)"))
-        assertNoCompletionOrRefresh(root,ctx)
+        assertNoNavigationOrRefresh(root,ctx)
         assertFalse(text(root).any { it.startsWith("Next:") })
       }
     }
@@ -289,13 +321,13 @@ class WidgetRenderTest {
       val ctx=context(language,1f)
       val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","plan"))
       val clean=render(ctx,sample,300,200,"$language-resume-only")
-      assertActionFullyVisible(clean,L10n.text(ctx,"Resume")); assertNoCompletionOrRefresh(clean,ctx)
+      assertActionFullyVisible(clean,L10n.text(ctx,"Done")); assertNoNavigationOrRefresh(clean,ctx)
       val failed=render(ctx,WidgetSnapshot(1,failed=true,notice="Could not load the widget. Refresh to try again."),300,200,"$language-recovery-error")
       assertActionFullyVisible(failed,L10n.text(ctx,"Refresh"))
       val conflict=render(ctx,sample.copy(notice="This view changed. Review the refreshed routine."),300,240,"$language-recovery-conflict")
-      assertActionFullyVisible(conflict,L10n.text(ctx,"Refresh")); assertFalse(text(conflict).contains(L10n.text(ctx,"Done")))
+      assertActionFullyVisible(conflict,L10n.text(ctx,"Refresh")); assertActionFullyVisible(conflict,L10n.text(ctx,"Done"))
       val empty=render(ctx,WidgetSnapshot(1,date="2026-10-16"),300,200,"$language-empty-compact")
-      assertActionFullyVisible(empty,L10n.text(ctx,"View Agenda (0)")); assertNoCompletionOrRefresh(empty,ctx)
+      assertActionFullyVisible(empty,L10n.text(ctx,"View Agenda (0)")); assertNoNavigationOrRefresh(empty,ctx)
       render(ctx,WidgetSnapshot(1,failed=true),180,110,"$language-error-summary")
     }
   }

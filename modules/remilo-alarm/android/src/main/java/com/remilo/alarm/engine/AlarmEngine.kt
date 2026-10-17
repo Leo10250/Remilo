@@ -79,7 +79,7 @@ class AlarmEngine internal constructor(private val context: Context,
     }
   }
   fun presentationChanged(finished: () -> Unit = {}) = submit {
-    com.remilo.alarm.widget.WidgetWork.request(context)
+    com.remilo.alarm.widget.WidgetWork.request(context, includePreview = true)
     try {
       reconcileLanguage()
       val notifications = AlarmNotifications(context)
@@ -433,7 +433,7 @@ class AlarmEngine internal constructor(private val context: Context,
     val adjustment = if (alert?.state == "Scheduled") content().records().history(record.id)
       .lastOrNull { it.targetMs == alert.targetMs && it.kind in setOf("Snooze", "Postpone") }?.kind else null
     val segment = record.segmentId?.let { content().records().series(it) }
-    val rule = segment?.let { RuleCodec.decode(it.rule) }
+    val rule = if(record.routineId != null) routines.recurrence(record) else segment?.let { RuleCodec.decode(it.rule) }
     val repeat = rule?.let { com.remilo.alarm.core.Agenda.summary(it) }
     val repeatRule = rule?.let { RuleCodec.map(it).filterKeys { key -> key in setOf("frequency", "interval", "weekdays", "day", "ordinal", "weekday", "month", "count", "until") } +
       mapOf("zoneMode" to if (it.zoneId == null) "floating" else "pinned") }
@@ -451,7 +451,7 @@ class AlarmEngine internal constructor(private val context: Context,
       "quickSnoozeMinutes" to (alert?.snoozeMinutes ?: (content().records().settings() ?: defaultSettings()).snoozeMinutes),
       "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
       "seriesId" to segment?.seriesId,
-      "seriesState" to segment?.state, "repeatSummary" to repeat, "repeatRule" to repeatRule,
+      "seriesState" to (record.routineId?.let { content().routines().plan(it)?.state } ?: segment?.state), "repeatSummary" to repeat, "repeatRule" to repeatRule,
       "alertAdjustment" to when (adjustment) { "Snooze" -> "Snoozed"; "Postpone" -> "Postponed"; else -> null },
       "agendaGroup" to agendaGroup(record, queryNow, zone)) +
       if (record.completed || record.deleted || record.skipped) mapOf("collectionAtMs" to collectionTime(record)) else emptyMap()
@@ -1801,8 +1801,13 @@ class AlarmEngine internal constructor(private val context: Context,
       val date = current.nominalSlot?.substringBefore('T') ?: return
       if (!RoutinePolicy.open(date, current.dayEnded, now(), ZoneId.systemDefault())) return
       if (generation == current.generation && now() < current.targetMs && current.state in setOf("Scheduled", "Pending")) { register(current); return }
+      // An immediately edited open day retains its original occurrence identity.
+      // Its DP exception can outlive that archived segment; Pause/Trash fence the
+      // alert itself before commit. No CE content is required before unlock.
+      val segmentState = current.segmentId?.let { alerts.plan(it)?.state }
+      val ownedOpenDay = current.exception && current.dayStarted && segmentState == "Archived"
       if (!RoutinePolicy.delivery(now(), current.targetMs, current.expiresAtMs, generation, current.generation,
-          !current.prompted && current.state in setOf("Scheduled", "Pending") && current.segmentId?.let { alerts.plan(it)?.state == "Active" } == true)) return
+          !current.prompted && current.state in setOf("Scheduled", "Pending") && (segmentState == "Active" || ownedOpenDay))) return
       if (!routineReady(current.mode)) { alerts.put(current.copy(state = "Blocked")); changed(); return }
       if (current.mode == "Notification") {
         alerts.put(current.copy(state = "Notified", prompted = true, dayStarted = true))

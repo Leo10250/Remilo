@@ -30,6 +30,8 @@ import java.util.Locale
 
 class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = { context, number ->
   widgetRequest(context) { it.widgetSnapshot(number, WidgetWork.supported(context, number)) }
+}, private val previewBase: suspend (Context) -> WidgetSnapshot = { context ->
+  widgetRequest(context) { it.widgetSnapshot(-1,false) }
 }) : GlanceAppWidget() {
   override val sizeMode = SizeMode.Exact
   override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -42,16 +44,18 @@ class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = 
       WidgetContent(current,fontScale = current.fontScale)
     }
   }
-  override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(180.dp,110.dp), DpSize(300.dp,200.dp), DpSize(300.dp,440.dp)))
+  // A picker showcases the interactive footprint. Including the tiny summary here
+  // lets launchers select it and stretch three labels over the entire preview.
+  override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(280.dp,240.dp), DpSize(300.dp,440.dp)))
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
     val fontScale = context.resources.configuration.fontScale
-    val base = widgetRequest(context) { it.widgetSnapshot(-1,false) }.copy(date = LocalDate.now().toString())
+    val base = previewBase(context).copy(date = LocalDate.now().toString())
     val example = WidgetSetup.example(context,"Routine",base)
     provideContent { WidgetContent(example, true, fontScale) }
   }
 }
 
-internal fun previewSnapshot() = WidgetSnapshot(-1, WidgetConfiguration("Today", "preview"), "2026-10-12",
+internal fun previewSnapshot() = WidgetSnapshot(-1, WidgetConfiguration("Today", "preview"), "2026-10-12", doneToken = "preview",
   session = mapOf("title" to "Routine", "state" to "InProgress", "date" to "2026-10-12", "completedCount" to 1, "totalCount" to 4,
     "steps" to listOf(
       mapOf("id" to "preview-bird-dog", "name" to "Bird-dog", "target" to "3 × 10", "completed" to true),
