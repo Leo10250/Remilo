@@ -11,7 +11,7 @@ import { deviceZone } from '../domain/time';
 import { Icon, IconButton, type IconName } from './components';
 import { useReducedMotion } from './motion';
 import { useFoundationStyle, useFontScaleOverride, useTheme } from './theme';
-import { RoutineProgress } from './routine-progress';
+import { RoutineProgress, RoutineProgressRing } from './routine-progress';
 
 function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; icon?: IconName; iconSize?: number; color?: string }) {
   'use no memo';
@@ -79,11 +79,12 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
   const terminal = item.completed || item.skipped || item.deleted;
+  const routineLeading = !!item.routine && !terminal && !selection && !restore;
   const titleLineHeight = lineHeightFor(typography.body, 1.4) * scale;
   const renderedLineHeight = titleLineHeight * fontScale;
   // The first title line shares the 48dp control's optical center. Metadata can
   // grow below it without moving the completion control or More down the card.
-  const hasControls = !!(selection || onMore || onDone && !restore && !terminal);
+  const hasControls = !!(routineLeading || selection || onMore || onDone && !restore && !terminal);
   const titleInset = hasControls ? Math.max(0, (48 - renderedLineHeight) / 2) : 0;
   const controlInset = hasControls ? Math.max(0, (renderedLineHeight - 48) / 2) : 0;
   const selectionControl = selection &&
@@ -133,7 +134,12 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
         accessibilityActions={selection ? [] : [...(onMore ? [{ name: 'longpress', label: t('m_3ddd2c824c07') }] : []), ...(onDone ? [{ name: restore ? 'restore' : terminal ? 'reopen' : 'complete', label: actionLabel }] : [])]}
         onAccessibilityAction={(event) => { if (selection || busy) return; if (['complete', 'reopen', 'restore'].includes(event.nativeEvent.actionName)) act(); else if (event.nativeEvent.actionName === 'longpress') onMore?.(); }}
         onPress={() => { if (revealed) settle(false); else onOpen(); }} onLongPress={busy || selection ? undefined : onMore}
-        style={{ flex: 1, gap: space.xs, minHeight: 48, justifyContent: 'flex-start', paddingTop: titleInset }}>
+        style={{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'flex-start', gap: compact ? space.xs : space.sm }}>
+        {routineLeading && item.routine && <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+          style={{ width: 48, height: 48, marginTop: controlInset, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <RoutineProgressRing done={item.routine.completedCount} total={item.routine.totalCount} />
+        </View>}
+        <View style={{ flex: 1, gap: space.xs, paddingTop: titleInset }}>
         {title}
         {item.routineFamily ? <><MetadataLine label={t('routine_in_trash')} /><MetadataLine label={t('routine_trash_days', { count: item.routineFamily.recordedDays })} /></> : <>
         {browsing.status?.label === 'Ringing' && <MetadataLine icon="alarm" label={t('m_426a858eacbb')} color={colors.accent} />}
@@ -141,14 +147,15 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
           icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
           color={active && delivery.changed ? colors.accent : colors.muted} />
         {!!calendarNotice && <MetadataLine icon="warning" label={calendarNotice} />}
-        {!!item.routine && <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ paddingLeft: 26 }}>
-          <RoutineProgress compact accessible={false} done={item.routine.completedCount} total={item.routine.totalCount} />
-        </View>}
         {!item.routine && !!consequence && <MetadataLine icon="schedule" label={consequence} />}
         {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')} />}
         {(!item.routine || terminal) && !!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}
           label={active ? browsing.status.label : terminalState} color={colors[browsing.status.tone]} />}
         {!item.routine && !!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}</>}
+        {!!item.routine && <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ paddingStart: 26, paddingTop: 8 }}>
+          <RoutineProgress compact layout="inline" accessible={false} done={item.routine.completedCount} total={item.routine.totalCount} />
+        </View>}
+        </View>
       </Pressable>
       {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton icon="more_vert" label={t('m_05d82d5eb6ee') + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
     </Animated.View></GestureDetector>

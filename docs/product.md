@@ -310,7 +310,10 @@ new dates and prompts while an existing today session can still finish.
 
 The routine library lives within Lists. Agenda uses one ordinary compact surface
 per dated routine with a compact bar and informational exercise counts, with no whole-workout Done
-or completion swipe. Calendar publication/linking is unavailable for routines.
+or completion swipe. Its informational leading ring shares the ordinary
+completion-control column, keeping glyphs/titles/metadata/More aligned. A separate
+progress footer adapts from inline bar/count to stacked content at narrow/large
+text sizes. Calendar publication/linking is unavailable for routines.
 All authored content, progress and correction records remain credential-protected.
 Text is the exercise-guidance fallback until individually approved bundled
 illustrations exist. No personal workout is automatically seeded on installation.

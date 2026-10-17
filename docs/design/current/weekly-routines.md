@@ -41,8 +41,24 @@ Notification option uses the dedicated quiet-by-default channel and shows its
 actual Android settings. No alert hides the clock without losing draft minutes.
 
 Agenda reuses the neutral event glyph and ordinary row geometry/More target.
+The owner's 16 October tile correction uses the supplied compact mockup for
+alignment/hierarchy and the current ordinary tile for style. Active routine rows
+place a 24 dp informational progress ring in the same 48 dp leading column as an
+ordinary reminder's completion control. The neutral 20 dp event glyph, 6 dp text
+gap, title, timing/repeat metadata and fixed 48 dp More target share the ordinary
+row's horizontal anchors and first-title-line optical center. The ring is inside
+the row's open-details target, with no separate completion action. Selection uses
+the existing selection checkbox instead; terminal rows reserve no leading slot.
+
 Exercise counts are information, with no whole-routine checkbox or swipe Done.
-Add a 4 dp progress bar and numeric count aligned with the row's metadata. Focus
+After timing and applicable repeat/status metadata, leave 12 dp before the
+progress footer, aligned to the title text. At ordinary size/available width use
+a 48 dp long, 4 dp thick segmented bar, an 8 dp gap and the existing numeric count
+in 14 sp supporting text. A narrow column, long count or increased text scale
+uses count above a full-column bar with an 8 dp gap. Never shrink text or controls.
+Keep current surface, accent/soft/outline roles, 16 dp corners, 12 dp card padding
+and ordinary inter-card spacing; mockup colors or geometry do not replace them.
+Focus
 uses the current Page header, localized weekday title and the existing weekly
 title at 24 sp inside the content, explicit date and frozen Alert metadata.
 The count/state precede a 6 dp progress bar: up to twelve equal segments with 2 dp

@@ -1,5 +1,12 @@
 # Verification and release evidence
 
+Routine tile alignment checks compare active routine and ordinary reminders in
+the same Agenda: leading ring/control center, event/title/metadata anchors, More
+target and footer clearance. Check 0/partial/full counts, one/twelve/more than
+twelve exercises, selection, Completed/Trash, long EN/ZH titles, narrow layouts
+and 200% text across eight appearance pairs. The ring opens details with the row
+and never offers whole-routine completion. Native progress remains authoritative.
+
 Agenda's top refresh indicator must remain quiet during minute/status rereads,
 native change notifications and foreground refreshes. Check deliberate pull from
 reconciliation through query completion, rapid repeated gestures, failures with

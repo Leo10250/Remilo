@@ -934,6 +934,18 @@ failed external navigation. Verify native TalkBack announcements, Back/IME,
 pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
 reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.
 
+## Routine Agenda tile alignment (UX-31)
+
+On the identified signed build, compare a routine with an ordinary reminder in
+one Agenda section. Confirm ring/completion-control centers, event/title/timing
+columns and More alignment. Check progress spacing at 0, partial and complete
+counts, twelve and more than twelve exercises, long English/Chinese, narrow and
+200% text across all eight atmosphere/brightness pairs. Tap the ring/row to open
+the dated session; verify there is no whole-routine Done. Open More over Agenda,
+and check selection/Completed/Trash without an extra leading placeholder. Verify
+TalkBack reads the numeric progress once and ordinary reminder completion/swipe
+behavior remains intact. These actual-render observations remain unperformed.
+
 ## Agenda refresh indicator follow-up (BETA-09)
 
 On an identified signed build containing the repair, leave populated Agenda open

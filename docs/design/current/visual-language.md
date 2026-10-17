@@ -149,6 +149,9 @@ presentation manifest; this correction changes no stored values or actions.
   uses a 24 dp glyph in a nonshrinking 48 dp target. Align real controls to the first
   title line; terminal rows reserve no completion-control placeholder. See the
   [alert experience](alert-experience.md) for state-specific metadata and relative overdue.
+  Active routine rows use the same leading-column width with an informational
+  progress ring, preserving the ordinary event-glyph/title/More anchors. Their
+  separated progress footer follows the [current routine contract](weekly-routines.md).
 - Do not copy component omissions from a sample (e.g. missing navigation chevron)
   or infer action availability from icon tint.
 - Measure contrast on actual surfaces: normal text at least 4.5:1, qualifying
