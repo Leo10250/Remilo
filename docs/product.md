@@ -323,13 +323,13 @@ See the [routine design contract](design/current/weekly-routines.md).
 
 The Android home-screen widget supports independent Routine Focus and Today
 configurations. Focus offers the first unfinished exercise, target, daily count,
-Resume, separate guarded Done and named
-Undo through the existing native session. Today places an
+Resume into the existing native session; completion happens inside Remilo.
+Previously captured widget actions retain conditional Retry/Undo recovery. Today places an
 optional pinned Focus above today's and overdue ordinary reminders from all lists;
 reminder rows open their existing Details. Rest days remain informational and
 unfinished ended workouts never enter the overdue list. Compact/large-text views
 open Remilo for actions. Settings and routine contextual actions open native setup.
-No React Native process or network is required for refresh/completion. Background
+No React Native process or network is required for widget refresh or legacy recovery. Background
 refresh is an OS-controlled opportunity; explicit dated actions reject stale work
 even when launcher pixels are delayed. Widget IDs/configuration/actions are local
 presentation state outside portable backups. See the [widget contract](design/current/home-screen-widget.md).
@@ -339,7 +339,9 @@ when no data is available, visible loading/error feedback otherwise. New Focus
 drafts default to the first available routine; saved unavailable selections never
 retarget automatically. Real empty widgets explain their state and open Agenda.
 Compact Today shows one full reminder row or the selected routine's focused
-exercise, with measured footer space, primary Resume and separate text Done.
+exercise, with primary Resume. Healthy Focus has no action footer, Done or
+permanent Refresh. Next exercise appears only in expanded layouts; actual failed
+loads/conflicts or captured uncertain actions expose their recovery control.
 Rest days show one outcome and View routine without exercise completion controls.
 
 - A broader date-aware in-app Today presentation may supplement the widget without
@@ -515,5 +517,6 @@ without cropping and stored privately as an immutable normalized image. The full
 composition is retained, with bounded resolution and metadata removed. Photo
 changes apply tomorrow and history retains its original image. Portable format 7
 archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
-The widget prefers compact wide placement and uses Resume + Done, explicit date,
-numeric progress, eligible named Undo and native stale-action protection.
+The widget prefers compact wide placement and uses Resume, explicit date,
+numeric progress and native stale-action protection. Completion is inside Remilo;
+legacy named Undo/Retry is conditional recovery, not a new completion shortcut.

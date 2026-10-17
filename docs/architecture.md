@@ -741,6 +741,16 @@ Production uses Glance SizeMode.Exact; setup supplies the measured dp width and
 height to the same composition and fills its RemoteViews host explicitly. Fixed
 footer actions remain outside bounded list content; compact Today renders one
 complete reminder row, while expanded native collections remain scrollable.
+WidgetSizing shares 200 dp Resume-only and 240 dp selected-routine-footer preview
+heights with the production breakpoints. Healthy Focus has no footer. The current
+composition creates no Done PendingIntent; existing native descriptors/receipts
+remain compatible with previously cached actions, uncertain Retry and eligible
+Undo. Only known failures expose Refresh. Native app completion commits drive
+the same projections; no progress or scheduling ownership changes.
+An explicit successful refresh acknowledges only that instance's saved conflict
+notice through the serialized native worker. It preserves pending operation and
+receipt identities, so refresh cannot discard or retarget an uncertain command.
+Background refreshes do not acknowledge feedback automatically.
 
 ## Routine refinement: CE16, media and portable archives
 

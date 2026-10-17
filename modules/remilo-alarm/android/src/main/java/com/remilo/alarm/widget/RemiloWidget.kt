@@ -42,7 +42,7 @@ class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = 
       WidgetContent(current,fontScale = current.fontScale)
     }
   }
-  override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(180.dp,110.dp), DpSize(300.dp,240.dp), DpSize(300.dp,440.dp)))
+  override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(180.dp,110.dp), DpSize(300.dp,200.dp), DpSize(300.dp,440.dp)))
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
     val fontScale = context.resources.configuration.fontScale
     val base = widgetRequest(context) { it.widgetSnapshot(-1,false) }.copy(date = LocalDate.now().toString())
@@ -57,7 +57,7 @@ internal fun previewSnapshot() = WidgetSnapshot(-1, WidgetConfiguration("Today",
       mapOf("id" to "preview-bird-dog", "name" to "Bird-dog", "target" to "3 × 10", "completed" to true),
       mapOf("id" to "preview-front-plank", "name" to "Front plank", "target" to "3 × 40 s", "completed" to false),
       mapOf("id" to "preview-side-plank", "name" to "Side plank", "target" to "3 × 25 s / side", "completed" to false),
-      mapOf("id" to "preview-intervals", "name" to "Intervals", "target" to "8 intervals", "completed" to false))), doneToken = "preview")
+      mapOf("id" to "preview-intervals", "name" to "Intervals", "target" to "8 intervals", "completed" to false))))
 
 /** Same production composition for setup and host render verification, with inert controls. */
 internal class WidgetRender(private val snapshot: WidgetSnapshot, private val preview: Boolean = true) : GlanceAppWidget() {
@@ -95,5 +95,8 @@ class WidgetExerciseAction : ActionCallback {
   companion object { val TOKEN = ActionParameters.Key<String>("token") }
 }
 class WidgetRefreshAction : ActionCallback {
-  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) { WidgetPresentation.refresh(context); RemiloWidget().updateAll(context); WidgetWork.request(context) }
+  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+    WidgetPresentation.refresh(context,GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
+    RemiloWidget().updateAll(context); WidgetWork.request(context)
+  }
 }

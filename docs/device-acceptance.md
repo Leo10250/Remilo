@@ -998,11 +998,14 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   Retry, old JSON import and rejection of corrupt archives without partial content.
 - Place independent Focus/Today widgets, including a 4×2 allocation too small for
   controls. Resize through summary/interactive/expanded layouts. Resume opens the
-  exact exercise/date, Done changes one exercise, Undo survives final completion,
+  exact exercise/date; complete the exercise inside Remilo and confirm progress
+  updates on the widget. Healthy widgets have no Done or permanent Refresh, and
+  Next appears only when expanded. Earlier captured actions retain exact Retry
+  and eligible named Undo, including after final completion;
   repeated Resume links select that exercise on an already open screen,
   duplicate/stale taps never advance another date and reconfiguration Cancel holds.
 - Verify Sunday Rest, Skip, pause/resume, midnight/travel/reboot, first-unlock
-  privacy, missing/trashed selection, manual Refresh and deferred background work.
+  privacy, missing/trashed selection, conditional error Refresh and deferred background work.
   Normal reminders retain overdue/postponement and their existing alarm actions.
 - Review actual app and launcher surfaces across all eight appearance pairs,
   English/Chinese, long authored content, reduced motion and text through 200%.
@@ -1013,7 +1016,7 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   is needed. With routines present, switching an unselected draft to Focus picks
   the first available routine. Cancel preserves saved configuration. A deleted
   saved selection remains unavailable. Verify real empty widgets, single Rest day
-  wording, one full compact Today row and unclipped View Agenda/Resume/Done at
+  wording, one full compact Today row and unclipped View Agenda/Resume/recovery at
   launcher sizes and text scales; previews fill their measured host.
 
 Installation and distribution require their separate authorization. These cases

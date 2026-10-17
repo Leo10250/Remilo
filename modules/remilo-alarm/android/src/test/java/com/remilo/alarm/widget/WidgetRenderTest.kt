@@ -89,6 +89,14 @@ class WidgetRenderTest {
   private fun textViews(view: View): List<TextView> = (if (view is TextView) listOf(view) else emptyList()) +
     if (view is ViewGroup) (0 until view.childCount).flatMap { textViews(view.getChildAt(it)) } else emptyList()
   private fun text(view: View) = textViews(view).map { it.text.toString() }
+  private fun descriptions(view: View): List<String> = listOfNotNull(view.contentDescription?.toString()) +
+    if(view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
+  private fun assertNoCompletionOrRefresh(root: View, ctx: Context) {
+    assertFalse(text(root).contains(L10n.text(ctx,"Done")))
+    assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
+    assertFalse(descriptions(root).contains(L10n.text(ctx,"Refresh")))
+    assertFalse(text(root).contains(L10n.text(ctx,"Refresh")))
+  }
   @Test fun actualRemoteViewsRenderEightAppearancesBothLanguagesAndAdaptiveSizes() {
     for (language in listOf("en","zh-Hans")) for (scene in listOf("sunrise","sky","evening","night")) for (brightness in listOf("light","dark")) {
       val sample = previewSnapshot().copy(appearance = AppearancePolicy.Resolved(scene,brightness),
@@ -107,27 +115,27 @@ class WidgetRenderTest {
       render(context(language,1.5f),previewSnapshot().copy(undoToken = "undo",undoName = "Bird-dog"),300,440,"$language-undo-150")
     }
   }
-  @Test fun routineFocusUsesCompactResumeDoneAndExpandedUpcomingWithoutAnEmptyActionGap() {
+  @Test fun routineFocusHasOnlyResumeInCompactAndNextExerciseOnlyWhenExpanded() {
     val sample=previewSnapshot().copy(configuration = WidgetConfiguration("Routine","preview"),session=previewSnapshot().session!! + ("title" to "Core & intervals"))
-    val compact=render(context("en",1f),sample,300,240,"routine-focus-compact")
-    assertActionFullyVisible(compact,"Resume"); assertActionFullyVisible(compact,"Done")
-    assertTrue(text(compact).any { it.contains("Next: Side plank") }); assertFalse(text(compact).contains("Widget settings"))
-    val expanded=render(context("en",1f),sample,300,440,"routine-focus-expanded")
-    assertTrue(text(expanded).contains("Side plank")); assertTrue(text(expanded).contains("Intervals"))
+    val ctx=context("en",1f)
+    val compact=render(ctx,sample.copy(doneToken="legacy-unused"),300,200,"routine-focus-compact")
+    assertActionFullyVisible(compact,"Resume"); assertNoCompletionOrRefresh(compact,ctx)
+    assertFalse(text(compact).any { it.contains("Next:") }); assertFalse(text(compact).contains("Widget settings"))
+    val expanded=render(ctx,sample,300,440,"routine-focus-expanded")
+    assertTrue(text(expanded).contains("Next: Side plank")); assertTrue(text(expanded).contains("Intervals"))
+    assertActionFullyVisible(expanded,"Resume"); assertNoCompletionOrRefresh(expanded,ctx)
   }
   @OptIn(ExperimentalGlanceApi::class)
-  @Test fun inertPreviewPreservesProductionLabelsAndRefreshAffordance() {
+  @Test fun inertPreviewPreservesResumeOnlyProductionLabels() {
     val ctx=context("en",1f)
     val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"))
     fun root(preview: Boolean): View {
       val remote=runBlocking { WidgetRender(sample,preview).compose(ctx,size=DpSize(300.dp,240.dp)) }
       return remote.apply(ctx,FrameLayout(ctx))
     }
-    fun descriptions(view: View): List<String> = listOfNotNull(view.contentDescription?.toString()) +
-      if(view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
     val production=root(false); val preview=root(true)
     assertEquals(text(production),text(preview))
-    assertTrue(descriptions(production).contains("Refresh")); assertTrue(descriptions(preview).contains("Refresh"))
+    assertNoCompletionOrRefresh(production,ctx); assertNoCompletionOrRefresh(preview,ctx)
     fun clickable(view: View): List<View> = (if(view.hasOnClickListeners())listOf(view) else emptyList()) +
       if(view is ViewGroup) (0 until view.childCount).flatMap { clickable(view.getChildAt(it)) } else emptyList()
     assertTrue("Example controls must be inert",clickable(preview).isEmpty())
@@ -169,7 +177,7 @@ class WidgetRenderTest {
       child = parent
     }
   }
-  @Test fun completionAndUndoLabelsRemainFullyVisibleAtNormalAndLargeText() {
+  @Test fun legacyUndoAndUncertainRetryRemainVisibleWithoutNewCompletionControls() {
     for (language in listOf("en", "zh-Hans")) for ((height, scale) in listOf(240 to 1f, 440 to 1.5f)) {
       val ctx = context(language, scale)
       for (mode in listOf("continue", "final", "retry")) {
@@ -182,8 +190,10 @@ class WidgetRenderTest {
         val sample = previewSnapshot().copy(undoToken = "undo", undoName = "Bird-dog", retryToken = if (mode == "retry") "retry" else null,
           session = previewSnapshot().session!! + mapOf("steps" to steps, "completedCount" to if (final) 3 else 1))
         val root = render(ctx, sample, 300, height, "$language-actions-$height-${(scale * 100).toInt()}-$mode")
-        val label = if (mode == "retry") "Retry" else "Done"
-        assertActionFullyVisible(root, L10n.text(ctx, label))
+        assertFalse(text(root).contains(L10n.text(ctx,"Done")))
+        assertFalse(text(root).contains(L10n.text(ctx,"Refresh")))
+        if (mode == "retry") assertActionFullyVisible(root,L10n.text(ctx,"Retry"))
+        else assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
         assertActionFullyVisible(root, L10n.text(ctx, "Resume"))
         assertActionFullyVisible(root, L10n.text(ctx, "Undo Bird-dog"))
       }
@@ -226,7 +236,7 @@ class WidgetRenderTest {
       val root=render(ctx,sample,300,240,"$language-setup-example-$mode")
       assertTrue(text(root).contains(L10n.text(ctx,if(mode == "Today") "Water plants" else "Core & intervals")))
       if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (1)"))
-      else { assertActionFullyVisible(root,L10n.text(ctx,"Resume")); assertActionFullyVisible(root,L10n.text(ctx,"Done")) }
+      else { assertActionFullyVisible(root,L10n.text(ctx,"Resume")); assertNoCompletionOrRefresh(root,ctx) }
     }
   }
   @Test fun compactTodayFooterNeverOverlapsOrClipsContentAndEmptyStatesAreIntentional() {
@@ -238,7 +248,8 @@ class WidgetRenderTest {
       assertTrue(text(ordinary).contains("Reminder 1")); assertFalse(text(ordinary).contains("Reminder 2"))
       assertActionFullyVisible(ordinary,L10n.text(ctx,"View Agenda (73)"))
       val focus=render(ctx,previewSnapshot().copy(reminders=reminders,total=73),width,240,"$language-today-focus-$width")
-      for(action in listOf("View Agenda (73)","Resume","Done")) assertActionFullyVisible(focus,L10n.text(ctx,action))
+      for(action in listOf("View Agenda (73)","Resume")) assertActionFullyVisible(focus,L10n.text(ctx,action))
+      assertNoCompletionOrRefresh(focus,ctx)
       val rest=previewSnapshot().copy(session=mapOf("title" to "Workout","state" to "Rest","steps" to emptyList<Any>()),doneToken=null,total=73)
       val resting=render(ctx,rest,width,240,"$language-today-rest-$width")
       assertEquals(1,text(resting).count { it == L10n.text(ctx,"Rest day") })
@@ -254,9 +265,14 @@ class WidgetRenderTest {
   @Test fun compactProductionActionsFitEveryAppearanceAndIntermediateTextScaleFallsBack() {
     for(language in listOf("en","zh-Hans")) for(scene in listOf("sunrise","sky","evening","night")) for(brightness in listOf("light","dark")) {
       val ctx=context(language,1f)
-      val sample=previewSnapshot().copy(appearance=AppearancePolicy.Resolved(scene,brightness))
-      val root=render(ctx,sample,300,240,"$language-$scene-$brightness-compact")
-      for(action in listOf("Resume","Done","View Agenda (0)")) assertActionFullyVisible(root,L10n.text(ctx,action))
+      for(mode in listOf("Routine","Today")) {
+        val sample=previewSnapshot().copy(configuration=WidgetConfiguration(mode,"preview"),appearance=AppearancePolicy.Resolved(scene,brightness))
+        val root=render(ctx,sample,300,WidgetSizing.compactHeight(sample),"$language-$scene-$brightness-$mode-compact")
+        assertActionFullyVisible(root,L10n.text(ctx,"Resume"))
+        if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (0)"))
+        assertNoCompletionOrRefresh(root,ctx)
+        assertFalse(text(root).any { it.startsWith("Next:") })
+      }
     }
     for(language in listOf("en","zh-Hans")) for(scale in listOf(1.1f,1.2f,1.5f,2f)) {
       val ctx=context(language,scale)
@@ -265,10 +281,48 @@ class WidgetRenderTest {
       assertTrue(text(root).contains("1/4"))
     }
   }
+  @Test fun recoveryControlsAppearOnlyForActualErrorsAndCompactPreviewsMatchContent() {
+    assertEquals(200,WidgetSizing.compactHeight(previewSnapshot().copy(configuration=WidgetConfiguration("Routine","plan"))))
+    assertEquals(240,WidgetSizing.compactHeight(previewSnapshot()))
+    assertEquals(200,WidgetSizing.compactHeight(WidgetSnapshot(1)))
+    for(language in listOf("en","zh-Hans")) {
+      val ctx=context(language,1f)
+      val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","plan"))
+      val clean=render(ctx,sample,300,200,"$language-resume-only")
+      assertActionFullyVisible(clean,L10n.text(ctx,"Resume")); assertNoCompletionOrRefresh(clean,ctx)
+      val failed=render(ctx,WidgetSnapshot(1,failed=true,notice="Could not load the widget. Refresh to try again."),300,200,"$language-recovery-error")
+      assertActionFullyVisible(failed,L10n.text(ctx,"Refresh"))
+      val conflict=render(ctx,sample.copy(notice="This view changed. Review the refreshed routine."),300,240,"$language-recovery-conflict")
+      assertActionFullyVisible(conflict,L10n.text(ctx,"Refresh")); assertFalse(text(conflict).contains(L10n.text(ctx,"Done")))
+      val empty=render(ctx,WidgetSnapshot(1,date="2026-10-16"),300,200,"$language-empty-compact")
+      assertActionFullyVisible(empty,L10n.text(ctx,"View Agenda (0)")); assertNoCompletionOrRefresh(empty,ctx)
+      render(ctx,WidgetSnapshot(1,failed=true),180,110,"$language-error-summary")
+    }
+  }
   @Test fun civilRefreshBoundaryUsesLocalMidnightAndDst() {
     val zone = ZoneId.of("America/Los_Angeles")
     val at = Instant.parse("2026-11-01T05:00:00Z").toEpochMilli() // 22:00 local before DST ends.
     assertEquals(Instant.parse("2026-11-01T07:00:00Z").toEpochMilli(),WidgetWork.boundary(at,zone))
+  }
+  @Test fun explicitRefreshAcknowledgesConflictFeedbackWithoutChangingProgressOrConfiguration() {
+    val ctx=RuntimeEnvironment.getApplication() as Context
+    shadowOf(ctx.getSystemService(android.os.UserManager::class.java)).setUserUnlocked(true)
+    ctx.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE).edit().clear().commit()
+    val at=Instant.parse("2026-10-12T12:00:00Z").toEpochMilli()
+    val date=Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+    val session=mapOf("date" to date,"occurrenceId" to "occurrence","revision" to 1L,"ended" to false,
+      "steps" to listOf(mapOf("id" to "exercise","name" to "Front plank","completed" to false)))
+    val coordinator=WidgetCoordinator(ctx,{at},{AppearancePolicy.Resolved("sky","light")},{session},{emptyMap()},{true},
+      {mapOf("status" to "Rejected")},{false})
+    coordinator.configure(701,"Routine","plan",0)
+    val initial=coordinator.snapshot(701)
+    coordinator.act(701,initial.doneToken!!)
+    assertNotNull(coordinator.snapshot(701).notice)
+    coordinator.acknowledgeRefresh(701)
+    val refreshed=coordinator.snapshot(701)
+    assertNull(refreshed.notice); assertEquals(initial.session,refreshed.session)
+    assertEquals(initial.configuration,refreshed.configuration)
+    ctx.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE).edit().clear().commit()
   }
   @Test fun uncommittedUncertainTapKeepsItsIdentityButCannotBlockTomorrow() {
     val ctx = RuntimeEnvironment.getApplication() as Context
@@ -282,6 +336,7 @@ class WidgetRenderTest {
     coordinator.configure(700,"Routine","plan",0)
     val original = coordinator.snapshot(700).doneToken!!
     try { coordinator.act(700,original); fail("Expected storage interruption") } catch (_: IllegalStateException) { }
+    coordinator.acknowledgeRefresh(700) // Refresh must never discard the uncertain operation.
     assertEquals(original,coordinator.snapshot(700).retryToken)
     assertNull(coordinator.snapshot(700).doneToken)
     date = "2026-10-13"; at = Instant.parse("2026-10-13T12:00:00Z").toEpochMilli()

@@ -312,6 +312,12 @@ class AlarmEngine internal constructor(private val context: Context,
     prepareContentActions(); widgets.validate(mode, routineId)
     return widgets.snapshot(-1, com.remilo.alarm.widget.WidgetConfiguration(mode, routineId))
   }
+  fun refreshWidget(id: Int, supportedHost: Boolean): com.remilo.alarm.widget.WidgetSnapshot {
+    val current = widgetSnapshot(id,supportedHost)
+    if(current.locked || !current.configured) return current
+    widgets.acknowledgeRefresh(id)
+    return current.copy(notice = null)
+  }
   fun widgetAction(id: Int, token: String, supportedHost: Boolean = true): Map<String, Any?> {
     if (!unlocked() || !supportedHost || context.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked)
       return mapOf("status" to "Rejected", "errorCode" to "LOCKED")

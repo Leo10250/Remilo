@@ -74,6 +74,9 @@ Resume + Done presentation. Shared row chevrons now follow interaction semantics
 The later 16 October widget correction adds always-visible example/loading/error
 previews, draft-only first-routine defaults, explicit empty/rest states and bounded
 compact content with quieter secondary actions. See the maintained widget contract.
+The final 16 October Resume-only correction removes Done and permanent Refresh
+from both widget sizes, limits Next to expanded layouts and keeps conditional
+recovery for earlier captured actions. The app remains the completion interface.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

@@ -42,8 +42,10 @@ import java.time.format.DateTimeFormatter
   val total = (session?.get("totalCount") as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
   val done = ((session?.get("completedCount") as? Number)?.toInt() ?: 0).coerceIn(0,total)
   val outcome = label(when(state) { "Rest" -> "Rest day"; "Paused" -> "Paused"; "Skipped" -> "Skipped today"; "Completed" -> "Completed today"; "Upcoming" -> "Not started yet"; "NotCompleted" -> "Not completed"; "PartiallyCompleted" -> "Partially completed"; else -> "$done of $total done" })
-  val minimumHeight = (24 + 210*fontScale.coerceAtLeast(1f)).dp
-  val summary = size.width < 300.dp || size.height < maxOf(240.dp,minimumHeight) || fontScale >= 1.6f || fontScale > 1.2f && size.height < 440.dp
+  val hasRecovery = snapshot.retryToken != null || snapshot.undoToken != null || snapshot.notice != null
+  val hasFooter = hasRecovery || snapshot.configuration.mode == "Today"
+  val minimumHeight = (24 + (if(selectedRoutineNeedsFooter(snapshot))210 else 164)*fontScale.coerceAtLeast(1f)).dp
+  val summary = size.width < 300.dp || size.height < maxOf(WidgetSizing.compactHeight(snapshot).dp,minimumHeight) || fontScale >= 1.6f || fontScale > 1.2f && size.height < 440.dp
   val expanded = size.height >= 440.dp && fontScale <= 1.2f
   val selected = snapshot.configuration.routineId != null
   val activeExercise = step != null && session?.get("ended") != true && state !in setOf("Rest","Skipped","Upcoming","Paused")
@@ -51,10 +53,6 @@ import java.time.format.DateTimeFormatter
   val primaryHeight = (56*fontScale.coerceAtLeast(1f)).dp
   @Composable fun copy(text: String, supporting: Boolean = false, lines: Int = 1, font: Int = if(supporting)14 else 16, modifier: GlanceModifier = GlanceModifier, medium: Boolean = false) {
     Text(text,modifier,TextStyle(color = if(supporting)muted else ink,fontSize = font.sp,fontWeight = if(medium)FontWeight.Medium else FontWeight.Normal),maxLines = lines)
-  }
-  @Composable fun refresh() {
-    if(!snapshot.locked) Image(ImageProvider(com.remilo.alarm.R.drawable.ic_widget_refresh),label("Refresh"),
-      GlanceModifier.size(actionHeight).padding((actionHeight - 20.dp)/2).then(if(preview)GlanceModifier else GlanceModifier.clickable(actionRunCallback<WidgetRefreshAction>())),colorFilter = ColorFilter.tint(muted))
   }
   @Composable fun action(text: String, callback: Action, modifier: GlanceModifier, primary: Boolean = false, description: String = text) {
     // Center an intrinsic-height label; do not stretch a TextView inside the action viewport.
@@ -67,27 +65,25 @@ import java.time.format.DateTimeFormatter
   @Composable fun footer() {
     Row(GlanceModifier.fillMaxWidth().height(actionHeight),verticalAlignment = Alignment.Vertical.CenterVertically) {
       val undo = snapshot.undoToken
-      val next = steps.dropWhile { it !== step }.drop(1).firstOrNull { it["completed"] != true }
       Box(GlanceModifier.defaultWeight().fillMaxHeight()
         .then(when { preview -> GlanceModifier; undo != null -> GlanceModifier.clickable(actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to undo)))
-          snapshot.configuration.mode == "Today" -> GlanceModifier.clickable(agenda); else -> GlanceModifier }),contentAlignment = Alignment.CenterStart) {
+          snapshot.notice == null && snapshot.configuration.mode == "Today" -> GlanceModifier.clickable(agenda); else -> GlanceModifier }),contentAlignment = Alignment.CenterStart) {
         when {
           undo != null -> Text(label("Undo ${snapshot.undoName.orEmpty()}"),style = TextStyle(color = accent,fontSize = 14.sp),maxLines = 2)
-          snapshot.configuration.mode == "Today" -> Text(label("View Agenda (${snapshot.total})"),style = TextStyle(color = accent,fontSize = 14.sp),maxLines = 1)
           snapshot.notice != null -> copy(label(snapshot.notice),true,2)
-          next != null && activeExercise -> copy(label("Next: ${next["name"]}"),true)
+          snapshot.retryToken != null -> copy(label("Retry the same action"),true,2)
+          snapshot.configuration.mode == "Today" -> Text(label("View Agenda (${snapshot.total})"),style = TextStyle(color = accent,fontSize = 14.sp),maxLines = 1)
         }
       }
-      refresh()
-      val token = snapshot.retryToken ?: snapshot.doneToken
-      if(token != null && selected && (activeExercise || snapshot.retryToken != null)) action(label(if(snapshot.retryToken != null)"Retry" else "Done"),
-        actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token)),
-        GlanceModifier.width((64*fontScale.coerceAtLeast(1f)).dp).fillMaxHeight(),
-        description = label(if(snapshot.retryToken != null)"Retry the same action" else "Mark as done") + ": " + (step?.get("name") as? String).orEmpty())
+      // Only an already captured, uncertain legacy action can expose a mutation.
+      val retry = snapshot.retryToken
+      if(retry != null) action(label("Retry"),actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to retry)),
+        GlanceModifier.width((80*fontScale.coerceAtLeast(1f)).dp).fillMaxHeight(),description = label("Retry the same action"))
+      else if(snapshot.notice != null) action(label("Refresh"),actionRunCallback<WidgetRefreshAction>(),GlanceModifier.width((88*fontScale.coerceAtLeast(1f)).dp).fillMaxHeight())
     }
   }
   @Composable fun reminder(row: Map<String,Any?>) {
-    Column(GlanceModifier.fillMaxWidth().height(68.dp).padding(vertical = 8.dp)
+    Column(GlanceModifier.fillMaxWidth().height(if(expanded)68.dp else 56.dp).padding(vertical = 8.dp)
       .then(if(preview)GlanceModifier else GlanceModifier.clickable(actionStartActivity(widgetOpen(context,"reminder/${row["id"]}"))))) {
       copy(row["title"] as? String ?: "",medium = true)
       Text(WidgetText.reminder(context,row),style = TextStyle(color = if(row["overdue"] == true)ColorProvider(Color(roles.warning)) else muted,fontSize = 14.sp),maxLines = 1)
@@ -95,9 +91,12 @@ import java.time.format.DateTimeFormatter
   }
   Column(GlanceModifier.fillMaxSize().appWidgetBackground().background(ColorProvider(Color(roles.surface)))
     .cornerRadius(android.R.dimen.system_app_widget_background_radius).padding(if(summary && fontScale >= 1.6f)8.dp else 12.dp)
-    .then(if(!preview && summary && snapshot.configured && !snapshot.locked && !snapshot.failed) GlanceModifier.clickable(if(selected) if(session == null)setup else openRoutine else agenda) else GlanceModifier)
-    .semantics { contentDescription = if(snapshot.locked) label("Unlock to view Remilo.") else "$title, $date, " + if(selected)outcome else label("${snapshot.total} reminders") }) {
-    if(summary && snapshot.configured && !snapshot.locked && !snapshot.failed) {
+    .then(if(!preview && summary && !snapshot.locked) GlanceModifier.clickable(when { snapshot.failed -> actionRunCallback<WidgetRefreshAction>(); !snapshot.configured -> setup; selected -> if(session == null)setup else openRoutine; else -> agenda }) else GlanceModifier)
+    .semantics { contentDescription = when { snapshot.locked -> label("Unlock to view Remilo."); snapshot.failed -> label(snapshot.notice ?: "Could not load the widget. Refresh to try again."); else -> "$title, $date, " + if(selected)outcome else label("${snapshot.total} reminders") } }) {
+    if(summary && (snapshot.locked || snapshot.failed || !snapshot.configured)) {
+      if(fontScale < 1.2f) copy("Remilo",medium = true)
+      copy(label(when { snapshot.locked -> "Unlock to view Remilo."; snapshot.failed -> "Could not load the widget. Refresh to try again."; else -> "Choose what to show" }),true,if(fontScale >= 1.2f)2 else 3)
+    } else if(summary) {
       if(fontScale < 1.6f) copy(date,true)
       copy(title)
       copy(if(session != null) if(state in setOf("Rest","Paused","Skipped","Completed","Upcoming","NotCompleted","PartiallyCompleted"))outcome else "$done/$total"
@@ -110,7 +109,10 @@ import java.time.format.DateTimeFormatter
       Spacer(GlanceModifier.height(8.dp))
       when {
         snapshot.locked -> copy(label("Unlock to view Remilo."),lines = 2)
-        snapshot.failed -> { copy(label(snapshot.notice ?: "Could not load the widget. Refresh to try again."),lines = 2); refresh() }
+        snapshot.failed -> {
+          copy(label(snapshot.notice ?: "Could not load the widget. Refresh to try again."),lines = 2)
+          action(label("Refresh"),actionRunCallback<WidgetRefreshAction>(),GlanceModifier.fillMaxWidth().height(actionHeight))
+        }
         !snapshot.configured -> action(label("Choose what to show"),setup,GlanceModifier.fillMaxWidth().height(primaryHeight),true)
         else -> {
           if(selected) {
@@ -141,7 +143,7 @@ import java.time.format.DateTimeFormatter
                     GlanceModifier.width(((if(activeExercise)104 else 128)*fontScale.coerceAtLeast(1f)).dp).height(primaryHeight),activeExercise)
                 }
               }
-              Spacer(GlanceModifier.height(8.dp))
+              if(hasFooter || expanded) Spacer(GlanceModifier.height(8.dp))
             }
           } else {
             copy(title,font = 22,medium = true)
@@ -150,12 +152,15 @@ import java.time.format.DateTimeFormatter
           // List space is bounded ABOVE the footer. Compact Today shows exactly one full row.
           if(snapshot.configuration.mode == "Today" && (!selected || expanded)) {
             Column(GlanceModifier.fillMaxWidth().defaultWeight()) {
+              if(selected && expanded && activeExercise) steps.firstOrNull { it !== step && it["completed"] != true }?.let {
+                copy(label("Next: ${it["name"]}"),true); Spacer(GlanceModifier.height(8.dp))
+              }
               if(selected) copy(label("Today's reminders"),true)
               if(snapshot.reminders.isEmpty()) {
                 copy(label("No reminders for today."),lines = 2)
                 if(!selected) copy(label("Today's and overdue reminders will appear here."),true,2)
               } else if(!expanded) reminder(snapshot.reminders.first())
-              else if(staticCollections) Column { snapshot.reminders.take(if(selected)2 else 4).forEach { reminder(it) } }
+              else if(staticCollections) Column { snapshot.reminders.take(if(selected)1 else 4).forEach { reminder(it) } }
               else androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxSize()) { snapshot.reminders.forEach { row -> item { reminder(row) } } }
             }
           } else if(expanded && snapshot.configuration.mode == "Routine") {
@@ -163,7 +168,7 @@ import java.time.format.DateTimeFormatter
               @Composable fun upcoming(row: Map<String,Any?>) {
                 val destination = snapshot.configuration.routineId?.let { id -> actionStartActivity(widgetOpen(context,"routine-session?id=${Uri.encode(id)}&date=${snapshot.date}&stepId=${Uri.encode(row["id"].toString())}")) } ?: openRoutine
                 Column(GlanceModifier.fillMaxWidth().height(64.dp).padding(vertical = 8.dp).then(if(preview)GlanceModifier else GlanceModifier.clickable(destination))) {
-                  copy(row["name"] as? String ?: ""); copy(row["target"] as? String ?: "",true)
+                  copy(if(row === steps.firstOrNull { it !== step && it["completed"] != true }) label("Next: ${row["name"]}") else row["name"] as? String ?: ""); copy(row["target"] as? String ?: "",true)
                 }
               }
               val remaining = steps.filter { it !== step && it["completed"] != true }.takeIf { activeExercise }.orEmpty()
@@ -171,7 +176,7 @@ import java.time.format.DateTimeFormatter
               else androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxSize()) { remaining.forEach { row -> item { upcoming(row) } } }
             }
           }
-          footer()
+          if(hasFooter) footer()
         }
       }
     }

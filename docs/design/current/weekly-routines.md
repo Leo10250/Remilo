@@ -169,5 +169,6 @@ or that midnight expiry improves adherence; those reflect the owner's workflow.
   remain authoritative; this introduces no iOS implementation.
 
 Actual component/host checks and signed-phone usability acceptance remain distinct.
-The widget consumes this same native session authority and adds the same compact
-bar and completion/Undo vocabulary. The broader daily digest remains separate.
+The widget consumes this same native session authority and shows its compact bar
+with exact-exercise Resume. Completion is inside Remilo. Captured legacy actions
+retain conditional Retry/Undo recovery. The broader daily digest remains separate.

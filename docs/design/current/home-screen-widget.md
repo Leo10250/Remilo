@@ -16,11 +16,14 @@ rows with the accurate total and View Agenda. Rows open existing Details.
 
 Focus shows the selected routine, explicit date, numerical daily progress, first
 unfinished exercise and its target, with a 4 dp segmented (up to 12 exercises) or
-continuous bar alongside the numeric count. Resume opens that exact date and displayed exercise. A separate Done action
-binds that exact exercise/date;
-advance only after native acknowledgement. Show the most recent widget-completed
-exercise's name beside an explicitly labelled Undo, including after the final
-exercise. The app retains all other corrections and Skip/Pause/history actions.
+continuous bar alongside the numeric count. Resume opens that exact date and
+displayed exercise. The owner's subsequent 16 October Resume-only correction
+removes Done from compact and expanded widgets. Exercise completion/correction
+happens inside Remilo; native commits update the widget's exercise and progress.
+Previously captured uncertain widget actions retain their exact Retry, and a
+previous widget completion retains named Undo only while natively eligible.
+These are conditional recovery controls, not normal widget actions. The app
+retains Skip/Pause/history actions.
 Rest, Skipped, Completed and Paused follow native session eligibility. Removing a
 selected routine never selects another routine automatically.
 
@@ -44,23 +47,29 @@ preview rendering have visible feedback and retry rather than a blank region.
 The RemoteViews child fills an explicitly measured preview host in both axes.
 
 The preferred footprint is 4×2. Actual available dp, not launcher cell labels,
-selects 180×110 summary, 300×240 interactive and 300×440 expanded compositions.
+selects 180×110 summary, approximately 300×200 Resume-only Focus (240 dp when
+Today/legacy recovery needs a footer), and 300×440 expanded compositions.
 Use a single opaque reading surface, system outer corners and 12 dp internal
 padding. No nested routine card or weighted gap above a bottom action.
 
 The compact hierarchy is Classic/Remilo plus weekday/date (14 sp), routine title
 (22 sp), segmented progress and numeric count (14 sp), exercise (18 sp) and target
 (14 sp). Resume is the sole filled 56 dp primary action to the exercise's right,
-with current 16 dp button corners. The 48 dp footer contains one contextual item
-(Next or Today’s accurate View Agenda count), neutral Refresh and a separate text
-Done action. Eligible named Undo replaces the contextual item, including after
-final completion. Expanded Routine mode adds upcoming exercises; expanded Today
-adds the native reminder list. Compact Today keeps an accurate Agenda link/count.
+with current 16 dp button corners. A healthy compact Focus has no footer or
+reserved empty action strip: no Done, Refresh, Retry, Undo or Next. Expanded
+Routine adds upcoming exercises with the first labelled Next; expanded Today
+adds Next and the native reminder list. Compact Today retains its accurate
+Agenda link/count. No new exercise completion action is exposed in either size.
+
+Only actual recovery state adds the 48 dp footer: Retry binds the original
+uncertain operation; eligible named Undo corrects an earlier widget completion;
+a conflict/load failure exposes labelled Refresh. Ordinary successful reads,
+empty/rest outcomes and current progress never expose Refresh. A small failed
+widget uses its whole surface to refresh with an accessible recovery description.
 
 Reserve footer height outside the list's remaining-height region. Center
 intrinsic-height labels in the measured action boxes; never stretch a footer
-TextView to fill a parent. Refresh keeps a 20 dp glyph inside its growing touch
-target at enlarged text sizes. Compact Today without a routine shows one complete
+TextView to fill a parent. Compact Today without a routine shows one complete
 reminder row; expanded Today retains the scrollable native results. Do not show
 partially obscured rows behind View Agenda. Use 12 dp after the title and 16 dp
 after progress before the exercise/action row. Rest days show Rest day once,
@@ -71,8 +80,8 @@ View Agenda; no example reminders appear on the home screen.
 
 Summary sizes and font scale 1.6+ open the exact dated session instead of squeezing
 controls. At 1.2–1.6, interactive Focus requires expanded height and omits secondary
-lists. Intermediate text scales also require at least 24 + 210 × fontScale dp
-height for interactive content. Use exact available widget dimensions rather than
+lists. Intermediate text scales also require at least 24 + 164 × fontScale dp
+height for Resume-only content (210 with a selected-routine footer). Use exact available widget dimensions rather than
 assuming launcher cells provide a particular height. Scale actions/text, keep 56/48 dp targets, and prioritize identity/outcome
 in very small summaries. No text shrinking. EN/ZH use the same anatomy.
 
@@ -87,8 +96,9 @@ Refresh after native changes and user actions, on resize/reconfiguration and
 recovery/unlock/language/clock changes, with coalesced background work, a requested
 next civil/atmosphere boundary and a 30-minute recovery opportunity. Android may
 defer background work. Explicit dates and native stale-action rejection remain
-required even while the launcher retains cached pixels. Compact views open the
-app for refresh/actions. No exact-midnight display guarantee is made.
+required even while the launcher retains cached pixels. Routine completion is
+inside the app; widget recovery refresh is offered only after a known failure.
+No exact-midnight display guarantee is made.
 
 Use generic content before first unlock and on unsupported hosts. Declare
 home-screen and `not_keyguard` placement. Widget configuration/action identities

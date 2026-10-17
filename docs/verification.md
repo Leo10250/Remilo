@@ -419,13 +419,21 @@ refresh. Do not equate host capture or signed assembly with those observations.
 The 16 October widget correction additionally checks first-routine defaults only
 for unselected setup drafts; unavailable selections never retarget. Empty setup
 uses labelled inert examples in both modes/languages, while real widgets show
-truthful empty states. Assert View Agenda, Resume, Done, View routine and named
-Undo text/bounds in actual compact RemoteViews, including Today + Focus, Rest,
+truthful empty states. Assert View Agenda, Resume, View routine and conditional
+legacy Retry/Undo text/bounds in actual compact RemoteViews, including Today + Focus, Rest,
 multiple reminders, 300/360 dp width and intermediate/200% font-scale fallback.
 Check rest-day wording appears once. On a signed phone separately review native
 configuration's measured preview host, no-data first setup, switching mode,
 cancellation, launcher resizing and TalkBack. Host layout checks do not establish
 those device observations.
+
+The later Resume-only correction asserts that healthy compact and expanded
+widgets contain no Done or Refresh, compact contains no Next, and expanded keeps
+Next/upcoming context. Check 300×200 Focus and Today-without-routine, 300×240
+Today-with-Focus/recovery, failed-load Refresh, conflict feedback, tiny failed
+summaries, inert previews and eligible legacy retry/Undo without retargeting.
+Complete exercises inside the app and verify native progress convergence; keep
+legacy mutation safety tests for already captured actions.
 
 ## Shared routine editor, Focus and Alarm correction
 
@@ -449,7 +457,7 @@ the active screen stays bound to its date until Open today is selected.
 Routine Alarm tests must cover Start/Dismiss without exercise completion,
 same-day Snooze with stable targets, duplicate/stale/cross-command operation IDs,
 uncertain acknowledgement at each commit boundary, locked restart and mixed
-ordinary/routine sessions. Final exercise from app or widget, Skip, Pause,
+ordinary/routine sessions. Final exercise from app or a captured legacy widget action, Skip, Pause,
 deletion and midnight must silence only that routine member. Verify no quiet
 fallback when Alarm access is blocked, bounded Alarm lateness, quiet same-day
 callback behavior, no recovery catch-up, and backward/forward date or zone changes
@@ -644,8 +652,8 @@ cancel/replace/draft leases, future-only snapshots and referenced-file retention
 Archive tests cover images, legacy JSON, corruption, missing assets, safe entries,
 size limits, copy conflicts and uncertain receipt replay.
 
-Review actual Glance RemoteViews at 300×240 and 300×440 plus summary/large text,
-eight appearance pairs and both languages. Resume/Done/Undo labels and targets
+Review actual Glance RemoteViews at 300×200/240 and 300×440 plus summary/large text,
+eight appearance pairs and both languages. Resume and conditional recovery labels/targets
 must fit, with no giant spacer or nested routine card. Signed-phone picker,
 launcher resizing/reconfiguration, TalkBack, IME and end-to-end observations remain
 in the consolidated acceptance run; native/browser host captures do not close them.

@@ -49,6 +49,11 @@ internal class WidgetCoordinator(context: Context, private val now: () -> Long,
     return result
   }
   private fun rejected() = mapOf("status" to "Rejected", "errorCode" to "STALE_WIDGET")
+  /** A successful explicit refresh acknowledges feedback, never an uncertain command. */
+  fun acknowledgeRefresh(id: Int) {
+    val saved = state.read(id) ?: return
+    if(saved.has("notice")) { saved.remove("notice"); state.write(id,saved) }
+  }
   @Suppress("UNCHECKED_CAST")
   fun snapshot(id: Int, draft: WidgetConfiguration? = null): WidgetSnapshot {
     val saved = if (draft == null) state.read(id) else null

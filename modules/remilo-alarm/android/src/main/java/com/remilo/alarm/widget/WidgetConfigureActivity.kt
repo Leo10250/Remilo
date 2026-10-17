@@ -100,10 +100,11 @@ class WidgetConfigureActivity : ComponentActivity() {
     LaunchedEffect(mode, routineId, loaded) { if (loaded) try { refresh() }
       catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
       catch (_: Exception) { error = "This view changed. Review the refreshed routine." } }
-    LaunchedEffect(preview,expandedPreview,previewWidth,previewAttempt) {
+    val previewHeight = if(expandedPreview)440 else WidgetSizing.compactHeight(preview)
+    LaunchedEffect(preview,previewHeight,previewWidth,previewAttempt) {
       val snapshot = preview ?: return@LaunchedEffect
       previewFailed = false
-      try { renderedPreview = WidgetRender(snapshot).compose(this@WidgetConfigureActivity, size = DpSize(previewWidth,if(expandedPreview)440.dp else 240.dp)) }
+      try { renderedPreview = WidgetRender(snapshot).compose(this@WidgetConfigureActivity, size = DpSize(previewWidth,previewHeight.dp)) }
       catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
       catch (_: Exception) { renderedPreview = null; previewFailed = true }
     }
@@ -187,7 +188,7 @@ class WidgetConfigureActivity : ComponentActivity() {
             FilterChip(selected = expandedPreview,onClick = { expandedPreview = true },enabled = !busy,label = { Text(text("Expanded")) },shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),modifier = Modifier.heightIn(min = 48.dp))
           }
           if(examplePreview) Text(text("Example preview · Sample content only"),fontSize = 14.sp,color = Color(roles.onSurfaceVariant))
-          Box(Modifier.fillMaxWidth().height(if(expandedPreview)440.dp else 240.dp).onSizeChanged { previewWidth = with(previewDensity) { it.width.toDp() } }
+          Box(Modifier.fillMaxWidth().height(previewHeight.dp).onSizeChanged { previewWidth = with(previewDensity) { it.width.toDp() } }
             .semantics { contentDescription = text("Preview") + ": " + (preview?.session?.get("title") as? String ?: text("Today's reminders")) }) {
           renderedPreview?.let { remote -> AndroidView(modifier = Modifier.fillMaxSize(),
             factory = { android.widget.FrameLayout(it).apply { isEnabled = false; importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS } },
