@@ -92,7 +92,8 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
         <Button label={busy ? t('m_3329a9bb48b9') : t('m_050b04ca8915')} busy={busy} disabled={!valid || !preview.data || preview.isFetching || !!preview.error || !preview.data.upcoming.length} onPress={useRule} />
         <Button label={t('m_f0714b3053e2')} variant="neutral" disabled={busy} onPress={() => setCustom(false)} />
       </View></BottomActionBar> : undefined}>
-      <View pointerEvents={busy ? 'none' : 'auto'} importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
+      {/* Applying a repeat must not reparent the sheet's native controls. */}
+      <View collapsable={false} pointerEvents={busy ? 'none' : 'auto'} importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
         accessibilityElementsHidden={busy} style={{ gap: 12 }}>
       {!custom ? <>
         <Choice label={t('m_621d129ab80a')} selected={!value} onPress={() => void apply(undefined)} />

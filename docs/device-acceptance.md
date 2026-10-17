@@ -1,5 +1,16 @@
 # Offline Android acceptance run
 
+## Reminder Save crash follow-up — 16 October 2026
+
+On an identified updated signed APK, save one-off and repeating reminders in all
+three Alert modes, with the keyboard open and closed. Confirm one saved item,
+truthful feedback and the expected return destination without the app closing.
+Apply repeat presets and Custom repeat, change timing, save a routine and edit an
+existing reminder. After a recoverable rejection, confirm the draft, touch and
+TalkBack controls remain usable; retain the same command on an unknown reply.
+See the [crash evidence and repair](evidence/2026-10-16-save-crash.md). Existing
+crash logs and host checks do not establish a successful updated-phone result.
+
 ## Weekly routine editor, Focus and widget follow-up — 15 October 2026
 
 Observe these together on an identified signed bundled APK when the owner resumes

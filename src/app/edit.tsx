@@ -341,7 +341,8 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
       <Button label={t('m_6a47708f4e14')} variant="secondary" onPress={() => setReviewOpen(true)} /></View></Group>}
     {reviewLoading && <ActionFeedback loading message={t('m_914801fd4cfa')} />}
     {saveAsNew && <Copy muted>{t('m_77bcd00eca3e')}</Copy>}
-    <View pointerEvents={frozen ? 'none' : 'auto'} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}
+    {/* Keep the native parent stable when Save freezes/unfreezes its descendants. */}
+    <View collapsable={false} pointerEvents={frozen ? 'none' : 'auto'} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}
       accessibilityElementsHidden={frozen} style={{ gap: 16 }}>
       <Field required label={t('m_7e8cd2056da7')} placeholder={t('m_41f45aa7f7ff')} inputRef={titleInput} autoFocus={initialTitleFocus} value={draft.title}
         multiline compactMultiline submitBehavior="blurAndSubmit" enterKeyHint="done" onSubmitEditing={() => titleInput.current?.blur()}
