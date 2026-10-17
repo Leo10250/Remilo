@@ -1,10 +1,12 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState, type RefObject } from 'react';
 import { AppState, Linking, View } from 'react-native';
 import type { RoutineCommand } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { nextRoutineFocus, routineDayEnded } from '../domain/routine-focus';
 import { routineSessionQueryKey, RoutineSessionViewDates } from '../domain/routine-session-view';
+import { routineExerciseEditContext, type RoutineExerciseEditContext } from '../domain/routine-exercise-edit';
+import { RoutineExerciseEditSheet } from '../ui/routine-exercise-edit';
 import { RoutineSessionContent, type RoutineUndo } from '../ui/routine-focus';
 import { RoutineActions } from '../ui/routine-actions';
 import { useTranslation } from '../localization/react';
@@ -40,6 +42,7 @@ function RoutineSessionView() {
   const [selected, setSelected] = useState<{ date: string; stepId: string } | undefined>(() => date && requestedStep ? { date, stepId: requestedStep } : undefined), [menu, setMenu] = useState(!!showMenu), [history, setHistory] = useState(!!showHistory);
   const [corrections, setCorrections] = useState(false), [now, setNow] = useState(Date.now);
   const [undo, setUndo] = useState<RoutineUndo | null>(null);
+  const [editTarget, setEditTarget] = useState<RoutineExerciseEditContext | null>(null), [editTrigger, setEditTrigger] = useState<RefObject<View | null>>(() => ({ current: null }));
   // An identical launcher link can arrive while this destination is already
   // mounted. Consume the new intent, without reselecting after ordinary Done.
   useEffect(() => {
@@ -103,12 +106,17 @@ function RoutineSessionView() {
       {session.deleted && <ActionFeedback message={t('routine_deleted')} tone="warning" />}
       {session.skipped && !ended && <Button label={t('routine_undo_skip')} icon="undo" variant="secondary" disabled={action.guarded || session.deleted} onPress={() => mutate('UndoSkipRoutineDay')} />}
       <RoutineSessionContent session={session} selectedId={selected?.date === session.date ? selected.stepId : undefined} ended={ended} guarded={action.guarded}
+        editDay={new Intl.DateTimeFormat(localeTag, { weekday: 'long' }).format(new Date(session.date + 'T12:00:00'))}
+        onEditStep={(stepId, trigger) => { if (!action.isGuarded() && !routineDayEnded(session, Date.now()) && !session.deleted) {
+          setEditTrigger(trigger); setEditTarget(routineExerciseEditContext(id, session.date, stepId));
+        } }}
         onSelect={stepId => setSelected({ date: session.date, stepId })} onChangeStep={changeStep} undo={undo} onUndo={() => { if (undo?.date === session.date) changeStep(undo.stepId, false); }} onOpenToday={openToday} />
       {historyCorrections.length > 0 && <Disclosure title={t('routine_history_changes')} icon="history">{historyCorrections.map(change => <View key={change.id}>
         <Copy>{session.steps.find(s => s.id === change.stepId)?.name}</Copy><Copy muted size={14}>{t('routine_correction_at', { time: shortDateTime(change.atMs) })}</Copy>
       </View>)}</Disclosure>}
       <ConnectedGroup><SettingRow intent="action" label={t('routine_history')} icon="history" disabled={action.guarded} onPress={() => setHistory(true)} /></ConnectedGroup>
     </View>}
+    <RoutineExerciseEditSheet target={editTarget} onClose={() => setEditTarget(null)} returnFocusRef={editTrigger} />
     <RoutineActions target={menu ? { id, date: session?.date ?? date } : null} onClose={() => setMenu(false)} onCorrect={() => setCorrections(true)} onRemoved={() => { if (router.canGoBack()) router.back(); else router.replace('/routines'); }} />
     <Sheet title={t('routine_correct_checkmarks')} visible={corrections} onClose={() => { if (!action.guarded) setCorrections(false); }}>
       <Copy muted>{t('routine_day_ended')}</Copy>

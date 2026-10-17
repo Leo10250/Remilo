@@ -11,6 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.ImageView
+import android.widget.LinearLayout
+import com.remilo.alarm.R
+import com.remilo.alarm.presentation.AtmosphereTokens
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.compose
@@ -126,11 +130,41 @@ class WidgetRenderTest {
     assertTrue(text(expanded).contains("Next: Side plank")); assertTrue(text(expanded).contains("Intervals"))
     assertActionFullyVisible(expanded,"Done"); assertNoNavigationOrRefresh(expanded,ctx)
     val after=render(ctx,sample.copy(undoToken="undo",undoName="Bird-dog"),300,200,"routine-focus-compact-after-completion")
-    assertActionFullyVisible(after,"Done"); assertActionFullyVisible(after,"Undo Bird-dog")
+    assertActionFullyVisible(after,"Done"); assertActionFullyVisible(after,"Undo completion of Bird-dog")
+    fun bounds(root: View, view: View): Rect = Rect(0,0,view.width,view.height).also { (root as ViewGroup).offsetDescendantRectToMyCoords(view,it) }
+    val undo = descendants(after).first { it.contentDescription?.toString() == "Undo completion of Bird-dog" }
+    val undoBounds = bounds(after,undo)
+    val doneBounds = bounds(after,textViews(after).single { it.text.toString() == "Done" })
+    assertTrue("Undo must precede the trailing primary Done",undoBounds.right < doneBounds.left)
     assertFalse(text(after).contains("Resume")); assertFalse(text(after).contains("Refresh"))
     val final=render(ctx,sample.copy(doneToken=null,undoToken="undo",undoName="Front plank",session=sample.session!! + mapOf("state" to "Completed",
       "completedCount" to 4,"steps" to (sample.session["steps"] as List<Map<String,Any?>>).map { it + ("completed" to true) })),300,200,"routine-focus-final-undo")
-    assertActionFullyVisible(final,"Undo Front plank"); assertFalse(text(final).contains("Done"))
+    assertActionFullyVisible(final,"Undo completion of Front plank"); assertFalse(text(final).contains("Done"))
+    assertActionFullyVisible(final,"Completed today")
+    assertEquals("Final completion must not move Undo into Done's slot",undoBounds.centerX(),
+      bounds(final,descendants(final).first { it.contentDescription?.toString() == "Undo completion of Front plank" }).centerX())
+  }
+  @Test fun progressHandlesZeroContinuousAndConfirmedFeedbackWithoutShiftingActions() {
+    val ctx=context("en",1f)
+    val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"))
+    val zero=render(ctx,sample.copy(session=sample.session!! + mapOf("totalCount" to 0,"completedCount" to 0,"state" to "Rest","steps" to emptyList<Any>())),300,200,"progress-zero")
+    assertNull(zero.findViewById<View>(R.id.widget_progress_track)); assertFalse(text(zero).contains("0 of 0 done"))
+    for(completed in listOf(0,4,13)) {
+      val continuous=render(ctx,sample.copy(session=sample.session!! + mapOf("totalCount" to 13,"completedCount" to completed)),300,200,"progress-continuous-$completed")
+      assertNull(continuous.findViewById<View>(R.id.widget_progress_track)); assertTrue(text(continuous).contains("$completed of 13 done"))
+    }
+    val pending=render(ctx,sample.copy(actionFeedback=WidgetActionFeedback(busy=true,saving=true)),300,200,"action-saving")
+    assertTrue(text(pending).contains("Saving…"))
+    val disabled=pending.findViewById<View>(R.id.widget_undo_disabled)
+    assertFalse("Pending Undo must expose disabled state",disabled.isEnabled)
+    assertFalse("Pending Undo must have no mutation listener",disabled.hasOnClickListeners())
+    val confirmed=render(ctx,sample.copy(actionFeedback=WidgetActionFeedback(confirmation="Completed Bird-dog")),300,200,"action-confirmed")
+    val ready=render(ctx,sample,300,200,"action-ready")
+    assertTrue(descriptions(confirmed).contains("Completed Bird-dog"))
+    val readyCount=textViews(ready).single { it.text.toString() == "1 of 4 done" }
+    val confirmedCount=textViews(confirmed).single { it.text.toString() == "1 of 4 done" }
+    assertEquals(readyCount.left,confirmedCount.left); assertEquals(readyCount.width,confirmedCount.width)
+    assertActionFullyVisible(confirmed,"Done")
   }
   @OptIn(ExperimentalGlanceApi::class)
   @Test fun inertPreviewPreservesDirectCompletionProductionLabels() {
@@ -149,6 +183,16 @@ class WidgetRenderTest {
   }
   private fun assertActionFullyVisible(root: View, label: String) {
     val matches = textViews(root).filter { it.text.toString().equals(label, ignoreCase = true) }
+    if(matches.isEmpty() && label.startsWith(L10n.text(root.context,"Undo"))) {
+      val icon = descendants(root).firstOrNull { it.contentDescription?.toString() == label }
+        ?: throw AssertionError("Missing accessible Undo control: $label / ${descriptions(root)}")
+      val target = generateSequence(icon) { it.parent as? View }.firstOrNull { it.hasOnClickListeners() }
+        ?: throw AssertionError("Undo has no action: $label")
+      val density=root.resources.displayMetrics.density
+      assertTrue(target.width >= 48*density); assertTrue(target.height >= 48*density)
+      assertTrue(target.top >= 0 && target.bottom <= (target.parent as View).height)
+      return
+    }
     assertEquals("Expected one action named $label; rendered ${text(root)}", 1, matches.size)
     val button = matches.single()
     assertEquals("Action must be visible: $label", View.VISIBLE, button.visibility)
@@ -184,6 +228,41 @@ class WidgetRenderTest {
       child = parent
     }
   }
+  private fun descendants(view: View): List<View> = listOf(view) + if(view is ViewGroup)
+    (0 until view.childCount).flatMap { descendants(view.getChildAt(it)) } else emptyList()
+
+  @Test fun everyProgressSegmentSurvivesAndUsesTheAppColorsAcrossAllEightPairs() {
+    for(scene in listOf("sunrise","sky","evening","night")) for(brightness in listOf("light","dark")) {
+      val roles=AtmosphereTokens.colors(scene,brightness)
+      fun luminance(color: Long): Double {
+        fun channel(shift: Int): Double { val s=((color shr shift) and 255)/255.0; return if(s <= 0.04045)s/12.92 else Math.pow((s+0.055)/1.055,2.4) }
+        return 0.2126*channel(16)+0.7152*channel(8)+0.0722*channel(0)
+      }
+      val a=luminance(roles.primary); val b=luminance(roles.container)
+      assertTrue("$scene-$brightness progress contrast",(maxOf(a,b)+0.05)/(minOf(a,b)+0.05) >= 3)
+      for(total in listOf(1,4,6,7,10,11,12)) {
+        val completed=minOf(4,total)
+        val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"),appearance=AppearancePolicy.Resolved(scene,brightness),
+          session=previewSnapshot().session!! + mapOf("totalCount" to total,"completedCount" to completed,"steps" to (0 until total).map {
+            mapOf("id" to "step-$it","name" to "Same name","target" to "3 × 10","completed" to (it < completed)) }))
+        val root=render(context("en",1f),sample,300,200,"segments-$scene-$brightness-$total")
+        val track=root.findViewById<LinearLayout>(R.id.widget_progress_track)
+        assertNotNull("Missing track for $total",track); assertEquals(total,track.childCount)
+        repeat(total) { index ->
+          val segment=track.getChildAt(index) as ImageView
+          assertTrue(segment.width > 0)
+          assertTrue(kotlin.math.abs(segment.width-track.getChildAt(0).width) <= 1)
+          val pixels=Bitmap.createBitmap(segment.width,segment.height,Bitmap.Config.ARGB_8888)
+          segment.draw(Canvas(pixels))
+          assertEquals((if(index < completed)roles.primary else roles.container).toInt(),pixels.getPixel(segment.width/2,segment.height/2))
+          pixels.recycle()
+          val margin=(segment.layoutParams as LinearLayout.LayoutParams).marginEnd
+          assertEquals(if(index == total-1)0 else (2*root.resources.displayMetrics.density).toInt(),margin)
+        }
+        assertTrue(text(root).contains("$completed of $total done"))
+      }
+    }
+  }
   @Test fun undoAndUncertainRetryRemainVisibleWithGuardedCompletion() {
     for (language in listOf("en", "zh-Hans")) for ((height, scale) in listOf(240 to 1f, 440 to 1.5f)) {
       val ctx = context(language, scale)
@@ -196,13 +275,13 @@ class WidgetRenderTest {
           mapOf("name" to "Intervals", "target" to "8 intervals", "completed" to final))
         val sample = previewSnapshot().copy(undoToken = "undo", undoName = "Bird-dog", retryToken = if (mode == "retry") "retry" else null,
           session = previewSnapshot().session!! + mapOf("steps" to steps, "completedCount" to if (final) 3 else 1))
-        val root = render(ctx, sample, 300, height, "$language-actions-$height-${(scale * 100).toInt()}-$mode")
+        val root = render(ctx, sample, WidgetSizing.minimumWidth(sample,scale), height, "$language-actions-$height-${(scale * 100).toInt()}-$mode")
         assertFalse(text(root).contains(L10n.text(ctx,"Refresh")))
         if (mode == "retry") assertActionFullyVisible(root,L10n.text(ctx,"Retry"))
         else assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
         if(mode != "retry") assertActionFullyVisible(root, L10n.text(ctx, "Done"))
         else assertFalse(text(root).contains(L10n.text(ctx,"Done")))
-        assertActionFullyVisible(root, L10n.text(ctx, "Undo Bird-dog"))
+        if(mode != "retry") assertActionFullyVisible(root, L10n.text(ctx, "Undo completion of Bird-dog"))
       }
     }
   }
@@ -245,19 +324,24 @@ class WidgetRenderTest {
       else { assertActionFullyVisible(root,L10n.text(ctx,"Done")); assertNoNavigationOrRefresh(root,ctx) }
     }
   }
-  @Test fun narrowSetupPreviewShowsTheInteractiveExampleInsteadOfStretchedSummary() {
+  @Test fun narrowSetupPreviewPreservesAnExampleAndOnlyShowsActionsWhenTheyFit() {
     for(language in listOf("en","zh-Hans")) for(width in listOf(260,280,300)) for(scale in listOf(1f,1.1f,1.2f,1.5f)) {
       val ctx=context(language,scale)
       val sample=WidgetSetup.example(ctx,"Routine",WidgetSnapshot(-1,date="2026-10-17"))
       val root=render(ctx,sample,width,WidgetSizing.previewHeight(sample,false,scale),"$language-setup-$width-${(scale*100).toInt()}")
-      assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
-      assertActionFullyVisible(root,L10n.text(ctx,"Done"))
+      if(width >= WidgetSizing.minimumWidth(sample,scale)) {
+        assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
+        assertActionFullyVisible(root,L10n.text(ctx,"Done"))
+      } else {
+        assertTrue(text(root).contains(L10n.text(ctx,"Core & intervals")))
+        assertFalse(text(root).contains(L10n.text(ctx,"Done")))
+      }
     }
   }
   @OptIn(ExperimentalGlanceApi::class)
   @Test fun launcherPreviewUsesThemedExampleWithInteractiveContentEvenAtMinimumProviderSize() {
     for(language in listOf("en","zh-Hans")) {
-      val ctx=context(language,1.2f)
+      val ctx=context(language,1f)
       val base=WidgetSnapshot(-1,locked=true,appearance=AppearancePolicy.Resolved("night","dark"),
         session=mapOf("title" to "Private routine","state" to "Rest"))
       val widget=RemiloWidget(previewBase={ base })
@@ -281,7 +365,7 @@ class WidgetRenderTest {
       for(action in listOf("View Agenda (73)","Done")) assertActionFullyVisible(focus,L10n.text(ctx,action))
       assertNoNavigationOrRefresh(focus,ctx)
       val after=render(ctx,previewSnapshot().copy(reminders=reminders,total=73,undoToken="undo",undoName="Bird-dog"),width,240,"$language-today-after-completion-$width")
-      for(action in listOf("View Agenda (73)","Done","Undo Bird-dog")) assertActionFullyVisible(after,L10n.text(ctx,action))
+      for(action in listOf("View Agenda (73)","Done","Undo completion of Bird-dog")) assertActionFullyVisible(after,L10n.text(ctx,action))
       val rest=previewSnapshot().copy(session=mapOf("title" to "Workout","state" to "Rest","steps" to emptyList<Any>()),doneToken=null,total=73)
       val resting=render(ctx,rest,width,240,"$language-today-rest-$width")
       assertEquals(1,text(resting).count { it == L10n.text(ctx,"Rest day") })

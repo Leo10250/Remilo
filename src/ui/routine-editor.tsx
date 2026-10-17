@@ -84,6 +84,24 @@ export function RoutineWeekFields({ days, onChange, disabled = false }: { days: 
 }
 
 type ExerciseDraft = { value: RoutineExercise; position: number; initial: string; isNew: boolean };
+/** One form for nested weekly drafts and a directly saved exercise. Image selection stays draft-only. */
+export function RoutineExerciseForm({ exercise, onChange, imageOpen, onImageOpenChange, disabled = false }: {
+  exercise: RoutineExercise; onChange: (patch: Partial<RoutineExercise>) => void;
+  imageOpen: boolean; onImageOpenChange: (open: boolean) => void; disabled?: boolean;
+}) {
+  const t = useTranslation(), illustration = getExerciseIllustration(exercise.illustration);
+  return <View style={{ gap: 12 }}>
+    <Field label={t('routine_exercise_name')} placeholder={t('routine_name_example')} required value={exercise.name} maxLength={200} multiline compactMultiline editable={!disabled} onChangeText={name => onChange({ name })} />
+    <Field label={t('routine_target')} placeholder={t('routine_target_example')} value={exercise.target} maxLength={1000} multiline compactMultiline editable={!disabled} onChangeText={target => onChange({ target })} />
+    <Copy muted size={14}>{t('routine_target_help')}</Copy>
+    <Field label={t('routine_guidance')} placeholder={t('routine_guidance_example')} value={exercise.notes} maxLength={10000} multiline compactMultiline editable={!disabled} onChangeText={notes => onChange({ notes })} />
+    <Copy muted size={14}>{t('routine_guidance_help')}</Copy>
+    <ConnectedGroup><SettingRow intent="picker" label={t('routine_illustration')} disabled={disabled}
+      value={exercise.customImageId ? t('routine_photo_for', { name: exercise.name }) : illustration ? t(illustration.labelKey) : exercise.illustration ? t('routine_illustration_unavailable') : t('routine_no_illustration')}
+      onPress={() => { Keyboard.dismiss(); onImageOpenChange(true); }} /></ConnectedGroup>
+    {imageOpen && <ExerciseImageChooser key={exercise.id} exercise={exercise} onChange={onChange} onClose={() => onImageOpenChange(false)} />}
+  </View>;
+}
 export function RoutineDayEditor({ index, day, onClose, onChange }: { index: number; day: RoutineDay; onClose: () => void; onChange: (day: RoutineDay) => void }) {
   const t = useTranslation(), confirm = useAppearanceConfirmation();
   const [draft, setDraft] = useState<RoutineDay>(() => ({ type: day.type, exercises: day.exercises.map(exercise => ({ ...exercise })) }));
@@ -112,7 +130,6 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
     setDraft({ type: 'Exercises', exercises }); setEditing(null); Keyboard.dismiss();
   };
   useExerciseImageLeases([...draft.exercises, ...(editing ? [editing.value] : [])]);
-  const illustration = editing ? getExerciseIllustration(editing.value.illustration) : undefined;
   return <Sheet title={t(editing ? 'routine_exercise_editor_title' : 'routine_day_editor_title', editing ? undefined : { day: t(routineDayKeys[index]) })}
     visible onClose={close} onBack={close} footer={<View style={{ padding: 16, gap: 8 }}>
       <Button label={t(editing?.isNew ? 'routine_child_add' : 'routine_child_done')} disabled={editing ? !editing.value.name.trim() : !valid} onPress={() => {
@@ -123,14 +140,7 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
     <Copy muted size={14}>{t('routine_plan_local_hint')}</Copy>
     {editing ? <View style={{ gap: 12 }}>
       <View accessibilityLiveRegion="polite"><Copy muted size={14}>{t('routine_ordinal', { current: editing.position + 1, total: draft.exercises.length + (editing.isNew ? 1 : 0) })}</Copy></View>
-      <Field label={t('routine_exercise_name')} placeholder={t('routine_name_example')} required value={editing.value.name} maxLength={200} multiline compactMultiline onChangeText={name => patchExercise({ name })} />
-      <Field label={t('routine_target')} placeholder={t('routine_target_example')} value={editing.value.target} maxLength={1000} multiline compactMultiline onChangeText={target => patchExercise({ target })} />
-      <Copy muted size={14}>{t('routine_target_help')}</Copy>
-      <Field label={t('routine_guidance')} placeholder={t('routine_guidance_example')} value={editing.value.notes} maxLength={10000} multiline compactMultiline onChangeText={notes => patchExercise({ notes })} />
-      <Copy muted size={14}>{t('routine_guidance_help')}</Copy>
-      <ConnectedGroup><SettingRow intent="picker" label={t('routine_illustration')}
-        value={editing.value.customImageId ? t('routine_photo_for', { name: editing.value.name }) : illustration ? t(illustration.labelKey) : editing.value.illustration ? t('routine_illustration_unavailable') : t('routine_no_illustration')}
-        onPress={() => { Keyboard.dismiss(); setIllustrationOpen(true); }} /></ConnectedGroup>
+      <RoutineExerciseForm exercise={editing.value} onChange={patchExercise} imageOpen={illustrationOpen} onImageOpenChange={setIllustrationOpen} />
       {!editing.isNew && <ConnectedGroup>
         <SettingRow intent="action" key="up" label={t('routine_move_up')} disabled={editing.position === 0} onPress={() => setEditing({ ...editing, position: editing.position - 1 })} />
         <SettingRow intent="action" key="down" label={t('routine_move_down')} disabled={editing.position >= draft.exercises.length - 1} onPress={() => setEditing({ ...editing, position: editing.position + 1 })} />
@@ -158,6 +168,5 @@ export function RoutineDayEditor({ index, day, onClose, onChange }: { index: num
         {!canAdd && !!removed && canAddRoutineExercise(draft.exercises.length) && <Copy muted size={14}>{t('routine_undo_capacity_hint')}</Copy>}
       </>}
     </View>}
-    {illustrationOpen && editing && <ExerciseImageChooser key={editing.value.id} exercise={editing.value} onChange={patchExercise} onClose={() => setIllustrationOpen(false)} />}
   </Sheet>;
 }

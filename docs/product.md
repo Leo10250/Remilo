@@ -299,6 +299,11 @@ one exercise and advances the illustrated Focus card only after native confirmat
 exercises changes only the view. Explicit Undo completion remains available after
 the final exercise. Skip today retains partial checks and has an explicit Undo
 while the day is open. Notification opening/dismissal never changes progress.
+Today/future exercise rows also expose a neutral pencil + Edit control which
+opens the existing fields directly, independently of Focus selection. Its single
+Save edits the exact weekly-plan exercise immediately; adding/removing/reordering
+stays in the weekly editor. Past rows retain checkmark correction without this
+direct plan-edit control. Revision conflicts retain drafts for explicit reload.
 
 Local midnight ends the session without making unfinished work overdue. Native
 reads/actions/recovery enforce closure without requiring a midnight wake-up.
@@ -329,10 +334,16 @@ The Android home-screen widget supports independent Routine Focus and Today
 configurations. Focus offers the first unfinished exercise, target, daily count,
 one primary Done action that completes the displayed exercise directly in the
 native session, advances after confirmation and offers named Undo. Exercise text
+uses a separate original ordinal to distinguish otherwise similar exercises.
+Compact unfilled Undo sits to the left of trailing Done, with a reserved disabled
+slot before eligibility. Saving appears only for a pending action after 250 ms;
+a brief check acknowledges confirmed native progress without delaying the next
+valid action. Progress uses the app's accent/soft roles, with exactly one segment
+per exercise through twelve and continuous fill above twelve. Exercise text
 opens its exact dated details. Uncertain widget actions retain exact Retry. Today places an
 optional pinned Focus above today's and overdue ordinary reminders from all lists;
 reminder rows open their existing Details. Rest days remain informational and
-unfinished ended workouts never enter the overdue list. Compact/large-text views
+unfinished ended workouts never enter the overdue list. Summary/large-text views
 open Remilo for actions. Settings and routine contextual actions open native setup.
 No React Native process or network is required for widget refresh, completion or recovery. Background
 refresh is an OS-controlled opportunity; explicit dated actions reject stale work
@@ -523,6 +534,6 @@ composition is retained, with bounded resolution and metadata removed. Photo
 changes apply immediately to today's open session and closed history retains its original image. Portable format 7
 archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
 The widget prefers compact wide placement and uses Done, explicit date,
-numeric progress and native stale-action protection. Named Undo/Retry appears
-only after a completion or uncertain action. History is outside routine More,
+numeric progress and native stale-action protection. Undo is enabled only after
+an eligible widget completion; Retry appears only for an uncertain action. History is outside routine More,
 as a visible row on the routine screen.

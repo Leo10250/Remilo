@@ -37,7 +37,7 @@ internal class WidgetCoordinator(context: Context, private val now: () -> Long,
     val action = saved.optJSONObject("actions")?.optJSONObject(token) ?: return rejected()
     val input = command(action)
     // The original receipt wins even if a later configuration/date/revision has changed.
-    if (committed(input["operationId"] as String)) return apply(input).also {
+    if (committed(input["operationId"] as String)) return (apply(input) + ("widgetReplay" to true)).also {
       if (saved.optString("pending") == token) finish(id, saved, token, action)
     }
     if (action.getLong("configurationRevision") != saved.getLong("revision") ||
@@ -46,7 +46,7 @@ internal class WidgetCoordinator(context: Context, private val now: () -> Long,
     val result = apply(input) // An exception retains the exact pending descriptor for Retry.
     if (result["status"] == "Applied") finish(id, saved, token, action)
     else { saved.remove("pending"); saved.put("notice", "This view changed. Review the refreshed routine."); state.write(id, saved) }
-    return result
+    return result + ("widgetReplay" to false)
   }
   private fun rejected() = mapOf("status" to "Rejected", "errorCode" to "STALE_WIDGET")
   /** A successful explicit refresh acknowledges feedback, never an uncertain command. */

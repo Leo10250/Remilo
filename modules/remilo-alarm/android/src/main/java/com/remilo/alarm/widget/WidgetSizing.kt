@@ -2,6 +2,8 @@ package com.remilo.alarm.widget
 
 /** Shared by real launcher constraints and the inert native setup preview. */
 internal object WidgetSizing {
+  fun minimumWidth(snapshot: WidgetSnapshot, scale: Float): Int = if(snapshot.configuration.routineId != null)
+    kotlin.math.ceil(44 + 256*scale.coerceAtLeast(1f).toDouble()).toInt() else 260
   fun previewHeight(snapshot: WidgetSnapshot?, expanded: Boolean, scale: Float): Int =
     if(expanded || scale > 1.2f)440 else maxOf(compactHeight(snapshot),(24 + (if(snapshot != null && selectedRoutineNeedsFooter(snapshot))210 else 164)*scale.coerceAtLeast(1f)).toInt() + 4)
   fun compactHeight(snapshot: WidgetSnapshot?): Int =

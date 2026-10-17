@@ -6,13 +6,16 @@ import com.remilo.alarm.core.AppearancePolicy
 import org.json.JSONObject
 
 data class WidgetConfiguration(val mode: String = "Today", val routineId: String? = null, val revision: Long = 0)
+/** Discardable feedback only. Never serialized to preferences, DP or portable backup. */
+data class WidgetActionFeedback(val busy: Boolean = false, val saving: Boolean = false, val confirmation: String? = null)
 data class WidgetSnapshot(val id: Int, val configuration: WidgetConfiguration = WidgetConfiguration(),
   val date: String = "", val appearance: AppearancePolicy.Resolved = AppearancePolicy.Resolved("sky", "light"),
   val session: Map<String, Any?>? = null, val reminders: List<Map<String, Any?>> = emptyList(), val total: Int = 0,
   val doneToken: String? = null, val undoToken: String? = null, val undoName: String? = null,
   val retryToken: String? = null, val notice: String? = null, val locked: Boolean = false, val configured: Boolean = true, val failed: Boolean = false,
   val fontScale: Float = 1f, val localeTag: String = "en", val uses24HourClock: Boolean = false,
-  val zoneId: String = java.time.ZoneId.systemDefault().id, val projectionEpoch: Long = 0)
+  val zoneId: String = java.time.ZoneId.systemDefault().id, val projectionEpoch: Long = 0,
+  val actionFeedback: WidgetActionFeedback? = null)
 
 /** CE-only presentation identities. Access exclusively on AlarmEngine's serialized worker. */
 internal class WidgetState(private val context: Context) {

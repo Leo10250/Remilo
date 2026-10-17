@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Image, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { RoutineSession } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { routineFocusStep } from '../domain/routine-focus';
@@ -51,27 +51,38 @@ export function ExerciseIllustrationFrame({ illustration, name }: { illustration
   </View>;
 }
 
-function RoutineSequenceRow({ step, index, total, guarded, selected, onSelect }: {
+function RoutineSequenceRow({ step, index, total, guarded, selected, onSelect, onEdit, day }: {
   step: RoutineSession['steps'][number]; index: number; total: number; guarded: boolean; selected: boolean; onSelect: () => void;
+  onEdit?: (stepId: string, trigger: RefObject<View | null>) => void; day?: string;
 }) {
-  const t = useTranslation(), colors = useTheme(), scale = useFontScaleOverride(), [focused, setFocused] = useState(false);
+  const t = useTranslation(), colors = useTheme(), scale = useFontScaleOverride(), [focused, setFocused] = useState(false), [editFocused, setEditFocused] = useState(false), editRef = useRef<View>(null);
   const { fontScale } = useWindowDimensions(), badge = 32 * Math.max(scale, fontScale);
-  return <Pressable accessibilityRole="button" disabled={guarded} accessibilityState={{ disabled: guarded, selected }}
+  return <View style={{ minHeight: 64, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: selected ? colors.soft : colors.surface }}>
+    <Pressable accessibilityRole="button" disabled={guarded} accessibilityState={{ disabled: guarded, selected }}
     accessibilityLabel={[t('routine_ordinal', { current: index + 1, total }), step.name, step.target, step.completed ? t('routine_completed') : ''].filter(Boolean).join('. ')}
     onPress={onSelect} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    style={({ pressed }) => ({ minHeight: 64, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
-      borderWidth: 2, borderColor: focused ? colors.accent : 'transparent', backgroundColor: pressed || selected ? colors.soft : colors.surface })}>
+    style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 12,
+      borderWidth: 2, borderColor: focused ? colors.accent : 'transparent', backgroundColor: pressed || selected ? colors.soft : colors.surface, opacity: pressed ? 0.75 : 1 })}>
     <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: badge, height: badge, flexShrink: 0, borderRadius: badge / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? colors.accent : colors.soft }}>
       {step.completed ? <Icon name="check" size={20} color={selected ? colors.accentInk : colors.muted} /> : <Text style={{ color: selected ? colors.accentInk : colors.muted, fontSize: 14 * scale }}>{index + 1}</Text>}
     </View>
     <View style={{ flex: 1, gap: 4 }}><Copy>{step.name}</Copy>{!!step.target && <Copy muted size={14}>{step.target}</Copy>}{step.completed && <Copy muted size={14}>{t('m_11a6767d5674')}</Copy>}{selected && <Copy size={14}>{t('routine_viewing')}</Copy>}</View>
-  </Pressable>;
+    </Pressable>
+    {onEdit && <Pressable ref={editRef} accessibilityRole="button" accessibilityState={{ disabled: guarded }} disabled={guarded}
+      accessibilityLabel={t('routine_edit_row', { current: index + 1, total, name: step.name, day: day ?? '' })}
+      onPress={() => onEdit(step.id, editRef)} onFocus={() => setEditFocused(true)} onBlur={() => setEditFocused(false)}
+      style={({ pressed }) => ({ minHeight: 48, minWidth: 48, padding: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4,
+        borderWidth: 2, borderColor: editFocused ? colors.accent : 'transparent', backgroundColor: pressed ? colors.soft : 'transparent', opacity: guarded ? 0.45 : pressed ? 0.75 : 1 })}>
+      <Icon name="edit" size={20} color={colors.muted} /><Copy size={14}>{t('m_464c4ffd019e')}</Copy>
+    </Pressable>}
+  </View>;
 }
 
 /** Shared actual Focus composition; the screen alone owns dated native mutations. */
-export function RoutineSessionContent({ session, selectedId, onSelect, onChangeStep, guarded = false, ended, undo, onUndo, onOpenToday }: {
+export function RoutineSessionContent({ session, selectedId, onSelect, onChangeStep, guarded = false, ended, undo, onUndo, onOpenToday, onEditStep, editDay }: {
   session: RoutineSession; selectedId?: string; onSelect: (id: string) => void; onChangeStep: (id: string, completed: boolean) => void;
   guarded?: boolean; ended: boolean; undo?: RoutineUndo | null; onUndo: () => void; onOpenToday: () => void;
+  onEditStep?: (stepId: string, trigger: RefObject<View | null>) => void; editDay?: string;
 }) {
   const t = useTranslation(), colors = useTheme(), scale = useFontScaleOverride();
   const { clockPreferenceLabel, formatDate } = useTimeFormatting();
@@ -130,7 +141,7 @@ export function RoutineSessionContent({ session, selectedId, onSelect, onChangeS
     {!current && session.completed && <Card><View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Icon name="check_circle" /><View style={{ flex: 1 }}><Copy heading>{t(ended ? 'routine_completed' : 'routine_daily_finished')}</Copy></View>
     </View></Card>}
-    {!!sequence.length && <ConnectedGroup title={t('routine_sequence')}>{sequence.map(({ step, index }) => <RoutineSequenceRow key={step.id} step={step} selected={step.id === current?.id} index={index} total={session.totalCount} guarded={guarded} onSelect={() => inspect(step.id)} />)}</ConnectedGroup>}
+    {!!sequence.length && <ConnectedGroup title={t('routine_sequence')}>{sequence.map(({ step, index }) => <RoutineSequenceRow key={step.id} step={step} selected={step.id === current?.id} index={index} total={session.totalCount} guarded={guarded} onSelect={() => inspect(step.id)} onEdit={!ended && !session.deleted ? onEditStep : undefined} day={editDay} />)}</ConnectedGroup>}
     {!!session.notes && <Disclosure title={t('m_8a7525b1492f')} icon="notes"><Copy>{session.notes}</Copy></Disclosure>}
   </View>;
 }

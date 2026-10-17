@@ -1027,6 +1027,18 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   history stays frozen. Check fresh widget/Agenda agreement, edited future Alarm/
   Notification callbacks before unlock, Snooze, Pause and stale delivery fencing.
 - Open History from its visible routine-screen row; it is absent from More.
+- Compare the widget's filled/unfinished colors with Agenda in all eight pairs.
+  A 4/7 example has exactly seven segments and four filled. Check separate exercise
+  ordinal, immediate disabled submission, delayed Saving only for slow operations,
+  brief confirmation and the next exercise without waiting for that mark to clear.
+  Unfilled Undo stays left of trailing Done, has a complete target, is disabled
+  without an eligible completion, and remains in its slot after final completion.
+  Reconfiguration/midnight/concurrent actions must not retain an old success mark.
+- On today's/future exercise rows, tap pencil + Edit directly: Focus selection and
+  scroll remain stable, the exact ID/day fields open, and closing restores focus.
+  Check Save/Cancel, dirty-discard, photo leases/cancellation, uncertain same-command
+  Retry and revision conflict with Reload exercise. Check keyboard/TalkBack and
+  200% text. Past/ended rows omit Edit while checkmark correction still works.
 
 Installation and distribution require their separate authorization. These cases
 remain unobserved until the consolidated physical run is recorded.

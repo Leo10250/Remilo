@@ -1,6 +1,16 @@
 {
   "version": 1,
   "messages": {
+    "widget_preview_ordinal_title": { "en": "2. Front plank", "zh-Hans": "2. 平板支撑", "args": {}, "context": "Static widget picker example" },
+    "routine_edit_row": { "en": "Edit exercise {current} of {total}: {name}, {day}", "zh-Hans": "编辑{day}第 {current} 项动作（共 {total} 项）：{name}", "args": { "current": "number", "total": "number", "name": "string", "day": "string" }, "context": "Direct routine exercise editing" },
+    "routine_edit_day_context": { "en": "{day} · Weekly plan", "zh-Hans": "{day} · 每周计划", "args": { "day": "string" }, "context": "Direct routine exercise editing" },
+    "routine_edit_immediate_hint": { "en": "Changes update your weekly plan immediately. Today’s progress is preserved, and past days stay unchanged.", "zh-Hans": "更改将立即更新每周计划，保留今天的进度，过去日期的记录不会改变。", "args": {}, "context": "Direct routine exercise editing" },
+    "routine_edit_unavailable": { "en": "This exercise is no longer in the weekly plan. Close this editor to review the updated routine.", "zh-Hans": "此动作已不在每周计划中。请关闭编辑页面，查看更新后的训练。", "args": {}, "context": "Direct routine exercise editing" },
+    "routine_reload_exercise": { "en": "Reload exercise", "zh-Hans": "重新加载动作", "args": {}, "context": "Direct routine exercise editing" },
+    "widget_undo_completion_named": { "en": "Undo completion of {name}", "zh-Hans": "撤销{name}的完成", "args": { "name": "string" }, "context": "Compact widget Undo" },
+    "widget_undo_unavailable": { "en": "Undo unavailable", "zh-Hans": "当前无法撤销", "args": {}, "context": "Compact widget Undo" },
+    "widget_undid_named": { "en": "Undid completion of {name}", "zh-Hans": "已撤销{name}的完成", "args": { "name": "string" }, "context": "Widget action confirmation" },
+    "widget_saving_progress": { "en": "Saving progress", "zh-Hans": "正在保存进度", "args": {}, "context": "Widget pending action" },
     "m_bf4156d6b15c": {
       "en": "Automatic Calendar sync enabled",
       "zh-Hans": "已启用日历自动同步",

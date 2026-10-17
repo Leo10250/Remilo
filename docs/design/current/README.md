@@ -79,6 +79,12 @@ widget action completes the displayed exercise in place, with conditional Undo/
 Retry and expanded-only Next. Setup/picker use curated examples in the current
 theme. Saved plan edits take effect immediately in today's open session while
 closed history remains frozen; History moves outside routine overflow menus.
+The later 17 October progress/action correction matches widget fill/track to app
+roles, renders every segment, adds guarded Saving/confirmation feedback and puts
+compact unfilled Undo to the left of trailing Done. Direct pencil + Edit on
+today/future exercise rows uses the shared form and immediate native edit path.
+See the maintained widget and weekly-routine contracts for responsive/ownership
+details; these changes preserve the current visual language.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

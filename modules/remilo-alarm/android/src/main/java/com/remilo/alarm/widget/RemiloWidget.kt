@@ -36,7 +36,8 @@ class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = 
   override val sizeMode = SizeMode.Exact
   override suspend fun provideGlance(context: Context, id: GlanceId) {
     val number = GlanceAppWidgetManager(context).getAppWidgetId(id)
-    val snapshot = try { load(context,number) }
+    val snapshot = try { if(WidgetWork.unlocked(context) && WidgetWork.supported(context,number))
+      WidgetPresentation.feedbackSnapshot(number) ?: load(context,number) else load(context,number) }
       catch (_: Exception) { WidgetSnapshot(number, notice = "Could not load the widget. Refresh to try again.", failed = true) }
     val projection = WidgetPresentation.publish(snapshot.copy(id = number,fontScale = context.resources.configuration.fontScale))
     provideContent {
@@ -46,7 +47,7 @@ class RemiloWidget(private val load: suspend (Context, Int) -> WidgetSnapshot = 
   }
   // A picker showcases the interactive footprint. Including the tiny summary here
   // lets launchers select it and stretch three labels over the entire preview.
-  override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(280.dp,240.dp), DpSize(300.dp,440.dp)))
+  override val previewSizeMode = SizeMode.Responsive(setOf(DpSize(300.dp,240.dp), DpSize(300.dp,440.dp)))
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
     val fontScale = context.resources.configuration.fontScale
     val base = previewBase(context).copy(date = LocalDate.now().toString())
@@ -77,24 +78,26 @@ internal fun widgetOpen(context: Context, path: String): Intent = Intent(Intent.
 
 /** Count units, not ordinal step positions. Numeric progress remains in the header. */
 @Composable
-internal fun WidgetRoutineProgress(completed: Int, total: Int, fill: ColorProvider, track: ColorProvider) {
-  if (total <= 12) Row(GlanceModifier.fillMaxWidth().height(4.dp)) {
-    repeat(total) { index ->
-      if (index > 0) Spacer(GlanceModifier.width(2.dp))
-      Box(GlanceModifier.defaultWeight().height(4.dp).cornerRadius(2.dp).background(if (index < completed) fill else track)) {}
-    }
-  } else Row(GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp).background(track)) {
+internal fun WidgetRoutineProgress(completed: Int, total: Int, fill: Long, track: Long) {
+  if(total <= 0)return
+  val done = completed.coerceIn(0,total)
+  if (total <= 12) AndroidRemoteViews(WidgetProgressViews.segments(LocalContext.current,done,total,fill.toInt(),track.toInt()),
+    GlanceModifier.fillMaxWidth().height(4.dp))
+  else Row(GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp).background(ColorProvider(Color(track)))) {
     // Use the native progress component for arbitrary totals without extra RemoteViews.
-    LinearProgressIndicator(progress = completed.toFloat() / total, modifier = GlanceModifier.fillMaxWidth().height(4.dp), color = fill, backgroundColor = track)
+    LinearProgressIndicator(progress = done.toFloat() / total, modifier = GlanceModifier.fillMaxWidth().height(4.dp), color = ColorProvider(Color(fill)), backgroundColor = ColorProvider(Color(track)))
   }
 }
 
 class WidgetExerciseAction : ActionCallback {
   override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
     val id = GlanceAppWidgetManager(context).getAppWidgetId(glanceId)
-    parameters[TOKEN]?.let { token -> runCatching { widgetRequest(context) { it.widgetAction(id, token, WidgetWork.supported(context, id)) } } }
-    WidgetPresentation.refresh(context)
-    RemiloWidget().updateAll(context)
+    val token = parameters[TOKEN] ?: return
+    val ticket = WidgetPresentation.begin(id,token) ?: return
+    runWidgetAction(ticket,if(ticket.undo)"Undid completion of ${ticket.name}" else "Completed ${ticket.name}",
+      execute = { runCatching { widgetRequest(context) { it.widgetAction(id, token, WidgetWork.supported(context, id)) } }.getOrNull() },
+      refresh = { WidgetPresentation.refresh(context) },
+      render = { all -> if(all)RemiloWidget().updateAll(context) else RemiloWidget().update(context,glanceId) })
   }
   companion object { val TOKEN = ActionParameters.Key<String>("token") }
 }

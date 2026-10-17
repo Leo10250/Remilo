@@ -20,9 +20,9 @@ continuous bar alongside the numeric count. The owner's 17 October clarification
 supersedes Resume-only navigation: **Done** is the single filled primary button,
 completing only the displayed exercise directly in the widget through the native
 guarded command. Advance after confirmation; show named Undo after completion,
-including the last exercise. Compact Focus places Undo in the header in place of
-branding, with a 48 dp target, so the first completion does not force a 200 dp
-widget into a summary. An uncertain action exposes its exact Retry, without
+including the last exercise. Undo is an unfilled glyph to the left of Done, with
+a reserved 48 dp target; before eligibility it is visibly disabled and has no
+mutation intent. Branding stays in the header. An uncertain action exposes its exact Retry, without
 a new completion target. Tapping exercise text opens its exact dated app session.
 Keep Skip/Pause and full history/correction inside Remilo.
 Rest, Skipped, Completed and Paused follow native session eligibility. Removing a
@@ -49,23 +49,28 @@ preview rendering have visible feedback and retry rather than a blank region.
 The RemoteViews child fills an explicitly measured preview host in both axes.
 
 The preferred footprint is 4×2. Actual available dp, not launcher cell labels,
-selects 180×110 summary, interactive Focus from 260×200 (240 dp when
+selects 180×110 summary, interactive Focus from 300×200 at normal text (240 dp when
 Today/recovery needs a footer), and 300×440 expanded compositions.
 Use a single opaque reading surface, system outer corners and 12 dp internal
 padding. No nested routine card or weighted gap above a bottom action.
 
 The compact hierarchy is Classic/Remilo plus weekday/date (14 sp), routine title
 (22 sp), segmented progress and numeric count (14 sp), exercise (18 sp) and target
-(14 sp). Done is the sole filled 56 dp primary action to the exercise's right,
+(14 sp). The exercise name starts with its separate original plan ordinal,
+preserved even when the name truncates. Done is the sole filled 56 dp primary action at the trailing edge,
 with current 16 dp button corners, an 80 dp minimum width and a full accessible
-exercise-specific label. A healthy compact Focus has no reserved footer strip;
-only actual completion/uncertainty/failure adds Undo/Retry/Refresh. No Next in compact. Expanded
+exercise-specific label. Its unfilled 20 dp Undo glyph sits immediately to its
+left, with an 8 dp gap and at least a 48 dp target. Keep 12 dp between exercise
+text and actions. Enabled Undo uses onSurfaceVariant; disabled uses disabledInk,
+exposes disabled state and carries no callback. After final completion, hide Done
+while keeping eligible Undo in its established slot. A healthy compact Focus has
+no reserved footer strip or permanent Refresh. No Next in compact. Expanded
 Routine adds upcoming exercises with the first labelled Next; expanded Today
 adds Next and the native reminder list. Compact Today retains its accurate
 Agenda link/count.
 
-In Today/expanded layouts, completion/recovery state uses the 48 dp footer: Retry binds the original
-uncertain operation; eligible named Undo corrects the latest widget completion;
+In Today/expanded layouts, recovery state uses the 48 dp footer: Retry binds the original
+uncertain operation; eligible named Undo beside Done corrects the latest widget completion;
 a conflict/load failure exposes labelled Refresh. Ordinary successful reads,
 empty/rest outcomes and current progress never expose Refresh. A small failed
 widget uses its whole surface to refresh with an accessible recovery description.
@@ -84,7 +89,9 @@ View Agenda; no example reminders appear on the home screen.
 Summary sizes and font scale 1.6+ open the exact dated session instead of squeezing
 controls. At 1.2–1.6, interactive Focus requires expanded height and omits secondary
 lists. Intermediate text scales also require at least 24 + 164 × fontScale dp
-height for interactive content (210 with a selected-routine footer). Use exact available widget dimensions rather than
+height for interactive content (210 with a selected-routine footer). Require at
+least 128 scaled dp for the exercise column, scaled action widths and complete
+count/ordinal; otherwise use summary. Use exact available widget dimensions rather than
 assuming launcher cells provide a particular height. Scale actions/text, keep 56/48 dp targets, and prioritize identity/outcome
 in very small summaries. No text shrinking. EN/ZH use the same anatomy.
 
@@ -93,10 +100,36 @@ gear from routine content. Setup and picker previews render this actual Glance
 composition with inert actions. Missing/trashed selections stay explicit and
 never switch to another plan. No exercise art or new scenery in the widget.
 The setup preview grows for intermediate text scales. Picker generated previews
-offer interactive 280×240 and expanded sizes, excluding the tiny summary that
+offer interactive 300×240 and 300×440 sizes, excluding the tiny summary that
 launchers can otherwise stretch. Publish refreshed examples for appearance,
 language, date and composition changes with Android's rate limit respected;
 launchers may retain cached previews. Production retains its real summary fallback.
+
+### Progress and acknowledgment — 17 October 2026 correction
+
+Completed progress uses canonical primary (app accent); unfinished uses container
+(app soft), never outline. Apply this to segmented/continuous bars and examples.
+Zero steps omit the bar; 1–12 use exactly one equal-width segment per step, 4 dp
+high, 2 dp gaps, rounded ends and no final margin. More than 12 use continuous
+fill. Fill represents the clamped completed count. A native horizontal weighted
+RemoteViews component avoids Glance Row's ten-child truncation. The numeric count
+remains visible and accessible. Require at least 3:1 fill/track distinction in
+all eight appearance pairs as a project quality guard, not complete accessibility
+certification. Static XML previews derive Sky light/dark from canonical tokens
+and follow host brightness; generated previews use Remilo's resolved appearance.
+
+Done/Undo immediately guard another local submission while preserving the shown
+exercise/count. After 250 ms, pending Done reads Saving…; fast results avoid a
+loading flash. Confirmed native results advance immediately to the first
+unfinished step and show a check in a reserved 16 dp slot beside numeric progress
+for 1.5 seconds. Named accessible feedback includes the affected exercise and new
+ordinal without forcing focus. The next valid Done is immediately usable.
+Uncertainty retains exact Retry; a conflict refreshes without retargeting. These
+durations are presentation defaults, not universal research thresholds. Timers
+run outside the native worker, with no polling or per-frame launcher animation.
+Newer actions invalidate older timers; date/configuration/session changes fence
+feedback. Process death discards this presentation, while durable receipts and
+descriptors retain progress, one-step Undo and exact uncertain recovery.
 
 ## Freshness and privacy
 
@@ -131,6 +164,15 @@ receiver replaces it with the generic Unlock message while the user is locked.
 - [Google generated previews](https://developer.android.com/develop/ui/compose/glance/generated-previews):
   provide representative responsive sizes and deliberately refresh the generated
   cache; publishing is rate limited (approximately twice per hour).
+- [Apple toolbar guidance](https://developer.apple.com/design/human-interface-guidelines/toolbars)
+  places a prominent primary action at the trailing edge. The owner's later
+  correction therefore places Undo before Done. [Gmail](https://support.google.com/mail/answer/2819488)
+  and [Todoist](https://www.todoist.com/help/articles/complete-a-task-with-a-recurring-date-dmI6SVqdP)
+  expose secondary contextual Undo, but do not establish a universal adjacent
+  button order. This is a layout judgment, not a demonstrated widget-study result.
+- [Ge et al., 2024](https://www.sciencedirect.com/science/article/abs/pii/S1071581924000417)
+  links response/loading delay with perceived animation fluency. It informs prompt
+  acknowledgment, not Undo placement or a universal timing threshold.
 - [While et al., CHI 2024](https://arxiv.org/abs/2403.12343): age-related differences
   in glanceable smartwatch-chart perception motivate explicit text/counts and
   readability testing; this is not a comparison of these widget layouts.

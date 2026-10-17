@@ -1,5 +1,25 @@
 # Verification and release evidence
 
+Widget progress/action/direct-edit checks require actual production RemoteViews,
+not mockups. Cover totals 0/1/4/6/7/10/11/12/13+, zero/partial/full, exactly seven
+segments/four filled for 4/7, primary/container pixel mapping and at least 3:1
+fill/track distinction in eight appearance pairs. Check separate original ordinal,
+300×200/240 compact and 300×440 expanded, summary sizes, both languages, long
+content and scaled text through 200%. Undo precedes trailing Done with a complete
+48 dp target and stays fixed after final completion; disabled Undo has no intent.
+Confirm Saving only after 250 ms, a reserved nonshifting confirmation slot,
+fast-operation no-flash, exact Retry, receipt replay suppression, old timer/new
+action isolation, concurrent revision/date/config/privacy fences and process death.
+
+Exercise-row Edit must open the correct stable ID in one tap without selecting or
+scrolling Focus. Check separate keyboard/TalkBack controls and focus return,
+Cancel/dirty discard, custom-photo replacement/cancellation/leases, uncertain Save
+recovery, concurrent plan conflict/reload, completion preservation and midnight.
+Past/ended/deleted rows omit direct Edit while historical checkmark correction
+remains. Review shared forms in both languages/eight pairs/narrow/200% text.
+Signed-phone launcher timing, resizing, perceived feedback, keyboard, Photo Picker
+and TalkBack remain explicit gates; host renders cannot establish them.
+
 Routine tile alignment checks compare active routine and ordinary reminders in
 the same Agenda: leading ring/control center, event/title/metadata anchors, More
 target and footer clearance. Check 0/partial/full counts, one/twelve/more than

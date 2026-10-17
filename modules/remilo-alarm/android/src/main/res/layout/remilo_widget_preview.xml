@@ -1,19 +1,20 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="12dp" android:background="@drawable/widget_preview_background">
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
   <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_remilo_notification" android:importantForAccessibility="no" />
-  <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="Remilo" android:textColor="#4E6173" android:textSize="14sp" />
-  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/l10n_routine_day_0" android:textColor="#4E6173" android:textSize="14sp" />
+  <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="Remilo" android:textColor="@color/widget_preview_muted" android:textSize="14sp" />
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/l10n_routine_day_0" android:textColor="@color/widget_preview_muted" android:textSize="14sp" />
  </LinearLayout>
- <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/l10n_routine_type_weekly" android:textColor="#172331" android:textSize="22sp" android:textStyle="bold" />
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/l10n_widget_example_routine_title" android:textColor="@color/widget_preview_ink" android:textSize="22sp" android:textStyle="bold" />
  <LinearLayout android:layout_width="match_parent" android:layout_height="20dp" android:layout_marginTop="12dp" android:gravity="center_vertical">
-  <ProgressBar style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_weight="1" android:layout_height="4dp" android:max="4" android:progress="1" android:progressTint="#1859C9" android:progressBackgroundTint="#7C8D9F" />
-  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/l10n_widget_preview_progress" android:textColor="#4E6173" android:textSize="14sp" />
+  <ProgressBar style="?android:attr/progressBarStyleHorizontal" android:layout_width="0dp" android:layout_weight="1" android:layout_height="4dp" android:max="4" android:progress="1" android:progressTint="@color/widget_preview_primary" android:progressBackgroundTint="@color/widget_preview_track" />
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/l10n_widget_preview_progress" android:textColor="@color/widget_preview_muted" android:textSize="14sp" />
  </LinearLayout>
  <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="16dp" android:gravity="center_vertical">
   <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/l10n_widget_preview_title" android:textColor="#172331" android:textSize="18sp" android:textStyle="bold" />
-   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/l10n_widget_preview_target" android:textColor="#4E6173" android:textSize="14sp" />
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/l10n_widget_preview_ordinal_title" android:textColor="@color/widget_preview_ink" android:textSize="18sp" android:textStyle="bold" />
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/l10n_widget_preview_target" android:textColor="@color/widget_preview_muted" android:textSize="14sp" />
   </LinearLayout>
-  <TextView android:layout_width="80dp" android:layout_height="56dp" android:gravity="center" android:text="@string/l10n_widget_done" android:textColor="#FFFFFF" android:textSize="16sp" android:background="@drawable/widget_preview_action" />
+  <ImageView android:layout_width="48dp" android:layout_height="48dp" android:padding="14dp" android:src="@drawable/widget_undo" android:tint="@color/widget_preview_disabled" android:enabled="false" android:importantForAccessibility="no" />
+  <TextView android:layout_width="80dp" android:layout_height="56dp" android:layout_marginStart="8dp" android:gravity="center" android:text="@string/l10n_widget_done" android:textColor="@color/widget_preview_on_primary" android:textSize="16sp" android:background="@drawable/widget_preview_action" />
  </LinearLayout>
 </LinearLayout>

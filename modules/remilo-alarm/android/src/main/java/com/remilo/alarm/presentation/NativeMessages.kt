@@ -3,6 +3,16 @@ package com.remilo.alarm.presentation
 
 /** Typed descriptors for native presentation and persisted status writes. */
 object NativeMessages {
+  fun widget_preview_ordinal_title(): L10n.Message = L10n.Message("widget_preview_ordinal_title")
+  fun routine_edit_row(current: Number, total: Number, name: String, day: String): L10n.Message = L10n.Message("routine_edit_row", mapOf("current" to current.toString(), "total" to total.toString(), "name" to name.toString(), "day" to day.toString()))
+  fun routine_edit_day_context(day: String): L10n.Message = L10n.Message("routine_edit_day_context", mapOf("day" to day.toString()))
+  fun routine_edit_immediate_hint(): L10n.Message = L10n.Message("routine_edit_immediate_hint")
+  fun routine_edit_unavailable(): L10n.Message = L10n.Message("routine_edit_unavailable")
+  fun routine_reload_exercise(): L10n.Message = L10n.Message("routine_reload_exercise")
+  fun widget_undo_completion_named(name: String): L10n.Message = L10n.Message("widget_undo_completion_named", mapOf("name" to name.toString()))
+  fun widget_undo_unavailable(): L10n.Message = L10n.Message("widget_undo_unavailable")
+  fun widget_undid_named(name: String): L10n.Message = L10n.Message("widget_undid_named", mapOf("name" to name.toString()))
+  fun widget_saving_progress(): L10n.Message = L10n.Message("widget_saving_progress")
   fun m_bf4156d6b15c(): L10n.Message = L10n.Message("m_bf4156d6b15c")
   fun m_8089865e173e(): L10n.Message = L10n.Message("m_8089865e173e")
   fun m_71ad1b9eb735(): L10n.Message = L10n.Message("m_71ad1b9eb735")

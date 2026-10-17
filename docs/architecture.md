@@ -728,7 +728,7 @@ single worker owns all reads/mutations. Descriptors bind configuration revision,
 date, occurrence, stable exercise ID, expected session revision and operation ID.
 Routine receipts precede stale checks for committed retries. A pending identity
 survives an uncertain outcome; the refreshed widget offers the exact Retry, and a
-committed receipt reconstructs acknowledgement/Undo after process death. No copied
+committed receipt reconstructs progress/Undo after process death. No copied
 exercise checks, DP content, database migration or portable backup change is added.
 Widget-ID restore copies configuration only and mints fresh action descriptors.
 
@@ -758,15 +758,42 @@ complete reminder row, while expanded native collections remain scrollable.
 WidgetSizing shares interactive and selected-routine-footer preview heights with
 production breakpoints and increases setup height for scaled text. Healthy Focus
 has no footer. Done invokes the native callback with its captured descriptor;
-there is no ambiguous Resume navigation button. Compact Focus puts eligible Undo
-in the header in place of branding, preserving a 48 dp target and the interactive
-200 dp footprint after completion. Expanded/Today layouts use the recovery footer.
+there is no ambiguous Resume navigation button. A reserved unfilled 48 dp Undo
+target precedes trailing Done, disabled without an eligible descriptor and held
+in place after final completion. Interactive Focus requires 300×200 dp at normal
+text and wider/scaled budgets thereafter; Today/recovery uses a separate footer.
 Only known failures expose Refresh. Native app/widget completion commits drive
 the same projections; no progress or scheduling ownership changes.
 An explicit successful refresh acknowledges only that instance's saved conflict
 notice through the serialized native worker. It preserves pending operation and
 receipt identities, so refresh cannot discard or retarget an uncertain command.
 Background refreshes do not acknowledge feedback automatically.
+
+The progress leaf is a weighted horizontal AndroidRemoteViews layout, one native
+ImageView per segment for 1–12 steps, avoiding Glance's ten-child Row cap.
+Primary/container roles exactly match app accent/soft for segmented/continuous
+progress. Generated previews use the same composition at 300×240/440; canonical
+Sky light/dark resources supply the host-brightness XML fallback.
+
+WidgetPresentation owns discardable process-only action tickets keyed by widget
+and captured token/context/revision. It guards local duplicate submissions and
+publishes the captured projection immediately, adding Saving after 250 ms without
+an extra read queued behind the engine. After command confirmation and fresh
+native projections, only the initiating instance gets a 1.5-second named check;
+later actions/timers cannot overwrite newer feedback. Replayed receipts never
+recreate success feedback or Undo. Native coroutine timers sit outside the
+serialized worker, with no JavaScript timer or polling. Privacy, configuration,
+date and session revision changes fence overlays. Process death loses only the
+overlay; durable descriptors/receipts still own recovery and progress.
+
+Exercise-row editing captures routine/date/weekday/stable ID, loads the latest
+definition and shares the weekly editor's form/photo chooser. Its Save replaces
+only that ID in the captured weekly draft through existing EditRoutine, with
+one operation ID and expected plan revision. Concurrent plan edits reject and
+retain the draft for explicit reload; native open-day reconciliation preserves
+matching checkmarks and ended snapshots. Image leases persist through uncertain
+Save. Selection and Edit are sibling controls; only today/future unended rows
+expose Edit. No new bridge, schema, backup format or progress store is introduced.
 
 ## Routine refinement: CE16, media and portable archives
 

@@ -115,7 +115,7 @@ export function useCapturedCommand(onApplied?: (job: CapturedJob, result: Comman
     } catch (error) { setFeedback({ message: errorText(error, t('m_a91088bd04e9')), tone: 'danger' }); }
     finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
   };
-  return { busy, guarded, feedback, recovery: recoveryPresentation(operation.captured?.command.kind), execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
+  return { busy, guarded, feedback, clearFeedback: () => setFeedback(undefined), recovery: recoveryPresentation(operation.captured?.command.kind), execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
 }
 export function CommandRecovery({ action }: { action: ReturnType<typeof useCapturedCommand> }) {
   'use no memo';

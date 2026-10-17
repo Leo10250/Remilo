@@ -20,7 +20,8 @@ rows say Rest day · No alert. Remove the ambiguous Routine attachment tile and
 Today only tile. One helper explains rest-day silence and independent dates.
 Each weekday opens a scoped day draft with Workout day / Rest day, ordered
 exercise rows and Add exercise. Done applies to the parent draft; Cancel/Back
-protect unapplied changes. Only parent Save writes native state.
+protect unapplied changes. Within this weekly/day draft workflow, only parent
+Save writes native state. Direct row editing has its own one persistent Save.
 Rest day is explicit. Non-rest days require named exercises. Exercise identity
 survives rename/reorder. Targets and notes are authored free text; do not infer
 training weights or translate authored content. Removing an exercise has Undo.
@@ -96,7 +97,37 @@ New routine Starts on/time reuses the ordinary editor's responsive two-column
 date/time anatomy and independent pickers. Required labels use one localized
 Title (required) label. Exercise fields are Exercise name, Sets, reps or time,
 How to do it and Exercise image, with empty-field examples and persistent help.
-All scoped edits still require the one parent Save.
+Weekly/day draft edits still require the one parent Save. The direct row editor
+below is a separate single-exercise Save using the same revision-guarded command.
+
+### Direct exercise editing — 17 October 2026 correction
+
+Today's and future unended session rows expose pencil + Edit beside the body.
+Each connected row is a noninteractive surface containing two sibling controls:
+badge/name/prescription/status selects the Focus card; the neutral trailing Edit
+opens that exact stable exercise ID directly. Neither Edit nor its return selects
+or scrolls to Focus or changes checks. Preserve 16/4 dp corners, 2 dp seams,
+14 dp padding, minimum 64 dp row height, selected soft surface, Viewing and Done
+labels. Controls have separate pressed/focus states and at least 48 dp targets;
+rows grow with text. No chevron or filled treatment for Edit. Its accessible name
+includes ordinal, exercise name and weekday; closing returns focus to that Edit
+when its row still exists. Past/ended/deleted rows have no direct Edit; historical
+checkmark correction and weekly-editor access remain separate.
+
+Use the same exercise form and full-frame photo chooser in weekly and direct
+editing. The direct sheet says Edit exercise, [weekday] · Weekly plan, and explains
+immediate application with today's matching checks retained and past days frozen.
+Prefill from the latest weekly definition by captured routine/date/weekday/ID,
+never by name or ordinal. One persistent Save clones that captured plan and
+replaces only the matching exercise; all other content, days, IDs and order stay
+intact. Add/remove/reorder stay in the existing day/weekly editor. Save uses one
+stable EditRoutine operation with the loaded plan revision. Uncertain results
+reuse the captured command; conflicts retain the draft and offer Reload exercise
+with dirty-discard confirmation. A missing/trashed exercise reports an actionable
+error. Keep image draft leases through uncertain recovery, releasing them on
+cancel/confirmation. Native immediate editing owns concurrency and midnight;
+ended snapshots never change. Refresh session/widget queries after confirmation
+without resetting the selected ID or underlying scroll.
 
 Approved exercise illustrations are explicitly selected, immutable versioned IDs.
 Do not infer equipment or bind artwork from exercise names. Unknown references
@@ -178,5 +209,5 @@ or that midnight expiry improves adherence; those reflect the owner's workflow.
 
 Actual component/host checks and signed-phone usability acceptance remain distinct.
 The widget consumes this same native session authority and shows its compact bar
-with exact-exercise Resume. Completion is inside Remilo. Captured legacy actions
-retain conditional Retry/Undo recovery. The broader daily digest remains separate.
+with direct Done, adjacent unfilled Undo and exact-exercise text navigation.
+Uncertain actions retain exact Retry. The broader daily digest remains separate.
