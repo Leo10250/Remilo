@@ -30,8 +30,11 @@ not mockups. Cover totals 0/1/4/6/7/10/11/12/13+, zero/partial/full, exactly sev
 segments/four filled for 4/7, primary/container pixel mapping and at least 3:1
 fill/track distinction in eight appearance pairs. Check plain authored exercise
 names, all seven full weekdays in both languages and full spoken date/position.
-Next is quiet bottom-left supporting text in compact Focus; Today keeps Agenda
-on the right with a complete 48 dp target. Verify the next unfinished stable step,
+Next is quiet bottom-left supporting text in compact Focus. The complete action
+group aligns with its layout band's bottom; Undo and Done share a centerline.
+Check fixed action coordinates with and without a prescription, on the last
+exercise and through eligible final Undo. Today keeps Agenda below Focus on the
+right with a complete 48 dp target and no overlap. Verify the next unfinished stable step,
 last/terminal/recovery omissions, long-name ellipsis with full accessible text,
 and production/setup/generated/static preview parity. Cover
 300×200/240 compact and 300×440 expanded, summary sizes, both languages, long

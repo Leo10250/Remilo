@@ -366,10 +366,13 @@ retarget automatically. Real empty widgets explain their state and open Agenda.
 Compact Today shows one full reminder row or the selected routine's focused
 exercise, with primary Done. Healthy Focus has no reserved action footer or
 permanent Refresh. A quiet bottom-left line identifies the next unfinished
-exercise in compact and expanded Focus; compact Today shares its footer with
-the trailing Agenda link. Last/terminal/summary/compact recovery views omit Next.
-Actual failed
-loads/conflicts or captured uncertain actions expose their recovery control.
+exercise in compact and expanded Focus. Healthy compact Focus aligns the action
+group with the bottom of the current-text/Next column, retaining optional
+prescriptions. Its reserved Next line keeps controls fixed when the last exercise
+has no Next and through eligible final Undo. Compact Today uses that same Focus
+layout above a separate trailing Agenda link. Last/terminal/summary/compact
+recovery views omit Next. Actual failed loads/conflicts or captured uncertain
+actions expose their recovery control.
 Rest days show one outcome and View routine without exercise completion controls.
 
 - A broader date-aware in-app Today presentation may supplement the widget without

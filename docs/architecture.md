@@ -780,9 +780,15 @@ also budgets header/title and Agenda footer; small actual hosts fall back to
 summary. A fixed 56 dp text row no longer clips the reminder time.
 WidgetSizing shares interactive and selected-routine-footer preview heights with
 production breakpoints and increases setup height for scaled text. Healthy Focus
-has no action footer. Its compact Next line shares the left gutter and has a
-native-font height budget; compact Today puts Next and Agenda in its existing
-footer. Expanded views retain one Next label with upcoming content. Next is
+has no action footer. In healthy compact Focus, a current-text region of at least 56 scaled dp
+and a reserved native-font Next band form the left column. The complete Done/Undo
+group aligns to its bottom, retaining center alignment within the action group.
+StaticLayout includes fallback-font spacing and padding across the session's
+authored names; measurement does not instantiate Views or require a main Looper.
+The reserved band preserves action coordinates when the prescription or Next is
+absent and through eligible final Undo. Compact Today uses the same composition
+above its separate full Agenda footer. Expanded/recovery layouts retain their
+existing grouping. Expanded views retain one Next label with upcoming content. Next is
 derived from the same session's second unfinished stable step, never tomorrow's
 plan. No visible ordinal is added to the exercise name. The header formats the
 projection date as a full localized weekday; the complete localized date and

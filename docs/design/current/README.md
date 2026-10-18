@@ -95,6 +95,10 @@ The next reference refinement removes the visible exercise ordinal, shows the
 localized full weekday at top right, and adds quiet bottom-left Next context in
 compact Focus. Full date/position remain accessible and native action identities
 stay dated. The existing theme, Done/Undo and scaled-text fallbacks remain.
+The owner's subsequent comparison selects **Bottom of Next line** for compact
+Focus: current text and Next form the left column, and the action group aligns
+to that column's bottom. Preserve prescriptions, complete targets and stable
+positions when Next disappears. Expanded and recovery layouts retain their anatomy.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

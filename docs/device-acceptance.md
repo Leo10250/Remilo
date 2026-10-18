@@ -1034,8 +1034,10 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   does not respond. Check their states in all eight appearance pairs.
   A 4/7 example has exactly seven segments and four filled. Exercise names have no
   added number. Check all seven full weekday headers, full spoken dates/positions,
-  quiet bottom-left Next, its omission after the last exercise and full Agenda
-  targets beside it in Today. Check long names, native font bounds, immediate
+  quiet bottom-left Next and the action group aligned to that text band's bottom.
+  Undo and Done share a centerline; control positions stay fixed without a
+  prescription, when Next disappears and through eligible final Undo. Today's
+  full Agenda target stays below Focus. Check long names, native font bounds, immediate
   disabled submission, delayed Saving only for slow operations,
   brief confirmation and the next exercise without waiting for that mark to clear.
   Unfilled Undo stays left of trailing Done, has a complete target, is disabled

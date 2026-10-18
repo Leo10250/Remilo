@@ -98,6 +98,13 @@ class WidgetRenderTest {
   private fun descriptions(view: View): List<String> = listOfNotNull(view.contentDescription?.toString()) +
     if(view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
   private fun nextLabel(context: Context, name: String) = L10n.text(context,NativeMessages.widget_next(name))
+  private fun globalBounds(root: View, view: View): Rect = Rect(0,0,view.width,view.height).also {
+    (root as ViewGroup).offsetDescendantRectToMyCoords(view,it)
+  }
+  private fun doneTarget(root: View, ctx: Context): View {
+    val label=textViews(root).single { it.text.toString() == L10n.text(ctx,"Done") }
+    return generateSequence(label as View) { it.parent as? View }.first { it.hasOnClickListeners() }
+  }
   private fun assertNoNavigationOrRefresh(root: View, ctx: Context) {
     assertFalse(text(root).contains(L10n.text(ctx,"Resume")))
     assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
@@ -169,9 +176,47 @@ class WidgetRenderTest {
       assertEquals(bounds(nameView).left,bounds(nextView).left)
       val doneView=textViews(root).single { it.text.toString() == L10n.text(ctx,"Done") }
       val doneTarget=generateSequence(doneView as View) { it.parent as? View }.first { it.hasOnClickListeners() }
-      assertTrue(bounds(nextView).top >= bounds(doneTarget).bottom)
+      val nextBounds=bounds(nextView); val actionBounds=bounds(doneTarget)
+      assertTrue("Next must share the bottom action band",nextBounds.top >= actionBounds.top && nextBounds.bottom <= actionBounds.bottom)
+      assertTrue("Done must align with the Next line's bottom",actionBounds.bottom-nextBounds.bottom <= 6*ctx.resources.displayMetrics.density)
       assertEquals(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP,14f,ctx.resources.displayMetrics),nextView.textSize,0.1f)
       assertEquals(AtmosphereTokens.colors("sky","light").onSurfaceVariant.toInt(),nextView.currentTextColor)
+    }
+  }
+  @Test fun compactActionsAlignWithNextAndStayFixedWithoutPrescriptionOrNext() {
+    for(language in listOf("en","zh-Hans"))for(mode in listOf("Routine","Today"))for(scale in listOf(1f,1.2f,1.5f)) {
+      val ctx=context(language,scale)
+      val sample=previewSnapshot().copy(configuration=WidgetConfiguration(mode,"preview"),undoToken="undo",undoName="Bird-dog")
+      @Suppress("UNCHECKED_CAST") val steps=sample.session!!["steps"] as List<Map<String,Any?>>
+      val width=WidgetSizing.minimumWidth(sample,scale); val height=WidgetSizing.previewHeight(ctx,sample,false,scale)
+      val root=render(ctx,sample,width,height,"$language-bottom-$mode-${(scale*100).toInt()}")
+      val action=globalBounds(root,doneTarget(root,ctx))
+      val undo=globalBounds(root,descendants(root).first { it.contentDescription?.toString() == L10n.text(ctx,"Undo completion of Bird-dog") })
+      val next=globalBounds(root,textViews(root).single { it.text.toString() == nextLabel(ctx,"Side plank") })
+      assertEquals("Undo and Done must share a centerline",action.centerY(),undo.centerY())
+      assertTrue(next.top >= action.top && next.bottom <= action.bottom)
+      assertTrue(action.bottom-next.bottom <= 6*ctx.resources.displayMetrics.density)
+      assertActionFullyVisible(root,L10n.text(ctx,"Done")); assertActionFullyVisible(root,nextLabel(ctx,"Side plank"))
+      if(mode == "Today") {
+        val agenda=textViews(root).single { it.text.toString() == L10n.text(ctx,"View Agenda (0)") }
+        val target=generateSequence(agenda as View) { it.parent as? View }.first { it.hasOnClickListeners() }
+        assertTrue("Agenda must remain outside the exercise controls",globalBounds(root,target).top >= action.bottom)
+        assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (0)"))
+      }
+      val absentTarget=sample.copy(session=sample.session + ("steps" to steps.map { it - "target" }))
+      val noTarget=render(ctx,absentTarget,width,height,"$language-bottom-no-target-$mode-${(scale*100).toInt()}")
+      assertEquals(action,globalBounds(noTarget,doneTarget(noTarget,ctx)))
+      assertActionFullyVisible(noTarget,"Front plank")
+      val last=sample.copy(session=sample.session + mapOf("completedCount" to 3,
+        "steps" to steps.mapIndexed { index,step -> step + ("completed" to (index != steps.lastIndex)) }))
+      val lastRoot=render(ctx,last,width,height,"$language-bottom-last-$mode-${(scale*100).toInt()}")
+      assertEquals(action,globalBounds(lastRoot,doneTarget(lastRoot,ctx)))
+      assertFalse(text(lastRoot).any { it.startsWith(nextLabel(ctx,"")) })
+      val final=sample.copy(doneToken=null,session=sample.session + mapOf("state" to "Completed","completedCount" to 4,
+        "steps" to steps.map { it + ("completed" to true) }))
+      val finalRoot=render(ctx,final,width,height,"$language-bottom-final-$mode-${(scale*100).toInt()}")
+      assertEquals(undo,globalBounds(finalRoot,descendants(finalRoot).first { it.contentDescription?.toString() == L10n.text(ctx,"Undo completion of Bird-dog") }))
+      assertActionFullyVisible(finalRoot,L10n.text(ctx,"Completed today")); assertFalse(text(finalRoot).contains(L10n.text(ctx,"Done")))
     }
   }
   @Test fun nextUsesTheNextUnfinishedStepAndFitsScaledAndLongContent() {
@@ -253,6 +298,9 @@ class WidgetRenderTest {
       for(label in listOf("Monday","Front plank","Done")) assertActionFullyVisible(parent,L10n.text(ctx,label))
       assertActionFullyVisible(parent,L10n.text(ctx,"Next: ${L10n.text(ctx,"Side plank")}"))
       assertFalse(text(parent).any { it.startsWith("2.") })
+      val done=textViews(parent).single { it.text.toString() == L10n.text(ctx,"Done") }
+      val next=textViews(parent).single { it.text.toString() == L10n.text(ctx,"Next: ${L10n.text(ctx,"Side plank")}") }
+      assertEquals(globalBounds(parent,done).bottom,globalBounds(parent,next).bottom)
     }
   }
   private fun assertActionFullyVisible(root: View, label: String) {
@@ -516,6 +564,8 @@ class WidgetRenderTest {
       val ctx=context(language,1f)
       for(mode in listOf("Routine","Today")) {
         val sample=previewSnapshot().copy(configuration=WidgetConfiguration(mode,"preview"),appearance=AppearancePolicy.Resolved(scene,brightness))
+        assertTrue("Compact $language $mode minimum height ${WidgetSizing.minimumHeight(ctx,sample,1f)} exceeds its reference footprint",
+          WidgetSizing.minimumHeight(ctx,sample,1f) <= WidgetSizing.compactHeight(sample))
         val root=render(ctx,sample,300,WidgetSizing.compactHeight(sample),"$language-$scene-$brightness-$mode-compact")
         assertActionFullyVisible(root,L10n.text(ctx,"Done"))
         if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (0)"))

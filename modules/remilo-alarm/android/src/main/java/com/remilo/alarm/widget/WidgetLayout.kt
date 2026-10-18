@@ -54,6 +54,7 @@ import com.remilo.alarm.presentation.NativeMessages
   val activeExercise = step != null && session?.get("ended") != true && state !in setOf("Rest","Skipped","Upcoming","Paused")
   val nextStep = widgetNextExercise(snapshot)
   val nextLabel = nextStep?.let { L10n.text(context,NativeMessages.widget_next(it["name"] as? String ?: "")) }
+  val bottomActions = !expanded && bottomAlignedFocusActions(snapshot)
   val actionHeight = (48*fontScale.coerceAtLeast(1f)).dp
   val primaryHeight = (56*fontScale.coerceAtLeast(1f)).dp
   @Composable fun copy(text: String, supporting: Boolean = false, lines: Int = 1, font: Int = if(supporting)14 else 16, modifier: GlanceModifier = GlanceModifier, medium: Boolean = false) {
@@ -86,6 +87,16 @@ import com.remilo.alarm.presentation.NativeMessages
       modifier = GlanceModifier.size(actionHeight),
       backgroundColor = null, contentColor = muted)
   }
+  @Composable fun exerciseText() {
+    Column(GlanceModifier.fillMaxWidth().then(if(preview)GlanceModifier else GlanceModifier.clickable(openRoutine))
+      .semantics { contentDescription = if(activeExercise)listOfNotNull(feedback?.confirmation?.let(::label),
+        label("Exercise ${steps.indexOf(step) + 1} of $total"),step!!["name"],step["target"]).joinToString(". ") else outcome }) {
+      if(activeExercise) copy(step!!["name"] as? String ?: "",font = 18,medium = true,lines = if(expanded)2 else 1)
+      else copy(outcome,font = 18,medium = true,lines = 2)
+      if(activeExercise) (step!!["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true) }
+      else if(state == "Rest") copy(label("No exercises scheduled today."),true,2)
+    }
+  }
   @Composable fun footer() {
     val agendaAtEnd = selected && snapshot.configuration.mode == "Today" && !hasRecovery
     Row(GlanceModifier.fillMaxWidth().height(actionHeight),verticalAlignment = Alignment.Vertical.CenterVertically) {
@@ -95,8 +106,6 @@ import com.remilo.alarm.presentation.NativeMessages
         when {
           snapshot.notice != null -> copy(label(snapshot.notice),true,2)
           snapshot.retryToken != null -> copy(label("Retry the same action"),true,2)
-          agendaAtEnd && !expanded && nextStep != null -> copy(nextLabel.orEmpty(),true,
-            modifier = GlanceModifier.semantics { contentDescription = nextLabel.orEmpty() })
           !agendaAtEnd && snapshot.configuration.mode == "Today" -> Text(label("View Agenda (${snapshot.total})"),style = TextStyle(color = accent,fontSize = 14.sp),maxLines = 1)
         }
       }
@@ -170,39 +179,37 @@ import com.remilo.alarm.presentation.NativeMessages
                   }
                   Spacer(GlanceModifier.height(if(expanded)16.dp else 12.dp))
                 }
-                Row(GlanceModifier.fillMaxWidth(),verticalAlignment = Alignment.Vertical.CenterVertically) {
-                  Column(GlanceModifier.defaultWeight().padding(end = 12.dp)
-                    .then(if(preview)GlanceModifier else GlanceModifier.clickable(openRoutine))
-                    .semantics { contentDescription = if(activeExercise)listOfNotNull(feedback?.confirmation?.let(::label),
-                      label("Exercise ${steps.indexOf(step) + 1} of $total"),step!!["name"],step["target"]).joinToString(". ") else outcome }) {
-                    if(activeExercise) copy(step!!["name"] as? String ?: "",font = 18,medium = true,lines = if(expanded)2 else 1)
-                    else copy(outcome,font = 18,medium = true,lines = 2)
-                    if(activeExercise) (step!!["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true) }
-                    else if(state == "Rest") copy(label("No exercises scheduled today."),true,2)
+                Row(GlanceModifier.fillMaxWidth(),verticalAlignment = if(bottomActions)Alignment.Vertical.Bottom else Alignment.Vertical.CenterVertically) {
+                  Column(GlanceModifier.defaultWeight().padding(end = 12.dp)) {
+                    if(bottomActions) {
+                      Box(GlanceModifier.fillMaxWidth().height(WidgetSizing.currentTextHeight(context,fontScale).dp),contentAlignment = Alignment.CenterStart) { exerciseText() }
+                      Spacer(GlanceModifier.height(2.dp))
+                      Box(GlanceModifier.fillMaxWidth().height(WidgetSizing.nextLineHeight(context,snapshot,fontScale).dp),contentAlignment = Alignment.CenterStart) {
+                        if(nextStep != null) copy(nextLabel.orEmpty(),true,
+                          modifier = GlanceModifier.fillMaxWidth().semantics { contentDescription = nextLabel.orEmpty() })
+                      }
+                    } else exerciseText()
                   }
-                  if(activeExercise) {
-                    undoControl(); Spacer(GlanceModifier.width(8.dp))
-                    Box(GlanceModifier.width((80*fontScale.coerceAtLeast(1f)).dp).height(primaryHeight)) {
-                      snapshot.doneToken?.takeIf { snapshot.retryToken == null }?.let { token -> action(label(if(feedback?.saving == true)"Saving…" else "Done"),
-                        actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token)),
-                        GlanceModifier.fillMaxSize(),true,
-                        label(if(busy)"Saving progress" else "Mark ${step!!["name"]} as done"),enabled = !busy) }
+                  Row(GlanceModifier.then(if(bottomActions)GlanceModifier.height(primaryHeight) else GlanceModifier),verticalAlignment = Alignment.Vertical.CenterVertically) {
+                    if(activeExercise) {
+                      undoControl(); Spacer(GlanceModifier.width(8.dp))
+                      Box(GlanceModifier.width((80*fontScale.coerceAtLeast(1f)).dp).height(primaryHeight)) {
+                        snapshot.doneToken?.takeIf { snapshot.retryToken == null }?.let { token -> action(label(if(feedback?.saving == true)"Saving…" else "Done"),
+                          actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token)),
+                          GlanceModifier.fillMaxSize(),true,
+                          label(if(busy)"Saving progress" else "Mark ${step!!["name"]} as done"),enabled = !busy) }
+                      }
+                    } else if(snapshot.undoToken != null && snapshot.retryToken == null) {
+                      undoControl()
+                      // Keep Undo in its established slot after the final completion.
+                      Spacer(GlanceModifier.width((8 + 80*fontScale.coerceAtLeast(1f)).dp))
                     }
-                  } else if(snapshot.undoToken != null && snapshot.retryToken == null) {
-                    undoControl()
-                    // Keep Undo in its established slot after the final completion.
-                    Spacer(GlanceModifier.width((8 + 80*fontScale.coerceAtLeast(1f)).dp))
+                    else action(label("View routine"),openRoutine,
+                      GlanceModifier.width((128*fontScale.coerceAtLeast(1f)).dp).height(primaryHeight))
                   }
-                  else action(label("View routine"),openRoutine,
-                    GlanceModifier.width((128*fontScale.coerceAtLeast(1f)).dp).height(primaryHeight))
-                }
-                if(!expanded && !hasFooter && nextStep != null) {
-                  Spacer(GlanceModifier.height(2.dp))
-                  copy(nextLabel.orEmpty(),true,
-                    modifier = GlanceModifier.fillMaxWidth().semantics { contentDescription = nextLabel.orEmpty() })
                 }
               }
-              if(hasFooter || expanded) Spacer(GlanceModifier.height(8.dp))
+              if((hasFooter || expanded) && !bottomActions) Spacer(GlanceModifier.height(8.dp))
             }
           } else {
             copy(title,font = 22,medium = true)

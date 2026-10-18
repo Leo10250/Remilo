@@ -74,11 +74,20 @@ regardless of their native/Glance wrapper. The target remains at least 48 dp and
 does not change position or graphic size with eligibility. Disabled Undo
 exposes disabled state and carries no callback. After final completion, hide Done
 while keeping eligible Undo in its established slot. A healthy compact Focus has
-no reserved action footer strip or permanent Refresh. Compact Routine shows one
-quiet 14 sp Next line below the exercise/action row, aligned to the left gutter.
-Compact Today places Next at bottom left and the accurate Agenda link/count at
-bottom right, inside its existing 48 dp footer. Expanded Routine retains upcoming
-exercises with a quiet Next label on the first; expanded Today adds Next and the
+no reserved action footer strip or permanent Refresh. The owner's next 17 October
+comparison selects **Bottom of Next line**. In healthy compact Focus, the current
+name/prescription and quiet 14 sp Next line form the left column; the 56 dp action
+group aligns to its bottom. Undo remains centered beside Done within that group.
+Keep the current-text area at least 56 scaled dp, growing for native font metrics,
+followed by 2 dp and a Next line budget of at least 20 scaled dp, including native
+fallback-font metrics. Reserve that line's space when Next is
+absent so actions do not jump on the last exercise or eligible final Undo.
+Next shares the left gutter and the exercise column's available width, with end
+ellipsis and its complete accessible name. Preserve optional prescriptions;
+an empty prescription does not move the controls. Compact Today uses the same
+Focus anatomy, followed by a separate trailing Agenda link/count in a full 48 dp
+footer. Expanded Routine retains upcoming exercises with a quiet Next label on
+the first; expanded Today adds Next and the
 native reminder list. Never repeat the same Next line in one composition.
 
 In Today/expanded layouts, recovery state uses the 48 dp footer: Retry binds the original
@@ -95,8 +104,10 @@ partially obscured rows behind View Agenda. Use 12 dp after the title and 16 dp
 after progress before the exercise/action row in expanded views. Compact Focus
 uses 4 dp after the header and title, 12 dp after progress and 2 dp before Next, preserving
 the 200 dp interactive footprint and full 56/48 dp controls. Budget native text
-metrics for all lines and fall back when they cannot fit. Next is one supporting
-line, may ellipsize the authored name at its end, and retains the full accessible
+metrics for all lines and fall back when they cannot fit. The action group's
+bottom aligns with the Next line's layout band, while text glyphs retain normal
+font padding. Next is one supporting line, may ellipsize the authored name at its
+end, and retains the full accessible
 name. It names the next unfinished exercise in the current session, skipping
 checked rows. Hide it on the last exercise and in rest/skipped/ended/unavailable
 or compact recovery/summary views. Rest days show Rest day once,
