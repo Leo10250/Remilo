@@ -106,7 +106,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
       </> : <>
         <SelectRow label={t('m_16b6668d9831')} value={rule.frequency} choices={Object.entries(repeatNames).map(([frequency, label]) => ({ value: frequency as RecurrenceDraft['frequency'], label }))}
           onChange={(frequency) => patch({ frequency })} />
-        <Field label={t('m_87b340027980') + unit + ')'} keyboardType="number-pad" value={numbers.interval} error={validation.interval}
+        <Field label={t('repeat_interval_label', { unit })} keyboardType="number-pad" value={numbers.interval} error={validation.interval}
           onChangeText={(interval) => setNumbers((current) => ({ ...current, interval }))} />
         {rule.frequency === 'weekly' && <><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
           {dayNames.map((name, index) => { const selected = rule.weekdays?.includes(index + 1) ?? false; return <Pressable key={name}

@@ -223,7 +223,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {!scoped && !!calendarSummary.data?.reviewCount && <View style={{ marginBottom: 12 }}><CalendarAttentionCard count={calendarSummary.data.reviewCount} tone={calendarSummary.data.attention?.tone} disabled={guarded}
       onPress={() => router.push({ pathname: '/calendar-reviews', params: originParams(destination) })} /></View>}
     {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={t('m_e0b2d5621800') + caps.activeSessionActions.members.length + ')'} disabled={guarded}
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={t('mark_all_done_count', { count: caps.activeSessionActions.members.length })} disabled={guarded}
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
           kind: 'DoneAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })), operationId: engine().createOperationId(),
         }, success: captured.members.length + t('m_a6167e44d2cf') }); }} /></View>

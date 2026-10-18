@@ -1,5 +1,15 @@
 # Offline Android acceptance run
 
+## Chinese wording follow-up — 18 October 2026
+
+On the identified signed build, read Chinese routine General/Exercise creation,
+weekday/shared scopes, row editing, Focus, history and widget setup/actions. Check
+动作/步骤/日常计划 consistently; verify authored English names remain intact.
+Read Calendar creation/recovery, completion/Undo, Trash/restore, backup and Settings
+copy in context. Confirm complete parenthesized counts/units at 100–200% text,
+TalkBack labels, IME and vendor font layout. Compare app/native/widget presentation;
+host catalog/render checks do not close these phone observations.
+
 ## Generic routine creation follow-up — 18 October 2026
 
 On the identified signed build, check Create→Reminder/Routine and direct library

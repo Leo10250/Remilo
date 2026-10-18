@@ -48,7 +48,7 @@ class LanguageCoordinatorTest {
     PresentationLanguage.update(context, "zh-Hans")
     assertEquals(expected, AlarmControlAction.entries.associateWith { it.commandKind })
     assertEquals(english, AlarmControlAction.entries.associateWith { it.commandKind })
-    assertEquals("\u5f00\u59cb\u8bad\u7ec3", L10n.text(context, "Start routine"))
+    assertEquals("开始计划", L10n.text(context, "Start routine"))
     assertEquals("\u5173\u95ed\u95f9\u949f", L10n.text(context, "Dismiss alarm"))
     assertNotEquals(L10n.text(context, "Start routine"), AlarmControlAction.StartRoutine.commandKind)
     assertNotEquals(L10n.text(context, "Dismiss alarm"), AlarmControlAction.DismissRoutine.commandKind)

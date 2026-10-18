@@ -2229,4 +2229,7 @@ object NativeMessages {
   fun routine_remove_step(): L10n.Message = L10n.Message("routine_remove_step")
   fun routine_day_steps(day: String): L10n.Message = L10n.Message("routine_day_steps", mapOf("day" to day.toString()))
   fun routine_preview_next(): L10n.Message = L10n.Message("routine_preview_next")
+  fun calendar_import_all_count(count: Number): L10n.Message = L10n.Message("calendar_import_all_count", mapOf("count" to count.toString()))
+  fun mark_all_done_count(count: Number): L10n.Message = L10n.Message("mark_all_done_count", mapOf("count" to count.toString()))
+  fun repeat_interval_label(unit: String): L10n.Message = L10n.Message("repeat_interval_label", mapOf("unit" to unit.toString()))
 }

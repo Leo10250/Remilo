@@ -107,6 +107,10 @@ positions when Next disappears. Expanded and recovery layouts retain their anato
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.
+The [18 October wording review](localization.md#simplified-chinese-wording-review--owner-correction-18-october-2026)
+requires context-sensitive Chinese: fitness items are 动作, general items 步骤,
+routine destinations 日常计划 and private calendar publication 添加到日历.
+Preserve authored content, native behavior and current visual style.
 
 The owner's 18 October confirmation approval replaces app-owned native alerts
 with the [shared themed confirmation](visual-language.md#app-owned-confirmations--owner-approval-18-october-2026).

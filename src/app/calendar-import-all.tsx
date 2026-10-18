@@ -100,7 +100,7 @@ export default function CalendarImportAll() {
     } finally { running.current = false; setBusy(false); }
   };
   return <Page compact title={t('m_ecb8f0a7dc25')} onBack={back} footer={!operationIds.length && ready && entries.length ? <BottomActionBar>
-    <Button label={uncertain ? t('m_1936752a4785') : t('m_ae3ab8de0dcf') + entries.length + ')'} disabled={busy || !uncertain && invalid.length > 0} onPress={() => void apply()} />
+    <Button label={uncertain ? t('m_1936752a4785') : t('calendar_import_all_count', { count: entries.length })} disabled={busy || !uncertain && invalid.length > 0} onPress={() => void apply()} />
     <Button label={t('m_19766ed6ccb2')} variant="secondary" disabled={busy || uncertain} onPress={back} />
   </BottomActionBar> : undefined}>
     <Copy muted>{t('m_6c2e4493af7d')}</Copy>

@@ -1004,7 +1004,7 @@ object MessageCatalog {
     "m_9abfcd6cc71c" to Entry(R.string.l10n_m_9abfcd6cc71c, false, listOf(), "Available in the Android app", false),
     "m_e75d471ec00e" to Entry(R.string.l10n_m_e75d471ec00e, false, listOf(), "Optional, manual one-off publishing", false),
     "m_3334fee2c77f" to Entry(R.string.l10n_m_3334fee2c77f, false, listOf(), "Backups", false),
-    "m_a7b215af0d49" to Entry(R.string.l10n_m_a7b215af0d49, false, listOf(), "Includes titles, notes, lists and reminders.", false),
+    "m_a7b215af0d49" to Entry(R.string.l10n_m_a7b215af0d49, false, listOf(), "Includes reminders, routines, lists, history and custom images.", false),
     "m_95365d0f81ab" to Entry(R.string.l10n_m_95365d0f81ab, false, listOf(), "What’s included?", false),
     "m_d6dfd0f08280" to Entry(R.string.l10n_m_d6dfd0f08280, false, listOf(), "Export backup", false),
     "m_580447a9d871" to Entry(R.string.l10n_m_580447a9d871, false, listOf(), "Preparing backup…", false),
@@ -1017,7 +1017,7 @@ object MessageCatalog {
     "m_da461edf6be4" to Entry(R.string.l10n_m_da461edf6be4, false, listOf(), "Enter a whole number from 1 to 1440.", false),
     "m_c03efc02ebc8" to Entry(R.string.l10n_m_c03efc02ebc8, false, listOf(), "Shown when you postpone an alert to tomorrow.", false),
     "m_417b6c80d6e4" to Entry(R.string.l10n_m_417b6c80d6e4, false, listOf(), "What’s included in backups", false),
-    "m_03588484b7c5" to Entry(R.string.l10n_m_03588484b7c5, false, listOf(), "Titles, notes, lists and reminders are included in a plain-text JSON file.", false),
+    "m_03588484b7c5" to Entry(R.string.l10n_m_03588484b7c5, false, listOf(), "Backups are not encrypted and contain reminders, routines, lists, history and included custom images.", false),
     "m_a9a1a38b9395" to Entry(R.string.l10n_m_a9a1a38b9395, false, listOf(), "One-off reminders in Trash are excluded. Repeating deletion exclusions are kept.", false),
     "m_6d3b4ca3720b" to Entry(R.string.l10n_m_6d3b4ca3720b, false, listOf(), "App settings, appearance and Google Calendar connection/publication data are excluded.", false),
     "m_c2e4d9d387bc" to Entry(R.string.l10n_m_c2e4d9d387bc, false, listOf(), "move to Trash", false),
@@ -2235,8 +2235,8 @@ object MessageCatalog {
     "widget_resume" to Entry(R.string.l10n_widget_resume, false, listOf(), "Resume", false),
     "widget_next" to Entry(R.string.l10n_widget_next, false, listOf("name"), "Next: {name}", false),
     "widget_done_count" to Entry(R.string.l10n_widget_done_count, false, listOf("done", "total"), "{done} of {total} done", false),
-    "backup_photos" to Entry(R.string.l10n_backup_photos, false, listOf("count"), "Includes {count} exercise photos", false),
-    "backup_photo_hint" to Entry(R.string.l10n_backup_photo_hint, false, listOf(), "Backups include saved exercise photos and routine history. Older JSON backups can also be restored.", false),
+    "backup_photos" to Entry(R.string.l10n_backup_photos, false, listOf("count"), "Includes {count} custom images", false),
+    "backup_photo_hint" to Entry(R.string.l10n_backup_photo_hint, false, listOf(), "Backups include saved custom images and routine history. Older JSON backups can also be restored.", false),
     "widget_preview_progress" to Entry(R.string.l10n_widget_preview_progress, false, listOf(), "1 of 4 done", false),
     "widget_preview_next" to Entry(R.string.l10n_widget_preview_next, false, listOf(), "Next: Side plank", false),
     "widget_refresh" to Entry(R.string.l10n_widget_refresh, false, listOf(), "Refresh", false),
@@ -2286,6 +2286,9 @@ object MessageCatalog {
     "routine_title_example" to Entry(R.string.l10n_routine_title_example, false, listOf(), "Morning routine", false),
     "routine_remove_step" to Entry(R.string.l10n_routine_remove_step, false, listOf(), "Remove step", false),
     "routine_day_steps" to Entry(R.string.l10n_routine_day_steps, false, listOf("day"), "{day} · Steps", false),
-    "routine_preview_next" to Entry(R.string.l10n_routine_preview_next, false, listOf(), "Next: Plan the day", false)
+    "routine_preview_next" to Entry(R.string.l10n_routine_preview_next, false, listOf(), "Next: Plan the day", false),
+    "calendar_import_all_count" to Entry(R.string.l10n_calendar_import_all_count, false, listOf("count"), "Import all ({count})", false),
+    "mark_all_done_count" to Entry(R.string.l10n_mark_all_done_count, false, listOf("count"), "Mark all as done ({count})", false),
+    "repeat_interval_label" to Entry(R.string.l10n_repeat_interval_label, false, listOf("unit"), "Repeat every ({unit})", false)
   )
 }

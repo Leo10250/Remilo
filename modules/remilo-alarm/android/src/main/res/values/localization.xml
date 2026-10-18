@@ -979,7 +979,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_m_9abfcd6cc71c">Available in the Android app</string>
   <string name="l10n_m_e75d471ec00e">Optional, manual one-off publishing</string>
   <string name="l10n_m_3334fee2c77f">Backups</string>
-  <string name="l10n_m_a7b215af0d49">Includes titles, notes, lists and reminders.</string>
+  <string name="l10n_m_a7b215af0d49">Includes reminders, routines, lists, history and custom images.</string>
   <string name="l10n_m_95365d0f81ab">What’s included?</string>
   <string name="l10n_m_d6dfd0f08280">Export backup</string>
   <string name="l10n_m_580447a9d871">Preparing backup…</string>
@@ -992,7 +992,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_m_da461edf6be4">Enter a whole number from 1 to 1440.</string>
   <string name="l10n_m_c03efc02ebc8">Shown when you postpone an alert to tomorrow.</string>
   <string name="l10n_m_417b6c80d6e4">What’s included in backups</string>
-  <string name="l10n_m_03588484b7c5">Titles, notes, lists and reminders are included in a plain-text JSON file.</string>
+  <string name="l10n_m_03588484b7c5">Backups are not encrypted and contain reminders, routines, lists, history and included custom images.</string>
   <string name="l10n_m_a9a1a38b9395">One-off reminders in Trash are excluded. Repeating deletion exclusions are kept.</string>
   <string name="l10n_m_6d3b4ca3720b">App settings, appearance and Google Calendar connection/publication data are excluded.</string>
   <string name="l10n_m_c2e4d9d387bc">move to Trash</string>
@@ -2213,8 +2213,8 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_widget_resume">Resume</string>
   <string name="l10n_widget_next">Next: %1$s</string>
   <string name="l10n_widget_done_count">%1$s of %2$s done</string>
-  <string name="l10n_backup_photos">Includes %1$s exercise photos</string>
-  <string name="l10n_backup_photo_hint">Backups include saved exercise photos and routine history. Older JSON backups can also be restored.</string>
+  <string name="l10n_backup_photos">Includes %1$s custom images</string>
+  <string name="l10n_backup_photo_hint">Backups include saved custom images and routine history. Older JSON backups can also be restored.</string>
   <string name="l10n_widget_preview_progress">1 of 4 done</string>
   <string name="l10n_widget_preview_next">Next: Side plank</string>
   <string name="l10n_widget_refresh">Refresh</string>
@@ -2268,4 +2268,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_routine_remove_step">Remove step</string>
   <string name="l10n_routine_day_steps">%1$s · Steps</string>
   <string name="l10n_routine_preview_next">Next: Plan the day</string>
+  <string name="l10n_calendar_import_all_count">Import all (%1$s)</string>
+  <string name="l10n_mark_all_done_count">Mark all as done (%1$s)</string>
+  <string name="l10n_repeat_interval_label">Repeat every (%1$s)</string>
 </resources>

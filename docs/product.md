@@ -65,6 +65,10 @@ status messages do not become extra blocking decisions.
   All app-owned presentation, native alarms and notifications are localized offline.
   Authored/imported content, device clock preferences and durable scheduling/work
   semantics remain independent. See the [language contract](design/current/localization.md).
+  Its 18 October wording correction uses contextual Chinese: 动作 for a fitness
+  item, 步骤 for a General item and 日常计划 for routine destinations. Calendar
+  copies use 添加 wording; marking completed work unfinished is distinct from
+  opening a page or restoring Trash. These are presentation changes only.
 
 The owner's 11 October wording correction labels every work-completion action
 **Mark as done**, and captured group completion **Mark all as done (N)**, across
