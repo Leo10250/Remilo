@@ -28,7 +28,12 @@ and launcher observations remain on the owner checklist.
 Widget progress/action/direct-edit checks require actual production RemoteViews,
 not mockups. Cover totals 0/1/4/6/7/10/11/12/13+, zero/partial/full, exactly seven
 segments/four filled for 4/7, primary/container pixel mapping and at least 3:1
-fill/track distinction in eight appearance pairs. Check separate original ordinal,
+fill/track distinction in eight appearance pairs. Check plain authored exercise
+names, all seven full weekdays in both languages and full spoken date/position.
+Next is quiet bottom-left supporting text in compact Focus; Today keeps Agenda
+on the right with a complete 48 dp target. Verify the next unfinished stable step,
+last/terminal/recovery omissions, long-name ellipsis with full accessible text,
+and production/setup/generated/static preview parity. Cover
 300×200/240 compact and 300×440 expanded, summary sizes, both languages, long
 content and scaled text through 200%. Undo precedes trailing Done with a complete
 48 dp target and stays fixed after final completion; disabled Undo has no intent.
@@ -475,8 +480,8 @@ those device observations.
 The 17 October correction supersedes Resume-only interaction: Done completes the
 displayed exercise in place; exercise text retains exact app navigation. Check
 native confirmation, duplicate taps, stale revisions after immediate edits,
-uncertain Retry and named Undo including final completion. Compact contains no
-Next/permanent Refresh, and expanded keeps Next/upcoming context. Check 260–300×200
+uncertain Retry and named Undo including final completion. Compact has quiet Next
+context and no permanent Refresh; expanded retains Next/upcoming content. Check 260–300×200
 Focus before/after completion and Today-without-routine, 300×240
 Today-with-Focus/recovery, failed-load Refresh, conflict feedback, tiny failed
 summaries, inert sample previews regardless of private data, and Retry/Undo without

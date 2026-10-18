@@ -1000,7 +1000,7 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   controls. Resize through summary/interactive/expanded layouts. Done completes
   only the displayed exercise without opening Remilo; confirm native progress
   agrees in both places. Exercise text opens the exact exercise/date. No permanent
-  Refresh or compact Next. Verify named Undo, including after final completion,
+  Refresh. Verify quiet compact Next and named Undo, including after final completion,
   and exact Retry for uncertain actions. Repeated exercise links select that
   exercise on an already open screen,
   duplicate/stale taps never advance another date and reconfiguration Cancel holds.
@@ -1032,8 +1032,11 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   the placed widget with the phone's font and text size. Enabled and disabled
   Undo must have identical graphic size/position; disabled is visibly dimmed and
   does not respond. Check their states in all eight appearance pairs.
-  A 4/7 example has exactly seven segments and four filled. Check separate exercise
-  ordinal, immediate disabled submission, delayed Saving only for slow operations,
+  A 4/7 example has exactly seven segments and four filled. Exercise names have no
+  added number. Check all seven full weekday headers, full spoken dates/positions,
+  quiet bottom-left Next, its omission after the last exercise and full Agenda
+  targets beside it in Today. Check long names, native font bounds, immediate
+  disabled submission, delayed Saving only for slow operations,
   brief confirmation and the next exercise without waiting for that mark to clear.
   Unfilled Undo stays left of trailing Done, has a complete target, is disabled
   without an eligible completion, and remains in its slot after final completion.

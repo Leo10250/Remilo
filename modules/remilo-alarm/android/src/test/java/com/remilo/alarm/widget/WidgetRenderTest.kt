@@ -23,6 +23,7 @@ import androidx.glance.appwidget.runComposition
 import androidx.glance.ExperimentalGlanceApi
 import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.presentation.L10n
+import com.remilo.alarm.presentation.NativeMessages
 import com.remilo.alarm.system.PresentationLanguage
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CompletableDeferred
@@ -96,6 +97,7 @@ class WidgetRenderTest {
   private fun text(view: View) = textViews(view).map { it.text.toString() }
   private fun descriptions(view: View): List<String> = listOfNotNull(view.contentDescription?.toString()) +
     if(view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
+  private fun nextLabel(context: Context, name: String) = L10n.text(context,NativeMessages.widget_next(name))
   private fun assertNoNavigationOrRefresh(root: View, ctx: Context) {
     assertFalse(text(root).contains(L10n.text(ctx,"Resume")))
     assertFalse(text(root).contains(L10n.text(ctx,"Retry")))
@@ -120,12 +122,14 @@ class WidgetRenderTest {
       render(context(language,1.5f),previewSnapshot().copy(undoToken = "undo",undoName = "Bird-dog"),300,440,"$language-undo-150")
     }
   }
-  @Test fun routineFocusCompletesInPlaceAndNextExerciseOnlyAppearsExpanded() {
+  @Test fun routineFocusShowsPlainExerciseWeekdayAndCompactNextWithoutChangingActions() {
     val sample=previewSnapshot().copy(configuration = WidgetConfiguration("Routine","preview"),session=previewSnapshot().session!! + ("title" to "Core & intervals"))
     val ctx=context("en",1f)
     val compact=render(ctx,sample.copy(doneToken="legacy-unused"),300,200,"routine-focus-compact")
     assertActionFullyVisible(compact,"Done"); assertNoNavigationOrRefresh(compact,ctx)
-    assertFalse(text(compact).any { it.contains("Next:") }); assertFalse(text(compact).contains("Widget settings"))
+    assertActionFullyVisible(compact,"Next: Side plank"); assertActionFullyVisible(compact,"Monday")
+    assertTrue(text(compact).contains("Front plank")); assertFalse(text(compact).contains("2."))
+    assertFalse(text(compact).contains("Widget settings"))
     val expanded=render(ctx,sample,300,440,"routine-focus-expanded")
     assertTrue(text(expanded).contains("Next: Side plank")); assertTrue(text(expanded).contains("Intervals"))
     assertActionFullyVisible(expanded,"Done"); assertNoNavigationOrRefresh(expanded,ctx)
@@ -143,6 +147,62 @@ class WidgetRenderTest {
     assertActionFullyVisible(final,"Completed today")
     assertEquals("Final completion must not move Undo into Done's slot",undoBounds.centerX(),
       bounds(final,descendants(final).first { it.contentDescription?.toString() == "Undo completion of Front plank" }).centerX())
+    assertFalse(text(final).any { it.startsWith("Next:") })
+  }
+  @Test fun weekdayHeaderCoversTheWholeWeekAndKeepsTheFullDateAccessible() {
+    val weekdays = mapOf("en" to listOf("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"),
+      "zh-Hans" to listOf("星期一","星期二","星期三","星期四","星期五","星期六","星期日"))
+    for((language,names) in weekdays) for(day in 0..6) {
+      val ctx=context(language,1f); val date=java.time.LocalDate.parse("2026-10-12").plusDays(day.toLong()).toString()
+      val sample=previewSnapshot().copy(date=date,configuration=WidgetConfiguration("Routine","preview"),
+        session=previewSnapshot().session!! + ("date" to date))
+      val root=render(ctx,sample,300,200,"$language-weekday-$day")
+      assertActionFullyVisible(root,names[day]); assertActionFullyVisible(root,"Front plank")
+      val next=nextLabel(ctx,"Side plank"); assertActionFullyVisible(root,next)
+      if(language == "zh-Hans") assertEquals("下一项：Side plank",next)
+      assertFalse(text(root).contains("2."))
+      assertTrue(descriptions(root).any { it.contains(WidgetText.date(ctx,date)) && it.contains("2026") })
+      assertTrue(descriptions(root).any { it.contains(L10n.text(ctx,"Exercise 2 of 4")) })
+      val nextView=textViews(root).single { it.text.toString() == next }
+      val nameView=textViews(root).single { it.text.toString() == "Front plank" }
+      fun bounds(view: View)=Rect(0,0,view.width,view.height).also { (root as ViewGroup).offsetDescendantRectToMyCoords(view,it) }
+      assertEquals(bounds(nameView).left,bounds(nextView).left)
+      val doneView=textViews(root).single { it.text.toString() == L10n.text(ctx,"Done") }
+      val doneTarget=generateSequence(doneView as View) { it.parent as? View }.first { it.hasOnClickListeners() }
+      assertTrue(bounds(nextView).top >= bounds(doneTarget).bottom)
+      assertEquals(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP,14f,ctx.resources.displayMetrics),nextView.textSize,0.1f)
+      assertEquals(AtmosphereTokens.colors("sky","light").onSurfaceVariant.toInt(),nextView.currentTextColor)
+    }
+  }
+  @Test fun nextUsesTheNextUnfinishedStepAndFitsScaledAndLongContent() {
+    val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"))
+    @Suppress("UNCHECKED_CAST") val steps=sample.session!!["steps"] as List<Map<String,Any?>>
+    assertEquals("preview-side-plank",widgetNextExercise(sample)!!["id"])
+    val skippedOver=sample.copy(session=sample.session + ("steps" to steps.map { if(it["id"] == "preview-side-plank")it + ("completed" to true) else it }))
+    assertEquals("preview-intervals",widgetNextExercise(skippedOver)!!["id"])
+    val last=sample.copy(session=sample.session + ("steps" to steps.take(2)))
+    assertNull(widgetNextExercise(last))
+    for(state in listOf("Rest","Skipped","Upcoming","Paused")) assertNull(widgetNextExercise(sample.copy(session=sample.session + ("state" to state))))
+    assertNull(widgetNextExercise(sample.copy(session=sample.session + ("ended" to true))))
+    assertNull(widgetNextExercise(sample.copy(session=sample.session + ("deleted" to true))))
+    for(language in listOf("en","zh-Hans")) for(scale in listOf(1f,1.1f,1.2f,1.5f,2f)) {
+      val ctx=context(language,scale)
+      val width=WidgetSizing.minimumWidth(sample,scale); val height=WidgetSizing.previewHeight(ctx,sample,false,scale)
+      val root=render(ctx,sample,width,height,"$language-next-scaled-${(scale*100).toInt()}")
+      if(scale < 1.6f) {
+        assertActionFullyVisible(root,L10n.text(ctx,"Done")); assertActionFullyVisible(root,nextLabel(ctx,"Side plank"))
+      } else assertFalse(text(root).any { it.startsWith(nextLabel(ctx,"Side plank")) })
+    }
+    for(language in listOf("en","zh-Hans")) for(mode in listOf("Routine","Today")) {
+      val ctx=context(language,1f); val name=if(language == "en")"Long exercise name ".repeat(15) else "很长的下一项练习名称".repeat(15)
+      val long=sample.copy(configuration=WidgetConfiguration(mode,"preview"),session=sample.session +
+        ("steps" to steps.map { if(it["id"] == "preview-side-plank")it + ("name" to name) else it }))
+      val root=render(ctx,long,300,WidgetSizing.compactHeight(long),"$language-next-long-$mode")
+      val label=nextLabel(ctx,name); val next=textViews(root).single { it.text.toString() == label }
+      assertEquals(1,next.layout.lineCount); assertTrue(next.layout.getEllipsisCount(0) > 0)
+      assertTrue(descriptions(root).contains(label)); assertActionFullyVisible(root,L10n.text(ctx,"Done"))
+      if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (0)"))
+    }
   }
   @Test fun progressHandlesZeroContinuousAndConfirmedFeedbackWithoutShiftingActions() {
     val ctx=context("en",1f)
@@ -180,6 +240,20 @@ class WidgetRenderTest {
     fun clickable(view: View): List<View> = (if(view.hasOnClickListeners())listOf(view) else emptyList()) +
       if(view is ViewGroup) (0 until view.childCount).flatMap { clickable(view.getChildAt(it)) } else emptyList()
     assertTrue("Example controls must be inert",clickable(preview).isEmpty())
+  }
+  @Test fun staticPickerFallbackMatchesThePlainTitleWeekdayAndNextHierarchy() {
+    for(language in listOf("en","zh-Hans")) {
+      val ctx=context(language,1f); val parent=FrameLayout(ctx)
+      val root=android.view.LayoutInflater.from(ctx).inflate(R.layout.remilo_widget_preview,parent,false)
+      parent.addView(root)
+      val density=ctx.resources.displayMetrics.density
+      parent.measure(View.MeasureSpec.makeMeasureSpec((300*density).toInt(),View.MeasureSpec.EXACTLY),
+        View.MeasureSpec.makeMeasureSpec((200*density).toInt(),View.MeasureSpec.EXACTLY))
+      parent.layout(0,0,parent.measuredWidth,parent.measuredHeight)
+      for(label in listOf("Monday","Front plank","Done")) assertActionFullyVisible(parent,L10n.text(ctx,label))
+      assertActionFullyVisible(parent,L10n.text(ctx,"Next: ${L10n.text(ctx,"Side plank")}"))
+      assertFalse(text(parent).any { it.startsWith("2.") })
+    }
   }
   private fun assertActionFullyVisible(root: View, label: String) {
     val matches = textViews(root).filter { it.text.toString().equals(label, ignoreCase = true) }
@@ -446,7 +520,7 @@ class WidgetRenderTest {
         assertActionFullyVisible(root,L10n.text(ctx,"Done"))
         if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (0)"))
         assertNoNavigationOrRefresh(root,ctx)
-        assertFalse(text(root).any { it.startsWith("Next:") })
+        assertActionFullyVisible(root,nextLabel(ctx,"Side plank"))
       }
     }
     for(language in listOf("en","zh-Hans")) for(scale in listOf(1.1f,1.2f,1.5f,2f)) {

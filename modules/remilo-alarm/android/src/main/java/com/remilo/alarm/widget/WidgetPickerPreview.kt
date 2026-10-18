@@ -11,7 +11,7 @@ internal object WidgetPickerPreview {
     if(android.os.Build.VERSION.SDK_INT < 35 || !WidgetWork.unlocked(context)) return
     runCatching {
       val appearance = widgetRequest(context) { it.widgetSnapshot(-1,false).appearance }
-      val key = "metrics-3:${appearance.atmosphere}:${appearance.brightness}:${com.remilo.alarm.system.PresentationLanguage.language}:${context.resources.configuration.fontScale}:${java.time.LocalDate.now()}"
+      val key = "weekday-next-4:${appearance.atmosphere}:${appearance.brightness}:${com.remilo.alarm.system.PresentationLanguage.language}:${context.resources.configuration.fontScale}:${java.time.LocalDate.now()}"
       val preferences = context.getSharedPreferences("remilo-widget-picker-preview",Context.MODE_PRIVATE)
       val now = System.currentTimeMillis()
       if(preferences.getString("published",null) == key || now - preferences.getLong("attempt",0) in 0 until 30 * 60_000L) return

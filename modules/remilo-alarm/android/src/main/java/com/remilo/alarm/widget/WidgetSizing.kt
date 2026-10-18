@@ -19,6 +19,13 @@ internal object WidgetSizing {
     16 + lineHeight(context,16,24,scale) + lineHeight(context,14,20,scale))
   fun minimumHeight(context: Context, snapshot: WidgetSnapshot, scale: Float): Int {
     val base = maxOf(compactHeight(snapshot),ceil(24 + (if(selectedRoutineNeedsFooter(snapshot))210 else 164)*scale.coerceAtLeast(1f)).toInt())
+    if(!selectedRoutineNeedsFooter(snapshot) && widgetNextExercise(snapshot) != null && !snapshot.failed && !snapshot.locked && snapshot.configured) {
+      // Header/title/progress, full action row and one quiet Next line. Never borrow its space from targets.
+      val focus = 24 + maxOf(20,lineHeight(context,14,20,scale)) + 4 + lineHeight(context,22,28,scale) + 4 +
+        lineHeight(context,14,20,scale) + 12 + maxOf(ceil(56*scale.coerceAtLeast(1f)).toInt(),
+          lineHeight(context,18,24,scale) + lineHeight(context,14,20,scale)) + 2 + lineHeight(context,14,20,scale)
+      return maxOf(base,focus)
+    }
     if(snapshot.configuration.mode != "Today" || snapshot.configuration.routineId != null || snapshot.reminders.isEmpty() ||
       snapshot.failed || snapshot.locked || !snapshot.configured)return base
     val today = 24 + maxOf(20,lineHeight(context,14,20,scale)) + 8 + lineHeight(context,22,28,scale) + 12 +
@@ -29,6 +36,14 @@ internal object WidgetSizing {
     if(expanded || scale > 1.2f)440 else minimumHeight(context,snapshot ?: WidgetSnapshot(-1),scale) + 4
   fun compactHeight(snapshot: WidgetSnapshot?): Int =
     if(snapshot == null || selectedRoutineNeedsFooter(snapshot) || snapshot.configuration.routineId != null && snapshot.session == null)240 else 200
+}
+
+/** Presentation of the next unfinished step in the same native session, never tomorrow's plan. */
+@Suppress("UNCHECKED_CAST")
+internal fun widgetNextExercise(snapshot: WidgetSnapshot): Map<String,Any?>? {
+  val session = snapshot.session ?: return null
+  if(session["deleted"] == true || session["ended"] == true || session["state"] in setOf("Rest","Skipped","Upcoming","Paused"))return null
+  return (session["steps"] as? List<Map<String,Any?>>).orEmpty().filter { it["completed"] != true }.getOrNull(1)
 }
 
 internal fun selectedRoutineNeedsFooter(snapshot: WidgetSnapshot): Boolean =

@@ -76,7 +76,7 @@ previews, draft-only first-routine defaults, explicit empty/rest states and boun
 compact content with quieter secondary actions. See the maintained widget contract.
 The 17 October correction supersedes Resume-only navigation: the sole primary
 widget action completes the displayed exercise in place, with conditional Undo/
-Retry and expanded-only Next. Setup/picker use curated examples in the current
+Retry. Setup/picker use curated examples in the current
 theme. Saved plan edits take effect immediately in today's open session while
 closed history remains frozen; History moves outside routine overflow menus.
 The later 17 October progress/action correction matches widget fill/track to app
@@ -91,6 +91,10 @@ geometry, with clearly dimmed disabled ink. Setup and production share the sizin
 The subsequent owner correction allows repeated widget Undo, newest completion
 first, throughout the current dated session. Each instance retains only its own
 still-valid completion identities; the compact control and native guards stay the same.
+The next reference refinement removes the visible exercise ordinal, shows the
+localized full weekday at top right, and adds quiet bottom-left Next context in
+compact Focus. Full date/position remain accessible and native action identities
+stay dated. The existing theme, Done/Undo and scaled-text fallbacks remain.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

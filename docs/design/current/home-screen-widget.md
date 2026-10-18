@@ -14,7 +14,7 @@ whose original alert is overdue. Local Calendar imports participate as ordinary
 reminders; the widget never fetches Calendar content. Show at most 20 reminder
 rows with the accurate total and View Agenda. Rows open existing Details.
 
-Focus shows the selected routine, explicit date, numerical daily progress, first
+Focus shows the selected routine, localized full weekday, numerical daily progress, first
 unfinished exercise and its target, with a 4 dp segmented (up to 12 exercises) or
 continuous bar alongside the numeric count. The owner's 17 October clarification
 supersedes Resume-only navigation: **Done** is the single filled primary button,
@@ -56,10 +56,12 @@ Today/recovery needs a footer), and 300×440 expanded compositions.
 Use a single opaque reading surface, system outer corners and 12 dp internal
 padding. No nested routine card or weighted gap above a bottom action.
 
-The compact hierarchy is Classic/Remilo plus weekday/date (14 sp), routine title
+The compact hierarchy is Classic/Remilo plus full weekday (14 sp), routine title
 (22 sp), segmented progress and numeric count (14 sp), exercise (18 sp) and target
-(14 sp). The exercise name starts with its separate original plan ordinal,
-preserved even when the name truncates. Done is the sole filled 56 dp primary action at the trailing edge,
+(14 sp). Show the authored exercise name without an added ordinal prefix. Keep
+its original position in the accessible exercise description. The full localized
+date remains in the accessible widget description and exact-session destination.
+Done is the sole filled 56 dp primary action at the trailing edge,
 with current 16 dp button corners, an 80 dp minimum width and a full accessible
 exercise-specific label. Its unfilled 20 dp Undo glyph sits immediately to its
 left, with an 8 dp gap and at least a 48 dp target. Keep 12 dp between exercise
@@ -72,10 +74,12 @@ regardless of their native/Glance wrapper. The target remains at least 48 dp and
 does not change position or graphic size with eligibility. Disabled Undo
 exposes disabled state and carries no callback. After final completion, hide Done
 while keeping eligible Undo in its established slot. A healthy compact Focus has
-no reserved footer strip or permanent Refresh. No Next in compact. Expanded
-Routine adds upcoming exercises with the first labelled Next; expanded Today
-adds Next and the native reminder list. Compact Today retains its accurate
-Agenda link/count.
+no reserved action footer strip or permanent Refresh. Compact Routine shows one
+quiet 14 sp Next line below the exercise/action row, aligned to the left gutter.
+Compact Today places Next at bottom left and the accurate Agenda link/count at
+bottom right, inside its existing 48 dp footer. Expanded Routine retains upcoming
+exercises with a quiet Next label on the first; expanded Today adds Next and the
+native reminder list. Never repeat the same Next line in one composition.
 
 In Today/expanded layouts, recovery state uses the 48 dp footer: Retry binds the original
 uncertain operation; eligible named Undo beside Done corrects the latest remaining widget completion;
@@ -88,7 +92,14 @@ intrinsic-height labels in the measured action boxes; never stretch a footer
 TextView to fill a parent. Compact Today without a routine shows one complete
 reminder row; expanded Today retains the scrollable native results. Do not show
 partially obscured rows behind View Agenda. Use 12 dp after the title and 16 dp
-after progress before the exercise/action row. Rest days show Rest day once,
+after progress before the exercise/action row in expanded views. Compact Focus
+uses 4 dp after the header and title, 12 dp after progress and 2 dp before Next, preserving
+the 200 dp interactive footprint and full 56/48 dp controls. Budget native text
+metrics for all lines and fall back when they cannot fit. Next is one supporting
+line, may ellipsize the authored name at its end, and retains the full accessible
+name. It names the next unfinished exercise in the current session, skipping
+checked rows. Hide it on the last exercise and in rest/skipped/ended/unavailable
+or compact recovery/summary views. Rest days show Rest day once,
 No exercises scheduled today and a neutral View routine action, without Resume
 or Done. Completed/skipped/ended sessions similarly show their native outcome.
 Real empty Today widgets show No reminders for today, a short explanation and
@@ -109,7 +120,7 @@ controls. At 1.2–1.6, interactive Focus requires expanded height and omits sec
 lists. Intermediate text scales also require at least 24 + 164 × fontScale dp
 height for interactive content (210 with a selected-routine footer). Require at
 least 128 scaled dp for the exercise column, scaled action widths and complete
-count/ordinal; otherwise use summary. Use exact available widget dimensions rather than
+count and targets; otherwise use summary. Use exact available widget dimensions rather than
 assuming launcher cells provide a particular height. Scale actions/text, keep 56/48 dp targets, and prioritize identity/outcome
 in very small summaries. No text shrinking. EN/ZH use the same anatomy.
 
@@ -182,7 +193,7 @@ earlier history. Widget history remains excluded from portable backup.
 Refresh after native changes and user actions, on resize/reconfiguration and
 recovery/unlock/language/clock changes, with coalesced background work, a requested
 next civil/atmosphere boundary and a 30-minute recovery opportunity. Android may
-defer background work. Explicit dates and native stale-action rejection remain
+defer background work. Exact dated identities and native stale-action rejection remain
 required even while the launcher retains cached pixels. Routine completion uses
 the existing native receipt/revision guards; Refresh appears only after a known failure.
 No exact-midnight display guarantee is made.

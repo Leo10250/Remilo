@@ -780,7 +780,14 @@ also budgets header/title and Agenda footer; small actual hosts fall back to
 summary. A fixed 56 dp text row no longer clips the reminder time.
 WidgetSizing shares interactive and selected-routine-footer preview heights with
 production breakpoints and increases setup height for scaled text. Healthy Focus
-has no footer. Done invokes the native callback with its captured descriptor;
+has no action footer. Its compact Next line shares the left gutter and has a
+native-font height budget; compact Today puts Next and Agenda in its existing
+footer. Expanded views retain one Next label with upcoming content. Next is
+derived from the same session's second unfinished stable step, never tomorrow's
+plan. No visible ordinal is added to the exercise name. The header formats the
+projection date as a full localized weekday; the complete localized date and
+exercise position remain accessible. Routes/descriptors still carry exact dates.
+Done invokes the native callback with its captured descriptor;
 there is no ambiguous Resume navigation button. A reserved unfilled 48 dp Undo
 target precedes trailing Done, disabled without an eligible descriptor and held
 in place after final completion. Interactive Focus requires 300×200 dp at normal

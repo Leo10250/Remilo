@@ -9,7 +9,9 @@ import java.time.format.FormatStyle
 import java.util.Date
 
 internal object WidgetText {
-  fun date(context: Context, value: String): String = runCatching { LocalDate.parse(value).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+  fun weekday(context: Context, value: String): String = runCatching { LocalDate.parse(value).format(DateTimeFormatter.ofPattern("EEEE",
+    PresentationLanguage.context(context).resources.configuration.locales[0])) }.getOrDefault("")
+  fun date(context: Context, value: String): String = runCatching { LocalDate.parse(value).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
     .withLocale(PresentationLanguage.context(context).resources.configuration.locales[0])) }.getOrDefault("")
   fun reminder(context: Context, row: Map<String, Any?>): String {
     val localized = PresentationLanguage.context(context)

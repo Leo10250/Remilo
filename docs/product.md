@@ -334,7 +334,8 @@ The Android home-screen widget supports independent Routine Focus and Today
 configurations. Focus offers the first unfinished exercise, target, daily count,
 one primary Done action that completes the displayed exercise directly in the
 native session, advances after confirmation and offers named Undo. Exercise text
-uses a separate original ordinal to distinguish otherwise similar exercises.
+shows the authored name without an added number. The header shows the localized
+full weekday; the full date and original exercise position remain accessible.
 Compact unfilled Undo sits to the left of trailing Done, with a reserved disabled
 slot before eligibility. Enabled/disabled Undo has identical glyph size; disabled
 is clearly dimmed neutral ink and cannot act. Undo can reverse multiple completions
@@ -364,7 +365,10 @@ drafts default to the first available routine; saved unavailable selections neve
 retarget automatically. Real empty widgets explain their state and open Agenda.
 Compact Today shows one full reminder row or the selected routine's focused
 exercise, with primary Done. Healthy Focus has no reserved action footer or
-permanent Refresh. Next exercise appears only in expanded layouts; actual failed
+permanent Refresh. A quiet bottom-left line identifies the next unfinished
+exercise in compact and expanded Focus; compact Today shares its footer with
+the trailing Agenda link. Last/terminal/summary/compact recovery views omit Next.
+Actual failed
 loads/conflicts or captured uncertain actions expose their recovery control.
 Rest days show one outcome and View routine without exercise completion controls.
 
@@ -541,7 +545,7 @@ without cropping and stored privately as an immutable normalized image. The full
 composition is retained, with bounded resolution and metadata removed. Photo
 changes apply immediately to today's open session and closed history retains its original image. Portable format 7
 archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
-The widget prefers compact wide placement and uses Done, explicit date,
+The widget prefers compact wide placement and uses Done, a full weekday header,
 numeric progress and native stale-action protection. Undo reverses the current
 widget's remaining eligible completions in reverse order; Retry appears only for
 an uncertain action. History is outside routine More,
