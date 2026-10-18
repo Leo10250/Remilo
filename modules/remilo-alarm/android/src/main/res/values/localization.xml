@@ -26,7 +26,8 @@
   <string name="l10n_routine_image_generic_help">Add your own photo or choose an illustration.</string>
   <string name="l10n_routine_exercise_library">Exercise illustrations</string>
   <string name="l10n_routine_step_editor">Edit step</string>
-  <string name="l10n_routine_schedule">Schedule</string>
+  <string name="l10n_routine_schedule">Date and time</string>
+  <string name="l10n_routine_weekly_plan">Weekly plan</string>
   <string name="l10n_routine_days">Days</string>
   <string name="l10n_routine_choose_days">Choose days</string>
   <string name="l10n_routine_every_day">Every day</string>

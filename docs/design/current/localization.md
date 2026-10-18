@@ -91,6 +91,12 @@ individual movement with the whole activity.
 | Exact-alarm permission | 精确闹钟, with plain help about on-time ringing |
 | Database schema diagnostics | 内容数据库版本 / 提醒数据库版本 |
 
+The owner's subsequent weekday-builder correction takes precedence for that
+group: use 每周安排 as its heading and 步骤 in every weekday count, including the
+Exercise preset. Do not use 动作 for this group or its counts. The lower timing
+section is 日期与时间. Individual exercise-form vocabulary has a different scope
+from this weekday arrangement.
+
 Prefer clear scope and outcomes over 原生验证, 终态, 钟面时间, 训练焦点 or
 “写入” in user-facing recovery. Retry wording refers to the captured request
 (此次操作), never a replacement operation. Use one consistent neutral/direct

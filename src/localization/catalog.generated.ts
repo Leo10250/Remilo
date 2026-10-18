@@ -26,7 +26,8 @@ export const catalogs = {
     "routine_image_generic_help": "Add your own photo or choose an illustration.",
     "routine_exercise_library": "Exercise illustrations",
     "routine_step_editor": "Edit step",
-    "routine_schedule": "Schedule",
+    "routine_schedule": "Date and time",
+    "routine_weekly_plan": "Weekly plan",
     "routine_days": "Days",
     "routine_choose_days": "Choose days",
     "routine_every_day": "Every day",
@@ -2290,7 +2291,8 @@ export const catalogs = {
     "routine_image_generic_help": "添加自己的照片或选择插图。",
     "routine_exercise_library": "动作插图",
     "routine_step_editor": "编辑步骤",
-    "routine_schedule": "安排",
+    "routine_schedule": "日期与时间",
+    "routine_weekly_plan": "每周安排",
     "routine_days": "重复",
     "routine_choose_days": "选择星期",
     "routine_every_day": "每天",
@@ -4546,6 +4548,7 @@ export interface MessageArguments {
   routine_exercise_library: Record<string, never>;
   routine_step_editor: Record<string, never>;
   routine_schedule: Record<string, never>;
+  routine_weekly_plan: Record<string, never>;
   routine_days: Record<string, never>;
   routine_choose_days: Record<string, never>;
   routine_every_day: Record<string, never>;

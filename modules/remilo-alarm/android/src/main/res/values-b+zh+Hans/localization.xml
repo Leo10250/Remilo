@@ -26,7 +26,8 @@
   <string name="l10n_routine_image_generic_help">添加自己的照片或选择插图。</string>
   <string name="l10n_routine_exercise_library">动作插图</string>
   <string name="l10n_routine_step_editor">编辑步骤</string>
-  <string name="l10n_routine_schedule">安排</string>
+  <string name="l10n_routine_schedule">日期与时间</string>
+  <string name="l10n_routine_weekly_plan">每周安排</string>
   <string name="l10n_routine_days">重复</string>
   <string name="l10n_routine_choose_days">选择星期</string>
   <string name="l10n_routine_every_day">每天</string>

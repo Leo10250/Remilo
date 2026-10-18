@@ -110,6 +110,8 @@ Chinese selection and Chinese typography across app and native presentation.
 The [18 October wording review](localization.md#simplified-chinese-wording-review--owner-correction-18-october-2026)
 requires context-sensitive Chinese: fitness items are 动作, general items 步骤,
 routine destinations 日常计划 and private calendar publication 添加到日历.
+The later weekday-builder correction uses 每周安排, neutral 步骤 counts in both
+presets, and 日期与时间 for the lower settings group.
 Preserve authored content, native behavior and current visual style.
 
 The owner's 18 October confirmation approval replaces app-owned native alerts

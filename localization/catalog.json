@@ -152,10 +152,16 @@
       "context": "Generic routines"
     },
     "routine_schedule": {
-      "en": "Schedule",
-      "zh-Hans": "安排",
+      "en": "Date and time",
+      "zh-Hans": "日期与时间",
       "args": {},
-      "context": "Generic routines"
+      "context": "Routine editor timing settings; distinct from the weekday content arrangement."
+    },
+    "routine_weekly_plan": {
+      "en": "Weekly plan",
+      "zh-Hans": "每周安排",
+      "args": {},
+      "context": "Weekday-grouped routine content, regardless of preset. Weekday rows count steps, not fitness movements."
     },
     "routine_days": {
       "en": "Days",

@@ -3,13 +3,16 @@
 ## Chinese wording review — 18 October 2026
 
 Check all owned catalogs and hardcoded presentation for Simplified Chinese usage,
-not only the routine screenshot. Exercise list/form/counts use 动作, the optional
+not only the routine screenshot. Individual Exercise fields use 动作, the optional
 preset 锻炼 and General items 步骤. Generic routine widgets/setup/actions must not
 become training-only or calendar 日程. Verify weekday versus Monday–Friday scope,
 Calendar 添加 versus ongoing 同步, 未完成 versus navigation 打开/Trash 恢复,
 consistent 回收站 and natural pending/uncertain feedback with exact captured retries.
 Check complete count/unit labels and Chinese punctuation, backup archive/privacy
 disclosures and unchanged authored values/English historical status recognition.
+The later weekday-builder correction uses 每周安排 and step counts (4 个步骤)
+for both presets, with 日期与时间 below. Verify the grouping/counts never say 动作,
+shared sequences still show their content heading, and navigation/draft state stays.
 Render app and native widget surfaces with both presets, Chinese/English, long
 names, all appearance pairs and large text. Existing catalog, shared/native/lint
 checks and signed assembly apply; phone TalkBack, IME, OEM fonts and launcher

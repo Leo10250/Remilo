@@ -45,7 +45,12 @@ at least one scheduled day with named steps; avoid initial validation errors.
 Different steps by day switches the entire routine to independent selected weekdays,
 preserving current IDs/content. Selected-day rows open scoped drafts; newly selected
 days are empty with Add step/Copy steps from. Days is the only scheduling control;
-there is no Workout/Rest selector in child editors. Unsaved off/on caches content/IDs;
+there is no Workout/Rest selector in child editors.
+The weekday-grouped content heading is Weekly plan / 每周安排; its rows show
+step counts (e.g. 4 个步骤) for both presets, never 动作. The lower timing settings
+heading is Date and time / 日期与时间. These labels distinguish content arrangement
+from timing without changing existing connected surfaces, spacing or themes.
+Unsaved off/on caches content/IDs;
 saved unscheduled days remain empty Rest data. If authored content exists only in
 an unscheduled draft, require selecting
 a source day before changing arrangement; never silently erase that cached content.

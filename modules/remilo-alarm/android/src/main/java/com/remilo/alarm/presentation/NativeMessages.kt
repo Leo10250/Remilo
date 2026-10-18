@@ -29,6 +29,7 @@ object NativeMessages {
   fun routine_exercise_library(): L10n.Message = L10n.Message("routine_exercise_library")
   fun routine_step_editor(): L10n.Message = L10n.Message("routine_step_editor")
   fun routine_schedule(): L10n.Message = L10n.Message("routine_schedule")
+  fun routine_weekly_plan(): L10n.Message = L10n.Message("routine_weekly_plan")
   fun routine_days(): L10n.Message = L10n.Message("routine_days")
   fun routine_choose_days(): L10n.Message = L10n.Message("routine_choose_days")
   fun routine_every_day(): L10n.Message = L10n.Message("routine_every_day")

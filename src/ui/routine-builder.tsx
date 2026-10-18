@@ -45,10 +45,10 @@ export function RoutineBuilderFields({ value, onChange, disabled = false }: { va
     else setSource({ target: null, day: null });
   };
   return <View style={{ gap: 12 }}>
-    <ConnectedGroup title={t(general ? 'routine_steps' : 'routine_sequence')}>
+    <ConnectedGroup title={t(shared ? general ? 'routine_steps' : 'routine_sequence' : 'routine_weekly_plan')}>
       {shared ? value.sharedSteps.map((step, i) => <RoutineBuilderStepRow key={step.id} exercise={step} position={i} total={value.sharedSteps.length} disabled={disabled} onPress={() => open(-1, step.id)} />) : active.map(index => {
         const steps = value.days[index].exercises;
-        return <SettingRow key={index} intent="navigation" minHeight={64} label={t(routineDayKeys[index])} value={t(general ? 'routine_step_count' : 'routine_exercise_count', { count: steps.length })}
+        return <SettingRow key={index} intent="navigation" minHeight={64} label={t(routineDayKeys[index])} value={t('routine_step_count', { count: steps.length })}
           description={steps.slice(0, 2).map(step => step.name).join(' · ') || t('routine_first_step')} disabled={disabled} onPress={() => open(index)} />;
       })}
     </ConnectedGroup>
