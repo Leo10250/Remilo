@@ -1,5 +1,6 @@
 <ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
  android:id="@+id/widget_undo_disabled" android:layout_width="match_parent" android:layout_height="match_parent"
- android:minWidth="48dp" android:minHeight="48dp" android:padding="14dp" android:src="@drawable/widget_undo"
+ android:minWidth="48dp" android:minHeight="48dp" android:padding="12dp" android:src="@drawable/widget_undo_frame"
  android:background="@android:color/transparent" android:scaleType="centerInside" android:enabled="false"
- android:clickable="false" android:focusable="false" android:importantForAccessibility="yes" />
+ android:clickable="false" android:focusable="false" android:importantForAccessibility="yes"
+ android:contentDescription="@string/l10n_widget_undo_unavailable" />

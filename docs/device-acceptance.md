@@ -1028,6 +1028,10 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   Notification callbacks before unlock, Snooze, Pause and stale delivery fencing.
 - Open History from its visible routine-screen row; it is absent from More.
 - Compare the widget's filled/unfinished colors with Agenda in all eight pairs.
+  Confirm reminder time (including 09:00) is completely visible in Today setup and
+  the placed widget with the phone's font and text size. Enabled and disabled
+  Undo must have identical graphic size/position; disabled is visibly dimmed and
+  does not respond. Check their states in all eight appearance pairs.
   A 4/7 example has exactly seven segments and four filled. Check separate exercise
   ordinal, immediate disabled submission, delayed Saving only for slow operations,
   brief confirmation and the next exercise without waiting for that mark to clear.

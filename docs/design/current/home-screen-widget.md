@@ -61,7 +61,13 @@ preserved even when the name truncates. Done is the sole filled 56 dp primary ac
 with current 16 dp button corners, an 80 dp minimum width and a full accessible
 exercise-specific label. Its unfilled 20 dp Undo glyph sits immediately to its
 left, with an 8 dp gap and at least a 48 dp target. Keep 12 dp between exercise
-text and actions. Enabled Undo uses onSurfaceVariant; disabled uses disabledInk,
+text and actions. Enabled Undo uses opaque onSurfaceVariant; disabled uses the
+same neutral ink at 38% image opacity, clearly dimmer in every appearance pair.
+Do not use opaque disabledInk for this standalone glyph: that role belongs on a
+disabled container and is too similar to enabled neutral ink here. Both states
+use the same 20 dp glyph within one shared 24 dp drawable frame (2 dp inset),
+regardless of their native/Glance wrapper. The target remains at least 48 dp and
+does not change position or graphic size with eligibility. Disabled Undo
 exposes disabled state and carries no callback. After final completion, hide Done
 while keeping eligible Undo in its established slot. A healthy compact Focus has
 no reserved footer strip or permanent Refresh. No Next in compact. Expanded
@@ -85,6 +91,16 @@ No exercises scheduled today and a neutral View routine action, without Resume
 or Done. Completed/skipped/ended sessions similarly show their native outcome.
 Real empty Today widgets show No reminders for today, a short explanation and
 View Agenda; no example reminders appear on the home screen.
+
+The owner's later 17 October clipping correction removes the fixed 56 dp
+reminder-row text budget. Reserve both complete text lines, 16 dp vertical
+padding and current 24/20 sp line-height budgets scaled with text. Use native
+font top/bottom metrics when taller. Setup and production share this measurement
+for the Today minimum height, including header/title and the full Agenda footer.
+Grow the example preview to fit; an actually smaller launcher uses summary
+instead of cutting off the time. Inspect the entire time's glyph bounds and
+clipping ancestors, not only the Agenda action. Expanded rows use the same
+measurement with their existing larger minimum.
 
 Summary sizes and font scale 1.6+ open the exact dated session instead of squeezing
 controls. At 1.2–1.6, interactive Focus requires expanded height and omits secondary

@@ -755,6 +755,10 @@ Production uses Glance SizeMode.Exact; setup supplies the measured dp width and
 height to the same composition and fills its RemoteViews host explicitly. Fixed
 footer actions remain outside bounded list content; compact Today renders one
 complete reminder row, while expanded native collections remain scrollable.
+WidgetSizing budgets both reminder text lines using native font top/bottom
+metrics and scaled line-height floors, plus padding. Today minimum/preview height
+also budgets header/title and Agenda footer; small actual hosts fall back to
+summary. A fixed 56 dp text row no longer clips the reminder time.
 WidgetSizing shares interactive and selected-routine-footer preview heights with
 production breakpoints and increases setup height for scaled text. Healthy Focus
 has no footer. Done invokes the native callback with its captured descriptor;
@@ -762,6 +766,11 @@ there is no ambiguous Resume navigation button. A reserved unfilled 48 dp Undo
 target precedes trailing Done, disabled without an eligible descriptor and held
 in place after final completion. Interactive Focus requires 300×200 dp at normal
 text and wider/scaled budgets thereafter; Today/recovery uses a separate footer.
+Undo's enabled Glance and inert native paths share one 24 dp drawable frame with
+a 20 dp inner glyph. Disabled uses the same neutral tint with image alpha 97/255;
+it never swaps to an opaque disabled text color or a differently sized graphic.
+The inactive native control has a localized XML description plus the runtime
+named label and disabled state, with no attached callback.
 Only known failures expose Refresh. Native app/widget completion commits drive
 the same projections; no progress or scheduling ownership changes.
 An explicit successful refresh acknowledges only that instance's saved conflict

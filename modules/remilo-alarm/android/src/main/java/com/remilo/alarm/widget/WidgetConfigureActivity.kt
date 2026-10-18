@@ -89,7 +89,7 @@ class WidgetConfigureActivity : ComponentActivity() {
     LaunchedEffect(mode, routineId, loaded) { if (loaded) try { refresh() }
       catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
       catch (_: Exception) { error = "This view changed. Review the refreshed routine." } }
-    val previewHeight = WidgetSizing.previewHeight(preview,expandedPreview,previewDensity.fontScale)
+    val previewHeight = WidgetSizing.previewHeight(this@WidgetConfigureActivity,preview,expandedPreview,previewDensity.fontScale)
     LaunchedEffect(preview,previewHeight,previewWidth,previewAttempt) {
       val snapshot = preview ?: return@LaunchedEffect
       previewFailed = false

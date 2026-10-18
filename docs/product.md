@@ -336,7 +336,10 @@ one primary Done action that completes the displayed exercise directly in the
 native session, advances after confirmation and offers named Undo. Exercise text
 uses a separate original ordinal to distinguish otherwise similar exercises.
 Compact unfilled Undo sits to the left of trailing Done, with a reserved disabled
-slot before eligibility. Saving appears only for a pending action after 250 ms;
+slot before eligibility. Enabled/disabled Undo has identical glyph size; disabled
+is clearly dimmed neutral ink and cannot act. Reminder rows and setup previews
+fit both complete name/time lines with native text metrics; undersized placed
+widgets use summary rather than clipping the time. Saving appears only for a pending action after 250 ms;
 a brief check acknowledges confirmed native progress without delaying the next
 valid action. Progress uses the app's accent/soft roles, with exactly one segment
 per exercise through twelve and continuous fill above twelve. Exercise text

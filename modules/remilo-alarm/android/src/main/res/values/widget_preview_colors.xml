@@ -6,5 +6,5 @@
  <color name="widget_preview_primary">#175BC4</color>
  <color name="widget_preview_on_primary">#FFFFFF</color>
  <color name="widget_preview_track">#E4EFFA</color>
- <color name="widget_preview_disabled">#55514E</color>
+ <color name="widget_preview_disabled">#4E6173</color>
 </resources>

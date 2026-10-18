@@ -1,5 +1,16 @@
 # Verification and release evidence
 
+The widget phone correction adds complete reminder title/time bounds checks,
+including 09:00 at 100/110/120/150% text, both languages and compact setup widths.
+Check native font padding, row padding, preview height, footer and every clipping
+ancestor. At 200% require the intentional summary. Compare enabled, disabled and
+inert-preview Undo graphic masks/centers in every appearance pair at normal and
+150% text: identical graphic size and target position, full enabled opacity,
+38% disabled image opacity, no disabled mutation listener and disabled semantic
+state. Verify at least 2:1 enabled/disabled rendered-ink distinction as a project
+guard, separately from enabled-control/surface contrast. Physical vendor-font
+and launcher observations remain on the owner checklist.
+
 Widget progress/action/direct-edit checks require actual production RemoteViews,
 not mockups. Cover totals 0/1/4/6/7/10/11/12/13+, zero/partial/full, exactly seven
 segments/four filled for 4/7, primary/container pixel mapping and at least 3:1

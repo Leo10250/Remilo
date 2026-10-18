@@ -48,7 +48,7 @@ import java.time.format.DateTimeFormatter
   val hasRecovery = snapshot.retryToken != null || snapshot.notice != null
   val expanded = size.height >= 440.dp && fontScale <= 1.2f
   val hasFooter = hasRecovery || snapshot.configuration.mode == "Today"
-  val minimumHeight = (24 + (if(selectedRoutineNeedsFooter(snapshot))210 else 164)*fontScale.coerceAtLeast(1f)).dp
+  val minimumHeight = WidgetSizing.minimumHeight(context,snapshot,fontScale).dp
   val minimumWidth = WidgetSizing.minimumWidth(snapshot,fontScale).dp
   val summary = size.width < minimumWidth || size.height < maxOf(WidgetSizing.compactHeight(snapshot).dp,minimumHeight) || fontScale >= 1.6f || fontScale > 1.2f && size.height < 440.dp
   val selected = snapshot.configuration.routineId != null
@@ -73,9 +73,13 @@ import java.time.format.DateTimeFormatter
       AndroidRemoteViews(android.widget.RemoteViews(context.packageName,com.remilo.alarm.R.layout.widget_undo_disabled).apply {
         setBoolean(com.remilo.alarm.R.id.widget_undo_disabled,"setEnabled",false)
         setContentDescription(com.remilo.alarm.R.id.widget_undo_disabled,description)
-        setInt(com.remilo.alarm.R.id.widget_undo_disabled,"setColorFilter",(if(preview && token != null)roles.onSurfaceVariant else roles.disabledInk).toInt())
+        // The disabled glyph is the same neutral ink at 38% opacity, not the
+        // opaque disabled text role intended for a different container.
+        setInt(com.remilo.alarm.R.id.widget_undo_disabled,"setColorFilter",roles.onSurfaceVariant.toInt())
+        setInt(com.remilo.alarm.R.id.widget_undo_disabled,"setImageAlpha",
+          if(preview && token != null && !busy && snapshot.retryToken == null)255 else 97)
       },GlanceModifier.size(actionHeight))
-    } else CircleIconButton(imageProvider = ImageProvider(com.remilo.alarm.R.drawable.widget_undo),
+    } else CircleIconButton(imageProvider = ImageProvider(com.remilo.alarm.R.drawable.widget_undo_frame),
       contentDescription = description,
       onClick = actionRunCallback<WidgetExerciseAction>(actionParametersOf(WidgetExerciseAction.TOKEN to token.orEmpty())),
       modifier = GlanceModifier.size(actionHeight),
@@ -100,7 +104,7 @@ import java.time.format.DateTimeFormatter
     }
   }
   @Composable fun reminder(row: Map<String,Any?>) {
-    Column(GlanceModifier.fillMaxWidth().height(if(expanded)68.dp else 56.dp).padding(vertical = 8.dp)
+    Column(GlanceModifier.fillMaxWidth().height(WidgetSizing.reminderHeight(context,fontScale,expanded).dp).padding(vertical = 8.dp)
       .then(if(preview)GlanceModifier else GlanceModifier.clickable(actionStartActivity(widgetOpen(context,"reminder/${row["id"]}"))))) {
       copy(row["title"] as? String ?: "",medium = true)
       Text(WidgetText.reminder(context,row),style = TextStyle(color = if(row["overdue"] == true)ColorProvider(Color(roles.warning)) else muted,fontSize = 14.sp),maxLines = 1)

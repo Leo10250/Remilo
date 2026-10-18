@@ -76,8 +76,8 @@ class WidgetRenderTest {
     assertEquals(2L,stream.value.projectionEpoch)
     WidgetPresentation.prune(emptySet())
   }
-  private fun render(context: Context, snapshot: WidgetSnapshot, width: Int, height: Int, name: String): View {
-    val remote = runBlocking { WidgetRender(snapshot, preview = false).compose(context, size = DpSize(width.dp,height.dp)) }
+  private fun render(context: Context, snapshot: WidgetSnapshot, width: Int, height: Int, name: String, preview: Boolean = false): View {
+    val remote = runBlocking { WidgetRender(snapshot, preview).compose(context, size = DpSize(width.dp,height.dp)) }
     val parent = FrameLayout(context)
     val view = remote.apply(context, parent); parent.addView(view)
     val density = context.resources.displayMetrics.density
@@ -231,6 +231,65 @@ class WidgetRenderTest {
   private fun descendants(view: View): List<View> = listOf(view) + if(view is ViewGroup)
     (0 until view.childCount).flatMap { descendants(view.getChildAt(it)) } else emptyList()
 
+  @Test fun reminderTimeFitsItsRowAndPreviewAtRealTextScales() {
+    val app=RuntimeEnvironment.getApplication() as Context
+    val previous=android.provider.Settings.System.getString(app.contentResolver,android.provider.Settings.System.TIME_12_24)
+    android.provider.Settings.System.putString(app.contentResolver,android.provider.Settings.System.TIME_12_24,"24")
+    try {
+      for(language in listOf("en","zh-Hans")) for(scale in listOf(1f,1.1f,1.2f,1.5f,2f)) for(width in listOf(300,360)) {
+        val ctx=context(language,scale)
+        val sample=WidgetSetup.example(ctx,"Today",WidgetSnapshot(-1,date="2026-10-17"))
+        val height=WidgetSizing.previewHeight(ctx,sample,false,scale)
+        val root=render(ctx,sample,width,height,"$language-today-time-$width-${(scale*100).toInt()}")
+        if(scale < 1.6f) {
+          assertActionFullyVisible(root,L10n.text(ctx,"Water plants"))
+          assertActionFullyVisible(root,"09:00")
+          assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (1)"))
+        } else assertFalse(text(root).contains("09:00")) // Intentional large-text summary.
+      }
+    } finally { android.provider.Settings.System.putString(app.contentResolver,android.provider.Settings.System.TIME_12_24,previous) }
+  }
+
+  @Test fun undoEnabledDisabledAndPreviewUseTheSameGlyphGeometryAndDistinctOpacity() {
+    fun pixels(view: ImageView): Pair<Rect,Int> {
+      val bitmap=Bitmap.createBitmap(view.width,view.height,Bitmap.Config.ARGB_8888); view.draw(Canvas(bitmap))
+      val bounds=Rect(view.width,view.height,0,0); var alpha=0
+      for(y in 0 until view.height)for(x in 0 until view.width) {
+        val value=android.graphics.Color.alpha(bitmap.getPixel(x,y)); alpha=maxOf(alpha,value)
+        if(value > 0) { bounds.left=minOf(bounds.left,x);bounds.top=minOf(bounds.top,y);bounds.right=maxOf(bounds.right,x+1);bounds.bottom=maxOf(bounds.bottom,y+1) }
+      }
+      bitmap.recycle(); return bounds to alpha
+    }
+    for(scene in listOf("sunrise","sky","evening","night"))for(brightness in listOf("light","dark"))for(scale in listOf(1f,1.5f)) {
+      val ctx=context("en",scale); val roles=AtmosphereTokens.colors(scene,brightness)
+      val sample=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","preview"),appearance=AppearancePolicy.Resolved(scene,brightness))
+      val width=WidgetSizing.minimumWidth(sample,scale); val height=if(scale > 1.2f)440 else 200
+      val disabledRoot=render(ctx,sample,width,height,"undo-$scene-$brightness-${(scale*100).toInt()}-disabled")
+      val enabledRoot=render(ctx,sample.copy(undoToken="undo",undoName="Bird-dog"),width,height,"undo-$scene-$brightness-${(scale*100).toInt()}-enabled")
+      val previewRoot=render(ctx,sample.copy(undoToken="undo",undoName="Bird-dog"),width,height,"undo-$scene-$brightness-${(scale*100).toInt()}-preview",preview=true)
+      val disabled=disabledRoot.findViewById<ImageView>(R.id.widget_undo_disabled)
+      val node=descendants(enabledRoot).first { it.contentDescription?.toString() == "Undo completion of Bird-dog" }
+      val enabled=descendants(node).filterIsInstance<ImageView>().first()
+      val (a,enabledAlpha)=pixels(enabled); val (b,disabledAlpha)=pixels(disabled)
+      assertEquals(255,enabledAlpha); assertEquals(97,disabledAlpha)
+      assertTrue("Undo width changed between states: $a / $b",kotlin.math.abs(a.width()-b.width()) <= 1)
+      assertTrue("Undo height changed between states: $a / $b",kotlin.math.abs(a.height()-b.height()) <= 1)
+      assertEquals(enabled.drawable.intrinsicWidth,disabled.drawable.intrinsicWidth)
+      val enabledBounds=Rect(a).also { (enabledRoot as ViewGroup).offsetDescendantRectToMyCoords(enabled,it) }
+      val disabledBounds=Rect(b).also { (disabledRoot as ViewGroup).offsetDescendantRectToMyCoords(disabled,it) }
+      assertTrue(kotlin.math.abs(enabledBounds.centerX()-disabledBounds.centerX()) <= 1)
+      assertTrue(kotlin.math.abs(enabledBounds.centerY()-disabledBounds.centerY()) <= 1)
+      val (previewBounds,previewAlpha)=pixels(previewRoot.findViewById(R.id.widget_undo_disabled))
+      assertEquals(b.width(),previewBounds.width()); assertEquals(b.height(),previewBounds.height()); assertEquals(255,previewAlpha)
+      assertFalse(disabled.isEnabled); assertFalse(disabled.hasOnClickListeners())
+      assertActionFullyVisible(enabledRoot,"Undo completion of Bird-dog")
+      val faded=androidx.core.graphics.ColorUtils.compositeColors(androidx.core.graphics.ColorUtils.setAlphaComponent(roles.onSurfaceVariant.toInt(),97),roles.surface.toInt())
+      val distinction=androidx.core.graphics.ColorUtils.calculateContrast(roles.onSurfaceVariant.toInt(),faded)
+      assertTrue("Enabled/disabled Undo distinction in $scene-$brightness: $distinction",distinction >= 2)
+      assertTrue(androidx.core.graphics.ColorUtils.calculateContrast(roles.onSurfaceVariant.toInt(),roles.surface.toInt()) >= 3)
+    }
+  }
+
   @Test fun everyProgressSegmentSurvivesAndUsesTheAppColorsAcrossAllEightPairs() {
     for(scene in listOf("sunrise","sky","evening","night")) for(brightness in listOf("light","dark")) {
       val roles=AtmosphereTokens.colors(scene,brightness)
@@ -328,7 +387,7 @@ class WidgetRenderTest {
     for(language in listOf("en","zh-Hans")) for(width in listOf(260,280,300)) for(scale in listOf(1f,1.1f,1.2f,1.5f)) {
       val ctx=context(language,scale)
       val sample=WidgetSetup.example(ctx,"Routine",WidgetSnapshot(-1,date="2026-10-17"))
-      val root=render(ctx,sample,width,WidgetSizing.previewHeight(sample,false,scale),"$language-setup-$width-${(scale*100).toInt()}")
+      val root=render(ctx,sample,width,WidgetSizing.previewHeight(ctx,sample,false,scale),"$language-setup-$width-${(scale*100).toInt()}")
       if(width >= WidgetSizing.minimumWidth(sample,scale)) {
         assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
         assertActionFullyVisible(root,L10n.text(ctx,"Done"))
