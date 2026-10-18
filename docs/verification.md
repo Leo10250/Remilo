@@ -1,5 +1,19 @@
 # Verification and release evidence
 
+Repeated widget Undo checks complete several exercises, then reverse all of them
+one at a time, including after final completion and process restart. Verify the
+next named target, first unfinished exercise, count and enabled state after each
+reversal, and disabled only when no eligible records remain or while submitting.
+Cover the native 100-exercise limit, identical names, interleaved app/independent
+widget changes, stale descriptors, overwritten targets, immediate plan removal/
+reordering/renaming, and Done-after-Undo. Duplicate Done/Undo receipts must neither
+advance nor consume another record. Interrupt Undo at capture/fence/commit and
+before native capture; exact Retry and recovery must preserve the preceding record.
+Check legacy installed one-step state and cached/pending legacy Undo, Skip/Undo
+Skip, Pause, Trash/Restore, configuration/widget-ID restore, midnight and clock
+rollback. Keep the existing geometry/color/accessibility checks. Phone interaction
+and TalkBack remain distinct from native host regression results.
+
 The widget phone correction adds complete reminder title/time bounds checks,
 including 09:00 at 100/110/120/150% text, both languages and compact setup widths.
 Check native font padding, row padding, preview height, footer and every clipping

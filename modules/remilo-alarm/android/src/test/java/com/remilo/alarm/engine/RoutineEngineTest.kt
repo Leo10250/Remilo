@@ -175,7 +175,7 @@ class RoutineEngineTest {
   private fun widgetAct(token: String, number: Int = 1) = request { engine.widgetAction(number, token) }
   private fun widgetConfigure(id: String?, mode: String = "Routine", number: Int = 1, revision: Long = 0) = request { engine.configureWidget(number, mode, id, revision) }
 
-  @Test fun widgetDoneAdvancesOnceAndUndoSurvivesFinalExerciseAndRestart() {
+  @Test fun widgetDoneAdvancesOnceAndRepeatedUndoSurvivesFinalExerciseAndRestart() {
     val id = create(); widgetConfigure(id)
     var previous: String? = null
     for (i in 0..3) {
@@ -189,6 +189,156 @@ class RoutineEngineTest {
     assertEquals("Applied", widgetAct(widget().undoToken!!)["status"])
     assertEquals(3, read(id)["completedCount"]); assertNotNull(widget().doneToken)
     assertEquals("Applied", widgetAct(previous!!)["status"]); assertEquals(3, read(id)["completedCount"])
+    for (i in 2 downTo 0) {
+      restart(); val current = widget()
+      assertEquals(steps(read(id))[i]["name"], current.undoName)
+      val undo = current.undoToken!!
+      assertEquals("Applied", widgetAct(undo)["status"])
+      assertEquals("Applied", widgetAct(undo)["status"]) // A replay never pops the preceding completion.
+      assertEquals(i, read(id)["completedCount"])
+    }
+    assertNull(widget().undoToken); assertNotNull(widget().doneToken)
+    assertEquals("Applied", widgetAct(previous)["status"]); assertNull(widget().undoToken)
+    widgetAct(widget().doneToken!!); assertEquals(1,read(id)["completedCount"])
+    widgetAct(widget().undoToken!!); assertEquals(0,read(id)["completedCount"]); assertNull(widget().undoToken)
+  }
+  @Test fun repeatedWidgetUndoKeepsOtherWidgetsAndAppCompletions() {
+    val id = create(); widgetConfigure(id); widgetConfigure(id,number = 2)
+    widgetAct(widget().doneToken!!)
+    widgetAct(widget(2).doneToken!!,2)
+    widgetAct(widget().doneToken!!)
+    command(action(read(id),index = 3,operation = "app:fourth"))
+    assertEquals("Side plank",widget().undoName)
+    widgetAct(widget().undoToken!!); assertEquals("Bird-dog",widget().undoName)
+    widgetAct(widget().undoToken!!); assertNull(widget().undoToken)
+    assertEquals(listOf(false,true,false,true),steps(read(id)).map { it["completed"] })
+    assertEquals("Front plank",widget(2).undoName)
+    widgetAct(widget(2).undoToken!!,2); assertNull(widget(2).undoToken)
+    assertEquals(listOf(false,false,false,true),steps(read(id)).map { it["completed"] })
+  }
+  @Test fun appRecompletionInvalidatesOnlyThatWidgetUndoTargetAndStaleUndoNeverRetargets() {
+    val id = create(); widgetConfigure(id)
+    widgetAct(widget().doneToken!!); widgetAct(widget().doneToken!!)
+    val stale = widget().undoToken!!
+    command(action(read(id),index = 1,done = false,operation = "app:undo-second"))
+    command(action(read(id),index = 1,operation = "app:redo-second"))
+    assertEquals("Rejected",widgetAct(stale)["status"])
+    assertEquals("Bird-dog",widget().undoName)
+    widgetAct(widget().undoToken!!)
+    assertEquals(listOf(false,true,false,false),steps(read(id)).map { it["completed"] })
+    assertNull(widget().undoToken)
+  }
+  @Test fun immediatePlanEditsKeepMatchingUndoIdentitiesAndDropRemovedExercises() {
+    val id = create(); widgetConfigure(id)
+    widgetAct(widget().doneToken!!); widgetAct(widget().doneToken!!)
+    val stale = widget().undoToken!!
+    val days = week().toMutableList()
+    val monday = (days[0]["exercises"] as List<Map<String,Any?>>).toMutableList()
+    monday.removeAt(1); monday[0] = monday[0] + ("name" to "Updated Bird-dog")
+    days[0] = days[0] + ("exercises" to monday.reversed())
+    assertEquals("Applied",command(draft() + mapOf("kind" to "EditRoutine","operationId" to "widget-edit",
+      "routineId" to id,"expectedRevision" to 1,"days" to days))["status"])
+    assertEquals("Rejected",widgetAct(stale)["status"])
+    assertEquals("Updated Bird-dog",widget().undoName)
+    widgetAct(widget().undoToken!!)
+    assertEquals(0,read(id)["completedCount"]); assertNull(widget().undoToken)
+  }
+  @Test fun interruptedRepeatedUndoRecoversExactlyOnceAtEachNativeCheckpoint() {
+    for (stage in listOf("captured","fenced","committed")) {
+      val id = create(operation = "undo-recovery-$stage")
+      widgetConfigure(id,number = 10)
+      repeat(2) { widgetAct(widget(10).doneToken!!,10) }
+      val undo = widget(10).undoToken!!
+      failAt = stage
+      try { widgetAct(undo,10); fail("Expected interruption at $stage") } catch (_: java.util.concurrent.ExecutionException) { }
+      restart(); assertEquals(1,read(id)["completedCount"])
+      assertEquals("Bird-dog",widget(10).undoName); assertNull(widget(10).retryToken)
+      assertEquals("Applied",widgetAct(undo,10)["status"])
+      assertEquals("Bird-dog",widget(10).undoName)
+      widgetAct(widget(10).undoToken!!,10)
+      assertEquals(0,read(id)["completedCount"]); assertNull(widget(10).undoToken)
+      request { engine.removeWidget(10) }
+    }
+  }
+  @Test fun widgetUndoHistorySupportsAllHundredExercisesWithoutDescriptorTruncation() {
+    val days = week().toMutableList()
+    days[0] = mapOf("type" to "Exercises","exercises" to (0 until 100).map {
+      mapOf("id" to "step-$it","name" to "Identical name","target" to "3 × 10","notes" to "","illustration" to "") })
+    val created = command(draft() + mapOf("kind" to "CreateRoutine","operationId" to "hundred-steps",
+      "startsOn" to "2026-10-12","days" to days))
+    val id = (created["routine"] as Map<*,*>)["id"] as String
+    widgetConfigure(id)
+    repeat(100) { widgetAct(widget().doneToken!!) }
+    restart(); assertNull(widget().doneToken)
+    for (i in 99 downTo 0) {
+      val token = widget().undoToken!!
+      assertEquals("Applied",widgetAct(token)["status"])
+      assertEquals(i,read(id)["completedCount"])
+      assertFalse(steps(read(id))[i]["completed"] as Boolean)
+    }
+    assertNull(widget().undoToken)
+    val saved = JSONObject(context.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE).getString("widget:1",null)!!)
+    assertEquals(0,saved.getJSONArray("undoHistory").length())
+    assertTrue(saved.getJSONObject("actions").length() <= 57)
+  }
+  @Test fun installedOneStepWidgetKeepsItsLastUndoAndAddsNewHistory() {
+    val id = create(); widgetConfigure(id)
+    widgetAct(widget().doneToken!!)
+    val prefs = context.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE)
+    val saved = JSONObject(prefs.getString("widget:1",null)!!)
+    val entry = saved.getJSONArray("undoHistory").getJSONObject(0)
+    saved.remove("undoHistory")
+    saved.put("last",JSONObject().put("token",entry.getString("token")).put("stepId",entry.getString("stepId"))
+      .put("date",entry.getString("date")))
+    prefs.edit().putString("widget:1",saved.toString()).commit()
+    restart(); assertEquals("Bird-dog",widget().undoName)
+    widgetAct(widget().doneToken!!); assertEquals("Front plank",widget().undoName)
+    widgetAct(widget().undoToken!!); assertEquals("Bird-dog",widget().undoName)
+    widgetAct(widget().undoToken!!); assertEquals(0,read(id)["completedCount"]); assertNull(widget().undoToken)
+  }
+  @Test fun legacyCapturedUndoAndItsCommittedRecoveryConsumeOnlyTheOriginalTarget() {
+    for (interrupted in listOf(false,true)) {
+      val id = create(operation = "legacy-$interrupted"); widgetConfigure(id,number = 11)
+      widgetAct(widget(11).doneToken!!,11); val undo = widget(11).undoToken!!
+      val prefs = context.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE)
+      val saved = JSONObject(prefs.getString("widget:11",null)!!)
+      val entry = saved.getJSONArray("undoHistory").getJSONObject(0)
+      saved.remove("undoHistory"); saved.put("last",entry)
+      saved.getJSONObject("actions").getJSONObject(undo).remove("undoOf")
+      prefs.edit().putString("widget:11",saved.toString()).commit()
+      if (interrupted) {
+        failAt = "committed"
+        try { widgetAct(undo,11); fail("Expected legacy interruption") } catch (_: java.util.concurrent.ExecutionException) { }
+        restart()
+      } else assertEquals("Applied",widgetAct(undo,11)["status"])
+      assertEquals(0,read(id)["completedCount"]); assertNull(widget(11).undoToken)
+      assertEquals("Applied",widgetAct(undo,11)["status"]); assertNull(widget(11).undoToken)
+      request { engine.removeWidget(11) }
+    }
+  }
+  @Test fun repeatedUndoIsSuspendedBySkipAndDiscardedWhenTheRoutineIsTrashed() {
+    val id = create(); widgetConfigure(id)
+    repeat(2) { widgetAct(widget().doneToken!!) }
+    command(action(read(id),"SkipRoutineDay") - "stepId" - "completed"); assertNull(widget().undoToken)
+    command(action(read(id),"UndoSkipRoutineDay") - "stepId" - "completed"); assertEquals("Front plank",widget().undoName)
+    family(id,"PauseRoutine",1)
+    widgetAct(widget().undoToken!!); assertEquals("Bird-dog",widget().undoName)
+    val stale = widget().undoToken!!
+    family(id,"TrashRoutine",2)
+    assertEquals("Rejected",widgetAct(stale)["status"]); assertNull(widget().undoToken)
+    family(id,"RestoreRoutine",3)
+    assertEquals(1,read(id)["completedCount"]); assertNull(widget().undoToken)
+  }
+  @Test fun yesterdayUndoCannotChangeTodayOrReappearAfterAClockRollback() {
+    val id = create(); widgetConfigure(id)
+    repeat(2) { widgetAct(widget().doneToken!!) }
+    val stale = widget().undoToken!!
+    now = instant("2026-10-13T00:00:00Z")
+    assertEquals("DAY_ENDED",widgetAct(stale)["errorCode"])
+    assertNull(widget().undoToken); assertEquals(0,read(id)["completedCount"])
+    assertEquals(2,read(id,"2026-10-12")["completedCount"])
+    now = instant("2026-10-12T20:00:00Z")
+    assertNull(widget().undoToken); assertEquals(true,read(id)["ended"])
   }
   @Test fun widgetStaleRevisionAndTwoInstancesNeverCompleteAnotherExercise() {
     val id = create(); widgetConfigure(id); widgetConfigure(id, number = 2)

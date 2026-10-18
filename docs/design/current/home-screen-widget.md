@@ -21,8 +21,10 @@ supersedes Resume-only navigation: **Done** is the single filled primary button,
 completing only the displayed exercise directly in the widget through the native
 guarded command. Advance after confirmation; show named Undo after completion,
 including the last exercise. Undo is an unfilled glyph to the left of Done, with
-a reserved 48 dp target; before eligibility it is visibly disabled and has no
-mutation intent. Branding stays in the header. An uncertain action exposes its exact Retry, without
+a reserved 48 dp target. Repeated taps reverse this instance's eligible completions
+newest first, one per confirmed Undo, including after final completion. It becomes
+disabled when none remain (or while an action is pending), with no mutation intent.
+Branding stays in the header. An uncertain action exposes its exact Retry, without
 a new completion target. Tapping exercise text opens its exact dated app session.
 Keep Skip/Pause and full history/correction inside Remilo.
 Rest, Skipped, Completed and Paused follow native session eligibility. Removing a
@@ -76,7 +78,7 @@ adds Next and the native reminder list. Compact Today retains its accurate
 Agenda link/count.
 
 In Today/expanded layouts, recovery state uses the 48 dp footer: Retry binds the original
-uncertain operation; eligible named Undo beside Done corrects the latest widget completion;
+uncertain operation; eligible named Undo beside Done corrects the latest remaining widget completion;
 a conflict/load failure exposes labelled Refresh. Ordinary successful reads,
 empty/rest outcomes and current progress never expose Refresh. A small failed
 widget uses its whole surface to refresh with an accessible recovery description.
@@ -145,7 +147,35 @@ durations are presentation defaults, not universal research thresholds. Timers
 run outside the native worker, with no polling or per-frame launcher animation.
 Newer actions invalidate older timers; date/configuration/session changes fence
 feedback. Process death discards this presentation, while durable receipts and
-descriptors retain progress, one-step Undo and exact uncertain recovery.
+descriptors retain progress, repeated Undo and exact uncertain recovery.
+
+### Repeated Undo — 17 October 2026 correction
+
+Undo is a per-instance history for the current configuration and dated session,
+not a single consumable record. After reversing two mistaken Done actions, a
+4/7 count becomes 3/7 then 2/7. Each confirmed reversal updates progress, the first
+unfinished exercise and the accessible Undo target for the next eligible record.
+Keep the existing compact control to the left of Done, its fixed geometry,
+disabled treatment, submission guard and confirmation feedback. Add no extra UI.
+
+Persist only completion identities in CE widget preferences, never copied checks.
+The native session's latest change for that exact exercise must still be that
+widget's recorded completion. Another surface's changes to the target invalidate
+that record; unrelated exercise changes remain intact. Removed exercises drop
+out, while edits/reordering retaining the stable ID preserve eligible records.
+Mint each Undo against the current session revision and its recorded target;
+a cached stale tap rejects rather than selecting a different history entry.
+
+Retain every eligible completion through the 100-exercise session limit, without
+a time-based expiry or loss on process restart. A confirmed Undo consumes exactly
+its captured completion identity. Duplicate receipt replays cannot consume the
+next record or recreate an undone completion. Pending/uncertain actions retain
+the same descriptor and block new actions until resolved. Date/session changes,
+reconfiguration and widget-ID restore discard the old history; unavailable/trashed
+or ended sessions have no actionable history. Skip suspends actions until undone;
+Pause still follows native eligibility for an existing open day. An installed
+one-step widget retains its last eligible record on upgrade, without inventing
+earlier history. Widget history remains excluded from portable backup.
 
 ## Freshness and privacy
 

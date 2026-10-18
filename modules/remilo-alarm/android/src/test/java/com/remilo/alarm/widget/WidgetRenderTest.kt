@@ -519,4 +519,48 @@ class WidgetRenderTest {
     assertNull(next.retryToken); assertNotNull(next.doneToken); assertNotEquals(original,next.doneToken)
     ctx.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE).edit().clear().commit()
   }
+  @Test fun undoInterruptedBeforeNativeCaptureRetriesItsExactTargetAndPreservesEarlierHistory() {
+    val ctx = RuntimeEnvironment.getApplication() as Context
+    shadowOf(ctx.getSystemService(android.os.UserManager::class.java)).setUserUnlocked(true)
+    val prefs = ctx.getSharedPreferences("remilo-widgets-v1",Context.MODE_PRIVATE)
+    prefs.edit().clear().commit()
+    val at = Instant.parse("2026-10-12T12:00:00Z").toEpochMilli()
+    val date = Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+    var revision = 1L; var interrupt = false
+    val completed = mutableSetOf<String>()
+    val changes = mutableListOf<Map<String,Any?>>()
+    val receipts = mutableSetOf<String>()
+    fun coordinator() = WidgetCoordinator(ctx,{at},{AppearancePolicy.Resolved("sky","light")},{
+      mapOf("date" to date,"occurrenceId" to "occurrence","revision" to revision,"ended" to false,"changes" to changes.toList(),
+        "steps" to listOf("first","second").map { mapOf("id" to it,"name" to it,"completed" to (it in completed)) })
+    },{emptyMap()},{true},{ input ->
+      if(interrupt) { interrupt = false; throw IllegalStateException("Storage unavailable before native capture") }
+      val operation = input["operationId"] as String
+      if(operation !in receipts) {
+        check(input["expectedRevision"] == revision)
+        val step = input["stepId"] as String
+        if(input["completed"] == true)completed.add(step) else completed.remove(step)
+        changes.add(mapOf("id" to operation,"stepId" to step,"completed" to input["completed"]))
+        revision++; receipts.add(operation)
+      }
+      mapOf("status" to "Applied")
+    },{it in receipts})
+    var owner = coordinator(); owner.configure(702,"Routine","plan",0)
+    repeat(2) { owner.act(702,owner.snapshot(702).doneToken!!) }
+    val undo = owner.snapshot(702).undoToken!!
+    interrupt = true
+    try { owner.act(702,undo); fail("Expected interruption") } catch (_: IllegalStateException) { }
+    owner = coordinator() // Process-only owners can be recreated before the same exact Retry.
+    owner.acknowledgeRefresh(702)
+    val pending = owner.snapshot(702)
+    assertEquals(undo,pending.retryToken); assertNull(pending.doneToken); assertNull(pending.undoToken)
+    assertTrue(pending.retryIsUndo); assertEquals("second",pending.retryName)
+    assertEquals(setOf("first","second"),completed)
+    assertEquals("Applied",owner.act(702,undo)["status"])
+    assertEquals("first",owner.snapshot(702).undoName)
+    assertEquals("Applied",owner.act(702,undo)["status"]); assertEquals(setOf("first"),completed)
+    owner.act(702,owner.snapshot(702).undoToken!!)
+    assertTrue(completed.isEmpty()); assertNull(owner.snapshot(702).undoToken)
+    prefs.edit().clear().commit()
+  }
 }

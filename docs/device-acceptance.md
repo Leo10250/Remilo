@@ -1037,6 +1037,12 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   brief confirmation and the next exercise without waiting for that mark to clear.
   Unfilled Undo stays left of trailing Done, has a complete target, is disabled
   without an eligible completion, and remains in its slot after final completion.
+  Complete several exercises, then Undo repeatedly: each confirmed tap reverses
+  the latest remaining completion from that widget, updates the count/exercise
+  and keeps Undo enabled until its eligible history is exhausted. Repeat after
+  final completion and app process restart. Interleave app/other-widget actions;
+  their checks must remain intact. Test repeated/stale taps, uncertain recovery,
+  plan edits, midnight, reconfiguration and Trash without retargeting an old Undo.
   Reconfiguration/midnight/concurrent actions must not retain an old success mark.
 - On today's/future exercise rows, tap pencil + Edit directly: Focus selection and
   scroll remain stable, the exact ID/day fields open, and closing restores focus.

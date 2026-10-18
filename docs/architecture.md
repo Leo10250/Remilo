@@ -723,7 +723,7 @@ union is selected before ordering/counting/pagination, capped at 20 widget rows.
 No reminder delivery, recurrence or progress authority moves into Glance.
 
 The CE `remilo-widgets-v1` preferences contain versioned per-instance configuration,
-captured command descriptors and a last-widget-action identity. AlarmEngine's
+captured command descriptors and per-instance completion identity history. AlarmEngine's
 single worker owns all reads/mutations. Descriptors bind configuration revision,
 date, occurrence, stable exercise ID, expected session revision and operation ID.
 Routine receipts precede stale checks for committed retries. A pending identity
@@ -731,6 +731,25 @@ survives an uncertain outcome; the refreshed widget offers the exact Retry, and 
 committed receipt reconstructs progress/Undo after process death. No copied
 exercise checks, DP content, database migration or portable backup change is added.
 Widget-ID restore copies configuration only and mints fresh action descriptors.
+
+The CE `undoHistory` array stores completion token, stable exercise ID, date,
+occurrence and configuration revision in confirmed order. Snapshot reconciliation
+retains only current, non-ended/non-deleted session entries whose checked exercise's
+latest native change is that recorded widget completion. It selects the newest
+remaining entry and captures a fresh revision-guarded Undo descriptor with an
+`undoOf` completion token. Confirmation removes exactly that entry, exposing the
+preceding eligible completion. Unrelated app/other-widget changes remain intact;
+overwritten or removed targets drop out. Reconfiguration/date/session replacement,
+Trash/unavailability and widget-ID restore discard the history. Skip suspends its
+controls; Pause follows existing open-session eligibility. Retain all eligible
+entries up to the native 100-exercise limit plus 56 bounded stale retry descriptors.
+Pending Undo recovery consumes its captured entry once, including after process
+death. Receipt replay without matching pending state never changes the history.
+An installed legacy `last` entry upgrades to one eligible record using its retained
+descriptor; cached legacy Undo descriptors and pending receipts remain compatible.
+Pending projections also carry the captured action's direction and exercise name
+for accurate Retry confirmation. This presentation metadata never changes its
+descriptor, target or native eligibility.
 
 Native commit/presentation hooks enqueue coalesced WorkManager refreshes without
 depending on bridge observers. Active widgets also retain a 30-minute recovery

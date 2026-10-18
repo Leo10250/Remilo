@@ -2,6 +2,7 @@ package com.remilo.alarm.widget
 
 import android.content.Context
 import com.remilo.alarm.core.AppearancePolicy
+import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
 import java.time.ZoneId
@@ -26,10 +27,33 @@ internal class WidgetCoordinator(context: Context, private val now: () -> Long,
     obj.keys().asSequence().associateWith { key -> obj.get(key).let { value -> when {
       value == JSONObject.NULL -> null; key == "expectedRevision" -> (value as Number).toLong(); else -> value } } }
   }
+  /** Completion identities only; the native session remains the source of checks and eligibility. */
+  private fun history(saved: JSONObject): List<JSONObject> {
+    saved.optJSONArray("undoHistory")?.let { list -> return (0 until list.length()).map { list.getJSONObject(it) } }
+    // Upgrade an installed one-step widget without manufacturing earlier Undo targets.
+    val last = saved.optJSONObject("last") ?: return emptyList()
+    val action = saved.optJSONObject("actions")?.optJSONObject(last.getString("token")) ?: return emptyList()
+    return listOf(completion(last.getString("token"), action))
+  }
+  private fun completion(token: String, action: JSONObject): JSONObject {
+    val input = action.getJSONObject("command")
+    return JSONObject().put("token", token).put("stepId", input.getString("stepId"))
+      .put("date", input.getString("date")).put("occurrenceId", input.getString("occurrenceId"))
+      .put("configurationRevision", action.getLong("configurationRevision"))
+  }
+  private fun saveHistory(saved: JSONObject, entries: List<JSONObject>) {
+    saved.put("undoHistory", JSONArray(entries)); saved.remove("last")
+  }
   private fun finish(id: Int, saved: JSONObject, token: String, action: JSONObject) {
-    if (action.getJSONObject("command").getBoolean("completed")) saved.put("last", JSONObject().put("token", token)
-      .put("stepId", action.getJSONObject("command").getString("stepId")).put("date", action.getJSONObject("command").getString("date")))
-    else saved.remove("last")
+    val entries = history(saved)
+    val input = action.getJSONObject("command")
+    if (input.getBoolean("completed")) saveHistory(saved, entries.filter { it.getString("token") != token } + completion(token, action))
+    else {
+      val target = action.optString("undoOf").takeIf { it.isNotEmpty() }
+        ?: entries.lastOrNull { it.getString("stepId") == input.getString("stepId") &&
+          it.getString("occurrenceId") == input.getString("occurrenceId") && it.getString("date") == input.getString("date") }?.getString("token")
+      saveHistory(saved, entries.filter { it.getString("token") != target })
+    }
     saved.remove("pending"); saved.remove("notice"); state.write(id, saved)
   }
   fun act(id: Int, token: String): Map<String, Any?> {
@@ -70,28 +94,38 @@ internal class WidgetCoordinator(context: Context, private val now: () -> Long,
       }
     }
     val waiting = saved?.optString("pending")?.takeIf { it.isNotEmpty() }
+    val waitingCommand = waiting?.let { actions.optJSONObject(it)?.getJSONObject("command") }
     val steps = session?.get("steps") as? List<Map<String, Any?>> ?: emptyList()
     val eligible = saved != null && waiting == null && session?.get("occurrenceId") != null && session["ended"] != true &&
       session["deleted"] != true && session["skipped"] != true && session["date"] == date
-    fun descriptor(step: Map<String, Any?>?, completed: Boolean): String? {
+    val changes = session?.get("changes") as? List<Map<String, Any?>> ?: emptyList()
+    val entries = saved?.let(::history).orEmpty().filter { entry ->
+      entry.getLong("configurationRevision") == config.revision && entry.getString("date") == date && session?.get("date") == date &&
+        entry.getString("occurrenceId") == session?.get("occurrenceId") && session?.get("ended") != true && session?.get("deleted") != true &&
+        steps.any { it["id"] == entry.getString("stepId") && it["completed"] == true } &&
+        changes.lastOrNull { it["stepId"] == entry.getString("stepId") }?.let {
+          it["id"] == "widget:${entry.getString("token")}" && it["completed"] == true
+        } == true
+    }
+    fun descriptor(step: Map<String, Any?>?, completed: Boolean, undoOf: String? = null): String? {
       if (!eligible || step == null) return null
       val input = mapOf("kind" to "SetRoutineExercise", "occurrenceId" to session!!["occurrenceId"], "date" to date,
         "stepId" to step["id"], "completed" to completed, "expectedRevision" to session["revision"])
       actions.keys().asSequence().firstOrNull { key -> val a = actions.getJSONObject(key)
-        a.optLong("configurationRevision") == config.revision && command(a) - "operationId" == input }?.let { return it }
+        a.optLong("configurationRevision") == config.revision && command(a) - "operationId" == input &&
+          a.optString("undoOf").takeIf { it.isNotEmpty() } == undoOf }?.let { return it }
       val token = UUID.randomUUID().toString()
-      actions.put(token, JSONObject().put("configurationRevision", config.revision).put("command", JSONObject(input + ("operationId" to "widget:$token"))))
+      actions.put(token, JSONObject().put("configurationRevision", config.revision).put("undoOf", undoOf)
+        .put("command", JSONObject(input + ("operationId" to "widget:$token"))))
       return token
     }
     val done = descriptor(steps.firstOrNull { it["completed"] != true }, true)
-    val last = saved?.optJSONObject("last")?.takeIf { it.optString("date") == date }
-    val undoStep = last?.let { previous -> steps.firstOrNull { it["id"] == previous.optString("stepId") && it["completed"] == true }?.takeIf { step ->
-      val changes = session?.get("changes") as? List<Map<String, Any?>> ?: emptyList()
-      changes.lastOrNull { it["stepId"] == step["id"] }?.get("id") == "widget:${previous.optString("token")}" } }
-    val undo = descriptor(undoStep, false)
+    val undoStep = entries.lastOrNull()?.let { previous -> steps.firstOrNull { it["id"] == previous.getString("stepId") } }
+    val undo = descriptor(undoStep, false, entries.lastOrNull()?.getString("token"))
     if (saved != null) {
-      // Bounded stale descriptors support receipt retries; pending/last/current controls are retained.
-      val keep = listOfNotNull(done, undo, waiting, last?.optString("token")).toSet()
+      saveHistory(saved, entries)
+      // Retain every eligible completion (at most the session's 100 steps), plus bounded stale receipt retries.
+      val keep = (listOfNotNull(done, undo, waiting) + entries.map { it.getString("token") }).toSet()
       actions.keys().asSequence().toList().filter { it !in keep }.dropLast(56).forEach(actions::remove)
       saved.put("actions", actions); state.write(id, saved)
     }
@@ -99,6 +133,8 @@ internal class WidgetCoordinator(context: Context, private val now: () -> Long,
       session["deleted"] != true && steps.any { it["completed"] != true }
     return WidgetSnapshot(id, config, date, appearance(), session, (list["items"] as? List<Map<String, Any?>>).orEmpty().take(20),
       (list["total"] as? Number)?.toInt() ?: 0, done ?: "preview".takeIf { previewDone }, undo, undoStep?.get("name") as? String, waiting,
-      saved?.optString("notice")?.takeIf { it.isNotEmpty() }, configured = saved != null || draft != null)
+      saved?.optString("notice")?.takeIf { it.isNotEmpty() }, configured = saved != null || draft != null,
+      retryIsUndo = waitingCommand?.getBoolean("completed") == false,
+      retryName = steps.firstOrNull { it["id"] == waitingCommand?.getString("stepId") }?.get("name") as? String)
   }
 }

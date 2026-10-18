@@ -48,6 +48,15 @@ class WidgetPresentationTest {
       assertFalse(WidgetPresentation.finish(ticket,response,"Completed Front plank")); assertNull(flow.value.actionFeedback)
     }
   }
+  @Test fun retryFeedbackUsesTheCapturedActionDirectionAndNameInsteadOfCurrentControls() {
+    for(undo in listOf(false,true)) {
+      WidgetPresentation.publish(initial().copy(doneToken=null,undoToken=null,undoName="Earlier completion",
+        retryToken="retry",retryIsUndo=undo,retryName="Captured exercise"))
+      val ticket=WidgetPresentation.begin(1,"retry")!!
+      assertEquals(undo,ticket.undo); assertEquals("Captured exercise",ticket.name)
+      WidgetPresentation.clear(ticket)
+    }
+  }
   @Test fun dateConfigPrivacyAndConcurrentRevisionFenceFeedback() {
     val original=initial()
     for(next in listOf(original.copy(date="2026-10-13"),original.copy(configuration=WidgetConfiguration("Routine","other",2)),

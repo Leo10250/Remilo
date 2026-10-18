@@ -88,6 +88,9 @@ details; these changes preserve the current visual language.
 The next 17 October phone correction makes Today reminder height account for
 both text lines/vendor font metrics and gives both Undo states identical graphic
 geometry, with clearly dimmed disabled ink. Setup and production share the sizing.
+The subsequent owner correction allows repeated widget Undo, newest completion
+first, throughout the current dated session. Each instance retains only its own
+still-valid completion identities; the compact control and native guards stay the same.
 
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.

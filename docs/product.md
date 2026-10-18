@@ -337,7 +337,12 @@ native session, advances after confirmation and offers named Undo. Exercise text
 uses a separate original ordinal to distinguish otherwise similar exercises.
 Compact unfilled Undo sits to the left of trailing Done, with a reserved disabled
 slot before eligibility. Enabled/disabled Undo has identical glyph size; disabled
-is clearly dimmed neutral ink and cannot act. Reminder rows and setup previews
+is clearly dimmed neutral ink and cannot act. Undo can reverse multiple completions
+from that widget's current dated session, newest first, one per tap, including
+after final completion. It remains enabled while eligible records remain and
+survives process restart. Each target must still match that widget's native
+completion; changes from other surfaces are preserved. Date/session/configuration
+changes discard the old history. Reminder rows and setup previews
 fit both complete name/time lines with native text metrics; undersized placed
 widgets use summary rather than clipping the time. Saving appears only for a pending action after 250 ms;
 a brief check acknowledges confirmed native progress without delaying the next
@@ -537,6 +542,7 @@ composition is retained, with bounded resolution and metadata removed. Photo
 changes apply immediately to today's open session and closed history retains its original image. Portable format 7
 archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
 The widget prefers compact wide placement and uses Done, explicit date,
-numeric progress and native stale-action protection. Undo is enabled only after
-an eligible widget completion; Retry appears only for an uncertain action. History is outside routine More,
+numeric progress and native stale-action protection. Undo reverses the current
+widget's remaining eligible completions in reverse order; Retry appears only for
+an uncertain action. History is outside routine More,
 as a visible row on the routine screen.

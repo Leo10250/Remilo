@@ -13,9 +13,9 @@ internal object WidgetPresentation {
     var saving = false
     var confirmedRevision: Long? = null
     var confirmation: String? = null
-    val undo = token == captured?.undoToken
+    val undo = token == captured?.undoToken || (token == captured?.retryToken && captured?.retryIsUndo == true)
     @Suppress("UNCHECKED_CAST")
-    val name = if(undo)captured?.undoName.orEmpty() else
+    val name = if(token == captured?.retryToken)captured?.retryName.orEmpty() else if(undo)captured?.undoName.orEmpty() else
       (captured?.session?.get("steps") as? List<Map<String,Any?>>)?.firstOrNull { it["completed"] != true }?.get("name") as? String ?: ""
   }
   private fun sameContext(a: WidgetSnapshot, b: WidgetSnapshot) = !b.locked && !b.failed && b.configured &&

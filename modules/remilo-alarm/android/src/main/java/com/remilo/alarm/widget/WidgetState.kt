@@ -15,7 +15,7 @@ data class WidgetSnapshot(val id: Int, val configuration: WidgetConfiguration = 
   val retryToken: String? = null, val notice: String? = null, val locked: Boolean = false, val configured: Boolean = true, val failed: Boolean = false,
   val fontScale: Float = 1f, val localeTag: String = "en", val uses24HourClock: Boolean = false,
   val zoneId: String = java.time.ZoneId.systemDefault().id, val projectionEpoch: Long = 0,
-  val actionFeedback: WidgetActionFeedback? = null)
+  val actionFeedback: WidgetActionFeedback? = null, val retryIsUndo: Boolean = false, val retryName: String? = null)
 
 /** CE-only presentation identities. Access exclusively on AlarmEngine's serialized worker. */
 internal class WidgetState(private val context: Context) {
