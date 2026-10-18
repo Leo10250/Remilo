@@ -32,9 +32,9 @@ export function RoutineActions({ target, onClose, onRemoved, onCorrect }: {
     <QueryState loading={plans.isLoading && !!target} error={plans.error} empty={!!target && !plans.isLoading && !plan} emptyMessage={t('routine_load_error')} onRetry={() => void plans.refetch()} />
     <CommandRecovery action={action} />
     <SettingRow intent="action" label={t('routine_open_today')} disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/routine-session', params: { id: target!.id } }))} />
-    <SettingRow intent="action" label={t('routine_edit')} icon="edit" disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/edit', params: { routineId: target!.id } }))} />
+    <SettingRow intent="action" label={t('routine_edit')} icon="edit" disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/routine-edit', params: { routineId: target!.id } }))} />
     <WidgetSetupRow routineId={target?.id} disabled={action.guarded || !plan} onOpen={close} />
-    <SettingRow intent="action" label={t('routine_duplicate')} icon="content_copy" disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/edit', params: { copyRoutine: target!.id } }))} />
+    <SettingRow intent="action" label={t('routine_duplicate')} icon="content_copy" disabled={action.guarded || !plan} onPress={() => navigate(() => router.push({ pathname: '/routine-edit', params: { copyRoutine: target!.id } }))} />
     {day?.occurrenceId && day.totalCount > 0 && !day.ended && !day.skipped && !day.completed && !day.deleted && <SettingRow intent="action" label={t('routine_skip')} icon="block" disabled={action.guarded} onPress={() => {
       void action.execute({ command: { kind: 'SkipRoutineDay', occurrenceId: day.occurrenceId!, date: day.date, expectedRevision: day.revision, operationId: engine().createOperationId() }, success: t('routine_skipped_saved') });
     }} />}

@@ -1,16 +1,422 @@
 {
   "version": 1,
   "messages": {
-    "widget_preview_ordinal_title": { "en": "2. Front plank", "zh-Hans": "2. 平板支撑", "args": {}, "context": "Static widget picker example" },
-    "routine_edit_row": { "en": "Edit exercise {current} of {total}: {name}, {day}", "zh-Hans": "编辑{day}第 {current} 项动作（共 {total} 项）：{name}", "args": { "current": "number", "total": "number", "name": "string", "day": "string" }, "context": "Direct routine exercise editing" },
-    "routine_edit_day_context": { "en": "{day} · Weekly plan", "zh-Hans": "{day} · 每周计划", "args": { "day": "string" }, "context": "Direct routine exercise editing" },
-    "routine_edit_immediate_hint": { "en": "Changes update your weekly plan immediately. Today’s progress is preserved, and past days stay unchanged.", "zh-Hans": "更改将立即更新每周计划，保留今天的进度，过去日期的记录不会改变。", "args": {}, "context": "Direct routine exercise editing" },
-    "routine_edit_unavailable": { "en": "This exercise is no longer in the weekly plan. Close this editor to review the updated routine.", "zh-Hans": "此动作已不在每周计划中。请关闭编辑页面，查看更新后的训练。", "args": {}, "context": "Direct routine exercise editing" },
-    "routine_reload_exercise": { "en": "Reload exercise", "zh-Hans": "重新加载动作", "args": {}, "context": "Direct routine exercise editing" },
-    "widget_undo_completion_named": { "en": "Undo completion of {name}", "zh-Hans": "撤销{name}的完成", "args": { "name": "string" }, "context": "Compact widget Undo" },
-    "widget_undo_unavailable": { "en": "Undo unavailable", "zh-Hans": "当前无法撤销", "args": {}, "context": "Compact widget Undo" },
-    "widget_undid_named": { "en": "Undid completion of {name}", "zh-Hans": "已撤销{name}的完成", "args": { "name": "string" }, "context": "Widget action confirmation" },
-    "widget_saving_progress": { "en": "Saving progress", "zh-Hans": "正在保存进度", "args": {}, "context": "Widget pending action" },
+    "create_title": {
+      "en": "Create",
+      "zh-Hans": "新建",
+      "args": {},
+      "context": "Separate creation"
+    },
+    "create_reminder": {
+      "en": "New reminder",
+      "zh-Hans": "新建提醒",
+      "args": {},
+      "context": "Separate creation"
+    },
+    "create_reminder_help": {
+      "en": "Something to do once or repeatedly.",
+      "zh-Hans": "一次性或重复需要完成的事项。",
+      "args": {},
+      "context": "Separate creation"
+    },
+    "create_routine_help": {
+      "en": "A sequence of steps with fresh progress on scheduled days.",
+      "zh-Hans": "按安排的日期执行一系列步骤，每天重新记录进度。",
+      "args": {},
+      "context": "Separate creation"
+    },
+    "routine_generic_hint": {
+      "en": "Complete the steps on each scheduled day. Progress starts fresh the next day.",
+      "zh-Hans": "在安排的日期完成各个步骤，次日重新记录进度。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_preset": {
+      "en": "Preset",
+      "zh-Hans": "预设",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_general": {
+      "en": "General",
+      "zh-Hans": "通用",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_exercise_preset": {
+      "en": "Exercise",
+      "zh-Hans": "运动",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_general_help": {
+      "en": "Everyday steps, instructions and optional images.",
+      "zh-Hans": "日常步骤、说明及可选图片。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_exercise_preset_help": {
+      "en": "Exercise names, sets/reps/time and exercise illustrations. No sample exercises are added.",
+      "zh-Hans": "动作名称、组数、次数、时长和动作插图。不会添加示例动作。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_steps": {
+      "en": "Steps",
+      "zh-Hans": "步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_add_step": {
+      "en": "Add step",
+      "zh-Hans": "添加步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_first_step": {
+      "en": "Add the first step to your routine.",
+      "zh-Hans": "为日常计划添加第一个步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_name": {
+      "en": "Step name",
+      "zh-Hans": "步骤名称",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_example": {
+      "en": "Read",
+      "zh-Hans": "阅读",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_amount": {
+      "en": "Amount or duration",
+      "zh-Hans": "数量或时长",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_amount_example": {
+      "en": "10 minutes or 1 chapter",
+      "zh-Hans": "10 分钟或 1 章",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_amount_help": {
+      "en": "Add an amount, time or goal when useful.",
+      "zh-Hans": "按需添加数量、时间或目标。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_instructions": {
+      "en": "Instructions",
+      "zh-Hans": "步骤说明",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_instructions_example": {
+      "en": "Read one chapter, then write three notes.",
+      "zh-Hans": "阅读一章，然后记下三条笔记。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_instructions_help": {
+      "en": "Add setup tips or reminders for this step.",
+      "zh-Hans": "添加此步骤的准备提示或注意事项。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_image": {
+      "en": "Step image",
+      "zh-Hans": "步骤图片",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_image_generic_help": {
+      "en": "Add your own photo or choose an illustration.",
+      "zh-Hans": "添加自己的照片或选择插图。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_exercise_library": {
+      "en": "Exercise illustrations",
+      "zh-Hans": "动作插图",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_editor": {
+      "en": "Edit step",
+      "zh-Hans": "编辑步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_schedule": {
+      "en": "Schedule",
+      "zh-Hans": "安排",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_days": {
+      "en": "Days",
+      "zh-Hans": "日期",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_choose_days": {
+      "en": "Choose days",
+      "zh-Hans": "选择星期",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_every_day": {
+      "en": "Every day",
+      "zh-Hans": "每天",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_different_days": {
+      "en": "Different steps by day",
+      "zh-Hans": "每天使用不同步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_shared_hint": {
+      "en": "The same steps are used on every selected day.",
+      "zh-Hans": "每个选定日期使用相同的步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_use_shared": {
+      "en": "Use the same steps",
+      "zh-Hans": "使用相同步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_use_these_steps": {
+      "en": "Use these steps",
+      "zh-Hans": "使用这些步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_replace_days_hint": {
+      "en": "Steps on these days will be replaced when you save: {days}",
+      "zh-Hans": "保存时将替换以下日期的步骤：{days}",
+      "args": {
+        "days": "string"
+      },
+      "context": "Generic routines"
+    },
+    "routine_copy_steps": {
+      "en": "Copy steps from…",
+      "zh-Hans": "复制其他日期的步骤…",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_not_scheduled": {
+      "en": "Not scheduled",
+      "zh-Hans": "未安排",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_no_schedule_today": {
+      "en": "No routine scheduled today",
+      "zh-Hans": "今天未安排此计划",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_no_steps_today": {
+      "en": "There are no steps scheduled for this day.",
+      "zh-Hans": "此日期没有安排步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_required_steps_days": {
+      "en": "Choose at least one day and add a named step on every selected day.",
+      "zh-Hans": "请至少选择一个日期，并为每个选定日期添加已命名的步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_shared_edit_context": {
+      "en": "All scheduled days · Routine",
+      "zh-Hans": "所有安排日期 · 日常计划",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_shared_edit_hint": {
+      "en": "Changes update this step on every scheduled day. Today’s matching progress is preserved; past days stay unchanged.",
+      "zh-Hans": "更改将更新所有安排日期的此步骤，保留今天对应的进度，过去日期保持不变。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_edit_step_row": {
+      "en": "Edit step {current} of {total}: {name}, {day}",
+      "zh-Hans": "编辑{day}第 {current} 个步骤（共 {total} 个）：{name}",
+      "args": {
+        "current": "number",
+        "total": "number",
+        "name": "string",
+        "day": "string"
+      },
+      "context": "Generic routines"
+    },
+    "routine_step_count": {
+      "en": {
+        "one": "{count} step",
+        "other": "{count} steps"
+      },
+      "zh-Hans": {
+        "other": "{count} 个步骤"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Generic routines"
+    },
+    "routine_current_step": {
+      "en": "Current step · {current} of {total}",
+      "zh-Hans": "当前步骤 · 第 {current} 个，共 {total} 个",
+      "args": {
+        "current": "number",
+        "total": "number"
+      },
+      "context": "Generic routines"
+    },
+    "routine_viewing_step": {
+      "en": "Viewing step · {current} of {total}",
+      "zh-Hans": "正在查看 · 第 {current} 个步骤，共 {total} 个",
+      "args": {
+        "current": "number",
+        "total": "number"
+      },
+      "context": "Generic routines"
+    },
+    "routine_completed_step": {
+      "en": "Completed step · {current} of {total}",
+      "zh-Hans": "已完成步骤 · 第 {current} 个，共 {total} 个",
+      "args": {
+        "current": "number",
+        "total": "number"
+      },
+      "context": "Generic routines"
+    },
+    "routine_complete_step": {
+      "en": "Complete step",
+      "zh-Hans": "完成步骤",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_previous_step": {
+      "en": "View previous step",
+      "zh-Hans": "查看上一步",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_step_removed": {
+      "en": "Removed {name}",
+      "zh-Hans": "已移除{name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "Generic routines"
+    },
+    "routine_checks_removed": {
+      "en": "Saving removes {count} checked steps from today. Past days stay unchanged.",
+      "zh-Hans": "保存后将移除今天 {count} 个已勾选步骤，过去日期保持不变。",
+      "args": {
+        "count": "number"
+      },
+      "context": "Generic routines"
+    },
+    "routine_reload": {
+      "en": "Reload routine",
+      "zh-Hans": "重新加载日常计划",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_generic_preview_title": {
+      "en": "Morning routine",
+      "zh-Hans": "晨间计划",
+      "args": {},
+      "context": "Widget sample"
+    },
+    "routine_generic_preview_next": {
+      "en": "Plan the day",
+      "zh-Hans": "规划今天",
+      "args": {},
+      "context": "Widget sample"
+    },
+    "widget_preview_ordinal_title": {
+      "en": "Front plank",
+      "zh-Hans": "平板支撑",
+      "args": {},
+      "context": "Static widget picker example"
+    },
+    "routine_edit_row": {
+      "en": "Edit exercise {current} of {total}: {name}, {day}",
+      "zh-Hans": "编辑{day}第 {current} 项动作（共 {total} 项）：{name}",
+      "args": {
+        "current": "number",
+        "total": "number",
+        "name": "string",
+        "day": "string"
+      },
+      "context": "Direct routine exercise editing"
+    },
+    "routine_edit_day_context": {
+      "en": "{day} · Routine",
+      "zh-Hans": "{day} · 日常计划",
+      "args": {
+        "day": "string"
+      },
+      "context": "Direct routine exercise editing"
+    },
+    "routine_edit_immediate_hint": {
+      "en": "Changes update this weekday immediately. Today’s matching progress is preserved; past days stay unchanged.",
+      "zh-Hans": "更改将立即更新此星期的步骤，保留今天对应的进度，过去日期保持不变。",
+      "args": {},
+      "context": "Direct routine exercise editing"
+    },
+    "routine_edit_unavailable": {
+      "en": "This step is no longer in the routine. Close this editor to review the updated routine.",
+      "zh-Hans": "此步骤已不在日常计划中。请关闭编辑页面查看更新后的计划。",
+      "args": {},
+      "context": "Direct routine exercise editing"
+    },
+    "routine_reload_exercise": {
+      "en": "Reload step",
+      "zh-Hans": "重新加载步骤",
+      "args": {},
+      "context": "Direct routine exercise editing"
+    },
+    "widget_undo_completion_named": {
+      "en": "Undo completion of {name}",
+      "zh-Hans": "撤销{name}的完成",
+      "args": {
+        "name": "string"
+      },
+      "context": "Compact widget Undo"
+    },
+    "widget_undo_unavailable": {
+      "en": "Undo unavailable",
+      "zh-Hans": "当前无法撤销",
+      "args": {},
+      "context": "Compact widget Undo"
+    },
+    "widget_undid_named": {
+      "en": "Undid completion of {name}",
+      "zh-Hans": "已撤销{name}的完成",
+      "args": {
+        "name": "string"
+      },
+      "context": "Widget action confirmation"
+    },
+    "widget_saving_progress": {
+      "en": "Saving progress",
+      "zh-Hans": "正在保存进度",
+      "args": {},
+      "context": "Widget pending action"
+    },
     "m_bf4156d6b15c": {
       "en": "Automatic Calendar sync enabled",
       "zh-Hans": "已启用日历自动同步",
@@ -13227,15 +13633,15 @@
       "calendarStatus": false
     },
     "routine_library_hint": {
-      "en": "Weekly plans with progress for each day",
-      "zh-Hans": "每周计划，每天独立记录进度",
+      "en": "Reusable step sequences with progress for each scheduled day.",
+      "zh-Hans": "可重复使用的步骤序列，按安排的日期记录进度。",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
     },
     "routine_new": {
-      "en": "Add a routine",
-      "zh-Hans": "添加日常计划",
+      "en": "New routine",
+      "zh-Hans": "新建日常计划",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13283,8 +13689,8 @@
       "calendarStatus": false
     },
     "routine_today_only_hint": {
-      "en": "Available all day. Unfinished exercises stay in history at midnight and never become overdue.",
-      "zh-Hans": "全天可用。未完成的练习在午夜转入历史记录，不会逾期。",
+      "en": "Available all day. Unfinished steps stay in history at midnight and never become overdue.",
+      "zh-Hans": "全天可用，午夜后未完成的步骤保留在历史记录中，不会变为逾期。",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13304,8 +13710,8 @@
       "calendarStatus": false
     },
     "routine_shared_time": {
-      "en": "One time for every workout day",
-      "zh-Hans": "所有锻炼日共用一个时间",
+      "en": "One time for every scheduled day",
+      "zh-Hans": "所有安排日期共用一个时间",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13318,8 +13724,8 @@
       "calendarStatus": false
     },
     "routine_changes_immediate": {
-      "en": "Changes apply when you save, including today. Existing exercises keep their checkmarks. Past days stay unchanged.",
-      "zh-Hans": "保存后立即生效，包括今天。保留已有练习的勾选状态，过去的记录不变。",
+      "en": "Changes apply when you save, including today. Matching steps keep their checkmarks. Past days stay unchanged.",
+      "zh-Hans": "更改将在保存时立即生效，包括今天；保留对应步骤的勾选状态，过去日期保持不变。",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13654,8 +14060,8 @@
       "calendarStatus": false
     },
     "routine_edit": {
-      "en": "Edit weekly routine",
-      "zh-Hans": "编辑每周计划",
+      "en": "Edit routine",
+      "zh-Hans": "编辑日常计划",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13717,8 +14123,8 @@
       "calendarStatus": false
     },
     "routine_notification_warning": {
-      "en": "Notifications are unavailable. Exercises remain available in Agenda.",
-      "zh-Hans": "通知不可用，练习仍可在日程中查看。",
+      "en": "Notifications are unavailable. Steps remain available in Agenda.",
+      "zh-Hans": "通知不可用，仍可在日程中完成步骤。",
       "args": {},
       "context": "Weekly routines",
       "calendarStatus": false
@@ -13882,8 +14288,8 @@
       "calendarStatus": false
     },
     "routine_notification_body": {
-      "en": "Your exercises are ready for today.",
-      "zh-Hans": "今日练习已准备好。",
+      "en": "Your routine is ready for today.",
+      "zh-Hans": "今天的日常计划已准备就绪。",
       "args": {},
       "context": "Native routine notification",
       "calendarStatus": false
@@ -13910,8 +14316,8 @@
       "calendarStatus": false
     },
     "routine_day_open_error": {
-      "en": "Use today's exercise controls while this day is open.",
-      "zh-Hans": "当天尚未结束，请使用今日练习控件。",
+      "en": "Use today’s step controls while this day is open.",
+      "zh-Hans": "请在此日期结束前使用今天的步骤控件。",
       "args": {},
       "context": "Routine guarded actions",
       "calendarStatus": false
@@ -13924,8 +14330,8 @@
       "calendarStatus": false
     },
     "routine_action_required": {
-      "en": "Open the routine to update exercise progress.",
-      "zh-Hans": "请打开日常计划来更新练习进度。",
+      "en": "Open the routine to update step progress.",
+      "zh-Hans": "打开日常计划以更新步骤进度。",
       "args": {},
       "context": "Routine guarded actions",
       "calendarStatus": false
@@ -14143,8 +14549,8 @@
       "calendarStatus": false
     },
     "widget_routine_hint": {
-      "en": "One routine's exercise and daily progress.",
-      "zh-Hans": "显示一项训练的动作和每日进度。",
+      "en": "One routine’s steps and daily progress.",
+      "zh-Hans": "一个日常计划的步骤和每日进度。",
       "args": {},
       "context": "Android widget and setup",
       "calendarStatus": false
@@ -14328,8 +14734,8 @@
       "calendarStatus": false
     },
     "routine_day_editor_title": {
-      "en": "{day}’s exercises",
-      "zh-Hans": "{day}的动作",
+      "en": "{day} · Exercises",
+      "zh-Hans": "{day} · 动作",
       "args": {
         "day": "string"
       },
@@ -14344,8 +14750,8 @@
       "calendarStatus": false
     },
     "routine_plan_local_hint": {
-      "en": "Changes are saved when you save the reminder.",
-      "zh-Hans": "保存提醒时才会保存这些更改。",
+      "en": "Changes stay in this draft until you save the routine.",
+      "zh-Hans": "保存日常计划前，更改仅保留在此草稿中。",
       "args": {},
       "context": "Routine editor and dated Focus presentation",
       "calendarStatus": false
@@ -14451,8 +14857,8 @@
       "calendarStatus": false
     },
     "routine_ordinal": {
-      "en": "Exercise {current} of {total}",
-      "zh-Hans": "第 {current} 项动作，共 {total} 项",
+      "en": "{current} of {total}",
+      "zh-Hans": "第 {current} 项，共 {total} 项",
       "args": {
         "current": "number",
         "total": "number"
@@ -14461,8 +14867,8 @@
       "calendarStatus": false
     },
     "routine_daily_finished": {
-      "en": "Today’s exercises completed",
-      "zh-Hans": "今天的动作已全部完成",
+      "en": "All steps completed",
+      "zh-Hans": "所有步骤已完成",
       "args": {},
       "context": "Routine editor and dated Focus presentation",
       "calendarStatus": false
@@ -14603,8 +15009,8 @@
       "calendarStatus": false
     },
     "routine_one_check": {
-      "en": "One check per exercise",
-      "zh-Hans": "每项动作勾选一次",
+      "en": "One check per step",
+      "zh-Hans": "每个步骤勾选一次",
       "args": {},
       "context": "Routine editor and Focus",
       "calendarStatus": false
@@ -14626,8 +15032,8 @@
       "calendarStatus": false
     },
     "routine_focus_announcement": {
-      "en": "Current exercise: {name}. {position} of {total}.",
-      "zh-Hans": "当前动作：{name}。第 {position} 项，共 {total} 项。",
+      "en": "Current step: {name}. {position} of {total}.",
+      "zh-Hans": "当前步骤：{name}。第 {position} 项，共 {total} 项。",
       "args": {
         "name": "string",
         "position": "number",
@@ -14940,8 +15346,8 @@
       "calendarStatus": false
     },
     "routine_undo_capacity_hint": {
-      "en": "A day can have 100 exercises. One space is reserved for Undo until you finish editing this day.",
-      "zh-Hans": "每天最多可添加100项动作。在完成当天编辑前，会为撤销保留一个位置。",
+      "en": "A day can have 100 steps. One space is reserved for Undo until you finish editing this day.",
+      "zh-Hans": "每天最多 100 个步骤，完成此日期的编辑前会为撤销保留一个位置。",
       "args": {},
       "context": "Exercise draft capacity reserved for an explicit removal Undo",
       "calendarStatus": false
@@ -15122,29 +15528,29 @@
       "calendarStatus": false
     },
     "routine_trash_hint": {
-      "en": "Moves this weekly routine and its recorded days to Trash.",
-      "zh-Hans": "将此每周日程及其已记录的日期移至废纸篓。",
+      "en": "Moves this routine and its recorded days to Trash.",
+      "zh-Hans": "将此日常计划及其日期记录移至回收站。",
       "args": {},
       "context": "Routine UI refinement",
       "calendarStatus": false
     },
     "routine_trashed": {
-      "en": "Weekly routine moved to Trash",
-      "zh-Hans": "每周日程已移至废纸篓",
+      "en": "Routine moved to Trash",
+      "zh-Hans": "日常计划已移至回收站",
       "args": {},
       "context": "Routine UI refinement",
       "calendarStatus": false
     },
     "routine_restored": {
-      "en": "Weekly routine restored",
-      "zh-Hans": "每周日程已恢复",
+      "en": "Routine restored",
+      "zh-Hans": "日常计划已恢复",
       "args": {},
       "context": "Routine UI refinement",
       "calendarStatus": false
     },
     "routine_purged": {
-      "en": "Weekly routine permanently deleted",
-      "zh-Hans": "每周日程已永久删除",
+      "en": "Routine permanently deleted",
+      "zh-Hans": "日常计划已永久删除",
       "args": {},
       "context": "Routine UI refinement",
       "calendarStatus": false
@@ -15301,59 +15707,100 @@
     "widget_example_label": {
       "en": "Example preview · Sample content only",
       "zh-Hans": "示例预览 · 仅含示例内容",
-      "args": {}, "context": "Widget setup; sample data is never saved", "calendarStatus": false
+      "args": {},
+      "context": "Widget setup; sample data is never saved",
+      "calendarStatus": false
     },
     "widget_preview_loading": {
-      "en": "Loading preview…", "zh-Hans": "正在加载预览…",
-      "args": {}, "context": "Widget setup preview", "calendarStatus": false
+      "en": "Loading preview…",
+      "zh-Hans": "正在加载预览…",
+      "args": {},
+      "context": "Widget setup preview",
+      "calendarStatus": false
     },
     "widget_preview_error": {
-      "en": "Could not load the preview.", "zh-Hans": "无法加载预览。",
-      "args": {}, "context": "Widget setup preview", "calendarStatus": false
+      "en": "Could not load the preview.",
+      "zh-Hans": "无法加载预览。",
+      "args": {},
+      "context": "Widget setup preview",
+      "calendarStatus": false
     },
     "widget_empty_help": {
-      "en": "Today's and overdue reminders will appear here.", "zh-Hans": "今天和已逾期的提醒将显示在这里。",
-      "args": {}, "context": "Real empty widget; no example content", "calendarStatus": false
+      "en": "Today's and overdue reminders will appear here.",
+      "zh-Hans": "今天和已逾期的提醒将显示在这里。",
+      "args": {},
+      "context": "Real empty widget; no example content",
+      "calendarStatus": false
     },
     "widget_rest_help": {
-      "en": "No exercises scheduled today.", "zh-Hans": "今天没有安排练习。",
-      "args": {}, "context": "Informational rest day", "calendarStatus": false
+      "en": "No exercises scheduled today.",
+      "zh-Hans": "今天没有安排练习。",
+      "args": {},
+      "context": "Informational rest day",
+      "calendarStatus": false
     },
     "widget_choose_routine": {
-      "en": "Choose routine", "zh-Hans": "选择日程",
-      "args": {}, "context": "Widget unavailable routine recovery", "calendarStatus": false
+      "en": "Choose routine",
+      "zh-Hans": "选择日程",
+      "args": {},
+      "context": "Widget unavailable routine recovery",
+      "calendarStatus": false
     },
     "widget_choose_routine_help": {
-      "en": "Choose a routine to show its progress.", "zh-Hans": "选择一个日程以显示其进度。",
-      "args": {}, "context": "Widget unavailable routine recovery", "calendarStatus": false
+      "en": "Choose a routine to show its progress.",
+      "zh-Hans": "选择一个日程以显示其进度。",
+      "args": {},
+      "context": "Widget unavailable routine recovery",
+      "calendarStatus": false
     },
     "widget_view_routine": {
-      "en": "View routine", "zh-Hans": "查看日程",
-      "args": {}, "context": "Rest or finished session navigation", "calendarStatus": false
+      "en": "View routine",
+      "zh-Hans": "查看日程",
+      "args": {},
+      "context": "Rest or finished session navigation",
+      "calendarStatus": false
     },
     "widget_example_routine_title": {
-      "en": "Core & intervals", "zh-Hans": "核心与间歇训练",
-      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+      "en": "Core & intervals",
+      "zh-Hans": "核心与间歇训练",
+      "args": {},
+      "context": "Nonpersonal widget example",
+      "calendarStatus": false
     },
     "widget_example_reminder_title": {
-      "en": "Water plants", "zh-Hans": "给植物浇水",
-      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+      "en": "Water plants",
+      "zh-Hans": "给植物浇水",
+      "args": {},
+      "context": "Nonpersonal widget example",
+      "calendarStatus": false
     },
     "widget_example_intervals": {
-      "en": "Intervals", "zh-Hans": "间歇训练",
-      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+      "en": "Intervals",
+      "zh-Hans": "间歇训练",
+      "args": {},
+      "context": "Nonpersonal widget example",
+      "calendarStatus": false
     },
     "widget_example_reps": {
-      "en": "3 × 10", "zh-Hans": "3 组 × 10 次",
-      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+      "en": "3 × 10",
+      "zh-Hans": "3 组 × 10 次",
+      "args": {},
+      "context": "Nonpersonal widget example",
+      "calendarStatus": false
     },
     "widget_example_side_target": {
-      "en": "3 × 25 s / side", "zh-Hans": "每侧 3 组 × 25 秒",
-      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+      "en": "3 × 25 s / side",
+      "zh-Hans": "每侧 3 组 × 25 秒",
+      "args": {},
+      "context": "Nonpersonal widget example",
+      "calendarStatus": false
     },
     "widget_example_intervals_target": {
-      "en": "8 intervals", "zh-Hans": "8 组间歇",
-      "args": {}, "context": "Nonpersonal widget example", "calendarStatus": false
+      "en": "8 intervals",
+      "zh-Hans": "8 组间歇",
+      "args": {},
+      "context": "Nonpersonal widget example",
+      "calendarStatus": false
     },
     "calendar_sync_inactive": {
       "en": "Calendar sync inactive",
@@ -15361,6 +15808,149 @@
       "args": {},
       "context": "Terminal reminder Calendar preference",
       "calendarStatus": false
+    },
+    "routine_title_error": {
+      "args": {},
+      "context": "Generic routines",
+      "en": "Enter a title.",
+      "zh-Hans": "请输入标题。"
+    },
+    "routine_widget_step": {
+      "en": "Step {current} of {total}",
+      "zh-Hans": "第 {current} 个步骤，共 {total} 个",
+      "args": {
+        "current": "number",
+        "total": "number"
+      },
+      "context": "Generic routines"
+    },
+    "routine_preview_drink": {
+      "en": "Drink water",
+      "zh-Hans": "喝水",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_preview_ready": {
+      "en": "Get ready",
+      "zh-Hans": "准备出门",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_preview_time": {
+      "en": "10 minutes",
+      "zh-Hans": "10 分钟",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_required": {
+      "en": "Enter the required routine name or step.",
+      "zh-Hans": "请填写日常计划和步骤名称。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_day": {
+      "en": "Choose a scheduled day or an unscheduled day.",
+      "zh-Hans": "请选择安排或不安排此日期。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_add": {
+      "en": "Add a step on every scheduled day.",
+      "zh-Hans": "请为每个安排日期添加步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_step": {
+      "en": "Choose a step.",
+      "zh-Hans": "请选择步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_unique": {
+      "en": "Step identities must be unique.",
+      "zh-Hans": "步骤标识必须唯一。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_active": {
+      "en": "Choose at least one scheduled day, or pause the routine.",
+      "zh-Hans": "请至少安排一个日期，或暂停此计划。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_photo": {
+      "en": "Choose an available step photo.",
+      "zh-Hans": "请选择可用的步骤照片。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_image": {
+      "en": "Choose one step image.",
+      "zh-Hans": "请选择一张步骤图片。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_skip": {
+      "en": "Undo Skip today before changing steps.",
+      "zh-Hans": "更改步骤前，请撤销跳过今天。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_session": {
+      "en": "Choose a step from this session.",
+      "zh-Hans": "请选择本次计划中的步骤。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_completion": {
+      "en": "Choose the step completion state.",
+      "zh-Hans": "请选择步骤完成状态。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_authoring": {
+      "en": "Choose valid routine fields and step arrangement.",
+      "zh-Hans": "请选择有效的预设和步骤安排。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_links": {
+      "en": "Routine step links are invalid.",
+      "zh-Hans": "日常计划步骤关联无效。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_native_shared": {
+      "en": "Shared steps must match on every scheduled day.",
+      "zh-Hans": "每个安排日期的共享步骤必须一致。",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_title_example": {
+      "en": "Morning routine",
+      "zh-Hans": "晨间计划",
+      "args": {},
+      "context": "Generic routines"
+    },
+    "routine_remove_step": {
+      "context": "Generic routines",
+      "en": "Remove step",
+      "args": {},
+      "zh-Hans": "移除步骤"
+    },
+    "routine_day_steps": {
+      "context": "Generic routines",
+      "en": "{day} · Steps",
+      "args": {
+        "day": "string"
+      },
+      "zh-Hans": "{day} · 步骤"
+    },
+    "routine_preview_next": {
+      "en": "Next: Plan the day",
+      "zh-Hans": "下一项：规划今天",
+      "args": {},
+      "context": "Generic widget fallback"
     }
   }
 }

@@ -116,7 +116,7 @@ class AlarmNotifications(private val context: Context) {
       .setSmallIcon(R.drawable.ic_remilo_notification)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setContentTitle(if (public || title == null) L10n.text("Today's routine") else title)
-      .setContentText(L10n.text("Your exercises are ready for today."))
+        .setContentText(L10n.text("Your routine is ready for today."))
       .setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(if (public) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE)
       .setContentIntent(openReminder(record.occurrenceId)).setAutoCancel(true)

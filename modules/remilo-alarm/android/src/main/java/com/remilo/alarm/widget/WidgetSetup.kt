@@ -9,7 +9,7 @@ internal object WidgetSetup {
     selected ?: if (mode == "Routine") plans.firstOrNull()?.get("id") as? String else null
 
   /** Inert, localized presentation data. Never saved as a plan, reminder or configuration. */
-  fun example(context: Context, mode: String, base: WidgetSnapshot, withRoutine: Boolean = mode == "Routine"): WidgetSnapshot {
+  fun example(context: Context, mode: String, base: WidgetSnapshot, withRoutine: Boolean = mode == "Routine", preset: String = "General"): WidgetSnapshot {
     fun text(value: String) = L10n.text(context, value)
     if (mode == "Today" && !withRoutine) return base.copy(configuration = WidgetConfiguration("Today"), session = null,
       reminders = listOf(mapOf("id" to "example", "title" to text("Water plants"), "mode" to "None",
@@ -20,7 +20,9 @@ internal object WidgetSetup {
     return sample.copy(configuration = WidgetConfiguration(mode, "preview"), date = base.date, appearance = base.appearance,
       reminders = if(mode == "Today") example(context,"Today",base,false).reminders else emptyList(), total = if(mode == "Today")1 else 0,
       session = sample.session + mapOf(
-      "title" to text("Core & intervals"), "date" to base.date,
-      "steps" to steps.map { it + mapOf("name" to text(it["name"] as String), "target" to text(it["target"] as String)) }))
+      "title" to text(if(preset == "General") "Morning routine" else "Core & intervals"), "date" to base.date, "presentationPreset" to preset,
+      "steps" to steps.mapIndexed { index, step -> step + mapOf(
+        "name" to text(if(preset == "General") listOf("Drink water","Read","Plan the day","Get ready")[index] else step["name"] as String),
+        "target" to text(if(preset == "General") if(index == 1) "10 minutes" else "" else step["target"] as String)) }))
   }
 }

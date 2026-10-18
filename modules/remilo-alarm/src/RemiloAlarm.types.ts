@@ -87,14 +87,17 @@ export type SeriesCommand =
 export type ListCommand = { kind: 'CreateList'; name: string; operationId: string } |
   { kind: 'RenameList'; listId: string; name: string; expectedRevision: number; operationId: string } |
   { kind: 'RemoveList'; listId: string; expectedRevision: number; operationId: string };
-export type RoutineExercise = { id: string; name: string; target: string; notes: string; illustration?: string; customImageId?: string };
+export type RoutineAuthoringMode = 'Shared' | 'ByWeekday';
+export type RoutinePreset = 'General' | 'Exercise';
+export type RoutineExercise = { id: string; name: string; target: string; notes: string; illustration?: string; customImageId?: string; sharedStepId?: string };
 export type ExercisePhoto = { id: string; uri: string; width: number; height: number; lease?: string };
 export type RoutineDay = { type: 'Rest' | 'Exercises'; exercises: RoutineExercise[] };
 export type RoutineDraft = { title: string; minutes: number; mode: 'Alarm' | 'Notification' | 'None'; listId: string | null; days: RoutineDay[];
-  notes?: string; sound?: 'remilo' | 'system'; vibration?: boolean };
+  notes?: string; sound?: 'remilo' | 'system'; vibration?: boolean; authoringMode?: RoutineAuthoringMode; presentationPreset?: RoutinePreset };
 export type RoutinePlan = RoutineDraft & { notes: string; sound: 'remilo' | 'system'; vibration: boolean;
   id: string; revision: number; state: 'Active' | 'Paused' | 'Trashed'; startsOn: string; effectiveDate: string };
 export type RoutineProgress = { routineId: string; date: string; revision: number; ended: boolean; endsAtMs?: number; completedCount: number; totalCount: number;
+  authoringMode?: RoutineAuthoringMode; presentationPreset?: RoutinePreset;
   changes?: { id: string; kind: string; stepId: string | null; completed: boolean | null; atMs: number }[];
   skipped: boolean; completed: boolean; state: 'Rest' | 'Paused' | 'Upcoming' | 'Ready' | 'InProgress' | 'Completed' | 'Skipped' | 'NotCompleted' | 'PartiallyCompleted';
   steps: (RoutineExercise & { completed: boolean })[] };

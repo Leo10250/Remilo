@@ -13,10 +13,13 @@ export function editableRoutineExercise(plan: RoutinePlan, context: RoutineExerc
 }
 /** Deliberately excludes progress and operational fields; the native edit reconciles current checks. */
 export function routineExerciseEditCommand(plan: RoutinePlan, context: RoutineExerciseEditContext, value: RoutineExercise, operationId: string): Extract<RoutineCommand, { kind: 'EditRoutine' }> {
-  if (!editableRoutineExercise(plan, context) || value.id !== context.stepId) throw new Error('Exercise unavailable');
+  const saved = editableRoutineExercise(plan, context);
+  if (!saved || value.id !== context.stepId || value.sharedStepId !== saved.sharedStepId) throw new Error('Step unavailable');
   return { kind: 'EditRoutine', operationId, routineId: plan.id, expectedRevision: plan.revision,
     title: plan.title, minutes: plan.minutes, mode: plan.mode, listId: plan.listId, notes: plan.notes, sound: plan.sound, vibration: plan.vibration,
-    days: plan.days.map((day, index) => ({ type: day.type, exercises: day.exercises.map(exercise => ({
-      ...(index === context.weekday && exercise.id === context.stepId ? value : exercise),
-    })) })) };
+    authoringMode: plan.authoringMode, presentationPreset: plan.presentationPreset,
+    days: plan.days.map((day, index) => ({ type: day.type, exercises: day.exercises.map(exercise => {
+      const shared = plan.authoringMode === 'Shared' && !!value.sharedStepId && exercise.sharedStepId === value.sharedStepId;
+      return shared || index === context.weekday && exercise.id === context.stepId ? { ...value, id: exercise.id, sharedStepId: exercise.sharedStepId } : { ...exercise };
+    }) })) };
 }

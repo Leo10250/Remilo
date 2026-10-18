@@ -24,6 +24,7 @@ import { activateNotice, CommandRecovery, ListNameSheet, notifyTrash, RootMore, 
 import { useRootState } from '../ui/root-state';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { RoutineActions, type RoutineActionTarget } from '../ui/routine-actions';
+import { CreationMenu } from '../ui/creation-menu';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
 import { calendarCancellation, calendarRowNotice } from '../domain/calendar-presentation';
@@ -132,10 +133,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const emptyCreate = canCreateFromEmptyAgenda({ native: nativeAvailable, scoped, view, searching: searching || !!search,
     optionalFilters: chips.length, items: items.length, total: totals?.total, success: reminders.isSuccess,
     fetching: reminders.isFetching, error: !!reminders.error, placeholder: reminders.isPlaceholderData });
-  const createReminder = () => {
-    if (isGuarded() || !nativeAvailable || missingList) return;
-    Keyboard.dismiss(); router.push(destination.kind === 'list' ? { pathname: '/edit', params: listOriginParams(destination.listId) } : '/edit');
-  };
+  const [creationMenu, setCreationMenu] = useState(false), creationTrigger = useRef<View>(null);
+  const create = () => { if (!isGuarded() && nativeAvailable && !missingList) { Keyboard.dismiss(); setCreationMenu(true); } };
   const sections = [...groups].map(([group, data]) => ({ key: group, title: groupTitle(group, new Date(capabilities.data?.observedAtMs ?? initialNow)), count: totals?.groups[group] ?? data.length, data: collapsed.includes(group) ? [] : data }));
   const open = (item: Occurrence) => { Keyboard.dismiss(); if (item.routine) router.push({ pathname: '/routine-session', params: { id: item.routine.routineId, date: item.routine.date } }); else router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination) } }); };
   const complete = (item: Occurrence) => {
@@ -243,12 +242,12 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={item.routine ? undefined : () => complete(item)} onMore={() => { if (!isGuarded()) { if (item.routine) setRoutineMenu({ id: item.routine.routineId, date: item.routine.date }); else setSelected(item); } }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? t('m_2ff2d9a672c5') : search || chips.length ? t('m_75bf15d2c28d') : view === 'today' ? t('m_fc926e22caaa') : view === 'upcoming' ? t('m_e22b01420e5f') : scoped ? t('m_284f8a392982') : t('m_057d33f49512')} onRetry={() => void reminders.refetch()} />
-          {emptyCreate && <Button label={t('m_1ee0df0ecf27')} disabled={guarded} onPress={createReminder} />}
+          {emptyCreate && <Button label={t('create_title')} buttonRef={creationTrigger} disabled={guarded} onPress={create} />}
           {!!search && <Button label={t('m_3b7ea51793e9')} variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
           {!!chips.length && <Button label={t('m_10afa98480f2')} variant="secondary" disabled={guarded} onPress={resetFilters} />}</View>}
         ListFooterComponent={reminders.isFetchingNextPage ? <ActionFeedback loading message={t('m_964e5f88d036')} /> : reminders.isFetchNextPageError ? <Button label={t('m_6c13d1198cd5')} variant="secondary" onPress={() => void reminders.fetchNextPage()} /> : null} />
-      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel={t('m_cd566803bf39')} accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
-        onPress={createReminder}
+      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel={t('create_title')} accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
+        ref={creationTrigger} onPress={create}
         style={({ pressed }) => ({ position: 'absolute', right: 16, bottom: 16, width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, elevation: 3, opacity: pressed ? 0.8 : 1 })}>
         <Icon name="add" color={colors.accentInk} size={28} /></Pressable>}
     </View>
@@ -256,6 +255,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {activeToast && !action.guarded && <Snackbar key={toast ? 'local' : notice?.id} message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? t('m_a8283ade3185') : !toast ? notice?.action?.label : undefined}
       onAction={() => { if (toast?.undo) void undo(toast.undo); else if (notice?.action) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
       onClose={() => { if (toast) setToast(null); else if (notice) dismissNotice(notice.id); }} />}
+    <CreationMenu visible={creationMenu} onClose={() => setCreationMenu(false)} trigger={creationTrigger} params={destination.kind === 'list' ? listOriginParams(destination.listId) : undefined} />
     {!scoped && <RootNavigation destination="agenda" disabled={guarded} isGuarded={isGuarded} />}
     <BrowseFilterSheet title={t('m_76d11d556a30')} kind="agenda" draft={filterDraft} disabled={guarded} lists={lists.data ?? []} listsLoading={lists.isLoading && nativeAvailable}
       listsError={lists.error} onRetryLists={() => void lists.refetch()} fixedListId={fixedListId} fixedListName={listName}

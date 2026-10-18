@@ -51,9 +51,9 @@ export function ExerciseIllustrationFrame({ illustration, name }: { illustration
   </View>;
 }
 
-function RoutineSequenceRow({ step, index, total, guarded, selected, onSelect, onEdit, day }: {
+function RoutineSequenceRow({ step, index, total, guarded, selected, onSelect, onEdit, day, general }: {
   step: RoutineSession['steps'][number]; index: number; total: number; guarded: boolean; selected: boolean; onSelect: () => void;
-  onEdit?: (stepId: string, trigger: RefObject<View | null>) => void; day?: string;
+  onEdit?: (stepId: string, trigger: RefObject<View | null>) => void; day?: string; general?: boolean;
 }) {
   const t = useTranslation(), colors = useTheme(), scale = useFontScaleOverride(), [focused, setFocused] = useState(false), [editFocused, setEditFocused] = useState(false), editRef = useRef<View>(null);
   const { fontScale } = useWindowDimensions(), badge = 32 * Math.max(scale, fontScale);
@@ -69,7 +69,7 @@ function RoutineSequenceRow({ step, index, total, guarded, selected, onSelect, o
     <View style={{ flex: 1, gap: 4 }}><Copy>{step.name}</Copy>{!!step.target && <Copy muted size={14}>{step.target}</Copy>}{step.completed && <Copy muted size={14}>{t('m_11a6767d5674')}</Copy>}{selected && <Copy size={14}>{t('routine_viewing')}</Copy>}</View>
     </Pressable>
     {onEdit && <Pressable ref={editRef} accessibilityRole="button" accessibilityState={{ disabled: guarded }} disabled={guarded}
-      accessibilityLabel={t('routine_edit_row', { current: index + 1, total, name: step.name, day: day ?? '' })}
+      accessibilityLabel={t(general ? 'routine_edit_step_row' : 'routine_edit_row', { current: index + 1, total, name: step.name, day: day ?? '' })}
       onPress={() => onEdit(step.id, editRef)} onFocus={() => setEditFocused(true)} onBlur={() => setEditFocused(false)}
       style={({ pressed }) => ({ minHeight: 48, minWidth: 48, padding: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4,
         borderWidth: 2, borderColor: editFocused ? colors.accent : 'transparent', backgroundColor: pressed ? colors.soft : 'transparent', opacity: guarded ? 0.45 : pressed ? 0.75 : 1 })}>
@@ -114,9 +114,9 @@ export function RoutineSessionContent({ session, selectedId, onSelect, onChangeS
       <View style={{ flex: 1 }}><Copy muted size={14}>{alert}{mode !== 'None' && session.minutes != null ? ' · ' + clockPreferenceLabel(session.minutes) : ''}</Copy></View>
     </View>
     {!!session.totalCount ? <RoutineProgress done={session.completedCount} total={session.totalCount} state={t(stateKeys[state])} /> :
-      <Copy heading>{t(stateKeys[state])}</Copy>}
+      <Copy heading>{t(state === 'Rest' && session.presentationPreset === 'General' ? 'routine_no_schedule_today' : stateKeys[state])}</Copy>}
     {ended && <><Copy muted>{t('routine_day_ended')}</Copy><Button label={t('routine_open_today')} variant="secondary" onPress={onOpenToday} disabled={guarded} /></>}
-    {state === 'Rest' && <Copy muted>{t('routine_rest_hint')}</Copy>}
+    {state === 'Rest' && <Copy muted>{t(session.presentationPreset === 'General' ? 'routine_no_steps_today' : 'routine_rest_hint')}</Copy>}
     {state === 'Paused' && <Copy muted>{t('routine_paused_hint')}</Copy>}
     {!!session.totalCount && <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View accessibilityLiveRegion="polite" style={{ flex: 1, minWidth: 0 }}><Copy muted size={14}>{canUndo ? t('routine_completed_named', { name: undo.name }) : t('routine_one_check')}</Copy></View>
@@ -125,7 +125,7 @@ export function RoutineSessionContent({ session, selectedId, onSelect, onChangeS
     </View>}
     {current && <View ref={cardAnchor} collapsable={false}><Card><View style={{ gap: 12 }}>
       <View accessibilityLiveRegion="polite" style={{ gap: 12 }}>
-        <Copy muted size={14}>{current.completed ? t('routine_completed_exercise') + ' · ' + t('routine_ordinal', { current: currentIndex + 1, total: session.totalCount }) : t(current.id === firstUnfinished ? 'routine_current_position' : 'routine_viewing_position', { current: currentIndex + 1, total: session.totalCount })}</Copy>
+        <Copy muted size={14}>{session.presentationPreset === 'General' ? t(current.completed ? 'routine_completed_step' : current.id === firstUnfinished ? 'routine_current_step' : 'routine_viewing_step', { current: currentIndex + 1, total: session.totalCount }) : current.completed ? t('routine_completed_exercise') + ' · ' + t('routine_ordinal', { current: currentIndex + 1, total: session.totalCount }) : t(current.id === firstUnfinished ? 'routine_current_position' : 'routine_viewing_position', { current: currentIndex + 1, total: session.totalCount })}</Copy>
         <Copy heading size={24}>{current.name}</Copy>
       </View>
       {current.customImageId ? <CustomExerciseImageFrame key={current.id} id={current.customImageId} name={current.name} collapsed={Math.max(scale,fontScale) >= 1.6 || height < 640} /> : illustration && <ExerciseIllustrationFrame key={current.id + ':' + illustration.id} illustration={illustration} name={current.name} />}
@@ -133,15 +133,15 @@ export function RoutineSessionContent({ session, selectedId, onSelect, onChangeS
         fontWeight: fontWeightFor(24, '500'), ...chineseTextMetrics(24, scale, '500') }}>{current.target}</Text>}
       {!!current.notes && <ExerciseGuidance key={current.id} notes={current.notes} name={current.name} />}
       {current.completed && <Copy muted>{t('routine_completed')}</Copy>}
-      <Button buttonRef={primaryAction} label={t(current.completed ? 'routine_undo_completion' : session.steps.filter(step => !step.completed).length === 1 ? 'routine_complete_exercise' : 'routine_complete_continue')} icon={current.completed ? 'undo' : 'check'}
+      <Button buttonRef={primaryAction} label={t(current.completed ? 'routine_undo_completion' : session.steps.filter(step => !step.completed).length === 1 ? session.presentationPreset === 'General' ? 'routine_complete_step' : 'routine_complete_exercise' : 'routine_complete_continue')} icon={current.completed ? 'undo' : 'check'}
         accessibilityLabel={t(current.completed ? 'routine_undo_named' : 'routine_mark_named', { name: current.name })}
         disabled={!eligible} onPress={() => onChangeStep(current.id, !current.completed)} />
-      {currentIndex > 0 && <Button label={t('routine_view_previous')} variant="neutral" disabled={guarded} onPress={() => onSelect(session.steps[currentIndex - 1].id)} />}
+      {currentIndex > 0 && <Button label={t(session.presentationPreset === 'General' ? 'routine_previous_step' : 'routine_view_previous')} variant="neutral" disabled={guarded} onPress={() => onSelect(session.steps[currentIndex - 1].id)} />}
     </View></Card></View>}
     {!current && session.completed && <Card><View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Icon name="check_circle" /><View style={{ flex: 1 }}><Copy heading>{t(ended ? 'routine_completed' : 'routine_daily_finished')}</Copy></View>
     </View></Card>}
-    {!!sequence.length && <ConnectedGroup title={t('routine_sequence')}>{sequence.map(({ step, index }) => <RoutineSequenceRow key={step.id} step={step} selected={step.id === current?.id} index={index} total={session.totalCount} guarded={guarded} onSelect={() => inspect(step.id)} onEdit={!ended && !session.deleted ? onEditStep : undefined} day={editDay} />)}</ConnectedGroup>}
+    {!!sequence.length && <ConnectedGroup title={t(session.presentationPreset === 'General' ? 'routine_steps' : 'routine_sequence')}>{sequence.map(({ step, index }) => <RoutineSequenceRow key={step.id} step={step} general={session.presentationPreset === 'General'} selected={step.id === current?.id} index={index} total={session.totalCount} guarded={guarded} onSelect={() => inspect(step.id)} onEdit={!ended && !session.deleted ? onEditStep : undefined} day={editDay} />)}</ConnectedGroup>}
     {!!session.notes && <Disclosure title={t('m_8a7525b1492f')} icon="notes"><Copy>{session.notes}</Copy></Disclosure>}
   </View>;
 }

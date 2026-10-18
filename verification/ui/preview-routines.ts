@@ -40,7 +40,8 @@ export function routinePreview(enabled: boolean, emit: () => void, options: { pr
     const day = new Date(target + 'T12:00:00'), definition = p.days[(day.getDay() + 6) % 7];
     const boundary = new Date(target + 'T00:00:00'); boundary.setDate(boundary.getDate() + 1);
     if (!sessions.has(key)) sessions.set(key, { routineId: id, ...(definition.type === 'Exercises' && target <= today && p.state === 'Active' ? { occurrenceId: `routine-${id}-${target}` } : {}),
-      title: p.title, notes: p.notes, mode: p.mode, minutes: p.minutes, sound: p.sound, vibration: p.vibration, date: target, revision: 1, ended: target < today,
+      title: p.title, notes: p.notes, mode: p.mode, minutes: p.minutes, sound: p.sound, vibration: p.vibration,
+      authoringMode: p.authoringMode ?? 'ByWeekday', presentationPreset: p.presentationPreset ?? 'Exercise', date: target, revision: 1, ended: target < today,
       endsAtMs: boundary.getTime(), completedCount: 0, totalCount: definition.exercises.length, state: 'Ready', completed: false, skipped: false,
       steps: definition.exercises.map((exercise, index) => ({ ...exercise, completed: target <= today && index === 0 && !!options.progress })) });
     const saved = sessions.get(key)!;
@@ -55,8 +56,8 @@ export function routinePreview(enabled: boolean, emit: () => void, options: { pr
       return { items: structuredClone(history.slice(offset, offset + 50)), nextCursor: offset + 50 < history.length ? String(offset + 50) : null, total: history.length };
     },
     previewRoutine: async (input: Pick<RoutineDraft, 'mode' | 'minutes'> & Partial<Pick<RoutineDraft, 'days'>> & { startsOn?: string; routineId?: string }) => {
-      const today = currentDate(), tomorrow = new Date(today + 'T00:00:00'); tomorrow.setDate(tomorrow.getDate() + 1);
-      const effectiveDate = input.routineId ? civilAt(tomorrow.getTime()).slice(0, 10) : input.startsOn ?? today;
+      const today = currentDate();
+      const effectiveDate = input.routineId ? today : input.startsOn ?? today;
       const start = new Date((effectiveDate > today ? effectiveDate : today) + 'T00:00:00'), days = input.days ?? plan.days;
       let nextAlertMs: number | null = null;
       if (input.mode !== 'None') for (let offset = 0; offset < 14; offset++) {
@@ -78,8 +79,15 @@ export function routinePreview(enabled: boolean, emit: () => void, options: { pr
         result = { status: 'Applied', routine: structuredClone(p) };
         if (command.kind === 'PurgeRoutine') plans.splice(plans.indexOf(p),1);
       } else if (command.kind === 'CreateRoutine' || command.kind === 'EditRoutine') {
+        if (command.kind === 'EditRoutine' && plans.find(p => p.id === command.routineId)?.revision !== command.expectedRevision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
         const p: RoutinePlan = command.kind === 'CreateRoutine' ? { notes: '', sound: 'remilo', vibration: false, ...command, id: 'weekly-' + plans.length, revision: 1, state: 'Active', effectiveDate: command.startsOn } : { ...plans.find(p => p.id === command.routineId)!, ...command, revision: command.expectedRevision + 1 };
         const index = plans.findIndex(row => row.id === p.id); if (index < 0) plans.push(p); else plans[index] = p;
+        for (const existing of sessions.values()) if (existing.routineId === p.id && existing.date === currentDate() && !existing.ended) {
+          const definition = p.days[(new Date(existing.date + 'T12:00:00').getDay() + 6) % 7], checked = new Set(existing.steps.filter(step => step.completed).map(step => step.id));
+          existing.steps = definition.exercises.map(step => ({ ...step, completed: checked.has(step.id) }));
+          Object.assign(existing, { title: p.title, notes: p.notes, mode: p.mode, minutes: p.minutes, sound: p.sound, vibration: p.vibration,
+            authoringMode: p.authoringMode ?? 'ByWeekday', presentationPreset: p.presentationPreset ?? 'Exercise', revision: existing.revision + 1 }); updateState(existing);
+        }
         result = { status: 'Applied', routine: p };
       } else if (command.kind === 'PauseRoutine' || command.kind === 'ResumeRoutine') {
         const p = plans.find(p => p.id === command.routineId)!; p.state = command.kind === 'PauseRoutine' ? 'Paused' : 'Active'; p.revision++; result = { status: 'Applied', routine: p };

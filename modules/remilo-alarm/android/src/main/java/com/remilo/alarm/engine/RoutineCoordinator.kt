@@ -80,6 +80,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
       "ended" to ended, "endsAtMs" to RoutinePolicy.end(LocalDate.parse(date), zone()), "completedCount" to done.size, "totalCount" to steps.size,
       "skipped" to record.skipped, "completed" to record.completed,
       "notes" to v.notes, "mode" to v.mode, "minutes" to v.minutes, "sound" to v.sound, "vibration" to v.vibration,
+      "authoringMode" to v.authoringMode, "presentationPreset" to v.presentationPreset,
       "state" to when { steps.isEmpty() -> "Rest"; record.skipped -> "Skipped"; record.completed -> "Completed"; ended -> if (done.isEmpty()) "NotCompleted" else "PartiallyCompleted"; done.isEmpty() -> "Ready"; else -> "InProgress" },
       "changes" to saved?.let { rows(it.changes) }.orEmpty(),
       "steps" to steps.map { it + ("completed" to (it["id"] in done)) })
@@ -104,7 +105,8 @@ internal class RoutineCoordinator(private val context: Context, private val data
     return mapOf("id" to plan.id, "revision" to plan.revision, "state" to plan.state,
       "startsOn" to plan.startsOn, "effectiveDate" to v.effectiveDate, "title" to v.title,
       "minutes" to v.minutes, "mode" to v.mode, "listId" to v.listId, "days" to rows(v.days),
-      "notes" to v.notes, "sound" to v.sound, "vibration" to v.vibration)
+      "notes" to v.notes, "sound" to v.sound, "vibration" to v.vibration,
+      "authoringMode" to v.authoringMode, "presentationPreset" to v.presentationPreset)
   }
   fun session(id: String, date: String?): Map<String, Any?>? {
     val plan = dao.plan(id) ?: return null
@@ -119,6 +121,7 @@ internal class RoutineCoordinator(private val context: Context, private val data
     return mapOf("routineId" to id, "date" to day.toString(), "title" to v.title,
       "state" to if (rest(v, day)) "Rest" else if (plan.state == "Paused") "Paused" else "Upcoming",
       "notes" to v.notes, "mode" to v.mode, "minutes" to v.minutes, "sound" to v.sound, "vibration" to v.vibration,
+      "authoringMode" to v.authoringMode, "presentationPreset" to v.presentationPreset,
       "ended" to (day < today()), "steps" to steps, "completedCount" to 0, "totalCount" to steps.size)
   }
   fun history(id: String, cursor: String?): Map<String, Any?> {
@@ -133,11 +136,16 @@ internal class RoutineCoordinator(private val context: Context, private val data
   private fun checkedText(value: Any?, max: Int, required: Boolean = false): String {
     require(value == null || value is String) { "Enter valid routine text." }
     val text = (value as? String).orEmpty()
-    require(text.length <= max && (!required || text.isNotBlank())) { "Enter the required routine name or exercise." }
+    require(text.length <= max && (!required || text.isNotBlank())) { "Enter the required routine name or step." }
     return if (required) text.trim() else text
   }
   @Suppress("UNCHECKED_CAST") private fun checkedVersion(command: Map<String, Any?>, id: String, date: String, revision: Long = 1): RoutineVersion {
     val title = checkedText(command["title"], 200, true)
+    val previous = dao.versions(id).maxByOrNull { it.revision }
+    require(command["authoringMode"] == null || command["authoringMode"] is String) { "Choose valid routine fields and step arrangement." }
+    require(command["presentationPreset"] == null || command["presentationPreset"] is String) { "Choose valid routine fields and step arrangement." }
+    val authoringMode = command["authoringMode"] as? String ?: previous?.authoringMode ?: "ByWeekday"
+    val presentationPreset = command["presentationPreset"] as? String ?: previous?.presentationPreset ?: "Exercise"
     val number = command["minutes"] as? Number ?: error("Choose a routine time.")
     require(number.toDouble().isFinite() && number.toDouble() % 1 == 0.0 && number.toInt() in 0..1439) { "Choose a routine time." }
     val mode = command["mode"] as? String ?: "Notification"
@@ -154,24 +162,26 @@ internal class RoutineCoordinator(private val context: Context, private val data
     val ids = mutableSetOf<String>()
     val validated = days.map { raw ->
       val day = raw as? Map<String, Any?> ?: error("Choose a routine day.")
-      require(day["type"] in setOf("Rest", "Exercises")) { "Choose Exercises or Rest day." }
+      require(day["type"] in setOf("Rest", "Exercises")) { "Choose a scheduled day or an unscheduled day." }
       val steps = day["exercises"] as? List<*> ?: emptyList<Any>()
-      require(steps.size <= 100 && (day["type"] != "Exercises" || steps.isNotEmpty())) { "Add an exercise or choose Rest day." }
+      require(steps.size <= 100 && (day["type"] != "Exercises" || steps.isNotEmpty())) { "Add a step on every scheduled day." }
       mapOf("type" to day["type"], "exercises" to if (day["type"] == "Rest") emptyList<Any>() else steps.map { rawStep ->
-        val step = rawStep as? Map<String, Any?> ?: error("Choose an exercise.")
+        val step = rawStep as? Map<String, Any?> ?: error("Choose a step.")
         val stepId = checkedText(step["id"], 200, true)
-        require(ids.add(stepId)) { "Exercise identities must be unique." }
+        require(ids.add(stepId)) { "Step identities must be unique." }
         val illustration = checkedText(step["illustration"], 80)
         val image = checkedText(step["customImageId"], 64)
-        require(image.isEmpty() || image.matches(Regex("[a-f0-9]{64}")) && dao.image(image) != null && ExerciseImages(context).file(image).isFile) { "Choose an available exercise photo." }
-        require(image.isEmpty() || illustration.isEmpty()) { "Choose one exercise image." }
+        require(image.isEmpty() || image.matches(Regex("[a-f0-9]{64}")) && dao.image(image) != null && ExerciseImages(context).file(image).isFile) { "Choose an available step photo." }
+        require(image.isEmpty() || illustration.isEmpty()) { "Choose one step image." }
         require(illustration.isEmpty() || illustration.matches(Regex("[a-z0-9-]+"))) { "Choose an approved illustration reference." }
         mapOf("id" to stepId, "name" to checkedText(step["name"], 200, true), "target" to checkedText(step["target"], 1000),
-          "notes" to checkedText(step["notes"], 10_000), "illustration" to illustration, "customImageId" to image)
+          "notes" to checkedText(step["notes"], 10_000), "illustration" to illustration, "customImageId" to image) +
+          checkedText(step["sharedStepId"], 200).takeIf { it.isNotEmpty() }?.let { mapOf("sharedStepId" to it) }.orEmpty()
       })
     }
-    require(validated.any { it["type"] == "Exercises" }) { "Add at least one workout day, or pause the routine." }
-    return RoutineVersion(id, date, title, number.toInt(), mode, list, JSONArray(validated).toString(), notes, sound, vibration, revision)
+    require(validated.any { it["type"] == "Exercises" }) { "Choose at least one scheduled day, or pause the routine." }
+    com.remilo.alarm.core.RoutineAuthoring.validate(JSONArray(validated), authoringMode, presentationPreset)
+    return RoutineVersion(id, date, title, number.toInt(), mode, list, JSONArray(validated).toString(), notes, sound, vibration, revision, authoringMode, presentationPreset)
   }
   private fun template(v: RoutineVersion): ReminderRecord {
     val start = LocalDate.parse(v.effectiveDate).atTime(v.minutes / 60, v.minutes % 60).atZone(zone()).toInstant().toEpochMilli()
@@ -260,10 +270,10 @@ internal class RoutineCoordinator(private val context: Context, private val data
     var skipped = record.skipped
     val done = strings(session.done).toMutableSet()
     if (kind in setOf("SetRoutineExercise", "CorrectRoutineExercise")) {
-      require(!record.skipped || historical) { "Undo Skip today before changing exercises." }
-      val stepId = command["stepId"] as? String ?: error("Choose an exercise.")
-      require(rows(session.steps).any { it["id"] == stepId }) { "Choose an exercise from this session." }
-      require(command["completed"] is Boolean) { "Choose the exercise completion state." }
+      require(!record.skipped || historical) { "Undo Skip today before changing steps." }
+      val stepId = command["stepId"] as? String ?: error("Choose a step.")
+      require(rows(session.steps).any { it["id"] == stepId }) { "Choose a step from this session." }
+      require(command["completed"] is Boolean) { "Choose the step completion state." }
       if (command["completed"] == true) done.add(stepId) else done.remove(stepId)
     } else if (kind == "SkipRoutineDay") { if (record.completed) return rejected("NOT_ELIGIBLE"); skipped = true }
     else if (kind == "UndoSkipRoutineDay") skipped = false

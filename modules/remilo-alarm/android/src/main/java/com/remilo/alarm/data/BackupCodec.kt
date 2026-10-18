@@ -25,12 +25,13 @@ object BackupCodec {
     routines: List<RoutinePlan> = emptyList(), routineVersions: List<RoutineVersion> = emptyList(), routineSessions: List<RoutineSession> = emptyList(), images: List<ExerciseImage> = emptyList(), purgedRoutines: List<PurgedRoutine> = emptyList()): String {
     if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000 || purged.size > 10_000 ||
       routines.size > 10_000 || routineVersions.size > 10_000 || routineSessions.size > 10_000) throw BackupLimitException()
-    val json = JSONObject(mapOf("format" to "Remilo", "version" to 7, "exportedAtMs" to now,
+    val json = JSONObject(mapOf("format" to "Remilo", "version" to 8, "exportedAtMs" to now,
       "images" to images.map { mapOf("id" to it.id, "mime" to it.mime, "width" to it.width, "height" to it.height, "bytes" to it.bytes) },
       "purgedRoutines" to purgedRoutines.map { it.id },
       "routines" to routines.map { mapOf("id" to it.id, "revision" to it.revision, "startsOn" to it.startsOn, "state" to it.state, "pauses" to JSONArray(it.pauses), "priorState" to it.priorState, "trashedAtMs" to it.trashedAtMs, "trashIntervals" to JSONArray(it.trashIntervals)) },
       "routineVersions" to routineVersions.map { mapOf("routineId" to it.routineId, "revision" to it.revision, "effectiveDate" to it.effectiveDate, "title" to it.title,
-        "minutes" to it.minutes, "mode" to it.mode, "notes" to it.notes, "sound" to it.sound, "vibration" to it.vibration, "listId" to it.listId, "days" to JSONArray(it.days)) },
+        "minutes" to it.minutes, "mode" to it.mode, "notes" to it.notes, "sound" to it.sound, "vibration" to it.vibration, "listId" to it.listId, "days" to JSONArray(it.days),
+        "authoringMode" to it.authoringMode, "presentationPreset" to it.presentationPreset) },
       "routineSessions" to routineSessions.map { mapOf("occurrenceId" to it.occurrenceId, "routineId" to it.routineId, "date" to it.date,
         "versionDate" to it.versionDate, "versionRevision" to it.versionRevision, "steps" to JSONArray(it.steps), "done" to JSONArray(it.done), "ended" to it.ended,
         "changes" to JSONArray(it.changes)) },
@@ -88,7 +89,7 @@ object BackupCodec {
   fun decode(json: String): Bundle {
     require(json.toByteArray(Charsets.UTF_8).size <= 10_000_000) { "Backup exceeds 10 MB." }
     val root = JSONObject(json)
-    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6, 7)) { "Unsupported backup format/version." }
+    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6, 7, 8)) { "Unsupported backup format/version." }
     val version = root.getInt("version")
     val media = if (version >= 7) root.getJSONArray("images") else JSONArray()
     require(media.length() <= 10_000)
@@ -205,6 +206,7 @@ object BackupCodec {
       for (i in 0 until a.length()) { val s = a.getJSONObject(i); val id = text(s, "id", 200)
         require(id.isNotBlank() && found.add(id) && text(s, "name", 200).isNotBlank())
         text(s, "target", 1000); text(s, "notes", 10_000)
+        if (s.has("sharedStepId")) { require(version >= 8); require(text(s, "sharedStepId", 200).isNotBlank()) }
         val illustration = text(s, "illustration", 80, true); require(illustration.matches(Regex("[a-z0-9-]*")))
         val image = text(s,"customImageId",64,true); require(image.isEmpty() || version >= 7 && image in mediaIds && illustration.isEmpty()) }
       return found
@@ -227,10 +229,13 @@ object BackupCodec {
         val ids = steps(day.getJSONArray("exercises")); require(if (type == "Rest") ids.isEmpty() else ids.isNotEmpty())
         require(ids.all { exerciseIds.add(it) }); if (type == "Exercises") active = true }
       require(active)
+      val authoring = if (version >= 8) text(o, "authoringMode", 20) else "ByWeekday"
+      val preset = if (version >= 8) text(o, "presentationPreset", 20) else "Exercise"
+      com.remilo.alarm.core.RoutineAuthoring.validate(days, authoring, preset)
       RoutineVersion(id, effective, title, minutes.toInt(), mode, list, days.toString(),
         if (version >= 6) text(o, "notes", 10_000) else "",
         if (version >= 6) text(o, "sound", 20).also { require(it in setOf("remilo", "system")) } else "remilo",
-        if (version >= 6) boolean(o, "vibration") else false, revision)
+        if (version >= 6) boolean(o, "vibration") else false, revision, authoring, preset)
     }
     require(purgedRoutines.none { it.id in routineIds || series.any { s -> s.seriesId == it.id } })
     routines.forEach { p -> require(routineVersions.any { it.routineId == p.id && it.effectiveDate == p.startsOn }) }

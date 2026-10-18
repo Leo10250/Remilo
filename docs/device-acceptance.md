@@ -1,5 +1,17 @@
 # Offline Android acceptance run
 
+## Generic routine creation follow-up — 18 October 2026
+
+On the identified signed build, check Create→Reminder/Routine and direct library
+entry, list inheritance, IME/keyboard, 100–200% text and TalkBack focus/cancellation.
+Create a weekly water-plants reminder, a shared weekday morning routine and an
+Exercise routine with different Monday/Thursday sequences. Verify field examples
+are never saved, shared edits update selected days and independent days remain
+independent. Test photo/discard, mode-conversion/check-removal review, conflicts,
+midnight/frozen history and widgets after immediate edits. Check all appearance
+pairs and both languages; format8 transfer must retain photos/Trash/shared editing.
+Host/browser tests do not establish these phone observations. Installation is separate.
+
 ## Themed confirmation follow-up — 18 October 2026
 
 On the identified signed APK, compare short app-owned confirmations with existing

@@ -295,11 +295,11 @@ class WidgetRenderTest {
       parent.measure(View.MeasureSpec.makeMeasureSpec((300*density).toInt(),View.MeasureSpec.EXACTLY),
         View.MeasureSpec.makeMeasureSpec((200*density).toInt(),View.MeasureSpec.EXACTLY))
       parent.layout(0,0,parent.measuredWidth,parent.measuredHeight)
-      for(label in listOf("Monday","Front plank","Done")) assertActionFullyVisible(parent,L10n.text(ctx,label))
-      assertActionFullyVisible(parent,L10n.text(ctx,"Next: ${L10n.text(ctx,"Side plank")}"))
+      for(label in listOf("Monday","Read","Done")) assertActionFullyVisible(parent,L10n.text(ctx,label))
+      assertActionFullyVisible(parent,L10n.text(ctx,"Next: ${L10n.text(ctx,"Plan the day")}"))
       assertFalse(text(parent).any { it.startsWith("2.") })
       val done=textViews(parent).single { it.text.toString() == L10n.text(ctx,"Done") }
-      val next=textViews(parent).single { it.text.toString() == L10n.text(ctx,"Next: ${L10n.text(ctx,"Side plank")}") }
+      val next=textViews(parent).single { it.text.toString() == L10n.text(ctx,"Next: ${L10n.text(ctx,"Plan the day")}") }
       assertEquals(globalBounds(parent,done).bottom,globalBounds(parent,next).bottom)
     }
   }
@@ -500,7 +500,7 @@ class WidgetRenderTest {
       assertEquals("2026-10-16",sample.date)
       val root=render(ctx,sample,300,240,"$language-setup-example-$mode")
       assertFalse(text(root).any { it.contains("Private") })
-      assertTrue(text(root).contains(L10n.text(ctx,if(mode == "Today") "Water plants" else "Core & intervals")))
+      assertTrue(text(root).contains(L10n.text(ctx,if(mode == "Today") "Water plants" else "Morning routine")))
       if(mode == "Today") assertActionFullyVisible(root,L10n.text(ctx,"View Agenda (1)"))
       else { assertActionFullyVisible(root,L10n.text(ctx,"Done")); assertNoNavigationOrRefresh(root,ctx) }
     }
@@ -511,13 +511,30 @@ class WidgetRenderTest {
       val sample=WidgetSetup.example(ctx,"Routine",WidgetSnapshot(-1,date="2026-10-17"))
       val root=render(ctx,sample,width,WidgetSizing.previewHeight(ctx,sample,false,scale),"$language-setup-$width-${(scale*100).toInt()}")
       if(width >= WidgetSizing.minimumWidth(sample,scale)) {
-        assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
+        assertTrue(text(root).contains(L10n.text(ctx,"Read")))
         assertActionFullyVisible(root,L10n.text(ctx,"Done"))
       } else {
-        assertTrue(text(root).contains(L10n.text(ctx,"Core & intervals")))
+        assertTrue(text(root).contains(L10n.text(ctx,"Morning routine")))
         assertFalse(text(root).contains(L10n.text(ctx,"Done")))
       }
     }
+  }
+  @Test fun genericExamplesAndExercisePresetUseProductionLayoutAcrossAppearancesAndScaling() {
+    for(scene in listOf("sunrise","sky","evening","night")) for(brightness in listOf("light","dark"))
+      for(language in listOf("en","zh-Hans")) for(scale in listOf(1f,2f)) {
+        val ctx=context(language,scale)
+        val base=WidgetSnapshot(-1,date="2026-10-17",appearance=AppearancePolicy.Resolved(scene,brightness))
+        val sample=WidgetSetup.example(ctx,"Routine",base)
+        val root=render(ctx,sample,300,if(scale == 1f)240 else 440,"$scene-$brightness-$language-generic-${(scale*100).toInt()}")
+        assertTrue(text(root).contains(L10n.text(ctx,"Morning routine")))
+        assertEquals("General",sample.session!!["presentationPreset"])
+        if(scale == 1f) { assertActionFullyVisible(root,L10n.text(ctx,"Read")); assertActionFullyVisible(root,L10n.text(ctx,"Done")) }
+        else assertFalse(text(root).contains(L10n.text(ctx,"Done")))
+      }
+    val ctx=context("en",1f)
+    val exercise=WidgetSetup.example(ctx,"Routine",WidgetSnapshot(-1,date="2026-10-17"),preset="Exercise")
+    val root=render(ctx,exercise,300,240,"exercise-preset-example")
+    assertTrue(text(root).contains("Core & intervals")); assertActionFullyVisible(root,"Front plank")
   }
   @OptIn(ExperimentalGlanceApi::class)
   @Test fun launcherPreviewUsesThemedExampleWithInteractiveContentEvenAtMinimumProviderSize() {
@@ -529,7 +546,7 @@ class WidgetRenderTest {
       val remote=runBlocking { widget.composeForPreview(ctx,android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN,
         android.appwidget.AppWidgetProviderInfo().apply { minWidth=180; minHeight=110 }) }
       val root=remote.apply(ctx,FrameLayout(ctx))
-      assertTrue(text(root).contains(L10n.text(ctx,"Front plank")))
+      assertTrue(text(root).contains(L10n.text(ctx,"Read")))
       assertTrue(text(root).contains(L10n.text(ctx,"Done")))
       assertFalse(text(root).contains("Private routine")); assertFalse(text(root).contains(L10n.text(ctx,"Rest day")))
     }

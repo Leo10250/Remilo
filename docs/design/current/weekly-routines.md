@@ -1,44 +1,42 @@
 # Weekly routines — 15 October 2026
 
+The [18 October generic-routine correction](routine-creation.md) supersedes unified
+creation/type switching, seven-day-first authoring and workout-only setup below.
+Native dated-session, delivery, history, photo and action rules remain authoritative.
+
 The owner-approved implementation plan extends reminders without a new root tab
 or workout-specific appearance. This contract supplements the shared visual
 language and current reminder editor; normal reminders retain their lifecycle.
 
 ## Setup and presentation
 
-Use one reminder editor and one Save. Title → Type appears first; new drafts can
-select Reminder or Weekly routine. Existing records and duplicate flows retain
-their type. Switching a new draft preserves common title, time, Alert, List and
-Notes, and caches each type's other fields. Direct new-routine entry defaults to
-Notification; switching an unsaved ordinary draft preserves its selected Alert.
-Keep the current compact header, keyboard-aware viewport and persistent Save.
+Create offers separate reminder/routine destinations, with no type selector in
+either editor. /routine-edit owns routine create/edit/duplicate drafts and uses
+the compact header, keyboard-aware viewport and persistent Save. The library's
+New routine enters directly. Blank drafts default to General/Shared, no selected
+weekdays and Notification; there is no seeded content.
 
-Routine order is Title → Type → Starts on/time → Alert → Exercises by day → List
-→ Notes and applicable sound controls. Show all seven connected weekday rows,
-with full localized names, exercise counts, first two names and +N more. Rest
-rows say Rest day · No alert. Remove the ambiguous Routine attachment tile and
-Today only tile. One helper explains rest-day silence and independent dates.
-Each weekday opens a scoped day draft with Workout day / Rest day, ordered
-exercise rows and Add exercise. Done applies to the parent draft; Cancel/Back
-protect unapplied changes. Within this weekly/day draft workflow, only parent
-Save writes native state. Direct row editing has its own one persistent Save.
-Rest day is explicit. Non-rest days require named exercises. Exercise identity
-survives rename/reorder. Targets and notes are authored free text; do not infer
-training weights or translate authored content. Removing an exercise has Undo.
-A day has at most 100 exercises; a pending removal reserves space for its Undo
-until Done finishes that scoped day edit.
-Child changes stay in the parent draft until Save; cancel does not write native
-state. Selecting Rest day retains its cached exercises in that unsaved parent
-draft, so reopening the day and selecting Workout day restores them. Parent Save
-sends an empty exercise definition for Rest day without mutating the cached draft.
-Concurrent edits retain the draft and require review before replacing it.
+Routine order is Title → Preset → Steps → Schedule → Alert → List → Notes and
+applicable sound controls. General uses one shared sequence by default. The Days
+picker is the only scheduling control. Different steps by day switches the whole
+routine to independent selected-weekday rows with counts and name previews.
+Nested day drafts have no Workout/Rest selector. Done updates the parent draft;
+only parent Save writes native state. Direct row editing has its own persistent
+Save. At least one selected day and named steps on every selected day are required.
+Step IDs survive rename/reorder; Shared mode additionally retains logical shared
+keys. Prescriptions and instructions stay free text. Removing a step has Undo.
+A day has at most 100 steps; pending removal reserves room for its Undo until
+Done finishes the scoped edit. Unselecting/reselecting a day caches its content
+and IDs until the parent editor closes; Save sends empty Rest data for unselected
+days. Returning to Shared requires an explicit source/replacement review.
+Concurrent edits retain the draft and require explicit reload before replacing it.
 
 Repeat days come from the plan. One shared time controls delivery. Plan, Alert,
 time, sound, vibration and overall Notes edits apply immediately on Save; show a concise
 review with expandable changed-day/target details. The 17 October owner correction
 supersedes tomorrow-effective edits: reconcile today's open session to the new
 definition, retaining its occurrence and matching stable-ID checkmarks. Added
-workout weekdays are available today; making today Rest cancels its delivery and
+scheduled weekdays are available today; unscheduling today cancels its delivery and
 removes actionable Agenda work. Completed/Skipped aggregates follow the revised
 exercises while an intentional skip stays skipped. Closed days retain their exact
 snapshots, and elapsed or already-posted prompts never replay. Use the exact shared inline
@@ -95,8 +93,9 @@ surfaces, atmospheric browsing chrome, 16/14 sp text, scaling, 56 dp primary and
 48 dp other targets. Both English and Simplified Chinese use the same anatomy.
 New routine Starts on/time reuses the ordinary editor's responsive two-column
 date/time anatomy and independent pickers. Required labels use one localized
-Title (required) label. Exercise fields are Exercise name, Sets, reps or time,
-How to do it and Exercise image, with empty-field examples and persistent help.
+Title (required) label. General fields are Step name, Amount or duration,
+Instructions and Step image. Exercise fields retain Exercise name, Sets, reps or
+time, How to do it and Exercise image. Both use empty-field examples and help.
 Weekly/day draft edits still require the one parent Save. The direct row editor
 below is a separate single-exercise Save using the same revision-guarded command.
 
@@ -114,13 +113,14 @@ includes ordinal, exercise name and weekday; closing returns focus to that Edit
 when its row still exists. Past/ended/deleted rows have no direct Edit; historical
 checkmark correction and weekly-editor access remain separate.
 
-Use the same exercise form and full-frame photo chooser in weekly and direct
-editing. The direct sheet says Edit exercise, [weekday] · Weekly plan, and explains
-immediate application with today's matching checks retained and past days frozen.
+Use the same preset-aware step form and full-frame photo chooser in builder and
+direct editing. Shared context says All scheduled days · Routine and explains
+linked edits; independent context names the weekday. Both explain immediate
+application, matching checks and frozen past days.
 Prefill from the latest weekly definition by captured routine/date/weekday/ID,
 never by name or ordinal. One persistent Save clones that captured plan and
-replaces only the matching exercise; all other content, days, IDs and order stay
-intact. Add/remove/reorder stay in the existing day/weekly editor. Save uses one
+replaces the matching step (and its linked copies in Shared mode); unrelated
+content, IDs and order stay intact. Add/remove/reorder stay in the builder. Save uses one
 stable EditRoutine operation with the loaded plan revision. Uncertain results
 reuse the captured command; conflicts retain the draft and offer Reload exercise
 with dirty-discard confirmation. A missing/trashed exercise reports an actionable

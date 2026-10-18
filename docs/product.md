@@ -283,19 +283,30 @@ resolution is required before a suspended link resumes.
 
 ## Android weekly routines
 
-The shared reminder editor has a new-draft Reminder / Weekly routine type choice.
-Saved records and duplicate flows retain their type; common title, Alert, time,
-List and overall Notes survive new-draft type changes. Seven visible weekday
-rows edit exercises or Rest day within the one parent Save. One owning recurring
-reminder supplies one shared clock time; its versioned weekly plan supplies
-ordered exercises for each weekday or an explicit Rest day. Existing ordinary
-reminders cannot be converted in v1. Duplication creates independent identities.
+The owner's 18 October [generic-routine contract](design/current/routine-creation.md)
+supersedes unified creation and workout-only setup below. Create offers separate
+reminder/routine destinations. New routines are empty General/Shared sequences
+with explicit weekdays; optional Exercise changes fields/tools without seeding
+content. Shared edits affect all linked days; explicit weekday mode edits independently.
+Existing routines retain their weekday definitions and Exercise presentation.
+The daily-reset, native delivery, immediate editing and frozen-history rules remain.
+CE17/portable format8 preserve authoring intent and support legacy content/imports.
+
+The former unified editor/type selector is retired. Create opens New reminder or
+New routine; /edit and /routine-edit own separate drafts. New General routines
+edit one shared sequence and choose weekdays explicitly; Different steps by day
+opens independent selected-day sequences. Exercise is an optional presentation
+preset, not another task type. One parent Save commits nested draft changes.
+One owning recurring reminder supplies a shared clock; immutable versions supply
+ordered steps for each scheduled weekday or the internal empty Rest representation.
+Ordinary reminders cannot be converted in v1. Duplication creates independent
+routine, shared-step and materialized weekday identities.
 Use the same Alarm / Notification / No alert control as ordinary reminders.
 Notification uses a separate quiet-by-default channel; Android controls its
 settings after creation. Alarm uses normal sound/vibration and access checks,
 with Start routine / Snooze / Dismiss alarm. These actions do not check exercises.
 
-Every workout is available throughout its device-local date, even before its
+Every scheduled routine is available throughout its device-local date, even before its
 notification time or when created after that time. A late creation/resume/recovery
 does not replay elapsed prompts. Rest days create neither actionable Agenda work
 nor notifications. The UI derives repeat weekdays from the non-rest definitions.
@@ -310,8 +321,8 @@ the final exercise. Skip today retains partial checks and has an explicit Undo
 while the day is open. Notification opening/dismissal never changes progress.
 Today/future exercise rows also expose a neutral pencil + Edit control which
 opens the existing fields directly, independently of Focus selection. Its single
-Save edits the exact weekly-plan exercise immediately; adding/removing/reordering
-stays in the weekly editor. Past rows retain checkmark correction without this
+Save edits the exact step immediately, including linked copies in Shared mode;
+adding/removing/reordering stays in the routine builder. Past rows retain checkmark correction without this
 direct plan-edit control. Revision conflicts retain drafts for explicit reload.
 
 Local midnight ends the session without making unfinished work overdue. Native
@@ -322,7 +333,7 @@ action timestamps and never reopen Agenda or delivery. The owner's 17 October
 correction makes plan/Alert/time/Notes/photo changes apply immediately on Save.
 Reconcile today's open definition while preserving occurrence identity, matching
 stable-ID checks and intentional Skip; closed dates remain unchanged. Newly added
-workout weekdays are available today; Rest removes today's actionable work.
+scheduled weekdays are available today; unscheduling removes today's actionable work.
 An elapsed or already-posted prompt never replays. Pause suppresses
 new dates and prompts while an existing today session can still finish.
 
@@ -462,9 +473,9 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   retry receipts. Local recovery and older backup imports into the same installation
   cannot resurrect that identity by default; an explicitly requested backup copy
   has a separate identity. Existing
-  exported files are unchanged. Backup format 7 retains minimal repeating exclusions,
+  exported files are unchanged. Backup format 8 retains minimal repeating exclusions,
   weekly plans, dated progress and correction history, and adds private exercise
-  photos plus whole-routine Trash. JSON versions 1–6 remain
+  photos, authoring/preset metadata and whole-routine Trash. Formats 1–7 remain
   readable. Unknown replies keep the existing command/batch
   guards; retry uses the same operation, and batches report confirmed partial results.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
@@ -555,8 +566,8 @@ states and progress, and permanent deletion retains identity exclusions.
 An optional custom still photo is chosen through Android Photo Picker, previewed
 without cropping and stored privately as an immutable normalized image. The full
 composition is retained, with bounded resolution and metadata removed. Photo
-changes apply immediately to today's open session and closed history retains its original image. Portable format 7
-archives include photos and Trash state; legacy JSON versions 1–6 remain readable.
+changes apply immediately to today's open session and closed history retains its original image. Portable format 8
+archives include photos and Trash state; legacy formats 1–7 remain readable.
 The widget prefers compact wide placement and uses Done, a full weekday header,
 numeric progress and native stale-action protection. Undo reverses the current
 widget's remaining eligible completions in reverse order; Retry appears only for

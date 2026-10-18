@@ -3,7 +3,7 @@ import { useLocalizedState, useTranslation } from '../localization/react';
 import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { Redirect, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, TextInput, View } from 'react-native';
 import type { CalendarCreationDisposition, Command, CommandResult, RecurrenceDraft, RoutinePlan, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -17,8 +17,8 @@ import { civilAt, deviceZone } from '../domain/time';
 import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, IconButton, Page, QueryState, RowSupport, SettingRow, Sheet, Status, Toggle } from '../ui/components';
 import { RoutineActions } from '../ui/routine-actions';
 import { useExerciseImageLeases } from '../ui/exercise-images';
-import { ReminderTypeSelector, RoutineChangeReview, RoutineWeekFields, routineDayKeys } from '../ui/routine-editor';
-import { canChangeReminderType, changeRoutineClock, routinePayload, switchReminderDraftType, validRoutineDays, weeklyEditorDraft, type ReminderType, type WeeklyEditorDraft } from '../domain/routine-editor-draft';
+import { RoutineChangeReview, RoutineWeekFields, routineDayKeys } from '../ui/routine-editor';
+import { changeRoutineClock, routinePayload, validRoutineDays, weeklyEditorDraft, type ReminderType, type WeeklyEditorDraft } from '../domain/routine-editor-draft';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
@@ -57,6 +57,11 @@ function routineSeed(plan: RoutinePlan): Seed {
     mode: plan.mode, eventStartMs: when, alarmAtMs: when, sound: plan.sound, vibration: plan.vibration }) } };
 }
 export default function Editor() {
+  const params = useLocalSearchParams<OriginParams & { routine?: string; routineId?: string; copyRoutine?: string }>();
+  if (params.routine !== undefined || params.routineId !== undefined || params.copyRoutine !== undefined) return <Redirect href={{ pathname: '/routine-edit', params }} />;
+  return <ReminderEditor />;
+}
+function ReminderEditor() {
   'use no memo';
   const t = useTranslation();
   const params = useLocalSearchParams<OriginParams & { id?: string; duplicate?: string; segmentId?: string; following?: string; routine?: string; routineId?: string; copyRoutine?: string }>();
@@ -70,6 +75,7 @@ export default function Editor() {
       if (!plan) throw new Error(t('routine_load_error'));
       return routineSeed(plan);
     } });
+  if (source.data?.routineId) return <Redirect href={{ pathname: '/routine-edit', params: { ...retainedOriginParams(params), ...(duplicate ? { copyRoutine: source.data.routineId } : { routineId: source.data.routineId }) } }} />;
   if (!nativeAvailable) return <Page compact title={t('m_31757bbfa17e')}><Copy>{t('m_00b26ac6b4a0')}</Copy></Page>;
   if (editing && !source.data) return <Page compact title={t('m_1f1353b055df')} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(retainedOriginParams(params)))}><QueryState loading={source.isLoading} error={source.error}
     empty={false} onRetry={() => void source.refetch()} /></Page>;
@@ -91,7 +97,7 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
     title: duplicate ? seed.state.draft.title.slice(0, 193) + t('m_d75612450689') : seed.state.draft.title } }));
   const { draft, recurrence } = state, zone = draft.zoneId ?? deviceZone();
   const [baseline, setBaseline] = useState(state);
-  const [editorType, setEditorType] = useState<ReminderType>(seed.routinePlan || newRoutine ? 'Routine' : 'Reminder');
+  const [editorType] = useState<ReminderType>(seed.routinePlan || newRoutine ? 'Routine' : 'Reminder');
   const [weekly, setWeekly] = useState<WeeklyEditorDraft>(() => weeklyEditorDraft(seed.state.draft, seed.routinePlan, duplicate));
   const [baselineWeekly, setBaselineWeekly] = useState(weekly), [baselineType] = useState(editorType);
   const [loadedRoutine, setLoadedRoutine] = useState(duplicate ? undefined : seed.routinePlan);
@@ -121,7 +127,6 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
   const [review, setReview] = useState<Review | null>(null), [reviewOpen, setReviewOpen] = useState(false), [scopeChanged, setScopeChanged] = useState(false);
   const editingId = saveAsNew || routine ? undefined : id, editingSeries = saveAsNew || routine ? undefined : loadedSeries;
   const creation = !editingId && !editingSeries && !loadedRoutine;
-  const typeEditable = canChangeReminderType(creation, duplicate, !!seed.routinePlan, !!seed.series);
   const routinePlans = useQuery({ queryKey: ['routines'], queryFn: () => engine().queryRoutines(), enabled: nativeAvailable && !!loadedRoutine });
   const latestRoutine = routinePlans.data?.find(plan => plan.id === loadedRoutine?.id);
   const routineStale = !!latestRoutine && latestRoutine.revision !== loadedRoutine?.revision;
@@ -297,11 +302,6 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
   const timingLabel = noAlert ? t('m_75ba69e3a8b7') : modeLabel(draft.mode) + t('m_4a8f540240f1');
   const calendarSummary = hasSeparateEvent(resolvedDraft) || preserveEvent ? eventRange(resolvedDraft) : undefined;
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
-  const chooseType = (type: ReminderType) => {
-    if (!typeEditable || frozen || pendingSave.current || type === editorType) return;
-    finishEditing(); setMessage(''); setFieldError(undefined);
-    void updateTiming(() => switchReminderDraftType(draft, type, input => engine().convertTime(input)), 'eventStartMs').then(() => setEditorType(type)).catch(() => {});
-  };
   const restoreRoutine = () => {
     if (!latestRoutine) return;
     const latest = routineSeed(latestRoutine).state;
@@ -348,7 +348,6 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
         multiline compactMultiline submitBehavior="blurAndSubmit" enterKeyHint="done" onSubmitEditing={() => titleInput.current?.blur()}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <ConnectedGroup>
-        {typeEditable ? <ReminderTypeSelector key="type" value={editorType} disabled={frozen} onChange={chooseType} /> : <SettingRow intent="action" key="type" label={t('routine_type_label')} value={t(routine ? 'routine_type_weekly' : 'routine_type_reminder')} />}
         {(!routine || !loadedRoutine || !noAlert) && <View key="timing">
           {(!routine || !noAlert) && <RowSupport><Copy muted size={14}>{routine ? t('routine_shared_time') : timingLabel}</Copy></RowSupport>}
           {routine ? <>

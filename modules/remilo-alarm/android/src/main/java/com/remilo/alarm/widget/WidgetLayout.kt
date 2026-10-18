@@ -38,10 +38,11 @@ import com.remilo.alarm.presentation.NativeMessages
   val weekday = WidgetText.weekday(context,snapshot.date)
   val fullDate = WidgetText.date(context,snapshot.date)
   val state = session?.get("state") as? String
+  val general = session?.get("presentationPreset") == "General"
   val title = session?.get("title") as? String ?: label(if(snapshot.configuration.routineId != null) "Routine unavailable" else "Today's reminders")
   val total = (session?.get("totalCount") as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
   val done = ((session?.get("completedCount") as? Number)?.toInt() ?: 0).coerceIn(0,total)
-  val outcome = label(when(state) { "Rest" -> "Rest day"; "Paused" -> "Paused"; "Skipped" -> "Skipped today"; "Completed" -> "Completed today"; "Upcoming" -> "Not started yet"; "NotCompleted" -> "Not completed"; "PartiallyCompleted" -> "Partially completed"; else -> "$done of $total done" })
+  val outcome = label(when(state) { "Rest" -> if(general) "No routine scheduled today" else "Rest day"; "Paused" -> "Paused"; "Skipped" -> "Skipped today"; "Completed" -> "Completed today"; "Upcoming" -> "Not started yet"; "NotCompleted" -> "Not completed"; "PartiallyCompleted" -> "Partially completed"; else -> "$done of $total done" })
   val feedback = snapshot.actionFeedback
   val busy = feedback?.busy == true
   val hasRecovery = snapshot.retryToken != null || snapshot.notice != null
@@ -90,11 +91,11 @@ import com.remilo.alarm.presentation.NativeMessages
   @Composable fun exerciseText() {
     Column(GlanceModifier.fillMaxWidth().then(if(preview)GlanceModifier else GlanceModifier.clickable(openRoutine))
       .semantics { contentDescription = if(activeExercise)listOfNotNull(feedback?.confirmation?.let(::label),
-        label("Exercise ${steps.indexOf(step) + 1} of $total"),step!!["name"],step["target"]).joinToString(". ") else outcome }) {
+        if(general) L10n.text(context,NativeMessages.routine_widget_step(steps.indexOf(step) + 1,total)) else label("Exercise ${steps.indexOf(step) + 1} of $total"),step!!["name"],step["target"]).joinToString(". ") else outcome }) {
       if(activeExercise) copy(step!!["name"] as? String ?: "",font = 18,medium = true,lines = if(expanded)2 else 1)
       else copy(outcome,font = 18,medium = true,lines = 2)
       if(activeExercise) (step!!["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true) }
-      else if(state == "Rest") copy(label("No exercises scheduled today."),true,2)
+      else if(state == "Rest") copy(label(if(general) "There are no steps scheduled for this day." else "No exercises scheduled today."),true,2)
     }
   }
   @Composable fun footer() {

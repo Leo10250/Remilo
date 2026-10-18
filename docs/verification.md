@@ -1,5 +1,23 @@
 # Verification and release evidence
 
+## Separate creation and generic routines — 18 October 2026
+
+Check Create choices, direct routine entry, list inheritance, legacy redirects and
+focus/scroll-preserving dismissal. Ordinary reminder Calendar/timing/recurrence/
+overdue behavior stays. New routines are blank General/Shared with explicit days.
+Verify stable shared identities across duplicate names, reorder, day off/on before/
+after Save, copying, duplication, conversions and direct editing scopes. Preset
+switching retains values/photos/checks and freezes historical presentation. Cover
+dirty cancellation, photo leases, checked-step removal review, conflicts, exact
+uncertain retry, midnight and stale widgets. Native checks cover CE16→17 defaults,
+format8 linkage/media/Trash/history, legacy1–7 import and atomic malformed rejection.
+
+Render production components in EN/Chinese, all eight appearance pairs, narrow
+widths and 100–200% text. Check complete Save/row targets, IME, keyboard/TalkBack,
+scope copy and themed discard. Existing widget render/action/fallback checks remain.
+Browser fixtures do not establish phone acceptance. Run shared/design/localization,
+native tests, lint and signed assembly using release:prepare; record actual results.
+
 App-owned confirmation checks cover reminder/routine/day/exercise Discard,
 reload-draft, list removal, Calendar decisions and unconfirmed Save/import/bulk
 guards. Verify exactly one captured callback, duplicate/stale choices, repeated
@@ -736,6 +754,6 @@ Immediate-edit regressions additionally cover adding Saturday while it is Saturd
 Rest/workout transitions, stable occurrence identity and retained matching checks,
 completed-day extension, intentional Skip, removed-step audit, photo/time changes,
 receipt replay and process death at each edit journal boundary. Closed history and
-backward-clock closure stay immutable. Backup format 7 round trips retain edited
+backward-clock closure stay immutable. Backup format 8 round trips retain edited
 timing/Rest/audit while legacy format readers remain covered. Agenda and widget
 must resolve the same dated revision; saving never posts an elapsed catch-up prompt.

@@ -1,5 +1,9 @@
 # Android home-screen widget — 15 October 2026
 
+The [18 October generic-routine correction](routine-creation.md) adds preset-aware
+step/rest wording and curated General examples. Layout, Done feedback, repeated
+Undo and bottom alignment remain. Historical wording follows its bound version.
+
 The owner-approved RW-03 contract adds one configurable Android widget. It uses
 the current visual language and the native routine authority, with no new root,
 workout scenery, wallpaper automation, lock-screen implementation or iOS work.

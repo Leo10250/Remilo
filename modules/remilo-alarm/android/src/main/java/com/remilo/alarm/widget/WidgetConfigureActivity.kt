@@ -73,7 +73,8 @@ class WidgetConfigureActivity : ComponentActivity() {
       // titles, today's rest state, and whether this installation has any content.
       val base = widgetRequest(this) { it.widgetSnapshot(-1,false) }.copy(date = java.time.LocalDate.now().toString())
       if (mode != selectedMode || routineId != selectedRoutine) return
-      preview = WidgetSetup.example(this,selectedMode,base,selectedRoutine != null || selectedMode == "Routine")
+      preview = WidgetSetup.example(this,selectedMode,base,selectedRoutine != null || selectedMode == "Routine",
+        plans.firstOrNull { it["id"] == selectedRoutine }?.get("presentationPreset") as? String ?: "General")
       error = null
     }
     LaunchedEffect(Unit) {

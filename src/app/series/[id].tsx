@@ -32,7 +32,7 @@ export default function SeriesDetails() {
   const family = families.data?.find((item) => item.seriesId === familyId || item.current.id === id);
   const series = family?.current ?? query.data;
   const routineId = (series?.template as { routineId?: string } | undefined)?.routineId;
-  useEffect(() => { if (routineId) router.replace({ pathname: '/edit', params: { routineId } }); }, [routineId]);
+  useEffect(() => { if (routineId) router.replace({ pathname: '/routine-edit', params: { routineId } }); }, [routineId]);
   const seriesId = family?.seriesId ?? series?.seriesId;
   const calendarLink = links.data?.find(item => item.seriesId === seriesId || item.occurrenceId === seriesId);
   const publication = publications.data?.find(item => item.occurrenceId === seriesId);

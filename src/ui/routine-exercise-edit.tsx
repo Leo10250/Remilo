@@ -63,18 +63,18 @@ export function RoutineExerciseEditSheet({ target, onClose, returnFocusRef }: {
     Keyboard.dismiss();
     void action.execute({ command: routineExerciseEditCommand(data.plan, target, draft, engine().createOperationId()), success: t('routine_saved_changes') });
   };
-  return <Sheet title={t('routine_edit_exercise')} visible={!!target} onClose={close} onBack={close} returnFocusRef={returnFocusRef}
+  return <Sheet title={t(data?.plan?.presentationPreset === 'General' ? 'routine_step_editor' : 'routine_edit_exercise')} visible={!!target} onClose={close} onBack={close} returnFocusRef={returnFocusRef}
     footer={<View style={{ padding: 16, gap: 8 }}>
       <Button label={t('m_1509f561f241')} busy={action.busy} disabled={loading || !draft?.name.trim() || action.guarded || !!data?.error || action.feedback?.tone === 'danger'} onPress={save} />
       <Button label={t('m_19766ed6ccb2')} variant="neutral" disabled={action.guarded} onPress={close} />
     </View>}>
-    {target && <Copy muted size={14}>{t('routine_edit_day_context', { day: t(routineDayKeys[target.weekday]) })}</Copy>}
-    <Copy muted size={14}>{t('routine_edit_immediate_hint')}</Copy>
+    {target && <Copy muted size={14}>{data?.plan?.authoringMode === 'Shared' ? t('routine_shared_edit_context') : t('routine_edit_day_context', { day: t(routineDayKeys[target.weekday]) })}</Copy>}
+    <Copy muted size={14}>{t(data?.plan?.authoringMode === 'Shared' ? 'routine_shared_edit_hint' : 'routine_edit_immediate_hint')}</Copy>
     <ActionFeedback loading={loading} message={data?.error || undefined} tone={data?.error ? 'danger' : 'muted'} />
     {!!data && <CommandRecovery action={action} />}
     {!action.guarded && target && (data?.error || action.feedback?.tone === 'danger') && <Button label={t('routine_reload_exercise')} variant="neutral"
       onPress={() => discardThen(() => { setReloading(true); action.clearFeedback(); void load(target, ++generation.current); })} />}
-    {draft && <RoutineExerciseForm exercise={draft} disabled={action.guarded || loading} imageOpen={imageOpen} onImageOpenChange={setImageOpen}
+    {draft && <RoutineExerciseForm exercise={draft} preset={data?.plan?.presentationPreset} disabled={action.guarded || loading} imageOpen={imageOpen} onImageOpenChange={setImageOpen}
       onChange={patch => { if (!action.isGuarded()) setLoaded(value => value?.target === target && value.draft ? { ...value, draft: { ...value.draft, ...patch } } : value); }} />}
   </Sheet>;
 }

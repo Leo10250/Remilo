@@ -129,7 +129,7 @@ function RoutineSessionView() {
     </Sheet>
     <Sheet title={t('routine_history')} visible={history} onClose={() => setHistory(false)}>
       <QueryState loading={historyQuery.isLoading} error={historyQuery.error} empty={!historyQuery.data?.pages[0]?.items.length} emptyMessage={t('routine_empty_history')} onRetry={() => void historyQuery.refetch()} />
-      <ConnectedGroup>{historyQuery.data?.pages.flatMap(p => p.items).map(past => <SettingRow intent="navigation" key={past.occurrenceId} label={formatDate(new Date(past.date + 'T12:00:00').getTime())} value={t(stateKeys[past.state])}
+      <ConnectedGroup>{historyQuery.data?.pages.flatMap(p => p.items).map(past => <SettingRow intent="navigation" key={past.occurrenceId} label={formatDate(new Date(past.date + 'T12:00:00').getTime())} value={t(past.state === 'Rest' && past.presentationPreset === 'General' ? 'routine_not_scheduled' : stateKeys[past.state])}
         description={t('routine_progress', { done: past.completedCount, total: past.totalCount })} disabled={action.guarded} onPress={() => { setHistory(false); setUndo(null); setSelected(undefined); router.push({ pathname: '/routine-session', params: { id, date: past.date } }); }} />)}</ConnectedGroup>
       {historyQuery.hasNextPage && <Button label={t('m_964e5f88d036')} variant="secondary" busy={historyQuery.isFetchingNextPage} onPress={() => void historyQuery.fetchNextPage()} />}
     </Sheet>

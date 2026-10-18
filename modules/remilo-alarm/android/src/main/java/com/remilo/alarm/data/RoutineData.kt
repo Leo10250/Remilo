@@ -20,7 +20,9 @@ data class RoutineVersion(val routineId: String, val effectiveDate: String, val 
   @ColumnInfo(defaultValue = "''") val notes: String = "",
   @ColumnInfo(defaultValue = "'remilo'") val sound: String = "remilo",
   @ColumnInfo(defaultValue = "0") val vibration: Boolean = false,
-  @ColumnInfo(defaultValue = "1") val revision: Long = 1)
+  @ColumnInfo(defaultValue = "1") val revision: Long = 1,
+  @ColumnInfo(defaultValue = "'ByWeekday'") val authoringMode: String = "ByWeekday",
+  @ColumnInfo(defaultValue = "'Exercise'") val presentationPreset: String = "Exercise")
 @Entity(tableName = "routine_sessions", indices = [Index(value = ["routineId", "date"], unique = true)])
 data class RoutineSession(@PrimaryKey val occurrenceId: String, val routineId: String,
   val date: String, val versionDate: String, val steps: String, val done: String = "[]",

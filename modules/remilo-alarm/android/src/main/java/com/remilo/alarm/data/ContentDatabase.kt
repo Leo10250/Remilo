@@ -116,12 +116,18 @@ abstract class ContentDatabase : RoomDatabase() {
   abstract fun sync(): CalendarSyncDao
   abstract fun managedCalendar(): CalendarManagedDao
   companion object {
-    const val VERSION = 16
+    const val VERSION = 17
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
       ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
-      .addCallback(object : RoomDatabase.Callback() {
+      .addMigrations(MIGRATION_16_17).addCallback(object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
       }).build()
+    val MIGRATION_16_17 = object : Migration(16, 17) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE routine_versions ADD COLUMN authoringMode TEXT NOT NULL DEFAULT 'ByWeekday'")
+        db.execSQL("ALTER TABLE routine_versions ADD COLUMN presentationPreset TEXT NOT NULL DEFAULT 'Exercise'")
+      }
+    }
     val MIGRATION_15_16 = object : Migration(15, 16) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE routine_plans ADD COLUMN priorState TEXT NOT NULL DEFAULT 'Active'")

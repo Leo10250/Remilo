@@ -59,7 +59,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
         <Button label={t('m_3fb9aa9bdbb5')} icon="add" disabled={!nativeAvailable || guarded} onPress={() => setEditing('create')} /></>}
       {!management && <ConnectedGroup title={t('m_ff3b424445ad')}><SettingRow intent="navigation" key="repeats" label={t('m_92ee0233f013')} icon="repeat" description={t('m_baa6cb3b3dc6')} disabled={guarded || !nativeAvailable}
         onPress={() => router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })} />
-        <SettingRow intent="navigation" key="routines" label={t('routine_library')} icon="fitness_center" description={t('routine_library_hint')} disabled={guarded || !nativeAvailable} onPress={() => router.push('/routines')} /></ConnectedGroup>}
+        <SettingRow intent="navigation" key="routines" label={t('routine_library')} icon="checklist" description={t('routine_library_hint')} disabled={guarded || !nativeAvailable} onPress={() => router.push('/routines')} /></ConnectedGroup>}
       <QueryState loading={query.isLoading && nativeAvailable} error={query.error}
         empty={!nativeAvailable || management && !query.data?.length} emptyMessage={!nativeAvailable ? t('m_76edd8d2cf44') : t('m_230fe389ffc2')} onRetry={() => void query.refetch()} />
       {management ? <ConnectedGroup footer={groupFeedback}>{query.data?.map((list) => <SettingRow intent="action" key={list.id} label={list.name} icon="checklist" minHeight={72} disabled={guarded} onPress={() => setSelected(list)} />)}</ConnectedGroup> :

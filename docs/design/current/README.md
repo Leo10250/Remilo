@@ -58,6 +58,11 @@ implementation units; approval of a synthetic image does not complete one.
 
 ## Page contracts
 
+The owner's [18 October generic-routine contract](routine-creation.md) supersedes
+unified creation: Create offers reminder/routine destinations, new routines are
+General/Shared, and optional Exercise fields insert no sample content. Explicit
+shared linkage and weekday conversion preserve native progress/frozen history.
+
 The owner's [15 October weekly routine contract](weekly-routines.md) adds optional
 weekly plans and date-scoped exercise progress within the existing reminder model.
 The subsequent owner-approved correction unifies the editor, exposes all three
