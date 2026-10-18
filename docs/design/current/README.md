@@ -103,6 +103,14 @@ positions when Next disappears. Expanded and recovery layouts retain their anato
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.
 
+The owner's 18 October confirmation approval replaces app-owned native alerts
+with the [shared themed confirmation](visual-language.md#app-owned-confirmations--owner-approval-18-october-2026).
+Short decisions use centered opaque dialogs with production Buttons; richer
+destructive reviews and existing forms/menus retain their themed sheets. Android
+system surfaces and native date/time interaction remain governed by their current
+contracts. Captured decisions, cancellation, accessibility and pending-save guards
+are preserved.
+
 | Contract | Reference / review status |
 |---|---|
 | [Agenda and navigation](screens/agenda.md) | R3 homepage accepted; exceptional states still need review. |

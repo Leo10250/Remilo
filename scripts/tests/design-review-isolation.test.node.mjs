@@ -253,6 +253,7 @@ test('presentation stress scale is isolated, SSR-safe and retained through fixtu
       react: { useState: (initialize) => { if (!initialized) { initialized = true; retained = initialize(); } return [retained, () => {}]; } },
       'react/jsx-runtime': { jsx: (type, props) => ({ type, props }) },
       '../../src/ui/theme': { useTheme: () => colors, PresentationProvider: provider },
+      './confirmation-preview': { ConfirmationPreview: 'ConfirmationPreview' },
     }, { URLSearchParams, ...(search == null ? {} : { window }) }).default;
     const rendered = preview({ children: 'fixture' });
     assert.equal(rendered.type, provider); assert.equal(rendered.props.colors, colors);
@@ -331,6 +332,7 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
       '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
       './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
       './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},
+      './confirmation-state': compile('src/ui/confirmation-state.ts'),
     });
     // Model the header's foreground and scenic-control context; a Modal retains both.
     contexts.find((context) => context.value === false).value = true;

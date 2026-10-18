@@ -38,6 +38,15 @@ governs Done, original-alert overdue, inline Alert choices and shared terminal
 cards. Earlier [beta corrections](design/current/beta-fixes.md) retain four roots,
 alert-first browsing, stationary covers and splash requirements.
 
+App-owned discard/reload, list-removal, Calendar decisions and unconfirmed-action
+notices share a themed confirmation. It follows the same atmosphere/brightness,
+typography and action semantics as existing themed sheets. Back/cancellation
+preserves drafts and pending-operation recovery; only an explicit confirming
+choice executes the captured callback. A newer route cannot inherit an old choice.
+Longer destructive reviews keep their existing sheet. Android permission, picker,
+sharing, authorization and launcher surfaces remain platform-owned; native brief
+status messages do not become extra blocking decisions.
+
 ## Release sequence
 
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.

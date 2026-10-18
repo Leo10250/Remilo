@@ -20,6 +20,7 @@ import { presentation } from './atmosphere.generated';
 import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
 import { headerScrimGeometry, headerTransition } from './header-transition';
 import { scheduleSnackbarDismiss } from './snackbar-timeout';
+import { rememberConfirmationFocus } from './confirmation-state';
 
 type ConnectedCorners = Pick<ViewStyle, 'borderTopLeftRadius' | 'borderTopRightRadius' | 'borderBottomLeftRadius' | 'borderBottomRightRadius'>;
 const ConnectedRowContext = createContext<ConnectedCorners | null>(null);
@@ -76,8 +77,8 @@ export function IconButton({ icon, label, onPress, disabled = false, variant = '
   const foundation = useFoundationStyle(), state = usePresentationState(), scenic = useContext(ScenicChrome), [focused, setFocused] = useState(false);
   const c = foundation?.colors;
   return <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={label} aria-expanded={expanded} disabled={disabled} accessibilityState={{ disabled, ...(expanded !== undefined ? { expanded } : {}) }}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    onPress={onPress} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
+    onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
       borderRadius: 24, backgroundColor: scenic ? pressed ? colors.ink + '20' : 'transparent' : c ? disabled ? c.disabledSurface : pressed || state === 'pressed' ? c.secondaryPressed : 'transparent' : pressed ? colors.soft : 'transparent',
       borderWidth: c ? 2 : variant === 'outlined' ? 1 : 0, borderColor: c && (focused || state === 'focused') ? scenic ? colors.ink : c.focus : variant === 'outlined' && !scenic ? disabled ? c?.disabledInk ?? colors.muted : c?.outline ?? colors.border : 'transparent', opacity: scenic ? disabled ? 0.4 : 1 : c ? 1 : disabled ? 0.4 : 1 })}>
     <Icon name={icon} color={!scenic && c && disabled ? c.disabledInk : colors.ink} />
@@ -105,8 +106,9 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
   const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.dangerInk : variant === 'secondary' ? colors.accent : colors.ink;
-  const button = <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+  const button = <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked}
+    onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }}
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
     style={({ pressed }) => {
       const active = !blocked && (pressed || state === 'pressed');
       const round = variant === 'danger' || variant === 'outlined';
@@ -155,7 +157,7 @@ export function Field({ label, error, inputRef, compactMultiline = false, requir
     <TextInput ref={inputRef} accessibilityLabel={required ? t('field_required_label', { label }) : label}
     placeholderTextColor={colors.muted} selectionColor={colors.accent} cursorColor={colors.accent} {...props}
     onContentSizeChange={props.multiline && (foundation || compactMultiline) ? resize : props.onContentSizeChange}
-    onFocus={event => { setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
       borderRadius: foundation?.tokens.shape.field ?? shape.field,
       backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: compactMultiline ? 48 : props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
       ...(compactMultiline ? { height: titleHeight, lineHeight: lineHeightFor(typography.body, 1.4) * scale } : {}),
@@ -179,8 +181,8 @@ export function SettingRow({ label, value, icon, onPress, intent, destructive = 
     {!stackedStatus && children}{onPress && intent !== 'action' && <Icon name={intent === 'picker' ? 'expand_more' : 'chevron_right'} size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
-    accessibilityLabel={accessibilityLabel ?? [label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={onPress}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    accessibilityLabel={accessibilityLabel ?? [label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }}
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ ...corners, backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>
       {body}{corners && focused && <RowFocus corners={corners} />}
     </Pressable> : body;

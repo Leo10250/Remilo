@@ -16,6 +16,20 @@ delegating default rendering to AlarmControlsScreen. Reusable presentation slots
 remain available to isolated fixtures. Production components consume generated
 atmosphere roles and bundled scene/crop mappings.
 
+App-owned confirmations use a process-only external presentation store and one
+React Native Modal host under the root theme/preview providers. Existing screens
+retain `useAppearanceConfirmation` and their captured action callbacks. The host
+opens above the active page or sheet and reads canonical foundation roles rather
+than a scenic toolbar override. A request retains localized descriptors, owner
+identity, unique presentation ID and initiating focus node; it stores no engine
+state. Language changes update copy without replacing the request. Completion
+clears presentation before running a callback, so duplicates/older closures cannot
+replay it. Repeated presentation requests are ignored while one decision is open;
+owner blur/unmount invalidates it without executing a callback. Cancellation/acknowledgment
+returns connected focus with a generation-guarded frame callback. Automatic
+atmosphere holds and reduced motion stay presentation-only. No database, backup,
+native scheduling, Calendar operation or system permission contract changes.
+
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup

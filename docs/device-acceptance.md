@@ -1,5 +1,18 @@
 # Offline Android acceptance run
 
+## Themed confirmation follow-up — 18 October 2026
+
+On the identified signed APK, compare short app-owned confirmations with existing
+themed Trash/permanent-delete sheets in all four atmospheres and both brightnesses.
+Check reminder/routine/day/exercise Discard, reload, list removal, Calendar
+decisions and pending-save/import guards. Back, backdrop and Keep editing retain
+the exact draft, underlying sheet, route and scroll. Repeated taps cannot replay
+the choice; uncertain commands still use their exact Retry. Observe native Modal
+stacking, heading announcement, TalkBack/keyboard focus return, reduced motion,
+Chinese, 200% text, landscape/IME and safe-area scrolling. System permission,
+photo/file/share, Google authorization and launcher UI remains platform-owned.
+Host/browser checks do not close these physical acceptance observations.
+
 ## Reminder Save crash follow-up — 16 October 2026
 
 On an identified updated signed APK, save one-off and repeating reminders in all

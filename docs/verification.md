@@ -1,5 +1,21 @@
 # Verification and release evidence
 
+App-owned confirmation checks cover reminder/routine/day/exercise Discard,
+reload-draft, list removal, Calendar decisions and unconfirmed Save/import/bulk
+guards. Verify exactly one captured callback, duplicate/stale choices, repeated
+Back, owner unmount, reentrant actions, callback failure and translated open copy
+with authored names preserved. Back/backdrop/Keep editing retain saved and draft
+state; pending commands remain guarded and retry the same operation. Review the
+production dialog and existing destructive sheets across all eight pairs, both
+languages, narrow/landscape windows and 100–200% text. Check opaque canonical
+surface/ink/error roles, complete targets, keyboard dismissal, scrolling, reduced
+motion, heading announcement, focus return and no interaction with the underlying
+page/sheet. The isolated `reviewConfirmation=discard|info|list|long` fixture supports
+the existing review appearance/language/scale parameters and `reviewParent=sheet`.
+Browser fixtures do not establish native dialog stacking, TalkBack or IME acceptance.
+Android permissions, Google authorization, photo/document pickers, sharing,
+launcher confirmation and native date/time remain separate system/device gates.
+
 Repeated widget Undo checks complete several exercises, then reverse all of them
 one at a time, including after final completion and process restart. Verify the
 next named target, first unfinished exercise, count and enabled state after each
