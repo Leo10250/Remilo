@@ -20,6 +20,7 @@ import androidx.glance.semantics.contentDescription
 import com.remilo.alarm.presentation.AtmosphereTokens
 import com.remilo.alarm.presentation.L10n
 import com.remilo.alarm.presentation.NativeMessages
+import com.remilo.alarm.presentation.exerciseTargetText
 
 /** Production RemoteViews composition shared by launcher, setup and native render tests. */
 @Composable internal fun WidgetContent(snapshot: WidgetSnapshot, preview: Boolean = false, fontScale: Float = 1f, staticCollections: Boolean = preview) {
@@ -91,10 +92,10 @@ import com.remilo.alarm.presentation.NativeMessages
   @Composable fun exerciseText() {
     Column(GlanceModifier.fillMaxWidth().then(if(preview)GlanceModifier else GlanceModifier.clickable(openRoutine))
       .semantics { contentDescription = if(activeExercise)listOfNotNull(feedback?.confirmation?.let(::label),
-        if(general) L10n.text(context,NativeMessages.routine_widget_step(steps.indexOf(step) + 1,total)) else label("Exercise ${steps.indexOf(step) + 1} of $total"),step!!["name"],step["target"]).joinToString(". ") else outcome }) {
+        if(general) L10n.text(context,NativeMessages.routine_widget_step(steps.indexOf(step) + 1,total)) else label("Exercise ${steps.indexOf(step) + 1} of $total"),step!!["name"],exerciseTargetText(context,step)).joinToString(". ") else outcome }) {
       if(activeExercise) copy(step!!["name"] as? String ?: "",font = 18,medium = true,lines = if(expanded)2 else 1)
       else copy(outcome,font = 18,medium = true,lines = 2)
-      if(activeExercise) (step!!["target"] as? String)?.takeIf { it.isNotEmpty() }?.let { copy(it,true) }
+      if(activeExercise) exerciseTargetText(context,step!!).takeIf { it.isNotEmpty() }?.let { copy(it,true) }
       else if(state == "Rest") copy(label(if(general) "There are no steps scheduled for this day." else "No exercises scheduled today."),true,2)
     }
   }
@@ -237,7 +238,7 @@ import com.remilo.alarm.presentation.NativeMessages
                 Column(GlanceModifier.fillMaxWidth().height(64.dp).padding(vertical = 8.dp).then(if(preview)GlanceModifier else GlanceModifier.clickable(destination))) {
                   val next = row === nextStep
                   copy(if(next) nextLabel.orEmpty() else row["name"] as? String ?: "",supporting = next)
-                  copy(row["target"] as? String ?: "",true)
+                  copy(exerciseTargetText(context,row),true)
                 }
               }
               val remaining = steps.filter { it !== step && it["completed"] != true }.takeIf { activeExercise }.orEmpty()

@@ -33,7 +33,7 @@ native scheduling, Calendar operation or system permission contract changes.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 17/9/8. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 17/9/9. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -41,7 +41,7 @@ preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
-portable backup format 8 (legacy readers 1–7).
+portable backup format 9 (legacy readers 1–8).
 
 [P4-B linking](calendar-linking.md) adds CE 7→8 links and immutable phased
 operations. Local import/edit, link checkpoints, receipts and scheduling outbox
@@ -623,6 +623,25 @@ backup version, eligibility or overdue authority changes in this refinement.
 
 ## Weekly routine lifecycle and durable progress
 
+### Day tabs and structured targets — owner correction, 18 October 2026
+
+New authoring drafts are General/ByWeekday. Tabs select a weekday; its nonempty
+sequence determines scheduling. Copying allocates independent materialized IDs and
+shares immutable image references. Existing Shared versions remain readable; UI
+Save converts the new revision to ByWeekday, preserving IDs/checks and stripping
+links. Direct row Save edits only the captured weekday and performs that conversion.
+Opening/cancelling never persists conversion. Historical versions remain untouched.
+
+RoutineExercise gains optional exerciseTarget: sets/reps/repsMax, duration(value,
+sec/min/hr), eachSide, weight(value,kg/lb), additionalText. Nonempty legacy target
+text and exerciseTarget are exclusive. Numeric entry strings remain process-only;
+normalized optional numbers are validated natively before capture. No derived
+summary is stored; matching RN/Kotlin localized formatting consumes immutable data.
+JSON already lives in credential-protected versions/sessions, so CE17/DP9 stay.
+Format9 validates structured targets and snapshot consistency before atomic import,
+retains formats1–8, and never parses legacy target text. All authoring still uses
+the serialized command path, revision guards and receipt-first exact retries.
+
 ### Generic authoring correction — 18 October 2026
 
 CE17 adds authoringMode (Shared/ByWeekday) and presentationPreset (General/Exercise)
@@ -636,13 +655,15 @@ shared key, never title/ordinal matching. Reorder/content edits preserve both ID
 Unsaved off/on caches copies; saved unscheduled days remain empty Rest definitions.
 
 Separate routes share fields, not owning submission lifecycles. Child Add/Done is
-draft-only; direct shared editing uses existing captured EditRoutine and updates all
-siblings. Legacy missing Edit metadata inherits the loaded version; legacy Create
+draft-only; the later Day tabs direct-edit path uses captured EditRoutine, converts
+Shared to independent and updates only the captured weekday. Legacy missing Edit
+metadata inherits the loaded version; legacy Create
 uses ByWeekday/Exercise. Receipts preserve exact captured retry identity before stale
 checks. Session presentation resolves preset from versionRevision, freezing history.
 
-Portable format8 includes both metadata fields and shared links in the existing photo
-archive. Formats1–7 import with legacy defaults. Validate linkage before commit;
+Portable format9 includes both metadata fields, shared links and structured targets
+in the existing photo archive. Format8 metadata remains readable; formats1–7 import
+with legacy defaults. Validate linkage and targets before commit;
 retain whole-family copy/conflict identities, media leases, streaming, integrity and
 resource bounds. Invalid metadata cannot partially mutate content. Curated preview
 content stays inert; native reconciliation/delivery authority is unchanged.
@@ -897,12 +918,12 @@ unreferenced images and interrupted source copies become eligible for cleanup
 after 24 hours. Unlocked engine reads offer cleanup at most hourly; referenced
 history never expires. Durable content contains no picker URI.
 
-Portable format 8 is a streaming .remilo ZIP: content.json (existing 10 MB bound)
+Portable format 9 is a streaming .remilo ZIP: content.json (existing 10 MB bound)
 plus media/<hash>.webp, with a 200 MiB archive/expanded bound. Validate entry paths,
 uniqueness, manifest, hashes, dimensions and decodability before installing files
 and atomically committing content references. Prepared CE import handles replace
 raw JSON in the UI; receipt-first retries bind the same handle/copy choices.
-Legacy JSON versions 1–6 and format-7 archives remain readable. Widgets, OS handles, generations and
+Legacy JSON versions 1–6 and format-7/8 archives remain readable. Widgets, OS handles, generations and
 private operational sessions remain excluded. Widget progress/actions retain
 native authority; exercise navigation retains an exact exercise ID in the dated deep link.
 Format-7/8 validation accepts immediately edited snapshots whose original nominal
@@ -910,4 +931,6 @@ identity differs from the updated alert time, checking current definition/metada
 and the original segment identity. Rest snapshots remain empty/uncompleted, and
 removed-step audit references must resolve to retained immutable plan revisions.
 CE17 adds authoring/preset metadata as described above; DP9 stays unchanged.
-Portable version 8 carries shared linkage, retaining format 1–7 readers.
+Portable version 9 adds optional structured targets to version/snapshot JSON;
+version8 linkage remains readable along with formats1–7. Invalid targets reject
+before committing media/content, and closed snapshots are never reformatted in storage.

@@ -1,6 +1,7 @@
 import type { RoutineDay, RoutineDraft, RoutinePlan, TimeConversion, TimeConversionInput } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { moveDraftEvent, type EditorDraft } from './editor-draft';
 import { civilAt } from './time';
+import { validExercise } from './exercise-target';
 
 export type ReminderType = 'Reminder' | 'Routine';
 export type WeeklyEditorDraft = { startsOn: string; days: RoutineDay[] };
@@ -9,7 +10,7 @@ export const MAX_ROUTINE_EXERCISES_PER_DAY = 100;
 export const canAddRoutineExercise = (count: number, hasPendingRemoval = false) => count + (hasPendingRemoval ? 1 : 0) < MAX_ROUTINE_EXERCISES_PER_DAY;
 export const emptyRoutineDays = (): RoutineDay[] => Array.from({ length: 7 }, () => ({ type: 'Rest', exercises: [] }));
 export const validRoutineDays = (days: RoutineDay[]) => days.length === 7 && days.some(day => day.type === 'Exercises') &&
-  days.every(day => day.type === 'Rest' || day.exercises.length > 0 && day.exercises.length <= MAX_ROUTINE_EXERCISES_PER_DAY && day.exercises.every(exercise => !!exercise.name.trim()));
+  days.every(day => day.type === 'Rest' ? day.exercises.length === 0 : day.exercises.length > 0 && day.exercises.length <= MAX_ROUTINE_EXERCISES_PER_DAY && day.exercises.every(validExercise));
 
 /** Common content stays in the parent editor; only weekly definitions live here. */
 export function weeklyEditorDraft(draft: EditorDraft, plan?: RoutinePlan, duplicate = false, now = Date.now()): WeeklyEditorDraft {

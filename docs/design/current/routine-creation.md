@@ -1,79 +1,111 @@
-# Separate creation and general routines — 18 October 2026
+# Routine creation and Day tabs — owner correction, 18 October 2026
 
-This owner-approved correction supersedes the unified editor/type selector,
-seven-day-first builder and workout-only setup in weekly-routines.md. Native
-immediate edits, dated progress, midnight closure, frozen history, photos, Trash
-and widget actions continue to apply. It adds no habit scoring or automation.
+Approved Day tabs and all-fields-visible forms supersede Shared-by-default creation,
+the arrangement switch, separate Days picker and earlier workout-only/unified editor.
+Native immediate edits, dated checks, midnight closure, frozen history, photos, Trash
+and widget actions retain their existing ownership.
 
-## Entry and style
+## Entry and shared style
 
-Agenda/list-content + and empty Agenda Create open the themed Create sheet:
+Agenda/list-content + and empty Agenda Create open the themed two-choice sheet:
 New reminder first, New routine second. Explain one task/event versus a sequence
-with fresh scheduled-day progress. Connected command rows use neutral event/checklist
-icons, no chevrons and at least 64 dp height. Close before navigating; fence duplicate
-selection and return focus/scroll on dismissal. List-management creation is unchanged.
-The routine library retains direct New routine. /edit owns reminders; /routine-edit
-owns routine create/edit/duplicate. Legacy routine parameters redirect with identity,
-list and origin intact. Missing saved routines show recovery, never blank creation.
+with fresh daily progress. Neutral event/checklist icons, connected command rows,
+64 dp minimum and no chevrons. Close before navigating, fence duplicate selection,
+restore focus/scroll on dismissal. List-management creation is unchanged. The routine
+library retains direct New routine. /edit owns reminders; /routine-edit owns routine
+create/edit/duplicate. Legacy parameters redirect with IDs/list/origin retained.
+Missing saved routines show recovery rather than a blank form.
 
-Use current four atmospheres/independent brightness, opaque surfaces, Classic identity,
-neutral icons, compact editor chrome, 16 dp gutters, 12 dp groups, 16/4 dp corners,
-2 dp seams, 16/14 sp typography/Chinese metrics and 56/48 dp action targets.
+Keep four atmospheres, independent brightness, opaque surfaces, Classic identity,
+neutral Material icons, compact editing chrome, 16 dp gutters, 12 dp groups,
+16/4 dp connected corners, 2 dp seams, existing 16/14 sp typography/Chinese metrics,
+56 dp primary and 48 dp other targets. Mock frames/backgrounds/heights are not app UI.
 
-## Builder
+## Parent draft and days
 
-Order: Title, Preset, Steps, Schedule, Alert, List, optional Notes and applicable
-sound/vibration/access controls. One persistent parent Save commits; nested Add/Done
-updates only its owning draft. Themed dirty cancellation protects text and photos.
-New routines are General/Shared, empty, no weekdays selected, start today and default
-Notification. No sample content is saved. Explain fresh daily progress once.
+Order: required Title, Purpose (General/Exercise), Weekly plan tabs, selected-day
+content, Date and time summary, collapsed More settings (List/Notes), Save routine.
+Urgent delivery warnings stay visible. New drafts are blank General/ByWeekday, start
+today, default Notification and retain current clock/sound preferences. No examples
+are saved. New drafts show Monday; existing drafts show today if populated, otherwise
+the first populated weekday; duplicates show the first populated weekday. Keep title
+focus/IME behavior. Purpose changes alone never alter content or IDs.
 
-General/Exercise is an optional picker, changing field vocabulary/examples and image
-library disclosure without changing content, identities, timing or checks. General
-fields: Step name (required), Amount or duration, Instructions, Step image. Examples:
-Read; 10 minutes or 1 chapter; Read one chapter, then write three notes. Exercise
-retains name, sets/reps/time, How to do it and Exercise image. Limits remain
-200/1000/10000; prescriptions are free text. Photo is first; Exercise illustrations
-is initially collapsed for General/open for Exercise. Full-frame/private media stays.
+Monday-first tabs select editing context, not scheduled-day checkboxes. Adding the
+first step schedules a day; removing its last step unschedules it. Empty arrays
+serialize as Rest, populated arrays as Exercises. No separate Days/Workout/Rest
+controls. Seven equal controls with 2 dp gaps require 48 dp each; otherwise use
+four/three controls with 4 dp gaps. Also wrap above 120% text. Use short labels,
+selected outline/soft surface and populated dots; accessibility names the full
+weekday, selected state and count/not scheduled. Switching preserves drafts and IDs.
 
-Shared steps are edited once and materialized to selected days. Days opens seven
-full-name Monday-first checkbox rows with Done/Cancel. Starts on/time reuse ordinary
-responsive date/time controls and native pickers. No alert hides time but keeps draft
-minutes. Existing start restrictions, shared clock and Alert modes remain. Require
-at least one scheduled day with named steps; avoid initial validation errors.
+Selected-day headers are at least 48 dp high with a 12 dp following gap. Populated
+days show Copy to…, connected ordinal/name/target/pencil rows and Add exercise/step.
+Each builder row is one editor-opening control, at least 64 dp high with 14 dp padding.
+Viewing-screen Select/Edit remain siblings. Empty routine/day use only the weekday,
+quiet Not scheduled and Add. An empty day additionally offers Copy from another day
+when a populated source exists. No decorative icon, empty-state headline/card or
+artificial gap. Save needs a title and at least one valid populated day; selection
+may be empty. Keep removal Undo when all days become empty.
 
-Different steps by day switches the entire routine to independent selected weekdays,
-preserving current IDs/content. Selected-day rows open scoped drafts; newly selected
-days are empty with Add step/Copy steps from. Days is the only scheduling control;
-there is no Workout/Rest selector in child editors.
-The weekday-grouped content heading is Weekly plan / 每周安排; its rows show
-step counts (e.g. 4 个步骤) for both presets, never 动作. The lower timing settings
-heading is Date and time / 日期与时间. These labels distinguish content arrangement
-from timing without changing existing connected surfaces, spacing or themes.
-Unsaved off/on caches content/IDs;
-saved unscheduled days remain empty Rest data. If authored content exists only in
-an unscheduled draft, require selecting
-a source day before changing arrangement; never silently erase that cached content.
-The weekday chooser previews cached names to make that source discoverable.
-Returning to shared chooses a nonempty
-source, previews replaced days, preserves source IDs and allocates other copies.
-Do not infer matches by name/position. Review any checked steps removed today on Save.
+Date and time opens a themed draft-only sheet with Starts on/current restrictions,
+shared Alert/time, sound/vibration and delivery controls. Reuse native pickers and
+responsive shared fields. No alert hides time without erasing it. Sheet Done updates
+the parent, Cancel changes nothing. Only Save routine persists.
 
-## Editing and presentation
+## Step form
 
-One-tap row Edit stays separate from selection/scroll/completion. Shared editing
-resolves exact day-specific ID to sharedStepId, then edits all linked weekdays.
-Independent mode edits one day. Explain scope in the form. Use loaded revisions,
-captured exact retry, retained conflict drafts, explicit reload and image leases.
-Ended rows retain historical check correction only. Ended content stays frozen.
+Add/row editing opens the full-height themed editor directly within the route,
+without an intermediate day overview/Done. Context names the weekday and Weekly
+plan. Back protects the child draft; persistent Done applies to the parent only.
+Return to the same day/scroll and initiating/new row. More contains Move up/down and
+Remove. Named weekday-aware removal Undo survives tab switches; reserve its capacity
+within the existing 100-step limit.
 
-General uses Step/Steps, Current/Completed step, Complete step, View previous step,
-Not scheduled and No routine scheduled today across app/native/widgets/accessibility.
-Exercise may retain exercise/rest vocabulary; navigation always says Routine.
-The routine library uses neutral checklist icons. Chinese uses 日常计划 and 步骤;
-authored content is unchanged. Widget layout, Done feedback, repeated Undo, Next
-and bottom alignment remain. Generic previews use inert Morning routine content.
+Exercise fields: name (required, 200 characters), optional Sets, Reps per set,
+Time per set plus seconds/minutes/hours, More target options, live summary,
+Description (10,000 characters), and Image with a neutral image glyph. Numeric
+fields use two columns when readable and otherwise stack. Blank values stay blank;
+unit defaults seconds/kg do not create targets. More offers range, each side,
+weight, additional target text and custom target. Counts are positive safe integers;
+time/weight positive finite safe decimals. Validate range endpoints/each-side
+prerequisites, preserve partial input strings, omit unused fields and focus errors.
 
-CE17/versioned authoring metadata and format8 are defined in architecture. Existing
-routines migrate to ByWeekday/Exercise without content inference or snapshot edits.
-Native validation owns shared consistency; DP remains content-free schema9.
+RN/Kotlin share localized formatting fixtures: 3 sets × 10 reps; 3 sets × 40 sec;
+3 sets · 10 reps per set · 40 sec per set. Never invent zero/one defaults. Existing
+custom text stays editable without parsing/translating. Explicitly confirm replacing
+nonempty targets, retaining both representations locally until Done. General keeps
+Amount or duration; unrelated edits preserve existing numeric structure, while an
+explicit target-text edit replaces it. Use Description and Image for both purposes.
+
+Use the real offline photo/illustration chooser, full-frame/enlarged previews,
+current image/Remove and private media leases. Hold leases for parent/child drafts,
+pending removals, copy reviews and uncertain Save recovery.
+
+## Copy and compatibility
+
+Copy to… lists the other six full-name weekdays with checkboxes/counts, initially
+unselected. Continue captures source/destinations. Empty destinations apply directly;
+populated ones require a review naming old/incoming content and Replace steps.
+Cancel changes nothing. Replace, never append. Allocate fresh materialized IDs once
+on application, copying all targets/notes/images and sharing immutable files.
+Preserve source IDs/content; copies are independent. Clear removal Undo only for
+replaced destinations and announce the copied days. Copy from… lists populated
+sources and fills the selected empty day. All copies remain draft-only until Save.
+
+Existing Shared definitions remain readable. The editor prepares independent drafts
+without changing saved data or treating opening alone as dirty. Explain that Save
+makes weekdays independent. Preserve materialized IDs/order/content and strip linkage
+only in the new revision. Direct viewing-row Save follows the same conversion while
+editing only the captured weekday/ID. Cancel leaves saved data unchanged. Retain
+revision guards, captured exact retry, conflict drafts/reload, image leases and
+explicit review when replacing/removing today's checked IDs. Closed history stays.
+
+Chinese builder uses 每周安排, 步骤 counts, 日期与时间, 用途, 组数, 每组次数,
+每组时长, 描述 and 图片; do not introduce 动作 into this builder. Global destinations
+remain 日常计划. Authored content is unchanged.
+
+CE17/DP9 remain. Optional exerciseTarget is credential-protected version/session
+JSON, exclusive with nonempty custom target text. Format9 includes it; formats1–8
+retain text/metadata without inference. Validate atomically before mutation and
+preserve historical Shared versions, receipts, photos and family Trash.

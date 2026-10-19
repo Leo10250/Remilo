@@ -4,6 +4,11 @@ The [18 October generic-routine correction](routine-creation.md) supersedes unif
 creation/type switching, seven-day-first authoring and workout-only setup below.
 Native dated-session, delivery, history, photo and action rules remain authoritative.
 
+The later owner-approved Day tabs correction in that contract uses independent
+weekday drafts, numeric sets/reps/time, Description/Image fields, compact empty
+states and explicit copy replacement. Shared conversion occurs only on Save,
+preserving IDs/checks. Format9 includes optional target JSON; CE17/DP9 stay.
+
 The owner-approved implementation plan extends reminders without a new root tab
 or workout-specific appearance. This contract supplements the shared visual
 language and current reminder editor; normal reminders retain their lifecycle.

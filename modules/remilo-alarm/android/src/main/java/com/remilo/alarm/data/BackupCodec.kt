@@ -25,7 +25,7 @@ object BackupCodec {
     routines: List<RoutinePlan> = emptyList(), routineVersions: List<RoutineVersion> = emptyList(), routineSessions: List<RoutineSession> = emptyList(), images: List<ExerciseImage> = emptyList(), purgedRoutines: List<PurgedRoutine> = emptyList()): String {
     if (records.size > 10_000 || history.size > 100_000 || series.size > 10_000 || lists.size > 10_000 || purged.size > 10_000 ||
       routines.size > 10_000 || routineVersions.size > 10_000 || routineSessions.size > 10_000) throw BackupLimitException()
-    val json = JSONObject(mapOf("format" to "Remilo", "version" to 8, "exportedAtMs" to now,
+    val json = JSONObject(mapOf("format" to "Remilo", "version" to 9, "exportedAtMs" to now,
       "images" to images.map { mapOf("id" to it.id, "mime" to it.mime, "width" to it.width, "height" to it.height, "bytes" to it.bytes) },
       "purgedRoutines" to purgedRoutines.map { it.id },
       "routines" to routines.map { mapOf("id" to it.id, "revision" to it.revision, "startsOn" to it.startsOn, "state" to it.state, "pauses" to JSONArray(it.pauses), "priorState" to it.priorState, "trashedAtMs" to it.trashedAtMs, "trashIntervals" to JSONArray(it.trashIntervals)) },
@@ -89,7 +89,7 @@ object BackupCodec {
   fun decode(json: String): Bundle {
     require(json.toByteArray(Charsets.UTF_8).size <= 10_000_000) { "Backup exceeds 10 MB." }
     val root = JSONObject(json)
-    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6, 7, 8)) { "Unsupported backup format/version." }
+    require(root.optString("format") == "Remilo" && root.opt("version") in setOf(1, 2, 3, 4, 5, 6, 7, 8, 9)) { "Unsupported backup format/version." }
     val version = root.getInt("version")
     val media = if (version >= 7) root.getJSONArray("images") else JSONArray()
     require(media.length() <= 10_000)
@@ -206,6 +206,7 @@ object BackupCodec {
       for (i in 0 until a.length()) { val s = a.getJSONObject(i); val id = text(s, "id", 200)
         require(id.isNotBlank() && found.add(id) && text(s, "name", 200).isNotBlank())
         text(s, "target", 1000); text(s, "notes", 10_000)
+        if(s.has("exerciseTarget")) { require(version >= 9); com.remilo.alarm.core.ExerciseTargets.validate(s.getJSONObject("exerciseTarget"),s.getString("target")) }
         if (s.has("sharedStepId")) { require(version >= 8); require(text(s, "sharedStepId", 200).isNotBlank()) }
         val illustration = text(s, "illustration", 80, true); require(illustration.matches(Regex("[a-z0-9-]*")))
         val image = text(s,"customImageId",64,true); require(image.isEmpty() || version >= 7 && image in mediaIds && illustration.isEmpty()) }

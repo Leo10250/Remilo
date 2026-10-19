@@ -15,7 +15,8 @@ object RoutineAuthoring {
         val step = steps.getJSONObject(i)
         val key = step.optString("sharedStepId", "")
         require(key.length <= 200 && (mode == "Shared" && key.isNotBlank() && keys.add(key) || mode == "ByWeekday" && key.isEmpty())) { "Routine step links are invalid." }
-        listOf(key, step.getString("name"), step.getString("target"), step.getString("notes"), step.optString("illustration", ""), step.optString("customImageId", ""))
+        if(step.has("exerciseTarget")) ExerciseTargets.validate(step.getJSONObject("exerciseTarget"),step.getString("target"))
+        listOf(key, step.getString("name"), step.getString("target"), ExerciseTargets.signature(step), step.getString("notes"), step.optString("illustration", ""), step.optString("customImageId", ""))
       }
       if (mode == "Shared" && day.getString("type") == "Exercises") {
         require(expected == null || expected == content) { "Shared steps must match on every scheduled day." }

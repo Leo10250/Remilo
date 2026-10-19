@@ -4,6 +4,7 @@ import type { RoutineSession } from '../../modules/remilo-alarm/src/RemiloAlarm.
 import { routineFocusStep } from '../domain/routine-focus';
 import { modeLabel } from '../domain/presentation';
 import { useTranslation } from '../localization/react';
+import { exerciseTargetText } from '../domain/exercise-target';
 import { Button, Card, ConnectedGroup, Copy, Disclosure, Icon, Sheet } from './components';
 import { getExerciseIllustration, type ExerciseIllustration } from './exercise-illustrations';
 import { CustomExerciseImageFrame } from './exercise-images';
@@ -59,14 +60,14 @@ function RoutineSequenceRow({ step, index, total, guarded, selected, onSelect, o
   const { fontScale } = useWindowDimensions(), badge = 32 * Math.max(scale, fontScale);
   return <View style={{ minHeight: 64, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: selected ? colors.soft : colors.surface }}>
     <Pressable accessibilityRole="button" disabled={guarded} accessibilityState={{ disabled: guarded, selected }}
-    accessibilityLabel={[t('routine_ordinal', { current: index + 1, total }), step.name, step.target, step.completed ? t('routine_completed') : ''].filter(Boolean).join('. ')}
+    accessibilityLabel={[t('routine_ordinal', { current: index + 1, total }), step.name, exerciseTargetText(step), step.completed ? t('routine_completed') : ''].filter(Boolean).join('. ')}
     onPress={onSelect} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 12,
       borderWidth: 2, borderColor: focused ? colors.accent : 'transparent', backgroundColor: pressed || selected ? colors.soft : colors.surface, opacity: pressed ? 0.75 : 1 })}>
     <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: badge, height: badge, flexShrink: 0, borderRadius: badge / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? colors.accent : colors.soft }}>
       {step.completed ? <Icon name="check" size={20} color={selected ? colors.accentInk : colors.muted} /> : <Text style={{ color: selected ? colors.accentInk : colors.muted, fontSize: 14 * scale }}>{index + 1}</Text>}
     </View>
-    <View style={{ flex: 1, gap: 4 }}><Copy>{step.name}</Copy>{!!step.target && <Copy muted size={14}>{step.target}</Copy>}{step.completed && <Copy muted size={14}>{t('m_11a6767d5674')}</Copy>}{selected && <Copy size={14}>{t('routine_viewing')}</Copy>}</View>
+    <View style={{ flex: 1, gap: 4 }}><Copy>{step.name}</Copy>{!!exerciseTargetText(step) && <Copy muted size={14}>{exerciseTargetText(step)}</Copy>}{step.completed && <Copy muted size={14}>{t('m_11a6767d5674')}</Copy>}{selected && <Copy size={14}>{t('routine_viewing')}</Copy>}</View>
     </Pressable>
     {onEdit && <Pressable ref={editRef} accessibilityRole="button" accessibilityState={{ disabled: guarded }} disabled={guarded}
       accessibilityLabel={t(general ? 'routine_edit_step_row' : 'routine_edit_row', { current: index + 1, total, name: step.name, day: day ?? '' })}
@@ -129,8 +130,8 @@ export function RoutineSessionContent({ session, selectedId, onSelect, onChangeS
         <Copy heading size={24}>{current.name}</Copy>
       </View>
       {current.customImageId ? <CustomExerciseImageFrame key={current.id} id={current.customImageId} name={current.name} collapsed={Math.max(scale,fontScale) >= 1.6 || height < 640} /> : illustration && <ExerciseIllustrationFrame key={current.id + ':' + illustration.id} illustration={illustration} name={current.name} />}
-      {!!current.target && <Text style={{ color: colors.ink, fontSize: 24 * scale, lineHeight: lineHeightFor(24) * scale,
-        fontWeight: fontWeightFor(24, '500'), ...chineseTextMetrics(24, scale, '500') }}>{current.target}</Text>}
+      {!!exerciseTargetText(current) && <Text style={{ color: colors.ink, fontSize: 24 * scale, lineHeight: lineHeightFor(24) * scale,
+        fontWeight: fontWeightFor(24, '500'), ...chineseTextMetrics(24, scale, '500') }}>{exerciseTargetText(current)}</Text>}
       {!!current.notes && <ExerciseGuidance key={current.id} notes={current.notes} name={current.name} />}
       {current.completed && <Copy muted>{t('routine_completed')}</Copy>}
       <Button buttonRef={primaryAction} label={t(current.completed ? 'routine_undo_completion' : session.steps.filter(step => !step.completed).length === 1 ? session.presentationPreset === 'General' ? 'routine_complete_step' : 'routine_complete_exercise' : 'routine_complete_continue')} icon={current.completed ? 'undo' : 'check'}

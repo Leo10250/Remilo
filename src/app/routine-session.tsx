@@ -10,6 +10,7 @@ import { RoutineExerciseEditSheet } from '../ui/routine-exercise-edit';
 import { RoutineSessionContent, type RoutineUndo } from '../ui/routine-focus';
 import { RoutineActions } from '../ui/routine-actions';
 import { useTranslation } from '../localization/react';
+import { exerciseTargetText } from '../domain/exercise-target';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Disclosure, IconButton, Page, QueryState, SettingRow, Sheet } from '../ui/components';
 import { CommandRecovery, RootNotice, useCapturedCommand } from '../ui/navigation';
 import { engine, nativeAvailable } from '../ui/native';
@@ -122,7 +123,7 @@ function RoutineSessionView() {
       <Copy muted>{t('routine_day_ended')}</Copy>
       <CommandRecovery action={action} />
       <ConnectedGroup>{session?.steps.map(step => <View key={step.id} style={{ padding: 16, gap: 8 }}>
-        <Copy>{step.name}</Copy>{!!step.target && <Copy muted size={14}>{step.target}</Copy>}{step.completed && <Copy muted size={14}>{t('routine_completed')}</Copy>}
+        <Copy>{step.name}</Copy>{!!exerciseTargetText(step) && <Copy muted size={14}>{exerciseTargetText(step)}</Copy>}{step.completed && <Copy muted size={14}>{t('routine_completed')}</Copy>}
         <Button label={t(step.completed ? 'routine_undo_completion' : 'routine_correction_done')} variant="secondary" accessibilityLabel={t(step.completed ? 'routine_undo_named' : 'routine_mark_named', { name: step.name })}
           disabled={action.guarded || !ended || session.deleted} onPress={() => mutate('CorrectRoutineExercise', step.id, !step.completed)} />
       </View>)}</ConnectedGroup>

@@ -53,7 +53,7 @@ class PortableFiles(private val context: Context) {
           }
         }
         require("content.json" in names)
-        val root = JSONObject(File(dir,"content.json").readText()); require(root.getInt("version") in 7..8)
+        val root = JSONObject(File(dir,"content.json").readText()); require(root.getInt("version") in 7..9)
         val bundle = BackupCodec.decode(root.toString())
         require(names == setOf("content.json") + bundle.images.map { "media/${it.id}.webp" })
       } else { require(source.length() <= 10_000_000); require(source.renameTo(File(dir,"content.json"))) }

@@ -1,10 +1,39 @@
 # Verification and release evidence
 
+## Day tabs and structured targets — owner correction, 18 October 2026
+
+Use actual /routine-edit components: new General/ByWeekday, regular Exercise day,
+empty routine/day, copy selection and replacement review. Check seven-to-four/three
+tab wrapping, selected/count labels, one-tap editing, persistent Done/Save and no
+decorative empty icons, artificial gaps, Days picker or arrangement switch. Verify
+Monday Plank/Bird-dog and Wednesday Push-up, independent copies, cancellation,
+removal Undo across tabs/capacity, and draft-only Date and time Done.
+
+Shared formatting fixtures cover RN/Kotlin EN/Chinese, blanks, singular/plural,
+both reps/time, range, each side, decimal units/weight and untouched authored text.
+Reject unsafe/nonpositive/nonfinite counts, fractional repetitions, invalid ranges,
+units and each-side prerequisites. Keep partial strings. Purpose-only/unrelated
+General edits preserve numeric structures. Explicit target replacement/discard
+retains original data until applied.
+
+Native checks cover Shared conversion only on Save, materialized IDs/matching
+checks, receipt replay, stale widgets, concurrent completion, midnight and frozen
+history. Format9 retains target JSON/photos/Trash and identity remapping; formats1–8
+retain legacy text. Malformed import is atomic. CE17/DP9 remain unchanged.
+
+Render all eight appearance pairs, both languages, narrow widths and 100–200% text,
+including advanced fields, legacy text and actual widget RemoteViews. Check complete
+targets, keyboard visibility, focus return and accessible scope. Run release:prepare
+for shared/design/localization/tooling, native tests, lint and signed assembly.
+Record actual artifact identity/hash/results. Signed-phone IME, TalkBack, pickers,
+launcher and end-to-end observations remain gates; installation/distribution separate.
+
 ## Chinese wording review — 18 October 2026
 
 Check all owned catalogs and hardcoded presentation for Simplified Chinese usage,
-not only the routine screenshot. Individual Exercise fields use 动作, the optional
-preset 锻炼 and General items 步骤. Generic routine widgets/setup/actions must not
+not only the routine screenshot. The Day tabs/shared form correction uses 步骤
+in builder fields/counts for both purposes, 用途 for Purpose and 锻炼 for Exercise.
+Other exercise-specific viewing vocabulary remains contextual. Generic routine widgets/setup/actions must not
 become training-only or calendar 日程. Verify weekday versus Monday–Friday scope,
 Calendar 添加 versus ongoing 同步, 未完成 versus navigation 打开/Trash 恢复,
 consistent 回收站 and natural pending/uncertain feedback with exact captured retries.
@@ -12,7 +41,7 @@ Check complete count/unit labels and Chinese punctuation, backup archive/privacy
 disclosures and unchanged authored values/English historical status recognition.
 The later weekday-builder correction uses 每周安排 and step counts (4 个步骤)
 for both presets, with 日期与时间 below. Verify the grouping/counts never say 动作,
-shared sequences still show their content heading, and navigation/draft state stays.
+weekday tabs show their full selected-day heading, and navigation/draft state stays.
 Render app and native widget surfaces with both presets, Chinese/English, long
 names, all appearance pairs and large text. Existing catalog, shared/native/lint
 checks and signed assembly apply; phone TalkBack, IME, OEM fonts and launcher
@@ -22,13 +51,14 @@ observations remain separate acceptance gates.
 
 Check Create choices, direct routine entry, list inheritance, legacy redirects and
 focus/scroll-preserving dismissal. Ordinary reminder Calendar/timing/recurrence/
-overdue behavior stays. New routines are blank General/Shared with explicit days.
+overdue behavior stays. The later Day tabs correction makes new routines blank
+General/ByWeekday with scheduling derived from nonempty weekdays.
 Verify stable shared identities across duplicate names, reorder, day off/on before/
 after Save, copying, duplication, conversions and direct editing scopes. Preset
 switching retains values/photos/checks and freezes historical presentation. Cover
 dirty cancellation, photo leases, checked-step removal review, conflicts, exact
 uncertain retry, midnight and stale widgets. Native checks cover CE16→17 defaults,
-format8 linkage/media/Trash/history, legacy1–7 import and atomic malformed rejection.
+format9 targets/linkage/media/Trash/history, legacy1–8 import and atomic malformed rejection.
 
 Render production components in EN/Chinese, all eight appearance pairs, narrow
 widths and 100–200% text. Check complete Save/row targets, IME, keyboard/TalkBack,
@@ -772,6 +802,6 @@ Immediate-edit regressions additionally cover adding Saturday while it is Saturd
 Rest/workout transitions, stable occurrence identity and retained matching checks,
 completed-day extension, intentional Skip, removed-step audit, photo/time changes,
 receipt replay and process death at each edit journal boundary. Closed history and
-backward-clock closure stay immutable. Backup format 8 round trips retain edited
+backward-clock closure stay immutable. Backup format 9 round trips retain edited
 timing/Rest/audit while legacy format readers remain covered. Agenda and widget
 must resolve the same dated revision; saving never posts an elapsed catch-up prompt.

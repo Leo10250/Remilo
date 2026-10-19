@@ -60,8 +60,10 @@ implementation units; approval of a synthetic image does not complete one.
 
 The owner's [18 October generic-routine contract](routine-creation.md) supersedes
 unified creation: Create offers reminder/routine destinations, new routines are
-General/Shared, and optional Exercise fields insert no sample content. Explicit
-shared linkage and weekday conversion preserve native progress/frozen history.
+General/ByWeekday, with Day tabs and optional Exercise fields that insert no sample
+content. The later owner-approved correction replaces the arrangement switch/Days
+picker, adds structured sets/reps/time, compact empty states and independent copying.
+Legacy Shared conversion occurs only on Save, preserving IDs/progress/frozen history.
 
 The owner's [15 October weekly routine contract](weekly-routines.md) adds optional
 weekly plans and date-scoped exercise progress within the existing reminder model.

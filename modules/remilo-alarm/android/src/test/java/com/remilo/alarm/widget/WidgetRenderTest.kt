@@ -54,6 +54,19 @@ class WidgetRenderTest {
     return app.createConfigurationContext(config).also { PresentationLanguage.update(it,language) }
   }
   @After fun resetLanguage() { PresentationLanguage.update(RuntimeEnvironment.getApplication(),"en") }
+  @Test fun structuredPrescriptionsRenderFromTheSameDataInEveryAppearance() {
+    for(language in listOf("en","zh-Hans"))for(scene in listOf("sunrise","sky","evening","night"))for(brightness in listOf("light","dark")) {
+      val ctx=context(language,1f);val base=previewSnapshot().copy(configuration=WidgetConfiguration("Routine","example"))
+      val step=mapOf<String,Any?>("id" to "numeric","name" to "Front plank","target" to "","exerciseTarget" to mapOf("sets" to 3,"duration" to mapOf("value" to 40,"unit" to "sec")),"completed" to false)
+      val snapshot=base.copy(appearance=base.appearance.copy(atmosphere=scene,brightness=brightness),session=base.session!!+mapOf("steps" to listOf(step),"totalCount" to 1,"completedCount" to 0))
+      val expected=com.remilo.alarm.presentation.exerciseTargetText(ctx,step)
+      for(height in listOf(240,440)) {
+        val root=render(ctx,snapshot,360,height,"numeric-$language-$scene-$brightness-$height")
+        assertTrue(text(root).toString(),text(root).contains(expected))
+        assertTrue(descriptions(root).any { it.contains(expected) })
+      }
+    }
+  }
   @OptIn(ExperimentalGlanceApi::class)
   @Test fun activeGlanceSessionConsumesFreshNativeProjectionWithoutRestart() = runBlocking {
     val ctx = context("en",1f)

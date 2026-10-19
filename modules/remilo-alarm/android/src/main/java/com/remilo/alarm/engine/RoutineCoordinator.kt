@@ -174,9 +174,12 @@ internal class RoutineCoordinator(private val context: Context, private val data
         require(image.isEmpty() || image.matches(Regex("[a-f0-9]{64}")) && dao.image(image) != null && ExerciseImages(context).file(image).isFile) { "Choose an available step photo." }
         require(image.isEmpty() || illustration.isEmpty()) { "Choose one step image." }
         require(illustration.isEmpty() || illustration.matches(Regex("[a-z0-9-]+"))) { "Choose an approved illustration reference." }
-        mapOf("id" to stepId, "name" to checkedText(step["name"], 200, true), "target" to checkedText(step["target"], 1000),
+        val target = checkedText(step["target"],1000)
+        val structured = com.remilo.alarm.core.ExerciseTargets.checked(step["exerciseTarget"],target)
+        mapOf("id" to stepId, "name" to checkedText(step["name"], 200, true), "target" to target,
           "notes" to checkedText(step["notes"], 10_000), "illustration" to illustration, "customImageId" to image) +
-          checkedText(step["sharedStepId"], 200).takeIf { it.isNotEmpty() }?.let { mapOf("sharedStepId" to it) }.orEmpty()
+          checkedText(step["sharedStepId"], 200).takeIf { it.isNotEmpty() }?.let { mapOf("sharedStepId" to it) }.orEmpty() +
+          structured?.let { mapOf("exerciseTarget" to it) }.orEmpty()
       })
     }
     require(validated.any { it["type"] == "Exercises" }) { "Choose at least one scheduled day, or pause the routine." }

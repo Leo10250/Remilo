@@ -89,7 +89,9 @@ export type ListCommand = { kind: 'CreateList'; name: string; operationId: strin
   { kind: 'RemoveList'; listId: string; expectedRevision: number; operationId: string };
 export type RoutineAuthoringMode = 'Shared' | 'ByWeekday';
 export type RoutinePreset = 'General' | 'Exercise';
-export type RoutineExercise = { id: string; name: string; target: string; notes: string; illustration?: string; customImageId?: string; sharedStepId?: string };
+export type ExerciseTarget = { sets?: number; reps?: number; repsMax?: number; duration?: { value: number; unit: 'sec' | 'min' | 'hr' };
+  eachSide?: boolean; weight?: { value: number; unit: 'kg' | 'lb' }; additionalText?: string };
+export type RoutineExercise = { id: string; name: string; target: string; exerciseTarget?: ExerciseTarget; notes: string; illustration?: string; customImageId?: string; sharedStepId?: string };
 export type ExercisePhoto = { id: string; uri: string; width: number; height: number; lease?: string };
 export type RoutineDay = { type: 'Rest' | 'Exercises'; exercises: RoutineExercise[] };
 export type RoutineDraft = { title: string; minutes: number; mode: 'Alarm' | 'Notification' | 'None'; listId: string | null; days: RoutineDay[];

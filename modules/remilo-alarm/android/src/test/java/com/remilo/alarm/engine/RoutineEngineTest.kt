@@ -60,6 +60,55 @@ class RoutineEngineTest {
   private fun rows(view: String = "agenda", extra: Map<String, Any?> = emptyMap()) = page(view, extra)["items"] as List<Map<String, Any?>>
   private fun recover() { val result = CompletableFuture<Unit>(); engine.recover { result.complete(Unit) }; result.get(20, TimeUnit.SECONDS) }
   private fun restart() { engine.close(); engine = newEngine(); recover() }
+  @Test fun numericTargetsSurviveImmediateEditsReceiptsFrozenSnapshotsAndBackupCopy() {
+    fun numeric(sets: Int) = week().mapIndexed { index,day -> if(index != 0)day else day + ("exercises" to (day["exercises"] as List<Map<String,Any?>>).mapIndexed { i,step ->
+      if(i != 0)step else step + mapOf("target" to "","exerciseTarget" to mapOf("sets" to sets,"reps" to 10,"duration" to mapOf("value" to 40,"unit" to "sec"))) }) }
+    val created=command(draft()+mapOf("kind" to "CreateRoutine","operationId" to "numeric-create","startsOn" to "2026-10-12","days" to numeric(3)))
+    val id=(created["routine"] as Map<String,Any?>)["id"] as String
+    val original=read(id);command(action(original,operation="numeric-check"))
+    val edit=draft()+mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "numeric-edit","days" to numeric(4))
+    assertEquals("Applied",command(edit)["status"]);val confirmed=read(id)
+    assertEquals(1,confirmed["completedCount"]);assertEquals("0-0",steps(confirmed)[0]["id"])
+    assertEquals(4,(steps(confirmed)[0]["exerciseTarget"] as Map<*,*>)["sets"])
+    assertEquals("Applied",command(edit)["status"]);assertEquals(confirmed,read(id))
+    val json=request { engine.exportBackup() };assertEquals(9,JSONObject(json).getInt("version"))
+    val beforeImport=read(id);val malformed=JSONObject(json)
+    malformed.getJSONArray("routineVersions").getJSONObject(0).getJSONArray("days").getJSONObject(0).getJSONArray("exercises").getJSONObject(0)
+      .getJSONObject("exerciseTarget").put("sets",0)
+    assertEquals("Rejected",request { engine.importBackup(malformed.toString(),emptyList(),"numeric-malformed") }["status"])
+    assertEquals(beforeImport,read(id))
+    assertThrows(Exception::class.java) { BackupCodec.decode(JSONObject(json).put("version",8).toString()) }
+    assertEquals("Applied",request { engine.importBackup(json,listOf(id),"numeric-copy") }["status"])
+    val copied=request { engine.queryRoutines() }.first { it["id"] != id }
+    assertEquals(4,(steps(read(copied["id"] as String))[0]["exerciseTarget"] as Map<*,*>)["sets"])
+    now=instant("2026-10-13T07:00:00Z");recover()
+    assertEquals("Applied",command(edit+mapOf("expectedRevision" to 2,"operationId" to "numeric-tuesday-edit","days" to numeric(5)))["status"])
+    val ended=read(id,"2026-10-12");assertTrue(ended["ended"] as Boolean)
+    assertEquals(4,(steps(ended)[0]["exerciseTarget"] as Map<*,*>)["sets"]);assertEquals(1,ended["completedCount"])
+    BackupCodec.decode(request { engine.exportBackup() })
+  }
+  @Test fun independentConversionPreservesIdsChecksAndUneditedWeekdayContent() {
+    val sharedDays: List<Map<String,Any?>> = (0..6).map { d ->
+      val definitions: List<Map<String,Any?>> = if(d<2)listOf(mapOf("id" to "$d-read","sharedStepId" to "read","name" to "Read","target" to "1 chapter","notes" to ""))else emptyList()
+      mapOf("type" to if(d<2)"Exercises" else "Rest","exercises" to definitions)
+    }
+    val content=draft()+mapOf("days" to sharedDays,"authoringMode" to "Shared","presentationPreset" to "General")
+    val created=command(content+mapOf("kind" to "CreateRoutine","operationId" to "conversion-create","startsOn" to "2026-10-12"))
+    val id=(created["routine"] as Map<*,*>)["id"] as String;val first=read(id);command(action(first,operation="conversion-check"))
+    val converted=sharedDays.mapIndexed { d,day -> day+("exercises" to (day["exercises"] as List<Map<String,Any?>>).map { step -> step.filterKeys { it!="sharedStepId" }+if(d==0)mapOf("target" to "2 chapters")else emptyMap() }) }
+    assertEquals("Applied",command(content+mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "conversion-save","authoringMode" to "ByWeekday","days" to converted))["status"])
+    assertEquals(1,read(id)["completedCount"]);assertEquals("0-read",steps(read(id))[0]["id"]);assertEquals("2 chapters",steps(read(id))[0]["target"])
+    assertEquals("1 chapter",steps(read(id,"2026-10-13"))[0]["target"])
+    assertFalse(steps(read(id))[0].containsKey("sharedStepId"));BackupCodec.decode(request { engine.exportBackup() })
+  }
+  @Test fun invalidNumericEditIsAtomicAndLegacyEightTextImportsUnchanged() {
+    val id=create();val before=read(id)
+    val badDays=week().mapIndexed { index,day -> if(index != 0)day else day + ("exercises" to (day["exercises"] as List<Map<String,Any?>>).mapIndexed { i,step ->
+      if(i != 0)step else step + mapOf("target" to "","exerciseTarget" to mapOf("sets" to -1)) }) }
+    assertEquals("Rejected",command(draft()+mapOf("kind" to "EditRoutine","routineId" to id,"expectedRevision" to 1,"operationId" to "bad-numeric","days" to badDays))["status"])
+    assertEquals(before,read(id));val legacy=JSONObject(request { engine.exportBackup() }).put("version",8)
+    val imported=BackupCodec.decode(legacy.toString());assertEquals("3×10",org.json.JSONArray(imported.routineVersions.single().days).getJSONObject(0).getJSONArray("exercises").getJSONObject(0).getString("target"))
+  }
   @Test fun sharedRoutineMetadataPreservesCheckedIdsAndFrozenPresentationAcrossImmediateEdits() {
     val sharedDays: List<Map<String,Any?>> = (0..6).map { d ->
       val steps: List<Map<String,String>> = if(d < 2) listOf("read","plan").map { key -> mapOf("id" to "$d-$key", "sharedStepId" to key, "name" to "Same name", "target" to "10 minutes", "notes" to "") } else emptyList()
@@ -80,7 +129,7 @@ class RoutineEngineTest {
     assertEquals("General",read(id,"2026-10-12")["presentationPreset"])
     assertEquals(1,read(id,"2026-10-12")["completedCount"])
     val backup = request { engine.exportBackup() }
-    assertEquals(8,JSONObject(backup).getInt("version"))
+    assertEquals(9,JSONObject(backup).getInt("version"))
     val bundle = BackupCodec.decode(backup)
     assertEquals(setOf("General","Exercise"),bundle.routineVersions.map { it.presentationPreset }.toSet())
     val broken = JSONObject(backup)
@@ -586,7 +635,7 @@ class RoutineEngineTest {
     assertEquals("Skipped",read(id)["state"]); assertNull(widget().doneToken); assertEquals(0,read(id)["completedCount"])
     assertEquals(4,(read(id)["changes"] as List<Map<String,Any?>>).count { it["kind"]=="SetRoutineExercise" })
     val json=request { engine.exportBackup() }; val decoded=BackupCodec.decode(json)
-    assertEquals(8,JSONObject(json).getInt("version")); assertEquals(3,decoded.routineVersions.size)
+    assertEquals(9,JSONObject(json).getInt("version")); assertEquals(3,decoded.routineVersions.size)
     assertEquals("Applied",request { engine.importBackup(json,listOf(id),"copy-immediate-audit") }["status"])
   }
   @Test fun immediateEditJournalRecoversAtEveryBoundaryAndRetainsClosedHistory() {
@@ -673,7 +722,7 @@ class RoutineEngineTest {
   @Test fun backupCopyAndPurgeKeepWholeFamilyIdentityAndProgress() {
     val id = create(); command(action(read(id)))
     val json = request { engine.exportBackup() }; val decoded = BackupCodec.decode(json)
-    assertEquals(8, JSONObject(json).getInt("version")); assertEquals(1, decoded.routineSessions.size)
+    assertEquals(9, JSONObject(json).getInt("version")); assertEquals(1, decoded.routineSessions.size)
     val restore = request { engine.importBackup(json,listOf(id),"restore-copy") }; assertEquals("Applied",restore["status"])
     assertEquals("Applied", request { engine.importBackup(json,listOf(id),"restore-copy") }["status"])
     val plans = request { engine.queryRoutines() }; assertEquals(2,plans.size)
@@ -868,7 +917,7 @@ class RoutineEngineTest {
       "expectedRevision" to 1, "notes" to "Tomorrow instructions", "sound" to "remilo", "vibration" to false))
     assertEquals("Tomorrow instructions", read(id)["notes"]); assertEquals("Notification",read(id)["mode"])
     val backup = request { engine.exportBackup() }; val decoded = BackupCodec.decode(backup)
-    assertEquals(8,JSONObject(backup).getInt("version")); assertEquals("Original instructions",decoded.routineVersions.first().notes)
+    assertEquals(9,JSONObject(backup).getInt("version")); assertEquals("Original instructions",decoded.routineVersions.first().notes)
     now = instant("2026-10-13T08:00:00Z"); assertEquals("Tomorrow instructions",read(id)["notes"])
     assertEquals("Original instructions",read(id,"2026-10-12")["notes"])
   }

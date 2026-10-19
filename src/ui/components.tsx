@@ -24,6 +24,7 @@ import { rememberConfirmationFocus } from './confirmation-state';
 
 type ConnectedCorners = Pick<ViewStyle, 'borderTopLeftRadius' | 'borderTopRightRadius' | 'borderBottomLeftRadius' | 'borderBottomRightRadius'>;
 const ConnectedRowContext = createContext<ConnectedCorners | null>(null);
+export const useConnectedRowCorners = () => useContext(ConnectedRowContext);
 
 function RowFocus({ corners }: { corners: ConnectedCorners }) {
   'use no memo';
@@ -38,7 +39,7 @@ export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'a
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
   'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop' |
   'menu' | 'language' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important' |
-  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home' | 'link_off' | 'open_in_new';
+  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home' | 'link_off' | 'open_in_new' | 'image';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
   'use no memo';
   useLocale();
@@ -407,7 +408,7 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
     </View></ScrollChromeProvider>
   </SafeAreaView>;
 }
-export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef, returnFocusWhen }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean }>) {
+export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef, returnFocusWhen, fullHeight = false, actions }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean; fullHeight?: boolean; actions?: ReactNode }>) {
   'use no memo';
   const t = useTranslation();
   const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
@@ -433,13 +434,14 @@ export function Sheet({ title, visible, onClose, onBack, children, footer, retur
       <Pressable accessibilityLabel={t('m_48845bff334a')} accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
         <View style={{ flex: 1, backgroundColor: '#00000066' }} />
       </Pressable>
-      <View accessibilityViewIsModal style={{ maxHeight: '88%', flexShrink:1, backgroundColor: colors.surface, borderTopLeftRadius: shape.sheet, borderTopRightRadius: shape.sheet }}>
+      <SafeAreaView edges={fullHeight?['top','left','right']:[]} accessibilityViewIsModal style={{ maxHeight: fullHeight?'100%':'88%', flex:fullHeight?1:undefined, flexShrink:1, backgroundColor: fullHeight?colors.background:colors.surface, borderTopLeftRadius: fullHeight?0:shape.sheet, borderTopRightRadius: fullHeight?0:shape.sheet }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 4 }}>
+          {fullHeight&&<IconButton icon="arrow_back" label={t('m_76900f1bfd16')} onPress={onBack??onClose} />}
           <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar * scale, fontWeight: '600', ...chineseTextMetrics(typography.appBar, scale, '600') }}>{title}</Text>
-          <IconButton icon="close" label={t('m_79c84b48c2f0') + title} onPress={onClose} />
+          {fullHeight?actions:<IconButton icon="close" label={t('m_79c84b48c2f0') + title} onPress={onClose} />}
         </View>
-        <FormViewport fill={false} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
-      </View>
+        <FormViewport fill={fullHeight} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
+      </SafeAreaView>
     </View>
   </Modal></ScrollChromeProvider></ConnectedRowContext.Provider></ScenicChrome.Provider></PresentationProvider>;
 }

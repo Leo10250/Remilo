@@ -1,4 +1,5 @@
 import type { RoutineCommand, RoutineExercise, RoutinePlan } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { weekdayRoutineBuilder } from './routine-builder';
 
 export type RoutineExerciseEditContext = { routineId: string; date: string; stepId: string; weekday: number };
 /** Plans use Monday first. Resolve the authored civil date, not UTC or completed count. */
@@ -17,9 +18,9 @@ export function routineExerciseEditCommand(plan: RoutinePlan, context: RoutineEx
   if (!saved || value.id !== context.stepId || value.sharedStepId !== saved.sharedStepId) throw new Error('Step unavailable');
   return { kind: 'EditRoutine', operationId, routineId: plan.id, expectedRevision: plan.revision,
     title: plan.title, minutes: plan.minutes, mode: plan.mode, listId: plan.listId, notes: plan.notes, sound: plan.sound, vibration: plan.vibration,
-    authoringMode: plan.authoringMode, presentationPreset: plan.presentationPreset,
-    days: plan.days.map((day, index) => ({ type: day.type, exercises: day.exercises.map(exercise => {
-      const shared = plan.authoringMode === 'Shared' && !!value.sharedStepId && exercise.sharedStepId === value.sharedStepId;
-      return shared || index === context.weekday && exercise.id === context.stepId ? { ...value, id: exercise.id, sharedStepId: exercise.sharedStepId } : { ...exercise };
+    authoringMode: 'ByWeekday', presentationPreset: plan.presentationPreset,
+    days: weekdayRoutineBuilder(plan).days.map((day, index) => ({ type: day.type, exercises: day.exercises.map(exercise => {
+      const {sharedStepId:_link,...independent}=value;
+      return index === context.weekday && exercise.id === context.stepId ? { ...independent, id: exercise.id } : exercise;
     }) })) };
 }

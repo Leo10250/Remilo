@@ -17,7 +17,7 @@ export function routineBuilder(plan?: RoutinePlan, allocate?: Allocate): Routine
   const days = (plan?.days ?? emptyRoutineDays()).map(day => ({ ...day, exercises: day.exercises.map(step => ({ ...step,
     ...(allocate ? { id: allocate(), ...(step.sharedStepId ? { sharedStepId: links.get(step.sharedStepId) ?? links.set(step.sharedStepId, allocate()).get(step.sharedStepId) } : {}) } : {}),
   })) }));
-  const authoringMode = plan?.authoringMode ?? (plan ? 'ByWeekday' : 'Shared');
+  const authoringMode = plan?.authoringMode ?? 'ByWeekday';
   return { days, authoringMode, presentationPreset: plan?.presentationPreset ?? (plan ? 'Exercise' : 'General'),
     sharedSteps: authoringMode === 'Shared' ? (days.find(day => day.type === 'Exercises')?.exercises ?? []).map(step => ({ ...step, id: step.sharedStepId! })) : [] };
 }
@@ -37,6 +37,19 @@ export function selectRoutineDays(draft: RoutineBuilder, selected: number[], all
 
 export function separateRoutineDays(draft: RoutineBuilder): RoutineBuilder {
   return { ...draft, authoringMode: 'ByWeekday', days: draft.days.map(day => ({ ...day, exercises: day.exercises.map(independent) })) };
+}
+
+/** Presentation conversion is draft-only; native old versions and receipts remain intact. */
+export const weekdayRoutineBuilder = (plan?: RoutinePlan, allocate?: Allocate): RoutineBuilder => ({...separateRoutineDays(routineBuilder(plan,allocate)),sharedSteps:[]});
+export const cloneRoutineStep = (step: RoutineExercise): RoutineExercise => JSON.parse(JSON.stringify(step));
+export const routineDayWithSteps = (steps: RoutineExercise[]): RoutineDay => ({ type: steps.length ? 'Exercises' : 'Rest', exercises: steps });
+export function initialRoutineWeekday(days: RoutineDay[], today: number, creation = false, duplicate = false): number {
+  if (creation) return 0;
+  return !duplicate && days[today]?.exercises.length ? today : Math.max(0,days.findIndex(day => day.exercises.length > 0));
+}
+export function copyRoutineDays(draft: RoutineBuilder, source: RoutineExercise[], targets: number[], allocate: Allocate): RoutineBuilder {
+  if (!source.length || source.length > 100 || new Set(targets).size !== targets.length || targets.some(day=>day<0||day>6||!Number.isInteger(day))) throw new Error('Invalid copy');
+  return { ...draft, days:draft.days.map((day,index)=>targets.includes(index) ? routineDayWithSteps(source.map(step=>({...cloneRoutineStep(independent(step)),id:allocate()}))) : day) };
 }
 
 export function shareRoutineStepsFrom(draft: RoutineBuilder, source: number | null, allocate: Allocate): RoutineBuilder {

@@ -6,23 +6,21 @@ import { Keyboard, TextInput, View } from 'react-native';
 import type { RoutineCommand, RoutinePlan } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { editorDraft } from '../domain/editor-draft';
 import { creationOrigin, retainedOriginParams, type OriginParams } from '../domain/navigation';
-import { routineBuilder, routineBuilderPayload } from '../domain/routine-builder';
+import { weekdayRoutineBuilder, initialRoutineWeekday, routineBuilderPayload } from '../domain/routine-builder';
 import { validRoutineDays } from '../domain/routine-editor-draft';
-import { civilAt, deviceZone } from '../domain/time';
+import { civilAt } from '../domain/time';
 import { useTranslation } from '../localization/react';
 import { errorText } from '../localization';
-import { AlertModeSelector } from '../ui/alert-mode-selector';
-import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, DateField, Disclosure, Field, IconButton, Page, QueryState, Toggle } from '../ui/components';
+import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, Disclosure, Field, IconButton, Page, QueryState } from '../ui/components';
 import { useAppearanceConfirmation } from '../ui/confirmation';
-import { DateTimeFields } from '../ui/date-time-fields';
 import { useExerciseImageLeases } from '../ui/exercise-images';
 import { notify } from '../ui/feedback';
 import { CommandRecovery, ListPicker, returnToOrigin, useCapturedCommand } from '../ui/navigation';
 import { engine, nativeAvailable, useCapabilities } from '../ui/native';
 import { RoutineActions } from '../ui/routine-actions';
-import { RoutineBuilderFields, RoutineDaysField, RoutinePresetField } from '../ui/routine-builder';
+import { RoutineBuilderFields, RoutinePresetField } from '../ui/routine-builder';
 import { RoutineChangeReview } from '../ui/routine-editor';
-import { SoundPicker } from '../ui/sound-picker';
+import { RoutineTimingField } from '../ui/routine-timing';
 import { useAppearanceHold } from '../ui/theme';
 import { useTimeFormatting } from '../ui/time-display';
 
@@ -50,8 +48,11 @@ export default function RoutineEditor() {
 function RoutineEditorForm({ plan, duplicate, params, onReload }: { plan?: RoutinePlan; duplicate: boolean; params: OriginParams; onReload: () => Promise<void> }) {
   const t = useTranslation(), confirm = useAppearanceConfirmation(), navigation = useNavigation(), caps = useCapabilities(), { formatTime } = useTimeFormatting();
   useAppearanceHold(true);
+  // Background queries may refresh, but only explicit Reload may replace a draft's revision.
+  const [loadedPlan]=useState(plan);
   const [origin] = useState(() => creationOrigin(params));
-  const [builder, setBuilder] = useState(() => routineBuilder(plan, duplicate ? () => engine().createOperationId() : undefined));
+  const [builder, setBuilder] = useState(() => weekdayRoutineBuilder(plan, duplicate ? () => engine().createOperationId() : undefined));
+  const [initialDay] = useState(() => initialRoutineWeekday(builder.days,(new Date().getDay()+6)%7,!plan,duplicate));
   const [startsOn, setStartsOn] = useState(() => plan && !duplicate ? plan.startsOn : civilAt(Date.now()).slice(0, 10));
   const [draft, setDraft] = useState(() => {
     const value = editorDraft({ title: plan ? duplicate ? plan.title.slice(0, 193) + t('m_d75612450689') : plan.title : '', notes: plan?.notes ?? '', mode: plan?.mode ?? 'Notification',
@@ -60,15 +61,15 @@ function RoutineEditorForm({ plan, duplicate, params, onReload }: { plan?: Routi
     return value;
   });
   const [baseline] = useState(() => JSON.stringify({ draft, builder, startsOn })), [openedDate] = useState(() => civilAt(Date.now()).slice(0, 10));
-  const [attempted, setAttempted] = useState(false), [saved, setSaved] = useState(false), [menu, setMenu] = useState(false), [dateError, setDateError] = useState('');
+  const [attempted, setAttempted] = useState(false), [saved, setSaved] = useState(false), [menu, setMenu] = useState(false);
   const [preparing, setPreparing] = useState(false), [readError, setReadError] = useState('');
   const left = useRef(false), preparingRef = useRef(false);
   const titleRef = useRef<TextInput>(null), notesRef = useRef<TextInput>(null);
-  const existing = plan && !duplicate ? plan : undefined;
+  const existing = loadedPlan && !duplicate ? loadedPlan : undefined;
   const lists = useQuery({ queryKey: ['lists'], queryFn: () => engine().getLists() });
   const payload = { title: draft.title, notes: draft.notes, minutes: new Date(draft.alarmAtMs).getHours() * 60 + new Date(draft.alarmAtMs).getMinutes(),
     mode: draft.mode ?? 'Notification', listId: draft.listId ?? null, sound: draft.sound, vibration: draft.vibration, ...routineBuilderPayload(builder) };
-  const valid = !!draft.title.trim() && validRoutineDays(payload.days) && !dateError;
+  const valid = !!draft.title.trim() && validRoutineDays(payload.days);
   const dirty = JSON.stringify({ draft, builder, startsOn }) !== baseline;
   const action = useCapturedCommand((_job, result) => {
     if (result.status === 'Applied' || result.status === 'Blocked') {
@@ -114,40 +115,27 @@ function RoutineEditorForm({ plan, duplicate, params, onReload }: { plan?: Routi
   ]);
   const noAlert = draft.mode === 'None';
   return <Page compact title={t(existing ? 'routine_edit' : 'routine_new')} onBack={leave} actions={existing ? <IconButton icon="more_vert" label={t('routine_more')} disabled={frozen} onPress={() => setMenu(true)} /> : undefined}
-    footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}><Button label={t('m_1509f561f241')} busy={action.busy || preparing} disabled={frozen} onPress={() => void save()} /></View></BottomActionBar>}>
+    footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}><Button label={t('routine_save_full')} busy={action.busy || preparing} disabled={frozen||!valid} onPress={() => void save()} /></View></BottomActionBar>}>
     <CommandRecovery action={action} />
     {!!readError && <ActionFeedback tone="danger" message={readError} />}
     {action.feedback?.tone === 'danger' && !action.guarded && existing && <Button label={t('routine_reload')} variant="secondary" onPress={reload} />}
     <View collapsable={false} style={{ gap: 12 }} pointerEvents={frozen ? 'none' : 'auto'} accessibilityElementsHidden={frozen} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}>
     <Field label={t('m_7e8cd2056da7')} placeholder={t('routine_title_example')} required inputRef={titleRef} value={draft.title} maxLength={200} multiline compactMultiline autoFocus={!plan}
       editable={!frozen} error={attempted && !draft.title.trim() ? t('routine_title_error') : undefined} onChangeText={title => setDraft(current => ({ ...current, title }))} />
-    <Copy muted size={14}>{t('routine_generic_hint')}</Copy>
     <RoutinePresetField value={builder.presentationPreset} disabled={frozen} onChange={presentationPreset => setBuilder(current => ({ ...current, presentationPreset }))} />
-    <RoutineBuilderFields value={builder} disabled={frozen} onChange={setBuilder} />
+    {existing?.authoringMode==='Shared'&&<Copy muted size={14}>{t('routine_independent_notice')}</Copy>}
+    <RoutineBuilderFields value={builder} disabled={frozen} onChange={setBuilder} initialDay={initialDay} />
     {attempted && !validRoutineDays(payload.days) && <ActionFeedback tone="danger" message={t('routine_required_steps_days')} />}
-    <ConnectedGroup title={t('routine_schedule')}>
-      {!existing ? <DateTimeFields dateLabel={t('routine_starts')} dateZoneId={deviceZone()} dateValue={new Date(`${startsOn}T12:00:00`).getTime()}
-        value={draft.alarmAtMs} zoneId={deviceZone()} allDay={noAlert} disabled={frozen} onError={setDateError}
-        onDateChange={value => setStartsOn(civilAt(value).slice(0, 10))} onChange={alarmAtMs => { setDateError(''); setDraft(current => ({ ...current, alarmAtMs })); }} />
-        : !noAlert && <DateField label={t('m_33b93476cf59')} value={draft.alarmAtMs} zoneId={deviceZone()} timeOnly disabled={frozen} onError={setDateError} onChange={alarmAtMs => { setDateError(''); setDraft(current => ({ ...current, alarmAtMs })); }} />}
-      <RoutineDaysField value={builder} disabled={frozen} onChange={setBuilder} />
-    </ConnectedGroup>
-    {!!dateError && <ActionFeedback message={dateError} tone="danger" />}
-    <ConnectedGroup><AlertModeSelector value={draft.mode ?? 'Notification'} disabled={frozen} onChange={mode => setDraft(current => ({ ...current, mode }))} /></ConnectedGroup>
+    <RoutineTimingField value={{startsOn,alarmAtMs:draft.alarmAtMs,mode:draft.mode,sound:draft.sound,vibration:draft.vibration}} existing={!!existing} disabled={frozen} onChange={({startsOn,...timing})=>{setStartsOn(startsOn);setDraft(current=>({...current,...timing}));}} />
+    <Disclosure title={t('routine_more_settings')}>
     <ConnectedGroup><ListPicker value={draft.listId ?? null} disabled={frozen} onChange={listId => setDraft(current => ({ ...current, listId }))} /></ConnectedGroup>
-    <Disclosure title={t('m_6239b93e96e9')} initial={!!draft.notes}><Field label={t('m_8a7525b1492f')} inputRef={notesRef} value={draft.notes} maxLength={10000} multiline editable={!frozen} onChangeText={notes => setDraft(current => ({ ...current, notes }))} /></Disclosure>
+    <Field label={t('m_8a7525b1492f')} inputRef={notesRef} value={draft.notes} maxLength={10000} multiline editable={!frozen} onChangeText={notes => setDraft(current => ({ ...current, notes }))} />
+    <Copy muted size={14}>{t('routine_generic_hint')}</Copy></Disclosure>
     {existing && <RoutineChangeReview plan={existing} draft={payload} listName={lists.data?.find(list => list.id === payload.listId)?.name} />}
     {!!removedChecks && <ActionFeedback tone="warning" message={t('routine_checks_removed', { count: removedChecks })} />}
     {preview.data?.nextAlertMs != null && !noAlert && <Copy muted size={14}>{t('routine_next_prompt', { time: formatTime(preview.data.nextAlertMs) })}</Copy>}
     {!!preview.error && <ActionFeedback tone="warning" message={t('routine_load_error')} />}
-    {draft.mode === 'Notification' && <><Copy muted size={14}>{t('routine_no_catchup')}</Copy>
-      {caps.data && (!caps.data.notifications || !caps.data.routineChannelEnabled) && <ActionFeedback tone="warning" message={t('routine_notification_warning')} />}
-      {caps.data?.routineChannelQuiet === false && <Copy muted size={14}>{t('routine_channel_changed')}</Copy>}
-      <Button label={t('routine_channel_settings')} variant="neutral" disabled={frozen} onPress={() => void engine().openSettings('routineChannel')} /></>}
-    {draft.mode === 'Alarm' && <Disclosure title={t('m_8c648567f73c')}><ConnectedGroup>
-      <SoundPicker value={draft.sound ?? 'remilo'} disabled={frozen} onChange={sound => setDraft(current => ({ ...current, sound }))} />
-      <Toggle label={t('m_59e1fd02f6c2')} value={draft.vibration ?? false} disabled={frozen} onChange={vibration => setDraft(current => ({ ...current, vibration }))} />
-    </ConnectedGroup></Disclosure>}
+    {draft.mode==='Notification'&&caps.data&&(!caps.data.notifications||!caps.data.routineChannelEnabled)&&<ActionFeedback tone="warning" message={t('routine_notification_warning')}/>}
     </View>
     <RoutineActions target={menu && existing ? { id: existing.id } : null} onClose={() => setMenu(false)} onRemoved={() => setSaved(true)} />
   </Page>;

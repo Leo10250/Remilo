@@ -1090,5 +1090,24 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
   Retry and revision conflict with Reload exercise. Check keyboard/TalkBack and
   200% text. Past/ended rows omit Edit while checkmark correction still works.
 
+## Day tabs and structured targets follow-up — 18 October 2026
+
+- Create a blank General routine and an Exercise routine with Front plank/Bird-dog
+  on Monday and Push-up on Wednesday. Tab selection alone must not schedule a day.
+  Verify the compact empty states, day dots, independent editing and saved schedule.
+- Enter sets/reps/time together, decimals, ranges, each-side scope, weight and
+  additional text using the Android keyboards. Check inline error focus, native
+  unit/date/time pickers, IME visibility, 200% text and the persistent Done/Save.
+  Reopen legacy custom text and cancel numeric replacement without changing it.
+- Copy to empty and populated days; review named replacements and cancel/confirm.
+  Check independent copied content, removal Undo across tabs, scroll/focus return,
+  custom-photo leases and themed dirty-discard prompts. Step Done remains draft-only.
+- Save an old Shared plan through the main editor and direct row Edit. Verify the
+  conversion notice, one-day edit scope, retained IDs/checks and unchanged closed
+  history. Check conflicts, exact uncertain Retry, midnight and stale widget taps.
+- Read localized numeric targets in Focus, history and launcher widgets across
+  both languages/themes. Check TalkBack labels and clipping on the signed phone.
+  Export/import format9 with photos/Trash/history and inspect the restored content.
+
 Installation and distribution require their separate authorization. These cases
 remain unobserved until the consolidated physical run is recorded.

@@ -289,22 +289,23 @@ resolution is required before a suspended link resumes.
 
 The owner's 18 October [generic-routine contract](design/current/routine-creation.md)
 supersedes unified creation and workout-only setup below. Create offers separate
-reminder/routine destinations. New routines are empty General/Shared sequences
-with explicit weekdays; optional Exercise changes fields/tools without seeding
-content. Shared edits affect all linked days; explicit weekday mode edits independently.
-Existing routines retain their weekday definitions and Exercise presentation.
+reminder/routine destinations. New routines are empty General/ByWeekday sequences
+with Day tabs; nonempty weekdays are scheduled automatically. Optional Exercise
+changes fields/tools without seeding content. Copying creates independent day-specific
+steps. Existing Shared plans convert only on Save, with notice and materialized IDs
+preserved. Existing content and ended snapshots retain their presentation.
 The daily-reset, native delivery, immediate editing and frozen-history rules remain.
-CE17/portable format8 preserve authoring intent and support legacy content/imports.
+CE17/DP9 and portable format9 preserve authoring intent and legacy content/imports.
 
 The former unified editor/type selector is retired. Create opens New reminder or
 New routine; /edit and /routine-edit own separate drafts. New General routines
-edit one shared sequence and choose weekdays explicitly; Different steps by day
-opens independent selected-day sequences. Exercise is an optional presentation
+edit independent sequences through weekday tabs; the old arrangement switch and
+Days picker are retired. Exercise is an optional presentation
 preset, not another task type. One parent Save commits nested draft changes.
 One owning recurring reminder supplies a shared clock; immutable versions supply
 ordered steps for each scheduled weekday or the internal empty Rest representation.
 Ordinary reminders cannot be converted in v1. Duplication creates independent
-routine, shared-step and materialized weekday identities.
+routine and materialized weekday identities.
 Use the same Alarm / Notification / No alert control as ordinary reminders.
 Notification uses a separate quiet-by-default channel; Android controls its
 settings after creation. Alarm uses normal sound/vibration and access checks,
@@ -325,7 +326,8 @@ the final exercise. Skip today retains partial checks and has an explicit Undo
 while the day is open. Notification opening/dismissal never changes progress.
 Today/future exercise rows also expose a neutral pencil + Edit control which
 opens the existing fields directly, independently of Focus selection. Its single
-Save edits the exact step immediately, including linked copies in Shared mode;
+Save edits the exact weekday/step immediately and converts legacy Shared to
+independent days with notice, preserving all materialized IDs and matching checks;
 adding/removing/reordering stays in the routine builder. Past rows retain checkmark correction without this
 direct plan-edit control. Revision conflicts retain drafts for explicit reload.
 
@@ -477,9 +479,9 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   retry receipts. Local recovery and older backup imports into the same installation
   cannot resurrect that identity by default; an explicitly requested backup copy
   has a separate identity. Existing
-  exported files are unchanged. Backup format 8 retains minimal repeating exclusions,
+  exported files are unchanged. Backup format 9 retains minimal repeating exclusions,
   weekly plans, dated progress and correction history, and adds private exercise
-  photos, authoring/preset metadata and whole-routine Trash. Formats 1–7 remain
+  photos, authoring/preset metadata, structured targets and whole-routine Trash. Formats 1–8 remain
   readable. Unknown replies keep the existing command/batch
   guards; retry uses the same operation, and batches report confirmed partial results.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
@@ -570,8 +572,8 @@ states and progress, and permanent deletion retains identity exclusions.
 An optional custom still photo is chosen through Android Photo Picker, previewed
 without cropping and stored privately as an immutable normalized image. The full
 composition is retained, with bounded resolution and metadata removed. Photo
-changes apply immediately to today's open session and closed history retains its original image. Portable format 8
-archives include photos and Trash state; legacy formats 1–7 remain readable.
+changes apply immediately to today's open session and closed history retains its original image. Portable format 9
+archives include photos and Trash state; legacy formats 1–8 remain readable.
 The widget prefers compact wide placement and uses Done, a full weekday header,
 numeric progress and native stale-action protection. Undo reverses the current
 widget's remaining eligible completions in reverse order; Retry appears only for

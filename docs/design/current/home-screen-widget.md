@@ -4,6 +4,12 @@ The [18 October generic-routine correction](routine-creation.md) adds preset-awa
 step/rest wording and curated General examples. Layout, Done feedback, repeated
 Undo and bottom alignment remain. Historical wording follows its bound version.
 
+The later Day tabs correction adds structured exerciseTarget content. Render its
+localized target summary using the shared RN/Kotlin fixtures; never show raw JSON
+or store a second summary. Legacy target text stays authored text. Target edits
+retain dated actions/revision guards, confirmation and repeated Undo. Review actual
+RemoteViews in both languages, all appearance pairs and large-text fallbacks.
+
 The owner-approved RW-03 contract adds one configurable Android widget. It uses
 the current visual language and the native routine authority, with no new root,
 workout scenery, wallpaper automation, lock-screen implementation or iOS work.

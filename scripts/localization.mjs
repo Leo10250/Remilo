@@ -29,6 +29,7 @@ export function generate(catalog) {
   for (const [key, entry] of Object.entries(messages)) {
     if (!/^[a-z][a-z0-9_]*$/.test(key) || names.has(key)) throw new Error('Invalid/duplicate message key: ' + key);
     names.add(key);
+    if (entry.en != null && entry['zh-Hans'] != null && (typeof entry.en === 'string') !== (typeof entry['zh-Hans'] === 'string')) throw new Error('Mismatched native plural resource: ' + key);
     for (const [name, type] of Object.entries(entry.args ?? {})) if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(name) || !['string', 'number', 'string | number'].includes(type)) throw new Error('Invalid argument: ' + key + '.' + name);
     for (const language of ['en', 'zh-Hans']) {
       const value = entry[language];

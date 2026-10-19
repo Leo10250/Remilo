@@ -138,7 +138,7 @@ class PermanentDeletionTest {
     trash(id); apply(command(id, "Purge", "purge-series"))
     val backup = request { engine.exportBackup() } as String
     val bundle = BackupCodec.decode(backup)
-    assertEquals(8, JSONObject(backup).getInt("version"))
+    assertEquals(9, JSONObject(backup).getInt("version"))
     assertEquals(listOf(PurgedOccurrence(id, before["segmentId"] as String, before["nominalSlot"] as String)), bundle.purged)
     assertTrue(bundle.records.none { it.id == id || it.id == oneOff })
     assertTrue(bundle.history.none { it.occurrenceId == id || it.occurrenceId == oneOff })

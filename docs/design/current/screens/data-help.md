@@ -1,10 +1,12 @@
 # Data/Help: Export, Restore and Diagnostics
 
-The 18 October generic-routine correction advances portable exports to format8,
+The later 18 October Day tabs correction advances portable exports to format9,
 retaining the same photo-inclusive `.remilo` file workflow. Include Shared/ByWeekday
-and General/Exercise metadata plus explicit shared-step links. Formats1–7 remain
+and General/Exercise metadata, explicit legacy shared-step links and optional
+structured exercise targets in immutable versions/snapshots. Formats1–8 remain
 importable, with legacy routines restored as ByWeekday/Exercise. Malformed linkage
-fails before committing content; prepared handles and uncertain retries stay exact.
+or target data fails before committing content; legacy text is never parsed.
+Prepared handles and uncertain retries stay exact. CE17/DP9 remain unchanged.
 
 The [10 October UX refinement](../ux-refinement.md) condenses backup introductions
 and moves inclusion/exclusion details into disclosures. Whole-backup Restore,

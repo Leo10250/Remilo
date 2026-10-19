@@ -1,5 +1,6 @@
 import { errorText, t as currentText, t } from '../localization';
 import { useLocalizedState, useTranslation } from '../localization/react';
+import { exerciseTargetText } from '../domain/exercise-target';
 import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
@@ -460,7 +461,7 @@ function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }
         <Copy muted>{lists.data?.find(list => list.id === latestRoutine.listId)?.name ?? t('m_eacd31d849f9')}</Copy>
         {!!latestRoutine.notes && <Copy muted>{latestRoutine.notes}</Copy>}
         {latestRoutine.days.map((day, index) => <View key={index}><Copy heading>{t(routineDayKeys[index])}</Copy>
-          <Copy muted>{day.type === 'Rest' ? t('routine_rest') : day.exercises.map(exercise => [exercise.name, exercise.target].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}</>}
+          <Copy muted>{day.type === 'Rest' ? t('routine_rest') : day.exercises.map(exercise => [exercise.name, exerciseTargetText(exercise)].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}</>}
       <Button label={t('routine_keep_draft')} disabled={!latestRoutine || !!routinePlans.error || routinePlans.isFetching} onPress={keepRoutineDraft} />
       <Button label={t('routine_load_latest')} variant="secondary" disabled={!latestRoutine || !!routinePlans.error || routinePlans.isFetching} onPress={restoreRoutine} />
     </Sheet>

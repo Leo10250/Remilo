@@ -11,7 +11,7 @@ export const workoutWeek: RoutineDay[] = [
   ['Long walk|60 min'], [],
 ].map((exercises, day) => ({ type: exercises.length ? 'Exercises' : 'Rest', exercises: exercises.map((value, index) => ({ id: `exercise-${day}-${index}`, name: value.split('|')[0], target: value.split('|')[1], notes: '', illustration: '' })) }));
 
-export function routinePreview(enabled: boolean, emit: () => void, options: { progress?: boolean; illustration?: boolean } = {}) {
+export function routinePreview(enabled: boolean, emit: () => void, options: { progress?: boolean; illustration?: boolean; shape?:string } = {}) {
   const currentDate = () => civilAt(Date.now()).slice(0, 10);
   const today = currentDate(), monday = new Date(today + 'T12:00:00');
   monday.setDate(monday.getDate() - (monday.getDay() + 6) % 7);
@@ -24,6 +24,14 @@ export function routinePreview(enabled: boolean, emit: () => void, options: { pr
   const guidance: Record<string, string> = { 'exercise-0-1': 'Complete all three holds, then continue.', 'exercise-3-1': 'Complete all three holds, then continue.' };
   const plan: RoutinePlan = { id: 'weekly', title: 'Weekly workout', notes: '', sound: 'remilo', vibration: false, revision: 1, state: 'Active', startsOn, effectiveDate: startsOn, minutes: 540, mode: 'Notification', listId: null,
     days: workoutWeek.map(day => ({ ...day, exercises: day.exercises.map(exercise => ({ ...exercise, notes: guidance[exercise.id] ?? '', illustration: options.illustration ? illustrations[exercise.id] ?? '' : '' })) })) };
+  if(options.shape==='day-tabs'||options.shape==='shared') {
+    plan.title='Weekly exercise';plan.presentationPreset='Exercise';plan.authoringMode=options.shape==='shared'?'Shared':'ByWeekday';
+    plan.days=Array.from({length:7},()=>({type:'Rest',exercises:[]}));
+    plan.days[0]={type:'Exercises',exercises:[{id:'plank-mon',name:'Front plank',target:'',exerciseTarget:{sets:3,duration:{value:40,unit:'sec'}},notes:''},
+      {id:'bird-mon',name:'Bird-dog',target:'',exerciseTarget:{sets:3,reps:10},notes:''}]};
+    plan.days[2]={type:'Exercises',exercises:[{id:'push-wed',name:'Push-up',target:'',exerciseTarget:{sets:3,reps:12},notes:''}]};
+    if(options.shape==='shared') {plan.days[0].exercises.forEach(step=>step.sharedStepId=step.id);plan.days[2].exercises=plan.days[0].exercises.map(step=>({...structuredClone(step),id:step.id+'-wed'}));}
+  }
   const plans: RoutinePlan[] = enabled ? [plan] : [];
   const sessions = new Map<string, RoutineSession>(), receipts = new Map<string, CommandResult>();
   const updateState = (value: RoutineSession) => {
