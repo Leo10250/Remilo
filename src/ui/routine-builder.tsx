@@ -14,6 +14,8 @@ import { useFontScaleOverride, useTheme } from './theme';
 import { engine } from './native';
 
 const shortDays=['routine_short_mon','routine_short_tue','routine_short_wed','routine_short_thu','routine_short_fri','routine_short_sat','routine_short_sun'] as const;
+// Empty grid slots need the same border/padding budget as populated cells.
+const dayTabCellStyle={flex:1,minWidth:48,paddingHorizontal:2,borderWidth:2,borderColor:'transparent'};
 export function RoutinePresetField({ value, onChange, disabled }: { value: RoutinePreset; onChange: (value: RoutinePreset) => void; disabled?: boolean }) {
   const t = useTranslation(), [open, setOpen] = useState(false);
   return <><ConnectedGroup><SettingRow intent="picker" label={t('routine_purpose')} value={t(value === 'General' ? 'routine_general' : 'routine_exercise_preset')} disabled={disabled} onPress={() => { Keyboard.dismiss(); setOpen(true); }} /></ConnectedGroup>
@@ -41,7 +43,7 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
   const [removed,setRemoved]=useState<{day:number;step:RoutineExercise;index:number}|null>(null),[copy,setCopy]=useState<CopyDraft|null>(null),[feedback,setFeedback]=useState('');
   const formRef=useRef<ExerciseFormHandle>(null),trigger=useRef<View|null>(null),copyTrigger=useRef<View|null>(null),addTrigger=useRef<View|null>(null),rows=useRef(new Map<string,View>()),focusId=useRef<string|null>(null);
   const steps=value.days[selected].exercises,general=value.presentationPreset==='General';
-  const columns=Math.max(scale,fontScale)>1.2||(available-12)/7<48?4:7,gap=columns===4?4:2;
+  const columns=Math.max(scale,fontScale)>1.2||Math.floor(available)<7*48+6*2?4:7,gap=columns===4?4:2;
   const canAdd=canAddRoutineExercise(steps.length,removed?.day===selected),sourceDays=value.days.flatMap((day,index)=>index!==selected&&day.exercises.length?[index]:[]);
   const patch=(days:RoutineBuilder['days'])=>onChange({...value,authoringMode:'ByWeekday',sharedSteps:[],days});
   const setSteps=(day:number,list:RoutineExercise[])=>patch(value.days.map((current,i)=>i===day?routineDayWithSteps(list):current));
@@ -76,9 +78,16 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
   useExerciseImageLeases([...(editing?[editing.value]:[]),...(removed?[removed.step]:[]),...(copy?.steps??[]),...(copy?.before.flatMap(day=>day.steps)??[])]);
   return <View style={{gap:12}}>
     <View style={{gap:8}}><Copy heading size={18}>{t('routine_weekly_plan')}</Copy>
-      <View onLayout={event=>setAvailable(event.nativeEvent.layout.width)} style={{flexDirection:'row',flexWrap:'wrap',gap}}>
-        {routineDayKeys.map((key,index)=><DayTab key={key} label={t(shortDays[index])} status={t('routine_day_tab_label',{day:t(key),status:value.days[index].exercises.length?t('routine_step_count',{count:value.days[index].exercises.length}):t('routine_not_scheduled')})}
-          width={(available-(columns-1)*gap)/columns} populated={!!value.days[index].exercises.length} selected={selected===index} disabled={disabled} onPress={()=>{Keyboard.dismiss();setSelected(index);setFeedback('');}} />)}
+      <View onLayout={event=>setAvailable(event.nativeEvent.layout.width)} style={{gap}}>
+        {/* Explicit rows avoid Yoga wrapping the last fractional-width tab onto its own line. */}
+        {Array.from({length:Math.ceil(routineDayKeys.length/columns)},(_,row)=><View key={row} style={{flexDirection:'row',gap}}>
+          {Array.from({length:columns},(_,column)=>{
+            const index=row*columns+column,key=routineDayKeys[index];
+            return key?<DayTab key={key} label={t(shortDays[index])} status={t('routine_day_tab_label',{day:t(key),status:value.days[index].exercises.length?t('routine_step_count',{count:value.days[index].exercises.length}):t('routine_not_scheduled')})}
+              populated={!!value.days[index].exercises.length} selected={selected===index} disabled={disabled} onPress={()=>{Keyboard.dismiss();setSelected(index);setFeedback('');}} />:
+              <View key={column} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={dayTabCellStyle}/>;
+          })}
+        </View>)}
       </View>
     </View>
     <View style={{gap:12}}><View style={{minHeight:48,flexDirection:'row',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
@@ -120,10 +129,10 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
   </View>;
 }
 
-function DayTab({label,status,width,populated,selected,disabled,onPress}:{label:string;status:string;width:number;populated:boolean;selected:boolean;disabled:boolean;onPress:()=>void}) {
+function DayTab({label,status,populated,selected,disabled,onPress}:{label:string;status:string;populated:boolean;selected:boolean;disabled:boolean;onPress:()=>void}) {
   const colors=useTheme(),[focused,setFocused]=useState(false);
-  return <Pressable accessibilityRole="tab" accessibilityLabel={status} accessibilityState={{selected,disabled}} disabled={disabled} onPress={onPress} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
-    style={({pressed})=>({width,minWidth:48,minHeight:64,borderRadius:16,paddingVertical:8,paddingHorizontal:2,borderWidth:2,borderColor:selected||focused?colors.accent:'transparent',backgroundColor:selected||pressed?colors.soft:colors.surface,
+  return <Pressable accessibilityRole="tab" accessibilityLabel={status} accessibilityState={{selected,disabled}} aria-selected={selected} aria-disabled={disabled} disabled={disabled} onPress={onPress} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
+    style={({pressed})=>({...dayTabCellStyle,minHeight:64,borderRadius:16,paddingVertical:8,borderColor:selected||focused?colors.accent:'transparent',backgroundColor:selected||pressed?colors.soft:colors.surface,
       alignItems:'center',justifyContent:'center',gap:6,opacity:disabled ? .5 : 1})}>
     <Copy>{label}</Copy><View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{width:4,height:4,borderRadius:2,backgroundColor:populated?colors.accent:'transparent'}}/>
   </Pressable>;

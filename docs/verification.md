@@ -9,6 +9,13 @@ decorative empty icons, artificial gaps, Days picker or arrangement switch. Veri
 Monday Plank/Bird-dog and Wednesday Push-up, independent copies, cancellation,
 removal Undo across tabs/capacity, and draft-only Date and time Done.
 
+For weekday layout regressions, measure actual tab positions at widths around the
+348 dp content threshold, including fractional cell widths/density rounding.
+Require exactly seven tabs in one non-wrapping row or four/three in explicit rows;
+never six/one. Both rows retain equal cell widths and 48 dp minimum targets. The
+empty fourth slot is invisible and excluded from accessibility. Resize through
+the breakpoint and check selected-day navigation in both languages at 100%/200%.
+
 Shared formatting fixtures cover RN/Kotlin EN/Chinese, blanks, singular/plural,
 both reps/time, range, each side, decimal units/weight and untouched authored text.
 Reject unsafe/nonpositive/nonfinite counts, fractional repetitions, invalid ranges,

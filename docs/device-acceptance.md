@@ -1095,6 +1095,9 @@ misunderstanding for these cases. Host tests/captures cannot supply observations
 - Create a blank General routine and an Exercise routine with Front plank/Bird-dog
   on Monday and Push-up on Wednesday. Tab selection alone must not schedule a day.
   Verify the compact empty states, day dots, independent editing and saved schedule.
+  At portrait widths and after rotation, require seven weekdays in one row or an
+  even four/three grid; Sunday must never be stranded alone. Check 200% text,
+  selected-day retention, equal tile widths and complete touch targets.
 - Enter sets/reps/time together, decimals, ranges, each-side scope, weight and
   additional text using the Android keyboards. Check inline error focus, native
   unit/date/time pickers, IME visibility, 200% text and the persistent Done/Save.
