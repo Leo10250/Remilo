@@ -36,8 +36,10 @@ first step schedules a day; removing its last step unschedules it. Empty arrays
 serialize as Rest, populated arrays as Exercises. No separate Days/Workout/Rest
 controls. Seven equal controls with 2 dp gaps require 48 dp each; otherwise use
 four/three controls with 4 dp gaps. Use explicit non-wrapping row groups with equal
-flex widths, retaining an empty fourth slot in the last row. Fractional tab widths
-must never leave Sunday alone on a new line. Also use four/three above 120% text. Use short labels,
+flex widths. In the four/three fallback, center the lower three as a group, retaining
+the first row's cell widths and gaps. No visible or accessible placeholder is needed.
+Fractional widths must never leave Sunday alone on a new line. Also use four/three
+above 120% text. Use short labels,
 selected outline/soft surface and populated dots; accessibility names the full
 weekday, selected state and count/not scheduled. Switching preserves drafts and IDs.
 

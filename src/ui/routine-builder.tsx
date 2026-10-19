@@ -14,7 +14,6 @@ import { useFontScaleOverride, useTheme } from './theme';
 import { engine } from './native';
 
 const shortDays=['routine_short_mon','routine_short_tue','routine_short_wed','routine_short_thu','routine_short_fri','routine_short_sat','routine_short_sun'] as const;
-// Empty grid slots need the same border/padding budget as populated cells.
 const dayTabCellStyle={flex:1,minWidth:48,paddingHorizontal:2,borderWidth:2,borderColor:'transparent'};
 export function RoutinePresetField({ value, onChange, disabled }: { value: RoutinePreset; onChange: (value: RoutinePreset) => void; disabled?: boolean }) {
   const t = useTranslation(), [open, setOpen] = useState(false);
@@ -80,14 +79,17 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
     <View style={{gap:8}}><Copy heading size={18}>{t('routine_weekly_plan')}</Copy>
       <View onLayout={event=>setAvailable(event.nativeEvent.layout.width)} style={{gap}}>
         {/* Explicit rows avoid Yoga wrapping the last fractional-width tab onto its own line. */}
-        {Array.from({length:Math.ceil(routineDayKeys.length/columns)},(_,row)=><View key={row} style={{flexDirection:'row',gap}}>
-          {Array.from({length:columns},(_,column)=>{
+        {Array.from({length:Math.ceil(routineDayKeys.length/columns)},(_,row)=>{
+          const count=Math.min(columns,routineDayKeys.length-row*columns);
+          // A partial row keeps the full row's cell width and gaps, centered as a group.
+          const fraction=count/columns;
+          return <View key={row} style={{width:`${fraction*100}%`,alignSelf:'center'}}><View style={{flexDirection:'row',gap,marginHorizontal:gap*(1-fraction)/2}}>
+          {Array.from({length:count},(_,column)=>{
             const index=row*columns+column,key=routineDayKeys[index];
-            return key?<DayTab key={key} label={t(shortDays[index])} status={t('routine_day_tab_label',{day:t(key),status:value.days[index].exercises.length?t('routine_step_count',{count:value.days[index].exercises.length}):t('routine_not_scheduled')})}
-              populated={!!value.days[index].exercises.length} selected={selected===index} disabled={disabled} onPress={()=>{Keyboard.dismiss();setSelected(index);setFeedback('');}} />:
-              <View key={column} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={dayTabCellStyle}/>;
+            return <DayTab key={key} label={t(shortDays[index])} status={t('routine_day_tab_label',{day:t(key),status:value.days[index].exercises.length?t('routine_step_count',{count:value.days[index].exercises.length}):t('routine_not_scheduled')})}
+              populated={!!value.days[index].exercises.length} selected={selected===index} disabled={disabled} onPress={()=>{Keyboard.dismiss();setSelected(index);setFeedback('');}} />;
           })}
-        </View>)}
+        </View></View>;})}
       </View>
     </View>
     <View style={{gap:12}}><View style={{minHeight:48,flexDirection:'row',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
