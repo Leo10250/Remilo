@@ -35,6 +35,11 @@ export function exerciseTargetText(step: Pick<RoutineExercise, 'target' | 'exerc
 
 export type ExerciseTargetFields = { mode: 'Numeric' | 'Text'; preserveStructured: boolean; custom: string; sets: string; reps: string; repsMax: string; range: boolean;
   duration: string; unit: 'sec' | 'min' | 'hr'; eachSide: boolean; weight: string; weightUnit: 'kg' | 'lb'; additionalText: string };
+/** Editing syntax only: keep partial decimals and never turn a rejected paste into another number. */
+export function numericTargetInput(previous: string, candidate: string, integer: boolean): string {
+  const normalized = integer ? candidate : candidate.replace(',', '.');
+  return (integer ? /^\d*$/ : /^\d*(?:\.\d*)?$/).test(normalized) ? normalized : previous;
+}
 export function targetFields(step: RoutineExercise, general = false): ExerciseTargetFields {
   const value = step.exerciseTarget;
   const number = (n:number | undefined) => n === undefined ? '' : targetNumberText(n);
@@ -49,7 +54,7 @@ export function targetFieldErrors(fields: ExerciseTargetFields): Partial<Record<
   for (const key of ['sets','reps','repsMax','duration','weight'] as const) {
     if (key === 'repsMax' && !fields.range || !fields[key].trim()) continue;
     const integer = ['sets','reps','repsMax'].includes(key), raw = fields[key].trim();
-    if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw) || !positiveTargetNumber(Number(raw), integer)) errors[key] = integer ? 'integer' : 'number';
+    if (!(integer ? /^\d+$/ : /^(?:\d+(?:\.\d*)?|\.\d+)$/).test(raw) || !positiveTargetNumber(Number(raw), integer)) errors[key] = integer ? 'integer' : 'number';
   }
   if (fields.range && (!fields.reps.trim() || !fields.repsMax.trim() || Number(fields.repsMax) < Number(fields.reps))) errors.repsMax = 'range';
   if (fields.eachSide && !fields.reps.trim() && !fields.duration.trim()) errors.eachSide = 'side';

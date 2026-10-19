@@ -1,5 +1,29 @@
 # Verification and release evidence
 
+## Routine editor polish — owner correction, 19 October 2026
+
+Measure weekday labels in empty/mixed/populated states: equal vertical centers,
+uniform tile heights and at least 6 dp label/dot clearance through 200% text.
+Retain seven or centered four/three rows, widths/targets and full count labels.
+Check both connected Date and time/Alert rows. Date sheets contain no Alert
+selector; Alert sheets contain all three modes and applicable sound/vibration/
+channel controls. Done merges only owned fields into the parent; Cancel/backdrop/
+Back, dirty discard and focus return preserve the parent and captured Save recovery.
+No alert hides clock controls and restores the unchanged time when enabled again.
+
+Exercise numeric fields guard hardware/paste input as well as requesting numeric
+keyboards. Check whole counts, decimal duration/weight, comma normalization,
+blank/unfinished strings, rejected letters/signs/exponents/multiple separators,
+positive/safe bounds, rep ranges and each-side prerequisites. Verify legacy text
+and draft cancellation. Unit/单位 is outside both outlined unit controls; compare
+actual input/picker padding, height, typography/surface/outline and label alignment,
+including adjacent inline errors. Both builder and direct editing share the form.
+
+Render actual components across all eight appearance pairs, EN/Chinese, narrow
+widths and 100–200% text. Run release:prepare and record actual checks/artifact
+identity/hash. Browser checks do not establish phone IME, native picker, TalkBack
+or alarm acceptance. Installation/distribution remain separate actions.
+
 ## Day tabs and structured targets — owner correction, 18 October 2026
 
 Use actual /routine-edit components: new General/ByWeekday, regular Exercise day,

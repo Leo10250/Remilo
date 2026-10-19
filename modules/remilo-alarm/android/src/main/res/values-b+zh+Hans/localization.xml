@@ -5,6 +5,9 @@
   <string name="l10n_exercise_reps">每组次数</string>
   <string name="l10n_exercise_time">每组时长</string>
   <string name="l10n_exercise_unit">时间单位</string>
+  <string name="l10n_exercise_unit_label">单位</string>
+  <string name="l10n_routine_alert_scope">在安排的日期，为整份日常计划提醒一次。</string>
+  <string name="l10n_routine_no_alert_scope">日常计划仍会按每周安排显示，但不发送提醒。</string>
   <string name="l10n_exercise_seconds">秒</string>
   <string name="l10n_exercise_minutes">分钟</string>
   <string name="l10n_exercise_hours">小时</string>

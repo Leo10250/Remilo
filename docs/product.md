@@ -307,6 +307,11 @@ ordered steps for each scheduled weekday or the internal empty Rest representati
 Ordinary reminders cannot be converted in v1. Duplication creates independent
 routine and materialized weekday identities.
 Use the same Alarm / Notification / No alert control as ordinary reminders.
+The routine editor exposes it through a dedicated Alert row beside Date and time.
+Each sheet applies only its own fields to the parent draft; parent Save persists.
+Weekday labels remain centered as scheduling dots appear. Numeric target fields
+guard whole/decimal entry and pair with matching outlined Unit selectors in both
+builder and direct editing; free-text authored targets remain unchanged.
 Notification uses a separate quiet-by-default channel; Android controls its
 settings after creation. Alarm uses normal sound/vibration and access checks,
 with Start routine / Snooze / Dismiss alarm. These actions do not check exercises.

@@ -2,10 +2,23 @@ import {describe,expect,it} from 'vitest';
 import fixtures from '../../verification/fixtures/exercise-targets.json';
 import type {RoutineExercise,ExerciseTarget} from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import {createTranslator} from '../localization';
-import {applyTargetFields,exerciseTargetText,targetFieldErrors,targetFields,validExerciseTarget} from './exercise-target';
+import {applyTargetFields,exerciseTargetText,numericTargetInput,targetFieldErrors,targetFields,validExerciseTarget} from './exercise-target';
 
 const step:RoutineExercise={id:'stable',name:'Plank',target:'',notes:''};
 describe('structured exercise targets',()=>{
+  it('guards count and decimal editing without parsing partial input or stripping rejected pastes',()=>{
+    for(const raw of ['', '0','003','12','9007199254740992']) expect(numericTargetInput('3',raw,true)).toBe(raw);
+    for(const raw of ['3.0','3,0','+3','-3','1e3','12 reps',' 12','NaN','Infinity']) expect(numericTargetInput('3',raw,true)).toBe('3');
+    for(const raw of ['', '.', '.5','0','1.','01.50']) expect(numericTargetInput('7.5',raw,false)).toBe(raw);
+    expect(numericTargetInput('7.5','12,',false)).toBe('12.');
+    expect(numericTargetInput('7.5',',5',false)).toBe('.5');
+    expect(numericTargetInput('7.5','12,50',false)).toBe('12.50');
+    for(const raw of ['7.5 kg','1,234.5','1,2,3','1..2','-1','+1','1e3','1 2']) expect(numericTargetInput('7.5',raw,false)).toBe('7.5');
+    const fields=targetFields(step);
+    expect(targetFieldErrors({...fields,sets:'3.0'})).toHaveProperty('sets');
+    expect(targetFieldErrors({...fields,duration:'.'})).toHaveProperty('duration');
+    expect(targetFieldErrors({...fields,duration:'1.',weight:'.5'})).toEqual({});
+  });
   it('shares localized summaries with the native fixture',()=>{
     for(const fixture of fixtures)for(const language of ['en','zh-Hans'] as const) expect(exerciseTargetText(fixture as unknown as RoutineExercise,createTranslator(language))).toBe(fixture[language==='en'?'en':'zh']);
     for(const fixture of fixtures.filter(value=>value.exerciseTarget)) {

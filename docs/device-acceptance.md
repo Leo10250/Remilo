@@ -1,5 +1,17 @@
 # Offline Android acceptance run
 
+## Routine editor polish follow-up — 19 October 2026
+
+On the identified signed build, inspect centered weekday labels before/after
+adding steps and at 200% text, including centered four/three rows. Use the visible
+Alert row for all three modes, sound/vibration and channel recovery; cancel/Back
+must retain parent values and return focus correctly. No alert must retain clock
+time. Test numeric keyboards, hardware/paste rejection, decimal comma/point,
+partial entry and validation for sets/reps/time/weight in builder/direct editing.
+Compare both external Unit labels and outlined fields with neighboring inputs,
+including errors, IME, TalkBack, Chinese and all atmosphere/brightness pairs.
+Host renders and release preparation do not close these physical observations.
+
 ## Chinese wording follow-up — 18 October 2026
 
 On the identified signed build, read Chinese routine General/Exercise creation,

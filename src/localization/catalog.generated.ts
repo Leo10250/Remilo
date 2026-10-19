@@ -5,6 +5,9 @@ export const catalogs = {
     "exercise_reps": "Reps per set",
     "exercise_time": "Time per set",
     "exercise_unit": "Time unit",
+    "exercise_unit_label": "Unit",
+    "routine_alert_scope": "One alert for the routine on each scheduled day.",
+    "routine_no_alert_scope": "The routine stays in your weekly plan without sending an alert.",
     "exercise_seconds": "Seconds",
     "exercise_minutes": "Minutes",
     "exercise_hours": "Hours",
@@ -2349,6 +2352,9 @@ export const catalogs = {
     "exercise_reps": "每组次数",
     "exercise_time": "每组时长",
     "exercise_unit": "时间单位",
+    "exercise_unit_label": "单位",
+    "routine_alert_scope": "在安排的日期，为整份日常计划提醒一次。",
+    "routine_no_alert_scope": "日常计划仍会按每周安排显示，但不发送提醒。",
     "exercise_seconds": "秒",
     "exercise_minutes": "分钟",
     "exercise_hours": "小时",
@@ -4682,6 +4688,9 @@ export interface MessageArguments {
   exercise_reps: Record<string, never>;
   exercise_time: Record<string, never>;
   exercise_unit: Record<string, never>;
+  exercise_unit_label: Record<string, never>;
+  routine_alert_scope: Record<string, never>;
+  routine_no_alert_scope: Record<string, never>;
   exercise_seconds: Record<string, never>;
   exercise_minutes: Record<string, never>;
   exercise_hours: Record<string, never>;

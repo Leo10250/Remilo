@@ -64,6 +64,10 @@ General/ByWeekday, with Day tabs and optional Exercise fields that insert no sam
 content. The later owner-approved correction replaces the arrangement switch/Days
 picker, adds structured sets/reps/time, compact empty states and independent copying.
 Legacy Shared conversion occurs only on Save, preserving IDs/progress/frozen history.
+The owner's 19 October polish centers weekday labels independently of scheduling
+dots, exposes a dedicated connected Alert row, and aligns outlined unit pickers
+with guarded numeric inputs in the shared routine step form. Theme roles, dated
+ownership and stored formats remain unchanged.
 
 The owner's [15 October weekly routine contract](weekly-routines.md) adds optional
 weekly plans and date-scoped exercise progress within the existing reminder model.

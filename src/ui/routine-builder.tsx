@@ -12,6 +12,7 @@ import type { ExerciseFormHandle } from './exercise-target-fields';
 import { useExerciseImageLeases } from './exercise-images';
 import { useFontScaleOverride, useTheme } from './theme';
 import { engine } from './native';
+import { lineHeightFor, typography } from './tokens';
 
 const shortDays=['routine_short_mon','routine_short_tue','routine_short_wed','routine_short_thu','routine_short_fri','routine_short_sat','routine_short_sun'] as const;
 const dayTabCellStyle={flex:1,minWidth:48,paddingHorizontal:2,borderWidth:2,borderColor:'transparent'};
@@ -43,6 +44,8 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
   const formRef=useRef<ExerciseFormHandle>(null),trigger=useRef<View|null>(null),copyTrigger=useRef<View|null>(null),addTrigger=useRef<View|null>(null),rows=useRef(new Map<string,View>()),focusId=useRef<string|null>(null);
   const steps=value.days[selected].exercises,general=value.presentationPreset==='General';
   const columns=Math.max(scale,fontScale)>1.2||Math.floor(available)<7*48+6*2?4:7,gap=columns===4?4:2;
+  // Center the label independently; reserve symmetric clearance for the bottom dot at every text scale.
+  const dayHeight=Math.max(64,Math.ceil(lineHeightFor(typography.body)*scale*fontScale+40));
   const canAdd=canAddRoutineExercise(steps.length,removed?.day===selected),sourceDays=value.days.flatMap((day,index)=>index!==selected&&day.exercises.length?[index]:[]);
   const patch=(days:RoutineBuilder['days'])=>onChange({...value,authoringMode:'ByWeekday',sharedSteps:[],days});
   const setSteps=(day:number,list:RoutineExercise[])=>patch(value.days.map((current,i)=>i===day?routineDayWithSteps(list):current));
@@ -87,7 +90,7 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
           {Array.from({length:count},(_,column)=>{
             const index=row*columns+column,key=routineDayKeys[index];
             return <DayTab key={key} label={t(shortDays[index])} status={t('routine_day_tab_label',{day:t(key),status:value.days[index].exercises.length?t('routine_step_count',{count:value.days[index].exercises.length}):t('routine_not_scheduled')})}
-              populated={!!value.days[index].exercises.length} selected={selected===index} disabled={disabled} onPress={()=>{Keyboard.dismiss();setSelected(index);setFeedback('');}} />;
+              height={dayHeight} populated={!!value.days[index].exercises.length} selected={selected===index} disabled={disabled} onPress={()=>{Keyboard.dismiss();setSelected(index);setFeedback('');}} />;
           })}
         </View></View>;})}
       </View>
@@ -131,11 +134,11 @@ export function RoutineBuilderFields({ value, onChange, disabled = false, initia
   </View>;
 }
 
-function DayTab({label,status,populated,selected,disabled,onPress}:{label:string;status:string;populated:boolean;selected:boolean;disabled:boolean;onPress:()=>void}) {
+function DayTab({label,status,height,populated,selected,disabled,onPress}:{label:string;status:string;height:number;populated:boolean;selected:boolean;disabled:boolean;onPress:()=>void}) {
   const colors=useTheme(),[focused,setFocused]=useState(false);
   return <Pressable accessibilityRole="tab" accessibilityLabel={status} accessibilityState={{selected,disabled}} aria-selected={selected} aria-disabled={disabled} disabled={disabled} onPress={onPress} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
-    style={({pressed})=>({...dayTabCellStyle,minHeight:64,borderRadius:16,paddingVertical:8,borderColor:selected||focused?colors.accent:'transparent',backgroundColor:selected||pressed?colors.soft:colors.surface,
-      alignItems:'center',justifyContent:'center',gap:6,opacity:disabled ? .5 : 1})}>
-    <Copy>{label}</Copy><View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{width:4,height:4,borderRadius:2,backgroundColor:populated?colors.accent:'transparent'}}/>
+    style={({pressed})=>({...dayTabCellStyle,minHeight:height,borderRadius:16,paddingVertical:8,borderColor:selected||focused?colors.accent:'transparent',backgroundColor:selected||pressed?colors.soft:colors.surface,
+      alignItems:'center',justifyContent:'center',opacity:disabled ? .5 : 1})}>
+    <Copy>{label}</Copy>{populated&&<View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',bottom:8,width:4,height:4,borderRadius:2,backgroundColor:colors.accent}}/>}
   </Pressable>;
 }

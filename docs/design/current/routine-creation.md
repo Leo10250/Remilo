@@ -24,7 +24,7 @@ neutral Material icons, compact editing chrome, 16 dp gutters, 12 dp groups,
 ## Parent draft and days
 
 Order: required Title, Purpose (General/Exercise), Weekly plan tabs, selected-day
-content, Date and time summary, collapsed More settings (List/Notes), Save routine.
+content, connected Date and time/Alert summaries, collapsed More settings (List/Notes), Save routine.
 Urgent delivery warnings stay visible. New drafts are blank General/ByWeekday, start
 today, default Notification and retain current clock/sound preferences. No examples
 are saved. New drafts show Monday; existing drafts show today if populated, otherwise
@@ -43,6 +43,13 @@ above 120% text. Use short labels,
 selected outline/soft surface and populated dots; accessibility names the full
 weekday, selected state and count/not scheduled. Switching preserves drafts and IDs.
 
+The owner's 19 October polish centers labels independently of scheduling dots in
+every state. Dots are 4 dp with an 8 dp bottom inset, outside normal content layout;
+empty tiles reserve no invisible dot/gap. All seven tiles share a minimum 64 dp
+height, growing uniformly with text metrics to retain at least 6 dp label/dot
+clearance, including their selected outline. Label positions do not change when
+steps are added or removed. Existing seven/four-three widths and centering stay.
+
 Selected-day headers are at least 48 dp high with a 12 dp following gap. Populated
 days show Copy to…, connected ordinal/name/target/pencil rows and Add exercise/step.
 Each builder row is one editor-opening control, at least 64 dp high with 14 dp padding.
@@ -52,10 +59,16 @@ when a populated source exists. No decorative icon, empty-state headline/card or
 artificial gap. Save needs a title and at least one valid populated day; selection
 may be empty. Keep removal Undo when all days become empty.
 
-Date and time opens a themed draft-only sheet with Starts on/current restrictions,
-shared Alert/time, sound/vibration and delivery controls. Reuse native pickers and
-responsive shared fields. No alert hides time without erasing it. Sheet Done updates
-the parent, Cancel changes nothing. Only Save routine persists.
+Date and time and Alert are separate connected main-editor navigation rows.
+Date and time summarizes Starts on and applicable clock time; its sheet retains
+native pickers and saved-start restrictions. Alert summarizes Alarm/Notification/
+No alert and opens the existing three-choice selector, applicable sound/vibration,
+notification-channel controls and routine-wide scope help. Urgent warnings remain
+visible on the parent. No per-step alerts are introduced. No alert hides clock
+time without erasing it. Each sheet owns a captured local draft and applies only
+its own fields on Done. Cancel changes nothing; Back/backdrop protects dirty
+changes with the themed confirmation. Return focus to the originating row.
+Only Save routine persists.
 
 ## Step form
 
@@ -74,6 +87,21 @@ unit defaults seconds/kg do not create targets. More offers range, each side,
 weight, additional target text and custom target. Counts are positive safe integers;
 time/weight positive finite safe decimals. Validate range endpoints/each-side
 prerequisites, preserve partial input strings, omit unused fields and focus errors.
+
+The 19 October input correction uses numeric keyboards plus a shared whole-edit
+guard: sets/reps/max reps accept digits, duration/weight accept one decimal
+separator. Normalize a single comma to a point without parsing while typing;
+retain blank/unfinished strings. Reject letters, signs, exponent notation and
+multiple separators by preserving the previous string, never stripping a paste
+into a different number. Semantic bounds/errors still apply on interaction/Done.
+Names/descriptions/notes/additional/custom targets remain text; dates/clocks stay
+pickers. Apply through the shared builder and direct-edit form.
+
+Time and weight unit selectors use outlined picker fields with Unit/单位 above,
+only the selected value and chevron inside, and the paired numeric input's padding,
+outline/surface, radius, height and typography. Specific accessible names/sheet
+titles remain Time unit/Weight unit. Paired errors do not move their controls;
+stack at narrow widths/enlarged text. Unit choices return focus to their trigger.
 
 RN/Kotlin share localized formatting fixtures: 3 sets × 10 reps; 3 sets × 40 sec;
 3 sets · 10 reps per set · 40 sec per set. Never invent zero/one defaults. Existing

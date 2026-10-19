@@ -165,8 +165,28 @@ export function Field({ label, error, inputRef, compactMultiline = false, requir
       fontSize: typography.body * scale, ...chineseTextMetrics(typography.body, scale) }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? lineHeightFor(typography.supporting, 1.4) * scale : undefined }}>{ownedMessage(error)}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, intent, destructive = false, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, prominent = false, accessibilityLabel }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; destructive?: boolean; statusLabel?: string; compact?: boolean; prominent?: boolean; accessibilityLabel?: string;
+/** Paired numeric inputs and picker values use identical single-line field metrics. */
+export const singleLineFieldMetrics = (scale: number) => ({ minHeight: 56, lineHeight: lineHeightFor(typography.body) * scale, textAlignVertical: 'center' as const });
+export function PickerField({ label, value, accessibilityLabel, onPress, disabled = false, buttonRef }: {
+  label: string; value: string; accessibilityLabel: string; onPress: () => void; disabled?: boolean; buttonRef?: Ref<View>;
+}) {
+  'use no memo';
+  useLocale();
+  const colors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride(), [focused,setFocused] = useState(false);
+  const ink = disabled ? foundation?.colors.disabledInk ?? colors.muted : colors.ink;
+  return <View style={{gap:space.xs}}><Copy muted size={typography.supporting}>{label}</Copy>
+    <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={[accessibilityLabel,value].join(', ')} accessibilityState={{disabled}} disabled={disabled}
+      onPress={event=>{rememberConfirmationFocus(event.currentTarget);onPress();}} onFocus={event=>{rememberConfirmationFocus(event.currentTarget);setFocused(true);}} onBlur={()=>setFocused(false)}
+      style={({pressed})=>[styles.input,singleLineFieldMetrics(scale),{borderRadius:foundation?.tokens.shape.field??shape.field,
+        backgroundColor:pressed?colors.soft:colors.surface,borderColor:focused?foundation?.colors.focus??colors.accent:foundation?.colors.outline??colors.muted,
+        flexDirection:'row',alignItems:'center',gap:space.sm}]}>
+      <Text style={{flex:1,minWidth:0,color:ink,fontSize:typography.body*scale,lineHeight:lineHeightFor(typography.body)*scale,...chineseTextMetrics(typography.body,scale)}}>{value}</Text>
+      <Icon name="expand_more" size={20} color={disabled?ink:colors.muted}/>
+    </Pressable>
+  </View>;
+}
+export function SettingRow({ label, value, icon, onPress, intent, destructive = false, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, prominent = false, accessibilityLabel, buttonRef }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; destructive?: boolean; statusLabel?: string; compact?: boolean; prominent?: boolean; accessibilityLabel?: string; buttonRef?: Ref<View>;
 } & ({ onPress: () => void; intent: 'navigation' | 'action' | 'picker' } | { onPress?: undefined; intent?: 'navigation' | 'action' | 'picker' })>) {
   'use no memo';
   useLocale();
@@ -181,7 +201,7 @@ export function SettingRow({ label, value, icon, onPress, intent, destructive = 
     <View style={{ flex: 1, gap: space.xs }}>{destructive ? <Text style={{ color: colors.danger, fontSize: typography.body * scale, lineHeight: lineHeightFor(typography.body) * scale, ...chineseTextMetrics(typography.body, scale) }}>{label}</Text> : <Copy heading={prominent} size={prominent ? typography.heading : typography.body}>{label}</Copy>}{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:lineHeightFor(typography.supporting, 1.4) * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
     {!stackedStatus && children}{onPress && intent !== 'action' && <Icon name={intent === 'picker' ? 'expand_more' : 'chevron_right'} size={20} />}
   </View>;
-  return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
+  return onPress ? <Pressable ref={buttonRef} accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
     accessibilityLabel={accessibilityLabel ?? [label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }}
     onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ ...corners, backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>

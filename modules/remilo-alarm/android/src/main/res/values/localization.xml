@@ -5,6 +5,9 @@
   <string name="l10n_exercise_reps">Reps per set</string>
   <string name="l10n_exercise_time">Time per set</string>
   <string name="l10n_exercise_unit">Time unit</string>
+  <string name="l10n_exercise_unit_label">Unit</string>
+  <string name="l10n_routine_alert_scope">One alert for the routine on each scheduled day.</string>
+  <string name="l10n_routine_no_alert_scope">The routine stays in your weekly plan without sending an alert.</string>
   <string name="l10n_exercise_seconds">Seconds</string>
   <string name="l10n_exercise_minutes">Minutes</string>
   <string name="l10n_exercise_hours">Hours</string>

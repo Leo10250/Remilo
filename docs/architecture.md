@@ -637,6 +637,10 @@ sec/min/hr), eachSide, weight(value,kg/lb), additionalText. Nonempty legacy targ
 text and exerciseTarget are exclusive. Numeric entry strings remain process-only;
 normalized optional numbers are validated natively before capture. No derived
 summary is stored; matching RN/Kotlin localized formatting consumes immutable data.
+Whole-edit numeric syntax guards preserve transient strings and normalize a single
+decimal comma without changing that native authority. The separate routine Date
+and time/Alert sheets capture process-only drafts and merge only their own fields
+into the parent. Picker-field styling and centered weekday dots add no stored state.
 JSON already lives in credential-protected versions/sessions, so CE17/DP9 stay.
 Format9 validates structured targets and snapshot consistency before atomic import,
 retains formats1–8, and never parses legacy target text. All authoring still uses
