@@ -132,13 +132,13 @@ class PermanentDeletionTest {
     assertTrue((content { it.history(id) } as List<*>).isEmpty())
     assertEquals(emptyList<ActionRecord>(), protected { it.actions() })
   }
-  @Test fun versionFourBackupCarriesOnlyRecurringIdentityExclusionsAndRestoresThemBeforeDirectBoot() {
+  @Test fun versionFiveBackupCarriesRecurringIdentityExclusionsAndRestoresThemBeforeDirectBoot() {
     val oneOff = create(); trash(oneOff); apply(command(oneOff, "Purge", "purge-one"))
     val id = create("series", recurring = true); val before = occurrence(id)!!
     trash(id); apply(command(id, "Purge", "purge-series"))
     val backup = request { engine.exportBackup() } as String
     val bundle = BackupCodec.decode(backup)
-    assertEquals(4, JSONObject(backup).getInt("version"))
+    assertEquals(9, JSONObject(backup).getInt("version"))
     assertEquals(listOf(PurgedOccurrence(id, before["segmentId"] as String, before["nominalSlot"] as String)), bundle.purged)
     assertTrue(bundle.records.none { it.id == id || it.id == oneOff })
     assertTrue(bundle.history.none { it.occurrenceId == id || it.occurrenceId == oneOff })

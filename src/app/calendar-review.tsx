@@ -133,7 +133,7 @@ export default function CalendarReview() {
       <ConnectedGroup title={t('m_0e570ca6fabe')}><View key="source" style={{ padding: 16, gap: 12 }}><Copy>{preview.calendarName} · {preview.email}</Copy>
         <Copy muted>{t('m_0efd92a33590')}{scheduleDateTime(preview.checkedAtMs)}.</Copy></View></ConnectedGroup>
       <ConnectedGroup title={t('m_b97900d1be7c')}><View key="sync">
-        {activating || params.candidateId ? <SettingRow icon="event" label={t('m_41a8bf8da139')} description={t('m_bf02ddb833cf')} /> :
+        {activating || params.candidateId ? <SettingRow intent="action" icon="event" label={t('m_41a8bf8da139')} description={t('m_bf02ddb833cf')} /> :
           <Toggle label={t('m_23a71272299e')} value={choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable)} disabled={busy || uncertain}
             onChange={value => { setChoices(old => ({ ...old, automaticSync: value })); if (imported) setDirty(true); }} />}
         <RowSupport><Copy muted size={14}>{t('m_1e631f4fb0c8')}</Copy></RowSupport>

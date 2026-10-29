@@ -11,6 +11,7 @@ import { deviceZone } from '../domain/time';
 import { Icon, IconButton, type IconName } from './components';
 import { useReducedMotion } from './motion';
 import { useFoundationStyle, useFontScaleOverride, useTheme } from './theme';
+import { RoutineProgress, RoutineProgressRing } from './routine-progress';
 
 function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; icon?: IconName; iconSize?: number; color?: string }) {
   'use no memo';
@@ -25,7 +26,7 @@ function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; ic
   </View>;
 }
 
-export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice }: {
+export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice }: {
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
   compact?: boolean; editorial?: boolean; glyph?: IconName; nowMs?: number;
   presentation?: 'row' | 'tile';
@@ -36,6 +37,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
 }) {
   'use no memo';
   const t = useTranslation();
+  const onDone = item.routine && !restore ? undefined : suppliedOnDone;
   const { alertPresentation, reminderBrowsingPresentation, scheduleDateTime } = useTimeFormatting();
   const colors = useTheme(), scale = useFontScaleOverride(), reducedMotion = useReducedMotion();
   const { fontScale } = useWindowDimensions();
@@ -54,7 +56,7 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const selecting = !!selection;
   useEffect(() => { if (selecting && current.current !== 0) settle(false); }, [selecting, settle]);
   const swipeTrash = !!onTrash && (item.completed || item.skipped);
-  const canSwipe = !selection && !busy && !restore && !item.deleted && (swipeTrash || !!onDone && !item.completed && !item.skipped);
+  const canSwipe = !selection && !busy && !restore && !item.deleted && (swipeTrash || !item.routine && !!onDone && !item.completed && !item.skipped);
   const begin = useCallback((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => { origin.current = current.current; eligible.current = I18nManager.isRTL ? event.x < width.current - 24 : event.x > 24; }, []);
   const update = useCallback((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => { if (eligible.current) setShift(direction * Math.min(88, Math.max(0, direction * (origin.current + event.translationX)))); }, [direction, setShift]);
   const end = useCallback(() => { if (eligible.current) settle(direction * current.current > 44); }, [direction, settle]);
@@ -71,17 +73,18 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
   const recordedAt = item.deleted ? item.history?.filter((entry) => entry.kind === 'Delete').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) :
     item.skipped ? item.history?.filter((entry) => entry.kind === 'Skip').reduce<number | null>((latest, entry) => Math.max(latest ?? 0, entry.atMs), null) : recordedCompletionTime(item.history);
   const terminalState = (browsing.status?.label ?? '') + (showActionDate && !active && recordedAt != null ? ' ' + scheduleDateTime(recordedAt, zone, nowMs) : '');
-  const summary = [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
-    item.listName, !ordinaryDue(item) ? t('m_2d52d03bbb9a') + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? t('m_57a9b5958b87') : '', calendarNotice].filter(Boolean).join('. ');
+  const summary = item.routineFamily ? [item.title, t('routine_in_trash'), t('routine_trash_days', { count: item.routineFamily.recordedDays })].join('. ') : [item.title, browsing.spokenLabel, showActionDate && !active && recordedAt != null ? browsing.status?.label + ' ' + spokenDateTime(recordedAt, zone) : '',
+    item.listName, item.routine ? t('routine_progress', { done: item.routine.completedCount, total: item.routine.totalCount }) : '', !ordinaryDue(item) ? t('m_2d52d03bbb9a') + spokenDateTime(item.dueAtMs, zone) : '', repeat, item.exception ? t('m_57a9b5958b87') : '', calendarNotice].filter(Boolean).join('. ');
   const actionLabel = restore ? t('m_a76e13b98392') : item.completed || item.skipped ? t('m_a886d1dc4f12') : t('m_62aa4b87cc52');
   const act = () => { settle(false); onDone?.(); };
   const swipeAct = () => { settle(false); if (swipeTrash) onTrash?.(); else onDone?.(); };
   const terminal = item.completed || item.skipped || item.deleted;
+  const routineLeading = !!item.routine && !terminal && !selection && !restore;
   const titleLineHeight = lineHeightFor(typography.body, 1.4) * scale;
   const renderedLineHeight = titleLineHeight * fontScale;
   // The first title line shares the 48dp control's optical center. Metadata can
   // grow below it without moving the completion control or More down the card.
-  const hasControls = !!(selection || onMore || onDone && !restore && !terminal);
+  const hasControls = !!(routineLeading || selection || onMore || onDone && !restore && !terminal);
   const titleInset = hasControls ? Math.max(0, (48 - renderedLineHeight) / 2) : 0;
   const controlInset = hasControls ? Math.max(0, (renderedLineHeight - 48) / 2) : 0;
   const selectionControl = selection &&
@@ -131,18 +134,28 @@ export function ReminderRow({ item, onOpen, onDone, onMore, onTrash, busy = fals
         accessibilityActions={selection ? [] : [...(onMore ? [{ name: 'longpress', label: t('m_3ddd2c824c07') }] : []), ...(onDone ? [{ name: restore ? 'restore' : terminal ? 'reopen' : 'complete', label: actionLabel }] : [])]}
         onAccessibilityAction={(event) => { if (selection || busy) return; if (['complete', 'reopen', 'restore'].includes(event.nativeEvent.actionName)) act(); else if (event.nativeEvent.actionName === 'longpress') onMore?.(); }}
         onPress={() => { if (revealed) settle(false); else onOpen(); }} onLongPress={busy || selection ? undefined : onMore}
-        style={{ flex: 1, gap: space.xs, minHeight: 48, justifyContent: 'flex-start', paddingTop: titleInset }}>
+        style={{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'flex-start', gap: compact ? space.xs : space.sm }}>
+        {routineLeading && item.routine && <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+          style={{ width: 48, height: 48, marginTop: controlInset, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <RoutineProgressRing done={item.routine.completedCount} total={item.routine.totalCount} />
+        </View>}
+        <View style={{ flex: 1, gap: space.xs, paddingTop: titleInset }}>
         {title}
+        {item.routineFamily ? <><MetadataLine label={t('routine_in_trash')} /><MetadataLine label={t('routine_trash_days', { count: item.routineFamily.recordedDays })} /></> : <>
         {browsing.status?.label === 'Ringing' && <MetadataLine icon="alarm" label={t('m_426a858eacbb')} color={colors.accent} />}
         <MetadataLine label={browsing.timing + (item.listName ? ' · ' + item.listName : '')}
           icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
           color={active && delivery.changed ? colors.accent : colors.muted} />
         {!!calendarNotice && <MetadataLine icon="warning" label={calendarNotice} />}
-        {!!consequence && <MetadataLine icon="schedule" label={consequence} />}
+        {!item.routine && !!consequence && <MetadataLine icon="schedule" label={consequence} />}
         {!!repeat && <MetadataLine icon="repeat" iconSize={14} label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')} />}
-        {!!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}
+        {(!item.routine || terminal) && !!browsing.status && browsing.status.label !== 'Ringing' && <MetadataLine icon={active ? browsing.status.icon : undefined}
           label={active ? browsing.status.label : terminalState} color={colors[browsing.status.tone]} />}
-        {!!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}
+        {!item.routine && !!browsing.warning && <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />}</>}
+        {!!item.routine && <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ paddingStart: 26, paddingTop: 8 }}>
+          <RoutineProgress compact layout="inline" accessible={false} done={item.routine.completedCount} total={item.routine.totalCount} />
+        </View>}
+        </View>
       </Pressable>
       {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton icon="more_vert" label={t('m_05d82d5eb6ee') + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
     </Animated.View></GestureDetector>

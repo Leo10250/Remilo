@@ -15,6 +15,7 @@ class RingingService : Service() {
   private var sessionId: String? = null
   private var audio: AlarmAudio? = null
   private var audioStarting = false
+  private var expiry: Runnable? = null
   private var sound = "remilo"
   private var vibration = false
   private lateinit var notifications: AlarmNotifications
@@ -43,6 +44,10 @@ class RingingService : Service() {
     AlarmEngine.get(this).sessionSnapshot(id, { snapshot -> main.post {
       if (sessionId != id) return@post
       val members = snapshot.members
+      expiry?.let(main::removeCallbacks)
+      expiry = members.map { it.first }.filter { it.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }.minOfOrNull { it.expiresAtMs }?.let { end ->
+        Runnable { AlarmEngine.get(this).expireRoutineDeliveries(); refreshMembers(id) }.also { main.postDelayed(it, (end - System.currentTimeMillis()).coerceAtLeast(1L)) }
+      }
       if (members.isEmpty()) {
         audio?.stop(); audio = null; audioStarting = false
         stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
@@ -67,6 +72,7 @@ class RingingService : Service() {
   override fun onDestroy() {
     if (active === this) active = null
     audioStarting = false
+    expiry?.let(main::removeCallbacks); expiry = null
     audio?.stop("Interrupted")
     super.onDestroy()
   }

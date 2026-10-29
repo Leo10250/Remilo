@@ -1,5 +1,92 @@
 # Offline Android acceptance run
 
+## Routine editor polish follow-up — 19 October 2026
+
+On the identified signed build, inspect centered weekday labels before/after
+adding steps and at 200% text, including centered four/three rows. Use the visible
+Alert row for all three modes, sound/vibration and channel recovery; cancel/Back
+must retain parent values and return focus correctly. No alert must retain clock
+time. Test numeric keyboards, hardware/paste rejection, decimal comma/point,
+partial entry and validation for sets/reps/time/weight in builder/direct editing.
+Compare both external Unit labels and outlined fields with neighboring inputs,
+including errors, IME, TalkBack, Chinese and all atmosphere/brightness pairs.
+Host renders and release preparation do not close these physical observations.
+
+## Chinese wording follow-up — 18 October 2026
+
+On the identified signed build, read Chinese routine General/Exercise creation,
+weekday/shared scopes, row editing, Focus, history and widget setup/actions. Check
+动作/步骤/日常计划 consistently; verify authored English names remain intact.
+Read Calendar creation/recovery, completion/Undo, Trash/restore, backup and Settings
+copy in context. Confirm complete parenthesized counts/units at 100–200% text,
+TalkBack labels, IME and vendor font layout. Compare app/native/widget presentation;
+host catalog/render checks do not close these phone observations.
+
+## Generic routine creation follow-up — 18 October 2026
+
+On the identified signed build, check Create→Reminder/Routine and direct library
+entry, list inheritance, IME/keyboard, 100–200% text and TalkBack focus/cancellation.
+Create a weekly water-plants reminder, a shared weekday morning routine and an
+Exercise routine with different Monday/Thursday sequences. Verify field examples
+are never saved, shared edits update selected days and independent days remain
+independent. Test photo/discard, mode-conversion/check-removal review, conflicts,
+midnight/frozen history and widgets after immediate edits. Check all appearance
+pairs and both languages; format8 transfer must retain photos/Trash/shared editing.
+Host/browser tests do not establish these phone observations. Installation is separate.
+
+## Themed confirmation follow-up — 18 October 2026
+
+On the identified signed APK, compare short app-owned confirmations with existing
+themed Trash/permanent-delete sheets in all four atmospheres and both brightnesses.
+Check reminder/routine/day/exercise Discard, reload, list removal, Calendar
+decisions and pending-save/import guards. Back, backdrop and Keep editing retain
+the exact draft, underlying sheet, route and scroll. Repeated taps cannot replay
+the choice; uncertain commands still use their exact Retry. Observe native Modal
+stacking, heading announcement, TalkBack/keyboard focus return, reduced motion,
+Chinese, 200% text, landscape/IME and safe-area scrolling. System permission,
+photo/file/share, Google authorization and launcher UI remains platform-owned.
+Host/browser checks do not close these physical acceptance observations.
+
+## Reminder Save crash follow-up — 16 October 2026
+
+On an identified updated signed APK, save one-off and repeating reminders in all
+three Alert modes, with the keyboard open and closed. Confirm one saved item,
+truthful feedback and the expected return destination without the app closing.
+Apply repeat presets and Custom repeat, change timing, save a routine and edit an
+existing reminder. After a recoverable rejection, confirm the draft, touch and
+TalkBack controls remain usable; retain the same command on an unknown reply.
+See the [crash evidence and repair](evidence/2026-10-16-save-crash.md). Existing
+crash logs and host checks do not establish a successful updated-phone result.
+
+## Weekly routine editor, Focus and widget follow-up — 15 October 2026
+
+Observe these together on an identified signed bundled APK when the owner resumes
+the consolidated run. Host checks do not establish these outcomes.
+
+- Create the exact 21-exercise week through the shared editor. Switch new-draft
+  Type both ways and retain title, Alert, clock, List and Notes. Check all three
+  Alert modes, seven visible weekdays, child Done/Cancel and unsaved Back guards.
+  Set Sunday to Rest and correctly predict its lack of Agenda work or delivery.
+- Open today's dated Focus from Agenda. Inspect its illustration and enlarged
+  view, full target and guidance. Complete and Undo exercises, including the last,
+  inspect completed/upcoming rows, and distinguish View previous from Undo.
+  Verify numeric/bar progress agrees across Agenda, Focus and independent widgets.
+- Leave Monday incomplete across midnight. Keep its screen open, open Tuesday
+  elsewhere and return: Monday stays ended, Tuesday has fresh exercises, and stale
+  actions cannot change Tuesday. Correct Monday's history without reopening it.
+  Exercise Skip/Undo today, pause/resume and immediately effective plan/Alert edits.
+- Ring a routine Alarm alone and beside an ordinary alarm. Start routine opens
+  that exact date after unlock; Dismiss changes no checks; Snooze stays within the
+  day. Final completion, Skip, Pause and midnight stop only the routine member.
+  Confirm ordinary Done, overdue, Snooze, timeout and pre-unlock privacy still work.
+- Review editor, Focus, Agenda and widget in both languages, all eight appearance
+  pairs, narrow/landscape, 200% text and reduced motion. Check native IME/Back,
+  TalkBack announcements/focus, 56/48 dp targets, launcher resizing, Refresh,
+  duplicate/stale widget taps and native operation with JavaScript absent.
+
+Record success, mistakes, assistance and misunderstandings. Installation and
+distribution remain separate actions; artwork approval does not close these gates.
+
 ## Language follow-up — 15 October 2026
 
 Pending on an identified signed bundled APK. No installation is implied by host checks.
@@ -597,7 +684,9 @@ following rules; pause preview-only series afterward to avoid leaving test alarm
 ## F. Alert experience and card consistency
 
 - **F1 — visible alert choices:** the editor continuously shows Alarm,
-  Notification and No alert. Alarm is the default. Switch among them: hidden
+  Notification and No alert. Alarm is the ordinary-reminder default; direct
+  new-routine entry defaults to Notification under the [weekly routine contract](design/current/weekly-routines.md).
+  Switch among them: hidden
   authored timing and Alarm options survive; sound/vibration appear only for
   Alarm. At 200% text all three choices remain visible in a stacked group. Check
   selected/checked TalkBack announcements and the IME-aware Save footer.
@@ -917,3 +1006,159 @@ screen controls now use Mark as done/Postpone and notifications retain Snooze.
   formats and reduced motion. All tiles share their anatomy, selected check and
   growing size; whole-grid reflow, footer clearance, TalkBack selection/focus and
   Back ordering stay usable. Notification Snooze and re-triggered actions remain.
+
+## Routine Agenda tile alignment (UX-31)
+
+On the identified signed build, compare a routine with an ordinary reminder in
+one Agenda section. Confirm ring/completion-control centers, event/title/timing
+columns and More alignment. Check progress spacing at 0, partial and complete
+counts, twelve and more than twelve exercises, long English/Chinese, narrow and
+200% text across all eight atmosphere/brightness pairs. Tap the ring/row to open
+the dated session; verify there is no whole-routine Done. Open More over Agenda,
+and check selection/Completed/Trash without an extra leading placeholder. Verify
+TalkBack reads the numeric progress once and ordinary reminder completion/swipe
+behavior remains intact. These actual-render observations remain unperformed.
+
+## Agenda refresh indicator follow-up (BETA-09)
+
+On an identified signed build containing the repair, leave populated Agenda open
+for more than a minute, receive native updates and background/foreground the app.
+Confirm no unsolicited top pull indicator and current rows/date/status. Pull to
+refresh deliberately and repeatedly; confirm one active refresh, completion and
+retained error feedback. Check empty/first-load, pagination and list-scoped Agenda
+independently. The indicator's actual phone behavior remains unobserved here.
+
+## Publication and quick Trash follow-up (CAL-07)
+
+On an identified signed build, enable the reviewed automatic Calendar publication
+policy. Create an ordinary reminder then quickly move it to Trash before and
+during publication, including a lost/offline reply. Confirm the reminder stays
+in Trash, its alert stays cancelled and no stale review banner remains. Restart
+with a review record from the older build and confirm local reconciliation clears
+that retired export. An already sent Google copy must remain unchanged and must
+not reappear as a new imported reminder.
+
+From retained publication details, Check publication result must show progress
+until the bounded native result, then confirmed or still-unconfirmed feedback.
+Unavailable lookup must not create a replacement or claim confirmed deletion.
+An active eligible managed publication's confirmed original copy clears its own
+review and finishes its link; unrelated reviews remain. Check English/Chinese,
+TalkBack feedback, Back during a check and ordinary alarm delivery. Do not use
+real personal events as fixtures. These observations remain unperformed here.
+
+## Routine, photos and compact widget refinement (16 October)
+
+On the identified signed build, record task success, errors, assistance and any
+misunderstanding for these cases. Host tests/captures cannot supply observations.
+
+- Select every exercise, including checked ones, and confirm the ordered list
+  never loses a row. Complete the last exercise, Undo it and correct an earlier
+  check. Verify the Focus heading/selected state and TalkBack announcements.
+- Open/close routine More in filtered, scrolled Agenda and the library. Confirm
+  origin retention, clear Trash discovery, named Undo, paused-family Restore and
+  destructive confirmation for permanent deletion. Keep an ordinary alarm ringing
+  while removing a routine member and verify only that member stops.
+- Compare the routine's creation timing controls with an ordinary reminder at
+  narrow/landscape widths and 200% text. Verify three Alert choices, No alert's
+  hidden clock, required labels, examples, keyboard, Back and scoped draft Cancel.
+- Pick, cancel and replace portrait/wide/transparent/EXIF-rotated still photos.
+  Preserve the full frame, test unreadable/oversized/animated files and low storage,
+  interrupt the picker/import and reopen Remilo. No saved image changes on Cancel.
+  After a saved change, today's open session uses the replacement and closed
+  history retains its old photo. Missing media retains readable text and actions.
+- Export and restore a `.remilo` archive with shared photos, historical revisions,
+  trashed routines and prior individually deleted dates. Verify copies, uncertain
+  Retry, old JSON import and rejection of corrupt archives without partial content.
+- Place independent Focus/Today widgets, including a 4×2 allocation too small for
+  controls. Resize through summary/interactive/expanded layouts. Done completes
+  only the displayed exercise without opening Remilo; confirm native progress
+  agrees in both places. Exercise text opens the exact exercise/date. No permanent
+  Refresh. Verify quiet compact Next and named Undo, including after final completion,
+  and exact Retry for uncertain actions. Repeated exercise links select that
+  exercise on an already open screen,
+  duplicate/stale taps never advance another date and reconfiguration Cancel holds.
+- Verify Sunday Rest, Skip, pause/resume, midnight/travel/reboot, first-unlock
+  privacy, missing/trashed selection, conditional error Refresh and deferred background work.
+  Normal reminders retain overdue/postponement and their existing alarm actions.
+- Review actual app and launcher surfaces across all eight appearance pairs,
+  English/Chinese, long authored content, reduced motion and text through 200%.
+  Compare equivalent dimensions/themes in curated setup samples and placed widgets;
+  reject clipped actions, weak progress contrast or unexplained large empty gaps.
+- Start widget setup with no reminders/routines: a labelled example must remain
+  visible and inert, Today can be added, and Routine Focus explains that a routine
+  is needed. With routines present, switching an unselected draft to Focus picks
+  the first available routine. Cancel preserves saved configuration. A deleted
+  saved selection remains unavailable. Verify real empty widgets, single Rest day
+  wording, one full compact Today row and unclipped View Agenda/Done/recovery at
+  launcher sizes and text scales; previews fill their measured host.
+- Setup and launcher picker always show curated examples in the app theme,
+  including when personal content is present or today's routine is Rest. Verify
+  selected real configuration is saved, sample content is inert and never created.
+- Save changes while today is open: add today's weekday, reorder/remove/add
+  exercises, change time/Alert/photo, and switch Rest/workout. Retain matching checks
+  and intentional Skip; completed-day extension updates the aggregate. Closed
+  history stays frozen. Check fresh widget/Agenda agreement, edited future Alarm/
+  Notification callbacks before unlock, Snooze, Pause and stale delivery fencing.
+- Open History from its visible routine-screen row; it is absent from More.
+- Compare the widget's filled/unfinished colors with Agenda in all eight pairs.
+  Confirm reminder time (including 09:00) is completely visible in Today setup and
+  the placed widget with the phone's font and text size. Enabled and disabled
+  Undo must have identical graphic size/position; disabled is visibly dimmed and
+  does not respond. Check their states in all eight appearance pairs.
+  A 4/7 example has exactly seven segments and four filled. Exercise names have no
+  added number. Check all seven full weekday headers, full spoken dates/positions,
+  quiet bottom-left Next and the action group aligned to that text band's bottom.
+  Undo and Done share a centerline; control positions stay fixed without a
+  prescription, when Next disappears and through eligible final Undo. Today's
+  full Agenda target stays below Focus. Check long names, native font bounds, immediate
+  disabled submission, delayed Saving only for slow operations,
+  brief confirmation and the next exercise without waiting for that mark to clear.
+  Unfilled Undo stays left of trailing Done, has a complete target, is disabled
+  without an eligible completion, and remains in its slot after final completion.
+  Complete several exercises, then Undo repeatedly: each confirmed tap reverses
+  the latest remaining completion from that widget, updates the count/exercise
+  and keeps Undo enabled until its eligible history is exhausted. Repeat after
+  final completion and app process restart. Interleave app/other-widget actions;
+  their checks must remain intact. Test repeated/stale taps, uncertain recovery,
+  plan edits, midnight, reconfiguration and Trash without retargeting an old Undo.
+  Reconfiguration/midnight/concurrent actions must not retain an old success mark.
+- On today's/future exercise rows, tap pencil + Edit directly: Focus selection and
+  scroll remain stable, the exact ID/day fields open, and closing restores focus.
+  Check Save/Cancel, dirty-discard, photo leases/cancellation, uncertain same-command
+  Retry and revision conflict with Reload exercise. Check keyboard/TalkBack and
+  200% text. Past/ended rows omit Edit while checkmark correction still works.
+
+## Day tabs and structured targets follow-up — 18 October 2026
+
+- Create a blank General routine and an Exercise routine with Front plank/Bird-dog
+  on Monday and Push-up on Wednesday. Tab selection alone must not schedule a day.
+  Verify the compact empty states, day dots, independent editing and saved schedule.
+  At portrait widths and after rotation, require seven weekdays in one row or an
+  four/three arrangement with the lower three centered; Sunday must never be stranded alone. Check 200% text,
+  selected-day retention, equal tile widths and complete touch targets.
+- Enter sets/reps/time together, decimals, ranges, each-side scope, weight and
+  additional text using the Android keyboards. Check inline error focus, native
+  unit/date/time pickers, IME visibility, 200% text and the persistent Done/Save.
+  Reopen legacy custom text and cancel numeric replacement without changing it.
+- Copy to empty and populated days; review named replacements and cancel/confirm.
+  Check independent copied content, removal Undo across tabs, scroll/focus return,
+  custom-photo leases and themed dirty-discard prompts. Step Done remains draft-only.
+- Save an old Shared plan through the main editor and direct row Edit. Verify the
+  conversion notice, one-day edit scope, retained IDs/checks and unchanged closed
+  history. Check conflicts, exact uncertain Retry, midnight and stale widget taps.
+- Read localized numeric targets in Focus, history and launcher widgets across
+  both languages/themes. Check TalkBack labels and clipping on the signed phone.
+  Export/import format9 with photos/Trash/history and inspect the restored content.
+
+Installation and distribution require their separate authorization. These cases
+remain unobserved until the consolidated physical run is recorded.
+
+## Integrated Postpone storage and profile boundaries
+
+On an identified integrated signed build, upgrade preserved Routines9 data and
+each known version8 lineage. Inspect existing reminders, Routines/steps/photos,
+settings and receipt recovery after upgrade/restart/unlock. Routine alerts retain
+Start/Snooze/Dismiss and expiry; ordinary members use Mark as done/Postpone. In a
+mixed audio session, keep Routine controls and per-member ordinary Postpone; a
+new Routine arrival must not enlarge an already captured ordinary PostponeAll.
+These observations require a separately authorized integrated device run.

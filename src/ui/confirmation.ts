@@ -1,35 +1,17 @@
-import { t, captureFeedback, presentFeedback, subscribeLanguage } from '../localization';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, type AlertButton, type AlertOptions } from 'react-native';
-import { useAppearanceHold } from './theme';
+import { useCallback, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { Keyboard } from 'react-native';
+import { confirmations, type ConfirmationButton, type ConfirmationOptions } from './confirmation-state';
 
-/** Native confirmations retain the atmosphere until a choice or dismissal. */
+/** One themed confirmation above the active page/sheet; route ownership fences late choices. */
 export function useAppearanceConfirmation() {
-  const [active, setActive] = useState(false);
-  const retained = useRef<{ payload: unknown; generation: number } | undefined>(undefined);
-  useAppearanceHold(active);
-  const present = useCallback((entry: { payload: unknown; generation: number }) => {
-    const { title, message, buttons, options } = presentFeedback<{ title: string; message?: string; buttons?: AlertButton[]; options?: AlertOptions }>(entry.payload);
-    const generation = ++entry.generation;
-    const choices = (buttons?.length ? buttons : [{ text: t('m_565339bc4d33') }]).map((button) => ({ ...button, onPress: () => {
-      if (retained.current !== entry) return;
-      retained.current = undefined;
-      setActive(false); button.onPress?.();
-    } }));
-    try {
-      Alert.alert(title, message, choices, { ...options, onDismiss: () => {
-        // Re-presenting native Alert dismisses its former fragment. That is a
-        // presentation replacement, not cancellation of the captured choice.
-        if (retained.current !== entry || generation !== entry.generation) return;
-        retained.current = undefined; setActive(false); options?.onDismiss?.();
-      } });
-    } catch (error) { retained.current = undefined; setActive(false); throw error; }
+  const owner = useRef(Symbol('confirmation')), mounted = useRef(false);
+  useFocusEffect(useCallback(() => {
+    const identity = owner.current;
+    mounted.current = true;
+    return () => { mounted.current = false; confirmations.release(identity); };
+  }, []));
+  return useCallback((title: string, message?: string, buttons?: ConfirmationButton[], options?: ConfirmationOptions) => {
+    if (mounted.current && !confirmations.getSnapshot()) { Keyboard.dismiss(); confirmations.present(owner.current, title, message, buttons, options); }
   }, []);
-  useEffect(() => subscribeLanguage(() => {
-    if (retained.current) try { present(retained.current); } catch { /* Native presentation failure must not interrupt the locale snapshot or execute a choice. */ }
-  }), [present]);
-  return useCallback((title: string, message?: string, buttons?: AlertButton[], options?: AlertOptions) => {
-    const entry = { payload: captureFeedback({ title, message, buttons, options }), generation: 0 };
-    retained.current = entry; setActive(true); present(entry);
-  }, [present]);
 }

@@ -1,0 +1,11 @@
+[
+  {"target":"Original 3 × 10, 6% incline","en":"Original 3 × 10, 6% incline","zh":"Original 3 × 10, 6% incline"},
+  {"target":"","exerciseTarget":{"sets":3,"reps":10},"en":"3 sets × 10 reps","zh":"3 组 × 10 次"},
+  {"target":"","exerciseTarget":{"sets":3,"duration":{"value":40,"unit":"sec"}},"en":"3 sets × 40 sec","zh":"3 组 × 40 秒"},
+  {"target":"","exerciseTarget":{"sets":3,"reps":10,"duration":{"value":40,"unit":"sec"}},"en":"3 sets · 10 reps per set · 40 sec per set","zh":"3 组 · 每组 10 次 · 每组 40 秒"},
+  {"target":"","exerciseTarget":{"sets":1,"reps":1},"en":"1 set × 1 rep","zh":"1 组 × 1 次"},
+  {"target":"","exerciseTarget":{"reps":8,"repsMax":12,"eachSide":true,"weight":{"value":17.5,"unit":"lb"},"additionalText":"6% incline"},"en":"8–12 reps each side · 17.5 lb · 6% incline","zh":"8–12 次 / 侧 · 17.5 lb · 6% incline"},
+  {"target":"","exerciseTarget":{"duration":{"value":1.5,"unit":"min"}},"en":"1.5 min","zh":"1.5 分钟"},
+  {"target":"","exerciseTarget":{"duration":{"value":2,"unit":"hr"}},"en":"2 hr","zh":"2 小时"},
+  {"target":"","exerciseTarget":{"duration":{"value":0.0000001,"unit":"sec"}},"en":"0.0000001 sec","zh":"0.0000001 秒"}
+]

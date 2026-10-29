@@ -6,7 +6,7 @@ current contracts. Accepted reference bundles remain historical visual evidence.
 
 ## Actions and presentation
 
-Native single/member controls and ringing Reminder Details expose **Mark as done**
+Ordinary native single/member controls and ringing Reminder Details expose **Mark as done**
 and **Postpone**. Group footers expose **Mark all as done (N)** and **Postpone all**.
 Notifications, non-ringing quick actions and the Snooze preference retain their
 existing behavior and legacy commands.
@@ -67,9 +67,9 @@ commands. Exact retries recognize receipts before new-action time validation;
 recovery never replaces newer generations or silently retimes elapsed targets.
 Report Scheduled/Blocked/Pending/Superseded/Missed outcomes truthfully.
 
-Operational schema 8 mirrors only three Tomorrow clock-minute integers and their
-settings revision, alongside generalized bulk receipts. Credential schema 13 and
-backup format 4 are unchanged. Before first unlock use generic content and the
+Operational schema 10 mirrors only three Tomorrow clock-minute integers and their
+settings revision, alongside generalized bulk receipts. The integrated Routines
+credential schema 17 and backup format 9 remain unchanged. Before first unlock use generic content and the
 protected mirror only. If an upgrade has no mirror, keep relative/Custom available
 and the three Tomorrow tiles disabled with an unlock explanation. Never guess
 the owner's saved preferences. Normal unlocked initialization/settings/recovery
@@ -77,3 +77,11 @@ repairs the mirror. Notification Snooze remains compatible.
 
 Implementation/verification status belongs only in the backlog. Host/fixture
 checks never establish signed-phone sound, Direct Boot, picker or TalkBack acceptance.
+
+## Routines integration — owner confirmation
+
+Routine alerts retain Start routine, Snooze and Dismiss and their dated-session
+expiry. The new chooser applies to ordinary reminders. Mixed groups retain
+per-member controls; ordinary-only groups may expose Postpone all. Operational
+10 upgrades the Routines version 9 and both known version-8 lineages without
+losing receipt, reminder, routine or settings data.

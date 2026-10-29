@@ -5,6 +5,7 @@ import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
 import { resolveLanguage } from '../../src/localization';
 import { previewCalendar } from './preview-calendar';
+import { routinePreview } from './preview-routines';
 
 const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
@@ -104,6 +105,12 @@ if (review.get('reviewText') === 'long') {
   });
 }
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+const routines = routinePreview(review.get('reviewRoutine') === '1', () => listeners.forEach(fn => fn()), {
+  progress: review.get('reviewRoutineProgress') === '1', illustration: review.get('reviewExerciseArt') === 'front-plank',
+  shape:review.get('reviewRoutineShape')??undefined,
+});
+if (routines.progress) items.push(make(routines.progress.occurrenceId!, 'Weekly workout', 0, { mode: 'Notification', vibration: false,
+  routine: routines.progress, overdue: false, overdueAtMs: null }));
 let onCalendarCreation: ((id: string, disposition?: CalendarCreationDisposition) => void) | undefined, applyingCalendarImport = false;
 const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
@@ -269,9 +276,9 @@ function familyViews(): RepeatFamily[] {
 function view(item: Occurrence, now=Date.now()): Occurrence {
   const value = clone(item);
   value.listName = value.listId ? lists.get(value.listId)?.name ?? '' : '';
-  value.overdueAtMs = overdueReference(value);
+  value.overdueAtMs = value.routine ? null : overdueReference(value);
   value.quickSnoozeMinutes = settings.snoozeMinutes;
-  value.overdue = !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
+  value.overdue = value.overdueAtMs != null && !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
   value.agendaAtMs = value.mode === 'None' ? value.eventStartMs : value.nextAlertMs ?? value.alarmAtMs;
   const eventDay = civilAt(value.agendaAtMs,deviceZone()).slice(0,10), currentDay=civilAt(now,deviceZone()).slice(0,10);
   value.agendaGroup = value.completed || value.skipped ? 'completed' : value.overdue ? 'overdue' : eventDay < currentDay ? 'earlier' : eventDay;
@@ -297,7 +304,7 @@ function query(filter: ReminderFilter, cursor: string | null): ReminderPage {
     (filter.view !== 'today' || item.agendaAtMs >= start.getTime() && item.agendaAtMs < end.getTime()) &&
     (filter.view !== 'upcoming' || item.agendaAtMs >= end.getTime()));
   const rank = (item: Occurrence) => item.agendaGroup === 'overdue' ? 0 : item.agendaGroup === 'earlier' ? 1 : 2;
-  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs : item.agendaAtMs;
+  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs ?? item.agendaAtMs : item.agendaAtMs;
   rows.sort((a, b) => ['completed', 'history', 'deleted'].includes(filter.view) ? (b.collectionAtMs ?? b.eventStartMs) - (a.collectionAtMs ?? a.eventStartMs) || b.eventStartMs - a.eventStartMs || a.id.localeCompare(b.id) :
     (['agenda','overdue','today','upcoming','attention'].includes(filter.view) ? rank(a)-rank(b) || activeAnchor(a)-activeAnchor(b) : a.eventStartMs-b.eventStartMs) || a.id.localeCompare(b.id));
   const groups: Record<string, number> = {}; rows.forEach((row) => { groups[row.agendaGroup] = (groups[row.agendaGroup] ?? 0) + 1; });
@@ -312,6 +319,7 @@ function addOccurrence(value: ResolvedReminderDraft, segment?: StoredSeries): Oc
   items.push(item); return item;
 }
 function apply(command: Command): CommandResult {
+  const routine = routines.apply(command); if (routine) return routine;
   const receipt = receipts.get(command.operationId); if (receipt) return clone(receipt);
   let result: CommandResult = { status: 'Applied' };
   if (command.kind === 'Settings') {
@@ -324,6 +332,10 @@ function apply(command: Command): CommandResult {
     if (command.kind === 'SnoozeAll' && command.snoozeMinutes !== settings.snoozeMinutes) return { status: 'Rejected', errorCode: 'STALE_SNOOZE_DURATION' };
     const captured = [...new Map(command.members.map((member) => [member.occurrenceId, member])).values()];
     if (!captured.length || captured.length !== command.members.length) return { status: 'Rejected', errorCode: 'INVALID_SESSION_MEMBERS' };
+    if (command.kind === 'PostponeAll' && captured.some(member => {
+      const item = items.find(row => row.id === member.occurrenceId);
+      return !!item?.routine || item?.kind === 'RoutineFamily';
+    })) return { status: 'Rejected', errorCode: 'ROUTINE_ACTION_REQUIRED' };
     const now = Date.now(), target = command.kind === 'PostponeAll' ? command.alarmAtMs : now + settings.snoozeMinutes * 60_000;
     if (command.kind === 'PostponeAll' && (!Number.isSafeInteger(target) || target <= now)) return { status: 'Rejected', errorCode: 'INVALID_TARGET' };
     if (command.kind === 'PostponeAll' && captured.some(member => {
@@ -373,6 +385,8 @@ function apply(command: Command): CommandResult {
     if (!item) return { status: 'Rejected', errorCode: 'NOT_FOUND' };
     if ('expectedRevision' in command && item.revision !== command.expectedRevision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
     if ('expectedGeneration' in command && item.generation !== command.expectedGeneration) return { status: 'Rejected', errorCode: 'STALE_GENERATION' };
+    if (command.kind === 'Postpone' && (item.routine || item.kind === 'RoutineFamily'))
+      return { status: 'Rejected', errorCode: 'ROUTINE_ACTION_REQUIRED' };
     if (command.kind === 'Purge') {
       if (!item.deleted) return { status: 'Rejected', errorCode: 'INVALID_INPUT', errorMessage: 'Only reminders in Trash can be deleted permanently.' };
       items.splice(items.indexOf(item), 1);
@@ -444,6 +458,15 @@ const calendarBridge = previewCalendar(review, (id) => items.find((item) => item
 onCalendarCreation = calendarBridge.captureCalendarCreation;
 const preview = {
   ...calendarBridge,
+  getWidgetSupport: async () => ({ pinSupported: false, instanceCount: 0 }),
+  openWidgetSetup: async () => { throw new Error('Widget placement requires the Android app.'); },
+  chooseExercisePhoto: async () => { throw new Error('Photo selection requires the Android app.'); },
+  getExerciseImage: async () => null, releaseExerciseImage: async () => true,
+  prepareBackupExport: async () => { throw new Error('Photo-inclusive backup requires the Android app.'); },
+  prepareBackupImport: async () => { throw new Error('File restoration requires the Android app.'); },
+  releasePreparedImport: async () => true,
+  applyPreparedImport: async (): Promise<CommandResult> => ({ status: 'Rejected', errorMessage: 'File restoration requires the Android app.' }),
+  queryRoutines: routines.queryRoutines, getRoutineSession: routines.getRoutineSession, queryRoutineHistory: routines.queryRoutineHistory, previewRoutine: routines.previewRoutine,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => timePreferences(),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
@@ -460,7 +483,7 @@ const preview = {
     const allowed = permissionFixture !== 'blocked';
     return { exactAlarms: allowed && permissionFixture !== 'exact' && permissionFixture !== 'mixed',
       notifications: allowed && permissionFixture !== 'app', channelEnabled: allowed && permissionFixture !== 'alarm-channel',
-      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed',
+      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed', routineChannelEnabled: allowed, routineChannelQuiet: true,
       fullScreen: allowed && permissionFixture !== 'full-screen' && permissionFixture !== 'mixed', unlocked: true,
       observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
   },

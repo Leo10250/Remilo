@@ -5,8 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import type { ImportPreview } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { RestoreOperation } from '../domain/restore';
@@ -24,7 +23,7 @@ export default function Backup() {
   const confirm = useAppearanceConfirmation();
   const [phase, setPhase] = useState<'idle' | 'reading' | 'restoring'>('idle');
   const working = useRef(false);
-  const [json, setJson] = useState('');
+  const [json, setJson] = useState(''), [imageCount, setImageCount] = useState(0);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [copies, setCopies] = useState<string[]>([]);
   const [previewLimit, setPreviewLimit] = useState(25);
@@ -32,8 +31,13 @@ export default function Backup() {
   const [feedback, setFeedback] = useLocalizedState<{ message: string; tone: 'success' | 'warning' | 'danger' }>();
   const [operation] = useState(() => new RestoreOperation({
     id: () => engine().createOperationId(),
-    restore: (job) => engine().importBackup(job.json, job.copies, job.operationId),
+    restore: (job) => engine().applyPreparedImport(job.json, job.copies, job.operationId),
   }));
+  const stagedHandle = useRef(json);
+  useEffect(() => { stagedHandle.current = json; }, [json]);
+  useEffect(() => () => {
+    if (stagedHandle.current && !operation.pending) void engine().releasePreparedImport(stagedHandle.current).catch(() => {});
+  }, [operation]);
   const busy = phase !== 'idle';
   useAppearanceHold(busy || uncertain);
   usePreventRemove(busy || uncertain, () => {
@@ -44,13 +48,11 @@ export default function Backup() {
     if (working.current || operation.pending) return;
     working.current = true; setPhase('reading'); setFeedback(undefined);
     try {
-      const selected = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, type: ['application/json', 'text/plain', 'application/octet-stream'] });
+      const selected = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, type: ['application/json', 'application/zip', 'text/plain', 'application/octet-stream'] });
       if (selected.canceled) return;
-      const file = new File(selected.assets[0].uri);
-      if (file.size > 10_000_000) throw new Error(t('m_a9e9b2a1cbd3'));
-      const data = await file.text();
-      const next = await engine().previewImport(data);
-      setJson(data); setPreview(next); setCopies([]); setPreviewLimit(25);
+      const next = await engine().prepareBackupImport(selected.assets[0].uri);
+      if (json) void engine().releasePreparedImport(json);
+      setJson(next.handle); setImageCount(next.imageCount); setPreview(next); setCopies([]); setPreviewLimit(25);
     } catch { setFeedback({ message: preview ? t('m_8244869b563b') : t('m_3370f7ef5943'), tone: 'danger' }); }
     finally { working.current = false; setPhase('idle'); }
   };
@@ -59,6 +61,7 @@ export default function Backup() {
     working.current = true; setPhase('restoring'); setFeedback(undefined);
     try {
       const result = await operation.run(json, copies);
+      void engine().releasePreparedImport(json);
       setUncertain(false);
       setFeedback({ message: result.retry ? t('m_3484304627a9') :
         t('m_a43a0dc77b1e', { arg0: String(result.added ?? 0), arg1: String(result.preserved ?? 0), arg2: String(result.blocked ? t('m_e6230f66090b') : '') }),
@@ -78,21 +81,23 @@ export default function Backup() {
       <Button label={phase === 'restoring' ? t('m_5a4918e0201c') : uncertain ? t('m_24be300a8083') : t('m_6da1c554212c')}
         disabled={!nativeAvailable || busy} onPress={() => void restore()} />
       <Button label={t('m_f657ed08c403')} variant="secondary" disabled={busy || uncertain}
-        onPress={() => { setPreview(null); setJson(''); setCopies([]); setFeedback(undefined); }} />
+        onPress={() => { if (json) void engine().releasePreparedImport(json); setPreview(null); setJson(''); setCopies([]); setFeedback(undefined); }} />
     </View></BottomActionBar> : undefined}>
     <Copy muted>{t('m_1034ca31a970')}</Copy>
+    <Copy muted>{t('backup_photo_hint')}</Copy>
     {!nativeAvailable && <Copy muted>{t('m_fd7ada1a6f59')}</Copy>}
-    <Group><SettingRow label={phase === 'reading' ? t('m_e72fbb36b74a') : preview ? t('m_3d56dc86536d') : t('m_5eba2dbd12f9')}
+    <Group><SettingRow intent="action" label={phase === 'reading' ? t('m_e72fbb36b74a') : preview ? t('m_3d56dc86536d') : t('m_5eba2dbd12f9')}
       icon="download" disabled={!nativeAvailable || busy || uncertain} onPress={() => void choose()} /></Group>
     {(!preview || phase === 'reading') && <ActionFeedback loading={phase === 'reading'} message={phase === 'reading' ? t('m_e72fbb36b74a') : feedback?.message}
       tone={phase === 'reading' ? 'muted' : feedback?.tone} />}
     {preview && <>
       <Copy size={20}>{preview.count} {t('m_5e9e09782c22')}</Copy>
+      {!!imageCount && <Copy muted>{t('backup_photos', { count: imageCount })}</Copy>}
       <Copy muted>{t('m_6377003ff6b8')}</Copy>
       <Copy muted size={14}>{t('m_55163370572c')}</Copy>
       {!!preview.lists?.length && <Group title={t('m_cd0502b3a59a', { arg0: String(preview.lists.length) })}>
         <Copy muted size={14}>{t('m_d028075f15ca')}</Copy>
-        {preview.lists.map((list) => <SettingRow key={list.id} label={list.name}
+        {preview.lists.map((list) => <SettingRow intent="action" key={list.id} label={list.name}
           value={list.restoredName !== list.name ? t('m_488e1fe2c9c6', { arg0: String(list.restoredName) }) : list.conflict ? t('m_60ab6223678c') : t('m_e8bf5cca37b0')} />)}
       </Group>}
       <Group title={t('m_b13d60535b1f')}>

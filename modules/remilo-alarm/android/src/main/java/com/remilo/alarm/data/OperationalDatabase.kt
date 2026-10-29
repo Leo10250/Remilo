@@ -16,11 +16,17 @@ data class AlertRecord(@PrimaryKey val occurrenceId: String, val targetMs: Long,
   @ColumnInfo(defaultValue = "NULL") val segmentId: String? = null,
   @ColumnInfo(defaultValue = "NULL") val nominalSlot: String? = null,
   @ColumnInfo(defaultValue = "0") val exception: Boolean = false,
-  @ColumnInfo(defaultValue = "''") val resolvedZone: String = "")
+  @ColumnInfo(defaultValue = "''") val resolvedZone: String = "",
+  @ColumnInfo(defaultValue = "'Reminder'") val profile: String = "Reminder",
+  @ColumnInfo(defaultValue = "0") val expiresAtMs: Long = 0,
+  @ColumnInfo(defaultValue = "0") val dayEnded: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val prompted: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val dayStarted: Boolean = false)
 @Entity(tableName = "series_plans")
 data class SeriesPlan(@PrimaryKey val id: String, val rule: String, val state: String,
   val mode: String, val sound: String, val vibration: Boolean, val snoozeMinutes: Int,
-  val resolvedZone: String, val materializedThrough: String? = null)
+  val resolvedZone: String, val materializedThrough: String? = null,
+  @ColumnInfo(defaultValue = "'Reminder'") val profile: String = "Reminder")
 @Entity(tableName = "sessions")
 data class SessionRecord(@PrimaryKey val id: String, val state: String,
   val startedElapsedMs: Long = 0, val deadlineElapsedMs: Long = 0,
@@ -63,9 +69,19 @@ data class PostponePreferencesRecord(@PrimaryKey val id: String = "app",
 data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: String = "system",
   val revision: Long = 1, val settingsRevision: Long = 0, val projected: String = "",
   val pendingProjection: Boolean = false, val externalPending: Boolean = false)
+/** Content-free delivery intent; retained after CE history acknowledgement for guarded retries. */
+@Entity(tableName = "routine_alert_receipts")
+data class RoutineAlertReceipt(@PrimaryKey val operationId: String, val kind: String,
+  val occurrenceId: String, val date: String, val expectedGeneration: Long, val expectedSessionId: String,
+  val generation: Long, val occurredAtMs: Long, val targetMs: Long?, val snoozeMinutes: Int?, val fingerprint: String, val settled: Boolean = false,
+  @ColumnInfo(defaultValue = "'Pending'") val resultStatus: String = "Pending")
 @Dao interface OperationalDao {
   @Query("SELECT * FROM postpone_preferences WHERE id = 'app'") fun postponePreferences(): PostponePreferencesRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun postponePreferences(record: PostponePreferencesRecord)
+  @Query("SELECT * FROM routine_alert_receipts WHERE operationId = :id") fun routineAlertReceipt(id: String): RoutineAlertReceipt?
+  @Query("SELECT * FROM routine_alert_receipts") fun routineAlertReceipts(): List<RoutineAlertReceipt>
+  @Query("SELECT * FROM routine_alert_receipts WHERE settled = 0") fun pendingRoutineAlerts(): List<RoutineAlertReceipt>
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun routineAlertReceipt(record: RoutineAlertReceipt)
   @Query("SELECT * FROM language_preferences WHERE id = 'app'") fun language(): LanguageRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun language(record: LanguageRecord)
   @Query("SELECT * FROM alerts") fun all(): List<AlertRecord>
@@ -96,21 +112,63 @@ data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: St
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class,
-  PostponePreferencesRecord::class], version = 8, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class, RoutineAlertReceipt::class, PostponePreferencesRecord::class], version = OperationalDatabase.VERSION, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
+    const val VERSION = 10
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+      "remilo-operational.db").addMigrations(*MIGRATIONS).build()
+    /** Two independently deployed version-8 lineages are retained as explicit inputs. */
+    val MIGRATION_7_10 = object : Migration(7, 10) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        MIGRATION_7_8.migrate(db)
+        MIGRATION_8_9.migrate(db)
+        MIGRATION_9_10.migrate(db)
+      }
+    }
+    val MIGRATION_8_10 = object : Migration(8, 10) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        val identity = db.query("SELECT identity_hash FROM room_master_table WHERE id = 42").use { row ->
+          if (row.moveToFirst()) row.getString(0) else null
+        }
+        when (identity) {
+          "848d76d92f0321341c8071cead845d4a" -> {
+            // Chooser v8 already owns frozen Postpone receipts and its preference mirror.
+            MIGRATION_7_8.migrate(db)
+            MIGRATION_8_9.migrate(db)
+          }
+          "5d7804e1ece64d848da5b28b8a4e6f0a" -> {
+            MIGRATION_8_9.migrate(db)
+            MIGRATION_9_10.migrate(db)
+          }
+          else -> throw IllegalStateException("Unknown operational version 8 schema.")
+        }
+      }
+    }
+    val MIGRATION_9_10 = object : Migration(9, 10) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE bulk_snooze_receipts_v10 (operationId TEXT NOT NULL PRIMARY KEY, sessionId TEXT NOT NULL, snapshotKey TEXT NOT NULL, occurredAtMs INTEGER NOT NULL, targetMs INTEGER NOT NULL, snoozeMinutes INTEGER, settled INTEGER NOT NULL, kind TEXT NOT NULL DEFAULT 'SnoozeAll')")
+        db.execSQL("INSERT INTO bulk_snooze_receipts_v10 (operationId,sessionId,snapshotKey,occurredAtMs,targetMs,snoozeMinutes,settled,kind) SELECT operationId,sessionId,snapshotKey,occurredAtMs,targetMs,snoozeMinutes,settled,'SnoozeAll' FROM bulk_snooze_receipts")
+        db.execSQL("DROP TABLE bulk_snooze_receipts")
+        db.execSQL("ALTER TABLE bulk_snooze_receipts_v10 RENAME TO bulk_snooze_receipts")
+        db.execSQL("CREATE TABLE postpone_preferences (id TEXT NOT NULL PRIMARY KEY, tomorrowMorning INTEGER NOT NULL, tomorrowAfternoon INTEGER NOT NULL, tomorrowEvening INTEGER NOT NULL, revision INTEGER NOT NULL)")
+      }
+    }
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE alerts ADD COLUMN dayStarted INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS routine_alert_receipts (operationId TEXT NOT NULL PRIMARY KEY, kind TEXT NOT NULL, occurrenceId TEXT NOT NULL, date TEXT NOT NULL, expectedGeneration INTEGER NOT NULL, expectedSessionId TEXT NOT NULL, generation INTEGER NOT NULL, occurredAtMs INTEGER NOT NULL, targetMs INTEGER, snoozeMinutes INTEGER, fingerprint TEXT NOT NULL, settled INTEGER NOT NULL, resultStatus TEXT NOT NULL DEFAULT 'Pending')")
+      }
+    }
     val MIGRATION_7_8 = object : Migration(7, 8) {
       override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("CREATE TABLE bulk_snooze_receipts_v8 (operationId TEXT NOT NULL PRIMARY KEY, sessionId TEXT NOT NULL, snapshotKey TEXT NOT NULL, occurredAtMs INTEGER NOT NULL, targetMs INTEGER NOT NULL, snoozeMinutes INTEGER, settled INTEGER NOT NULL, kind TEXT NOT NULL DEFAULT 'SnoozeAll')")
-        db.execSQL("INSERT INTO bulk_snooze_receipts_v8 (operationId,sessionId,snapshotKey,occurredAtMs,targetMs,snoozeMinutes,settled,kind) SELECT operationId,sessionId,snapshotKey,occurredAtMs,targetMs,snoozeMinutes,settled,'SnoozeAll' FROM bulk_snooze_receipts")
-        db.execSQL("DROP TABLE bulk_snooze_receipts")
-        db.execSQL("ALTER TABLE bulk_snooze_receipts_v8 RENAME TO bulk_snooze_receipts")
-        db.execSQL("CREATE TABLE postpone_preferences (id TEXT NOT NULL PRIMARY KEY, tomorrowMorning INTEGER NOT NULL, tomorrowAfternoon INTEGER NOT NULL, tomorrowEvening INTEGER NOT NULL, revision INTEGER NOT NULL)")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN profile TEXT NOT NULL DEFAULT 'Reminder'")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN expiresAtMs INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN dayEnded INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE alerts ADD COLUMN prompted INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE series_plans ADD COLUMN profile TEXT NOT NULL DEFAULT 'Reminder'")
       }
     }
     val MIGRATION_6_7 = object : Migration(6, 7) {
@@ -159,5 +217,7 @@ abstract class OperationalDatabase : RoomDatabase() {
         db.execSQL("ALTER TABLE sessions ADD COLUMN vibration INTEGER NOT NULL DEFAULT 0")
       }
     }
+    val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+      MIGRATION_7_8, MIGRATION_8_9, MIGRATION_7_10, MIGRATION_8_10, MIGRATION_9_10)
   }
 }

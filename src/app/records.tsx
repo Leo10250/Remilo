@@ -17,6 +17,7 @@ import { ReminderRow } from '../ui/reminder-row';
 import { PurgeConfirmation } from '../ui/purge-confirmation';
 import { useRootState } from '../ui/root-state';
 import { useAppearanceHold } from '../ui/theme';
+import { routineDayKeys } from '../ui/routine-editor';
 
 export default function Records() {
   'use no memo';
@@ -101,11 +102,11 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     const operationId = engine().createOperationId();
     singleRunning.current = true;
     setSelected(null);
-    void action.execute({ command: { kind, occurrenceId: item.id, expectedRevision: item.revision, operationId }, item,
+    void action.execute({ command: item.routineFamily && kind !== 'Reopen' ? { kind: kind === 'UndoDelete' ? 'RestoreRoutine' : kind === 'Purge' ? 'PurgeRoutine' : 'TrashRoutine', routineId: item.routineFamily.id, expectedRevision: item.routineFamily.revision, operationId } : { kind, occurrenceId: item.id, expectedRevision: item.revision, operationId }, item,
       success: kind === 'UndoDelete' ? item.completed ? t('m_a0cbb012eedf') : item.skipped ? t('m_4dc0768b0761') : t('m_cb9c0f35189c')
         : kind === 'Purge' ? t('m_ddba37fd352b') : kind === 'Delete' ? t('m_2d65f262cc64') : t('m_8b94105daf2b') }).finally(() => { singleRunning.current = false; });
   };
-  const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
+  const open = (item: Occurrence) => { if (!isGuarded()) { Keyboard.dismiss(); if (item.routineFamily) setSelected(item); else if (item.routine && !item.deleted) router.push({ pathname: '/routine-session', params: { id: item.routine.routineId, date: item.routine.date } }); else router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination), originCollection: view } }); } };
   const commitFilters = (draft: BrowseFilters) => {
     const next = commitBrowseFilters(view, appliedFilters, draft, { fixedListId, guarded: isGuarded(), selecting: selectingRef.current });
     if (!next) return false;
@@ -153,7 +154,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
         <Copy muted size={14}>{guarded && bulk.job ? t('m_c8e043d904a9') + bulk.job.entries.length + (bulk.job.entries.length === 1 ? t('m_caddc31b6d05') : t('m_b5765ff6882a')) : selectionIds.length + t('m_df16eabb211c') + items.length + t('m_3cded792a06b') + loadedLabel + '.'}</Copy>
         {bulk.guarded && !bulk.busy && <Button label={t('m_913b0a77f27f')} onPress={bulk.retry} />}
         {!!selectionIds.length && !bulk.guarded && <>
-          <Button label={view === 'deleted' ? t('m_a76e13b98392') : t('m_a886d1dc4f12')} accessibilityLabel={view === 'deleted' ? t('m_536d8b1e30eb') : t('m_380e09bc779d')} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
+          <Button label={view === 'deleted' ? t('m_a76e13b98392') : t('m_a886d1dc4f12')} accessibilityLabel={view === 'deleted' ? t('m_536d8b1e30eb') : t('m_380e09bc779d')} variant="secondary" disabled={guarded || !selectedItems.length || view !== 'deleted' && selectedItems.some(item => !!item.routine)} onPress={() => runBulk(view === 'deleted' ? 'UndoDelete' : 'Reopen')} />
           {view === 'completed' && <Button label={t('m_9adcdf33dce1')} accessibilityLabel={t('m_570d20ab666c')} variant="secondary" disabled={guarded || !selectedItems.length} onPress={() => runBulk('Delete')} />}
           {view === 'deleted' && <Button label={t('m_280b10c89cc4')} accessibilityLabel={t('m_cee8f4863172')} variant="danger" disabled={guarded || !selectedItems.length || selectedItems.length !== selectionIds.length} onPress={() => requestPurge(selectedItems, true)} />}
         </>}
@@ -161,7 +162,7 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
       <RootNotice disabled={guarded} />{!selecting && <RootNavigation destination={scoped ? 'lists' : view === 'deleted' ? 'trash' : 'completed'} atRoot={!scoped} disabled={guarded} isGuarded={isGuarded} />}</>}>
     {searching && <View style={{ gap: 8 }}><Field inputRef={searchInput} label={t('m_fc9f7623b53e') + title.toLowerCase()} placeholder={t('m_2796b78f7c5e')} value={search} onChangeText={(value) => { if (!isGuarded() && !selectingRef.current) setSearch(value); }} editable={!guarded && !selecting} />
       {!!search && <Button label={t('m_3b7ea51793e9')} variant="secondary" disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}</View>}
-    {!!search && !searching && <SettingRow label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}
+    {!!search && !searching && <SettingRow intent="action" label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded || selecting} onPress={() => { if (!isGuarded() && !selectingRef.current) setSearch(''); }} />}
     {scoped && <Copy muted size={14}>{t('m_8e644ee1deea') + scopeName}</Copy>}
     <BrowseFilterChips chips={chips} disabled={guarded || selecting} onRemove={removeFilter} onReset={resetFilters} />
     {selecting && <Copy muted size={14}>{t('m_6b16b17cf558')}</Copy>}
@@ -177,14 +178,14 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
     {query.hasNextPage && <Button label={query.isFetchingNextPage ? t('m_964e5f88d036') : query.isFetchNextPageError ? t('m_6c13d1198cd5') : t('m_ac8991ef0101')} disabled={guarded || query.isFetchingNextPage} variant="secondary" onPress={() => { if (!isGuarded()) void query.fetchNextPage(); }} />}
     <Sheet title={selecting ? t('m_b847ffdd0a1b') : title + t('m_04d2a6702176')} visible={menuOpen} onClose={() => { if (!isGuarded()) setMenuOpen(false); }}>
       {selecting ? <>
-        <SettingRow label={t('m_b67fb40d381e')} description={t('m_b6fac3049447') + items.length + t('m_0cba3160436e') + loadedLabel + '.'} disabled={guarded || !items.length} onPress={() => { if (isGuarded()) return; setSelectionIds(items.map((item) => item.id)); setMenuOpen(false); bulk.clear(); }} />
-        <SettingRow label={t('m_cea4d2e010b8')} disabled={guarded || !selectionIds.length} onPress={() => { if (isGuarded()) return; setSelectionIds([]); setMenuOpen(false); bulk.clear(); }} />
-        <SettingRow label={t('m_860e7995708f')} disabled={guarded} onPress={exitSelection} />
-      </> : <SettingRow label={t('m_de3ead6ecd09')} icon="checklist" disabled={guarded || !items.length} onPress={startSelection} />}
-      {!selecting && view === 'deleted' && <SettingRow label={t('m_7739c768203f')} icon="info" disabled={guarded} onPress={() => {
+        <SettingRow intent="action" label={t('m_b67fb40d381e')} description={t('m_b6fac3049447') + items.length + t('m_0cba3160436e') + loadedLabel + '.'} disabled={guarded || !items.length} onPress={() => { if (isGuarded()) return; setSelectionIds(items.map((item) => item.id)); setMenuOpen(false); bulk.clear(); }} />
+        <SettingRow intent="action" label={t('m_cea4d2e010b8')} disabled={guarded || !selectionIds.length} onPress={() => { if (isGuarded()) return; setSelectionIds([]); setMenuOpen(false); bulk.clear(); }} />
+        <SettingRow intent="action" label={t('m_860e7995708f')} disabled={guarded} onPress={exitSelection} />
+      </> : <SettingRow intent="action" label={t('m_de3ead6ecd09')} icon="checklist" disabled={guarded || !items.length} onPress={startSelection} />}
+      {!selecting && view === 'deleted' && <SettingRow intent="action" label={t('m_7739c768203f')} icon="info" disabled={guarded} onPress={() => {
         if (isGuarded()) return; setMenuOpen(false); setTrashHelpOpen(true);
       }} />}
-      {!selecting && <SettingRow label={t('m_74a883a037bc')} icon="settings" disabled={guarded} onPress={() => {
+      {!selecting && <SettingRow intent="action" label={t('m_74a883a037bc')} icon="settings" disabled={guarded} onPress={() => {
         if (isGuarded()) return; setMenuOpen(false); router.push({ pathname: '/settings', params: originParams(destination) });
       }} />}
     </Sheet>
@@ -198,9 +199,11 @@ function RecordsContent({ view, origin }: { view: 'deleted' | 'completed'; origi
       <Copy muted size={14}>{t('m_6a85a9b0418d')}</Copy>
     </Sheet>
     <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => { if (!isGuarded()) setSelected(null); }}>
-      {view === 'completed' && <SettingRow label={t('m_a886d1dc4f12')} icon="undo" disabled={guarded} onPress={() => { if (selected) update(selected, 'Reopen'); }} />}
-      <SettingRow label={view === 'completed' ? t('m_9adcdf33dce1') : t('m_a76e13b98392')} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
-      {view === 'deleted' && <SettingRow label={t('m_280b10c89cc4')} icon="delete_forever" description={t('m_a3e8748f021d')} disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
+      {selected?.routineFamily && <><Copy>{t('routine_in_trash')}</Copy><Copy muted>{t('routine_trash_days', { count: selected.routineFamily.recordedDays })}</Copy>
+        {selected.routineFamily.days.map((day, i) => <View key={i}><Copy>{t(routineDayKeys[i])}</Copy><Copy muted size={14}>{day.type === 'Rest' ? t(selected.routineFamily!.presentationPreset === 'General' ? 'routine_not_scheduled' : 'routine_rest') : day.exercises.map(e => [e.name, e.target].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}</>}
+      {view === 'completed' && <SettingRow intent="action" label={selected?.routine ? t('routine_title') : t('m_a886d1dc4f12')} icon={selected?.routine ? 'checklist' : 'undo'} disabled={guarded} onPress={() => { if (selected?.routine) { const item = selected; setSelected(null); open(item); } else if (selected) update(selected, 'Reopen'); }} />}
+      <SettingRow intent="action" label={view === 'completed' ? t('m_9adcdf33dce1') : t('m_a76e13b98392')} icon={view === 'completed' ? 'delete' : 'restore'} disabled={guarded} onPress={() => { if (selected) update(selected, view === 'completed' ? 'Delete' : 'UndoDelete'); }} />
+      {view === 'deleted' && <SettingRow intent="action" label={t('m_280b10c89cc4')} icon="delete_forever" description={t('m_a3e8748f021d')} disabled={guarded} onPress={() => { if (selected) requestPurge([selected], false); }} />}
     </Sheet>
     <PurgeConfirmation items={purgeItems} onCancel={() => setPurgeItems([])} onConfirm={confirmPurge} />
   </Page>;

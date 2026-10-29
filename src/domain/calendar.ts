@@ -8,6 +8,12 @@ export function publicationCommand(preview: CalendarPublicationPreview, operatio
 export function canRetryPublication(publication: CalendarPublication) {
   return ['Waiting', 'Unconfirmed', 'NeedsAccess', 'Failed'].includes(publication.state);
 }
+export function publicationCheckFeedback(publication: CalendarPublication) {
+  if (publication.state === 'Published') return { message: t('publication_checked_confirmed'), tone: 'success' as const };
+  if (publication.state === 'Cancelled') return { message: t('publication_checked_cancelled'), tone: 'muted' as const };
+  if (publication.readOnly) return { message: t('publication_checked_inactive'), tone: 'warning' as const };
+  return { message: publication.message || t('publication_checked_unconfirmed'), tone: 'warning' as const };
+}
 export function calendarError(error: unknown): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (code.includes('CREATION_UNCONFIRMED')) return t('m_3d41a331cd10');

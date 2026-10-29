@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T06:41:34.119886+00:00",
+  "assetId": "machine-shoulder-press",
+  "candidate": 1,
+  "candidateSha256": "44d3d3822d5c4d61bc559fcb9a4ba6387f199f221fecc1032ff80a75a7ad009a",
+  "reviewSha256": "27df8c1e8f19f7ee6f3aecdf8c0567c0785e7ab4e0da0f47c35e2adec07c5852",
+  "reviewRecordSha256": "306e857b7dbaa1efc095b194f41202ba22cd0998bd229e9b6f1a8f3c4b2d970e",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

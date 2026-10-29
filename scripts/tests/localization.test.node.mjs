@@ -27,3 +27,7 @@ test('English plurals require one/other, Chinese needs other', () => {
   delete catalog.messages.minutes.en.one;
   assert.throws(() => generate(catalog), /Missing translation/);
 });
+test('both languages must generate the same Android string or plural resource type', () => {
+  const catalog = { messages: { sets: { en: { one: '{count} set', other: '{count} sets' }, 'zh-Hans': '{count} 组', args: { count: 'number' } } } };
+  assert.throws(() => generate(catalog), /Mismatched native plural resource/);
+});

@@ -115,7 +115,7 @@ export function useCapturedCommand(onApplied?: (job: CapturedJob, result: Comman
     } catch (error) { setFeedback({ message: errorText(error, t('m_a91088bd04e9')), tone: 'danger' }); }
     finally { running.current = false; setBusy(false); setGuarded(operation.pending); void client.invalidateQueries(); }
   };
-  return { busy, guarded, feedback, recovery: recoveryPresentation(operation.captured?.command.kind), execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
+  return { busy, guarded, feedback, clearFeedback: () => setFeedback(undefined), recovery: recoveryPresentation(operation.captured?.command.kind), execute, isGuarded: () => running.current || operation.pending, retry: () => { if (operation.captured) void execute(operation.captured); } };
 }
 export function CommandRecovery({ action }: { action: ReturnType<typeof useCapturedCommand> }) {
   'use no memo';
@@ -129,6 +129,13 @@ export function notifyTrash(item: Occurrence, result: CommandResult) {
   notify({ message: t('m_2d65f262cc64'), ...(deleted?.id === item.id && deleted.deleted ? { action: { label: t('m_a8283ade3185'), undoDelete: { id: item.id, revision: deleted.revision, operationId: engine().createOperationId() } } } : {}) });
 }
 export async function activateNotice(notice: Notice) {
+  const routine = notice.action?.undoRoutineTrash;
+  if (routine) {
+    try { const result = await apply({ kind: 'RestoreRoutine', routineId: routine.id, expectedRevision: routine.revision, operationId: routine.operationId });
+      notify(commandFeedback(result, t('routine_restored')));
+    } catch (error) { notify({ message: errorText(error, t('m_ef261ab8a0a9')), persistent: true, action: notice.action }); }
+    return;
+  }
   const captured = notice.action?.undoDelete;
   if (captured) {
     try {
@@ -163,13 +170,13 @@ export function RootMore({ origin, disabled = false, extra, listActions }: { ori
   const record = (view: 'completed' | 'deleted') => { close(); router.push({ pathname: '/records', params: { view, ...originParams(origin) } }); };
   return <><IconButton icon="more_vert" label={t('m_74250745fec3')} disabled={disabled} onPress={() => { Keyboard.dismiss(); setOpen(true); }} />
     <Sheet title={t('m_d47d7cb0e4f8')} visible={open} onClose={close}>
-      {origin.kind === 'list' && <><SettingRow label={t('m_d028225196e8')} icon="check_circle" onPress={() => record('completed')} />
-        <SettingRow label={t('m_3001960cedfb')} icon="delete" onPress={() => record('deleted')} /></>}
+      {origin.kind === 'list' && <><SettingRow intent="action" label={t('m_d028225196e8')} icon="check_circle" onPress={() => record('completed')} />
+        <SettingRow intent="action" label={t('m_3001960cedfb')} icon="delete" onPress={() => record('deleted')} /></>}
       {extra}
-      {listActions && <><SettingRow label={t('m_e01205cfdbd9')} icon="edit" onPress={() => { close(); listActions.rename(); }} />
-        <SettingRow label={t('m_669f24b0f91d')} icon="delete" onPress={() => { close(); listActions.remove(); }} /></>}
-      {origin.kind === 'lists' && <SettingRow label={t('m_ab81e9366bfe')} icon="edit" onPress={() => { close(); router.push({ pathname: '/lists/manage', params: originParams(origin) }); }} />}
-      <SettingRow label={t('m_74a883a037bc')} icon="settings" onPress={() => { close(); router.push({ pathname: '/settings', params: originParams(origin) }); }} />
+      {listActions && <><SettingRow intent="action" label={t('m_e01205cfdbd9')} icon="edit" onPress={() => { close(); listActions.rename(); }} />
+        <SettingRow intent="action" label={t('m_669f24b0f91d')} icon="delete" onPress={() => { close(); listActions.remove(); }} /></>}
+      {origin.kind === 'lists' && <SettingRow intent="action" label={t('m_ab81e9366bfe')} icon="edit" onPress={() => { close(); router.push({ pathname: '/lists/manage', params: originParams(origin) }); }} />}
+      <SettingRow intent="action" label={t('m_74a883a037bc')} icon="settings" onPress={() => { close(); router.push({ pathname: '/settings', params: originParams(origin) }); }} />
     </Sheet></>;
 }
 
@@ -194,7 +201,7 @@ export function ListPicker({ value, onChange, disabled = false }: { value: strin
   const t = useTranslation();
   const query = useQuery({ queryKey: ['lists'], queryFn: () => engine().queryLists(), enabled: nativeAvailable });
   const [open, setOpen] = useState(false), [create, setCreate] = useState(false);
-  return <><SettingRow label={t('m_6f202f54a7b2')} icon="checklist" value={value === null ? t('m_eacd31d849f9') : query.data?.find((list) => list.id === value)?.name ?? t('m_e7f6d340d947')} onPress={() => setOpen(true)} disabled={disabled} />
+  return <><SettingRow intent="picker" label={t('m_6f202f54a7b2')} icon="checklist" value={value === null ? t('m_eacd31d849f9') : query.data?.find((list) => list.id === value)?.name ?? t('m_e7f6d340d947')} onPress={() => setOpen(true)} disabled={disabled} />
     <Sheet title={t('m_91392cf35939')} visible={open && !create} onClose={() => setOpen(false)}>
       <Choice label={t('m_eacd31d849f9')} selected={value === null} onPress={() => { onChange(null); setOpen(false); }} />
       <QueryState loading={query.isLoading} error={query.error} onRetry={() => void query.refetch()} />

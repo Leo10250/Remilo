@@ -66,6 +66,64 @@ Terminology: 日程, 清单, 已完成, 回收站, 操作记录, 标记为完成
 推迟提醒, 停止试听, 闹钟, 通知 and 无提醒. Completion, postponement and stopping
 preview remain distinct. Translate messages, never commands or stored state enums.
 
+## Simplified Chinese wording review — owner correction, 18 October 2026
+
+Use Chinese product vocabulary by meaning and context, not a single dictionary
+translation for every English word. The owner requested an app-wide review after
+the exercise builder displayed 练习. That noun is inappropriate for a list of
+fitness movements; changing every occurrence to 锻炼 would also confuse an
+individual movement with the whole activity.
+
+| Meaning | Chinese presentation |
+|---|---|
+| Routine, including generic widget/setup destinations | 日常计划 |
+| General routine item | 步骤; e.g. 4 个步骤 |
+| Exercise preset | 锻炼; Preset picker label 用途 |
+| One fitness exercise | 动作; e.g. 4 个动作, 动作名称, 添加动作 |
+| Whole exercise activity | 锻炼 or 训练 according to the sentence |
+| Weekday scope | 星期 / 每周这一天; 工作日 only for the explicit Monday–Friday preset |
+| Routine Focus widget mode | 计划进度 |
+| Calendar event | 日程, while the destination/source calendar stays 日历 |
+| Calendar copy creation/publication | 添加到日历; ongoing synchronization remains a separate behavior |
+| Reopen completed work | 标记为未完成, distinct from navigation 打开 and Trash 恢复 |
+| Trash | 回收站, consistently across app/native/widget feedback |
+| Sound preview | 试听 / 停止试听, distinct from stopping a ringing alarm |
+| Exact-alarm permission | 精确闹钟, with plain help about on-time ringing |
+| Database schema diagnostics | 内容数据库版本 / 提醒数据库版本 |
+
+The owner's subsequent weekday-builder correction takes precedence for that
+group: use 每周安排 as its heading and 步骤 in every weekday count, including the
+Exercise preset. Do not use 动作 for this group or its counts. The lower timing
+section is 日期与时间. Individual exercise-form vocabulary has a different scope
+from this weekday arrangement.
+
+Prefer clear scope and outcomes over 原生验证, 终态, 钟面时间, 训练焦点 or
+“写入” in user-facing recovery. Retry wording refers to the captured request
+(此次操作), never a replacement operation. Use one consistent neutral/direct
+voice (你 where a pronoun is useful), Chinese punctuation and complete count/unit
+labels. Do not concatenate an English closing parenthesis onto a translated
+opening fragment. Preserve argument bindings, identities, timestamps, existing
+action behavior and historically recognized English Calendar status templates.
+
+The vocabulary was compared with actual first-party Chinese product documentation:
+[Huawei Health](https://consumer.huawei.com/cn/support/content/zh-cn01057377/)
+uses training/course language for the whole activity and 动作 for its components;
+[Huawei Calendar](https://consumer.huawei.com/cn/support/content/zh-cn16093658/)
+uses 日程; [Dida/TickTick](https://help.dida365.com/start/6194405595563425792)
+uses tasks, reminders, completion and clear creation controls; and
+[Apple Reminders](https://support.apple.com/zh-cn/guide/iphone/iph88463e18/ios)
+distinguishes reminders, lists and completion. These are usage references, not
+proof of one universally best translation or a requirement to copy another app.
+[Google Calendar](https://support.google.com/calendar/answer/72143?hl=zh-Hans)
+calls events 活动 in its Chinese help; Remilo uses the familiar 日程 consistently
+within its own interface.
+
+Authored titles, exercise names, descriptions, imported content and Calendar names
+remain untouched. An English Weekly workout or Bird-dog supplied by a user/fixture
+is not missing interface localization. Bundled illustration labels and inert
+sample content are localized. The catalog and generated Android resources remain
+the authority; platform-controlled screens follow the platform's own wording.
+
 Catalog parity, host tests and fixture renders do not establish physical alarm,
 TalkBack, OEM font or pre-unlock acceptance. Signed-phone cases remain in the
 consolidated owner checklist. Implementation does not install/distribute a build.

@@ -1,5 +1,6 @@
 import type { AppSettings, Occurrence, PostponeTimeInput, TimeConversion } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt } from './time';
+import { canAdjustAlert } from './presentation';
 
 export const postponeChoices = ['15', '30', '60', '1440', 'tomorrow-0', 'tomorrow-1', 'tomorrow-2', 'custom'] as const;
 export type PostponeChoice = typeof postponeChoices[number];
@@ -7,6 +8,10 @@ export type PostponeCapture = {
   occurrenceId: string; expectedGeneration: number; title: string; referenceAtMs: number; zoneId: string;
   tomorrowMinutes: readonly [number, number, number];
 };
+/** Routine alerts retain their dedicated Start/Snooze/Dismiss flow. */
+export function canPostponeReminder(item: Pick<Occurrence, 'completed' | 'deleted' | 'skipped' | 'mode' | 'deliveryState' | 'routine' | 'kind'> | null | undefined) {
+  return !!item && !item.routine && item.kind !== 'RoutineFamily' && canAdjustAlert(item);
+}
 export function capturePostpone(item: Pick<Occurrence, 'id' | 'generation' | 'title'>,
   settings: Pick<AppSettings, 'tomorrowMorning' | 'tomorrowAfternoon' | 'tomorrowEvening'> | undefined,
   referenceAtMs: number, zoneId: string): PostponeCapture {

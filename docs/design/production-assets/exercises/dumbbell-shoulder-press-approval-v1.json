@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T06:35:18.768451+00:00",
+  "assetId": "dumbbell-shoulder-press",
+  "candidate": 1,
+  "candidateSha256": "33a3c85917cca337761344719442cec179c454bfca0ab3d9a376f67d2c23cc19",
+  "reviewSha256": "56735ce909cb982b005ef54cb993810b26da6c38d7cb30478412366ae384f7fa",
+  "reviewRecordSha256": "6b6d4772a8c820621ccdb3bae39559e9b14e7a0a22dcae29c4b63f8de15f13d0",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

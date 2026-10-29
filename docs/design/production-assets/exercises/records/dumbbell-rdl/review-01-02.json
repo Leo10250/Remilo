@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "assetId": "dumbbell-rdl",
+  "candidate": 1,
+  "revision": 2,
+  "recordedAtUtc": "2026-10-16T07:06:02.543594+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/dumbbell-rdl/prepared-01.json",
+    "sha256": "693f2aa2293f407977a243df5be499ba5bdc34d20e97c9b4626bbd1d5fc94ffc"
+  },
+  "candidateSha256": "8b56e8f4d7403d1c19d1bd69bdca04ae971eb4b6d287ce84ebfead87c1ff6c1e",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "reviewer": "Delegated assistant after original/decoded source/export light/dark/checkerboard, both helper sizes and all eight current surfaces at both sizes; independent UX source review",
+    "recordedAtUtc": "2026-10-16T07:06:01.154438+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Romanian deadlift reads as a hip hinge with hips back, forward torso, hanging arms, near-vertical shins and softly bent knees rather than a deep squat."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Approved front-plank person/style retained: blue-gray top, terracotta leggings, bun, natural adult proportions and restrained educational shading; plain gray shoes/weights."
+      },
+      {
+        "name": "pose-and-grip",
+        "status": "pass",
+        "observation": "Back and neck form a plausible continuous posture with no obvious severe rounded-back break. Both arms reach separate hands/weights beside the lower legs; wrists read as straight. Two complete shoes appear planted. No duplicated limb, floating grip or material anatomy defect observed. Independent source review agrees; exact neutral angles are not certified."
+      },
+      {
+        "name": "equipment-continuity",
+        "status": "pass",
+        "observation": "Two matching hex dumbbells read as separate weights with each hand contacting its own handle. Far handle/end is partly overlapped in this three-quarter view; no fused extra weight or visibly disconnected handle observed."
+      },
+      {
+        "name": "decoded-alpha",
+        "status": "pass",
+        "observation": "Viewed original and source/export light/dark composites plus decoded checkerboard: clean transparency around/between limbs and weights, with no distracting matte, colored fringe or clipped extremity."
+      },
+      {
+        "name": "small-usage-and-containment",
+        "status": "pass",
+        "observation": "Viewed source/runtime helper panels at 256x144 and 320x180 plus both-size all-eight current-container composites. Hinge silhouette, softly bent knees, two arm/weight paths and full shoes remain recognizable and contained. Overlapping finger/handle detail is clearer enlarged."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No text, weight numbers, labels, arrows, branding, scenery, app controls, phone frame or watermark observed."
+      }
+    ],
+    "limitations": [
+      "Far handle and weight end are partly occluded by the near arm/weight. At small sizes the hinge and two weights read, but full grip detail benefits from enlarged view.",
+      "No exact neck/back/knee angles or clinical validation of technique claimed. Visual equipment observations are not mechanical certification.",
+      "Visible alpha>=128 bbox [497,26,1075,898] on 1672x941 leaves ~5.0dp above and 8.2dp below at180dp height: modest vertical margins with full containment.",
+      "Untagged source explicitly interpreted as sRGB under profile; no embedded-profile measurement or conversion claimed.",
+      "Deterministic boards use current presentation.json colors; no actual native/RN rendering, measured text/control contrast or signed-phone acceptance established.",
+      "Human artwork and activation approval pending; no production promotion."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "542f27e877373812b0e663b85f3da35f5923755fb2db44ef4db0d6520bdf02dc"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/all-atmospheres-256x144-v1.png",
+        "sha256": "680378fa36ddb5d4be18ae20eb667a7a9abf7b1c9ea795777b6d5fe08e032cf7"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/source-light-v1.png",
+        "sha256": "aae843762ae0b1f0b885352d4d1b36d9878580ad5cb8e64d59744b881d623995"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/source-dark-v1.png",
+        "sha256": "6e975a540903f11cb0bfff308c518472cd1ee2c3eb6433ddaf69bdd85022d57c"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/export-light-v1.png",
+        "sha256": "7f2e6567e8feff9f0944d770a85c8382b6c10f6a7ac6767e8d3163bb20a39aa0"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/export-dark-v1.png",
+        "sha256": "2c58afd26acd52874f941e5d62604efe338ca68a9526429f86b534a50a1c5652"
+      }
+    ]
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02.png",
+    "sha256": "441ec7b63ad6ecdad51213641b5826a6ea3a66ce529590285a204a77d70751de"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/01.png",
+      "sha256": "a5271d95a09d933ce855343093238f6bafbb7c74fba70e16b0d6d8ec9e97aba8",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/02.png",
+      "sha256": "1429c3b1522a8046d6d793caa8da69196d321eb76617575657d28cc4200460c8",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/03.png",
+      "sha256": "77d237012daa5d6d8e597171f730590d7720f761d88b0fccaba3e0d2991ca794",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/04.png",
+      "sha256": "60815610bcc8a1310d870f8c48eb1c5f47a214c91ca74a25d5f80040d902c92a",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/05.png",
+      "sha256": "d9ef9c1f79b6d86ef8e14b634adae1442708e9ef71f50f7cbfcd853aa9aee20f",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/06.png",
+      "sha256": "83cfa33ecc26e804072dbd36a1bf9fbc3f90775a1772ac0ecc5f35678c29b90a",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/07.png",
+      "sha256": "f2c83441530e0ab16053f3c31d95f6126023efa815bbc4fab5cc5ea7b491b662",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/08.png",
+      "sha256": "8b51a0df625cc77ce3c92013ba6ca285f0670a7def122595e56b70389d406d11",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/09.png",
+      "sha256": "9232744d27570a0265e66182d32443627b5586ff4270ba2efc40ac348452049f",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/10.png",
+      "sha256": "7493567cfd89177126ff916e256f33d4631b331780e1eba150d80b1f5f62750d",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/11.png",
+      "sha256": "623445f8ea2431fb51b3edeb04561aec301ecba73cc2cc30464e33c592c6081a",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-02-panels/12.png",
+      "sha256": "f029445937fe6ae325d696e41c1a301df3c2d7cf2489b86344bd7966b0707b76",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "542f27e877373812b0e663b85f3da35f5923755fb2db44ef4db0d6520bdf02dc"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/all-atmospheres-256x144-v1.png",
+      "sha256": "680378fa36ddb5d4be18ae20eb667a7a9abf7b1c9ea795777b6d5fe08e032cf7"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/source-light-v1.png",
+      "sha256": "aae843762ae0b1f0b885352d4d1b36d9878580ad5cb8e64d59744b881d623995"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/source-dark-v1.png",
+      "sha256": "6e975a540903f11cb0bfff308c518472cd1ee2c3eb6433ddaf69bdd85022d57c"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/export-light-v1.png",
+      "sha256": "7f2e6567e8feff9f0944d770a85c8382b6c10f6a7ac6767e8d3163bb20a39aa0"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/export-dark-v1.png",
+      "sha256": "2c58afd26acd52874f941e5d62604efe338ca68a9526429f86b534a50a1c5652"
+    }
+  ],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "1ea62335bbf77bb1ed7e6c6542aff5fe2bc8e349942e6c191a01c0c029764a42"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

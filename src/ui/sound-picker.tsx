@@ -78,7 +78,7 @@ export function SoundPicker({ value, onChange, disabled = false }: { value: Soun
     preview?.state === 'Playing' ? t('m_94a0f98c0984', { arg0: String(label(preview.actualSound ?? preview.sound)), arg1: String(preview.actualSound && preview.actualSound !== preview.sound ? t('m_c9d0e41b38a5') : '.') }) :
     preview?.state === 'Failed' ? reasonMessage(preview.reason) :
     preview?.state === 'Interrupted' ? reasonMessage(preview.reason ?? t('m_132d124d6bb3')) : preview?.state === 'Ended' ? reasonMessage(preview.reason ?? t('m_99df459b70fb')) : '');
-  return <><SettingRow label={t('m_46124e023603')} icon="volume_up" value={label(value)} disabled={disabled} onPress={() => setOpen(true)} />
+  return <><SettingRow intent="picker" label={t('m_46124e023603')} icon="volume_up" value={label(value)} disabled={disabled} onPress={() => setOpen(true)} />
     <Sheet title={t('m_0fb95a89117b')} visible={open} onClose={close}>
       <Copy muted>{t('m_2dd2503b3307')}</Copy>
       {(['remilo', 'system'] as const).map((sound) => {

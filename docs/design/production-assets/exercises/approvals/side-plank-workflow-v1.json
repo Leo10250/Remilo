@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:29:53.412788+00:00",
+  "assetId": "side-plank",
+  "candidate": 1,
+  "candidateSha256": "faa74dc267401768d9ec5fc3c4cae7a3ea3e5207234a0af45e93d388ce37e5c9",
+  "reviewSha256": "bd670048060d09fbc1adfef13f09ec4f142d5d40cb020f954df8476ee1983250",
+  "reviewRecordSha256": "8df107c832634786170ab49662361cb2566e949886553d86c16086f2ace24585",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": [],
+  "version": 1,
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/side-plank/prepared-01.json",
+    "sha256": "b8a2760378c1757a55e65f8ba34c0b3a12bb6eb495a568b18c31fbf8d60b312b"
+  },
+  "reviewRecord": {
+    "path": "docs/design/production-assets/exercises/records/side-plank/review-01-02.json",
+    "sha256": "8df107c832634786170ab49662361cb2566e949886553d86c16086f2ace24585"
+  },
+  "files": [
+    {
+      "sha256": "faa74dc267401768d9ec5fc3c4cae7a3ea3e5207234a0af45e93d388ce37e5c9",
+      "width": 1672,
+      "height": 941,
+      "size": [
+        1672,
+        941
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": false,
+      "iccSha256": null,
+      "iccDescription": null,
+      "iccValid": null,
+      "exifOrientation": 1,
+      "displaySize": [
+        1672,
+        941
+      ],
+      "role": "source",
+      "path": "assets/exercises/masters/side-plank-v1.png",
+      "bytesPreserved": true
+    },
+    {
+      "sha256": "ebcf8b29c2370bb51b27f15024af2ff36397b2557c7400e479f2e22db6837048",
+      "role": "runtime",
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "transform": {
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "sourceDisplaySize": [
+          1672,
+          941
+        ],
+        "targetSize": [
+          960,
+          540
+        ],
+        "contentRectPx": [
+          0,
+          0,
+          959,
+          540
+        ],
+        "fit": "contain",
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "upscaled": false,
+        "resizeFilter": "Lanczos",
+        "mask": null,
+        "colorPolicy": "Untagged pixels interpreted as sRGB; no measured color-space assertion",
+        "orientationApplied": true,
+        "addedSourceDetail": false
+      },
+      "exportSpec": {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "11.1.0",
+        "libwebpVersion": "1.3.2",
+        "losslessScope": "Exact transformed pixels, all channels verified"
+      },
+      "path": "assets/exercises/side-plank-v1.webp",
+      "cropProfiles": {
+        "focus-narrow": {
+          "viewportDp": [
+            256,
+            144
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        },
+        "focus-wide": {
+          "viewportDp": [
+            320,
+            180
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        }
+      },
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "master-size",
+      "status": "pass",
+      "detail": "Actual [1672, 941]; minimum [960, 540]"
+    },
+    {
+      "id": "master-format",
+      "status": "pass",
+      "detail": "Actual PNG"
+    },
+    {
+      "id": "master-alpha",
+      "status": "pass",
+      "detail": "Alpha extrema [0, 255]"
+    },
+    {
+      "id": "master-color",
+      "status": "pass",
+      "detail": "Untagged source explicitly interpreted as sRGB"
+    },
+    {
+      "id": "export:runtime",
+      "status": "pass",
+      "detail": "Deterministic pixels prepared without undeclared enlargement"
+    }
+  ],
+  "inspection": {
+    "reviewer": "Assistant after viewing original, unchanged previously inspected approved style input, decoded export, light/dark/checkerboard panels, both usage sizes and all eight current container colors; independent pose/readability observation by second assistant reviewer",
+    "recordedAtUtc": "2026-10-16T05:28:21.449698+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Viewed the source and decoded runtime: one adult demonstrates a side forearm plank on one simple mat, with free hand resting on the upper hip. No extra person or equipment observed."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Compared with the actual approved front-plank master: blue-gray top, muted terracotta leggings, hair bun, restrained outlines, natural proportions, softly shaded fabric/body and mat retain the approved educational illustration style."
+      },
+      {
+        "name": "pose-readability",
+        "status": "pass",
+        "observation": "Supporting forearm/elbow and stacked feet are visible on the mat; upper arm reads approximately vertical beneath the shoulder, hips are visibly lifted and both legs extended. Free hand is on hip. Foreshortening affects the forearm but does not obscure its support role. No obvious extra/missing limb, disconnected joint, impossible bend or conflicting contact observed; independent second reviewer agreed. This is visual plausibility, not clinical validation."
+      },
+      {
+        "name": "alpha-and-decoded-edges",
+        "status": "pass",
+        "observation": "Viewed source/export light and dark composites, decoded checkerboard, and all eight current container colors. Surrounding area is transparent with no visible rectangular backdrop, distracting matte edge, colored fringe or opaque halo. Fine hair edges and mat shadow remain acceptable at reviewed sizes."
+      },
+      {
+        "name": "usage-framing",
+        "status": "pass",
+        "observation": "Viewed actual source/export 256x144 and 320x180 panels and eight current 320x180 container composites. Full head, supporting hand/forearm, both feet and mat remain within contain bounds. Supporting contacts and stacked-foot silhouette remain readable; separate toe outlines are clearer at 960x540 than at 320x180."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No visible text, labels, arrows, numbers, app controls, phone frame, scenery, logo or watermark observed in the candidate/export."
+      }
+    ],
+    "limitations": [
+      "Visual posture observations are not clinical or biomechanical validation.",
+      "Untagged source pixels are explicitly interpreted as sRGB under the profile, without claiming measured embedded sRGB or a color conversion.",
+      "Usage boards are deterministic illustration composites using current presentation.json container colors, not actual RN/native component renders, text/control contrast measurements or signed-phone acceptance.",
+      "Human artwork and activation approval remain pending; no production promotion performed."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "7f425224cba2a9ef7f905f2662fa999becdc86aee2940ae92861fe6575222dce"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/source-light-v1.png",
+        "sha256": "25e8050a050ece97d80a963025a69aa714b2a12106a45711cef83b3d933413df"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/source-dark-v1.png",
+        "sha256": "0d301f6a6bf42cfce1923b0c0fbbbd23fa0f4d5cadce369df834930685223b10"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/export-light-v1.png",
+        "sha256": "4f64b754e7896ab0978dcb4277f211af93ee314081818add29d3caf8926f6d0f"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/export-dark-v1.png",
+        "sha256": "7be45c97e37f50131e18012629f663afcb3c34b100cf839961a81b1220c0cc35"
+      }
+    ]
+  },
+  "exceptionsDoNotAmendMeasuredConformance": true
+}

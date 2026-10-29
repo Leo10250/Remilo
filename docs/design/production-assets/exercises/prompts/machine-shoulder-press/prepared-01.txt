@@ -1,0 +1,9 @@
+Use case: scientific-educational
+Asset/use: Remilo exercise library, one transparent exercise cutout in a wide16:9 frame up to320x180dp with optional enlarged view.
+Primary request: An adult doing a seated MACHINE shoulder press, on a clearly recognizable unbranded selectorized overhead-press machine. This is a separate equipment choice from the dumbbell press.
+Input 1: Approved Front plank supplies the same woman, blue-gray top, muted terracotta leggings, natural anatomy and softly shaded educational illustration style; add plain gray shoes. Change the pose and equipment completely.
+Posture: Seated with back supported by near-upright padded backrest, feet planted apart. Both hands wrap around separate shoulder-press handles above and beside the shoulders. Bent elbows align beneath the handles; two lever arms move upward in a plausible overhead pressing path. Upright torso without excessive back arch, neutral wrists, face unobscured.
+Equipment: A single complete simple gray shoulder-press machine with seat/backrest, two overhead pivoting levers ending in clearly attached handles, solid supported frame and a small weight stack. Hands and mechanical connections coherent. No numbers, brand or labels. Do not draw dumbbells.
+Composition: Three-quarter front view showing both hand grips and the overhead lever arms, person and entire machine fully contained. Include generous transparent breathing room above the machine and beneath feet/base. Wide16:9, centered subject/machine.
+Output/style: Transparent PNG at least960x540pixels, clean restrained shading and clear silhouette matching the reference. Genuine transparency around equipment and person.
+Exclude: Gym, floor/background, UI, text, arrows, numbers, logos, watermark, muscle overlays, extra people, duplicate limbs or disconnected machine parts. One illustration only.

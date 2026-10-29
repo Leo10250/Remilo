@@ -1,0 +1,9 @@
+Use case: scientific-educational
+Asset/use: Remilo bundled exercise illustration; transparent cutout in a 16:9 frame up to 320 x 180 dp. Shared illustration for authored running intervals or easy jog; do not depict a training prescription.
+Primary request: One adult running at an easy, natural stride, viewed from the side facing left.
+Input 1: Approved Front plank illustration for the same person, softly shaded educational style, natural proportions, neutral blue-gray top and muted terracotta leggings. Change posture to running; add plain neutral running shoes.
+Posture: Upright relaxed trunk with slight natural forward lean, elbows bent and arms counter-swinging, one knee forward and the other leg behind in a recognizable running gait. Natural anatomy, feet and hands complete.
+Composition: Entire adult centered on a wide landscape 16:9 transparent canvas with comfortable margins. No mat, equipment, ground plane, landscape or scene. Preserve clear silhouette at 256 x 144 dp.
+Style: Soft educational shading and restrained outlines, consistent clothing and palette with pilot. No excessive facial detail.
+Output target: Transparent PNG at least 960 x 540 pixels, genuine transparency around subject.
+Exclude: All text, numbers, arrows, motion streaks, labels, logos, watermark, UI, scenery, alternate poses, extra people or equipment. One illustration asset only.

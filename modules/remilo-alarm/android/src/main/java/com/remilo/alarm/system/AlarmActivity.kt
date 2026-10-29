@@ -16,6 +16,7 @@ import com.remilo.alarm.core.DeliverySnapshot
 import com.remilo.alarm.core.PostponeDraft
 import com.remilo.alarm.core.PostponePickerDraft
 import com.remilo.alarm.core.PostponeTimePolicy
+import com.remilo.alarm.core.AlarmPresentationPolicy
 import com.remilo.alarm.data.AlertRecord
 import com.remilo.alarm.engine.AlarmEngine
 import com.remilo.alarm.presentation.AtmosphereTokens
@@ -52,6 +53,9 @@ class AlarmActivity : ComponentActivity() {
   private val guard = SessionRefreshGuard()
   private var pendingCommand: Map<String, Any?>? = null
   private var deferredIntent: Intent? = null
+  private var navigatingRoutine = false
+  private val cutoffHandler = android.os.Handler(android.os.Looper.getMainLooper())
+  private var cutoffTask: Runnable? = null
   private val unconfirmed = mutableStateOf(false)
   private var observation: AutoCloseable? = null
   private lateinit var engine: AlarmEngine
@@ -66,7 +70,7 @@ class AlarmActivity : ComponentActivity() {
     val preserveAction = pendingCommand != null || busy.value || unconfirmed.value || postpone.value != null
     // Keep the selected session and exact retry even when a later alarm starts a new group.
     if (!guard.select(id, pendingCommand != null, busy.value, unconfirmed.value, choosing = postpone.value != null)) {
-      if (id != this.intent.getStringExtra("sessionId")) deferredIntent = Intent(intent)
+      if (id != this.intent.getStringExtra("sessionId") || intent.hasExtra("startRoutineId")) deferredIntent = Intent(intent)
       refresh(); return
     }
     setIntent(intent)
@@ -88,13 +92,20 @@ class AlarmActivity : ComponentActivity() {
       if (!isDestroyed && guard.accepts(ticket) && current.id == ticket.sessionId) {
         snapshot.value = current
         refreshError.value = null
+        scheduleSnoozeCutoff(current)
         val draft = postpone.value
         if (draft != null && pendingCommand == null && !busy.value && !unconfirmed.value &&
           !draft.matches(current.id, current.state, current.members.map { DeliverySnapshot.Member(it.first.occurrenceId, it.first.generation) })) {
           postpone.value = draft.copy(stale = true, picker = null)
           dismissPicker()
         }
-        if (SessionRefreshGuard.mayDismiss(current.state, pendingCommand != null, busy.value, unconfirmed.value)) {
+        val startId = intent.getStringExtra("startRoutineId")
+        if (startId != null && pendingCommand == null && !busy.value && !unconfirmed.value && postpone.value == null) {
+          val generation = intent.getLongExtra("startRoutineGeneration", -1)
+          intent.removeExtra("startRoutineId")
+          current.members.firstOrNull { it.first.occurrenceId == startId && it.first.generation == generation && it.first.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }?.let { act("StartRoutine", it.first) }
+        }
+        if (SessionRefreshGuard.mayDismiss(current.state, pendingCommand != null, busy.value, unconfirmed.value || navigatingRoutine)) {
           discardPostpone()
           val incoming = deferredIntent
           if (incoming != null) { deferredIntent = null; select(incoming) } else finish()
@@ -102,6 +113,17 @@ class AlarmActivity : ComponentActivity() {
       }
     } }, { runOnUiThread { if (!isDestroyed && guard.accepts(ticket)) refreshError.value = if (snapshot.value == null) "Could not load alarm controls." else "Could not refresh alarm controls." } })
   }
+  private fun scheduleSnoozeCutoff(current: AlarmEngine.SessionSnapshot) {
+    cutoffTask?.let(cutoffHandler::removeCallbacks); cutoffTask = null
+    if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
+    val next = current.members.map { it.first }.filter { it.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }
+      .map { it.expiresAtMs - it.snoozeMinutes * 60_000L }.filter { it > current.observedAtMs }.minOrNull() ?: return
+    cutoffTask = Runnable { if (!isDestroyed && !isFinishing) refresh() }.also {
+      cutoffHandler.postDelayed(it, (next - current.observedAtMs + 1).coerceAtLeast(1L))
+    }
+  }
+  override fun onResume() { super.onResume(); refresh() }
+  override fun onPause() { cutoffTask?.let(cutoffHandler::removeCallbacks); cutoffTask = null; super.onPause() }
   private fun act(kind: String, record: AlertRecord? = null) {
     if (kind in setOf("Postpone", "PostponeAll")) { openPostpone(kind == "PostponeAll", record); return }
     val current = snapshot.value ?: return
@@ -109,13 +131,13 @@ class AlarmActivity : ComponentActivity() {
     error.value = null; refreshError.value = null
     val title = current.members.firstOrNull { it.first.occurrenceId == record?.occurrenceId }?.second ?: "Reminder"
     progress.value = when (kind) { "DoneAll" -> "Completing ${current.members.size} reminders…";
-      "SnoozeAll" -> "Snoozing ${current.members.size} reminders…"; "Snooze" -> "Snoozing $title…"; else -> "Completing $title…" }
-    val command = mutableMapOf<String, Any?>("kind" to kind, "operationId" to UUID.randomUUID().toString(),
+      "SnoozeAll" -> "Snoozing ${current.members.size} reminders…"; "Snooze", "SnoozeRoutineAlarm" -> "Snoozing $title…"; "StartRoutine", "DismissRoutineAlarm" -> "Dismissing alarm…"; else -> "Completing $title…" }
+    val command = mutableMapOf<String, Any?>("kind" to if (kind == "StartRoutine") "DismissRoutineAlarm" else kind, "openRoutine" to (kind == "StartRoutine"), "date" to record?.nominalSlot?.substringBefore('T'), "operationId" to UUID.randomUUID().toString(),
       "expectedSessionId" to current.id, "occurrenceId" to record?.occurrenceId, "expectedGeneration" to record?.generation)
     if (kind in setOf("DoneAll", "SnoozeAll")) command["members"] = DeliverySnapshot.maps(current.members.map {
       DeliverySnapshot.Member(it.first.occurrenceId, it.first.generation) })
     if (kind == "SnoozeAll") command["snoozeMinutes"] = current.members.first().first.snoozeMinutes
-    if (kind == "Snooze") command["expectedSnoozeMinutes"] = record?.snoozeMinutes
+    if (kind in setOf("Snooze", "SnoozeRoutineAlarm")) command["expectedSnoozeMinutes"] = record?.snoozeMinutes
     pendingCommand = command
     sendAction(command)
   }
@@ -125,7 +147,7 @@ class AlarmActivity : ComponentActivity() {
     val selected = if (all) current.members.map { it.first } else current.members.map { it.first }.filter {
       it.occurrenceId == record?.occurrenceId && it.generation == record?.generation
     }
-    if (selected.isEmpty()) { refresh(); return }
+    if (selected.isEmpty() || !AlarmPresentationPolicy.canPostpone(selected.map { it.profile })) { refresh(); return }
     val at = System.currentTimeMillis()
     val zone = ZoneId.systemDefault().id
     val target = PostponeTimePolicy.resolve(mapOf("kind" to "Relative", "zoneId" to zone, "referenceAtMs" to at, "minutes" to 15))
@@ -164,6 +186,10 @@ class AlarmActivity : ComponentActivity() {
     if (busy.value || pendingCommand != null || unconfirmed.value || draft.stale || draft.picker != null) return
     val current = snapshot.value ?: return
     if (!draft.matches(current.id, current.state, current.members.map { DeliverySnapshot.Member(it.first.occurrenceId, it.first.generation) })) {
+      postpone.value = draft.copy(stale = true)
+      return
+    }
+    if (!AlarmPresentationPolicy.canPostpone(current.members.map { it.first }.filter { record -> draft.members.any { it.occurrenceId == record.occurrenceId } }.map { it.profile })) {
       postpone.value = draft.copy(stale = true)
       return
     }
@@ -282,6 +308,18 @@ class AlarmActivity : ComponentActivity() {
           error.value = message
           Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
+        if (status?.get("status") == "Applied" && command["openRoutine"] == true) {
+          val open = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("remilo://reminder/${command["occurrenceId"]}")).setPackage(packageName)
+          val keyguard = getSystemService(android.app.KeyguardManager::class.java)
+          if (keyguard.isKeyguardLocked) {
+            navigatingRoutine = true
+            keyguard.requestDismissKeyguard(this, object : android.app.KeyguardManager.KeyguardDismissCallback() {
+              override fun onDismissSucceeded() { navigatingRoutine = false; startActivity(open); refresh() }
+              override fun onDismissCancelled() { navigatingRoutine = false; refresh() }
+              override fun onDismissError() { navigatingRoutine = false; refresh() }
+            })
+          } else startActivity(open)
+        }
         if (status?.get("status") == "Applied" && command["kind"] in setOf("CompleteDelivery", "DoneAll")) {
           val message = if (command["kind"] == "DoneAll") "${status["count"]} reminders completed" else "Reminder completed"
           Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -308,6 +346,7 @@ class AlarmActivity : ComponentActivity() {
       if (saved.getString("sessionId") != null) {
         pendingCommand = mapOf<String, Any?>("kind" to saved.getString("kind"), "operationId" to saved.getString("operationId"),
           "expectedSessionId" to saved.getString("sessionId"), "occurrenceId" to saved.getString("occurrenceId"),
+          "date" to saved.getString("date"), "openRoutine" to saved.getBoolean("openRoutine"),
           "expectedGeneration" to if (saved.containsKey("generation")) saved.getLong("generation") else null).toMutableMap().also { command ->
           val ids = saved.getStringArray("memberIds")
           val generations = saved.getLongArray("memberGenerations")
@@ -384,6 +423,7 @@ class AlarmActivity : ComponentActivity() {
     postpone.value?.let { outState.putBundle("postponeDraft", PostponeSavedState.save(it)) }
     pickerDialog?.onSaveInstanceState()?.let { outState.putBundle("postponePickerView", it) }
     pendingCommand?.let { command -> outState.putBundle("pendingAction", Bundle().apply {
+      putString("date", command["date"] as? String); putBoolean("openRoutine", command["openRoutine"] == true)
       putString("kind", command["kind"] as String); putString("operationId", command["operationId"] as String)
       putString("sessionId", command["expectedSessionId"] as String)
       putString("occurrenceId", command["occurrenceId"] as? String)
@@ -399,5 +439,5 @@ class AlarmActivity : ComponentActivity() {
     }) }
     super.onSaveInstanceState(outState)
   }
-  override fun onDestroy() { observation?.close(); dismissPicker(); super.onDestroy() }
+  override fun onDestroy() { cutoffTask?.let(cutoffHandler::removeCallbacks); observation?.close(); dismissPicker(); super.onDestroy() }
 }

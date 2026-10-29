@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:29:53.412788+00:00",
+  "assetId": "side-plank",
+  "candidate": 1,
+  "candidateSha256": "faa74dc267401768d9ec5fc3c4cae7a3ea3e5207234a0af45e93d388ce37e5c9",
+  "reviewSha256": "bd670048060d09fbc1adfef13f09ec4f142d5d40cb020f954df8476ee1983250",
+  "reviewRecordSha256": "8df107c832634786170ab49662361cb2566e949886553d86c16086f2ace24585",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

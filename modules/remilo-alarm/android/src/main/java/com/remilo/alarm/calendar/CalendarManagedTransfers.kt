@@ -185,6 +185,7 @@ class CalendarManagedTransfers(private val state: CalendarAutomaticAccess, priva
     }
   }
   fun publish(token: String, intent: CalendarManagedExport, background: Boolean): String {
+    var operationId = intent.operationId
     try {
       budget()
       val connection = state.access { it.connection() }
@@ -200,13 +201,15 @@ class CalendarManagedTransfers(private val state: CalendarAutomaticAccess, priva
       if (intent.operationId.isNotEmpty() && state.access(true) { it.supersedeManagedPublication(intent.operationId) }) return "Deferred"
       val job = if (intent.state == "Captured") state.access { it.operation(intent.operationId) } ?: throw CalendarFailure("NOT_FOUND")
         else state.access(true) { it.captureManagedPublication(intent.localId, UUID.randomUUID().toString(), calendar) }
+      operationId = job.operationId
       if (job.state != "Published") {
         val active = state.access(true) { it.begin(job.operationId) } ?: throw CalendarFailure("INELIGIBLE")
         CalendarPublisher(state, transport).publish(active, token)
       }
       val outcome = state.access { it.operation(job.operationId) } ?: return "Excluded"
+      if (outcome.state == "Cancelled" || state.access { it.managed.intent(intent.localId)?.state } == "Cancelled") return "Excluded"
       if (outcome.state != "Published") {
-        state.access(true) { it.managed.publicationFailed(intent.localId, if (outcome.attempted) "UNCONFIRMED_RESOURCE" else "RETRY", background) }
+        state.access(true) { it.managed.publicationFailed(intent.localId, if (outcome.attempted) "UNCONFIRMED_RESOURCE" else "RETRY", background, operationId) }
         return "Deferred"
       }
       budget()
@@ -215,7 +218,7 @@ class CalendarManagedTransfers(private val state: CalendarAutomaticAccess, priva
       return "Published"
     } catch (error: CalendarFailure) {
       if (error.code in setOf("BUDGET", "STALE_AUTHORIZATION", "STALE_PREVIEW")) return "Deferred"
-      state.access(true) { it.managed.publicationFailed(intent.localId, error.code, background) }
+      state.access(true) { it.managed.publicationFailed(intent.localId, error.code, background, operationId) }
       return if (error.code in setOf("NETWORK", "RETRY", "NOT_AVAILABLE")) "Deferred" else "Review"
     }
   }

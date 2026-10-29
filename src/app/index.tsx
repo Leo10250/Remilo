@@ -23,6 +23,8 @@ import { creationOrigin, listOriginParams, originParams, readRootSnapshot, retai
 import { activateNotice, CommandRecovery, ListNameSheet, notifyTrash, RootMore, RootNavigation, useCapturedCommand, useDestinationNavigation } from '../ui/navigation';
 import { useRootState } from '../ui/root-state';
 import { useAppearanceConfirmation } from '../ui/confirmation';
+import { RoutineActions, type RoutineActionTarget } from '../ui/routine-actions';
+import { CreationMenu } from '../ui/creation-menu';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
 import { calendarCancellation, calendarRowNotice } from '../domain/calendar-presentation';
@@ -54,6 +56,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const filterOpen = filterDraft !== null;
   const searchInput = useRef<TextInput>(null), searchFocusRequested = useRef(false);
   const [selected, setSelected] = useState<Occurrence | null>(null), [toast, setToast] = useLocalizedState<Toast | null>(null);
+  const [routineMenu, setRoutineMenu] = useState<RoutineActionTarget | null>(null);
+  const [refreshing, setRefreshing] = useState(false), refreshRunning = useRef(false);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
   const [editingList, setEditingList] = useState<ListRecord | null>(null), [listGuarded, setListGuarded] = useState(false), [initialNow] = useState(Date.now);
   const [savedScroll] = useState(()=>readRootSnapshot(key + ':scroll', 0));
@@ -80,6 +84,13 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   });
   const guarded = action.guarded || listGuarded;
   const isGuarded = () => action.isGuarded() || listGuarded;
+  const refreshAgenda = async () => {
+    if (refreshRunning.current || isGuarded() || !nativeAvailable) return;
+    refreshRunning.current = true; setRefreshing(true);
+    try { await engine().reconcile(); await client.invalidateQueries(); }
+    catch (error) { setToast({ message: errorText(error, t('m_1573dcd227e5')), persistent: true }); }
+    finally { refreshRunning.current = false; setRefreshing(false); }
+  };
   useAppearanceHold(searching || guarded);
   useEffect(() => {
     if (!searching || !searchFocusRequested.current || guarded) return;
@@ -122,12 +133,10 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const emptyCreate = canCreateFromEmptyAgenda({ native: nativeAvailable, scoped, view, searching: searching || !!search,
     optionalFilters: chips.length, items: items.length, total: totals?.total, success: reminders.isSuccess,
     fetching: reminders.isFetching, error: !!reminders.error, placeholder: reminders.isPlaceholderData });
-  const createReminder = () => {
-    if (isGuarded() || !nativeAvailable || missingList) return;
-    Keyboard.dismiss(); router.push(destination.kind === 'list' ? { pathname: '/edit', params: listOriginParams(destination.listId) } : '/edit');
-  };
+  const [creationMenu, setCreationMenu] = useState(false), creationTrigger = useRef<View>(null);
+  const create = () => { if (!isGuarded() && nativeAvailable && !missingList) { Keyboard.dismiss(); setCreationMenu(true); } };
   const sections = [...groups].map(([group, data]) => ({ key: group, title: groupTitle(group, new Date(capabilities.data?.observedAtMs ?? initialNow)), count: totals?.groups[group] ?? data.length, data: collapsed.includes(group) ? [] : data }));
-  const open = (item: Occurrence) => { Keyboard.dismiss(); router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination) } }); };
+  const open = (item: Occurrence) => { Keyboard.dismiss(); if (item.routine) router.push({ pathname: '/routine-session', params: { id: item.routine.routineId, date: item.routine.date } }); else router.push({ pathname: '/reminder/[id]', params: { id: item.id, ...originParams(destination) } }); };
   const complete = (item: Occurrence) => {
     if (isGuarded()) return;
     if (notice) dismissNotice(notice.id); setToast(null); animate();
@@ -205,7 +214,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       <BrowseFilterButton count={chips.length} disabled={guarded} expanded={filterOpen} onPress={openFilters} />
     </View>
     {!!chips.length && <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}><BrowseFilterChips chips={chips} disabled={guarded} onRemove={removeFilter} onReset={resetFilters} /></View>}
-    {!!search && !searching && <SettingRow label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
+    {!!search && !searching && <SettingRow intent="action" label={t('m_3363e5f143b7') + search} value={t('m_3b7ea51793e9')} disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
     {missingList && <View style={{ padding: 16, gap: 8 }}><Copy>{t('m_1e930ff715ad')}</Copy><Button label={t('m_8055353d4b41')} disabled={guarded}
       onPress={() => router.replace({ pathname: '/lists/[id]', params: { id: 'none', noList: 'true', ...originParams(origin), ...retainedOriginParams(params) } })} /></View>}
     {!!warning && <Pressable accessibilityRole="button" accessibilityLabel={warning + t('m_cd7dac8a7f6b')} disabled={guarded}
@@ -214,7 +223,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {!scoped && !!calendarSummary.data?.reviewCount && <View style={{ marginBottom: 12 }}><CalendarAttentionCard count={calendarSummary.data.reviewCount} tone={calendarSummary.data.attention?.tone} disabled={guarded}
       onPress={() => router.push({ pathname: '/calendar-reviews', params: originParams(destination) })} /></View>}
     {!!caps?.activeSessionActions?.members.length && <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={t('m_e0b2d5621800') + caps.activeSessionActions.members.length + ')'} disabled={guarded}
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="check" label={t('mark_all_done_count', { count: caps.activeSessionActions.members.length })} disabled={guarded}
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
           kind: 'DoneAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })), operationId: engine().createOperationId(),
         }, success: captured.members.length + t('m_a6167e44d2cf') }); }} /></View>
@@ -226,19 +235,19 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     </View>}
     {!!reminders.error && !!items.length && <View><ActionFeedback message={t('m_3d982a3fc277')} tone="danger" /><Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void reminders.refetch()} /></View>}
 </>}
-        refreshing={reminders.isRefetching} onRefresh={() => { void engine().reconcile().then(() => client.invalidateQueries()).catch((error: Error) => setToast({ message: errorText(error, t('m_1573dcd227e5')), persistent: true })); }}
+        refreshing={refreshing} onRefresh={() => void refreshAgenda()}
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
-        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={() => complete(item)} onMore={() => { if (!isGuarded()) setSelected(item); }} busy={guarded} />}
+        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={item.routine ? undefined : () => complete(item)} onMore={() => { if (!isGuarded()) { if (item.routine) setRoutineMenu({ id: item.routine.routineId, date: item.routine.date }); else setSelected(item); } }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? t('m_2ff2d9a672c5') : search || chips.length ? t('m_75bf15d2c28d') : view === 'today' ? t('m_fc926e22caaa') : view === 'upcoming' ? t('m_e22b01420e5f') : scoped ? t('m_284f8a392982') : t('m_057d33f49512')} onRetry={() => void reminders.refetch()} />
-          {emptyCreate && <Button label={t('m_1ee0df0ecf27')} disabled={guarded} onPress={createReminder} />}
+          {emptyCreate && <Button label={t('create_title')} buttonRef={creationTrigger} disabled={guarded} onPress={create} />}
           {!!search && <Button label={t('m_3b7ea51793e9')} variant="secondary" disabled={guarded} onPress={() => { if (!isGuarded()) setSearch(''); }} />}
           {!!chips.length && <Button label={t('m_10afa98480f2')} variant="secondary" disabled={guarded} onPress={resetFilters} />}</View>}
         ListFooterComponent={reminders.isFetchingNextPage ? <ActionFeedback loading message={t('m_964e5f88d036')} /> : reminders.isFetchNextPageError ? <Button label={t('m_6c13d1198cd5')} variant="secondary" onPress={() => void reminders.fetchNextPage()} /> : null} />
-      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel={t('m_cd566803bf39')} accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
-        onPress={createReminder}
+      {!emptyCreate && <Pressable accessibilityRole="button" accessibilityLabel={t('create_title')} accessibilityState={{ disabled: !nativeAvailable || missingList || guarded }} disabled={!nativeAvailable || missingList || guarded}
+        ref={creationTrigger} onPress={create}
         style={({ pressed }) => ({ position: 'absolute', right: 16, bottom: 16, width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, elevation: 3, opacity: pressed ? 0.8 : 1 })}>
         <Icon name="add" color={colors.accentInk} size={28} /></Pressable>}
     </View>
@@ -246,17 +255,19 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     {activeToast && !action.guarded && <Snackbar key={toast ? 'local' : notice?.id} message={activeToast.message} persistent={activeToast.persistent} action={toast?.undo ? t('m_a8283ade3185') : !toast ? notice?.action?.label : undefined}
       onAction={() => { if (toast?.undo) void undo(toast.undo); else if (notice?.action) void activateNotice(notice).finally(() => { void client.invalidateQueries(); }); }}
       onClose={() => { if (toast) setToast(null); else if (notice) dismissNotice(notice.id); }} />}
+    <CreationMenu visible={creationMenu} onClose={() => setCreationMenu(false)} trigger={creationTrigger} params={destination.kind === 'list' ? listOriginParams(destination.listId) : undefined} />
     {!scoped && <RootNavigation destination="agenda" disabled={guarded} isGuarded={isGuarded} />}
     <BrowseFilterSheet title={t('m_76d11d556a30')} kind="agenda" draft={filterDraft} disabled={guarded} lists={lists.data ?? []} listsLoading={lists.isLoading && nativeAvailable}
       listsError={lists.error} onRetryLists={() => void lists.refetch()} fixedListId={fixedListId} fixedListName={listName}
       onDraftChange={next => { if (!isGuarded()) setFilterDraft(next); }} onCancel={() => setFilterDraft(null)}
       onApply={() => { if (filterDraft && commitFilters(filterDraft)) setFilterDraft(null); }} />
     <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => setSelected(null)}>
-      <SettingRow label={t('m_1f1353b055df')} icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
-      {!!selected && canAdjustAlert(selected) && <SettingRow label={t('m_63fb48d94634')} icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
-      <SettingRow label={t('m_62aa4b87cc52')} icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
-      <SettingRow label={t('m_9adcdf33dce1')} icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
+      <SettingRow intent="action" label={t('m_1f1353b055df')} icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
+      {!!selected && canAdjustAlert(selected) && <SettingRow intent="action" label={t('m_63fb48d94634')} icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
+      <SettingRow intent="action" label={t('m_62aa4b87cc52')} icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
+      <SettingRow intent="action" label={t('m_9adcdf33dce1')} icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
+    <RoutineActions target={routineMenu} onClose={() => setRoutineMenu(null)} />
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
       if (!trashItem || guarded) return;
       const captured = trashItem; setTrashItem(null); deleteItem(captured);

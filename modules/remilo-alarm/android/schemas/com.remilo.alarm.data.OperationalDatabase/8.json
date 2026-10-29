@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "848d76d92f0321341c8071cead845d4a",
+    "identityHash": "5d7804e1ece64d848da5b28b8a4e6f0a",
     "entities": [
       {
         "tableName": "alerts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`occurrenceId` TEXT NOT NULL, `targetMs` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `state` TEXT NOT NULL, `sessionId` TEXT, `mode` TEXT NOT NULL DEFAULT 'Alarm', `sound` TEXT NOT NULL DEFAULT 'remilo', `vibration` INTEGER NOT NULL DEFAULT 0, `snoozeMinutes` INTEGER NOT NULL DEFAULT 10, `previousState` TEXT DEFAULT NULL, `segmentId` TEXT DEFAULT NULL, `nominalSlot` TEXT DEFAULT NULL, `exception` INTEGER NOT NULL DEFAULT 0, `resolvedZone` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`occurrenceId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`occurrenceId` TEXT NOT NULL, `targetMs` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `state` TEXT NOT NULL, `sessionId` TEXT, `mode` TEXT NOT NULL DEFAULT 'Alarm', `sound` TEXT NOT NULL DEFAULT 'remilo', `vibration` INTEGER NOT NULL DEFAULT 0, `snoozeMinutes` INTEGER NOT NULL DEFAULT 10, `previousState` TEXT DEFAULT NULL, `segmentId` TEXT DEFAULT NULL, `nominalSlot` TEXT DEFAULT NULL, `exception` INTEGER NOT NULL DEFAULT 0, `resolvedZone` TEXT NOT NULL DEFAULT '', `profile` TEXT NOT NULL DEFAULT 'Reminder', `expiresAtMs` INTEGER NOT NULL DEFAULT 0, `dayEnded` INTEGER NOT NULL DEFAULT 0, `prompted` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`occurrenceId`))",
         "fields": [
           {
             "fieldPath": "occurrenceId",
@@ -96,6 +96,34 @@
             "affinity": "TEXT",
             "notNull": true,
             "defaultValue": "''"
+          },
+          {
+            "fieldPath": "profile",
+            "columnName": "profile",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Reminder'"
+          },
+          {
+            "fieldPath": "expiresAtMs",
+            "columnName": "expiresAtMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "dayEnded",
+            "columnName": "dayEnded",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "prompted",
+            "columnName": "prompted",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -217,7 +245,7 @@
       },
       {
         "tableName": "series_plans",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `rule` TEXT NOT NULL, `state` TEXT NOT NULL, `mode` TEXT NOT NULL, `sound` TEXT NOT NULL, `vibration` INTEGER NOT NULL, `snoozeMinutes` INTEGER NOT NULL, `resolvedZone` TEXT NOT NULL, `materializedThrough` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `rule` TEXT NOT NULL, `state` TEXT NOT NULL, `mode` TEXT NOT NULL, `sound` TEXT NOT NULL, `vibration` INTEGER NOT NULL, `snoozeMinutes` INTEGER NOT NULL, `resolvedZone` TEXT NOT NULL, `materializedThrough` TEXT, `profile` TEXT NOT NULL DEFAULT 'Reminder', PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -271,6 +299,13 @@
             "fieldPath": "materializedThrough",
             "columnName": "materializedThrough",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "profile",
+            "columnName": "profile",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Reminder'"
           }
         ],
         "primaryKey": {
@@ -404,7 +439,7 @@
       },
       {
         "tableName": "bulk_snooze_receipts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`operationId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `snapshotKey` TEXT NOT NULL, `occurredAtMs` INTEGER NOT NULL, `targetMs` INTEGER NOT NULL, `snoozeMinutes` INTEGER, `settled` INTEGER NOT NULL, `kind` TEXT NOT NULL DEFAULT 'SnoozeAll', PRIMARY KEY(`operationId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`operationId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `snapshotKey` TEXT NOT NULL, `occurredAtMs` INTEGER NOT NULL, `targetMs` INTEGER NOT NULL, `snoozeMinutes` INTEGER NOT NULL, `settled` INTEGER NOT NULL, PRIMARY KEY(`operationId`))",
         "fields": [
           {
             "fieldPath": "operationId",
@@ -439,20 +474,14 @@
           {
             "fieldPath": "snoozeMinutes",
             "columnName": "snoozeMinutes",
-            "affinity": "INTEGER"
+            "affinity": "INTEGER",
+            "notNull": true
           },
           {
             "fieldPath": "settled",
             "columnName": "settled",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "kind",
-            "columnName": "kind",
-            "affinity": "TEXT",
-            "notNull": true,
-            "defaultValue": "'SnoozeAll'"
           }
         ],
         "primaryKey": {
@@ -558,53 +587,11 @@
             "id"
           ]
         }
-      },
-      {
-        "tableName": "postpone_preferences",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tomorrowMorning` INTEGER NOT NULL, `tomorrowAfternoon` INTEGER NOT NULL, `tomorrowEvening` INTEGER NOT NULL, `revision` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "tomorrowMorning",
-            "columnName": "tomorrowMorning",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "tomorrowAfternoon",
-            "columnName": "tomorrowAfternoon",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "tomorrowEvening",
-            "columnName": "tomorrowEvening",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "revision",
-            "columnName": "revision",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '848d76d92f0321341c8071cead845d4a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5d7804e1ece64d848da5b28b8a4e6f0a')"
     ]
   }
 }

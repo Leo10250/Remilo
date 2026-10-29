@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:24:28.592140+00:00",
+  "assetId": "bird-dog",
+  "candidate": 1,
+  "candidateSha256": "8b6ccd761270d45e56713ac15e5393930bb55dbe58c6cf6b7cfd2370294e1f93",
+  "reviewSha256": "c668026c350853543f01914a59333daed7763eb7628951b82e569d0e5a33a5a2",
+  "reviewRecordSha256": "b9aabbc9e8865147983400ca4cddaaec75a8ac0cfe98318c413bb8c7621788ee",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

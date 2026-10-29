@@ -1,0 +1,74 @@
+{
+  "reviewer": "Delegated assistant after original/source/export light/dark/checkerboard, both helper sizes and all eight current surfaces at both sizes; independent UX original-source review",
+  "recordedAtUtc": "2026-10-16T07:10:43.031734+00:00",
+  "checks": [
+    {
+      "name": "identity",
+      "status": "pass",
+      "observation": "Supported one-arm dumbbell row is recognizable near the top of the pull, with one bent pulling arm beside the torso and a separate straight support arm."
+    },
+    {
+      "name": "style-consistency",
+      "status": "pass",
+      "observation": "Previously inspected approved front-plank person/style retained: blue-gray top, terracotta leggings, bun, natural adult proportions and restrained educational shading; plain gray shoes/bench/weight."
+    },
+    {
+      "name": "pose-and-contact",
+      "status": "pass",
+      "observation": "Flat support palm and bent knee visibly meet the bench pad. The separate pulling hand grips one dumbbell near the lower ribs; supporting shin/foot extends behind the knee and the other complete shoe appears planted. Back/neck are plausible and continuous. No duplicate/disconnected limb or material floating-contact defect observed. Independent source review agrees."
+    },
+    {
+      "name": "equipment-continuity",
+      "status": "pass",
+      "observation": "Exactly one gray hex dumbbell has a continuous handle/two matching ends and a visible wrapped hand grip. Horizontal bench pad, frame, angled legs and feet are continuous and fully contained; no disconnected equipment or invented weight label observed."
+    },
+    {
+      "name": "decoded-alpha",
+      "status": "pass",
+      "observation": "Viewed original/source/export light/dark and decoded checkerboard: clean transparency around/between person, dumbbell and bench; no distracting matte, colored fringe or visibly clipped extremity. Complete bun outline remains within the source."
+    },
+    {
+      "name": "small-usage-and-containment",
+      "status": "pass",
+      "observation": "Viewed source/runtime helper panels at 256x144 and 320x180 plus both-size all-eight current-container composites. Support hand/knee, pulling arm/weight and standing shoe remain recognizable. Full figure and bench remain contained; fine finger/contact detail is clearer enlarged."
+    },
+    {
+      "name": "interface-remnants",
+      "status": "pass",
+      "observation": "No weight number, text, labels, arrows, scenery, branding, UI, phone frame or watermark observed. The user's unspecified row weight is not invented."
+    }
+  ],
+  "limitations": [
+    "Top clearance is very tight: visible alpha>=128 bbox [366,7,1324,913] on 1672x941 gives approximately 1.3dp above and 5.4dp below at180dp height. Bun outline is complete; generous margins are not achieved.",
+    "No exact elbow angle, spinal/shoulder alignment or clinical exercise-form validation claimed. Equipment observations do not mechanically certify the bench/dumbbell.",
+    "Untagged source explicitly interpreted as sRGB under profile; no embedded-profile measurement or conversion claimed.",
+    "Deterministic boards use current presentation.json colors; actual native/RN rendering, measured text/control contrast and signed-phone acceptance remain separate.",
+    "Review is technical/visual only. Root records and binds the owner's standing artwork/activation approval; this reviewer performs no production promotion."
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "b1fa68c407333a6ef170c4caba62865db8d9401fd75ee68361ddd60877e75247"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/all-atmospheres-256x144-v1.png",
+      "sha256": "66fba4cf9eda56b10868f3cd72eb9c5840c8a46f3b072dfdc906cea9b497faa9"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/source-light-v1.png",
+      "sha256": "5691defa4e14721ad56103678f5cfc7fb015dd117ccdd77683aaacca279f9dee"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/source-dark-v1.png",
+      "sha256": "8c2a7f32454670cc6502b5cf9f687e2eb58f7c7a6556eaa1bbb11d4d2f5b952f"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/export-light-v1.png",
+      "sha256": "bdc8400e866e2e6e5c9f95849e6b5485efb48681149ad6e53d14b1c6f6930d1f"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/export-dark-v1.png",
+      "sha256": "ddb6440b9ef0e79093919edb07a1784a176399358f47f4e0d51222f78f5c2a3e"
+    }
+  ]
+}

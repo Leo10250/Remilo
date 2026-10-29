@@ -23,7 +23,7 @@ export function CalendarSummaryRow({ id, link, publication, jobs, origin, disabl
   const disposition = useQuery({ queryKey: ['calendar', 'disposition', id], queryFn: () => engine().getCalendarReminderDisposition(id), enabled: nativeAvailable });
   if (!link && !publication && !jobs.length && !disposition.data) return null;
   const summary = (!link || link.state === 'Detached') && disposition.data ? calendarDispositionLabel(disposition.data) : calendarSummary(link, publication, jobs);
-  return <ConnectedGroup><SettingRow icon="event" label={t('m_b074310e911f')} disabled={disabled}
+  return <ConnectedGroup><SettingRow intent="navigation" icon="event" label={t('m_b074310e911f')} disabled={disabled}
     description={summary + (link?.successfulAtMs != null ? t('m_00fe18e6060b') + scheduleDateTime(link.successfulAtMs) : '')}
     onPress={() => router.push({ pathname: '/calendar-manage', params: { id: link?.occurrenceId ?? id, ...origin, originReminderId: id } } as Href)} /></ConnectedGroup>;
 }

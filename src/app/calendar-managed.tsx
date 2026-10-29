@@ -96,8 +96,8 @@ export default function ManagedCalendar() {
     </> : <>
       <Copy muted>{mode === 'resume' ? t('m_b3654a56ff8e') : mode === 'recovered' ? t('m_46c4b1c0a26e') : mode === 'policy' ? t('m_0e641191fb8f') : t('m_173329670273')}</Copy>
       {mode === 'setup' && <ConnectedGroup title={t('m_4daf4f599e5c')}>
-        <SettingRow icon="event" label={t('m_7da2bcb6bb6b')} value={connection.data?.connected ? connection.data.email : t('m_0303e1824670')} description={connection.data?.connected ? undefined : t('m_e3b0eada86d6')} />
-        <SettingRow icon="event" label={t('m_d1f78591d052')} value={source?.name || (preview?.createCalendar ? t('m_23c9159672e0') : saved.data?.calendarName || (connection.data?.connected ? checking ? t('m_453d0743c738') : t('m_c45aab93dad2') : t('m_88cd4e78a673')))}
+        <SettingRow intent="action" icon="event" label={t('m_7da2bcb6bb6b')} value={connection.data?.connected ? connection.data.email : t('m_0303e1824670')} description={connection.data?.connected ? undefined : t('m_e3b0eada86d6')} />
+        <SettingRow intent="picker" icon="event" label={t('m_d1f78591d052')} value={source?.name || (preview?.createCalendar ? t('m_23c9159672e0') : saved.data?.calendarName || (connection.data?.connected ? checking ? t('m_453d0743c738') : t('m_c45aab93dad2') : t('m_88cd4e78a673')))}
           description={preview?.createCalendar ? t('m_f8b9614ab2a4') : source ? t('m_869ef35dc892') : preview?.calendarCandidates.length ? t('m_180f8f916659') : t('m_08fcf92a3a86')}
           disabled={locked || !preview?.calendarCandidates.length} onPress={preview?.calendarCandidates.length ? () => setSheet('calendar') : undefined} />
         {preview?.createCalendar && <TimeZoneField value={zone} atMs={zoneAtMs} disabled={locked} onChange={calendarZone => setDraft(old => ({ ...old, calendarZone }))} />}
@@ -118,12 +118,12 @@ export default function ManagedCalendar() {
               <RowSupport><Copy muted size={14}>{t('m_338b804f1e94')}</Copy></RowSupport></View>
           </ConnectedGroup>
           {policy.automaticImport && <ConnectedGroup title={t('m_9727cce5dbc9')} footer={<Copy muted size={14}>{t('m_b3ccc50b119d')}</Copy>}>
-            <SettingRow icon="alarm" label={t('m_ab30d609b7e2')} value={policy.importMode === 'None' ? t('m_d1af410eb4d0') : policy.importMode} disabled={locked} onPress={() => setSheet('alerts')} />
+            <SettingRow intent="picker" icon="alarm" label={t('m_ab30d609b7e2')} value={policy.importMode === 'None' ? t('m_d1af410eb4d0') : policy.importMode} disabled={locked} onPress={() => setSheet('alerts')} />
             {policy.importMode !== 'None' && <View><DateField label={t('m_54eb2244b919')} timeOnly value={allDayTime.getTime()} disabled={locked} onError={setError}
               onChange={value => { const date = new Date(value); updatePolicy({ allDayAlarmMinutes: date.getHours() * 60 + date.getMinutes() }); }} />
               <RowSupport><Copy muted size={14}>{zoneLabel} {t('m_b76eb494eaa2')}</Copy></RowSupport></View>}
           </ConnectedGroup>}
-          <ConnectedGroup><SettingRow icon="notifications" label={t('m_2d7a7719bc44')} value={policy.disableGoogleReminders ? t('m_372ce595191c') : t('m_2856380acc3a')}
+          <ConnectedGroup><SettingRow intent="picker" icon="notifications" label={t('m_2d7a7719bc44')} value={policy.disableGoogleReminders ? t('m_372ce595191c') : t('m_2856380acc3a')}
             description={policy.disableGoogleReminders ? t('m_a57bf69e8e1b') : t('m_0e928a7cd037')} disabled={locked} onPress={() => setSheet('google')} /></ConnectedGroup>
           <ConnectedGroup><Disclosure title={t('m_4a2622a4fb47')} summary={t('m_aff37c4e6bf2')} icon="info">
             <Copy muted size={14}>{t('m_f4f325445050')}</Copy>

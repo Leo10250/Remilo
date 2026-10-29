@@ -85,14 +85,15 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
   };
   const unit = rule.frequency === 'daily' ? t('m_ab51004e9d71') : rule.frequency === 'weekly' ? t('m_eb0d2375b518') : rule.frequency === 'yearly' ? t('m_1c50993b009c') : t('m_168374334431');
   return <>
-    <SettingRow icon="repeat" label={t('m_b6b7a0065808')} value={repeatLabel(value)} disabled={disabled || busy} onPress={() => { if (disabled || busy) return; setCustom(false); setMessage(''); setOpen(true); }} />
+    <SettingRow intent="picker" icon="repeat" label={t('m_b6b7a0065808')} value={repeatLabel(value)} disabled={disabled || busy} onPress={() => { if (disabled || busy) return; setCustom(false); setMessage(''); setOpen(true); }} />
     <Sheet title={custom ? t('m_78f1813922c0') : t('m_b6b7a0065808')} visible={open} onClose={close} onBack={() => { if (!busy) { if (custom) setCustom(false); else close(); } }}
       footer={custom ? <BottomActionBar><View style={{ flex: 1, gap: 8 }}>
         {busy && <ActionFeedback loading message={t('m_29080326dd40')} />}{!!message && <ActionFeedback message={message} tone="danger" />}
         <Button label={busy ? t('m_3329a9bb48b9') : t('m_050b04ca8915')} busy={busy} disabled={!valid || !preview.data || preview.isFetching || !!preview.error || !preview.data.upcoming.length} onPress={useRule} />
         <Button label={t('m_f0714b3053e2')} variant="neutral" disabled={busy} onPress={() => setCustom(false)} />
       </View></BottomActionBar> : undefined}>
-      <View pointerEvents={busy ? 'none' : 'auto'} importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
+      {/* Applying a repeat must not reparent the sheet's native controls. */}
+      <View collapsable={false} pointerEvents={busy ? 'none' : 'auto'} importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
         accessibilityElementsHidden={busy} style={{ gap: 12 }}>
       {!custom ? <>
         <Choice label={t('m_621d129ab80a')} selected={!value} onPress={() => void apply(undefined)} />
@@ -105,7 +106,7 @@ export function RepeatForm({ value, onChange, startMs, zoneId, previewDraft, has
       </> : <>
         <SelectRow label={t('m_16b6668d9831')} value={rule.frequency} choices={Object.entries(repeatNames).map(([frequency, label]) => ({ value: frequency as RecurrenceDraft['frequency'], label }))}
           onChange={(frequency) => patch({ frequency })} />
-        <Field label={t('m_87b340027980') + unit + ')'} keyboardType="number-pad" value={numbers.interval} error={validation.interval}
+        <Field label={t('repeat_interval_label', { unit })} keyboardType="number-pad" value={numbers.interval} error={validation.interval}
           onChangeText={(interval) => setNumbers((current) => ({ ...current, interval }))} />
         {rule.frequency === 'weekly' && <><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
           {dayNames.map((name, index) => { const selected = rule.weekdays?.includes(index + 1) ?? false; return <Pressable key={name}

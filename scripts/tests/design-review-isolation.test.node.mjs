@@ -99,6 +99,7 @@ function loadPreview(search) {
     '../../src/domain/calendar-link': compile('src/domain/calendar-link.ts'),
   });
   return compile('verification/ui/preview-engine.ts', {
+    './preview-routines': compile('verification/ui/preview-routines.ts', { '../../src/domain/time': time }, { structuredClone }),
     '../../src/domain/time': time,
     '../../src/domain/repeat': compile('src/domain/repeat.ts'),
     './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time, './preview-calendar-links': linked,
@@ -252,6 +253,7 @@ test('presentation stress scale is isolated, SSR-safe and retained through fixtu
       react: { useState: (initialize) => { if (!initialized) { initialized = true; retained = initialize(); } return [retained, () => {}]; } },
       'react/jsx-runtime': { jsx: (type, props) => ({ type, props }) },
       '../../src/ui/theme': { useTheme: () => colors, PresentationProvider: provider },
+      './confirmation-preview': { ConfirmationPreview: 'ConfirmationPreview' },
     }, { URLSearchParams, ...(search == null ? {} : { window }) }).default;
     const rendered = preview({ children: 'fixture' });
     assert.equal(rendered.type, provider); assert.equal(rendered.props.colors, colors);
@@ -330,6 +332,7 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
       '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
       './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
       './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},
+      './confirmation-state': compile('src/ui/confirmation-state.ts'),
     });
     // Model the header's foreground and scenic-control context; a Modal retains both.
     contexts.find((context) => context.value === false).value = true;
@@ -408,7 +411,7 @@ test('native atmosphere rendering leaves observation, guarded actions and confir
   const refreshEnd = activity.indexOf('private fun act(', refreshStart);
   assert.ok(refreshStart >= 0 && refreshEnd > refreshStart, 'Inspect the native refresh owner separately from action handlers.');
   const refresh = activity.slice(refreshStart, refreshEnd);
-  assert.match(refresh, /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null;\s*select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
+  assert.match(refresh, /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null;\s*select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
     'Only confirmed terminal state clears the draft, then selects a queued session or finishes when none exists.');
   assert.equal([...refresh.matchAll(/\bfinish\(\)/g)].length, 1, 'Refresh has no dismissal path outside the guarded terminal branch.');
   assert.match(sessionGuard, /fun mayDismiss\([^)]*\)\s*=\s*ended\(state\) && !pending && !busy && !unconfirmed/,
@@ -418,6 +421,23 @@ test('native atmosphere rendering leaves observation, guarded actions and confir
   assert.match(sessionGuard, /sessionId\.isNotEmpty\(\) && \(pending \|\| busy \|\| unconfirmed \|\| choosing\)/);
   assert.match(refresh, /draft != null && pendingCommand == null && !busy\.value && !unconfirmed\.value &&\s*!draft\.matches\([\s\S]*?postpone\.value = draft\.copy\(stale = true, picker = null\)\s*dismissPicker\(\)/,
     'Changed captured members invalidate only an unsubmitted draft and dismiss its provisional picker.');
+
+  assert.match(activity, /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)/,
+    'An acknowledged alarm dismissal retains the activity while routine unlock/navigation is pending.');
+  assert.match(activity, /if \(status\?\.get\("status"\) == "Applied" && command\["openRoutine"\] == true\)/,
+    'Only an acknowledged Start routine action opens private routine content.');
+  assert.match(activity, /if \(keyguard\.isKeyguardLocked\) \{\s+navigatingRoutine = true\s+keyguard\.requestDismissKeyguard/,
+    'Retain the activity before requesting unlock, so the ended session cannot discard its continuation.');
+  assert.match(activity, /override fun onDismissSucceeded\(\) \{ navigatingRoutine = false; startActivity\(open\); refresh\(\) \}/,
+    'Successful unlock opens the captured routine and then releases dismissal retention.');
+  for (const callback of ['onDismissCancelled', 'onDismissError']) {
+    const body = activity.match(new RegExp(`override fun ${callback}\\(\\) \\{([^}]+)\\}`))?.[1];
+    assert.ok(body, `${callback} must handle the pending routine continuation.`);
+    assert.match(body, /navigatingRoutine = false; refresh\(\)/,
+      `${callback} releases retention and refreshes the ended session.`);
+    assert.doesNotMatch(body, /startActivity/,
+      `${callback} must not open private content after an unsuccessful unlock.`);
+  }
   assert.match(activity, /deferredIntent = Intent\(intent\)/, 'Later alarm intents are retained while the current action is unresolved.');
   assert.match(activity, /pendingCommand\?\.get\("operationId"\) == command\["operationId"\]/, 'Action responses acknowledge the frozen operation rather than a mutable snapshot.');
   assert.match(activity, /if \(definitive && deferredIntent != null\)/, 'Only a definitive action response selects the queued session.');

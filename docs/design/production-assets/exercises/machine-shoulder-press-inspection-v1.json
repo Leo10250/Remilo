@@ -1,0 +1,82 @@
+{
+  "reviewer": "Delegated assistant after viewing original, decoded source/export light/dark/checkerboard, top details, both helper sizes and both-size all-eight boards; independent UX source review",
+  "recordedAtUtc": "2026-10-16T06:39:22.420920+00:00",
+  "checks": [
+    {
+      "name": "identity",
+      "status": "pass",
+      "observation": "Seated machine shoulder press is recognizable, with two handles raised above/beside the shoulders and bent elbows underneath."
+    },
+    {
+      "name": "style-consistency",
+      "status": "pass",
+      "observation": "Approved front-plank person/style retained: blue-gray top, terracotta leggings, bun, natural proportions and restrained educational shading; gray shoes/equipment."
+    },
+    {
+      "name": "pose-and-contact",
+      "status": "pass",
+      "observation": "Both hands visibly wrap their separate handles. Full arms, legs/shoes, supported back and hips/seat are coherent; feet read as planted. No obvious duplicated limb, floating grip or disconnected joint."
+    },
+    {
+      "name": "equipment-continuity",
+      "status": "pass",
+      "observation": "Handles visibly join separate pivoting levers; stack, frame, backrest, seat and base read as continuous equipment. Independent source reviewer found no material contact defect. This is visual plausibility, not engineering certification."
+    },
+    {
+      "name": "decoded-alpha",
+      "status": "pass",
+      "observation": "Source/export light/dark composites and checkerboard retain clean transparent surroundings/frame openings, without distracting colored fringe or matte. Actual cropped top details show both rounded cap outlines complete."
+    },
+    {
+      "name": "small-usage-and-containment",
+      "status": "pass",
+      "observation": "Viewed source/runtime 256x144 and320x180 helper panels and both-size all-eight current-container boards: complete machine and person remain recognizable and contained. Upper lever caps are not visibly cut; top breathing room is extremely tight (~0.8dp in180)."
+    },
+    {
+      "name": "interface-remnants",
+      "status": "pass",
+      "observation": "No text, numbers, logos, arrows, scenery, phone frame, watermark or app controls observed."
+    }
+  ],
+  "limitations": [
+    "Visible alpha>=128 bbox [433,4,1262,897] on1672x941 leaves ~0.8dp top clearance in180 frame. Both cap curves are complete; generous top margins are not achieved. Nonzero alpha reaches top/bottom only as faint noise; y0 maximum11, y1 maximum14, y2 maximum15.",
+    "Fine mechanism and finger detail is clearer enlarged. No clinical exercise-technique or mechanical-engineering validation claimed.",
+    "Untagged source is explicitly interpreted as sRGB under profile; no embedded profile or color conversion claimed.",
+    "Deterministic boards use current presentation.json container colors; they do not establish actual native/RN rendering, contrast measurement or signed-phone acceptance.",
+    "Human artwork and activation approval pending; no production promotion."
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "d832b271d5d2c8c2bfdcb0745668cfb8cd7bafc3fea710914509217d1e7e21ad"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/all-atmospheres-256x144-v1.png",
+      "sha256": "0d181363e96f1e2a44f4dc1e190296910b3bd801d1d9d3c473f983ef2d2b4327"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/source-light-v1.png",
+      "sha256": "1b91984ef7119ba500043f6776a39327d3cee1f8d364fedff848ac82145690eb"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/source-dark-v1.png",
+      "sha256": "cfc0b7bbc58780932a22b195f69794ac241ab5fd3779bebc702988574912f34e"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/export-light-v1.png",
+      "sha256": "c156c26a4ab9742396afd55bf50b42e49680fdd39f5d31d5fb9244af6938c281"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/export-dark-v1.png",
+      "sha256": "6dfbf87fcfca83930d3fe02fe90d932bb28ee1d1d5875d802ca4bf3f21f9f4d8"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/top-levers-light-v1.png",
+      "sha256": "1520f88ab7744a5b24a750a281c74573bf6cbd1032dedfafc2198bff0be108de"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/top-levers-dark-v1.png",
+      "sha256": "bd636e116db555a6f6fab7ebdab75bb6b0c2b36dea9a69642a624e79be9ec6ec"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ import { recoveryPresentation, commandFeedback, type Tone } from '../../domain/a
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
 import { modeLabel, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
-import { capturePostpone, postponeCaptureMatches, type PostponeCapture } from '../../domain/postpone';
+import { canPostponeReminder, capturePostpone, postponeCaptureMatches, type PostponeCapture } from '../../domain/postpone';
 import { PostponeChooser } from '../../ui/postpone-chooser';
 import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
 
@@ -41,6 +41,7 @@ export default function ReminderDetails() {
   const routeParams = useMemo(() => ({ ...originParams(origin), originCollection: params.originCollection, originFamily: params.originFamily,
     originSegmentId: params.originSegmentId, originReminderId: params.originReminderId }), [origin, params.originCollection, params.originFamily, params.originSegmentId, params.originReminderId]);
   const query = useQuery({ queryKey: ['occurrence', id], queryFn: () => engine().getOccurrence(id), enabled: nativeAvailable });
+  useEffect(() => { const routine = query.data?.routine; if (routine && !query.data?.deleted) router.replace({ pathname: '/routine-session', params: { id: routine.routineId, date: routine.date } }); }, [query.data]);
   const item = query.data, settings = useSettings(), command = useCommand(), colors = useTheme();
   const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(), enabled: nativeAvailable });
   const publication = calendar.data?.find((value) => value.occurrenceId === id);
@@ -75,7 +76,7 @@ export default function ReminderDetails() {
     if (!segmentId) router.replace({ pathname: '/edit', params: { id: itemId, ...routeParams, originReminderId: itemId } });
   }, [action, itemId, segmentId, routeParams]);
   useEffect(() => {
-    if (action !== 'postpone' || postponeFromRoute.current || !item || !settings.data || !canAdjustAlert(item)) return;
+    if (action !== 'postpone' || postponeFromRoute.current || !item || !settings.data || !canPostponeReminder(item)) return;
     postponeFromRoute.current = true;
     setPostponeCapture({ item: { ...item }, draft: capturePostpone(item, settings.data, Date.now(), deviceZone()) });
     setPostpone(true);
@@ -127,7 +128,7 @@ export default function ReminderDetails() {
   const delivery = async (kind: DeliveryCommand['kind'], alarmAtMs?: number) => {
     const captured = kind === 'Postpone' ? postponeCapture?.item : item;
     if (!captured || command.isPending || pendingOperation.current || !canAdjustAlert(captured) || kind === 'Stop' && captured.deliveryState !== 'Alerting') return;
-    if (kind === 'Postpone' && (!postponeCapture || !postponeCaptureMatches(postponeCapture.draft, item))) return;
+    if (kind === 'Postpone' && (!postponeCapture || !canPostponeReminder(captured) || !canPostponeReminder(item) || !postponeCaptureMatches(postponeCapture.draft, item))) return;
     if (kind === 'CompleteDelivery' && captured.deliveryState !== 'Alerting' && !(captured.mode === 'Notification' && captured.deliveryState === 'Notified')) return;
     pendingOperation.current = { command: { kind, occurrenceId: captured.id, expectedGeneration: captured.generation, alarmAtMs,
       ...(kind === 'Snooze' ? { expectedSnoozeMinutes: captured.quickSnoozeMinutes } : {}), operationId: engine().createOperationId() }, item: captured,
@@ -136,7 +137,7 @@ export default function ReminderDetails() {
   };
   const edit = () => { if (command.isPending || uncertain) return; setMenu(false); if (item?.segmentId) setScope(true); else router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); };
   const openPostpone = () => {
-    if (!item || !settings.data || command.isPending || pendingOperation.current || !canAdjustAlert(item)) return;
+    if (!item || !settings.data || command.isPending || pendingOperation.current || !canPostponeReminder(item)) return;
     setPostponeCapture({ item: { ...item }, draft: capturePostpone(item, settings.data, Date.now(), deviceZone()) });
     setSheetFeedback(null); setPostponeResult(false); setPostpone(true);
   };
@@ -149,7 +150,7 @@ export default function ReminderDetails() {
     catch (error) { if (calendarCaptureRejected(error)) { unlinkCommand.current = null; setUnlinkUncertain(false); } else setUnlinkUncertain(true); setFeedback({ message: calendarError(error), tone: 'warning' }); }
     finally { setUnlinkBusy(false); }
   };
-  const adjust = item && canAdjustAlert(item), completion = recordedCompletionTime(item?.history);
+  const adjust = item && canAdjustAlert(item), postponeEligible = canPostponeReminder(item), completion = recordedCompletionTime(item?.history);
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
   const recovery = recoveryPresentation(recoveryKind);
@@ -162,7 +163,7 @@ export default function ReminderDetails() {
       {item.deliveryState === 'Alerting' && <Copy muted size={typography.supporting}>{t('m_1ce1890d9f80')}</Copy>}
       <View style={{ width: '100%' }}><Button icon="check" label={t('m_62aa4b87cc52')} disabled={command.isPending || uncertain}
         onPress={() => void (item.deliveryState === 'Alerting' ? delivery('CompleteDelivery') : content('Done'))} /></View>
-      {adjust && <View style={{ width: '100%' }}><Button buttonRef={postponeTrigger} icon="schedule" label={t('postpone_action')} variant="secondary" disabled={command.isPending || uncertain || !settings.data} onPress={openPostpone} /></View>}
+      {postponeEligible && <View style={{ width: '100%' }}><Button buttonRef={postponeTrigger} icon="schedule" label={t('postpone_action')} variant="secondary" disabled={command.isPending || uncertain || !settings.data} onPress={openPostpone} /></View>}
       </>}
       {item.deleted ? <View style={{ flex: 1 }}><Button icon="undo" label={t('m_8451e1c4f068')} disabled={command.isPending || uncertain} onPress={() => void content('UndoDelete')} /></View> :
         (item.completed || item.skipped) && <View style={{ flex: 1 }}><Button icon="undo" label={item.skipped ? t('m_3d2391eae496') : t('m_a1dceb5971c8')} variant="secondary" disabled={command.isPending || uncertain} onPress={() => void content('Reopen')} /></View>}
@@ -196,37 +197,37 @@ export default function ReminderDetails() {
         <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
         {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>{t('m_cf71ed31217a')}</Copy>}
       </> : undefined}>
-        <SettingRow key="repeat" icon="repeat" label={repeatSummary(item) ?? t('m_544d9e42216c')} description={(family?.state === 'Paused' ? t('m_83e8432c0130') : family?.state === 'Ended' ? t('m_2cc4cc84a99e') : t('m_f1f3c6717092')) +
+        <SettingRow intent="navigation" key="repeat" icon="repeat" label={repeatSummary(item) ?? t('m_544d9e42216c')} description={(family?.state === 'Paused' ? t('m_83e8432c0130') : family?.state === 'Ended' ? t('m_2cc4cc84a99e') : t('m_f1f3c6717092')) +
           (item.exception ? item.deliveryState === 'Scheduled' ? t('m_ef0fa85f2b02') : item.deliveryState === 'Blocked' ? t('m_ebd1b267b509') : item.deliveryState === 'Pending' ? t('m_3724a633605f') : t('m_f25081ef1779') : '')}
           disabled={command.isPending || uncertain} onPress={() => {
             if (!pendingOperation.current && !runningOperation.current) router.push({ pathname: '/series/[id]', params: { id: item.segmentId!, ...(family ? { seriesId: family.seriesId } : {}), ...routeParams, originReminderId: id } });
           }} />
       </ConnectedGroup>}
       <ConnectedGroup>
-        <InformationRow key="list" icon="checklist" label={t('m_6f202f54a7b2')} value={item.listName || t('m_eacd31d849f9')} onPress={command.isPending || uncertain ? undefined : () => {
+        <InformationRow intent="navigation" key="list" icon="checklist" label={t('m_6f202f54a7b2')} value={item.listName || t('m_eacd31d849f9')} onPress={command.isPending || uncertain ? undefined : () => {
           if (!pendingOperation.current && !runningOperation.current) router.push(reminderListRoute(item.listId ?? null, id, routeParams));
         }} />
-        {!!item.notes && <InformationRow key="notes" icon="notes" label={t('m_8a7525b1492f')} value={item.notes} />}
+        {!!item.notes && <InformationRow intent="navigation" key="notes" icon="notes" label={t('m_8a7525b1492f')} value={item.notes} />}
       </ConnectedGroup>
       <ScheduleDetails item={item} occurrence hasPublication={!!publication || !!calendarLink} />
       <CalendarSummaryRow id={id} link={calendarLink} publication={publication} jobs={calendarOperations.data?.filter(operation => operation.occurrenceId === id) || []} origin={routeParams} disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain} />
       {unlinkUncertain && <Button label={t('m_3a8c6f6adf3a')} variant="secondary" disabled={unlinkBusy} onPress={() => void unlink()} />}
     </>}
     <Sheet title={t('m_3ddd2c824c07')} visible={menu} onClose={() => setMenu(false)}>
-      {item && !item.deleted && <SettingRow icon="edit" label={t('m_464c4ffd019e')} onPress={edit} />}
-      {active && !item.segmentId && !calendarLink && (!publication || publication.state === 'Cancelled') && <SettingRow icon="event" label={t('m_3a4c8285963f')} disabled={command.isPending || uncertain}
+      {item && !item.deleted && <SettingRow intent="action" icon="edit" label={t('m_464c4ffd019e')} onPress={edit} />}
+      {active && !item.segmentId && !calendarLink && (!publication || publication.state === 'Cancelled') && <SettingRow intent="action" icon="event" label={t('m_3a4c8285963f')} disabled={command.isPending || uncertain}
         onPress={() => { setMenu(false); router.push({ pathname: '/calendar-publish', params: { id, ...routeParams, originReminderId: id } }); }} />}
-      {calendarLink && calendarLink.state !== 'Detached' && <SettingRow icon="close" label={t('m_d9203b69027f')} disabled={unlinkBusy || unlinkUncertain}
+      {calendarLink && calendarLink.state !== 'Detached' && <SettingRow intent="action" icon="close" label={t('m_d9203b69027f')} disabled={unlinkBusy || unlinkUncertain}
         onPress={() => { setMenu(false); confirm(t('m_b89208529acc'), t(calendarOperations.data?.some(operation => operation.occurrenceId === id && operation.remoteAttempted && !['Confirmed', 'Cancelled', 'Conflict', 'Failed'].includes(operation.state)) ? 'unlink_reminder_confirmation_pending' : 'unlink_reminder_confirmation'),
           [{ text: t('m_19766ed6ccb2'), style: 'cancel' }, { text: t('m_b90108da0bd2'), onPress: () => void unlink() }]); }} />}
-      <SettingRow icon="content_copy" label={t('m_02cdaabfca80')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }); }} />
-      <SettingRow icon="history" label={t('m_38da1505ca83')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/activity', params: { id, ...routeParams, originReminderId: id } }); }} />
-      {adjust && item?.deliveryState !== 'Alerting' && <SettingRow icon="snooze" label={t('m_44f91ee971e4') + item.quickSnoozeMinutes + t('m_2e75737a6b58')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void delivery('Snooze'); }} />}
-      {active && item.segmentId && <SettingRow label={t('m_fb6f0c89eb3c')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void content('Skip'); }} />}
+      <SettingRow intent="action" icon="content_copy" label={t('m_02cdaabfca80')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }); }} />
+      <SettingRow intent="action" icon="history" label={t('m_38da1505ca83')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); router.push({ pathname: '/activity', params: { id, ...routeParams, originReminderId: id } }); }} />
+      {adjust && item?.deliveryState !== 'Alerting' && <SettingRow intent="action" icon="snooze" label={t('m_44f91ee971e4') + item.quickSnoozeMinutes + t('m_2e75737a6b58')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void delivery('Snooze'); }} />}
+      {active && item.segmentId && <SettingRow intent="action" label={t('m_fb6f0c89eb3c')} disabled={command.isPending || uncertain} onPress={() => { setMenu(false); void content('Skip'); }} />}
       {item && !item.deleted && <View style={{ marginTop: 12, paddingTop: 8, borderTopWidth: 0.5, borderTopColor: colors.border }}>
-        <SettingRow icon="delete" label={t('m_9adcdf33dce1')} description={t('m_1faff714eac7')} disabled={command.isPending || uncertain} onPress={moveToTrash} />
+        <SettingRow intent="action" icon="delete" label={t('m_9adcdf33dce1')} description={t('m_1faff714eac7')} disabled={command.isPending || uncertain} onPress={moveToTrash} />
       </View>}
-      {item?.deleted && <SettingRow icon="delete_forever" label={t('m_280b10c89cc4')} description={t('m_a3e8748f021d')} disabled={command.isPending || uncertain}
+      {item?.deleted && <SettingRow intent="action" icon="delete_forever" label={t('m_280b10c89cc4')} description={t('m_a3e8748f021d')} disabled={command.isPending || uncertain}
         onPress={() => { if (command.isPending || pendingOperation.current || runningOperation.current) return; setMenu(false); setPurgeItem({ ...item }); }} />}
     </Sheet>
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
@@ -240,18 +241,18 @@ export default function ReminderDetails() {
     <Sheet title={t('m_4794fc66cf81')} visible={scope && !!item?.segmentId} returnFocusRef={scopeTrigger} returnFocusWhen={() => focused} onClose={() => setScope(false)}>
       <Copy heading>{item?.title}</Copy>
       {item && <Copy muted>{item.mode === 'None' ? t('m_b7eb137d28d1') + (item.allDay ? formatDate(item.eventStartMs, item.zoneId) + t('m_b3d544d5d55c') : formatTime(item.eventStartMs, item.zoneId)) : t('m_9feb5fc02300') + modeLabel(item.mode).toLowerCase() + ' · ' + formatTime(item.alarmAtMs, item.zoneId)}</Copy>}
-      <SettingRow label={t('m_f1f3c6717092')} description={t('m_2e865a55dab6')} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); }} />
+      <SettingRow intent="action" label={t('m_f1f3c6717092')} description={t('m_2e865a55dab6')} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); }} />
       <QueryState loading={series.isLoading} error={series.error} onRetry={() => void series.refetch()} />
       {item?.segmentId && series.data && series.data.state !== 'Archived' && <>
-        <SettingRow label={t('m_3374941b0ba2')} description={t('m_5f4c9ca214d4')} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, following: item.nominalSlot!, ...routeParams, originReminderId: id } }); }} />
-        <SettingRow label={t('m_b76950f065f0')} description={t('m_9b8c73c985f1')} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, ...routeParams, originReminderId: id } }); }} />
+        <SettingRow intent="action" label={t('m_3374941b0ba2')} description={t('m_5f4c9ca214d4')} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, following: item.nominalSlot!, ...routeParams, originReminderId: id } }); }} />
+        <SettingRow intent="action" label={t('m_b76950f065f0')} description={t('m_9b8c73c985f1')} onPress={() => { setScope(false); router.push({ pathname: '/edit', params: { segmentId: item.segmentId!, ...routeParams, originReminderId: id } }); }} />
       </>}
       {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>{t('m_eabe16e1ec41')}</Copy>}
     </Sheet>
     <PostponeChooser key={postponeCapture ? `${postponeCapture.draft.occurrenceId}:${postponeCapture.draft.referenceAtMs}` : 'closed'}
       visible={postpone} capture={postponeCapture?.draft ?? null} busy={command.isPending} uncertain={uncertain}
       returnFocusRef={postponeTrigger} returnFocusWhen={() => focused}
-      acknowledged={postponeResult} eligible={!!adjust && !!postponeCapture && postponeCaptureMatches(postponeCapture.draft, item)}
+      acknowledged={postponeResult} eligible={postponeEligible && !!postponeCapture && postponeCaptureMatches(postponeCapture.draft, item)}
       retryLabel={recovery.retry} progressLabel={t('m_1622aa101d70')} onClose={closePostpone}
       onSubmit={target => { void delivery('Postpone', target); }} onRetry={() => { void runPending(); }}
       onSelectionChange={() => setSheetFeedback(null)}

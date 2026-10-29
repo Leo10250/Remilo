@@ -618,6 +618,8 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
   fun pendingIntents(): List<CalendarManagedExport> = if (!active()) emptyList() else dao.exports().filter {
     it.subject == binding().subject && it.calendarId == binding().calendarId && it.state in setOf("Pending", "Captured") && it.retryAtMs <= now() }
   fun authored(id: String, revision: Long, choice: String = "Default") {
+    val local = CalendarLinkStore(db, now, recoverInterrupted = false).record(id)
+    if (local?.routineId != null) { localOnly(id); return }
     if (choice !in setOf("Default", "Managed", "LocalOnly")) throw CalendarFailure("INVALID_INPUT")
     if (choice == "LocalOnly") { dao.disposition(CalendarManagedDisposition(id, (dao.disposition(id)?.revision ?: 0) + 1, "LocalOnly")); retireIntent(id, "LocalOnly"); return }
     if (choice == "Managed") dao.disposition(CalendarManagedDisposition(id, (dao.disposition(id)?.revision ?: 0) + 1, "Managed"))
@@ -653,23 +655,59 @@ class CalendarManagedStore(private val db: ContentDatabase, private val now: () 
     if (value.state == "Captured" && value.operationId != operationId) throw CalendarFailure("OPERATION_PENDING")
     dao.export(value.copy(state = "Captured", operationId = operationId))
   }
-  fun guardPublication(operationId: String) {
+  fun guardPublication(operationId: String, confirming: Boolean = false) {
     val value = dao.exports().firstOrNull { it.operationId == operationId } ?: return
-    if (!permitsCalendar(value.subject, value.calendarId) || value.authEpoch != binding().authEpoch || value.state != "Captured" || dao.disposition(value.localId)?.disposition == "LocalOnly") throw CalendarFailure("STALE_AUTHORIZATION")
+    if (!permitsCalendar(value.subject, value.calendarId) || value.authEpoch != binding().authEpoch ||
+      value.state !in (if (confirming) setOf("Captured", "Review") else setOf("Captured")) ||
+      dao.disposition(value.localId)?.disposition == "LocalOnly") throw CalendarFailure("STALE_AUTHORIZATION")
   }
   fun publicationConfirmed(operationId: String) {
     val value = dao.exports().firstOrNull { it.operationId == operationId } ?: return
-    guardPublication(operationId); dao.export(value.copy(state = "Confirmed")); dao.resolve("export:${value.localId}")
+    guardPublication(operationId, confirming = true); dao.export(value.copy(state = "Confirmed", reason = "")); dao.resolve("export:${value.localId}")
     CalendarSyncRequests(db, now).checkpoint(value.localId, published = true)
   }
-  fun publicationFailed(localId: String, reason: String, background: Boolean) {
+  fun publicationFailed(localId: String, reason: String, background: Boolean, expectedOperationId: String) {
     val value = intent(localId) ?: return
+    // An I/O result must never revive a retired intent or overwrite its replacement.
+    if (value.operationId != expectedOperationId || value.state in setOf("Cancelled", "Confirmed")) return
+    if (db.calendar().operation(expectedOperationId)?.readOnly == true) { retireIntent(localId, "LocalTerminal"); return }
+    val local = CalendarLinkStore(db, now, recoverInterrupted = false).record(localId)
+    if (local == null || local.deleted || local.completed || local.skipped) { retireIntent(localId, "LocalTerminal"); return }
+    if (dao.disposition(localId)?.disposition == "LocalOnly") { retireIntent(localId, "LocalOnly"); return }
     val sent = value.operationId.takeIf(String::isNotBlank)?.let { db.calendar().operation(it) }?.attempted == true
     if (reason in setOf("NETWORK", "RETRY", "BUDGET", "NOT_AVAILABLE") && !sent) dao.export(value.copy(failures = value.failures + 1,
       retryAtMs = now() + minOf(3_600_000L, 60_000L * (1L shl minOf(value.failures, 6)))))
     else db.runInTransaction { dao.export(value.copy(state = "Review", reason = reason)); issue("Export", localId, reason, background) }
   }
-  fun retireIntent(id: String, reason: String) { intent(id)?.let { dao.export(it.copy(state = "Cancelled", reason = reason)) }; dao.resolve("export:$id") }
+  fun retireIntent(id: String, reason: String) = db.runInTransaction {
+    intent(id)?.let { value ->
+      dao.export(value.copy(state = "Cancelled", reason = reason))
+      // A sent publication may appear in a later collection page. It is still the
+      // removed local copy, not permission to import a replacement reminder.
+      value.operationId.takeIf(String::isNotBlank)?.let { db.calendar().operation(it) }?.let { job ->
+        suppress(CalendarLinkMapper.key(job.subject, job.calendarId, job.eventId), reason, id)
+        db.calendarResources().jobs(job.operationId).filter { it.eventId.isNotBlank() }.forEach { child ->
+          suppress(CalendarLinkMapper.key(job.subject, child.calendarId, child.eventId), reason, id)
+        }
+      }
+    }
+    dao.resolve("export:$id")
+  }
+  /** Repair review records left by older late callbacks; never performs Google I/O. */
+  fun reconcileRetiredExports() {
+    val records = CalendarLinkStore(db, now, recoverInterrupted = false)
+    db.runInTransaction {
+      dao.exports().forEach { value ->
+        val local = records.record(value.localId)
+        when {
+          value.state == "Cancelled" -> retireIntent(value.localId, value.reason)
+          local == null || local.deleted || local.completed || local.skipped ||
+            value.operationId.takeIf(String::isNotBlank)?.let { db.calendar().operation(it)?.readOnly } == true -> retireIntent(value.localId, "LocalTerminal")
+          dao.disposition(value.localId)?.disposition == "LocalOnly" -> retireIntent(value.localId, "LocalOnly")
+        }
+      }
+    }
+  }
   fun disposition(id: String): Map<String, Any?> {
     val logical = familyIdentity(id)
     val saved = dao.disposition(logical); val intent = intent(logical)

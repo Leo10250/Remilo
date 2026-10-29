@@ -38,6 +38,15 @@ governs Done, original-alert overdue, inline Alert choices and shared terminal
 cards. Earlier [beta corrections](design/current/beta-fixes.md) retain four roots,
 alert-first browsing, stationary covers and splash requirements.
 
+App-owned discard/reload, list-removal, Calendar decisions and unconfirmed-action
+notices share a themed confirmation. It follows the same atmosphere/brightness,
+typography and action semantics as existing themed sheets. Back/cancellation
+preserves drafts and pending-operation recovery; only an explicit confirming
+choice executes the captured callback. A newer route cannot inherit an old choice.
+Longer destructive reviews keep their existing sheet. Android permission, picker,
+sharing, authorization and launcher surfaces remain platform-owned; native brief
+status messages do not become extra blocking decisions.
+
 ## Release sequence
 
 1. Offline Android alarm reliability on a signed bundled APK, Android 14+.
@@ -51,8 +60,9 @@ alert-first browsing, stationary covers and splash requirements.
 ## Required behavior
 
 The owner's 28 October [uniform Postpone contract](design/current/postpone-chooser.md)
-governs native single/member/group controls and the Reminder Details chooser.
-Ringing surfaces expose Mark as done/Postpone (and their group counterparts).
+governs ordinary native single/member/group controls and the Reminder Details chooser.
+Ordinary ringing surfaces expose Mark as done/Postpone (and their group counterparts).
+Routine alerts retain Start routine/Snooze/Dismiss and their dated-session expiry.
 Notification Snooze, non-ringing quick actions and legacy commands remain supported.
 Opening the chooser leaves playback and the original five-minute deadline running;
 only confirmation changes the captured occurrences' next alerts. One eight-tile
@@ -65,6 +75,10 @@ clock times and a separate Custom step. The opening default remains 15 minutes.
   All app-owned presentation, native alarms and notifications are localized offline.
   Authored/imported content, device clock preferences and durable scheduling/work
   semantics remain independent. See the [language contract](design/current/localization.md).
+  Its 18 October wording correction uses contextual Chinese: 动作 for a fitness
+  item, 步骤 for a General item and 日常计划 for routine destinations. Calendar
+  copies use 添加 wording; marking completed work unfinished is distinct from
+  opening a page or restoring Trash. These are presentation changes only.
 
 The owner's 11 October wording correction labels every work-completion action
 **Mark as done**, and captured group completion **Mark all as done (N)**, across
@@ -155,7 +169,7 @@ resolution is required before a suspended link resumes.
   preserve the selected alert. No alert uses Scheduled for. Opening event details
   does not publish anything. Main Details shows Event for publication context;
   other full event ranges remain accessible in Schedule details.
-- Alarm Done completes the selected current occurrence and silences its delivery.
+- Ordinary alarm Done completes the selected current occurrence and silences its delivery.
   Done all (N) completes the displayed captured session members; later arrivals
   are excluded and remain independently actionable. Snooze all and Postpone all use one common
   future target and leaves all captured work unfinished, with per-item scheduling results.
@@ -165,9 +179,9 @@ resolution is required before a suspended link resumes.
   Active Apps Stop retain their distinct meanings. Done also completes and cancels.
 - Reopen clears completed and skipped state while preserving occurrence identity
   and guards. It never replays an elapsed alert; Restore retains skipped state.
-- Every ringing delivery, including one re-triggered by Snooze, provides native
+- Every ordinary ringing delivery, including one re-triggered by Snooze, provides native
   Mark as done and Postpone. Single-reminder notifications include Done/Snooze from their first post;
-  grouped notifications offer Done all/Snooze all and open native per-reminder controls.
+  ordinary-only grouped notifications offer Done all/Snooze all and open native per-reminder controls.
   Ordinary Notification offers Done/Snooze without alarm audio or full-screen UI;
   posting or dismissing it never completes work. Android controls
   compact/expanded presentation, so also retain the native alarm screen.
@@ -175,7 +189,8 @@ resolution is required before a suspended link resumes.
   New controls bind their displayed duration; committed retries keep their original
   target even after a preference change. Postpone: 15/30/60 minutes, 24 elapsed hours, tomorrow
   10 AM/2 PM/5 PM (editable), or custom. Confirm the actual future instant.
-- Postpone replaces Snooze and changes only the current occurrence's next alert.
+- For ordinary reminders, Postpone replaces the selected Snooze target and changes
+  only the current occurrence's next alert. Routine Snooze keeps its dated-session bounds.
 - Native audio session ends at five minutes from playback start. Arrivals keep
   the original deadline/sound. One sound; independently actionable members.
 - Timeout leaves unresolved items unfinished with silent Snooze/Postpone actions.
@@ -184,10 +199,11 @@ resolution is required before a suspended link resumes.
   scheduled date for all-day No alert. Independent Due does not override it.
 - Normal callbacks up to five minutes late may ring; later ones become Missed.
   Reboot, upgrade, restore and recovery never replay past alerts or interrupted sound.
-- Before first unlock: generic text, native Mark as done/Postpone, notification
+- Before first unlock: generic text, ordinary native Mark as done/Postpone, notification
   quick Snooze, protected scheduling
   data only, plus reviewed minimal non-private appearance data for bundled global
-  theming. Private reminder content and credentials remain credential-protected.
+  theming. Routine Alarm uses the actions in the [weekly routine contract](design/current/weekly-routines.md#native-routine-alarm-presentation).
+  Private reminder content and credentials remain credential-protected.
 - Unlocked: actionable heads-up/ongoing notification where permitted. Locked:
   native alarm screen where permitted. No overlay permission or forced takeover.
 - Permissions/capabilities and Test Alarm are visible; scheduling is not proof of audibility.
@@ -223,6 +239,9 @@ resolution is required before a suspended link resumes.
   Collection headers use icon-only Filters beside Search/More, showing an active
   optional-filter count and a complete spoken label. Agenda's content-row Filters
   retains its label, and applied removable chips remain visible on both surfaces.
+  Agenda refreshes cached rows quietly on native changes, foregrounding and its
+  minute-based date/status update. Only a deliberate pull-to-refresh activates
+  the top refresh indicator; initial loading and pagination keep separate feedback.
   Back from a non-Agenda root returns to Agenda; secondary pages return to their origin.
   Search/sheets, draft guards and unconfirmed operations take precedence over root Back.
   Each destination retains its own filters and scroll position, including Completed
@@ -278,17 +297,129 @@ resolution is required before a suspended link resumes.
   Series conflicts are preserved as a whole family unless explicitly restored as
   a separate copy. Editing a paused series keeps its future ordinary alerts paused.
 
-## Planned Android daily workflows (after the reminder core, before iOS)
+## Android weekly routines
 
-- Workout plans are reusable weekly templates, with a different ordered exercise
-  checklist for each selected day. Per-exercise completion, Undo/skip and history
-  belong to a dated occurrence; checking an exercise never deletes the plan or
-  changes the next week's exercises. Reuse the existing recurrence/identity kernel
-  if suitable instead of creating a competing scheduler.
-- A calm, date-aware Today presentation shows that day's workout and relevant
-  reminders; a compact Android home-screen widget can show today's checklist
-  and safe quick actions. A new permanent tab is optional, not required.
-  Device-local day changes, time zones and process death must not show stale dates.
+The owner's 18 October [generic-routine contract](design/current/routine-creation.md)
+supersedes unified creation and workout-only setup below. Create offers separate
+reminder/routine destinations. New routines are empty General/ByWeekday sequences
+with Day tabs; nonempty weekdays are scheduled automatically. Optional Exercise
+changes fields/tools without seeding content. Copying creates independent day-specific
+steps. Existing Shared plans convert only on Save, with notice and materialized IDs
+preserved. Existing content and ended snapshots retain their presentation.
+The daily-reset, native delivery, immediate editing and frozen-history rules remain.
+CE17/DP9 and portable format9 preserve authoring intent and legacy content/imports.
+
+The former unified editor/type selector is retired. Create opens New reminder or
+New routine; /edit and /routine-edit own separate drafts. New General routines
+edit independent sequences through weekday tabs; the old arrangement switch and
+Days picker are retired. Exercise is an optional presentation
+preset, not another task type. One parent Save commits nested draft changes.
+One owning recurring reminder supplies a shared clock; immutable versions supply
+ordered steps for each scheduled weekday or the internal empty Rest representation.
+Ordinary reminders cannot be converted in v1. Duplication creates independent
+routine and materialized weekday identities.
+Use the same Alarm / Notification / No alert control as ordinary reminders.
+The routine editor exposes it through a dedicated Alert row beside Date and time.
+Each sheet applies only its own fields to the parent draft; parent Save persists.
+Weekday labels remain centered as scheduling dots appear. Numeric target fields
+guard whole/decimal entry and pair with matching outlined Unit selectors in both
+builder and direct editing; free-text authored targets remain unchanged.
+Notification uses a separate quiet-by-default channel; Android controls its
+settings after creation. Alarm uses normal sound/vibration and access checks,
+with Start routine / Snooze / Dismiss alarm. These actions do not check exercises.
+
+Every scheduled routine is available throughout its device-local date, even before its
+notification time or when created after that time. A late creation/resume/recovery
+does not replay elapsed prompts. Rest days create neither actionable Agenda work
+nor notifications. The UI derives repeat weekdays from the non-rest definitions.
+
+Each closed dated snapshot freezes exercise names, free-text targets, guidance, overall
+Notes, Alert/time/sound/vibration and stable identities. Each date references an
+immutable plan revision; another edit using the same effective date after a clock
+change cannot rewrite its content or invalidate its backup. Complete & continue checks
+one exercise and advances the illustrated Focus card only after native confirmation; selecting previous
+exercises changes only the view. Explicit Undo completion remains available after
+the final exercise. Skip today retains partial checks and has an explicit Undo
+while the day is open. Notification opening/dismissal never changes progress.
+Today/future exercise rows also expose a neutral pencil + Edit control which
+opens the existing fields directly, independently of Focus selection. Its single
+Save edits the exact weekday/step immediately and converts legacy Shared to
+independent days with notice, preserving all materialized IDs and matching checks;
+adding/removing/reordering stays in the routine builder. Past rows retain checkmark correction without this
+direct plan-edit control. Revision conflicts retain drafts for explicit reload.
+
+Local midnight ends the session without making unfinished work overdue. Native
+reads/actions/recovery enforce closure without requiring a midnight wake-up.
+Completed sessions can appear in Completed; skips follow Show skipped. Unfinished
+ended work belongs only in routine history. History corrections retain their actual
+action timestamps and never reopen Agenda or delivery. The owner's 17 October
+correction makes plan/Alert/time/Notes/photo changes apply immediately on Save.
+Reconcile today's open definition while preserving occurrence identity, matching
+stable-ID checks and intentional Skip; closed dates remain unchanged. Newly added
+scheduled weekdays are available today; unscheduling removes today's actionable work.
+An elapsed or already-posted prompt never replays. Pause suppresses
+new dates and prompts while an existing today session can still finish.
+
+The routine library lives within Lists. Agenda uses one ordinary compact surface
+per dated routine with a compact bar and informational exercise counts, with no whole-workout Done
+or completion swipe. Its informational leading ring shares the ordinary
+completion-control column, keeping glyphs/titles/metadata/More aligned. A separate
+progress footer adapts from inline bar/count to stacked content at narrow/large
+text sizes. Calendar publication/linking is unavailable for routines.
+All authored content, progress and correction records remain credential-protected.
+Text is the exercise-guidance fallback until individually approved bundled
+illustrations exist. No personal workout is automatically seeded on installation.
+See the [routine design contract](design/current/weekly-routines.md).
+
+## Planned Android daily workflows (before iOS)
+
+The Android home-screen widget supports independent Routine Focus and Today
+configurations. Focus offers the first unfinished exercise, target, daily count,
+one primary Done action that completes the displayed exercise directly in the
+native session, advances after confirmation and offers named Undo. Exercise text
+shows the authored name without an added number. The header shows the localized
+full weekday; the full date and original exercise position remain accessible.
+Compact unfilled Undo sits to the left of trailing Done, with a reserved disabled
+slot before eligibility. Enabled/disabled Undo has identical glyph size; disabled
+is clearly dimmed neutral ink and cannot act. Undo can reverse multiple completions
+from that widget's current dated session, newest first, one per tap, including
+after final completion. It remains enabled while eligible records remain and
+survives process restart. Each target must still match that widget's native
+completion; changes from other surfaces are preserved. Date/session/configuration
+changes discard the old history. Reminder rows and setup previews
+fit both complete name/time lines with native text metrics; undersized placed
+widgets use summary rather than clipping the time. Saving appears only for a pending action after 250 ms;
+a brief check acknowledges confirmed native progress without delaying the next
+valid action. Progress uses the app's accent/soft roles, with exactly one segment
+per exercise through twelve and continuous fill above twelve. Exercise text
+opens its exact dated details. Uncertain widget actions retain exact Retry. Today places an
+optional pinned Focus above today's and overdue ordinary reminders from all lists;
+reminder rows open their existing Details. Rest days remain informational and
+unfinished ended workouts never enter the overdue list. Summary/large-text views
+open Remilo for actions. Settings and routine contextual actions open native setup.
+No React Native process or network is required for widget refresh, completion or recovery. Background
+refresh is an OS-controlled opportunity; explicit dated actions reject stale work
+even when launcher pixels are delayed. Widget IDs/configuration/actions are local
+presentation state outside portable backups. See the [widget contract](design/current/home-screen-widget.md).
+
+Widget setup always presents a preview: clearly labelled inert example content
+regardless of current data, with the real app theme and visible loading/error feedback. New Focus
+drafts default to the first available routine; saved unavailable selections never
+retarget automatically. Real empty widgets explain their state and open Agenda.
+Compact Today shows one full reminder row or the selected routine's focused
+exercise, with primary Done. Healthy Focus has no reserved action footer or
+permanent Refresh. A quiet bottom-left line identifies the next unfinished
+exercise in compact and expanded Focus. Healthy compact Focus aligns the action
+group with the bottom of the current-text/Next column, retaining optional
+prescriptions. Its reserved Next line keeps controls fixed when the last exercise
+has no Next and through eligible final Undo. Compact Today uses that same Focus
+layout above a separate trailing Agenda link. Last/terminal/summary/compact
+recovery views omit Next. Actual failed loads/conflicts or captured uncertain
+actions expose their recovery control.
+Rest days show one outcome and View routine without exercise completion controls.
+
+- A broader date-aware in-app Today presentation may supplement the widget without
+  requiring a new permanent tab. Native day/zone resolution remains authoritative.
 - An optional configurable daily agenda notification summarizes what is due
   today and any planned workout, without becoming a second alarm. Calendar items
   may be included only after optional scoped Calendar authorization; this is
@@ -365,8 +496,10 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   retry receipts. Local recovery and older backup imports into the same installation
   cannot resurrect that identity by default; an explicitly requested backup copy
   has a separate identity. Existing
-  exported files are unchanged. Backup format 4 carries minimal repeating exclusions,
-  and versions 1–3 remain readable. Unknown replies keep the existing command/batch
+  exported files are unchanged. Backup format 9 retains minimal repeating exclusions,
+  weekly plans, dated progress and correction history, and adds private exercise
+  photos, authoring/preset metadata, structured targets and whole-routine Trash. Formats 1–8 remain
+  readable. Unknown replies keep the existing command/batch
   guards; retry uses the same operation, and batches report confirmed partial results.
 - One editor supports one-off/repeat creation. Common repeat rules precede Custom
   repeat; independent due/end/all-day/zone controls are advanced. Drafts apply only
@@ -395,7 +528,7 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   Completed timestamps come from recorded Done events, never sorting fallbacks.
   Activity renders only recorded events and meaningful targets; empty history says
   No recorded activity and does not claim a complete audit trail.
-  Done/Reopen/Restore stay persistent for their states. Ringing Details exposes only
+  Done/Reopen/Restore stay persistent for their states. Ringing ordinary Reminder Details exposes only
   Mark as done and Postpone; Postpone opens the uniform chooser.
   Custom Postpone starts with a future target and rejects past targets without mutation.
 - Android Back exits transient Agenda search; clearing its query is a separate
@@ -425,19 +558,41 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   or replaced with another selection during that uncertainty. Diagnostics provide
   visible refresh/retry/share feedback without claiming a share sheet sent a report.
 - Creation/editing exposes Alarm/Notification/No alert inline, defaulting to Alarm.
+  This default applies to ordinary reminders; direct new-routine entry defaults
+  to Notification, while a new-draft type switch preserves its selected Alert.
   The visible single-selection group adapts to large text without a mode sheet;
   alarm sound/vibration only appears for Alarm. Draft/save guards remain intact.
 - Completed/skipped/Trash use the same card geometry and borderless 48 dp More target
   as Agenda. They have one terminal state label and no completion control or empty
   placeholder; explicit selection mode retains selection checkboxes. Preserve
   historical schedule/alert, independent Due, details navigation and existing menus.
-- Native controls never start React Native. A confirmed ended session dismisses
+- Ordinary completion/Postpone controls never start React Native. Routine Start
+  opens the dated app session after confirmed dismissal and unlock. A confirmed ended session dismisses
   when no submitted command remains unconfirmed, including timeout/external
   termination. An unknown submitted command retains its frozen recovery view.
   An initial empty loading state cannot close the screen; remaining group members retain controls.
   Failed actions retain controls and an error. Before first unlock, content is generic.
-- Standard notifications retain Done/Snooze on every single delivery. Grouped
+- Ordinary reminder notifications retain Done/Snooze on every single delivery. Ordinary-only grouped
   alarm notifications open native controls and offer captured Done all/Snooze all. Android
   owns popup layout and expansion. Channel identities and audio deadlines remain.
 - The owned geometric R and notification cue supply adaptive, monochrome, legacy, notification
   and splash variants. Application ID and signing identity remain unchanged.
+
+## Routine refinement — 16 October 2026
+
+The illustrated Focus card keeps every exercise visible below it, with a selected
+Viewing state. Shared creation date/time controls and clear exercise examples
+match ordinary reminders. Contextual More stays over its originating screen.
+Whole-routine Trash hides the plan and all recorded days; Restore preserves prior
+states and progress, and permanent deletion retains identity exclusions.
+
+An optional custom still photo is chosen through Android Photo Picker, previewed
+without cropping and stored privately as an immutable normalized image. The full
+composition is retained, with bounded resolution and metadata removed. Photo
+changes apply immediately to today's open session and closed history retains its original image. Portable format 9
+archives include photos and Trash state; legacy formats 1–8 remain readable.
+The widget prefers compact wide placement and uses Done, a full weekday header,
+numeric progress and native stale-action protection. Undo reverses the current
+widget's remaining eligible completions in reverse order; Retry appears only for
+an uncertain action. History is outside routine More,
+as a visible row on the routine screen.

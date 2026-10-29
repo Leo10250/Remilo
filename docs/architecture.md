@@ -16,10 +16,24 @@ delegating default rendering to AlarmControlsScreen. Reusable presentation slots
 remain available to isolated fixtures. Production components consume generated
 atmosphere roles and bundled scene/crop mappings.
 
+App-owned confirmations use a process-only external presentation store and one
+React Native Modal host under the root theme/preview providers. Existing screens
+retain `useAppearanceConfirmation` and their captured action callbacks. The host
+opens above the active page or sheet and reads canonical foundation roles rather
+than a scenic toolbar override. A request retains localized descriptors, owner
+identity, unique presentation ID and initiating focus node; it stores no engine
+state. Language changes update copy without replacing the request. Completion
+clears presentation before running a callback, so duplicates/older closures cannot
+replay it. Repeated presentation requests are ignored while one decision is open;
+owner blur/unmount invalidates it without executing a callback. Cancellation/acknowledgment
+returns connected focus with a generation-guarded frame callback. Automatic
+atmosphere holds and reduced motion stay presentation-only. No database, backup,
+native scheduling, Calendar operation or system permission contract changes.
+
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 13/8/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 17/10/9. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -27,7 +41,7 @@ preserves brightness/revisions. DP 3→4 adds only an allowlisted appearance
 singleton and nullable migrated session presentation fields. Every new session
 captures its resolved atmosphere and actual Light/Dark pair; legacy sessions
 follow silent Interrupted recovery. Settings/session presentation stays outside
-portable backup format 4.
+portable backup format 9 (legacy readers 1–8).
 
 [P4-B linking](calendar-linking.md) adds CE 7→8 links and immutable phased
 operations. Local import/edit, link checkpoints, receipts and scheduling outbox
@@ -122,6 +136,16 @@ identity. Same-operation recovery still reads the original event ID first.
 HTTP 400 has a distinct non-private rejection code; response bodies and tokens
 remain excluded from JS, storage and logs. No schema, alarm or backup change is
 introduced by this encoding repair.
+
+Managed publication failures bind to their captured operation identity and cannot
+revive retired exports or downgrade confirmed ones. CalendarStore startup repairs
+older terminal export-review records locally. Retirement preserves suppression of
+captured remote identities so a late Google collection echo cannot recreate the
+deleted reminder. A confirmed publication can finish its eligible managed link
+in the same worker checkpoint; retired copies remain read-only. Explicit
+publication checks acknowledge after bounded native I/O and return the saved
+result rather than treating queue dispatch as completion. No schema/backup/DP
+change is needed for these lifecycle fences.
 
 Accepted: React Native/Expo SDK 57 UI; tracked Android native project; local Expo
 module as a thin bridge to normal Kotlin classes. SDK 36, minimum API 34.
@@ -597,6 +621,324 @@ in the existing singleton. UTC carrier dates adapt minutes-of-day picker values
 without converting a shortcut into a dated alarm. No engine/bridge/database/
 backup version, eligibility or overdue authority changes in this refinement.
 
+## Weekly routine lifecycle and durable progress
+
+### Day tabs and structured targets — owner correction, 18 October 2026
+
+New authoring drafts are General/ByWeekday. Tabs select a weekday; its nonempty
+sequence determines scheduling. Copying allocates independent materialized IDs and
+shares immutable image references. Existing Shared versions remain readable; UI
+Save converts the new revision to ByWeekday, preserving IDs/checks and stripping
+links. Direct row Save edits only the captured weekday and performs that conversion.
+Opening/cancelling never persists conversion. Historical versions remain untouched.
+
+RoutineExercise gains optional exerciseTarget: sets/reps/repsMax, duration(value,
+sec/min/hr), eachSide, weight(value,kg/lb), additionalText. Nonempty legacy target
+text and exerciseTarget are exclusive. Numeric entry strings remain process-only;
+normalized optional numbers are validated natively before capture. No derived
+summary is stored; matching RN/Kotlin localized formatting consumes immutable data.
+Whole-edit numeric syntax guards preserve transient strings and normalize a single
+decimal comma without changing that native authority. The separate routine Date
+and time/Alert sheets capture process-only drafts and merge only their own fields
+into the parent. Picker-field styling and centered weekday dots add no stored state.
+JSON already lives in credential-protected versions/sessions, so CE17/DP9 stay.
+Format9 validates structured targets and snapshot consistency before atomic import,
+retains formats1–8, and never parses legacy target text. All authoring still uses
+the serialized command path, revision guards and receipt-first exact retries.
+
+### Generic authoring correction — 18 October 2026
+
+CE17 adds authoringMode (Shared/ByWeekday) and presentationPreset (General/Exercise)
+to immutable versions. Migration16→17 defaults legacy versions to ByWeekday/Exercise,
+without changing day/snapshot JSON, checks or immutable IDs. DP remains9 and private
+authoring metadata never enters its delivery profile. Shared definitions still use
+seven arrays and unique day-specific step IDs; sharedStepId explicitly links siblings.
+Validation requires identical ordered shared keys/content across scheduled days.
+Completion remains dated/materialized-ID based; direct edit resolves exact ID to
+shared key, never title/ordinal matching. Reorder/content edits preserve both IDs.
+Unsaved off/on caches copies; saved unscheduled days remain empty Rest definitions.
+
+Separate routes share fields, not owning submission lifecycles. Child Add/Done is
+draft-only; the later Day tabs direct-edit path uses captured EditRoutine, converts
+Shared to independent and updates only the captured weekday. Legacy missing Edit
+metadata inherits the loaded version; legacy Create
+uses ByWeekday/Exercise. Receipts preserve exact captured retry identity before stale
+checks. Session presentation resolves preset from versionRevision, freezing history.
+
+Portable format9 includes both metadata fields, shared links and structured targets
+in the existing photo archive. Format8 metadata remains readable; formats1–7 import
+with legacy defaults. Validate linkage and targets before commit;
+retain whole-family copy/conflict identities, media leases, streaming, integrity and
+resource bounds. Invalid metadata cannot partially mutate content. Curated preview
+content stays inert; native reconciliation/delivery authority is unchanged.
+
+The 15 October owner-approved routine extension adds a nullable `routineId` to
+CE reminders (default null), keeping ordinary reminders' overdue and delivery
+semantics intact. CE14 added plans, effective-date versions, dated snapshots and
+routine operation receipts. Each snapshot freezes ordered exercise content and
+stores explicit completed IDs, an independent irreversible `ended` flag, revision
+and correction history. Local dates use the recurrence kernel's Monday=1 convention.
+Rest is authored plan data; only workout weekdays enter weekly floating recurrence.
+
+`RoutineCoordinator` runs only on `AlarmEngine`'s serialized mutation worker.
+It resolves today's slot with the existing segment/nominal identity even after
+the notification time. Reads, actions and recovery settle pending operations and
+close past dates before projecting results. Ended routines are excluded before
+active filtering/sorting/counting/pagination; they have no overdue boundary.
+Ordinary Done/Reopen/Snooze and series mutations reject routine targets. Dedicated
+exercise commands bind operation ID, date, occurrence, stable step ID and expected
+session revision. Committed receipts are checked before revision validation.
+
+Progress first captures a CE operation containing the desired explicit state and
+actual action timestamp. Aggregate completion/skip changes fence the DP generation
+and cancel delivery, then snapshot/header/history/receipt commit in one CE
+transaction. Reconciliation finishes interrupted operations before generic schedule
+recovery. A history correction can change completion without clearing `ended` or
+registering delivery. Plan/Alert/time/Notes/sound/photo edits replace recurrence
+from the saved local date. A captured EditRoutine journal fences today's delivery,
+then appends the immutable revision and updates an open today's snapshot/header in
+the same CE transaction. Preserve the original occurrence/nominal identity and
+matching stable-ID checks; revision advances reject cached exercise/widget commands.
+Retain removed-step action audit against previous plan revisions. Rest has an empty
+snapshot, no completion requirement and cancelled delivery. Ended days are never
+rewritten, including after clock travel. Reconciliation suppresses elapsed/already
+posted delivery. Today's edited DP alert is a day-started exception retaining its
+original segment identity. A scheduled, unprompted open-day exception may deliver
+from an Archived segment; Paused/Changing plans do not grant that exception.
+Pause fences the owned day's alert before its CE commit, and Trash fences all
+family members. Generation/date/expiry checks remain mandatory before unlock.
+Updating the plan clock changes that alert's content-free target at the edit
+fence; ordinary completion/Undo preserves explicit Snooze targets.
+Pause intervals exclude newly materialized paused dates;
+an existing session can still finish. Resume never replays elapsed prompts.
+
+DP8 added a content-free `RoutineQuiet` profile on plans/alerts, an alert
+day-expiry instant and irreversible day-ended/prompted delivery flags. It contains
+no routine titles, exercise definitions, checks or
+correction history. The stored profile name remains backward-compatible; actual
+Alert mode selects Alarm or Notification. CE15 adds versioned overall Notes, sound and vibration with safe migration defaults.
+It also replaces the effective-date primary key with `(routineId, revision)` and
+binds each dated session to its exact immutable `versionRevision`. Legacy CE14
+rows receive deterministic IDs in authored insertion order and existing sessions
+retain their exact date-to-revision references. Effective dates are availability
+boundaries, not identities: repeated edits after clock travel append revisions
+instead of overwriting content referenced by a closed day. The newest authored
+eligible revision governs a new day. Dated projections resolve Notes, Alert/time,
+sound, vibration and exercises from their saved revision, never the latest plan.
+Only removal of a deleted list reference normalizes historical version rows.
+
+The existing scheduler/receiver handles routine Notification
+with approximate fallback. A registered delayed callback may deliver once within
+its original date; recovery does not post elapsed targets. The separate low-importance
+channel defaults to no sound/vibration and remains user-controlled. Posted prompts
+have a remaining-day timeout and reconciliation cancellation, no Done/Snooze
+controls, and generic public/pre-unlock text. Deep links retain occurrence identity.
+
+Portable format 6 includes plan and immutable revision IDs, exact dated revision
+references and applicable revisions (including Notes/sound/
+vibration), snapshots and action history,
+but no routine operation receipts, Android generations/handles, alarm sessions or
+Calendar state. Readers retain formats 1–5, defaulting omitted new fields. Restore remaps plan/family/segment/date
+identities together for conflict copies, restores purge exclusions first and
+preserves retry-stable imports. Routine authored data is excluded by native Calendar
+publication/link/export guards. The widget uses these same queries
+and guarded commands; React state and presentation refresh timers have no durable
+progress or scheduling authority.
+
+## Routine Alarm delivery and reversible progress
+
+Routine Alarm follows normal exact-alarm/access/audio registration. Ordinary
+completion and bulk actions reject routine members; a routine alert has dedicated
+Dismiss/Snooze commands. Start first confirms Dismiss, then opens its selected
+occurrence/date after keyguard dismissal. Mixed sessions retain per-member
+controls and never expose ambiguous whole-group completion.
+
+DP9 adds content-free routine alert receipts with command identity, input
+fingerprint, captured occurrence/date/generation/session, action timestamp, frozen
+Snooze target and settled result. Matching receipts precede live date/revision
+checks; retries acknowledge the captured result and cannot retarget another day.
+All command namespaces protect these identities, including Calendar operations.
+The operational outbox remains separate from durable retry receipts. No authored
+content, exercise checks or private Notes enter DP or portable operational state.
+
+Routine Alarm retains the ordinary bounded callback-lateness policy; only its
+quiet Notification callback may arrive later within the original open date.
+Recovery, resume and creation never replay elapsed targets. Explicit Snooze can
+rearm prompted eligibility for a same-day future target; blocked registration
+never silently becomes Notification. Final exercise/Skip/Pause/deletion and day
+closure detach only the affected ringing member. The native service requests the
+earlier routine member-expiry boundary without shortening an ordinary member’s
+shared session deadline. Read/action/recovery guards remain authoritative when
+clock or zone changes. An already-started date that ceases to be today ends
+irreversibly; untouched future registrations remain future work. A frozen session
+owns its plan/date across replacement segments. Recovery writes terminal protected
+exclusions for competing occurrences before publishing a replacement rule, so a
+crash or Direct Boot cannot revive that date. Queries also reject those competing
+occurrences; the original dated session and its correction history remain intact.
+
+## Native home-screen widget
+
+RW-03 uses Glance 1.2.0 and native Compose configuration inside the owned Android
+module. The bridge only exposes widget support and opening setup. Glance reads
+WidgetSnapshot through AlarmEngine.request; WidgetCoordinator projects the same
+dated routine session and a native Today/overdue ordinary-reminder query. The
+union is selected before ordering/counting/pagination, capped at 20 widget rows.
+No reminder delivery, recurrence or progress authority moves into Glance.
+
+The CE `remilo-widgets-v1` preferences contain versioned per-instance configuration,
+captured command descriptors and per-instance completion identity history. AlarmEngine's
+single worker owns all reads/mutations. Descriptors bind configuration revision,
+date, occurrence, stable exercise ID, expected session revision and operation ID.
+Routine receipts precede stale checks for committed retries. A pending identity
+survives an uncertain outcome; the refreshed widget offers the exact Retry, and a
+committed receipt reconstructs progress/Undo after process death. No copied
+exercise checks, DP content, database migration or portable backup change is added.
+Widget-ID restore copies configuration only and mints fresh action descriptors.
+
+The CE `undoHistory` array stores completion token, stable exercise ID, date,
+occurrence and configuration revision in confirmed order. Snapshot reconciliation
+retains only current, non-ended/non-deleted session entries whose checked exercise's
+latest native change is that recorded widget completion. It selects the newest
+remaining entry and captures a fresh revision-guarded Undo descriptor with an
+`undoOf` completion token. Confirmation removes exactly that entry, exposing the
+preceding eligible completion. Unrelated app/other-widget changes remain intact;
+overwritten or removed targets drop out. Reconfiguration/date/session replacement,
+Trash/unavailability and widget-ID restore discard the history. Skip suspends its
+controls; Pause follows existing open-session eligibility. Retain all eligible
+entries up to the native 100-exercise limit plus 56 bounded stale retry descriptors.
+Pending Undo recovery consumes its captured entry once, including after process
+death. Receipt replay without matching pending state never changes the history.
+An installed legacy `last` entry upgrades to one eligible record using its retained
+descriptor; cached legacy Undo descriptors and pending receipts remain compatible.
+Pending projections also carry the captured action's direction and exercise name
+for accurate Retry confirmation. This presentation metadata never changes its
+descriptor, target or native eligibility.
+
+Native commit/presentation hooks enqueue coalesced WorkManager refreshes without
+depending on bridge observers. Active widgets also retain a 30-minute recovery
+opportunity and a one-time next midnight/atmosphere-boundary request. Final-widget
+removal cancels periodic/boundary work and prunes preferences. WorkManager is not
+initialized before first unlock; the direct-boot path sends generic RemoteViews
+without CE or Glance access. Unsupported hosts receive generic content. Home-screen
+and `not_keyguard` metadata limit placement; Android/launchers retain control of
+cached pixels and refresh timing. Every mutation still checks native date/revision.
+
+An active Glance session collects a discardable StateFlow of native projections;
+`updateAll` alone does not rerun the initial `provideGlance` data load. Refresh
+workers and exercise callbacks reload through the native worker before publishing.
+A process-local native projection epoch rejects late older query results, while
+language/clock/zone/font presentation changes invalidate the view. This cache
+never validates commands or stores progress durably and is pruned with instances.
+
+WidgetSetup resolves first-routine defaults only inside configuration drafts and
+constructs localized inert example projections for every setup/picker preview. It never
+mutates plans or persisted widget state. A missing saved routine remains missing.
+Production uses Glance SizeMode.Exact; setup supplies the measured dp width and
+height to the same composition and fills its RemoteViews host explicitly. Fixed
+footer actions remain outside bounded list content; compact Today renders one
+complete reminder row, while expanded native collections remain scrollable.
+WidgetSizing budgets both reminder text lines using native font top/bottom
+metrics and scaled line-height floors, plus padding. Today minimum/preview height
+also budgets header/title and Agenda footer; small actual hosts fall back to
+summary. A fixed 56 dp text row no longer clips the reminder time.
+WidgetSizing shares interactive and selected-routine-footer preview heights with
+production breakpoints and increases setup height for scaled text. Healthy Focus
+has no action footer. In healthy compact Focus, a current-text region of at least 56 scaled dp
+and a reserved native-font Next band form the left column. The complete Done/Undo
+group aligns to its bottom, retaining center alignment within the action group.
+StaticLayout includes fallback-font spacing and padding across the session's
+authored names; measurement does not instantiate Views or require a main Looper.
+The reserved band preserves action coordinates when the prescription or Next is
+absent and through eligible final Undo. Compact Today uses the same composition
+above its separate full Agenda footer. Expanded/recovery layouts retain their
+existing grouping. Expanded views retain one Next label with upcoming content. Next is
+derived from the same session's second unfinished stable step, never tomorrow's
+plan. No visible ordinal is added to the exercise name. The header formats the
+projection date as a full localized weekday; the complete localized date and
+exercise position remain accessible. Routes/descriptors still carry exact dates.
+Done invokes the native callback with its captured descriptor;
+there is no ambiguous Resume navigation button. A reserved unfilled 48 dp Undo
+target precedes trailing Done, disabled without an eligible descriptor and held
+in place after final completion. Interactive Focus requires 300×200 dp at normal
+text and wider/scaled budgets thereafter; Today/recovery uses a separate footer.
+Undo's enabled Glance and inert native paths share one 24 dp drawable frame with
+a 20 dp inner glyph. Disabled uses the same neutral tint with image alpha 97/255;
+it never swaps to an opaque disabled text color or a differently sized graphic.
+The inactive native control has a localized XML description plus the runtime
+named label and disabled state, with no attached callback.
+Only known failures expose Refresh. Native app/widget completion commits drive
+the same projections; no progress or scheduling ownership changes.
+An explicit successful refresh acknowledges only that instance's saved conflict
+notice through the serialized native worker. It preserves pending operation and
+receipt identities, so refresh cannot discard or retarget an uncertain command.
+Background refreshes do not acknowledge feedback automatically.
+
+The progress leaf is a weighted horizontal AndroidRemoteViews layout, one native
+ImageView per segment for 1–12 steps, avoiding Glance's ten-child Row cap.
+Primary/container roles exactly match app accent/soft for segmented/continuous
+progress. Generated previews use the same composition at 300×240/440; canonical
+Sky light/dark resources supply the host-brightness XML fallback.
+
+WidgetPresentation owns discardable process-only action tickets keyed by widget
+and captured token/context/revision. It guards local duplicate submissions and
+publishes the captured projection immediately, adding Saving after 250 ms without
+an extra read queued behind the engine. After command confirmation and fresh
+native projections, only the initiating instance gets a 1.5-second named check;
+later actions/timers cannot overwrite newer feedback. Replayed receipts never
+recreate success feedback or Undo. Native coroutine timers sit outside the
+serialized worker, with no JavaScript timer or polling. Privacy, configuration,
+date and session revision changes fence overlays. Process death loses only the
+overlay; durable descriptors/receipts still own recovery and progress.
+
+Exercise-row editing captures routine/date/weekday/stable ID, loads the latest
+definition and shares the weekly editor's form/photo chooser. Its Save replaces
+only that ID in the captured weekly draft through existing EditRoutine, with
+one operation ID and expected plan revision. Concurrent plan edits reject and
+retain the draft for explicit reload; native open-day reconciliation preserves
+matching checkmarks and ended snapshots. Image leases persist through uncertain
+Save. Selection and Edit are sibling controls; only today/future unended rows
+expose Edit. No new bridge, schema, backup format or progress store is introduced.
+
+## Routine media, family Trash and portable archives
+
+CE15→16 adds routine prior-state/Trash interval metadata, immutable exercise image
+metadata and family purge exclusions. DP9 remains unchanged. A captured journaled
+Trash/Restore/Purge operation fences each family's DP plans/alert generations,
+then commits CE ownership and its receipt on the existing serialized worker.
+Recovery settles captured family operations before series replenishment. Queries
+exclude trashed children before counts/order/pagination and emit one typed
+RoutineFamily Trash projection. Restore never uses occurrence UndoDelete and
+retains preexisting child deletion, completion, skip and ended states.
+Trash and Restore advance occurrence/session revisions without changing those
+states, so an uncommitted cached command cannot revive after ownership is restored.
+
+The bridge launches a transient Photo Picker transport; the engine holds no
+Activity/React reference. Bounded decoding/I/O runs separately. Full-frame,
+orientation-correct, metadata-free WebP files (2048 px long edge, <=4 MiB) live in
+CE files under immutable SHA-256 IDs; source selection is capped at 50 MiB.
+Only metadata, references and draft leases mutate on the engine worker. GC keeps
+all plan revisions, frozen sessions, Trash, draft and export leases; abandoned
+unreferenced images and interrupted source copies become eligible for cleanup
+after 24 hours. Unlocked engine reads offer cleanup at most hourly; referenced
+history never expires. Durable content contains no picker URI.
+
+Portable format 9 is a streaming .remilo ZIP: content.json (existing 10 MB bound)
+plus media/<hash>.webp, with a 200 MiB archive/expanded bound. Validate entry paths,
+uniqueness, manifest, hashes, dimensions and decodability before installing files
+and atomically committing content references. Prepared CE import handles replace
+raw JSON in the UI; receipt-first retries bind the same handle/copy choices.
+Legacy JSON versions 1–6 and format-7/8 archives remain readable. Widgets, OS handles, generations and
+private operational sessions remain excluded. Widget progress/actions retain
+native authority; exercise navigation retains an exact exercise ID in the dated deep link.
+Format-7/8 validation accepts immediately edited snapshots whose original nominal
+identity differs from the updated alert time, checking current definition/metadata
+and the original segment identity. Rest snapshots remain empty/uncompleted, and
+removed-step audit references must resolve to retained immutable plan revisions.
+CE17 adds authoring/preset metadata as described above; DP9 stays unchanged.
+Portable version 9 adds optional structured targets to version/snapshot JSON;
+version8 linkage remains readable along with formats1–7. Invalid targets reject
+before committing media/content, and closed snapshots are never reformatted in storage.
+
 ## ADR 010: Uniform Postpone and durable absolute group targets
 
 The owner's 28 October chooser correction adds read-only resolvePostponeTime and
@@ -614,10 +956,13 @@ arrivals stay excluded; exact receipt lookup precedes new-action future validati
 Retries preserve targets/results and never override newer work or retime elapsed
 targets. Legacy Done/Snooze identities and notification actions remain compatible.
 
-DP7→8 retains the bulk_snooze_receipts/members SQL identities while adding a kind
+The integrated DP10 upgrade retains the bulk_snooze_receipts/members SQL identities while adding a kind
 defaulted to SnoozeAll and nullable duration. The receipt table is rebuilt with
 unchanged legacy values. A separate postpone_preferences record mirrors only three
-clock-minute integers and source settings revision. CE13 and backup4 do not change.
+clock-minute integers and source settings revision. The Routines CE17 and backup9 remain unchanged.
+Direct upgrades recognize both known version-8 schema identities and preserve their
+receipts and fields, as well as the existing Routines version-9 data. Unknown
+version-8 identities fail closed. No downgrade or destructive fallback is used.
 Absent/corrupt pre-unlock mirrors leave Tomorrow choices unavailable; relative and
 Custom continue. CE settings/retry/unlocked recovery repairs the mirror.
 
@@ -625,3 +970,7 @@ The native activity owns an editable operational draft separately from pending
 commands, saves exact alarmAtMs/scope/picker state, defers replacement intents and
 re-reads private titles. RN Details likewise binds its opening generation. Native
 timeouts dismiss unsubmitted pickers; unknown submitted commands remain frozen.
+
+The owner confirmed that Routine Start/Snooze/Dismiss controls and dated-session
+expiry remain unchanged. The uniform chooser and PostponeAll apply to ordinary
+reminders; mixed groups retain the existing per-member controls.

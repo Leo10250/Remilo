@@ -1,6 +1,6 @@
 # Verification and release evidence
 
-The 28 October uniform Postpone change requires DP7→8 receipt/mirror preservation,
+The 28 October uniform Postpone change requires DP7/known-8/9→10 receipt/mirror preservation,
 pure native time/DST cases, captured PostponeAll/stale/retry/fault recovery, settings
 mirror repair, locked-upgrade absence and native/app chooser state tests. Inspect
 eight equal tiles, Custom cancellation, 15-minute default, fixed target/scope,
@@ -13,6 +13,220 @@ before test execution, following the [upstream dependency guidance](https://robo
 The test suite uses the staged directory rather than making a separate Maven
 download partway through a test class. Resolution failures remain failures; no
 behavioral test is skipped or treated as passing.
+
+## Storage compatibility and restoration — 28 October 2026
+
+Native request/background failures may log only a bounded allowlist summary:
+failure category, numeric Room migration versions and safe exception class.
+Arbitrary exception messages, SQL, paths, identity hashes, authored content and
+credentials stay out of diagnostics. Preserve the existing bridge error codes.
+Regression fixtures must verify that rejected newer schemas retain their stored
+version and marker data without registering or cancelling alarms.
+
+Compare schema versions and identities before changing feature baselines. An
+older implementation must not open newer data through a downgrade migration or
+destructive fallback; equal version numbers alone do not prove compatibility.
+The [observed phone failure](evidence/2026-10-28-agenda-storage-investigation.md)
+is an unsupported operational 9-to-8 transition. CE17 is a compatible-branch
+requirement, not an observed phone credential-database version.
+
+The owner-selected restoration uses the CE17/DP9 Routines baseline with the
+Robolectric CI fix and privacy-safe diagnostics, preserving existing app data,
+signing identity and Routines behavior. Run the relevant shared/native checks and
+identify the signed APK before in-place installation through the repository
+deploy command. Never repair this failure with uninstall, data clearing,
+replacement keys, automatic permission grants or a lower-schema fallback.
+Record actual build/hash, installation and optional launch outcomes separately,
+then distinguish native query recovery from observed Agenda/Routines data access.
+Restoring those views does not establish physical alarm or beta acceptance.
+
+## Routine editor polish — owner correction, 19 October 2026
+
+Measure weekday labels in empty/mixed/populated states: equal vertical centers,
+uniform tile heights and at least 6 dp label/dot clearance through 200% text.
+Retain seven or centered four/three rows, widths/targets and full count labels.
+Check both connected Date and time/Alert rows. Date sheets contain no Alert
+selector; Alert sheets contain all three modes and applicable sound/vibration/
+channel controls. Done merges only owned fields into the parent; Cancel/backdrop/
+Back, dirty discard and focus return preserve the parent and captured Save recovery.
+No alert hides clock controls and restores the unchanged time when enabled again.
+
+Exercise numeric fields guard hardware/paste input as well as requesting numeric
+keyboards. Check whole counts, decimal duration/weight, comma normalization,
+blank/unfinished strings, rejected letters/signs/exponents/multiple separators,
+positive/safe bounds, rep ranges and each-side prerequisites. Verify legacy text
+and draft cancellation. Unit/单位 is outside both outlined unit controls; compare
+actual input/picker padding, height, typography/surface/outline and label alignment,
+including adjacent inline errors. Both builder and direct editing share the form.
+
+Render actual components across all eight appearance pairs, EN/Chinese, narrow
+widths and 100–200% text. Run release:prepare and record actual checks/artifact
+identity/hash. Browser checks do not establish phone IME, native picker, TalkBack
+or alarm acceptance. Installation/distribution remain separate actions.
+
+## Day tabs and structured targets — owner correction, 18 October 2026
+
+Use actual /routine-edit components: new General/ByWeekday, regular Exercise day,
+empty routine/day, copy selection and replacement review. Check seven-to-four/three
+tab wrapping, selected/count labels, one-tap editing, persistent Done/Save and no
+decorative empty icons, artificial gaps, Days picker or arrangement switch. Verify
+Monday Plank/Bird-dog and Wednesday Push-up, independent copies, cancellation,
+removal Undo across tabs/capacity, and draft-only Date and time Done.
+
+For weekday layout regressions, measure actual tab positions at widths around the
+348 dp content threshold, including fractional cell widths/density rounding.
+Require exactly seven tabs in one non-wrapping row or four/three in explicit rows;
+never six/one. Both rows retain equal cell widths and 48 dp minimum targets. The
+lower three are centered together with equal left/right insets and unchanged gaps.
+There are exactly seven accessible tabs, with no placeholder. Resize through
+the breakpoint and check selected-day navigation in both languages at 100%/200%.
+
+Shared formatting fixtures cover RN/Kotlin EN/Chinese, blanks, singular/plural,
+both reps/time, range, each side, decimal units/weight and untouched authored text.
+Reject unsafe/nonpositive/nonfinite counts, fractional repetitions, invalid ranges,
+units and each-side prerequisites. Keep partial strings. Purpose-only/unrelated
+General edits preserve numeric structures. Explicit target replacement/discard
+retains original data until applied.
+
+Native checks cover Shared conversion only on Save, materialized IDs/matching
+checks, receipt replay, stale widgets, concurrent completion, midnight and frozen
+history. Format9 retains target JSON/photos/Trash and identity remapping; formats1–8
+retain legacy text. Malformed import is atomic. CE17/DP9 remain unchanged.
+
+Render all eight appearance pairs, both languages, narrow widths and 100–200% text,
+including advanced fields, legacy text and actual widget RemoteViews. Check complete
+targets, keyboard visibility, focus return and accessible scope. Run release:prepare
+for shared/design/localization/tooling, native tests, lint and signed assembly.
+Record actual artifact identity/hash/results. Signed-phone IME, TalkBack, pickers,
+launcher and end-to-end observations remain gates; installation/distribution separate.
+
+## Chinese wording review — 18 October 2026
+
+Check all owned catalogs and hardcoded presentation for Simplified Chinese usage,
+not only the routine screenshot. The Day tabs/shared form correction uses 步骤
+in builder fields/counts for both purposes, 用途 for Purpose and 锻炼 for Exercise.
+Other exercise-specific viewing vocabulary remains contextual. Generic routine widgets/setup/actions must not
+become training-only or calendar 日程. Verify weekday versus Monday–Friday scope,
+Calendar 添加 versus ongoing 同步, 未完成 versus navigation 打开/Trash 恢复,
+consistent 回收站 and natural pending/uncertain feedback with exact captured retries.
+Check complete count/unit labels and Chinese punctuation, backup archive/privacy
+disclosures and unchanged authored values/English historical status recognition.
+The later weekday-builder correction uses 每周安排 and step counts (4 个步骤)
+for both presets, with 日期与时间 below. Verify the grouping/counts never say 动作,
+weekday tabs show their full selected-day heading, and navigation/draft state stays.
+Render app and native widget surfaces with both presets, Chinese/English, long
+names, all appearance pairs and large text. Existing catalog, shared/native/lint
+checks and signed assembly apply; phone TalkBack, IME, OEM fonts and launcher
+observations remain separate acceptance gates.
+
+## Separate creation and generic routines — 18 October 2026
+
+Check Create choices, direct routine entry, list inheritance, legacy redirects and
+focus/scroll-preserving dismissal. Ordinary reminder Calendar/timing/recurrence/
+overdue behavior stays. The later Day tabs correction makes new routines blank
+General/ByWeekday with scheduling derived from nonempty weekdays.
+Verify stable shared identities across duplicate names, reorder, day off/on before/
+after Save, copying, duplication, conversions and direct editing scopes. Preset
+switching retains values/photos/checks and freezes historical presentation. Cover
+dirty cancellation, photo leases, checked-step removal review, conflicts, exact
+uncertain retry, midnight and stale widgets. Native checks cover CE16→17 defaults,
+format9 targets/linkage/media/Trash/history, legacy1–8 import and atomic malformed rejection.
+
+Render production components in EN/Chinese, all eight appearance pairs, narrow
+widths and 100–200% text. Check complete Save/row targets, IME, keyboard/TalkBack,
+scope copy and themed discard. Existing widget render/action/fallback checks remain.
+Browser fixtures do not establish phone acceptance. Run shared/design/localization,
+native tests, lint and signed assembly using release:prepare; record actual results.
+
+App-owned confirmation checks cover reminder/routine/day/exercise Discard,
+reload-draft, list removal, Calendar decisions and unconfirmed Save/import/bulk
+guards. Verify exactly one captured callback, duplicate/stale choices, repeated
+Back, owner unmount, reentrant actions, callback failure and translated open copy
+with authored names preserved. Back/backdrop/Keep editing retain saved and draft
+state; pending commands remain guarded and retry the same operation. Review the
+production dialog and existing destructive sheets across all eight pairs, both
+languages, narrow/landscape windows and 100–200% text. Check opaque canonical
+surface/ink/error roles, complete targets, keyboard dismissal, scrolling, reduced
+motion, heading announcement, focus return and no interaction with the underlying
+page/sheet. The isolated `reviewConfirmation=discard|info|list|long` fixture supports
+the existing review appearance/language/scale parameters and `reviewParent=sheet`.
+Browser fixtures do not establish native dialog stacking, TalkBack or IME acceptance.
+Android permissions, Google authorization, photo/document pickers, sharing,
+launcher confirmation and native date/time remain separate system/device gates.
+
+Repeated widget Undo checks complete several exercises, then reverse all of them
+one at a time, including after final completion and process restart. Verify the
+next named target, first unfinished exercise, count and enabled state after each
+reversal, and disabled only when no eligible records remain or while submitting.
+Cover the native 100-exercise limit, identical names, interleaved app/independent
+widget changes, stale descriptors, overwritten targets, immediate plan removal/
+reordering/renaming, and Done-after-Undo. Duplicate Done/Undo receipts must neither
+advance nor consume another record. Interrupt Undo at capture/fence/commit and
+before native capture; exact Retry and recovery must preserve the preceding record.
+Check legacy installed one-step state and cached/pending legacy Undo, Skip/Undo
+Skip, Pause, Trash/Restore, configuration/widget-ID restore, midnight and clock
+rollback. Keep the existing geometry/color/accessibility checks. Phone interaction
+and TalkBack remain distinct from native host regression results.
+
+The widget phone correction adds complete reminder title/time bounds checks,
+including 09:00 at 100/110/120/150% text, both languages and compact setup widths.
+Check native font padding, row padding, preview height, footer and every clipping
+ancestor. At 200% require the intentional summary. Compare enabled, disabled and
+inert-preview Undo graphic masks/centers in every appearance pair at normal and
+150% text: identical graphic size and target position, full enabled opacity,
+38% disabled image opacity, no disabled mutation listener and disabled semantic
+state. Verify at least 2:1 enabled/disabled rendered-ink distinction as a project
+guard, separately from enabled-control/surface contrast. Physical vendor-font
+and launcher observations remain on the owner checklist.
+
+Widget progress/action/direct-edit checks require actual production RemoteViews,
+not mockups. Cover totals 0/1/4/6/7/10/11/12/13+, zero/partial/full, exactly seven
+segments/four filled for 4/7, primary/container pixel mapping and at least 3:1
+fill/track distinction in eight appearance pairs. Check plain authored exercise
+names, all seven full weekdays in both languages and full spoken date/position.
+Next is quiet bottom-left supporting text in compact Focus. The complete action
+group aligns with its layout band's bottom; Undo and Done share a centerline.
+Check fixed action coordinates with and without a prescription, on the last
+exercise and through eligible final Undo. Today keeps Agenda below Focus on the
+right with a complete 48 dp target and no overlap. Verify the next unfinished stable step,
+last/terminal/recovery omissions, long-name ellipsis with full accessible text,
+and production/setup/generated/static preview parity. Cover
+300×200/240 compact and 300×440 expanded, summary sizes, both languages, long
+content and scaled text through 200%. Undo precedes trailing Done with a complete
+48 dp target and stays fixed after final completion; disabled Undo has no intent.
+Confirm Saving only after 250 ms, a reserved nonshifting confirmation slot,
+fast-operation no-flash, exact Retry, receipt replay suppression, old timer/new
+action isolation, concurrent revision/date/config/privacy fences and process death.
+
+Exercise-row Edit must open the correct stable ID in one tap without selecting or
+scrolling Focus. Check separate keyboard/TalkBack controls and focus return,
+Cancel/dirty discard, custom-photo replacement/cancellation/leases, uncertain Save
+recovery, concurrent plan conflict/reload, completion preservation and midnight.
+Past/ended/deleted rows omit direct Edit while historical checkmark correction
+remains. Review shared forms in both languages/eight pairs/narrow/200% text.
+Signed-phone launcher timing, resizing, perceived feedback, keyboard, Photo Picker
+and TalkBack remain explicit gates; host renders cannot establish them.
+
+Routine tile alignment checks compare active routine and ordinary reminders in
+the same Agenda: leading ring/control center, event/title/metadata anchors, More
+target and footer clearance. Check 0/partial/full counts, one/twelve/more than
+twelve exercises, selection, Completed/Trash, long EN/ZH titles, narrow layouts
+and 200% text across eight appearance pairs. The ring opens details with the row
+and never offers whole-routine completion. Native progress remains authoritative.
+
+Agenda's top refresh indicator must remain quiet during minute/status rereads,
+native change notifications and foreground refreshes. Check deliberate pull from
+reconciliation through query completion, rapid repeated gestures, failures with
+cached rows, first loading and pagination on an identified signed phone build.
+
+Calendar publication/deletion regressions must cover Trash during lookup (no
+insert), Trash during an insert (preserved Google copy, no relink/reimport), lost
+sent replies, unavailable read-only identity, restart repair of old review rows,
+exact-operation recovery and late failures after confirmed/replaced operations.
+Verify queue count and pages agree and ordinary reminders retain delivery state.
+On the signed phone, create then quickly Trash with automatic publication enabled;
+confirm no stale Agenda review, visible Check publication result progress/outcome,
+and no restored reminder. Live Google checks remain a separate acceptance gate.
 
 Language checks cover catalog parity/escaping/placeholders, script-aware resolution,
 CE12→13/DP6→7 preservation, bootstrap before unlock, manual/system synchronization,
@@ -395,6 +609,77 @@ G5: disconnected changes/convergence, normal and offline primary handoff, logout
 Calendar writer separate from ringing role. G6: real-iPhone behavior, documented
 limits, widget/countdown integration and visible coverage. No early iOS testing.
 
+## Android home-screen widget acceptance
+
+RW-03 widget checks cover independent Routine Focus/Today instances, configuration
+cancellation/reconfiguration, ID restore, removal, native progress convergence,
+duplicate/concurrent/stale taps, receipt retry and process death around final-step
+completion/Undo. Test exact weekly rest/skip/pause behavior, midnight/DST/clock/zone
+changes, mixed collections beyond 50 entries, accurate pre-limit counts and
+ordinary overdue/postponement. Locked/unsupported hosts must remain generic.
+Review production RemoteViews across eight appearance pairs, English/Chinese,
+compact/interactive/expanded sizes and 200% text. Signed-phone acceptance separately
+checks real launcher pin/cancel/resize/restore, TalkBack, app/widget updates without
+React Native, denied notifications, reboot/first unlock and deferred background
+refresh. Do not equate host capture or signed assembly with those observations.
+
+The 16 October widget correction additionally checks first-routine defaults only
+for unselected setup drafts; unavailable selections never retarget. Empty setup
+uses labelled inert examples in both modes/languages, while real widgets show
+truthful empty states. Assert View Agenda, Resume, View routine and conditional
+legacy Retry/Undo text/bounds in actual compact RemoteViews, including Today + Focus, Rest,
+multiple reminders, 300/360 dp width and intermediate/200% font-scale fallback.
+Check rest-day wording appears once. On a signed phone separately review native
+configuration's measured preview host, no-data first setup, switching mode,
+cancellation, launcher resizing and TalkBack. Host layout checks do not establish
+those device observations.
+
+The 17 October correction supersedes Resume-only interaction: Done completes the
+displayed exercise in place; exercise text retains exact app navigation. Check
+native confirmation, duplicate taps, stale revisions after immediate edits,
+uncertain Retry and named Undo including final completion. Compact has quiet Next
+context and no permanent Refresh; expanded retains Next/upcoming content. Check 260–300×200
+Focus before/after completion and Today-without-routine, 300×240
+Today-with-Focus/recovery, failed-load Refresh, conflict feedback, tiny failed
+summaries, inert sample previews regardless of private data, and Retry/Undo without
+retargeting. In setup/picker, verify an interactive example instead of a stretched
+summary; inspect current theme, EN/ZH and intermediate font scales. Complete in
+both widget/app and verify convergence without opening React Native. Picker
+generated-preview caching/rate limits require a separate real-launcher observation.
+
+## Shared routine editor, Focus and Alarm correction
+
+Check new-draft Type switching through all three Alert modes, preserving shared
+title, visible clock, List and Notes while caching ordinary timing/Repeat and
+weekly day definitions. Saved and duplicate types are fixed. Child Done applies
+only to the parent draft; exercise/day Back, backdrop and Cancel protect dirty
+changes. Rest toggling is reversible before Save, exercise IDs survive reorder,
+and removal Undo names the exercise. Inspect all seven day summaries and empty
+weekly setup without an initial error flash.
+
+Run the exact 21-exercise week through native-confirmed Complete & continue,
+last-exercise completion, checked-item inspection, named Undo and history
+correction. Confirm numeric plus visual Agenda/Focus/widget progress; unknown
+illustration IDs use text without a broken image. Inspect the actual card, zoom
+sheet, guidance disclosure and shared editor in all eight current appearance
+pairs, English/Chinese, narrow/landscape and 200% text. Long authored intervals
+and targets must wrap intact. Verify focus stays useful after advancement and
+the active screen stays bound to its date until Open today is selected.
+
+Routine Alarm tests must cover Start/Dismiss without exercise completion,
+same-day Snooze with stable targets, duplicate/stale/cross-command operation IDs,
+uncertain acknowledgement at each commit boundary, locked restart and mixed
+ordinary/routine sessions. Final exercise from app or a captured legacy widget action, Skip, Pause,
+deletion and midnight must silence only that routine member. Verify no quiet
+fallback when Alarm access is blocked, bounded Alarm lateness, quiet same-day
+callback behavior, no recovery catch-up, and backward/forward date or zone changes
+without revival of an already-opened date. Check CE14→15, DP8→9 and backup1–6
+with frozen dated Notes/mode/time/sound/vibration and unknown artwork references.
+
+Use the same consolidated signed-phone acceptance run for actual alarm audio,
+keyguard Start, launcher actions, keyboard/Back and TalkBack. Host tests and web
+or RemoteViews renders do not establish physical acceptance or distribution.
+
 ## Shipped 0.4.0 UX refinement observations
 
 The layout references in this section describe earlier pending baseline checks.
@@ -546,3 +831,49 @@ feedback, required-title, device-format, measured navigation and genuine-empty
 behavior checks. Review production components in eight pairs at 360 dp/100–200%,
 landscape, long English/Chinese and reduced motion. U32–U35 are pending signed
 device observations; no installation/distribution accompanies implementation.
+
+Weekly routines add an exact 21-exercise fixture (including Friday's unspecified
+row weight and Sunday Rest) in host tests and the isolated component preview.
+Verify separate dates, completion/explicit Undo after the final step, Skip/Undo,
+midnight rejection, old-day correction timestamps, immediately effective edits,
+pause/resume and elapsed-prompt suppression, notification permissions/channel,
+Direct Boot privacy, crash-journal boundaries, Trash/Restore/Purge, mixed query
+pages/counts and backup/migration compatibility. Ordinary Alarm/Notification/No
+alert overdue, recurrence and recovery tests remain required.
+
+Consolidated signed-phone acceptance must demonstrate creating the week, predicting
+Sunday, Done/Undo including the final exercise, leaving Monday unfinished and
+opening Tuesday without overdue work, correcting Monday without delivery, and
+normal alarm/overdue reminder use. Record task success, errors, help required and
+misunderstandings, then refine observed problems. Include actual Android IME,
+TalkBack, 200% text, narrow/landscape, both languages and all eight pairs. Host
+tests and web fixtures cannot complete these physical gates or authorize distribution.
+
+## Routine/photo/widget refinement — 16 October 2026
+
+Exercise selection must preserve every row/key/ordinal, keep a visible selected
+state and never change checks. Verify native-confirmed advance and Undo after
+final completion, contextual menu route/scroll preservation, shared date/time
+geometry, examples and semantic chevrons. Review EN/ZH and 100–200% text.
+
+Verify CE15→16 migration; whole-family Trash/Restore/Purge at journal checkpoints;
+preserved child states; stale app/widget delivery guards; no retroactive dates or
+catch-up prompts; purge exclusions against old backups; and accurate mixed Trash
+pagination/counts. Photo tests cover full frame, alpha/orientation/downsampling,
+cancel/replace/draft leases, immediate open-day updates/frozen closed history and referenced-file retention.
+Archive tests cover images, legacy JSON, corruption, missing assets, safe entries,
+size limits, copy conflicts and uncertain receipt replay.
+
+Review actual Glance RemoteViews at 300×200/240 and 300×440 plus summary/large text,
+eight appearance pairs and both languages. Done and conditional recovery labels/targets
+must fit, with no giant spacer or nested routine card. Signed-phone picker,
+launcher resizing/reconfiguration, TalkBack, IME and end-to-end observations remain
+in the consolidated acceptance run; native/browser host captures do not close them.
+
+Immediate-edit regressions additionally cover adding Saturday while it is Saturday,
+Rest/workout transitions, stable occurrence identity and retained matching checks,
+completed-day extension, intentional Skip, removed-step audit, photo/time changes,
+receipt replay and process death at each edit journal boundary. Closed history and
+backward-clock closure stay immutable. Backup format 9 round trips retain edited
+timing/Rest/audit while legacy format readers remain covered. Agenda and widget
+must resolve the same dated revision; saving never posts an elapsed catch-up prompt.

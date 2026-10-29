@@ -83,7 +83,7 @@ export function CalendarAttentionCard({ count, tone = 'warning', disabled, onPre
   const colors = useTheme(), [focused, setFocused] = useState(false);
   return <ConnectedGroup><Pressable accessibilityRole="button" accessibilityLabel={t('calendar_review_count', { count })} accessibilityState={{ disabled }} disabled={disabled}
     onPress={onPress} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} style={({ pressed }) => ({ minHeight: 56, padding: 16, gap: 8, borderLeftWidth: 3, borderLeftColor: colors[tone], borderWidth: focused ? 2 : 0, borderColor: colors.accent, backgroundColor: pressed ? colors.soft : colors.surface })}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Icon name={tone === 'danger' ? 'error' : 'warning'} color={colors[tone]} /><View style={{ flex: 1, gap: 4 }}><Copy heading>{t('m_3d2d5eb3e995')}</Copy><Copy muted size={14}>{t('m_7d87416abd53')}</Copy><Copy heading size={16}>{t('m_aff0766a5290')}{t('item_count', { count })}</Copy></View><Icon name="chevron_right" /></View>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Icon name={tone === 'danger' ? 'error' : 'warning'} color={colors[tone]} /><View style={{ flex: 1, gap: 4 }}><Copy heading>{t('m_3d2d5eb3e995')}</Copy><Copy muted size={14}>{t('m_7d87416abd53')}</Copy><Copy heading size={16}>{t('calendar_review_action_count', { count })}</Copy></View><Icon name="chevron_right" /></View>
   </Pressable></ConnectedGroup>;
 }
 export function useCalendarReviewTiming(id?: string) {
@@ -144,7 +144,7 @@ export function CalendarReviewItems({ items, selected, onToggle, disabled = fals
     </View></ConnectedGroup>)}
     {!!review.length && <Copy heading>{t('m_33071713d5e1')}{review.length}</Copy>}
     {review.map(item => <ConnectedGroup key={item.itemId}><View>
-      <SettingRow prominent label={item.title} description={[item.calendarName, item.scope].filter(Boolean).join(' · ')} />
+      <SettingRow intent="action" prominent label={item.title} description={[item.calendarName, item.scope].filter(Boolean).join(' · ')} />
       <RowSupport><Copy muted size={14}>{managedCalendarItemReason(item)}</Copy>
         {(item.occurrenceId || item.candidateId) && <Button label={item.reason === 'ElapsedAlert' ? t('m_2d2f0c2ff330') : t('m_6a47708f4e14')} variant="secondary" disabled={disabled} onPress={() => onReview(item)} />}</RowSupport>
     </View></ConnectedGroup>)}

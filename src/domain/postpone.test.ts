@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PostponeTimeInput, TimeConversion } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { capturePostpone, PostponeDraft, postponeCaptureMatches, postponeChoices, postponeTimeInput } from './postpone';
+import type { Occurrence, PostponeTimeInput, TimeConversion } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { canPostponeReminder, capturePostpone, PostponeDraft, postponeCaptureMatches, postponeChoices, postponeTimeInput } from './postpone';
 import { civilAt } from './time';
 
 const start = Date.parse('2026-10-28T10:00:00Z');
@@ -16,6 +16,15 @@ const resolve = async (input: PostponeTimeInput) => {
 const deferred = () => { let finish!: (value: TimeConversion) => void; const promise = new Promise<TimeConversion>(done => { finish = done; }); return { promise, finish }; };
 
 describe('Postpone presentation capture', () => {
+  it('keeps ordinary Postpone out of dedicated Routine and family controls', () => {
+    const regular = { completed: false, deleted: false, skipped: false, mode: 'Alarm' as const, deliveryState: 'Alerting' };
+    expect(canPostponeReminder(regular)).toBe(true);
+    expect(canPostponeReminder({ ...regular, routine: { routineId: 'routine' } as NonNullable<Occurrence['routine']> })).toBe(false);
+    expect(canPostponeReminder({ ...regular, kind: 'RoutineFamily' })).toBe(false);
+    expect(canPostponeReminder({ ...regular, completed: true })).toBe(false);
+    expect(canPostponeReminder({ ...regular, mode: 'None' })).toBe(false);
+    expect(canPostponeReminder({ ...regular, deliveryState: 'Changing' })).toBe(false);
+  });
   it('captures identity, generation, zone and copied configured shortcuts without adopting later data', () => {
     const item = { id: 'one', generation: 4, title: 'First title' };
     const settings = { tomorrowMorning: 123, tomorrowAfternoon: 456, tomorrowEvening: 789 };

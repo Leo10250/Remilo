@@ -1,0 +1,361 @@
+{
+  "schemaVersion": 1,
+  "assetId": "running",
+  "candidate": 1,
+  "revision": 2,
+  "recordedAtUtc": "2026-10-16T05:32:50.962531+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/running/prepared-01.json",
+    "sha256": "fa330a600e9dd50dbab3b41ca5a546051c40ff5fa213423da3b3df15a0f1f4da"
+  },
+  "candidateSha256": "8971ac8c783219c4151c9ba2b68c88e339503de5aea967c0604aa523fc54a309",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "reviewer": "Assistant after viewing original, unchanged previously inspected approved style input, decoded export, light/dark/checkerboard panels, both usage sizes and all eight current container colors; independent gait/readability observation by second assistant reviewer",
+    "recordedAtUtc": "2026-10-16T05:32:48.816203+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Viewed original and decoded runtime: one adult in a running/jogging stride, side view facing left, with two complete arms/hands and legs/shoes. No mat, ground plane, extra person or equipment observed."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Compared with the actual approved front-plank master: blue-gray top, muted terracotta leggings, hair bun, restrained contours and soft educational shading remain consistent. Added neutral gray/white running shoes have no visible brand or text."
+      },
+      {
+        "name": "gait-readability",
+        "status": "pass",
+        "observation": "The slightly forward-leaning upright trunk, bent counter-swinging arms, forward knee and trailing leg form a recognizable running stride. The near arm swings back while the near leg comes forward. Both feet are airborne, which reads as a static running flight phase. No obvious disconnected joint, duplicated anatomy or missing limb observed; independent second reviewer agreed. These are visual observations, not clinical gait validation."
+      },
+      {
+        "name": "alpha-and-decoded-edges",
+        "status": "pass",
+        "observation": "Viewed source/export light and dark composites, decoded checkerboard and all eight current container colors. Surrounding area is transparent with no visible rectangular backdrop, colored fringe or opaque matte halo. Shoe edges retain their intended light sole rather than an observed background remnant."
+      },
+      {
+        "name": "usage-framing",
+        "status": "pass",
+        "observation": "Viewed actual source/export 256x144 and 320x180 panels and all eight current 320x180 container composites. Upright subject is naturally narrow within the wide contain frame but the stride and complete hands/shoes remain readable. Bun has roughly 10px top margin in the 540px export (about 3dp at 180dp); this is tighter than side space but not clipped."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No visible text, numbers, labels, arrows, motion streaks, app controls, phone frame, scenery, logo or watermark observed."
+      }
+    ],
+    "limitations": [
+      "The bun has a tight but unclipped top margin of about 3dp in the 320x180 frame.",
+      "A single static running illustration does not prescribe speed, cadence, interval intensity or clinically validate gait.",
+      "Untagged source pixels are explicitly interpreted as sRGB under the profile, without claiming measured embedded sRGB or a color conversion.",
+      "Usage boards are deterministic illustration composites using current presentation.json container colors, not actual RN/native component renders, text/control contrast measurements or signed-phone acceptance.",
+      "Human artwork and activation approval remain pending; no production promotion performed."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "e147757d7096da8e8471c5adec02086a16d48b361abcf165d9c64e13b90654dc"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/source-light-v1.png",
+        "sha256": "a7e8f6851025ca4787885ea461f6a66ba54e900a6835c14b2e7cf077dec5ed61"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/source-dark-v1.png",
+        "sha256": "412fb6a0cf9fecdaa0b3444c3313ec3780e09d4d1fea3ff8b1a8034919262cde"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/export-light-v1.png",
+        "sha256": "611055ca820cd6d6754421130471273436712c90d9bc0f5f1c4676e8b93d6d66"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/export-dark-v1.png",
+        "sha256": "c3f500ad949fdd96ff95af8181e0dd9b108ef4f22336b4088c41b13825896a7d"
+      }
+    ]
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02.png",
+    "sha256": "bf1bb58c2f13548642d133eb3f9a897e6be50570d9304f2034abdf178b2202a4"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/01.png",
+      "sha256": "7d3bd5c90ea0775269d4fccad3fbc7752a3c3e27e84d2f9f5e47e6dba7de62f4",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/02.png",
+      "sha256": "d098d889d2e38babb6e4943dd0afc90059eec102a64a980fecdba19010744b22",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/03.png",
+      "sha256": "1df2d09517a5c2763e8cc473b144964db9bbfb196238952a492b864d2ee5cf47",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/04.png",
+      "sha256": "e30ae1bc08e7adb6a3203417789c80867c19231912a0545345d9758c4b4ba83a",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/05.png",
+      "sha256": "000531207b01b6030cab5113d8b10f86950d97dfdebaf93784cb98d9388e76ae",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/06.png",
+      "sha256": "6518bd54f3803330c849d8f16967f317736daef13d0d85e86954c32573b15a95",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/07.png",
+      "sha256": "281dcf423db1b58b8005a4cba22e97ea3bccbe065fe12c5c8b598d5a179c56ff",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/08.png",
+      "sha256": "00bd142d99c2126e03766c8d9a609c9ee88f9966c5ea57cad8d310669e9bca95",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/09.png",
+      "sha256": "2f4a771624f0bab14064dd0291ba92687b883513281375e42cfe88cf0f3ad435",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/10.png",
+      "sha256": "b41d4f430195fb07f51ad1fee6d48440e4c3c818c50b97e810e27fd66cb01c2c",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/11.png",
+      "sha256": "6aa6cd15658cb136ff7ae5fdd74f1b990cd92d9fedc00ed17ac9665c7b43f561",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/review-02-panels/12.png",
+      "sha256": "8cdc97eb6d967ec01e53321cefe75e6bf8a42ea4dd3958628d704f3afc1ead4e",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "e147757d7096da8e8471c5adec02086a16d48b361abcf165d9c64e13b90654dc"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/source-light-v1.png",
+      "sha256": "a7e8f6851025ca4787885ea461f6a66ba54e900a6835c14b2e7cf077dec5ed61"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/source-dark-v1.png",
+      "sha256": "412fb6a0cf9fecdaa0b3444c3313ec3780e09d4d1fea3ff8b1a8034919262cde"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/export-light-v1.png",
+      "sha256": "611055ca820cd6d6754421130471273436712c90d9bc0f5f1c4676e8b93d6d66"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/export-dark-v1.png",
+      "sha256": "c3f500ad949fdd96ff95af8181e0dd9b108ef4f22336b4088c41b13825896a7d"
+    }
+  ],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "e205a3336e61cceb456f51214c1ffb886cc34e6126c5b8f000cc89c780b50bef"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

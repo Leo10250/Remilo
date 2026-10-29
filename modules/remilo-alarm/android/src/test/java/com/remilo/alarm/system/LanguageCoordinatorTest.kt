@@ -32,10 +32,28 @@ class LanguageCoordinatorTest {
     assertEquals("en", LanguageCoordinator.resolve(emptyList()))
   }
   @Test fun translatedAlarmCopyCannotChangeCapturedCommandKinds() {
-    val english = AlarmControlAction.entries.map { it.commandKind }
+    val expected = mapOf(
+      AlarmControlAction.CompleteDelivery to "CompleteDelivery",
+      AlarmControlAction.StartRoutine to "StartRoutine",
+      AlarmControlAction.DismissRoutine to "DismissRoutineAlarm",
+      AlarmControlAction.RoutineSnooze to "SnoozeRoutineAlarm",
+      AlarmControlAction.Postpone to "Postpone",
+      AlarmControlAction.DoneAll to "DoneAll",
+      AlarmControlAction.PostponeAll to "PostponeAll")
+    PresentationLanguage.update(context, "en")
+    val english = AlarmControlAction.entries.associateWith { it.commandKind }
+    assertEquals(expected, english)
+    assertEquals("Start routine", L10n.text(context, "Start routine"))
+    assertEquals("Dismiss alarm", L10n.text(context, "Dismiss alarm"))
     PresentationLanguage.update(context, "zh-Hans")
-    assertEquals(listOf("CompleteDelivery", "Postpone", "DoneAll", "PostponeAll"), english)
-    assertEquals(english, AlarmControlAction.entries.map { it.commandKind })
+    assertEquals(expected, AlarmControlAction.entries.associateWith { it.commandKind })
+    assertEquals(english, AlarmControlAction.entries.associateWith { it.commandKind })
+    assertEquals("开始计划", L10n.text(context, "Start routine"))
+    assertEquals("\u5173\u95ed\u95f9\u949f", L10n.text(context, "Dismiss alarm"))
+    assertNotEquals(L10n.text(context, "Start routine"), AlarmControlAction.StartRoutine.commandKind)
+    assertNotEquals(L10n.text(context, "Dismiss alarm"), AlarmControlAction.DismissRoutine.commandKind)
+    assertNotEquals(AlarmControlAction.CompleteDelivery.commandKind, AlarmControlAction.StartRoutine.commandKind)
+    assertNotEquals(AlarmControlAction.CompleteDelivery.commandKind, AlarmControlAction.DismissRoutine.commandKind)
     assertEquals("稍后提醒", L10n.text(context, "Snooze"))
     assertEquals("推迟", L10n.text(context, com.remilo.alarm.presentation.NativeMessages.postpone_action()))
     assertEquals("全部推迟（3）", L10n.text(context, com.remilo.alarm.presentation.NativeMessages.postpone_all_action(3)))

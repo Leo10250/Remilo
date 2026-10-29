@@ -10,6 +10,7 @@ import RemiloAlarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
 import { ThemeProvider, useTheme } from '../ui/theme';
 import PresentationPreview from '../ui/presentation-preview';
 import { TimeDisplayProvider } from '../ui/time-display';
+import { ConfirmationHost } from '../ui/confirmation-dialog';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -29,7 +30,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider>
       <QueryClientProvider client={client}>
-        <TimeDisplayProvider><ThemeProvider><PresentationPreview><Navigation /></PresentationPreview></ThemeProvider></TimeDisplayProvider>
+        <TimeDisplayProvider><ThemeProvider><PresentationPreview><Navigation /><ConfirmationHost /></PresentationPreview></ThemeProvider></TimeDisplayProvider>
       </QueryClientProvider>
     </SafeAreaProvider></GestureHandlerRootView>
   );
