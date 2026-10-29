@@ -43,10 +43,19 @@ Robolectric4.17 uses API34 for these tests and API35 for resource compilation.
 Both jars were present during the successful local native suite. Missing downloads
 remain dependency failures; no test is skipped or failure reclassified as success.
 
-The focused CI-only local commit is e912c7b, also referenced by the separate local
-fix-robolectric-sdk-downloads branch. It has not been pushed: automatic approval
-review rejected external publication without explicit owner authorization. No new
-GitHub run or repaired main-branch result is claimed.
+At the initial implementation handoff, the focused CI-only local commit e912c7b
+on fix-robolectric-sdk-downloads had not been pushed: automatic approval review
+rejected external publication without explicit owner authorization. That handoff
+did not claim a new GitHub run or repaired main-branch result.
+
+The owner then explicitly authorized pushing both prepared branches and opening
+draft PRs. Both pushes succeeded: [CI fix #19](https://github.com/Leo10250/Remilo/pull/19)
+targets main, and [chooser #20](https://github.com/Leo10250/Remilo/pull/20) targets
+the CI branch for a focused stacked diff. Merge #19 first; then update/rebase the
+chooser branch as needed and retarget #20 to main. A squash/rebase merge of #19
+requires removing its already-landed commit from the chooser stack. At PR creation,
+both heads had running shared/Android checks; no merge or remote passing result
+was observed. Live status remains in the backlog.
 
 ## Automated evidence
 
@@ -83,7 +92,7 @@ logs and reports remain in ignored verification/local; keys and APKs stay out of
 The final release source map matches the current PostponeChooser source. APK
 SHA-256: `2516722a62662895001663bb4c04bd8a92b4ccca10efdccfc7e7b215711fc8fa`.
 
-No installation, publication or physical observation was performed. Native
+No installation, distribution or physical observation was performed. Native
 picker/Back/rotation behavior, all eight visual pairs, English/Chinese 100–200%
 text, TalkBack, locked/Direct Boot, continued audio while choosing and original
 cutoff remain in the [consolidated acceptance checklist](../device-acceptance.md#uniform-postpone-follow-up-alert-06).
