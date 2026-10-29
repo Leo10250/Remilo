@@ -118,11 +118,30 @@ and rejects any scoped ModalBottomSheet call. This verifies the specific binary
 linkage boundary that failed in the old APK; indirect calls, reflection, resources,
 device class-loader state and physical behavior remain outside this check.
 
-## Physical acceptance
+## Authorized installation — 29 October 2026
 
-The new candidate has not been installed by this work. Actual locked-sheet and
-picker visibility, notification unlock-to-Home handoff, modal/focus appearance,
-TalkBack, continued sound and the original five-minute cutoff require an identified
-signed-phone run. Host tests cannot establish these outcomes. The consolidated
+After reviewing the verified candidate, the owner explicitly authorized
+**Install and open**. The repository deploy command installed the signed
+com.remilo.app 0.4.0 (4) ARM64 APK as an in-place update on the **Pixel 9 Pro XL**
+and reported a successful launch. No uninstall, data clear, downgrade flag,
+permission grant, replacement key or ADB-server restart was used.
+
+The read-only installed/local comparison reports a hash match to the exact
+`3805f4d4b483c9a8e32d84cc7784e9f84d6beae7091a6d4b3593c3655b27499e`
+candidate above. Source-map and DEX checks were repeated after deployment and
+passed on that same hash. A bounded post-launch crash snapshot retains the four
+old failures, latest 28 October 23:47:09.661, with no newer matching crash in that
+snapshot. This does not establish that the updated chooser has been exercised.
+
+The current-screen capture is black, so Agenda/chooser appearance could not be
+verified from it. No device unlocking, navigation or alarm-test scheduling was
+performed by tools. After being asked to repeat the locked-screen Postpone test,
+the owner explicitly confirmed **Yes, the selector opens** on this updated build.
+This records the specific phone result without inferring other observations.
+
+Picker visibility, notification unlock-to-Home handoff, full modal/focus appearance,
+TalkBack, continued sound and the original five-minute cutoff remain separate
+physical observations. Host tests and a successful installation cannot establish
+these outcomes. The consolidated
 checklist records the scenarios; beta acceptance and distribution are not declared.
 Private logs, captures, device identities and build artifacts remain ignored.
