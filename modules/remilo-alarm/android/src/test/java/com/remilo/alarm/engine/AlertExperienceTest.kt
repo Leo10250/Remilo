@@ -78,6 +78,244 @@ class AlertExperienceTest {
   private fun complete(id: String, op: String = "complete", generation: Long = 1) = apply(mapOf(
     "kind" to "CompleteDelivery", "operationId" to op, "occurrenceId" to id, "expectedGeneration" to generation))
 
+  private fun postponeGroup(operation: String, target: Long, snapshot: Map<*, *> = actions()) =
+    group("PostponeAll", operation, snapshot) + ("alarmAtMs" to target)
+
+  @Test fun postponeAllUsesTheShownAbsoluteTargetExcludesLaterArrivalsAndKeepsWorkUnfinished() {
+    val a = create("postpone-a"); val b = create("postpone-b"); val later = create("postpone-later")
+    now += 60_000; fire(a); fire(b)
+    val originals = listOf(a, b).associateWith(::occurrence)
+    now++
+    val target = now + 86_400_000; val command = postponeGroup("postpone-all", target)
+    fire(later)
+    apply(mapOf("kind" to "Settings", "operationId" to "duration-after-selection", "expectedRevision" to 1L, "snoozeMinutes" to 25))
+    assertEquals("Applied", apply(command)["status"])
+    for (id in listOf(a, b)) {
+      val value = occurrence(id)
+      assertEquals(target, value["nextAlertMs"]); assertEquals(2L, value["generation"])
+      assertEquals(false, value["completed"])
+      assertEquals(true, value["overdue"])
+      listOf("title", "notes", "eventStartMs", "eventEndMs", "dueAtMs", "alarmAtMs", "overdueAtMs", "listId", "revision").forEach { field ->
+        assertEquals(originals.getValue(id)[field], value[field])
+      }
+      assertEquals("Postponed", value["alertAdjustment"])
+      assertEquals(1, (value["history"] as List<*>).count { (it as Map<*, *>)["kind"] == "Postpone" })
+    }
+    assertEquals("Alerting", occurrence(later)["deliveryState"])
+    assertEquals("Applied", apply(command)["status"])
+    assertEquals(1L, occurrence(later)["generation"])
+  }
+
+  @Test fun postponeAllRejectsStaleMembersAndExpiredUncommittedTargetsWithoutPartialMutation() {
+    val a = create("stale-postpone-a"); val b = create("stale-postpone-b")
+    now += 60_000; fire(a); fire(b)
+    val snapshot = actions(); val target = now + 120_000
+    assertEquals("INVALID_INPUT", apply(postponeGroup("expired-postpone", now, snapshot))["errorCode"])
+    assertTrue(records().all { it.state == "Alerting" && it.generation == 1L })
+    val stale = postponeGroup("stale-postpone", target, snapshot)
+    complete(a, "complete-before-postpone")
+    assertEquals("STALE_MEMBERS", apply(stale)["errorCode"])
+    assertEquals("Alerting", occurrence(b)["deliveryState"]); assertEquals(1L, occurrence(b)["generation"])
+  }
+
+  @Test fun postponeAllIdentityRejectsChangedTargetKindMembersAndSessionButAcknowledgesElapsedExactRetry() {
+    val a = create("postpone-identity-a"); val b = create("postpone-identity-b")
+    now += 60_000; fire(a); fire(b)
+    val snapshot = actions(); val target = now + 120_000; val command = postponeGroup("postpone-identity", target, snapshot)
+    assertEquals("Applied", apply(command)["status"])
+    assertEquals("OPERATION_REUSED", apply(command + ("alarmAtMs" to target + 1))["errorCode"])
+    assertEquals("OPERATION_REUSED", apply(command + ("expectedSessionId" to "other-session"))["errorCode"])
+    assertEquals("OPERATION_REUSED", apply(command + ("members" to listOf(mapOf("occurrenceId" to a, "expectedGeneration" to 1L))))["errorCode"])
+    assertEquals("OPERATION_REUSED", apply(command + mapOf("kind" to "SnoozeAll", "snoozeMinutes" to 10))["errorCode"])
+    assertEquals("OPERATION_REUSED", apply(command + ("kind" to "DoneAll"))["errorCode"])
+    now = target + 1
+    assertEquals("Applied", apply(command)["status"])
+    assertTrue(records().all { it.generation == 2L && it.targetMs == target })
+  }
+
+  @Test fun bulkPostponeResumesEveryDurableCrashBoundaryWithoutRetimingOrDuplicateHistory() {
+    for (stage in listOf("protected-committed", "member-registered", "member-acknowledged", "settled")) {
+      val a = create("postpone-a-$stage"); val b = create("postpone-b-$stage")
+      now += 60_000; fire(a); fire(b)
+      val target = now + 3_600_000; val command = postponeGroup("postpone-$stage", target)
+      failAt = stage
+      try { apply(command); fail("Fault must interrupt acknowledgement") } catch (_: java.util.concurrent.ExecutionException) {}
+      engine.close(); now += 5_000; engine = newEngine()
+      assertEquals("Applied", apply(command)["status"])
+      for (id in listOf(a, b)) {
+        val value = occurrence(id)
+        assertEquals(target, value["nextAlertMs"]); assertEquals(2L, value["generation"])
+        assertEquals(1, (value["history"] as List<*>).count { (it as Map<*, *>)["kind"] == "Postpone" })
+      }
+    }
+  }
+
+  @Test fun resumedBulkPostponeCannotUndoANewerDoneOrRegisterAnElapsedTarget() {
+    val a = create("newer-postpone-a"); val b = create("newer-postpone-b")
+    now += 60_000; fire(a); fire(b)
+    val target = now + 120_000; val command = postponeGroup("interrupted-postpone", target)
+    failAt = "protected-committed"
+    try { apply(command); fail("Fault must interrupt acknowledgement") } catch (_: java.util.concurrent.ExecutionException) {}
+    apply(mapOf("kind" to "Done", "operationId" to "newer-done", "occurrenceId" to a, "expectedRevision" to 1L))
+    now = target + 1
+    val result = apply(command)
+    assertEquals("Partial", result["status"])
+    assertEquals(setOf("Superseded", "Missed"), (result["memberResults"] as List<*>).map { (it as Map<*, *>)["status"] }.toSet())
+    assertEquals(true, occurrence(a)["completed"])
+    assertEquals(false, occurrence(b)["completed"]); assertEquals("Missed", occurrence(b)["deliveryState"])
+  }
+
+  @Test fun partialBulkPostponeRemainsTruthfulAndDoesNotResubmitSettledRegistrations() {
+    val a = create("mixed-postpone-a"); val b = create("mixed-postpone-b")
+    now += 60_000; fire(a); fire(b)
+    val target = now + 1_800_000; val command = postponeGroup("mixed-postpone", target)
+    failedIds.add(b)
+    val result = apply(command)
+    assertEquals("Partial", result["status"])
+    assertEquals(setOf("Scheduled", "Blocked"), (result["memberResults"] as List<*>).map { (it as Map<*, *>)["status"] }.toSet())
+    val count = registrations.size
+    failedIds.clear(); now += 10_000
+    assertEquals(result, apply(command)); assertEquals(count, registrations.size)
+    assertTrue(records().all { it.targetMs == target && it.generation == 2L })
+    assertFalse(occurrence(a)["completed"] as Boolean); assertFalse(occurrence(b)["completed"] as Boolean)
+  }
+
+  @Test fun resumedBulkPostponeCannotReplaceANewerSinglePostpone() {
+    val a = create("superseded-postpone-a"); val b = create("superseded-postpone-b")
+    now += 60_000; fire(a); fire(b)
+    val target = now + 120_000; val command = postponeGroup("older-bulk-postpone", target)
+    failAt = "protected-committed"
+    try { apply(command); fail("Fault must interrupt acknowledgement") } catch (_: java.util.concurrent.ExecutionException) {}
+    val newerTarget = target + 300_000
+    assertEquals("Applied", apply(mapOf("kind" to "Postpone", "operationId" to "newer-single-postpone",
+      "occurrenceId" to a, "expectedGeneration" to 2L, "alarmAtMs" to newerTarget))["status"])
+    val result = apply(command)
+    assertEquals("Partial", result["status"])
+    assertEquals(setOf("Superseded", "Scheduled"), (result["memberResults"] as List<*>).map { (it as Map<*, *>)["status"] }.toSet())
+    assertEquals(newerTarget, occurrence(a)["nextAlertMs"]); assertEquals(3L, occurrence(a)["generation"])
+    assertEquals(target, occurrence(b)["nextAlertMs"]); assertEquals(2L, occurrence(b)["generation"])
+  }
+
+  @Test fun directBootPostponeUsesMirroredPreferencesAndProjectsHistoryExactlyOnceAfterUnlock() {
+    val a = create("boot-postpone-a"); val b = create("boot-postpone-b")
+    apply(mapOf("kind" to "Settings", "operationId" to "postpone-shortcuts", "expectedRevision" to 1L,
+      "tomorrowMorning" to 630, "tomorrowAfternoon" to 900, "tomorrowEvening" to 1080))
+    engine.close(); shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false); engine = newEngine()
+    now += 60_000; fire(a); fire(b)
+    val session = actions()["sessionId"] as String
+    val snapshot = CompletableFuture<AlarmEngine.SessionSnapshot>()
+    engine.sessionSnapshot(session, { snapshot.complete(it) }, { snapshot.completeExceptionally(IllegalStateException(it)) })
+    val safe = snapshot.get(20, TimeUnit.SECONDS)
+    assertTrue(safe.content.isEmpty()); assertTrue(safe.members.all { it.second == "Reminder" })
+    assertEquals(PostponePreferencesRecord(tomorrowMorning = 630, tomorrowAfternoon = 900, tomorrowEvening = 1080, revision = 2), safe.postponePreferences)
+    val target = now + 86_400_000; val command = postponeGroup("boot-postpone", target)
+    assertEquals("Applied", apply(command)["status"])
+    engine.close(); shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true); engine = newEngine()
+    assertEquals("Applied", apply(command)["status"])
+    for (id in listOf(a, b)) {
+      val value = occurrence(id)
+      assertEquals(target, value["nextAlertMs"]); assertEquals(false, value["completed"])
+      assertEquals(1, (value["history"] as List<*>).count { (it as Map<*, *>)["kind"] == "Postpone" })
+    }
+  }
+
+  @Test fun missingPreUnlockPostponeMirrorIsAbsentUntilCredentialSettingsAreReconciled() {
+    engine.close()
+    context.createDeviceProtectedStorageContext().deleteDatabase("remilo-operational.db")
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false); engine = newEngine()
+    fun snapshot(): AlarmEngine.SessionSnapshot {
+      val result = CompletableFuture<AlarmEngine.SessionSnapshot>()
+      engine.sessionSnapshot("absent", { result.complete(it) }, { result.completeExceptionally(IllegalStateException(it)) })
+      return result.get(20, TimeUnit.SECONDS)
+    }
+    assertNull(snapshot().postponePreferences)
+    shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(true)
+    val recovered = CompletableFuture<Unit>()
+    engine.recover { recovered.complete(Unit) }; recovered.get(20, TimeUnit.SECONDS)
+    assertEquals(PostponePreferencesRecord(revision = 1), snapshot().postponePreferences)
+  }
+
+  @Test fun relativeAndCustomPostponeRemainOperationalBeforeUnlockWithoutAShortcutMirror() {
+    val a = create("mirrorless-relative"); val b = create("mirrorless-custom")
+    request {
+      val db = OperationalDatabase.open(context)
+      try { db.openHelper.writableDatabase.execSQL("DELETE FROM postpone_preferences") } finally { db.close() }
+    }
+    engine.close(); shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false); engine = newEngine()
+    now += 60_000; fire(a); fire(b)
+    val sessionId = actions()["sessionId"]
+    val relative = request { engine.resolvePostponeTime(mapOf("kind" to "Relative", "zoneId" to "UTC", "referenceAtMs" to now, "minutes" to 30)) } as Map<*, *>
+    val customLocal = com.remilo.alarm.core.CivilTime.fromInstant("UTC", now + 3_600_000)["local"]
+    val custom = request { engine.resolvePostponeTime(mapOf("kind" to "Custom", "zoneId" to "UTC", "referenceAtMs" to now, "local" to customLocal)) } as Map<*, *>
+    for ((id, target) in listOf(a to relative["instantMs"], b to custom["instantMs"])) {
+      assertEquals("Applied", apply(mapOf("kind" to "Postpone", "operationId" to "mirrorless-$id",
+        "occurrenceId" to id, "expectedGeneration" to 1L, "expectedSessionId" to sessionId, "alarmAtMs" to target))["status"])
+    }
+    assertTrue(records().all { it.state == "Scheduled" && it.generation == 2L })
+    val mirror = request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().postponePreferences() } finally { db.close() }
+    }
+    assertNull(mirror)
+  }
+
+  @Test fun exactSettingsRetryRepairsPostponeMirrorWithoutAnotherCredentialRevision() {
+    val settings = mapOf("kind" to "Settings", "operationId" to "mirror-settings", "expectedRevision" to 1L,
+      "tomorrowMorning" to 615, "tomorrowAfternoon" to 855, "tomorrowEvening" to 1035)
+    assertEquals("Applied", apply(settings)["status"])
+    request {
+      val db = OperationalDatabase.open(context)
+      try { db.openHelper.writableDatabase.execSQL("DELETE FROM postpone_preferences") } finally { db.close() }
+    }
+    assertEquals("Applied", apply(settings)["status"])
+    val mirrored = request {
+      val db = OperationalDatabase.open(context)
+      try { db.records().postponePreferences() } finally { db.close() }
+    }
+    assertEquals(PostponePreferencesRecord(tomorrowMorning = 615, tomorrowAfternoon = 855, tomorrowEvening = 1035, revision = 2), mirrored)
+    val revision = request {
+      val db = ContentDatabase.open(context)
+      try { db.records().settings()!!.revision } finally { db.close() }
+    }
+    assertEquals(2L, revision)
+  }
+
+  @Test fun resolvingPostponeTimeDoesNotMutateOrRegisterAnAlert() {
+    create("read-only-postpone")
+    val before = records(); val registrationCount = registrations.size
+    val resolved = request { engine.resolvePostponeTime(mapOf("kind" to "Relative", "zoneId" to "UTC",
+      "referenceAtMs" to now, "minutes" to 30)) } as Map<*, *>
+    assertEquals(now + 1_800_000, resolved["instantMs"])
+    assertEquals(before, records()); assertEquals(registrationCount, registrations.size)
+  }
+
+  @Test fun nativeSinglePostponeRejectsWrongSessionButDetailsPostponeStillWorksWithoutSession() {
+    val id = create("single-session-postpone"); now += 60_000; fire(id)
+    val target = now + 120_000
+    val command = mapOf("kind" to "Postpone", "operationId" to "single-session", "occurrenceId" to id,
+      "expectedGeneration" to 1L, "alarmAtMs" to target)
+    assertEquals("STALE_SESSION", apply(command + ("expectedSessionId" to "wrong-session"))["errorCode"])
+    assertEquals(1L, occurrence(id)["generation"])
+    val captured = command + ("expectedSessionId" to actions()["sessionId"])
+    assertEquals("Applied", apply(captured)["status"])
+    now = target + 1
+    assertEquals("Applied", apply(captured)["status"])
+    assertEquals("Applied", apply(command + mapOf("operationId" to "details-postpone", "expectedGeneration" to 2L, "alarmAtMs" to now + 60_000))["status"])
+  }
+
+  @Test fun postponeAllRetainsRecurringOccurrenceIdentityAndFutureNormalSlot() {
+    apply(mapOf("kind" to "CreateSeries", "operationId" to "postpone-repeat", "title" to "Repeat", "alarmAtMs" to now + 60_000,
+      "recurrence" to mapOf("frequency" to "daily", "interval" to 1, "count" to 2, "zoneMode" to "floating")))
+    val first = records().minBy { it.targetMs }; val future = records().maxBy { it.targetMs }
+    now += 60_000; fire(first.occurrenceId)
+    val target = now + 1_800_000
+    assertEquals("Applied", apply(postponeGroup("postpone-repeat-action", target))["status"])
+    val postponed = records().first { it.occurrenceId == first.occurrenceId }
+    assertEquals(first.nominalSlot, postponed.nominalSlot); assertEquals(first.segmentId, postponed.segmentId)
+    assertTrue(postponed.exception); assertEquals(target, postponed.targetMs)
+    assertEquals(future, records().first { it.occurrenceId == future.occurrenceId })
+  }
+
   @Test fun postedNotificationHasBothNativeActionsAndDismissalLeavesItUnfinished() {
     val id = create("notification", "Notification"); now += 60_000; fire(id)
     assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)

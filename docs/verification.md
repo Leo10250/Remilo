@@ -1,5 +1,19 @@
 # Verification and release evidence
 
+The 28 October uniform Postpone change requires DP7→8 receipt/mirror preservation,
+pure native time/DST cases, captured PostponeAll/stale/retry/fault recovery, settings
+mirror repair, locked-upgrade absence and native/app chooser state tests. Inspect
+eight equal tiles, Custom cancellation, 15-minute default, fixed target/scope,
+large text/landscape and translated/device-clock labels. Run shared checks and
+native unit/lint/release assembly serially. Signed-phone sound while choosing,
+cutoff, picker, pre-unlock and TalkBack observations stay in the consolidated run.
+
+Robolectric's pinned API 34 runtime/API 35 resource jars resolve through Gradle
+before test execution, following the [upstream dependency guidance](https://robolectric.org/blog/2023/11/11/improving-android-all-downloading/).
+The test suite uses the staged directory rather than making a separate Maven
+download partway through a test class. Resolution failures remain failures; no
+behavioral test is skipped or treated as passing.
+
 Language checks cover catalog parity/escaping/placeholders, script-aware resolution,
 CE12→13/DP6→7 preservation, bootstrap before unlock, manual/system synchronization,
 exact retries, unchanged scheduling/content, retained feedback and device clock

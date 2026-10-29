@@ -46,7 +46,7 @@ export type DeliveryCommand = {
   expectedSnoozeMinutes?: number;
 };
 export type SessionCommand = { operationId: string; expectedSessionId: string; members: SessionActionMember[] } &
-  ({ kind: 'DoneAll' } | { kind: 'SnoozeAll'; snoozeMinutes: number });
+  ({ kind: 'DoneAll' } | { kind: 'SnoozeAll'; snoozeMinutes: number } | { kind: 'PostponeAll'; alarmAtMs: number });
 export type ContentCommand = Partial<ReminderDraft> & {
   kind: 'Edit' | 'Done' | 'Reopen' | 'Delete' | 'UndoDelete' | 'Skip' | 'Purge'; operationId: string; occurrenceId: string; expectedRevision: number;
 };
@@ -75,6 +75,10 @@ export type TimeConversionInput = { zoneId: string; instantMs: number; local?: n
 export type TimeConversion = {
   zoneId: string; instantMs: number; local: string; offsetSeconds: number; adjustment: 'none' | 'gapForward' | 'earlierFold';
 };
+export type PostponeTimeInput =
+  | { kind: 'Relative'; referenceAtMs: number; zoneId: string; minutes: 15 | 30 | 60 | 1440 }
+  | { kind: 'Tomorrow'; referenceAtMs: number; zoneId: string; minutesOfDay: number }
+  | { kind: 'Custom'; referenceAtMs: number; zoneId: string; local: string };
 export type SeriesCommand =
   (ReminderDraft & { kind: 'CreateSeries'; recurrence: RecurrenceDraft; operationId: string; calendarDisposition?: CalendarCreationDisposition }) |
   (ReminderDraft & { kind: 'EditSeries' | 'EditFollowing'; recurrence: RecurrenceDraft; operationId: string; segmentId: string; expectedRevision: number; nominalSlot?: string }) |

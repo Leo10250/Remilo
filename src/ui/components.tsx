@@ -96,8 +96,8 @@ export function Heading({ children }: PropsWithChildren) {
   const foundation = useFoundationStyle();
   return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? lineHeightFor(typography.heading, 1.4) * scale : undefined, fontWeight: '600', ...chineseTextMetrics(typography.heading, scale, '600') }}>{children}</Text>;
 }
-export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint }: {
-  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
+export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint, buttonRef }: {
+  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string; buttonRef?: Ref<View>;
 }) {
   'use no memo';
   useLocale();
@@ -105,7 +105,7 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
   const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.dangerInk : variant === 'secondary' ? colors.accent : colors.ink;
-  const button = <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
+  const button = <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     style={({ pressed }) => {
       const active = !blocked && (pressed || state === 'pressed');

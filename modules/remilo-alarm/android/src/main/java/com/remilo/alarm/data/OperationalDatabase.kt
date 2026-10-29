@@ -47,17 +47,25 @@ data class PendingCompletion(@PrimaryKey val operationId: String, val occurrence
 /** Frozen group intent and registration acknowledgements, never private content. */
 @Entity(tableName = "bulk_snooze_receipts")
 data class BulkSnoozeReceipt(@PrimaryKey val operationId: String, val sessionId: String,
-  val snapshotKey: String, val occurredAtMs: Long, val targetMs: Long, val snoozeMinutes: Int,
-  val settled: Boolean = false)
+  val snapshotKey: String, val occurredAtMs: Long, val targetMs: Long, val snoozeMinutes: Int?,
+  val settled: Boolean = false,
+  @ColumnInfo(defaultValue = "'SnoozeAll'") val kind: String = "SnoozeAll")
 @Entity(tableName = "bulk_snooze_members", primaryKeys = ["operationId", "occurrenceId"])
 data class BulkSnoozeMember(val operationId: String, val occurrenceId: String,
   val expectedGeneration: Long, val generation: Long, val status: String = "Pending")
+/** Allowlisted clock preferences only. Absence means no confirmed CE mirror yet. */
+@Entity(tableName = "postpone_preferences")
+data class PostponePreferencesRecord(@PrimaryKey val id: String = "app",
+  val tomorrowMorning: Int = 600, val tomorrowAfternoon: Int = 840,
+  val tomorrowEvening: Int = 1020, val revision: Long = 0)
 /** Language enums and reconciliation metadata only; never content or message arguments. */
 @Entity(tableName = "language_preferences")
 data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: String = "system",
   val revision: Long = 1, val settingsRevision: Long = 0, val projected: String = "",
   val pendingProjection: Boolean = false, val externalPending: Boolean = false)
 @Dao interface OperationalDao {
+  @Query("SELECT * FROM postpone_preferences WHERE id = 'app'") fun postponePreferences(): PostponePreferencesRecord?
+  @Insert(onConflict = OnConflictStrategy.REPLACE) fun postponePreferences(record: PostponePreferencesRecord)
   @Query("SELECT * FROM language_preferences WHERE id = 'app'") fun language(): LanguageRecord?
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun language(record: LanguageRecord)
   @Query("SELECT * FROM alerts") fun all(): List<AlertRecord>
@@ -88,13 +96,23 @@ data class LanguageRecord(@PrimaryKey val id: String = "app", val preference: St
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun bulkSnoozeMember(record: BulkSnoozeMember)
 }
 @Database(entities = [AlertRecord::class, SessionRecord::class, ActionRecord::class, SeriesPlan::class, AppearanceRecord::class,
-  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class], version = 7, exportSchema = true)
+  CompletionReceipt::class, PendingCompletion::class, BulkSnoozeReceipt::class, BulkSnoozeMember::class, LanguageRecord::class,
+  PostponePreferencesRecord::class], version = 8, exportSchema = true)
 abstract class OperationalDatabase : RoomDatabase() {
   abstract fun records(): OperationalDao
   companion object {
     fun open(context: Context): OperationalDatabase = Room.databaseBuilder(
       context.createDeviceProtectedStorageContext(), OperationalDatabase::class.java,
-      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+      "remilo-operational.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE bulk_snooze_receipts_v8 (operationId TEXT NOT NULL PRIMARY KEY, sessionId TEXT NOT NULL, snapshotKey TEXT NOT NULL, occurredAtMs INTEGER NOT NULL, targetMs INTEGER NOT NULL, snoozeMinutes INTEGER, settled INTEGER NOT NULL, kind TEXT NOT NULL DEFAULT 'SnoozeAll')")
+        db.execSQL("INSERT INTO bulk_snooze_receipts_v8 (operationId,sessionId,snapshotKey,occurredAtMs,targetMs,snoozeMinutes,settled,kind) SELECT operationId,sessionId,snapshotKey,occurredAtMs,targetMs,snoozeMinutes,settled,'SnoozeAll' FROM bulk_snooze_receipts")
+        db.execSQL("DROP TABLE bulk_snooze_receipts")
+        db.execSQL("ALTER TABLE bulk_snooze_receipts_v8 RENAME TO bulk_snooze_receipts")
+        db.execSQL("CREATE TABLE postpone_preferences (id TEXT NOT NULL PRIMARY KEY, tomorrowMorning INTEGER NOT NULL, tomorrowAfternoon INTEGER NOT NULL, tomorrowEvening INTEGER NOT NULL, revision INTEGER NOT NULL)")
+      }
+    }
     val MIGRATION_6_7 = object : Migration(6, 7) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS language_preferences (id TEXT NOT NULL PRIMARY KEY, preference TEXT NOT NULL, revision INTEGER NOT NULL, settingsRevision INTEGER NOT NULL, projected TEXT NOT NULL, pendingProjection INTEGER NOT NULL, externalPending INTEGER NOT NULL)")

@@ -1862,4 +1862,35 @@
   <plurals name="l10n_calendar_review_notification">
     <item quantity="other">%1$s 项未完成提醒需要查看。</item>
   </plurals>
+  <string name="l10n_postpone_action">推迟</string>
+  <string name="l10n_postpone_all_action">全部推迟（%1$s）</string>
+  <string name="l10n_postpone_one_day">1 天</string>
+  <string name="l10n_postpone_choose_date_time">选择日期和时间</string>
+  <string name="l10n_postpone_scope_single">仅更改下次提醒时间，此提醒仍未完成。</string>
+  <string name="l10n_postpone_next_alert">下次提醒</string>
+  <string name="l10n_postpone_custom_date_time">自定日期和时间</string>
+  <string name="l10n_postpone_use_time">使用此时间</string>
+  <string name="l10n_postpone_back_choices">返回选项</string>
+  <string name="l10n_postpone_future_time">请选择未来的时间。</string>
+  <string name="l10n_postpone_scope_group">更改这 %1$s 个提醒的下次提醒时间，它们仍未完成。</string>
+  <string name="l10n_postpone_15_minutes">15 分钟</string>
+  <string name="l10n_postpone_30_minutes">30 分钟</string>
+  <string name="l10n_postpone_one_hour">1 小时</string>
+  <string name="l10n_postpone_tomorrow">明天</string>
+  <string name="l10n_postpone_next_group">全部 %1$s 个提醒的下次时间</string>
+  <string name="l10n_postpone_24_hours">24 小时后</string>
+  <string name="l10n_postpone_custom">自定</string>
+  <string name="l10n_postpone_date_time">日期和时间</string>
+  <string name="l10n_postpone_stale">这些提醒已更改，请关闭后重新选择。</string>
+  <string name="l10n_postpone_saved_times_locked">解锁后可使用已保存的时间。</string>
+  <string name="l10n_postpone_all_plain">全部推迟</string>
+  <string name="l10n_postpone_submitting">正在推迟…</string>
+  <string name="l10n_postpone_submitting_group">正在推迟 %1$s 个提醒…</string>
+  <string name="l10n_postpone_failed_time">无法确定此时间，请重新选择。</string>
+  <string name="l10n_postpone_zone">时间采用 %1$s</string>
+  <string name="l10n_postpone_group_subject">这 %1$s 个提醒</string>
+  <string name="l10n_postpone_pending">已保存推迟操作，正在等待安排。请重试同一操作。</string>
+  <string name="l10n_postpone_failed_schedule">无法安排推迟后的提醒，请在 Remilo 中检查提醒问题。</string>
+  <string name="l10n_postpone_partial">已安排 %2$s 个提醒中的 %1$s 个，请在 Remilo 中检查提醒问题。</string>
+  <string name="l10n_postpone_selected">已选择</string>
 </resources>

@@ -50,6 +50,15 @@ alert-first browsing, stationary covers and splash requirements.
 
 ## Required behavior
 
+The owner's 28 October [uniform Postpone contract](design/current/postpone-chooser.md)
+governs native single/member/group controls and the Reminder Details chooser.
+Ringing surfaces expose Mark as done/Postpone (and their group counterparts).
+Notification Snooze, non-ringing quick actions and legacy commands remain supported.
+Opening the chooser leaves playback and the original five-minute deadline running;
+only confirmation changes the captured occurrences' next alerts. One eight-tile
+layout offers 15/30/60 minutes, 24 elapsed hours, the three configured Tomorrow
+clock times and a separate Custom step. The opening default remains 15 minutes.
+
 - Interface language is System default, English or Simplified Chinese. New
   installations follow supported phone languages; upgrades retain English until
   changed. Manual choice persists and synchronizes with Android's per-app language.
@@ -148,7 +157,7 @@ resolution is required before a suspended link resumes.
   other full event ranges remain accessible in Schedule details.
 - Alarm Done completes the selected current occurrence and silences its delivery.
   Done all (N) completes the displayed captured session members; later arrivals
-  are excluded and remain independently actionable. Snooze all uses one common
+  are excluded and remain independently actionable. Snooze all and Postpone all use one common
   future target and leaves all captured work unfinished, with per-item scheduling results.
   Future recurring occurrences retain their identity/rule and scheduling. Snooze and
   Postpone remain postponements; timeout and interrupted playback remain unfinished.
@@ -156,15 +165,15 @@ resolution is required before a suspended link resumes.
   Active Apps Stop retain their distinct meanings. Done also completes and cancels.
 - Reopen clears completed and skipped state while preserving occurrence identity
   and guards. It never replays an elapsed alert; Restore retains skipped state.
-- Every ringing delivery, including one re-triggered by Snooze, provides native Done
-  and Snooze. Single-reminder notifications include both from their first post;
+- Every ringing delivery, including one re-triggered by Snooze, provides native
+  Mark as done and Postpone. Single-reminder notifications include Done/Snooze from their first post;
   grouped notifications offer Done all/Snooze all and open native per-reminder controls.
   Ordinary Notification offers Done/Snooze without alarm audio or full-screen UI;
   posting or dismissing it never completes work. Android controls
   compact/expanded presentation, so also retain the native alarm screen.
 - Quick Snooze defaults to 10 minutes and uses the current globally mirrored setting.
   New controls bind their displayed duration; committed retries keep their original
-  target even after a preference change. Postpone: 15/30/60 minutes, tomorrow
+  target even after a preference change. Postpone: 15/30/60 minutes, 24 elapsed hours, tomorrow
   10 AM/2 PM/5 PM (editable), or custom. Confirm the actual future instant.
 - Postpone replaces Snooze and changes only the current occurrence's next alert.
 - Native audio session ends at five minutes from playback start. Arrivals keep
@@ -175,7 +184,8 @@ resolution is required before a suspended link resumes.
   scheduled date for all-day No alert. Independent Due does not override it.
 - Normal callbacks up to five minutes late may ring; later ones become Missed.
   Reboot, upgrade, restore and recovery never replay past alerts or interrupted sound.
-- Before first unlock: generic text, native Done/quick Snooze, protected scheduling
+- Before first unlock: generic text, native Mark as done/Postpone, notification
+  quick Snooze, protected scheduling
   data only, plus reviewed minimal non-private appearance data for bundled global
   theming. Private reminder content and credentials remain credential-protected.
 - Unlocked: actionable heads-up/ongoing notification where permitted. Locked:
@@ -385,8 +395,8 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   Completed timestamps come from recorded Done events, never sorting fallbacks.
   Activity renders only recorded events and meaningful targets; empty history says
   No recorded activity and does not claim a complete audit trail.
-  Done/Reopen/Restore stay persistent for their states. Ringing Details shows one
-  Done plus Snooze, with eligible Postpone still readily available.
+  Done/Reopen/Restore stay persistent for their states. Ringing Details exposes only
+  Mark as done and Postpone; Postpone opens the uniform chooser.
   Custom Postpone starts with a future target and rejects past targets without mutation.
 - Android Back exits transient Agenda search; clearing its query is a separate
   action. Nested sheets handle Back within their draft. Loading, retry, action
@@ -421,9 +431,10 @@ planned presentation as already shipped or discard baseline behavioral guarantee
   as Agenda. They have one terminal state label and no completion control or empty
   placeholder; explicit selection mode retains selection checkboxes. Preserve
   historical schedule/alert, independent Due, details navigation and existing menus.
-- Native controls never start React Native. Done/Snooze automatically dismiss a
-  confirmed ended session, including timeout/external termination. An initial empty
-  loading state cannot close the screen; remaining group members retain controls.
+- Native controls never start React Native. A confirmed ended session dismisses
+  when no submitted command remains unconfirmed, including timeout/external
+  termination. An unknown submitted command retains its frozen recovery view.
+  An initial empty loading state cannot close the screen; remaining group members retain controls.
   Failed actions retain controls and an error. Before first unlock, content is generic.
 - Standard notifications retain Done/Snooze on every single delivery. Grouped
   alarm notifications open native controls and offer captured Done all/Snooze all. Android

@@ -891,3 +891,29 @@ actions for progress and outcomes, including authorization cancellation and
 failed external navigation. Verify native TalkBack announcements, Back/IME,
 pickers, 48/56dp targets, 200% text, long English/Chinese, 12/24-hour formats and
 reduced motion. Preserve P4-D/P4-E/G4 acceptance until these are observed.
+
+## Uniform Postpone follow-up (ALERT-06)
+
+These observations remain pending until recorded on an identified signed bundled
+phone build. Earlier Snooze observations retain their historical meaning; native
+screen controls now use Mark as done/Postpone and notifications retain Snooze.
+
+- Single/member/Details: open Postpone while ringing; hear continued sound and
+  confirm the original five-minute cutoff. Cancel without changing the next alert.
+  Choose each relative/Tomorrow option, inspect exact date/time/zone and confirm.
+  Check 1 day is 24 elapsed hours across DST, distinct from calendar Tomorrow.
+- Custom: use real Date/Time pickers, cancel either picker and Back to choices;
+  retain the previous selection. Use this time selects only a valid future value.
+  Recreate/rotate during the grid, custom step and unknown command; retain the exact
+  operational draft/target and re-read private content after unlock.
+- Group: capture N, deliver another reminder while choosing, then Postpone all;
+  only the captured set shares its target and later arrivals remain independent.
+  Change/complete a captured member elsewhere; reject the uncommitted whole set.
+  Record Scheduled/Blocked/Pending results, retry an unknown reply unchanged.
+- Pre-unlock: generic titles only, usable relative/Custom choices and mirrored
+  saved times. For upgrade-before-first-unlock without a mirror, Tomorrow stays
+  disabled with the explanation; unlock repairs it without guessed values.
+- Inspect all eight pairs, 360 dp/landscape, 100–200% English/Chinese, 12/24-hour
+  formats and reduced motion. All tiles share their anatomy, selected check and
+  growing size; whole-grid reflow, footer clearance, TalkBack selection/focus and
+  Back ordering stay usable. Notification Snooze and re-triggered actions remain.

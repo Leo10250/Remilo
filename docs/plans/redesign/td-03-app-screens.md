@@ -41,6 +41,12 @@ Apply the approved page contracts and correction notes to Agenda, Lists, Repeats
 
 ## Acceptance and handoff
 
+The owner's 28 October [uniform Postpone correction](../../design/current/postpone-chooser.md)
+adds the shared eight-tile app chooser and native time resolver. Ringing Details
+uses only Mark as done/Postpone; retain captured generation, Custom cancellation,
+exact targets, saved settings/zone and uncertain-command recovery. Review all eight
+pairs, large text and platform pickers without inferring physical acceptance.
+
 Review actual screens in all four atmospheres and both appearances; exercise dense/long content, search+IME, filters, empty/no-match, loading/retained errors, large text/TalkBack, lower Notes validation, stale/uncertain saves, recurrence exceptions and whole-backup copy/retry receipts. Verify loaded-only selection, independent row-open/selection targets, Back/Done selecting ordering, per-item identities, partial/stale outcomes, unknown-reply stop and same-item retry before continuing. Preserve the approved R9 composition 05 while observing remaining exceptional and Android interaction states; its owner approval does not establish device acceptance.
 
 Record actual revision, delivered contracts, render/command evidence, unresolved

@@ -1407,7 +1407,11 @@ class AlarmEngineTest {
     assertEquals("Applied", result["status"])
     val after = snapshot(session)
     assertEquals("zh-Hans", after.language)
-    assertEquals(before.copy(language = after.language, presentationRevision = after.presentationRevision), after)
+    val mirroredBefore = requireNotNull(before.postponePreferences)
+    val mirroredAfter = requireNotNull(after.postponePreferences)
+    assertEquals(mirroredBefore.copy(revision = (revision as Number).toLong() + 1), mirroredAfter)
+    assertEquals(before.copy(language = after.language, presentationRevision = after.presentationRevision,
+      postponePreferences = mirroredAfter), after)
     assertEquals(rows, protectedRows()); assertEquals(registrations, os.registered.size)
     assertEquals(backup, request { engine.exportBackup() })
     request {

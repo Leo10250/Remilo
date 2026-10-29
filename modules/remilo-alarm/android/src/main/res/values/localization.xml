@@ -1872,4 +1872,35 @@ A previously sent Google update may still finish.</string>
     <item quantity="one">%1$s unfinished reminder needs review.</item>
     <item quantity="other">%1$s unfinished reminders need review.</item>
   </plurals>
+  <string name="l10n_postpone_action">Postpone</string>
+  <string name="l10n_postpone_all_action">Postpone all (%1$s)</string>
+  <string name="l10n_postpone_one_day">1 day</string>
+  <string name="l10n_postpone_choose_date_time">Choose date &amp; time</string>
+  <string name="l10n_postpone_scope_single">Only the next alert changes. The reminder stays unfinished.</string>
+  <string name="l10n_postpone_next_alert">Next alert</string>
+  <string name="l10n_postpone_custom_date_time">Custom date &amp; time</string>
+  <string name="l10n_postpone_use_time">Use this time</string>
+  <string name="l10n_postpone_back_choices">Back to choices</string>
+  <string name="l10n_postpone_future_time">Choose a future time.</string>
+  <string name="l10n_postpone_scope_group">Changes the next alert for these %1$s reminders. They stay unfinished.</string>
+  <string name="l10n_postpone_15_minutes">15 min</string>
+  <string name="l10n_postpone_30_minutes">30 min</string>
+  <string name="l10n_postpone_one_hour">1 hour</string>
+  <string name="l10n_postpone_tomorrow">Tomorrow</string>
+  <string name="l10n_postpone_next_group">Next alerts for all %1$s</string>
+  <string name="l10n_postpone_24_hours">24 hours later</string>
+  <string name="l10n_postpone_custom">Custom</string>
+  <string name="l10n_postpone_date_time">Date &amp; time</string>
+  <string name="l10n_postpone_stale">These reminders changed. Close and choose again.</string>
+  <string name="l10n_postpone_saved_times_locked">Saved times are available after unlocking.</string>
+  <string name="l10n_postpone_all_plain">Postpone all</string>
+  <string name="l10n_postpone_submitting">Postponing…</string>
+  <string name="l10n_postpone_submitting_group">Postponing %1$s reminders…</string>
+  <string name="l10n_postpone_failed_time">Could not resolve this time. Choose again.</string>
+  <string name="l10n_postpone_zone">Times shown in %1$s</string>
+  <string name="l10n_postpone_group_subject">These %1$s reminders</string>
+  <string name="l10n_postpone_pending">Postpone is saved; scheduling is pending. Retry the same action.</string>
+  <string name="l10n_postpone_failed_schedule">Could not schedule Postpone. Review alert problems in Remilo.</string>
+  <string name="l10n_postpone_partial">%1$s of %2$s alerts scheduled. Review alert problems in Remilo.</string>
+  <string name="l10n_postpone_selected">Selected</string>
 </resources>

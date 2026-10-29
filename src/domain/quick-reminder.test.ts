@@ -27,12 +27,13 @@ describe('honest command feedback', () => {
     expect(commandFeedback({ status: 'Applied' }, 'CompleteDelivery')).toContain('completed');
     expect(commandFeedback({ status: 'Applied' }, 'DoneAll')).toContain('completed');
     expect(commandFeedback({ status: 'Applied' }, 'SnoozeAll')).toContain('unfinished');
+    expect(commandFeedback({ status: 'Applied' }, 'PostponeAll')).toContain('unfinished');
     expect(commandFeedback({ status: 'Applied' }, 'Done')).not.toContain('unfinished');
   });
-  it('never reports a partial bulk schedule as completed or wholly scheduled', () => {
+  it.each(['SnoozeAll', 'PostponeAll'] as const)('never reports a partial %s schedule as completed or wholly scheduled', kind => {
     expect(commandFeedback({ status: 'Partial', memberResults: [
       { occurrenceId: 'a', generation: 2, status: 'Scheduled' },
       { occurrenceId: 'b', generation: 2, status: 'Blocked' },
-    ] }, 'SnoozeAll')).toContain('1 of 2 alerts scheduled');
+    ] }, kind)).toContain('1 of 2 alerts scheduled');
   });
 });

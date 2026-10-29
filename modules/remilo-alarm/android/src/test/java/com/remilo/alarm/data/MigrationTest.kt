@@ -15,6 +15,36 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class MigrationTest {
+  @Test fun protectedV7PostponeMigrationPreservesPendingAndSettledSnoozeReceipts() {
+    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v7-postpone.db", 7).use { db ->
+      db.execSQL("INSERT INTO bulk_snooze_receipts VALUES ('pending','session','key',50000,650000,10,0)")
+      db.execSQL("INSERT INTO bulk_snooze_receipts VALUES ('settled','session','other',60000,960000,15,1)")
+      db.execSQL("INSERT INTO bulk_snooze_members VALUES ('pending','one',7,8,'Pending')")
+      db.execSQL("INSERT INTO bulk_snooze_members VALUES ('settled','two',2,3,'Blocked')")
+    }
+    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v7-postpone.db").allowMainThreadQueries()
+      .addMigrations(OperationalDatabase.MIGRATION_7_8).build()
+    try {
+      assertEquals(BulkSnoozeReceipt("pending", "session", "key", 50000, 650000, 10), db.records().bulkSnoozeReceipt("pending"))
+      assertEquals(BulkSnoozeReceipt("settled", "session", "other", 60000, 960000, 15, true), db.records().bulkSnoozeReceipt("settled"))
+      assertEquals(listOf(BulkSnoozeMember("pending", "one", 7, 8)), db.records().bulkSnoozeMembers("pending"))
+      assertEquals("Blocked", db.records().bulkSnoozeMembers("settled").single().status)
+      assertNull(db.records().postponePreferences())
+      val postpone = BulkSnoozeReceipt("postpone", "session", "postpone-key", 60000, 999999, null, kind = "PostponeAll")
+      db.records().bulkSnoozeReceipt(postpone)
+      assertEquals(postpone, db.records().bulkSnoozeReceipt("postpone"))
+      val mirror = PostponePreferencesRecord(tomorrowMorning = 630, tomorrowAfternoon = 900, tomorrowEvening = 1080, revision = 17)
+      db.records().postponePreferences(mirror)
+      assertEquals(mirror, db.records().postponePreferences())
+      val columns = mutableListOf<String>()
+      db.openHelper.readableDatabase.query("PRAGMA table_info(postpone_preferences)").use { cursor ->
+        while (cursor.moveToNext()) columns.add(cursor.getString(1))
+      }
+      assertEquals(listOf("id", "tomorrowMorning", "tomorrowAfternoon", "tomorrowEvening", "revision"), columns)
+    } finally { db.close(); context.deleteDatabase("protected-v7-postpone.db") }
+  }
+
   @Test fun languageMigrationPreservesContentAndMapsOnlyKnownCalendarCopy() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "language-migration.db", 12).use { db ->
@@ -41,7 +71,7 @@ class MigrationTest {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.OperationalDatabase", "language-protected.db", 6).close()
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "language-protected.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_6_7).build()
+      .addMigrations(OperationalDatabase.MIGRATION_6_7, OperationalDatabase.MIGRATION_7_8).build()
     try {
       assertEquals(LanguageRecord(preference = "en"), db.records().language())
       val fields = LanguageRecord::class.java.declaredFields.map { it.name }.toSet()
@@ -211,7 +241,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO actions VALUES ('snooze', 'old', 'Snooze', 900, 3)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-migration.db")
-      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7).build()
+      .allowMainThreadQueries().addMigrations(OperationalDatabase.MIGRATION_1_2, OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7, OperationalDatabase.MIGRATION_7_8).build()
     try {
       val alert = db.records().find("old")!!
       assertEquals(60000L, alert.targetMs)
@@ -244,7 +274,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,mode,sound,vibration,snoozeMinutes) VALUES ('v2',60000,9,'Scheduled','Alarm','system',1,15)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v2.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7).build()
+      .addMigrations(OperationalDatabase.MIGRATION_2_3, OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7, OperationalDatabase.MIGRATION_7_8).build()
     try {
       val alert = db.records().find("v2")!!
       assertEquals(60000L, alert.targetMs); assertEquals(9L, alert.generation)
@@ -300,7 +330,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO sessions VALUES ('session','Active',1000,301000,'system',1)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v3-appearance.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7).build()
+      .addMigrations(OperationalDatabase.MIGRATION_3_4, OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7, OperationalDatabase.MIGRATION_7_8).build()
     try {
       assertNull(db.records().appearance())
       val session = db.records().activeSession()!!
@@ -321,7 +351,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO actions (operationId,occurrenceId,kind,occurredAtMs,generation) VALUES ('old-stop','legacy','Stop',50000,7)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v4-completion.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7).build()
+      .addMigrations(OperationalDatabase.MIGRATION_4_5, OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7, OperationalDatabase.MIGRATION_7_8).build()
     try {
       assertEquals("Stopped", db.records().find("legacy")!!.state)
       assertEquals("Stop", db.records().action("old-stop")!!.kind)
@@ -344,7 +374,7 @@ class MigrationTest {
       db.execSQL("INSERT INTO pending_completions VALUES ('done','old',7,50000)")
     }
     val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v5-actions.db").allowMainThreadQueries()
-      .addMigrations(OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7).build()
+      .addMigrations(OperationalDatabase.MIGRATION_5_6, OperationalDatabase.MIGRATION_6_7, OperationalDatabase.MIGRATION_7_8).build()
     try {
       val receipt = db.records().completionReceipt("done")!!
       assertEquals("Stop", receipt.kind); assertEquals(6L, receipt.expectedGeneration); assertNull(receipt.snapshotKey)

@@ -6,6 +6,11 @@ repository cleanup authorized by [A37](../approved-design-cleanup.json), and
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
+The owner's 28 October [uniform Postpone chooser](postpone-chooser.md) replaces
+native/ringing Details quick-Snooze controls with Mark as done/Postpone and adds
+captured Postpone all. It governs the eight matching tiles, shared native time
+resolution, custom step and protected recovery. Notification Snooze is retained.
+
 The owner's [12 October Calendar management correction](calendar-management.md)
 keeps reminder information first, moves Calendar administration to a separate page
 and explains independent deletion with Agenda/Details cancellation notices.

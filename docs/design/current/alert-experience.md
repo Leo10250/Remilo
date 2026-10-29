@@ -8,6 +8,13 @@ TD-04 and TD-06; task status belongs only in the backlog.
 
 ## Completion and postponement
 
+The owner's 28 October [uniform Postpone chooser](postpone-chooser.md) supersedes
+the earlier quick-Snooze presentation below on native controls and ringing Details.
+Those surfaces use Mark as done/Postpone, with captured Postpone all for groups;
+notification Snooze remains unchanged. Opening/selecting leaves audio and its
+original deadline running. Captured operation, privacy and completion rules below
+continue to apply, including to retained Snooze commands.
+
 The owner's 11 October wording correction uses **Mark as done** for every single
 work-completion control and **Mark all as done (N)** for captured group completion.
 Apply this to Details, Agenda/list menus, row/swipe spoken actions, native alarm
@@ -23,14 +30,14 @@ Snooze means later and leaves work unfinished. No response, timeout, interruptio
 notification posting and notification dismissal never complete work. Historical
 Stopped outcomes remain unfinished; sound-preview Stop is still preview-only.
 
-Native controls use filled Mark as done with a checkmark and outlined Snooze · X min.
+Native controls use filled Mark as done with a checkmark and outlined Postpone.
 Prominent single/group actions are at least 64 dp; member actions are at least
 56 dp. Preserve captured atmosphere/brightness, first-member sound, the original
 five-minute deadline, generic pre-unlock content and confirmed-terminal dismissal.
-Ringing Details contains one Mark as done plus Snooze and retains Postpone.
+Ringing Details contains one Mark as done plus Postpone.
 
 Each group action binds the session and displayed member IDs/generations. Mark all as done
-(N) and Snooze all · X min affect exactly that set. Validate all captured members
+(N) and Postpone all affect exactly that set. Validate all captured members
 before mutation; stale members reject an uncommitted operation. Later arrivals
 remain independently actionable. Bulk Snooze computes one target from one action
 instant and the current globally mirrored duration. Partial scheduling outcomes

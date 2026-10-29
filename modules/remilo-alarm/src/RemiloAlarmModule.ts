@@ -13,6 +13,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   queryRepeatFamilies(): Promise<RepeatFamily[]>;
   getTimeZones(atMs: number): Promise<TimeZoneOption[]>;
   convertTime(input: TimeConversionInput): Promise<TimeConversion>;
+  resolvePostponeTime(input: import('./RemiloAlarm.types').PostponeTimeInput): Promise<TimeConversion>;
   getSeries(id: string): Promise<Series | null>;
   getSeriesDraft(id: string, nominal: string): Promise<{ template: ResolvedReminderDraft; remainingCount: number | null }>;
   applyCommand(command: Command): Promise<CommandResult>;

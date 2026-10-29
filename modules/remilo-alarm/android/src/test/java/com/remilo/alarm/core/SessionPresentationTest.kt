@@ -50,4 +50,12 @@ class SessionPresentationTest {
     assertFalse(guard.select("incoming-session", pending = true, unconfirmed = true))
     assertEquals("saved-command-session", guard.request().sessionId)
   }
+  @Test fun openPostponeChoicesKeepTheirCapturedSessionUntilDismissed() {
+    val guard = SessionRefreshGuard(); assertTrue(guard.select("captured"))
+    val ticket = guard.request()
+    assertFalse(guard.select("later", choosing = true))
+    assertTrue(guard.accepts(ticket))
+    assertEquals("captured", guard.request().sessionId)
+    assertTrue(guard.select("later"))
+  }
 }

@@ -1,5 +1,11 @@
 # Native alarm and Postpone visual specification
 
+The owner's 28 October [uniform Postpone correction](../postpone-chooser.md)
+supersedes earlier native quick-Snooze actions and mixed app shortcut rows. It
+adds the same eight-tile chooser to native alarms and Reminder Details, with
+captured Postpone all and the existing 15-minute opening default. Notification
+Snooze and historical accepted reference pixels remain unchanged.
+
 The [10 October UX refinement](../ux-refinement.md) updates app-owned Postpone
 shortcuts to Tomorrow plus actual clock time, one scope sentence and exact target
 preview. Native alarm layout/actions and eligibility remain unchanged.
@@ -32,10 +38,12 @@ extends those rules to alarm controls and Postpone; it does not replace the
 1. A single native alarm receives a larger scenic opening than Details/Editor,
    with a quiet information surface and two large, immediately reachable actions.
 2. Multiple alarms share one scene and a compact header. Each member owns a
-   clearly labeled Done/Snooze pair; Done all and Snooze all stay accessible in a separate footer.
-3. The native surface retains Done and timed quick Snooze. Done completes the
-   occurrence; custom Postpone remains in the app's Reminder Details workflow. Opening an editor or
-   picker is not required to silence an alarm.
+   clearly labeled Mark as done/Postpone pair; Mark all as done (N) and Postpone
+   all stay accessible in a separate footer.
+3. The native surface offers Mark as done and Postpone, with matching captured
+   group controls. Completion is immediate; Postpone opens the uniform chooser
+   and silences the affected delivery only after confirmation. Opening a chooser
+   leaves playback and its original five-minute deadline running.
 4. Postpone uses a themed, opaque, expandable sheet with shortcut selection,
    a custom date/time option, an exact next-alert preview and one persistent
    confirmation action. Choosing a shortcut does not immediately mutate the alert.
@@ -104,7 +112,7 @@ atmospheres in both Light and Dark, without needing a separate generated image o
 every combination.
 
 Appearance failure falls back to usable privacy-safe controls and never blocks native
-foreground promotion, audio startup or Done/Snooze.
+foreground promotion, audio startup or Mark as done/Postpone.
 
 ## A. Single native alarm
 
@@ -124,8 +132,8 @@ or swipe-to-dismiss gestures.
   when a native credential-safe projection supplies them. Linked/coincident timing
   stays concise. A postponed alert does not overwrite the original Event or Due.
   Do not fabricate these values from the operational alert target.
-- **Action footer:** full-width filled `Done` with checkmark, then full-width outlined
-  `Snooze · 10 min` (actual configured duration), each at least 64 dp high, with
+- **Action footer:** full-width filled `Mark as done` with checkmark, then full-width outlined
+  `Postpone`, each at least 64 dp high, with
   16 dp corners and a 12 dp gap. Use the atmosphere primary/onPrimary pair;
   Done receives the ordinary completion role.
 - **Done meaning:** silence and complete the affected occurrence without confirmation.
@@ -147,16 +155,16 @@ than claiming playback is already active.
 
 Use one scrollable column of opaque member cards with 16 dp gutters/corners and
 12 dp gaps. Each card contains the complete title, an explicit alert time/state,
-available consequential Event/Due support, and its own filled `Done` plus outlined
-`Snooze · N min`. Member actions are at least 56 dp high. They may share a row
+available consequential Event/Due support, and its own filled `Mark as done` plus outlined
+`Postpone`. Member actions are at least 56 dp high. They may share a row
 when labels fit with at least a 12 dp gap; stack at larger text/narrower widths.
 Do not hide the action pair behind a row menu or require opening details first.
 
-The separate, measured footer contains filled `Done all (N)` and outlined
-`Snooze all · X min`, each at least 64 dp high. Done completes and Snooze leaves
+The separate, measured footer contains filled `Mark all as done (N)` and outlined
+`Postpone all`, each at least 64 dp high. Done completes and Postpone leaves
 unfinished the exact displayed IDs/generations. Later arrivals are excluded.
-Validate session and every captured member before mutation, without confirmation.
-Snooze all uses one target/current mirrored duration with truthful per-item results.
+Validate session and every captured member before mutation. Postpone all captures
+the shown set when opened, then confirms one absolute target with truthful per-item results.
 
 Partially visible cards may scroll into view. The footer must not cover their
 controls, and TalkBack focus must bring a focused card/action into view. Keep
@@ -170,12 +178,12 @@ The shared scene must not change when the first member disappears.
 | Initial loading, no confirmed snapshot | Generic/last eligible safe background; `Loading alarm controls…`; progress/Retry as applicable. Do not show invented enabled member actions, close automatically, or infer that an empty view means the session ended. |
 | Starting with known members | Show known content and `Starting alarm…`; preserve eligible native actions under the existing engine policy. No guaranteed-audibility language. |
 | Action in progress | Name the selected action/member, show progress without relayout jumps, and prevent duplicate submissions using the existing native busy guard. Preserve known content and the scene; do not optimistically remove the member. |
-| Refresh failed with known members | Retain the last known cards/actions; show `Could not refresh alarm controls.` and `Refresh controls`. Refresh does not secretly reissue Done/Snooze. |
-| Done/Snooze rejected | Retain known controls and the action-specific error. Refresh authoritative identity/eligibility before a new deliberate action. |
-| Done/Snooze not confirmed | Freeze the exact command, including operation ID, generations, members and displayed duration. Retry action resubmits that command; do not recapture or claim completion/scheduling before acknowledgement. |
-| Snooze scheduling partial/blocked/pending | Report truthful member outcomes and keep work unfinished. Do not use a generic success acknowledgement. |
+| Refresh failed with known members | Retain the last known cards/actions; show `Could not refresh alarm controls.` and `Refresh controls`. Refresh does not secretly reissue completion or Postpone. |
+| Completion/Postpone rejected | Retain known controls and the action-specific error. Refresh authoritative identity/eligibility before a new deliberate action. |
+| Completion/Postpone not confirmed | Freeze the exact command, including operation ID, generations, captured members and absolute Postpone target. Retry action resubmits that command; do not recapture, rebase the target or claim completion/scheduling before acknowledgement. |
+| Postpone scheduling partial/blocked/pending | Report truthful member outcomes and keep work unfinished. Do not use a generic success acknowledgement. |
 | Confirmed member removed, others remain | Remove only that confirmed member, update count, preserve other targets and shared canvas. Avoid taking focus to an unrelated action. |
-| Confirmed terminal session, including timeout | Dismiss the native activity under the existing lifecycle contract. Do not leave a full-screen ringing screen or invented timeout countdown behind. Unfinished outcomes and eligible follow-up actions live in the app/silent unresolved notification. |
+| Confirmed terminal session, including timeout | Close an unsubmitted chooser and dismiss the native activity when no submitted command remains unconfirmed. An unknown submitted command retains its frozen recovery view and exact retry. Do not leave an invented ringing state or timeout countdown behind. Unfinished outcomes and eligible follow-up actions live in the app/silent unresolved notification. |
 
 System Back/navigation is not Done. Preserve the current native navigation
 contract; do not wire incidental UI dismissal to an engine mutation. Post-timeout
@@ -211,46 +219,39 @@ the Remilo button/layout proposals above are product choices, not mandated templ
 
 ## E. Postpone sheet and custom time
 
-Entry is the eligible `Postpone alert` action in Reminder Details, including
-eligible ringing/stopped/missed/timed-out/problem states. Quick native Snooze
-remains the immediate, duration-based alternative; this draft does not add custom
-Postpone to the native alarm activity. Opening the app sheet does not itself
-stop sound or mutate Event, Due or the next alert.
+The [28 October uniform chooser contract](../postpone-chooser.md) owns this flow
+in native single/member/group alerts and eligible Reminder Details. Ringing
+surfaces use Mark as done/Postpone; notifications retain quick Snooze.
 
-Use an opaque themed bottom sheet with about 28 dp top corners, 16 dp side gutters
-and a real labeled Close target. Show the title `Postpone alert`, the selected
-reminder title, and `Changes the next alert only. Event and due time stay unchanged.`
-Allow the sheet to expand to the available height and scroll. Avoid painting a
-second landscape inside the sheet; the underlying accepted Details scene provides
-identity while the controls retain clean reading surfaces.
+Use eight identical tiles in row-major order: 15/30 minutes, 1 hour/1 day,
+Tomorrow morning/afternoon, Tomorrow evening/Custom. Use 16 dp corners, 8 dp gaps,
+an 80 dp minimum height, shared role colors and a checkmark plus selected outline.
+Tomorrow tiles display the saved clock values. Reflow the whole grid into one
+column at font scale 1.6 or insufficient measured width. The opaque sheet uses
+24 dp top corners and 16 dp gutters, with one exact target preview and persistent
+confirmation below the scroller. Retain footer/IME/safe-area fallbacks.
 
-Content order:
+Opening captures scope, device timezone and shortcut values, and selects now plus
+15 minutes. Relative selection uses its deliberate action instant; 1 day is exactly
+24 elapsed hours. Tomorrow uses the next calendar date at the configured clock
+time. Both native and app use the Kotlin resolver with gap-forward/earlier-fold
+civil resolution. Confirmation and exact retries use the same concrete target;
+waiting/recreation/preference changes never silently rebase it. Expiry requires
+another selection. Original Event/Due and overdue references stay unchanged.
 
-1. **Relative shortcuts:** selectable `15 min`, `30 min`, `1 hour` controls with
-   at least 48 dp targets. Show a check/radio state plus color, not color alone.
-2. **Tomorrow shortcuts:** full-width rows displaying the actual configured
-   morning/afternoon/evening times. Defaults remain 10 AM / 2 PM / 5 PM; these are
-   editable preferences, not fixed theme labels.
-3. **Custom date and time:** a neutral calendar/time affordance opening the existing
-   Android date/time interaction. Retain the selected draft while opening/returning
-   from pickers; returning does not apply the command.
-4. **Exact preview:** `Next alert` followed by a full date and time, with relevant
-   device-zone/offset context. Make Today versus Tomorrow unambiguous. Display the
-   existing Event/Due relationship unchanged; the reminder may still be Overdue.
-5. **Footer:** one filled `Postpone alert` at least 56 dp high above the safe area
-   and any actual IME. Cancel/Close abandons the local selection before submission.
+Custom opens a provisional Date/Time step. Android picker changes do not select
+Custom or submit a command. Use this time promotes a valid target and returns to
+the grid; Back to choices discards provisional changes. Android Back closes the
+picker, then custom step, then chooser. Closing or selecting never silences sound.
+The original five-minute deadline continues; confirmation postpones captured work.
 
-Opening starts with a future now+15-minute draft, matching the current form.
-Selecting a relative shortcut resolves a concrete future instant at selection;
-the preview and confirmation refer to that same instant. Waiting must not silently
-rebase the target or change a captured command. Re-selecting explicitly calculates
-a fresh target; reject an expired/past target at validation and native mutation.
-Respect existing device-zone/DST resolution, and show the resolved date/time rather
-than promising every wall time exists. This draft changes no time or shortcut policy.
-
-When custom fields or an IME reduce space, use the accepted editor contract:
-one inset owner, a measured non-overlapping footer, and visible focused input/caret/
-helper/error. Long reminder titles and 200% text may require a full-height sheet.
+Postpone all captures the shown IDs/generations and fixed count when opened;
+later arrivals stay excluded. Stale captured members reject the whole operation.
+Before first unlock use generic content and protected operational data only.
+Absent upgraded shortcut mirrors disable the three Tomorrow tiles with an unlock
+explanation while leaving relative/Custom usable. Unknown commands freeze their
+operation ID, scope and target until acknowledged. See the shared contract for
+recreation, deferred-session and per-member outcome requirements.
 
 ## F. Postpone validation, results and retry
 
@@ -274,11 +275,11 @@ Saving notes/text cannot silently clear a pending postponement.
 
 Use the canonical neutral structural icons and labeled semantic warning/error
 roles. Filled Done and Done all use the atmosphere primary/onPrimary;
-Snooze/Snooze all use the outlined action style. Done is intentionally prominent
+Postpone/Postpone all use the outlined native action style; notification Snooze remains. Done is intentionally prominent
 on ringing surfaces and Details; Postpone retains its secondary outlined treatment.
 
 Native urgent controls are deliberately larger than the ordinary 56 dp app action:
-single Done/Snooze and Done all/Snooze all use at least 64 dp, per-member actions at least
+single Mark as done/Postpone and both group actions use at least 64 dp, per-member actions at least
 56 dp. All other interactive targets are at least 48 dp and must not overlap.
 Use the same 16 dp button corners across appearance; larger alarm controls do not
 justify per-theme pills or unrelated fonts. Baseline values are 16 sp, support
@@ -326,7 +327,7 @@ canonical roles; annotate any generation drift rather than treating it as policy
 ## I. Implementation ownership and handoff boundaries
 
 - [AlarmControlsScreen](../../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt)
-  renders captured appearance, member Done/Snooze and both captured group actions.
+  renders captured appearance, member Mark as done/Postpone and both captured group actions.
   Preserve measured footer/scroll fallback and accessible action minimums.
 - [AlarmActivity](../../../../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt)
   owns snapshots/actions/confirmed dismissal. Refresh controls fetches state;
@@ -344,7 +345,7 @@ canonical roles; annotate any generation drift rather than treating it as policy
 - [Reminder Details](../../../../src/app/reminder/[id].tsx) already supplies relative/
   Tomorrow/custom Postpone, future-time validation, and guarded captured-command
   retries, including frozen uncertain commands and truthful scheduling outcomes.
-  Ringing Details has one Done plus current-duration Snooze and Postpone. Sound
+  Ringing Details has Mark as done and Postpone. Sound
   preview retains its separate Stop meaning. Live implementation status belongs
   only in the backlog.
 

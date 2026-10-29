@@ -19,7 +19,7 @@ atmosphere roles and bundled scene/crop mappings.
 The [current roadmap](plans/redesign/README.md) owns scope: TD-01 shared
 roles, TD-02 preferences/native-safe mirror, TD-03 pages, TD-04 native presentation,
 TD-05 static Classic and TD-06 acceptance. Current credential/operational/backup
-versions are 13/7/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
+versions are 13/8/4. [P4-A](calendar-publishing.md) adds CE-only Calendar connection,
 publication bindings and immutable jobs through 6→7; network/authorization runs
 on a separate I/O executor and cannot block the serialized alarm worker. Calendar
 state is excluded from DP and portable backups. CE 4→5 adds global atmosphere with Automatic default and
@@ -596,3 +596,32 @@ alarm-check page owns captured Test recovery; lifetime preference ownership stay
 in the existing singleton. UTC carrier dates adapt minutes-of-day picker values
 without converting a shortcut into a dated alarm. No engine/bridge/database/
 backup version, eligibility or overdue authority changes in this refinement.
+
+## ADR 010: Uniform Postpone and durable absolute group targets
+
+The owner's 28 October chooser correction adds read-only resolvePostponeTime and
+PostponeAll. A pure Kotlin policy resolves elapsed 15/30/60/1440-minute selections,
+calendar Tomorrow clock values and custom civil time through CivilTime. App/native
+drafts capture settings and device zone; selected targets are fixed instants, with
+expired confirmation rejected. Custom fields are provisional until Use this time.
+Choosing/cancelling never changes delivery or its original audio deadline.
+
+PostponeAll binds kind, session, sorted captured IDs/generations and absolute target
+to a distinct fingerprint. One serialized DP transaction validates the complete
+captured set, creates new generations, recurring exceptions, Postpone journals and
+recoverable registration members before audio detachment/registration. Later
+arrivals stay excluded; exact receipt lookup precedes new-action future validation.
+Retries preserve targets/results and never override newer work or retime elapsed
+targets. Legacy Done/Snooze identities and notification actions remain compatible.
+
+DP7→8 retains the bulk_snooze_receipts/members SQL identities while adding a kind
+defaulted to SnoozeAll and nullable duration. The receipt table is rebuilt with
+unchanged legacy values. A separate postpone_preferences record mirrors only three
+clock-minute integers and source settings revision. CE13 and backup4 do not change.
+Absent/corrupt pre-unlock mirrors leave Tomorrow choices unavailable; relative and
+Custom continue. CE settings/retry/unlocked recovery repairs the mirror.
+
+The native activity owns an editable operational draft separately from pending
+commands, saves exact alarmAtMs/scope/picker state, defers replacement intents and
+re-reads private titles. RN Details likewise binds its opening generation. Native
+timeouts dismiss unsubmitted pickers; unknown submitted commands remain frozen.

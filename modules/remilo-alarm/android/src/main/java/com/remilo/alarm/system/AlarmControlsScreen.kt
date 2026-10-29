@@ -52,7 +52,7 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 
 internal enum class AlarmControlAction(val commandKind: String) {
-  CompleteDelivery("CompleteDelivery"), Snooze("Snooze"), DoneAll("DoneAll"), SnoozeAll("SnoozeAll")
+  CompleteDelivery("CompleteDelivery"), Postpone("Postpone"), DoneAll("DoneAll"), PostponeAll("PostponeAll")
 }
 
 /** Rendering only. Native observation, guarded actions and confirmed dismissal stay in the activity. */
@@ -194,7 +194,7 @@ private fun AlarmFooter(current: AlarmEngine.SessionSnapshot?, busy: Boolean, er
       } else if (members.size > 1) {
         FilledAlarmButton(L10n.text("Mark all as done (${members.size})"), L10n.text("Mark all ${members.size} shown reminders as done"), busy || unconfirmed, roles,
           AtmosphereTokens.nativeSingle, checkmark = true) { onAction(AlarmControlAction.DoneAll, null) }
-        SnoozeGroupButton(members.first().first.snoozeMinutes, members.size, busy || unconfirmed, roles) { onAction(AlarmControlAction.SnoozeAll, null) }
+        PostponeGroupButton(members.size, busy || unconfirmed, roles) { onAction(AlarmControlAction.PostponeAll, null) }
       }
       // Reserve one scalable status line so starting an action cannot move its
       // targets. The full member remains readable in the retained information card.
@@ -222,36 +222,36 @@ private fun AlarmActions(record: AlertRecord, title: String, state: String, busy
     val inline = minimum == AtmosphereTokens.nativeMember && maxWidth >= 280.dp && density.fontScale <= 1.15f
     if (inline) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
       FilledAlarmButton(L10n.text(NativeMessages.m_62aa4b87cc52()), L10n.text("Mark as done, $title, $stateLabel"), busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, checkmark = true) { onAction(AlarmControlAction.CompleteDelivery, record) }
-      SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, onAction = onAction)
+      PostponeAlarmButton(record, title, stateLabel, busy, roles, minimum, Modifier.weight(1f).fillMaxHeight(), compact = true, onAction = onAction)
     } else Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtmosphereTokens.spaceMd.dp)) {
       FilledAlarmButton(L10n.text(NativeMessages.m_62aa4b87cc52()), L10n.text("Mark as done, $title, $stateLabel"), busy, roles, minimum, checkmark = true) { onAction(AlarmControlAction.CompleteDelivery, record) }
-      SnoozeAlarmButton(record, title, stateLabel, busy, roles, minimum, onAction = onAction)
+      PostponeAlarmButton(record, title, stateLabel, busy, roles, minimum, onAction = onAction)
     }
   }
 }
 
 @Composable
-private fun SnoozeAlarmButton(record: AlertRecord, title: String, stateLabel: String, busy: Boolean, roles: AtmosphereTokens.Roles,
+private fun PostponeAlarmButton(record: AlertRecord, title: String, stateLabel: String, busy: Boolean, roles: AtmosphereTokens.Roles,
   minimum: Int, modifier: Modifier = Modifier, compact: Boolean = false, onAction: (AlarmControlAction, AlertRecord?) -> Unit) {
-  OutlinedButton(onClick = { onAction(AlarmControlAction.Snooze, record) }, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
+  OutlinedButton(onClick = { onAction(AlarmControlAction.Postpone, record) }, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(roles.primary), disabledContentColor = Color(roles.disabledInk)),
     border = androidx.compose.foundation.BorderStroke(1.dp, Color(if (busy) roles.disabledInk else roles.primary)),
     contentPadding = PaddingValues(horizontal = (if (compact) AtmosphereTokens.spaceSm else AtmosphereTokens.spaceGutter).dp,
       vertical = AtmosphereTokens.spaceSm.dp), modifier = modifier.fillMaxWidth().heightIn(min = minimum.dp)
-      .semantics { contentDescription = L10n.text("Snooze ${record.snoozeMinutes} minutes, $title, $stateLabel") }) {
-    Text(L10n.text("Snooze · ${record.snoozeMinutes} min"), fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
+      .semantics { contentDescription = L10n.text(NativeMessages.postpone_action()) + ", $title, $stateLabel" }) {
+    Text(L10n.text(NativeMessages.postpone_action()), fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
   }
 }
 
 @Composable
-private fun SnoozeGroupButton(minutes: Int, count: Int, busy: Boolean, roles: AtmosphereTokens.Roles, onClick: () -> Unit) {
+private fun PostponeGroupButton(count: Int, busy: Boolean, roles: AtmosphereTokens.Roles, onClick: () -> Unit) {
   OutlinedButton(onClick = onClick, enabled = !busy, shape = RoundedCornerShape(AtmosphereTokens.shapeAction.dp),
     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(roles.primary), disabledContentColor = Color(roles.disabledInk)),
     border = androidx.compose.foundation.BorderStroke(1.dp, Color(if (busy) roles.disabledInk else roles.primary)),
     contentPadding = PaddingValues(horizontal = AtmosphereTokens.spaceGutter.dp, vertical = AtmosphereTokens.spaceSm.dp),
     modifier = Modifier.fillMaxWidth().heightIn(min = AtmosphereTokens.nativeSingle.dp)
-      .semantics { contentDescription = L10n.text("Snooze all $count shown reminders for $minutes minutes") }) {
-    Text(L10n.text("Snooze all · $minutes min"), fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
+      .semantics { contentDescription = L10n.text(NativeMessages.postpone_all_action(count)) }) {
+    Text(L10n.text(NativeMessages.postpone_all_plain()), fontSize = AtmosphereTokens.typeBody.sp, lineHeight = AtmosphereTokens.spaceLg.sp)
   }
 }
 
@@ -352,7 +352,7 @@ private fun SceneArtwork(roles: AtmosphereTokens.Roles, compact: Boolean, modifi
 
 /** Observer follows this rendering owner, including Direct Boot without private reads. */
 @Composable
-private fun rememberDeviceTimeFormat(zone: TimeZone = TimeZone.getDefault()): java.text.DateFormat {
+internal fun rememberDeviceTimeFormat(zone: TimeZone = TimeZone.getDefault()): java.text.DateFormat {
   val context = LocalContext.current
   var observation by remember { mutableIntStateOf(0) }
   DisposableEffect(context) {

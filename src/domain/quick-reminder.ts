@@ -19,7 +19,7 @@ export function commandFeedback(result: CommandResult, kind?: Command['kind']): 
     case 'Partial': return actionFeedback(result, '').message;
     case 'Applied': return kind === 'Done' || kind === 'CompleteDelivery' || kind === 'DoneAll' || result.occurrence?.completed ? t('m_7b359664f423')
       : kind === 'Stop' || kind === 'StopAll' ? t('m_87d39ab68d95')
-      : kind === 'Snooze' || kind === 'SnoozeAll' || kind === 'Postpone' ? t('m_ee0e3ba1f353') : t('m_fca046ccd586');
+      : kind === 'Snooze' || kind === 'SnoozeAll' || kind === 'Postpone' || kind === 'PostponeAll' ? t('m_ee0e3ba1f353') : t('m_fca046ccd586');
     case 'Rejected': return result.errorCode === 'STALE_GENERATION'
       ? t('m_6e90807654c2')
       : result.errorMessage ?? t('m_c50c5580c7bb', { arg0: String(result.errorCode ?? 'unknown') });

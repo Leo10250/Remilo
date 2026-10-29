@@ -14,6 +14,7 @@ import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.core.CivilTime
 import com.remilo.alarm.core.Recurrence
 import com.remilo.alarm.core.DeliverySnapshot
+import com.remilo.alarm.core.PostponeTimePolicy
 import com.remilo.alarm.core.OverduePolicy
 import com.remilo.alarm.data.*
 import com.remilo.alarm.system.*
@@ -130,7 +131,7 @@ class AlarmEngine internal constructor(private val context: Context,
       // request to restart playback. Monotonic values never cross process recovery.
       alerts.activeSession()?.let { endSession(it.id, "Interrupted") }
       alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
-      if (unlocked()) try { mirrorAppearance(prepareContentActions().records().settings() ?: defaultSettings()) }
+      if (unlocked()) try { syncProtectedSettings(prepareContentActions().records().settings() ?: defaultSettings()) }
       catch (_: Exception) { /* Presentation recovery must not block autonomous delivery. */ }
     }
   }
@@ -594,6 +595,7 @@ class AlarmEngine internal constructor(private val context: Context,
     return if (input.containsKey("instantMs")) CivilTime.fromInstant(id, epoch(input["instantMs"], "instantMs"))
       else CivilTime.fromLocal(id, input["local"] as? String ?: throw IllegalArgumentException("Choose a valid local time."))
   }
+  fun resolvePostponeTime(input: Map<String, Any?>): Map<String, Any> = PostponeTimePolicy.resolve(input)
   fun getSeries(id: String): Map<String, Any?>? { prepareContentActions(); return series.get(id) }
   fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> { prepareContentActions(); return series.editDraft(id, nominal) }
   private fun updateSettings(operation: String, command: Map<String, Any?>): Map<String, Any?> {
@@ -638,6 +640,10 @@ class AlarmEngine internal constructor(private val context: Context,
     var snoozeChanged = false
     operational.runInTransaction {
       mirrorAppearance(settings)
+      val postpone = PostponePreferencesRecord(tomorrowMorning = settings.tomorrowMorning,
+        tomorrowAfternoon = settings.tomorrowAfternoon, tomorrowEvening = settings.tomorrowEvening,
+        revision = settings.revision)
+      if (alerts.postponePreferences() != postpone) alerts.postponePreferences(postpone)
       alerts.all().filter { it.snoozeMinutes != settings.snoozeMinutes }.forEach {
         alerts.put(it.copy(snoozeMinutes = settings.snoozeMinutes)); snoozeChanged = true
       }
@@ -651,7 +657,7 @@ class AlarmEngine internal constructor(private val context: Context,
     catch (_: Exception) { AppearancePolicy.captured(null, null) }
   }
   fun diagnostics(): Map<String, Any> { prepareContentActions(); return mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to 13, "operationalSchema" to 7,
+    "contentSchema" to 13, "operationalSchema" to 8,
     "states" to alerts.all().groupingBy { it.state }.eachCount(),
     "pendingOperations" to (content().records().pending().size + alerts.completions().size)) }
   fun exportBackup(): String {
@@ -817,7 +823,7 @@ class AlarmEngine internal constructor(private val context: Context,
     val operationId = command["operationId"] as? String
       ?: throw InputError("operationId", "Try this action again.")
     validate(operationId.isNotBlank() && operationId.length <= 200, "operationId", "Try this action again.")
-    if (command["kind"] !in setOf("Stop", "StopAll", "CompleteDelivery", "DoneAll", "SnoozeAll", "Snooze", "Postpone")) {
+    if (command["kind"] !in setOf("Stop", "StopAll", "CompleteDelivery", "DoneAll", "SnoozeAll", "PostponeAll", "Snooze", "Postpone")) {
       prepareContentActions()
       if (content().calendar().operation(operationId) != null)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
@@ -869,12 +875,13 @@ class AlarmEngine internal constructor(private val context: Context,
       "Settings" -> updateSettings(operationId, command)
       "CreateList", "RenameList", "RemoveList" -> mutateList(operationId, command)
       "StopAll" -> stopAll(operationId, text(command, "expectedSessionId", "", 200))
-      "DoneAll", "SnoozeAll" -> {
+      "DoneAll", "SnoozeAll", "PostponeAll" -> {
         val sessionId = text(command, "expectedSessionId", "", 200)
         validate(sessionId.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
         val captured = capturedMembers(command["members"])
         val minutes = if (command["kind"] == "SnoozeAll") integer(command["snoozeMinutes"], "snoozeMinutes", 1, 1440) else null
-        applySessionAction(operationId, sessionId, captured, minutes)
+        val target = if (command["kind"] == "PostponeAll") epoch(command["alarmAtMs"], "alarmAtMs") else null
+        applySessionAction(operationId, sessionId, captured, command["kind"] as String, minutes, target)
       }
       "Stop", "CompleteDelivery", "Snooze", "Postpone" -> {
         val id = command["occurrenceId"] as? String
@@ -888,7 +895,11 @@ class AlarmEngine internal constructor(private val context: Context,
         val at = if (command["kind"] == "Postpone") epoch(command["alarmAtMs"], "alarmAtMs") else null
         val expectedMinutes = if (command["kind"] == "Snooze" && command.containsKey("expectedSnoozeMinutes"))
           integer(command["expectedSnoozeMinutes"], "expectedSnoozeMinutes", 1, 1440) else null
-        applyAction(id, generation, command["kind"] as String, operationId, at, expectedMinutes)
+        val sessionId = if (command["kind"] == "Postpone" && command.containsKey("expectedSessionId"))
+          text(command, "expectedSessionId", "", 200).also {
+            validate(it.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
+          } else null
+        applyAction(id, generation, command["kind"] as String, operationId, at, expectedMinutes, sessionId)
       }
       else -> mapOf("status" to "Rejected", "errorCode" to "UNSUPPORTED_COMMAND", "errorField" to "kind")
     }
@@ -1300,7 +1311,7 @@ class AlarmEngine internal constructor(private val context: Context,
   }
 
   private fun applyAction(id: String, expected: Long, kind: String, operationId: String, targetMs: Long? = null,
-    expectedSnoozeMinutes: Int? = null): Map<String, Any?> {
+    expectedSnoozeMinutes: Int? = null, expectedSessionId: String? = null): Map<String, Any?> {
     if (alerts.bulkSnoozeReceipt(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     alerts.completionReceipt(operationId)?.let { receipt ->
       if (kind !in setOf("Stop", "CompleteDelivery") || receipt.kind != kind || receipt.occurrenceId != id || receipt.expectedGeneration != expected)
@@ -1337,6 +1348,9 @@ class AlarmEngine internal constructor(private val context: Context,
       "errorField" to "expectedGeneration", "generation" to old.generation)
     if (old.state in setOf("Completed", "Deleted", "Changing", "SeriesChanging", "Skipped", "Replaced", "Paused") || old.mode == "None")
       return mapOf("status" to "Rejected", "errorCode" to "NOT_ELIGIBLE", "errorMessage" to "This reminder has no eligible alert. Refresh it first.")
+    if (expectedSessionId != null && (old.state != "Alerting" || old.sessionId != expectedSessionId ||
+        alerts.activeSession()?.id != expectedSessionId))
+      return mapOf("status" to "Rejected", "errorCode" to "STALE_SESSION", "errorMessage" to "That alarm session has ended. Refresh controls.")
     if (kind == "Stop" && old.state != "Alerting") return mapOf("status" to "Rejected", "errorCode" to "NOT_RINGING")
     if (kind == "CompleteDelivery" && old.state != "Alerting" && !(old.mode == "Notification" && old.state == "Notified"))
       return mapOf("status" to "Rejected", "errorCode" to "NOT_DELIVERED", "errorMessage" to "That delivery has ended. Refresh this reminder.")
@@ -1415,9 +1429,9 @@ class AlarmEngine internal constructor(private val context: Context,
   }
 
   private fun applySessionAction(operationId: String, sessionId: String, captured: List<DeliverySnapshot.Member>,
-    snoozeMinutes: Int?): Map<String, Any?> {
-    val kind = if (snoozeMinutes == null) "DoneAll" else "SnoozeAll"
-    val key = DeliverySnapshot.key(captured, snoozeMinutes)
+    kind: String, snoozeMinutes: Int?, targetMs: Long? = null): Map<String, Any?> {
+    val key = if (kind == "PostponeAll") DeliverySnapshot.postponeKey(captured, requireNotNull(targetMs))
+      else DeliverySnapshot.key(captured, snoozeMinutes)
     alerts.completionReceipt(operationId)?.let { receipt ->
       if (kind != receipt.kind || receipt.sessionId != sessionId || receipt.snapshotKey != key)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
@@ -1425,14 +1439,15 @@ class AlarmEngine internal constructor(private val context: Context,
       return completionResult(receipt)
     }
     alerts.bulkSnoozeReceipt(operationId)?.let { receipt ->
-      if (kind != "SnoozeAll" || receipt.sessionId != sessionId || receipt.snapshotKey != key)
+      if (kind != receipt.kind || receipt.sessionId != sessionId || receipt.snapshotKey != key ||
+          (kind == "PostponeAll" && receipt.targetMs != targetMs))
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       return resumeBulkSnooze(receipt)
     }
     if (alerts.action(operationId) != null || (unlocked() &&
         (content().records().receipt(operationId) != null || content().records().historyOperation(operationId) != null)))
       return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-    if (snoozeMinutes != null && unlocked()) prepareContentActions()
+    if (kind != "DoneAll" && unlocked()) prepareContentActions()
     val session = alerts.activeSession()
     if (session?.id != sessionId) return mapOf("status" to "Rejected", "errorCode" to "STALE_SESSION",
       "errorMessage" to "That alarm session has ended. Refresh controls.")
@@ -1441,15 +1456,18 @@ class AlarmEngine internal constructor(private val context: Context,
         record.sessionId != sessionId || record.generation != member.expectedGeneration })
       return mapOf("status" to "Rejected", "errorCode" to "STALE_MEMBERS", "errorMessage" to "The alarm group changed. Refresh controls and try again.")
     val current = members.filterNotNull()
-    if (snoozeMinutes == null) {
+    if (kind == "DoneAll") {
       val receipt = CompletionReceipt(operationId, kind, null, null, sessionId, null, current.size, key)
       completeDeliveries(current, receipt)
       return completionResult(receipt)
     }
-    if (current.any { it.snoozeMinutes != snoozeMinutes }) return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE",
+    if (kind == "SnoozeAll" && current.any { it.snoozeMinutes != snoozeMinutes }) return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE",
       "errorMessage" to "The Snooze duration changed. Refresh controls and try again.")
     val at = now()
-    val receipt = BulkSnoozeReceipt(operationId, sessionId, key, at, at + snoozeMinutes * 60_000L, snoozeMinutes)
+    if (kind == "PostponeAll") validate(requireNotNull(targetMs) > at, "alarmAtMs", "Choose an alert time in the future.")
+    val receipt = BulkSnoozeReceipt(operationId, sessionId, key, at,
+      if (kind == "PostponeAll") requireNotNull(targetMs) else at + requireNotNull(snoozeMinutes) * 60_000L,
+      snoozeMinutes, kind = kind)
     operational.runInTransaction {
       alerts.bulkSnoozeReceipt(receipt)
       current.forEach { old ->
@@ -1457,8 +1475,10 @@ class AlarmEngine internal constructor(private val context: Context,
           targetMs = receipt.targetMs, exception = old.exception || old.segmentId != null)
         alerts.put(next)
         alerts.bulkSnoozeMember(BulkSnoozeMember(operationId, old.occurrenceId, old.generation, next.generation))
-        val child = UUID.nameUUIDFromBytes("remilo:snoozeall:$operationId:${old.occurrenceId}".toByteArray()).toString()
-        alerts.action(ActionRecord(child, old.occurrenceId, "Snooze", at, next.generation, receipt.targetMs))
+        val actionKind = if (kind == "PostponeAll") "Postpone" else "Snooze"
+        val prefix = if (kind == "PostponeAll") "postponeall" else "snoozeall"
+        val child = UUID.nameUUIDFromBytes("remilo:$prefix:$operationId:${old.occurrenceId}".toByteArray()).toString()
+        alerts.action(ActionRecord(child, old.occurrenceId, actionKind, at, next.generation, receipt.targetMs))
       }
     }
     // Detach the exact captured group before registration or private projection.
@@ -1655,7 +1675,8 @@ class AlarmEngine internal constructor(private val context: Context,
   data class SessionMemberContent(val title: String, val eventStartMs: Long, val eventEndMs: Long,
     val dueAtMs: Long, val allDay: Boolean, val zoneId: String, val dueLinked: Boolean)
   data class SessionSnapshot(val id: String, val state: String, val members: List<Pair<AlertRecord, String>>,
-    val theme: String, val atmosphere: String, val content: Map<String, SessionMemberContent> = emptyMap(), val language: String = PresentationLanguage.language, val presentationRevision: Long = 0)
+    val theme: String, val atmosphere: String, val content: Map<String, SessionMemberContent> = emptyMap(), val language: String = PresentationLanguage.language, val presentationRevision: Long = 0,
+    val postponePreferences: PostponePreferencesRecord? = null)
   fun sessionSnapshot(sessionId: String, callback: (SessionSnapshot) -> Unit, failed: (String) -> Unit) = request({
     reconcileDeliveryPresentation()
     val session = alerts.session(sessionId)
@@ -1663,7 +1684,8 @@ class AlarmEngine internal constructor(private val context: Context,
     val members = alerts.members(sessionId)
     val content = members.mapNotNull { record -> memberContent(record.occurrenceId)?.let { record.occurrenceId to it } }.toMap()
     SessionSnapshot(sessionId, session?.state ?: "Ended", members.map { it to (content[it.occurrenceId]?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())) },
-      appearance.brightness, appearance.atmosphere, content, presentationRevision = presentationRevision)
+      appearance.brightness, appearance.atmosphere, content, presentationRevision = presentationRevision,
+      postponePreferences = alerts.postponePreferences())
   }, { callback(it as SessionSnapshot) }, failed)
   private fun memberViews(sessionId: String) = alerts.members(sessionId).map { it to
     (memberContent(it.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())) }

@@ -208,6 +208,7 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("queryRepeatFamilies") { promise: Promise -> dispatch(promise) { it.queryRepeatFamilies() } }
     AsyncFunction("getTimeZones") { atMs: Double, promise: Promise -> dispatch(promise) { it.timeZones(atMs) } }
     AsyncFunction("convertTime") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.convertTime(input) } }
+    AsyncFunction("resolvePostponeTime") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.resolvePostponeTime(input) } }
     AsyncFunction("getSeries") { id: String, promise: Promise -> dispatch(promise) { it.getSeries(id) } }
     AsyncFunction("getSeriesDraft") { id: String, nominal: String, promise: Promise -> dispatch(promise) { it.getSeriesDraft(id, nominal) } }
     AsyncFunction("getDiagnostics") { promise: Promise -> dispatch(promise) { it.diagnostics() } }

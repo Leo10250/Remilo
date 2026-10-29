@@ -13201,6 +13201,238 @@
       },
       "context": "Count-based Calendar presentation; Chinese has no English plural suffix",
       "calendarStatus": false
+    },
+    "postpone_action": {
+      "en": "Postpone",
+      "zh-Hans": "推迟",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_all_action": {
+      "en": "Postpone all ({count})",
+      "zh-Hans": "全部推迟（{count}）",
+      "args": {
+        "count": "number"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_one_day": {
+      "en": "1 day",
+      "zh-Hans": "1 天",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_choose_date_time": {
+      "en": "Choose date & time",
+      "zh-Hans": "选择日期和时间",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_scope_single": {
+      "en": "Only the next alert changes. The reminder stays unfinished.",
+      "zh-Hans": "仅更改下次提醒时间，此提醒仍未完成。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_next_alert": {
+      "en": "Next alert",
+      "zh-Hans": "下次提醒",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_custom_date_time": {
+      "en": "Custom date & time",
+      "zh-Hans": "自定日期和时间",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_use_time": {
+      "en": "Use this time",
+      "zh-Hans": "使用此时间",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_back_choices": {
+      "en": "Back to choices",
+      "zh-Hans": "返回选项",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_future_time": {
+      "en": "Choose a future time.",
+      "zh-Hans": "请选择未来的时间。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_scope_group": {
+      "en": "Changes the next alert for these {count} reminders. They stay unfinished.",
+      "zh-Hans": "更改这 {count} 个提醒的下次提醒时间，它们仍未完成。",
+      "args": {
+        "count": "number"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_15_minutes": {
+      "en": "15 min",
+      "zh-Hans": "15 分钟",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_30_minutes": {
+      "en": "30 min",
+      "zh-Hans": "30 分钟",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_one_hour": {
+      "en": "1 hour",
+      "zh-Hans": "1 小时",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_tomorrow": {
+      "en": "Tomorrow",
+      "zh-Hans": "明天",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_next_group": {
+      "en": "Next alerts for all {count}",
+      "zh-Hans": "全部 {count} 个提醒的下次时间",
+      "args": {
+        "count": "number"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_24_hours": {
+      "en": "24 hours later",
+      "zh-Hans": "24 小时后",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_custom": {
+      "en": "Custom",
+      "zh-Hans": "自定",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_date_time": {
+      "en": "Date & time",
+      "zh-Hans": "日期和时间",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_stale": {
+      "en": "These reminders changed. Close and choose again.",
+      "zh-Hans": "这些提醒已更改，请关闭后重新选择。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_saved_times_locked": {
+      "en": "Saved times are available after unlocking.",
+      "zh-Hans": "解锁后可使用已保存的时间。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_all_plain": {
+      "en": "Postpone all",
+      "zh-Hans": "全部推迟",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_submitting": {
+      "en": "Postponing…",
+      "zh-Hans": "正在推迟…",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_submitting_group": {
+      "en": "Postponing {count} reminders…",
+      "zh-Hans": "正在推迟 {count} 个提醒…",
+      "args": {
+        "count": "number"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_failed_time": {
+      "en": "Could not resolve this time. Choose again.",
+      "zh-Hans": "无法确定此时间，请重新选择。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_zone": {
+      "en": "Times shown in {zone}",
+      "zh-Hans": "时间采用 {zone}",
+      "args": {
+        "zone": "string"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_group_subject": {
+      "en": "These {count} reminders",
+      "zh-Hans": "这 {count} 个提醒",
+      "args": {
+        "count": "number"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_pending": {
+      "en": "Postpone is saved; scheduling is pending. Retry the same action.",
+      "zh-Hans": "已保存推迟操作，正在等待安排。请重试同一操作。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_failed_schedule": {
+      "en": "Could not schedule Postpone. Review alert problems in Remilo.",
+      "zh-Hans": "无法安排推迟后的提醒，请在 Remilo 中检查提醒问题。",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_partial": {
+      "en": "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.",
+      "zh-Hans": "已安排 {count} 个提醒中的 {scheduled} 个，请在 Remilo 中检查提醒问题。",
+      "args": {
+        "scheduled": "number",
+        "count": "number"
+      },
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
+    },
+    "postpone_selected": {
+      "en": "Selected",
+      "zh-Hans": "已选择",
+      "args": {},
+      "context": "Uniform Postpone chooser",
+      "calendarStatus": false
     }
   }
 }

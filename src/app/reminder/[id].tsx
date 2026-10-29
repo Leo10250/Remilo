@@ -13,11 +13,13 @@ import { recoveryPresentation, commandFeedback, type Tone } from '../../domain/a
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
 import { modeLabel, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
 import { deviceZone } from '../../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
+import { capturePostpone, postponeCaptureMatches, type PostponeCapture } from '../../domain/postpone';
+import { PostponeChooser } from '../../ui/postpone-chooser';
+import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
 
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
 import { typography } from '../../ui/tokens';
-import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary, ZoneSummary } from '../../ui/schedule';
+import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
@@ -33,7 +35,7 @@ type Feedback = { message: string; tone: Tone };
 export default function ReminderDetails() {
   'use no memo';
   const t = useTranslation();
-  const { formatDate, formatTime, scheduleDateTime, alertPresentation, clockPreferenceLabel } = useTimeFormatting();
+  const { formatDate, formatTime, scheduleDateTime, alertPresentation } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; action?: string }>(), { id, action } = params;
   const origin = useMemo(() => creationOrigin({ originRoot: params.originRoot, originListId: params.originListId, originNoList: params.originNoList }), [params.originRoot, params.originListId, params.originNoList]);
   const routeParams = useMemo(() => ({ ...originParams(origin), originCollection: params.originCollection, originFamily: params.originFamily,
@@ -53,17 +55,18 @@ export default function ReminderDetails() {
   const series = useQuery({ queryKey: ['series', item?.segmentId], queryFn: () => engine().getSeries(item!.segmentId!), enabled: nativeAvailable && !!item?.segmentId });
   const families = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable && !!item?.segmentId });
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
-  const scopeTrigger = useRef<View>(null), focused = useIsFocused();
-  const [postpone, setPostpone] = useState(action === 'postpone'), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
+  const scopeTrigger = useRef<View>(null), postponeTrigger = useRef<View>(null), focused = useIsFocused();
+  const [postpone, setPostpone] = useState(false), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
+  const [postponeCapture, setPostponeCapture] = useState<{ item: Occurrence; draft: PostponeCapture } | null>(null);
+  const postponeFromRoute = useRef(false);
   const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
-  const [now, setNow] = useState(Date.now);
-  const [target, setTarget] = useState(() => Date.now() + 900_000), [feedback, setFeedback] = useLocalizedState<Feedback | null>(null), [sheetFeedback, setSheetFeedback] = useLocalizedState<Feedback | null>(null);
+  const [feedback, setFeedback] = useLocalizedState<Feedback | null>(null), [sheetFeedback, setSheetFeedback] = useLocalizedState<Feedback | null>(null);
   const pendingOperation = useRef<{ command: ContentCommand | DeliveryCommand; item: Occurrence; success: string } | null>(null);
   const runningOperation = useRef(false);
   const [uncertain, setUncertain] = useState(false);
   const [recoveryKind, setRecoveryKind] = useState<string>();
-  const [postponeResult, setPostponeResult] = useState(false), [selection, setSelection] = useState('15');
+  const [postponeResult, setPostponeResult] = useState(false);
   useAppearanceHold(command.isPending || uncertain);
   usePreventRemove(command.isPending || uncertain || unlinkBusy || unlinkUncertain, () => {
     confirm(t('m_62b815b59b7a'), t('m_b920b015452f'));
@@ -71,7 +74,12 @@ export default function ReminderDetails() {
   useEffect(() => { if (action !== 'edit' || !itemId) return;
     if (!segmentId) router.replace({ pathname: '/edit', params: { id: itemId, ...routeParams, originReminderId: itemId } });
   }, [action, itemId, segmentId, routeParams]);
-  useEffect(() => { if (!postpone) return; const tick = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(tick); }, [postpone]);
+  useEffect(() => {
+    if (action !== 'postpone' || postponeFromRoute.current || !item || !settings.data || !canAdjustAlert(item)) return;
+    postponeFromRoute.current = true;
+    setPostponeCapture({ item: { ...item }, draft: capturePostpone(item, settings.data, Date.now(), deviceZone()) });
+    setPostpone(true);
+  }, [action, item, settings.data]);
   const runPending = async () => {
     const operation = pendingOperation.current;
     if (!operation || command.isPending || runningOperation.current) return;
@@ -117,16 +125,21 @@ export default function ReminderDetails() {
     setTrashItem({ ...item });
   };
   const delivery = async (kind: DeliveryCommand['kind'], alarmAtMs?: number) => {
-    if (!item || command.isPending || pendingOperation.current || !canAdjustAlert(item) || kind === 'Stop' && item.deliveryState !== 'Alerting') return;
-    if (kind === 'CompleteDelivery' && item.deliveryState !== 'Alerting' && !(item.mode === 'Notification' && item.deliveryState === 'Notified')) return;
-    pendingOperation.current = { command: { kind, occurrenceId: id, expectedGeneration: item.generation, alarmAtMs,
-      ...(kind === 'Snooze' ? { expectedSnoozeMinutes: item.quickSnoozeMinutes } : {}), operationId: engine().createOperationId() }, item,
+    const captured = kind === 'Postpone' ? postponeCapture?.item : item;
+    if (!captured || command.isPending || pendingOperation.current || !canAdjustAlert(captured) || kind === 'Stop' && captured.deliveryState !== 'Alerting') return;
+    if (kind === 'Postpone' && (!postponeCapture || !postponeCaptureMatches(postponeCapture.draft, item))) return;
+    if (kind === 'CompleteDelivery' && captured.deliveryState !== 'Alerting' && !(captured.mode === 'Notification' && captured.deliveryState === 'Notified')) return;
+    pendingOperation.current = { command: { kind, occurrenceId: captured.id, expectedGeneration: captured.generation, alarmAtMs,
+      ...(kind === 'Snooze' ? { expectedSnoozeMinutes: captured.quickSnoozeMinutes } : {}), operationId: engine().createOperationId() }, item: captured,
       success: kind === 'Stop' || kind === 'CompleteDelivery' ? t('m_7b359664f423') : kind === 'Postpone' ? t('m_b47059d04e58') + formatTime(alarmAtMs!) : t('m_5550d1a27260') };
     await runPending();
   };
   const edit = () => { if (command.isPending || uncertain) return; setMenu(false); if (item?.segmentId) setScope(true); else router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); };
-  const openPostpone = () => { const current = Date.now(); setNow(current); setTarget(current + 900_000); setSelection('15'); setSheetFeedback(null); setPostponeResult(false); setPostpone(true); };
-  const tomorrow = (minutes: number) => { const date = new Date(); date.setDate(date.getDate() + 1); date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0); setTarget(date.getTime()); setSheetFeedback(null); };
+  const openPostpone = () => {
+    if (!item || !settings.data || command.isPending || pendingOperation.current || !canAdjustAlert(item)) return;
+    setPostponeCapture({ item: { ...item }, draft: capturePostpone(item, settings.data, Date.now(), deviceZone()) });
+    setSheetFeedback(null); setPostponeResult(false); setPostpone(true);
+  };
   const active = item && !item.deleted && !item.completed && !item.skipped;
   const unlink = async () => {
     if (unlinkBusy || !calendarLink) return;
@@ -140,7 +153,6 @@ export default function ReminderDetails() {
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
   const recovery = recoveryPresentation(recoveryKind);
-  const frozenPostpone = command.isPending || uncertain || postponeResult;
   const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
   return <Page title={t('m_31757bbfa17e')} scrollKey={'reminder:' + id} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
     actions={item ? <>{!item.deleted && <IconButton icon="edit" label={t('m_1f1353b055df')} buttonRef={scopeTrigger} disabled={command.isPending || uncertain} onPress={edit} />}
@@ -150,9 +162,7 @@ export default function ReminderDetails() {
       {item.deliveryState === 'Alerting' && <Copy muted size={typography.supporting}>{t('m_1ce1890d9f80')}</Copy>}
       <View style={{ width: '100%' }}><Button icon="check" label={t('m_62aa4b87cc52')} disabled={command.isPending || uncertain}
         onPress={() => void (item.deliveryState === 'Alerting' ? delivery('CompleteDelivery') : content('Done'))} /></View>
-      {adjust && item.deliveryState === 'Alerting' && <View style={{ width: '100%' }}><Button icon="snooze" label={t('m_44f91ee971e4') + item.quickSnoozeMinutes + t('m_2e75737a6b58')} variant="secondary"
-        disabled={command.isPending || uncertain} onPress={() => void delivery('Snooze')} /></View>}
-      {adjust && <View style={{ width: '100%' }}><Button icon="schedule" label={t('m_a5200499d443')} variant="secondary" disabled={command.isPending || uncertain} onPress={openPostpone} /></View>}
+      {adjust && <View style={{ width: '100%' }}><Button buttonRef={postponeTrigger} icon="schedule" label={t('postpone_action')} variant="secondary" disabled={command.isPending || uncertain || !settings.data} onPress={openPostpone} /></View>}
       </>}
       {item.deleted ? <View style={{ flex: 1 }}><Button icon="undo" label={t('m_8451e1c4f068')} disabled={command.isPending || uncertain} onPress={() => void content('UndoDelete')} /></View> :
         (item.completed || item.skipped) && <View style={{ flex: 1 }}><Button icon="undo" label={item.skipped ? t('m_3d2391eae496') : t('m_a1dceb5971c8')} variant="secondary" disabled={command.isPending || uncertain} onPress={() => void content('Reopen')} /></View>}
@@ -164,6 +174,7 @@ export default function ReminderDetails() {
       <Button label={recovery.retry} variant="secondary" disabled={command.isPending} onPress={() => void runPending()} /></>}
     {command.isPending && <ActionFeedback loading message={t('m_290b3d0729bd')} />}
     {item && <>
+      {!settings.data && <QueryState loading={settings.isLoading} error={settings.error} onRetry={() => void settings.refetch()} />}
       {query.error && <><ActionFeedback message={t('m_d31a19e7291e')} tone="warning" /><Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void query.refetch()} /></>}
       <View style={{flexDirection:'row',alignItems:'flex-start',gap:12}}><View style={{height:typography.title*scale*fontScale*1.4,justifyContent:'center'}}><Icon name="event" color={colors.muted} size={28}/></View><View style={{flex:1}}><Copy heading size={typography.title}>{item.title}</Copy></View></View>
       <SchedulePrimary item={item} />
@@ -237,25 +248,15 @@ export default function ReminderDetails() {
       </>}
       {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>{t('m_eabe16e1ec41')}</Copy>}
     </Sheet>
-    <Sheet title={t('m_a5200499d443')} visible={postpone} onClose={closePostpone} footer={<BottomActionBar><View style={{ flex: 1, gap: 8 }}>
-      {sheetFeedback && !uncertain && <ActionFeedback {...sheetFeedback} />}
-      {uncertain && <ActionFeedback message={recovery.message} tone="warning" />}
-      {postponeResult ? <><Button label={t('m_59f6ec7bb281')} onPress={closePostpone} />
-        <Button label={t('m_0146bbb12bf3')} variant="secondary" onPress={() => { closePostpone(); router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } }); }} /></> :
-        <Button label={command.isPending ? t('m_1622aa101d70') : uncertain ? recovery.retry : t('m_a5200499d443')} busy={command.isPending}
-          disabled={command.isPending || (!uncertain && (!adjust || target <= now))} onPress={() => void (uncertain ? runPending() : delivery('Postpone', target))} />}
-    </View></BottomActionBar>}>
-      <Copy heading>{item?.title}</Copy><Copy muted size={14}>{t('m_b581db28b50e')}</Copy>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{[15, 30, 60].map((minutes) => <View key={minutes} style={{ flexGrow: 1, flexBasis: 88 }}>
-        <Choice label={minutes === 60 ? t('m_698eab0611ad') : t('m_592b238e52a5') + minutes + t('m_336e6529193b')} selected={selection === String(minutes)} disabled={frozenPostpone}
-          onPress={() => { setTarget(Date.now() + minutes * 60_000); setSelection(String(minutes)); setSheetFeedback(null); }} /></View>)}</View>
-      {[settings.data?.tomorrowMorning ?? 600, settings.data?.tomorrowAfternoon ?? 840, settings.data?.tomorrowEvening ?? 1020].map((minutes, index) => {
-        return <Choice key={index} label={t('m_45f074a10945') + clockPreferenceLabel(minutes)} selected={selection === 'tomorrow-' + index} disabled={frozenPostpone} onPress={() => { tomorrow(minutes); setSelection('tomorrow-' + index); }} />;
-      })}
-      <DateField label={selection === 'custom' ? t('m_951aba5b302c') : t('m_a8c6ab4d7e5d')} value={target} disabled={frozenPostpone} onChange={(value) => { setTarget(value); setSelection('custom'); setSheetFeedback(null); }} />
-      <Copy>{t('m_ac9a908af109')}{formatTime(target)}</Copy><ZoneSummary zoneId={deviceZone()} atMs={target} />
-      {!postponeResult && !uncertain && target <= now && <Status label={t('m_d4c558eae719')} tone="danger" />}
-      {!postponeResult && !uncertain && !adjust && item && <Status label={t('m_21731204daa0')} tone="warning" />}
-    </Sheet>
+    <PostponeChooser key={postponeCapture ? `${postponeCapture.draft.occurrenceId}:${postponeCapture.draft.referenceAtMs}` : 'closed'}
+      visible={postpone} capture={postponeCapture?.draft ?? null} busy={command.isPending} uncertain={uncertain}
+      returnFocusRef={postponeTrigger} returnFocusWhen={() => focused}
+      acknowledged={postponeResult} eligible={!!adjust && !!postponeCapture && postponeCaptureMatches(postponeCapture.draft, item)}
+      retryLabel={recovery.retry} progressLabel={t('m_1622aa101d70')} onClose={closePostpone}
+      onSubmit={target => { void delivery('Postpone', target); }} onRetry={() => { void runPending(); }}
+      onSelectionChange={() => setSheetFeedback(null)}
+      onAlarmSettings={() => { closePostpone(); router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } }); }}
+      feedback={<>{sheetFeedback && !uncertain && <ActionFeedback {...sheetFeedback} />}
+        {uncertain && <ActionFeedback message={recovery.message} tone="warning" />}</>} />
   </Page>;
 }

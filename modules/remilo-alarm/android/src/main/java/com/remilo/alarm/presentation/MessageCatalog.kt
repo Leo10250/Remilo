@@ -5,7 +5,7 @@ import com.remilo.alarm.R
 
 object MessageCatalog {
   data class Entry(val resource: Int, val plural: Boolean, val args: List<String>, val english: String, val calendarStatus: Boolean)
-  val entries: Map<String, Entry> by lazy { buildMap { putAll(chunk0()); putAll(chunk1()); putAll(chunk2()); putAll(chunk3()); putAll(chunk4()); putAll(chunk5()); putAll(chunk6()); putAll(chunk7()); putAll(chunk8()); putAll(chunk9()); putAll(chunk10()); putAll(chunk11()); putAll(chunk12()); putAll(chunk13()); putAll(chunk14()); putAll(chunk15()); putAll(chunk16()); putAll(chunk17()); putAll(chunk18()); putAll(chunk19()); putAll(chunk20()); putAll(chunk21()); putAll(chunk22()); } }
+  val entries: Map<String, Entry> by lazy { buildMap { putAll(chunk0()); putAll(chunk1()); putAll(chunk2()); putAll(chunk3()); putAll(chunk4()); putAll(chunk5()); putAll(chunk6()); putAll(chunk7()); putAll(chunk8()); putAll(chunk9()); putAll(chunk10()); putAll(chunk11()); putAll(chunk12()); putAll(chunk13()); putAll(chunk14()); putAll(chunk15()); putAll(chunk16()); putAll(chunk17()); putAll(chunk18()); putAll(chunk19()); putAll(chunk20()); putAll(chunk21()); putAll(chunk22()); putAll(chunk23()); } }
   private fun chunk0(): Map<String, Entry> = mapOf(
     "m_bf4156d6b15c" to Entry(R.string.l10n_m_bf4156d6b15c, false, listOf(), "Automatic Calendar sync enabled", false),
     "m_8089865e173e" to Entry(R.string.l10n_m_8089865e173e, false, listOf(), "Recovered Calendar alerts enabled", false),
@@ -1889,6 +1889,39 @@ object MessageCatalog {
     "item_count" to Entry(R.plurals.l10n_item_count, true, listOf("count"), "{count} items", false),
     "calendar_review_count" to Entry(R.plurals.l10n_calendar_review_count, true, listOf("count"), "Calendar items need review. Review {count} items.", false),
     "pending_updates" to Entry(R.plurals.l10n_pending_updates, true, listOf("count"), "{count} updates waiting", false),
-    "calendar_review_notification" to Entry(R.plurals.l10n_calendar_review_notification, true, listOf("count"), "{count} unfinished reminders need review.", false)
+    "calendar_review_notification" to Entry(R.plurals.l10n_calendar_review_notification, true, listOf("count"), "{count} unfinished reminders need review.", false),
+    "postpone_action" to Entry(R.string.l10n_postpone_action, false, listOf(), "Postpone", false)
+  )
+  private fun chunk23(): Map<String, Entry> = mapOf(
+    "postpone_all_action" to Entry(R.string.l10n_postpone_all_action, false, listOf("count"), "Postpone all ({count})", false),
+    "postpone_one_day" to Entry(R.string.l10n_postpone_one_day, false, listOf(), "1 day", false),
+    "postpone_choose_date_time" to Entry(R.string.l10n_postpone_choose_date_time, false, listOf(), "Choose date & time", false),
+    "postpone_scope_single" to Entry(R.string.l10n_postpone_scope_single, false, listOf(), "Only the next alert changes. The reminder stays unfinished.", false),
+    "postpone_next_alert" to Entry(R.string.l10n_postpone_next_alert, false, listOf(), "Next alert", false),
+    "postpone_custom_date_time" to Entry(R.string.l10n_postpone_custom_date_time, false, listOf(), "Custom date & time", false),
+    "postpone_use_time" to Entry(R.string.l10n_postpone_use_time, false, listOf(), "Use this time", false),
+    "postpone_back_choices" to Entry(R.string.l10n_postpone_back_choices, false, listOf(), "Back to choices", false),
+    "postpone_future_time" to Entry(R.string.l10n_postpone_future_time, false, listOf(), "Choose a future time.", false),
+    "postpone_scope_group" to Entry(R.string.l10n_postpone_scope_group, false, listOf("count"), "Changes the next alert for these {count} reminders. They stay unfinished.", false),
+    "postpone_15_minutes" to Entry(R.string.l10n_postpone_15_minutes, false, listOf(), "15 min", false),
+    "postpone_30_minutes" to Entry(R.string.l10n_postpone_30_minutes, false, listOf(), "30 min", false),
+    "postpone_one_hour" to Entry(R.string.l10n_postpone_one_hour, false, listOf(), "1 hour", false),
+    "postpone_tomorrow" to Entry(R.string.l10n_postpone_tomorrow, false, listOf(), "Tomorrow", false),
+    "postpone_next_group" to Entry(R.string.l10n_postpone_next_group, false, listOf("count"), "Next alerts for all {count}", false),
+    "postpone_24_hours" to Entry(R.string.l10n_postpone_24_hours, false, listOf(), "24 hours later", false),
+    "postpone_custom" to Entry(R.string.l10n_postpone_custom, false, listOf(), "Custom", false),
+    "postpone_date_time" to Entry(R.string.l10n_postpone_date_time, false, listOf(), "Date & time", false),
+    "postpone_stale" to Entry(R.string.l10n_postpone_stale, false, listOf(), "These reminders changed. Close and choose again.", false),
+    "postpone_saved_times_locked" to Entry(R.string.l10n_postpone_saved_times_locked, false, listOf(), "Saved times are available after unlocking.", false),
+    "postpone_all_plain" to Entry(R.string.l10n_postpone_all_plain, false, listOf(), "Postpone all", false),
+    "postpone_submitting" to Entry(R.string.l10n_postpone_submitting, false, listOf(), "Postponing…", false),
+    "postpone_submitting_group" to Entry(R.string.l10n_postpone_submitting_group, false, listOf("count"), "Postponing {count} reminders…", false),
+    "postpone_failed_time" to Entry(R.string.l10n_postpone_failed_time, false, listOf(), "Could not resolve this time. Choose again.", false),
+    "postpone_zone" to Entry(R.string.l10n_postpone_zone, false, listOf("zone"), "Times shown in {zone}", false),
+    "postpone_group_subject" to Entry(R.string.l10n_postpone_group_subject, false, listOf("count"), "These {count} reminders", false),
+    "postpone_pending" to Entry(R.string.l10n_postpone_pending, false, listOf(), "Postpone is saved; scheduling is pending. Retry the same action.", false),
+    "postpone_failed_schedule" to Entry(R.string.l10n_postpone_failed_schedule, false, listOf(), "Could not schedule Postpone. Review alert problems in Remilo.", false),
+    "postpone_partial" to Entry(R.string.l10n_postpone_partial, false, listOf("scheduled", "count"), "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.", false),
+    "postpone_selected" to Entry(R.string.l10n_postpone_selected, false, listOf(), "Selected", false)
   )
 }

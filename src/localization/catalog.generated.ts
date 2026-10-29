@@ -1863,7 +1863,38 @@ export const catalogs = {
     "calendar_review_notification": {
       "one": "{count} unfinished reminder needs review.",
       "other": "{count} unfinished reminders need review."
-    }
+    },
+    "postpone_action": "Postpone",
+    "postpone_all_action": "Postpone all ({count})",
+    "postpone_one_day": "1 day",
+    "postpone_choose_date_time": "Choose date & time",
+    "postpone_scope_single": "Only the next alert changes. The reminder stays unfinished.",
+    "postpone_next_alert": "Next alert",
+    "postpone_custom_date_time": "Custom date & time",
+    "postpone_use_time": "Use this time",
+    "postpone_back_choices": "Back to choices",
+    "postpone_future_time": "Choose a future time.",
+    "postpone_scope_group": "Changes the next alert for these {count} reminders. They stay unfinished.",
+    "postpone_15_minutes": "15 min",
+    "postpone_30_minutes": "30 min",
+    "postpone_one_hour": "1 hour",
+    "postpone_tomorrow": "Tomorrow",
+    "postpone_next_group": "Next alerts for all {count}",
+    "postpone_24_hours": "24 hours later",
+    "postpone_custom": "Custom",
+    "postpone_date_time": "Date & time",
+    "postpone_stale": "These reminders changed. Close and choose again.",
+    "postpone_saved_times_locked": "Saved times are available after unlocking.",
+    "postpone_all_plain": "Postpone all",
+    "postpone_submitting": "Postponing…",
+    "postpone_submitting_group": "Postponing {count} reminders…",
+    "postpone_failed_time": "Could not resolve this time. Choose again.",
+    "postpone_zone": "Times shown in {zone}",
+    "postpone_group_subject": "These {count} reminders",
+    "postpone_pending": "Postpone is saved; scheduling is pending. Retry the same action.",
+    "postpone_failed_schedule": "Could not schedule Postpone. Review alert problems in Remilo.",
+    "postpone_partial": "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.",
+    "postpone_selected": "Selected"
   },
   "zh-Hans": {
     "m_bf4156d6b15c": "已启用日历自动同步",
@@ -3720,7 +3751,38 @@ export const catalogs = {
     },
     "calendar_review_notification": {
       "other": "{count} 项未完成提醒需要查看。"
-    }
+    },
+    "postpone_action": "推迟",
+    "postpone_all_action": "全部推迟（{count}）",
+    "postpone_one_day": "1 天",
+    "postpone_choose_date_time": "选择日期和时间",
+    "postpone_scope_single": "仅更改下次提醒时间，此提醒仍未完成。",
+    "postpone_next_alert": "下次提醒",
+    "postpone_custom_date_time": "自定日期和时间",
+    "postpone_use_time": "使用此时间",
+    "postpone_back_choices": "返回选项",
+    "postpone_future_time": "请选择未来的时间。",
+    "postpone_scope_group": "更改这 {count} 个提醒的下次提醒时间，它们仍未完成。",
+    "postpone_15_minutes": "15 分钟",
+    "postpone_30_minutes": "30 分钟",
+    "postpone_one_hour": "1 小时",
+    "postpone_tomorrow": "明天",
+    "postpone_next_group": "全部 {count} 个提醒的下次时间",
+    "postpone_24_hours": "24 小时后",
+    "postpone_custom": "自定",
+    "postpone_date_time": "日期和时间",
+    "postpone_stale": "这些提醒已更改，请关闭后重新选择。",
+    "postpone_saved_times_locked": "解锁后可使用已保存的时间。",
+    "postpone_all_plain": "全部推迟",
+    "postpone_submitting": "正在推迟…",
+    "postpone_submitting_group": "正在推迟 {count} 个提醒…",
+    "postpone_failed_time": "无法确定此时间，请重新选择。",
+    "postpone_zone": "时间采用 {zone}",
+    "postpone_group_subject": "这 {count} 个提醒",
+    "postpone_pending": "已保存推迟操作，正在等待安排。请重试同一操作。",
+    "postpone_failed_schedule": "无法安排推迟后的提醒，请在 Remilo 中检查提醒问题。",
+    "postpone_partial": "已安排 {count} 个提醒中的 {scheduled} 个，请在 Remilo 中检查提醒问题。",
+    "postpone_selected": "已选择"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -5564,4 +5626,35 @@ export interface MessageArguments {
   calendar_review_count: { count: number };
   pending_updates: { count: number };
   calendar_review_notification: { count: number };
+  postpone_action: Record<string, never>;
+  postpone_all_action: { count: number };
+  postpone_one_day: Record<string, never>;
+  postpone_choose_date_time: Record<string, never>;
+  postpone_scope_single: Record<string, never>;
+  postpone_next_alert: Record<string, never>;
+  postpone_custom_date_time: Record<string, never>;
+  postpone_use_time: Record<string, never>;
+  postpone_back_choices: Record<string, never>;
+  postpone_future_time: Record<string, never>;
+  postpone_scope_group: { count: number };
+  postpone_15_minutes: Record<string, never>;
+  postpone_30_minutes: Record<string, never>;
+  postpone_one_hour: Record<string, never>;
+  postpone_tomorrow: Record<string, never>;
+  postpone_next_group: { count: number };
+  postpone_24_hours: Record<string, never>;
+  postpone_custom: Record<string, never>;
+  postpone_date_time: Record<string, never>;
+  postpone_stale: Record<string, never>;
+  postpone_saved_times_locked: Record<string, never>;
+  postpone_all_plain: Record<string, never>;
+  postpone_submitting: Record<string, never>;
+  postpone_submitting_group: { count: number };
+  postpone_failed_time: Record<string, never>;
+  postpone_zone: { zone: string };
+  postpone_group_subject: { count: number };
+  postpone_pending: Record<string, never>;
+  postpone_failed_schedule: Record<string, never>;
+  postpone_partial: { scheduled: number; count: number };
+  postpone_selected: Record<string, never>;
 }

@@ -9,7 +9,8 @@
     "target": 48,
     "action": 56,
     "nativeSingle": 64,
-    "nativeMember": 56
+    "nativeMember": 56,
+    "postponeTile": 80
   },
   "typography": {
     "display": 32,

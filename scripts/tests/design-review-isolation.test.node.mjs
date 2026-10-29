@@ -402,16 +402,31 @@ test('ordinary reminder rows expose leading completion independently from openin
 test('native atmosphere rendering leaves observation, guarded actions and confirmed dismissal in the activity', () => {
   const activity = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt');
   const controls = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt');
+  const sessionGuard = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt');
   assert.match(activity, /AtmosphereTokens\.colors\(current\?\.atmosphere/);
-  assert.match(activity, /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value\)\) finish\(\)/);
-  assert.match(activity, /if \(!guard\.select\(id, pendingCommand != null, busy\.value, unconfirmed\.value\)\)/);
+  const refreshStart = activity.indexOf('private fun refresh()');
+  const refreshEnd = activity.indexOf('private fun act(', refreshStart);
+  assert.ok(refreshStart >= 0 && refreshEnd > refreshStart, 'Inspect the native refresh owner separately from action handlers.');
+  const refresh = activity.slice(refreshStart, refreshEnd);
+  assert.match(refresh, /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null;\s*select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
+    'Only confirmed terminal state clears the draft, then selects a queued session or finishes when none exists.');
+  assert.equal([...refresh.matchAll(/\bfinish\(\)/g)].length, 1, 'Refresh has no dismissal path outside the guarded terminal branch.');
+  assert.match(sessionGuard, /fun mayDismiss\([^)]*\)\s*=\s*ended\(state\) && !pending && !busy && !unconfirmed/,
+    'Terminal dismissal remains blocked by a pending, busy or unconfirmed command.');
+  assert.match(activity, /if \(!guard\.select\(id, pendingCommand != null, busy\.value, unconfirmed\.value, choosing = postpone\.value != null\)\)/,
+    'A chooser draft also owns its captured session while later intents wait.');
+  assert.match(sessionGuard, /sessionId\.isNotEmpty\(\) && \(pending \|\| busy \|\| unconfirmed \|\| choosing\)/);
+  assert.match(refresh, /draft != null && pendingCommand == null && !busy\.value && !unconfirmed\.value &&\s*!draft\.matches\([\s\S]*?postpone\.value = draft\.copy\(stale = true, picker = null\)\s*dismissPicker\(\)/,
+    'Changed captured members invalidate only an unsubmitted draft and dismiss its provisional picker.');
   assert.match(activity, /deferredIntent = Intent\(intent\)/, 'Later alarm intents are retained while the current action is unresolved.');
   assert.match(activity, /pendingCommand\?\.get\("operationId"\) == command\["operationId"\]/, 'Action responses acknowledge the frozen operation rather than a mutable snapshot.');
   assert.match(activity, /if \(definitive && deferredIntent != null\)/, 'Only a definitive action response selects the queued session.');
   assert.match(activity, /outState\.putParcelable\("deferredIntent", it\)/, 'The queued intent survives activity recreation.');
   const restorePosition = activity.indexOf('savedInstanceState?.getBundle("pendingAction")');
+  const draftRestorePosition = activity.indexOf('savedInstanceState?.getBundle("postponeDraft")');
   const initialRefreshPosition = activity.indexOf('select(initialIntent)');
   assert.ok(restorePosition >= 0 && initialRefreshPosition > restorePosition, 'Restore the frozen action before selecting or refreshing its session.');
+  assert.ok(draftRestorePosition >= 0 && initialRefreshPosition > draftRestorePosition, 'Restore an unsubmitted chooser capture before its first session refresh.');
   assert.match(activity, /"expectedGeneration" to record\?\.generation/);
   assert.match(activity, /AlarmControlsScreen\(/);
   assert.ok(!controls.includes('engine.apply'), 'Rendering delegates mutations to the native activity.');
