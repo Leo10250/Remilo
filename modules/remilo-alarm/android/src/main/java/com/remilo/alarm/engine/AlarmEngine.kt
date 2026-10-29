@@ -14,6 +14,7 @@ import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.core.CivilTime
 import com.remilo.alarm.core.Recurrence
 import com.remilo.alarm.core.DeliverySnapshot
+import com.remilo.alarm.core.StorageFailureDiagnostics
 import com.remilo.alarm.core.OverduePolicy
 import com.remilo.alarm.core.RoutinePolicy
 import com.remilo.alarm.data.*
@@ -200,7 +201,7 @@ class AlarmEngine internal constructor(private val context: Context,
     try {
       worker.execute {
         try { task() } catch (error: Exception) {
-          Log.e("Remilo", "Native operation failed: ${error.javaClass.simpleName}")
+          Log.e("Remilo", "Native operation failed: ${StorageFailureDiagnostics.summary(error)}")
         } finally { finished() }
       }
     } catch (_: RejectedExecutionException) { finished() /* detached native callback after close */ }
@@ -234,8 +235,14 @@ class AlarmEngine internal constructor(private val context: Context,
       try { resolve(block()) } catch (error: CalendarFailure) { reject(error.code) }
       catch (_: BackupLimitException) { reject("BACKUP_TOO_LARGE") }
       catch (_: IllegalArgumentException) { reject("INVALID_INPUT") }
-      catch (_: IllegalStateException) { reject("NOT_AVAILABLE") }
-      catch (_: Exception) { reject("STORAGE_ERROR") }
+      catch (error: IllegalStateException) {
+        Log.e("Remilo", "Native request failed: ${StorageFailureDiagnostics.summary(error)}")
+        reject("NOT_AVAILABLE")
+      }
+      catch (error: Exception) {
+        Log.e("Remilo", "Native request failed: ${StorageFailureDiagnostics.summary(error)}")
+        reject("STORAGE_ERROR")
+      }
     }
   }
 

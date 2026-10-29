@@ -1,5 +1,31 @@
 # Verification and release evidence
 
+## Storage compatibility and restoration — 28 October 2026
+
+Native request/background failures may log only a bounded allowlist summary:
+failure category, numeric Room migration versions and safe exception class.
+Arbitrary exception messages, SQL, paths, identity hashes, authored content and
+credentials stay out of diagnostics. Preserve the existing bridge error codes.
+Regression fixtures must verify that rejected newer schemas retain their stored
+version and marker data without registering or cancelling alarms.
+
+Compare schema versions and identities before changing feature baselines. An
+older implementation must not open newer data through a downgrade migration or
+destructive fallback; equal version numbers alone do not prove compatibility.
+The [observed phone failure](evidence/2026-10-28-agenda-storage-investigation.md)
+is an unsupported operational 9-to-8 transition. CE17 is a compatible-branch
+requirement, not an observed phone credential-database version.
+
+The owner-selected restoration uses the CE17/DP9 Routines baseline with the
+Robolectric CI fix and privacy-safe diagnostics, preserving existing app data,
+signing identity and Routines behavior. Run the relevant shared/native checks and
+identify the signed APK before in-place installation through the repository
+deploy command. Never repair this failure with uninstall, data clearing,
+replacement keys, automatic permission grants or a lower-schema fallback.
+Record actual build/hash, installation and optional launch outcomes separately,
+then distinguish native query recovery from observed Agenda/Routines data access.
+Restoring those views does not establish physical alarm or beta acceptance.
+
 ## Routine editor polish — owner correction, 19 October 2026
 
 Measure weekday labels in empty/mixed/populated states: equal vertical centers,
