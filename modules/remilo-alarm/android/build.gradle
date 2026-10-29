@@ -24,6 +24,22 @@ android {
 
 expoModule { canBePublished false }
 ksp { arg('room.schemaLocation', "$projectDir/schemas") }
+// Resolve test SDKs through Gradle before tests start, instead of Robolectric's
+// separate Maven downloader failing partway through a CI test class. These are
+// the API 34 runtime and API 35 resource SDKs used by pinned Robolectric 4.17.
+configurations {
+  robolectricSdk34 { canBeConsumed = false; canBeResolved = true }
+  robolectricSdk35 { canBeConsumed = false; canBeResolved = true }
+}
+def prepareRobolectricSdkJars = tasks.register('prepareRobolectricSdkJars', Sync) {
+  // Separate configurations retain both versions of the same Maven module.
+  from(configurations.robolectricSdk34, configurations.robolectricSdk35)
+  into(layout.buildDirectory.dir('robolectric-sdks'))
+}
+tasks.withType(Test).configureEach {
+  dependsOn(prepareRobolectricSdkJars)
+  systemProperty 'robolectric.dependency.dir', layout.buildDirectory.dir('robolectric-sdks').get().asFile.absolutePath
+}
 dependencies {
   implementation 'com.google.android.gms:play-services-auth:22.0.0'
   implementation 'androidx.room:room-runtime:2.8.5'
@@ -37,4 +53,6 @@ dependencies {
   testImplementation 'junit:junit:4.13.2'
   testImplementation 'androidx.work:work-testing:2.12.0'
   testImplementation 'org.robolectric:robolectric:4.17'
+  robolectricSdk34('org.robolectric:android-all-instrumented:14-robolectric-10818077-i7') { transitive = false }
+  robolectricSdk35('org.robolectric:android-all-instrumented:15-robolectric-13954326-i7') { transitive = false }
 }
