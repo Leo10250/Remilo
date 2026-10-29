@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "incline-treadmill-walking",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T05:37:26.459461+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/incline-treadmill-walking/prepared-01.json",
+    "sha256": "c526161991a3c19ad36b363dcf2747b608f576906ade3aaf125938b5e64d7257"
+  },
+  "candidateSha256": "e38368c46a474d8da58f2401f2ecf6cbef4ec22db7223b6705b53f986e440c3a",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01.png",
+    "sha256": "82a1838f528dd99dcb5bb8f8cc0ca3d7c11d475197d274d6582d4b5faa6944c3"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/01.png",
+      "sha256": "c37b2b5e1e2331244629be479f8ea02a773a1ae974637147affc2737292c6e20",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/02.png",
+      "sha256": "d7c20af0811a844853bfba4e732adf83a9df00ee1584198097be3f2ef7318e07",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/03.png",
+      "sha256": "d038aab9fc181c2d42a5985beaba7d4dbcf5bca4421695c8dab9a54ac2842f15",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/04.png",
+      "sha256": "1cd112188e70edcdd5670b42b3408c48f7931d73d10954efd48014ebfa509de8",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/05.png",
+      "sha256": "9a5632d76a693af3937628441fc445840f9a0c9db8b7a76ba5716f0278161495",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/06.png",
+      "sha256": "a37cee3cda18f0137d60fdf91d65fa3e7ff4d5ecb810198609327047d770e2b7",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/07.png",
+      "sha256": "9978d7e781dca87cac48d1caf9b3f1be177118e880638761838eaad6d4dba50b",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/08.png",
+      "sha256": "ad137e7b338402e4523007f2eff91e39ffcf41c2fb7d94c119f4307d75a6b9c3",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/09.png",
+      "sha256": "0de5110d9652c0f8d1d9d608c5376170efd354eb6c4c88dba12f41538366e1ec",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/10.png",
+      "sha256": "4fd2b3f4e06650eece663c9931f6d74567e0c5749a62981ee51cb0b337ca3f56",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/11.png",
+      "sha256": "553a483705904494edcb1addbe400fd33b09a9e3b41ee79410e3f1c664c5fdda",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/incline-treadmill-walking/candidate-01/review-01-panels/12.png",
+      "sha256": "3f7e84f9ec157eb645ff306d91fac5ae7332a036ffef536a2af3a489ec11d710",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "44cec6446992fbd5b7f29e1fad761b9c8a901531b35711bb3cf4d2c2f8dc294c"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

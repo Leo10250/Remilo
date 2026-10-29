@@ -4,15 +4,29 @@ import { type TimeDisplayPreferences, type CalendarConnection, type CalendarPubl
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
+  chooseExercisePhoto(request: string): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
+  getExerciseImage(id: string, lease: string | null): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
+  releaseExerciseImage(lease: string): Promise<boolean>;
+  prepareBackupExport(): Promise<{ uri: string; imageCount: number; bytes: number }>;
+  prepareBackupImport(uri: string): Promise<ImportPreview & { handle: string; imageCount: number }>;
+  applyPreparedImport(handle: string, copies: string[], operation: string): Promise<CommandResult>;
+  releasePreparedImport(handle: string): Promise<boolean>;
+  getWidgetSupport(): Promise<{ pinSupported: boolean; instanceCount: number }>;
+  openWidgetSetup(routineId: string | null): Promise<{ opened: boolean }>;
   getTimeDisplayPreferences(): Promise<TimeDisplayPreferences>;
   getCapabilities(): Promise<Capabilities>;
   queryReminders(filter: ReminderFilter, cursor: string | null): Promise<ReminderPage>;
   getOccurrence(id: string): Promise<Occurrence | null>;
   previewSchedule(draft: ReminderDraft & { recurrence?: RecurrenceDraft }): Promise<SchedulePreview>;
   querySeries(): Promise<Series[]>;
+  queryRoutines(): Promise<import('./RemiloAlarm.types').RoutinePlan[]>;
+  previewRoutine(input: import('./RemiloAlarm.types').RoutineDraft & { startsOn: string; routineId?: string }): Promise<{ nextAlertMs: number | null; today: string; effectiveDate: string }>;
+  getRoutineSession(id: string, date: string | null): Promise<import('./RemiloAlarm.types').RoutineSession | null>;
+  queryRoutineHistory(id: string, cursor: string | null): Promise<{ items: import('./RemiloAlarm.types').RoutineSession[]; total: number; nextCursor: string | null }>;
   queryRepeatFamilies(): Promise<RepeatFamily[]>;
   getTimeZones(atMs: number): Promise<TimeZoneOption[]>;
   convertTime(input: TimeConversionInput): Promise<TimeConversion>;
+  resolvePostponeTime(input: import('./RemiloAlarm.types').PostponeTimeInput): Promise<TimeConversion>;
   getSeries(id: string): Promise<Series | null>;
   getSeriesDraft(id: string, nominal: string): Promise<{ template: ResolvedReminderDraft; remainingCount: number | null }>;
   applyCommand(command: Command): Promise<CommandResult>;
@@ -55,7 +69,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   previewImport(json: string): Promise<ImportPreview>;
   importBackup(json: string, copyIds: string[], operationId: string): Promise<CommandResult>;
   reconcile(): Promise<void>;
-  openSettings(kind: 'exact' | 'notifications' | 'fullScreen'): Promise<void>;
+  openSettings(kind: 'exact' | 'notifications' | 'fullScreen' | 'routineChannel'): Promise<void>;
 }
 
 export default requireOptionalNativeModule<RemiloAlarmModule>('RemiloAlarm');

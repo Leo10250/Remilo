@@ -15,4 +15,8 @@ object DeliverySnapshot {
   fun maps(members: List<Member>): List<Map<String, Any>> = members.map {
     mapOf("occurrenceId" to it.occurrenceId, "expectedGeneration" to it.expectedGeneration)
   }
+  /** Separate domain preserves every legacy Done/Snooze fingerprint. */
+  fun postponeKey(members: List<Member>, targetMs: Long): String =
+    MessageDigest.getInstance("SHA-256").digest("postponeall:${key(members)}:target:$targetMs".toByteArray(Charsets.UTF_8))
+      .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 }

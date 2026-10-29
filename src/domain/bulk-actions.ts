@@ -1,8 +1,8 @@
 import { t, ownedMessage } from '../localization';
-import type { CommandResult, ContentCommand, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { Command, CommandResult, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 export type BulkKind = 'Reopen' | 'Delete' | 'UndoDelete' | 'Purge';
-export type BulkEntry = Readonly<{ id: string; title: string; revision: number; operationId: string }>;
+export type BulkEntry = Readonly<{ id: string; title: string; revision: number; operationId: string; routineFamilyId?: string }>;
 export type BulkJob = Readonly<{ id: string; kind: BulkKind; entries: readonly BulkEntry[] }>;
 export type BulkOutcome = Readonly<{ entry: BulkEntry; result: CommandResult }>;
 export type BulkProgress = { total: number; confirmed: number; rejected: number; pending: number; deliveryProblems: number };
@@ -21,7 +21,7 @@ export function captureBulk(kind: BulkKind, items: readonly Occurrence[], id: ()
   };
   const jobId = nextId();
   return Object.freeze({ id: jobId, kind, entries: Object.freeze(unique.map(item => Object.freeze({
-    id: item.id, title: item.title, revision: item.revision, operationId: nextId(),
+    id: item.id, title: item.title, revision: item.revision, operationId: nextId(), ...(item.routineFamily ? { routineFamilyId: item.routineFamily.id } : {}),
   }))) });
 }
 
@@ -30,7 +30,7 @@ export class BulkOperation {
   private current?: BulkJob;
   private acknowledged: BulkOutcome[] = [];
   private flight?: Promise<void>;
-  constructor(private perform: (command: ContentCommand) => Promise<CommandResult>, private changed: () => void = () => {}) {}
+  constructor(private perform: (command: Command) => Promise<CommandResult>, private changed: () => void = () => {}) {}
   get job() { return this.current; }
   get outcomes(): readonly BulkOutcome[] { return this.acknowledged.slice(); }
   get progress(): BulkProgress {
@@ -52,7 +52,10 @@ export class BulkOperation {
     const job = this.current!;
     for (let index = this.acknowledged.length; index < job.entries.length; index++) {
       const entry = job.entries[index];
-      const result = await this.perform({ kind: job.kind, occurrenceId: entry.id, expectedRevision: entry.revision, operationId: entry.operationId });
+      const result = await this.perform(entry.routineFamilyId && job.kind !== 'Reopen' ? {
+        kind: job.kind === 'UndoDelete' ? 'RestoreRoutine' : job.kind === 'Purge' ? 'PurgeRoutine' : 'TrashRoutine',
+        routineId: entry.routineFamilyId, expectedRevision: entry.revision, operationId: entry.operationId,
+      } : { kind: job.kind, occurrenceId: entry.id, expectedRevision: entry.revision, operationId: entry.operationId });
       // Promise rejection pauses at this exact child. Only a native Rejected
       // receipt definitively rules out mutation; acknowledged prefixes stay put.
       this.acknowledged.push(Object.freeze({ entry, result }));

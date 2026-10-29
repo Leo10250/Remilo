@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "dumbbell-rdl",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T07:05:06.343086+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/dumbbell-rdl/prepared-01.json",
+    "sha256": "693f2aa2293f407977a243df5be499ba5bdc34d20e97c9b4626bbd1d5fc94ffc"
+  },
+  "candidateSha256": "8b56e8f4d7403d1c19d1bd69bdca04ae971eb4b6d287ce84ebfead87c1ff6c1e",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01.png",
+    "sha256": "dff6d3741b95df84de10ce1a0dc21a403ba489477b1b4424d4fec26d1d84293b"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/01.png",
+      "sha256": "22c89ad7a7f7519eb705cda0b8d79c2f50409ce584f436ace9c0cfa06045c3bf",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/02.png",
+      "sha256": "e8323dd0262d6b8e6b491e30469308ac8370dacdfe574eb0d285f2a2a59a60a8",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/03.png",
+      "sha256": "9fd4f7e2267857eb3b576799b1d409141efd6c1eaf6f27ce09c9b9463808acea",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/04.png",
+      "sha256": "7b48ae1b7913ed1575148607ae8266f2d7097753e4303a1b20509b16f5578b9b",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/05.png",
+      "sha256": "a65b51c52b90bd89651dfb0db8662629317560b7fd9951092f5ff10b03464065",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/06.png",
+      "sha256": "2c7461d8ee790cb88c21b0718f0b8ad8e75b931165310967a0adf0dc4bf02ee3",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/07.png",
+      "sha256": "048b3f6475dfd8a8b75dfb9084af43016343847ffbd3932106b991471361d4c9",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/08.png",
+      "sha256": "6e555fd089377597452a49d8efc37a3fcc41c5150b9fd4f2a93097c5f30e2544",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/09.png",
+      "sha256": "fe1a21a6bf27f79a5da7af548b193f2e047ce9426e6971debe0201f97b24ea7a",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/10.png",
+      "sha256": "5b71d40d5b81e759f8ebad39179890b5939dc08714ecaaadb74eb7a5f8234b58",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/11.png",
+      "sha256": "51572151d324e4dd04d2f22a78a08127507eb8ea99e6291376bd0e6d69c2fcc2",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-rdl/candidate-01/review-01-panels/12.png",
+      "sha256": "3eed9c5a73eddf2762bf7349d299e91da0ef2c9ebdd92a0dc08b35e975439fe1",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "1ea62335bbf77bb1ed7e6c6542aff5fe2bc8e349942e6c191a01c0c029764a42"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

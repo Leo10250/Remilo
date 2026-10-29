@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "assetId": "machine-chest-press",
+  "candidate": 1,
+  "revision": 2,
+  "recordedAtUtc": "2026-10-16T05:56:48.405890+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/machine-chest-press/prepared-01.json",
+    "sha256": "498b535aa90baf6e4934bff5df90cc465497a12fd32b342f20574aa49c1b0d33"
+  },
+  "candidateSha256": "414e41ba15b48441bb7c9941555e210146b678b513f67c78b9616b0748ac7b2e",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "reviewer": "Delegated assistant after viewing original, unchanged previously inspected approved style input, decoded export, light/dark/checkerboard panels and all eight current container colors at both 256x144 and 320x180; root assistant separately inspected original source",
+    "recordedAtUtc": "2026-10-16T05:56:45.009140+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Viewed original and decoded runtime: one adult seated on a selectorized chest-press station, holding two separate chest-height handles. Full figure and machine are contained."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Compared with the actual approved front-plank master: blue-gray top, muted terracotta leggings, hair bun, natural proportions, restrained outlines and softly shaded educational finish remain consistent. Gray shoes and equipment have no visible branding."
+      },
+      {
+        "name": "pose-and-contact-readability",
+        "status": "pass",
+        "observation": "Hips are supported by the seat, back/head meet the upright backrest, shoes read as flat below the knees, and each hand wraps a separate chest-height grip. No obvious duplicated limb, missing hand, disconnected joint or torso twist observed. The far arm appears straighter than the near arm in this three-quarter view; this review does not assert matching or exact elbow angles."
+      },
+      {
+        "name": "equipment-continuity",
+        "status": "pass",
+        "observation": "Each grip visibly joins a lever; paired pivoting arms, upright backrest, seat, frame and selector stack read as continuous equipment. Foreground lever leaves face and main torso visible. No obvious floating handle or disconnected frame component observed; mechanical correctness is not certified."
+      },
+      {
+        "name": "alpha-and-decoded-edges",
+        "status": "pass",
+        "observation": "Viewed source/export light/dark composites, decoded checkerboard and both sizes on all eight current container colors. Surroundings and frame openings are transparent, with no visible rectangular backdrop, colored fringe or distracting matte halo."
+      },
+      {
+        "name": "usage-framing",
+        "status": "pass",
+        "observation": "Viewed actual source/export 256x144 and 320x180 helper panels plus eight current-container composites at each size. Seated chest-press identity, separate grips, complete shoes and machine remain recognizable. Fine grip and selector details are clearer in the larger view. No clipped head, handle, foot or equipment edge observed."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No readable text, weight numbers, labels, arrows, gym background, app controls, phone frame, logo or watermark observed."
+      }
+    ],
+    "limitations": [
+      "Far arm appears straighter than near arm in the three-quarter pose; no precise matching bilateral elbow angle is asserted.",
+      "Visual pose/contact/equipment observations do not clinically validate exercise technique or mechanically certify the machine.",
+      "Untagged source pixels are explicitly interpreted as sRGB under the profile, without claiming measured embedded sRGB or a color conversion.",
+      "Usage boards are deterministic illustration composites using current presentation.json container colors, not actual RN/native component renders, text/control contrast measurements or signed-phone acceptance.",
+      "Human artwork and activation approval remain pending; no production promotion performed."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "9bad5c4e668293ecb8dea0b4f752c3b5598c796c04bc2bddcc981359b7f86ea1"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/all-atmospheres-256x144-v1.png",
+        "sha256": "28a52aa6a1955f7398fede551ab2eb65b141992cd5f38dc5e9a8145294a3f4ea"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/source-light-v1.png",
+        "sha256": "029783f66a1303f2cb85497f910cb31eff8e5ca3086bd9b087dd4f6d1a5b7b65"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/source-dark-v1.png",
+        "sha256": "7d441cae3d3c8f0de3af8392c411ac16409e6969cae5b7c961703cbce36dd1c0"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/export-light-v1.png",
+        "sha256": "134c1189c6af549221f66f866c3766549e3c39f8c510770464eb7607e201ae38"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/export-dark-v1.png",
+        "sha256": "651c997c0cadcdc8e3f573e342cca76acb591c28f54d22f628249e2ead0bed9a"
+      }
+    ]
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02.png",
+    "sha256": "fecda5c80d08740fdcc16ef18e5e00a3ddc0ba511be425463bfabba8406f373f"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/01.png",
+      "sha256": "a64ddcd8eb4a4b1f7bac413f6aef5a482d6a0d30e9e25ca31dee6e8a8bd931c8",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/02.png",
+      "sha256": "5d48867a8d21733a8e919b89d3bed5006c1babf57fa16bc44d9cb2521ce9a5a3",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/03.png",
+      "sha256": "6c3b7c3f5e7ba271b5e5842fd5a3e54af42c77fef77a3619428f84bd29d8f486",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/04.png",
+      "sha256": "35ee91b850a859ff63f3bdb9ba634da3e91a659e2f81ab15ca7c134ddf32b0be",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/05.png",
+      "sha256": "59fff3b5cd7b27a68f1983b73bf290a2b55e7a10956db9539eb8f5fa06041ac6",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/06.png",
+      "sha256": "6ea82b03615bf8c4168cd0029f138d9d44f0eba9b1dfb779b32199afec0388d8",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/07.png",
+      "sha256": "3ca6c307199dfe7aadb8144644a6520293113da1d1911078d28a59ed507a36c0",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/08.png",
+      "sha256": "7c68a00cc7d6fab2fa4c9037fe62d620b6960c52b000a6349a85c015d19fa3f5",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/09.png",
+      "sha256": "3426215afc699cfe104858fed387d150ae8b54cf584a63c276f6052be9cc3608",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/10.png",
+      "sha256": "9ee897d498d6538f66d9e8cddbd8d2bb29e01bf44f19fd0b0906351f29b89a2a",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/11.png",
+      "sha256": "5649a9e79e98839f1855f76e2d5a948eaf144a0322ea720978c202c3e11e8151",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/review-02-panels/12.png",
+      "sha256": "67276a0c7b300f151130d52e24772920a9cc4edf2f63258e33613576f064f848",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "9bad5c4e668293ecb8dea0b4f752c3b5598c796c04bc2bddcc981359b7f86ea1"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/all-atmospheres-256x144-v1.png",
+      "sha256": "28a52aa6a1955f7398fede551ab2eb65b141992cd5f38dc5e9a8145294a3f4ea"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/source-light-v1.png",
+      "sha256": "029783f66a1303f2cb85497f910cb31eff8e5ca3086bd9b087dd4f6d1a5b7b65"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/source-dark-v1.png",
+      "sha256": "7d441cae3d3c8f0de3af8392c411ac16409e6969cae5b7c961703cbce36dd1c0"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/export-light-v1.png",
+      "sha256": "134c1189c6af549221f66f866c3766549e3c39f8c510770464eb7607e201ae38"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/machine-chest-press/candidate-01/export-dark-v1.png",
+      "sha256": "651c997c0cadcdc8e3f573e342cca76acb591c28f54d22f628249e2ead0bed9a"
+    }
+  ],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "43b410128cc63ebd45e8e6ba9e6cbd50614c781a871216b7ae82818b9b14a8ac"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

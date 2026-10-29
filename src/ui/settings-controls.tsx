@@ -38,7 +38,7 @@ export function ClockPreferenceRow({ minutes, onChange, disabled = false }: { mi
       });
     } catch { fail(); }
   };
-  return <View><SettingRow icon="schedule" label={clockPreferenceLabel(minutes)} disabled={disabled || picking} onPress={pick} />
+  return <View><SettingRow intent="picker" icon="schedule" label={clockPreferenceLabel(minutes)} disabled={disabled || picking} onPress={pick} />
     {!!error && <ActionFeedback message={error} tone="danger" />}</View>;
 }
 
@@ -72,7 +72,7 @@ export function AtmospherePicker({ value, onChange }: { value: AtmosphereSelecti
   'use no memo';
   const t = useTranslation();
   const [open, setOpen] = useState(false), { scene, brightness } = useAtmosphere();
-  return <><SettingRow icon="palette" label={t('m_402b3d52f2b5')} value={atmosphereNames[value]}
+  return <><SettingRow intent="picker" icon="palette" label={t('m_402b3d52f2b5')} value={atmosphereNames[value]}
     description={value === 'automatic' ? t('m_6819898282aa', { arg0: String(atmosphereNames[scene]) }) : undefined} onPress={() => setOpen(true)}>
     {value !== 'automatic' && <AtmosphereSwatch scene={value} brightness={brightness} />}
   </SettingRow>

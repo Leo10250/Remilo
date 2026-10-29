@@ -99,6 +99,18 @@ semantic warning icon/text. Keep 16 dp insets, connected corners/seams, clipped
 press/focus feedback, 48 dp secondary and 56 dp primary/review targets. Apple
 hierarchy/feedback principles do not authorize iOS-specific control styling.
 
+## Publication recovery feedback — 16 October 2026
+
+Check publication result shows a busy indicator until the bounded native check
+returns, followed by its confirmed, cancelled or still-unconfirmed result even
+when the saved state did not change. Read-only checks never restore reminders or
+reactivate a retired association; do not claim a removed local alert is still
+kept, or that a separately restored reminder is inactive. Calendar preference
+reasons use localized explanations, never internal outcome codes. The Agenda
+banner uses one localized plural message for its Review count so words cannot
+run together. Retired automatic publications do not remain actionable review
+items; their sent identities stay available for read-only inspection.
+
 The research basis is [Structured's continuous setup](https://help.structured.app/en/articles/329730),
 [Todoist's distinct sync directions](https://www.todoist.com/help/todoist/integrations/use-the-calendar-integration-rCqwLCt3G),
 [Google communication guidance](https://codelabs.developers.google.com/codelabs/material-communication-guidance),

@@ -1,0 +1,65 @@
+{
+  "reviewer": "Assistant after viewing original, unchanged previously inspected approved style input, decoded export, light/dark/checkerboard panels, both usage sizes and all eight current container colors; independent gait/readability observation by second assistant reviewer",
+  "recordedAtUtc": "2026-10-16T05:32:48.816203+00:00",
+  "checks": [
+    {
+      "name": "identity",
+      "status": "pass",
+      "observation": "Viewed original and decoded runtime: one adult in a running/jogging stride, side view facing left, with two complete arms/hands and legs/shoes. No mat, ground plane, extra person or equipment observed."
+    },
+    {
+      "name": "style-consistency",
+      "status": "pass",
+      "observation": "Compared with the actual approved front-plank master: blue-gray top, muted terracotta leggings, hair bun, restrained contours and soft educational shading remain consistent. Added neutral gray/white running shoes have no visible brand or text."
+    },
+    {
+      "name": "gait-readability",
+      "status": "pass",
+      "observation": "The slightly forward-leaning upright trunk, bent counter-swinging arms, forward knee and trailing leg form a recognizable running stride. The near arm swings back while the near leg comes forward. Both feet are airborne, which reads as a static running flight phase. No obvious disconnected joint, duplicated anatomy or missing limb observed; independent second reviewer agreed. These are visual observations, not clinical gait validation."
+    },
+    {
+      "name": "alpha-and-decoded-edges",
+      "status": "pass",
+      "observation": "Viewed source/export light and dark composites, decoded checkerboard and all eight current container colors. Surrounding area is transparent with no visible rectangular backdrop, colored fringe or opaque matte halo. Shoe edges retain their intended light sole rather than an observed background remnant."
+    },
+    {
+      "name": "usage-framing",
+      "status": "pass",
+      "observation": "Viewed actual source/export 256x144 and 320x180 panels and all eight current 320x180 container composites. Upright subject is naturally narrow within the wide contain frame but the stride and complete hands/shoes remain readable. Bun has roughly 10px top margin in the 540px export (about 3dp at 180dp); this is tighter than side space but not clipped."
+    },
+    {
+      "name": "interface-remnants",
+      "status": "pass",
+      "observation": "No visible text, numbers, labels, arrows, motion streaks, app controls, phone frame, scenery, logo or watermark observed."
+    }
+  ],
+  "limitations": [
+    "The bun has a tight but unclipped top margin of about 3dp in the 320x180 frame.",
+    "A single static running illustration does not prescribe speed, cadence, interval intensity or clinically validate gait.",
+    "Untagged source pixels are explicitly interpreted as sRGB under the profile, without claiming measured embedded sRGB or a color conversion.",
+    "Usage boards are deterministic illustration composites using current presentation.json container colors, not actual RN/native component renders, text/control contrast measurements or signed-phone acceptance.",
+    "Human artwork and activation approval remain pending; no production promotion performed."
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "e147757d7096da8e8471c5adec02086a16d48b361abcf165d9c64e13b90654dc"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/source-light-v1.png",
+      "sha256": "a7e8f6851025ca4787885ea461f6a66ba54e900a6835c14b2e7cf077dec5ed61"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/source-dark-v1.png",
+      "sha256": "412fb6a0cf9fecdaa0b3444c3313ec3780e09d4d1fea3ff8b1a8034919262cde"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/export-light-v1.png",
+      "sha256": "611055ca820cd6d6754421130471273436712c90d9bc0f5f1c4676e8b93d6d66"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/running/candidate-01/export-dark-v1.png",
+      "sha256": "c3f500ad949fdd96ff95af8181e0dd9b108ef4f22336b4088c41b13825896a7d"
+    }
+  ]
+}

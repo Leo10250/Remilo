@@ -5,8 +5,150 @@ import com.remilo.alarm.R
 
 object MessageCatalog {
   data class Entry(val resource: Int, val plural: Boolean, val args: List<String>, val english: String, val calendarStatus: Boolean)
-  val entries: Map<String, Entry> by lazy { buildMap { putAll(chunk0()); putAll(chunk1()); putAll(chunk2()); putAll(chunk3()); putAll(chunk4()); putAll(chunk5()); putAll(chunk6()); putAll(chunk7()); putAll(chunk8()); putAll(chunk9()); putAll(chunk10()); putAll(chunk11()); putAll(chunk12()); putAll(chunk13()); putAll(chunk14()); putAll(chunk15()); putAll(chunk16()); putAll(chunk17()); putAll(chunk18()); putAll(chunk19()); putAll(chunk20()); putAll(chunk21()); putAll(chunk22()); } }
+  val entries: Map<String, Entry> by lazy { buildMap { putAll(chunk0()); putAll(chunk1()); putAll(chunk2()); putAll(chunk3()); putAll(chunk4()); putAll(chunk5()); putAll(chunk6()); putAll(chunk7()); putAll(chunk8()); putAll(chunk9()); putAll(chunk10()); putAll(chunk11()); putAll(chunk12()); putAll(chunk13()); putAll(chunk14()); putAll(chunk15()); putAll(chunk16()); putAll(chunk17()); putAll(chunk18()); putAll(chunk19()); putAll(chunk20()); putAll(chunk21()); putAll(chunk22()); putAll(chunk23()); putAll(chunk24()); putAll(chunk25()); putAll(chunk26()); putAll(chunk27()); putAll(chunk28()); putAll(chunk29()); } }
   private fun chunk0(): Map<String, Entry> = mapOf(
+    "exercise_sets" to Entry(R.string.l10n_exercise_sets, false, listOf(), "Sets", false),
+    "exercise_reps" to Entry(R.string.l10n_exercise_reps, false, listOf(), "Reps per set", false),
+    "exercise_time" to Entry(R.string.l10n_exercise_time, false, listOf(), "Time per set", false),
+    "exercise_unit" to Entry(R.string.l10n_exercise_unit, false, listOf(), "Time unit", false),
+    "exercise_unit_label" to Entry(R.string.l10n_exercise_unit_label, false, listOf(), "Unit", false),
+    "routine_alert_scope" to Entry(R.string.l10n_routine_alert_scope, false, listOf(), "One alert for the routine on each scheduled day.", false),
+    "routine_no_alert_scope" to Entry(R.string.l10n_routine_no_alert_scope, false, listOf(), "The routine stays in your weekly plan without sending an alert.", false),
+    "exercise_seconds" to Entry(R.string.l10n_exercise_seconds, false, listOf(), "Seconds", false),
+    "exercise_minutes" to Entry(R.string.l10n_exercise_minutes, false, listOf(), "Minutes", false),
+    "exercise_hours" to Entry(R.string.l10n_exercise_hours, false, listOf(), "Hours", false),
+    "exercise_more_targets" to Entry(R.string.l10n_exercise_more_targets, false, listOf(), "More target options", false),
+    "exercise_optional_targets" to Entry(R.string.l10n_exercise_optional_targets, false, listOf(), "Targets are optional. Leave unused fields blank.", false),
+    "exercise_rep_range" to Entry(R.string.l10n_exercise_rep_range, false, listOf(), "Rep range", false),
+    "exercise_reps_max" to Entry(R.string.l10n_exercise_reps_max, false, listOf(), "Maximum reps per set", false),
+    "exercise_each_side" to Entry(R.string.l10n_exercise_each_side, false, listOf(), "Each side", false),
+    "exercise_weight" to Entry(R.string.l10n_exercise_weight, false, listOf(), "Weight (optional)", false),
+    "exercise_weight_unit" to Entry(R.string.l10n_exercise_weight_unit, false, listOf(), "Weight unit", false),
+    "exercise_additional" to Entry(R.string.l10n_exercise_additional, false, listOf(), "Additional target (optional)", false),
+    "exercise_additional_example" to Entry(R.string.l10n_exercise_additional_example, false, listOf(), "Distance, incline or intervals", false),
+    "exercise_custom" to Entry(R.string.l10n_exercise_custom, false, listOf(), "Custom target", false),
+    "exercise_use_numeric" to Entry(R.string.l10n_exercise_use_numeric, false, listOf(), "Use numeric fields", false),
+    "exercise_use_custom" to Entry(R.string.l10n_exercise_use_custom, false, listOf(), "Use custom target instead", false),
+    "exercise_replace_target" to Entry(R.string.l10n_exercise_replace_target, false, listOf(), "Replace this target?", false),
+    "exercise_replace_target_hint" to Entry(R.string.l10n_exercise_replace_target_hint, false, listOf(), "The previous target stays in this draft until you finish editing. Nothing is saved yet.", false),
+    "exercise_replace" to Entry(R.string.l10n_exercise_replace, false, listOf(), "Replace target", false),
+    "exercise_number_error" to Entry(R.string.l10n_exercise_number_error, false, listOf(), "Enter a positive number within the supported range.", false),
+    "exercise_integer_error" to Entry(R.string.l10n_exercise_integer_error, false, listOf(), "Enter a positive whole number within the supported range.", false),
+    "exercise_range_error" to Entry(R.string.l10n_exercise_range_error, false, listOf(), "Enter minimum and maximum reps. The maximum must be at least the minimum.", false),
+    "exercise_side_error" to Entry(R.string.l10n_exercise_side_error, false, listOf(), "Add reps or time before choosing Each side.", false),
+    "exercise_length_error" to Entry(R.string.l10n_exercise_length_error, false, listOf(), "Use no more than 1,000 characters.", false),
+    "exercise_no_target" to Entry(R.string.l10n_exercise_no_target, false, listOf(), "No target set", false),
+    "exercise_description" to Entry(R.string.l10n_exercise_description, false, listOf(), "Description (optional)", false),
+    "exercise_description_example" to Entry(R.string.l10n_exercise_description_example, false, listOf(), "Setup, technique or anything to remember", false),
+    "exercise_image" to Entry(R.string.l10n_exercise_image, false, listOf(), "Image", false),
+    "exercise_image_hint" to Entry(R.string.l10n_exercise_image_hint, false, listOf(), "Add photo or illustration · Optional", false),
+    "exercise_count_sets" to Entry(R.plurals.l10n_exercise_count_sets, true, listOf("count"), "{count} sets", false),
+    "exercise_count_reps" to Entry(R.plurals.l10n_exercise_count_reps, true, listOf("count"), "{count} reps", false),
+    "exercise_range_reps" to Entry(R.string.l10n_exercise_range_reps, false, listOf("min", "max"), "{min}–{max} reps", false),
+    "exercise_seconds_short" to Entry(R.string.l10n_exercise_seconds_short, false, listOf("count"), "{count} sec", false),
+    "exercise_minutes_short" to Entry(R.string.l10n_exercise_minutes_short, false, listOf("count"), "{count} min", false),
+    "exercise_hours_short" to Entry(R.string.l10n_exercise_hours_short, false, listOf("count"), "{count} hr", false),
+    "exercise_per_set" to Entry(R.string.l10n_exercise_per_set, false, listOf("value"), "{value} per set", false),
+    "exercise_each_side_summary" to Entry(R.string.l10n_exercise_each_side_summary, false, listOf("value"), "{value} each side", false),
+    "routine_purpose" to Entry(R.string.l10n_routine_purpose, false, listOf(), "Purpose", false),
+    "routine_more_settings" to Entry(R.string.l10n_routine_more_settings, false, listOf(), "More settings", false),
+    "routine_save_full" to Entry(R.string.l10n_routine_save_full, false, listOf(), "Save routine", false),
+    "routine_step_name_builder" to Entry(R.string.l10n_routine_step_name_builder, false, listOf(), "Step name", false),
+    "routine_exercise_name_builder" to Entry(R.string.l10n_routine_exercise_name_builder, false, listOf(), "Exercise name", false),
+    "routine_step_add_builder" to Entry(R.string.l10n_routine_step_add_builder, false, listOf(), "Add step", false),
+    "routine_exercise_add_builder" to Entry(R.string.l10n_routine_exercise_add_builder, false, listOf(), "Add exercise", false),
+    "routine_step_edit_builder" to Entry(R.string.l10n_routine_step_edit_builder, false, listOf(), "Edit step", false),
+    "routine_exercise_edit_builder" to Entry(R.string.l10n_routine_exercise_edit_builder, false, listOf(), "Edit exercise", false),
+    "routine_day_context_builder" to Entry(R.string.l10n_routine_day_context_builder, false, listOf("day"), "{day} · Weekly plan", false),
+    "routine_day_tab_label" to Entry(R.string.l10n_routine_day_tab_label, false, listOf("day", "status"), "{day} · {status}", false),
+    "routine_short_mon" to Entry(R.string.l10n_routine_short_mon, false, listOf(), "Mon", false),
+    "routine_short_tue" to Entry(R.string.l10n_routine_short_tue, false, listOf(), "Tue", false),
+    "routine_short_wed" to Entry(R.string.l10n_routine_short_wed, false, listOf(), "Wed", false),
+    "routine_short_thu" to Entry(R.string.l10n_routine_short_thu, false, listOf(), "Thu", false),
+    "routine_short_fri" to Entry(R.string.l10n_routine_short_fri, false, listOf(), "Fri", false),
+    "routine_short_sat" to Entry(R.string.l10n_routine_short_sat, false, listOf(), "Sat", false),
+    "routine_short_sun" to Entry(R.string.l10n_routine_short_sun, false, listOf(), "Sun", false),
+    "routine_copy_to" to Entry(R.string.l10n_routine_copy_to, false, listOf(), "Copy to…", false),
+    "routine_copy_continue" to Entry(R.string.l10n_routine_copy_continue, false, listOf(), "Continue", false),
+    "routine_copy_to_title" to Entry(R.string.l10n_routine_copy_to_title, false, listOf("day"), "Copy {day} to…", false),
+    "routine_copy_from_day" to Entry(R.string.l10n_routine_copy_from_day, false, listOf(), "Copy from another day", false),
+    "routine_will_replace" to Entry(R.string.l10n_routine_will_replace, false, listOf(), "Will be replaced", false),
+    "routine_replace_steps_title" to Entry(R.string.l10n_routine_replace_steps_title, false, listOf(), "Replace existing steps?", false),
+    "routine_replace_steps" to Entry(R.string.l10n_routine_replace_steps, false, listOf(), "Replace steps", false),
+    "routine_replace_with" to Entry(R.string.l10n_routine_replace_with, false, listOf(), "Replace with", false),
+    "routine_copy_independent_hint" to Entry(R.string.l10n_routine_copy_independent_hint, false, listOf(), "Copies can be edited independently. Nothing is saved until Save routine.", false),
+    "routine_copied_days" to Entry(R.string.l10n_routine_copied_days, false, listOf("days"), "Copied to {days}. Edit each day separately.", false),
+    "routine_removed_day" to Entry(R.string.l10n_routine_removed_day, false, listOf("name", "day"), "Removed {name} from {day}", false),
+    "routine_independent_notice" to Entry(R.string.l10n_routine_independent_notice, false, listOf(), "Saving will make each day independently editable. Existing steps and progress are preserved.", false),
+    "routine_independent_days" to Entry(R.string.l10n_routine_independent_days, false, listOf(), "Independent weekdays", false),
+    "routine_from_today" to Entry(R.string.l10n_routine_from_today, false, listOf(), "From today", false),
+    "routine_timing_hint" to Entry(R.string.l10n_routine_timing_hint, false, listOf(), "Repeats on weekdays that have steps.", false),
+    "create_title" to Entry(R.string.l10n_create_title, false, listOf(), "Create", false),
+    "create_reminder" to Entry(R.string.l10n_create_reminder, false, listOf(), "New reminder", false),
+    "create_reminder_help" to Entry(R.string.l10n_create_reminder_help, false, listOf(), "Something to do once or repeatedly.", false),
+    "create_routine_help" to Entry(R.string.l10n_create_routine_help, false, listOf(), "A sequence of steps with fresh progress on scheduled days.", false)
+  )
+  private fun chunk1(): Map<String, Entry> = mapOf(
+    "routine_generic_hint" to Entry(R.string.l10n_routine_generic_hint, false, listOf(), "Complete the steps on each scheduled day. Progress starts fresh the next day.", false),
+    "routine_preset" to Entry(R.string.l10n_routine_preset, false, listOf(), "Preset", false),
+    "routine_general" to Entry(R.string.l10n_routine_general, false, listOf(), "General", false),
+    "routine_exercise_preset" to Entry(R.string.l10n_routine_exercise_preset, false, listOf(), "Exercise", false),
+    "routine_general_help" to Entry(R.string.l10n_routine_general_help, false, listOf(), "Everyday steps, instructions and optional images.", false),
+    "routine_exercise_preset_help" to Entry(R.string.l10n_routine_exercise_preset_help, false, listOf(), "Exercise names, sets/reps/time and exercise illustrations. No sample exercises are added.", false),
+    "routine_steps" to Entry(R.string.l10n_routine_steps, false, listOf(), "Steps", false),
+    "routine_add_step" to Entry(R.string.l10n_routine_add_step, false, listOf(), "Add step", false),
+    "routine_first_step" to Entry(R.string.l10n_routine_first_step, false, listOf(), "Add the first step to your routine.", false),
+    "routine_step_name" to Entry(R.string.l10n_routine_step_name, false, listOf(), "Step name", false),
+    "routine_step_example" to Entry(R.string.l10n_routine_step_example, false, listOf(), "Read", false),
+    "routine_step_amount" to Entry(R.string.l10n_routine_step_amount, false, listOf(), "Amount or duration", false),
+    "routine_step_amount_example" to Entry(R.string.l10n_routine_step_amount_example, false, listOf(), "10 minutes or 1 chapter", false),
+    "routine_step_amount_help" to Entry(R.string.l10n_routine_step_amount_help, false, listOf(), "Add an amount, time or goal when useful.", false),
+    "routine_step_instructions" to Entry(R.string.l10n_routine_step_instructions, false, listOf(), "Instructions", false),
+    "routine_step_instructions_example" to Entry(R.string.l10n_routine_step_instructions_example, false, listOf(), "Read one chapter, then write three notes.", false),
+    "routine_step_instructions_help" to Entry(R.string.l10n_routine_step_instructions_help, false, listOf(), "Add setup tips or reminders for this step.", false),
+    "routine_step_image" to Entry(R.string.l10n_routine_step_image, false, listOf(), "Step image", false),
+    "routine_image_generic_help" to Entry(R.string.l10n_routine_image_generic_help, false, listOf(), "Add your own photo or choose an illustration.", false),
+    "routine_exercise_library" to Entry(R.string.l10n_routine_exercise_library, false, listOf(), "Exercise illustrations", false),
+    "routine_step_editor" to Entry(R.string.l10n_routine_step_editor, false, listOf(), "Edit step", false),
+    "routine_schedule" to Entry(R.string.l10n_routine_schedule, false, listOf(), "Date and time", false),
+    "routine_weekly_plan" to Entry(R.string.l10n_routine_weekly_plan, false, listOf(), "Weekly plan", false),
+    "routine_days" to Entry(R.string.l10n_routine_days, false, listOf(), "Days", false),
+    "routine_choose_days" to Entry(R.string.l10n_routine_choose_days, false, listOf(), "Choose days", false),
+    "routine_every_day" to Entry(R.string.l10n_routine_every_day, false, listOf(), "Every day", false),
+    "routine_different_days" to Entry(R.string.l10n_routine_different_days, false, listOf(), "Different steps by day", false),
+    "routine_shared_hint" to Entry(R.string.l10n_routine_shared_hint, false, listOf(), "The same steps are used on every selected day.", false),
+    "routine_use_shared" to Entry(R.string.l10n_routine_use_shared, false, listOf(), "Use the same steps", false),
+    "routine_use_these_steps" to Entry(R.string.l10n_routine_use_these_steps, false, listOf(), "Use these steps", false),
+    "routine_replace_days_hint" to Entry(R.string.l10n_routine_replace_days_hint, false, listOf("days"), "Steps on these days will be replaced when you save: {days}", false),
+    "routine_copy_steps" to Entry(R.string.l10n_routine_copy_steps, false, listOf(), "Copy steps from…", false),
+    "routine_not_scheduled" to Entry(R.string.l10n_routine_not_scheduled, false, listOf(), "Not scheduled", false),
+    "routine_no_schedule_today" to Entry(R.string.l10n_routine_no_schedule_today, false, listOf(), "No routine scheduled today", false),
+    "routine_no_steps_today" to Entry(R.string.l10n_routine_no_steps_today, false, listOf(), "There are no steps scheduled for this day.", false),
+    "routine_required_steps_days" to Entry(R.string.l10n_routine_required_steps_days, false, listOf(), "Choose at least one day and add a named step on every selected day.", false),
+    "routine_shared_edit_context" to Entry(R.string.l10n_routine_shared_edit_context, false, listOf(), "All scheduled days · Routine", false),
+    "routine_shared_edit_hint" to Entry(R.string.l10n_routine_shared_edit_hint, false, listOf(), "Changes update this step on every scheduled day. Today’s matching progress is preserved; past days stay unchanged.", false),
+    "routine_edit_step_row" to Entry(R.string.l10n_routine_edit_step_row, false, listOf("current", "total", "name", "day"), "Edit step {current} of {total}: {name}, {day}", false),
+    "routine_step_count" to Entry(R.plurals.l10n_routine_step_count, true, listOf("count"), "{count} steps", false),
+    "routine_current_step" to Entry(R.string.l10n_routine_current_step, false, listOf("current", "total"), "Current step · {current} of {total}", false),
+    "routine_viewing_step" to Entry(R.string.l10n_routine_viewing_step, false, listOf("current", "total"), "Viewing step · {current} of {total}", false),
+    "routine_completed_step" to Entry(R.string.l10n_routine_completed_step, false, listOf("current", "total"), "Completed step · {current} of {total}", false),
+    "routine_complete_step" to Entry(R.string.l10n_routine_complete_step, false, listOf(), "Complete step", false),
+    "routine_previous_step" to Entry(R.string.l10n_routine_previous_step, false, listOf(), "View previous step", false),
+    "routine_step_removed" to Entry(R.string.l10n_routine_step_removed, false, listOf("name"), "Removed {name}", false),
+    "routine_checks_removed" to Entry(R.string.l10n_routine_checks_removed, false, listOf("count"), "Saving removes {count} checked steps from today. Past days stay unchanged.", false),
+    "routine_reload" to Entry(R.string.l10n_routine_reload, false, listOf(), "Reload routine", false),
+    "routine_generic_preview_title" to Entry(R.string.l10n_routine_generic_preview_title, false, listOf(), "Morning routine", false),
+    "routine_generic_preview_next" to Entry(R.string.l10n_routine_generic_preview_next, false, listOf(), "Plan the day", false),
+    "widget_preview_ordinal_title" to Entry(R.string.l10n_widget_preview_ordinal_title, false, listOf(), "Front plank", false),
+    "routine_edit_row" to Entry(R.string.l10n_routine_edit_row, false, listOf("current", "total", "name", "day"), "Edit exercise {current} of {total}: {name}, {day}", false),
+    "routine_edit_day_context" to Entry(R.string.l10n_routine_edit_day_context, false, listOf("day"), "{day} · Routine", false),
+    "routine_edit_immediate_hint" to Entry(R.string.l10n_routine_edit_immediate_hint, false, listOf(), "Changes update this weekday immediately. Today’s matching progress is preserved; past days stay unchanged.", false),
+    "routine_edit_unavailable" to Entry(R.string.l10n_routine_edit_unavailable, false, listOf(), "This step is no longer in the routine. Close this editor to review the updated routine.", false),
+    "routine_reload_exercise" to Entry(R.string.l10n_routine_reload_exercise, false, listOf(), "Reload step", false),
+    "widget_undo_completion_named" to Entry(R.string.l10n_widget_undo_completion_named, false, listOf("name"), "Undo completion of {name}", false),
+    "widget_undo_unavailable" to Entry(R.string.l10n_widget_undo_unavailable, false, listOf(), "Undo unavailable", false),
+    "widget_undid_named" to Entry(R.string.l10n_widget_undid_named, false, listOf("name"), "Undid completion of {name}", false),
+    "widget_saving_progress" to Entry(R.string.l10n_widget_saving_progress, false, listOf(), "Saving progress", false),
     "m_bf4156d6b15c" to Entry(R.string.l10n_m_bf4156d6b15c, false, listOf(), "Automatic Calendar sync enabled", false),
     "m_8089865e173e" to Entry(R.string.l10n_m_8089865e173e, false, listOf(), "Recovered Calendar alerts enabled", false),
     "m_71ad1b9eb735" to Entry(R.string.l10n_m_71ad1b9eb735, false, listOf(), "Updated Google Calendar", false),
@@ -26,7 +168,9 @@ object MessageCatalog {
     "m_f9435c3c51ce" to Entry(R.string.l10n_m_f9435c3c51ce, false, listOf(), "Ringing stopped", false),
     "m_02e87bf90c4c" to Entry(R.string.l10n_m_02e87bf90c4c, false, listOf(), "Notification sent", false),
     "m_88096584e4a8" to Entry(R.string.l10n_m_88096584e4a8, false, listOf(), "Snoozed", false),
-    "m_fd4879b3f653" to Entry(R.string.l10n_m_fd4879b3f653, false, listOf(), "Postponed", false),
+    "m_fd4879b3f653" to Entry(R.string.l10n_m_fd4879b3f653, false, listOf(), "Postponed", false)
+  )
+  private fun chunk2(): Map<String, Entry> = mapOf(
     "m_83e8432c0130" to Entry(R.string.l10n_m_83e8432c0130, false, listOf(), "Repeat paused", false),
     "m_b0bfe35718ef" to Entry(R.string.l10n_m_b0bfe35718ef, false, listOf(), "Repeat resumed", false),
     "m_14d64a9f7100" to Entry(R.string.l10n_m_14d64a9f7100, false, listOf(), "Alert missed", false),
@@ -86,9 +230,7 @@ object MessageCatalog {
     "m_c33ea23d51f1" to Entry(R.string.l10n_m_c33ea23d51f1, false, listOf(), "Notification details", false),
     "m_31d7ae351725" to Entry(R.string.l10n_m_31d7ae351725, false, listOf(), "App notifications", false),
     "m_9cbbfcb9624f" to Entry(R.string.l10n_m_9cbbfcb9624f, false, listOf(), "Alarm notifications", false),
-    "m_261078774b32" to Entry(R.string.l10n_m_261078774b32, false, listOf(), "Reminder notifications", false)
-  )
-  private fun chunk1(): Map<String, Entry> = mapOf(
+    "m_261078774b32" to Entry(R.string.l10n_m_261078774b32, false, listOf(), "Reminder notifications", false),
     "m_66b41af0ba4b" to Entry(R.string.l10n_m_66b41af0ba4b, false, listOf(), "Lock-screen alarms", false),
     "m_69bbfaef0807" to Entry(R.string.l10n_m_69bbfaef0807, false, listOf(), "Full-screen alarm display is unavailable.", false),
     "m_94ff0d164e2e" to Entry(R.string.l10n_m_94ff0d164e2e, false, listOf(), "Alarm check", false),
@@ -108,7 +250,9 @@ object MessageCatalog {
     "m_60acc53f13a5" to Entry(R.string.l10n_m_60acc53f13a5, false, listOf(), "Dark", false),
     "m_8224099ad6af" to Entry(R.string.l10n_m_8224099ad6af, false, listOf(), "Daily schedule", false),
     "m_d7a57b14486e" to Entry(R.string.l10n_m_d7a57b14486e, false, listOf(), "Uses your device’s local time.", false),
-    "m_9c7c53e80a4e" to Entry(R.string.l10n_m_9c7c53e80a4e, false, listOf(), "Sunrise", false),
+    "m_9c7c53e80a4e" to Entry(R.string.l10n_m_9c7c53e80a4e, false, listOf(), "Sunrise", false)
+  )
+  private fun chunk3(): Map<String, Entry> = mapOf(
     "m_b72804afefc3" to Entry(R.string.l10n_m_b72804afefc3, false, listOf(), "Sky", false),
     "m_458c1fed5743" to Entry(R.string.l10n_m_458c1fed5743, false, listOf(), "Evening", false),
     "m_4e9f8db8242b" to Entry(R.string.l10n_m_4e9f8db8242b, false, listOf(), "Night", false),
@@ -168,9 +312,7 @@ object MessageCatalog {
     "m_f3a7e7a28691" to Entry(R.string.l10n_m_f3a7e7a28691, false, listOf("arg0", "arg1"), "Turn on sync for {arg0} {arg1}", false),
     "m_db7318c55879" to Entry(R.string.l10n_m_db7318c55879, false, listOf(), "Back to Calendar", false),
     "m_dc7c5a03424f" to Entry(R.string.l10n_m_dc7c5a03424f, false, listOf(), "Choose which linked reminders should stay up to date in both apps.", false),
-    "m_b9425bf65303" to Entry(R.string.l10n_m_b9425bf65303, false, listOf(), "Turning on sync…", false)
-  )
-  private fun chunk2(): Map<String, Entry> = mapOf(
+    "m_b9425bf65303" to Entry(R.string.l10n_m_b9425bf65303, false, listOf(), "Turning on sync…", false),
     "m_627a29d1ff3c" to Entry(R.string.l10n_m_627a29d1ff3c, false, listOf(), "Checking linked reminders…", false),
     "m_594bff388101" to Entry(R.string.l10n_m_594bff388101, false, listOf(), "Check reminders again", false),
     "m_8ceca6d37b3b" to Entry(R.string.l10n_m_8ceca6d37b3b, false, listOf(), "Ready to turn on ·", false),
@@ -190,7 +332,9 @@ object MessageCatalog {
     "m_ffe7d4cb4b52" to Entry(R.string.l10n_m_ffe7d4cb4b52, false, listOf(), "Preparing review ", false),
     "m_a4282e4b2298" to Entry(R.string.l10n_m_a4282e4b2298, false, listOf(), " of ", false),
     "m_ee6c6ad65095" to Entry(R.string.l10n_m_ee6c6ad65095, false, listOf(), "Account changed", false),
-    "m_ecb8f0a7dc25" to Entry(R.string.l10n_m_ecb8f0a7dc25, false, listOf(), "Import all Calendar events", false),
+    "m_ecb8f0a7dc25" to Entry(R.string.l10n_m_ecb8f0a7dc25, false, listOf(), "Import all Calendar events", false)
+  )
+  private fun chunk4(): Map<String, Entry> = mapOf(
     "m_1936752a4785" to Entry(R.string.l10n_m_1936752a4785, false, listOf(), "Retry same imports", false),
     "m_ae3ab8de0dcf" to Entry(R.string.l10n_m_ae3ab8de0dcf, false, listOf(), "Import all (", false),
     "m_19766ed6ccb2" to Entry(R.string.l10n_m_19766ed6ccb2, false, listOf(), "Cancel", false),
@@ -250,9 +394,7 @@ object MessageCatalog {
     "m_58f5140118ac" to Entry(R.string.l10n_m_58f5140118ac, false, listOf(), "Choose a date range of up to 366 days.", false),
     "m_8d71009f1092" to Entry(R.string.l10n_m_8d71009f1092, false, listOf(), "Browse events", false),
     "m_3843add32c04" to Entry(R.string.l10n_m_3843add32c04, false, listOf(), "Import all", false),
-    "m_5136714ef7f2" to Entry(R.string.l10n_m_5136714ef7f2, false, listOf(), "Reading Google Calendar…", false)
-  )
-  private fun chunk3(): Map<String, Entry> = mapOf(
+    "m_5136714ef7f2" to Entry(R.string.l10n_m_5136714ef7f2, false, listOf(), "Reading Google Calendar…", false),
     "m_7474f431c818" to Entry(R.string.l10n_m_7474f431c818, false, listOf(), "No new events on this page.", false),
     "m_c0da945b464e" to Entry(R.string.l10n_m_c0da945b464e, false, listOf(), " Load more or use Import all to check the remaining dates.", false),
     "m_df0e214cb7cf" to Entry(R.string.l10n_m_df0e214cb7cf, false, listOf(), " Imported events are already in Remilo.", false),
@@ -272,7 +414,9 @@ object MessageCatalog {
     "m_85913f35260d" to Entry(R.string.l10n_m_85913f35260d, false, listOf(), "Check finished. Review the Calendar status.", false),
     "m_3229d16ca643" to Entry(R.string.l10n_m_3229d16ca643, false, listOf(), "Unconfirmed", true),
     "m_b0b9fe24ffa9" to Entry(R.string.l10n_m_b0b9fe24ffa9, false, listOf(), "Manual", true),
-    "m_b7ec43768c62" to Entry(R.string.l10n_m_b7ec43768c62, false, listOf(), "Unlinked. Both copies and your local alerts are kept.", false),
+    "m_b7ec43768c62" to Entry(R.string.l10n_m_b7ec43768c62, false, listOf(), "Unlinked. Both copies and your local alerts are kept.", false)
+  )
+  private fun chunk5(): Map<String, Entry> = mapOf(
     "m_b89208529acc" to Entry(R.string.l10n_m_b89208529acc, false, listOf(), "Unlink from Google Calendar?", false),
     "m_c3e673801a54" to Entry(R.string.l10n_m_c3e673801a54, false, listOf(), "Keep the local ", false),
     "m_a5e8ce0db8d3" to Entry(R.string.l10n_m_a5e8ce0db8d3, false, listOf(), "repeating family and its alerts", false),
@@ -332,9 +476,7 @@ object MessageCatalog {
     "m_b6741b4ccf6d" to Entry(R.string.l10n_m_b6741b4ccf6d, false, listOf(), "Authorize", false),
     "m_0ed3345cd8bb" to Entry(R.string.l10n_m_0ed3345cd8bb, false, listOf(), "Adopt", true),
     "m_859390eb495b" to Entry(R.string.l10n_m_859390eb495b, false, listOf(), "Publish", true),
-    "m_9357bdd53345" to Entry(R.string.l10n_m_9357bdd53345, false, listOf(), "These settings need another check before confirming.", false)
-  )
-  private fun chunk4(): Map<String, Entry> = mapOf(
+    "m_9357bdd53345" to Entry(R.string.l10n_m_9357bdd53345, false, listOf(), "These settings need another check before confirming.", false),
     "m_5e506c8d2951" to Entry(R.string.l10n_m_5e506c8d2951, false, listOf(), "Review and resume sync", false),
     "m_e506da94ceb4" to Entry(R.string.l10n_m_e506da94ceb4, false, listOf(), "Calendar sync preferences", false),
     "m_111b11a90779" to Entry(R.string.l10n_m_111b11a90779, false, listOf(), "Turn on recovered alerts", false),
@@ -354,7 +496,9 @@ object MessageCatalog {
     "m_e3b0eada86d6" to Entry(R.string.l10n_m_e3b0eada86d6, false, listOf(), "Allow access to find your Remilo calendar.", false),
     "m_d1f78591d052" to Entry(R.string.l10n_m_d1f78591d052, false, listOf(), "Remilo calendar", false),
     "m_23c9159672e0" to Entry(R.string.l10n_m_23c9159672e0, false, listOf(), "Create a new Remilo calendar", false),
-    "m_453d0743c738" to Entry(R.string.l10n_m_453d0743c738, false, listOf(), "Checking calendars…", false),
+    "m_453d0743c738" to Entry(R.string.l10n_m_453d0743c738, false, listOf(), "Checking calendars…", false)
+  )
+  private fun chunk6(): Map<String, Entry> = mapOf(
     "m_c45aab93dad2" to Entry(R.string.l10n_m_c45aab93dad2, false, listOf(), "Choose a Remilo calendar", false),
     "m_88cd4e78a673" to Entry(R.string.l10n_m_88cd4e78a673, false, listOf(), "Choose after connecting", false),
     "m_f8b9614ab2a4" to Entry(R.string.l10n_m_f8b9614ab2a4, false, listOf(), "Created only after you confirm below.", false),
@@ -414,9 +558,7 @@ object MessageCatalog {
     "m_0158ffecbd50" to Entry(R.string.l10n_m_0158ffecbd50, false, listOf(), "Repeating event. This publishes the reviewed series schedule.", false),
     "m_d8811e01b3a3" to Entry(R.string.l10n_m_d8811e01b3a3, false, listOf(), "Title, notes and event times will be sent to this calendar. Google Calendar reminders are disabled. Due, completion and alert controls stay in Remilo. Later edits are not synchronized.", false),
     "m_dd83acb79e4a" to Entry(R.string.l10n_m_dd83acb79e4a, false, listOf(), "This reminder will keep", false),
-    "m_e497b292f139" to Entry(R.string.l10n_m_e497b292f139, false, listOf(), "when you travel. Its current event, due and alert instants stay the same.", false)
-  )
-  private fun chunk5(): Map<String, Entry> = mapOf(
+    "m_e497b292f139" to Entry(R.string.l10n_m_e497b292f139, false, listOf(), "when you travel. Its current event, due and alert instants stay the same.", false),
     "m_558aba6db20a" to Entry(R.string.l10n_m_558aba6db20a, false, listOf(), "The request is not confirmed. Retry its captured operation; do not start a replacement publication. Saved jobs remain available after leaving this page.", false),
     "m_688e2f9b65c7" to Entry(R.string.l10n_m_688e2f9b65c7, false, listOf(), "Capturing publication…", false),
     "m_12dd26f54ada" to Entry(R.string.l10n_m_12dd26f54ada, false, listOf(), "Calendar request not confirmed", false),
@@ -436,7 +578,9 @@ object MessageCatalog {
     "m_9e636d2d17ec" to Entry(R.string.l10n_m_9e636d2d17ec, false, listOf(), "Review Calendar changes", false),
     "m_ceda88a9a0fd" to Entry(R.string.l10n_m_ceda88a9a0fd, false, listOf(), "Check choices", false),
     "m_91178678e720" to Entry(R.string.l10n_m_91178678e720, false, listOf(), "Import reminder", false),
-    "m_71e50031d9c2" to Entry(R.string.l10n_m_71e50031d9c2, false, listOf(), "Apply chosen changes", false),
+    "m_71e50031d9c2" to Entry(R.string.l10n_m_71e50031d9c2, false, listOf(), "Apply chosen changes", false)
+  )
+  private fun chunk7(): Map<String, Entry> = mapOf(
     "m_62b005b2d47b" to Entry(R.string.l10n_m_62b005b2d47b, false, listOf(), "Review which values to keep before linking this event to its existing Remilo copy.", false),
     "m_b0fb1f750602" to Entry(R.string.l10n_m_b0fb1f750602, false, listOf(), "Review this event and its alert before adding it to Remilo.", false),
     "m_c672ed8175e2" to Entry(R.string.l10n_m_c672ed8175e2, false, listOf(), "Choose which values to keep in both apps. Your local alert settings stay in Remilo.", false),
@@ -496,9 +640,7 @@ object MessageCatalog {
     "m_17a0e412897f" to Entry(R.string.l10n_m_17a0e412897f, false, listOf(), "Connection changed", false),
     "m_8d261a372fde" to Entry(R.string.l10n_m_8d261a372fde, false, listOf(), "Sync", false),
     "m_4664827f8e89" to Entry(R.string.l10n_m_4664827f8e89, false, listOf(), "Progress", false),
-    "m_3d2d5eb3e995" to Entry(R.string.l10n_m_3d2d5eb3e995, false, listOf(), "Calendar items need review", false)
-  )
-  private fun chunk6(): Map<String, Entry> = mapOf(
+    "m_3d2d5eb3e995" to Entry(R.string.l10n_m_3d2d5eb3e995, false, listOf(), "Calendar items need review", false),
     "m_638daed11ef3" to Entry(R.string.l10n_m_638daed11ef3, false, listOf(), "Review these items. Other authorized work can continue.", false),
     "m_e6bc867f7622" to Entry(R.string.l10n_m_e6bc867f7622, false, listOf(), "Review items", false),
     "m_d640c7421da0" to Entry(R.string.l10n_m_d640c7421da0, false, listOf(), "Resume", true),
@@ -518,7 +660,9 @@ object MessageCatalog {
     "m_59909a83ae12" to Entry(R.string.l10n_m_59909a83ae12, false, listOf(), "Google events to Remilo", false),
     "m_b4ec2d7e78ce" to Entry(R.string.l10n_m_b4ec2d7e78ce, false, listOf(), "Add ongoing and upcoming events", false),
     "m_192bc55a3400" to Entry(R.string.l10n_m_192bc55a3400, false, listOf(), "Automatic import off", false),
-    "m_40a3bf59729e" to Entry(R.string.l10n_m_40a3bf59729e, false, listOf(), "New Remilo reminders to Google", false),
+    "m_40a3bf59729e" to Entry(R.string.l10n_m_40a3bf59729e, false, listOf(), "New Remilo reminders to Google", false)
+  )
+  private fun chunk8(): Map<String, Entry> = mapOf(
     "m_066eff43059c" to Entry(R.string.l10n_m_066eff43059c, false, listOf(), "On · Local only is available", false),
     "m_f1fc666eb56b" to Entry(R.string.l10n_m_f1fc666eb56b, false, listOf(), "Automatic export off", false),
     "m_2b92a414df3c" to Entry(R.string.l10n_m_2b92a414df3c, false, listOf(), "Review recovered alerts", false),
@@ -578,9 +722,7 @@ object MessageCatalog {
     "m_fedeca67dfed" to Entry(R.string.l10n_m_fedeca67dfed, false, listOf(), "No operational alerts in this snapshot.", false),
     "m_99d490c3f215" to Entry(R.string.l10n_m_99d490c3f215, false, listOf(), "Pending reminder updates", false),
     "m_573a58a1e38d" to Entry(R.string.l10n_m_573a58a1e38d, false, listOf(), "Pending reminder updates counts credential-store reminder projections; it does not count every recovery job.", false),
-    "m_9794e36a7e73" to Entry(R.string.l10n_m_9794e36a7e73, false, listOf(), "Observed permissions", false)
-  )
-  private fun chunk7(): Map<String, Entry> = mapOf(
+    "m_9794e36a7e73" to Entry(R.string.l10n_m_9794e36a7e73, false, listOf(), "Observed permissions", false),
     "m_fa28a8a6b6bf" to Entry(R.string.l10n_m_fa28a8a6b6bf, false, listOf(), "Permissions observed", false),
     "m_aa3c57bf2387" to Entry(R.string.l10n_m_aa3c57bf2387, false, listOf(), "Alarm channel", false),
     "m_c2728d07deea" to Entry(R.string.l10n_m_c2728d07deea, false, listOf(), "Reminder channel", false),
@@ -600,7 +742,9 @@ object MessageCatalog {
     "m_21b111cbfe6e" to Entry(R.string.l10n_m_21b111cbfe6e, false, listOf(), "Default", true),
     "m_31442c166f10" to Entry(R.string.l10n_m_31442c166f10, false, listOf(), "Save not confirmed", false),
     "m_341b6b4fb929" to Entry(R.string.l10n_m_341b6b4fb929, false, listOf(), "Retry save before leaving.", false),
-    "m_d8eb10e04288" to Entry(R.string.l10n_m_d8eb10e04288, false, listOf(), "Updating timing", false),
+    "m_d8eb10e04288" to Entry(R.string.l10n_m_d8eb10e04288, false, listOf(), "Updating timing", false)
+  )
+  private fun chunk9(): Map<String, Entry> = mapOf(
     "m_27b05dc65c32" to Entry(R.string.l10n_m_27b05dc65c32, false, listOf(), "Wait for the timing update before leaving.", false),
     "m_85bcf41666a5" to Entry(R.string.l10n_m_85bcf41666a5, false, listOf(), "Discard changes?", false),
     "m_2a6bb39d73ff" to Entry(R.string.l10n_m_2a6bb39d73ff, false, listOf(), "Your reminder has not been saved.", false),
@@ -660,9 +804,7 @@ object MessageCatalog {
     "m_09f21e33c391" to Entry(R.string.l10n_m_09f21e33c391, false, listOf(), "This floating repeat will be pinned to", false),
     "m_0bdc93934138" to Entry(R.string.l10n_m_0bdc93934138, false, listOf(), "when published. Later phone time-zone changes do not move its Calendar schedule.", false),
     "m_4171fe0e2802" to Entry(R.string.l10n_m_4171fe0e2802, false, listOf(), "The all-day event uses", false),
-    "m_2307d01ab2a5" to Entry(R.string.l10n_m_2307d01ab2a5, false, listOf(), "; the Calendar uses", false)
-  )
-  private fun chunk8(): Map<String, Entry> = mapOf(
+    "m_2307d01ab2a5" to Entry(R.string.l10n_m_2307d01ab2a5, false, listOf(), "; the Calendar uses", false),
     "m_6e558a290d11" to Entry(R.string.l10n_m_6e558a290d11, false, listOf(), ". Publication needs timing review. Your local alert is preserved.", false),
     "m_7ef8b1a640de" to Entry(R.string.l10n_m_7ef8b1a640de, false, listOf(), "Calendar preferences could not be displayed. Your saved native Calendar preference still applies; local saving does not wait for Google.", false),
     "m_22609ce661b0" to Entry(R.string.l10n_m_22609ce661b0, false, listOf(), "Calendar event (optional)", false),
@@ -682,7 +824,9 @@ object MessageCatalog {
     "m_8c648567f73c" to Entry(R.string.l10n_m_8c648567f73c, false, listOf(), "Alarm options", false),
     "m_59e1fd02f6c2" to Entry(R.string.l10n_m_59e1fd02f6c2, false, listOf(), "Vibration", false),
     "m_2cc2a7090f66" to Entry(R.string.l10n_m_2cc2a7090f66, false, listOf(), "Next dates", false),
-    "m_05aa0106edd0" to Entry(R.string.l10n_m_05aa0106edd0, false, listOf(), "Clock-change adjustment · ", false),
+    "m_05aa0106edd0" to Entry(R.string.l10n_m_05aa0106edd0, false, listOf(), "Clock-change adjustment · ", false)
+  )
+  private fun chunk10(): Map<String, Entry> = mapOf(
     "m_07714689fced" to Entry(R.string.l10n_m_07714689fced, false, listOf(), "Fewer than three occurrences remain.", false),
     "m_197c9d025305" to Entry(R.string.l10n_m_197c9d025305, false, listOf(), "Earlier unfinished and postponed reminders stay unchanged.", false),
     "m_dd7df50aa500" to Entry(R.string.l10n_m_dd7df50aa500, false, listOf(), "The repeat remains paused.", false),
@@ -742,9 +886,7 @@ object MessageCatalog {
     "m_964e5f88d036" to Entry(R.string.l10n_m_964e5f88d036, false, listOf(), "Loading more…", false),
     "m_6c13d1198cd5" to Entry(R.string.l10n_m_6c13d1198cd5, false, listOf(), "Retry loading more", false),
     "m_cd566803bf39" to Entry(R.string.l10n_m_cd566803bf39, false, listOf(), "Add reminder", false),
-    "m_a8283ade3185" to Entry(R.string.l10n_m_a8283ade3185, false, listOf(), "Undo", false)
-  )
-  private fun chunk9(): Map<String, Entry> = mapOf(
+    "m_a8283ade3185" to Entry(R.string.l10n_m_a8283ade3185, false, listOf(), "Undo", false),
     "m_76d11d556a30" to Entry(R.string.l10n_m_76d11d556a30, false, listOf(), "Filter reminders", false),
     "m_3ddd2c824c07" to Entry(R.string.l10n_m_3ddd2c824c07, false, listOf(), "Reminder actions", false),
     "m_62aa4b87cc52" to Entry(R.string.l10n_m_62aa4b87cc52, false, listOf(), "Mark as done", false),
@@ -764,7 +906,9 @@ object MessageCatalog {
     "m_92ee0233f013" to Entry(R.string.l10n_m_92ee0233f013, false, listOf(), "Repeats", false),
     "m_baa6cb3b3dc6" to Entry(R.string.l10n_m_baa6cb3b3dc6, false, listOf(), "Manage recurring reminders", false),
     "m_76edd8d2cf44" to Entry(R.string.l10n_m_76edd8d2cf44, false, listOf(), "Use the Android app to manage lists.", false),
-    "m_230fe389ffc2" to Entry(R.string.l10n_m_230fe389ffc2, false, listOf(), "No named lists yet.", false),
+    "m_230fe389ffc2" to Entry(R.string.l10n_m_230fe389ffc2, false, listOf(), "No named lists yet.", false)
+  )
+  private fun chunk11(): Map<String, Entry> = mapOf(
     "m_b3d21ebfbaf7" to Entry(R.string.l10n_m_b3d21ebfbaf7, false, listOf(), "Your lists", false),
     "m_4408d1a48e1e" to Entry(R.string.l10n_m_4408d1a48e1e, false, listOf(), "Create list", false),
     "m_abc46aaef9ad" to Entry(R.string.l10n_m_abc46aaef9ad, false, listOf(), "List actions", false),
@@ -824,9 +968,7 @@ object MessageCatalog {
     "m_87124f754c23" to Entry(R.string.l10n_m_87124f754c23, false, listOf(), "Reminder updated", false),
     "m_cae7d57bc067" to Entry(R.string.l10n_m_cae7d57bc067, false, listOf(), "Stop", false),
     "m_3a623a728b2d" to Entry(R.string.l10n_m_3a623a728b2d, false, listOf(), "Notified", false),
-    "m_7b359664f423" to Entry(R.string.l10n_m_7b359664f423, false, listOf(), "Reminder completed.", false)
-  )
-  private fun chunk10(): Map<String, Entry> = mapOf(
+    "m_7b359664f423" to Entry(R.string.l10n_m_7b359664f423, false, listOf(), "Reminder completed.", false),
     "m_b47059d04e58" to Entry(R.string.l10n_m_b47059d04e58, false, listOf(), "Next alert postponed to ", false),
     "m_5550d1a27260" to Entry(R.string.l10n_m_5550d1a27260, false, listOf(), "Next alert snoozed. Still unfinished.", false),
     "m_1ce1890d9f80" to Entry(R.string.l10n_m_1ce1890d9f80, false, listOf(), "Alarm ringing", false),
@@ -846,7 +988,9 @@ object MessageCatalog {
     "m_0146bbb12bf3" to Entry(R.string.l10n_m_0146bbb12bf3, false, listOf(), "Review alert permissions", false),
     "m_b6b7a0065808" to Entry(R.string.l10n_m_b6b7a0065808, false, listOf(), "Repeat", false),
     "m_cf71ed31217a" to Entry(R.string.l10n_m_cf71ed31217a, false, listOf(), "This occurrence belongs to a previous schedule. Repeat details shows the current schedule.", false),
-    "m_544d9e42216c" to Entry(R.string.l10n_m_544d9e42216c, false, listOf(), "Repeating", false),
+    "m_544d9e42216c" to Entry(R.string.l10n_m_544d9e42216c, false, listOf(), "Repeating", false)
+  )
+  private fun chunk12(): Map<String, Entry> = mapOf(
     "m_7cdc804e6996" to Entry(R.string.l10n_m_7cdc804e6996, false, listOf(), "Ended", false),
     "m_2cc4cc84a99e" to Entry(R.string.l10n_m_2cc4cc84a99e, false, listOf(), "Repeat ended", false),
     "m_f1f3c6717092" to Entry(R.string.l10n_m_f1f3c6717092, false, listOf(), "This occurrence", false),
@@ -906,9 +1050,7 @@ object MessageCatalog {
     "m_b9fe1464783e" to Entry(R.string.l10n_m_b9fe1464783e, false, listOf(), "Time zone", false),
     "m_394d31d5bfb3" to Entry(R.string.l10n_m_394d31d5bfb3, false, listOf(), "Follows your device", false),
     "m_76348b77ee9b" to Entry(R.string.l10n_m_76348b77ee9b, false, listOf("arg0"), "After {arg0} occurrences", false),
-    "m_64d389ab5222" to Entry(R.string.l10n_m_64d389ab5222, false, listOf(), "Does not end", false)
-  )
-  private fun chunk11(): Map<String, Entry> = mapOf(
+    "m_64d389ab5222" to Entry(R.string.l10n_m_64d389ab5222, false, listOf(), "Does not end", false),
     "m_89b7b9146715" to Entry(R.string.l10n_m_89b7b9146715, false, listOf(), "Resume repeat", false),
     "m_7c5238809996" to Entry(R.string.l10n_m_7c5238809996, false, listOf(), "Pause repeat", false),
     "m_9916d68ae209" to Entry(R.string.l10n_m_9916d68ae209, false, listOf(), "Edit entire series", false),
@@ -928,7 +1070,9 @@ object MessageCatalog {
     "m_81d4cad2c628" to Entry(R.string.l10n_m_81d4cad2c628, false, listOf(), "Backup prepared, but the share sheet could not be opened. Retry sharing this file.", false),
     "m_c56e51fc430f" to Entry(R.string.l10n_m_c56e51fc430f, false, listOf("arg0", "arg1"), "Last checked {arg0}; {arg1}", false),
     "m_d6d1cdc660d1" to Entry(R.string.l10n_m_d6d1cdc660d1, false, listOf(), "couldn’t refresh.", false),
-    "m_eb50add3d378" to Entry(R.string.l10n_m_eb50add3d378, false, listOf(), "refreshing…", false),
+    "m_eb50add3d378" to Entry(R.string.l10n_m_eb50add3d378, false, listOf(), "refreshing…", false)
+  )
+  private fun chunk13(): Map<String, Entry> = mapOf(
     "m_de367fa1d4a6" to Entry(R.string.l10n_m_de367fa1d4a6, false, listOf(), "Settings are unavailable.", false),
     "m_eb0582ac36eb" to Entry(R.string.l10n_m_eb0582ac36eb, false, listOf(), "Use the Android app to manage settings.", false),
     "m_5fb7b58aa419" to Entry(R.string.l10n_m_5fb7b58aa419, false, listOf(), "Sound & vibration", false),
@@ -939,7 +1083,7 @@ object MessageCatalog {
     "m_9abfcd6cc71c" to Entry(R.string.l10n_m_9abfcd6cc71c, false, listOf(), "Available in the Android app", false),
     "m_e75d471ec00e" to Entry(R.string.l10n_m_e75d471ec00e, false, listOf(), "Optional, manual one-off publishing", false),
     "m_3334fee2c77f" to Entry(R.string.l10n_m_3334fee2c77f, false, listOf(), "Backups", false),
-    "m_a7b215af0d49" to Entry(R.string.l10n_m_a7b215af0d49, false, listOf(), "Includes titles, notes, lists and reminders.", false),
+    "m_a7b215af0d49" to Entry(R.string.l10n_m_a7b215af0d49, false, listOf(), "Includes reminders, routines, lists, history and custom images.", false),
     "m_95365d0f81ab" to Entry(R.string.l10n_m_95365d0f81ab, false, listOf(), "What’s included?", false),
     "m_d6dfd0f08280" to Entry(R.string.l10n_m_d6dfd0f08280, false, listOf(), "Export backup", false),
     "m_580447a9d871" to Entry(R.string.l10n_m_580447a9d871, false, listOf(), "Preparing backup…", false),
@@ -952,7 +1096,7 @@ object MessageCatalog {
     "m_da461edf6be4" to Entry(R.string.l10n_m_da461edf6be4, false, listOf(), "Enter a whole number from 1 to 1440.", false),
     "m_c03efc02ebc8" to Entry(R.string.l10n_m_c03efc02ebc8, false, listOf(), "Shown when you postpone an alert to tomorrow.", false),
     "m_417b6c80d6e4" to Entry(R.string.l10n_m_417b6c80d6e4, false, listOf(), "What’s included in backups", false),
-    "m_03588484b7c5" to Entry(R.string.l10n_m_03588484b7c5, false, listOf(), "Titles, notes, lists and reminders are included in a plain-text JSON file.", false),
+    "m_03588484b7c5" to Entry(R.string.l10n_m_03588484b7c5, false, listOf(), "Backups are not encrypted and contain reminders, routines, lists, history and included custom images.", false),
     "m_a9a1a38b9395" to Entry(R.string.l10n_m_a9a1a38b9395, false, listOf(), "One-off reminders in Trash are excluded. Repeating deletion exclusions are kept.", false),
     "m_6d3b4ca3720b" to Entry(R.string.l10n_m_6d3b4ca3720b, false, listOf(), "App settings, appearance and Google Calendar connection/publication data are excluded.", false),
     "m_c2e4d9d387bc" to Entry(R.string.l10n_m_c2e4d9d387bc, false, listOf(), "move to Trash", false),
@@ -988,9 +1132,7 @@ object MessageCatalog {
     "m_32cacee293c2" to Entry(R.string.l10n_m_32cacee293c2, false, listOf("arg0"), " {arg0} alert registrations need attention.", false),
     "m_4ec31c58bd44" to Entry(R.string.l10n_m_4ec31c58bd44, false, listOf(), "Calendar request already running", false),
     "m_6e293a8c009e" to Entry(R.string.l10n_m_6e293a8c009e, false, listOf(), "Waiting", true),
-    "m_e595f17fac1d" to Entry(R.string.l10n_m_e595f17fac1d, false, listOf(), "Sending", true)
-  )
-  private fun chunk12(): Map<String, Entry> = mapOf(
+    "m_e595f17fac1d" to Entry(R.string.l10n_m_e595f17fac1d, false, listOf(), "Sending", true),
     "m_519921d54110" to Entry(R.string.l10n_m_519921d54110, false, listOf(), "Review cancelled", false),
     "m_5177d17292cf" to Entry(R.string.l10n_m_5177d17292cf, false, listOf(), "Narrow the dates to review these imports together.", false),
     "m_8a9efb1c03d6" to Entry(R.string.l10n_m_8a9efb1c03d6, false, listOf(), "Event listing changed", false),
@@ -1010,7 +1152,9 @@ object MessageCatalog {
     "m_701dcf7d3a6b" to Entry(R.string.l10n_m_701dcf7d3a6b, false, listOf(), "This event cannot be imported.", false),
     "m_dd1841d29502" to Entry(R.string.l10n_m_dd1841d29502, false, listOf(), "Not configured", false),
     "m_30416545a561" to Entry(R.string.l10n_m_30416545a561, false, listOf(), "Setup needs review", false),
-    "m_4e56c840938f" to Entry(R.string.l10n_m_4e56c840938f, false, listOf(), "Preparing Remilo calendar", false),
+    "m_4e56c840938f" to Entry(R.string.l10n_m_4e56c840938f, false, listOf(), "Preparing Remilo calendar", false)
+  )
+  private fun chunk14(): Map<String, Entry> = mapOf(
     "m_77656cdbb15e" to Entry(R.string.l10n_m_77656cdbb15e, false, listOf(), "Importing Calendar reminders", false),
     "m_2bac957cacfe" to Entry(R.string.l10n_m_2bac957cacfe, false, listOf(), "Google access needed", false),
     "m_de37d8d70a8f" to Entry(R.string.l10n_m_de37d8d70a8f, false, listOf(), "Remilo calendar unavailable", false),
@@ -1070,9 +1214,7 @@ object MessageCatalog {
     "m_043dcffe8daf" to Entry(R.string.l10n_m_043dcffe8daf, false, listOf(), "This local work is finished or removed.", false),
     "m_43cbb51990f4" to Entry(R.string.l10n_m_43cbb51990f4, false, listOf(), "This reminder was removed locally.", false),
     "m_9683e5eabbb0" to Entry(R.string.l10n_m_9683e5eabbb0, false, listOf(), "Linked updates have stopped.", false),
-    "m_7495bbbd2502" to Entry(R.string.l10n_m_7495bbbd2502, false, listOf(), "A fresh review is needed before transfers resume.", false)
-  )
-  private fun chunk13(): Map<String, Entry> = mapOf(
+    "m_7495bbbd2502" to Entry(R.string.l10n_m_7495bbbd2502, false, listOf(), "A fresh review is needed before transfers resume.", false),
     "m_fd5d3cf60dd4" to Entry(R.string.l10n_m_fd5d3cf60dd4, false, listOf(), "The proposed schedule needs review.", false),
     "m_f3882f30e216" to Entry(R.string.l10n_m_f3882f30e216, false, listOf(), "The proposed content needs review.", false),
     "m_3c8d24c2c85c" to Entry(R.string.l10n_m_3c8d24c2c85c, false, listOf(), "A fresh review is needed.", false),
@@ -1092,7 +1234,9 @@ object MessageCatalog {
     "m_2204c2c3f1b5" to Entry(R.string.l10n_m_2204c2c3f1b5, false, listOf(), "Continue authorization", false),
     "m_64af0e42ea9e" to Entry(R.string.l10n_m_64af0e42ea9e, false, listOf(), "Calendar creation isn’t confirmed", false),
     "m_19d1b56ab64e" to Entry(R.string.l10n_m_19d1b56ab64e, false, listOf(), "Google may already have created the calendar. Check the original request before creating another.", false),
-    "m_2b9b02919ba1" to Entry(R.string.l10n_m_2b9b02919ba1, false, listOf(), "Check creation result", false),
+    "m_2b9b02919ba1" to Entry(R.string.l10n_m_2b9b02919ba1, false, listOf(), "Check creation result", false)
+  )
+  private fun chunk15(): Map<String, Entry> = mapOf(
     "m_6ea25f950a4a" to Entry(R.string.l10n_m_6ea25f950a4a, false, listOf(), "Can’t access your Remilo calendar", false),
     "m_fc291cb5eedd" to Entry(R.string.l10n_m_fc291cb5eedd, false, listOf("arg0"), "{arg0} couldn’t be reached. Check access before reviewing a replacement. Local alerts continue.", false),
     "m_003b4d1c1e62" to Entry(R.string.l10n_m_003b4d1c1e62, false, listOf(), "Check calendar access", false),
@@ -1152,9 +1296,7 @@ object MessageCatalog {
     "m_6e2b4313f185" to Entry(R.string.l10n_m_6e2b4313f185, false, listOf(), "Review the problem before trying again.", false),
     "m_65fbca83060d" to Entry(R.string.l10n_m_65fbca83060d, false, listOf(), "This check is no longer active", false),
     "m_1049ca39305f" to Entry(R.string.l10n_m_1049ca39305f, false, listOf(), "The account, link or permission changed.", false),
-    "m_87e095310472" to Entry(R.string.l10n_m_87e095310472, false, listOf(), "Check not finished", false)
-  )
-  private fun chunk14(): Map<String, Entry> = mapOf(
+    "m_87e095310472" to Entry(R.string.l10n_m_87e095310472, false, listOf(), "Check not finished", false),
     "m_c10f13fed888" to Entry(R.string.l10n_m_c10f13fed888, false, listOf(), "No complete check is recorded for this request.", false),
     "m_42ad44bebf0f" to Entry(R.string.l10n_m_42ad44bebf0f, false, listOf(), "Updates stopped", false),
     "m_b4e8adc06607" to Entry(R.string.l10n_m_b4e8adc06607, false, listOf(), "Both copies are kept.", false),
@@ -1174,7 +1316,9 @@ object MessageCatalog {
     "m_8d3e019d3824" to Entry(R.string.l10n_m_8d3e019d3824, false, listOf(), "Updates available", false),
     "m_7c2edede4883" to Entry(R.string.l10n_m_7c2edede4883, false, listOf(), "Review both copies before applying manual changes.", false),
     "m_4ea875df7cbc" to Entry(R.string.l10n_m_4ea875df7cbc, false, listOf(), "Calendar update waiting", false),
-    "m_bafb7d838ca0" to Entry(R.string.l10n_m_bafb7d838ca0, false, listOf(), "Your saved update still has work remaining.", false),
+    "m_bafb7d838ca0" to Entry(R.string.l10n_m_bafb7d838ca0, false, listOf(), "Your saved update still has work remaining.", false)
+  )
+  private fun chunk16(): Map<String, Entry> = mapOf(
     "m_bf6947de0cbb" to Entry(R.string.l10n_m_bf6947de0cbb, false, listOf(), "Local alerts continue while changes are checked.", false),
     "m_4eac6a88771f" to Entry(R.string.l10n_m_4eac6a88771f, false, listOf(), "Manual updates", false),
     "m_4b3ea0ade966" to Entry(R.string.l10n_m_4b3ea0ade966, false, listOf("arg0"), "{arg0} updated from Google", false),
@@ -1234,9 +1378,7 @@ object MessageCatalog {
     "m_a116c6c034c9" to Entry(R.string.l10n_m_a116c6c034c9, false, listOf(), "Overdue · ", false),
     "m_c81f58f9df63" to Entry(R.string.l10n_m_c81f58f9df63, false, listOf(), "Overdue by ", false),
     "m_aa145420c39e" to Entry(R.string.l10n_m_aa145420c39e, false, listOf(), "In Trash · Previously ", false),
-    "m_6b65c366111c" to Entry(R.string.l10n_m_6b65c366111c, false, listOf(), "Alert paused", false)
-  )
-  private fun chunk15(): Map<String, Entry> = mapOf(
+    "m_6b65c366111c" to Entry(R.string.l10n_m_6b65c366111c, false, listOf(), "Alert paused", false),
     "m_9d801125babd" to Entry(R.string.l10n_m_9d801125babd, false, listOf(), "In Trash. Restore keeps its previous completion state.", false),
     "m_338098a7f260" to Entry(R.string.l10n_m_338098a7f260, false, listOf(), "Alarm stopped. Still unfinished.", false),
     "m_924e555dae94" to Entry(R.string.l10n_m_924e555dae94, false, listOf(), "Alarm timed out. Still unfinished.", false),
@@ -1256,7 +1398,9 @@ object MessageCatalog {
     "m_a28c03f64572" to Entry(R.string.l10n_m_a28c03f64572, false, listOf(), "Enter a title of 1–200 characters.", false),
     "m_d9471cc007ff" to Entry(R.string.l10n_m_d9471cc007ff, false, listOf(), "Choose a delay of at least one minute.", false),
     "m_9893f83cba30" to Entry(R.string.l10n_m_9893f83cba30, false, listOf(), "Choose a valid future time.", false),
-    "m_897135b5f991" to Entry(R.string.l10n_m_897135b5f991, false, listOf(), "Saved and registered with Android. Sound depends on your device settings.", false),
+    "m_897135b5f991" to Entry(R.string.l10n_m_897135b5f991, false, listOf(), "Saved and registered with Android. Sound depends on your device settings.", false)
+  )
+  private fun chunk17(): Map<String, Entry> = mapOf(
     "m_3d4b2f828981" to Entry(R.string.l10n_m_3d4b2f828981, false, listOf(), "Saved, but alarm delivery is blocked. Check permissions and notification settings.", false),
     "m_9bbdb5a75cf8" to Entry(R.string.l10n_m_9bbdb5a75cf8, false, listOf(), "Saved. Scheduling is still pending; refresh to check its state.", false),
     "m_87d39ab68d95" to Entry(R.string.l10n_m_87d39ab68d95, false, listOf(), "Action applied. Check the reminder status.", false),
@@ -1316,9 +1460,7 @@ object MessageCatalog {
     "m_8028ab0fb62f" to Entry(R.string.l10n_m_8028ab0fb62f, false, listOf(), "Shows an Android notification.", false),
     "m_960748eb41fa" to Entry(R.string.l10n_m_960748eb41fa, false, listOf(), "Saves the reminder without sound or a notification.", false),
     "m_44a57b22e03d" to Entry(R.string.l10n_m_44a57b22e03d, false, listOf(), "Alert", false),
-    "m_546ebb8eb993" to Entry(R.string.l10n_m_546ebb8eb993, false, listOf(), "Filters", false)
-  )
-  private fun chunk16(): Map<String, Entry> = mapOf(
+    "m_546ebb8eb993" to Entry(R.string.l10n_m_546ebb8eb993, false, listOf(), "Filters", false),
     "m_e8fe96a2bdd3" to Entry(R.string.l10n_m_e8fe96a2bdd3, false, listOf(), "Remove filter: ", false),
     "m_58cefb489b1a" to Entry(R.string.l10n_m_58cefb489b1a, false, listOf(), "Reset all filters", false),
     "m_d80ab19b7edb" to Entry(R.string.l10n_m_d80ab19b7edb, false, listOf(), "Apply filters", false),
@@ -1338,7 +1480,9 @@ object MessageCatalog {
     "m_0bf454f67353" to Entry(R.string.l10n_m_0bf454f67353, false, listOf(), "Review results", false),
     "m_61bfc95a906c" to Entry(R.string.l10n_m_61bfc95a906c, false, listOf(), "Bulk action results", false),
     "m_a7f851a6a9e6" to Entry(R.string.l10n_m_a7f851a6a9e6, false, listOf(), "This reminder changed or is unavailable. Refresh before selecting it again.", false),
-    "m_00fe18e6060b" to Entry(R.string.l10n_m_00fe18e6060b, false, listOf(), " · Last successful sync ", false),
+    "m_00fe18e6060b" to Entry(R.string.l10n_m_00fe18e6060b, false, listOf(), " · Last successful sync ", false)
+  )
+  private fun chunk18(): Map<String, Entry> = mapOf(
     "m_1b35b915d7c0" to Entry(R.string.l10n_m_1b35b915d7c0, false, listOf(), "Reminder saved. Google update not confirmed.", false),
     "m_53826bd0b89a" to Entry(R.string.l10n_m_53826bd0b89a, false, listOf(), "Calendar details", false),
     "m_b91efd0e05bc" to Entry(R.string.l10n_m_b91efd0e05bc, false, listOf(), "Changes confirmed", false),
@@ -1398,9 +1542,7 @@ object MessageCatalog {
     "m_7d87416abd53" to Entry(R.string.l10n_m_7d87416abd53, false, listOf(), "Check changes, incoming events or Calendar setup.", false),
     "m_67f542ba6d8f" to Entry(R.string.l10n_m_67f542ba6d8f, false, listOf(), "Authorized", false),
     "m_f8278bd3d08e" to Entry(R.string.l10n_m_f8278bd3d08e, false, listOf(), "Google access confirmed.", false),
-    "m_2cb105c80f63" to Entry(R.string.l10n_m_2cb105c80f63, false, listOf(), "Google access needs another check.", false)
-  )
-  private fun chunk17(): Map<String, Entry> = mapOf(
+    "m_2cb105c80f63" to Entry(R.string.l10n_m_2cb105c80f63, false, listOf(), "Google access needs another check.", false),
     "m_35e1683f019c" to Entry(R.string.l10n_m_35e1683f019c, false, listOf(), "Check the saved Google connection before continuing.", false),
     "m_22c3fbbc38db" to Entry(R.string.l10n_m_22c3fbbc38db, false, listOf(), "Finish connecting in Google.", false),
     "m_639a34a4219e" to Entry(R.string.l10n_m_639a34a4219e, false, listOf(), "Google connection cancelled. Your settings are unchanged.", false),
@@ -1420,7 +1562,9 @@ object MessageCatalog {
     "m_29605b40c59d" to Entry(R.string.l10n_m_29605b40c59d, false, listOf(), "No alarm scheduled", false),
     "m_99c40ab40592" to Entry(R.string.l10n_m_99c40ab40592, false, listOf(), "Date", false),
     "m_33b93476cf59" to Entry(R.string.l10n_m_33b93476cf59, false, listOf(), "Time", false),
-    "m_c9da6a4a8999" to Entry(R.string.l10n_m_c9da6a4a8999, false, listOf(), "Install the Android build to use reminders on this device.", false),
+    "m_c9da6a4a8999" to Entry(R.string.l10n_m_c9da6a4a8999, false, listOf(), "Install the Android build to use reminders on this device.", false)
+  )
+  private fun chunk19(): Map<String, Entry> = mapOf(
     "m_fe8e0e6d9197" to Entry(R.string.l10n_m_fe8e0e6d9197, false, listOf(), "This reminder changed. Refresh it and try again.", false),
     "m_064837cfb680" to Entry(R.string.l10n_m_064837cfb680, false, listOf(), "The action could not be applied. Refresh and try again.", false),
     "m_0fdf485f5bfd" to Entry(R.string.l10n_m_0fdf485f5bfd, false, listOf(), "Agenda", false),
@@ -1480,9 +1624,7 @@ object MessageCatalog {
     "m_36b4a10de04d" to Entry(R.string.l10n_m_36b4a10de04d, false, listOf(), "Next scheduled dates", false),
     "m_8c2b2752eb0a" to Entry(R.string.l10n_m_8c2b2752eb0a, false, listOf(), "Next notifications", false),
     "m_c4fd79c88bc5" to Entry(R.string.l10n_m_c4fd79c88bc5, false, listOf(), "Next alarms", false),
-    "m_1787ad19aea5" to Entry(R.string.l10n_m_1787ad19aea5, false, listOf(), "Correct the repeat fields to preview dates.", false)
-  )
-  private fun chunk18(): Map<String, Entry> = mapOf(
+    "m_1787ad19aea5" to Entry(R.string.l10n_m_1787ad19aea5, false, listOf(), "Correct the repeat fields to preview dates.", false),
     "m_d55b202a4153" to Entry(R.string.l10n_m_d55b202a4153, false, listOf(), "Previewing current rule…", false),
     "m_c54c5811eb4f" to Entry(R.string.l10n_m_c54c5811eb4f, false, listOf(), "Could not preview this rule. Your draft is kept.", false),
     "m_ceba35272869" to Entry(R.string.l10n_m_ceba35272869, false, listOf(), "Retry preview", false),
@@ -1502,7 +1644,9 @@ object MessageCatalog {
     "m_192553fb51fb" to Entry(R.string.l10n_m_192553fb51fb, false, listOf(), "Mark as done: ", false),
     "m_3b4c6a754231" to Entry(R.string.l10n_m_3b4c6a754231, false, listOf(), "Open reminder: ", false),
     "m_6183768276ae" to Entry(R.string.l10n_m_6183768276ae, false, listOf(), "Long press for reminder actions", false),
-    "m_93ae4c694ec5" to Entry(R.string.l10n_m_93ae4c694ec5, false, listOf(), " · changed occurrence", false),
+    "m_93ae4c694ec5" to Entry(R.string.l10n_m_93ae4c694ec5, false, listOf(), " · changed occurrence", false)
+  )
+  private fun chunk20(): Map<String, Entry> = mapOf(
     "m_96f63af4d45b" to Entry(R.string.l10n_m_96f63af4d45b, false, listOf("arg0", "arg1", "arg2"), " · UTC{arg0}{arg1}:{arg2}", false),
     "m_54b61e4a03c4" to Entry(R.string.l10n_m_54b61e4a03c4, false, listOf(), "Independent time", false),
     "m_cf9c7aa24a26" to Entry(R.string.l10n_m_cf9c7aa24a26, false, listOf(), "When", false),
@@ -1562,9 +1706,7 @@ object MessageCatalog {
     "m_f53a93bd763f" to Entry(R.string.l10n_m_f53a93bd763f, false, listOf(), "Show more cities", false),
     "m_47bf6cee7617" to Entry(R.string.l10n_m_47bf6cee7617, false, listOf(), "Move this occurrence to Trash?", false),
     "m_b9348a0ffde3" to Entry(R.string.l10n_m_b9348a0ffde3, false, listOf(), "Move reminder to Trash?", false),
-    "m_13a483f418fc" to Entry(R.string.l10n_m_13a483f418fc, false, listOf(), "Its alert will be cancelled. You can restore it from Trash.", false)
-  )
-  private fun chunk19(): Map<String, Entry> = mapOf(
+    "m_13a483f418fc" to Entry(R.string.l10n_m_13a483f418fc, false, listOf(), "Its alert will be cancelled. You can restore it from Trash.", false),
     "m_d24f58583752" to Entry(R.string.l10n_m_d24f58583752, false, listOf(), "Only this occurrence moves to Trash. The repeating plan and other occurrences are kept.", false),
     "m_4c8d1b0c497f" to Entry(R.string.l10n_m_4c8d1b0c497f, false, listOf(), "Keep reminder", false),
     "m_a4fe65264ef7" to Entry(R.string.l10n_m_a4fe65264ef7, false, listOf(), "Language", false),
@@ -1584,7 +1726,9 @@ object MessageCatalog {
     "m_6df37daaa46c" to Entry(R.string.l10n_m_6df37daaa46c, false, listOf(), "week", false),
     "m_eb0d2375b518" to Entry(R.string.l10n_m_eb0d2375b518, false, listOf(), "weeks", false),
     "m_a5c7d1719e28" to Entry(R.string.l10n_m_a5c7d1719e28, false, listOf(), "month", false),
-    "m_168374334431" to Entry(R.string.l10n_m_168374334431, false, listOf(), "months", false),
+    "m_168374334431" to Entry(R.string.l10n_m_168374334431, false, listOf(), "months", false)
+  )
+  private fun chunk21(): Map<String, Entry> = mapOf(
     "m_4cb4ea25583c" to Entry(R.string.l10n_m_4cb4ea25583c, false, listOf(), "year", false),
     "m_1c50993b009c" to Entry(R.string.l10n_m_1c50993b009c, false, listOf(), "years", false),
     "m_157dca92e425" to Entry(R.string.l10n_m_157dca92e425, false, listOf(), "save", false),
@@ -1644,9 +1788,7 @@ object MessageCatalog {
     "m_4631596494ec" to Entry(R.string.l10n_m_4631596494ec, false, listOf(), "The managed source changed. Only a previously sent outcome may be checked.", true),
     "m_0381e6ae9b14" to Entry(R.string.l10n_m_0381e6ae9b14, false, listOf(), "Importing ongoing and upcoming events.", true),
     "m_1f62d40ba8ed" to Entry(R.string.l10n_m_1f62d40ba8ed, false, listOf(), "Calendar setup needs review.", true),
-    "m_0bb276f562cb" to Entry(R.string.l10n_m_0bb276f562cb, false, listOf(), "Automatic Calendar work is paused.", true)
-  )
-  private fun chunk20(): Map<String, Entry> = mapOf(
+    "m_0bb276f562cb" to Entry(R.string.l10n_m_0bb276f562cb, false, listOf(), "Automatic Calendar work is paused.", true),
     "m_f1361ab2c1f4" to Entry(R.string.l10n_m_f1361ab2c1f4, false, listOf(), "Managed Calendar sync is disabled.", true),
     "m_57d5feec5c1f" to Entry(R.string.l10n_m_57d5feec5c1f, false, listOf(), "Calendar access needs review.", true),
     "m_64ca0847a89f" to Entry(R.string.l10n_m_64ca0847a89f, false, listOf(), "Review current Calendar work before resuming.", true),
@@ -1666,7 +1808,9 @@ object MessageCatalog {
     "m_3e9b5a79cb67" to Entry(R.string.l10n_m_3e9b5a79cb67, false, listOf(), "Authorize the original Google account and retry this publication.", true),
     "m_1c23f55b5a78" to Entry(R.string.l10n_m_1c23f55b5a78, false, listOf(), "This publication belongs to another Google account. Reconnect its original account.", true),
     "m_fc2a8426e491" to Entry(R.string.l10n_m_fc2a8426e491, false, listOf(), "You no longer own the selected calendar. No new event was sent.", true),
-    "m_f5d4bc3f6ba1" to Entry(R.string.l10n_m_f5d4bc3f6ba1, false, listOf(), "Google denied access to this destination. Review its permissions before retrying.", true),
+    "m_f5d4bc3f6ba1" to Entry(R.string.l10n_m_f5d4bc3f6ba1, false, listOf(), "Google denied access to this destination. Review its permissions before retrying.", true)
+  )
+  private fun chunk22(): Map<String, Entry> = mapOf(
     "m_52cd021178ce" to Entry(R.string.l10n_m_52cd021178ce, false, listOf(), "Google rejected the saved event details (HTTP 400). If retrying still fails, report this error.", true),
     "m_150b44eeb9b5" to Entry(R.string.l10n_m_150b44eeb9b5, false, listOf(), "The saved event times could not be prepared for Google Calendar. Report this error before retrying.", true),
     "m_6c066e19957d" to Entry(R.string.l10n_m_6c066e19957d, false, listOf(), "The previously sent Calendar identity is missing or cancelled. No replacement event was created.", true),
@@ -1726,9 +1870,7 @@ object MessageCatalog {
     "m_d2b2e3cfbe7b" to Entry(R.string.l10n_m_d2b2e3cfbe7b, false, listOf(), "This reminder is no longer in Trash.", false),
     "m_d64b2799362c" to Entry(R.string.l10n_m_d64b2799362c, false, listOf(), "This reminder changed. Refresh before deleting it permanently.", false),
     "m_de2a55e20939" to Entry(R.string.l10n_m_de2a55e20939, false, listOf(), "Only reminders in Trash can be deleted permanently.", false),
-    "m_ec23fe5106b6" to Entry(R.string.l10n_m_ec23fe5106b6, false, listOf(), "Choose an existing list.", false)
-  )
-  private fun chunk21(): Map<String, Entry> = mapOf(
+    "m_ec23fe5106b6" to Entry(R.string.l10n_m_ec23fe5106b6, false, listOf(), "Choose an existing list.", false),
     "m_6f3b65a7e82c" to Entry(R.string.l10n_m_6f3b65a7e82c, false, listOf(), "This operation was already used. Try again.", false),
     "m_ab3564334c42" to Entry(R.string.l10n_m_ab3564334c42, false, listOf(), "This list was removed.", false),
     "m_672324b1c1ba" to Entry(R.string.l10n_m_672324b1c1ba, false, listOf(), "This list changed. Refresh before updating it.", false),
@@ -1748,7 +1890,9 @@ object MessageCatalog {
     "m_4acf61fd5ab5" to Entry(R.string.l10n_m_4acf61fd5ab5, false, listOf(), "Try this preview again.", false),
     "m_846a01d8a4e5" to Entry(R.string.l10n_m_846a01d8a4e5, false, listOf(), "Try this action again.", false),
     "m_74dfe94ef191" to Entry(R.string.l10n_m_74dfe94ef191, false, listOf(), "Choose a series.", false),
-    "m_f8d552fde0c9" to Entry(R.string.l10n_m_f8d552fde0c9, false, listOf(), "Choose a repeat rule.", false),
+    "m_f8d552fde0c9" to Entry(R.string.l10n_m_f8d552fde0c9, false, listOf(), "Choose a repeat rule.", false)
+  )
+  private fun chunk23(): Map<String, Entry> = mapOf(
     "m_8a63dfa1229b" to Entry(R.string.l10n_m_8a63dfa1229b, false, listOf(), "Choose an original occurrence.", false),
     "m_35348877ac0d" to Entry(R.string.l10n_m_35348877ac0d, false, listOf(), "Choose a Calendar option.", false),
     "m_daee8d8cf280" to Entry(R.string.l10n_m_daee8d8cf280, false, listOf(), "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.", false),
@@ -1808,9 +1952,7 @@ object MessageCatalog {
     "m_47a6585d63ac" to Entry(R.string.l10n_m_47a6585d63ac, false, listOf("arg0"), "Mark all as done ({arg0})", false),
     "m_befa490a5b8a" to Entry(R.string.l10n_m_befa490a5b8a, false, listOf("arg0"), "Mark all {arg0} shown reminders as done", false),
     "m_94d292cade49" to Entry(R.string.l10n_m_94d292cade49, false, listOf(), "Retry action", false),
-    "m_b22fd07a194a" to Entry(R.string.l10n_m_b22fd07a194a, false, listOf(), "alarm ringing", false)
-  )
-  private fun chunk22(): Map<String, Entry> = mapOf(
+    "m_b22fd07a194a" to Entry(R.string.l10n_m_b22fd07a194a, false, listOf(), "alarm ringing", false),
     "m_1827590dc0e9" to Entry(R.string.l10n_m_1827590dc0e9, false, listOf(), "starting alarm", false),
     "m_f86d3dead362" to Entry(R.string.l10n_m_f86d3dead362, false, listOf("arg0", "arg1"), "Mark as done, {arg0}, {arg1}", false),
     "m_49b5f82bba2e" to Entry(R.string.l10n_m_49b5f82bba2e, false, listOf("arg0", "arg1", "arg2"), "Snooze {arg0} minutes, {arg1}, {arg2}", false),
@@ -1830,7 +1972,9 @@ object MessageCatalog {
     "m_8d4ce3c39c9c" to Entry(R.string.l10n_m_8d4ce3c39c9c, false, listOf(), "Alarm could not ring", false),
     "m_8e9b539451c6" to Entry(R.string.l10n_m_8e9b539451c6, false, listOf(), "Reminder · tap to review", false),
     "m_304dfc45f451" to Entry(R.string.l10n_m_304dfc45f451, false, listOf(), "Exact alarm access is missing", false),
-    "m_72d981cddb10" to Entry(R.string.l10n_m_72d981cddb10, false, listOf(), "Product launcher is missing", false),
+    "m_72d981cddb10" to Entry(R.string.l10n_m_72d981cddb10, false, listOf(), "Product launcher is missing", false)
+  )
+  private fun chunk24(): Map<String, Entry> = mapOf(
     "m_23481b39598f" to Entry(R.string.l10n_m_23481b39598f, false, listOf(), "Language projection not confirmed", false),
     "m_4a8f540240f1" to Entry(R.string.l10n_m_4a8f540240f1, false, listOf(), " time", false),
     "m_6bcf3616a17d" to Entry(R.string.l10n_m_6bcf3616a17d, false, listOf(), " date", false),
@@ -1889,6 +2033,378 @@ object MessageCatalog {
     "item_count" to Entry(R.plurals.l10n_item_count, true, listOf("count"), "{count} items", false),
     "calendar_review_count" to Entry(R.plurals.l10n_calendar_review_count, true, listOf("count"), "Calendar items need review. Review {count} items.", false),
     "pending_updates" to Entry(R.plurals.l10n_pending_updates, true, listOf("count"), "{count} updates waiting", false),
-    "calendar_review_notification" to Entry(R.plurals.l10n_calendar_review_notification, true, listOf("count"), "{count} unfinished reminders need review.", false)
+    "calendar_review_notification" to Entry(R.plurals.l10n_calendar_review_notification, true, listOf("count"), "{count} unfinished reminders need review.", false),
+    "routine_title" to Entry(R.string.l10n_routine_title, false, listOf(), "Routine", false),
+    "routine_library" to Entry(R.string.l10n_routine_library, false, listOf(), "Routines", false),
+    "routine_library_hint" to Entry(R.string.l10n_routine_library_hint, false, listOf(), "Reusable step sequences with progress for each scheduled day.", false),
+    "routine_new" to Entry(R.string.l10n_routine_new, false, listOf(), "New routine", false),
+    "routine_attach" to Entry(R.string.l10n_routine_attach, false, listOf(), "Add weekly routine", false),
+    "routine_remove" to Entry(R.string.l10n_routine_remove, false, listOf(), "Remove routine from this draft", false),
+    "routine_weekly" to Entry(R.string.l10n_routine_weekly, false, listOf(), "Weekly plan", false),
+    "routine_exercises" to Entry(R.string.l10n_routine_exercises, false, listOf(), "Workout day", false),
+    "routine_rest" to Entry(R.string.l10n_routine_rest, false, listOf(), "Rest day", false),
+    "routine_today_only" to Entry(R.string.l10n_routine_today_only, false, listOf(), "Today only", false),
+    "routine_today_only_hint" to Entry(R.string.l10n_routine_today_only_hint, false, listOf(), "Available all day. Unfinished steps stay in history at midnight and never become overdue.", false),
+    "routine_quiet" to Entry(R.string.l10n_routine_quiet, false, listOf(), "Quiet notification", false),
+    "routine_no_alert" to Entry(R.string.l10n_routine_no_alert, false, listOf(), "No alert", false),
+    "routine_shared_time" to Entry(R.string.l10n_routine_shared_time, false, listOf(), "One time for every scheduled day", false),
+    "routine_weekly_hint" to Entry(R.string.l10n_routine_weekly_hint, false, listOf(), "Workout days follow this plan. Rest days have no notification or Agenda entry.", false),
+    "routine_changes_immediate" to Entry(R.string.l10n_routine_changes_immediate, false, listOf(), "Changes apply when you save, including today. Matching steps keep their checkmarks. Past days stay unchanged.", false),
+    "routine_change_review" to Entry(R.string.l10n_routine_change_review, false, listOf(), "Review changes", false),
+    "routine_changed_day" to Entry(R.string.l10n_routine_changed_day, false, listOf("day"), "Changed: {day}", false),
+    "routine_repeat" to Entry(R.string.l10n_routine_repeat, false, listOf("days"), "Every week · {days}", false),
+    "routine_exercise_count" to Entry(R.plurals.l10n_routine_exercise_count, true, listOf("count"), "{count} exercises", false),
+    "routine_progress" to Entry(R.string.l10n_routine_progress, false, listOf("done", "total"), "{done} of {total} completed", false)
+  )
+  private fun chunk25(): Map<String, Entry> = mapOf(
+    "routine_add_exercise" to Entry(R.string.l10n_routine_add_exercise, false, listOf(), "Add exercise", false),
+    "routine_name" to Entry(R.string.l10n_routine_name, false, listOf(), "Exercise name", false),
+    "routine_target" to Entry(R.string.l10n_routine_target, false, listOf(), "Sets, reps or time", false),
+    "routine_guidance" to Entry(R.string.l10n_routine_guidance, false, listOf(), "How to do it", false),
+    "routine_edit_exercise" to Entry(R.string.l10n_routine_edit_exercise, false, listOf(), "Edit exercise", false),
+    "routine_move_up" to Entry(R.string.l10n_routine_move_up, false, listOf(), "Move up", false),
+    "routine_move_down" to Entry(R.string.l10n_routine_move_down, false, listOf(), "Move down", false),
+    "routine_remove_exercise" to Entry(R.string.l10n_routine_remove_exercise, false, listOf(), "Remove exercise", false),
+    "routine_removed" to Entry(R.string.l10n_routine_removed, false, listOf(), "Exercise removed", false),
+    "routine_undo" to Entry(R.string.l10n_routine_undo, false, listOf(), "Undo", false),
+    "routine_use_day" to Entry(R.string.l10n_routine_use_day, false, listOf(), "Use this day", false),
+    "routine_validation" to Entry(R.string.l10n_routine_validation, false, listOf(), "Add a named exercise on every workout day, or choose Rest day.", false),
+    "routine_saved" to Entry(R.string.l10n_routine_saved, false, listOf(), "Routine saved", false),
+    "routine_back_reminder" to Entry(R.string.l10n_routine_back_reminder, false, listOf(), "Back to reminder", false),
+    "routine_history" to Entry(R.string.l10n_routine_history, false, listOf(), "Routine history", false),
+    "routine_skip" to Entry(R.string.l10n_routine_skip, false, listOf(), "Skip today", false),
+    "routine_undo_skip" to Entry(R.string.l10n_routine_undo_skip, false, listOf(), "Undo Skip today", false),
+    "routine_skipped" to Entry(R.string.l10n_routine_skipped, false, listOf(), "Skipped", false),
+    "routine_completed" to Entry(R.string.l10n_routine_completed, false, listOf(), "Completed", false),
+    "routine_ready" to Entry(R.string.l10n_routine_ready, false, listOf(), "Ready for today", false),
+    "routine_in_progress" to Entry(R.string.l10n_routine_in_progress, false, listOf(), "In progress", false),
+    "routine_not_completed" to Entry(R.string.l10n_routine_not_completed, false, listOf(), "Not completed", false),
+    "routine_partial" to Entry(R.string.l10n_routine_partial, false, listOf(), "Partially completed", false),
+    "routine_paused" to Entry(R.string.l10n_routine_paused, false, listOf(), "Paused", false),
+    "routine_upcoming" to Entry(R.string.l10n_routine_upcoming, false, listOf(), "Upcoming", false),
+    "routine_day_ended" to Entry(R.string.l10n_routine_day_ended, false, listOf(), "This day has ended. Corrections update history only.", false),
+    "routine_deleted" to Entry(R.string.l10n_routine_deleted, false, listOf(), "This session is in Trash. Restore it there before making corrections.", false),
+    "routine_focus" to Entry(R.string.l10n_routine_focus, false, listOf(), "Focus", false),
+    "routine_sequence" to Entry(R.string.l10n_routine_sequence, false, listOf(), "Exercises", false),
+    "routine_done" to Entry(R.string.l10n_routine_done, false, listOf(), "Mark as done", false),
+    "routine_undo_completion" to Entry(R.string.l10n_routine_undo_completion, false, listOf(), "Undo completion", false),
+    "routine_next" to Entry(R.string.l10n_routine_next, false, listOf(), "Next exercise", false),
+    "routine_previous" to Entry(R.string.l10n_routine_previous, false, listOf(), "Previous exercise", false),
+    "routine_correction_done" to Entry(R.string.l10n_routine_correction_done, false, listOf(), "Mark completed in history", false),
+    "routine_correction_saved" to Entry(R.string.l10n_routine_correction_saved, false, listOf(), "History corrected", false),
+    "routine_progress_saved" to Entry(R.string.l10n_routine_progress_saved, false, listOf(), "Progress saved", false),
+    "routine_skipped_saved" to Entry(R.string.l10n_routine_skipped_saved, false, listOf(), "Today skipped", false),
+    "routine_skip_undone" to Entry(R.string.l10n_routine_skip_undone, false, listOf(), "Today restored", false),
+    "routine_open_today" to Entry(R.string.l10n_routine_open_today, false, listOf(), "Open today", false),
+    "routine_empty_history" to Entry(R.string.l10n_routine_empty_history, false, listOf(), "No routine history yet", false),
+    "routine_edit" to Entry(R.string.l10n_routine_edit, false, listOf(), "Edit routine", false),
+    "routine_duplicate" to Entry(R.string.l10n_routine_duplicate, false, listOf(), "Duplicate routine", false),
+    "routine_pause" to Entry(R.string.l10n_routine_pause, false, listOf(), "Pause routine", false),
+    "routine_resume" to Entry(R.string.l10n_routine_resume, false, listOf(), "Resume routine", false),
+    "routine_plan" to Entry(R.string.l10n_routine_plan, false, listOf(), "View weekly plan", false),
+    "routine_rest_hint" to Entry(R.string.l10n_routine_rest_hint, false, listOf(), "Rest today. No exercises or notification to complete.", false),
+    "routine_paused_hint" to Entry(R.string.l10n_routine_paused_hint, false, listOf(), "Future days and notifications are paused. An existing session can still be completed.", false),
+    "routine_load_error" to Entry(R.string.l10n_routine_load_error, false, listOf(), "Could not load this routine. Try again.", false),
+    "routine_more" to Entry(R.string.l10n_routine_more, false, listOf(), "Routine actions", false),
+    "routine_notification_warning" to Entry(R.string.l10n_routine_notification_warning, false, listOf(), "Notifications are unavailable. Steps remain available in Agenda.", false),
+    "routine_channel_changed" to Entry(R.string.l10n_routine_channel_changed, false, listOf(), "Android controls this channel. Review its current sound and vibration settings.", false),
+    "routine_channel_settings" to Entry(R.string.l10n_routine_channel_settings, false, listOf(), "Routine notification settings", false),
+    "routine_next_prompt" to Entry(R.string.l10n_routine_next_prompt, false, listOf("time"), "Next notification: {time}", false),
+    "routine_no_catchup" to Entry(R.string.l10n_routine_no_catchup, false, listOf(), "If today’s time has passed, today stays available without a catch-up notification.", false),
+    "routine_history_changes" to Entry(R.string.l10n_routine_history_changes, false, listOf(), "Changes to this session", false),
+    "routine_correction_at" to Entry(R.string.l10n_routine_correction_at, false, listOf("time"), "Corrected {time}", false),
+    "routine_select_exercise" to Entry(R.string.l10n_routine_select_exercise, false, listOf(), "Choose an exercise below", false),
+    "routine_starts" to Entry(R.string.l10n_routine_starts, false, listOf(), "Starts on", false),
+    "routine_empty" to Entry(R.string.l10n_routine_empty, false, listOf(), "No routines yet", false),
+    "routine_instructions_fallback" to Entry(R.string.l10n_routine_instructions_fallback, false, listOf(), "Follow your saved target and guidance.", false),
+    "routine_attached_hint" to Entry(R.string.l10n_routine_attached_hint, false, listOf(), "Optional exercise progress with a different plan for each weekday.", false),
+    "routine_saved_changes" to Entry(R.string.l10n_routine_saved_changes, false, listOf(), "Routine updated. Changes are active now.", false),
+    "routine_day_0" to Entry(R.string.l10n_routine_day_0, false, listOf(), "Monday", false),
+    "routine_day_1" to Entry(R.string.l10n_routine_day_1, false, listOf(), "Tuesday", false),
+    "routine_day_2" to Entry(R.string.l10n_routine_day_2, false, listOf(), "Wednesday", false),
+    "routine_day_3" to Entry(R.string.l10n_routine_day_3, false, listOf(), "Thursday", false),
+    "routine_day_4" to Entry(R.string.l10n_routine_day_4, false, listOf(), "Friday", false),
+    "routine_day_5" to Entry(R.string.l10n_routine_day_5, false, listOf(), "Saturday", false),
+    "routine_day_6" to Entry(R.string.l10n_routine_day_6, false, listOf(), "Sunday", false),
+    "routine_channel" to Entry(R.string.l10n_routine_channel, false, listOf(), "Routine reminders", false),
+    "routine_channel_desc" to Entry(R.string.l10n_routine_channel_desc, false, listOf(), "Quiet prompts for today's routine", false),
+    "routine_notification_title" to Entry(R.string.l10n_routine_notification_title, false, listOf(), "Today's routine", false),
+    "routine_notification_body" to Entry(R.string.l10n_routine_notification_body, false, listOf(), "Your routine is ready for today.", false),
+    "routine_repeat_label" to Entry(R.string.l10n_routine_repeat_label, false, listOf(), "Repeat", false),
+    "routine_keep_draft" to Entry(R.string.l10n_routine_keep_draft, false, listOf(), "Keep my draft after review", false),
+    "routine_load_latest" to Entry(R.string.l10n_routine_load_latest, false, listOf(), "Load the latest plan", false),
+    "routine_day_open_error" to Entry(R.string.l10n_routine_day_open_error, false, listOf(), "Use today’s step controls while this day is open.", false),
+    "routine_stale_date" to Entry(R.string.l10n_routine_stale_date, false, listOf(), "This routine date changed. Open the dated session again.", false),
+    "routine_action_required" to Entry(R.string.l10n_routine_action_required, false, listOf(), "Open the routine to update step progress.", false),
+    "routine_validation_0" to Entry(R.string.l10n_routine_validation_0, false, listOf(), "Enter valid routine text.", false)
+  )
+  private fun chunk26(): Map<String, Entry> = mapOf(
+    "routine_validation_1" to Entry(R.string.l10n_routine_validation_1, false, listOf(), "Enter the required routine name or exercise.", false),
+    "routine_validation_2" to Entry(R.string.l10n_routine_validation_2, false, listOf(), "Choose a notification time.", false),
+    "routine_validation_3" to Entry(R.string.l10n_routine_validation_3, false, listOf(), "Routines support Notification or No alert.", false),
+    "routine_validation_4" to Entry(R.string.l10n_routine_validation_4, false, listOf(), "Choose seven routine days.", false),
+    "routine_validation_5" to Entry(R.string.l10n_routine_validation_5, false, listOf(), "Choose a routine day.", false),
+    "routine_validation_6" to Entry(R.string.l10n_routine_validation_6, false, listOf(), "Choose Exercises or Rest day.", false),
+    "routine_validation_7" to Entry(R.string.l10n_routine_validation_7, false, listOf(), "Add an exercise or choose Rest day.", false),
+    "routine_validation_8" to Entry(R.string.l10n_routine_validation_8, false, listOf(), "Choose an exercise.", false),
+    "routine_validation_9" to Entry(R.string.l10n_routine_validation_9, false, listOf(), "Exercise identities must be unique.", false),
+    "routine_validation_10" to Entry(R.string.l10n_routine_validation_10, false, listOf(), "Choose an approved illustration reference.", false),
+    "routine_validation_11" to Entry(R.string.l10n_routine_validation_11, false, listOf(), "Add at least one workout day, or pause the routine.", false),
+    "routine_validation_12" to Entry(R.string.l10n_routine_validation_12, false, listOf(), "Choose today or a future start date.", false),
+    "routine_validation_13" to Entry(R.string.l10n_routine_validation_13, false, listOf(), "Undo Skip today before changing exercises.", false),
+    "routine_validation_14" to Entry(R.string.l10n_routine_validation_14, false, listOf(), "Choose an exercise from this session.", false),
+    "routine_validation_15" to Entry(R.string.l10n_routine_validation_15, false, listOf(), "Choose the exercise completion state.", false),
+    "routine_next_after_changes" to Entry(R.string.l10n_routine_next_after_changes, false, listOf("time"), "First notification with these changes: {time}", false),
+    "widget_name" to Entry(R.string.l10n_widget_name, false, listOf(), "Home-screen widget", false),
+    "widget_description" to Entry(R.string.l10n_widget_description, false, listOf(), "See daily routine progress and today’s reminders.", false),
+    "widget_unlock" to Entry(R.string.l10n_widget_unlock, false, listOf(), "Unlock to view Remilo.", false),
+    "widget_add" to Entry(R.string.l10n_widget_add, false, listOf(), "Add to Home screen", false),
+    "widget_done" to Entry(R.string.l10n_widget_done, false, listOf(), "Done", false),
+    "widget_preview_title" to Entry(R.string.l10n_widget_preview_title, false, listOf(), "Front plank", false),
+    "widget_preview_target" to Entry(R.string.l10n_widget_preview_target, false, listOf(), "3 × 40 s", false),
+    "widget_settings" to Entry(R.string.l10n_widget_settings, false, listOf(), "Widget settings", false),
+    "widget_focus" to Entry(R.string.l10n_widget_focus, false, listOf(), "Routine Focus", false),
+    "widget_choose" to Entry(R.string.l10n_widget_choose, false, listOf(), "Choose what to show", false),
+    "widget_remilo_today" to Entry(R.string.l10n_widget_remilo_today, false, listOf(), "Remilo · Today", false),
+    "widget_remilo_routine" to Entry(R.string.l10n_widget_remilo_routine, false, listOf(), "Remilo · Routine", false),
+    "widget_today_hint" to Entry(R.string.l10n_widget_today_hint, false, listOf(), "Today's and overdue reminders, with an optional routine.", false),
+    "widget_routine_hint" to Entry(R.string.l10n_widget_routine_hint, false, listOf(), "One routine’s steps and daily progress.", false),
+    "widget_no_routine" to Entry(R.string.l10n_widget_no_routine, false, listOf(), "No routine", false),
+    "widget_no_routine_selected" to Entry(R.string.l10n_widget_no_routine_selected, false, listOf(), "No routine · Selected", false),
+    "widget_create_hint" to Entry(R.string.l10n_widget_create_hint, false, listOf(), "Create a routine in Remilo to show its progress.", false),
+    "widget_size_hint" to Entry(R.string.l10n_widget_size_hint, false, listOf(), "The size and text settings determine how much fits. Smaller widgets open Remilo for actions.", false),
+    "widget_load_error" to Entry(R.string.l10n_widget_load_error, false, listOf(), "Could not load the widget. Refresh to try again.", false),
+    "widget_changed" to Entry(R.string.l10n_widget_changed, false, listOf(), "This view changed. Review the refreshed routine.", false),
+    "widget_setup_changed" to Entry(R.string.l10n_widget_setup_changed, false, listOf(), "This view changed. Close setup and try again.", false),
+    "widget_pin_fallback" to Entry(R.string.l10n_widget_pin_fallback, false, listOf(), "Add Remilo from your home screen's Widgets menu.", false),
+    "widget_unavailable" to Entry(R.string.l10n_widget_unavailable, false, listOf(), "Routine unavailable", false),
+    "widget_not_started" to Entry(R.string.l10n_widget_not_started, false, listOf(), "Not started yet", false),
+    "widget_today_reminders" to Entry(R.string.l10n_widget_today_reminders, false, listOf(), "Today's reminders", false),
+    "widget_empty" to Entry(R.string.l10n_widget_empty, false, listOf(), "No reminders for today.", false),
+    "widget_reminder_count" to Entry(R.string.l10n_widget_reminder_count, false, listOf("count"), "{count} reminders", false),
+    "widget_agenda" to Entry(R.string.l10n_widget_agenda, false, listOf(), "View Agenda", false),
+    "widget_agenda_count" to Entry(R.string.l10n_widget_agenda_count, false, listOf("count"), "View Agenda ({count})", false),
+    "widget_undo" to Entry(R.string.l10n_widget_undo, false, listOf("name"), "Undo {name}", false),
+    "widget_next_alert" to Entry(R.string.l10n_widget_next_alert, false, listOf("time"), "Next alert: {time}", false),
+    "widget_setup_open_error" to Entry(R.string.l10n_widget_setup_open_error, false, listOf(), "Widget setup could not open.", false),
+    "widget_unlock_open" to Entry(R.string.l10n_widget_unlock_open, false, listOf(), "Open Remilo after unlocking.", false),
+    "widget_completed_name" to Entry(R.string.l10n_widget_completed_name, false, listOf("name"), "Completed: {name}", false),
+    "routine_type_label" to Entry(R.string.l10n_routine_type_label, false, listOf(), "Type", false),
+    "routine_type_reminder" to Entry(R.string.l10n_routine_type_reminder, false, listOf(), "Reminder", false),
+    "routine_type_weekly" to Entry(R.string.l10n_routine_type_weekly, false, listOf(), "Weekly routine", false),
+    "routine_exercises_by_day" to Entry(R.string.l10n_routine_exercises_by_day, false, listOf(), "Exercises by day", false),
+    "routine_day_editor_title" to Entry(R.string.l10n_routine_day_editor_title, false, listOf("day"), "{day} · Exercises", false),
+    "routine_day_fresh_hint" to Entry(R.string.l10n_routine_day_fresh_hint, false, listOf(), "Rest days have no alerts. Each day starts fresh; unfinished workouts stay in history.", false),
+    "routine_plan_local_hint" to Entry(R.string.l10n_routine_plan_local_hint, false, listOf(), "Changes stay in this draft until you save the routine.", false),
+    "routine_child_done" to Entry(R.string.l10n_routine_child_done, false, listOf(), "Done", false),
+    "routine_child_add" to Entry(R.string.l10n_routine_child_add, false, listOf(), "Add exercise", false),
+    "routine_child_discard_title" to Entry(R.string.l10n_routine_child_discard_title, false, listOf(), "Discard changes?", false),
+    "routine_child_discard_hint" to Entry(R.string.l10n_routine_child_discard_hint, false, listOf(), "Your changes on this screen have not been applied.", false),
+    "routine_day_rest_summary" to Entry(R.string.l10n_routine_day_rest_summary, false, listOf(), "Rest day · No alert", false),
+    "routine_day_editor_hint" to Entry(R.string.l10n_routine_day_editor_hint, false, listOf(), "Add exercises for this day or make it a rest day.", false),
+    "routine_current_position" to Entry(R.string.l10n_routine_current_position, false, listOf("current", "total"), "Current exercise · {current} of {total}", false),
+    "routine_completed_named" to Entry(R.string.l10n_routine_completed_named, false, listOf("name"), "Completed {name}", false),
+    "routine_undo_named" to Entry(R.string.l10n_routine_undo_named, false, listOf("name"), "Undo {name} completion", false),
+    "routine_read_more" to Entry(R.string.l10n_routine_read_more, false, listOf(), "Read more", false),
+    "routine_read_less" to Entry(R.string.l10n_routine_read_less, false, listOf(), "Show less", false),
+    "routine_view_illustration" to Entry(R.string.l10n_routine_view_illustration, false, listOf(), "View illustration", false),
+    "routine_illustration_title" to Entry(R.string.l10n_routine_illustration_title, false, listOf("name"), "{name} illustration", false),
+    "routine_ordinal" to Entry(R.string.l10n_routine_ordinal, false, listOf("current", "total"), "{current} of {total}", false),
+    "routine_daily_finished" to Entry(R.string.l10n_routine_daily_finished, false, listOf(), "All steps completed", false),
+    "routine_illustrations_pending" to Entry(R.string.l10n_routine_illustrations_pending, false, listOf(), "Illustrations are being prepared. Exercise names, targets and guidance remain available.", false),
+    "exercise_front_plank" to Entry(R.string.l10n_exercise_front_plank, false, listOf(), "Front plank", false),
+    "exercise_front_plank_description" to Entry(R.string.l10n_exercise_front_plank_description, false, listOf(), "Side view of a person holding a forearm plank on a mat, supported by forearms and toes.", false),
+    "routine_correct_checkmarks" to Entry(R.string.l10n_routine_correct_checkmarks, false, listOf(), "Correct checkmarks", false),
+    "routine_mark_named" to Entry(R.string.l10n_routine_mark_named, false, listOf("name"), "Mark {name} as done", false),
+    "routine_illustration" to Entry(R.string.l10n_routine_illustration, false, listOf(), "Exercise image", false),
+    "routine_no_illustration" to Entry(R.string.l10n_routine_no_illustration, false, listOf(), "No image", false),
+    "routine_illustration_unavailable" to Entry(R.string.l10n_routine_illustration_unavailable, false, listOf(), "Illustration unavailable", false)
+  )
+  private fun chunk27(): Map<String, Entry> = mapOf(
+    "routine_exercise_editor_title" to Entry(R.string.l10n_routine_exercise_editor_title, false, listOf(), "Exercise", false),
+    "routine_alarm_start" to Entry(R.string.l10n_routine_alarm_start, false, listOf(), "Start routine", false),
+    "routine_alarm_dismiss" to Entry(R.string.l10n_routine_alarm_dismiss, false, listOf(), "Dismiss alarm", false),
+    "routine_snooze_day_end" to Entry(R.string.l10n_routine_snooze_day_end, false, listOf(), "Snooze would pass the end of today.", false),
+    "routine_mode_validation" to Entry(R.string.l10n_routine_mode_validation, false, listOf(), "Choose Alarm, Notification or No alert.", false),
+    "routine_vibration_validation" to Entry(R.string.l10n_routine_vibration_validation, false, listOf(), "Choose a vibration setting.", false),
+    "widget_retry_same_action" to Entry(R.string.l10n_widget_retry_same_action, false, listOf(), "Retry the same action", false),
+    "routine_complete_continue" to Entry(R.string.l10n_routine_complete_continue, false, listOf(), "Complete & continue", false),
+    "routine_complete_exercise" to Entry(R.string.l10n_routine_complete_exercise, false, listOf(), "Complete exercise", false),
+    "routine_view_previous" to Entry(R.string.l10n_routine_view_previous, false, listOf(), "View previous exercise", false),
+    "routine_completed_exercise" to Entry(R.string.l10n_routine_completed_exercise, false, listOf(), "Completed exercise", false),
+    "routine_one_check" to Entry(R.string.l10n_routine_one_check, false, listOf(), "One check per step", false),
+    "routine_alarm_dismissing" to Entry(R.string.l10n_routine_alarm_dismissing, false, listOf(), "Dismissing alarm…", false),
+    "routine_dated_title" to Entry(R.string.l10n_routine_dated_title, false, listOf("day"), "{day}’s routine", false),
+    "routine_focus_announcement" to Entry(R.string.l10n_routine_focus_announcement, false, listOf("name", "position", "total"), "Current step: {name}. {position} of {total}.", false),
+    "routine_day_names_more" to Entry(R.string.l10n_routine_day_names_more, false, listOf("names", "count"), "{names} · +{count} more", false),
+    "routine_exercise_removed_named" to Entry(R.string.l10n_routine_exercise_removed_named, false, listOf("name"), "{name} removed", false),
+    "routine_undo_removed_named" to Entry(R.string.l10n_routine_undo_removed_named, false, listOf("name"), "Undo removal of {name}", false),
+    "routine_first_exercise_hint" to Entry(R.string.l10n_routine_first_exercise_hint, false, listOf(), "Choose a day to add your first exercise.", false),
+    "routine_change_summary" to Entry(R.string.l10n_routine_change_summary, false, listOf("count"), "{count} days changed", false),
+    "routine_change_details" to Entry(R.string.l10n_routine_change_details, false, listOf(), "Review changes", false),
+    "routine_time_validation" to Entry(R.string.l10n_routine_time_validation, false, listOf(), "Choose a routine time.", false),
+    "routine_repeat_empty" to Entry(R.string.l10n_routine_repeat_empty, false, listOf(), "Every week · Choose workout days", false),
+    "exercise_bird_dog" to Entry(R.string.l10n_exercise_bird_dog, false, listOf(), "Bird-dog", false),
+    "exercise_bird_dog_description" to Entry(R.string.l10n_exercise_bird_dog_description, false, listOf(), "A person balancing on one hand and knee while extending the opposite arm and leg.", false),
+    "exercise_side_plank" to Entry(R.string.l10n_exercise_side_plank, false, listOf(), "Side plank", false),
+    "exercise_side_plank_description" to Entry(R.string.l10n_exercise_side_plank_description, false, listOf(), "A person holding a side plank, supported by one forearm and the sides of the feet.", false),
+    "exercise_running" to Entry(R.string.l10n_exercise_running, false, listOf(), "Running", false),
+    "exercise_running_description" to Entry(R.string.l10n_exercise_running_description, false, listOf(), "A person running, shown from the side.", false),
+    "exercise_incline_treadmill_walking" to Entry(R.string.l10n_exercise_incline_treadmill_walking, false, listOf(), "Incline treadmill walk", false),
+    "exercise_incline_treadmill_walking_description" to Entry(R.string.l10n_exercise_incline_treadmill_walking_description, false, listOf(), "A person walking on an inclined treadmill.", false),
+    "exercise_walking" to Entry(R.string.l10n_exercise_walking, false, listOf(), "Walking", false),
+    "exercise_walking_description" to Entry(R.string.l10n_exercise_walking_description, false, listOf(), "A person walking, shown from the side.", false),
+    "exercise_lat_pulldown" to Entry(R.string.l10n_exercise_lat_pulldown, false, listOf(), "Lat pulldown", false),
+    "exercise_lat_pulldown_description" to Entry(R.string.l10n_exercise_lat_pulldown_description, false, listOf(), "A seated person holding a wide bar on a lat pulldown machine.", false),
+    "exercise_machine_chest_press" to Entry(R.string.l10n_exercise_machine_chest_press, false, listOf(), "Machine chest press", false),
+    "exercise_machine_chest_press_description" to Entry(R.string.l10n_exercise_machine_chest_press_description, false, listOf(), "A seated person pressing the handles of a chest press machine.", false),
+    "exercise_cable_face_pull" to Entry(R.string.l10n_exercise_cable_face_pull, false, listOf(), "Cable face pull", false),
+    "exercise_cable_face_pull_description" to Entry(R.string.l10n_exercise_cable_face_pull_description, false, listOf(), "A standing person pulling a cable rope attachment toward the face.", false),
+    "exercise_dumbbell_shoulder_press" to Entry(R.string.l10n_exercise_dumbbell_shoulder_press, false, listOf(), "Dumbbell shoulder press", false),
+    "exercise_dumbbell_shoulder_press_description" to Entry(R.string.l10n_exercise_dumbbell_shoulder_press_description, false, listOf(), "A seated person pressing two dumbbells upward.", false),
+    "exercise_machine_shoulder_press" to Entry(R.string.l10n_exercise_machine_shoulder_press, false, listOf(), "Machine shoulder press", false),
+    "exercise_machine_shoulder_press_description" to Entry(R.string.l10n_exercise_machine_shoulder_press_description, false, listOf(), "A seated person pressing the handles of a shoulder press machine upward.", false),
+    "exercise_incline_hammer_curl" to Entry(R.string.l10n_exercise_incline_hammer_curl, false, listOf(), "Incline hammer curl", false),
+    "exercise_incline_hammer_curl_description" to Entry(R.string.l10n_exercise_incline_hammer_curl_description, false, listOf(), "A person on an incline bench curling dumbbells with palms facing inward.", false),
+    "exercise_cable_triceps_pushdown" to Entry(R.string.l10n_exercise_cable_triceps_pushdown, false, listOf(), "Cable triceps pushdown", false),
+    "exercise_cable_triceps_pushdown_description" to Entry(R.string.l10n_exercise_cable_triceps_pushdown_description, false, listOf(), "A standing person extending the elbows to push a cable attachment downward.", false),
+    "exercise_goblet_squat" to Entry(R.string.l10n_exercise_goblet_squat, false, listOf(), "Goblet squat", false),
+    "exercise_goblet_squat_description" to Entry(R.string.l10n_exercise_goblet_squat_description, false, listOf(), "A person squatting while holding a dumbbell close to the chest.", false),
+    "exercise_dumbbell_bench_press" to Entry(R.string.l10n_exercise_dumbbell_bench_press, false, listOf(), "Dumbbell bench press", false),
+    "exercise_dumbbell_bench_press_description" to Entry(R.string.l10n_exercise_dumbbell_bench_press_description, false, listOf(), "A person lying on a bench and pressing two dumbbells upward.", false),
+    "exercise_dumbbell_rdl" to Entry(R.string.l10n_exercise_dumbbell_rdl, false, listOf(), "Dumbbell Romanian deadlift", false),
+    "exercise_dumbbell_rdl_description" to Entry(R.string.l10n_exercise_dumbbell_rdl_description, false, listOf(), "A person hinging forward at the hips while holding dumbbells near the legs.", false),
+    "exercise_one_arm_dumbbell_row" to Entry(R.string.l10n_exercise_one_arm_dumbbell_row, false, listOf(), "One-arm dumbbell row", false),
+    "exercise_one_arm_dumbbell_row_description" to Entry(R.string.l10n_exercise_one_arm_dumbbell_row_description, false, listOf(), "A person supported on a bench, drawing one dumbbell toward the hip.", false),
+    "routine_editor_new" to Entry(R.string.l10n_routine_editor_new, false, listOf(), "New weekly routine", false),
+    "routine_editor_edit" to Entry(R.string.l10n_routine_editor_edit, false, listOf(), "Edit weekly routine", false),
+    "routine_undo_capacity_hint" to Entry(R.string.l10n_routine_undo_capacity_hint, false, listOf(), "A day can have 100 steps. One space is reserved for Undo until you finish editing this day.", false),
+    "field_required_label" to Entry(R.string.l10n_field_required_label, false, listOf("label"), "{label} (required)", false),
+    "routine_viewing" to Entry(R.string.l10n_routine_viewing, false, listOf(), "Viewing", false),
+    "routine_viewing_position" to Entry(R.string.l10n_routine_viewing_position, false, listOf("current", "total"), "Viewing exercise · {current} of {total}", false),
+    "routine_exercise_name" to Entry(R.string.l10n_routine_exercise_name, false, listOf(), "Exercise name", false),
+    "routine_name_example" to Entry(R.string.l10n_routine_name_example, false, listOf(), "Front plank", false),
+    "routine_target_example" to Entry(R.string.l10n_routine_target_example, false, listOf(), "3 × 40 seconds", false),
+    "routine_target_help" to Entry(R.string.l10n_routine_target_help, false, listOf(), "Include weight, incline or intervals when needed.", false),
+    "routine_guidance_example" to Entry(R.string.l10n_routine_guidance_example, false, listOf(), "Complete all three holds, then continue.", false),
+    "routine_guidance_help" to Entry(R.string.l10n_routine_guidance_help, false, listOf(), "Add setup tips or technique reminders.", false),
+    "routine_image_help" to Entry(R.string.l10n_routine_image_help, false, listOf(), "Choose a library illustration or add your own photo.", false),
+    "routine_add_photo" to Entry(R.string.l10n_routine_add_photo, false, listOf(), "Add your photo", false),
+    "routine_replace_photo" to Entry(R.string.l10n_routine_replace_photo, false, listOf(), "Replace photo", false),
+    "routine_use_photo" to Entry(R.string.l10n_routine_use_photo, false, listOf(), "Use photo", false),
+    "routine_choose_another_photo" to Entry(R.string.l10n_routine_choose_another_photo, false, listOf(), "Choose another photo", false),
+    "routine_remove_image" to Entry(R.string.l10n_routine_remove_image, false, listOf(), "Remove image", false),
+    "routine_photo_for" to Entry(R.string.l10n_routine_photo_for, false, listOf("name"), "Photo for {name}", false),
+    "routine_view_image" to Entry(R.string.l10n_routine_view_image, false, listOf(), "View image", false),
+    "routine_image_unavailable" to Entry(R.string.l10n_routine_image_unavailable, false, listOf(), "Image unavailable", false),
+    "routine_photo_error" to Entry(R.string.l10n_routine_photo_error, false, listOf(), "Could not add this photo. Choose a still image under 50 MiB.", false),
+    "routine_photo_source_large" to Entry(R.string.l10n_routine_photo_source_large, false, listOf(), "This photo is larger than 50 MiB. Choose a smaller image.", false),
+    "routine_photo_output_large" to Entry(R.string.l10n_routine_photo_output_large, false, listOf(), "This photo is still too large after resizing. Choose a simpler or smaller image.", false),
+    "routine_photo_unsupported" to Entry(R.string.l10n_routine_photo_unsupported, false, listOf(), "Choose a still photo. Animated images are not supported.", false)
+  )
+  private fun chunk28(): Map<String, Entry> = mapOf(
+    "routine_photo_unreadable" to Entry(R.string.l10n_routine_photo_unreadable, false, listOf(), "This image could not be read. Try another photo.", false),
+    "routine_photo_storage_full" to Entry(R.string.l10n_routine_photo_storage_full, false, listOf(), "There is not enough storage to add this photo. Free some space and try again.", false),
+    "routine_trash_hint" to Entry(R.string.l10n_routine_trash_hint, false, listOf(), "Moves this routine and its recorded days to Trash.", false),
+    "routine_trashed" to Entry(R.string.l10n_routine_trashed, false, listOf(), "Routine moved to Trash", false),
+    "routine_restored" to Entry(R.string.l10n_routine_restored, false, listOf(), "Routine restored", false),
+    "routine_purged" to Entry(R.string.l10n_routine_purged, false, listOf(), "Routine permanently deleted", false),
+    "routine_in_trash" to Entry(R.string.l10n_routine_in_trash, false, listOf(), "Routine in Trash", false),
+    "routine_trash_days" to Entry(R.string.l10n_routine_trash_days, false, listOf("count"), "{count} recorded days", false),
+    "widget_resume" to Entry(R.string.l10n_widget_resume, false, listOf(), "Resume", false),
+    "widget_next" to Entry(R.string.l10n_widget_next, false, listOf("name"), "Next: {name}", false),
+    "widget_done_count" to Entry(R.string.l10n_widget_done_count, false, listOf("done", "total"), "{done} of {total} done", false),
+    "backup_photos" to Entry(R.string.l10n_backup_photos, false, listOf("count"), "Includes {count} custom images", false),
+    "backup_photo_hint" to Entry(R.string.l10n_backup_photo_hint, false, listOf(), "Backups include saved custom images and routine history. Older JSON backups can also be restored.", false),
+    "widget_preview_progress" to Entry(R.string.l10n_widget_preview_progress, false, listOf(), "1 of 4 done", false),
+    "widget_preview_next" to Entry(R.string.l10n_widget_preview_next, false, listOf(), "Next: Side plank", false),
+    "widget_refresh" to Entry(R.string.l10n_widget_refresh, false, listOf(), "Refresh", false),
+    "widget_preview_compact" to Entry(R.string.l10n_widget_preview_compact, false, listOf(), "Compact", false),
+    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false),
+    "publication_checked_confirmed" to Entry(R.string.l10n_publication_checked_confirmed, false, listOf(), "Publication checked. The original Google Calendar copy is confirmed.", false),
+    "publication_checked_cancelled" to Entry(R.string.l10n_publication_checked_cancelled, false, listOf(), "Publication was cancelled before it was sent. No Google event was created.", false),
+    "publication_checked_inactive" to Entry(R.string.l10n_publication_checked_inactive, false, listOf(), "The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.", false),
+    "publication_checked_unconfirmed" to Entry(R.string.l10n_publication_checked_unconfirmed, false, listOf(), "Google has not confirmed the original publication. Check again later or review the event in Google Calendar.", true),
+    "publication_inactive_context" to Entry(R.string.l10n_publication_inactive_context, false, listOf(), "This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.", false),
+    "publication_checking" to Entry(R.string.l10n_publication_checking, false, listOf(), "Checking the original publication…", false),
+    "calendar_review_action_count" to Entry(R.plurals.l10n_calendar_review_action_count, true, listOf("count"), "Review {count} items", false),
+    "widget_example_label" to Entry(R.string.l10n_widget_example_label, false, listOf(), "Example preview · Sample content only", false),
+    "widget_preview_loading" to Entry(R.string.l10n_widget_preview_loading, false, listOf(), "Loading preview…", false),
+    "widget_preview_error" to Entry(R.string.l10n_widget_preview_error, false, listOf(), "Could not load the preview.", false),
+    "widget_empty_help" to Entry(R.string.l10n_widget_empty_help, false, listOf(), "Today's and overdue reminders will appear here.", false),
+    "widget_rest_help" to Entry(R.string.l10n_widget_rest_help, false, listOf(), "No exercises scheduled today.", false),
+    "widget_choose_routine" to Entry(R.string.l10n_widget_choose_routine, false, listOf(), "Choose routine", false),
+    "widget_choose_routine_help" to Entry(R.string.l10n_widget_choose_routine_help, false, listOf(), "Choose a routine to show its progress.", false),
+    "widget_view_routine" to Entry(R.string.l10n_widget_view_routine, false, listOf(), "View routine", false),
+    "widget_example_routine_title" to Entry(R.string.l10n_widget_example_routine_title, false, listOf(), "Core & intervals", false),
+    "widget_example_reminder_title" to Entry(R.string.l10n_widget_example_reminder_title, false, listOf(), "Water plants", false),
+    "widget_example_intervals" to Entry(R.string.l10n_widget_example_intervals, false, listOf(), "Intervals", false),
+    "widget_example_reps" to Entry(R.string.l10n_widget_example_reps, false, listOf(), "3 × 10", false),
+    "widget_example_side_target" to Entry(R.string.l10n_widget_example_side_target, false, listOf(), "3 × 25 s / side", false),
+    "widget_example_intervals_target" to Entry(R.string.l10n_widget_example_intervals_target, false, listOf(), "8 intervals", false),
+    "calendar_sync_inactive" to Entry(R.string.l10n_calendar_sync_inactive, false, listOf(), "Calendar sync inactive", false),
+    "routine_title_error" to Entry(R.string.l10n_routine_title_error, false, listOf(), "Enter a title.", false),
+    "routine_widget_step" to Entry(R.string.l10n_routine_widget_step, false, listOf("current", "total"), "Step {current} of {total}", false),
+    "routine_preview_drink" to Entry(R.string.l10n_routine_preview_drink, false, listOf(), "Drink water", false),
+    "routine_preview_ready" to Entry(R.string.l10n_routine_preview_ready, false, listOf(), "Get ready", false),
+    "routine_preview_time" to Entry(R.string.l10n_routine_preview_time, false, listOf(), "10 minutes", false),
+    "routine_native_required" to Entry(R.string.l10n_routine_native_required, false, listOf(), "Enter the required routine name or step.", false),
+    "routine_native_day" to Entry(R.string.l10n_routine_native_day, false, listOf(), "Choose a scheduled day or an unscheduled day.", false),
+    "routine_native_add" to Entry(R.string.l10n_routine_native_add, false, listOf(), "Add a step on every scheduled day.", false),
+    "routine_native_step" to Entry(R.string.l10n_routine_native_step, false, listOf(), "Choose a step.", false),
+    "routine_native_unique" to Entry(R.string.l10n_routine_native_unique, false, listOf(), "Step identities must be unique.", false),
+    "routine_native_active" to Entry(R.string.l10n_routine_native_active, false, listOf(), "Choose at least one scheduled day, or pause the routine.", false),
+    "routine_native_photo" to Entry(R.string.l10n_routine_native_photo, false, listOf(), "Choose an available step photo.", false),
+    "routine_native_image" to Entry(R.string.l10n_routine_native_image, false, listOf(), "Choose one step image.", false),
+    "routine_native_skip" to Entry(R.string.l10n_routine_native_skip, false, listOf(), "Undo Skip today before changing steps.", false),
+    "routine_native_session" to Entry(R.string.l10n_routine_native_session, false, listOf(), "Choose a step from this session.", false),
+    "routine_native_completion" to Entry(R.string.l10n_routine_native_completion, false, listOf(), "Choose the step completion state.", false),
+    "routine_native_authoring" to Entry(R.string.l10n_routine_native_authoring, false, listOf(), "Choose valid routine fields and step arrangement.", false),
+    "routine_native_links" to Entry(R.string.l10n_routine_native_links, false, listOf(), "Routine step links are invalid.", false),
+    "routine_native_shared" to Entry(R.string.l10n_routine_native_shared, false, listOf(), "Shared steps must match on every scheduled day.", false),
+    "routine_title_example" to Entry(R.string.l10n_routine_title_example, false, listOf(), "Morning routine", false),
+    "routine_remove_step" to Entry(R.string.l10n_routine_remove_step, false, listOf(), "Remove step", false),
+    "routine_day_steps" to Entry(R.string.l10n_routine_day_steps, false, listOf("day"), "{day} · Steps", false),
+    "routine_preview_next" to Entry(R.string.l10n_routine_preview_next, false, listOf(), "Next: Plan the day", false),
+    "calendar_import_all_count" to Entry(R.string.l10n_calendar_import_all_count, false, listOf("count"), "Import all ({count})", false),
+    "mark_all_done_count" to Entry(R.string.l10n_mark_all_done_count, false, listOf("count"), "Mark all as done ({count})", false),
+    "repeat_interval_label" to Entry(R.string.l10n_repeat_interval_label, false, listOf("unit"), "Repeat every ({unit})", false),
+    "postpone_action" to Entry(R.string.l10n_postpone_action, false, listOf(), "Postpone", false),
+    "postpone_all_action" to Entry(R.string.l10n_postpone_all_action, false, listOf("count"), "Postpone all ({count})", false),
+    "postpone_one_day" to Entry(R.string.l10n_postpone_one_day, false, listOf(), "1 day", false),
+    "postpone_choose_date_time" to Entry(R.string.l10n_postpone_choose_date_time, false, listOf(), "Choose date & time", false),
+    "postpone_scope_single" to Entry(R.string.l10n_postpone_scope_single, false, listOf(), "Only the next alert changes. The reminder stays unfinished.", false),
+    "postpone_next_alert" to Entry(R.string.l10n_postpone_next_alert, false, listOf(), "Next alert", false),
+    "postpone_custom_date_time" to Entry(R.string.l10n_postpone_custom_date_time, false, listOf(), "Custom date & time", false),
+    "postpone_use_time" to Entry(R.string.l10n_postpone_use_time, false, listOf(), "Use this time", false),
+    "postpone_back_choices" to Entry(R.string.l10n_postpone_back_choices, false, listOf(), "Back to choices", false),
+    "postpone_future_time" to Entry(R.string.l10n_postpone_future_time, false, listOf(), "Choose a future time.", false),
+    "postpone_scope_group" to Entry(R.string.l10n_postpone_scope_group, false, listOf("count"), "Changes the next alert for these {count} reminders. They stay unfinished.", false),
+    "postpone_15_minutes" to Entry(R.string.l10n_postpone_15_minutes, false, listOf(), "15 min", false),
+    "postpone_30_minutes" to Entry(R.string.l10n_postpone_30_minutes, false, listOf(), "30 min", false),
+    "postpone_one_hour" to Entry(R.string.l10n_postpone_one_hour, false, listOf(), "1 hour", false)
+  )
+  private fun chunk29(): Map<String, Entry> = mapOf(
+    "postpone_tomorrow" to Entry(R.string.l10n_postpone_tomorrow, false, listOf(), "Tomorrow", false),
+    "postpone_next_group" to Entry(R.string.l10n_postpone_next_group, false, listOf("count"), "Next alerts for all {count}", false),
+    "postpone_24_hours" to Entry(R.string.l10n_postpone_24_hours, false, listOf(), "24 hours later", false),
+    "postpone_custom" to Entry(R.string.l10n_postpone_custom, false, listOf(), "Custom", false),
+    "postpone_date_time" to Entry(R.string.l10n_postpone_date_time, false, listOf(), "Date & time", false),
+    "postpone_stale" to Entry(R.string.l10n_postpone_stale, false, listOf(), "These reminders changed. Close and choose again.", false),
+    "postpone_saved_times_locked" to Entry(R.string.l10n_postpone_saved_times_locked, false, listOf(), "Saved times are available after unlocking.", false),
+    "postpone_all_plain" to Entry(R.string.l10n_postpone_all_plain, false, listOf(), "Postpone all", false),
+    "postpone_submitting" to Entry(R.string.l10n_postpone_submitting, false, listOf(), "Postponing…", false),
+    "postpone_submitting_group" to Entry(R.string.l10n_postpone_submitting_group, false, listOf("count"), "Postponing {count} reminders…", false),
+    "postpone_failed_time" to Entry(R.string.l10n_postpone_failed_time, false, listOf(), "Could not resolve this time. Choose again.", false),
+    "postpone_zone" to Entry(R.string.l10n_postpone_zone, false, listOf("zone"), "Times shown in {zone}", false),
+    "postpone_group_subject" to Entry(R.string.l10n_postpone_group_subject, false, listOf("count"), "These {count} reminders", false),
+    "postpone_pending" to Entry(R.string.l10n_postpone_pending, false, listOf(), "Postpone is saved; scheduling is pending. Retry the same action.", false),
+    "postpone_failed_schedule" to Entry(R.string.l10n_postpone_failed_schedule, false, listOf(), "Could not schedule Postpone. Review alert problems in Remilo.", false),
+    "postpone_partial" to Entry(R.string.l10n_postpone_partial, false, listOf("scheduled", "count"), "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.", false),
+    "postpone_selected" to Entry(R.string.l10n_postpone_selected, false, listOf(), "Selected", false),
+    "postpone_invalid_request" to Entry(R.string.l10n_postpone_invalid_request, false, listOf(), "This Postpone request is invalid. Close and choose the reminder again.", false),
+    "postpone_request_waiting" to Entry(R.string.l10n_postpone_request_waiting, false, listOf(), "Finish the current postponement before opening another.", false),
+    "postpone_load_failed" to Entry(R.string.l10n_postpone_load_failed, false, listOf(), "Could not load these reminders. Try again.", false),
+    "postpone_return_home" to Entry(R.string.l10n_postpone_return_home, false, listOf(), "Return to Home", false)
   )
 }

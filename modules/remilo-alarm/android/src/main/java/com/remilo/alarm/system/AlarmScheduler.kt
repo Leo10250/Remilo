@@ -41,8 +41,9 @@ class AlarmScheduler(private val context: Context) : AlarmRegistrar {
   companion object {
     fun capturedActionIntent(context: Context, purpose: String, alert: AlertRecord): Intent =
       intent(context, purpose, alert.occurrenceId, alert.generation).apply {
+        if (purpose in setOf("routinedismiss", "routinesnooze")) { putExtra("routineSessionId", alert.sessionId); putExtra("routineDate", alert.nominalSlot?.substringBefore('T')) }
         // Settings change without advancing delivery generations. Keep old shown durations immutable.
-        if (purpose == "quicksnooze") {
+        if (purpose in setOf("quicksnooze", "routinesnooze")) {
           data = data!!.buildUpon().appendPath(alert.snoozeMinutes.toString()).build()
           putExtra("snoozeMinutes", alert.snoozeMinutes)
         }

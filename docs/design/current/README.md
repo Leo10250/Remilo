@@ -6,6 +6,13 @@ repository cleanup authorized by [A37](../approved-design-cleanup.json), and
 This is the entry point for the four-atmosphere redesign. Implementation status
 belongs only in [the backlog](../../backlog.md).
 
+The owner's 28 October [uniform Postpone chooser](postpone-chooser.md) replaces
+native/ringing Details quick-Snooze controls with Mark as done/Postpone and adds
+captured Postpone all. It governs the eight matching tiles, shared native time
+resolution, custom step and protected recovery. The owner's notification follow-up
+uses Mark as done/Postpone for ordinary notifications; Postpone opens the Home
+chooser after any required unlock. Routine controls and legacy Snooze remain compatible.
+
 The owner's [12 October Calendar management correction](calendar-management.md)
 keeps reminder information first, moves Calendar administration to a separate page
 and explains independent deletion with Agenda/Details cancellation notices.
@@ -58,8 +65,75 @@ implementation units; approval of a synthetic image does not complete one.
 
 ## Page contracts
 
+The owner's [18 October generic-routine contract](routine-creation.md) supersedes
+unified creation: Create offers reminder/routine destinations, new routines are
+General/ByWeekday, with Day tabs and optional Exercise fields that insert no sample
+content. The later owner-approved correction replaces the arrangement switch/Days
+picker, adds structured sets/reps/time, compact empty states and independent copying.
+Legacy Shared conversion occurs only on Save, preserving IDs/progress/frozen history.
+The owner's 19 October polish centers weekday labels independently of scheduling
+dots, exposes a dedicated connected Alert row, and aligns outlined unit pickers
+with guarded numeric inputs in the shared routine step form. Theme roles, dated
+ownership and stored formats remain unchanged.
+
+The owner's [15 October weekly routine contract](weekly-routines.md) adds optional
+weekly plans and date-scoped exercise progress within the existing reminder model.
+The subsequent owner-approved correction unifies the editor, exposes all three
+Alert modes and adds illustrated Focus plus visible Agenda/widget progress.
+Use current shared components/tokens and active assets for this work; historical
+mockup pixels do not authorize a different page style.
+
+The owner's [15 October widget contract](home-screen-widget.md) adds configurable
+Routine Focus/Today home-screen presentation using the same native authority.
+The owner's 16 October refinement keeps the complete selected exercise sequence,
+shared date/time controls, contextual routine menus and whole-family Trash, adds
+full-frame custom photos with portable backup, and gives the widget compact
+Resume + Done presentation. Shared row chevrons now follow interaction semantics.
+The later 16 October widget correction adds always-visible example/loading/error
+previews, draft-only first-routine defaults, explicit empty/rest states and bounded
+compact content with quieter secondary actions. See the maintained widget contract.
+The 17 October correction supersedes Resume-only navigation: the sole primary
+widget action completes the displayed exercise in place, with conditional Undo/
+Retry. Setup/picker use curated examples in the current
+theme. Saved plan edits take effect immediately in today's open session while
+closed history remains frozen; History moves outside routine overflow menus.
+The later 17 October progress/action correction matches widget fill/track to app
+roles, renders every segment, adds guarded Saving/confirmation feedback and puts
+compact unfilled Undo to the left of trailing Done. Direct pencil + Edit on
+today/future exercise rows uses the shared form and immediate native edit path.
+See the maintained widget and weekly-routine contracts for responsive/ownership
+details; these changes preserve the current visual language.
+The next 17 October phone correction makes Today reminder height account for
+both text lines/vendor font metrics and gives both Undo states identical graphic
+geometry, with clearly dimmed disabled ink. Setup and production share the sizing.
+The subsequent owner correction allows repeated widget Undo, newest completion
+first, throughout the current dated session. Each instance retains only its own
+still-valid completion identities; the compact control and native guards stay the same.
+The next reference refinement removes the visible exercise ordinal, shows the
+localized full weekday at top right, and adds quiet bottom-left Next context in
+compact Focus. Full date/position remain accessible and native action identities
+stay dated. The existing theme, Done/Undo and scaled-text fallbacks remain.
+The owner's subsequent comparison selects **Bottom of Next line** for compact
+Focus: current text and Next form the left column, and the action group aligns
+to that column's bottom. Preserve prescriptions, complete targets and stable
+positions when Next disappears. Expanded and recovery layouts retain their anatomy.
+
 The owner's [15 October language contract](localization.md) adds English/Simplified
 Chinese selection and Chinese typography across app and native presentation.
+The [18 October wording review](localization.md#simplified-chinese-wording-review--owner-correction-18-october-2026)
+requires context-sensitive Chinese: fitness items are 动作, general items 步骤,
+routine destinations 日常计划 and private calendar publication 添加到日历.
+The later weekday-builder correction uses 每周安排, neutral 步骤 counts in both
+presets, and 日期与时间 for the lower settings group.
+Preserve authored content, native behavior and current visual style.
+
+The owner's 18 October confirmation approval replaces app-owned native alerts
+with the [shared themed confirmation](visual-language.md#app-owned-confirmations--owner-approval-18-october-2026).
+Short decisions use centered opaque dialogs with production Buttons; richer
+destructive reviews and existing forms/menus retain their themed sheets. Android
+system surfaces and native date/time interaction remain governed by their current
+contracts. Captured decisions, cancellation, accessibility and pending-save guards
+are preserved.
 
 | Contract | Reference / review status |
 |---|---|

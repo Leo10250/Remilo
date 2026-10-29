@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T07:03:09.008914+00:00",
+  "assetId": "dumbbell-bench-press",
+  "candidate": 1,
+  "candidateSha256": "b4e0913e9f0d33fe7b5443327697efa02d11d2357c819d4cd715e896687c5123",
+  "reviewSha256": "050ab83fb3d4a52cd4ce5e987ce792cb7175a0d6a77109bb2cacba53c074ed71",
+  "reviewRecordSha256": "62877972d9f8b494acae790d150f097874463eae5e4c3b0bb0ed95ddcb8ae891",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

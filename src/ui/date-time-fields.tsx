@@ -7,9 +7,10 @@ import { useFontScaleOverride, useTheme } from './theme';
 import { space } from './tokens';
 
 /** Independent pickers share a row only while both targets have readable room. */
-export function DateTimeFields({ value, zoneId, allDay, onChange, onError, disabled, labelPrefix }: {
+export function DateTimeFields({ value, zoneId, allDay, onChange, onError, disabled, labelPrefix, dateLabel, dateValue, dateZoneId, onDateChange }: {
   value: number; zoneId: string; allDay: boolean; onChange: (value: number) => void;
   onError: (message: string) => void; disabled: boolean; labelPrefix?: string;
+  dateLabel?: string; dateValue?: number; dateZoneId?: string; onDateChange?: (value: number) => void;
 }) {
   'use no memo';
   const t = useTranslation();
@@ -20,7 +21,7 @@ export function DateTimeFields({ value, zoneId, allDay, onChange, onError, disab
   const props = { value, zoneId, onChange, onError, disabled, compact: !stacked };
   return <View onLayout={event => setAvailableWidth(event.nativeEvent.layout.width)}
     style={{ flexDirection: stacked ? 'column' : 'row' }}>
-    <View style={{ flex: stacked ? undefined : 1, minWidth: 0 }}><DateField {...props} label={t('m_99c40ab40592')} accessibilityLabel={labelPrefix ? labelPrefix + t('m_6bcf3616a17d') : undefined} dateOnly /></View>
+    <View style={{ flex: stacked ? undefined : 1, minWidth: 0 }}><DateField {...props} zoneId={dateZoneId ?? zoneId} value={dateValue ?? value} onChange={onDateChange ?? onChange} label={dateLabel ?? t('m_99c40ab40592')} accessibilityLabel={dateLabel ?? (labelPrefix ? labelPrefix + t('m_6bcf3616a17d') : undefined)} dateOnly /></View>
     {!allDay && <>
       {!stacked && <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
         style={{ width: 1, marginVertical: space.md, backgroundColor: colors.border }} />}

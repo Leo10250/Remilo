@@ -12,6 +12,13 @@ TypeScript catalogs, Android default/Hans resources, native catalog and typed
 parity, arguments, escaping and deterministic output without changing files.
 The same check is part of `npm run verify`.
 
+Follow the [reviewed Chinese terminology](../docs/design/current/localization.md#simplified-chinese-wording-review--owner-correction-18-october-2026).
+Translate by context: a fitness item is 动作, a General item 步骤, a routine
+日常计划 and a Calendar event 日程. Use 添加到日历 for Calendar copy creation;
+synchronization remains a separate behavior. Keep recovery and weekday scope precise. Use complete localized
+messages for count/unit labels and their punctuation; never append an English `)`
+to a Chinese fragment. Authored text and native command/status identities stay intact.
+
 React render boundaries use `useTranslation`; standalone presentation functions
 accept explicit formatting/translator context when they need it. A native-confirmed
 snapshot selects the application language. `useLocalizedState` captures feedback

@@ -32,12 +32,47 @@ class LanguageCoordinatorTest {
     assertEquals("en", LanguageCoordinator.resolve(emptyList()))
   }
   @Test fun translatedAlarmCopyCannotChangeCapturedCommandKinds() {
-    val english = AlarmControlAction.entries.map { it.commandKind }
+    val expected = mapOf(
+      AlarmControlAction.CompleteDelivery to "CompleteDelivery",
+      AlarmControlAction.StartRoutine to "StartRoutine",
+      AlarmControlAction.DismissRoutine to "DismissRoutineAlarm",
+      AlarmControlAction.RoutineSnooze to "SnoozeRoutineAlarm",
+      AlarmControlAction.Postpone to "Postpone",
+      AlarmControlAction.DoneAll to "DoneAll",
+      AlarmControlAction.PostponeAll to "PostponeAll")
+    PresentationLanguage.update(context, "en")
+    val english = AlarmControlAction.entries.associateWith { it.commandKind }
+    assertEquals(expected, english)
+    assertEquals("Start routine", L10n.text(context, "Start routine"))
+    assertEquals("Dismiss alarm", L10n.text(context, "Dismiss alarm"))
     PresentationLanguage.update(context, "zh-Hans")
-    assertEquals(listOf("CompleteDelivery", "Snooze", "DoneAll", "SnoozeAll"), english)
-    assertEquals(english, AlarmControlAction.entries.map { it.commandKind })
+    assertEquals(expected, AlarmControlAction.entries.associateWith { it.commandKind })
+    assertEquals(english, AlarmControlAction.entries.associateWith { it.commandKind })
+    assertEquals("开始计划", L10n.text(context, "Start routine"))
+    assertEquals("\u5173\u95ed\u95f9\u949f", L10n.text(context, "Dismiss alarm"))
+    assertNotEquals(L10n.text(context, "Start routine"), AlarmControlAction.StartRoutine.commandKind)
+    assertNotEquals(L10n.text(context, "Dismiss alarm"), AlarmControlAction.DismissRoutine.commandKind)
+    assertNotEquals(AlarmControlAction.CompleteDelivery.commandKind, AlarmControlAction.StartRoutine.commandKind)
+    assertNotEquals(AlarmControlAction.CompleteDelivery.commandKind, AlarmControlAction.DismissRoutine.commandKind)
     assertEquals("稍后提醒", L10n.text(context, "Snooze"))
+    assertEquals("推迟", L10n.text(context, com.remilo.alarm.presentation.NativeMessages.postpone_action()))
+    assertEquals("全部推迟（3）", L10n.text(context, com.remilo.alarm.presentation.NativeMessages.postpone_all_action(3)))
     for (count in listOf(1, 2)) assertEquals("$count 项未完成提醒需要查看。", L10n.text(com.remilo.alarm.presentation.NativeMessages.calendar_review_notification(count)))
+  }
+  @Test fun postponeTilesCustomAndLockedFeedbackUseSimplifiedChinese() {
+    PresentationLanguage.update(context, "zh-Hans")
+    val expected = mapOf(
+      "15 min" to "15 分钟", "30 min" to "30 分钟", "1 hour" to "1 小时",
+      "1 day" to "1 天", "24 hours later" to "24 小时后", "Tomorrow" to "明天",
+      "Custom" to "自定", "Date & time" to "日期和时间", "Use this time" to "使用此时间",
+      "Back to choices" to "返回选项", "Choose a future time." to "请选择未来的时间。",
+      "Saved times are available after unlocking." to "解锁后可使用已保存的时间。",
+      "Only the next alert changes. The reminder stays unfinished." to "仅更改下次提醒时间，此提醒仍未完成。"
+    )
+    expected.forEach { (english, chinese) -> assertEquals(english, chinese, L10n.text(context, english)) }
+    assertEquals("全部 3 个提醒的下次时间", L10n.text(context, com.remilo.alarm.presentation.NativeMessages.postpone_next_group(3)))
+    assertEquals("已安排 3 个提醒中的 2 个，请在 Remilo 中检查提醒问题。",
+      L10n.text(context, com.remilo.alarm.presentation.NativeMessages.postpone_partial(2, 3)))
   }
   @Test fun legacyInitializationPinsEnglishBeforePrivateStorageIsAvailable() {
     Room.inMemoryDatabaseBuilder(context, OperationalDatabase::class.java).allowMainThreadQueries().build().withDatabase { db ->

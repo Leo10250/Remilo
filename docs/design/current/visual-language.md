@@ -30,7 +30,48 @@ and ordinary control/focus treatment at that boundary. Header foreground overrid
 must not enter the sheet through React context. Retain text scaling, reduced motion,
 appearance holds and modal accessibility behavior.
 
+### App-owned confirmations — owner approval, 18 October 2026
+
+Short decisions use one shared centered confirmation: opaque `surface`, ordinary
+`onSurface`/`onSurfaceVariant`, 24 dp corners, 24 dp content padding, 16 dp window
+gutters and a 344 dp maximum width. The heading uses the shared 22 sp app-bar role;
+body uses 16 sp with the existing Chinese metrics. Content and actions grow/scroll
+within the inset-safe available height at large text sizes. No scenic artwork or
+toolbar foreground overrides enter the dialog.
+
+Reuse production Buttons: semantic error/onError destructive action, neutral
+outlined cancellation and atmosphere primary acknowledgment/ordinary confirmation.
+Actions stack with an 8 dp gap and retain 56 dp minimum height, pressed/focus
+treatment and the existing round destructive/outlined geometry. Place cancellation
+after the main action, as in the existing permanent-delete sheet. Keep the current
+bottom-sheet anatomy for richer Trash/permanent-delete reviews, menus and forms.
+
+Back/backdrop safely dismiss by default; an explicitly noncancelable guard remains
+acknowledgment-only. Dismissal never discards a draft or approves an action. Return
+focus to the connected initiating control on cancellation/acknowledgment; never
+return it after a destructive mutation or to an unmounted screen. Localized copy
+updates without replacing the captured choice. Retain appearance holds, reduced
+motion, the underlying page/sheet and exact pending-operation guards. An owning
+screen's blur/unmount invalidates its retained callbacks; duplicate taps/Back and older
+closures cannot execute a newer confirmation.
+
+Android permission/Settings, authorization, photo/document picker, share, launcher,
+keyboard and notification surfaces stay platform-owned. Date/time retains native
+picker behavior; full runtime atmosphere integration is a separate native concern.
+Native brief status Toasts are not replaced with blocking confirmation dialogs.
+
 ## Color roles shared by every screen
+
+The owner's 16 October routine/widget refinement makes row accessories semantic:
+right chevrons indicate hierarchical navigation, picker arrows indicate choosing a
+value, disclosures retain their expansion indicators, and radios/checks/switches
+retain selection state. Context-menu commands, including Settings, Move to Trash,
+Restore, Duplicate, Pause and Refresh, have no generic trailing chevron. A true
+submenu may retain its submenu indicator. Same-screen exercise selection uses a
+visible selected state. Shared clickable rows declare their intent explicitly;
+ordinary hit areas, keyboard focus and pressed feedback remain intact.
+This follows [Apple's hierarchy/selection guidance](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables?changes=_5)
+and [Google's menu anatomy](https://developer.android.com/develop/ui/compose/components/menu).
 
 Use one shared role mapping in RN and native components. Appearance changes the
 role values and artwork, not which role an otherwise identical icon receives.
@@ -138,6 +179,9 @@ presentation manifest; this correction changes no stored values or actions.
   uses a 24 dp glyph in a nonshrinking 48 dp target. Align real controls to the first
   title line; terminal rows reserve no completion-control placeholder. See the
   [alert experience](alert-experience.md) for state-specific metadata and relative overdue.
+  Active routine rows use the same leading-column width with an informational
+  progress ring, preserving the ordinary event-glyph/title/More anchors. Their
+  separated progress footer follows the [current routine contract](weekly-routines.md).
 - Do not copy component omissions from a sample (e.g. missing navigation chevron)
   or infer action availability from icon tint.
 - Measure contrast on actual surfaces: normal text at least 4.5:1, qualifying

@@ -9,6 +9,7 @@ import com.remilo.alarm.engine.AlarmEngine
 class RecoveryReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action !in ACTIONS) return
+    com.remilo.alarm.widget.WidgetWork.request(context)
     Log.i("Remilo", "Recovery received: ${intent.action}")
     val pending = goAsync()
     try { AlarmEngine.get(context).recover {

@@ -27,7 +27,7 @@ export function TimeZoneField({ value, atMs, onChange, disabled = false, error }
     if (!cities.has(key) || zone.id === value) cities.set(key, zone);
   });
   const choices = [...cities.values()].sort((a, b) => Number(b.id === value) - Number(a.id === value) || a.label.localeCompare(b.label));
-  return <><SettingRow label={t('m_b9fe1464783e')} icon="event" disabled={disabled}
+  return <><SettingRow intent="picker" label={t('m_b9fe1464783e')} icon="event" disabled={disabled}
     value={selected?.label ?? value.split('/').at(-1)?.replaceAll('_', ' ')} description={selected ? [selected.region, offset(selected.offsetSeconds)].filter(Boolean).join(' · ') : value}
     onPress={() => { setSearch(''); setLimit(30); setOpen(true); }} />
     {error && <RowSupport><ActionFeedback message={error} tone="danger" /></RowSupport>}

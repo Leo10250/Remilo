@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { root, checked, localNode, WorkflowError } from '../tools.mjs';
 import { readJson } from './files.mjs';
+import { runComposeAlignedRelease } from './compose-classpath.mjs';
 import { androidTools, checkSigning, configuredVersions, inspectApk, validateApk, toolVersions } from './android-tools.mjs';
 
 export async function verifyShared({ json = false } = {}) {
@@ -51,14 +52,18 @@ export async function buildRelease({ abi = 'arm64-v8a', verify = false, requireS
   if (!existsSync(wrapper)) throw new WorkflowError('WRAPPER_MISSING', 'Restore the committed Android Gradle wrapper from Git.');
   const tasks = verify ? [':remilo-alarm:testDebugUnitTest', ':remilo-alarm:lintDebug', ':app:lintRelease', ':app:assembleRelease'] : [':app:assembleRelease'];
   // Invoke the committed wrapper JAR directly to preserve arguments on Windows, including paths with spaces.
-  await checked(tools.java, ['-Xmx64m', '-Xms64m', '-Dorg.gradle.appname=gradlew', '-classpath', wrapper,
-    'org.gradle.wrapper.GradleWrapperMain', ...tasks, ...(requireSigning ? ['-Premilo.requireSigning=true'] : []),
+  const gradle = (requestedTasks, { stream, timeout }) => checked(tools.java, ['-Xmx64m', '-Xms64m', '-Dorg.gradle.appname=gradlew', '-classpath', wrapper,
+    'org.gradle.wrapper.GradleWrapperMain', ...requestedTasks, ...(requireSigning ? ['-Premilo.requireSigning=true'] : []),
     `-PreactNativeArchitectures=${abi}`, '--console=plain', '--no-daemon'],
-  { cwd: join(root, 'android'), env: buildEnvironment(tools.env), stream: true, stderrStream: json, timeout: 1_800_000 });
+  { cwd: join(root, 'android'), env: buildEnvironment(tools.env), stream, stderrStream: json, timeout });
+  const composeAlignment = await runComposeAlignedRelease({
+    report: async () => (await gradle([':reportReleaseComposeClasspath'], { stream: false, timeout: 300_000 })).stdout,
+    assemble: () => gradle(tasks, { stream: true, timeout: 1_800_000 }),
+  });
   const path = releaseApkPath();
   const metadata = await inspectApk(path, tools, { allowUnsigned: !signed });
   validateApk(metadata, abi, expected, signed || requireSigning);
-  const build = { builtAt: new Date().toISOString(), variant: 'release', abi, apk: { path, metadata } };
+  const build = { builtAt: new Date().toISOString(), variant: 'release', abi, composeAlignment, apk: { path, metadata } };
   if (!json) console.log(`Built ${metadata.package} ${metadata.versionName} (${metadata.versionCode}), ${abi}, signed=${metadata.signed}\nAPK: ${path}`);
   return build;
 }

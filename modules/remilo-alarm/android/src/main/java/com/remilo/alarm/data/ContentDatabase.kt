@@ -24,7 +24,8 @@ data class ReminderRecord(@PrimaryKey val id: String, val title: String, val eve
   @ColumnInfo(defaultValue = "NULL") val nominalSlot: String? = null,
   @ColumnInfo(defaultValue = "0") val exception: Boolean = false,
   @ColumnInfo(defaultValue = "0") val skipped: Boolean = false,
-  @ColumnInfo(defaultValue = "NULL") val listId: String? = null)
+  @ColumnInfo(defaultValue = "NULL") val listId: String? = null,
+  @ColumnInfo(defaultValue = "NULL") val routineId: String? = null)
 @Entity(tableName = "lists", indices = [Index(value = ["normalizedName"])])
 data class ListRecord(@PrimaryKey val id: String, val name: String, val normalizedName: String,
   val revision: Long = 1, val createdAtMs: Long)
@@ -78,6 +79,7 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   @Query("DELETE FROM lists WHERE id = :id") fun removeList(id: String)
   @Query("SELECT * FROM series ORDER BY createdAtMs") fun series(): List<SeriesRecord>
   @Query("SELECT * FROM series WHERE id = :id") fun series(id: String): SeriesRecord?
+  @Query("DELETE FROM series WHERE seriesId = :id") fun purgeSeriesFamily(id: String)
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun series(record: SeriesRecord)
   @Insert(onConflict = OnConflictStrategy.REPLACE) fun pendingSeries(record: PendingSeries)
   @Query("SELECT * FROM pending_series") fun pendingSeries(): List<PendingSeries>
@@ -103,20 +105,56 @@ data class HistoryRecord(@PrimaryKey val operationId: String, val occurrenceId: 
   CalendarManagedPolicy::class, CalendarManagedPreview::class, CalendarManagedSetupOperation::class,
   CalendarManagedCandidate::class, CalendarManagedCache::class, CalendarManagedExport::class,
   CalendarManagedDisposition::class, CalendarManagedSuppression::class, CalendarManagedIssue::class,
-  CalendarManagedReceipt::class], version = 13, exportSchema = true)
+  CalendarManagedReceipt::class, RoutinePlan::class, RoutineVersion::class, RoutineSession::class, RoutineOperation::class,
+  ExerciseImage::class, PurgedRoutine::class], version = ContentDatabase.VERSION, exportSchema = true)
 abstract class ContentDatabase : RoomDatabase() {
   abstract fun records(): ContentDao
+  abstract fun routines(): RoutineDao
   abstract fun calendar(): CalendarDao
   abstract fun links(): CalendarLinkDao
   abstract fun calendarResources(): CalendarResourceDao
   abstract fun sync(): CalendarSyncDao
   abstract fun managedCalendar(): CalendarManagedDao
   companion object {
+    const val VERSION = 17
     fun open(context: Context): ContentDatabase = Room.databaseBuilder(context,
-      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
-      .addCallback(object : RoomDatabase.Callback() {
+      ContentDatabase::class.java, "remilo-content.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+      .addMigrations(MIGRATION_16_17).addCallback(object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) { CalendarManagedSchema.origin(db, "FreshInstallation") }
       }).build()
+    val MIGRATION_16_17 = object : Migration(16, 17) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE routine_versions ADD COLUMN authoringMode TEXT NOT NULL DEFAULT 'ByWeekday'")
+        db.execSQL("ALTER TABLE routine_versions ADD COLUMN presentationPreset TEXT NOT NULL DEFAULT 'Exercise'")
+      }
+    }
+    val MIGRATION_15_16 = object : Migration(15, 16) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE routine_plans ADD COLUMN priorState TEXT NOT NULL DEFAULT 'Active'")
+        db.execSQL("ALTER TABLE routine_plans ADD COLUMN trashedAtMs INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE routine_plans ADD COLUMN trashIntervals TEXT NOT NULL DEFAULT '[]'")
+        db.execSQL("CREATE TABLE exercise_images (id TEXT NOT NULL PRIMARY KEY, mime TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE purged_routines (id TEXT NOT NULL PRIMARY KEY)")
+      }
+    }
+    val MIGRATION_14_15 = object : Migration(14, 15) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        // Old effective dates are not identities: clock travel can make an edit reuse one.
+        // Preserve authored insertion order when assigning legacy immutable identities.
+        db.execSQL("CREATE TABLE routine_versions_new (routineId TEXT NOT NULL, effectiveDate TEXT NOT NULL, title TEXT NOT NULL, minutes INTEGER NOT NULL, mode TEXT NOT NULL, listId TEXT, days TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', sound TEXT NOT NULL DEFAULT 'remilo', vibration INTEGER NOT NULL DEFAULT 0, revision INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(routineId,revision))")
+        db.execSQL("INSERT INTO routine_versions_new (routineId,effectiveDate,title,minutes,mode,listId,days,revision) SELECT v.routineId,v.effectiveDate,v.title,v.minutes,v.mode,v.listId,v.days,(SELECT COUNT(*) FROM routine_versions old WHERE old.routineId=v.routineId AND old.rowid<=v.rowid) FROM routine_versions v")
+        db.execSQL("DROP TABLE routine_versions")
+        db.execSQL("ALTER TABLE routine_versions_new RENAME TO routine_versions")
+        db.execSQL("ALTER TABLE routine_sessions ADD COLUMN versionRevision INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE routine_sessions SET versionRevision = (SELECT v.revision FROM routine_versions v WHERE v.routineId=routine_sessions.routineId AND v.effectiveDate=routine_sessions.versionDate)")
+      }
+    }
+    val MIGRATION_13_14 = object : Migration(13, 14) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE reminders ADD COLUMN routineId TEXT DEFAULT NULL")
+        RoutineSchema.create(db)
+      }
+    }
     val MIGRATION_12_13 = object : Migration(12, 13) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")

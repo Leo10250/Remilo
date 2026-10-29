@@ -20,9 +20,11 @@ import { presentation } from './atmosphere.generated';
 import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-chrome';
 import { headerScrimGeometry, headerTransition } from './header-transition';
 import { scheduleSnackbarDismiss } from './snackbar-timeout';
+import { rememberConfirmationFocus } from './confirmation-state';
 
 type ConnectedCorners = Pick<ViewStyle, 'borderTopLeftRadius' | 'borderTopRightRadius' | 'borderBottomLeftRadius' | 'borderBottomRightRadius'>;
 const ConnectedRowContext = createContext<ConnectedCorners | null>(null);
+export const useConnectedRowCorners = () => useContext(ConnectedRowContext);
 
 function RowFocus({ corners }: { corners: ConnectedCorners }) {
   'use no memo';
@@ -37,7 +39,7 @@ export type IconName = 'arrow_back' | 'settings' | 'search' | 'filter_list' | 'a
   'alarm' | 'notifications' | 'lock' | 'volume_up' | 'vibration' | 'snooze' | 'schedule' | 'palette' |
   'download' | 'upload' | 'delete' | 'info' | 'warning' | 'error' | 'edit' | 'content_copy' | 'pause' | 'play_arrow' | 'event' | 'folder' | 'notes' | 'undo' | 'refresh' | 'history' | 'stop' |
   'menu' | 'language' | 'checklist' | 'restore' | 'delete_forever' | 'task_alt' | 'cancel' | 'alarm_off' | 'hourglass_empty' | 'block' | 'notification_important' |
-  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home' | 'link_off' | 'open_in_new';
+  'medication' | 'eco' | 'fitness_center' | 'restaurant' | 'celebration' | 'book' | 'bedtime' | 'home' | 'link_off' | 'open_in_new' | 'image';
 export function Icon({ name, color, size = 24 }: { name: IconName; color?: string; size?: number }) {
   'use no memo';
   useLocale();
@@ -76,8 +78,8 @@ export function IconButton({ icon, label, onPress, disabled = false, variant = '
   const foundation = useFoundationStyle(), state = usePresentationState(), scenic = useContext(ScenicChrome), [focused, setFocused] = useState(false);
   const c = foundation?.colors;
   return <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={label} aria-expanded={expanded} disabled={disabled} accessibilityState={{ disabled, ...(expanded !== undefined ? { expanded } : {}) }}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    onPress={onPress} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
+    onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }} style={({ pressed }) => ({ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center',
       borderRadius: 24, backgroundColor: scenic ? pressed ? colors.ink + '20' : 'transparent' : c ? disabled ? c.disabledSurface : pressed || state === 'pressed' ? c.secondaryPressed : 'transparent' : pressed ? colors.soft : 'transparent',
       borderWidth: c ? 2 : variant === 'outlined' ? 1 : 0, borderColor: c && (focused || state === 'focused') ? scenic ? colors.ink : c.focus : variant === 'outlined' && !scenic ? disabled ? c?.disabledInk ?? colors.muted : c?.outline ?? colors.border : 'transparent', opacity: scenic ? disabled ? 0.4 : 1 : c ? 1 : disabled ? 0.4 : 1 })}>
     <Icon name={icon} color={!scenic && c && disabled ? c.disabledInk : colors.ink} />
@@ -96,8 +98,8 @@ export function Heading({ children }: PropsWithChildren) {
   const foundation = useFoundationStyle();
   return <Text accessibilityRole="header" style={{ color: useTheme().ink, fontSize: typography.heading * scale, lineHeight: foundation ? lineHeightFor(typography.heading, 1.4) * scale : undefined, fontWeight: '600', ...chineseTextMetrics(typography.heading, scale, '600') }}>{children}</Text>;
 }
-export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint }: {
-  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string;
+export function Button({ label, onPress, disabled = false, variant = 'primary', icon, busy = false, accessibilityLabel, accessibilityHint, buttonRef }: {
+  label: string; onPress: () => void; disabled?: boolean; variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'outlined'; icon?: IconName; busy?: boolean; accessibilityLabel?: string; accessibilityHint?: string; buttonRef?: Ref<View>;
 }) {
   'use no memo';
   useLocale();
@@ -105,8 +107,9 @@ export function Button({ label, onPress, disabled = false, variant = 'primary', 
   const foundation = useFoundationStyle(), state = usePresentationState(), [focused, setFocused] = useState(false);
   const c = foundation?.colors, blocked = disabled || busy;
   const foreground = c ? blocked ? c.disabledInk : variant === 'primary' ? state === 'pressed' ? c.onPrimaryPressed : c.accentInk : variant === 'danger' ? c.dangerInk : variant === 'secondary' ? c.accent : c.ink : variant === 'primary' ? colors.accentInk : variant === 'danger' ? colors.dangerInk : variant === 'secondary' ? colors.accent : colors.ink;
-  const button = <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked} onPress={onPress}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+  const button = <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled: blocked, busy }} disabled={blocked}
+    onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }}
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
     style={({ pressed }) => {
       const active = !blocked && (pressed || state === 'pressed');
       const round = variant === 'danger' || variant === 'outlined';
@@ -150,21 +153,41 @@ export function Field({ label, error, inputRef, compactMultiline = false, requir
     onContentSizeChange?.(event);
   }, [onContentSizeChange]);
   const titleHeight = Math.max(48, Math.min(contentHeight || 48, typography.body * scale * fontScale * 1.4 * 3 + 22));
-  return <View ref={wrapper} style={{ gap: space.xs }}><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'baseline' }}>
-    <Copy muted size={typography.supporting}>{label}</Copy>{required && <Text aria-hidden accessibilityElementsHidden importantForAccessibility="no" style={{ color: colors.muted, fontSize: typography.supporting * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{t('m_4850b174b713')}</Text>}
-    </View><TextInput ref={inputRef} accessibilityLabel={required ? label + t('m_815117e98a1c') : label}
+  return <View ref={wrapper} style={{ gap: space.xs }}>
+    <Copy muted size={typography.supporting}>{required ? t('field_required_label', { label }) : label}</Copy>
+    <TextInput ref={inputRef} accessibilityLabel={required ? t('field_required_label', { label }) : label}
     placeholderTextColor={colors.muted} selectionColor={colors.accent} cursorColor={colors.accent} {...props}
     onContentSizeChange={props.multiline && (foundation || compactMultiline) ? resize : props.onContentSizeChange}
-    onFocus={event => { setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); requestAnimationFrame(()=>show()); props.onFocus?.(event); }} onBlur={event => { setFocused(false); props.onBlur?.(event); }} style={[styles.input, { color: colors.ink,
       borderRadius: foundation?.tokens.shape.field ?? shape.field,
       backgroundColor: colors.surface, borderColor: error ? colors.danger : focused && foundation ? foundation.colors.focus : foundation?.colors.outline ?? colors.muted, minHeight: compactMultiline ? 48 : props.multiline ? Math.max(80, foundation ? contentHeight : 80) : 48,
       ...(compactMultiline ? { height: titleHeight, lineHeight: lineHeightFor(typography.body, 1.4) * scale } : {}),
       fontSize: typography.body * scale, ...chineseTextMetrics(typography.body, scale) }, props.style]} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: foundation ? typography.supporting * scale : undefined, lineHeight: foundation ? lineHeightFor(typography.supporting, 1.4) * scale : undefined }}>{ownedMessage(error)}</Text>}</View>;
 }
-export function SettingRow({ label, value, icon, onPress, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, prominent = false, accessibilityLabel }: PropsWithChildren<{
-  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; statusLabel?: string; compact?: boolean; prominent?: boolean; accessibilityLabel?: string;
-}>) {
+/** Paired numeric inputs and picker values use identical single-line field metrics. */
+export const singleLineFieldMetrics = (scale: number) => ({ minHeight: 56, lineHeight: lineHeightFor(typography.body) * scale, textAlignVertical: 'center' as const });
+export function PickerField({ label, value, accessibilityLabel, onPress, disabled = false, buttonRef }: {
+  label: string; value: string; accessibilityLabel: string; onPress: () => void; disabled?: boolean; buttonRef?: Ref<View>;
+}) {
+  'use no memo';
+  useLocale();
+  const colors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride(), [focused,setFocused] = useState(false);
+  const ink = disabled ? foundation?.colors.disabledInk ?? colors.muted : colors.ink;
+  return <View style={{gap:space.xs}}><Copy muted size={typography.supporting}>{label}</Copy>
+    <Pressable ref={buttonRef} accessibilityRole="button" accessibilityLabel={[accessibilityLabel,value].join(', ')} accessibilityState={{disabled}} disabled={disabled}
+      onPress={event=>{rememberConfirmationFocus(event.currentTarget);onPress();}} onFocus={event=>{rememberConfirmationFocus(event.currentTarget);setFocused(true);}} onBlur={()=>setFocused(false)}
+      style={({pressed})=>[styles.input,singleLineFieldMetrics(scale),{borderRadius:foundation?.tokens.shape.field??shape.field,
+        backgroundColor:pressed?colors.soft:colors.surface,borderColor:focused?foundation?.colors.focus??colors.accent:foundation?.colors.outline??colors.muted,
+        flexDirection:'row',alignItems:'center',gap:space.sm}]}>
+      <Text style={{flex:1,minWidth:0,color:ink,fontSize:typography.body*scale,lineHeight:lineHeightFor(typography.body)*scale,...chineseTextMetrics(typography.body,scale)}}>{value}</Text>
+      <Icon name="expand_more" size={20} color={disabled?ink:colors.muted}/>
+    </Pressable>
+  </View>;
+}
+export function SettingRow({ label, value, icon, onPress, intent, destructive = false, children, description, supporting, minHeight = 56, disabled = false, statusLabel, compact = false, prominent = false, accessibilityLabel, buttonRef }: PropsWithChildren<{
+  label: string; value?: string; icon?: IconName; description?: string; supporting?: ReactNode; minHeight?: number; onPress?: () => void; disabled?: boolean; destructive?: boolean; statusLabel?: string; compact?: boolean; prominent?: boolean; accessibilityLabel?: string; buttonRef?: Ref<View>;
+} & ({ onPress: () => void; intent: 'navigation' | 'action' | 'picker' } | { onPress?: undefined; intent?: 'navigation' | 'action' | 'picker' })>) {
   'use no memo';
   useLocale();
   const colors = useTheme(), scale = useFontScaleOverride();
@@ -175,12 +198,12 @@ export function SettingRow({ label, value, icon, onPress, children, description,
   const body = <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? space.sm : space.md, minHeight,
     paddingVertical: compact ? space.sm : space.md, paddingHorizontal: compact ? space.md : space.gutter }}>
     {icon && <View style={{width:compact?32:40,height:compact?32:40,borderRadius:compact?12:16,alignItems:'center',justifyContent:'center',backgroundColor:colors.soft}}><Icon name={icon} size={compact?20:24} /></View>}
-    <View style={{ flex: 1, gap: space.xs }}><Copy heading={prominent} size={prominent ? typography.heading : typography.body}>{label}</Copy>{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:lineHeightFor(typography.supporting, 1.4) * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
-    {!stackedStatus && children}{onPress && <Icon name="chevron_right" size={20} />}
+    <View style={{ flex: 1, gap: space.xs }}>{destructive ? <Text style={{ color: colors.danger, fontSize: typography.body * scale, lineHeight: lineHeightFor(typography.body) * scale, ...chineseTextMetrics(typography.body, scale) }}>{label}</Text> : <Copy heading={prominent} size={prominent ? typography.heading : typography.body}>{label}</Copy>}{value && <Text style={{color:colors.muted,fontSize:typography.supporting*scale,lineHeight:lineHeightFor(typography.supporting, 1.4) * scale, ...chineseTextMetrics(typography.supporting, scale) }}>{value}</Text>}{!!description && <Copy muted size={typography.supporting}>{description}</Copy>}{supporting}{stackedStatus && children}</View>
+    {!stackedStatus && children}{onPress && intent !== 'action' && <Icon name={intent === 'picker' ? 'expand_more' : 'chevron_right'} size={20} />}
   </View>;
-  return onPress ? <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
-    accessibilityLabel={accessibilityLabel ?? [label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={onPress}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+  return onPress ? <Pressable ref={buttonRef} accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }}
+    accessibilityLabel={accessibilityLabel ?? [label, value, statusLabel, description].filter(Boolean).join(', ')} onPress={event => { rememberConfirmationFocus(event.currentTarget); onPress(); }}
+    onFocus={event => { rememberConfirmationFocus(event.currentTarget); setFocused(true); }} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ ...corners, backgroundColor: foundation && disabled ? foundation.colors.disabledSurface : pressed ? colors.soft : 'transparent', opacity: foundation ? 1 : disabled ? 0.5 : 1 })}>
       {body}{corners && focused && <RowFocus corners={corners} />}
     </Pressable> : body;
@@ -193,14 +216,14 @@ export function Group({ title, children }: PropsWithChildren<{ title?: string }>
     <View style={{ backgroundColor: colors.surface, borderRadius: shape.group, overflow: 'hidden' }}>{children}</View></View>;
 }
 
-export function InformationRow({ label, value, supporting, icon, onPress, prominent = false }: { label: string; value: string; supporting?: string; icon: IconName; onPress?: () => void; prominent?: boolean }) {
+export function InformationRow({ label, value, supporting, icon, onPress, intent, prominent = false }: { label: string; value: string; supporting?: string; icon: IconName; intent: "navigation" | "action" | "picker"; onPress?: () => void; prominent?: boolean }) {
   'use no memo';
   useLocale();
   const colors = useTheme(), corners = useContext(ConnectedRowContext), [focused, setFocused] = useState(false);
   const body = <View style={{ padding: 16, minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
     <View style={{ width: 24, paddingTop: 2 }}><Icon name={icon} /></View>
     <View style={{ flex: 1, gap: 4 }}><Copy muted size={14}>{label}</Copy><Copy size={prominent ? typography.title : typography.body}>{value}</Copy>{supporting && <Copy muted size={14}>{supporting}</Copy>}</View>
-    {onPress && <Icon name="chevron_right" size={20} />}
+    {onPress && intent !== "action" && <Icon name={intent === "picker" ? "expand_more" : "chevron_right"} size={20} />}
   </View>;
   return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={[label, value, supporting].filter(Boolean).join(', ')} onPress={onPress}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
@@ -311,7 +334,7 @@ export function DateField({ label, value, onChange, timeOnly = false, dateOnly =
     try { open(timeOnly ? 'time' : 'date', value, civilAt(value, zoneId)); } catch { fail(); }
   };
   const formatted = timeOnly ? shortTime(value, zoneId) : dateOnly ? shortDate(value, zoneId) : shortDateTime(value, zoneId);
-  return <><SettingRow icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled} compact={compact}
+  return <><SettingRow intent="picker" icon={timeOnly ? 'schedule' : 'event'} label={label} disabled={disabled} compact={compact}
     value={formatted} accessibilityLabel={accessibilityLabel ? accessibilityLabel + ', ' + formatted : undefined} onPress={pick} />
     {!!message && (connected ? <RowSupport><ActionFeedback message={message} tone="muted" /></RowSupport> : <ActionFeedback message={message} tone="muted" />)}</>;
 }
@@ -405,7 +428,7 @@ export function Page({ title, subtitle, children, back = true, actions, onBack, 
     </View></ScrollChromeProvider>
   </SafeAreaView>;
 }
-export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef, returnFocusWhen }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean }>) {
+export function Sheet({ title, visible, onClose, onBack, children, footer, returnFocusRef, returnFocusWhen, fullHeight = false, actions }: PropsWithChildren<{ title: string; visible: boolean; onClose: () => void; onBack?: () => void; footer?: ReactNode; returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean; fullHeight?: boolean; actions?: ReactNode }>) {
   'use no memo';
   const t = useTranslation();
   const inheritedColors = useTheme(), foundation = useFoundationStyle(), scale = useFontScaleOverride();
@@ -431,17 +454,18 @@ export function Sheet({ title, visible, onClose, onBack, children, footer, retur
       <Pressable accessibilityLabel={t('m_48845bff334a')} accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill}>
         <View style={{ flex: 1, backgroundColor: '#00000066' }} />
       </Pressable>
-      <View accessibilityViewIsModal style={{ maxHeight: '88%', flexShrink:1, backgroundColor: colors.surface, borderTopLeftRadius: shape.sheet, borderTopRightRadius: shape.sheet }}>
+      <SafeAreaView edges={fullHeight?['top','left','right']:[]} accessibilityViewIsModal style={{ maxHeight: fullHeight?'100%':'88%', flex:fullHeight?1:undefined, flexShrink:1, backgroundColor: fullHeight?colors.background:colors.surface, borderTopLeftRadius: fullHeight?0:shape.sheet, borderTopRightRadius: fullHeight?0:shape.sheet }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 4 }}>
+          {fullHeight&&<IconButton icon="arrow_back" label={t('m_76900f1bfd16')} onPress={onBack??onClose} />}
           <Text ref={heading} accessible accessibilityRole="header" style={{ color: colors.ink, flex: 1, fontSize: typography.appBar * scale, fontWeight: '600', ...chineseTextMetrics(typography.appBar, scale, '600') }}>{title}</Text>
-          <IconButton icon="close" label={t('m_79c84b48c2f0') + title} onPress={onClose} />
+          {fullHeight?actions:<IconButton icon="close" label={t('m_79c84b48c2f0') + title} onPress={onClose} />}
         </View>
-        <FormViewport fill={false} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
-      </View>
+        <FormViewport fill={fullHeight} footer={footer} contentStyle={{ padding:16,gap:12 }}>{children}</FormViewport>
+      </SafeAreaView>
     </View>
   </Modal></ScrollChromeProvider></ConnectedRowContext.Provider></ScenicChrome.Provider></PresentationProvider>;
 }
-export function Choice({ label, description, selected, onPress, disabled = false, icon }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean; icon?: IconName }) {
+export function Choice({ label, description, selected, onPress, disabled = false, icon, thumbnail }: { label: string; description?:string; selected: boolean; onPress: () => void; disabled?: boolean; icon?: IconName; thumbnail?: ReactNode }) {
   'use no memo';
   useLocale();
   const colors = useTheme();
@@ -450,7 +474,7 @@ export function Choice({ label, description, selected, onPress, disabled = false
     <View style={{width:24,height:24,borderRadius:12,borderWidth:2,borderColor:selected?colors.accent:colors.muted,alignItems:'center',justifyContent:'center'}} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {selected && <View style={{width:12,height:12,borderRadius:6,backgroundColor:colors.accent}}/>}
     </View>
-    {icon && <Icon name={icon} color={colors.muted} />}
+    {icon && <Icon name={icon} color={colors.muted} />}{thumbnail}
     <View style={{ flex: 1,gap:4 }}><Copy>{label}</Copy>{description && <Copy muted size={typography.supporting}>{description}</Copy>}</View>
   </Pressable>;
 }
@@ -477,7 +501,7 @@ export function SelectRow<T extends string | number>({ label, value, choices, on
   'use no memo';
   useLocale();
   const [open, setOpen] = useState(false);
-  return <><SettingRow label={label} icon={icon} value={choices.find((choice) => choice.value === value)?.label ?? String(value)} onPress={() => setOpen(true)} />
+  return <><SettingRow intent="picker" label={label} icon={icon} value={choices.find((choice) => choice.value === value)?.label ?? String(value)} onPress={() => setOpen(true)} />
     <Sheet title={label} visible={open} onClose={() => setOpen(false)}>{choices.map((choice) => <Choice key={choice.value}
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }

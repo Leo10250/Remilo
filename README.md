@@ -27,6 +27,19 @@ The local toolchain and existing beta signing key must already be configured.
 For multiple devices, use `npm run devices`, then
 `npm run deploy -- --device SERIAL`. Add `--launch` to open the app after install.
 
+Check storage compatibility before deploying from a different branch. Equal APK
+version numbers can contain different Room schemas; newer phone data needs source
+with a compatible schema or a supported forward migration. The
+[28 October investigation](docs/evidence/2026-10-28-agenda-storage-investigation.md)
+records a confirmed branch downgrade refusal and compatible restoration. Preserve
+the database files when resolving a mismatch.
+
+On Windows, a long worktree path can exceed Ninja's object-file limit. Set
+`remilo.cmakeStagingDirectory` in ignored `android/local.properties` to a short
+local directory outside `build/` when needed (for example, `C\:/rn-cxx/remilo`).
+Escape the drive colon in the properties file. This moves native build intermediates
+only; normal checkouts and CI retain the default staging directory.
+
 ## Toolchain
 
 - Node **22.23.3** (see `.nvmrc`); npm lockfile is committed.
@@ -114,7 +127,7 @@ permission grants or downgrade flags to get around an installation error.
 | `npm run doctor` | Read-only toolchain, dependency, signing and configuration diagnosis |
 | `npm run devices` | Transport states, model, Android/API and supported ABIs |
 | `npm run deploy` | Signed bundled build and in-place install; app stays closed |
-| `npm run device:logs -- --device SERIAL` | Bounded Remilo-tagged snapshot; add `--follow` for streaming, Ctrl+C to stop |
+| `npm run device:logs -- --device SERIAL` | Bounded Remilo-tagged snapshot; add `--follow` for streaming, Ctrl+C to stop, or `--crashes` for exact-package AndroidRuntime crash blocks |
 | `npm run device:capture -- --device SERIAL` | Screenshot of the current screen; no unlocking or navigation |
 | `npm run preview:ui` | Fixture-only UI preview on port 8092; add `--port NUMBER` |
 | `npm run verify:all` | Shared/tooling tests plus Android unit tests, lint and assembly |

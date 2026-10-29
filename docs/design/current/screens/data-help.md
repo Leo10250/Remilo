@@ -1,8 +1,39 @@
 # Data/Help: Export, Restore and Diagnostics
 
+The later 18 October Day tabs correction advances portable exports to format9,
+retaining the same photo-inclusive `.remilo` file workflow. Include Shared/ByWeekday
+and General/Exercise metadata, explicit legacy shared-step links and optional
+structured exercise targets in immutable versions/snapshots. Formats1–8 remain
+importable, with legacy routines restored as ByWeekday/Exercise. Malformed linkage
+or target data fails before committing content; legacy text is never parsed.
+Prepared handles and uncertain retries stay exact. CE17/DP9 remain unchanged.
+
 The [10 October UX refinement](../ux-refinement.md) condenses backup introductions
 and moves inclusion/exclusion details into disclosures. Whole-backup Restore,
 identity conflict choices, frozen retries and consequential recovery rules remain.
+
+## Photo-inclusive portable backup — 16 October 2026
+
+The owner's routine refinement supersedes the older JSON-only transport below.
+Export prepares a native `.remilo` ZIP containing `content.json` and immutable,
+normalized exercise photos. Include saved weekly revisions, dated progress/history,
+whole-routine Trash state and family purge exclusions. Ordinary one-off Trash
+remains excluded. JSON versions 1–6 remain importable through the same preview.
+Use the existing export/restore controls, not a second photo-backup workflow.
+
+The file picker passes a URI to native staging. JavaScript receives an import
+handle, counts and conflict preview, never the archive or image bytes. Apply and
+uncertain Retry retain that exact handle, copy choices and operation identity;
+Cancel releases the staging handle without changing content. Export holds a
+snapshot/media lease until streaming finishes and hands a prepared file to the
+existing share sheet. “Prepared for sharing” still makes no external-save claim.
+
+Validate allowed ZIP entries, paths, duplicates, hashes, decodability, media
+completeness and size bounds before committing content references. Invalid files
+leave existing reminders and routines unchanged. Limits are 200 MiB compressed
+and expanded, the existing 10 MB content metadata bound and 4 MiB per normalized
+image. Widget IDs/actions, operational generations and Android handles remain
+excluded. See [native ownership](../../../architecture.md#routine-refinement-ce16-media-and-portable-archives).
 
 Revision 2 · 8 October 2026 · **Design direction and fourteen current UI templates approved under A35, with documented implementation corrections.**
 

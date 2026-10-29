@@ -14,6 +14,8 @@ import com.google.android.gms.common.ConnectionResult
 import com.remilo.alarm.system.TimeDisplayPreferences
 
 class RemiloAlarmModule : Module() {
+  private val fileIO = java.util.concurrent.Executors.newSingleThreadExecutor()
+  private var photoRequest: String? = null
   private var observation: AutoCloseable? = null
   private var previewObservation: AutoCloseable? = null
   private var timeObservation: AutoCloseable? = null
@@ -49,6 +51,87 @@ class RemiloAlarmModule : Module() {
   }
   override fun definition() = ModuleDefinition {
     Name("RemiloAlarm")
+    AsyncFunction("chooseExercisePhoto") { request: String, promise: Promise ->
+      val activity = appContext.currentActivity
+      if (activity == null || photoRequest != null || request.length !in 1..100) promise.reject("NOT_AVAILABLE", "Open Remilo after unlocking.", null)
+      else {
+        photoRequest = request
+        val context = activity.applicationContext; val owner = engine()
+        com.remilo.alarm.media.ExercisePhotoActivity.callbacks[request] = { uri ->
+          photoRequest = null
+          if (uri == null) promise.resolve(null)
+          else fileIO.execute { try {
+            val image = com.remilo.alarm.data.ExerciseImages(context).normalize(uri)
+            owner.request({ owner.stageExerciseImage(image, request) }, { promise.resolve(it) }, { promise.reject(it, "Could not add this photo.", null) })
+          } catch (error: Exception) {
+            val code = when {
+              error is com.remilo.alarm.data.ExerciseImageException -> error.code
+              generateSequence(error as Throwable?) { it.cause }.any { it.message?.contains("ENOSPC") == true } -> "IMAGE_STORAGE_FULL"
+              else -> "IMAGE_UNREADABLE"
+            }
+            promise.reject(code, "Could not add this photo.", null)
+          } }
+        }
+        activity.runOnUiThread { try { activity.startActivity(Intent(activity, com.remilo.alarm.media.ExercisePhotoActivity::class.java).putExtra("request",request)) }
+          catch (_: Exception) { com.remilo.alarm.media.ExercisePhotoActivity.callbacks.remove(request); photoRequest = null; promise.reject("NOT_AVAILABLE","Photo picker could not open.",null) } }
+      }
+    }
+    AsyncFunction("getExerciseImage") { id: String, lease: String?, promise: Promise -> dispatch(promise) { it.exerciseImage(id, lease) } }
+    AsyncFunction("releaseExerciseImage") { lease: String, promise: Promise -> dispatch(promise) { it.releaseExerciseImage(lease); true } }
+    AsyncFunction("prepareBackupExport") { promise: Promise ->
+      val context = requireNotNull(appContext.reactContext).applicationContext; val owner = engine(); val lease = UUID.randomUUID().toString()
+      owner.request({ owner.captureBackupFile(lease) }, { value ->
+        @Suppress("UNCHECKED_CAST") val capture = value as Pair<String, List<com.remilo.alarm.data.ExerciseImage>>
+        fileIO.execute {
+        try { promise.resolve(com.remilo.alarm.data.PortableFiles(context).export(capture.first,capture.second)) }
+        catch (_: Exception) { promise.reject("BACKUP_FAILED", "Could not prepare this backup.", null) }
+        finally { owner.request({ owner.releaseBackupFile(lease,capture.second) }, {}, {}) }
+      } }, { promise.reject(it,"Could not prepare this backup.",null) })
+    }
+    AsyncFunction("prepareBackupImport") { uri: String, promise: Promise ->
+      val context = requireNotNull(appContext.reactContext).applicationContext; val owner = engine()
+      fileIO.execute { try {
+        val files = com.remilo.alarm.data.PortableFiles(context); val handle = files.prepare(Uri.parse(uri))
+        val json = java.io.File(files.directory(handle),"content.json").readText(); val bundle = com.remilo.alarm.data.BackupCodec.decode(json)
+        owner.request({ owner.previewImport(json) + mapOf("handle" to handle, "imageCount" to bundle.images.size) }, { promise.resolve(it) }, {
+          fileIO.execute { runCatching { files.discard(handle) } }
+          promise.reject(it,"Could not read this backup.",null)
+        })
+      } catch (_: Exception) { promise.reject("INVALID_BACKUP", "Could not read this backup.", null) } }
+    }
+    AsyncFunction("releasePreparedImport") { handle: String ->
+      val context = requireNotNull(appContext.reactContext).applicationContext
+      fileIO.execute { runCatching { com.remilo.alarm.data.PortableFiles(context).discard(handle) } }
+      true
+    }
+    AsyncFunction("applyPreparedImport") { handle: String, copies: List<String>, operation: String, promise: Promise ->
+      val context = requireNotNull(appContext.reactContext).applicationContext; val owner = engine()
+      val fingerprint = org.json.JSONArray(listOf(handle, copies.sorted())).toString()
+      owner.request({ owner.preparedImportReplay(operation,fingerprint) }, { replay ->
+        if (replay != null) promise.resolve(replay)
+        else fileIO.execute { try {
+          val files = com.remilo.alarm.data.PortableFiles(context); val bundle = files.validate(handle); files.install(handle,bundle)
+          val json = java.io.File(files.directory(handle),"content.json").readText()
+          owner.request({ owner.importBackup(json,copies,operation,fingerprint) }, { promise.resolve(it) }, { promise.reject(it,"Restore could not be confirmed.",null) })
+        } catch (_: Exception) { promise.resolve(mapOf("status" to "Rejected", "errorCode" to "INVALID_BACKUP")) } }
+      }, { promise.reject(it,"Restore could not be confirmed.",null) })
+    }
+    AsyncFunction("getWidgetSupport") {
+      val context = requireNotNull(appContext.reactContext).applicationContext
+      mapOf("pinSupported" to android.appwidget.AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported,
+        "instanceCount" to com.remilo.alarm.widget.WidgetWork.ids(context).size)
+    }
+    AsyncFunction("openWidgetSetup") { routineId: String?, promise: Promise ->
+      val activity = appContext.currentActivity
+      if (activity == null) promise.reject("NOT_AVAILABLE", "Open Remilo after unlocking.", null)
+      else activity.runOnUiThread {
+        try {
+          val intent = Intent(activity, com.remilo.alarm.widget.WidgetConfigureActivity::class.java)
+          if (routineId != null) intent.putExtra("routineId", routineId)
+          activity.startActivity(intent); promise.resolve(mapOf("opened" to true))
+        } catch (_: Exception) { promise.reject("NOT_AVAILABLE", "Widget setup could not open.", null) }
+      }
+    }
     Events("onChange", "onSoundPreviewState", "onTimeDisplayPreferencesChanged")
     OnCreate {
       val context = requireNotNull(appContext.reactContext).applicationContext
@@ -58,7 +141,7 @@ class RemiloAlarmModule : Module() {
       previewObservation = owner.observeSoundPreview { sendEvent("onSoundPreviewState", it) }
       owner.recover()
     }
-    OnDestroy { observation?.close(); observation = null; previewObservation?.close(); previewObservation = null; timeObservation?.close(); timeObservation = null }
+    OnDestroy { photoRequest?.let { com.remilo.alarm.media.ExercisePhotoActivity.callbacks.remove(it) }; photoRequest = null; fileIO.shutdown(); observation?.close(); observation = null; previewObservation?.close(); previewObservation = null; timeObservation?.close(); timeObservation = null }
     AsyncFunction("getTimeDisplayPreferences") { promise: Promise ->
       val owner = engine(); owner.presentationChanged { promise.resolve(owner.presentationSnapshot()) }
     }
@@ -126,9 +209,7 @@ class RemiloAlarmModule : Module() {
         "PublishOneOff" -> engine().calendarRequest(true, { it.capture(command) }, { result ->
           promise.resolve(result); runtime.start(CalendarStore.string(command, "operationId"))
         }, reject)
-        "RetryPublication" -> engine().calendarRequest(block = {
-          it.operation(CalendarStore.string(command, "operationId"))?.let(it::view) ?: throw CalendarFailure("NOT_FOUND")
-        }, resolve = { promise.resolve(it); runtime.start(CalendarStore.string(command, "operationId")) }, reject = reject)
+        "RetryPublication" -> runtime.checkPublication(CalendarStore.string(command, "operationId"), { promise.resolve(it) }, reject)
         "DisconnectCalendar" -> engine().calendarRequest(true, {
           it.disconnect(CalendarStore.string(command, "operationId"), CalendarStore.number(command, "expectedConnectionRevision"))
         }, { old -> promise.resolve(mapOf("disconnected" to true)); if (old != null) runtime.revoke(old) }, reject)
@@ -205,9 +286,14 @@ class RemiloAlarmModule : Module() {
     AsyncFunction("getLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("queryLists") { promise: Promise -> dispatch(promise) { it.lists() } }
     AsyncFunction("querySeries") { promise: Promise -> dispatch(promise) { it.querySeries() } }
+    AsyncFunction("queryRoutines") { promise: Promise -> dispatch(promise) { it.queryRoutines() } }
+    AsyncFunction("previewRoutine") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.previewRoutine(input) } }
+    AsyncFunction("getRoutineSession") { id: String, date: String?, promise: Promise -> dispatch(promise) { it.routineSession(id, date) } }
+    AsyncFunction("queryRoutineHistory") { id: String, cursor: String?, promise: Promise -> dispatch(promise) { it.routineHistory(id, cursor) } }
     AsyncFunction("queryRepeatFamilies") { promise: Promise -> dispatch(promise) { it.queryRepeatFamilies() } }
     AsyncFunction("getTimeZones") { atMs: Double, promise: Promise -> dispatch(promise) { it.timeZones(atMs) } }
     AsyncFunction("convertTime") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.convertTime(input) } }
+    AsyncFunction("resolvePostponeTime") { input: Map<String, Any?>, promise: Promise -> dispatch(promise) { it.resolvePostponeTime(input) } }
     AsyncFunction("getSeries") { id: String, promise: Promise -> dispatch(promise) { it.getSeries(id) } }
     AsyncFunction("getSeriesDraft") { id: String, nominal: String, promise: Promise -> dispatch(promise) { it.getSeriesDraft(id, nominal) } }
     AsyncFunction("getDiagnostics") { promise: Promise -> dispatch(promise) { it.diagnostics() } }
@@ -226,6 +312,8 @@ class RemiloAlarmModule : Module() {
         "exact" -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
         "fullScreen" -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))
         "notifications" -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        "routineChannel" -> Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+          .putExtra(Settings.EXTRA_CHANNEL_ID, com.remilo.alarm.system.AlarmNotifications.ROUTINE_CHANNEL)
         else -> throw IllegalArgumentException("Unknown settings destination")
       }
       context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

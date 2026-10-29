@@ -270,3 +270,21 @@ TalkBack. Run shared verification and Android verification sequentially, then
 identify a signed beta by source relationship, hash and signer. Signed-phone/live
 Google observations remain required. Build preparation does not authorize
 installation, distribution or acceptance claims.
+
+## Publication and local deletion races — 16 October 2026
+
+Local Trash retires its managed export permanently for that captured operation.
+Late publication failures cannot move Cancelled or Confirmed exports back to
+Review, and cannot affect a replacement operation. Startup reconciles older
+export-review records against saved local terminal/Local only decisions without
+network access. Retired captured identities are suppressed from automatic import,
+including a Google copy that becomes visible after local deletion.
+
+A sent publication still retains its original read-only recovery identity.
+Checking it never restores the local reminder, republishes a removed copy or
+deletes its Google event. An unavailable lookup remains unconfirmed rather than
+claiming Google deletion: [Google documents that 404 also covers lack of access](https://developers.google.com/workspace/calendar/api/guides/errors#404_not_found).
+An eligible active managed publication may establish its link and clear its own
+review after the original resources are confirmed; confirmation is idempotent
+and retains authorization/epoch fences. Explicit Check publication result waits
+for the bounded native check, shows progress and reports the observed outcome.

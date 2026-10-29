@@ -13,7 +13,7 @@ Run only the repository commands relevant to the request, from the repo root:
   installed APK hash comparison. Missing/mismatched artifacts are diagnostics;
   workspace Git state does not attribute an installed APK's source.
 - `npm run device:logs -- --device SERIAL`: bounded Remilo-tagged snapshot; add
-  `--follow` for a requested live session and stop with Ctrl+C.
+  `--follow` for a requested live session and stop with Ctrl+C. Add `--crashes` instead for a bounded Android crash-buffer snapshot filtered in memory to exact `com.remilo.app` AndroidRuntime PID blocks before saving; it cannot be combined with `--follow`.
 - `npm run device:capture -- --device SERIAL`: current screen without navigation.
 
 Use an explicit serial for multiple transports. Unauthorized devices require the

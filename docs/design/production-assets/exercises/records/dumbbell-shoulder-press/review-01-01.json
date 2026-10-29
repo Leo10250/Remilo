@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "dumbbell-shoulder-press",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T06:33:04.819993+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/dumbbell-shoulder-press/prepared-01.json",
+    "sha256": "752f97f71dd84c10bda0244ab18db38aa12c7a862652b7337060254dfd6a2b5c"
+  },
+  "candidateSha256": "33a3c85917cca337761344719442cec179c454bfca0ab3d9a376f67d2c23cc19",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01.png",
+    "sha256": "baa65a2176be61efab557c58db1a42f22b8ff4b84e08f75bf870fd2f0c7cdd14"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/01.png",
+      "sha256": "319b5a6d5ead1bf27745b083351ed61a4d0e9690b12c0ff455866148babb92f1",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/02.png",
+      "sha256": "a4e72c6ae95679712c1483b4d4e5849216d992de1ceedd22a8810cb5ce276f45",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/03.png",
+      "sha256": "29b4f02b704b11f48db45907f6b9aa5fca834681f2042e45c1c4dee40a821733",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/04.png",
+      "sha256": "f08e6ef73daa5346b82eff5c20603a34182105064f6bebd196fb8825db24ab8a",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/05.png",
+      "sha256": "8fc73cd99eb6d06b36ba7564d40d47f5dfefa8c59c4289a817ac618c10ab0c7a",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/06.png",
+      "sha256": "ff1ad3e597713e7c174990ad21d871ff43517d8ca337419a5c91d5968363488e",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/07.png",
+      "sha256": "994b2ce4a2c46a0e77cbf05a8cc2b6a3e588f50369eee6cc2d3266ebe2050676",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/08.png",
+      "sha256": "05e331e33ec4cacc77f5295f065c2373da53d3303e6c787092a069dfa22af19b",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/09.png",
+      "sha256": "670e5accccf6bf71df5917a05163abdb7c8c38ad9b5b1a754737996dd54177dd",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/10.png",
+      "sha256": "49e28af3ea3c648657de1e110b196022b7c12fbf9c49d58526a75a8ee5e5369c",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/11.png",
+      "sha256": "edcb169d82a1bc914714ffaa4d1f6307b46852a9b4f35f138a72f5257beb436d",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/dumbbell-shoulder-press/candidate-01/review-01-panels/12.png",
+      "sha256": "8415ca207b718e8e959ebeaf07e758b293bce46cd1b949c904695bf5cdcbf1d5",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "14c2246c8b0b6fe765cf5c6f3c4672ee77b7cc6c0b58393f59d1678215a0e254"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

@@ -13,41 +13,64 @@ import androidx.compose.ui.text.font.FontWeight
 import com.remilo.alarm.core.SessionRefreshGuard
 import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.core.DeliverySnapshot
+import com.remilo.alarm.core.PostponeDraft
+import com.remilo.alarm.core.PostponePickerDraft
+import com.remilo.alarm.core.PostponeTimePolicy
+import com.remilo.alarm.core.AlarmPresentationPolicy
 import com.remilo.alarm.data.AlertRecord
 import com.remilo.alarm.engine.AlarmEngine
 import com.remilo.alarm.presentation.AtmosphereTokens
 import androidx.core.view.WindowCompat
 import java.util.UUID
 import android.widget.Toast
+import android.app.Dialog
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import com.remilo.alarm.presentation.L10n
+import com.remilo.alarm.presentation.NativeMessages
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 /** Native-only controls. Empty loading state must never dismiss a live session. */
 class AlarmActivity : ComponentActivity() {
   override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
     super.onConfigurationChanged(newConfig)
     engine.presentationChanged()
+    if (pickerDialog != null) {
+      pickerViewState = pickerDialog?.onSaveInstanceState()
+      dismissPicker()
+      window.decorView.post { showPicker() }
+    }
   }
   private val snapshot = mutableStateOf<AlarmEngine.SessionSnapshot?>(null)
   private val error = mutableStateOf<String?>(null)
   private val refreshError = mutableStateOf<String?>(null)
   private val busy = mutableStateOf(false)
+  private val postpone = mutableStateOf<PostponeDraft?>(null)
   private val progress = mutableStateOf<String?>(null)
   private val loadingAppearance = mutableStateOf(AppearancePolicy.resolve(null, null, System.currentTimeMillis(),
     java.time.ZoneId.systemDefault(), false))
   private val guard = SessionRefreshGuard()
   private var pendingCommand: Map<String, Any?>? = null
   private var deferredIntent: Intent? = null
+  private var navigatingRoutine = false
+  private val cutoffHandler = android.os.Handler(android.os.Looper.getMainLooper())
+  private var cutoffTask: Runnable? = null
   private val unconfirmed = mutableStateOf(false)
   private var observation: AutoCloseable? = null
   private lateinit var engine: AlarmEngine
+  private var pickerDialog: Dialog? = null
+  private var pickerViewState: Bundle? = null
+  private var dismissingPicker = false
   private fun select(intent: Intent) {
     val id = intent.getStringExtra("sessionId") ?: run {
-      if (pendingCommand == null && !busy.value && !unconfirmed.value) finish()
+      if (pendingCommand == null && !busy.value && !unconfirmed.value && postpone.value == null) finish()
       return
     }
-    val preserveAction = pendingCommand != null || busy.value || unconfirmed.value
+    val preserveAction = pendingCommand != null || busy.value || unconfirmed.value || postpone.value != null
     // Keep the selected session and exact retry even when a later alarm starts a new group.
-    if (!guard.select(id, pendingCommand != null, busy.value, unconfirmed.value)) {
-      if (id != this.intent.getStringExtra("sessionId")) deferredIntent = Intent(intent)
+    if (!guard.select(id, pendingCommand != null, busy.value, unconfirmed.value, choosing = postpone.value != null)) {
+      if (id != this.intent.getStringExtra("sessionId") || intent.hasExtra("startRoutineId")) deferredIntent = Intent(intent)
       refresh(); return
     }
     setIntent(intent)
@@ -69,25 +92,188 @@ class AlarmActivity : ComponentActivity() {
       if (!isDestroyed && guard.accepts(ticket) && current.id == ticket.sessionId) {
         snapshot.value = current
         refreshError.value = null
-        if (SessionRefreshGuard.mayDismiss(current.state, pendingCommand != null, busy.value, unconfirmed.value)) finish()
+        scheduleSnoozeCutoff(current)
+        val draft = postpone.value
+        if (draft != null && pendingCommand == null && !busy.value && !unconfirmed.value &&
+          !draft.matches(current.id, current.state, current.members.map { DeliverySnapshot.Member(it.first.occurrenceId, it.first.generation) })) {
+          postpone.value = draft.copy(stale = true, picker = null)
+          dismissPicker()
+        }
+        val startId = intent.getStringExtra("startRoutineId")
+        if (startId != null && pendingCommand == null && !busy.value && !unconfirmed.value && postpone.value == null) {
+          val generation = intent.getLongExtra("startRoutineGeneration", -1)
+          intent.removeExtra("startRoutineId")
+          current.members.firstOrNull { it.first.occurrenceId == startId && it.first.generation == generation && it.first.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }?.let { act("StartRoutine", it.first) }
+        }
+        if (SessionRefreshGuard.mayDismiss(current.state, pendingCommand != null, busy.value, unconfirmed.value || navigatingRoutine)) {
+          discardPostpone()
+          val incoming = deferredIntent
+          if (incoming != null) { deferredIntent = null; select(incoming) } else finish()
+        }
       }
     } }, { runOnUiThread { if (!isDestroyed && guard.accepts(ticket)) refreshError.value = if (snapshot.value == null) "Could not load alarm controls." else "Could not refresh alarm controls." } })
   }
+  private fun scheduleSnoozeCutoff(current: AlarmEngine.SessionSnapshot) {
+    cutoffTask?.let(cutoffHandler::removeCallbacks); cutoffTask = null
+    if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
+    val next = current.members.map { it.first }.filter { it.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }
+      .map { it.expiresAtMs - it.snoozeMinutes * 60_000L }.filter { it > current.observedAtMs }.minOrNull() ?: return
+    cutoffTask = Runnable { if (!isDestroyed && !isFinishing) refresh() }.also {
+      cutoffHandler.postDelayed(it, (next - current.observedAtMs + 1).coerceAtLeast(1L))
+    }
+  }
+  override fun onResume() { super.onResume(); refresh() }
+  override fun onPause() { cutoffTask?.let(cutoffHandler::removeCallbacks); cutoffTask = null; super.onPause() }
   private fun act(kind: String, record: AlertRecord? = null) {
+    if (kind in setOf("Postpone", "PostponeAll")) { openPostpone(kind == "PostponeAll", record); return }
     val current = snapshot.value ?: return
-    if (busy.value || pendingCommand != null) return
+    if (busy.value || pendingCommand != null || postpone.value != null) return
     error.value = null; refreshError.value = null
     val title = current.members.firstOrNull { it.first.occurrenceId == record?.occurrenceId }?.second ?: "Reminder"
     progress.value = when (kind) { "DoneAll" -> "Completing ${current.members.size} reminders…";
-      "SnoozeAll" -> "Snoozing ${current.members.size} reminders…"; "Snooze" -> "Snoozing $title…"; else -> "Completing $title…" }
-    val command = mutableMapOf<String, Any?>("kind" to kind, "operationId" to UUID.randomUUID().toString(),
+      "SnoozeAll" -> "Snoozing ${current.members.size} reminders…"; "Snooze", "SnoozeRoutineAlarm" -> "Snoozing $title…"; "StartRoutine", "DismissRoutineAlarm" -> "Dismissing alarm…"; else -> "Completing $title…" }
+    val command = mutableMapOf<String, Any?>("kind" to if (kind == "StartRoutine") "DismissRoutineAlarm" else kind, "openRoutine" to (kind == "StartRoutine"), "date" to record?.nominalSlot?.substringBefore('T'), "operationId" to UUID.randomUUID().toString(),
       "expectedSessionId" to current.id, "occurrenceId" to record?.occurrenceId, "expectedGeneration" to record?.generation)
     if (kind in setOf("DoneAll", "SnoozeAll")) command["members"] = DeliverySnapshot.maps(current.members.map {
       DeliverySnapshot.Member(it.first.occurrenceId, it.first.generation) })
     if (kind == "SnoozeAll") command["snoozeMinutes"] = current.members.first().first.snoozeMinutes
-    if (kind == "Snooze") command["expectedSnoozeMinutes"] = record?.snoozeMinutes
+    if (kind in setOf("Snooze", "SnoozeRoutineAlarm")) command["expectedSnoozeMinutes"] = record?.snoozeMinutes
     pendingCommand = command
     sendAction(command)
+  }
+  private fun openPostpone(all: Boolean, record: AlertRecord?) {
+    val current = snapshot.value ?: return
+    if (busy.value || pendingCommand != null || unconfirmed.value || postpone.value != null || SessionRefreshGuard.ended(current.state)) return
+    val selected = if (all) current.members.map { it.first } else current.members.map { it.first }.filter {
+      it.occurrenceId == record?.occurrenceId && it.generation == record?.generation
+    }
+    if (selected.isEmpty() || !AlarmPresentationPolicy.canPostpone(selected.map { it.profile })) { refresh(); return }
+    val at = System.currentTimeMillis()
+    val zone = ZoneId.systemDefault().id
+    val target = PostponeTimePolicy.resolve(mapOf("kind" to "Relative", "zoneId" to zone, "referenceAtMs" to at, "minutes" to 15))
+    val preferences = current.postponePreferences
+    postpone.value = PostponeDraft(current.id, selected.map { DeliverySnapshot.Member(it.occurrenceId, it.generation) }, all,
+      zone, "15", (target["instantMs"] as Number).toLong(), at, preferences?.revision,
+      preferences?.let { listOf(it.tomorrowMorning, it.tomorrowAfternoon, it.tomorrowEvening) })
+    error.value = null
+  }
+  private fun choosePostpone(key: String) {
+    val draft = postpone.value ?: return
+    if (busy.value || pendingCommand != null || unconfirmed.value || draft.stale) return
+    if (key == "custom") {
+      postpone.value = draft.beginCustom(System.currentTimeMillis())
+      error.value = null; return
+    }
+    val at = System.currentTimeMillis()
+    val input = mutableMapOf<String, Any?>("zoneId" to draft.zoneId, "referenceAtMs" to at)
+    if (key.startsWith("tomorrow-")) {
+      val index = key.substringAfter('-').toIntOrNull() ?: return
+      val minutes = draft.tomorrowMinutes?.getOrNull(index) ?: return
+      input["kind"] = "Tomorrow"; input["minutesOfDay"] = minutes
+    } else {
+      val minutes = key.toIntOrNull()?.takeIf { it in setOf(15, 30, 60, 1440) } ?: return
+      input["kind"] = "Relative"; input["minutes"] = minutes
+    }
+    try {
+      val resolved = PostponeTimePolicy.resolve(input)
+      postpone.value = draft.copy(selection = key, targetMs = (resolved["instantMs"] as Number).toLong(), referenceAtMs = at,
+        adjustment = resolved["adjustment"] as String, picker = null)
+      error.value = null
+    } catch (_: Exception) { error.value = L10n.text(this, NativeMessages.postpone_failed_time()) }
+  }
+  private fun confirmPostpone() {
+    val draft = postpone.value ?: return
+    if (busy.value || pendingCommand != null || unconfirmed.value || draft.stale || draft.picker != null) return
+    val current = snapshot.value ?: return
+    if (!draft.matches(current.id, current.state, current.members.map { DeliverySnapshot.Member(it.first.occurrenceId, it.first.generation) })) {
+      postpone.value = draft.copy(stale = true)
+      return
+    }
+    if (!AlarmPresentationPolicy.canPostpone(current.members.map { it.first }.filter { record -> draft.members.any { it.occurrenceId == record.occurrenceId } }.map { it.profile })) {
+      postpone.value = draft.copy(stale = true)
+      return
+    }
+    if (draft.targetMs <= System.currentTimeMillis()) { error.value = L10n.text(this, NativeMessages.postpone_future_time()); return }
+    val command = draft.command(UUID.randomUUID().toString())
+    error.value = null; refreshError.value = null
+    progress.value = L10n.text(this, if (draft.all) NativeMessages.postpone_submitting_group(draft.members.size) else NativeMessages.postpone_submitting())
+    pendingCommand = command
+    sendAction(command)
+  }
+  private fun closePostpone() {
+    if (busy.value || pendingCommand != null || unconfirmed.value) return
+    discardPostpone(); error.value = null
+    val incoming = deferredIntent
+    if (incoming != null) { deferredIntent = null; select(incoming) } else refresh()
+  }
+  private fun backToPostponeChoices() {
+    if (busy.value || pendingCommand != null || unconfirmed.value) return
+    dismissPicker()
+    postpone.value = postpone.value?.copy(picker = null)
+    error.value = null
+  }
+  private fun pickCustomField(step: String) {
+    val draft = postpone.value ?: return
+    val custom = draft.picker ?: return
+    if (busy.value || pendingCommand != null || unconfirmed.value || draft.stale || step !in setOf("date", "time")) return
+    postpone.value = draft.copy(picker = custom.copy(step = step))
+    pickerViewState = null
+    showPicker()
+  }
+  private fun useCustomTime() {
+    val draft = postpone.value ?: return
+    val custom = draft.picker ?: return
+    if (busy.value || pendingCommand != null || unconfirmed.value || draft.stale || custom.step != "custom") return
+    try {
+      val at = System.currentTimeMillis()
+      postpone.value = draft.useCustom(at)
+      error.value = null
+    } catch (_: Exception) { error.value = L10n.text(this, NativeMessages.postpone_future_time()) }
+  }
+  private fun discardPostpone() { postpone.value = null; dismissPicker(); pickerViewState = null }
+  private fun dismissPicker() {
+    dismissingPicker = true
+    pickerDialog?.dismiss(); pickerDialog = null
+    dismissingPicker = false
+  }
+  /** System-owned date/time dialogs retain provisional input and never issue an action. */
+  private fun showPicker() {
+    val draft = postpone.value ?: return
+    val picking = draft.picker ?: return
+    if (picking.step == "custom") return
+    if (isDestroyed || isFinishing || pickerDialog?.isShowing == true || pendingCommand != null) return
+    val local = try { LocalDateTime.parse(picking.local) } catch (_: Exception) {
+      postpone.value = draft.copy(picker = null); return
+    }
+    var accepted = false
+    val dialog: Dialog = if (picking.step == "date") DatePickerDialog(this, { _, year, month, day ->
+      accepted = true
+      val active = postpone.value
+      if (active != null && active.sessionId == draft.sessionId && active.picker == picking && !active.stale) {
+        val chosen = LocalDateTime.of(year, month + 1, day, local.hour, local.minute)
+        postpone.value = active.copy(picker = PostponePickerDraft(chosen.toString()))
+        error.value = null
+      }
+    }, local.year, local.monthValue - 1, local.dayOfMonth) else TimePickerDialog(this, { _, hour, minute ->
+      accepted = true
+      val active = postpone.value
+      if (active != null && active.sessionId == draft.sessionId && active.picker == picking && !active.stale) {
+        val chosen = local.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+        postpone.value = active.copy(picker = PostponePickerDraft(chosen.toString()))
+        error.value = null
+      }
+    }, local.hour, local.minute, android.text.format.DateFormat.is24HourFormat(this))
+    pickerDialog = dialog
+    dialog.setOnDismissListener {
+      val owned = pickerDialog === dialog
+      if (owned) pickerDialog = null
+      if (owned && !accepted && !dismissingPicker && !isDestroyed) {
+        postpone.value?.let { if (it.sessionId == draft.sessionId && it.picker == picking) postpone.value = it.copy(picker = picking.copy(step = "custom")) }
+      }
+    }
+    pickerViewState?.let { dialog.onRestoreInstanceState(it) }; pickerViewState = null
+    dialog.window?.let { AlarmChildWindowPolicy.inherit(it, window) }
+    dialog.show()
   }
   private fun retry() { pendingCommand?.let(::sendAction) ?: refresh() }
   private fun sendAction(command: Map<String, Any?>) {
@@ -107,21 +293,39 @@ class AlarmActivity : ComponentActivity() {
         if (status?.get("status") in setOf("Partial", "Blocked")) {
           val outcomes = status?.get("memberResults") as? List<*>
           val scheduled = outcomes?.count { (it as? Map<*, *>)?.get("status") == "Scheduled" } ?: 0
-          val message = if (outcomes != null) "$scheduled of ${outcomes.size} reminders snoozed. Review alert problems in Remilo."
+          val postponing = command["kind"] in setOf("Postpone", "PostponeAll")
+          val message = if (postponing) {
+            if (outcomes != null) L10n.text(this, NativeMessages.postpone_partial(scheduled, outcomes.size))
+            else L10n.text(this, NativeMessages.postpone_failed_schedule())
+          } else if (outcomes != null) "$scheduled of ${outcomes.size} reminders snoozed. Review alert problems in Remilo."
             else "Could not schedule Snooze. Review alert problems in Remilo."
           error.value = message
           Toast.makeText(this, com.remilo.alarm.presentation.L10n.text(this, message), Toast.LENGTH_LONG).show()
         }
         if (status?.get("status") == "Pending") {
           pendingCommand = command; unconfirmed.value = true
-          val message = "Snooze is saved; scheduling is pending. Retry the same action."
+          val message = if (command["kind"] in setOf("Postpone", "PostponeAll")) L10n.text(this, NativeMessages.postpone_pending())
+            else "Snooze is saved; scheduling is pending. Retry the same action."
           error.value = message
           Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+        if (status?.get("status") == "Applied" && command["openRoutine"] == true) {
+          val open = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("remilo://reminder/${command["occurrenceId"]}")).setPackage(packageName)
+          val keyguard = getSystemService(android.app.KeyguardManager::class.java)
+          if (keyguard.isKeyguardLocked) {
+            navigatingRoutine = true
+            keyguard.requestDismissKeyguard(this, object : android.app.KeyguardManager.KeyguardDismissCallback() {
+              override fun onDismissSucceeded() { navigatingRoutine = false; startActivity(open); refresh() }
+              override fun onDismissCancelled() { navigatingRoutine = false; refresh() }
+              override fun onDismissError() { navigatingRoutine = false; refresh() }
+            })
+          } else startActivity(open)
         }
         if (status?.get("status") == "Applied" && command["kind"] in setOf("CompleteDelivery", "DoneAll")) {
           val message = if (command["kind"] == "DoneAll") "${status["count"]} reminders completed" else "Reminder completed"
           Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
+        if (definitive && status?.get("status") != "Rejected" && command["kind"] in setOf("Postpone", "PostponeAll")) discardPostpone()
         if (definitive && deferredIntent != null) {
           val incoming = deferredIntent!!; deferredIntent = null; select(incoming)
         } else refresh() // A terminated snapshot closes only after a definitive action acknowledgement.
@@ -137,10 +341,13 @@ class AlarmActivity : ComponentActivity() {
     setShowWhenLocked(true); setTurnScreenOn(true)
     engine = AlarmEngine.get(this)
     deferredIntent = savedInstanceState?.getParcelable("deferredIntent", Intent::class.java)
+    postpone.value = savedInstanceState?.getBundle("postponeDraft")?.let(PostponeSavedState::restore)
+    pickerViewState = savedInstanceState?.getBundle("postponePickerView")
     savedInstanceState?.getBundle("pendingAction")?.let { saved ->
       if (saved.getString("sessionId") != null) {
         pendingCommand = mapOf<String, Any?>("kind" to saved.getString("kind"), "operationId" to saved.getString("operationId"),
           "expectedSessionId" to saved.getString("sessionId"), "occurrenceId" to saved.getString("occurrenceId"),
+          "date" to saved.getString("date"), "openRoutine" to saved.getBoolean("openRoutine"),
           "expectedGeneration" to if (saved.containsKey("generation")) saved.getLong("generation") else null).toMutableMap().also { command ->
           val ids = saved.getStringArray("memberIds")
           val generations = saved.getLongArray("memberGenerations")
@@ -148,13 +355,15 @@ class AlarmActivity : ComponentActivity() {
             command["members"] = DeliverySnapshot.maps(ids.indices.map { DeliverySnapshot.Member(ids[it], generations[it]) })
           if (saved.containsKey("snoozeMinutes")) command["snoozeMinutes"] = saved.getInt("snoozeMinutes")
           if (saved.containsKey("expectedSnoozeMinutes")) command["expectedSnoozeMinutes"] = saved.getInt("expectedSnoozeMinutes")
+          if (saved.containsKey("alarmAtMs")) command["alarmAtMs"] = saved.getLong("alarmAtMs")
         }
         unconfirmed.value = true; error.value = "Could not confirm this action. Retry the same action."
       }
     }
-    val initialIntent = pendingCommand?.get("expectedSessionId")?.let { savedSession ->
+    val savedSession = pendingCommand?.get("expectedSessionId") as? String ?: postpone.value?.sessionId
+    val initialIntent = savedSession?.let {
       if (savedSession != intent.getStringExtra("sessionId")) deferredIntent = Intent(intent)
-      Intent(intent).putExtra("sessionId", savedSession as String)
+      Intent(intent).putExtra("sessionId", savedSession)
     } ?: intent
     select(initialIntent)
     observation = engine.observe { runOnUiThread { if (!isDestroyed) refresh() } }
@@ -199,13 +408,24 @@ class AlarmActivity : ComponentActivity() {
         labelMedium = englishType.labelMedium.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp),
         labelSmall = englishType.labelSmall.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp))
       MaterialTheme(colorScheme = scheme, typography = type) {
-        AlarmControlsScreen(current, busy.value, error.value, { action, record -> act(action.commandKind, record) }, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
+        AlarmModalFrame(modalOpen = postpone.value != null, content = {
+          AlarmControlsScreen(current, busy.value || postpone.value != null, error.value, { action, record -> act(action.commandKind, record) }, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
+        }, modal = { postpone.value?.let { draft ->
+          val subject = current?.members?.firstOrNull { it.first.occurrenceId == draft.members.first().occurrenceId }?.second
+            ?: L10n.text(NativeMessages.m_31757bbfa17e())
+          PostponeChooser(draft, subject, current?.id == draft.sessionId, busy.value, unconfirmed.value, error.value, roles,
+            ::closePostpone, ::choosePostpone, ::confirmPostpone, ::retry, ::backToPostponeChoices, ::pickCustomField, ::useCustomTime)
+        } })
       }
     }
+    if (postpone.value?.picker != null && pendingCommand == null) window.decorView.post { showPicker() }
   }
   override fun onSaveInstanceState(outState: Bundle) {
     deferredIntent?.let { outState.putParcelable("deferredIntent", it) }
+    postpone.value?.let { outState.putBundle("postponeDraft", PostponeSavedState.save(it)) }
+    pickerDialog?.onSaveInstanceState()?.let { outState.putBundle("postponePickerView", it) }
     pendingCommand?.let { command -> outState.putBundle("pendingAction", Bundle().apply {
+      putString("date", command["date"] as? String); putBoolean("openRoutine", command["openRoutine"] == true)
       putString("kind", command["kind"] as String); putString("operationId", command["operationId"] as String)
       putString("sessionId", command["expectedSessionId"] as String)
       putString("occurrenceId", command["occurrenceId"] as? String)
@@ -217,8 +437,9 @@ class AlarmActivity : ComponentActivity() {
       }
       (command["snoozeMinutes"] as? Int)?.let { putInt("snoozeMinutes", it) }
       (command["expectedSnoozeMinutes"] as? Int)?.let { putInt("expectedSnoozeMinutes", it) }
+      (command["alarmAtMs"] as? Number)?.let { putLong("alarmAtMs", it.toLong()) }
     }) }
     super.onSaveInstanceState(outState)
   }
-  override fun onDestroy() { observation?.close(); super.onDestroy() }
+  override fun onDestroy() { cutoffTask?.let(cutoffHandler::removeCallbacks); observation?.close(); dismissPicker(); super.onDestroy() }
 }

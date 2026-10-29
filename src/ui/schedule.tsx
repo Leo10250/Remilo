@@ -16,7 +16,7 @@ export function SchedulePrimary({ item }: { item: ScheduleItem }) {
   useLocale();
   const { detailSchedulePresentation } = useTimeFormatting();
   const primary = detailSchedulePresentation(item);
-  return <ConnectedGroup><InformationRow key="alert" prominent icon={item.mode === 'None' ? 'event' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
+  return <ConnectedGroup><InformationRow intent="navigation" key="alert" prominent icon={item.mode === 'None' ? 'event' : item.mode === 'Notification' ? 'notifications' : 'alarm'}
     label={primary.label} value={primary.value} supporting={item.mode === 'None' ? primary.supporting : undefined} /></ConnectedGroup>;
 }
 
@@ -40,14 +40,14 @@ export function Schedule({ item, draft = false, details = true, connected = fals
   const showZone = zone !== deviceZone() || item.repeatRule?.zoneMode === 'pinned', showAlertZone = changed && currentZone !== zone;
   const summary = detailSchedulePresentation(item, undefined, hasPublication);
   const rows = occurrence ? [
-    summary.showEvent && <InformationRow key="when" icon="event" label={t('m_1d7fc661c9ce')} value={eventRange(item)} />,
-    summary.showDue && <InformationRow key="due" icon="schedule" label={t('m_9071738f1459')} value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? t('m_54b61e4a03c4') : undefined} />,
+    summary.showEvent && <InformationRow intent="navigation" key="when" icon="event" label={t('m_1d7fc661c9ce')} value={eventRange(item)} />,
+    summary.showDue && <InformationRow intent="navigation" key="due" icon="schedule" label={t('m_9071738f1459')} value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? t('m_54b61e4a03c4') : undefined} />,
     ...Children.toArray(children),
   ].filter(Boolean) : [
-    <InformationRow key="when" icon="event" label={t('m_cf9c7aa24a26')} value={eventRange(item)} supporting={ordinaryDue(item) ? item.allDay ? t('m_35760eef25b2') : t('m_2062b803053d') : undefined} />,
-    !ordinaryDue(item) && <InformationRow key="due" icon="schedule" label={t('m_9071738f1459')} value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? t('m_ac91aec2f1dc') : undefined} />,
-    <InformationRow key="mode" icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} label={t('m_9f9e808feb4c')} value={modeLabel(item.mode)} />,
-    item.mode !== 'None' && <InformationRow key="alert" icon="schedule" label={t('m_ac9a908af109')} value={alert} supporting={changed ? t('m_c4662e6f0c7b') + scheduleDateTime(item.alarmAtMs, zone) + t('m_69127b5352fa') : item.alarmLinked === false ? t('m_d11be71c0a11') : undefined} />,
+    <InformationRow intent="navigation" key="when" icon="event" label={t('m_cf9c7aa24a26')} value={eventRange(item)} supporting={ordinaryDue(item) ? item.allDay ? t('m_35760eef25b2') : t('m_2062b803053d') : undefined} />,
+    !ordinaryDue(item) && <InformationRow intent="navigation" key="due" icon="schedule" label={t('m_9071738f1459')} value={scheduleDateTime(item.dueAtMs, zone)} supporting={item.dueLinked === false ? t('m_ac91aec2f1dc') : undefined} />,
+    <InformationRow intent="navigation" key="mode" icon={item.mode === 'None' ? 'alarm_off' : item.mode === 'Notification' ? 'notifications' : 'alarm'} label={t('m_9f9e808feb4c')} value={modeLabel(item.mode)} />,
+    item.mode !== 'None' && <InformationRow intent="navigation" key="alert" icon="schedule" label={t('m_ac9a908af109')} value={alert} supporting={changed ? t('m_c4662e6f0c7b') + scheduleDateTime(item.alarmAtMs, zone) + t('m_69127b5352fa') : item.alarmLinked === false ? t('m_d11be71c0a11') : undefined} />,
     ...Children.toArray(children),
   ];
   const support = <>

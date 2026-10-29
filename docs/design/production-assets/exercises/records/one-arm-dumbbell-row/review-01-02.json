@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "assetId": "one-arm-dumbbell-row",
+  "candidate": 1,
+  "revision": 2,
+  "recordedAtUtc": "2026-10-16T07:10:44.584940+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/one-arm-dumbbell-row/prepared-01.json",
+    "sha256": "1ed10d199c9c36fe88a1630735a4fd1b1b65593494b927badd41f42f3f31dd22"
+  },
+  "candidateSha256": "534cd796f0e42323007676555e05f732ec981404eeb22e41d4ecd1c80dc1e7f5",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "reviewer": "Delegated assistant after original/source/export light/dark/checkerboard, both helper sizes and all eight current surfaces at both sizes; independent UX original-source review",
+    "recordedAtUtc": "2026-10-16T07:10:43.031734+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Supported one-arm dumbbell row is recognizable near the top of the pull, with one bent pulling arm beside the torso and a separate straight support arm."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Previously inspected approved front-plank person/style retained: blue-gray top, terracotta leggings, bun, natural adult proportions and restrained educational shading; plain gray shoes/bench/weight."
+      },
+      {
+        "name": "pose-and-contact",
+        "status": "pass",
+        "observation": "Flat support palm and bent knee visibly meet the bench pad. The separate pulling hand grips one dumbbell near the lower ribs; supporting shin/foot extends behind the knee and the other complete shoe appears planted. Back/neck are plausible and continuous. No duplicate/disconnected limb or material floating-contact defect observed. Independent source review agrees."
+      },
+      {
+        "name": "equipment-continuity",
+        "status": "pass",
+        "observation": "Exactly one gray hex dumbbell has a continuous handle/two matching ends and a visible wrapped hand grip. Horizontal bench pad, frame, angled legs and feet are continuous and fully contained; no disconnected equipment or invented weight label observed."
+      },
+      {
+        "name": "decoded-alpha",
+        "status": "pass",
+        "observation": "Viewed original/source/export light/dark and decoded checkerboard: clean transparency around/between person, dumbbell and bench; no distracting matte, colored fringe or visibly clipped extremity. Complete bun outline remains within the source."
+      },
+      {
+        "name": "small-usage-and-containment",
+        "status": "pass",
+        "observation": "Viewed source/runtime helper panels at 256x144 and 320x180 plus both-size all-eight current-container composites. Support hand/knee, pulling arm/weight and standing shoe remain recognizable. Full figure and bench remain contained; fine finger/contact detail is clearer enlarged."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No weight number, text, labels, arrows, scenery, branding, UI, phone frame or watermark observed. The user's unspecified row weight is not invented."
+      }
+    ],
+    "limitations": [
+      "Top clearance is very tight: visible alpha>=128 bbox [366,7,1324,913] on 1672x941 gives approximately 1.3dp above and 5.4dp below at180dp height. Bun outline is complete; generous margins are not achieved.",
+      "No exact elbow angle, spinal/shoulder alignment or clinical exercise-form validation claimed. Equipment observations do not mechanically certify the bench/dumbbell.",
+      "Untagged source explicitly interpreted as sRGB under profile; no embedded-profile measurement or conversion claimed.",
+      "Deterministic boards use current presentation.json colors; actual native/RN rendering, measured text/control contrast and signed-phone acceptance remain separate.",
+      "Review is technical/visual only. Root records and binds the owner's standing artwork/activation approval; this reviewer performs no production promotion."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "b1fa68c407333a6ef170c4caba62865db8d9401fd75ee68361ddd60877e75247"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/all-atmospheres-256x144-v1.png",
+        "sha256": "66fba4cf9eda56b10868f3cd72eb9c5840c8a46f3b072dfdc906cea9b497faa9"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/source-light-v1.png",
+        "sha256": "5691defa4e14721ad56103678f5cfc7fb015dd117ccdd77683aaacca279f9dee"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/source-dark-v1.png",
+        "sha256": "8c2a7f32454670cc6502b5cf9f687e2eb58f7c7a6556eaa1bbb11d4d2f5b952f"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/export-light-v1.png",
+        "sha256": "bdc8400e866e2e6e5c9f95849e6b5485efb48681149ad6e53d14b1c6f6930d1f"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/export-dark-v1.png",
+        "sha256": "ddb6440b9ef0e79093919edb07a1784a176399358f47f4e0d51222f78f5c2a3e"
+      }
+    ]
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02.png",
+    "sha256": "a57cbb0061536a86234d9ca00b3c49e95947a89f49f61cd25743a797d7b809bc"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/01.png",
+      "sha256": "618d36ac17585cd46ccc07988bd378be49820cb0e89b702b8ae3fba6e7b96506",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/02.png",
+      "sha256": "00da35537d8c8ff3f9ab58ae251502cca9f5422dac9179ec2be86be2535fc4c9",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/03.png",
+      "sha256": "95869590afef34f0b0632d312c7c7d45fdd923e754a628aa04f56fade6fe4f64",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/04.png",
+      "sha256": "ea7b8bb5d453ff08c152a36d8c3eb5172265d88cc289c8ed1bf129981187d7db",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/05.png",
+      "sha256": "f7f1955bc78519c8d4abac575adf450effdc8a1c3051478771948a39f9d49652",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/06.png",
+      "sha256": "032d05ffcf4e1b018cdbadbd59456d441e75071d17cfe7e2458df9b3a568c7ae",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/07.png",
+      "sha256": "2ce4352d88033a8d6d9d6e41fa8bcc5941f4e4d83ab9459f64cf5f102b3ec5ee",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/08.png",
+      "sha256": "7a4b80734203f5b9060dcda22deadad0a585fefe12122e4cfd74e03f44ed0939",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/09.png",
+      "sha256": "ac49299e9a7f6a62f11ae5c2afdf338fb72cd36df2015d633af8f68cc688a617",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/10.png",
+      "sha256": "2fa15abdac000193d3851c568c41c9c2e17c9aa2a22e7386790cea44e0cada57",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/11.png",
+      "sha256": "235eb146dacf613e437b588726ced52a98343184df80c491d796290f9a466f43",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/review-02-panels/12.png",
+      "sha256": "6caac48bd9e378287c4a79c3966792132ec78b19f256a7b7945b053542dba143",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "b1fa68c407333a6ef170c4caba62865db8d9401fd75ee68361ddd60877e75247"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/all-atmospheres-256x144-v1.png",
+      "sha256": "66fba4cf9eda56b10868f3cd72eb9c5840c8a46f3b072dfdc906cea9b497faa9"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/source-light-v1.png",
+      "sha256": "5691defa4e14721ad56103678f5cfc7fb015dd117ccdd77683aaacca279f9dee"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/source-dark-v1.png",
+      "sha256": "8c2a7f32454670cc6502b5cf9f687e2eb58f7c7a6556eaa1bbb11d4d2f5b952f"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/export-light-v1.png",
+      "sha256": "bdc8400e866e2e6e5c9f95849e6b5485efb48681149ad6e53d14b1c6f6930d1f"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/one-arm-dumbbell-row/candidate-01/export-dark-v1.png",
+      "sha256": "ddb6440b9ef0e79093919edb07a1784a176399358f47f4e0d51222f78f5c2a3e"
+    }
+  ],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "26b2643daa4eb982ee973f500593562ee585479f2445588d2a8a50f473218ed4"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

@@ -3,6 +3,9 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+def localBuildProperties = new Properties()
+def localBuildFile = rootProject.file('local.properties')
+if (localBuildFile.exists()) localBuildFile.withInputStream { localBuildProperties.load(it) }
 def betaProperties = new Properties()
 def betaFile = rootProject.file('signing.properties')
 if (betaFile.exists()) betaFile.withInputStream { betaProperties.load(it) }
@@ -88,6 +91,11 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
+    // Optional private staging path for Windows worktrees with long source paths.
+    def cmakeStaging = localBuildProperties.getProperty('remilo.cmakeStagingDirectory')
+    if (cmakeStaging) {
+        externalNativeBuild.cmake.buildStagingDirectory = file(cmakeStaging)
+    }
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion

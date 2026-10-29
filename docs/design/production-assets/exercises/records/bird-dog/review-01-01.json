@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "assetId": "bird-dog",
+  "candidate": 1,
+  "revision": 1,
+  "recordedAtUtc": "2026-10-16T05:20:27.307408+00:00",
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/bird-dog/prepared-01.json",
+    "sha256": "0f506cb63ef121307e343821292a80c9a4203561e7083c87f89bcec6b20e8e97"
+  },
+  "candidateSha256": "8b6ccd761270d45e56713ac15e5393930bb55dbe58c6cf6b7cfd2370294e1f93",
+  "views": [
+    {
+      "name": "focus-narrow",
+      "size": [
+        256,
+        144
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    },
+    {
+      "name": "focus-wide",
+      "size": [
+        320,
+        180
+      ],
+      "unit": "dp",
+      "fit": "contain",
+      "focal": [
+        0.5,
+        0.5
+      ],
+      "overlayHeight": 0,
+      "landmarks": []
+    }
+  ],
+  "viewsSha256": "15aad5dcda28efe64d269da6e8383dba05a391fb46d211c355dba9b7be5446ab",
+  "sourceProfiles": {
+    "focus-narrow": {
+      "viewportDp": [
+        256,
+        144
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    },
+    "focus-wide": {
+      "viewportDp": [
+        320,
+        180
+      ],
+      "focalNormalized": [
+        0.5,
+        0.5
+      ],
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "fit": "contain",
+      "toolbarHeightDp": 0,
+      "feasibility": {
+        "feasible": true,
+        "currentContainsAll": true,
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "landmarks": [],
+        "requiredBoundsPx": null
+      }
+    }
+  },
+  "exportProfiles": {
+    "runtime": {
+      "focus-narrow": {
+        "viewportDp": [
+          256,
+          144
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      },
+      "focus-wide": {
+        "viewportDp": [
+          320,
+          180
+        ],
+        "focalNormalized": [
+          0.49947916666666664,
+          0.5
+        ],
+        "sourceRectPx": [
+          0,
+          0,
+          960,
+          540
+        ],
+        "fit": "contain",
+        "toolbarHeightDp": 0,
+        "feasibility": {
+          "feasible": true,
+          "currentContainsAll": true,
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "landmarks": [],
+          "requiredBoundsPx": null
+        }
+      }
+    }
+  },
+  "checks": [],
+  "inspection": {
+    "status": "pending",
+    "checks": []
+  },
+  "preview": {
+    "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01.png",
+    "sha256": "6ffe658a42617c559c6d1b58f71ffaef63f4a8d2ed1d06e5182dd8b61c5af7b0"
+  },
+  "previewPanels": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/01.png",
+      "sha256": "d4c05b8c6e1d56b2c5f7540a4cf06e9e60b12cb11db5e65f302efb1a850a1976",
+      "label": "Original artwork (aspect preserved)",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/02.png",
+      "sha256": "f17f070c911ceeffd1a649098f527877752f13a7da504030d26275a5aa2ea814",
+      "label": "Reference / paired comparison",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/03.png",
+      "sha256": "d29fc8c18a488bb84a5a41fa2192c530e4cb18fb4c702304c1a2e899cdb43d66",
+      "label": "Transparency on dark surface",
+      "width": 760,
+      "height": 300
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/04.png",
+      "sha256": "afc23c23cc5411a57d276792cb9ee044e90196d5abaf86ab945195f94759b89c",
+      "label": "Transparency on checkerboard",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/05.png",
+      "sha256": "ffe2c63a1a458ac7f4375ae23746b6bfb864c5d21f648eaa40e3e60c746bf0b1",
+      "label": "Decoded runtime export: 960 x 540px",
+      "width": 760,
+      "height": 420
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/06.png",
+      "sha256": "c566e5f335959e955f87cbbd102d1f7e1be1986ce578971692f8a7c4e63786a4",
+      "label": "runtime native pixels on light",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/07.png",
+      "sha256": "50d0b8ae5808c799b09ba19587fc5ab87f11a7a0a8dda2bc197830219b4bca76",
+      "label": "runtime native pixels on dark",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/08.png",
+      "sha256": "f84af77f254fb10b74558fc820588beee4b7ea8187a82a40ebb6940adbfff14f",
+      "label": "runtime native pixels on checkerboard",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/09.png",
+      "sha256": "5530239ee63ce7d42a6667fbd7c78d0151d63244ca8f7f54966d3e11e934cf28",
+      "label": "source focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/10.png",
+      "sha256": "838b554e07694ba6db01b3d1b0d06f8c1c48e2986283731227c8f2385918cbbe",
+      "label": "source focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/11.png",
+      "sha256": "473fcf3cba71717dc1ade20ed8384a5b94a8e00176e6b2051a0c9def051d8d2b",
+      "label": "runtime focus-narrow: 256 x 144 dp at 1px/unit",
+      "width": 256,
+      "height": 144
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/bird-dog/candidate-01/review-01-panels/12.png",
+      "sha256": "8ea5eb1174a83eabb3714cecff314b50f9f13a96649bf6b9d44b60efa9a20819",
+      "label": "runtime focus-wide: 320 x 180 dp at 1px/unit",
+      "width": 320,
+      "height": 180
+    }
+  ],
+  "supplementalPreviews": [],
+  "stagedOutputIdentities": [
+    {
+      "role": "runtime",
+      "sha256": "85eb6e166b43ee3a4a976082a298ab10621f38fdb952f430ddd950807ababab6"
+    }
+  ],
+  "runtimeContrastAssessed": false,
+  "deviceAcceptanceAssessed": false,
+  "comparison": {
+    "path": "assets/exercises/masters/front-plank-v1.png",
+    "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0"
+  }
+}

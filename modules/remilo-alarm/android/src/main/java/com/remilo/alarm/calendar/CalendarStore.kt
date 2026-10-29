@@ -184,9 +184,13 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   fun completeManagedPublication(operationId: String, event: JSONObject) {
     val job = operation(operationId) ?: return
     if (job.state != "Published" || publicationJobs(operationId).any { !it.confirmed }) return
-    managed.guardPublication(operationId)
-    val record = links.record(job.occurrenceId) ?: throw CalendarFailure("NOT_FOUND")
-    if (record.deleted || record.completed || record.skipped) throw CalendarFailure("INELIGIBLE")
+    val intent = managed.intent(job.occurrenceId)?.takeIf { it.operationId == operationId } ?: return
+    if (intent.state == "Confirmed") return
+    val record = links.record(job.occurrenceId)
+    if (job.readOnly || intent.state == "Cancelled" || record == null || record.deleted || record.completed || record.skipped) {
+      managed.retireIntent(job.occurrenceId, intent.reason.ifBlank { "LocalTerminal" }); return
+    }
+    managed.guardPublication(operationId, confirming = true)
     if (!CalendarMapper.matching(event, job.eventId)) throw CalendarFailure("FOREIGN_IDENTITY")
     val resources = db.calendarResources().resources(job.occurrenceId)
     val fields = resources.firstOrNull { it.resourceId == "master" }?.fields?.takeIf(String::isNotBlank)?.let(::JSONObject)
@@ -220,6 +224,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
     }
   }
   init {
+    managed.reconcileRetiredExports()
     dao.operations().filter { it.state == "Publishing" }.forEach {
       dao.update(it.copy(state = "Unconfirmed", message = "Publication was interrupted. Retry the same publication to confirm it.").localizedMessage())
     }
@@ -326,7 +331,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
   }
   fun preview(id: String, destination: OwnedCalendar? = null): Map<String, Any> {
     val record = publicationRecord(id) ?: throw CalendarFailure("NOT_FOUND")
-    if (record.deleted || record.completed || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
+    if (record.routineId != null || record.deleted || record.completed || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
     if (dao.binding(id) != null) throw CalendarFailure("ALREADY_PUBLISHED")
     if (links.link(id) != null) throw CalendarFailure("ALREADY_IMPORTED")
     val connection = connection()
@@ -481,6 +486,7 @@ class CalendarStore(private val db: ContentDatabase, private val now: () -> Long
       "INVALID_EVENT" -> "The saved event times could not be prepared for Google Calendar. Report this error before retrying."
       "REMOTE_REMOVED" -> "The previously sent Calendar identity is missing or cancelled. No replacement event was created."
       "NETWORK", "RETRY" -> "Publication is not confirmed. Retry the same publication; its content and destination are retained."
+      "UNCONFIRMED_RESOURCE" -> "Google has not confirmed the original publication. Check again later or review the event in Google Calendar."
       else -> "Calendar could not confirm this publication. Retry the same publication or review Google access."
     }
     dao.update(job.copy(state = state, message = message).localizedMessage())

@@ -1,10 +1,11 @@
 /** Synthetic, memory-only visual-review adapter. Never a scheduler or Android verification. */
 import type { AppSettings, CalendarCreationDisposition, Command, CommandResult, ImportPreview, Occurrence, ReminderDraft, ReminderFilter, ReminderPage,
-  ListRecord, RecurrenceDraft, RepeatFamily, ResolvedReminderDraft, SchedulePreview, Series, SoundPreviewSnapshot, TimeConversion, TimeConversionInput, TimeZoneOption } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+  ListRecord, PostponeTimeInput, RecurrenceDraft, RepeatFamily, ResolvedReminderDraft, SchedulePreview, Series, SoundPreviewSnapshot, TimeConversion, TimeConversionInput, TimeZoneOption } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt, deviceZone } from '../../src/domain/time';
 import { repeatLabel } from '../../src/domain/repeat';
 import { resolveLanguage } from '../../src/localization';
 import { previewCalendar } from './preview-calendar';
+import { routinePreview } from './preview-routines';
 
 const review = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
 let settings: AppSettings = { revision: 1, snoozeMinutes: 10, tomorrowMorning: 600, tomorrowAfternoon: 840,
@@ -104,6 +105,12 @@ if (review.get('reviewText') === 'long') {
   });
 }
 const listeners = new Set<() => void>(), receipts = new Map<string, CommandResult>();
+const routines = routinePreview(review.get('reviewRoutine') === '1', () => listeners.forEach(fn => fn()), {
+  progress: review.get('reviewRoutineProgress') === '1', illustration: review.get('reviewExerciseArt') === 'front-plank',
+  shape:review.get('reviewRoutineShape')??undefined,
+});
+if (routines.progress) items.push(make(routines.progress.occurrenceId!, 'Weekly workout', 0, { mode: 'Notification', vibration: false,
+  routine: routines.progress, overdue: false, overdueAtMs: null }));
 let onCalendarCreation: ((id: string, disposition?: CalendarCreationDisposition) => void) | undefined, applyingCalendarImport = false;
 const lostReplies = new Set<string>();
 const soundListeners = new Set<(snapshot: SoundPreviewSnapshot) => void>();
@@ -144,6 +151,21 @@ function convert(input: TimeConversionInput): TimeConversion {
   if (instantMs == null) throw new Error('This preview could not resolve the local time.');
   return { zoneId, instantMs, local: civilAt(instantMs, zoneId), offsetSeconds: offsetAt(instantMs),
     adjustment: matching.length > 1 ? 'earlierFold' : matching.length ? 'none' : 'gapForward' };
+}
+function resolvePostponeTime(input: PostponeTimeInput): TimeConversion {
+  if (!Number.isSafeInteger(input.referenceAtMs)) throw new Error('Choose a future time.');
+  let result: TimeConversion;
+  if (input.kind === 'Relative') {
+    if (![15, 30, 60, 1440].includes(input.minutes)) throw new Error('Choose a supported postponement.');
+    result = convert({ zoneId: input.zoneId, instantMs: input.referenceAtMs + input.minutes * 60_000 });
+  } else if (input.kind === 'Tomorrow') {
+    if (!Number.isInteger(input.minutesOfDay) || input.minutesOfDay < 0 || input.minutesOfDay > 1439) throw new Error('Choose a valid clock time.');
+    const date = localAfterDays(civilAt(input.referenceAtMs, input.zoneId).slice(0, 10) + 'T00:00:00', 1).slice(0, 10);
+    const clock = String(Math.floor(input.minutesOfDay / 60)).padStart(2, '0') + ':' + String(input.minutesOfDay % 60).padStart(2, '0');
+    result = convert({ zoneId: input.zoneId, local: date + 'T' + clock + ':00' });
+  } else result = convert({ zoneId: input.zoneId, local: input.local });
+  if (result.instantMs <= input.referenceAtMs) throw new Error('Choose a future time.');
+  return result;
 }
 const zoneSeeds = [
   ['America/Los_Angeles', 'Los Angeles', 'United States'], ['US/Pacific', 'Los Angeles', 'United States'],
@@ -254,9 +276,9 @@ function familyViews(): RepeatFamily[] {
 function view(item: Occurrence, now=Date.now()): Occurrence {
   const value = clone(item);
   value.listName = value.listId ? lists.get(value.listId)?.name ?? '' : '';
-  value.overdueAtMs = overdueReference(value);
+  value.overdueAtMs = value.routine ? null : overdueReference(value);
   value.quickSnoozeMinutes = settings.snoozeMinutes;
-  value.overdue = !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
+  value.overdue = value.overdueAtMs != null && !value.completed && !value.deleted && !value.skipped && value.overdueAtMs < now;
   value.agendaAtMs = value.mode === 'None' ? value.eventStartMs : value.nextAlertMs ?? value.alarmAtMs;
   const eventDay = civilAt(value.agendaAtMs,deviceZone()).slice(0,10), currentDay=civilAt(now,deviceZone()).slice(0,10);
   value.agendaGroup = value.completed || value.skipped ? 'completed' : value.overdue ? 'overdue' : eventDay < currentDay ? 'earlier' : eventDay;
@@ -282,7 +304,7 @@ function query(filter: ReminderFilter, cursor: string | null): ReminderPage {
     (filter.view !== 'today' || item.agendaAtMs >= start.getTime() && item.agendaAtMs < end.getTime()) &&
     (filter.view !== 'upcoming' || item.agendaAtMs >= end.getTime()));
   const rank = (item: Occurrence) => item.agendaGroup === 'overdue' ? 0 : item.agendaGroup === 'earlier' ? 1 : 2;
-  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs : item.agendaAtMs;
+  const activeAnchor = (item: Occurrence) => item.agendaGroup === 'overdue' ? item.overdueAtMs ?? item.agendaAtMs : item.agendaAtMs;
   rows.sort((a, b) => ['completed', 'history', 'deleted'].includes(filter.view) ? (b.collectionAtMs ?? b.eventStartMs) - (a.collectionAtMs ?? a.eventStartMs) || b.eventStartMs - a.eventStartMs || a.id.localeCompare(b.id) :
     (['agenda','overdue','today','upcoming','attention'].includes(filter.view) ? rank(a)-rank(b) || activeAnchor(a)-activeAnchor(b) : a.eventStartMs-b.eventStartMs) || a.id.localeCompare(b.id));
   const groups: Record<string, number> = {}; rows.forEach((row) => { groups[row.agendaGroup] = (groups[row.agendaGroup] ?? 0) + 1; });
@@ -297,35 +319,45 @@ function addOccurrence(value: ResolvedReminderDraft, segment?: StoredSeries): Oc
   items.push(item); return item;
 }
 function apply(command: Command): CommandResult {
+  const routine = routines.apply(command); if (routine) return routine;
   const receipt = receipts.get(command.operationId); if (receipt) return clone(receipt);
   let result: CommandResult = { status: 'Applied' };
   if (command.kind === 'Settings') {
     if (command.expectedRevision !== settings.revision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
     const { kind: _kind, operationId: _operation, expectedRevision: _revision, ...patch } = command;
     settings = { ...settings, ...patch, revision: settings.revision + 1 };
-  } else if (command.kind === 'DoneAll' || command.kind === 'SnoozeAll') {
+  } else if (command.kind === 'DoneAll' || command.kind === 'SnoozeAll' || command.kind === 'PostponeAll') {
     const session = sessionActions();
     if (!session || command.expectedSessionId !== session.sessionId) return { status: 'Rejected', errorCode: 'STALE_SESSION' };
     if (command.kind === 'SnoozeAll' && command.snoozeMinutes !== settings.snoozeMinutes) return { status: 'Rejected', errorCode: 'STALE_SNOOZE_DURATION' };
     const captured = [...new Map(command.members.map((member) => [member.occurrenceId, member])).values()];
     if (!captured.length || captured.length !== command.members.length) return { status: 'Rejected', errorCode: 'INVALID_SESSION_MEMBERS' };
-    const now = Date.now(), target = now + settings.snoozeMinutes * 60_000;
+    if (command.kind === 'PostponeAll' && captured.some(member => {
+      const item = items.find(row => row.id === member.occurrenceId);
+      return !!item?.routine || item?.kind === 'RoutineFamily';
+    })) return { status: 'Rejected', errorCode: 'ROUTINE_ACTION_REQUIRED' };
+    const now = Date.now(), target = command.kind === 'PostponeAll' ? command.alarmAtMs : now + settings.snoozeMinutes * 60_000;
+    if (command.kind === 'PostponeAll' && (!Number.isSafeInteger(target) || target <= now)) return { status: 'Rejected', errorCode: 'INVALID_TARGET' };
+    if (command.kind === 'PostponeAll' && captured.some(member => {
+      const item = items.find(row => row.id === member.occurrenceId);
+      return !item || item.generation !== member.expectedGeneration || item.deliveryState !== 'Alerting' || item.completed || item.deleted || item.skipped;
+    })) return { status: 'Rejected', errorCode: 'STALE_GENERATION' };
     let count = 0;
     const memberResults: NonNullable<CommandResult['memberResults']> = [];
     for (const member of captured) {
       const item = items.find((row) => row.id === member.occurrenceId);
       if (!item || item.generation !== member.expectedGeneration || item.deliveryState !== 'Alerting' || item.completed || item.deleted || item.skipped) {
-        if (command.kind === 'SnoozeAll') memberResults.push({ occurrenceId: member.occurrenceId, generation: item?.generation ?? member.expectedGeneration, status: 'Superseded' });
+        if (command.kind !== 'DoneAll') memberResults.push({ occurrenceId: member.occurrenceId, generation: item?.generation ?? member.expectedGeneration, status: 'Superseded' });
         continue;
       }
       item.generation++; count++;
       if (command.kind === 'DoneAll') { item.completed = true; item.revision++; item.deliveryState = 'Completed'; item.nextAlertMs = null; }
-      else { item.deliveryState = 'Scheduled'; item.nextAlertMs = target; item.alertAdjustment = 'Snoozed'; item.exception = !!item.segmentId;
+      else { item.deliveryState = 'Scheduled'; item.nextAlertMs = target; item.alertAdjustment = command.kind === 'PostponeAll' ? 'Postponed' : 'Snoozed'; item.exception = !!item.segmentId;
         memberResults.push({ occurrenceId: item.id, generation: item.generation, status: 'Scheduled', targetMs: target }); }
-      item.history ??= []; item.history.push({ kind: command.kind === 'DoneAll' ? 'Done' : 'Snooze', atMs: now, targetMs: command.kind === 'SnoozeAll' ? target : null });
+      item.history ??= []; item.history.push({ kind: command.kind === 'DoneAll' ? 'Done' : command.kind === 'PostponeAll' ? 'Postpone' : 'Snooze', atMs: now, targetMs: command.kind !== 'DoneAll' ? target : null });
     }
-    result = { status: count === captured.length ? command.kind === 'SnoozeAll' ? 'Scheduled' : 'Applied' : count ? 'Partial' : 'Rejected',
-      count, ...(command.kind === 'SnoozeAll' ? { memberResults } : {}), ...(count ? {} : { errorCode: 'STALE_GENERATION' }) };
+    result = { status: count === captured.length ? command.kind !== 'DoneAll' ? 'Scheduled' : 'Applied' : count ? 'Partial' : 'Rejected',
+      count, ...(command.kind !== 'DoneAll' ? { memberResults } : {}), ...(count ? {} : { errorCode: 'STALE_GENERATION' }) };
   } else if (command.kind === 'CreateList' || command.kind === 'RenameList' || command.kind === 'RemoveList') {
     const old = command.kind === 'CreateList' ? null : lists.get(command.listId);
     if (command.kind !== 'CreateList' && !old) return { status: 'Rejected', errorCode: 'NOT_FOUND', errorMessage: 'This list was removed.' };
@@ -353,6 +385,8 @@ function apply(command: Command): CommandResult {
     if (!item) return { status: 'Rejected', errorCode: 'NOT_FOUND' };
     if ('expectedRevision' in command && item.revision !== command.expectedRevision) return { status: 'Rejected', errorCode: 'STALE_REVISION' };
     if ('expectedGeneration' in command && item.generation !== command.expectedGeneration) return { status: 'Rejected', errorCode: 'STALE_GENERATION' };
+    if (command.kind === 'Postpone' && (item.routine || item.kind === 'RoutineFamily'))
+      return { status: 'Rejected', errorCode: 'ROUTINE_ACTION_REQUIRED' };
     if (command.kind === 'Purge') {
       if (!item.deleted) return { status: 'Rejected', errorCode: 'INVALID_INPUT', errorMessage: 'Only reminders in Trash can be deleted permanently.' };
       items.splice(items.indexOf(item), 1);
@@ -424,6 +458,15 @@ const calendarBridge = previewCalendar(review, (id) => items.find((item) => item
 onCalendarCreation = calendarBridge.captureCalendarCreation;
 const preview = {
   ...calendarBridge,
+  getWidgetSupport: async () => ({ pinSupported: false, instanceCount: 0 }),
+  openWidgetSetup: async () => { throw new Error('Widget placement requires the Android app.'); },
+  chooseExercisePhoto: async () => { throw new Error('Photo selection requires the Android app.'); },
+  getExerciseImage: async () => null, releaseExerciseImage: async () => true,
+  prepareBackupExport: async () => { throw new Error('Photo-inclusive backup requires the Android app.'); },
+  prepareBackupImport: async () => { throw new Error('File restoration requires the Android app.'); },
+  releasePreparedImport: async () => true,
+  applyPreparedImport: async (): Promise<CommandResult> => ({ status: 'Rejected', errorMessage: 'File restoration requires the Android app.' }),
+  queryRoutines: routines.queryRoutines, getRoutineSession: routines.getRoutineSession, queryRoutineHistory: routines.queryRoutineHistory, previewRoutine: routines.previewRoutine,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => timePreferences(),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
@@ -440,11 +483,12 @@ const preview = {
     const allowed = permissionFixture !== 'blocked';
     return { exactAlarms: allowed && permissionFixture !== 'exact' && permissionFixture !== 'mixed',
       notifications: allowed && permissionFixture !== 'app', channelEnabled: allowed && permissionFixture !== 'alarm-channel',
-      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed',
+      notificationChannelEnabled: allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed', routineChannelEnabled: allowed, routineChannelQuiet: true,
       fullScreen: allowed && permissionFixture !== 'full-screen' && permissionFixture !== 'mixed', unlocked: true,
       observedAtMs: Date.now(), activeSessionId: activeSessionActions?.sessionId ?? '', activeSessionActions };
   },
   getTimeZones: async (atMs: number) => zones(atMs), convertTime: async (input: TimeConversionInput) => convert(input),
+  resolvePostponeTime: async (input: PostponeTimeInput) => resolvePostponeTime(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),
   getOccurrence: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },
   getCalendarContext: async (id: string) => { const item = items.find((row) => row.id === id); return item ? view(item) : null; },

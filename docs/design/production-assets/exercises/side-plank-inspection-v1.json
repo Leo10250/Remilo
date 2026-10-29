@@ -1,0 +1,64 @@
+{
+  "reviewer": "Assistant after viewing original, unchanged previously inspected approved style input, decoded export, light/dark/checkerboard panels, both usage sizes and all eight current container colors; independent pose/readability observation by second assistant reviewer",
+  "recordedAtUtc": "2026-10-16T05:28:21.449698+00:00",
+  "checks": [
+    {
+      "name": "identity",
+      "status": "pass",
+      "observation": "Viewed the source and decoded runtime: one adult demonstrates a side forearm plank on one simple mat, with free hand resting on the upper hip. No extra person or equipment observed."
+    },
+    {
+      "name": "style-consistency",
+      "status": "pass",
+      "observation": "Compared with the actual approved front-plank master: blue-gray top, muted terracotta leggings, hair bun, restrained outlines, natural proportions, softly shaded fabric/body and mat retain the approved educational illustration style."
+    },
+    {
+      "name": "pose-readability",
+      "status": "pass",
+      "observation": "Supporting forearm/elbow and stacked feet are visible on the mat; upper arm reads approximately vertical beneath the shoulder, hips are visibly lifted and both legs extended. Free hand is on hip. Foreshortening affects the forearm but does not obscure its support role. No obvious extra/missing limb, disconnected joint, impossible bend or conflicting contact observed; independent second reviewer agreed. This is visual plausibility, not clinical validation."
+    },
+    {
+      "name": "alpha-and-decoded-edges",
+      "status": "pass",
+      "observation": "Viewed source/export light and dark composites, decoded checkerboard, and all eight current container colors. Surrounding area is transparent with no visible rectangular backdrop, distracting matte edge, colored fringe or opaque halo. Fine hair edges and mat shadow remain acceptable at reviewed sizes."
+    },
+    {
+      "name": "usage-framing",
+      "status": "pass",
+      "observation": "Viewed actual source/export 256x144 and 320x180 panels and eight current 320x180 container composites. Full head, supporting hand/forearm, both feet and mat remain within contain bounds. Supporting contacts and stacked-foot silhouette remain readable; separate toe outlines are clearer at 960x540 than at 320x180."
+    },
+    {
+      "name": "interface-remnants",
+      "status": "pass",
+      "observation": "No visible text, labels, arrows, numbers, app controls, phone frame, scenery, logo or watermark observed in the candidate/export."
+    }
+  ],
+  "limitations": [
+    "Visual posture observations are not clinical or biomechanical validation.",
+    "Untagged source pixels are explicitly interpreted as sRGB under the profile, without claiming measured embedded sRGB or a color conversion.",
+    "Usage boards are deterministic illustration composites using current presentation.json container colors, not actual RN/native component renders, text/control contrast measurements or signed-phone acceptance.",
+    "Human artwork and activation approval remain pending; no production promotion performed."
+  ],
+  "supplementalPreviews": [
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/all-atmospheres-320x180-v1.png",
+      "sha256": "7f425224cba2a9ef7f905f2662fa999becdc86aee2940ae92861fe6575222dce"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/source-light-v1.png",
+      "sha256": "25e8050a050ece97d80a963025a69aa714b2a12106a45711cef83b3d933413df"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/source-dark-v1.png",
+      "sha256": "0d301f6a6bf42cfce1923b0c0fbbbd23fa0f4d5cadce369df834930685223b10"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/export-light-v1.png",
+      "sha256": "4f64b754e7896ab0978dcb4277f211af93ee314081818add29d3caf8926f6d0f"
+    },
+    {
+      "localArtifactPath": "verification/local/artwork/exercises/side-plank/candidate-01/export-dark-v1.png",
+      "sha256": "7be45c97e37f50131e18012629f663afcb3c34b100cf839961a81b1220c0cc35"
+    }
+  ]
+}

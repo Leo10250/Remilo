@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:40:57.110655+00:00",
+  "assetId": "incline-treadmill-walking",
+  "candidate": 1,
+  "candidateSha256": "e38368c46a474d8da58f2401f2ecf6cbef4ec22db7223b6705b53f986e440c3a",
+  "reviewSha256": "3a7536d759cc9706e46d5d923eeabbf9adaec030a26091b95770cd2c3f33ef06",
+  "reviewRecordSha256": "0dcef71d4eeaffb8a1c61b833ec2a7b38e13ef3c1efa72d9e09eb9f9a9c4db84",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

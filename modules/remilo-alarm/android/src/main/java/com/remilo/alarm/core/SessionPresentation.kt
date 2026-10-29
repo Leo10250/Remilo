@@ -6,8 +6,8 @@ class SessionRefreshGuard {
   private var sessionId = ""
   private var revision = 0L
   /** An unresolved action owns this screen until its exact command is acknowledged. */
-  fun select(id: String, pending: Boolean = false, busy: Boolean = false, unconfirmed: Boolean = false): Boolean {
-    if (sessionId.isNotEmpty() && (pending || busy || unconfirmed)) return false
+  fun select(id: String, pending: Boolean = false, busy: Boolean = false, unconfirmed: Boolean = false, choosing: Boolean = false): Boolean {
+    if (sessionId.isNotEmpty() && (pending || busy || unconfirmed || choosing)) return false
     sessionId = id; revision++
     return true
   }

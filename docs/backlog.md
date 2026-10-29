@@ -13,6 +13,30 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 
 | ID | Task | Dependency | Status | Acceptance/evidence |
 |---|---|---|---|---|
+| ALERT-07 | Repair Postpone Compose crash, open notification chooser over Home and retain native locked presentation | owner locked-screen failure report and ordinary notification action confirmation | implemented/unverified | [Cause, checks and authorized deployment](evidence/2026-10-28-postpone-notification-lockscreen.md): missing Material3 method proven; resolved graph guard, 377 shared/119 tooling/656 native tests, localization/design, lint and signed assembly pass; all 94 checked packaged calls resolve; installed/opened on Pixel 9 Pro XL with matching APK hash; owner confirms locked selector opens; notification/audio/accessibility observations remain |
+| TK-08 | Restore the data-compatible Routines app after the incompatible chooser deployment | observed DP9-to-8 refusal; owner's 28 October restoration choice | verified | [Phone cause and restoration evidence](evidence/2026-10-28-agenda-storage-investigation.md): 334 shared/105 tooling/598 native checks, lint and signed assembly; in-place install/open and installed/local APK hash match; native recovery succeeded and owner confirmed Agenda loads normally; broader alarm/Routines/accessibility acceptance remains separate |
+| ALERT-06 | Uniform Postpone chooser integrated with compatible Routines storage | owner 28 October PR #20 integration request | implemented/unverified | [Integration evidence](evidence/2026-10-28-postpone-routines-integration.md): 343 shared/105 tooling/641 native tests, localization/design, lint and signed assembly; DP10 upgrades both known8 lineages and Routines9; Routine controls retained; integrated signed-phone upgrade/visual/accessibility acceptance remains |
+| TK-07 | Stage pinned Robolectric SDKs before Android tests | owner 28 October main-pipeline failure report | implemented/unverified | CI fix merged as [PR #19](https://github.com/Leo10250/Remilo/pull/19), carried onto this restoration branch as 49bfd62; local native verification uses staged SDK jars; remote main checks were not inspected during restoration |
+| UX-45 | Center weekday labels, surface routine Alert and align guarded numeric/unit fields | owner approved 19 October plan | implemented/unverified | [Implementation/build evidence](evidence/2026-10-19-routine-editor-polish.md); 53 measured component layouts, Save/direct-edit interactions, 334 shared/105 tooling/589 native tests, lint and signed 0.4.0(4) arm64 preparation passed; consolidated phone IME/TalkBack/native-picker acceptance remains |
+| UX-44 | Center the partial weekday row with equal-size tabs | owner approval after layout discussion | implemented/unverified | [Layout/build evidence](evidence/2026-10-18-centered-weekday-tabs.md); centered lower three retain widths/gaps/order and seven accessible targets; 84 layout checks, shared/tooling checks and signed 0.4.0(4) arm64 preparation passed; signed-phone acceptance remains |
+| UX-43 | Keep weekday tabs in stable seven or four/three rows | owner phone screenshot | implemented/unverified | [Layout/build evidence](evidence/2026-10-18-weekday-tab-wrapping.md); explicit equal-width rows prevent six/one wrapping; 84 layout checks, shared/tooling checks and signed 0.4.0(4) arm64 release preparation passed; signed-phone acceptance remains |
+| UX-42 | Day tabs, structured exercise targets and independent weekday copying | owner approved 18 October plan | implemented/unverified | [Implementation/build evidence](evidence/2026-10-18-day-tabs-routines.md); independent day drafts/copy reviews, numeric/custom targets, Shared conversion, format9; 333 shared/105 tooling/589 native tests, 160 component renders, lint and signed 0.4.0(4) arm64 assembly passed; consolidated signed-phone acceptance remains |
+| L10N-06 | Distinguish weekday arrangement from routine timing settings | owner 18 October wording approval | implemented/unverified | [Heading/count evidence](evidence/2026-10-18-routine-weekday-headings.md); 每周安排, neutral step counts in both presets and 日期与时间; localization/design/typecheck/lint, 327 shared and 104 tooling tests, 32 browser captures passed; existing phone acceptance remains |
+| L10N-05 | Review all Simplified Chinese copy against Chinese product usage | owner 18 October screenshot/correction | implemented/unverified | [Wording review evidence](evidence/2026-10-18-chinese-wording-review.md); all 2,226 existing messages reviewed, 528 corrected and 3 complete labels added; 66 component captures, 327 shared/104 tooling/583 native tests, lint and signed 0.4.0(4) arm64 assembly passed; phone IME/TalkBack/OEM-font/launcher acceptance remains |
+| UX-41 | Separate creation and generic routines with optional Exercise fields | owner 18 October plan | implemented/unverified | [Creation evidence](evidence/2026-10-18-generic-routine-creation.md); separate routes/Create sheet, shared/weekday identities and direct editing, presets, CE17/format8; 327 shared, 104 tooling and 583 native tests, 64 browser render combinations, lint and signed 0.4.0(4) arm64 assembly passed; consolidated phone acceptance remains pending |
+| UX-40 | Theme app-owned confirmations consistently with existing sheets | owner 18 October mock approval | implemented/unverified | [316 shared/104 tooling/575 native tests, 36 browser checks, lint and signed assembly](evidence/2026-10-18-themed-confirmations.md); all 27 app-owned confirmation calls use canonical theme/Buttons and captured-choice/focus guards; existing themed sheets and system UI retained; signed-phone Modal/IME/TalkBack gates remain |
+| UX-39 | Bottom-align compact widget action group with Next | owner 17 October comparison selection | implemented/unverified | [316 shared/97 tooling/575 native tests, native renders, lint and signed assembly](evidence/2026-10-17-widget-bottom-actions.md); selected bottom composition with optional prescriptions, stable last/final controls, fallback-font metrics and full separate Agenda target; signed-phone/launcher/TalkBack acceptance remains |
+| UX-38 | Clean widget exercise title, weekday and compact Next context | owner 17 October reference refinement | implemented/unverified | [316 shared/97 tooling/574 native tests, native renders, lint and signed assembly](evidence/2026-10-17-widget-weekday-next.md); plain exercise name, localized full weekday and quiet bottom-left Next with themed Done/Undo and dated native identity retained; signed-phone/font/launcher/TalkBack acceptance remains |
+| UX-37 | Repeated widget Undo for the current dated session | owner 17 October correction | implemented/unverified | [316 shared/97 tooling/571 native tests, lint and signed assembly](evidence/2026-10-17-widget-repeated-undo.md); persisted per-instance eligible completion history through all 100 exercises, exact Undo/Retry recovery and correct action feedback, preserved compact control and foreign changes; signed-phone/launcher/TalkBack acceptance remains |
+| UX-36 | Unclipped Today time and consistent, distinct Undo states | owner 17 October phone screenshots | implemented/unverified | [316 shared/97 tooling/560 native tests, actual RemoteViews review, lint and signed assembly](evidence/2026-10-17-widget-time-undo.md); complete reminder text/font budgets, preserved compact recovery, equal 20 dp Undo geometry and 38% disabled image opacity; corrected signed-phone vendor-font/launcher/TalkBack acceptance remains |
+| UX-35 | Widget progress, Done feedback, adjacent Undo and direct exercise-row editing | owner 17 October approved plan and left-of-Done refinement | implemented/unverified | [316 shared/97 tooling/558 native tests, actual RemoteViews review, lint and signed assembly](evidence/2026-10-17-widget-progress-editing.md); canonical segment colors/counts, guarded Saving/check feedback, fixed unfilled Undo before Done, shared-form direct Edit for today/future; signed-phone/launcher/keyboard/TalkBack acceptance remains |
+| UX-34 | Immediate routine edits, direct widget completion and representative previews | owner 17 October correction | implemented/unverified | [313 shared/97 tooling/548 native tests, actual RemoteViews review, lint and signed assembly](evidence/2026-10-17-immediate-routines-widget.md); immediate open-day revision/check reconciliation, guarded Done/Undo, curated themed previews and visible History outside More; signed-phone/launcher/TalkBack acceptance remains |
+| UX-33 | Resume-only widget with conditional recovery | owner 16 October explicit correction | implemented/unverified | [313 shared/97 tooling/539 native tests, actual RemoteViews review, lint and signed assembly](evidence/2026-10-16-resume-only-widget.md); 200 dp Focus, no Done/permanent Refresh, expanded-only Next and conditional legacy recovery; launcher/TalkBack/app-to-widget phone observations remain |
+| UX-32 | Clean widget hierarchy, dependable previews and empty states | owner 16 October widget screenshots | implemented/unverified | [313 shared/97 tooling/537 native tests, actual RemoteViews review, lint and signed assembly](evidence/2026-10-16-widget-preview-cleanup.md); draft-only first-routine defaults, labelled inert examples, explicit empty/rest outcomes and unclipped compact content; native setup/launcher/TalkBack phone gates remain |
+| UX-31 | Align routine Agenda tiles with ordinary reminder rows | owner 16 October tile correction | implemented/unverified | [313 shared/97 tooling/534 native tests, lint and signed assembly](evidence/2026-10-16-routine-tile-alignment.md); shared leading ring/control column and title/More anchors, separated responsive progress footer; browser preview blocked, actual visual/TalkBack acceptance remains |
+| BETA-09 | Keep automatic Agenda refreshes from flashing the pull indicator | owner 16 October report | implemented/unverified | [313 shared/97 tooling checks and controlled refresh repair](evidence/2026-10-16-agenda-refresh.md); background updates stay quiet, manual refresh covers reconciliation/query completion; updated signed-phone observation remains |
+| CAL-07 | Fence publication/deletion races and explain publication checks | owner 16 October report | implemented/unverified | [313 shared/97 tooling/534 native tests, lint and signed assembly](evidence/2026-10-16-calendar-publication-race.md); terminal/operation/read-only fences, old-review reconciliation and visible check outcomes; CAL-07 signed-phone/live Google follow-up remains |
+| BETA-08 | Prevent native form reparenting during reminder Save and Repeat Apply | owner 16 October crash report | implemented/unverified | [Scoped phone crash evidence and focused repair](evidence/2026-10-16-save-crash.md); stable native form parents retain existing interaction/accessibility guards; updated signed-phone Save/Apply confirmation remains required |
 | L10N-01 | Language contract and shared catalog/tooling | owner 15 October instruction | verified | [1,839 catalog pairs, deterministic TS/Android/Kotlin outputs, 292 shared and 97 tooling checks](evidence/2026-10-15-localization.md); no dependency/font/artwork added |
 | L10N-02 | Native bootstrap, preferences and Android synchronization | L10N-01 | implemented/unverified | [CE13/DP7, migration/projection/external-input/locale-failure tests and identified signed assembly](evidence/2026-10-15-localization.md); system-selector and pre-unlock phone observations remain |
 | L10N-03 | App/native text, accessibility and Calendar messages | L10N-01/02 | implemented/unverified | [Catalog integration, retained confirmation/feedback, historical message handling and 462 native tests](evidence/2026-10-15-localization.md); full UI/physical TalkBack/native alarm observations remain |
@@ -131,9 +155,9 @@ evidence below; P4-B–P4-E signed-device acceptance and G4 remain pending.
 | P4-E07 | Settings, editor, management and generalized review | P4-E06 | implemented/unverified | [Projection evidence](evidence/2026-10-14-calendar-managed-sync.md), [fixture observations](evidence/2026-10-14-calendar-managed-visual.md); reminder-first controls, saved phases/counts, candidate/setup routing, quiet issues and Activity |
 | P4-E08 | Integrated regressions, visual evidence and signed acceptance | P4-E01–07 | in progress | [257 shared/91 tooling/423 native checks, lint and identified signed ARM64 artifact](evidence/2026-10-14-calendar-managed-sync.md); representative eight-pair/large-text fixtures; [consolidated signed-phone/live Google and Android accessibility observations](device-acceptance.md) remain |
 | G4 | Calendar release gate | P4-A/B/C/D/E | pending | Managed discovery/reuse/creation and recovery, both directions after documented opportunities, protected conflicts/unknown writes, recurrence, independent deletion and quiet review notices on an identified signed build |
-| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | pending | different days have different checklists; plan survives daily completion |
-| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | pending | per-exercise Done/Undo tracked by local date; yesterday/tomorrow do not leak into today |
-| RW-03 | Readable Android home-screen Today widget | RW-02 | pending | today's plan/reminders update across midnight, edits, reboot and completion without opening React Native |
+| RW-01 | Reusable weekly workout plans with named exercises/steps and day-specific schedules | G3 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): shared date/time and required labels, three Alert modes, clearer exercise fields, contained photos, CE16/DP9 family Trash and format-7 photo archives; prior [routine/Alarm evidence](evidence/2026-10-15-routine-ui-correction.md) retained; consolidated phone acceptance pending |
+| RW-02 | Today workout checklist and date-aware app surface | RW-01, UX-10/11 | implemented/unverified | [16 October refinement](evidence/2026-10-16-routine-refinement.md): stable complete exercise list, selected Viewing state, named Undo, origin-preserving menus and native dated/history/media ownership; 17 existing approved illustrations retained; consolidated physical acceptance pending |
+| RW-03 | Readable Android home-screen Today widget | RW-02 | implemented/unverified | [Latest bottom-action refinement](evidence/2026-10-17-widget-bottom-actions.md): Done/Undo group aligned with the compact Next band, stable last/final controls and fallback-font bounds; plain title, full weekday, repeated Undo, exact recovery, canonical progress and curated previews retained; launcher/TalkBack/signed-phone acceptance pending |
 | RW-04 | Optional daily Today/agenda digest notification | RW-02 | pending | configurable local time, opt-in and quiet dismissal; no duplicate or alarm-channel behavior |
 | AI-01 | Android assistant/intent compatibility research and action contract | G3 | pending | current official support matrix for Android intents, Gemini/AppFunctions, Samsung/Bixby, versions and limits |
 | AI-02 | Safe external create-reminder/alarm actions and supported Android entry points | AI-01 | pending | voice/deep-link/shortcut intent drafts previewed, explicitly confirmed and saved once through native engine |
@@ -225,10 +249,106 @@ urgent information; verify that classification cannot delay or alter alarm work.
   device's local date/time zone and calendar-day rollover, even across process
   death and travel. Design a focused Today presentation, not a general task manager
   or mandatory bottom-navigation redesign.
+  - RW-01a: versioned CE plan/session schema and nullable ordinary-reminder
+    association implemented; current CE15/DP9 and format-6 portable content retain
+    legacy migrations and readers; immutable revision/date ownership checks passed.
+  - RW-01b: shared reminder editor, scoped weekly/day drafts, stable exercise edits,
+    rest days, future-only review and independent duplication implemented.
+  - RW-01c: content-free routine delivery profile, day expiry, pause/resume and
+    Calendar exclusion implemented. Signed-phone delivery/permissions pending.
+  - RW-02a: serialized exercise journal, retry receipts, aggregate completion,
+    whole-day Skip/Undo and actual-timestamp history correction implemented.
+  - RW-02b: native filtering/counting/pagination isolation, shared Agenda rows,
+    Focus sequence, library and history navigation implemented.
+  - RW-02c: host lifecycle/recovery/compatibility checks and actual-component
+    fixture review passed; consolidated signed-phone/TalkBack gates pending.
+  - RW-01d: shared reminder editor, creation-only Type, seven visible days, scoped
+    child drafts, Rest-cache restoration, shared Notes and all three Alert modes
+    implemented; [final 310 shared/97 tooling checks and scoped browser QA passed](evidence/2026-10-15-routine-ui-correction.md).
+    Final UI review reserves a pending Undo slot within the 100-exercise limit
+    with an English/Chinese hint; 18 focused JS checks/type/lint passed, followed
+    by the full shared suite and verified 2,078-message catalog in release preparation.
+  - RW-01e: CE15 immutable revisions/exact dated references, DP9 guarded routine
+    Alarm Start/Snooze/Dismiss receipts and backup6 implemented; 511 native tests
+    passed, including migration, strict backup/copy consistency, protected same-date
+    exclusions and repeat-family query/count guards. Signed-phone checks pending.
+  - RW-02d: standalone illustrated Focus, explicit named Undo/history corrections
+    and numeric/segmented Agenda progress implemented; eight-pair Chinese 200%
+    Focus fixture and narrow/landscape observations recorded in current evidence.
+    Empty correction-history disclosure is now gated on actual correction entries.
+    Native IME/dialog/TalkBack and consolidated physical acceptance remain pending.
+  - RW-02e: all 17 illustrations are approved/promoted in the static map with
+    masters/exports and provenance retained. The final row binds the owner's
+    16 October standing artwork/activation approval; earlier individual records
+    remain immutable. Portable audit passed 17 versions/468 resources with no
+    findings, technical limitations or unavailable local evidence. Explicit ID
+    selection and unknown-ID text fallback remain. Fresh final browser fixture
+    loading and all 17 exact export bytes inside the identified signed APK passed;
+    actual Android runtime contrast and physical acceptance remain pending.
 - RW-03: use a supported Android widget mechanism and native read/action path;
   React Native/Metro/network must not be required for refresh or completion.
   Show no private content before unlock without permission, and test stale widgets,
   size variants, midnight/time-zone transitions and device restart.
+  - RW-03a: native per-instance configuration, session/Today projections and
+    receipt-first guarded exercise actions implemented; host checks passed.
+  - RW-03b: Glance layouts, native setup/pinning, localization and app entry points
+    implemented; actual-component host renders reviewed.
+  - RW-03c: refresh/recovery/privacy, actual RemoteViews review and host checks;
+    [host evidence](evidence/2026-10-15-home-screen-widget.md) passed;
+    launcher/TalkBack/signed-phone acceptance remains a separate physical gate.
+  - RW-03d: shared compact progress bar and completion/Retry/Undo labels implemented;
+    final host RemoteViews assertions and 12 English/Chinese normal/large-text
+    captures passed, including full Chinese Retry copy and unclipped action bounds.
+    Final native verification, module/app lint and signed assembly passed;
+    launcher/TalkBack/physical acceptance pending. No illustrations added to widgets.
+
+- Owner's 16 October routine refinement (RW-01/RW-02/RW-03): implemented/unverified;
+  [311 shared/97 tooling/525 native tests, 2,118 messages, lint and signed ARM64
+  preparation passed](evidence/2026-10-16-routine-refinement.md). Physical gates and
+  the broader app/launcher review matrix remain. Latest contracts supersede the
+  earlier Focus-list, widget layout and backup transport descriptions above.
+  - RW-01f: explicit shared row interaction semantics, required labels and shared
+    start-date/time controls; clearer exercise examples and contained-photo chooser.
+  - RW-02f: stable complete exercise sequence with selected state, native-confirmed
+    advance/Undo, contextual menus on their origin and discoverable family Trash.
+  - RW-01g: CE16 journaled family Trash/Restore/Purge, typed mixed Trash queries,
+    preserved child/history states and DP9 delivery fences.
+  - RW-01h: immutable CE photos, draft/export leases, tomorrow-effective references
+    and history-aware cleanup; single-image Photo Picker without broad permissions.
+  - RW-01i: native prepared format-7 ZIP export/import, media integrity/size checks,
+    legacy JSON 1–6 readers and receipt-stable apply retries.
+  - RW-03e: 4×2 preferred composition, adaptive summary/Focus/list, primary Resume
+    plus separate Done, named Undo and exact date/exercise links; setup previews
+    share production composition. Signed-phone picker, launcher and accessibility
+    observations remain pending; no installation/distribution accompanies this work.
+  - RW-03f: owner’s later clean-widget correction tracked under UX-32: example
+    previews, explicit empty/rest outcomes, draft-only selection defaults and
+    unclipped compact content/actions using the current app presentation roles.
+  - RW-03g: owner's final Resume-only correction tracked under UX-33 supersedes
+    the earlier widget action set; app-owned completion, conditional legacy/error
+    recovery, expanded-only Next and shared 200/240 dp compact preview sizing.
+  - RW-03h / RW-01j: owner's 17 October UX-34 correction supersedes Resume-only
+    navigation and tomorrow-effective edits: direct native Done/Undo, curated
+    themed previews and immediate open-day reconciliation, with closed history
+    preserved. History is outside the routine overflow menu.
+  - RW-03i / RW-02g: UX-35 matches widget progress roles/counts, adds native
+    pending/confirmation feedback and reserved Undo before trailing Done. Direct
+    exercise-row Edit shares the weekly form and immediate native Save, with
+    stable selection, revision recovery and closed-history boundaries.
+  - RW-03j: UX-36 budgets complete reminder title/time and shared preview height
+    without changing empty/recovery controls; Undo states share a 20 dp graphic
+    and show distinct neutral opacity, with rendered size/color regression guards.
+  - RW-03k: UX-37 replaces the single Undo record with current-session completion
+    identity history, preserving other surfaces' checks, receipt-safe repeated
+    reversals and exact Retry action/name feedback through restart and final completion.
+  - RW-03l: UX-38 uses plain exercise names, full localized weekday headers and a
+    quiet compact Next line from the same session. Native font budgets preserve
+    complete Done/Undo/Agenda targets; full dates and positions remain accessible.
+  - RW-03m: UX-39 adopts the owner's Bottom of Next line comparison. Healthy
+    compact Focus aligns the action group to the left column's bottom, retains
+    prescriptions and stable coordinates, and places Today's full Agenda target
+    below Focus. StaticLayout measures fallback glyphs without Views or a Looper.
+
 - RW-04: digest is explicitly opt-in with editable delivery time and off switch.
   Show only authorized local data (plus opted-in linked Calendar events when
   P4 permits); no silent alarm-mode downgrade, duplicate notifications, or

@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T07:07:13.715761+00:00",
+  "assetId": "dumbbell-rdl",
+  "candidate": 1,
+  "candidateSha256": "8b56e8f4d7403d1c19d1bd69bdca04ae971eb4b6d287ce84ebfead87c1ff6c1e",
+  "reviewSha256": "441ec7b63ad6ecdad51213641b5826a6ea3a66ce529590285a204a77d70751de",
+  "reviewRecordSha256": "2b753093f4a46020db165a4e98bbeb04c05c49b9817c78bb03e060509d84a72c",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

@@ -33,6 +33,6 @@ function CalendarIssueRow({ issue, onPress }: { issue: CalendarReviewIssue; onPr
   const timing = useCalendarReviewTiming(issue.kind === 'Association' ? issue.occurrenceId : undefined);
   const title = issue.title || (issue.kind === 'Setup' ? t('m_eb79753ab339') : t('m_f6e8452bebf4'));
   const reason = calendarReviewIssueText(issue) + ' · ' + calendarReviewIssueReason(issue);
-  return <SettingRow prominent icon="event" label={title} description={reason} supporting={timing ? <Copy heading size={16}>{timing}</Copy> : undefined}
+  return <SettingRow intent="action" prominent icon="event" label={title} description={reason} supporting={timing ? <Copy heading size={16}>{timing}</Copy> : undefined}
     accessibilityLabel={[title, timing, reason].filter(Boolean).join('. ')} minHeight={56} onPress={onPress} />;
 }

@@ -260,7 +260,7 @@ class CalendarLinkStore(private val db: ContentDatabase, private val now: () -> 
     "localResult" to if (job.localApplied) mapOf("status" to job.localStatus) else null)
   fun active(record: ReminderRecord?) {
     if (record == null) throw CalendarFailure("NOT_FOUND")
-    if (record.completed || record.deleted || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
+    if (record.routineId != null || record.completed || record.deleted || record.skipped || record.segmentId != null) throw CalendarFailure("INELIGIBLE")
   }
   fun preview(calendar: OwnedCalendar, event: JSONObject, id: String?, choices: Map<String, Any?>,
     generation: Long, preservedAlertMs: Long? = null): Map<String, Any?> {

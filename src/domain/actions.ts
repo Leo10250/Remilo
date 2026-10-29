@@ -4,7 +4,7 @@ export type Tone = 'success' | 'warning' | 'danger' | 'muted' | 'accent';
 export function recoveryPresentation(kind?: string) {
   const action = ({ Create: 'save', Edit: 'save', CreateSeries: 'save', EditSeries: 'save', EditFollowing: 'save',
     Done: 'completion', CompleteDelivery: 'completion', Stop: 'completion', UndoDelete: 'restoration', Reopen: 'reopening',
-    Postpone: 'postponement', Snooze: 'snooze', Delete: t('m_c2e4d9d387bc'), Purge: t('m_082b6b51d6d1'), CreateList: 'save', RenameList: 'save' } as Record<string, string>)[kind ?? ''] ?? 'change';
+    Postpone: 'postponement', PostponeAll: 'postponement', Snooze: 'snooze', Delete: t('m_c2e4d9d387bc'), Purge: t('m_082b6b51d6d1'), CreateList: 'save', RenameList: 'save' } as Record<string, string>)[kind ?? ''] ?? 'change';
   const localizedAction = ownedMessage(action);
   return { message: t('m_563dc1862d65', { arg0: String(localizedAction[0].toUpperCase() + localizedAction.slice(1)) }), retry: t('m_f28163c407f6', { arg0: String(localizedAction) }),
     progress: action === 'completion' ? t('m_23ce4bcfcd5a') : action === 'restoration' ? t('m_464cb8565def') : action === 'save' ? t('m_23e39291d613') : t('m_91d9c6284054', { arg0: String(localizedAction) }) };

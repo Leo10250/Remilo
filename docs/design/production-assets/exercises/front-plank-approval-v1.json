@@ -1,0 +1,14 @@
+{
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T05:15:12.719465+00:00",
+  "assetId": "front-plank",
+  "candidate": 1,
+  "candidateSha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0",
+  "reviewSha256": "6d6669b219665d109549f72fc4b07ba3ce9072f4fdebf9b8751d650d2fcafa2b",
+  "reviewRecordSha256": "735c673958cbe8692cea20f29a6ec691247c07937cec29cdb15420ee693452d3",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": []
+}

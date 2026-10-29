@@ -44,6 +44,7 @@ object AtmosphereTokens {
   const val action = 56
   const val nativeSingle = 64
   const val nativeMember = 56
+  const val postponeTile = 80
   const val typeDisplay = 32
   const val typeTitle = 24
   const val typeAppBar = 22

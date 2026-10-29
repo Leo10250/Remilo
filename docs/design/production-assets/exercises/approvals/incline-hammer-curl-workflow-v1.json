@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T06:47:09.446125+00:00",
+  "assetId": "incline-hammer-curl",
+  "candidate": 1,
+  "candidateSha256": "eac103fb809f914cc71e06b7ceaa72ca78694ba5404c2bbeb482c7af6fe102af",
+  "reviewSha256": "c22481f0ddf7f7b2874ec325538ddb299e4cc4fc045920e014d5e15c695177d6",
+  "reviewRecordSha256": "c87f9328e5cb035ec479e40a62e52e07ae05744bb8819f9f62daf414bdb7fe7a",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": [],
+  "version": 1,
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/incline-hammer-curl/prepared-01.json",
+    "sha256": "550dbb96a240749640665833a06cd72258f10c483a611dd2ccb2828512969bdf"
+  },
+  "reviewRecord": {
+    "path": "docs/design/production-assets/exercises/records/incline-hammer-curl/review-01-02.json",
+    "sha256": "c87f9328e5cb035ec479e40a62e52e07ae05744bb8819f9f62daf414bdb7fe7a"
+  },
+  "files": [
+    {
+      "sha256": "eac103fb809f914cc71e06b7ceaa72ca78694ba5404c2bbeb482c7af6fe102af",
+      "width": 1672,
+      "height": 941,
+      "size": [
+        1672,
+        941
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": false,
+      "iccSha256": null,
+      "iccDescription": null,
+      "iccValid": null,
+      "exifOrientation": 1,
+      "displaySize": [
+        1672,
+        941
+      ],
+      "role": "source",
+      "path": "assets/exercises/masters/incline-hammer-curl-v1.png",
+      "bytesPreserved": true
+    },
+    {
+      "sha256": "be5e4c6f6e45a24942282bdb7fc5403fbb438ea3a3ac50eed1513751aa513850",
+      "role": "runtime",
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "transform": {
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "sourceDisplaySize": [
+          1672,
+          941
+        ],
+        "targetSize": [
+          960,
+          540
+        ],
+        "contentRectPx": [
+          0,
+          0,
+          959,
+          540
+        ],
+        "fit": "contain",
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "upscaled": false,
+        "resizeFilter": "Lanczos",
+        "mask": null,
+        "colorPolicy": "Untagged pixels interpreted as sRGB; no measured color-space assertion",
+        "orientationApplied": true,
+        "addedSourceDetail": false
+      },
+      "exportSpec": {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "11.1.0",
+        "libwebpVersion": "1.3.2",
+        "losslessScope": "Exact transformed pixels, all channels verified"
+      },
+      "path": "assets/exercises/incline-hammer-curl-v1.webp",
+      "cropProfiles": {
+        "focus-narrow": {
+          "viewportDp": [
+            256,
+            144
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        },
+        "focus-wide": {
+          "viewportDp": [
+            320,
+            180
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        }
+      },
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "master-size",
+      "status": "pass",
+      "detail": "Actual [1672, 941]; minimum [960, 540]"
+    },
+    {
+      "id": "master-format",
+      "status": "pass",
+      "detail": "Actual PNG"
+    },
+    {
+      "id": "master-alpha",
+      "status": "pass",
+      "detail": "Alpha extrema [0, 255]"
+    },
+    {
+      "id": "master-color",
+      "status": "pass",
+      "detail": "Untagged source explicitly interpreted as sRGB"
+    },
+    {
+      "id": "export:runtime",
+      "status": "pass",
+      "detail": "Deterministic pixels prepared without undeclared enlargement"
+    }
+  ],
+  "inspection": {
+    "reviewer": "Delegated assistant after original/decoded light/dark/checkerboard, both helper sizes and all eight current surfaces at both sizes; independent UX original-source review",
+    "recordedAtUtc": "2026-10-16T06:45:05.258971+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Incline hammer curl is recognizable: seated on an inclined bench with both bent elbows and two vertically oriented dumbbells in neutral grips."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Approved front-plank person/style retained: blue-gray top, terracotta leggings, bun, natural adult proportions and restrained educational shading; plain gray shoes and equipment."
+      },
+      {
+        "name": "pose-and-grip",
+        "status": "pass",
+        "observation": "Each hand visibly wraps its own continuous short handle between two hex ends, with thumbs upward and palms facing inward rather than upward. Upper arms stay beside the torso. Full arms/legs/shoes and seat/back support read plausibly; no obvious duplicated limb or floating weight. Independent source reviewer agrees."
+      },
+      {
+        "name": "equipment-continuity",
+        "status": "pass",
+        "observation": "Two matching complete dumbbells and one adjustable incline bench are visible. Backrest, seat, adjustment support, frame and base join coherently. No material disconnected part observed; precise bench angle/head-to-pad contact are not asserted."
+      },
+      {
+        "name": "decoded-alpha",
+        "status": "pass",
+        "observation": "Viewed source/export light/dark and decoded checkerboard: clean transparency surrounds figure and bench and remains in openings. No distracting matte, colored fringe or visibly clipped extremity observed."
+      },
+      {
+        "name": "small-usage-and-containment",
+        "status": "pass",
+        "observation": "Viewed source/runtime helper panels at256x144/320x180 and all eight current container-color composites at both sizes. Hammer grips, seated incline position, both shoes and full bench remain recognizable and contained. Fine fingers and dark bench details are clearer in enlarged view."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No text, weight numbers, branding, labels, arrows, gym/background, UI, watermark or phone frame observed."
+      }
+    ],
+    "limitations": [
+      "Vertical room is tight: visible alpha>=128 bbox [380,12,1314,913] on1672x941 leaves ~2.3dp top and5.4dp bottom at180. Full head, shoes and bench remain contained; no generous-margin claim.",
+      "No exact55-degree backrest angle or exact head-pad contact claimed; hair/view partly obscure the latter.",
+      "Visual plausibility does not clinically validate exercise form or mechanically certify equipment.",
+      "Untagged source explicitly interpreted as sRGB under profile; no embedded profile or conversion claimed.",
+      "Deterministic boards use current presentation.json container colors; they do not establish actual native/RN rendering or signed-phone acceptance.",
+      "Human artwork/activation approval pending; no production promotion."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "67e4b73b1bfaf590134e252be4d596cee46056e985432fe30ff3be4738691937"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/all-atmospheres-256x144-v1.png",
+        "sha256": "ce195046314096960c0173861f7c874b48b69570ea9ec0666bd1f86dfa4a570c"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/source-light-v1.png",
+        "sha256": "43cc0dc9757afa2f3fdff47adc0dc4a9ab1f7497f6a1a7bc4fc1ae0125184085"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/source-dark-v1.png",
+        "sha256": "ad7be80299835b03065607bd85d119c8024a8260283a7866ff0ac39fb2e1fd75"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/export-light-v1.png",
+        "sha256": "f7ec1771d062311656982e432b8ac1cbf6674906e6d084f6b0848f3d97b222f6"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/incline-hammer-curl/candidate-01/export-dark-v1.png",
+        "sha256": "4ad080e9c48673e8e59ad5363a64f345a32af854b17b917dd08c7ef8a598b234"
+      }
+    ]
+  },
+  "exceptionsDoNotAmendMeasuredConformance": true
+}

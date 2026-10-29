@@ -123,8 +123,13 @@ class AlarmEngineTest {
     val id = id(create())
     now += 60_000; fire(id)
     val (firstIntent, first) = deliveryNotification()
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), first.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), first.actions.map { it.title.toString() })
     assertTrue(first.actions.all { it.actionIntent.isImmutable })
+    val capturedSession = (request { engine.capabilities() } as Map<*, *>)["activeSessionActions"]
+    first.actions[1].actionIntent.send()
+    assertEquals("Alerting", (request { engine.occurrence(id) } as Map<*, *>)["deliveryState"])
+    assertEquals(1L, (request { engine.occurrence(id) } as Map<*, *>)["generation"])
+    assertEquals(capturedSession, (request { engine.capabilities() } as Map<*, *>)["activeSessionActions"])
     val oldStop = shadowOf(first.actions[0].actionIntent).savedIntent
     assertEquals(1L, oldStop.getLongExtra("generation", -1))
     action(id, "Snooze", 1, "snooze")
@@ -132,7 +137,7 @@ class AlarmEngineTest {
     request { Unit }
     now += 600_000; fire(id, 2)
     val (_, second) = deliveryNotification()
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), second.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), second.actions.map { it.title.toString() })
     val newStop = shadowOf(second.actions[0].actionIntent).savedIntent
     assertEquals(2L, newStop.getLongExtra("generation", -1))
     assertNotEquals(first.actions[0].actionIntent, second.actions[0].actionIntent)
@@ -341,7 +346,7 @@ class AlarmEngineTest {
     assertEquals("Reminder", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
     assertEquals("Remilo · alarm ringing", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
     assertFalse(notification.extras.toString().contains("Private title"))
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), notification.actions.map { it.title.toString() })
     val done = CompletableFuture<List<Pair<AlertRecord, String>>>()
     val session = request {
       val db = OperationalDatabase.open(context)
@@ -519,8 +524,11 @@ class AlarmEngineTest {
     engine = AlarmEngine(context, os, { now }, { 1L })
     now += 60_000; fire(id)
     val (_, notification) = deliveryNotification()
-    assertEquals("Snooze · 15 min", notification.actions[1].title.toString())
+    assertEquals("Postpone", notification.actions[1].title.toString())
+    // The delivery row owns the mirrored preference; the registrar still has the original schedule.
+    assertEquals(15, protectedRows().single { it.occurrenceId == id }.snoozeMinutes)
     action(id, "Snooze", 1, "locked-snooze")
+    assertEquals(15, os.active[id]!!.snoozeMinutes)
     assertEquals(now + 900_000, os.active[id]!!.targetMs)
   }
   @Test fun notificationAndNoAlertModesDoNotStartTheRingingService() {
@@ -822,7 +830,7 @@ class AlarmEngineTest {
     now += 60_000; fire(first); deliveryNotification(); fire(second)
     val (intent, notification) = deliveryNotification()
     val oldSession = intent.getStringExtra("sessionId")!!
-    assertEquals(listOf("Mark all as done (2)", "Snooze all · 10 min"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark all as done (2)", "Postpone all"), notification.actions.map { it.title.toString() })
     request { engine.apply(mapOf("kind" to "StopAll", "operationId" to "end-old", "expectedSessionId" to oldSession)) }
     val third = id(create("third")); now += 60_000; fire(third)
     val done = CompletableFuture<Unit>()
@@ -1245,7 +1253,7 @@ class AlarmEngineTest {
     assertEquals("evening", loading.getStringExtra("atmosphere")); assertEquals("dark", loading.getStringExtra("brightness"))
     assertEquals("Reminder", controls.members.single().second); assertTrue(controls.content.isEmpty())
     assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), notification.publicVersion.actions.map { it.title.toString() })
     assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
     action(first, "Stop", 1, "themed-boot-stop")
     assertEquals("Completed", protectedRows().single().state)
@@ -1289,7 +1297,7 @@ class AlarmEngineTest {
     val (_, notification) = deliveryNotification()
     assertEquals("Private title", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
     assertEquals("Reminder", notification.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), notification.publicVersion.actions.map { it.title.toString() })
     assertFalse(notification.publicVersion.extras.toString().contains("Private title"))
   }
   @Test fun identifiedTestAlarmRetriesKeepTheOriginalReminderAndInstant() {
@@ -1407,7 +1415,11 @@ class AlarmEngineTest {
     assertEquals("Applied", result["status"])
     val after = snapshot(session)
     assertEquals("zh-Hans", after.language)
-    assertEquals(before.copy(language = after.language, presentationRevision = after.presentationRevision), after)
+    val mirroredBefore = requireNotNull(before.postponePreferences)
+    val mirroredAfter = requireNotNull(after.postponePreferences)
+    assertEquals(mirroredBefore.copy(revision = (revision as Number).toLong() + 1), mirroredAfter)
+    assertEquals(before.copy(language = after.language, presentationRevision = after.presentationRevision,
+      postponePreferences = mirroredAfter), after)
     assertEquals(rows, protectedRows()); assertEquals(registrations, os.registered.size)
     assertEquals(backup, request { engine.exportBackup() })
     request {

@@ -11,6 +11,7 @@ export type Capabilities = {
   exactAlarms: boolean; notifications: boolean; channelEnabled: boolean;
   fullScreen: boolean; unlocked: boolean; observedAtMs: number; activeSessionId: string; notificationChannelEnabled: boolean;
   activeSessionActions: SessionActions | null;
+  routineChannelEnabled?: boolean; routineChannelQuiet?: boolean;
 };
 export type ReminderDraft = {
   title: string; alarmAtMs?: number; eventStartMs?: number; eventEndMs?: number; dueAtMs?: number;
@@ -21,6 +22,8 @@ export type ReminderDraft = {
 export type HistoryEntry = { kind: string; atMs: number; targetMs: number | null; groups?: string[] };
 export type ResolvedReminderDraft = Omit<Required<ReminderDraft>, 'listId'> & Pick<ReminderDraft, 'listId'>;
 export type Occurrence = ResolvedReminderDraft & {
+  kind?: 'RoutineFamily';
+  routineFamily?: RoutinePlan & { recordedDays: number; trashedAtMs: number };
   id: string; completed: boolean; deleted: boolean; revision: number; nextAlertMs: number | null;
   generation: number; deliveryState: string; overdue: boolean; history?: HistoryEntry[];
   segmentId: string | null; nominalSlot: string | null; exception: boolean; skipped: boolean;
@@ -32,12 +35,14 @@ export type Occurrence = ResolvedReminderDraft & {
   /** Native browsing anchor; independent of delivery confirmation and audibility. */
   agendaAtMs: number;
   /** Authored completion boundary; Snooze/Postpone never move it. */
-  overdueAtMs: number;
+  overdueAtMs: number | null;
+  routine?: RoutineProgress | null;
   /** Current globally mirrored native duration, including before first unlock. */
   quickSnoozeMinutes: number;
 };
 export type ReminderFilter = { view: 'agenda' | 'overdue' | 'completed' | 'today' | 'upcoming' | 'attention' | 'all' | 'history' | 'deleted'; search?: string; listId?: string | null; listName?: string; deliveryIssuesOnly?: boolean; overdueOnly?: boolean; segmentId?: string; seriesId?: string; includeSkipped?: boolean };
-export type ReminderPage = { items: Occurrence[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
+export type RoutineTrashRow = Occurrence & { kind: 'RoutineFamily'; routineFamily: RoutinePlan & { recordedDays: number; trashedAtMs: number } };
+export type ReminderPage = { items: (Occurrence | RoutineTrashRow)[]; nextCursor: string | null; total: number; groups: Record<string, number>; completedCount: number };
 /** Creation consent; Calendar policy is operational state and never part of portable reminder content. */
 export type CalendarCreationDisposition = 'Default' | 'Managed' | 'LocalOnly';
 export type CreateCommand = ReminderDraft & { kind: 'Create'; operationId: string; alarmAtMs?: number; calendarDisposition?: CalendarCreationDisposition };
@@ -46,7 +51,7 @@ export type DeliveryCommand = {
   expectedSnoozeMinutes?: number;
 };
 export type SessionCommand = { operationId: string; expectedSessionId: string; members: SessionActionMember[] } &
-  ({ kind: 'DoneAll' } | { kind: 'SnoozeAll'; snoozeMinutes: number });
+  ({ kind: 'DoneAll' } | { kind: 'SnoozeAll'; snoozeMinutes: number } | { kind: 'PostponeAll'; alarmAtMs: number });
 export type ContentCommand = Partial<ReminderDraft> & {
   kind: 'Edit' | 'Done' | 'Reopen' | 'Delete' | 'UndoDelete' | 'Skip' | 'Purge'; operationId: string; occurrenceId: string; expectedRevision: number;
 };
@@ -75,6 +80,10 @@ export type TimeConversionInput = { zoneId: string; instantMs: number; local?: n
 export type TimeConversion = {
   zoneId: string; instantMs: number; local: string; offsetSeconds: number; adjustment: 'none' | 'gapForward' | 'earlierFold';
 };
+export type PostponeTimeInput =
+  | { kind: 'Relative'; referenceAtMs: number; zoneId: string; minutes: 15 | 30 | 60 | 1440 }
+  | { kind: 'Tomorrow'; referenceAtMs: number; zoneId: string; minutesOfDay: number }
+  | { kind: 'Custom'; referenceAtMs: number; zoneId: string; local: string };
 export type SeriesCommand =
   (ReminderDraft & { kind: 'CreateSeries'; recurrence: RecurrenceDraft; operationId: string; calendarDisposition?: CalendarCreationDisposition }) |
   (ReminderDraft & { kind: 'EditSeries' | 'EditFollowing'; recurrence: RecurrenceDraft; operationId: string; segmentId: string; expectedRevision: number; nominalSlot?: string }) |
@@ -82,12 +91,40 @@ export type SeriesCommand =
 export type ListCommand = { kind: 'CreateList'; name: string; operationId: string } |
   { kind: 'RenameList'; listId: string; name: string; expectedRevision: number; operationId: string } |
   { kind: 'RemoveList'; listId: string; expectedRevision: number; operationId: string };
-export type Command = CreateCommand | DeliveryCommand | ContentCommand | SeriesCommand | ListCommand | SessionCommand |
+export type RoutineAuthoringMode = 'Shared' | 'ByWeekday';
+export type RoutinePreset = 'General' | 'Exercise';
+export type ExerciseTarget = { sets?: number; reps?: number; repsMax?: number; duration?: { value: number; unit: 'sec' | 'min' | 'hr' };
+  eachSide?: boolean; weight?: { value: number; unit: 'kg' | 'lb' }; additionalText?: string };
+export type RoutineExercise = { id: string; name: string; target: string; exerciseTarget?: ExerciseTarget; notes: string; illustration?: string; customImageId?: string; sharedStepId?: string };
+export type ExercisePhoto = { id: string; uri: string; width: number; height: number; lease?: string };
+export type RoutineDay = { type: 'Rest' | 'Exercises'; exercises: RoutineExercise[] };
+export type RoutineDraft = { title: string; minutes: number; mode: 'Alarm' | 'Notification' | 'None'; listId: string | null; days: RoutineDay[];
+  notes?: string; sound?: 'remilo' | 'system'; vibration?: boolean; authoringMode?: RoutineAuthoringMode; presentationPreset?: RoutinePreset };
+export type RoutinePlan = RoutineDraft & { notes: string; sound: 'remilo' | 'system'; vibration: boolean;
+  id: string; revision: number; state: 'Active' | 'Paused' | 'Trashed'; startsOn: string; effectiveDate: string };
+export type RoutineProgress = { routineId: string; date: string; revision: number; ended: boolean; endsAtMs?: number; completedCount: number; totalCount: number;
+  authoringMode?: RoutineAuthoringMode; presentationPreset?: RoutinePreset;
+  changes?: { id: string; kind: string; stepId: string | null; completed: boolean | null; atMs: number }[];
+  skipped: boolean; completed: boolean; state: 'Rest' | 'Paused' | 'Upcoming' | 'Ready' | 'InProgress' | 'Completed' | 'Skipped' | 'NotCompleted' | 'PartiallyCompleted';
+  steps: (RoutineExercise & { completed: boolean })[] };
+export type RoutineSession = RoutineProgress & { occurrenceId?: string; title: string; deleted?: boolean; notes: string;
+  mode: 'Alarm' | 'Notification' | 'None'; minutes: number; sound: 'remilo' | 'system'; vibration: boolean };
+export type RoutineCommand =
+  (RoutineDraft & { kind: 'CreateRoutine'; startsOn: string; operationId: string }) |
+  (RoutineDraft & { kind: 'EditRoutine'; routineId: string; expectedRevision: number; operationId: string }) |
+  { kind: 'PauseRoutine' | 'ResumeRoutine' | 'TrashRoutine' | 'RestoreRoutine' | 'PurgeRoutine'; routineId: string; expectedRevision: number; operationId: string } |
+  { kind: 'SetRoutineExercise' | 'CorrectRoutineExercise' | 'SkipRoutineDay' | 'UndoSkipRoutineDay'; occurrenceId: string; date: string;
+    expectedRevision: number; operationId: string; stepId?: string; completed?: boolean };
+export type RoutineAlarmCommand = { occurrenceId: string; date: string; expectedGeneration: number; expectedSessionId: string; operationId: string } &
+  ({ kind: 'DismissRoutineAlarm'; expectedSnoozeMinutes?: never } | { kind: 'SnoozeRoutineAlarm'; expectedSnoozeMinutes: number });
+export type Command = CreateCommand | DeliveryCommand | ContentCommand | SeriesCommand | ListCommand | SessionCommand | RoutineCommand | RoutineAlarmCommand |
   (Partial<AppSettings> & { kind: 'Settings'; operationId: string; expectedRevision: number }) |
   { kind: 'StopAll'; operationId: string; expectedSessionId: string };
 export type CommandResult = {
   status: 'Scheduled' | 'Blocked' | 'Pending' | 'Partial' | 'Applied' | 'Rejected';
   occurrence?: Occurrence; segmentId?: string; generation?: number; errorCode?: string;
+  occurrenceId?: string; date?: string;
+  routine?: RoutinePlan; routineSession?: RoutineSession;
   errorField?: string; errorMessage?: string; errorMessageKey?: string; errorMessageArgs?: Record<string, string | number>; count?: number; added?: number; preserved?: number; blocked?: number; retry?: boolean; list?: ListRecord | null;
   memberResults?: { occurrenceId: string; generation: number; status: 'Scheduled' | 'Blocked' | 'Pending' | 'Superseded' | 'Missed'; targetMs?: number }[];
 };

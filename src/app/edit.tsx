@@ -1,20 +1,25 @@
 import { errorText, t as currentText, t } from '../localization';
 import { useLocalizedState, useTranslation } from '../localization/react';
+import { exerciseTargetText } from '../domain/exercise-target';
 import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { Redirect, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, TextInput, View } from 'react-native';
-import type { CalendarCreationDisposition, Command, CommandResult, RecurrenceDraft, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { CalendarCreationDisposition, Command, CommandResult, RecurrenceDraft, RoutinePlan, Series } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { changeCalendarAllDay, changeDraftZone, chooseConflict, editorDraft, editorPreviewPayload, hasSeparateEvent, moveDraftAlert, moveDraftCalendarEvent, moveDraftDue, moveDraftEvent, relinkTimedSnapshot, reviewedTimedSnapshot, reviewChoicesComplete, reviewEditorDraft, type DraftConflict, type EditorDraft, type EditorState, type TimedDraftSnapshot } from '../domain/editor-draft';
 import { saveFeedback, type SaveContext } from '../domain/save-feedback';
 
 import { cleanRepeat, repeatLabel } from '../domain/repeat';
 import { creationOrigin, retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { modeLabel } from '../domain/presentation';
-import { deviceZone } from '../domain/time';
-import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, Page, QueryState, RowSupport, Sheet, Status, Toggle } from '../ui/components';
+import { civilAt, deviceZone } from '../domain/time';
+import { ActionFeedback, BottomActionBar, Button, Choice, ConnectedGroup, Copy, DateField, Disclosure, Field, Group, IconButton, Page, QueryState, RowSupport, SettingRow, Sheet, Status, Toggle } from '../ui/components';
+import { RoutineActions } from '../ui/routine-actions';
+import { useExerciseImageLeases } from '../ui/exercise-images';
+import { RoutineChangeReview, RoutineWeekFields, routineDayKeys } from '../ui/routine-editor';
+import { changeRoutineClock, routinePayload, validRoutineDays, weeklyEditorDraft, type ReminderType, type WeeklyEditorDraft } from '../domain/routine-editor-draft';
 import { AlertModeSelector } from '../ui/alert-mode-selector';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
@@ -27,12 +32,13 @@ import { SoundPicker } from '../ui/sound-picker';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { space } from '../ui/tokens';
 
-type Seed = { state: EditorState; revision?: number; series?: Series };
+type Seed = { state: EditorState; revision?: number; series?: Series; routineId?: string; routinePlan?: RoutinePlan };
 async function readSeed(id?: string, segmentId?: string, following?: string): Promise<Seed> {
-  let draft: EditorDraft, recurrence: RecurrenceDraft | undefined, revision: number | undefined, series: Series | undefined;
+  let draft: EditorDraft, recurrence: RecurrenceDraft | undefined, revision: number | undefined, series: Series | undefined, routineId: string | undefined;
   if (segmentId) {
     series = await engine().getSeries(segmentId) ?? undefined;
     if (!series) throw new Error(t('m_c32e5d8380a5'));
+    routineId = (series.template as { routineId?: string }).routineId;
     const source = following ? await engine().getSeriesDraft(segmentId, following) : undefined;
     draft = editorDraft(source?.template ?? series.template);
     recurrence = cleanRepeat({ ...series.rule, zoneMode: series.rule.zoneId ? 'pinned' : 'floating',
@@ -41,26 +47,45 @@ async function readSeed(id?: string, segmentId?: string, following?: string): Pr
   } else if (id) {
     const record = await engine().getOccurrence(id);
     if (!record) throw new Error(t('m_7f00c5392527'));
+    routineId = record.routine?.routineId;
     draft = editorDraft(record); revision = record.revision;
   } else draft = editorDraft();
-  return { state: { draft, recurrence }, revision, series };
+  return { state: { draft, recurrence }, revision, series, routineId };
+}
+function routineSeed(plan: RoutinePlan): Seed {
+  const when = new Date(plan.startsOn + 'T' + String(Math.floor(plan.minutes / 60)).padStart(2, '0') + ':' + String(plan.minutes % 60).padStart(2, '0') + ':00').getTime();
+  return { routineId: plan.id, routinePlan: plan, state: { draft: editorDraft({ title: plan.title, notes: plan.notes, listId: plan.listId,
+    mode: plan.mode, eventStartMs: when, alarmAtMs: when, sound: plan.sound, vibration: plan.vibration }) } };
 }
 export default function Editor() {
+  const params = useLocalSearchParams<OriginParams & { routine?: string; routineId?: string; copyRoutine?: string }>();
+  if (params.routine !== undefined || params.routineId !== undefined || params.copyRoutine !== undefined) return <Redirect href={{ pathname: '/routine-edit', params }} />;
+  return <ReminderEditor />;
+}
+function ReminderEditor() {
   'use no memo';
   const t = useTranslation();
-  const params = useLocalSearchParams<OriginParams & { id?: string; duplicate?: string; segmentId?: string; following?: string }>();
-  const id = params.id ?? params.duplicate, editing = !!id || !!params.segmentId;
-  const source = useQuery({ queryKey: ['editor-source', id, params.segmentId, params.following], enabled: nativeAvailable && editing,
-    queryFn: () => readSeed(id, params.segmentId, params.following) });
+  const params = useLocalSearchParams<OriginParams & { id?: string; duplicate?: string; segmentId?: string; following?: string; routine?: string; routineId?: string; copyRoutine?: string }>();
+  const id = params.id ?? params.duplicate, routineId = params.routineId ?? params.copyRoutine;
+  const editing = !!id || !!params.segmentId || !!routineId, duplicate = !!params.duplicate || !!params.copyRoutine;
+  const source = useQuery({ queryKey: ['editor-source', id, params.segmentId, params.following, routineId], enabled: nativeAvailable && editing,
+    queryFn: async () => {
+      const seed = routineId ? undefined : await readSeed(id, params.segmentId, params.following), planId = routineId ?? seed?.routineId;
+      if (!planId) return seed!;
+      const plan = (await engine().queryRoutines()).find(value => value.id === planId);
+      if (!plan) throw new Error(t('routine_load_error'));
+      return routineSeed(plan);
+    } });
+  if (source.data?.routineId) return <Redirect href={{ pathname: '/routine-edit', params: { ...retainedOriginParams(params), ...(duplicate ? { copyRoutine: source.data.routineId } : { routineId: source.data.routineId }) } }} />;
   if (!nativeAvailable) return <Page compact title={t('m_31757bbfa17e')}><Copy>{t('m_00b26ac6b4a0')}</Copy></Page>;
   if (editing && !source.data) return <Page compact title={t('m_1f1353b055df')} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(retainedOriginParams(params)))}><QueryState loading={source.isLoading} error={source.error}
     empty={false} onRetry={() => void source.refetch()} /></Page>;
   const origin = creationOrigin(params);
-  const seed = source.data ?? { state: { draft: editorDraft({ title: '', listId: origin.kind === 'list' ? origin.listId : null }) } };
-  return <EditorForm key={id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={!!params.duplicate} following={params.following} originParams={retainedOriginParams(params)} />;
+  const seed = source.data ?? { state: { draft: editorDraft({ title: '', listId: origin.kind === 'list' ? origin.listId : null, ...(params.routine ? { mode: 'Notification' as const } : {}) }) } };
+  return <EditorForm key={routineId ?? id ?? params.segmentId ?? 'new'} seed={seed} id={params.id} duplicate={duplicate} following={params.following} newRoutine={!!params.routine} originParams={retainedOriginParams(params)} />;
 }
 type Review = { latest: Seed; merged: EditorState; conflicts: DraftConflict[]; choices: Partial<Record<DraftConflict['key'], 'yours' | 'latest'>> };
-function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Seed; id?: string; duplicate: boolean; following?: string; originParams: OriginParams }) {
+function EditorForm({ seed, id, duplicate, following, newRoutine, originParams }: { seed: Seed; id?: string; duplicate: boolean; following?: string; newRoutine: boolean; originParams: OriginParams }) {
   'use no memo';
   const t = useTranslation();
   const { formatTime, eventRange } = useTimeFormatting();
@@ -73,6 +98,15 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     title: duplicate ? seed.state.draft.title.slice(0, 193) + t('m_d75612450689') : seed.state.draft.title } }));
   const { draft, recurrence } = state, zone = draft.zoneId ?? deviceZone();
   const [baseline, setBaseline] = useState(state);
+  const [editorType] = useState<ReminderType>(seed.routinePlan || newRoutine ? 'Routine' : 'Reminder');
+  const [weekly, setWeekly] = useState<WeeklyEditorDraft>(() => weeklyEditorDraft(seed.state.draft, seed.routinePlan, duplicate));
+  const [baselineWeekly, setBaselineWeekly] = useState(weekly), [baselineType] = useState(editorType);
+  const [loadedRoutine, setLoadedRoutine] = useState(duplicate ? undefined : seed.routinePlan);
+  const [routineMenu, setRoutineMenu] = useState(false);
+  useExerciseImageLeases(weekly.days.flatMap(day => day.exercises));
+  const [routineReviewOpen, setRoutineReviewOpen] = useState(false);
+  const routine = editorType === 'Routine';
+  const routineWeekdays = weekly.days.flatMap((day, index) => day.type === 'Exercises' ? [t(routineDayKeys[index])] : []).join(' · ');
   const [loadedRevision, setLoadedRevision] = useState(seed.revision), [loadedSeries, setLoadedSeries] = useState(seed.series);
   const [followingScope, setFollowingScope] = useState(following), [saveAsNew, setSaveAsNew] = useState(false);
   const [message, setMessage] = useLocalizedState(''), [fieldError, setFieldError] = useState<string | undefined>(), [zoneWarning, setZoneWarning] = useState('');
@@ -88,11 +122,16 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     titleInput.current?.blur(); notesInput.current?.blur(); Keyboard.dismiss();
   }, []);
   const [retrySave, setRetrySave] = useState(false), [saved, setSaved] = useState<CommandResult | null>(null);
+  const [removed, setRemoved] = useState(false);
+  useEffect(() => { if (removed) { if (router.canGoBack()) router.back(); else router.replace('/routines'); } }, [removed]);
   const [preparing, setPreparing] = useState(false), [reviewLoading, setReviewLoading] = useState(false);
   const [review, setReview] = useState<Review | null>(null), [reviewOpen, setReviewOpen] = useState(false), [scopeChanged, setScopeChanged] = useState(false);
-  const editingId = saveAsNew ? undefined : id, editingSeries = saveAsNew ? undefined : loadedSeries;
-  const creation = !editingId && !editingSeries;
-  const managed = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable && creation });
+  const editingId = saveAsNew || routine ? undefined : id, editingSeries = saveAsNew || routine ? undefined : loadedSeries;
+  const creation = !editingId && !editingSeries && !loadedRoutine;
+  const routinePlans = useQuery({ queryKey: ['routines'], queryFn: () => engine().queryRoutines(), enabled: nativeAvailable && !!loadedRoutine });
+  const latestRoutine = routinePlans.data?.find(plan => plan.id === loadedRoutine?.id);
+  const routineStale = !!latestRoutine && latestRoutine.revision !== loadedRoutine?.revision;
+  const managed = useQuery({ queryKey: ['calendar', 'managed'], queryFn: () => engine().getManagedCalendarState(), enabled: nativeAvailable && creation && !routine });
   const [calendarDisposition, setCalendarDisposition] = useState<CalendarCreationDisposition>('Default');
   const calendar = useQuery({ queryKey: ['calendar', 'publications'], queryFn: () => engine().getCalendarPublications(),
     enabled: nativeAvailable && !!editingId && !editingSeries });
@@ -101,9 +140,9 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     enabled: nativeAvailable && !!editingId && !editingSeries });
   const hasCalendarContext = calendar.data?.some(item => item.occurrenceId === editingId) || calendarLinks.data?.some(item => item.occurrenceId === editingId);
   const preserveEvent = !!editingId && !editingSeries && (!calendar.data || !!calendar.error || !calendarLinks.data || !!calendarLinks.error || !!hasCalendarContext);
-  const dirty = saveAsNew || calendarDisposition !== 'Default' || JSON.stringify(state) !== JSON.stringify(baseline);
+  const dirty = saveAsNew || calendarDisposition !== 'Default' || JSON.stringify(state) !== JSON.stringify(baseline) || editorType !== baselineType || JSON.stringify(weekly) !== JSON.stringify(baselineWeekly);
   const busy = preparing || command.isPending || reviewLoading;
-  usePreventRemove(!saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
+  usePreventRemove(!removed && !saved && (dirty || retrySave || preparing || command.isPending), ({ data }) => {
     if (retrySave || pendingSave.current || command.isPending) { confirm(t('m_31442c166f10'), t('m_341b6b4fb929')); return; }
     if (preparing) { confirm(t('m_d8eb10e04288'), t('m_27b05dc65c32')); return; }
     confirm(t('m_85bcf41666a5'), t('m_2a6bb39d73ff'), [{ text: t('m_e76fd2add010'), style: 'cancel' },
@@ -113,6 +152,13 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     if (!saved) return;
     if (savedNotified.current) return;
     savedNotified.current = true;
+    if (savedContext.current?.kind === 'CreateRoutine' || savedContext.current?.kind === 'EditRoutine') {
+      notify({ message: saved.status === 'Blocked' ? t('m_3e527a715fb1') : t(savedContext.current.kind === 'CreateRoutine' ? 'routine_saved' : 'routine_saved_changes'),
+        tone: saved.status === 'Blocked' ? 'warning' : 'success', persistent: saved.status === 'Blocked' });
+      finishEditing();
+      if (router.canGoBack()) router.back(); else returnToOrigin(origin);
+      return;
+    }
     const feedback = saveFeedback(savedContext.current!, saved, { access: caps.data, failed: !!caps.error, checking: caps.isFetching }, Date.now(), timeDisplay);
     notify({ message: feedback.message, tone: feedback.tone === 'accent' ? 'muted' : feedback.tone, persistent: feedback.persistent,
       action: { label: feedback.review === 'access' ? currentText('m_5ddb6f051115') : feedback.review === 'schedule' ? currentText('m_98c00356c056') : feedback.review === 'reminder' ? currentText('m_5ded6845709d') : currentText('m_dcc839a4015c'),
@@ -125,7 +171,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     else if (saved.segmentId) router.replace({ pathname: '/series/[id]', params: { id: saved.segmentId } });
     else if (saved.occurrence) router.replace({ pathname: '/reminder/[id]', params: { id: saved.occurrence.id } });
     else router.replace('/');
-  }, [saved, creation, origin, originParams, finishEditing, caps.data, caps.error, caps.isFetching, timeDisplay]);
+  }, [saved, creation, origin, originParams, finishEditing, caps.data, caps.error, caps.isFetching, timeDisplay, t]);
   const patch = (value: Partial<EditorDraft>) => { if (!pendingSave.current && !timingWork.current) setState((current) => ({ ...current, draft: { ...current.draft, ...value } })); };
   const updateTiming = async (resolve: () => Promise<{ draft: EditorDraft; warnings: string[] }>, field: string, nextRepeat?: { value?: RecurrenceDraft }) => {
     if (pendingSave.current || timingWork.current || busy || review) throw new Error(t('m_3f7c29473312'));
@@ -160,10 +206,15 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     .filter(([key, value]) => key !== 'listName' && value !== undefined));
   const previewPayload = editorPreviewPayload(state);
   const preview = useQuery({ queryKey: ['schedule-preview', previewPayload], queryFn: () => engine().previewSchedule(previewPayload),
-    enabled: nativeAvailable && !busy });
+    enabled: nativeAvailable && !busy && !routine });
+  const weeklyPayload = { ...routinePayload(draft, weekly), sound: draft.sound ?? settings.data?.sound ?? 'remilo', vibration: draft.vibration ?? settings.data?.vibration ?? true };
+  const routinePreview = useQuery({ queryKey: ['routine-preview', weeklyPayload, weekly.startsOn, loadedRoutine?.id],
+    queryFn: () => engine().previewRoutine({ ...weeklyPayload, startsOn: weekly.startsOn, ...(loadedRoutine ? { routineId: loadedRoutine.id } : {}) }),
+    enabled: nativeAvailable && routine && validRoutineDays(weekly.days) && !busy });
   const loadReview = async () => {
     setReviewLoading(true); setMessage('');
     try {
+      if (routine) { await routinePlans.refetch({ throwOnError: true }); setRoutineReviewOpen(true); return; }
       const latest = await readSeed(editingId, editingSeries?.id, followingScope);
       if (latest.series?.state === 'Archived') { setScopeChanged(true); setReview(null); return; }
       const result = reviewEditorDraft(baseline, state, latest.state);
@@ -197,10 +248,15 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     finally { setReviewLoading(false); }
   };
   const save = async () => {
-    if (busy || timingWork.current || review || scopeChanged) return;
+    if (busy || timingWork.current || review || scopeChanged || routineStale && !retrySave) return;
     setPreparing(true); setMessage(''); setFieldError(undefined);
     try {
       if (!pendingSave.current) {
+        if (routine) {
+          if (!validRoutineDays(weekly.days)) { setMessage(t('routine_validation')); setFieldError('days'); return; }
+          pendingSave.current = loadedRoutine ? { ...weeklyPayload, kind: 'EditRoutine', routineId: loadedRoutine.id, expectedRevision: loadedRoutine.revision, operationId: engine().createOperationId() }
+            : { ...weeklyPayload, kind: 'CreateRoutine', startsOn: weekly.startsOn, operationId: engine().createOperationId() };
+        } else {
         const resolved = preview.data;
         if (recurrence && resolved && !resolved.upcoming.length) { setMessage(t('m_dfe0e46b0c94')); setFieldError('recurrence'); return; }
         if (creation && !recurrence && resolved?.warnings.length && draft.mode !== 'None') { setMessage(resolved.warnings.join('\n')); setFieldError('alarmAtMs'); return; }
@@ -211,6 +267,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
           : editingId ? { ...payload, kind: 'Edit', occurrenceId: editingId, expectedRevision: loadedRevision!, operationId: engine().createOperationId() }
           : recurrence ? { ...payload, recurrence: cleanRepeat(recurrence), kind: 'CreateSeries', calendarDisposition, operationId: engine().createOperationId() }
           : { ...payload, kind: 'Create', calendarDisposition, operationId: engine().createOperationId() }) as Command;
+        }
       }
       const captured = pendingSave.current;
       savedContext.current = { kind: captured.kind, mode: 'mode' in captured ? captured.mode : draft.mode };
@@ -239,14 +296,28 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
     if (conflict.key === 'listId') return value == null ? t('m_eacd31d849f9') : lists.data?.find((list) => list.id === value)?.name ?? t('m_3331733936a8');
     return typeof value === 'string' && value.length ? value : t('m_dc937b598926');
   };
-  const disabled = !nativeAvailable || busy || !!review || scopeChanged || !draft.title.trim();
+  const disabled = !nativeAvailable || busy || !!review || scopeChanged || routineStale && !retrySave || !draft.title.trim() || routine && !validRoutineDays(weekly.days);
   const frozen = busy || retrySave || !!review;
   const resolvedDraft = { ...draft, ...preview.data };
   const noAlert = draft.mode === 'None';
   const timingLabel = noAlert ? t('m_75ba69e3a8b7') : modeLabel(draft.mode) + t('m_4a8f540240f1');
   const calendarSummary = hasSeparateEvent(resolvedDraft) || preserveEvent ? eventRange(resolvedDraft) : undefined;
   const reviewed = review?.conflicts.reduce((value, conflict) => chooseConflict(value, conflict, review.choices[conflict.key] ?? 'yours'), review.merged);
-  return <Page compact title={creation ? t('m_70f22f445886') : editingSeries ? followingScope ? t('m_3e60c726a1d3') : t('m_3ca78b60c94f') : t('m_1f1353b055df')}
+  const restoreRoutine = () => {
+    if (!latestRoutine) return;
+    const latest = routineSeed(latestRoutine).state;
+    setState(latest); setBaseline(latest); setLoadedRoutine(latestRoutine);
+    const nextWeekly = weeklyEditorDraft(latest.draft, latestRoutine);
+    setWeekly(nextWeekly); setBaselineWeekly(nextWeekly); setRoutineReviewOpen(false); setMessage(''); setFieldError(undefined); command.reset();
+  };
+  const keepRoutineDraft = () => {
+    if (!latestRoutine) return;
+    const latest = routineSeed(latestRoutine).state;
+    setBaseline(latest); setBaselineWeekly(weeklyEditorDraft(latest.draft, latestRoutine));
+    setLoadedRoutine(latestRoutine); setRoutineReviewOpen(false); setMessage(''); setFieldError(undefined); command.reset();
+  };
+  return <Page compact title={routine ? t(creation ? 'routine_editor_new' : 'routine_editor_edit') : creation ? t('m_70f22f445886') : editingSeries ? followingScope ? t('m_3e60c726a1d3') : t('m_3ca78b60c94f') : t('m_1f1353b055df')}
+    actions={loadedRoutine ? <IconButton icon="more_vert" label={t('routine_more')} disabled={frozen} onPress={() => setRoutineMenu(true)} /> : undefined}
     onBack={() => {
       if (!dirty && !retrySave && !busy) finishEditing();
       if (router.canGoBack()) router.back(); else router.replace(secondaryOriginRoute(originParams));
@@ -258,6 +329,7 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       <Button label={command.isPending ? t('m_23e39291d613') : preparing ? t('m_dfe40efe921f') : reviewLoading ? t('m_fcc53388888f') : retrySave ? t('m_71fdfa790e50') : t('m_1509f561f241')}
         accessibilityHint={!draft.title.trim() ? t('m_8b71decd932a') : undefined} busy={busy} disabled={disabled} onPress={() => void save()} />
     </View></BottomActionBar>}>
+    {loadedRoutine && <RoutineActions target={routineMenu ? { id: loadedRoutine.id } : null} onClose={() => setRoutineMenu(false)} onRemoved={() => { finishEditing(); setRemoved(true); }} />}
     {scopeChanged && <Group title={t('m_f5f54f060066')}><View style={{ padding: 14, gap: 12 }}>
       <Status label={t('m_2ebc23f04668')} tone="warning" />
       <Button label={t('m_0daa33738c8e')} variant="secondary" onPress={() => {
@@ -270,43 +342,66 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
       <Button label={t('m_6a47708f4e14')} variant="secondary" onPress={() => setReviewOpen(true)} /></View></Group>}
     {reviewLoading && <ActionFeedback loading message={t('m_914801fd4cfa')} />}
     {saveAsNew && <Copy muted>{t('m_77bcd00eca3e')}</Copy>}
-    <View pointerEvents={frozen ? 'none' : 'auto'} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}
+    {/* Keep the native parent stable when Save freezes/unfreezes its descendants. */}
+    <View collapsable={false} pointerEvents={frozen ? 'none' : 'auto'} importantForAccessibility={frozen ? 'no-hide-descendants' : 'auto'}
       accessibilityElementsHidden={frozen} style={{ gap: 16 }}>
       <Field required label={t('m_7e8cd2056da7')} placeholder={t('m_41f45aa7f7ff')} inputRef={titleInput} autoFocus={initialTitleFocus} value={draft.title}
         multiline compactMultiline submitBehavior="blurAndSubmit" enterKeyHint="done" onSubmitEditing={() => titleInput.current?.blur()}
         editable={!frozen} onChangeText={(title) => patch({ title })} maxLength={200} error={invalid(['title'])} />
       <ConnectedGroup>
-        <View key="timing">
-          <RowSupport><Copy muted size={14}>{timingLabel}</Copy></RowSupport>
-          <DateTimeFields labelPrefix={noAlert ? t('m_4724f344c1c0') : modeLabel(draft.mode)} value={noAlert ? resolvedDraft.eventStartMs : resolvedDraft.alarmAtMs} zoneId={zone} allDay={noAlert && !!draft.allDay}
-            onError={dateError} onChange={noAlert ? moveEvent : moveAlert} disabled={frozen || !preview.data} />
-          {(preview.error || preview.isPending) && <RowSupport>{preview.error ? <><ActionFeedback message={t('m_f5c72a8860c3')} tone="warning" />
+        {(!routine || !loadedRoutine || !noAlert) && <View key="timing">
+          {(!routine || !noAlert) && <RowSupport><Copy muted size={14}>{routine ? t('routine_shared_time') : timingLabel}</Copy></RowSupport>}
+          {routine ? <>
+            {!loadedRoutine && <DateTimeFields dateLabel={t('routine_starts')} dateZoneId={deviceZone()} dateValue={new Date(weekly.startsOn + 'T12:00:00').getTime()}
+              value={draft.alarmAtMs} zoneId={zone} allDay={noAlert} disabled={frozen} onError={dateError}
+              onDateChange={value => setWeekly(current => ({ ...current, startsOn: civilAt(value).slice(0, 10) }))}
+              onChange={value => setState(current => ({ ...current, draft: changeRoutineClock(current.draft, value) }))} />}
+            {loadedRoutine && !noAlert && <DateField label={t('m_33b93476cf59')} value={draft.alarmAtMs} zoneId={zone} timeOnly disabled={frozen} onError={dateError}
+              onChange={value => setState(current => ({ ...current, draft: changeRoutineClock(current.draft, value) }))} />}
+          </> : <DateTimeFields labelPrefix={noAlert ? t('m_4724f344c1c0') : modeLabel(draft.mode)} value={noAlert ? resolvedDraft.eventStartMs : resolvedDraft.alarmAtMs} zoneId={zone} allDay={noAlert && !!draft.allDay}
+            onError={dateError} onChange={noAlert ? moveEvent : moveAlert} disabled={frozen || !preview.data} />}
+          {!routine && (preview.error || preview.isPending) && <RowSupport>{preview.error ? <><ActionFeedback message={t('m_f5c72a8860c3')} tone="warning" />
               <Button label={t('m_942087cc2d41')} variant="secondary" disabled={frozen} onPress={() => void preview.refetch()} /></> :
               <ActionFeedback loading message={t('m_aa0d9f285325')} />}</RowSupport>}
           {noAlert && invalid(['eventStartMs']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
           {invalid(['alarmAtMs']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
-        </View>
+        </View>}
         <View key="alert"><AlertModeSelector value={draft.mode ?? 'Alarm'} disabled={frozen} onChange={(mode) => patch({ mode })} /></View>
-        {!editingId && <View key="repeat">
+        {routine ? <SettingRow intent="action" key="repeat" label={t('routine_repeat_label')} icon="repeat" value={routineWeekdays ? t('routine_repeat', { days: routineWeekdays }) : t('routine_repeat_empty')} /> : !editingId && <View key="repeat">
           <RepeatForm disabled={frozen} value={recurrence} onChange={applyRepeat} startMs={draft.eventStartMs} zoneId={zone} previewDraft={draft} hasPublication={hasCalendarContext} />
           {invalid(['recurrence']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
         </View>}
-        <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
+        {!routine && <View key="list"><ListPicker value={draft.listId ?? null} onChange={(listId) => patch({ listId })} disabled={frozen} />
           {invalid(['listId']) && <RowSupport><Status label={message} tone="danger" /></RowSupport>}
-        </View>
+        </View>}
       </ConnectedGroup>
+      {routine && <>
+        <RoutineWeekFields days={weekly.days} disabled={frozen} onChange={days => setWeekly(current => ({ ...current, days }))} />
+        {invalid(['days']) && <ActionFeedback message={message} tone="danger" />}
+        <ConnectedGroup><ListPicker value={draft.listId ?? null} onChange={listId => patch({ listId })} disabled={frozen} /></ConnectedGroup>
+        {loadedRoutine && <RoutineChangeReview plan={loadedRoutine} draft={weeklyPayload} listName={lists.data?.find(list => list.id === draft.listId)?.name} />}
+        {routineStale && <><ActionFeedback message={t('m_fe8e0e6d9197')} tone="warning" /><Button label={t('routine_change_review')} variant="secondary" onPress={() => void loadReview()} /></>}
+        {routinePreview.data?.nextAlertMs != null && draft.mode !== 'None' && <Copy muted size={14}>{t(loadedRoutine ? 'routine_next_after_changes' : 'routine_next_prompt', { time: formatTime(routinePreview.data.nextAlertMs) })}</Copy>}
+        {!!routinePreview.error && <Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void routinePreview.refetch()} />}
+        {draft.mode === 'Notification' && <>
+          <Copy muted size={14}>{t('routine_no_catchup')}</Copy>
+          {caps.data && (!caps.data.notifications || !caps.data.routineChannelEnabled) && <ActionFeedback tone="warning" message={t('routine_notification_warning')} />}
+          {caps.data?.routineChannelQuiet === false && <Copy muted size={14}>{t('routine_channel_changed')}</Copy>}
+          <Button label={t('routine_channel_settings')} variant="neutral" onPress={() => void engine().openSettings('routineChannel')} />
+        </>}
+      </>}
       <Disclosure title={t('m_6239b93e96e9')} initial={!!draft.notes} forceOpen={!!invalid(['notes'])}>
         <Field label={t('m_8a7525b1492f')} inputRef={notesInput} value={draft.notes} onChangeText={(notes) => patch({ notes })} multiline maxLength={10_000} error={invalid(['notes'])} />
       </Disclosure>
-      {creation && managed.data?.calendarId && managed.data.mode !== 'Disabled' && <ConnectedGroup title={t('m_b074310e911f')} footer={<Copy muted>{managed.data.mode === 'Paused' ? t('m_6191bfd04e38') : t('m_7c56eff50082')}</Copy>}>
+      {!routine && creation && !!managed.data?.calendarId && managed.data.mode !== 'Disabled' && <ConnectedGroup title={t('m_b074310e911f')} footer={<Copy muted>{managed.data.mode === 'Paused' ? t('m_6191bfd04e38') : t('m_7c56eff50082')}</Copy>}>
         <Toggle key="sync" label={t('m_3e44eada38e6')} value={calendarDisposition === 'Managed' || calendarDisposition === 'Default' && managed.data.policy.exportNewReminders}
           disabled={frozen} onChange={value => setCalendarDisposition(value ? 'Managed' : 'LocalOnly')} />
         <Copy muted>{calendarDisposition === 'LocalOnly' ? t('m_c905013aab29') : managed.data.calendarName}</Copy>
         {recurrence?.zoneMode === 'floating' && calendarDisposition !== 'LocalOnly' && <Copy muted>{t('m_09f21e33c391')}{zone} {t('m_0bdc93934138')}</Copy>}
         {draft.allDay && managed.data.calendarZone !== zone && calendarDisposition !== 'LocalOnly' && <Copy muted>{t('m_4171fe0e2802')}{zone}{t('m_2307d01ab2a5')}{managed.data.calendarZone}{t('m_6e558a290d11')}</Copy>}
       </ConnectedGroup>}
-      {creation && managed.error && <ActionFeedback message={t('m_7ef8b1a640de')} tone="warning" />}
-      <Disclosure title={t('m_22609ce661b0')} icon="event" summary={calendarSummary} forceOpen={!noAlert && !!invalid(['eventStartMs', 'allDay', 'eventEndMs']) || !!invalid(['eventEndMs'])}>
+      {!routine && creation && managed.error && <ActionFeedback message={t('m_7ef8b1a640de')} tone="warning" />}
+      {!routine && <Disclosure title={t('m_22609ce661b0')} icon="event" summary={calendarSummary} forceOpen={!noAlert && !!invalid(['eventStartMs', 'allDay', 'eventEndMs']) || !!invalid(['eventEndMs'])}>
         <Copy muted size={13}>{creation && managed.data?.calendarId && managed.data.mode !== 'Disabled' && calendarDisposition !== 'LocalOnly' ? t('m_dcfcd4d17b81') : t('m_5da6242c60ee')}</Copy>
         <ConnectedGroup footer={invalid(['eventStartMs', 'allDay', 'eventEndMs']) ? <Status label={message} tone="danger" /> : undefined}>
           {!noAlert && <View key="start"><RowSupport><Copy muted size={14}>{t('m_1d7fc661c9ce')}</Copy></RowSupport>
@@ -317,8 +412,8 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
             if (eventEndMs !== draft.eventEndMs) patch({ eventEndMs, ...(!noAlert ? { alarmLinked: false } : {}) });
           }} disabled={frozen} />}
         </ConnectedGroup>
-      </Disclosure>
-      <Disclosure title={t('m_fd7a9893f84d')} icon="settings" forceOpen={!!invalid(['dueAtMs', 'zoneId']) || noAlert && !!invalid(['allDay'])}>
+      </Disclosure>}
+      {!routine && <Disclosure title={t('m_fd7a9893f84d')} icon="settings" forceOpen={!!invalid(['dueAtMs', 'zoneId']) || noAlert && !!invalid(['allDay'])}>
         <View style={{ gap: space.md }}>
           {noAlert && <ConnectedGroup footer={invalid(['allDay']) ? <Status label={message} tone="danger" /> : undefined}>
             <Toggle key="all-day" label={t('m_34233e542b7b')} value={draft.allDay ?? false} disabled={frozen} onChange={changeAllDay} />
@@ -341,23 +436,35 @@ function EditorForm({ seed, id, duplicate, following, originParams }: { seed: Se
             <TimeZoneField key="zone" value={zone} atMs={draft.eventStartMs} disabled={frozen} onChange={(next) => { void changeZone(next, undefined).catch(() => {}); }} error={invalid(['zoneId'])} />
           </ConnectedGroup>}
         </View>
-      </Disclosure>
+      </Disclosure>}
       {draft.mode === 'Alarm' && <Disclosure title={t('m_8c648567f73c')} forceOpen={!!invalid(['sound', 'vibration'])}>
         <ConnectedGroup>
           <SoundPicker key="sound" value={draft.sound ?? settings.data?.sound ?? 'remilo'} onChange={(sound) => patch({ sound })} disabled={frozen} />
           <Toggle key="vibration" icon="vibration" label={t('m_59e1fd02f6c2')} value={draft.vibration ?? settings.data?.vibration ?? true} disabled={frozen} onChange={(vibration) => patch({ vibration })} />
         </ConnectedGroup>
       </Disclosure>}
-      {preview.data && <>
+      {!routine && preview.data && <>
         {recurrence && <Group title={t('m_2cc2a7090f66')}>{preview.data.upcoming.map((slot) => <View key={slot.nominalSlot} style={{ padding: 12, gap: 3 }}>
           <Copy size={14}>{formatTime(noAlert ? slot.eventStartMs : slot.alarmAtMs, slot.zoneId)}</Copy><Copy muted size={13}>{slot.adjusted ? t('m_05aa0106edd0') : ''}{noAlert ? t('m_d1af410eb4d0') : modeLabel(draft.mode)}</Copy>
         </View>)}{preview.data.upcoming.length < 3 && <Copy muted size={13}>{t('m_07714689fced')}</Copy>}</Group>}
         {preview.data.warnings.map((warning) => <ActionFeedback tone="warning" message={warning} key={warning} />)}
       </>}
       {editingSeries && <Copy muted size={13}>{t('m_197c9d025305')}{editingSeries.state === 'Paused' ? t('m_dd7df50aa500') : ''}</Copy>}
-      {preview.error && <Status label={t('m_034ec8f75aa9')} tone="warning" />}
+      {!routine && preview.error && <Status label={t('m_034ec8f75aa9')} tone="warning" />}
     </View>
     {command.error instanceof CommandError && command.error.code?.startsWith('STALE') && !review && !scopeChanged && <Button label={t('m_ba805b089799')} variant="secondary" disabled={busy} onPress={() => void loadReview()} />}
+    <Sheet title={t('routine_change_review')} visible={routineReviewOpen} onClose={() => setRoutineReviewOpen(false)}>
+      <Copy muted>{t('m_fe8e0e6d9197')}</Copy>
+      <QueryState loading={routinePlans.isFetching} error={routinePlans.error} empty={!latestRoutine && !routinePlans.isFetching} emptyMessage={t('routine_load_error')} onRetry={() => void loadReview()} />
+      {latestRoutine && <><Copy heading>{latestRoutine.title}</Copy><Copy muted>{modeLabel(latestRoutine.mode)}</Copy>
+        <Copy muted>{formatTime(routineSeed(latestRoutine).state.draft.alarmAtMs)}</Copy>
+        <Copy muted>{lists.data?.find(list => list.id === latestRoutine.listId)?.name ?? t('m_eacd31d849f9')}</Copy>
+        {!!latestRoutine.notes && <Copy muted>{latestRoutine.notes}</Copy>}
+        {latestRoutine.days.map((day, index) => <View key={index}><Copy heading>{t(routineDayKeys[index])}</Copy>
+          <Copy muted>{day.type === 'Rest' ? t('routine_rest') : day.exercises.map(exercise => [exercise.name, exerciseTargetText(exercise)].filter(Boolean).join(' · ')).join('\n')}</Copy></View>)}</>}
+      <Button label={t('routine_keep_draft')} disabled={!latestRoutine || !!routinePlans.error || routinePlans.isFetching} onPress={keepRoutineDraft} />
+      <Button label={t('routine_load_latest')} variant="secondary" disabled={!latestRoutine || !!routinePlans.error || routinePlans.isFetching} onPress={restoreRoutine} />
+    </Sheet>
     <Sheet title={t('m_6a47708f4e14')} visible={reviewOpen && !!review} onClose={() => setReviewOpen(false)}>
       <Copy muted>{t('m_bfc89b6b5977')}</Copy>
       {review?.conflicts.map((conflict) => <Group key={conflict.key} title={conflict.label}>

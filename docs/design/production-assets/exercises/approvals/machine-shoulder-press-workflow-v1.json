@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "ownerStatement": "Approve artwork and include it",
+  "recordedAtUtc": "2026-10-16T06:41:34.119886+00:00",
+  "assetId": "machine-shoulder-press",
+  "candidate": 1,
+  "candidateSha256": "44d3d3822d5c4d61bc559fcb9a4ba6387f199f221fecc1032ff80a75a7ad009a",
+  "reviewSha256": "27df8c1e8f19f7ee6f3aecdf8c0567c0785e7ab4e0da0f47c35e2adec07c5852",
+  "reviewRecordSha256": "306e857b7dbaa1efc095b194f41202ba22cd0998bd229e9b6f1a8f3c4b2d970e",
+  "scope": {
+    "artwork": true,
+    "activation": true
+  },
+  "exceptions": [],
+  "version": 1,
+  "preparedRecord": {
+    "path": "docs/design/production-assets/exercises/records/machine-shoulder-press/prepared-01.json",
+    "sha256": "9632faf1ca6945300635fc88c2b3d731962a37001328c610acc8c28023c4dd08"
+  },
+  "reviewRecord": {
+    "path": "docs/design/production-assets/exercises/records/machine-shoulder-press/review-01-02.json",
+    "sha256": "306e857b7dbaa1efc095b194f41202ba22cd0998bd229e9b6f1a8f3c4b2d970e"
+  },
+  "files": [
+    {
+      "sha256": "44d3d3822d5c4d61bc559fcb9a4ba6387f199f221fecc1032ff80a75a7ad009a",
+      "width": 1672,
+      "height": 941,
+      "size": [
+        1672,
+        941
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "hasAlpha": true,
+      "opaque": false,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "iccPresent": false,
+      "iccSha256": null,
+      "iccDescription": null,
+      "iccValid": null,
+      "exifOrientation": 1,
+      "displaySize": [
+        1672,
+        941
+      ],
+      "role": "source",
+      "path": "assets/exercises/masters/machine-shoulder-press-v1.png",
+      "bytesPreserved": true
+    },
+    {
+      "sha256": "3467855c8e68a12eb20d3377a9776dac9aeea913611e4b143f2d44e14da06aef",
+      "role": "runtime",
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "opaque": false,
+      "lossless": true,
+      "transform": {
+        "sourceRectPx": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "sourceDisplaySize": [
+          1672,
+          941
+        ],
+        "targetSize": [
+          960,
+          540
+        ],
+        "contentRectPx": [
+          0,
+          0,
+          959,
+          540
+        ],
+        "fit": "contain",
+        "focalNormalized": [
+          0.5,
+          0.5
+        ],
+        "upscaled": false,
+        "resizeFilter": "Lanczos",
+        "mask": null,
+        "colorPolicy": "Untagged pixels interpreted as sRGB; no measured color-space assertion",
+        "orientationApplied": true,
+        "addedSourceDetail": false
+      },
+      "exportSpec": {
+        "role": "runtime",
+        "destination": "assets/exercises/{asset}-v{version}.webp",
+        "size": [
+          960,
+          540
+        ],
+        "format": "WEBP",
+        "fit": "contain",
+        "focal": [
+          0.5,
+          0.5
+        ],
+        "lossless": true,
+        "allowUpscale": false,
+        "copies": []
+      },
+      "exportDetails": {
+        "encoder": "Pillow",
+        "pillowVersion": "11.1.0",
+        "libwebpVersion": "1.3.2",
+        "losslessScope": "Exact transformed pixels, all channels verified"
+      },
+      "path": "assets/exercises/machine-shoulder-press-v1.webp",
+      "cropProfiles": {
+        "focus-narrow": {
+          "viewportDp": [
+            256,
+            144
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        },
+        "focus-wide": {
+          "viewportDp": [
+            320,
+            180
+          ],
+          "focalNormalized": [
+            0.49947916666666664,
+            0.5
+          ],
+          "sourceRectPx": [
+            0,
+            0,
+            960,
+            540
+          ],
+          "fit": "contain",
+          "toolbarHeightDp": 0,
+          "feasibility": {
+            "feasible": true,
+            "currentContainsAll": true,
+            "sourceRectPx": [
+              0,
+              0,
+              960,
+              540
+            ],
+            "landmarks": [],
+            "requiredBoundsPx": null
+          }
+        }
+      },
+      "sourceRectPx": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "master-size",
+      "status": "pass",
+      "detail": "Actual [1672, 941]; minimum [960, 540]"
+    },
+    {
+      "id": "master-format",
+      "status": "pass",
+      "detail": "Actual PNG"
+    },
+    {
+      "id": "master-alpha",
+      "status": "pass",
+      "detail": "Alpha extrema [0, 255]"
+    },
+    {
+      "id": "master-color",
+      "status": "pass",
+      "detail": "Untagged source explicitly interpreted as sRGB"
+    },
+    {
+      "id": "export:runtime",
+      "status": "pass",
+      "detail": "Deterministic pixels prepared without undeclared enlargement"
+    }
+  ],
+  "inspection": {
+    "reviewer": "Delegated assistant after viewing original, decoded source/export light/dark/checkerboard, top details, both helper sizes and both-size all-eight boards; independent UX source review",
+    "recordedAtUtc": "2026-10-16T06:39:22.420920+00:00",
+    "checks": [
+      {
+        "name": "identity",
+        "status": "pass",
+        "observation": "Seated machine shoulder press is recognizable, with two handles raised above/beside the shoulders and bent elbows underneath."
+      },
+      {
+        "name": "style-consistency",
+        "status": "pass",
+        "observation": "Approved front-plank person/style retained: blue-gray top, terracotta leggings, bun, natural proportions and restrained educational shading; gray shoes/equipment."
+      },
+      {
+        "name": "pose-and-contact",
+        "status": "pass",
+        "observation": "Both hands visibly wrap their separate handles. Full arms, legs/shoes, supported back and hips/seat are coherent; feet read as planted. No obvious duplicated limb, floating grip or disconnected joint."
+      },
+      {
+        "name": "equipment-continuity",
+        "status": "pass",
+        "observation": "Handles visibly join separate pivoting levers; stack, frame, backrest, seat and base read as continuous equipment. Independent source reviewer found no material contact defect. This is visual plausibility, not engineering certification."
+      },
+      {
+        "name": "decoded-alpha",
+        "status": "pass",
+        "observation": "Source/export light/dark composites and checkerboard retain clean transparent surroundings/frame openings, without distracting colored fringe or matte. Actual cropped top details show both rounded cap outlines complete."
+      },
+      {
+        "name": "small-usage-and-containment",
+        "status": "pass",
+        "observation": "Viewed source/runtime 256x144 and320x180 helper panels and both-size all-eight current-container boards: complete machine and person remain recognizable and contained. Upper lever caps are not visibly cut; top breathing room is extremely tight (~0.8dp in180)."
+      },
+      {
+        "name": "interface-remnants",
+        "status": "pass",
+        "observation": "No text, numbers, logos, arrows, scenery, phone frame, watermark or app controls observed."
+      }
+    ],
+    "limitations": [
+      "Visible alpha>=128 bbox [433,4,1262,897] on1672x941 leaves ~0.8dp top clearance in180 frame. Both cap curves are complete; generous top margins are not achieved. Nonzero alpha reaches top/bottom only as faint noise; y0 maximum11, y1 maximum14, y2 maximum15.",
+      "Fine mechanism and finger detail is clearer enlarged. No clinical exercise-technique or mechanical-engineering validation claimed.",
+      "Untagged source is explicitly interpreted as sRGB under profile; no embedded profile or color conversion claimed.",
+      "Deterministic boards use current presentation.json container colors; they do not establish actual native/RN rendering, contrast measurement or signed-phone acceptance.",
+      "Human artwork and activation approval pending; no production promotion."
+    ],
+    "supplementalPreviews": [
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/all-atmospheres-320x180-v1.png",
+        "sha256": "d832b271d5d2c8c2bfdcb0745668cfb8cd7bafc3fea710914509217d1e7e21ad"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/all-atmospheres-256x144-v1.png",
+        "sha256": "0d181363e96f1e2a44f4dc1e190296910b3bd801d1d9d3c473f983ef2d2b4327"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/source-light-v1.png",
+        "sha256": "1b91984ef7119ba500043f6776a39327d3cee1f8d364fedff848ac82145690eb"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/source-dark-v1.png",
+        "sha256": "cfc0b7bbc58780932a22b195f69794ac241ab5fd3779bebc702988574912f34e"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/export-light-v1.png",
+        "sha256": "c156c26a4ab9742396afd55bf50b42e49680fdd39f5d31d5fb9244af6938c281"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/export-dark-v1.png",
+        "sha256": "6dfbf87fcfca83930d3fe02fe90d932bb28ee1d1d5875d802ca4bf3f21f9f4d8"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/top-levers-light-v1.png",
+        "sha256": "1520f88ab7744a5b24a750a281c74573bf6cbd1032dedfafc2198bff0be108de"
+      },
+      {
+        "localArtifactPath": "verification/local/artwork/exercises/machine-shoulder-press/candidate-01/top-levers-dark-v1.png",
+        "sha256": "bd636e116db555a6f6fab7ebdab75bb6b0c2b36dea9a69642a624e79be9ec6ec"
+      }
+    ]
+  },
+  "exceptionsDoNotAmendMeasuredConformance": true
+}
