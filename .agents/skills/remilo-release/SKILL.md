@@ -14,10 +14,10 @@ required; do not replace the identity to bypass a missing key. Finish edits befo
 checks/assembly and run only one release-producing command per checkout.
 
 Report actual completed checks, APK package/version/ABI/signer and the summary
-path. Link the [consolidated owner checklist](../../../docs/device-acceptance.md);
-unobserved physical, accessibility and alarm cases remain pending. Update the
-[backlog](../../../docs/backlog.md) only with actual results.
+path. Distinguish host checks from any actual device observations. Update the
+[backlog](../../../docs/backlog.md) for meaningful task changes or known failures;
+do not create a physical-check ledger from preparation alone.
 
 Preparation does not install or publish. Deployment, commits and pushes need
 applicable user authorization. Keep keys, serials and private diagnostics local.
-See [verification guidance](../../../docs/verification.md#development-workflow-and-private-evidence).
+See [verification guidance](../../../docs/verification.md).

@@ -9,7 +9,8 @@ export async function verifyShared({ json = false } = {}) {
   const checks = [];
   const tasks = [
     ['localization catalogs', [join(root, 'scripts/localization.mjs'), '--check']],
-    ['design implementation and preserved evidence', [join(root, 'scripts/verify-design.mjs')]],
+    ['documentation links', [join(root, 'scripts/verify-docs.mjs')]],
+    ['current assets and presentation', [join(root, 'scripts/verify-assets.mjs')]],
     ['typecheck', [join(root, 'node_modules/typescript/bin/tsc'), '--noEmit']],
     ['lint', [join(root, 'node_modules/eslint/bin/eslint.js'), '.']],
     ['shared tests', [join(root, 'node_modules/vitest/vitest.mjs'), 'run']],

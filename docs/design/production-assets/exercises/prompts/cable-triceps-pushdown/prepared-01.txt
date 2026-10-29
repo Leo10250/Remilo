@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise-library transparent cutout, wide16:9, up to320x180dp with optional enlarged view.
-Primary request: One adult doing a standing CABLE TRICEPS PUSHDOWN with a simple straight-bar attachment, shown near the bottom of the movement.
-Input1: Approved Front plank supplies only the same adult woman, softly shaded educational style, natural anatomy, blue-gray top and muted terracotta leggings. Add plain gray shoes.
-Posture: Standing facing a high cable pulley, feet planted hip-width apart, soft knees and a slight natural forward lean. Upper arms stay close beside torso, shoulders relaxed. Both elbows extend so hands hold a short straight bar just in front of upper thighs, without locked joints. Both hands visibly wrap around the bar in an overhand grip; wrists neutral. Show hands, elbows and bar clearly.
-Equipment: One complete unbranded gray high-pulley cable tower, compact weight stack and a single continuous taut cable ending in a metal clip attached to the CENTER of the straight bar. Bar extends evenly to the two hands. The cable stays in front of the person, not through the face/body. All equipment/hand contacts coherent, no numbers or branding.
-View/composition: Three-quarter side/front view with person beside the tower, both arm paths readable. Full person, shoes, machine cap/pulley and base completely contained in wide16:9. Leave visible empty transparent bands above the machine and below its base/shoes.
-Output/style: Transparent PNG at least960x540, restrained educational shading and muted gray equipment. Genuine transparency around all elements.
-Exclude: Gym/scenery, floor slab, text, labels, numbers, arrows, logos, UI, watermark, muscle overlays, extra people, duplicate or disconnected limbs/equipment. One illustration only.

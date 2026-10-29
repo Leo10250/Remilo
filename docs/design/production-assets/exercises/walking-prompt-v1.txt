@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo bundled exercise illustration; transparent figure contained in a 16:9 frame up to 320 x 180 dp. Shared illustration for authored easy or long walks, without a training prescription.
-Primary request: One adult walking at a relaxed natural pace, side view facing left. Clearly a walk, with one shoe in contact and the other beginning a normal step, not a running leap.
-Input 1: Approved Front plank illustration for the same person, softly shaded educational style, natural proportions, blue-gray top and muted terracotta leggings. Add simple gray walking shoes.
-Posture: Relaxed upright stance, modest stride, nearly straight supporting leg, natural opposite arm swing, hands open and relaxed. Natural anatomy with full hands and both shoes visible.
-Composition: Entire person centered in a wide 16:9 transparent canvas with generous head/foot margins, no equipment, mat, ground plane or background.
-Style: Soft educational shading, restrained outlines and palette consistent with approved pilot; avoid excessive facial details.
-Output target: Transparent PNG at least 960 x 540 pixels, genuinely transparent surroundings.
-Exclude: Text, numbers, arrows, labels, logos, watermark, motion streaks, UI, scenery, extra people, equipment or alternate poses. One illustration asset only.

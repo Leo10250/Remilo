@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise-library illustration, transparent cutout in a wide 16:9 frame up to 320 x 180 dp, with optional larger view.
-Primary request: One adult performing a seated dumbbell shoulder press on a plain supported bench, near the upper position with both dumbbells above the shoulders.
-Input 1 supplies only the approved woman's identity, blue-gray top, muted terracotta leggings, natural anatomy and softly shaded educational style. Add plain gray shoes.
-Posture: Seated tall with back supported on a near-upright padded backrest, feet flat apart. Both arms reach up over the shoulders with a small comfortable bend in the elbows, wrists neutral and hands visibly gripping separate dumbbell handles. Weight balanced above each shoulder, head neutral and chest not excessively arched.
-Equipment: Exactly two identical plain gray dumbbells, each a short continuous handle gripped between two matching solid hexagonal ends. One simple unbranded gray bench with full seat/backrest and coherent legs. No weight numbers or text.
-View/composition: Three-quarter front view making both hands, dumbbells, shoulders, seat and feet clear. Full person, both weights and entire bench fully contained; allow ample transparent breathing room ABOVE the weights and BELOW the feet. Wide16:9 composition, centered person/bench.
-Output: Transparent PNG at least 960 x 540 pixels, restrained educational shading and clear readable silhouette, genuine transparency around all elements.
-Exclude: Gym/background, floor slab, text, labels, numbers, arrows, logos, UI, watermark, muscle overlays, extra people, extra weights or duplicate/disconnected limbs. One illustration only.

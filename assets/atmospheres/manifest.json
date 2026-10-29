@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 2,
+  "assets": {
+    "sunrise-light": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/sunrise-light-v1.png",
+          "sha256": "281ea0c1d75be96e97405aa006f108377d5c51ebb4df39e60ca1a51ed407ad0d",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original untagged RGB PNG retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/sunrise-light-v1.webp",
+          "sha256": "cea2bfa17c6ee3f4ca1335a026260ccb395dc72137c7b149fc7f900ea9af5cbf",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_light_v1.webp"
+          ]
+        }
+      }
+    },
+    "sunrise-dark": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/sunrise-dark-v1.png",
+          "sha256": "7c5f60dbc4e2a3d658ba849d0f2426a34cccd191450d1063bbd21cd19a9f4c3f",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/sunrise-dark-v1.webp",
+          "sha256": "a30d49a800e3b058ce3b295b4f340a2224027f5c01595fe032b20bffe6d6fce3",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sunrise_dark_v1.webp"
+          ]
+        }
+      }
+    },
+    "sky-light": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/sky-light-v1.png",
+          "sha256": "3683559ed87e67772fe3f9caf0736aa67d1e559756fe49870b63f2599524acd4",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/sky-light-v1.webp",
+          "sha256": "8d3b9a9b9a918e8d95f0cfba247b2146fe6afc4aeb1adfa99a9fc17647f03427",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_light_v1.webp"
+          ]
+        }
+      }
+    },
+    "sky-dark": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/sky-dark-v1.png",
+          "sha256": "ede54a8935b5ab466261ceea8b48e0613f7aba79ff7de10d310d2d542d7f9ad1",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/sky-dark-v1.webp",
+          "sha256": "2d55aa03d6f3fbdd68f0ce9c9b83b45b3687c6b37c7d88e38d1a961903471b56",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_sky_dark_v1.webp"
+          ]
+        }
+      }
+    },
+    "evening-light": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/evening-light-v1.png",
+          "sha256": "70862a516bf45f3c61a8f52f468db048828ee714c5ca1e5b7b46328ea7708570",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/evening-light-v1.webp",
+          "sha256": "f6137fd0ae0bab5e1d743bff696c86b0d2d0e5db75007141e34177d712e61a73",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_light_v1.webp"
+          ]
+        }
+      }
+    },
+    "evening-dark": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/evening-dark-v1.png",
+          "sha256": "f7e5521ba29f6b8e670b2d1b12aa07b1d3ca81dc4d8f869cc37374118da626fc",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/evening-dark-v1.webp",
+          "sha256": "02ec4470c8f102de627dda86156ac3ff620f90cedce9438ff09429d85fce8b23",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_evening_dark_v1.webp"
+          ]
+        }
+      }
+    },
+    "night-light": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/night-light-v2.png",
+          "sha256": "a11839c13b720bb33ec12a5a02af8ac04220465feb5a9ef5fae2ef7bdd7a1e59",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/night-light-v2.webp",
+          "sha256": "3110f9dca7fc2f1166ba5d7f1c2ad91b9747fe1f7dcae611840e334f4574c51e",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_light_v2.webp"
+          ]
+        }
+      }
+    },
+    "night-dark": {
+      "sources": {
+        "master": {
+          "path": "assets/atmospheres/masters/night-dark-v2.png",
+          "sha256": "24523a3acb8f530bff571f520f19a1f4a87b70f5dfc8901fc87de84109f605e8",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "opaque",
+          "colorInterpretation": "sRGB; original RGB source retained unchanged"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/atmospheres/night-dark-v2.webp",
+          "sha256": "1e7b921002936bd3f3916173b92abe69543cd71ef37ffb89bf35e6a2c3b06b11",
+          "width": 1440,
+          "height": 810,
+          "format": "WEBP",
+          "alpha": "opaque",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "cover",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "resizeFilter": "Lanczos",
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": [
+            "modules/remilo-alarm/android/src/main/res/drawable-nodpi/remilo_scene_night_dark_v2.webp"
+          ]
+        }
+      }
+    }
+  }
+}

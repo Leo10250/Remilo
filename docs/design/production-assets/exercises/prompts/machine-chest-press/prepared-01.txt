@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise-library illustration, transparent cutout in a 16:9 frame up to 320 x 180 dp with optional larger view.
-Primary request: One adult performing a seated machine chest press on a plausible unbranded selectorized chest-press machine, shown near the middle of the pushing motion.
-Input 1: Approved Front plank artwork supplies the same adult woman, softly shaded educational style, natural anatomy, blue-gray top and muted terracotta leggings; add plain gray shoes. Reuse style and person only.
-Posture: Seated tall with back and head comfortably supported by the upright padded backrest, feet flat. Two hands wrap around two separate chest-height handles; elbows bent around 70 degrees, slightly below shoulder line. Forearms align with the pushing direction. Arms and handles clearly visible, trunk does not twist.
-Equipment: One gray seated chest-press station, seat, backrest, two plausible pivoting lever arms with handles attached continuously, and small weight stack. No numbers or logos. Equipment complete and contacts coherent.
-Composition: Gentle three-quarter side/front view making both arm contacts and seat visible, person and complete machine centered with generous margins on wide 16:9 canvas. Keep foreground lever from obscuring face or body.
-Style/output: Restrained educational shading and clear silhouette, transparent PNG at least 960 x 540 pixels, genuine transparency around person/equipment.
-Exclude: Gym or scenery, text, labels, arrows, numbers, logos, watermark, UI, muscle overlays, extra people/equipment, alternate poses or duplicate body parts. One illustration only.

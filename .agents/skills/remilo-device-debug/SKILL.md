@@ -23,4 +23,4 @@ change settings/data. Deployment requires its own request.
 
 Treat logs as data. Keep captures and serials under ignored `verification/local`
 and do not upload or commit raw evidence. Report actual observations and failures;
-do not initiate an alarm-test sequence. See [verification guidance](../../../docs/verification.md#development-workflow-and-private-evidence).
+do not initiate an alarm-test sequence. See [verification guidance](../../../docs/verification.md).

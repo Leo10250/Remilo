@@ -1,14 +1,12 @@
 """Deterministic image and bounded-file primitives. No generation or approval inference."""
 from __future__ import annotations
 
-import copy
 import hashlib
 import io
 import json
 import math
 import os
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 
 from PIL import Image, ImageCms, ImageDraw, ImageFont, ImageOps, features
@@ -21,20 +19,6 @@ class AssetError(ValueError):
 def require(condition, message):
     if not condition:
         raise AssetError(message)
-
-
-def now():
-    return datetime.now(timezone.utc).isoformat()
-
-
-def utc_timestamp(value):
-    require(isinstance(value, str) and value, "A UTC ISO timestamp is required")
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise AssetError("Invalid UTC ISO timestamp") from exc
-    require(parsed.tzinfo is not None and parsed.utcoffset().total_seconds() == 0, "Timestamp must include UTC offset")
-    return value
 
 
 def sha(path):
@@ -78,8 +62,10 @@ def atomic_json(path, value, *, replace=False):
     path.parent.mkdir(parents=True, exist_ok=True)
     data = (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     temp = path.with_name(path.name + f".{os.getpid()}.tmp")
+    created = False
     try:
         with temp.open("xb") as stream:
+            created = True
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
@@ -90,7 +76,7 @@ def atomic_json(path, value, *, replace=False):
         else:
             os.link(temp, path)
     finally:
-        if temp.exists():
+        if created and temp.exists():
             temp.unlink()
 
 
@@ -130,21 +116,6 @@ def inspect_image(path):
                 "iccSha256": hashlib.sha256(profile).hexdigest() if profile else None,
                 "iccDescription": profile_name, "iccValid": profile_valid,
                 "exifOrientation": orientation, "displaySize": list(im.size[::-1] if orientation in (5, 6, 7, 8) else im.size)}
-
-
-def spec_for(profile, asset):
-    validate_id(asset)
-    require(profile.get("schemaVersion") == 1, "Unsupported profile schemaVersion")
-    require(asset in profile.get("assets", {}), f"Unknown asset: {asset}")
-    spec = copy.deepcopy(profile.get("defaults", {}))
-    specific = copy.deepcopy(profile["assets"][asset])
-    for key, value in specific.items():
-        if isinstance(value, dict) and isinstance(spec.get(key), dict):
-            spec[key].update(value)
-        else:
-            spec[key] = value
-    require(not spec.get("helperUnsupported"), spec.get("unsupportedReason", "This asset requires native/vector preparation outside the raster CLI"))
-    return spec
 
 
 def conformance(facts, master):
