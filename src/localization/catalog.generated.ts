@@ -2380,7 +2380,37 @@ export const catalogs = {
     "postpone_invalid_request": "This Postpone request is invalid. Close and choose the reminder again.",
     "postpone_request_waiting": "Finish the current postponement before opening another.",
     "postpone_load_failed": "Could not load these reminders. Try again.",
-    "postpone_return_home": "Return to Home"
+    "postpone_return_home": "Return to Home",
+    "calendar_sync_up_to_date": "Up to date",
+    "calendar_sync_up_to_date_body": "No pending changes at the last completed check.",
+    "calendar_sync_checked_at": "Last completed check: {time}",
+    "calendar_sync_running": "Syncing changes…",
+    "calendar_sync_requesting": "Requesting sync…",
+    "calendar_sync_reading_status": "Reading sync status…",
+    "calendar_sync_reading_status_body": "Checking the saved request result before another sync can start.",
+    "calendar_sync_running_body": "Checking Google Calendar and updating Calendar items with automatic sync enabled.",
+    "calendar_sync_paused_body": "Automatic updates for this calendar are paused. Local reminders and alerts continue.",
+    "calendar_sync_blocked": "Sync blocked",
+    "calendar_sync_access_body": "Google access needs attention. Changes cannot sync until you reconnect.",
+    "calendar_sync_waiting": "Changes waiting to sync",
+    "calendar_sync_waiting_body": "Some updates are pending or held. A completed check is needed before these items can be shown as up to date.",
+    "calendar_sync_unchecked": "Sync status not yet confirmed",
+    "calendar_sync_unchecked_body": "Run Sync now to check for changes. Automatic sync being on does not confirm that every update has finished.",
+    "calendar_sync_status_unavailable": "Sync status unavailable",
+    "calendar_sync_status_unavailable_body": "Refresh to check the current status. Local reminders and alerts continue.",
+    "calendar_refresh_status": "Refresh status",
+    "calendar_sync_uncertain_body": "The sync request could not be confirmed. Check its result before starting another.",
+    "calendar_automatic_sync": "Automatic sync",
+    "calendar_global_scope": "All calendars with automatic sync",
+    "calendar_managed_scope": "Selected Remilo calendar",
+    "calendar_automatic_on": "On",
+    "calendar_automatic_paused": "Paused",
+    "calendar_automatic_off": "Off",
+    "calendar_automatic_on_body": "Automatic updates are enabled.",
+    "calendar_automatic_paused_body": "Automatic updates are paused.",
+    "calendar_automatic_off_body": "Automatic updates for this calendar are off.",
+    "calendar_turn_off_automatic": "Turn off automatic sync…",
+    "calendar_sync_scope_help": "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions."
   },
   "zh-Hans": {
     "exercise_sets": "组数",
@@ -4749,7 +4779,37 @@ export const catalogs = {
     "postpone_invalid_request": "此推迟请求无效。请关闭后重新选择提醒。",
     "postpone_request_waiting": "请先完成当前推迟操作，再打开其他提醒。",
     "postpone_load_failed": "无法加载这些提醒，请重试。",
-    "postpone_return_home": "返回首页"
+    "postpone_return_home": "返回首页",
+    "calendar_sync_up_to_date": "已是最新状态",
+    "calendar_sync_up_to_date_body": "上次完成检查时没有待同步的更改。",
+    "calendar_sync_checked_at": "上次完成检查：{time}",
+    "calendar_sync_running": "正在同步更改…",
+    "calendar_sync_requesting": "正在请求同步…",
+    "calendar_sync_reading_status": "正在读取同步状态…",
+    "calendar_sync_reading_status_body": "正在检查已保存请求的结果，完成后才能发起新的同步。",
+    "calendar_sync_running_body": "正在检查 Google 日历并更新已开启自动同步的事项。",
+    "calendar_sync_paused_body": "此日历的自动更新已暂停，本地事项和提醒继续生效。",
+    "calendar_sync_blocked": "无法同步",
+    "calendar_sync_access_body": "Google 授权需要处理，重新连接后才能同步更改。",
+    "calendar_sync_waiting": "更改等待同步",
+    "calendar_sync_waiting_body": "部分更新仍在等待处理或已暂缓，需要完成检查后才能确认这些事项已是最新状态。",
+    "calendar_sync_unchecked": "同步状态尚未确认",
+    "calendar_sync_unchecked_body": "点按“立即同步”检查更改。开启自动同步不代表所有更新都已完成。",
+    "calendar_sync_status_unavailable": "暂时无法获取同步状态",
+    "calendar_sync_status_unavailable_body": "请刷新以检查当前状态，本地事项和提醒继续生效。",
+    "calendar_refresh_status": "刷新状态",
+    "calendar_sync_uncertain_body": "同步请求尚未确认，请先检查其结果，再发起新的请求。",
+    "calendar_automatic_sync": "自动同步",
+    "calendar_global_scope": "所有已开启自动同步的日历",
+    "calendar_managed_scope": "所选 Remilo 日历",
+    "calendar_automatic_on": "已开启",
+    "calendar_automatic_paused": "已暂停",
+    "calendar_automatic_off": "已关闭",
+    "calendar_automatic_on_body": "自动更新已开启。",
+    "calendar_automatic_paused_body": "自动更新已暂停。",
+    "calendar_automatic_off_body": "此日历的自动更新已关闭。",
+    "calendar_turn_off_automatic": "关闭自动同步…",
+    "calendar_sync_scope_help": "“立即同步”会检查所有已开启自动同步的日历事项，单个事项仍可设为仅本地。自动同步控制仅适用于所选 Remilo 日历，其他日历保留各自的关联权限。"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -7095,4 +7155,34 @@ export interface MessageArguments {
   postpone_request_waiting: Record<string, never>;
   postpone_load_failed: Record<string, never>;
   postpone_return_home: Record<string, never>;
+  calendar_sync_up_to_date: Record<string, never>;
+  calendar_sync_up_to_date_body: Record<string, never>;
+  calendar_sync_checked_at: { time: string };
+  calendar_sync_running: Record<string, never>;
+  calendar_sync_requesting: Record<string, never>;
+  calendar_sync_reading_status: Record<string, never>;
+  calendar_sync_reading_status_body: Record<string, never>;
+  calendar_sync_running_body: Record<string, never>;
+  calendar_sync_paused_body: Record<string, never>;
+  calendar_sync_blocked: Record<string, never>;
+  calendar_sync_access_body: Record<string, never>;
+  calendar_sync_waiting: Record<string, never>;
+  calendar_sync_waiting_body: Record<string, never>;
+  calendar_sync_unchecked: Record<string, never>;
+  calendar_sync_unchecked_body: Record<string, never>;
+  calendar_sync_status_unavailable: Record<string, never>;
+  calendar_sync_status_unavailable_body: Record<string, never>;
+  calendar_refresh_status: Record<string, never>;
+  calendar_sync_uncertain_body: Record<string, never>;
+  calendar_automatic_sync: Record<string, never>;
+  calendar_global_scope: Record<string, never>;
+  calendar_managed_scope: Record<string, never>;
+  calendar_automatic_on: Record<string, never>;
+  calendar_automatic_paused: Record<string, never>;
+  calendar_automatic_off: Record<string, never>;
+  calendar_automatic_on_body: Record<string, never>;
+  calendar_automatic_paused_body: Record<string, never>;
+  calendar_automatic_off_body: Record<string, never>;
+  calendar_turn_off_automatic: Record<string, never>;
+  calendar_sync_scope_help: Record<string, never>;
 }

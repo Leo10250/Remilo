@@ -245,6 +245,30 @@ dispatch network work. Schema versions remain CE12/DP6/backup4.
 
 Presentation follows the current [attention/details contract](design/current/calendar-management.md#calendar-attention-and-sync-details--14-october-2026).
 
+### Settings status and controls — owner correction, 29 October 2026
+
+Settings separates the current check result from a persistent Automatic sync
+On/Paused/Off configuration summary. A saved, completed AllAuthorized request can
+restore Up to date on navigation only while the native projection confirms that
+its entire captured scope remains current and fully inspected. Its timestamp
+describes that completed check, not continuous freshness. Per-link/managed-source
+timestamps, Ready, a connection or enabled permission are insufficient proof.
+
+Current access/review issues, pending/held work, uncertain outcomes and changed
+scope supersede old success. Native Checking means active syncing; queued/offline
+continuation means waiting. New global request captures retain the managed binding
+revision in their existing JSON receipt. Native reads recheck live global scope,
+including pending work and incomplete legacy scans, before exposing success.
+These guards neither grant permission nor retarget a captured operation.
+
+Sync now remains AllAuthorized. The overview explains that scope rather than
+claiming that its global result checks only the displayed managed calendar.
+Managed Pause/Turn off affect that calendar; other link permissions remain
+independent. Resume keeps the existing reviewed flow. Configuration controls
+remain inside the state-first disclosure; specific recovery stays prominent in
+the leading status card. This presentation uses existing native commands/storage
+and introduces no database, DP or backup-format change.
+
 ## Required evidence
 
 Cover every comparison-table case, different-group merges, time-only automatic

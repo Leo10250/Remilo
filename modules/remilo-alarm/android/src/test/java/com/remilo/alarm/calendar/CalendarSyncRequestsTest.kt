@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.remilo.alarm.data.ContentDatabase
 import com.remilo.alarm.data.ReminderRecord
+import org.json.JSONObject
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -35,6 +36,15 @@ class CalendarSyncRequestsTest {
     db.sync().put(CalendarSyncState(id, mode = "Automatic"))
   }
   private fun result(id: String) = requests.view(id)!!["syncResult"] as Map<*, *>
+  private fun managed() {
+    db.managedCalendar().binding(CalendarManagedBinding(subject = "subject", calendarId = "calendar", mode = "Enabled", phase = "Ready", initialRecoveryComplete = true))
+    db.sync().cursor(CalendarSyncCursor(CalendarLinkMapper.key("subject", "calendar", "sync-query-v1"), "subject", "calendar", syncToken = "checked", checkedAtMs = now))
+  }
+  private fun checkedAll(): String = capture().also { id ->
+    assertTrue(requests.begin(id)); requests.finish(id, CalendarRunSummary(1, 0, 0, false)); assertEquals("NoChanges", result(id)["outcome"])
+  }
+  private fun candidate(id: String, state: String = "Pending") = CalendarManagedCandidate(id, "remote:$id", "subject", "calendar", "event:$id", "", 1,
+    "None", "fingerprint", "{}", "Incoming", state = state, observedAtMs = now)
   @Test fun acknowledgedRequestIsImmutableAndRetryRetainsIdentity() {
     val id = capture(); val before = db.managedCalendar().receipt(id)
     requests.capture(mapOf("operationId" to id, "scope" to mapOf("kind" to "AllAuthorized")))
@@ -96,6 +106,56 @@ class CalendarSyncRequestsTest {
     assertEquals("NoChanges", result(id)["outcome"])
     db.sync().put(CalendarSyncState("one", mode = "Automatic", dirtyRevision = 2, status = "UpdatePending"))
     assertEquals("Pending", result(id)["outcome"])
+  }
+  @Test fun laterManagedImportsAndExportsSupersedeSuccessWithLiveCounts() {
+    managed(); val id = checkedAll()
+    db.managedCalendar().candidate(candidate("incoming"))
+    db.managedCalendar().export(CalendarManagedExport("outgoing", "subject", "calendar", 1, 0, createdAtMs = now))
+    assertEquals("Pending", result(id)["outcome"]); assertEquals(2, requests.view(id)!!["pending"])
+    assertEquals("Retry", requests.view(id)!!["action"]); assertEquals(0, result(id)["changed"])
+  }
+  @Test fun laterHeldOrReviewCandidatesCannotRetainGreenSuccess() {
+    managed(); val id = checkedAll()
+    db.managedCalendar().candidate(candidate("incoming", "Held"))
+    assertEquals("Paused", result(id)["outcome"]); assertEquals(1, requests.view(id)!!["held"])
+    db.managedCalendar().candidate(candidate("incoming", "Review"))
+    assertEquals("NeedsReview", result(id)["outcome"]); assertEquals(1, requests.view(id)!!["review"])
+    assertEquals("ReviewItems", requests.view(id)!!["action"])
+  }
+  @Test fun liveAccessAndUncertaintySupersedeSuccessWithTheirOwnRecovery() {
+    link("one"); val id = checkedAll()
+    db.sync().issue(CalendarReviewIssue("one", "UnconfirmedWrite", "first", now, false))
+    assertEquals("Unconfirmed", result(id)["outcome"]); assertEquals("ReviewItems", requests.view(id)!!["action"])
+    db.sync().issue(CalendarReviewIssue("one", "NEEDS_ACCESS", "second", now, false))
+    assertEquals("AccessRequired", result(id)["outcome"]); assertEquals("Connect", requests.view(id)!!["action"])
+  }
+  @Test fun changedManagedPolicyFencesOnlyNewGlobalRequestsWithoutRetargetingRetry() {
+    managed(); link("one"); val global = checkedAll(); val association = capture("one")
+    assertTrue(requests.begin(association)); requests.checkpoint("one"); requests.finish(association, CalendarRunSummary(1, 1, 1, false))
+    val receipt = db.managedCalendar().receipt(global)!!
+    db.managedCalendar().binding(db.managedCalendar().binding()!!.copy(revision = 2))
+    assertEquals("ScopeChanged", result(global)["outcome"]); assertFalse(requests.view(global)!!["currentScope"] as Boolean); assertNull(requests.latest())
+    requests.capture(mapOf("operationId" to global, "scope" to mapOf("kind" to "AllAuthorized")))
+    assertEquals(receipt, db.managedCalendar().receipt(global)); assertFalse(requests.begin(global))
+    assertEquals("NoChanges", result(association)["outcome"])
+  }
+  @Test fun pausedOrDisabledManagedBindingFencesEarlierGlobalSuccess() {
+    for (mode in listOf("Paused", "Disabled")) {
+      managed(); val id = checkedAll(); val binding = db.managedCalendar().binding()!!
+      db.managedCalendar().binding(binding.copy(mode = mode, revision = binding.revision + 1, authEpoch = binding.authEpoch + 1))
+      assertEquals("ScopeChanged", result(id)["outcome"]); assertNull(requests.latest())
+    }
+  }
+  @Test fun legacyGlobalSuccessRequiresACompletedManagedCollectionAfterRescan() {
+    managed(); val id = checkedAll(); val receipt = db.managedCalendar().receipt(id)!!
+    db.managedCalendar().replaceReceipt(receipt.copy(result = JSONObject(receipt.result).also { it.remove("bindingRevision") }.toString()))
+    val key = CalendarLinkMapper.key("subject", "calendar", "sync-query-v1")
+    db.sync().cursor(CalendarSyncCursor(key, "subject", "calendar", generation = 2))
+    assertEquals("NotChecked", result(id)["outcome"]); assertEquals("Retry", requests.view(id)!!["action"])
+    db.sync().cursor(CalendarSyncCursor(key, "subject", "calendar", generation = 2, syncToken = "finished", paging = true, checkedAtMs = now))
+    assertEquals("NotChecked", result(id)["outcome"])
+    db.sync().cursor(CalendarSyncCursor(key, "subject", "calendar", generation = 2, syncToken = "finished", checkedAtMs = now))
+    assertEquals("NoChanges", result(id)["outcome"])
   }
   @Test fun pendingRunResumesTheSameIdentityAndAnIntentionalPauseDoesNotBeginExecution() {
     val id = capture(); requests.begin(id); requests.checkpoint("one", changed = true); requests.finish(id, CalendarRunSummary(1, 1, 1, true))

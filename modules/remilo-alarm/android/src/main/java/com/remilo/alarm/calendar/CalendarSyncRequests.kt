@@ -32,6 +32,7 @@ class CalendarSyncRequests(private val db: ContentDatabase, private val now: () 
     val value = JSONObject().put("kind", kind).put("occurrenceId", association).put("createdAtMs", now())
       .put("subject", connection.subject).put("connectionRevision", connection.revision).put("authEpoch", binding.authEpoch)
       .put("activationRevision", db.sync().state(association)?.activationRevision ?: 0L)
+    if (kind == "AllAuthorized") value.put("bindingRevision", binding.revision)
     dao.receipt(CalendarManagedReceipt(id, "CalendarSyncRequest", key, value.toString()))
     save(id, JSONObject().put("stage", "Waiting"))
     return mapOf("operationId" to id)
@@ -41,7 +42,7 @@ class CalendarSyncRequests(private val db: ContentDatabase, private val now: () 
     val connection = db.calendar().connection() ?: return false
     if (value.optLong("connectionRevision") != connection.revision || value.optString("subject") != connection.subject || value.optLong("authEpoch") != (dao.binding()?.authEpoch ?: 0L)) return false
     val id = value.optString("occurrenceId")
-    if (id.isEmpty()) return true
+    if (id.isEmpty()) return !value.has("bindingRevision") || value.optLong("bindingRevision") == (dao.binding()?.revision ?: 1L)
     val link = db.links().link(id) ?: return false
     val record = CalendarLinkStore(db, now, recoverInterrupted = false).record(id) ?: return false
     return !link.erased && link.state != "Detached" && !record.deleted && !record.completed && !record.skipped &&
@@ -137,10 +138,25 @@ class CalendarSyncRequests(private val db: ContentDatabase, private val now: () 
     val root = root(id) ?: return null; val value = JSONObject(root.result); val state = data(id); val valid = current(value)
     val stored = state.optString("outcome", "Checking")
     val liveStates = if (valid) states(value) else emptyList()
+    val liveIssues = if (valid) scopeIssues(value) else emptyList()
+    val liveProgress = if (valid && value.optString("occurrenceId").isEmpty()) CalendarStatusStore(db, now).progress() else emptyMap()
+    val pending = maxOf(liveStates.count { it.dirtyRevision > 0 || it.status in setOf("UpdatePending", "Deferred") }, liveProgress["pending"] as? Int ?: 0)
+    val held = liveProgress["held"] as? Int ?: 0
+    val review = maxOf(liveIssues.size, liveProgress["review"] as? Int ?: 0)
+    // Legacy receipts did not capture policy revision. A reset/unfinished managed
+    // collection is still evidence that an earlier all-scope result is insufficient.
+    val binding = dao.binding()
+    val needsScan = valid && value.optString("occurrenceId").isEmpty() && binding?.mode == "Enabled" &&
+      binding.calendarId.isNotBlank() && binding.subject == value.optString("subject") &&
+      (dao.policy()?.automaticImport != false) && db.sync().cursor(CalendarLinkMapper.key(binding.subject, binding.calendarId, "sync-query-v1"))
+        .let { it == null || it.paging || it.syncToken.isBlank() }
     val outcome = if (!valid) "ScopeChanged" else if (stored in setOf("NoChanges", "Synced")) when {
-      liveStates.any { it.status == "Unconfirmed" } -> "Unconfirmed"
-      scopeIssues(value).isNotEmpty() || liveStates.any { it.status in setOf("Review", "Paused") } -> "NeedsReview"
-      liveStates.any { it.dirtyRevision > 0 || it.status in setOf("UpdatePending", "Deferred") } -> "Pending"
+      liveIssues.any { it in setOf("AccessRequired", "AccountChanged", "AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH") } -> "AccessRequired"
+      liveStates.any { it.status == "Unconfirmed" } || liveIssues.any { it in setOf("UnconfirmedWrite", "CREATION_UNCONFIRMED", "CreationUnconfirmed") } -> "Unconfirmed"
+      review > 0 || liveStates.any { it.status in setOf("Review", "Paused") } -> "NeedsReview"
+      held > 0 && pending == 0 -> "Paused"
+      pending > 0 -> "Pending"
+      needsScan -> "NotChecked"
       else -> stored
     } else stored
     val stage = if (valid) state.optString("stage", "Waiting") else "Cancelled"
@@ -148,8 +164,8 @@ class CalendarSyncRequests(private val db: ContentDatabase, private val now: () 
     val counts = listOf("checked", "changed", "imported", "published").associateWith { if (valid) state.optJSONArray(it)?.length() ?: 0 else 0 }
     val scope = if (value.optBoolean("erased")) null else mapOf("kind" to value.optString("kind"), "occurrenceId" to value.optString("occurrenceId"))
     return mapOf("operationId" to id, "kind" to "Sync", "stage" to stage, "reason" to state.optString("reason"), "action" to action,
-      "confirmed" to counts.getValue("checked"), "pending" to if (valid) state.optInt("remaining") else 0, "review" to if (valid) state.optInt("review") else 0,
-      "held" to if (valid) state.optInt("held") else 0, "children" to emptyList<String>(), "currentScope" to valid,
+      "confirmed" to counts.getValue("checked"), "pending" to if (valid) maxOf(state.optInt("remaining"), pending) else 0, "review" to if (valid) maxOf(state.optInt("review"), review) else 0,
+      "held" to if (valid) maxOf(state.optInt("held"), held) else 0, "children" to emptyList<String>(), "currentScope" to valid,
       "syncResult" to (counts + mapOf("scope" to scope, "outcome" to outcome, "startedAtMs" to if (state.has("startedAtMs")) state.getLong("startedAtMs") else null,
         "finishedAtMs" to if (state.has("finishedAtMs")) state.getLong("finishedAtMs") else null)))
   }

@@ -1,5 +1,37 @@
 # Verification and release evidence
 
+## Calendar Settings status and controls — owner correction, 29 October 2026
+
+Verify the leading Up to date, native Checking, Paused and blocked/error states
+with the persistent Automatic sync On/Paused/Off disclosure open and closed.
+Configuration must not imply confirmed freshness. Restore a saved successful
+AllAuthorized result after navigation, retain its completed-check timestamp and
+prove that no new network action is dispatched by a read or disclosure change.
+Per-link/managed timestamps and Ready alone must not establish global success.
+
+Exercise current access, review, pending, held and uncertain work over an older
+success; account/auth/binding revision changes; stale currentScope; incomplete
+legacy scans; and queued/offline continuation. A pending request must not appear
+as actively syncing. Verify new global receipt binding guards and existing exact
+request recovery. Specific Review/Reconnect/inspect actions must survive without
+retargeting the captured command. Resume must open the existing reviewed flow,
+not bypass its native permission/selection review. Managed controls must leave
+other calendars' link permissions intact; global Sync now stays AllAuthorized.
+
+Render actual production components in all eight atmosphere/brightness pairs,
+English and Simplified Chinese, narrow widths and text scales through 200%.
+Check icon/value/header stability on expansion, wrapping/stacking, complete
+48/56 dp actions, state wording, theme contrast and focus return. Isolated
+fixtures may seed saved results using `reviewSyncSaved` (`NoChanges`, `Checking`,
+`Pending`, `AccessRequired` or `Failed`) with `reviewManaged=enabled|paused`; seeding remains
+memory-only and performs no authorization, Google request or native scheduling.
+
+Run relevant shared/design/localization checks and sequential native unit tests,
+lint and signed release preparation. Record actual command/artifact results
+separately. Browser evidence establishes layout only; signed-phone TalkBack,
+native authorization, live Google transport, background timing and end-to-end
+recovery remain device acceptance gates. Installation/distribution are separate.
+
 The 28 October uniform Postpone change requires DP7/known-8/9→10 receipt/mirror preservation,
 pure native time/DST cases, captured PostponeAll/stale/retry/fault recovery, settings
 mirror repair, locked-upgrade absence and native/app chooser state tests. Inspect

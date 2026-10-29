@@ -197,6 +197,63 @@ that removes its context may use the existing accessible snackbar. External link
 failure has an inline explanation. Secondary targets remain 48dp and review/
 primary actions 56dp, with clipped press/focus response and wrapping labels.
 
+## Calendar Settings status and controls — 29 October 2026
+
+The approved four-state mock guides Settings composition: Up to date, Syncing,
+Paused and Error. It does not replace native recovery or permission semantics.
+This correction supersedes the overview's action-first Sync controls disclosure
+and its use of Automatic sync on as the only healthy status. Per-reminder timing,
+relationship presentation and the existing setup/review flows remain governed by
+their current contracts.
+
+The leading card reports the latest native-confirmed synchronization state,
+separately from whether automatic transfers are enabled. A green Up to date state
+requires the latest completed, current-scope AllAuthorized request and native
+freshness checks across the entire authorized scope. Show its completed-check
+timestamp as supporting text. A per-link comparison, managed observation or old
+successful timestamp cannot establish a complete global check. Navigation may
+restore the saved result without dispatching a new check; it must not turn an
+unknown or incomplete result into success.
+
+Only native Checking work is presented as syncing. Queued/offline continuation
+remains waiting, with existing retry/recovery behavior. Current access failures,
+review issues, pending/held work, uncertain outcomes and changed scope override
+old success. Preserve contextual recovery rather than flattening every problem
+into Reconnect: access needs reconnection, conflicts need review and uncertain
+writes need outcome inspection. Paused stays neutral and explains that local
+reminders and alerts continue. Resume opens the existing reviewed native flow;
+the mock's simplified transition grants no new permission.
+
+Replace Sync controls with a state-first **Automatic sync** disclosure. Its saved
+**On / Paused / Off** value and supporting explanation remain visible when open
+or closed. The value describes configuration, not proof of freshness. Enabled but
+blocked sync keeps its configuration visible and explains the current blocker.
+Use existing connected-row geometry, neutral icon container, typography, pressed
+and focus treatment; let enlarged labels and values wrap/stack without clipping.
+The disclosure reports managed policy only: another authorized calendar's global
+progress or error must not change its permission explanation. Valid global work
+and recovery remain visible even while the selected calendar is Paused or Off.
+Short scope labels sit beside the status and managed control; the full scope
+explanation belongs in Sync details. Omit a zero-count support row entirely so
+it cannot reserve a seam or take the last visible row's outside corners.
+Pause and Turn off remain lower-emphasis contextual actions inside the disclosure.
+The leading card retains a prominent Resume, Review or Reconnect when required;
+healthy global Sync now remains secondary. Turning off retains the existing
+themed confirmation and independent-data consequences.
+
+Global Sync now retains **AllAuthorized** scope. Therefore Settings status and
+completed-check wording cover all authorized synchronization, not just the named
+managed calendar shown in the source row. State this scope honestly; individual
+reminders can remain local only. Pause/Turn off and managed preferences apply to
+the managed calendar; other calendars retain their own link permissions. The
+mock's narrower calendar-only status explanation is superseded by this existing
+native scope. No automatic new authorization or manual-link activation is added.
+
+Use canonical success/error roles with explicit text and icons, neutral waiting
+and Pause, and warnings for review/uncertainty. Preserve all four atmospheres,
+independent brightness, English/Simplified Chinese, readable large text, 48 dp
+secondary and 56 dp primary targets, and accessible state/action distinctions.
+
 ## Appearance, accessibility and rationale
 
 Use the approved eight atmosphere/brightness pairs, connected geometry, at least

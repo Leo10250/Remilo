@@ -16,7 +16,26 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
   const authorizations = new Map<string, { target: string | null; status: CalendarOperationStatus['stage'] }>();
   const syncRequests = new Map<string, { input: string; revision: number; status: CalendarOperationStatus }>();
   const latestSync = (id?: string) => [...syncRequests.values()].reverse().find(value => value.revision === connection.revision &&
+    value.status.currentScope &&
     (value.status.syncResult?.scope?.kind === 'Association' ? value.status.syncResult.scope.occurrenceId === id : !id))?.status.operationId;
+  const syncOutcomes: readonly CalendarSyncResult['outcome'][] = ['Checking', 'NoChanges', 'Synced', 'Pending', 'NeedsReview', 'AccessRequired', 'Unconfirmed', 'Paused', 'Failed', 'ScopeChanged', 'NotChecked'];
+  const captureSync = (command: Extract<CalendarCommand, { kind: 'RequestCalendarSync' }>, outcome: CalendarSyncResult['outcome'], atMs: number) => {
+    const stages: Partial<Record<CalendarSyncResult['outcome'], CalendarOperationStatus['stage']>> = { Checking: 'CheckingEvents', Pending: 'Waiting', AccessRequired: 'NeedsAccess', NeedsReview: 'NeedsReview', Unconfirmed: 'Unconfirmed', Paused: 'Paused', Failed: 'Failed', ScopeChanged: 'Cancelled' };
+    const confirmed = outcome === 'NoChanges' || outcome === 'Synced';
+    const status: CalendarOperationStatus = { operationId: command.operationId, kind: 'Sync', stage: stages[outcome] || 'Confirmed', reason: outcome === 'Pending' ? 'NETWORK' : '',
+      action: outcome === 'AccessRequired' ? 'Connect' : outcome === 'NeedsReview' || outcome === 'Unconfirmed' ? 'ReviewItems' : 'None', currentScope: outcome !== 'ScopeChanged', children: [],
+      confirmed: confirmed ? 1 : 0, pending: outcome === 'Pending' ? 1 : 0, review: outcome === 'NeedsReview' ? 1 : 0, held: 0,
+      syncResult: { scope: command.scope, outcome, checked: confirmed ? 1 : 0, changed: outcome === 'Synced' ? 1 : 0, imported: 0, published: 0,
+        startedAtMs: atMs, finishedAtMs: outcome === 'Checking' ? null : atMs } };
+    syncRequests.set(command.operationId, { input: JSON.stringify(command), revision: connection.revision, status });
+  };
+  // A saved native result can be inspected on page entry, independently of a new Sync now action.
+  // This fixture never dispatches a command, emits a change notification or accesses Google.
+  const savedOutcome = review.get('reviewSyncSaved');
+  if (syncOutcomes.includes(savedOutcome as CalendarSyncResult['outcome'])) {
+    captureSync({ kind: 'RequestCalendarSync', operationId: 'synthetic-saved-calendar-sync', scope: { kind: 'AllAuthorized' } },
+      savedOutcome as CalendarSyncResult['outcome'], Date.UTC(2026, 9, 29, 17, 24));
+  }
   const linked = previewCalendarLinks(review, find, changed, save, () => connection.revision, () => connection.connected);
   const adoptionPreviewIds = new Set<string>();
   const managed = previewManagedCalendar(review, find, changed, () => connection.revision, () => connection.connected,
@@ -98,11 +117,7 @@ export function previewCalendar(review: URLSearchParams, find: (id: string) => O
         const previous = syncRequests.get(command.operationId), input = JSON.stringify(command);
         if (previous) { if (previous.input !== input) return error('OPERATION_REUSED'); return { operationId: command.operationId }; }
         const outcome = (review.get('reviewSyncOutcome') || (review.get('reviewCalendarOffline') === '1' ? 'Pending' : review.get('reviewCalendarSync') === 'conflict' ? 'NeedsReview' : 'NoChanges')) as CalendarSyncResult['outcome'];
-        const stages: Partial<Record<CalendarSyncResult['outcome'], CalendarOperationStatus['stage']>> = { Checking: 'CheckingEvents', Pending: 'Waiting', AccessRequired: 'NeedsAccess', NeedsReview: 'NeedsReview', Unconfirmed: 'Unconfirmed', Paused: 'Paused', Failed: 'Failed', ScopeChanged: 'Cancelled' };
-        const stage = stages[outcome] || 'Confirmed';
-        syncRequests.set(command.operationId, { input, revision: connection.revision, status: { operationId: command.operationId, kind: 'Sync', stage, reason: outcome === 'Pending' ? 'NETWORK' : '', action: outcome === 'AccessRequired' ? 'Connect' : outcome === 'NeedsReview' || outcome === 'Unconfirmed' ? 'ReviewItems' : 'None',
-          currentScope: true, children: [], confirmed: outcome === 'NoChanges' || outcome === 'Synced' ? 1 : 0, pending: outcome === 'Pending' ? 1 : 0, review: outcome === 'NeedsReview' ? 1 : 0, held: 0,
-          syncResult: { scope: command.scope, outcome, checked: outcome === 'NoChanges' || outcome === 'Synced' ? 1 : 0, changed: outcome === 'Synced' ? 1 : 0, imported: 0, published: 0, startedAtMs: Date.now(), finishedAtMs: outcome === 'Checking' ? null : Date.now() } } });
+        captureSync(command, outcome, Date.now());
         changed();
         if (review.get('reviewLostReply') === '1') throw new Error('Synthetic sync reply lost after capture.');
         return { operationId: command.operationId };

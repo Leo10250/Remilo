@@ -32,6 +32,11 @@ supersedes earlier Calendar setup copy and layout while preserving native safety
 The subsequent [attention and sync-details refinement](calendar-management.md#calendar-attention-and-sync-details--14-october-2026)
 keeps local reminder timing prominent, makes review actionable and moves optional
 timestamps, per-reminder checks and history into collapsed details.
+The owner's [29 October Settings status correction](calendar-management.md#calendar-settings-status-and-controls--29-october-2026)
+separates the latest confirmed global check from a persistent Automatic sync
+On/Paused/Off summary. Current problems and pending work outrank old success;
+Resume retains its existing reviewed flow. Global Sync now keeps AllAuthorized
+scope, while the controls apply to the managed calendar.
 
 The owner's [11 October browsing-header correction](header-scroll-research.md)
 replaces the abrupt toolbar surface switch with a continuous scroll blend and
