@@ -9,22 +9,22 @@ import { CalendarAction } from '../domain/calendar-action';
 import { calendarOperationTitle, calendarSyncOutcome, calendarTransferText } from '../domain/calendar-ux';
 import { managedCalendarItemReason } from '../domain/calendar-managed';
 import { calendarError } from '../domain/calendar';
-import { ActionFeedback, Button, CheckRow, ConnectedGroup, Copy, Icon, RowSupport, SettingRow } from './components';
+import { ActionFeedback, Button, CheckRow, ConnectedGroup, Copy, Icon, RowSupport, SettingRow, type IconName } from './components';
 import { engine, nativeAvailable } from './native';
 import { useTheme } from './theme';
 import { useTimeFormatting } from './time-display';
 
-export function CalendarStatusCard({ title, description, warning = false, tone = warning ? 'warning' : 'muted', busy = false, action, label, secondary = false, announce = false, children }: { title: string; description: string; warning?: boolean; tone?: Tone; busy?: boolean; action?: () => void; label?: string; secondary?: boolean; announce?: boolean; children?: ReactNode }) {
+export function CalendarStatusCard({ title, description, warning = false, tone = warning ? 'warning' : 'muted', busy = false, disabled = false, icon, action, label, secondary = false, announce = false, children }: { title: string; description: string; warning?: boolean; tone?: Tone; busy?: boolean; disabled?: boolean; icon?: IconName; action?: () => void; label?: string; secondary?: boolean; announce?: boolean; children?: ReactNode }) {
   'use no memo';
   const t = useTranslation();
   const colors = useTheme();
   const semantic = ['warning', 'danger', 'success'].includes(tone);
   return <ConnectedGroup><View style={{ padding: 16, gap: 12, borderLeftWidth: semantic ? 3 : 0, borderLeftColor: colors[tone] }}>
-    <View accessibilityLiveRegion={announce ? 'polite' : 'none'} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}><Icon name={tone === 'danger' ? 'error' : tone === 'success' ? 'check_circle' : tone === 'warning' ? 'warning' : busy ? 'hourglass_empty' : 'event'} color={colors[tone]} />
+    <View accessibilityLiveRegion={announce ? 'polite' : 'none'} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}><Icon name={icon ?? (tone === 'danger' ? 'error' : tone === 'success' ? 'check_circle' : tone === 'warning' ? 'warning' : busy ? 'hourglass_empty' : 'event')} color={colors[tone]} />
       <View style={{ flex: 1, gap: 4 }}><Copy heading>{title}</Copy>{!!description && <Copy muted size={14}>{description}</Copy>}</View></View>
     {busy && <ActionFeedback loading message={t('m_5474eef8d0f1')} />}
     {children}
-    {action && label && <Button label={label} variant={secondary ? 'secondary' : 'primary'} disabled={busy} onPress={action} />}
+    {!!action && !!label && <Button label={label} variant={secondary ? 'secondary' : 'primary'} disabled={busy || disabled} onPress={action} />}
   </View></ConnectedGroup>;
 }
 export function CalendarOperationProgress({ operationId, onAction }: { operationId: string; onAction?: (status: CalendarOperationStatus) => void }) {
@@ -71,11 +71,19 @@ export function useCalendarAction(scopeKey = 'calendar') {
 }
 export function useCalendarSync(scope: CalendarSyncScope, savedId?: string | null) {
   const action = useCalendarAction(scope.kind === 'Association' ? scope.occurrenceId : 'all');
-  const requestId = action.operationId || savedId;
+  const starting = useRef(false), [settling, setSettling] = useState(false);
+  // Native's latest scope wins after refresh, including a request made by another screen.
+  const requestId = savedId || action.operationId;
   const status = useQuery({ queryKey: ['calendar', 'operation-status', requestId], queryFn: () => engine().getCalendarOperationStatus(requestId!), enabled: nativeAvailable && !!requestId,
     refetchInterval: query => query.state.data && ['Waiting', 'CheckingEvents'].includes(query.state.data.stage) ? 1000 : false });
-  return { ...action, requestId, status: status.data, showResult: !!action.operationId || !!status.data && !['NoChanges', 'Synced'].includes(status.data.syncResult?.outcome || ''), working: action.busy || status.data?.stage === 'CheckingEvents' || status.data?.stage === 'Waiting' && status.data.syncResult?.outcome === 'Checking',
-    start: () => action.run({ kind: 'RequestCalendarSync', operationId: status.data?.stage === 'Waiting' && requestId ? requestId : engine().createOperationId(), scope }) };
+  const start = async () => {
+    if (starting.current) return false;
+    starting.current = true; setSettling(true);
+    try { return await action.run({ kind: 'RequestCalendarSync', operationId: status.data?.stage === 'Waiting' && requestId ? requestId : engine().createOperationId(), scope }); }
+    finally { starting.current = false; setSettling(false); }
+  };
+  // Capture acknowledgement precedes query invalidation: keep the action guarded through both.
+  return { ...action, busy: action.busy || settling, requestId, status: status.data, statusError: status.error, statusLoading: !!requestId && status.isPending, showResult: !!action.operationId || !!status.data && !['NoChanges', 'Synced'].includes(status.data.syncResult?.outcome || ''), working: action.busy || settling || status.data?.stage === 'CheckingEvents' || status.data?.stage === 'Waiting' && status.data.syncResult?.outcome === 'Checking', start };
 }
 export function CalendarAttentionCard({ count, tone = 'warning', disabled, onPress }: { count: number; tone?: 'warning' | 'danger'; disabled?: boolean; onPress: () => void }) {
   'use no memo';

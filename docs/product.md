@@ -153,6 +153,17 @@ details. Explicit checks show durable scoped outcomes; an unchanged agreement is
 not an update, authorization is not completed synchronization, and routine
 background success does not interrupt. Current issues outrank old success.
 
+The owner's 29 October Calendar Settings correction separates that latest result
+from a persistent Automatic sync **On / Paused / Off** configuration summary.
+Up to date means a native-confirmed completed global check with its timestamp;
+enabled permission or a per-reminder timestamp cannot prove it. Current review,
+access, pending/held work, uncertain outcomes and scope changes supersede old
+success. Checking is syncing; offline/queued work remains waiting. Specific
+recovery stays visible, healthy Sync now stays secondary and Resume retains its
+reviewed flow. Global status/Sync now cover all authorized synchronization;
+managed-calendar controls leave other link permissions independent. See the
+[current Settings contract](design/current/calendar-management.md#calendar-settings-status-and-controls--29-october-2026).
+
 The owner's [Calendar hierarchy/independent Trash correction](design/current/calendar-management.md)
 places a compact Calendar entry after the reminder's local Details information.
 Its separate management page reads saved status until an explicit Check or review.

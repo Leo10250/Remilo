@@ -8,7 +8,7 @@ import type { CalendarCommand, ManagedCalendarCommand, OwnedCalendar } from '../
 import { retainedOriginParams, secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { calendarError } from '../domain/calendar';
 import { calendarCaptureRejected } from '../domain/calendar-link';
-import { calendarStatusPresentation, calendarSyncOutcome } from '../domain/calendar-ux';
+import { calendarAutomaticSyncPresentation, calendarOverviewPresentation } from '../domain/calendar-overview';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Disclosure, Page, QueryState, RowSupport, SettingRow, Sheet, Toggle } from '../ui/components';
 import { CalendarStatusCard, useCalendarAuthorization, useCalendarSync, useCalendarAction } from '../ui/calendar-sync';
 import { engine, nativeAvailable } from '../ui/native';
@@ -66,18 +66,19 @@ export default function CalendarSettings() {
     catch (error) { if (calendarCaptureRejected(error)) { selection.current = null; setSelectionPending(false); } throw error; }
   });
   const setup = (mode = 'setup', extra: Record<string, string> = {}) => router.push({ pathname: '/calendar-managed', params: { ...origin, mode, ...extra } });
-  const base = connection.data && managed.data ? calendarStatusPresentation(connection.data, managed.data) : null;
-  const result = syncRequest.showResult && syncRequest.status?.syncResult ? calendarSyncOutcome(syncRequest.status) : null;
-  const presentation = base && ['Sync', 'Progress'].includes(base.action) && (sync.data?.reviewCount ?? 0) > 0 ? { ...base, title: t('m_3d2d5eb3e995'), description: t('m_638daed11ef3'), label: t('m_e6bc867f7622'), action: 'ReviewItems' as const, tone: sync.data?.attention?.tone || 'warning' as const } :
-    base?.action === 'Sync' && result ? { ...base, ...result, ...(syncRequest.status?.syncResult?.outcome === 'AccessRequired' ? { label: t('m_b724411569e0'), action: 'Connect' as const } : syncRequest.status?.syncResult?.outcome === 'NeedsReview' || syncRequest.status?.syncResult?.outcome === 'Unconfirmed' ? { label: t('m_e6bc867f7622'), action: 'ReviewItems' as const } : {}) } : base;
+  const presentation = connection.data && managed.data ? calendarOverviewPresentation(connection.data, managed.data, sync.data, syncRequest.status,
+    { submitting: syncRequest.busy, inspecting: syncRequest.statusLoading, uncertain: syncRequest.unknown, unavailable: !!(connection.error || managed.error || sync.error || syncRequest.statusError) }) : null;
+  const automatic = managed.data ? calendarAutomaticSyncPresentation(managed.data) : null;
   const mainAction = () => {
     if (!presentation || !managed.data) return;
+    if (presentation.action === 'None') return;
+    if (presentation.action === 'Refresh') { void refresh(); return; }
     if (presentation.action === 'Connect' || presentation.action === 'Authorize') { void auth.start(presentation.action === 'Authorize' ? managed.data.operationId || null : null); return; }
     if (presentation.action === 'ReviewItems') { router.push({ pathname: '/calendar-reviews', params: origin }); return; }
     if (presentation.action === 'Resume') { setup('resume'); return; }
     if (presentation.action === 'Progress') { setup('progress', managed.data.operationId ? { operationId: managed.data.operationId } : {}); return; }
     if (presentation.action === 'InspectCreation' && managed.data.operationId) { void managedAction({ kind: 'RetryManagedCalendarOperation', operationId: managed.data.operationId }); return; }
-    if (presentation.action === 'Sync') { void syncRequest.start(); return; }
+    if (presentation.action === 'Sync' || presentation.action === 'Retry') { void syncRequest.start(); return; }
     setup();
   };
   const changeMode = (kind: 'PauseManagedCalendar' | 'DisableManagedCalendar') => {
@@ -93,12 +94,14 @@ export default function CalendarSettings() {
     }) }]);
   };
   const manualCount = links.data?.filter(link => link.syncMode !== 'Automatic' && link.state !== 'Detached').length ?? 0;
-  const locked = busy || unknown || selectionPending || auth.waiting || calendarAction.unknown || syncRequest.busy || syncRequest.unknown;
+  const pending = managed.data ? managed.data.progress?.pending ?? managed.data.pendingExportCount + (managed.data.pendingChangeCount ?? 0) : 0;
+  const held = managed.data?.progress?.held ?? managed.data?.heldExportCount ?? 0;
+  const locked = busy || unknown || selectionPending || auth.waiting || calendarAction.unknown || syncRequest.busy || syncRequest.unknown || syncRequest.statusLoading;
   return <Page title={t('m_b074310e911f')} scrollKey="calendar-settings" onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin))}>
     <QueryState loading={connection.isLoading && nativeAvailable} error={connection.error || managed.error} empty={!nativeAvailable} emptyMessage={t('m_59432f57b3c5')} onRetry={() => void refresh()} />
     {presentation && <CalendarStatusCard title={presentation.title} description={presentation.description} warning={presentation.warning} tone={presentation.tone}
-      announce={!!syncRequest.operationId}
-      label={presentation.label} secondary={presentation.action === 'Sync'} busy={locked || syncRequest.working} action={connection.data?.available === false ? undefined : mainAction}>
+      announce icon={presentation.state === 'Paused' ? 'pause' : undefined}
+      label={presentation.label} secondary={presentation.action === 'Sync' || presentation.action === 'Refresh'} busy={presentation.state === 'Syncing' || syncRequest.statusLoading && presentation.action === 'None'} disabled={locked} action={connection.data?.available === false ? undefined : mainAction}>
       {!!feedback && <ActionFeedback message={feedback} />}
       {!feedback && !!calendarAction.error && <ActionFeedback message={calendarAction.error} tone="warning" />}
       {calendarAction.unknown && !unknown && !selectionPending && <Button label={t('m_16003a1a9190')} variant="secondary" onPress={() => void calendarAction.retry()} />}
@@ -106,26 +109,29 @@ export default function CalendarSettings() {
       {!!syncRequest.error && <ActionFeedback message={syncRequest.error} tone="warning" />}
       {syncRequest.unknown && <Button label={t('m_16003a1a9190')} variant="secondary" onPress={() => void syncRequest.start()} />}
       {connection.data?.available === false && <ActionFeedback message={t('m_e351735905e7')} tone="warning" />}
-      {!!managed.data?.successfulAtMs && presentation.action === 'Sync' && <Copy muted size={14}>{t('m_52f55f8ae5c2')}{scheduleDateTime(managed.data.successfulAtMs)}</Copy>}
+      <Copy muted size={14}>{presentation.state === 'Paused' || presentation.state === 'Setup' ? t('calendar_managed_scope') : t('calendar_global_scope')}</Copy>
+      {presentation.checkedAtMs != null && <Copy muted size={14}>{t('calendar_sync_checked_at', { time: scheduleDateTime(presentation.checkedAtMs) })}</Copy>}
       {unknown && <Button label={t('m_16003a1a9190')} variant="secondary" onPress={() => void managedAction()} />}
     </CalendarStatusCard>}
+    {managed.data?.calendarId && <ConnectedGroup title={t('m_fc7921108075')}>
+      <Disclosure title={t('calendar_automatic_sync')} value={automatic?.value} summary={automatic ? `${t('calendar_managed_scope')} · ${automatic.summary}` : undefined} icon="refresh">
+        {managed.data.mode === 'Enabled' ? <Button label={t('m_430a5aaa1e87')} variant="secondary" disabled={locked} onPress={() => changeMode('PauseManagedCalendar')} /> :
+          <Button label={managed.data.mode === 'Paused' ? t('m_4a5f846d4f91') : t('m_c5702c19da53')} variant="secondary" disabled={locked} onPress={() => setup(managed.data!.mode === 'Paused' ? 'resume' : 'setup')} />}
+        {managed.data.mode !== 'Disabled' && <Button label={t('calendar_turn_off_automatic')} variant="neutral" disabled={locked} onPress={() => changeMode('DisableManagedCalendar')} />}
+        <Copy muted size={14}>{t('m_b87a00a6a35b')}</Copy>
+      </Disclosure>
+      <SettingRow intent="action" icon="download" label={t('m_59909a83ae12')} value={managed.data.policy.automaticImport ? t('m_b4ec2d7e78ce') : t('m_192bc55a3400')} disabled={locked} onPress={() => setup('policy')} />
+      <SettingRow intent="action" icon="upload" label={t('m_40a3bf59729e')} value={managed.data.policy.exportNewReminders ? t('m_066eff43059c') : t('m_f1fc666eb56b')} disabled={locked} onPress={() => setup('policy')} />
+      {(pending > 0 || held > 0) && <ViewSummary pending={pending} held={held} />}
+      {!!managed.data.recoveryCount && <SettingRow intent="action" icon="alarm" label={t('m_2b92a414df3c')} value={t('m_e0fad4b7a1fb', { arg0: String(managed.data.recoveryCount) })} disabled={locked} onPress={() => setup('recovered')} />}
+    </ConnectedGroup>}
     {managed.data && connection.data?.connected && <ConnectedGroup title={t('m_4daf4f599e5c')}>
       <SettingRow intent="action" icon="event" label={t('m_7da2bcb6bb6b')} value={connection.data.email} />
       <SettingRow intent="action" icon="event" label={t('m_d1f78591d052')} value={managed.data.calendarName || t('m_7498e51581fd')} description={managed.data.calendarZone || t('m_b9508bbefe31')}
         onPress={() => setup(managed.data!.calendarId && managed.data!.mode !== 'Disabled' ? 'policy' : 'setup')} disabled={locked} />
     </ConnectedGroup>}
-    {managed.data?.calendarId && <ConnectedGroup title={t('m_fc7921108075')}>
-      <SettingRow intent="action" icon="download" label={t('m_59909a83ae12')} value={managed.data.policy.automaticImport ? t('m_b4ec2d7e78ce') : t('m_192bc55a3400')} disabled={locked} onPress={() => setup('policy')} />
-      <SettingRow intent="action" icon="upload" label={t('m_40a3bf59729e')} value={managed.data.policy.exportNewReminders ? t('m_066eff43059c') : t('m_f1fc666eb56b')} disabled={locked} onPress={() => setup('policy')} />
-      <ViewSummary pending={managed.data.progress?.pending ?? managed.data.pendingExportCount + (managed.data.pendingChangeCount ?? 0)} held={managed.data.progress?.held ?? managed.data.heldExportCount} />
-      {!!managed.data.recoveryCount && <SettingRow intent="action" icon="alarm" label={t('m_2b92a414df3c')} value={t('m_e0fad4b7a1fb', { arg0: String(managed.data.recoveryCount) })} disabled={locked} onPress={() => setup('recovered')} />}
-      <Disclosure title={t('m_4e42724833a8')} summary={t('m_a75b7528db02')} icon="settings">
-        {managed.data.mode === 'Enabled' && <Button label={t('m_430a5aaa1e87')} variant="secondary" disabled={locked} onPress={() => changeMode('PauseManagedCalendar')} />}
-        {managed.data.mode !== 'Disabled' && <Button label={t('m_72497f61493d')} variant="neutral" disabled={locked} onPress={() => changeMode('DisableManagedCalendar')} />}
-        <Copy muted size={14}>{t('m_b87a00a6a35b')}</Copy>
-      </Disclosure>
-    </ConnectedGroup>}
     {managed.data?.calendarId && <ConnectedGroup><Disclosure title={t('m_358299bb64a8')} icon="info">
+      <Copy muted size={14}>{t('calendar_sync_scope_help')}</Copy>
       <Copy muted size={14}>{managed.data.calendarName} · {connection.data?.email}</Copy><Copy muted size={14}>{managed.data.calendarZone}</Copy>
       {managed.data.lastObservedAtMs != null && <Copy muted size={14}>{t('m_3ca2b1323cd4')}{scheduleDateTime(managed.data.lastObservedAtMs)}</Copy>}
       {managed.data.successfulAtMs != null && <Copy muted size={14}>{t('m_07330d3b86d7')}{scheduleDateTime(managed.data.successfulAtMs)}</Copy>}

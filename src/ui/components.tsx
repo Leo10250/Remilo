@@ -505,7 +505,7 @@ export function SelectRow<T extends string | number>({ label, value, choices, on
     <Sheet title={label} visible={open} onClose={() => setOpen(false)}>{choices.map((choice) => <Choice key={choice.value}
       label={choice.label} selected={choice.value === value} onPress={() => { onChange(choice.value); setOpen(false); }} />)}</Sheet></>;
 }
-export function Disclosure({ title, summary, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; summary?: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
+export function Disclosure({ title, summary, value, children, initial = false, forceOpen = false, icon }: PropsWithChildren<{ title: string; summary?: string; value?: string; initial?: boolean; forceOpen?: boolean; icon?: IconName }>) {
   'use no memo';
   useLocale();
   const colors = useTheme(), corners = useContext(ConnectedRowContext);
@@ -519,7 +519,9 @@ export function Disclosure({ title, summary, children, initial = false, forceOpe
       paddingHorizontal: corners ? space.gutter : space.xs, paddingVertical: corners ? space.md : 0,
       alignItems: 'center', gap: corners ? space.md : space.sm, backgroundColor: pressed ? colors.soft : 'transparent' })}>
     {icon && (corners ? <View style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 16, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}><Icon name={icon} /></View> : <Icon name={icon} />)}
-    <View style={{ flex: 1, minWidth: 0, paddingVertical: !corners && summary ? space.sm : 0, gap: space.xs }}><Copy>{title}</Copy>{summary && (corners || !open) && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} size={corners ? 20 : 24} />
+    <View style={{ flex: 1, minWidth: 0, paddingVertical: !corners && summary ? space.sm : 0, gap: space.xs }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', columnGap: space.md, rowGap: space.xs }}><Copy>{title}</Copy>{value && <Copy>{value}</Copy>}</View>
+      {summary && (corners || !open) && <Copy muted size={typography.supporting}>{summary}</Copy>}</View><Icon name={open ? 'expand_less' : 'expand_more'} size={corners ? 20 : 24} />
     {headerCorners && focused && <RowFocus corners={headerCorners} />}
   </Pressable>{open && <View style={{ paddingHorizontal: corners ? space.gutter : space.xs, paddingBottom: space.md, gap: space.sm }}>{children}</View>}</View>;
 }

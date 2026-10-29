@@ -120,6 +120,21 @@ epochs for delayed publication correlation. Historical incomplete receipts use
 conservative review rather than invented batch completion. Erased jobs cannot
 expose titles or recreate work through the read API.
 
+The 29 October Calendar Settings presentation reads configuration and confirmed
+check state separately. Automatic sync On/Paused/Off comes from the managed mode;
+the leading global result comes from the latest saved AllAuthorized request and
+native freshness validation. A completed request remains eligible for Up to date
+only while its captured identity/permission scope and current global work agree.
+New global request JSON receipts capture the managed binding revision; native
+reads also fence current issues, pending/held/uncertain work and incomplete legacy
+scans. Per-link or managed observation/success timestamps never substitute for a
+completed whole-scope request. Native Checking is active work; a queued request
+is waiting. Reads/navigation do not dispatch network work. Existing reviewed
+Resume, immutable retry receipts, serialized mutation ownership and separate I/O
+execution remain unchanged. No entity, schema, DP mirror or backup-format change
+is introduced. Global AllAuthorized checks and managed-calendar control scope
+remain distinct in both projection and presentation.
+
 Authorization has a request UUID and an immutable launch receipt. A separate
 deterministic outcome receipt records Authorized, Cancelled or Failed on the
 serialized worker and emits onChange. Launch acknowledgement grants nothing.
