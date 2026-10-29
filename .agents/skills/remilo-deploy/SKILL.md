@@ -23,6 +23,7 @@ restarting ADB. After a cancelled install, report the uncertain outcome rather
 than retrying automatically. Report installation separately from a launch failure.
 
 Report the selected model, APK package/version/ABI and whether the app was opened.
-Do not claim installed-hash verification or alarm reliability. Read the
-[workflow guide](../../../README.md#deploy-to-your-phone) for setup or failures;
-keep unobserved physical checks in the [owner checklist](../../../docs/device-acceptance.md).
+Installation does not establish installed-hash verification or alarm reliability.
+Read the [workflow guide](../../../README.md#deploy-to-your-phone) for setup or
+failures and the [verification guide](../../../docs/verification.md) when further
+checks are relevant. Do not create a physical-check ledger from installation alone.

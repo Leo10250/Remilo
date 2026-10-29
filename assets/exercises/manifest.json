@@ -1,0 +1,583 @@
+{
+  "schemaVersion": 2,
+  "assets": {
+    "front-plank": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/front-plank-v1.png",
+          "sha256": "65f10d963b7b1e7a57c848501ffacf4cb1f02954cace4cb0b05f8278d5793dc0",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/front-plank-v1.webp",
+          "sha256": "f30c4a08251e40c935ea93487577ef0f873f5476b5b87ec43078ed2411e70dce",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "bird-dog": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/bird-dog-v1.png",
+          "sha256": "8b6ccd761270d45e56713ac15e5393930bb55dbe58c6cf6b7cfd2370294e1f93",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/bird-dog-v1.webp",
+          "sha256": "85eb6e166b43ee3a4a976082a298ab10621f38fdb952f430ddd950807ababab6",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "side-plank": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/side-plank-v1.png",
+          "sha256": "faa74dc267401768d9ec5fc3c4cae7a3ea3e5207234a0af45e93d388ce37e5c9",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/side-plank-v1.webp",
+          "sha256": "ebcf8b29c2370bb51b27f15024af2ff36397b2557c7400e479f2e22db6837048",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "running": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/running-v1.png",
+          "sha256": "8971ac8c783219c4151c9ba2b68c88e339503de5aea967c0604aa523fc54a309",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/running-v1.webp",
+          "sha256": "e205a3336e61cceb456f51214c1ffb886cc34e6126c5b8f000cc89c780b50bef",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "incline-treadmill-walking": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/incline-treadmill-walking-v1.png",
+          "sha256": "e38368c46a474d8da58f2401f2ecf6cbef4ec22db7223b6705b53f986e440c3a",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/incline-treadmill-walking-v1.webp",
+          "sha256": "44cec6446992fbd5b7f29e1fad761b9c8a901531b35711bb3cf4d2c2f8dc294c",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "walking": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/walking-v1.png",
+          "sha256": "514227092f789472203a44ea4a1a04d6ac342539a35bcd6487c0fa8dfb1a6b50",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/walking-v1.webp",
+          "sha256": "57c63080693eedab028f89ea250f581ba2a97e382c113a6abd542e446387ff08",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "lat-pulldown": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/lat-pulldown-v1.png",
+          "sha256": "a8c2bad8b373d4d95e5c18036080311dd27571e72fd9db67dc18a91c17023a92",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/lat-pulldown-v1.webp",
+          "sha256": "ba3b3b82067a89264132d3ec22c0a592a3535cf7d4c58d8522dd7163109914b6",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "machine-chest-press": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/machine-chest-press-v1.png",
+          "sha256": "414e41ba15b48441bb7c9941555e210146b678b513f67c78b9616b0748ac7b2e",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/machine-chest-press-v1.webp",
+          "sha256": "43b410128cc63ebd45e8e6ba9e6cbd50614c781a871216b7ae82818b9b14a8ac",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "cable-face-pull": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/cable-face-pull-v1.png",
+          "sha256": "e3806779a7cc698eb8ad0ef019968bb6b455280fc60124214bd7610b875b0beb",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/cable-face-pull-v1.webp",
+          "sha256": "a0b2c7eff5a4042c671e5ff110e9f0b54284ab59a13827b0a3a005c9cc8899e2",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "dumbbell-shoulder-press": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/dumbbell-shoulder-press-v1.png",
+          "sha256": "33a3c85917cca337761344719442cec179c454bfca0ab3d9a376f67d2c23cc19",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/dumbbell-shoulder-press-v1.webp",
+          "sha256": "14c2246c8b0b6fe765cf5c6f3c4672ee77b7cc6c0b58393f59d1678215a0e254",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "machine-shoulder-press": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/machine-shoulder-press-v1.png",
+          "sha256": "44d3d3822d5c4d61bc559fcb9a4ba6387f199f221fecc1032ff80a75a7ad009a",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/machine-shoulder-press-v1.webp",
+          "sha256": "3467855c8e68a12eb20d3377a9776dac9aeea913611e4b143f2d44e14da06aef",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "incline-hammer-curl": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/incline-hammer-curl-v1.png",
+          "sha256": "eac103fb809f914cc71e06b7ceaa72ca78694ba5404c2bbeb482c7af6fe102af",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/incline-hammer-curl-v1.webp",
+          "sha256": "be5e4c6f6e45a24942282bdb7fc5403fbb438ea3a3ac50eed1513751aa513850",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "cable-triceps-pushdown": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/cable-triceps-pushdown-v1.png",
+          "sha256": "5815389465ac7564fc23f9b27d29fa41fa88d17284a7cd0f1e91c676ea4ca751",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/cable-triceps-pushdown-v1.webp",
+          "sha256": "e4efd7937e391776e42c90efb2b2551d461be3fcd83c3d792bf60ba408696a79",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "goblet-squat": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/goblet-squat-v1.png",
+          "sha256": "ff3b30c39f343c7daee37f7cce041817a3aa3f8bdd7de531dffa5bf5355ea125",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/goblet-squat-v1.webp",
+          "sha256": "a80b2315c0dba4da7b9a8ac09c4147c237a48018ca342beb6e85a18d04b3271d",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "dumbbell-bench-press": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/dumbbell-bench-press-v1.png",
+          "sha256": "b4e0913e9f0d33fe7b5443327697efa02d11d2357c819d4cd715e896687c5123",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/dumbbell-bench-press-v1.webp",
+          "sha256": "d15d825fd08a2a341b8cef053f52fb7dc54085c38fc4cdda965ac8acde833d25",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "dumbbell-rdl": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/dumbbell-rdl-v1.png",
+          "sha256": "8b56e8f4d7403d1c19d1bd69bdca04ae971eb4b6d287ce84ebfead87c1ff6c1e",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/dumbbell-rdl-v1.webp",
+          "sha256": "1ea62335bbf77bb1ed7e6c6542aff5fe2bc8e349942e6c191a01c0c029764a42",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    },
+    "one-arm-dumbbell-row": {
+      "sources": {
+        "master": {
+          "path": "assets/exercises/masters/one-arm-dumbbell-row-v1.png",
+          "sha256": "534cd796f0e42323007676555e05f732ec981404eeb22e41d4ecd1c80dc1e7f5",
+          "width": 1672,
+          "height": 941,
+          "format": "PNG",
+          "alpha": "transparent"
+        }
+      },
+      "outputs": {
+        "runtime": {
+          "path": "assets/exercises/one-arm-dumbbell-row-v1.webp",
+          "sha256": "26b2643daa4eb982ee973f500593562ee585479f2445588d2a8a50f473218ed4",
+          "width": 960,
+          "height": 540,
+          "format": "WEBP",
+          "alpha": "transparent",
+          "source": "master",
+          "transform": {
+            "kind": "raster",
+            "fit": "contain",
+            "focal": [
+              0.5,
+              0.5
+            ],
+            "lossless": true,
+            "allowUpscale": false
+          },
+          "copies": []
+        }
+      }
+    }
+  }
+}

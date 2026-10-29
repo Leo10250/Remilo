@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise illustration, transparent cutout contained in a 16:9 frame up to 320 x 180 dp. First pilot of a consistent bundled exercise library.
-Primary request: Create one clear side-view illustration of an adult performing a front forearm plank on a simple muted exercise mat.
-Input 1: Owner-supplied preferred Focus-screen screenshot, used ONLY as an illustration-style and posture reference. Use only the plank figure's softly shaded educational style. Exclude all app UI, typography, colors of controls, scenery, phone frame, and layout.
-Subject/posture: Entire adult visible from head to feet; both forearms supported on mat, elbows directly below shoulders, toes on mat, body forming a straight line through head, trunk and heels; hips neither raised nor sagging. Neutral neck, gaze toward mat. Natural anatomy, clearly readable support points.
-Style: Polished softly shaded educational illustration, restrained edges, natural proportions, neutral blue-gray top and muted terracotta leggings, no visual clutter. Match reference level of clarity without adding facial detail.
-Composition: Landscape wide canvas 16:9, person facing left, centered, fully contained with comfortable transparent margin, mat and every limb unclipped. Clear silhouette at 256 x 144 dp.
-Output target: Transparent PNG, at least 960 x 540 pixels; genuinely transparent background around figure and mat, no white rectangular background. Subtle contact shading only on mat.
-Exclude: All words, numbers, labels, arrows, branding, logos, watermark, scenery, UI, additional people, additional equipment, decorative background, alternate poses. This is an illustration asset, not a mockup.

@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise library transparent illustration in a wide 16:9 frame up to 320x180 dp, with optional enlarged view.
-Primary request: One adult doing a DUMBBELL ROMANIAN DEADLIFT, shown in the controlled bottom position of a hip hinge.
-Input 1: Approved Front plank provides the same woman, softly shaded educational style, natural anatomy, blue-gray top and muted terracotta leggings. Add plain gray shoes.
-Posture: Standing with feet hip width and both soles planted. Hips push backward, knees only slightly bent, shins nearly vertical. Torso leans forward from the hips, with a neutral continuous back and head aligned with the spine; this is a hinge, not a squat. Arms hang straight down from shoulders, one dumbbell in each hand close beside the lower legs at mid-shin height. Neutral grips with straight wrists, both hands clearly holding continuous handles. Hip, knee and shoulder anatomy plausible.
-Equipment: Exactly two matching plain gray hex dumbbells, with short handles and coherent solid ends, no text or weight labels.
-View/composition: Three-quarter side view that clearly shows hip hinge, softly bent knees, both separate dumbbells and both feet. Entire person, shoes and weights contained with generous transparent margins on all four sides. Wide 16:9, centered.
-Output/style: Transparent PNG at least 960x540 pixels, restrained natural educational shading and a clear small-size silhouette matching input 1. Genuine transparency around the subject.
-Exclude: Deep squat, rounded back, gym/background, floor slab, text, logos, numbers, arrows, UI, watermark, muscle overlays, extra people, duplicate limbs, floating weights or disconnected handles. One illustration only.

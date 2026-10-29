@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise library transparent illustration in a wide16:9 frame up to320x180dp, with optional enlarged view.
-Primary request: One adult doing a seated INCLINE HAMMER CURL with two dumbbells while leaning against an inclined bench.
-Input1: Approved Front plank provides the same woman, softly shaded educational style, natural anatomy, blue-gray top and muted terracotta leggings. Add plain gray shoes.
-Posture: Seated with head and back resting along a bench backrest inclined about55degrees from the floor, feet planted on either side. Upper arms hang naturally beside torso and stay back by the hips. Both elbows bend to curl the dumbbells toward the lower ribs, forearms around mid-curl, wrists straight. Use a neutral hammer grip: thumbs point up and palms face inward toward each other, never palms facing the ceiling. Both hands and separate handles clearly visible.
-Equipment: Exactly two matching plain gray hex dumbbells with continuous short handles and matching solid ends, and one simple complete unbranded adjustable incline bench with seat, inclined backrest and coherent supporting legs. No weight numbers or labels.
-View/composition: Three-quarter side/front view revealing backrest angle, both grips, arm positions and feet. Full person, dumbbells and bench entirely contained; generous clear transparent margins on all sides. Wide16:9, centered.
-Output/style: Transparent PNG at least960x540pixels, restrained natural educational shading, clear readable silhouette matching input1. Genuine transparency around the subject and bench.
-Exclude: Gym/background, floor slab, text, logos, numbers, arrows, UI, watermark, muscle overlays, extra people, duplicate limbs or disconnected equipment. One illustration only.

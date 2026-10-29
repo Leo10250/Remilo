@@ -1,9 +1,0 @@
-Use case: scientific-educational
-Asset/use: Remilo exercise library transparent illustration in a wide 16:9 frame up to 320x180 dp, with optional enlarged view.
-Primary request: One adult performing a GOBLET SQUAT with a single dumbbell held vertically close to the chest.
-Input 1: Approved Front plank provides the same woman, softly shaded educational style, natural anatomy, blue-gray top and muted terracotta leggings. Add plain gray shoes.
-Posture: Bottom-to-middle of a controlled squat, feet about shoulder width, both heels planted, knees aligned with toes, torso upright with a natural forward lean. Both hands securely cup the upper end of one vertical dumbbell at chest height. Elbows point downward inside the knees without impossible joint bends. Clearly readable hands, knees and feet.
-Equipment: Exactly one plain gray hex dumbbell held vertically, a continuous handle with two coherent solid ends. No labels or weight numbers.
-View/composition: Three-quarter front-side view revealing the chest grip, squat depth and both planted feet. Entire person and dumbbell contained with generous transparent margins on all four sides. Wide 16:9, centered.
-Output/style: Transparent PNG at least 960x540 pixels, restrained natural educational shading and clear silhouette matching input 1. Genuine transparency around the person.
-Exclude: Gym/background, floor slab, text, logos, numbers, arrows, UI, watermark, muscle overlays, extra people, extra weights, duplicate limbs or floating equipment. One illustration only.

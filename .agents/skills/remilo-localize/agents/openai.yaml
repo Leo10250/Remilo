@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remilo Localization"
+  short_description: "Natural Simplified Chinese for Remilo features"
+  default_prompt: "Use $remilo-localize to localize and independently review the changed Remilo interface copy."

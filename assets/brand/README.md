@@ -1,21 +1,9 @@
-# Shipped identity and approved replacement
+# Classic identity assets
 
-The currently shipped assets and scripts/brand.mjs export the geometric R with
-notification dot and blue #245CD6. This is an implementation baseline, not the
-approved identity for the next redesign. The cleanup preserves these shipped exports.
+`classic/manifest.json` lists the current editable sources, faithful export recipes and configuration/native copies. The isolated foreground and silhouette sources preserve the Classic ring/check/sun geometry; use deterministic transforms for exports. Existing filenames are retained, and Git history preserves retired artwork.
 
-[Current design](../../docs/design/current/README.md) and TD-05 use the supplied
-Classic ring/check/sun mark from [the Classic crop](reference/icon-classic.png) and [original
-source board](reference/source-icon-board.png). Preserve source geometry/finish; adapt isolation/padding/masks only.
-One static identity ships; no theme variants, app-controlled aliases or matching
-workers. Standard adaptive/monochrome exports may follow Android system treatment.
+Run `node scripts/brand.mjs --check` to compare every active copy and the adaptive selectors. Without `--check`, the copier validates all current sources before copying their exact bytes. It does not redraw or re-encode the identity.
 
-The existing exporter's central 66 dp adaptive safe area and ignored local mask/size
-review describe the R implementation. TD-05 must validate Classic layer separation,
-actual small sizes, splash and notification alpha against its own faithful exports.
-Actual launcher/device observations remain part of the consolidated owner run.
+For changed exports, `scripts/export-brand.py prepare` stages the existing crop/affine/density transformations in ignored working storage. Use its operation help and the shared visual skill. Source/output hashes and recipes belong in the current manifest; review panels, prompts and recovery state stay local.
 
-The [production export workflow](../../docs/design/production-assets/classic-exports.md)
-prepares faithful Classic candidates and records individual approvals before TD-05
-integration. Its [registry](../../docs/design/production-assets/brand-manifest.json)
-tracks export provenance; no unapproved candidate replaces the shipped R assets.
+The 288dp splash composition uses 288/432/576/864/1152px density canvases rendered directly from the 467px isolation. Its explicit bounded interpolation at the largest densities adds no original source detail. The current output geometry and filenames are configuration, not a historical approval ledger.
