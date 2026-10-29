@@ -971,6 +971,35 @@ commands, saves exact alarmAtMs/scope/picker state, defers replacement intents a
 re-reads private titles. RN Details likewise binds its opening generation. Native
 timeouts dismiss unsubmitted pickers; unknown submitted commands remain frozen.
 
+Ordinary notification Postpone uses an immutable, explicit Activity PendingIntent
+to MainActivity/Home, with an allowlisted URI payload containing only captured
+occurrence IDs/generations or session/member identities. Content taps retain their
+existing routes. MainActivity retains incoming intents for React cold/warm linking;
+private app content uses normal keyguard unlock. Expo native-intent assigns a fresh
+presentation identity to each arrival, so identical links may reopen after dismissal.
+A shared process-owned app controller retains drafts and exact pending commands
+across Home/Details navigation and queues another request until its owner closes.
+It revalidates captured eligibility; loading a request never mutates delivery.
+No notification trampoline, delivery timer or database schema is introduced.
+
+The native chooser is an in-window bottom sheet in AlarmActivity rather than a
+separate dialog window. Its modal semantics hide underlying controls while open;
+Date/Time dialogs explicitly inherit secure/show-when-locked window policy.
+This removes an extra lock-screen window dependency without changing deadlines,
+draft/retry ownership or forcing keyguard dismissal. Host window tests cannot
+establish physical keyguard visibility or audibility.
+
+Native Compose compilation and the packaged app must resolve matching Material3,
+UI, foundation and runtime artifacts, including Android variants. Expo SDK 57's
+UI module requires Material3 1.5.0-alpha17, whose published graph selects Compose
+1.11.0-beta02; the former local 2025.04.01 BOM compiled Material3 1.3.2 while the
+app packaged the newer API. Its experimental bottom-sheet signature differed and
+caused the observed NoSuchMethodError. Owned native UI/tests now compile against
+the app's selected API. Before tests/lint/assembly, every repository release build
+obtains Gradle's resolved native releaseCompileClasspath and app releaseRuntimeClasspath
+report and rejects version drift or an incomplete report. Unit tests against only
+the module graph cannot establish packaged binary compatibility.
+
 The owner confirmed that Routine Start/Snooze/Dismiss controls and dated-session
 expiry remain unchanged. The uniform chooser and PostponeAll apply to ordinary
 reminders; mixed groups retain the existing per-member controls.

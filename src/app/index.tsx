@@ -10,7 +10,10 @@ import { Animated, Keyboard, LayoutAnimation, Pressable, SectionList, Text, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { commandFeedback, editDestination, reopenCompleted } from '../domain/actions';
-import { canAdjustAlert, groupTitle } from '../domain/presentation';
+import { groupTitle } from '../domain/presentation';
+import { canPostponeReminder } from '../domain/postpone';
+import { parsePostponeRequest, type PostponeRequest } from '../domain/postpone-request';
+import { PostponeHost, usePostponeController } from '../ui/postpone-host';
 import { ActionFeedback, AtmosphericHeader, Button, Copy, Icon, IconButton, QueryState, SectionHeader, SettingRow, Sheet, Snackbar, Status } from '../ui/components';
 import { browseFilterChips, browseReminderFilter, commitBrowseFilters, removeBrowseFilter, resetBrowseFilters, type BrowseFilterField, type BrowseFilters } from '../domain/browse-filters';
 import { BrowseFilterButton, BrowseFilterChips, BrowseFilterSheet } from '../ui/browse-filters';
@@ -39,7 +42,7 @@ export default function HomeScreen() {
 export function AgendaScreen({ destination }: { destination: DestinationOrigin }) {
   'use no memo';
   const t = useTranslation();
-  const params = useLocalSearchParams<OriginParams>(), origin = destination.kind === 'list' && !params.originRoot && !params.originListId && !params.originNoList ? { kind: 'lists' as const } : creationOrigin(params);
+  const params = useLocalSearchParams<OriginParams & { postponeRequest?: string | string[]; postponeRequestKey?: string | string[] }>(), origin = destination.kind === 'list' && !params.originRoot && !params.originListId && !params.originNoList ? { kind: 'lists' as const } : creationOrigin(params);
   const key = rootKey(destination), scoped = destination.kind === 'list';
   const colors = useTheme(), scale = useFontScaleOverride(), client = useQueryClient(), capabilities = useCapabilities();
   const confirm = useAppearanceConfirmation();
@@ -82,8 +85,10 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       setToast({ message: feedback.message, persistent: feedback.tone !== 'success' });
     }
   });
-  const guarded = action.guarded || listGuarded;
-  const isGuarded = () => action.isGuarded() || listGuarded;
+  const postpone = usePostponeController(), postponeFocus = useRef<View>(null), moreButtons = useRef(new Map<string, View>());
+  const handledPostponeLink = useRef<string | null>(null);
+  const guarded = action.guarded || listGuarded || postpone.guarded;
+  const isGuarded = () => action.isGuarded() || listGuarded || postpone.controller.isGuarded();
   const refreshAgenda = async () => {
     if (refreshRunning.current || isGuarded() || !nativeAvailable) return;
     refreshRunning.current = true; setRefreshing(true);
@@ -183,6 +188,30 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const caps = capabilities.data, warning = caps ? !caps.exactAlarms ? t('m_7289470d5860') : !caps.notifications ? t('m_8276fc8f3d9a')
     : !caps.channelEnabled ? t('m_35a1741a1501') : !caps.fullScreen ? t('m_aaeb8e7dbd8f') : '' : '';
   const focused = useIsFocused();
+  useEffect(() => {
+    if (scoped || !focused || params.postponeRequest === undefined) return;
+    const token = JSON.stringify([params.postponeRequestKey, params.postponeRequest]);
+    if (handledPostponeLink.current === token) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active || handledPostponeLink.current === token) return;
+      handledPostponeLink.current = token;
+      const parsed = parsePostponeRequest(params.postponeRequest);
+      if (parsed.kind === 'valid') {
+        Keyboard.dismiss(); setSelected(null); setFilterDraft(null); setCreationMenu(false); setToast(null);
+        postpone.controller.open(parsed.request);
+      } else if (parsed.kind === 'invalid') setToast({ message: t('postpone_invalid_request'), persistent: true });
+      // Consuming the presentation params prevents a render/focus refresh from reopening a closed draft.
+      router.setParams({ postponeRequest: undefined, postponeRequestKey: undefined });
+    });
+    return () => { active = false; };
+  }, [scoped, focused, params.postponeRequest, params.postponeRequestKey, postpone.controller, setToast, t]);
+  const openPostpone = (request: PostponeRequest) => {
+    if (isGuarded()) return;
+    Keyboard.dismiss(); setSelected(null); setToast(null);
+    if (scoped) router.navigate({ pathname: '/', params: { postponeRequest: JSON.stringify(request), postponeRequestKey: engine().createOperationId() } });
+    else postpone.controller.open(request);
+  };
   const activeToast = !focused ? null : toast ?? (notice ? { message: notice.message, persistent: notice.persistent } : null);
   const constrained = searching || filterOpen || guarded;
   const rememberScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => { scrollY.current=event.nativeEvent.contentOffset.y; if(active.current && !searching && !restoreScroll.current)writeRootSnapshot(key+':scroll',scrollY.current); },[key,searching]);
@@ -227,11 +256,9 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
           kind: 'DoneAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })), operationId: engine().createOperationId(),
         }, success: captured.members.length + t('m_a6167e44d2cf') }); }} /></View>
-      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="snooze" label={t('m_1b57fa0b0d9e') + caps.activeSessionActions.snoozeMinutes + t('m_2e75737a6b58')} variant="secondary" disabled={guarded}
-        onPress={() => { const captured = caps.activeSessionActions!; void action.execute({ command: {
-          kind: 'SnoozeAll', expectedSessionId: captured.sessionId, members: captured.members.map((member) => ({ ...member })),
-          snoozeMinutes: captured.snoozeMinutes, operationId: engine().createOperationId(),
-        }, success: captured.members.length + t('m_b020b25f9113') }); }} /></View>
+      <View style={{ flexGrow: 1, flexBasis: 160 }}><Button icon="schedule" label={t('postpone_all_action', { count: caps.activeSessionActions.members.length })} variant="secondary" disabled={guarded} buttonRef={postponeFocus}
+        onPress={() => { const captured = caps.activeSessionActions!; openPostpone({ kind: 'Group', expectedSessionId: captured.sessionId,
+          members: captured.members.map(member => ({ ...member })) }); }} /></View>
     </View>}
     {!!reminders.error && !!items.length && <View><ActionFeedback message={t('m_3d982a3fc277')} tone="danger" /><Button label={t('m_942087cc2d41')} variant="secondary" onPress={() => void reminders.refetch()} /></View>}
 </>}
@@ -239,7 +266,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
         onEndReached={() => { if (reminders.hasNextPage && !reminders.isFetchingNextPage && !reminders.isFetchNextPageError) void reminders.fetchNextPage(); }}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} count={section.count} expanded={!collapsed.includes(section.key)} overdue={section.key === 'overdue'}
           onPress={() => { animate(); setCollapsed((current) => current.includes(section.key) ? current.filter((group) => group !== section.key) : [...current, section.key]); }} />}
-        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={item.routine ? undefined : () => complete(item)} onMore={() => { if (!isGuarded()) { if (item.routine) setRoutineMenu({ id: item.routine.routineId, date: item.routine.date }); else setSelected(item); } }} busy={guarded} />}
+        renderItem={({ item, section }) => <ReminderRow item={item} calendarNotice={calendarCancellation(item, calendarFor(item))?.row || calendarRowNotice(calendarFor(item)) || undefined} context={{ groupKey: section.key }} nowMs={caps?.observedAtMs} onOpen={() => { if (!isGuarded()) open(item); }} onDone={item.routine ? undefined : () => complete(item)} moreButtonRef={node => { if (node) moreButtons.current.set(item.id, node); else moreButtons.current.delete(item.id); }} onMore={() => { if (!isGuarded()) { postponeFocus.current = moreButtons.current.get(item.id) ?? null; if (item.routine) setRoutineMenu({ id: item.routine.routineId, date: item.routine.date }); else setSelected(item); } }} busy={guarded} />}
         ListEmptyComponent={<View style={{ padding: 16, gap: 8 }}><QueryState loading={reminders.isLoading && nativeAvailable} error={reminders.error} empty
           emptyMessage={!nativeAvailable ? t('m_2ff2d9a672c5') : search || chips.length ? t('m_75bf15d2c28d') : view === 'today' ? t('m_fc926e22caaa') : view === 'upcoming' ? t('m_e22b01420e5f') : scoped ? t('m_284f8a392982') : t('m_057d33f49512')} onRetry={() => void reminders.refetch()} />
           {emptyCreate && <Button label={t('create_title')} buttonRef={creationTrigger} disabled={guarded} onPress={create} />}
@@ -263,10 +290,11 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       onApply={() => { if (filterDraft && commitFilters(filterDraft)) setFilterDraft(null); }} />
     <Sheet title={selected?.title ?? t('m_3ddd2c824c07')} visible={!!selected} onClose={() => setSelected(null)}>
       <SettingRow intent="action" label={t('m_1f1353b055df')} icon="edit" onPress={() => { if (isGuarded()) return; if (selected) router.push({ ...editDestination(selected), params: { ...editDestination(selected).params, ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />
-      {!!selected && canAdjustAlert(selected) && <SettingRow intent="action" label={t('m_63fb48d94634')} icon="snooze" onPress={() => { if (isGuarded()) return; if (selected) router.push({ pathname: '/reminder/[id]', params: { id: selected.id, action: 'postpone', ...originParams(destination) } }); setSelected(null); }} disabled={guarded} />}
+      {!!selected && canPostponeReminder(selected) && <SettingRow intent="action" label={t('postpone_action')} icon="schedule" onPress={() => { if (selected) openPostpone({ kind: 'Single', occurrenceId: selected.id, expectedGeneration: selected.generation }); }} disabled={guarded} />}
       <SettingRow intent="action" label={t('m_62aa4b87cc52')} icon="check" onPress={() => { if (selected) complete(selected); setSelected(null); }} disabled={guarded} />
       <SettingRow intent="action" label={t('m_9adcdf33dce1')} icon="delete" onPress={() => { if (selected) trash(selected); setSelected(null); }} disabled={guarded} />
     </Sheet>
+    {!scoped && <PostponeHost action={postpone} returnFocusRef={postponeFocus} />}
     <RoutineActions target={routineMenu} onClose={() => setRoutineMenu(null)} />
     <TrashConfirmation item={trashItem} onCancel={() => setTrashItem(null)} onConfirm={() => {
       if (!trashItem || guarded) return;

@@ -112,3 +112,16 @@ describe('Postpone draft races and custom selection', () => {
     expect(draft.snapshot()).toMatchObject({ choice: '15', target: original, customOpen: false, customDraft: null });
   });
 });
+
+describe('Postpone draft host remount', () => {
+  it('does not reset the selected target or provisional custom fields on another initialize', async () => {
+    const draft = new PostponeDraft(capture(), resolve);
+    await draft.initialize(); await draft.select('60', start + 1000); await draft.openCustom(start + 2000);
+    await draft.editCustom(start + 7200000, start + 2000);
+    const selected = draft.snapshot();
+    await draft.initialize();
+    expect(draft.snapshot()).toBe(selected);
+    expect(draft.snapshot().choice).toBe('60');
+    expect(draft.snapshot().customInstantMs).toBe(start + 7200000);
+  });
+});

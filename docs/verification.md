@@ -8,6 +8,14 @@ large text/landscape and translated/device-clock labels. Run shared checks and
 native unit/lint/release assembly serially. Signed-phone sound while choosing,
 cutoff, picker, pre-unlock and TalkBack observations stay in the consolidated run.
 
+The notification/locked-sheet follow-up also requires direct Activity Postpone
+intents with operational-only captured payloads, ordinary Done/Postpone and
+unchanged Routine/legacy actions. Cover cold/warm/repeated Home links, invalid and
+stale scope, queued requests, pending exact retry across route replacement and
+opening without mutation. Native host checks must verify in-window sheet hosting
+and picker window policy. Actual locked visibility, unlock handoff, sound while
+choosing and the original cutoff require an identified signed phone build.
+
 Robolectric's pinned API 34 runtime/API 35 resource jars resolve through Gradle
 before test execution, following the [upstream dependency guidance](https://robolectric.org/blog/2023/11/11/improving-android-all-downloading/).
 The test suite uses the staged directory rather than making a separate Maven
@@ -401,7 +409,7 @@ Run it when inspecting installation identity, not as a compulsory deployment ste
 
 `device:logs` saves up to the last 2,000 log entries filtered to `Remilo:I`;
 `--follow` streams until Ctrl+C. It filters by tag rather than PID so process
-restarts remain visible, and never clears the log buffer. `device:capture` writes
+restarts remain visible, and never clears the log buffer. Add `--crashes` for a bounded Android crash-buffer snapshot: it saves only AndroidRuntime blocks whose exact `com.remilo.app` process header matches the log PID. Other-app records stay in memory and are discarded before writing; failed reads never persist or echo raw output. `--crashes` cannot be combined with `--follow`. No matching block means only that this bounded buffer snapshot contained none. `device:capture` writes
 binary PNG output without unlocking, navigation or temporary device files.
 Both accept `--device SERIAL`. Keep their logs/screenshots and serials local;
 there is no automatic upload. Do not infer human audibility from either artifact.

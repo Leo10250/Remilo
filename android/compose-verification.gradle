@@ -1,0 +1,35 @@
+import groovy.json.JsonOutput
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.result.UnresolvedDependencyResult
+
+// Report selected components, rather than declared BOMs or dependency-request text.
+// The repository build helper validates this report before starting assembly.
+tasks.register('reportReleaseComposeClasspath') {
+  group = 'verification'
+  description = 'Report resolved native release compile and packaged app Compose components.'
+  doLast {
+    def families = ['androidx.compose.material3', 'androidx.compose.ui', 'androidx.compose.foundation', 'androidx.compose.runtime'] as Set
+    def snapshot = { String projectPath, String configurationName ->
+      def configuration = project(projectPath).configurations.getByName(configurationName)
+      def resolution = configuration.incoming.resolutionResult
+      if (resolution.allDependencies.any { it instanceof UnresolvedDependencyResult }) {
+        throw new GradleException("Unresolved dependencies in ${projectPath}:${configurationName}; Compose alignment cannot be verified.")
+      }
+      def components = resolution.allComponents.collect { it.id }.findAll {
+        it instanceof ModuleComponentIdentifier && families.contains(it.group)
+      }.collect { [group: it.group, name: it.module, version: it.version] }.sort { a, b ->
+        "${a.group}:${a.name}" <=> "${b.group}:${b.name}"
+      }
+      if (components.isEmpty() || components.size() > 256) {
+        throw new GradleException("Unexpected Compose component count in ${projectPath}:${configurationName}.")
+      }
+      [project: projectPath, configuration: configurationName, components: components]
+    }
+    def report = [schemaVersion: 1,
+      nativeCompile: snapshot(':remilo-alarm', 'releaseCompileClasspath'),
+      appRuntime: snapshot(':app', 'releaseRuntimeClasspath')]
+    def encoded = JsonOutput.toJson(report)
+    if (encoded.getBytes('UTF-8').length > 262144) throw new GradleException('Compose classpath report exceeded its output bound.')
+    println('REMILO_COMPOSE_CLASSPATH_REPORT_V1=' + encoded)
+  }
+}

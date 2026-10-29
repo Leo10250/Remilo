@@ -3,22 +3,30 @@ import { finished } from 'node:stream/promises';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { localEvidence, checked, WorkflowError } from './tools.mjs';
+import { localEvidence, checked, execute, WorkflowError } from './tools.mjs';
 import { cli, options, allowedOptions } from './lib/cli.mjs';
 import { androidTools } from './lib/android-tools.mjs';
 import { targetDevice } from './lib/devices.mjs';
 import { logArguments } from './lib/deployment.mjs';
+import { collectRemiloCrashes, validateEvidenceLogOptions } from './lib/crash-evidence.mjs';
 
 await cli(async () => {
   const [mode, ...args] = process.argv.slice(2);
-  if (mode === '--help') return console.log('node scripts/device-evidence.mjs logs|capture [--device SERIAL] [--follow (logs only)]');
-  const flags = options(args, ['device']); allowedOptions(flags, mode === 'logs' ? ['device', 'follow', 'help'] : ['device', 'help']);
-  if (flags.help) return console.log(`npm run device:${mode} -- [--device SERIAL]${mode === 'logs' ? ' [--follow]' : ''}\nPrivate local evidence only. No data clearing, navigation, log clearing or device setting changes.`);
+  if (mode === '--help') return console.log('node scripts/device-evidence.mjs logs|capture [--device SERIAL] [--follow | --crashes (logs only)]\n--crashes: bounded crash-buffer snapshot; only exact com.remilo.app AndroidRuntime PID blocks are saved. Cannot follow.');
+  const flags = options(args, ['device']); allowedOptions(flags, mode === 'logs' ? ['device', 'follow', 'crashes', 'help'] : ['device', 'help']);
+  if (flags.help) return console.log(`npm run device:${mode} -- [--device SERIAL]${mode === 'logs' ? ' [--follow | --crashes]\n--crashes saves only exact com.remilo.app AndroidRuntime PID blocks from a bounded crash-buffer snapshot; cannot combine with --follow.' : ''}\nPrivate local evidence only. No data clearing, navigation, log clearing or device setting changes.`);
   if (!['logs', 'capture'].includes(mode)) throw new WorkflowError('ARGUMENT', 'Expected logs or capture.');
+  validateEvidenceLogOptions(flags);
   const tools = androidTools(), target = await targetDevice(tools, flags.device);
   const directory = join(localEvidence, mode); mkdirSync(directory, { recursive: true });
   const path = join(directory, `${new Date().toISOString().replaceAll(':', '-')}-${randomUUID()}.${mode === 'logs' ? 'log' : 'png'}`);
-  if (mode === 'logs') {
+  if (mode === 'logs' && flags.crashes) {
+    const result = await collectRemiloCrashes(target.serial, {
+      run: args => execute(tools.adb, args, { env: tools.env, timeout: 30_000 }),
+      persist: text => writeFileSync(path, text),
+    });
+    console.log(`Remilo AndroidRuntime crash blocks: ${result.blocks}; ${path}${result.blocks ? '' : ' (no matching block in this bounded snapshot)'}`);
+  } else if (mode === 'logs') {
     const output = createWriteStream(path); output.on('error', () => {});
     console.log(`Remilo-tagged logs: ${path}${flags.follow ? ' (Ctrl+C to finish)' : ''}`);
     try { await checked(tools.adb, logArguments(target.serial, flags.follow), { env: tools.env, outputFile: output, timeout: flags.follow ? 0 : 30_000, cancelIsSuccess: Boolean(flags.follow) }); }

@@ -47,6 +47,10 @@ uses only Mark as done/Postpone; retain captured generation, Custom cancellation
 exact targets, saved settings/zone and uncertain-command recovery. Review all eight
 pairs, large text and platform pickers without inferring physical acceptance.
 Routine alerts retain Start/Snooze/Dismiss and their dated-session expiry.
+Notification Postpone and Agenda More open the same chooser over Home. Preserve
+cold/warm/repeated request handling, captured single/group identity, stale/invalid
+feedback and exact pending-command ownership across route replacement. A second
+request waits rather than replacing an open draft. Private Home waits for unlock.
 
 Review actual screens in all four atmospheres and both appearances; exercise dense/long content, search+IME, filters, empty/no-match, loading/retained errors, large text/TalkBack, lower Notes validation, stale/uncertain saves, recurrence exceptions and whole-backup copy/retry receipts. Verify loaded-only selection, independent row-open/selection targets, Back/Done selecting ordering, per-item identities, partial/stale outcomes, unknown-reply stop and same-item retry before continuing. Preserve the approved R9 composition 05 while observing remaining exceptional and Android interaction states; its owner approval does not establish device acceptance.
 

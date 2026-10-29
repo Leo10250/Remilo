@@ -16,7 +16,9 @@ alarm and Notification as the direct new-routine default.
 The owner's 28 October [uniform Postpone chooser](postpone-chooser.md) supersedes
 the earlier quick-Snooze presentation below on native controls and ringing Details.
 Those surfaces use Mark as done/Postpone, with captured Postpone all for groups;
-notification Snooze remains unchanged. Opening/selecting leaves audio and its
+ordinary notifications use Mark as done/Postpone with a Home chooser handoff after
+required unlock; Routine notifications and legacy Snooze remain compatible.
+Opening/selecting leaves audio and its
 original deadline running. Captured operation, privacy and completion rules below
 continue to apply, including to retained Snooze commands.
 
@@ -123,11 +125,14 @@ captured retries, Reopen clearing both work states and Restore preserving them.
 
 ## Notifications and acceptance
 
-Single ordinary alarm and ordinary Notification posts include Mark as done and Snooze · X min in
+Single ordinary alarm and ordinary Notification posts include Mark as done and Postpone in
 private and generic/public variants. Ordinary-only group ringing posts include both captured
 group actions and open individual native controls through content tap. Android
 owns layout/expansion. Preserve channel identities and notification audio; ordinary
 Notification never starts alarm service/audio/full-screen controls.
+Postpone uses a direct Activity PendingIntent to Home with the captured chooser
+request. Unresolved notifications offer eligible Postpone. Opening the request
+does not execute a delivery command or reset audio; Home waits for keyguard unlock.
 
 New PendingIntent identities bind purpose, occurrence/session, generation or
 member fingerprint and displayed duration; extras alone never provide identity.

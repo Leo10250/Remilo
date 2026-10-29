@@ -3,8 +3,9 @@
 The owner's 28 October [uniform Postpone correction](../postpone-chooser.md)
 supersedes earlier native quick-Snooze actions and mixed app shortcut rows. It
 adds the same eight-tile chooser to native alarms and Reminder Details, with
-captured Postpone all and the existing 15-minute opening default. Notification
-Snooze and historical accepted reference pixels remain unchanged.
+captured Postpone all and the existing 15-minute opening default. The owner's later
+notification follow-up uses Done/Postpone and opens the Home chooser after required
+unlock. Legacy Snooze intents and historical accepted reference pixels remain compatible.
 
 The [10 October UX refinement](../ux-refinement.md) updates app-owned Postpone
 shortcuts to Tomorrow plus actual clock time, one scope sentence and exact target
@@ -204,17 +205,20 @@ device state and system policy control how it is presented. Do not draw a custom
 floating bubble, scene-filled OS banner or app-managed overlay. The global theme
 may inform a supported accent; Android controls background, expansion and layout.
 
-- Single ordinary ringing delivery retains native Done and duration-labeled Snooze from
-  its first post and after Snooze re-trigger. Tapping opens native controls.
+- Single ordinary ringing delivery offers Mark as done and Postpone from its first
+  post and after re-trigger. Content tapping opens native controls.
 - An ordinary-only grouped ringing notification opens native per-member controls and includes
-  captured Done all and Snooze all actions. Do not invent per-member controls in
+  captured Mark all as done and Postpone all actions. Do not invent per-member controls in
   the collapsed system template.
-- Unresolved/timeout notifications stay silent; existing quick Snooze and the
-  details route expose eligible follow-up Postpone. Ordinary Notification mode
-  provides Done/Snooze, stays unfinished on posting/dismissal and never starts
+- Unresolved/timeout notifications stay silent and expose eligible Postpone.
+  Ordinary Notification mode provides Mark as done/Postpone, stays unfinished on posting/dismissal and never starts
   ringing alarm audio/full-screen UI.
 - Public/pre-unlock variants use generic content. Never infer that a private
   notification flag alone proves title redaction on every lock screen.
+- Postpone directly opens the app's Home chooser after any required unlock,
+  carrying only the captured operational identities. This navigation never submits
+  a command or changes sound/deadlines. Routine notification controls are unchanged;
+  legacy Snooze PendingIntents remain accepted.
 
 [Android notification guidance](https://developer.android.com/develop/ui/compose/notifications/create-notification)
 describes actions, visibility/public variants and urgent full-screen presentation.
@@ -226,7 +230,9 @@ the Remilo button/layout proposals above are product choices, not mandated templ
 
 The [28 October uniform chooser contract](../postpone-chooser.md) owns this flow
 in native single/member/group alerts and eligible Reminder Details. Ringing
-surfaces use Mark as done/Postpone; notifications retain quick Snooze.
+surfaces and ordinary notifications use Mark as done/Postpone. Notification
+Postpone opens this chooser over Home after required unlock; native alarm Postpone
+stays in the alarm Activity's window and works without opening private Home content.
 
 Use eight identical tiles in row-major order: 15/30 minutes, 1 hour/1 day,
 Tomorrow morning/afternoon, Tomorrow evening/Custom. Use 16 dp corners, 8 dp gaps,
@@ -280,7 +286,7 @@ Saving notes/text cannot silently clear a pending postponement.
 
 Use the canonical neutral structural icons and labeled semantic warning/error
 roles. Filled Done and Done all use the atmosphere primary/onPrimary;
-Postpone/Postpone all use the outlined native action style; notification Snooze remains. Done is intentionally prominent
+Postpone/Postpone all use the outlined native action style. Done is intentionally prominent
 on ringing surfaces and Details; Postpone retains its secondary outlined treatment.
 
 Native urgent controls are deliberately larger than the ordinary 56 dp app action:

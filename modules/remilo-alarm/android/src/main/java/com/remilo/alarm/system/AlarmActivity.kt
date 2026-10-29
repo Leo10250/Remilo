@@ -272,6 +272,7 @@ class AlarmActivity : ComponentActivity() {
       }
     }
     pickerViewState?.let { dialog.onRestoreInstanceState(it) }; pickerViewState = null
+    dialog.window?.let { AlarmChildWindowPolicy.inherit(it, window) }
     dialog.show()
   }
   private fun retry() { pendingCommand?.let(::sendAction) ?: refresh() }
@@ -407,13 +408,14 @@ class AlarmActivity : ComponentActivity() {
         labelMedium = englishType.labelMedium.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp),
         labelSmall = englishType.labelSmall.copy(fontSize = AtmosphereTokens.chineseSupportingSize.sp, lineHeight = AtmosphereTokens.chineseSupportingLineHeight.sp, fontWeight = FontWeight(AtmosphereTokens.chineseSupportingWeight), letterSpacing = 0.sp))
       MaterialTheme(colorScheme = scheme, typography = type) {
-        AlarmControlsScreen(current, busy.value, error.value, { action, record -> act(action.commandKind, record) }, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
-        postpone.value?.let { draft ->
+        AlarmModalFrame(modalOpen = postpone.value != null, content = {
+          AlarmControlsScreen(current, busy.value || postpone.value != null, error.value, { action, record -> act(action.commandKind, record) }, ::retry, roles, progress.value, refreshError.value, unconfirmed.value)
+        }, modal = { postpone.value?.let { draft ->
           val subject = current?.members?.firstOrNull { it.first.occurrenceId == draft.members.first().occurrenceId }?.second
             ?: L10n.text(NativeMessages.m_31757bbfa17e())
           PostponeChooser(draft, subject, current?.id == draft.sessionId, busy.value, unconfirmed.value, error.value, roles,
             ::closePostpone, ::choosePostpone, ::confirmPostpone, ::retry, ::backToPostponeChoices, ::pickCustomField, ::useCustomTime)
-        }
+        } })
       }
     }
     if (postpone.value?.picker != null && pendingCommand == null) window.decorView.post { showPicker() }

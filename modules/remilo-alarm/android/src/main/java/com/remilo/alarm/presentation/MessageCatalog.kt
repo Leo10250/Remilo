@@ -2401,6 +2401,10 @@ object MessageCatalog {
     "postpone_pending" to Entry(R.string.l10n_postpone_pending, false, listOf(), "Postpone is saved; scheduling is pending. Retry the same action.", false),
     "postpone_failed_schedule" to Entry(R.string.l10n_postpone_failed_schedule, false, listOf(), "Could not schedule Postpone. Review alert problems in Remilo.", false),
     "postpone_partial" to Entry(R.string.l10n_postpone_partial, false, listOf("scheduled", "count"), "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.", false),
-    "postpone_selected" to Entry(R.string.l10n_postpone_selected, false, listOf(), "Selected", false)
+    "postpone_selected" to Entry(R.string.l10n_postpone_selected, false, listOf(), "Selected", false),
+    "postpone_invalid_request" to Entry(R.string.l10n_postpone_invalid_request, false, listOf(), "This Postpone request is invalid. Close and choose the reminder again.", false),
+    "postpone_request_waiting" to Entry(R.string.l10n_postpone_request_waiting, false, listOf(), "Finish the current postponement before opening another.", false),
+    "postpone_load_failed" to Entry(R.string.l10n_postpone_load_failed, false, listOf(), "Could not load these reminders. Try again.", false),
+    "postpone_return_home" to Entry(R.string.l10n_postpone_return_home, false, listOf(), "Return to Home", false)
   )
 }

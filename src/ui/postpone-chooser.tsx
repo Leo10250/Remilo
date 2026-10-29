@@ -15,9 +15,9 @@ import { presentation } from './atmosphere.generated';
 const noSubscribe = () => () => {};
 const emptySnapshot = () => emptyPostponeDraft;
 export function PostponeChooser({ visible, capture, busy, uncertain, acknowledged, eligible, feedback, retryLabel, progressLabel,
-  onClose, onSubmit, onRetry, onAlarmSettings, onSelectionChange, returnFocusRef, returnFocusWhen }: {
+  onClose, onSubmit, onRetry, onAlarmSettings, onSelectionChange, returnFocusRef, returnFocusWhen, acknowledgedLabel, draftOwner }: {
   visible: boolean; capture: PostponeCapture | null; busy: boolean; uncertain: boolean; acknowledged: boolean; eligible: boolean;
-  feedback?: ReactNode; retryLabel: string; progressLabel: string;
+  feedback?: ReactNode; retryLabel: string; progressLabel: string; acknowledgedLabel?: string; draftOwner?: PostponeDraft;
   onClose: () => void; onSubmit: (targetMs: number) => void; onRetry: () => void; onAlarmSettings: () => void;
   onSelectionChange: () => void;
   returnFocusRef?: RefObject<View | null>; returnFocusWhen?: () => boolean;
@@ -31,7 +31,7 @@ export function PostponeChooser({ visible, capture, busy, uncertain, acknowledge
   const [tileMeasure, setTileMeasure] = useState({ key: '', height: Number(presentation.geometry.postponeTile) }), [focused, setFocused] = useState<PostponeChoice | null>(null);
   const [pickerError, setPickerError] = useLocalizedState<string | null>(null);
   const customTrigger = useRef<View>(null), wasCustom = useRef(false);
-  const draft = useMemo(() => capture ? new PostponeDraft(capture, input => engine().resolvePostponeTime(input)) : null, [capture]);
+  const draft = useMemo(() => draftOwner ?? (capture ? new PostponeDraft(capture, input => engine().resolvePostponeTime(input)) : null), [capture, draftOwner]);
   const state = useSyncExternalStore(draft?.subscribe ?? noSubscribe, draft?.snapshot ?? emptySnapshot, draft?.snapshot ?? emptySnapshot);
   useEffect(() => {
     const returned = wasCustom.current && !state.customOpen; wasCustom.current = state.customOpen;
@@ -51,8 +51,8 @@ export function PostponeChooser({ visible, capture, busy, uncertain, acknowledge
       const time = Date.now(); setNow(time); const next = Math.floor(time / 60_000);
       if (next !== minute) { minute = next; void draft.refreshPreviews(time); } }, 1_000);
     const app = AppState.addEventListener('change', state => { if (state === 'active') refresh(); });
-    return () => { clearInterval(tick); app.remove(); draft.close(); };
-  }, [visible, draft]);
+    return () => { clearInterval(tick); app.remove(); if (!draftOwner) draft.close(); };
+  }, [visible, draft, draftOwner]);
   const selected = state.customOpen ? state.customDraft?.instantMs === state.customInstantMs ? state.customDraft : null : state.target;
   const previewMs = state.customOpen ? state.customInstantMs : state.target?.instantMs;
   const future = previewMs != null && previewMs > now;
@@ -70,13 +70,14 @@ export function PostponeChooser({ visible, capture, busy, uncertain, acknowledge
     if (resolved) return shortTime(resolved.instantMs, capture?.zoneId);
     return choice.startsWith('tomorrow-') && capture ? clockPreferenceLabel(capture.tomorrowMinutes[Number(choice.at(-1))]) : '—';
   };
+  const groupCount = capture && 'kind' in capture && capture.kind === 'Group' ? capture.members.length : null;
   const back = () => { if (!frozen) { setPickerError(null); draft?.backToChoices(); } };
   return <Sheet visible={visible} title={state.customOpen ? t('postpone_custom_date_time') : t('m_a5200499d443')} onClose={onClose}
     returnFocusRef={returnFocusRef} returnFocusWhen={returnFocusWhen}
     onBack={state.customOpen ? back : onClose}
     footer={<BottomActionBar><View style={{ width: '100%', gap: 8 }}>
       {capture && previewMs != null && <View style={{ backgroundColor: colors.background, padding: 12, borderRadius: 16, gap: 4 }}>
-        <Copy muted size={typography.supporting}>{t('postpone_next_alert')}</Copy><Copy>{formatTime(previewMs, capture.zoneId)}</Copy>
+        <Copy muted size={typography.supporting}>{groupCount != null ? t('postpone_next_group', { count: groupCount }) : t('postpone_next_alert')}</Copy><Copy>{formatTime(previewMs, capture.zoneId)}</Copy>
         <ZoneSummary zoneId={capture.zoneId} atMs={previewMs} />
       </View>}
       {selected?.adjustment !== 'none' && selected && <Copy muted size={typography.supporting}>
@@ -87,15 +88,15 @@ export function PostponeChooser({ visible, capture, busy, uncertain, acknowledge
         <Button label={t('postpone_use_time')} disabled={frozen || state.resolving || !!state.error || !future} onPress={() => { void draft?.useCustom(Date.now()).then(applied => { if (applied) onSelectionChange(); }); }} />
         <Button label={t('postpone_back_choices')} variant="secondary" disabled={frozen} onPress={back} />
       </> : acknowledged ? <>
-        <Button label={t('m_59f6ec7bb281')} onPress={onClose} />
+        <Button label={acknowledgedLabel ?? t('m_59f6ec7bb281')} onPress={onClose} />
         <Button label={t('m_0146bbb12bf3')} variant="secondary" onPress={onAlarmSettings} />
-      </> : <Button label={busy ? progressLabel : uncertain ? retryLabel : t('postpone_action')} busy={busy}
+      </> : <Button label={busy ? progressLabel : uncertain ? retryLabel : groupCount != null ? t('postpone_all_action', { count: groupCount }) : t('postpone_action')} busy={busy}
         disabled={busy || !uncertain && (!eligible || !future || state.resolving || !!state.error)}
         onPress={() => { if (uncertain) onRetry(); else if (state.target) onSubmit(state.target.instantMs); }} />}
     </View></BottomActionBar>}>
     {capture && <>
-      <Copy heading>{capture.title}</Copy>
-      <Copy muted size={typography.supporting}>{t('postpone_scope_single')}</Copy>
+      <Copy heading>{'title' in capture ? capture.title || t('m_31757bbfa17e') : t('postpone_group_subject', { count: capture.members.length })}</Copy>
+      <Copy muted size={typography.supporting}>{groupCount != null ? t('postpone_scope_group', { count: groupCount }) : t('postpone_scope_single')}</Copy>
       {state.customOpen ? <>
         {state.customInstantMs != null && <DateTimeFields value={state.customInstantMs} zoneId={capture.zoneId} allDay={false}
           labelPrefix={t('postpone_custom_date_time')} onError={setPickerError}

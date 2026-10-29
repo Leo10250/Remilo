@@ -11,7 +11,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.activity.compose.BackHandler
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
@@ -52,13 +53,10 @@ internal fun PostponeChooser(
   draft: PostponeDraft, subject: String, ready: Boolean,
   busy: Boolean, unconfirmed: Boolean, error: String?, roles: AtmosphereTokens.Roles,
   onClose: () -> Unit, onChoice: (String) -> Unit, onConfirm: () -> Unit, onRetry: () -> Unit,
-  onBackChoices: () -> Unit, onPickField: (String) -> Unit, onUseCustom: () -> Unit
+  onBackChoices: () -> Unit, onPickField: (String) -> Unit, onUseCustom: () -> Unit,
+  clockFormat: DateFormat? = null, minutesClockFormat: DateFormat? = null
 ) {
   val canDismiss = !busy && !unconfirmed
-  val latestDismiss = rememberUpdatedState(canDismiss)
-  val confirmDismiss = remember { { value: SheetValue -> value != SheetValue.Hidden || latestDismiss.value } }
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true,
-    confirmValueChange = confirmDismiss)
   var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
   val lifecycle = (LocalContext.current as? LifecycleOwner)?.lifecycle
   var foreground by remember(lifecycle) { mutableStateOf(lifecycle?.currentState?.isAtLeast(Lifecycle.State.STARTED) != false) }
@@ -74,19 +72,12 @@ internal fun PostponeChooser(
   }
   val frozen = !ready || busy || unconfirmed || draft.stale
   val custom = draft.picker != null
-  var previousCustom by remember { mutableStateOf(custom) }
-  LaunchedEffect(custom) {
-    // A dialog-window Back can reach the modal dismissal callback before the
-    // inner BackHandler. Returning from Custom must restore visible choices.
-    if (previousCustom && !custom) sheetState.show()
-    previousCustom = custom
-  }
   val customTime = if (custom) runCatching { PostponeTimePolicy.resolve(mapOf("kind" to "Custom", "zoneId" to draft.zoneId,
     "referenceAtMs" to now, "local" to draft.picker!!.local)) }.getOrNull() else null
   val shownTarget = if (custom) (customTime?.get("instantMs") as? Number)?.toLong() else draft.targetMs
   val future = shownTarget != null && shownTarget > now
-  val time = rememberDeviceTimeFormat(TimeZone.getTimeZone(draft.zoneId))
-  val shortcutClock = rememberDeviceTimeFormat(TimeZone.getTimeZone("UTC"))
+  val time = clockFormat ?: rememberDeviceTimeFormat(TimeZone.getTimeZone(draft.zoneId))
+  val shortcutClock = minutesClockFormat ?: rememberDeviceTimeFormat(TimeZone.getTimeZone("UTC"))
   val date = remember(draft.zoneId, PresentationLanguage.localeTag) {
     DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.forLanguageTag(PresentationLanguage.localeTag)).apply {
       timeZone = TimeZone.getTimeZone(draft.zoneId)
@@ -109,10 +100,13 @@ internal fun PostponeChooser(
     minutes?.let { shortcutClock.format(Date(it * 60_000L)) } ?: "—", minutes != null) } +
     Tile("custom", L10n.text(NativeMessages.postpone_custom()), L10n.text(NativeMessages.postpone_date_time()))
 
-  ModalBottomSheet(onDismissRequest = { if (canDismiss) { if (custom) onBackChoices() else onClose() } }, sheetState = sheetState,
-    containerColor = Color(roles.surface), contentColor = Color(roles.onSurface),
-    shape = RoundedCornerShape(topStart = AtmosphereTokens.shapeSheet.dp, topEnd = AtmosphereTokens.shapeSheet.dp)) {
-    BackHandler(enabled = custom && canDismiss) { onBackChoices() }
+  val title = if (custom) L10n.text(NativeMessages.postpone_custom_date_time()) else if (draft.all)
+    L10n.text(NativeMessages.postpone_all_action(draft.members.size)) else L10n.text(NativeMessages.m_a5200499d443())
+  val cancelFocus = remember { FocusRequester() }
+  val actionFocus = remember { FocusRequester() }
+  LaunchedEffect(Unit) { if (canDismiss) runCatching { cancelFocus.requestFocus() } }
+  LaunchedEffect(unconfirmed) { if (unconfirmed) runCatching { actionFocus.requestFocus() } }
+  AlarmPostponeSheet(canDismiss, custom, title, roles, onClose, onBackChoices) {
     BoxWithConstraints(Modifier.fillMaxWidth().fillMaxHeight(.94f)) {
       val density = LocalDensity.current
       val measurer = rememberTextMeasurer()
@@ -134,9 +128,9 @@ internal fun PostponeChooser(
       val footerOverflows = with(density) { footerHeight.toDp() } > maxHeight - AtmosphereTokens.nativeSingle.dp
       val header: @Composable () -> Unit = {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-          Text(if (custom) L10n.text(NativeMessages.postpone_custom_date_time()) else if (draft.all) L10n.text(NativeMessages.postpone_all_action(draft.members.size)) else L10n.text(NativeMessages.m_a5200499d443()),
+          Text(title,
             style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f).semantics { heading() })
-          TextButton(onClick = onClose, enabled = canDismiss, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)) {
+          TextButton(onClick = onClose, enabled = canDismiss, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).focusRequester(cancelFocus)) {
             Text(L10n.text(NativeMessages.m_19766ed6ccb2()), color = Color(if (canDismiss) roles.primary else roles.disabledInk))
           }
         }
@@ -204,7 +198,7 @@ internal fun PostponeChooser(
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
           Button(onClick = if (unconfirmed) onRetry else if (custom) onUseCustom else onConfirm,
             enabled = !busy && (unconfirmed || (ready && !draft.stale && future && (!custom || draft.picker?.step == "custom"))),
-            shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).focusRequester(actionFocus),
             contentPadding = PaddingValues(16.dp), colors = ButtonDefaults.buttonColors(
               containerColor = Color(roles.primary), contentColor = Color(roles.onPrimary),
               disabledContainerColor = Color(roles.disabledSurface), disabledContentColor = Color(roles.disabledInk))) {

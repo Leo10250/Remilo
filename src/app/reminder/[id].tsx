@@ -12,9 +12,8 @@ import { recoveryPresentation, commandFeedback, type Tone } from '../../domain/a
 
 import { creationOrigin, originParams, reminderListRoute, secondaryOriginRoute, type OriginParams } from '../../domain/navigation';
 import { modeLabel, canAdjustAlert, deliveryExplanation, overduePresentation, recordedCompletionTime, repeatSummary, stateIcon, stateLabel, stateTone } from '../../domain/presentation';
-import { deviceZone } from '../../domain/time';
-import { canPostponeReminder, capturePostpone, postponeCaptureMatches, type PostponeCapture } from '../../domain/postpone';
-import { PostponeChooser } from '../../ui/postpone-chooser';
+import { canPostponeReminder } from '../../domain/postpone';
+import { PostponeHost, usePostponeController } from '../../ui/postpone-host';
 import { ActionFeedback, BottomActionBar, Button, ConnectedGroup, Copy, Icon, IconButton, Page, QueryState, SettingRow, Sheet, Status } from '../../ui/components';
 
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
@@ -57,18 +56,17 @@ export default function ReminderDetails() {
   const families = useQuery({ queryKey: ['repeat-families'], queryFn: () => engine().queryRepeatFamilies(), enabled: nativeAvailable && !!item?.segmentId });
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
   const scopeTrigger = useRef<View>(null), postponeTrigger = useRef<View>(null), focused = useIsFocused();
-  const [postpone, setPostpone] = useState(false), [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
-  const [postponeCapture, setPostponeCapture] = useState<{ item: Occurrence; draft: PostponeCapture } | null>(null);
+  const postponeAction = usePostponeController();
+  const [scope, setScope] = useState(action === 'edit'), [menu, setMenu] = useState(false);
   const postponeFromRoute = useRef(false);
   const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
-  const [feedback, setFeedback] = useLocalizedState<Feedback | null>(null), [sheetFeedback, setSheetFeedback] = useLocalizedState<Feedback | null>(null);
+  const [feedback, setFeedback] = useLocalizedState<Feedback | null>(null);
   const pendingOperation = useRef<{ command: ContentCommand | DeliveryCommand; item: Occurrence; success: string } | null>(null);
   const runningOperation = useRef(false);
   const [uncertain, setUncertain] = useState(false);
   const [recoveryKind, setRecoveryKind] = useState<string>();
-  const [postponeResult, setPostponeResult] = useState(false);
-  useAppearanceHold(command.isPending || uncertain);
+  useAppearanceHold(command.isPending || uncertain || postponeAction.guarded);
   usePreventRemove(command.isPending || uncertain || unlinkBusy || unlinkUncertain, () => {
     confirm(t('m_62b815b59b7a'), t('m_b920b015452f'));
   });
@@ -76,23 +74,20 @@ export default function ReminderDetails() {
     if (!segmentId) router.replace({ pathname: '/edit', params: { id: itemId, ...routeParams, originReminderId: itemId } });
   }, [action, itemId, segmentId, routeParams]);
   useEffect(() => {
-    if (action !== 'postpone' || postponeFromRoute.current || !item || !settings.data || !canPostponeReminder(item)) return;
+    if (action !== 'postpone' || postponeFromRoute.current || !item || !canPostponeReminder(item)) return;
     postponeFromRoute.current = true;
-    setPostponeCapture({ item: { ...item }, draft: capturePostpone(item, settings.data, Date.now(), deviceZone()) });
-    setPostpone(true);
-  }, [action, item, settings.data]);
+    postponeAction.controller.open({ kind: 'Single', occurrenceId: item.id, expectedGeneration: item.generation }, 'details');
+  }, [action, item, postponeAction.controller]);
   const runPending = async () => {
     const operation = pendingOperation.current;
     if (!operation || command.isPending || runningOperation.current) return;
     runningOperation.current = true;
     setRecoveryKind(operation.command.kind);
-    setFeedback(null); setSheetFeedback(null);
+    setFeedback(null);
     try {
       const result = await command.mutateAsync(operation.command);
       pendingOperation.current = null; setUncertain(false);
-      const next = 'expectedGeneration' in operation.command && operation.command.kind === 'Postpone' && ['Blocked', 'Pending'].includes(result.status)
-        ? { message: t('m_1740914a5c1b', { arg0: String(result.status === 'Blocked' ? t('m_9b71e79182a6') : t('m_9b69a5f441b4')), arg1: String(formatTime(operation.command.alarmAtMs!)) }), tone: 'warning' as const }
-        : commandFeedback(result, operation.success);
+      const next = commandFeedback(result, operation.success);
       setFeedback(operation.command.kind === 'Delete' && next.tone === 'success' ? null : next);
       if (operation.command.kind === 'Delete') {
         notifyTrash(operation.item, result);
@@ -100,21 +95,18 @@ export default function ReminderDetails() {
         setDeleted(true);
       } else if (operation.command.kind === 'Purge') {
         setDeleted(true);
-      } else if ('expectedGeneration' in operation.command) {
-        if (operation.command.kind === 'Postpone' && (result.status === 'Blocked' || result.status === 'Pending')) { setSheetFeedback(next); setPostponeResult(true); }
-        else setPostpone(false);
       }
     } catch (error) {
       if (error instanceof CommandError) { pendingOperation.current = null; setUncertain(false); }
       else setUncertain(true);
       const next: Feedback = { message: errorText(error, t('m_e47c7ded09d7')), tone: 'danger' };
-      setFeedback(next); if ('expectedGeneration' in operation.command) setSheetFeedback(next);
+      setFeedback(next);
     } finally { runningOperation.current = false; }
   };
   const [deleted, setDeleted] = useState(false);
   useEffect(() => { if (deleted && !command.isPending && !uncertain) { if (router.canGoBack()) router.back(); else router.replace(secondaryOriginRoute(routeParams)); } }, [deleted, command.isPending, uncertain, routeParams]);
   const content = async (kind: ContentCommand['kind'], captured = item) => {
-    if (!captured || command.isPending || pendingOperation.current) return;
+    if (!captured || command.isPending || postponeAction.controller.isGuarded() || pendingOperation.current) return;
     pendingOperation.current = { command: { kind, occurrenceId: id, expectedRevision: captured.revision, operationId: engine().createOperationId() }, item: captured, success: activity[kind] ?? t('m_87124f754c23') };
     await runPending();
   };
@@ -125,21 +117,19 @@ export default function ReminderDetails() {
     if (item.completed || item.skipped) { void content('Delete'); return; }
     setTrashItem({ ...item });
   };
-  const delivery = async (kind: DeliveryCommand['kind'], alarmAtMs?: number) => {
-    const captured = kind === 'Postpone' ? postponeCapture?.item : item;
-    if (!captured || command.isPending || pendingOperation.current || !canAdjustAlert(captured) || kind === 'Stop' && captured.deliveryState !== 'Alerting') return;
-    if (kind === 'Postpone' && (!postponeCapture || !canPostponeReminder(captured) || !canPostponeReminder(item) || !postponeCaptureMatches(postponeCapture.draft, item))) return;
+  const delivery = async (kind: Exclude<DeliveryCommand['kind'], 'Postpone'>, alarmAtMs?: number) => {
+    const captured = item;
+    if (!captured || command.isPending || postponeAction.controller.isGuarded() || pendingOperation.current || !canAdjustAlert(captured) || kind === 'Stop' && captured.deliveryState !== 'Alerting') return;
     if (kind === 'CompleteDelivery' && captured.deliveryState !== 'Alerting' && !(captured.mode === 'Notification' && captured.deliveryState === 'Notified')) return;
     pendingOperation.current = { command: { kind, occurrenceId: captured.id, expectedGeneration: captured.generation, alarmAtMs,
       ...(kind === 'Snooze' ? { expectedSnoozeMinutes: captured.quickSnoozeMinutes } : {}), operationId: engine().createOperationId() }, item: captured,
-      success: kind === 'Stop' || kind === 'CompleteDelivery' ? t('m_7b359664f423') : kind === 'Postpone' ? t('m_b47059d04e58') + formatTime(alarmAtMs!) : t('m_5550d1a27260') };
+      success: kind === 'Stop' || kind === 'CompleteDelivery' ? t('m_7b359664f423') : t('m_5550d1a27260') };
     await runPending();
   };
   const edit = () => { if (command.isPending || uncertain) return; setMenu(false); if (item?.segmentId) setScope(true); else router.push({ pathname: '/edit', params: { id, ...routeParams, originReminderId: id } }); };
   const openPostpone = () => {
-    if (!item || !settings.data || command.isPending || pendingOperation.current || !canPostponeReminder(item)) return;
-    setPostponeCapture({ item: { ...item }, draft: capturePostpone(item, settings.data, Date.now(), deviceZone()) });
-    setSheetFeedback(null); setPostponeResult(false); setPostpone(true);
+    if (!item || command.isPending || pendingOperation.current || postponeAction.controller.isGuarded() || !canPostponeReminder(item)) return;
+    postponeAction.controller.open({ kind: 'Single', occurrenceId: item.id, expectedGeneration: item.generation }, 'details');
   };
   const active = item && !item.deleted && !item.completed && !item.skipped;
   const unlink = async () => {
@@ -154,7 +144,6 @@ export default function ReminderDetails() {
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
   const recovery = recoveryPresentation(recoveryKind);
-  const closePostpone = () => { if (!command.isPending && !uncertain && !pendingOperation.current) setPostpone(false); };
   return <Page title={t('m_31757bbfa17e')} scrollKey={'reminder:' + id} onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}
     actions={item ? <>{!item.deleted && <IconButton icon="edit" label={t('m_1f1353b055df')} buttonRef={scopeTrigger} disabled={command.isPending || uncertain} onPress={edit} />}
     <IconButton icon="more_vert" label={t('m_3ddd2c824c07')} disabled={command.isPending || uncertain} onPress={() => setMenu(true)} /></> : undefined}
@@ -249,15 +238,7 @@ export default function ReminderDetails() {
       </>}
       {series.data?.state === 'Archived' && <Copy muted size={typography.supporting}>{t('m_eabe16e1ec41')}</Copy>}
     </Sheet>
-    <PostponeChooser key={postponeCapture ? `${postponeCapture.draft.occurrenceId}:${postponeCapture.draft.referenceAtMs}` : 'closed'}
-      visible={postpone} capture={postponeCapture?.draft ?? null} busy={command.isPending} uncertain={uncertain}
-      returnFocusRef={postponeTrigger} returnFocusWhen={() => focused}
-      acknowledged={postponeResult} eligible={postponeEligible && !!postponeCapture && postponeCaptureMatches(postponeCapture.draft, item)}
-      retryLabel={recovery.retry} progressLabel={t('m_1622aa101d70')} onClose={closePostpone}
-      onSubmit={target => { void delivery('Postpone', target); }} onRetry={() => { void runPending(); }}
-      onSelectionChange={() => setSheetFeedback(null)}
-      onAlarmSettings={() => { closePostpone(); router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } }); }}
-      feedback={<>{sheetFeedback && !uncertain && <ActionFeedback {...sheetFeedback} />}
-        {uncertain && <ActionFeedback message={recovery.message} tone="warning" />}</>} />
+    <PostponeHost action={postponeAction} destination="details" returnFocusRef={postponeTrigger}
+      onAlarmSettings={() => router.push({ pathname: '/alarm-check', params: { ...routeParams, originReminderId: id } })} />
   </Page>;
 }

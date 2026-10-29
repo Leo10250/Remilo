@@ -9,7 +9,9 @@ belongs only in [the backlog](../../backlog.md).
 The owner's 28 October [uniform Postpone chooser](postpone-chooser.md) replaces
 native/ringing Details quick-Snooze controls with Mark as done/Postpone and adds
 captured Postpone all. It governs the eight matching tiles, shared native time
-resolution, custom step and protected recovery. Notification Snooze is retained.
+resolution, custom step and protected recovery. The owner's notification follow-up
+uses Mark as done/Postpone for ordinary notifications; Postpone opens the Home
+chooser after any required unlock. Routine controls and legacy Snooze remain compatible.
 
 The owner's [12 October Calendar management correction](calendar-management.md)
 keeps reminder information first, moves Calendar administration to a separate page

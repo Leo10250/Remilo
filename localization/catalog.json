@@ -16289,6 +16289,10 @@
       "args": {},
       "context": "Uniform Postpone chooser",
       "calendarStatus": false
-    }
+    },
+    "postpone_invalid_request": { "en": "This Postpone request is invalid. Close and choose the reminder again.", "zh-Hans": "此推迟请求无效。请关闭后重新选择提醒。", "args": {}, "context": "Notification Postpone chooser", "calendarStatus": false },
+    "postpone_request_waiting": { "en": "Finish the current postponement before opening another.", "zh-Hans": "请先完成当前推迟操作，再打开其他提醒。", "args": {}, "context": "Notification Postpone chooser", "calendarStatus": false },
+    "postpone_load_failed": { "en": "Could not load these reminders. Try again.", "zh-Hans": "无法加载这些提醒，请重试。", "args": {}, "context": "Notification Postpone chooser", "calendarStatus": false },
+    "postpone_return_home": { "en": "Return to Home", "zh-Hans": "返回首页", "args": {}, "context": "Notification Postpone chooser", "calendarStatus": false }
   }
 }

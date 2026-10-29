@@ -321,9 +321,13 @@ class AlertExperienceTest {
     assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedService)
     val manager = context.getSystemService(NotificationManager::class.java)
     val notification = manager.activeNotifications.single().notification
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.actions.map { it.title.toString() })
-    assertEquals(listOf("Mark as done", "Snooze · 10 min"), notification.publicVersion.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), notification.actions.map { it.title.toString() })
+    assertEquals(listOf("Mark as done", "Postpone"), notification.publicVersion.actions.map { it.title.toString() })
     assertNull(notification.fullScreenIntent)
+    val unchanged = records().single()
+    notification.actions[1].actionIntent.send()
+    assertEquals(unchanged, records().single())
+    assertEquals(Intent.ACTION_VIEW, shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity.action)
     manager.cancel(id, 1)
     assertEquals(false, occurrence(id)["completed"])
     assertEquals("Notified", occurrence(id)["deliveryState"])
@@ -332,14 +336,15 @@ class AlertExperienceTest {
     assertEquals(listOf("Done"), (occurrence(id)["history"] as List<*>).map { (it as Map<*, *>)["kind"] })
   }
 
-  @Test fun notificationActionsWorkBeforeFirstUnlockAndCannotAffectANewerDelivery() {
+  @Test fun legacyNotificationSnoozeIntentsRemainCompatibleBeforeFirstUnlockAndCannotAffectANewerDelivery() {
     val id = create("boot-notification", "Notification")
     engine.close(); shadowOf(context.getSystemService(UserManager::class.java)).setUserUnlocked(false); engine = newEngine()
     now += 60_000; fire(id)
     val notification = context.getSystemService(NotificationManager::class.java).activeNotifications.single().notification
     assertEquals("Reminder", notification.extras.getCharSequence("android.title").toString())
     val done = shadowOf(notification.actions[0].actionIntent).savedIntent
-    receive(shadowOf(notification.actions[1].actionIntent).savedIntent)
+    val legacySnooze = AlarmScheduler.capturedActionIntent(context, "quicksnooze", records().single())
+    receive(legacySnooze)
     assertEquals("Scheduled", records().single().state); assertEquals(2L, records().single().generation)
     receive(done)
     assertEquals("Scheduled", records().single().state)

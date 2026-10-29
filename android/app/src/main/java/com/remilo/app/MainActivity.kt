@@ -1,6 +1,7 @@
 package com.remilo.app
 import expo.modules.splashscreen.SplashScreenManager
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 
@@ -11,6 +12,11 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
+  override fun onNewIntent(intent: Intent) {
+    // Linking may initialize after this callback; keep its current Activity intent current.
+    setIntent(intent)
+    super.onNewIntent(intent)
+  }
   override fun onResume() {
     super.onResume()
     com.remilo.alarm.calendar.CalendarWork.reconcile(applicationContext, opportunity = true)

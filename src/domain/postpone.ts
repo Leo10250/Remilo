@@ -1,24 +1,23 @@
-import type { AppSettings, Occurrence, PostponeTimeInput, TimeConversion } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type { AppSettings, Occurrence, PostponeTimeInput, SessionActionMember, TimeConversion } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { civilAt } from './time';
 import { canAdjustAlert } from './presentation';
 
 export const postponeChoices = ['15', '30', '60', '1440', 'tomorrow-0', 'tomorrow-1', 'tomorrow-2', 'custom'] as const;
 export type PostponeChoice = typeof postponeChoices[number];
-export type PostponeCapture = {
-  occurrenceId: string; expectedGeneration: number; title: string; referenceAtMs: number; zoneId: string;
-  tomorrowMinutes: readonly [number, number, number];
-};
+export type PostponeClockCapture = { referenceAtMs: number; zoneId: string; tomorrowMinutes: readonly [number, number, number] };
+export type PostponeSingleCapture = PostponeClockCapture & { occurrenceId: string; expectedGeneration: number; title: string };
+export type PostponeCapture = PostponeSingleCapture | (PostponeClockCapture & { kind: 'Group'; expectedSessionId: string; members: SessionActionMember[] });
 /** Routine alerts retain their dedicated Start/Snooze/Dismiss flow. */
 export function canPostponeReminder(item: Pick<Occurrence, 'completed' | 'deleted' | 'skipped' | 'mode' | 'deliveryState' | 'routine' | 'kind'> | null | undefined) {
   return !!item && !item.routine && item.kind !== 'RoutineFamily' && canAdjustAlert(item);
 }
 export function capturePostpone(item: Pick<Occurrence, 'id' | 'generation' | 'title'>,
   settings: Pick<AppSettings, 'tomorrowMorning' | 'tomorrowAfternoon' | 'tomorrowEvening'> | undefined,
-  referenceAtMs: number, zoneId: string): PostponeCapture {
+  referenceAtMs: number, zoneId: string): PostponeSingleCapture {
   return { occurrenceId: item.id, expectedGeneration: item.generation, title: item.title, referenceAtMs, zoneId,
     tomorrowMinutes: [settings?.tomorrowMorning ?? 600, settings?.tomorrowAfternoon ?? 840, settings?.tomorrowEvening ?? 1020] };
 }
-export function postponeCaptureMatches(capture: PostponeCapture, item: Pick<Occurrence, 'id' | 'generation'> | null | undefined) {
+export function postponeCaptureMatches(capture: PostponeSingleCapture, item: Pick<Occurrence, 'id' | 'generation'> | null | undefined) {
   return item?.id === capture.occurrenceId && item.generation === capture.expectedGeneration;
 }
 export function postponeTimeInput(choice: Exclude<PostponeChoice, 'custom'>, capture: PostponeCapture, referenceAtMs: number): PostponeTimeInput {
@@ -42,6 +41,7 @@ export class PostponeDraft {
   private previewTicket = 0;
   private closed = false;
   private frozen = false;
+  private initialized = false;
   constructor(readonly capture: PostponeCapture, private resolve: Resolve) {}
   snapshot = () => this.state;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
@@ -51,6 +51,8 @@ export class PostponeDraft {
     this.frozen = value;
   }
   async initialize() {
+    if (this.initialized) return;
+    this.initialized = true;
     this.closed = false;
     const lifecycle = ++this.lifecycle;
     const ticket = ++this.ticket;

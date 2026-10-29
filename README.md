@@ -127,7 +127,7 @@ permission grants or downgrade flags to get around an installation error.
 | `npm run doctor` | Read-only toolchain, dependency, signing and configuration diagnosis |
 | `npm run devices` | Transport states, model, Android/API and supported ABIs |
 | `npm run deploy` | Signed bundled build and in-place install; app stays closed |
-| `npm run device:logs -- --device SERIAL` | Bounded Remilo-tagged snapshot; add `--follow` for streaming, Ctrl+C to stop |
+| `npm run device:logs -- --device SERIAL` | Bounded Remilo-tagged snapshot; add `--follow` for streaming, Ctrl+C to stop, or `--crashes` for exact-package AndroidRuntime crash blocks |
 | `npm run device:capture -- --device SERIAL` | Screenshot of the current screen; no unlocking or navigation |
 | `npm run preview:ui` | Fixture-only UI preview on port 8092; add `--port NUMBER` |
 | `npm run verify:all` | Shared/tooling tests plus Android unit tests, lint and assembly |

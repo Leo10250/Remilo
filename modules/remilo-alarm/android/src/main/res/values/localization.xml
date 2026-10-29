@@ -2385,4 +2385,8 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_postpone_failed_schedule">Could not schedule Postpone. Review alert problems in Remilo.</string>
   <string name="l10n_postpone_partial">%1$s of %2$s alerts scheduled. Review alert problems in Remilo.</string>
   <string name="l10n_postpone_selected">Selected</string>
+  <string name="l10n_postpone_invalid_request">This Postpone request is invalid. Close and choose the reminder again.</string>
+  <string name="l10n_postpone_request_waiting">Finish the current postponement before opening another.</string>
+  <string name="l10n_postpone_load_failed">Could not load these reminders. Try again.</string>
+  <string name="l10n_postpone_return_home">Return to Home</string>
 </resources>

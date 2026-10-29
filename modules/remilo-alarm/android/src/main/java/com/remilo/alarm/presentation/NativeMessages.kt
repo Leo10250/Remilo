@@ -2340,4 +2340,8 @@ object NativeMessages {
   fun postpone_failed_schedule(): L10n.Message = L10n.Message("postpone_failed_schedule")
   fun postpone_partial(scheduled: Number, count: Number): L10n.Message = L10n.Message("postpone_partial", mapOf("scheduled" to scheduled.toString(), "count" to count.toString()))
   fun postpone_selected(): L10n.Message = L10n.Message("postpone_selected")
+  fun postpone_invalid_request(): L10n.Message = L10n.Message("postpone_invalid_request")
+  fun postpone_request_waiting(): L10n.Message = L10n.Message("postpone_request_waiting")
+  fun postpone_load_failed(): L10n.Message = L10n.Message("postpone_load_failed")
+  fun postpone_return_home(): L10n.Message = L10n.Message("postpone_return_home")
 }

@@ -2376,7 +2376,11 @@ export const catalogs = {
     "postpone_pending": "Postpone is saved; scheduling is pending. Retry the same action.",
     "postpone_failed_schedule": "Could not schedule Postpone. Review alert problems in Remilo.",
     "postpone_partial": "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.",
-    "postpone_selected": "Selected"
+    "postpone_selected": "Selected",
+    "postpone_invalid_request": "This Postpone request is invalid. Close and choose the reminder again.",
+    "postpone_request_waiting": "Finish the current postponement before opening another.",
+    "postpone_load_failed": "Could not load these reminders. Try again.",
+    "postpone_return_home": "Return to Home"
   },
   "zh-Hans": {
     "exercise_sets": "组数",
@@ -4741,7 +4745,11 @@ export const catalogs = {
     "postpone_pending": "已保存推迟操作，正在等待安排。请重试同一操作。",
     "postpone_failed_schedule": "无法安排推迟后的提醒，请在 Remilo 中检查提醒问题。",
     "postpone_partial": "已安排 {count} 个提醒中的 {scheduled} 个，请在 Remilo 中检查提醒问题。",
-    "postpone_selected": "已选择"
+    "postpone_selected": "已选择",
+    "postpone_invalid_request": "此推迟请求无效。请关闭后重新选择提醒。",
+    "postpone_request_waiting": "请先完成当前推迟操作，再打开其他提醒。",
+    "postpone_load_failed": "无法加载这些提醒，请重试。",
+    "postpone_return_home": "返回首页"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -7083,4 +7091,8 @@ export interface MessageArguments {
   postpone_failed_schedule: Record<string, never>;
   postpone_partial: { scheduled: number; count: number };
   postpone_selected: Record<string, never>;
+  postpone_invalid_request: Record<string, never>;
+  postpone_request_waiting: Record<string, never>;
+  postpone_load_failed: Record<string, never>;
+  postpone_return_home: Record<string, never>;
 }

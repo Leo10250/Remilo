@@ -2,7 +2,7 @@ import { chineseTextMetrics, lineHeightFor, shape, space, typography } from './t
 import { useLocale, useTranslation } from '../localization/react';
 
 import { useTimeFormatting } from './time-display';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
 import { Animated, I18nManager, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, type GestureUpdateEvent, type PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -26,7 +26,8 @@ function MetadataLine({ label, icon, iconSize = 16, color }: { label: string; ic
   </View>;
 }
 
-export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice }: {
+export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTrash, busy = false, restore = false, compact = false, glyph = 'event', nowMs, presentation = 'row', showActionDate = false, selection, context, calendarNotice, moreButtonRef }: {
+  moreButtonRef?: Ref<View>;
   item: Occurrence; onOpen: () => void; onDone?: () => void; onMore?: () => void; onTrash?: () => void; busy?: boolean; restore?: boolean;
   compact?: boolean; editorial?: boolean; glyph?: IconName; nowMs?: number;
   presentation?: 'row' | 'tile';
@@ -157,7 +158,7 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
         </View>}
         </View>
       </Pressable>
-      {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton icon="more_vert" label={t('m_05d82d5eb6ee') + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
+      {!selection && onMore && <View style={{ marginTop: controlInset, width: 48, flexShrink: 0 }}><IconButton buttonRef={moreButtonRef} icon="more_vert" label={t('m_05d82d5eb6ee') + item.title} onPress={onMore} disabled={busy} variant="standard" /></View>}
     </Animated.View></GestureDetector>
   </View>;
 }

@@ -63,11 +63,17 @@ The owner's 28 October [uniform Postpone contract](design/current/postpone-choos
 governs ordinary native single/member/group controls and the Reminder Details chooser.
 Ordinary ringing surfaces expose Mark as done/Postpone (and their group counterparts).
 Routine alerts retain Start routine/Snooze/Dismiss and their dated-session expiry.
-Notification Snooze, non-ringing quick actions and legacy commands remain supported.
+Ordinary notifications show Mark as done/Postpone and corresponding captured group
+actions. Unresolved notifications expose eligible Postpone. Notification Postpone
+opens Home with the chooser after any required unlock; Agenda More > Postpone and
+ordinary active-group Postpone all use that same Home chooser. Legacy Snooze intents,
+non-ringing app quick actions and Snooze preferences remain supported.
 Opening the chooser leaves playback and the original five-minute deadline running;
 only confirmation changes the captured occurrences' next alerts. One eight-tile
 layout offers 15/30/60 minutes, 24 elapsed hours, the three configured Tomorrow
 clock times and a separate Custom step. The opening default remains 15 minutes.
+The full-screen alarm chooser stays inside its lock-capable Activity window and
+does not require navigating Home. Private Home content remains behind keyguard.
 
 - Interface language is System default, English or Simplified Chinese. New
   installations follow supported phone languages; upgrades retain English until

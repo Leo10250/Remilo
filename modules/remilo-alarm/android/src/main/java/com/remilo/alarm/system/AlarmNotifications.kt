@@ -39,9 +39,14 @@ class AlarmNotifications(private val context: Context) {
     })
   }
   fun ringing(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved, atMs: Long = System.currentTimeMillis()): Notification {
-    return ringingVariant(sessionId, members, appearance, false, atMs)
+    require(members.isNotEmpty()) { L10n.text(NativeMessages.m_a3e18f7210d9()) }
+    val postpone = if (members.none { it.first.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }) {
+      if (members.size == 1) NotificationPostponeIntent.single(context, members.single().first)
+      else NotificationPostponeIntent.group(context, sessionId, members.map { it.first })
+    } else null
+    return ringingVariant(sessionId, members, appearance, false, atMs, postpone)
   }
-  private fun ringingVariant(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved, public: Boolean, atMs: Long): Notification {
+  private fun ringingVariant(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved, public: Boolean, atMs: Long, postpone: PendingIntent?): Notification {
     require(members.isNotEmpty()) { L10n.text(NativeMessages.m_a3e18f7210d9()) }
     val open = PendingIntent.getActivity(context, 0,
       Intent(context, AlarmActivity::class.java).setData(Uri.parse("remilo-alarm://session/$sessionId"))
@@ -67,14 +72,14 @@ class AlarmNotifications(private val context: Context) {
         builder.addAction(Notification.Action.Builder(null, L10n.text("Dismiss alarm"), AlarmScheduler.capturedAction(context, "routinedismiss", record)).build())
       } else {
       builder.addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.m_62aa4b87cc52()), AlarmScheduler.capturedAction(context, "done", record)).build())
-      builder.addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
+      builder.addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.postpone_action()), requireNotNull(postpone)).build())
       }
     } else if (members.none { it.first.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }) {
       val records = members.map { it.first }
       builder.addAction(Notification.Action.Builder(null, L10n.text("Mark all as done (${members.size})"), AlarmScheduler.capturedGroup(context, "doneall", sessionId, records)).build())
-      builder.addAction(Notification.Action.Builder(null, L10n.text("Snooze all · ${records.first().snoozeMinutes} min"), AlarmScheduler.capturedGroup(context, "snoozeall", sessionId, records)).build())
+      builder.addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.postpone_all_plain()), requireNotNull(postpone)).build())
     }
-    if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, appearance, true, atMs))
+    if (!public) builder.setPublicVersion(ringingVariant(sessionId, members, appearance, true, atMs, postpone))
     return builder.build()
   }
   fun update(sessionId: String, members: List<Pair<AlertRecord, String>>, appearance: AppearancePolicy.Resolved) {
@@ -89,25 +94,26 @@ class AlarmNotifications(private val context: Context) {
         "Interrupted" -> L10n.text(NativeMessages.m_a48a8f6a3fa3()); else -> if (record.mode == "Notification") L10n.text(NativeMessages.m_08ec04b9786b()) else L10n.text(NativeMessages.m_8d4ce3c39c9c()) }).setOnlyAlertOnce(true)
       .setVisibility(Notification.VISIBILITY_PRIVATE)
       .setContentIntent(openReminder(record.occurrenceId))
-      .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
+      .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.postpone_action()), NotificationPostponeIntent.single(context, record)).build())
       .build())
   }
   fun regular(record: AlertRecord, title: String, appearance: AppearancePolicy.Resolved, onlyAlertOnce: Boolean = false) {
     if (!allowed()) return
+    val postpone = NotificationPostponeIntent.single(context, record)
     val public = Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(L10n.text(NativeMessages.m_31757bbfa17e()))
       .setContentText(L10n.text(NativeMessages.m_8e9b539451c6())).setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PUBLIC).setContentIntent(openReminder(record.occurrenceId))
       .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.m_62aa4b87cc52()), AlarmScheduler.capturedAction(context, "done", record)).build())
-      .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build()).build()
+      .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.postpone_action()), postpone).build()).build()
     manager.notify(record.occurrenceId, 1, Notification.Builder(context, NOTIFICATION_CHANNEL)
       .setColor(AtmosphereTokens.colors(appearance.atmosphere, appearance.brightness).primary.toInt())
       .setSmallIcon(R.drawable.ic_remilo_notification).setContentTitle(title)
       .setContentText(L10n.text(NativeMessages.m_8e9b539451c6())).setCategory(Notification.CATEGORY_REMINDER).setOnlyAlertOnce(onlyAlertOnce)
       .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(public).setContentIntent(openReminder(record.occurrenceId))
       .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.m_62aa4b87cc52()), AlarmScheduler.capturedAction(context, "done", record)).build())
-      .addAction(Notification.Action.Builder(null, L10n.text("Snooze · ${record.snoozeMinutes} min"), AlarmScheduler.capturedAction(context, "quicksnooze", record)).build())
+      .addAction(Notification.Action.Builder(null, L10n.text(NativeMessages.postpone_action()), postpone).build())
       .build())
   }
   fun routine(record: AlertRecord, title: String?, appearance: AppearancePolicy.Resolved, atMs: Long, onlyAlertOnce: Boolean = false) {

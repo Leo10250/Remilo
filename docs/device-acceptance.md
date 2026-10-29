@@ -1,5 +1,20 @@
 # Offline Android acceptance run
 
+## Postpone notification and locked chooser follow-up — 28 October 2026
+
+On an identified signed bundled APK, open single/member/group Postpone while
+locked and unlocked; observe the full-screen chooser, Back/Custom picker ordering,
+sound while choosing and the original five-minute cutoff. Notification Postpone
+must lead through normal unlock to Home with the captured selector open. Check
+cold/warm app, repeated identical taps, public/private variants, unresolved alerts,
+later arrivals, stale captures and queuing another request during a draft/unknown
+submission. Retry must preserve operation ID, generations, members and target.
+Opening/cancelling must not mutate or silence delivery. Preserve Routine actions,
+notification-only silence and legacy Snooze. Inspect English/Chinese, all eight
+appearance pairs, 360 dp/landscape, 100–200% text, TalkBack modal focus/return and
+secure pickers before/after first unlock. Host window/routing checks cannot close
+these physical observations; installation/distribution remain separate actions.
+
 ## Routine editor polish follow-up — 19 October 2026
 
 On the identified signed build, inspect centered weekday labels before/after

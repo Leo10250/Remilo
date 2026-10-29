@@ -8,8 +8,20 @@ current contracts. Accepted reference bundles remain historical visual evidence.
 
 Ordinary native single/member controls and ringing Reminder Details expose **Mark as done**
 and **Postpone**. Group footers expose **Mark all as done (N)** and **Postpone all**.
-Notifications, non-ringing quick actions and the Snooze preference retain their
-existing behavior and legacy commands.
+Ordinary ringing and notification-only notifications expose **Mark as done** and
+**Postpone**; ordinary grouped ringing notifications expose their captured all
+actions. Unresolved notifications expose eligible **Postpone** without broadening
+completion eligibility. Routine notifications retain their current controls.
+Non-ringing app quick actions, the Snooze preference and legacy Snooze commands
+remain compatible.
+
+Notification Postpone opens Home with this chooser through a direct Activity
+PendingIntent. The private Home screen waits for normal keyguard unlock. Capture
+only occurrence IDs/generations, or session ID and exact member IDs/generations;
+never put titles/notes in navigation payloads. Agenda More > Postpone also opens
+the Home chooser, and ordinary active groups expose Postpone all there. Repeated
+links can reopen a dismissed chooser. A new request waits while an existing draft
+or uncertain submitted command owns the chooser; it cannot replace that command.
 
 Both native and app choosers use one eight-tile anatomy, in this row-major order:
 15 min / 30 min; 1 hour / 1 day; Tomorrow morning / Tomorrow afternoon;
@@ -27,6 +39,11 @@ Keep one exact next-alert preview and persistent confirmation outside the choice
 scroller. Native footer actions retain 64 dp minimums; members/app actions retain
 56 dp. If the footer cannot fit, the complete sheet becomes scrollable. Retain
 captured atmosphere, safe insets, focus restoration and reduced motion.
+
+The full-screen alarm chooser renders inside the lock-capable alarm Activity's
+window. Hide underlying controls from keyboard/accessibility interaction while
+it is open. Custom Android picker windows inherit secure/lock-screen policy.
+Opening the native chooser needs no Home navigation or unlock; Home remains private.
 
 ## Time and custom selection
 
@@ -73,7 +90,7 @@ credential schema 17 and backup format 9 remain unchanged. Before first unlock u
 protected mirror only. If an upgrade has no mirror, keep relative/Custom available
 and the three Tomorrow tiles disabled with an unlock explanation. Never guess
 the owner's saved preferences. Normal unlocked initialization/settings/recovery
-repairs the mirror. Notification Snooze remains compatible.
+repairs the mirror. Legacy notification Snooze intents remain compatible.
 
 Implementation/verification status belongs only in the backlog. Host/fixture
 checks never establish signed-phone sound, Direct Boot, picker or TalkBack acceptance.
