@@ -14,8 +14,8 @@ ownership and recovery; [Calendar](calendar.md) defines the optional integration
 ## Scope
 
 Android 14+ is the primary platform. Google Calendar is optional and cannot become
-a dependency of local use. Daily digest, assistant actions, category suggestions,
-cloud coordination and dynamic launcher icons are future work until separately
+a dependency of local use. Assistant actions, category suggestions, cloud
+coordination and dynamic launcher icons are future work until separately
 implemented. iOS comes last, after the Android extensions and optional cloud phase;
 do not add unused platform or integration scaffolding.
 
@@ -276,8 +276,9 @@ Preference changes save through one native-confirmed controller. Failed/uncertai
 changes retain exact recovery without losing newer queued choices. Sound selection,
 preview and saved preference are separate. Preview has its own native identity and
 five-second cutoff; replacement, backgrounding and real alarm startup stop/release it.
-A preview error cannot block a real alarm. Permissions and Test Alarm show contextual
-outcomes; an accepted Test request is not proof of sound.
+A preview error cannot block a real alarm. The Settings permissions tile and the
+alarm check screen keep the last observed permission status visible during routine
+checks and surface failed checks. An accepted Test request is not proof of sound.
 
 English and Simplified Chinese are required for every new or changed app-owned feature,
 including native/widget/notification/accessibility copy and error/recovery states.

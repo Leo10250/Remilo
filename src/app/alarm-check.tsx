@@ -87,7 +87,7 @@ export default function AlarmCheck() {
       {summary.needsAttention && !caps.error && <ActionFeedback message={summary.message} tone={summary.tone} />}
       {caps.error && <ActionFeedback tone="warning" message={caps.data ? t('m_9f70c8e0c9ba', { arg0: String(shortDateTime(caps.data.observedAtMs)) }) : t('m_9461fb5601f6')} />}
       {caps.error && <Button label={t('m_4fbcda2801db')} variant="secondary" disabled={caps.isFetching || frozen} onPress={retryPermissions} />}
-      {caps.isFetching && <ActionFeedback loading message={caps.data ? t('m_0a7648b7d121', { arg0: String(shortDateTime(caps.data.observedAtMs)) }) : t('m_9c3f5ca13afe')} />}
+      {caps.isLoading && <ActionFeedback loading message={t('m_9c3f5ca13afe')} />}
     </>}
     <ConnectedGroup title={t('m_abccc78cc93c')} footer={<>
       {(pending === 'permissions' || feedback.permissions) && <ActionFeedback loading={pending === 'permissions'}
