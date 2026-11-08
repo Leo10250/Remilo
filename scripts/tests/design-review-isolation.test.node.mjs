@@ -10,60 +10,137 @@ const ts = require('typescript');
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 
+function findSyntax(node, predicate) {
+  return predicate(node) ? node : ts.forEachChild(node, (child) => findSyntax(child, predicate));
+}
+
+function readKotlin(file) {
+  return read(file)
+    .replace(/,\s*(?=\))/g, '')
+    .replace(/\s*;\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\(\s+|\s+\)/g, (match) => match.trim())
+    .replace(/\s*(\?\.|\.)\s*(?=\w)/g, '$1');
+}
+
 function metroResolver(preview) {
   const fallback = (context, name, platform) => context.resolveRequest(context, name, platform);
   const module = { exports: { resolver: { resolveRequest: fallback } } };
-  runInNewContext(read('metro.config.js'), {
-    __dirname: root, module, process: { env: preview == null ? {} : { REMILO_UI_PREVIEW: preview } },
-    require: (name) => {
-      if (name === 'node:path') return path;
-      if (name === 'expo/metro-config') return { getDefaultConfig: () => ({ resolver: { resolveRequest: fallback } }) };
-      throw new Error('Unexpected Metro configuration dependency: ' + name);
+  runInNewContext(
+    read('metro.config.js'),
+    {
+      __dirname: root,
+      module,
+      process: { env: preview == null ? {} : { REMILO_UI_PREVIEW: preview } },
+      require: (name) => {
+        if (name === 'node:path') return path;
+        if (name === 'expo/metro-config')
+          return { getDefaultConfig: () => ({ resolver: { resolveRequest: fallback } }) };
+        throw new Error('Unexpected Metro configuration dependency: ' + name);
+      },
     },
-  }, { filename: 'metro.config.js' });
+    { filename: 'metro.config.js' },
+  );
   return module.exports.resolver.resolveRequest;
 }
 
-const context = { resolveRequest: (_context, name, platform) => ({ type: 'normal', filePath: platform + ':' + name }) };
-const names = ['../../modules/remilo-alarm/src/RemiloAlarmModule', '../ui/theme', '../ui/presentation-preview', 'expo-file-system', 'expo-sharing'];
+const context = {
+  resolveRequest: (_context, name, platform) => ({
+    type: 'normal',
+    filePath: platform + ':' + name,
+  }),
+};
+const names = [
+  '../../modules/remilo-alarm/src/RemiloAlarmModule',
+  '../ui/theme',
+  '../ui/presentation-preview',
+  'expo-file-system',
+  'expo-sharing',
+];
 for (const preview of [undefined, '0', 'true', '']) {
   test(`preview environment ${String(preview)} preserves normal web and native resolution`, () => {
     const resolve = metroResolver(preview);
-    for (const platform of ['web', 'android', 'ios']) for (const name of names) {
-      assert.deepEqual(resolve(context, name, platform), { type: 'normal', filePath: platform + ':' + name });
-    }
+    for (const platform of ['web', 'android', 'ios'])
+      for (const name of names) {
+        assert.deepEqual(resolve(context, name, platform), {
+          type: 'normal',
+          filePath: platform + ':' + name,
+        });
+      }
   });
 }
 test('only the explicit preview web bundle substitutes the fixture bridge, leaving native and other modules normal', () => {
   const resolve = metroResolver('1');
-  assert.deepEqual({ ...resolve(context, names[0], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-engine.ts') });
-  assert.deepEqual({ ...resolve(context, names[2], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/presentation-preview.tsx') });
-  assert.deepEqual({ ...resolve(context, names[3], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-files.ts') });
-  assert.deepEqual({ ...resolve(context, names[4], 'web') }, { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-sharing.ts') });
-  for (const platform of ['android', 'ios']) for (const name of names) {
-    assert.deepEqual(resolve(context, name, platform), { type: 'normal', filePath: platform + ':' + name });
-  }
-  assert.deepEqual(resolve(context, names[1], 'web'), { type: 'normal', filePath: 'web:' + names[1] });
+  assert.deepEqual(
+    { ...resolve(context, names[0], 'web') },
+    { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-engine.ts') },
+  );
+  assert.deepEqual(
+    { ...resolve(context, names[2], 'web') },
+    { type: 'sourceFile', filePath: path.join(root, 'verification/ui/presentation-preview.tsx') },
+  );
+  assert.deepEqual(
+    { ...resolve(context, names[3], 'web') },
+    { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-files.ts') },
+  );
+  assert.deepEqual(
+    { ...resolve(context, names[4], 'web') },
+    { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-sharing.ts') },
+  );
+  for (const platform of ['android', 'ios'])
+    for (const name of names) {
+      assert.deepEqual(resolve(context, name, platform), {
+        type: 'normal',
+        filePath: platform + ':' + name,
+      });
+    }
+  assert.deepEqual(resolve(context, names[1], 'web'), {
+    type: 'normal',
+    filePath: 'web:' + names[1],
+  });
 });
 
 function compile(file, dependencies = {}, globals = {}) {
-    const module = { exports: {} };
-    const result = ts.transpileModule(read(file), { compilerOptions: {
-      module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022,
-    }, fileName: file });
-    runInNewContext(result.outputText, {
-      ...globals, module, exports: module.exports, require: (name) => {
-        if (name === '../localization' || name === '../../src/localization') return localizationFixture();
-        if (name === '../localization/react') return { useLocale: () => localizationFixture().currentLanguage(), useTranslation: () => localizationFixture().createTranslator(localizationFixture().currentLanguage()), useLocalizedState: dependencies.react?.useState ?? ((initial) => [typeof initial === 'function' ? initial() : initial, () => {}]) };
+  const module = { exports: {} };
+  const result = ts.transpileModule(read(file), {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      jsx: ts.JsxEmit.ReactJSX,
+      target: ts.ScriptTarget.ES2022,
+    },
+    fileName: file,
+  });
+  runInNewContext(
+    result.outputText,
+    {
+      ...globals,
+      module,
+      exports: module.exports,
+      require: (name) => {
+        if (name === '../localization' || name === '../../src/localization')
+          return localizationFixture();
+        if (name === '../localization/react')
+          return {
+            useLocale: () => localizationFixture().currentLanguage(),
+            useTranslation: () =>
+              localizationFixture().createTranslator(localizationFixture().currentLanguage()),
+            useLocalizedState:
+              dependencies.react?.useState ??
+              ((initial) => [typeof initial === 'function' ? initial() : initial, () => {}]),
+          };
         assert.ok(Object.hasOwn(dependencies, name), 'Unexpected presentation dependency: ' + name);
         return dependencies[name];
       },
-    }, { filename: file });
-    return module.exports;
+    },
+    { filename: file },
+  );
+  return module.exports;
 }
 let translations;
 function localizationFixture() {
-  return translations ??= compile('src/localization/index.ts', { './catalog.generated': compile('src/localization/catalog.generated.ts') });
+  return (translations ??= compile('src/localization/index.ts', {
+    './catalog.generated': compile('src/localization/catalog.generated.ts'),
+  }));
 }
 function loadPresentation() {
   const generated = compile('src/ui/atmosphere.generated.ts');
@@ -74,7 +151,11 @@ function loadPresentation() {
   const contexts = [];
   const theme = compile('src/ui/theme.tsx', {
     react: {
-      createContext: (value) => { const context = { value, Provider: Symbol('Provider') }; contexts.push(context); return context; },
+      createContext: (value) => {
+        const context = { value, Provider: Symbol('Provider') };
+        contexts.push(context);
+        return context;
+      },
       useContext: (context) => context.value,
       useState: (value) => [typeof value === 'function' ? value() : value, () => {}],
       useRef: (value) => ({ current: value }),
@@ -82,9 +163,19 @@ function loadPresentation() {
       useEffect: () => {}, // Host fixture does not run foreground timers/native observation.
     },
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }) },
-    'react-native': { useColorScheme: () => environment.system, AppState: { currentState: 'active' } },
+    'react-native': {
+      useColorScheme: () => environment.system,
+      AppState: { currentState: 'active' },
+    },
     '../../modules/remilo-alarm/src/RemiloAlarmModule': {},
-    './native': { useSettings: () => ({ data: environment.setting == null ? undefined : { theme: environment.setting, atmosphere: environment.atmosphere } }) },
+    './native': {
+      useSettings: () => ({
+        data:
+          environment.setting == null
+            ? undefined
+            : { theme: environment.setting, atmosphere: environment.atmosphere },
+      }),
+    },
     './colors': colors,
     '../domain/appearance': appearance,
     './tokens': tokens,
@@ -98,102 +189,183 @@ function loadPreview(search) {
   const linked = compile('verification/ui/preview-calendar-links.ts', {
     '../../src/domain/calendar-link': compile('src/domain/calendar-link.ts'),
   });
-  return compile('verification/ui/preview-engine.ts', {
-    './preview-routines': compile('verification/ui/preview-routines.ts', { '../../src/domain/time': time }, { structuredClone }),
-    '../../src/domain/time': time,
-    '../../src/domain/repeat': compile('src/domain/repeat.ts'),
-    './preview-calendar': compile('verification/ui/preview-calendar.ts', { '../../src/domain/time': time, './preview-calendar-links': linked,
-      './preview-calendar-managed': compile('verification/ui/preview-calendar-managed.ts') }),
-  }, { URLSearchParams, ...(search == null ? {} : { window: { location: { search } } }) }).default;
+  return compile(
+    'verification/ui/preview-engine.ts',
+    {
+      './preview-routines': compile(
+        'verification/ui/preview-routines.ts',
+        { '../../src/domain/time': time },
+        { structuredClone },
+      ),
+      '../../src/domain/time': time,
+      '../../src/domain/repeat': compile('src/domain/repeat.ts'),
+      './preview-calendar': compile('verification/ui/preview-calendar.ts', {
+        '../../src/domain/time': time,
+        './preview-calendar-links': linked,
+        './preview-calendar-managed': compile('verification/ui/preview-calendar-managed.ts'),
+      }),
+    },
+    { URLSearchParams, ...(search == null ? {} : { window: { location: { search } } }) },
+  ).default;
 }
 
 test('Calendar import/link fixtures create once and recover partial results without network or native globals', async () => {
   const preview = loadPreview('?reviewCalendarLink=partial');
   const before = await preview.getCalendarConnection();
-  const review = await preview.previewCalendarImport({ calendarId: 'source', eventId: 'personal' }, { mode: 'None' });
+  const review = await preview.previewCalendarImport(
+    { calendarId: 'source', eventId: 'personal' },
+    { mode: 'None' },
+  );
   assert.equal(review.choices.mode, 'None');
-  const command = { kind: 'ImportCalendarEvent', previewId: review.previewId, operationId: 'same-import' };
+  const command = {
+    kind: 'ImportCalendarEvent',
+    previewId: review.previewId,
+    operationId: 'same-import',
+  };
   const result = await preview.applyCalendarCommand(command);
-  assert.equal(result.localApplied, true); assert.equal(result.state, 'Unconfirmed');
+  assert.equal(result.localApplied, true);
+  assert.equal(result.state, 'Unconfirmed');
   await preview.applyCalendarCommand(command);
   assert.equal((await preview.getCalendarOperations()).length, 1);
-  assert.equal((await preview.queryReminders({ view: 'all', search: review.remote.title }, null)).total, 1);
+  assert.equal(
+    (await preview.queryReminders({ view: 'all', search: review.remote.title }, null)).total,
+    1,
+  );
   assert.deepEqual(await preview.getCalendarConnection(), before);
-  await preview.applyCalendarCommand({ kind: 'RetryCalendarOperation', operationId: command.operationId });
+  await preview.applyCalendarCommand({
+    kind: 'RetryCalendarOperation',
+    operationId: command.operationId,
+  });
   assert.equal((await preview.getCalendarOperations())[0].state, 'Confirmed');
 });
 test('Calendar all-event capture recovers its reply and excludes saved sources with no network or native globals', async () => {
   const preview = loadPreview('?reviewCalendarBulk=1&reviewLostReply=1');
-  const reviews = await Promise.all(['personal', 'personal-2', 'personal-3'].map(eventId => preview.previewCalendarImport({ calendarId: 'source', eventId }, {})));
-  const command = { kind: 'ImportCalendarEvents', operationId: 'all', items: reviews.map(p => ({ previewId: p.previewId, choices: { mode: 'None' } })) };
+  const reviews = await Promise.all(
+    ['personal', 'personal-2', 'personal-3'].map((eventId) =>
+      preview.previewCalendarImport({ calendarId: 'source', eventId }, {}),
+    ),
+  );
+  const command = {
+    kind: 'ImportCalendarEvents',
+    operationId: 'all',
+    items: reviews.map((p) => ({ previewId: p.previewId, choices: { mode: 'None' } })),
+  };
   await assert.rejects(preview.applyCalendarCommand(command), /batch reply lost/);
   const result = await preview.applyCalendarCommand(command);
   assert.equal(result.operations.length, 3);
   assert.equal((await preview.getCalendarOperations()).length, 3);
-  assert.equal((await preview.getCalendarLinks()).filter(link => link.source?.calendarId === 'source').length, 3);
-  assert.equal((await preview.queryReminders({ view: 'all', search: reviews[0].remote.title }, null)).total, 3);
+  assert.equal(
+    (await preview.getCalendarLinks()).filter((link) => link.source?.calendarId === 'source')
+      .length,
+    3,
+  );
+  assert.equal(
+    (await preview.queryReminders({ view: 'all', search: reviews[0].remote.title }, null)).total,
+    3,
+  );
 });
 
 test('Calendar checks keep cancellation and terminal local state with no network or scheduler globals', async () => {
-  const preview = loadPreview('?reviewCalendarLink=deleted&reviewCalendarLocal=completed&reviewCalendarOffline=1');
+  const preview = loadPreview(
+    '?reviewCalendarLink=deleted&reviewCalendarLocal=completed&reviewCalendarOffline=1',
+  );
   const before = await preview.getOccurrence('review');
   const checked = await preview.checkCalendarLink('review');
-  assert.equal(checked.availability, 'Deleted'); assert.equal(checked.lastCheckErrorCode, 'NETWORK');
-  assert.equal(checked.requiresReview, true); assert.deepEqual(await preview.getOccurrence('review'), before);
+  assert.equal(checked.availability, 'Deleted');
+  assert.equal(checked.lastCheckErrorCode, 'NETWORK');
+  assert.equal(checked.requiresReview, true);
+  assert.deepEqual(await preview.getOccurrence('review'), before);
   assert.equal((await preview.getCalendarLinks())[0].readOnly, true);
 });
 
 test('Calendar fixture executes connect/list/publish/retry with no network or native authorization globals', async () => {
   const preview = loadPreview('?reviewCalendar=disconnected&reviewCalendarOffline=1');
   await preview.authorizeCalendar(null);
-  const first = await preview.listOwnedCalendars(null), second = await preview.listOwnedCalendars(first.nextCursor);
-  assert.equal(first.items.length, 1); assert.equal(second.nextCursor, null);
+  const first = await preview.listOwnedCalendars(null),
+    second = await preview.listOwnedCalendars(first.nextCursor);
+  assert.equal(first.items.length, 1);
+  assert.equal(second.nextCursor, null);
   const connection = await preview.getCalendarConnection();
-  assert.equal(connection.connected, true); assert.equal(connection.calendarId, '');
-  await assert.rejects(() => preview.previewCalendarPublication('review'), { code: 'NEEDS_CONNECTION' });
-  await preview.applyCalendarCommand({ kind: 'SelectCalendar', operationId: 'choose-calendar',
-    expectedConnectionRevision: connection.revision, calendarId: first.items[0].id });
+  assert.equal(connection.connected, true);
+  assert.equal(connection.calendarId, '');
+  await assert.rejects(() => preview.previewCalendarPublication('review'), {
+    code: 'NEEDS_CONNECTION',
+  });
+  await preview.applyCalendarCommand({
+    kind: 'SelectCalendar',
+    operationId: 'choose-calendar',
+    expectedConnectionRevision: connection.revision,
+    calendarId: first.items[0].id,
+  });
   const review = await preview.previewCalendarPublication('review');
-  await preview.applyCalendarCommand({ kind: 'PublishOneOff', operationId: 'fixture', occurrenceId: 'review', expectedRevision: review.reminderRevision,
-    expectedConnectionRevision: review.connectionRevision, fingerprint: review.fingerprint });
+  await preview.applyCalendarCommand({
+    kind: 'PublishOneOff',
+    operationId: 'fixture',
+    occurrenceId: 'review',
+    expectedRevision: review.reminderRevision,
+    expectedConnectionRevision: review.connectionRevision,
+    fingerprint: review.fingerprint,
+  });
   await preview.applyCalendarCommand({ kind: 'RetryPublication', operationId: 'fixture' });
   assert.equal((await preview.getCalendarPublications()).length, 1);
   assert.equal((await preview.getCalendarPublications())[0].state, 'Unconfirmed');
 });
 
 test('fixture scene/brightness controls recognize all eight pairs and ignore unknown or missing values', async () => {
-  for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
-    const settings = await loadPreview(`?reviewScene=${scene}&reviewBrightness=${brightness}`).getSettings();
-    assert.equal(settings.atmosphere, scene); assert.equal(settings.theme, brightness);
-  }
+  for (const scene of ['sunrise', 'sky', 'evening', 'night'])
+    for (const brightness of ['light', 'dark']) {
+      const settings = await loadPreview(
+        `?reviewScene=${scene}&reviewBrightness=${brightness}`,
+      ).getSettings();
+      assert.equal(settings.atmosphere, scene);
+      assert.equal(settings.theme, brightness);
+    }
   for (const search of [undefined, '?reviewScene=retired-palette&reviewBrightness=invalid']) {
     const settings = await loadPreview(search).getSettings();
-    assert.equal(settings.atmosphere, 'automatic'); assert.equal(settings.theme, 'light');
+    assert.equal(settings.atmosphere, 'automatic');
+    assert.equal(settings.theme, 'light');
   }
-  const settings = await loadPreview('?reviewScene=automatic&reviewBrightness=system').getSettings();
-  assert.equal(settings.atmosphere, 'automatic'); assert.equal(settings.theme, 'system');
+  const settings = await loadPreview(
+    '?reviewScene=automatic&reviewBrightness=system',
+  ).getSettings();
+  assert.equal(settings.atmosphere, 'automatic');
+  assert.equal(settings.theme, 'system');
 });
 
 test('fixture language changes emit a confirmed snapshot and preserve authored content, clock and receipt identity', async () => {
   const preview = loadPreview('?reviewSystemLanguages=fr,zh-Hant-TW,zh-SG&reviewClock=24');
   assert.equal((await preview.getTimeDisplayPreferences()).resolvedLanguage, 'zh-Hans');
-  const before = await preview.getOccurrence('review'), snapshots = [];
-  const listener = preview.addListener('onTimeDisplayPreferencesChanged', value => snapshots.push(value));
-  const command = { kind: 'Settings', expectedRevision: 1, operationId: 'language-command', language: 'en' };
-  await preview.applyCommand(command); await preview.applyCommand(command);
+  const before = await preview.getOccurrence('review'),
+    snapshots = [];
+  const listener = preview.addListener('onTimeDisplayPreferencesChanged', (value) =>
+    snapshots.push(value),
+  );
+  const command = {
+    kind: 'Settings',
+    expectedRevision: 1,
+    operationId: 'language-command',
+    language: 'en',
+  };
+  await preview.applyCommand(command);
+  await preview.applyCommand(command);
   assert.equal((await preview.getTimeDisplayPreferences()).resolvedLanguage, 'en');
   assert.equal((await preview.getTimeDisplayPreferences()).uses24HourClock, true);
   assert.equal((await preview.getSettings()).revision, 2);
-  assert.ok(snapshots.some(value => value.resolvedLanguage === 'en'));
-  assert.deepEqual(await preview.getOccurrence('review'), before); listener.remove();
+  assert.ok(snapshots.some((value) => value.resolvedLanguage === 'en'));
+  assert.deepEqual(await preview.getOccurrence('review'), before);
+  listener.remove();
 });
 
 test('review fixtures cover empty/single lists and unavailable/blocked permission queries', async () => {
   assert.equal((await loadPreview('?reviewLists=empty').queryLists()).length, 0);
   assert.equal((await loadPreview('?reviewLists=single').queryLists()).length, 1);
-  await assert.rejects(loadPreview('?reviewPermissions=error').getCapabilities(), /could not be checked/);
+  await assert.rejects(
+    loadPreview('?reviewPermissions=error').getCapabilities(),
+    /could not be checked/,
+  );
   const blocked = await loadPreview('?reviewPermissions=blocked').getCapabilities();
-  assert.equal(blocked.exactAlarms, false); assert.equal(blocked.notifications, false);
+  assert.equal(blocked.exactAlarms, false);
+  assert.equal(blocked.notifications, false);
 });
 
 test('test lost-reply fixture retries the identified reminder without creating a duplicate', async () => {
@@ -201,62 +373,111 @@ test('test lost-reply fixture retries the identified reminder without creating a
   await assert.rejects(engine.scheduleTestAlarm('tile-review-test'), /reply lost/);
   const confirmed = await engine.scheduleTestAlarm('tile-review-test');
   const repeated = await engine.scheduleTestAlarm('tile-review-test');
-  assert.ok(confirmed.occurrence); assert.equal(repeated.occurrence.id, confirmed.occurrence.id);
+  assert.ok(confirmed.occurrence);
+  assert.equal(repeated.occurrence.id, confirmed.occurrence.id);
 });
 
 test('export review stays in memory and retries a synthetic share failure', async () => {
   const { Directory, File, Paths } = compile('verification/ui/preview-files.ts');
   const file = new File(new Directory(Paths.cache, 'exports'), 'fixture.json');
-  file.create(); file.write('synthetic backup');
-  assert.match(file.uri, /^memory:\/\//); assert.equal(await file.text(), 'synthetic backup');
+  file.create();
+  file.write('synthetic backup');
+  assert.match(file.uri, /^memory:\/\//);
+  assert.equal(await file.text(), 'synthetic backup');
   await assert.rejects(File.pickFileAsync(), /requires the Android app/);
-  const sharing = compile('verification/ui/preview-sharing.ts', {}, { URLSearchParams, window: { location: { search: '?reviewShare=failed-once' } } });
+  const sharing = compile(
+    'verification/ui/preview-sharing.ts',
+    {},
+    { URLSearchParams, window: { location: { search: '?reviewShare=failed-once' } } },
+  );
   assert.equal(await sharing.isAvailableAsync(), true);
   await assert.rejects(sharing.shareAsync(file.uri), /unavailable/);
   await sharing.shareAsync(file.uri);
 });
 
 test('long-text fixture supplies bounded English/Chinese content consistently across list membership and repeats', async () => {
-  const engine = loadPreview('?reviewText=long'), lists = await engine.queryLists();
+  const engine = loadPreview('?reviewText=long'),
+    lists = await engine.queryLists();
   assert.ok(lists.every((list) => list.name.includes('家庭') && list.name.length <= 60));
   const item = await engine.getOccurrence('review');
-  assert.match(item.title, /Check every detail/); assert.match(item.title, /检查全部细节/); assert.ok(item.title.length <= 200);
-  assert.match(item.notes, /original Event, Due and Next alert/); assert.match(item.notes, /光标/); assert.ok(item.notes.length < 4000);
+  assert.match(item.title, /Check every detail/);
+  assert.match(item.title, /检查全部细节/);
+  assert.ok(item.title.length <= 200);
+  assert.match(item.notes, /original Event, Due and Next alert/);
+  assert.match(item.notes, /光标/);
+  assert.ok(item.notes.length < 4000);
   assert.equal(item.listName, lists.find((list) => list.id === item.listId).name);
   const repeat = await engine.getSeries('daily');
-  assert.match(repeat.template.title, /检查全部细节/); assert.match(repeat.template.notes, /光标/);
-  assert.ok(!(await loadPreview('?reviewText=unknown').getOccurrence('review')).title.includes('检查全部细节'));
+  assert.match(repeat.template.title, /检查全部细节/);
+  assert.match(repeat.template.notes, /光标/);
+  assert.ok(
+    !(await loadPreview('?reviewText=unknown').getOccurrence('review')).title.includes(
+      '检查全部细节',
+    ),
+  );
 });
 
 test('lost-reply fixture commits once and acknowledges the same receipt on retries', async () => {
-  const engine = loadPreview('?reviewLostReply=1'), command = { kind: 'Create', title: 'Lost reply review', operationId: 'same-save', eventStartMs: Date.now() + 600_000 };
+  const engine = loadPreview('?reviewLostReply=1'),
+    command = {
+      kind: 'Create',
+      title: 'Lost reply review',
+      operationId: 'same-save',
+      eventStartMs: Date.now() + 600_000,
+    };
   await assert.rejects(engine.applyCommand(command), /reply was lost/);
   const after = await engine.queryReminders({ view: 'agenda', search: command.title }, null);
   assert.equal(after.total, 1);
-  const retry = await engine.applyCommand(command), again = await engine.applyCommand(command);
-  assert.equal(retry.occurrence.id, after.items[0].id); assert.equal(again.occurrence.revision, retry.occurrence.revision);
-  assert.equal((await engine.queryReminders({ view: 'agenda', search: command.title }, null)).total, 1);
-  assert.equal((await engine.applyCommand({ ...command, title: '', operationId: 'invalid-save' })).status, 'Rejected');
+  const retry = await engine.applyCommand(command),
+    again = await engine.applyCommand(command);
+  assert.equal(retry.occurrence.id, after.items[0].id);
+  assert.equal(again.occurrence.revision, retry.occurrence.revision);
+  assert.equal(
+    (await engine.queryReminders({ view: 'agenda', search: command.title }, null)).total,
+    1,
+  );
+  assert.equal(
+    (await engine.applyCommand({ ...command, title: '', operationId: 'invalid-save' })).status,
+    'Rejected',
+  );
   const ordinary = loadPreview('?reviewLostReply=true');
   assert.equal((await ordinary.applyCommand(command)).status, 'Scheduled');
 });
 
 test('presentation stress scale is isolated, SSR-safe and retained through fixture navigation', () => {
-  const ordinary = compile('src/ui/presentation-preview.tsx', { 'react/jsx-runtime': { Fragment: 'fragment', jsx: (type, props) => ({ type, props }) } }).default;
+  const ordinary = compile('src/ui/presentation-preview.tsx', {
+    'react/jsx-runtime': { Fragment: 'fragment', jsx: (type, props) => ({ type, props }) },
+  }).default;
   const ordinaryTree = ordinary({ children: 'ordinary' });
-  assert.equal(ordinaryTree.type, 'fragment'); assert.equal(ordinaryTree.props.children, 'ordinary');
-  const colors = { fixture: true }, provider = Symbol('presentation');
+  assert.equal(ordinaryTree.type, 'fragment');
+  assert.equal(ordinaryTree.props.children, 'ordinary');
+  const colors = { fixture: true },
+    provider = Symbol('presentation');
   for (const search of [undefined, '?reviewScale=2', '?reviewScale=3']) {
-    let initialized = false, retained;
+    let initialized = false,
+      retained;
     const window = { location: { search } };
-    const preview = compile('verification/ui/presentation-preview.tsx', {
-      react: { useState: (initialize) => { if (!initialized) { initialized = true; retained = initialize(); } return [retained, () => {}]; } },
-      'react/jsx-runtime': { jsx: (type, props) => ({ type, props }) },
-      '../../src/ui/theme': { useTheme: () => colors, PresentationProvider: provider },
-      './confirmation-preview': { ConfirmationPreview: 'ConfirmationPreview' },
-    }, { URLSearchParams, ...(search == null ? {} : { window }) }).default;
+    const preview = compile(
+      'verification/ui/presentation-preview.tsx',
+      {
+        react: {
+          useState: (initialize) => {
+            if (!initialized) {
+              initialized = true;
+              retained = initialize();
+            }
+            return [retained, () => {}];
+          },
+        },
+        'react/jsx-runtime': { jsx: (type, props) => ({ type, props }) },
+        '../../src/ui/theme': { useTheme: () => colors, PresentationProvider: provider },
+        './confirmation-preview': { ConfirmationPreview: 'ConfirmationPreview' },
+      },
+      { URLSearchParams, ...(search == null ? {} : { window }) },
+    ).default;
     const rendered = preview({ children: 'fixture' });
-    assert.equal(rendered.type, provider); assert.equal(rendered.props.colors, colors);
+    assert.equal(rendered.type, provider);
+    assert.equal(rendered.props.colors, colors);
     assert.equal(rendered.props.fontScale, search === '?reviewScale=2' ? 2 : undefined);
     window.location.search = '';
     assert.equal(preview({ children: 'next page' }).props.fontScale, rendered.props.fontScale);
@@ -266,22 +487,33 @@ test('presentation stress scale is isolated, SSR-safe and retained through fixtu
 test('ordinary atmosphere and brightness settings resolve independently with safe fallbacks', () => {
   const { theme, colors, appearance, environment } = loadPresentation();
   for (const [setting, system, expected] of [
-    ['light', 'dark', 'light'], ['dark', 'light', 'dark'], ['system', 'dark', 'dark'],
-    ['system', 'light', 'light'], ['system', null, 'light'], [undefined, 'dark', 'dark'],
+    ['light', 'dark', 'light'],
+    ['dark', 'light', 'dark'],
+    ['system', 'dark', 'dark'],
+    ['system', 'light', 'light'],
+    ['system', null, 'light'],
+    [undefined, 'dark', 'dark'],
   ]) {
     Object.assign(environment, { setting, system });
     const provider = theme.ThemeProvider({ children: 'content' });
     assert.equal(provider.props.value.brightness, expected);
-    const expectedScene = setting == null ? appearance.resolveAtmosphere(undefined, new Date()) : 'sky';
+    const expectedScene =
+      setting == null ? appearance.resolveAtmosphere(undefined, new Date()) : 'sky';
     assert.equal(provider.props.value.scene, expectedScene);
-    assert.deepEqual(provider.props.children.props.children.props.foundation.colors, colors.atmosphereColors(expectedScene, expected));
+    assert.deepEqual(
+      provider.props.children.props.children.props.foundation.colors,
+      colors.atmosphereColors(expectedScene, expected),
+    );
   }
   for (const atmosphere of ['sunrise', 'sky', 'evening', 'night']) {
     Object.assign(environment, { setting: 'dark', system: 'light', atmosphere });
     const provider = theme.ThemeProvider({ children: 'content' });
     assert.equal(provider.props.value.scene, atmosphere);
     assert.equal(provider.props.value.brightness, 'dark');
-    assert.deepEqual(provider.props.children.props.children.props.foundation.colors, colors.atmosphereColors(atmosphere, 'dark'));
+    assert.deepEqual(
+      provider.props.children.props.children.props.foundation.colors,
+      colors.atmosphereColors(atmosphere, 'dark'),
+    );
   }
   assert.equal(theme.useFontScaleOverride(), 1);
   assert.equal(theme.useReducedMotionOverride(), undefined);
@@ -293,106 +525,278 @@ test('optional presentation inherits scale and motion and preserves an explicit 
   const { theme, colors, contexts } = loadPresentation();
   contexts.find((context) => context.value === 1).value = 1.5;
   contexts.find((context) => context.value === undefined).value = true;
-  const inherited = theme.PresentationProvider({ colors: colors.palettes.dark, children: 'content' });
+  const inherited = theme.PresentationProvider({
+    colors: colors.palettes.dark,
+    children: 'content',
+  });
   assert.equal(inherited.props.value, colors.palettes.dark);
   assert.equal(inherited.props.children.props.value, 1.5);
   assert.equal(inherited.props.children.props.children.props.value, true);
-  const explicit = theme.PresentationProvider({ colors: colors.palettes.light, fontScale: 2, reducedMotion: false, children: 'content' });
+  const explicit = theme.PresentationProvider({
+    colors: colors.palettes.light,
+    fontScale: 2,
+    reducedMotion: false,
+    children: 'content',
+  });
   assert.equal(explicit.props.children.props.value, 2);
   assert.equal(explicit.props.children.props.children.props.value, false);
 });
 
 test('sheets restore surface foregrounds and controls when opened inside scenic headers in all eight themes', () => {
-  for (const language of ['en', 'zh-Hans']) for (const fontScale of [1, 2]) for (const scene of ['sunrise', 'sky', 'evening', 'night']) for (const brightness of ['light', 'dark']) {
-    localizationFixture().confirmLanguage(language);
-    const { theme, colors, contexts } = loadPresentation();
-    const palette = colors.atmosphereColors(scene, brightness);
-    const generated = compile('src/ui/atmosphere.generated.ts');
-    const tokens = compile('src/ui/tokens.ts', { './atmosphere.generated': generated });
-    const jsx = (type, props, key) => ({ type, props, key });
-    const components = compile('src/ui/components.tsx', {
-      ...Object.fromEntries([...read('src/ui/components.tsx').matchAll(/require\('([^']+\.webp)'\)/g)].map((match) => [match[1], 'fixture-artwork'])),
-      react: {
-        createContext: (value) => { const context = { value, Provider: Symbol('Provider') }; contexts.push(context); return context; },
-        useContext: (context) => context.value, useState: (value) => [value, () => {}],
-        useRef: (value) => ({ current: value }), useCallback: (callback) => callback, useEffect: () => {},
-        Children: { toArray: (children) => [children].flat(Infinity).filter((child) => child != null && typeof child !== 'boolean') },
-        isValidElement: (child) => child?.type != null,
-      },
-      'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
-      'react-native': {
-        View: 'View', Text: 'Text', Pressable: 'Pressable', Modal: 'Modal',
-        Platform: { OS: 'web' }, StyleSheet: { create: (styles) => styles, absoluteFill: { position: 'absolute' } },
-        useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
-      },
-      '@react-native-community/datetimepicker': {}, 'expo-symbols': { SymbolView: 'Glyph' }, 'expo-router': {},
-      'expo-linear-gradient': { LinearGradient: 'Gradient' }, './header-transition': compile('src/ui/header-transition.ts'),
-      'react-native-safe-area-context': {}, './theme': theme, './tokens': tokens,
-      './time-display': { useTimeDisplay: () => ({}), useTimeFormatting: () => ({}) },
-      '../domain/time': {}, './native': {}, './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
-      './form-viewport': { FormViewport: (props) => jsx('Viewport', { children: [props.children, props.footer] }) }, './atmosphere.generated': generated,
-      './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' }, './snackbar-timeout': {},
-      './confirmation-state': compile('src/ui/confirmation-state.ts'),
-    });
-    // Model the header's foreground and scenic-control context; a Modal retains both.
-    contexts.find((context) => context.value === false).value = true;
-    contexts.find((context) => context.value === 'default').value = 'focused';
-    const render = (node) => {
-      if (Array.isArray(node)) return node.map(render);
-      if (node == null || typeof node !== 'object') return node;
-      const context = contexts.find((candidate) => candidate.Provider === node.type);
-      if (context) {
-        const previous = context.value; context.value = node.props.value;
-        const rendered = render(node.props.children); context.value = previous; return rendered;
-      }
-      if (typeof node.type === 'function') return render(node.type(node.props));
-      return { ...node, props: { ...node.props, children: render(node.props.children) } };
-    };
-    const collect = (node) => Array.isArray(node) ? node.flatMap(collect) : node && typeof node === 'object' ? [node, ...collect(node.props.children)] : [];
-    const content = jsx(components.Sheet, { title: 'More', visible: true, onClose: () => {},
-      children: jsx(components.SettingRow, { label: 'Settings', icon: 'settings', description: 'App preferences', onPress: () => {} }),
-      footer: jsx(components.Copy, { children: 'Footer' }),
-    });
-    const header = jsx(theme.PresentationProvider, { colors: { ...palette, ink: '#FFFFFF', muted: '#FFFFFF' }, fontScale, reducedMotion: true, children: content });
-    const nodes = collect(render(jsx(theme.FoundationStyleProvider, { foundation: { colors: palette }, children: header })));
-    const text = (label) => nodes.find((node) => node.type === 'Text' && node.props.children === label);
-    assert.equal(text('More').props.style.color, palette.ink, scene + '/' + brightness);
-    assert.equal(text('Settings').props.style.color, palette.ink);
-    assert.equal(text('App preferences').props.style.color, palette.muted);
-    assert.equal(text('Footer').props.style.color, palette.ink);
-    assert.equal(text('More').props.style.fontSize, tokens.typography.appBar * fontScale, 'Text scale survives the boundary.');
-    if (language === 'zh-Hans') {
-      assert.equal(text('More').props.style.lineHeight, 30 * fontScale);
-      assert.equal(text('More').props.style.fontWeight, '500');
-      assert.equal(text('Settings').props.style.lineHeight, 24 * fontScale);
-      assert.equal(text('App preferences').props.style.lineHeight, 22 * fontScale);
-    }
-    assert.equal(nodes.find((node) => node.type === 'Modal').props.animationType, 'none', 'Reduced-motion context survives the boundary.');
-    const close = nodes.find((node) => node.type === 'Pressable' && node.props.accessibilityLabel === (language === 'zh-Hans' ? '关闭More' : 'Close More'));
-    assert.equal(close.props.style({ pressed: false }).borderColor, palette.focus, 'Close uses surface focus treatment rather than scenic white.');
-    assert.ok(nodes.some((node) => node.type === 'Glyph' && node.props.name.web === 'settings' && node.props.tintColor === palette.muted));
-  }
+  for (const language of ['en', 'zh-Hans'])
+    for (const fontScale of [1, 2])
+      for (const scene of ['sunrise', 'sky', 'evening', 'night'])
+        for (const brightness of ['light', 'dark']) {
+          localizationFixture().confirmLanguage(language);
+          const { theme, colors, contexts } = loadPresentation();
+          const palette = colors.atmosphereColors(scene, brightness);
+          const generated = compile('src/ui/atmosphere.generated.ts');
+          const tokens = compile('src/ui/tokens.ts', { './atmosphere.generated': generated });
+          const jsx = (type, props, key) => ({ type, props, key });
+          const components = compile('src/ui/components.tsx', {
+            ...Object.fromEntries(
+              [...read('src/ui/components.tsx').matchAll(/require\('([^']+\.webp)'\)/g)].map(
+                (match) => [match[1], 'fixture-artwork'],
+              ),
+            ),
+            react: {
+              createContext: (value) => {
+                const context = { value, Provider: Symbol('Provider') };
+                contexts.push(context);
+                return context;
+              },
+              useContext: (context) => context.value,
+              useState: (value) => [value, () => {}],
+              useRef: (value) => ({ current: value }),
+              useCallback: (callback) => callback,
+              useEffect: () => {},
+              Children: {
+                toArray: (children) =>
+                  [children]
+                    .flat(Infinity)
+                    .filter((child) => child != null && typeof child !== 'boolean'),
+              },
+              isValidElement: (child) => child?.type != null,
+            },
+            'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
+            'react-native': {
+              View: 'View',
+              Text: 'Text',
+              Pressable: 'Pressable',
+              Modal: 'Modal',
+              Platform: { OS: 'web' },
+              StyleSheet: { create: (styles) => styles, absoluteFill: { position: 'absolute' } },
+              useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
+            },
+            '@react-native-community/datetimepicker': {},
+            'expo-symbols': { SymbolView: 'Glyph' },
+            'expo-router': {},
+            'expo-linear-gradient': { LinearGradient: 'Gradient' },
+            './header-transition': compile('src/ui/header-transition.ts'),
+            'react-native-safe-area-context': {},
+            './theme': theme,
+            './tokens': tokens,
+            './time-display': { useTimeDisplay: () => ({}), useTimeFormatting: () => ({}) },
+            '../domain/time': {},
+            './native': {},
+            './motion': { useReducedMotion: () => theme.useReducedMotionOverride() },
+            './form-viewport': {
+              FormViewport: (props) =>
+                jsx('Viewport', { children: [props.children, props.footer] }),
+            },
+            './atmosphere.generated': generated,
+            './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' },
+            './snackbar-timeout': {},
+            './confirmation-state': compile('src/ui/confirmation-state.ts'),
+          });
+          // Model the header's foreground and scenic-control context; a Modal retains both.
+          contexts.find((context) => context.value === false).value = true;
+          contexts.find((context) => context.value === 'default').value = 'focused';
+          const render = (node) => {
+            if (Array.isArray(node)) return node.map(render);
+            if (node == null || typeof node !== 'object') return node;
+            const context = contexts.find((candidate) => candidate.Provider === node.type);
+            if (context) {
+              const previous = context.value;
+              context.value = node.props.value;
+              const rendered = render(node.props.children);
+              context.value = previous;
+              return rendered;
+            }
+            if (typeof node.type === 'function') return render(node.type(node.props));
+            return { ...node, props: { ...node.props, children: render(node.props.children) } };
+          };
+          const collect = (node) =>
+            Array.isArray(node)
+              ? node.flatMap(collect)
+              : node && typeof node === 'object'
+                ? [node, ...collect(node.props.children)]
+                : [];
+          const content = jsx(components.Sheet, {
+            title: 'More',
+            visible: true,
+            onClose: () => {},
+            children: jsx(components.SettingRow, {
+              label: 'Settings',
+              icon: 'settings',
+              description: 'App preferences',
+              onPress: () => {},
+            }),
+            footer: jsx(components.Copy, { children: 'Footer' }),
+          });
+          const header = jsx(theme.PresentationProvider, {
+            colors: { ...palette, ink: '#FFFFFF', muted: '#FFFFFF' },
+            fontScale,
+            reducedMotion: true,
+            children: content,
+          });
+          const nodes = collect(
+            render(
+              jsx(theme.FoundationStyleProvider, {
+                foundation: { colors: palette },
+                children: header,
+              }),
+            ),
+          );
+          const text = (label) =>
+            nodes.find((node) => node.type === 'Text' && node.props.children === label);
+          assert.equal(text('More').props.style.color, palette.ink, scene + '/' + brightness);
+          assert.equal(text('Settings').props.style.color, palette.ink);
+          assert.equal(text('App preferences').props.style.color, palette.muted);
+          assert.equal(text('Footer').props.style.color, palette.ink);
+          assert.equal(
+            text('More').props.style.fontSize,
+            tokens.typography.appBar * fontScale,
+            'Text scale survives the boundary.',
+          );
+          if (language === 'zh-Hans') {
+            assert.equal(text('More').props.style.lineHeight, 30 * fontScale);
+            assert.equal(text('More').props.style.fontWeight, '500');
+            assert.equal(text('Settings').props.style.lineHeight, 24 * fontScale);
+            assert.equal(text('App preferences').props.style.lineHeight, 22 * fontScale);
+          }
+          assert.equal(
+            nodes.find((node) => node.type === 'Modal').props.animationType,
+            'none',
+            'Reduced-motion context survives the boundary.',
+          );
+          const close = nodes.find(
+            (node) =>
+              node.type === 'Pressable' &&
+              node.props.accessibilityLabel ===
+                (language === 'zh-Hans' ? '关闭More' : 'Close More'),
+          );
+          assert.equal(
+            close.props.style({ pressed: false }).borderColor,
+            palette.focus,
+            'Close uses surface focus treatment rather than scenic white.',
+          );
+          assert.ok(
+            nodes.some(
+              (node) =>
+                node.type === 'Glyph' &&
+                node.props.name.web === 'settings' &&
+                node.props.tintColor === palette.muted,
+            ),
+          );
+        }
   localizationFixture().confirmLanguage('en');
 });
 
 test('ordinary reminder rows expose leading completion independently from opening and use a neutral glyph', () => {
-  const rowSource = ts.createSourceFile('row.tsx', read('src/ui/reminder-row.tsx'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const component = rowSource.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'ReminderRow');
+  const rowSource = ts.createSourceFile(
+    'row.tsx',
+    read('src/ui/reminder-row.tsx'),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const component = rowSource.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === 'ReminderRow',
+  );
   assert.ok(component && ts.isFunctionDeclaration(component));
   const binding = component.parameters[0].name;
   const glyph = binding.elements.find((element) => element.name.getText(rowSource) === 'glyph');
   assert.equal(glyph?.initializer?.text, 'event');
-  const openingKey = Object.entries(JSON.parse(read('localization/catalog.json')).messages).find(([, value]) => value.en === 'Open reminder: ')[0];
-  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf(`accessibilityLabel={t('${openingKey}') + summary}`);
-  assert.ok(completionPosition >= 0 && openingPosition > completionPosition, 'The independent completion control precedes opening the reminder.');
-  assert.match(body, /accessibilityRole="checkbox" aria-checked=\{item.completed\} accessibilityLabel=\{actionLabel \+ ': ' \+ summary\}/);
-  assert.match(body, /accessibilityState=\{\{ checked: item.completed, disabled: busy \}\} disabled=\{busy\} onPress=\{act\}/);
+  const openingKey = Object.entries(JSON.parse(read('localization/catalog.json')).messages).find(
+    ([, value]) => value.en === 'Open reminder: ',
+  )[0];
+  const isPressable = (node) =>
+    ts.isJsxOpeningElement(node) && node.tagName.getText(rowSource) === 'Pressable';
+  const attribute = (node, name) =>
+    node.attributes.properties.find(
+      (property) => ts.isJsxAttribute(property) && property.name.getText(rowSource) === name,
+    )?.initializer;
+  const expression = (node, name) => {
+    const initializer = attribute(node, name);
+    return initializer && ts.isJsxExpression(initializer) ? initializer.expression : undefined;
+  };
+  const isPlus = (node) =>
+    node && ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken;
+  const completion = findSyntax(
+    component,
+    (node) => ts.isVariableDeclaration(node) && node.name.getText(rowSource) === 'doneControl',
+  );
+  assert.ok(completion?.initializer);
+  const checkbox = findSyntax(completion.initializer, isPressable);
+  assert.ok(checkbox);
+  assert.equal(attribute(checkbox, 'accessibilityRole')?.text, 'checkbox');
+  assert.equal(expression(checkbox, 'aria-checked')?.getText(rowSource), 'item.completed');
+  const label = expression(checkbox, 'accessibilityLabel');
+  assert.ok(isPlus(label) && isPlus(label.left) && ts.isStringLiteral(label.left.right));
+  assert.equal(label.left.left.getText(rowSource), 'actionLabel');
+  assert.equal(label.left.right.text, ': ');
+  assert.equal(label.right.getText(rowSource), 'summary');
+  const state = expression(checkbox, 'accessibilityState');
+  assert.ok(state && ts.isObjectLiteralExpression(state));
+  assert.deepEqual(
+    Object.fromEntries(
+      state.properties.map((property) => {
+        assert.ok(ts.isPropertyAssignment(property));
+        return [property.name.getText(rowSource), property.initializer.getText(rowSource)];
+      }),
+    ),
+    { checked: 'item.completed', disabled: 'busy' },
+  );
+  assert.equal(expression(checkbox, 'disabled')?.getText(rowSource), 'busy');
+  assert.equal(expression(checkbox, 'onPress')?.getText(rowSource), 'act');
+  const completionSlot = findSyntax(
+    component,
+    (node) => ts.isJsxExpression(node) && node.expression?.getText(rowSource) === 'doneControl',
+  );
+  const opening = findSyntax(component, (node) => {
+    if (!isPressable(node)) return false;
+    const label = expression(node, 'accessibilityLabel');
+    return (
+      isPlus(label) &&
+      label.right.getText(rowSource) === 'summary' &&
+      ts.isCallExpression(label.left) &&
+      label.left.expression.getText(rowSource) === 't' &&
+      label.left.arguments.length === 1 &&
+      ts.isStringLiteral(label.left.arguments[0]) &&
+      label.left.arguments[0].text === openingKey
+    );
+  });
+  assert.ok(
+    completionSlot && opening && completionSlot.getStart(rowSource) < opening.getStart(rowSource),
+    'The independent completion control precedes opening the reminder.',
+  );
   for (const file of ['src/app/index.tsx', 'src/app/records.tsx', 'src/app/series/[id].tsx']) {
-    const source = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const source = ts.createSourceFile(
+      file,
+      read(file),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
     const attributes = [];
     const walk = (node) => {
       if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(source) === 'ReminderRow') {
-        attributes.push(...node.attributes.properties.filter(ts.isJsxAttribute).map((attribute) => attribute.name.getText(source)));
+        attributes.push(
+          ...node.attributes.properties
+            .filter(ts.isJsxAttribute)
+            .map((attribute) => attribute.name.getText(source)),
+        );
       }
       ts.forEachChild(node, walk);
     };
@@ -403,53 +807,128 @@ test('ordinary reminder rows expose leading completion independently from openin
 });
 
 test('native atmosphere rendering leaves observation, guarded actions and confirmed dismissal in the activity', () => {
-  const activity = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt');
-  const controls = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt');
-  const sessionGuard = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt');
+  const activity = readKotlin(
+    'modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt',
+  );
+  const controls = readKotlin(
+    'modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt',
+  );
+  const sessionGuard = readKotlin(
+    'modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt',
+  );
   assert.match(activity, /AtmosphereTokens\.colors\(current\?\.atmosphere/);
   const refreshStart = activity.indexOf('private fun refresh()');
   const refreshEnd = activity.indexOf('private fun act(', refreshStart);
-  assert.ok(refreshStart >= 0 && refreshEnd > refreshStart, 'Inspect the native refresh owner separately from action handlers.');
+  assert.ok(
+    refreshStart >= 0 && refreshEnd > refreshStart,
+    'Inspect the native refresh owner separately from action handlers.',
+  );
   const refresh = activity.slice(refreshStart, refreshEnd);
-  assert.match(refresh, /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null;\s*select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
-    'Only confirmed terminal state clears the draft, then selects a queued session or finishes when none exists.');
-  assert.equal([...refresh.matchAll(/\bfinish\(\)/g)].length, 1, 'Refresh has no dismissal path outside the guarded terminal branch.');
-  assert.match(sessionGuard, /fun mayDismiss\([^)]*\)\s*=\s*ended\(state\) && !pending && !busy && !unconfirmed/,
-    'Terminal dismissal remains blocked by a pending, busy or unconfirmed command.');
-  assert.match(activity, /if \(!guard\.select\(id, pendingCommand != null, busy\.value, unconfirmed\.value, choosing = postpone\.value != null\)\)/,
-    'A chooser draft also owns its captured session while later intents wait.');
-  assert.match(sessionGuard, /sessionId\.isNotEmpty\(\) && \(pending \|\| busy \|\| unconfirmed \|\| choosing\)/);
-  assert.match(refresh, /draft != null && pendingCommand == null && !busy\.value && !unconfirmed\.value &&\s*!draft\.matches\([\s\S]*?postpone\.value = draft\.copy\(stale = true, picker = null\)\s*dismissPicker\(\)/,
-    'Changed captured members invalidate only an unsubmitted draft and dismiss its provisional picker.');
+  assert.match(
+    refresh,
+    /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null\s+select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
+    'Only confirmed terminal state clears the draft, then selects a queued session or finishes when none exists.',
+  );
+  assert.equal(
+    [...refresh.matchAll(/\bfinish\(\)/g)].length,
+    1,
+    'Refresh has no dismissal path outside the guarded terminal branch.',
+  );
+  assert.match(
+    sessionGuard,
+    /fun mayDismiss\([^)]*\)\s*=\s*ended\(state\) && !pending && !busy && !unconfirmed/,
+    'Terminal dismissal remains blocked by a pending, busy or unconfirmed command.',
+  );
+  assert.match(
+    activity,
+    /if \(!guard\.select\(id, pendingCommand != null, busy\.value, unconfirmed\.value, choosing = postpone\.value != null\)\)/,
+    'A chooser draft also owns its captured session while later intents wait.',
+  );
+  assert.match(
+    sessionGuard,
+    /sessionId\.isNotEmpty\(\) && \(pending \|\| busy \|\| unconfirmed \|\| choosing\)/,
+  );
+  assert.match(
+    refresh,
+    /draft != null && pendingCommand == null && !busy\.value && !unconfirmed\.value &&\s*!draft\.matches\([\s\S]*?postpone\.value = draft\.copy\(stale = true, picker = null\)\s*dismissPicker\(\)/,
+    'Changed captured members invalidate only an unsubmitted draft and dismiss its provisional picker.',
+  );
 
-  assert.match(activity, /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)/,
-    'An acknowledged alarm dismissal retains the activity while routine unlock/navigation is pending.');
-  assert.match(activity, /if \(status\?\.get\("status"\) == "Applied" && command\["openRoutine"\] == true\)/,
-    'Only an acknowledged Start routine action opens private routine content.');
-  assert.match(activity, /if \(keyguard\.isKeyguardLocked\) \{\s+navigatingRoutine = true\s+keyguard\.requestDismissKeyguard/,
-    'Retain the activity before requesting unlock, so the ended session cannot discard its continuation.');
-  assert.match(activity, /override fun onDismissSucceeded\(\) \{ navigatingRoutine = false; startActivity\(open\); refresh\(\) \}/,
-    'Successful unlock opens the captured routine and then releases dismissal retention.');
+  assert.match(
+    activity,
+    /SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)/,
+    'An acknowledged alarm dismissal retains the activity while routine unlock/navigation is pending.',
+  );
+  assert.match(
+    activity,
+    /if \(status\?\.get\("status"\) == "Applied" && command\["openRoutine"\] == true\)/,
+    'Only an acknowledged Start routine action opens private routine content.',
+  );
+  assert.match(
+    activity,
+    /if \(keyguard\.isKeyguardLocked\) \{\s+navigatingRoutine = true\s+keyguard\.requestDismissKeyguard/,
+    'Retain the activity before requesting unlock, so the ended session cannot discard its continuation.',
+  );
+  assert.match(
+    activity,
+    /override fun onDismissSucceeded\(\) \{ navigatingRoutine = false startActivity\(open\) refresh\(\) \}/,
+    'Successful unlock opens the captured routine and then releases dismissal retention.',
+  );
   for (const callback of ['onDismissCancelled', 'onDismissError']) {
     const body = activity.match(new RegExp(`override fun ${callback}\\(\\) \\{([^}]+)\\}`))?.[1];
     assert.ok(body, `${callback} must handle the pending routine continuation.`);
-    assert.match(body, /navigatingRoutine = false; refresh\(\)/,
-      `${callback} releases retention and refreshes the ended session.`);
-    assert.doesNotMatch(body, /startActivity/,
-      `${callback} must not open private content after an unsuccessful unlock.`);
+    assert.match(
+      body,
+      /navigatingRoutine = false refresh\(\)/,
+      `${callback} releases retention and refreshes the ended session.`,
+    );
+    assert.doesNotMatch(
+      body,
+      /startActivity/,
+      `${callback} must not open private content after an unsuccessful unlock.`,
+    );
   }
-  assert.match(activity, /deferredIntent = Intent\(intent\)/, 'Later alarm intents are retained while the current action is unresolved.');
-  assert.match(activity, /pendingCommand\?\.get\("operationId"\) == command\["operationId"\]/, 'Action responses acknowledge the frozen operation rather than a mutable snapshot.');
-  assert.match(activity, /if \(definitive && deferredIntent != null\)/, 'Only a definitive action response selects the queued session.');
-  assert.match(activity, /outState\.putParcelable\("deferredIntent", it\)/, 'The queued intent survives activity recreation.');
+  assert.match(
+    activity,
+    /deferredIntent = Intent\(intent\)/,
+    'Later alarm intents are retained while the current action is unresolved.',
+  );
+  assert.match(
+    activity,
+    /pendingCommand\?\.get\("operationId"\) == command\["operationId"\]/,
+    'Action responses acknowledge the frozen operation rather than a mutable snapshot.',
+  );
+  assert.match(
+    activity,
+    /if \(definitive && deferredIntent != null\)/,
+    'Only a definitive action response selects the queued session.',
+  );
+  assert.match(
+    activity,
+    /outState\.putParcelable\("deferredIntent", it\)/,
+    'The queued intent survives activity recreation.',
+  );
   const restorePosition = activity.indexOf('savedInstanceState?.getBundle("pendingAction")');
   const draftRestorePosition = activity.indexOf('savedInstanceState?.getBundle("postponeDraft")');
   const initialRefreshPosition = activity.indexOf('select(initialIntent)');
-  assert.ok(restorePosition >= 0 && initialRefreshPosition > restorePosition, 'Restore the frozen action before selecting or refreshing its session.');
-  assert.ok(draftRestorePosition >= 0 && initialRefreshPosition > draftRestorePosition, 'Restore an unsubmitted chooser capture before its first session refresh.');
+  assert.ok(
+    restorePosition >= 0 && initialRefreshPosition > restorePosition,
+    'Restore the frozen action before selecting or refreshing its session.',
+  );
+  assert.ok(
+    draftRestorePosition >= 0 && initialRefreshPosition > draftRestorePosition,
+    'Restore an unsubmitted chooser capture before its first session refresh.',
+  );
   assert.match(activity, /"expectedGeneration" to record\?\.generation/);
   assert.match(activity, /AlarmControlsScreen\(/);
-  assert.ok(!controls.includes('engine.apply'), 'Rendering delegates mutations to the native activity.');
+  assert.ok(
+    !controls.includes('engine.apply'),
+    'Rendering delegates mutations to the native activity.',
+  );
   assert.ok(!controls.includes('finish()'), 'Rendering does not infer a session has ended.');
-  assert.ok(!read('modules/remilo-alarm/android/src/main/AndroidManifest.xml').includes('AlarmDesignReviewActivity'));
+  assert.ok(
+    !read('modules/remilo-alarm/android/src/main/AndroidManifest.xml').includes(
+      'AlarmDesignReviewActivity',
+    ),
+  );
 });

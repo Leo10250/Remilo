@@ -1,7 +1,7 @@
 package com.remilo.alarm.system
 
-import android.app.Service
 import android.app.Notification
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -19,77 +19,151 @@ class RingingService : Service() {
   private var sound = "remilo"
   private var vibration = false
   private lateinit var notifications: AlarmNotifications
-  override fun onCreate() { super.onCreate(); notifications = AlarmNotifications(this); active = this }
+
+  override fun onCreate() {
+    super.onCreate()
+    notifications = AlarmNotifications(this)
+    active = this
+  }
+
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    val id = intent?.getStringExtra("sessionId") ?: run { stopSelf(); return START_NOT_STICKY }
+    val id =
+      intent?.getStringExtra("sessionId")
+        ?: run {
+          stopSelf()
+          return START_NOT_STICKY
+        }
     try {
       // The engine supplies a complete snapshot before dispatch. Posting an empty
       // placeholder first can leave the initial heads-up surface without controls.
-      val initial = requireNotNull(intent.getParcelableExtra(INITIAL_NOTIFICATION, Notification::class.java))
-      startForeground(AlarmNotifications.FOREGROUND_ID, initial,
-        ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
+      val initial =
+        requireNotNull(intent.getParcelableExtra(INITIAL_NOTIFICATION, Notification::class.java))
+      startForeground(
+        AlarmNotifications.FOREGROUND_ID,
+        initial,
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED,
+      )
     } catch (_: Exception) {
       AlarmEngine.get(this).audioEnded(id, "Blocked")
-      stopSelf(); return START_NOT_STICKY
+      stopSelf()
+      return START_NOT_STICKY
     }
     if (sessionId != id) {
-      audio?.stop("TimedOut"); audio = null; audioStarting = false; sessionId = id
+      audio?.stop("TimedOut")
+      audio = null
+      audioStarting = false
+      sessionId = id
       sound = intent.getStringExtra("sound") ?: "remilo"
       vibration = intent.getBooleanExtra("vibration", false)
     }
     refreshMembers(id)
     return START_NOT_STICKY
   }
+
   private fun refreshMembers(id: String) {
-    AlarmEngine.get(this).sessionSnapshot(id, { snapshot -> main.post {
-      if (sessionId != id) return@post
-      val members = snapshot.members
-      expiry?.let(main::removeCallbacks)
-      expiry = members.map { it.first }.filter { it.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }.minOfOrNull { it.expiresAtMs }?.let { end ->
-        Runnable { AlarmEngine.get(this).expireRoutineDeliveries(); refreshMembers(id) }.also { main.postDelayed(it, (end - System.currentTimeMillis()).coerceAtLeast(1L)) }
-      }
-      if (members.isEmpty()) {
-        audio?.stop(); audio = null; audioStarting = false
-        stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
-      } else {
-        notifications.update(id, members, com.remilo.alarm.core.AppearancePolicy.captured(snapshot.atmosphere, snapshot.theme))
-        if (audio == null && !audioStarting) {
-          audioStarting = true
-          // Foreground promotion already happened. Wait only for native preview
-          // release, so real alarm playback cannot overlap a replaced preview.
-          AlarmEngine.get(this).beforeAlarmPlayback { main.post {
-          if (sessionId != id || !audioStarting || audio != null) return@post
-          audioStarting = false
-          audio = AlarmAudio(this, { elapsed -> AlarmEngine.get(this).audioStarted(id, elapsed) }, { reason ->
-            AlarmEngine.get(this).audioEnded(id, reason)
-            main.post { if (sessionId == id) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() } }
-          }, sound = sound, vibration = vibration).also { it.start() }
-          } }
-        }
-      }
-    } }, { /* Keep the existing foreground controls/audio deadline on read failure. */ })
+    AlarmEngine.get(this)
+      .sessionSnapshot(
+        id,
+        { snapshot ->
+          main.post {
+            if (sessionId != id) return@post
+            val members = snapshot.members
+            expiry?.let(main::removeCallbacks)
+            expiry =
+              members
+                .map { it.first }
+                .filter { it.profile == com.remilo.alarm.core.RoutinePolicy.PROFILE }
+                .minOfOrNull { it.expiresAtMs }
+                ?.let { end ->
+                  Runnable {
+                    AlarmEngine.get(this).expireRoutineDeliveries()
+                    refreshMembers(id)
+                  }
+                    .also {
+                      main.postDelayed(it, (end - System.currentTimeMillis()).coerceAtLeast(1L))
+                    }
+                }
+            if (members.isEmpty()) {
+              audio?.stop()
+              audio = null
+              audioStarting = false
+              stopForeground(STOP_FOREGROUND_REMOVE)
+              stopSelf()
+            } else {
+              notifications.update(
+                id,
+                members,
+                com.remilo.alarm.core.AppearancePolicy.captured(
+                  snapshot.atmosphere,
+                  snapshot.theme,
+                ),
+              )
+              if (audio == null && !audioStarting) {
+                audioStarting = true
+                // Foreground promotion already happened. Wait only for native preview
+                // release, so real alarm playback cannot overlap a replaced preview.
+                AlarmEngine.get(this).beforeAlarmPlayback {
+                  main.post {
+                    if (sessionId != id || !audioStarting || audio != null) return@post
+                    audioStarting = false
+                    audio =
+                      AlarmAudio(
+                          this,
+                          { elapsed -> AlarmEngine.get(this).audioStarted(id, elapsed) },
+                          { reason ->
+                            AlarmEngine.get(this).audioEnded(id, reason)
+                            main.post {
+                              if (sessionId == id) {
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                                stopSelf()
+                              }
+                            }
+                          },
+                          sound = sound,
+                          vibration = vibration,
+                        )
+                        .also { it.start() }
+                  }
+                }
+              }
+            }
+          }
+        },
+        { /* Keep the existing foreground controls/audio deadline on read failure. */ },
+      )
   }
+
   override fun onDestroy() {
     if (active === this) active = null
     audioStarting = false
-    expiry?.let(main::removeCallbacks); expiry = null
+    expiry?.let(main::removeCallbacks)
+    expiry = null
     audio?.stop("Interrupted")
     super.onDestroy()
   }
+
   override fun onBind(intent: Intent?): IBinder? = null
+
   companion object {
     const val INITIAL_NOTIFICATION = "initialNotification"
     @Volatile private var active: RingingService? = null
+
     fun refresh(@Suppress("UNUSED_PARAMETER") context: Context, sessionId: String) {
       active?.let { service -> service.main.post { service.refreshMembers(sessionId) } }
     }
+
     /** A completed native detach need not wait for another database query to stop sound. */
     fun stopSession(sessionId: String) {
-      active?.let { service -> service.main.post {
-        if (service.sessionId != sessionId) return@post
-        service.audio?.stop(); service.audio = null; service.audioStarting = false
-        service.stopForeground(STOP_FOREGROUND_REMOVE); service.stopSelf()
-      } }
+      active?.let { service ->
+        service.main.post {
+          if (service.sessionId != sessionId) return@post
+          service.audio?.stop()
+          service.audio = null
+          service.audioStarting = false
+          service.stopForeground(STOP_FOREGROUND_REMOVE)
+          service.stopSelf()
+        }
+      }
     }
   }
 }

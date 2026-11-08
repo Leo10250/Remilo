@@ -5,22 +5,40 @@ describe('captured UI operations', () => {
     const seen: { id: string; revision: number }[] = [];
     let resolve!: (result: string) => void;
     let calls = 0;
-    const operation = new CapturedOperation(async (job: { id: string; revision: number }) => {
-      seen.push(job); calls++;
-      if (calls === 1) return new Promise<string>((_, reject) => { resolve = () => reject(new Error('lost reply')); });
-      return 'applied';
-    }, () => false);
+    const operation = new CapturedOperation(
+      async (job: { id: string; revision: number }) => {
+        seen.push(job);
+        calls++;
+        if (calls === 1)
+          return new Promise<string>((_, reject) => {
+            resolve = () => reject(new Error('lost reply'));
+          });
+        return 'applied';
+      },
+      () => false,
+    );
     const first = operation.run({ id: 'first', revision: 3 });
     expect(operation.run({ id: 'second', revision: 4 })).toBe(first);
-    resolve(''); await expect(first).rejects.toThrow('lost reply');
+    resolve('');
+    await expect(first).rejects.toThrow('lost reply');
     expect(operation.pending).toBe(true);
     await expect(operation.run({ id: 'replacement', revision: 9 })).resolves.toBe('applied');
-    expect(seen).toEqual([{ id: 'first', revision: 3 }, { id: 'first', revision: 3 }]);
+    expect(seen).toEqual([
+      { id: 'first', revision: 3 },
+      { id: 'first', revision: 3 },
+    ]);
     expect(operation.pending).toBe(false);
   });
   it('releases a definitive rejection so a new deliberate action can capture a revision', async () => {
     const seen: number[] = [];
-    const operation = new CapturedOperation(async (revision: number) => { seen.push(revision); if (revision === 1) throw 'stale'; return revision; }, (error) => error === 'stale');
+    const operation = new CapturedOperation(
+      async (revision: number) => {
+        seen.push(revision);
+        if (revision === 1) throw 'stale';
+        return revision;
+      },
+      (error) => error === 'stale',
+    );
     await expect(operation.run(1)).rejects.toBe('stale');
     expect(operation.pending).toBe(false);
     await expect(operation.run(2)).resolves.toBe(2);

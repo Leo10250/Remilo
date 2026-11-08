@@ -1,5 +1,8 @@
 name: Verify
 on: [push, pull_request]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -7,11 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Check Expo SDK compatibility on dependency changes
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          changed_manifests=$(git diff --name-only HEAD^1 HEAD -- package.json package-lock.json)
+          if [ -n "$changed_manifests" ]; then
+            npm run verify:expo
+          else
+            echo "Skipping Expo dependency check because the manifest and lockfile are unchanged."
+          fi
       - run: npm run verify
   android:
     runs-on: ubuntu-latest
@@ -31,6 +46,10 @@ jobs:
           jdk-file: ${{ runner.temp }}/remilo-jdk.tar.gz
           # setup-java's cache label requires SemVer; archive/checksum pins 17.0.20.1+1.
           java-version: '17.0.20'
+      - uses: gradle/actions/setup-gradle@v6.4.1
+        with:
+          cache-provider: basic
+          cache-read-only: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
       - run: npm ci
       - run: chmod +x android/gradlew
       - name: Install Android build packages
@@ -38,4 +57,17 @@ jobs:
           task_sdkmanager="$(find -L "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
           test -x "$task_sdkmanager"
           "$task_sdkmanager" --sdk_root="$ANDROID_HOME" 'platforms;android-36' 'build-tools;36.0.0' 'build-tools;35.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
-      - run: npm run verify:android
+      - id: verify-android
+        run: npm run verify:android
+      - name: Upload Android verification reports
+        if: ${{ failure() && steps.verify-android.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: android-verification-reports
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            android/app/build/reports/lint-results-release.*
+            modules/remilo-alarm/android/build/reports/lint-results-debug.*
+            modules/remilo-alarm/android/build/reports/tests/testDebugUnitTest/**
+            modules/remilo-alarm/android/build/test-results/testDebugUnitTest/TEST-*.xml

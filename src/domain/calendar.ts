@@ -1,21 +1,41 @@
 import { t } from '../localization';
-import type { CalendarCommand, CalendarPublication, CalendarPublicationPreview } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type {
+  CalendarCommand,
+  CalendarPublication,
+  CalendarPublicationPreview,
+} from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
-export function publicationCommand(preview: CalendarPublicationPreview, operationId: string): CalendarCommand {
-  return { kind: 'PublishOneOff', operationId, occurrenceId: preview.occurrenceId,
-    expectedRevision: preview.reminderRevision, expectedConnectionRevision: preview.connectionRevision, fingerprint: preview.fingerprint };
+export function publicationCommand(
+  preview: CalendarPublicationPreview,
+  operationId: string,
+): CalendarCommand {
+  return {
+    kind: 'PublishOneOff',
+    operationId,
+    occurrenceId: preview.occurrenceId,
+    expectedRevision: preview.reminderRevision,
+    expectedConnectionRevision: preview.connectionRevision,
+    fingerprint: preview.fingerprint,
+  };
 }
 export function canRetryPublication(publication: CalendarPublication) {
   return ['Waiting', 'Unconfirmed', 'NeedsAccess', 'Failed'].includes(publication.state);
 }
 export function publicationCheckFeedback(publication: CalendarPublication) {
-  if (publication.state === 'Published') return { message: t('publication_checked_confirmed'), tone: 'success' as const };
-  if (publication.state === 'Cancelled') return { message: t('publication_checked_cancelled'), tone: 'muted' as const };
-  if (publication.readOnly) return { message: t('publication_checked_inactive'), tone: 'warning' as const };
-  return { message: publication.message || t('publication_checked_unconfirmed'), tone: 'warning' as const };
+  if (publication.state === 'Published')
+    return { message: t('publication_checked_confirmed'), tone: 'success' as const };
+  if (publication.state === 'Cancelled')
+    return { message: t('publication_checked_cancelled'), tone: 'muted' as const };
+  if (publication.readOnly)
+    return { message: t('publication_checked_inactive'), tone: 'warning' as const };
+  return {
+    message: publication.message || t('publication_checked_unconfirmed'),
+    tone: 'warning' as const,
+  };
 }
 export function calendarError(error: unknown): string {
-  const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (code.includes('CREATION_UNCONFIRMED')) return t('m_3d41a331cd10');
   if (code.includes('DISCOVERY_INCOMPLETE')) return t('m_f6b15efa47ca');
   if (code.includes('SELECTION_REQUIRED')) return t('m_554f1772bde5');

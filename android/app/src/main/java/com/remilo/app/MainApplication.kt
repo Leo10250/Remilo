@@ -5,15 +5,13 @@ import android.content.res.Configuration
 import android.os.UserManager
 import android.util.Log
 import androidx.work.Configuration as WorkConfiguration
-
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
+import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.ReactPackage
-import com.facebook.react.ReactHost
 import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
-
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
@@ -30,7 +28,7 @@ class MainApplication : Application(), ReactApplication, WorkConfiguration.Provi
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
-        }
+        },
     )
   }
 
@@ -40,15 +38,17 @@ class MainApplication : Application(), ReactApplication, WorkConfiguration.Provi
     Log.i("Remilo", "Application startup: native components only")
   }
 
-  @Synchronized fun initializeUi() {
+  @Synchronized
+  fun initializeUi() {
     check(getSystemService(UserManager::class.java).isUserUnlocked)
     if (uiInitialized) return
     Log.i("Remilo", "Initializing product UI runtime")
-    DefaultNewArchitectureEntryPoint.releaseLevel = try {
-      ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())
-    } catch (e: IllegalArgumentException) {
-      ReleaseLevel.STABLE
-    }
+    DefaultNewArchitectureEntryPoint.releaseLevel =
+      try {
+        ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())
+      } catch (e: IllegalArgumentException) {
+        ReleaseLevel.STABLE
+      }
     loadReactNative(this)
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
     uiInitialized = true

@@ -1,7 +1,5 @@
 package com.remilo.alarm.engine
 
-import com.remilo.alarm.presentation.NativeMessages
-
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -9,34 +7,40 @@ import android.content.res.Configuration
 import android.os.SystemClock
 import android.os.UserManager
 import android.util.Log
+import com.remilo.alarm.calendar.CalendarFailure
+import com.remilo.alarm.calendar.CalendarStore
 import com.remilo.alarm.core.AlarmPolicy
 import com.remilo.alarm.core.AppearancePolicy
 import com.remilo.alarm.core.CivilTime
-import com.remilo.alarm.core.Recurrence
 import com.remilo.alarm.core.DeliverySnapshot
-import com.remilo.alarm.core.PostponeTimePolicy
-import com.remilo.alarm.core.StorageFailureDiagnostics
 import com.remilo.alarm.core.OverduePolicy
+import com.remilo.alarm.core.PostponeTimePolicy
+import com.remilo.alarm.core.Recurrence
 import com.remilo.alarm.core.RoutinePolicy
+import com.remilo.alarm.core.StorageFailureDiagnostics
 import com.remilo.alarm.data.*
+import com.remilo.alarm.presentation.NativeMessages
 import com.remilo.alarm.system.*
+import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
-import java.time.Instant
-import java.time.ZoneId
-import com.remilo.alarm.calendar.CalendarStore
-import com.remilo.alarm.calendar.CalendarFailure
 
 /** The process-lifetime serialized owner. This class has no Expo/React imports. */
-class AlarmEngine internal constructor(private val context: Context,
+class AlarmEngine
+internal constructor(
+  private val context: Context,
   private val scheduler: AlarmRegistrar = AlarmScheduler(context),
   private val now: () -> Long = System::currentTimeMillis,
   private val elapsed: () -> Long = SystemClock::elapsedRealtime,
   private val appearanceZone: () -> ZoneId = ZoneId::systemDefault,
-  private val systemDark: () -> Boolean = { (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES },
+  private val systemDark: () -> Boolean = {
+    (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+      Configuration.UI_MODE_NIGHT_YES
+  },
   private val beforeAppearanceWrite: () -> Unit = {},
   private val completionCheckpoint: (String) -> Unit = {},
   private val bulkSnoozeCheckpoint: (String) -> Unit = {},
@@ -45,33 +49,58 @@ class AlarmEngine internal constructor(private val context: Context,
   private val calendarOpportunity: (() -> Unit)? = null,
   private val beforeLanguageProjection: () -> Unit = {},
   private val routineCheckpoint: (String) -> Unit = {},
-  private val routineAlertCheckpoint: (String) -> Unit = {}) {
+  private val routineAlertCheckpoint: (String) -> Unit = {},
+) {
   private val worker = Executors.newSingleThreadExecutor { task -> Thread(task, "Remilo-state") }
   private var lastMediaSweep = -3_600_000L
   private val operational = OperationalDatabase.open(context)
   private val alerts = operational.records()
-  private val languages = LanguageCoordinator(context, alerts, beforeProjection = beforeLanguageProjection)
+  private val languages =
+    LanguageCoordinator(context, alerts, beforeProjection = beforeLanguageProjection)
   @Volatile private var presentationRevision: Long = 0
-  @Volatile private var presentation: Map<String, Any> = mapOf("languagePreference" to "en", "resolvedLanguage" to "en", "localeTag" to "en", "uses24HourClock" to false)
+  @Volatile
+  private var presentation: Map<String, Any> =
+    mapOf(
+      "languagePreference" to "en",
+      "resolvedLanguage" to "en",
+      "localeTag" to "en",
+      "uses24HourClock" to false,
+    )
+
   fun presentationSnapshot(): Map<String, Any> = presentation
+
   private fun defaultSettings() = SettingsRecord(language = languages.reconcile().preference)
+
   private fun reconcileLanguage() {
     val language = languages.reconcile()
     if (unlocked()) {
       val dao = content().records()
       val saved = dao.settings()
       if (language.externalPending || saved == null) {
-        val next = (saved ?: defaultSettings()).let { if (it.language == language.preference) it else it.copy(language = language.preference, revision = it.revision + 1, lastOperationId = "") }
-        dao.settings(next); languages.imported(next.revision)
-      } else if (saved.language != language.preference) languages.commit(saved.language, saved.revision)
+        val next =
+          (saved ?: defaultSettings()).let {
+            if (it.language == language.preference) it
+            else
+              it.copy(
+                language = language.preference,
+                revision = it.revision + 1,
+                lastOperationId = "",
+              )
+          }
+        dao.settings(next)
+        languages.imported(next.revision)
+      } else if (saved.language != language.preference)
+        languages.commit(saved.language, saved.revision)
     }
     val nextPresentation = languages.snapshot()
     if (nextPresentation != presentation) presentationRevision++
     presentation = nextPresentation
   }
+
   private fun reconcileDeliveryPresentation() {
-    try { reconcileLanguage() }
-    catch (error: Exception) {
+    try {
+      reconcileLanguage()
+    } catch (error: Exception) {
       // Locale projection is retryable presentation work. It cannot fence an
       // already durable alarm or prevent protected completion/recovery.
       Log.w("Remilo", "Language projection deferred: ${error.javaClass.simpleName}")
@@ -80,6 +109,7 @@ class AlarmEngine internal constructor(private val context: Context,
       presentation = cached
     }
   }
+
   fun presentationChanged(finished: () -> Unit = {}) = submit {
     com.remilo.alarm.widget.WidgetWork.request(context, includePreview = true)
     try {
@@ -91,47 +121,121 @@ class AlarmEngine internal constructor(private val context: Context,
         if (posted.id == AlarmNotifications.FOREGROUND_ID) continue
         val record = posted.tag?.let { alerts.find(it) } ?: continue
         if (record.profile == RoutinePolicy.PROFILE) {
-          if (record.state == "Notified" && record.expiresAtMs > now()) notifications.routine(record,
-            if (unlocked()) content().records().find(record.occurrenceId)?.title else null, resolveAppearance(), now(), true)
+          if (record.state == "Notified" && record.expiresAtMs > now())
+            notifications.routine(
+              record,
+              if (unlocked()) content().records().find(record.occurrenceId)?.title else null,
+              resolveAppearance(),
+              now(),
+              true,
+            )
           else notifications.clearAttention(record.occurrenceId)
           continue
         }
-        if (record.state in setOf("Stopped", "TimedOut", "Missed", "Interrupted", "Blocked")) notifications.unresolved(record)
-        else if (record.mode == "Notification") notifications.regular(record, if (unlocked()) content().records().find(record.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()) else com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()), resolveAppearance(), true)
+        if (record.state in setOf("Stopped", "TimedOut", "Missed", "Interrupted", "Blocked"))
+          notifications.unresolved(record)
+        else if (record.mode == "Notification")
+          notifications.regular(
+            record,
+            if (unlocked())
+              content().records().find(record.occurrenceId)?.title
+                ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())
+            else com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()),
+            resolveAppearance(),
+            true,
+          )
       }
       // Text-only refresh: never enters the audio-start path.
       alerts.activeSession()?.let { session ->
-        val members = alerts.members(session.id).map { it to if (unlocked()) content().records().find(it.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()) else com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()) }
-        if (members.isNotEmpty()) notifications.update(session.id, members, AppearancePolicy.captured(session.resolvedAtmosphere, session.resolvedBrightness))
+        val members =
+          alerts.members(session.id).map {
+            it to
+              if (unlocked())
+                content().records().find(it.occurrenceId)?.title
+                  ?: com.remilo.alarm.presentation.L10n.text(
+                    context,
+                    NativeMessages.m_31757bbfa17e(),
+                  )
+              else com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())
+          }
+        if (members.isNotEmpty())
+          notifications.update(
+            session.id,
+            members,
+            AppearancePolicy.captured(session.resolvedAtmosphere, session.resolvedBrightness),
+          )
       }
-      listeners.forEach { try { it() } catch (_: Exception) {} }
-    } finally { finished() }
+      listeners.forEach {
+        try {
+          it()
+        } catch (_: Exception) {}
+      }
+    } finally {
+      finished()
+    }
   }
+
   private var content: ContentDatabase? = null
   private var calendarStore: CalendarStore? = null
-  private fun calendarStore(): CalendarStore = calendarStore ?: CalendarStore(content(), now)
-    .also { calendarStore = it }
-  internal fun <T> calendarRequest(notify: Boolean = false, block: (CalendarStore) -> T,
-    resolve: (T) -> Unit, reject: (String) -> Unit) {
+
+  private fun calendarStore(): CalendarStore =
+    calendarStore ?: CalendarStore(content(), now).also { calendarStore = it }
+
+  internal fun <T> calendarRequest(
+    notify: Boolean = false,
+    block: (CalendarStore) -> T,
+    resolve: (T) -> Unit,
+    reject: (String) -> Unit,
+  ) {
     submit {
       try {
         prepareContentActions()
         val value = block(calendarStore())
         if (notify) changed()
         resolve(value)
-      } catch (error: CalendarFailure) { reject(error.code) }
-      catch (_: IllegalArgumentException) { reject("INVALID_INPUT") }
-      catch (_: Exception) { reject("NOT_AVAILABLE") }
+      } catch (error: CalendarFailure) {
+        reject(error.code)
+      } catch (_: IllegalArgumentException) {
+        reject("INVALID_INPUT")
+      } catch (_: Exception) {
+        reject("NOT_AVAILABLE")
+      }
     }
   }
+
   private val listeners = CopyOnWriteArrayList<() -> Unit>()
   private val previewListeners = CopyOnWriteArrayList<(Map<String, Any>) -> Unit>()
-  private val preview = SoundPreviewController(context, { task -> submit(task = task) }, { snapshot ->
-    previewListeners.forEach { try { it(snapshot) } catch (_: Exception) { /* detached bridge */ } }
-  })
-  private val series = SeriesCoordinator(context, ::content, operational, scheduler, now, ::register)
-  private val routines = RoutineCoordinator(context, ::content, operational, series, scheduler, now, ::register, routineCheckpoint, ::refreshOrEndSession)
+  private val preview =
+    SoundPreviewController(
+      context,
+      { task -> submit(task = task) },
+      { snapshot ->
+        previewListeners.forEach {
+          try {
+            it(snapshot)
+          } catch (_: Exception) {
+            /* detached bridge */
+          }
+        }
+      },
+    )
+  private val series =
+    SeriesCoordinator(context, ::content, operational, scheduler, now, ::register)
+  private val routines =
+    RoutineCoordinator(
+      context,
+      ::content,
+      operational,
+      series,
+      scheduler,
+      now,
+      ::register,
+      routineCheckpoint,
+      ::refreshOrEndSession,
+    )
+
   private class InputError(val field: String, message: String) : IllegalArgumentException(message)
+
   private fun validate(valid: Boolean, field: String, message: String) {
     if (!valid) throw InputError(field, message)
   }
@@ -145,16 +249,22 @@ class AlarmEngine internal constructor(private val context: Context,
       alerts.activeSession()?.let { endSession(it.id, "Interrupted") }
       alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
       alerts.pendingRoutineAlerts().forEach { settleRoutineAlert(it) }
-      if (unlocked()) try { syncProtectedSettings(prepareContentActions().records().settings() ?: defaultSettings()) }
-      catch (_: Exception) { /* Presentation recovery must not block autonomous delivery. */ }
+      if (unlocked())
+        try {
+          syncProtectedSettings(prepareContentActions().records().settings() ?: defaultSettings())
+        } catch (_: Exception) {
+          /* Presentation recovery must not block autonomous delivery. */
+        }
     }
   }
 
   private fun unlocked() = context.getSystemService(UserManager::class.java).isUserUnlocked
+
   private fun content(): ContentDatabase {
     check(unlocked()) { "User must unlock first" }
     return content ?: ContentDatabase.open(context).also { content = it }
   }
+
   /** Called on the existing worker before CE reads and revision validation. */
   private fun prepareContentActions(): ContentDatabase {
     val db = content()
@@ -162,7 +272,16 @@ class AlarmEngine internal constructor(private val context: Context,
     // Identity mirrors contain no authored content and never enter portable backups.
     alerts.routineAlertReceipts().forEach { receipt ->
       if (db.records().receipt(receipt.operationId) == null)
-        db.records().receipt(CreationReceipt(receipt.operationId, receipt.occurrenceId, "RoutineAlarmDelivery", receipt.fingerprint))
+        db
+          .records()
+          .receipt(
+            CreationReceipt(
+              receipt.operationId,
+              receipt.occurrenceId,
+              "RoutineAlarmDelivery",
+              receipt.fingerprint,
+            )
+          )
     }
     closeProtectedRoutineDays()
     routines.recoverOperations()
@@ -183,14 +302,32 @@ class AlarmEngine internal constructor(private val context: Context,
         // A later Reopen must never be overwritten by replay of that commit.
         val committed = db.records().historyOperation(completion.operationId)
         if (committed == null) {
-          val record = checkNotNull(db.records().find(completion.occurrenceId)) { "Completion content not materialized" }
+          val record =
+            checkNotNull(db.records().find(completion.occurrenceId)) {
+              "Completion content not materialized"
+            }
           db.records().update(record.copy(completed = true, revision = record.revision + 1))
           calendarStore().links.terminal(record.id)
-          db.records().history(HistoryRecord(completion.operationId, record.id, "Done",
-            completion.occurredAtMs, completion.generation))
+          db
+            .records()
+            .history(
+              HistoryRecord(
+                completion.operationId,
+                record.id,
+                "Done",
+                completion.occurredAtMs,
+                completion.generation,
+              )
+            )
           completionCheckpoint("content-before-commit")
-        } else check(committed.kind == "Done" && committed.occurrenceId == completion.occurrenceId &&
-          committed.generation == completion.generation) { "Completion operation was reused" }
+        } else
+          check(
+            committed.kind == "Done" &&
+              committed.occurrenceId == completion.occurrenceId &&
+              committed.generation == completion.generation
+          ) {
+            "Completion operation was reused"
+          }
       }
       completionCheckpoint("content-committed")
       alerts.acknowledgeCompletion(completion.operationId)
@@ -198,49 +335,97 @@ class AlarmEngine internal constructor(private val context: Context,
     replayHistory(db)
     return db
   }
+
   private fun submit(finished: () -> Unit = {}, task: () -> Unit) {
     try {
       worker.execute {
-        try { task() } catch (error: Exception) {
+        try {
+          task()
+        } catch (error: Exception) {
           Log.e("Remilo", "Native operation failed: ${StorageFailureDiagnostics.summary(error)}")
-        } finally { finished() }
+        } finally {
+          finished()
+        }
       }
-    } catch (_: RejectedExecutionException) { finished() /* detached native callback after close */ }
+    } catch (_: RejectedExecutionException) {
+      finished() /* detached native callback after close */
+    }
   }
+
   private fun changed(calendarOpportunity: Boolean = false) {
     com.remilo.alarm.widget.WidgetWork.request(context)
-    listeners.forEach { try { it() } catch (_: Exception) { /* detached bridge */ } }
-    if (unlocked()) calendarStore?.sync?.notifications(com.remilo.alarm.calendar.CalendarReviewNotifications(context))
-    if (calendarOpportunity) calendarStore?.let { store -> store.sync.wakeDeferred { id ->
-      alerts.find(id)?.sessionId != null || alerts.all().any { it.segmentId in store.links.segments(id).map { segment -> segment.id } && it.sessionId != null }
-    } }
-    if (calendarOpportunity) this.calendarOpportunity?.invoke() ?: com.remilo.alarm.calendar.CalendarWork.reconcile(context, opportunity = true, owner = this)
+    listeners.forEach {
+      try {
+        it()
+      } catch (_: Exception) {
+        /* detached bridge */
+      }
+    }
+    if (unlocked())
+      calendarStore
+        ?.sync
+        ?.notifications(com.remilo.alarm.calendar.CalendarReviewNotifications(context))
+    if (calendarOpportunity)
+      calendarStore?.let { store ->
+        store.sync.wakeDeferred { id ->
+          alerts.find(id)?.sessionId != null ||
+            alerts.all().any {
+              it.segmentId in store.links.segments(id).map { segment -> segment.id } &&
+                it.sessionId != null
+            }
+        }
+      }
+    if (calendarOpportunity)
+      this.calendarOpportunity?.invoke()
+        ?: com.remilo.alarm.calendar.CalendarWork.reconcile(
+          context,
+          opportunity = true,
+          owner = this,
+        )
     else if (this.calendarOpportunity == null && unlocked() && calendarStore != null)
       com.remilo.alarm.calendar.CalendarWork.reconcile(context, owner = this)
   }
-  private fun calendarFieldsChanged(old: ReminderRecord, updated: ReminderRecord): Boolean = runCatching {
-    !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old),
-      com.remilo.alarm.calendar.CalendarLinkMapper.fields(updated))
-  }.getOrElse { old.title != updated.title || old.notes != updated.notes || old.eventStartMs != updated.eventStartMs ||
-    old.eventEndMs != updated.eventEndMs || old.allDay != updated.allDay || old.zoneId != updated.zoneId }
+
+  private fun calendarFieldsChanged(old: ReminderRecord, updated: ReminderRecord): Boolean =
+    runCatching {
+      !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+        com.remilo.alarm.calendar.CalendarLinkMapper.fields(old),
+        com.remilo.alarm.calendar.CalendarLinkMapper.fields(updated),
+      )
+    }
+    .getOrElse {
+      old.title != updated.title ||
+        old.notes != updated.notes ||
+        old.eventStartMs != updated.eventStartMs ||
+        old.eventEndMs != updated.eventEndMs ||
+        old.allDay != updated.allDay ||
+        old.zoneId != updated.zoneId
+    }
+
   fun observe(listener: () -> Unit): AutoCloseable {
     listeners.add(listener)
     return AutoCloseable { listeners.remove(listener) }
   }
+
   fun observeSoundPreview(listener: (Map<String, Any>) -> Unit): AutoCloseable {
     previewListeners.add(listener)
     return AutoCloseable { previewListeners.remove(listener) }
   }
+
   fun request(block: () -> Any?, resolve: (Any?) -> Unit, reject: (String) -> Unit) {
     submit {
-      try { resolve(block()) } catch (error: CalendarFailure) { reject(error.code) }
-      catch (_: BackupLimitException) { reject("BACKUP_TOO_LARGE") }
-      catch (_: IllegalArgumentException) { reject("INVALID_INPUT") }
-      catch (error: IllegalStateException) {
+      try {
+        resolve(block())
+      } catch (error: CalendarFailure) {
+        reject(error.code)
+      } catch (_: BackupLimitException) {
+        reject("BACKUP_TOO_LARGE")
+      } catch (_: IllegalArgumentException) {
+        reject("INVALID_INPUT")
+      } catch (error: IllegalStateException) {
         Log.e("Remilo", "Native request failed: ${StorageFailureDiagnostics.summary(error)}")
         reject("NOT_AVAILABLE")
-      }
-      catch (error: Exception) {
+      } catch (error: Exception) {
         Log.e("Remilo", "Native request failed: ${StorageFailureDiagnostics.summary(error)}")
         reject("STORAGE_ERROR")
       }
@@ -251,95 +436,231 @@ class AlarmEngine internal constructor(private val context: Context,
     AlarmNotifications(context) // Create channels before presenting their actual system settings.
     val manager = context.getSystemService(NotificationManager::class.java)
     val channel = manager.getNotificationChannel(AlarmNotifications.RINGING_CHANNEL)
-    val notificationChannel = manager.getNotificationChannel(AlarmNotifications.NOTIFICATION_CHANNEL)
+    val notificationChannel =
+      manager.getNotificationChannel(AlarmNotifications.NOTIFICATION_CHANNEL)
     val routineChannel = manager.getNotificationChannel(AlarmNotifications.ROUTINE_CHANNEL)
     val active = alerts.activeSession()
     val members = active?.let { alerts.members(it.id) }.orEmpty()
-    return mapOf("exactAlarms" to scheduler.canSchedule(),
+    return mapOf(
+      "exactAlarms" to scheduler.canSchedule(),
       "notifications" to manager.areNotificationsEnabled(),
-      "channelEnabled" to (channel == null || channel.importance != NotificationManager.IMPORTANCE_NONE),
-      "notificationChannelEnabled" to (notificationChannel == null || notificationChannel.importance != NotificationManager.IMPORTANCE_NONE),
-      "routineChannelEnabled" to (routineChannel == null || routineChannel.importance != NotificationManager.IMPORTANCE_NONE),
-      "routineChannelQuiet" to (routineChannel == null || routineChannel.importance <= NotificationManager.IMPORTANCE_LOW && routineChannel.sound == null && !routineChannel.shouldVibrate()),
-      "fullScreen" to manager.canUseFullScreenIntent(), "unlocked" to unlocked(),
+      "channelEnabled" to
+        (channel == null || channel.importance != NotificationManager.IMPORTANCE_NONE),
+      "notificationChannelEnabled" to
+        (notificationChannel == null ||
+          notificationChannel.importance != NotificationManager.IMPORTANCE_NONE),
+      "routineChannelEnabled" to
+        (routineChannel == null ||
+          routineChannel.importance != NotificationManager.IMPORTANCE_NONE),
+      "routineChannelQuiet" to
+        (routineChannel == null ||
+          routineChannel.importance <= NotificationManager.IMPORTANCE_LOW &&
+            routineChannel.sound == null &&
+            !routineChannel.shouldVibrate()),
+      "fullScreen" to manager.canUseFullScreenIntent(),
+      "unlocked" to unlocked(),
       "activeSessionId" to (active?.id ?: ""),
-      "activeSessionActions" to if (active != null && members.isNotEmpty() && members.none { it.profile == RoutinePolicy.PROFILE }) mapOf(
-        "sessionId" to active.id, "members" to DeliverySnapshot.maps(members.map { DeliverySnapshot.Member(it.occurrenceId, it.generation) }),
-        "snoozeMinutes" to members.first().snoozeMinutes) else null,
-      "observedAtMs" to now())
+      "activeSessionActions" to
+        if (
+          active != null &&
+            members.isNotEmpty() &&
+            members.none { it.profile == RoutinePolicy.PROFILE }
+        )
+          mapOf(
+            "sessionId" to active.id,
+            "members" to
+              DeliverySnapshot.maps(
+                members.map { DeliverySnapshot.Member(it.occurrenceId, it.generation) }
+              ),
+            "snoozeMinutes" to members.first().snoozeMinutes,
+          )
+        else null,
+      "observedAtMs" to now(),
+    )
   }
 
   private fun ready(mode: String = "Alarm"): Boolean {
     val capabilities = capabilities()
-    return (mode != "Alarm" || capabilities["exactAlarms"] == true) && capabilities["notifications"] == true &&
-      capabilities[if (mode == "Notification") "notificationChannelEnabled" else "channelEnabled"] == true
+    return (mode != "Alarm" || capabilities["exactAlarms"] == true) &&
+      capabilities["notifications"] == true &&
+      capabilities[
+        if (mode == "Notification") "notificationChannelEnabled" else "channelEnabled"] == true
   }
-  private fun routineReady(mode: String = "Notification"): Boolean = if (mode == "Alarm") ready("Alarm") else capabilities().let { it["notifications"] == true && it["routineChannelEnabled"] == true }
-  fun queryRoutines(): List<Map<String, Any?>> { prepareContentActions(); return routines.plans() }
+
+  private fun routineReady(mode: String = "Notification"): Boolean =
+    if (mode == "Alarm") ready("Alarm")
+    else capabilities().let { it["notifications"] == true && it["routineChannelEnabled"] == true }
+
+  fun queryRoutines(): List<Map<String, Any?>> {
+    prepareContentActions()
+    return routines.plans()
+  }
+
   fun stageExerciseImage(image: ExerciseImage, lease: String): Map<String, Any> {
-    val db = content(); val media = ExerciseImages(context)
-    require(media.file(image.id).isFile); db.routines().image(image); media.lease(image.id, lease)
-    return mapOf("id" to image.id, "uri" to android.net.Uri.fromFile(media.file(image.id)).toString(), "width" to image.width, "height" to image.height, "lease" to lease)
+    val db = content()
+    val media = ExerciseImages(context)
+    require(media.file(image.id).isFile)
+    db.routines().image(image)
+    media.lease(image.id, lease)
+    return mapOf(
+      "id" to image.id,
+      "uri" to android.net.Uri.fromFile(media.file(image.id)).toString(),
+      "width" to image.width,
+      "height" to image.height,
+      "lease" to lease,
+    )
   }
+
   fun exerciseImage(id: String, lease: String?): Map<String, Any>? {
-    val db = content(); val media = ExerciseImages(context)
+    val db = content()
+    val media = ExerciseImages(context)
     val image = db.routines().image(id) ?: return null
     if (!media.file(id).isFile) return null
     lease?.let { media.lease(id, it) }
-    return mapOf("id" to id, "uri" to android.net.Uri.fromFile(media.file(id)).toString(), "width" to image.width, "height" to image.height)
+    return mapOf(
+      "id" to id,
+      "uri" to android.net.Uri.fromFile(media.file(id)).toString(),
+      "width" to image.width,
+      "height" to image.height,
+    )
   }
-  fun releaseExerciseImage(lease: String) { val images = ExerciseImages(context); images.release(lease); images.clean(content()) }
+
+  fun releaseExerciseImage(lease: String) {
+    val images = ExerciseImages(context)
+    images.release(lease)
+    images.clean(content())
+  }
+
   fun captureBackupFile(lease: String): Pair<String, List<ExerciseImage>> {
-    val json = exportBackup(); val bundle = BackupCodec.decode(json)
+    val json = exportBackup()
+    val bundle = BackupCodec.decode(json)
     bundle.images.forEach { ExerciseImages(context).lease(it.id, "$lease:${it.id}") }
     return json to bundle.images
   }
-  fun releaseBackupFile(lease: String, images: List<ExerciseImage>) { images.forEach { ExerciseImages(context).release("$lease:${it.id}") } }
+
+  fun releaseBackupFile(lease: String, images: List<ExerciseImage>) {
+    images.forEach { ExerciseImages(context).release("$lease:${it.id}") }
+  }
+
   fun preparedImportReplay(operation: String, fingerprint: String): Map<String, Any?>? {
     val receipt = content().records().receipt(operation) ?: return null
-    require(receipt.kind == "Import" && receipt.sourceId == fingerprint) { "This operation was already used. Refresh and try again." }
+    require(receipt.kind == "Import" && receipt.sourceId == fingerprint) {
+      "This operation was already used. Refresh and try again."
+    }
     return importBackup("", emptyList(), operation, fingerprint)
   }
-  private val widgets by lazy { com.remilo.alarm.widget.WidgetCoordinator(context, now, ::resolveAppearance,
-    { routineSession(it, null) }, { query(mapOf("view" to "widget"), null) }, ::liveWidgetRoutine,
-    ::apply, { content().routines().operation(it)?.applied == true }) }
-  private fun liveWidgetRoutine(id: String): Boolean = !routines.trashed(id) && content().records().series().any {
-    it.seriesId == id && it.state != "Deleted" && org.json.JSONObject(it.template).optString("routineId") == id &&
-      !org.json.JSONObject(it.template).optBoolean("deleted")
+
+  private val widgets by lazy {
+    com.remilo.alarm.widget.WidgetCoordinator(
+      context,
+      now,
+      ::resolveAppearance,
+      { routineSession(it, null) },
+      { query(mapOf("view" to "widget"), null) },
+      ::liveWidgetRoutine,
+      ::apply,
+      { content().routines().operation(it)?.applied == true },
+    )
   }
-  fun widgetPlans(): List<Map<String, Any?>> { prepareContentActions(); return routines.plans().filter { liveWidgetRoutine(it["id"] as String) } }
+
+  private fun liveWidgetRoutine(id: String): Boolean =
+    !routines.trashed(id) &&
+      content().records().series().any {
+        it.seriesId == id &&
+          it.state != "Deleted" &&
+          org.json.JSONObject(it.template).optString("routineId") == id &&
+          !org.json.JSONObject(it.template).optBoolean("deleted")
+      }
+
+  fun widgetPlans(): List<Map<String, Any?>> {
+    prepareContentActions()
+    return routines.plans().filter { liveWidgetRoutine(it["id"] as String) }
+  }
+
   fun widgetConfiguration(id: Int) = widgets.state.configuration(widgets.state.read(id))
+
   private var widgetProjectionEpoch = 0L
-  fun configureWidget(id: Int, mode: String, routineId: String?, expected: Long) = widgets.configure(id, mode, routineId, expected)
-  fun widgetSnapshot(id: Int, supportedHost: Boolean = true): com.remilo.alarm.widget.WidgetSnapshot {
-    if (!unlocked() || !supportedHost) return com.remilo.alarm.widget.WidgetSnapshot(id, locked = true, appearance = resolveAppearance())
-    reconcileLanguage(); prepareContentActions(); return widgets.snapshot(id).copy(localeTag = presentation["localeTag"] as? String ?: "en",
-      uses24HourClock = presentation["uses24HourClock"] == true, projectionEpoch = ++widgetProjectionEpoch)
+
+  fun configureWidget(id: Int, mode: String, routineId: String?, expected: Long) =
+    widgets.configure(id, mode, routineId, expected)
+
+  fun widgetSnapshot(
+    id: Int,
+    supportedHost: Boolean = true,
+  ): com.remilo.alarm.widget.WidgetSnapshot {
+    if (!unlocked() || !supportedHost)
+      return com.remilo.alarm.widget.WidgetSnapshot(
+        id,
+        locked = true,
+        appearance = resolveAppearance(),
+      )
+    reconcileLanguage()
+    prepareContentActions()
+    return widgets
+      .snapshot(id)
+      .copy(
+        localeTag = presentation["localeTag"] as? String ?: "en",
+        uses24HourClock = presentation["uses24HourClock"] == true,
+        projectionEpoch = ++widgetProjectionEpoch,
+      )
   }
+
   fun widgetPreview(mode: String, routineId: String?): com.remilo.alarm.widget.WidgetSnapshot {
-    prepareContentActions(); widgets.validate(mode, routineId)
+    prepareContentActions()
+    widgets.validate(mode, routineId)
     return widgets.snapshot(-1, com.remilo.alarm.widget.WidgetConfiguration(mode, routineId))
   }
+
   fun refreshWidget(id: Int, supportedHost: Boolean): com.remilo.alarm.widget.WidgetSnapshot {
-    val current = widgetSnapshot(id,supportedHost)
-    if(current.locked || !current.configured) return current
+    val current = widgetSnapshot(id, supportedHost)
+    if (current.locked || !current.configured) return current
     widgets.acknowledgeRefresh(id)
     return current.copy(notice = null)
   }
+
   fun widgetAction(id: Int, token: String, supportedHost: Boolean = true): Map<String, Any?> {
-    if (!unlocked() || !supportedHost || context.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked)
+    if (
+      !unlocked() ||
+        !supportedHost ||
+        context.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked
+    )
       return mapOf("status" to "Rejected", "errorCode" to "LOCKED")
-    prepareContentActions(); return widgets.act(id, token)
+    prepareContentActions()
+    return widgets.act(id, token)
   }
+
   fun removeWidget(id: Int) = widgets.state.remove(id)
+
   fun restoreWidget(oldId: Int, newId: Int) = widgets.state.restore(oldId, newId)
+
   fun pruneWidgets(active: Set<Int>) = widgets.state.prune(active)
-  fun captureWidgetPin(mode: String, routineId: String?): String { prepareContentActions(); widgets.validate(mode, routineId); return widgets.state.capturePin(mode, routineId, now()) }
+
+  fun captureWidgetPin(mode: String, routineId: String?): String {
+    prepareContentActions()
+    widgets.validate(mode, routineId)
+    return widgets.state.capturePin(mode, routineId, now())
+  }
+
   fun finishWidgetPin(token: String, id: Int) = widgets.state.finishPin(token, id, now())
-  fun previewRoutine(input: Map<String, Any?>): Map<String, Any?> { prepareContentActions(); return routines.preview(input) }
-  fun routineSession(id: String, date: String?): Map<String, Any?>? { prepareContentActions(); return routines.session(id, date) }
-  fun routineHistory(id: String, cursor: String?): Map<String, Any?> { prepareContentActions(); return routines.history(id, cursor) }
-  fun query(filter: String, cursor: String?): Map<String, Any?> = query(mapOf("view" to filter), cursor)
+
+  fun previewRoutine(input: Map<String, Any?>): Map<String, Any?> {
+    prepareContentActions()
+    return routines.preview(input)
+  }
+
+  fun routineSession(id: String, date: String?): Map<String, Any?>? {
+    prepareContentActions()
+    return routines.session(id, date)
+  }
+
+  fun routineHistory(id: String, cursor: String?): Map<String, Any?> {
+    prepareContentActions()
+    return routines.history(id, cursor)
+  }
+
+  fun query(filter: String, cursor: String?): Map<String, Any?> =
+    query(mapOf("view" to filter), cursor)
+
   fun query(filter: Map<String, Any?>, cursor: String?): Map<String, Any?> {
     val db = prepareContentActions()
     val queryNow = now()
@@ -348,292 +669,740 @@ class AlarmEngine internal constructor(private val context: Context,
     val start = day.atStartOfDay(zone).toInstant().toEpochMilli()
     val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val search = (filter["search"] as? String)?.trim().orEmpty()
-    val familySegments = (filter["seriesId"] as? String)?.takeIf { it.isNotEmpty() }?.let { family ->
-      db.records().series().filter { it.seriesId == family }.map { it.id }.toSet()
-    }
+    val familySegments =
+      (filter["seriesId"] as? String)
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { family ->
+          db.records().series().filter { it.seriesId == family }.map { it.id }.toSet()
+        }
     fun matches(record: ReminderRecord) =
-      (search.isEmpty() || record.title.contains(search, true) || record.notes.contains(search, true)) &&
-        ((filter["segmentId"] as? String).isNullOrEmpty() || record.segmentId == filter["segmentId"]) &&
+      (search.isEmpty() ||
+        record.title.contains(search, true) ||
+        record.notes.contains(search, true)) &&
+        ((filter["segmentId"] as? String).isNullOrEmpty() ||
+          record.segmentId == filter["segmentId"]) &&
         (familySegments == null || record.segmentId in familySegments) &&
         (if (filter.containsKey("listId")) record.listId == filter["listId"]
-          else (filter["listName"] as? String).isNullOrEmpty() ||
-            (record.listId?.let { db.records().list(it)?.name } ?: record.listName) == filter["listName"]) &&
-        (filter["deliveryIssuesOnly"] != true || (record.mode != "None" && alerts.find(record.id)?.state in
-          setOf("Missed", "TimedOut", "Interrupted", "Blocked", "Failed"))) &&
+        else
+          (filter["listName"] as? String).isNullOrEmpty() ||
+            (record.listId?.let { db.records().list(it)?.name } ?: record.listName) ==
+              filter["listName"]) &&
+        (filter["deliveryIssuesOnly"] != true ||
+          (record.mode != "None" &&
+            alerts.find(record.id)?.state in
+              setOf("Missed", "TimedOut", "Interrupted", "Blocked", "Failed"))) &&
         (filter["overdueOnly"] != true || overdue(record, queryNow))
     val familyRows = if (filter["view"] == "deleted") routines.trashRows().toMap() else emptyMap()
     val candidates = db.records().all().filter { !routines.trashed(it.routineId) } + familyRows.keys
     val records = candidates.filter { record ->
       val alert = alerts.find(record.id)
-      val selected = when (filter["view"]) {
-        "deleted" -> record.deleted
-        "history" -> !record.deleted && (record.completed || record.skipped)
-        "completed" -> !record.deleted && (record.completed || (filter["includeSkipped"] == true && record.skipped))
-        "overdue" -> overdue(record, queryNow)
-        "attention" -> !record.deleted && !record.completed && !record.skipped && (overdue(record, queryNow) ||
-          alert?.state in setOf("Missed", "Stopped", "TimedOut", "Interrupted", "Blocked", "Failed", "Notified", "Changing"))
-        "widget" -> record.routineId == null && !record.deleted && !record.completed && !record.skipped &&
-          (overdue(record, queryNow) || agendaAt(record, alert) in start until end)
-        "today" -> !record.deleted && !record.completed && !record.skipped && agendaAt(record, alert) in start until end
-        "upcoming" -> !record.deleted && !record.completed && !record.skipped && agendaAt(record, alert) >= end
-        else -> !record.deleted && !record.completed && !record.skipped
-      }
-      selected && matches(record) && (filter["view"] in setOf("completed", "history", "deleted") || routines.visible(record))
+      val selected =
+        when (filter["view"]) {
+          "deleted" -> record.deleted
+          "history" -> !record.deleted && (record.completed || record.skipped)
+          "completed" ->
+            !record.deleted &&
+              (record.completed || (filter["includeSkipped"] == true && record.skipped))
+          "overdue" -> overdue(record, queryNow)
+          "attention" ->
+            !record.deleted &&
+              !record.completed &&
+              !record.skipped &&
+              (overdue(record, queryNow) ||
+                alert?.state in
+                  setOf(
+                    "Missed",
+                    "Stopped",
+                    "TimedOut",
+                    "Interrupted",
+                    "Blocked",
+                    "Failed",
+                    "Notified",
+                    "Changing",
+                  ))
+          "widget" ->
+            record.routineId == null &&
+              !record.deleted &&
+              !record.completed &&
+              !record.skipped &&
+              (overdue(record, queryNow) || agendaAt(record, alert) in start until end)
+          "today" ->
+            !record.deleted &&
+              !record.completed &&
+              !record.skipped &&
+              agendaAt(record, alert) in start until end
+          "upcoming" ->
+            !record.deleted &&
+              !record.completed &&
+              !record.skipped &&
+              agendaAt(record, alert) >= end
+          else -> !record.deleted && !record.completed && !record.skipped
+        }
+      selected &&
+        matches(record) &&
+        (filter["view"] in setOf("completed", "history", "deleted") || routines.visible(record))
     }
     val historical = filter["view"] in setOf("completed", "history", "deleted")
-    val collectionTimes = if (historical) {
-      val activity = db.records().collectionHistory().groupBy { it.occurrenceId to it.kind }
-        .mapValues { (_, entries) -> entries.maxOf { it.occurredAtMs } }
-      records.associate { it.id to ((familyRows[it]?.get("trashedAtMs") as? Number)?.toLong() ?: activity[it.id to collectionKind(it)] ?: it.eventStartMs) }
-    } else emptyMap()
-    val ordered = if (filter["view"] in setOf("agenda", "overdue", "today", "upcoming", "attention", "widget")) records.sortedWith(
-      compareBy<ReminderRecord> { com.remilo.alarm.core.Agenda.rank(agendaGroup(it, queryNow, zone)) }
-        .thenBy { if (overdue(it, queryNow)) overdueAt(it) else agendaAt(it) }.thenBy { it.id })
-      else if (historical) records.sortedWith(
-        compareByDescending<ReminderRecord> { collectionTimes.getValue(it.id) }.thenByDescending { it.eventStartMs }.thenBy { it.id })
+    val collectionTimes =
+      if (historical) {
+        val activity =
+          db
+            .records()
+            .collectionHistory()
+            .groupBy { it.occurrenceId to it.kind }
+            .mapValues { (_, entries) -> entries.maxOf { it.occurredAtMs } }
+        records.associate {
+          it.id to
+            ((familyRows[it]?.get("trashedAtMs") as? Number)?.toLong()
+              ?: activity[it.id to collectionKind(it)]
+              ?: it.eventStartMs)
+        }
+      } else emptyMap()
+    val ordered =
+      if (filter["view"] in setOf("agenda", "overdue", "today", "upcoming", "attention", "widget"))
+        records.sortedWith(
+          compareBy<ReminderRecord> {
+              com.remilo.alarm.core.Agenda.rank(agendaGroup(it, queryNow, zone))
+            }
+            .thenBy { if (overdue(it, queryNow)) overdueAt(it) else agendaAt(it) }
+            .thenBy { it.id }
+        )
+      else if (historical)
+        records.sortedWith(
+          compareByDescending<ReminderRecord> { collectionTimes.getValue(it.id) }
+            .thenByDescending { it.eventStartMs }
+            .thenBy { it.id }
+        )
       else records.sortedWith(compareBy<ReminderRecord> { it.eventStartMs }.thenBy { it.id })
     val offset = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
     val page = ordered.drop(offset).take(50)
     val groups = ordered.groupingBy { agendaGroup(it, queryNow, zone) }.eachCount()
-    val completedCount = db.records().all().count { !routines.trashed(it.routineId) && !it.deleted && it.completed && matches(it) }
-    return mapOf("items" to page.map { record -> view(record, queryNow, zone) + (familyRows[record]?.let { mapOf<String, Any?>("kind" to "RoutineFamily", "routineFamily" to it, "collectionAtMs" to it["trashedAtMs"]) } ?: emptyMap<String, Any?>()) },
-      "nextCursor" to if (offset + page.size < ordered.size) (offset + page.size).toString() else null,
-      "total" to ordered.size, "groups" to groups, "completedCount" to completedCount)
+    val completedCount =
+      db.records().all().count {
+        !routines.trashed(it.routineId) && !it.deleted && it.completed && matches(it)
+      }
+    return mapOf(
+      "items" to
+        page.map { record ->
+          view(record, queryNow, zone) +
+            (familyRows[record]?.let {
+              mapOf<String, Any?>(
+                "kind" to "RoutineFamily",
+                "routineFamily" to it,
+                "collectionAtMs" to it["trashedAtMs"],
+              )
+            } ?: emptyMap<String, Any?>())
+        },
+      "nextCursor" to
+        if (offset + page.size < ordered.size) (offset + page.size).toString() else null,
+      "total" to ordered.size,
+      "groups" to groups,
+      "completedCount" to completedCount,
+    )
   }
+
   fun occurrence(id: String): Map<String, Any?>? {
     val db = prepareContentActions()
-    return db.records().find(id)?.takeUnless { routines.trashed(it.routineId) }?.let { record ->
-      val family = record.segmentId?.let { db.records().series(it)?.seriesId }
-      val association = db.links().links().firstOrNull { it.occurrenceId == id || family != null && calendarStore().links.currentSeries(it.occurrenceId)?.seriesId == family }?.occurrenceId ?: id
-      val history = db.records().history(id).map { mapOf<String, Any?>("kind" to it.kind, "atMs" to it.occurredAtMs, "targetMs" to it.targetMs) } + calendarStore().sync.activity(association)
-      view(record) + ("history" to history.sortedBy { (it["atMs"] as Number).toLong() })
-    }
+    return db
+      .records()
+      .find(id)
+      ?.takeUnless { routines.trashed(it.routineId) }
+      ?.let { record ->
+        val family = record.segmentId?.let { db.records().series(it)?.seriesId }
+        val association =
+          db
+            .links()
+            .links()
+            .firstOrNull {
+              it.occurrenceId == id ||
+                family != null &&
+                  calendarStore().links.currentSeries(it.occurrenceId)?.seriesId == family
+            }
+            ?.occurrenceId ?: id
+        val history =
+          db.records().history(id).map {
+            mapOf<String, Any?>(
+              "kind" to it.kind,
+              "atMs" to it.occurredAtMs,
+              "targetMs" to it.targetMs,
+            )
+          } + calendarStore().sync.activity(association)
+        view(record) + ("history" to history.sortedBy { (it["atMs"] as Number).toLong() })
+      }
   }
+
   fun calendarContext(id: String): Map<String, Any?>? {
-    occurrence(id)?.let { return it }
+    occurrence(id)?.let {
+      return it
+    }
     val store = calendarStore().links
     val segment = store.currentSeries(id) ?: return null
     val record = store.record(id) ?: return null
-    val segments = content().records().series().filter { it.seriesId == segment.seriesId }.map { it.id }.toSet()
-    val deliveries = alerts.all().filter { it.segmentId in segments && it.state !in setOf("Completed", "Deleted", "Skipped", "Replaced") }
+    val segments =
+      content().records().series().filter { it.seriesId == segment.seriesId }.map { it.id }.toSet()
+    val deliveries =
+      alerts.all().filter {
+        it.segmentId in segments &&
+          it.state !in setOf("Completed", "Deleted", "Skipped", "Replaced")
+      }
     val target = deliveries.filter { it.targetMs > now() }.minByOrNull { it.targetMs }
-    return view(record) + mapOf("calendarSeriesId" to segment.seriesId, "history" to calendarStore().sync.activity(id), "nextAlertMs" to target?.targetMs,
-      "alarmAtMs" to (target?.targetMs ?: record.definedAlarmAtMs), "deliveryState" to (target?.state ?: if (segment.state == "Paused") "Paused" else "NoAlert"))
+    return view(record) +
+      mapOf(
+        "calendarSeriesId" to segment.seriesId,
+        "history" to calendarStore().sync.activity(id),
+        "nextAlertMs" to target?.targetMs,
+        "alarmAtMs" to (target?.targetMs ?: record.definedAlarmAtMs),
+        "deliveryState" to
+          (target?.state ?: if (segment.state == "Paused") "Paused" else "NoAlert"),
+      )
   }
+
   private fun collectionKind(record: ReminderRecord): String? =
-    when { record.deleted -> "Delete"; record.completed -> "Done"; record.skipped -> "Skip"; else -> null }
+    when {
+      record.deleted -> "Delete"
+      record.completed -> "Done"
+      record.skipped -> "Skip"
+      else -> null
+    }
+
   private fun collectionTime(record: ReminderRecord): Long {
     val kind = collectionKind(record)
-    return kind?.let { content().records().history(record.id).filter { it.kind == kind }.maxOfOrNull { it.occurredAtMs } }
-      ?: record.eventStartMs
+    return kind?.let {
+      content()
+        .records()
+        .history(record.id)
+        .filter { it.kind == kind }
+        .maxOfOrNull { it.occurredAtMs }
+    } ?: record.eventStartMs
   }
+
   private fun agendaAt(record: ReminderRecord, alert: AlertRecord? = alerts.find(record.id)): Long =
-    if (record.routineId != null) routines.anchor(record) else if (record.mode == "None") record.eventStartMs else alert?.targetMs ?: record.definedAlarmAtMs ?: record.eventStartMs
+    if (record.routineId != null) routines.anchor(record)
+    else if (record.mode == "None") record.eventStartMs
+    else alert?.targetMs ?: record.definedAlarmAtMs ?: record.eventStartMs
+
   private fun agendaGroup(record: ReminderRecord, at: Long, zone: ZoneId): String =
-    if (record.routineId != null) { if (record.completed || record.skipped) "completed" else record.nominalSlot!!.substringBefore('T') }
-    else com.remilo.alarm.core.Agenda.group(agendaAt(record), overdueAt(record), record.completed, record.skipped, at, zone)
-  private fun overdueAt(record: ReminderRecord): Long = OverduePolicy.reference(record.mode, record.eventStartMs,
-    record.definedAlarmAtMs, record.allDay, ZoneId.of(record.zoneId.ifEmpty { ZoneId.systemDefault().id }))
+    if (record.routineId != null) {
+      if (record.completed || record.skipped) "completed"
+      else record.nominalSlot!!.substringBefore('T')
+    } else
+      com.remilo.alarm.core.Agenda.group(
+        agendaAt(record),
+        overdueAt(record),
+        record.completed,
+        record.skipped,
+        at,
+        zone,
+      )
+
+  private fun overdueAt(record: ReminderRecord): Long =
+    OverduePolicy.reference(
+      record.mode,
+      record.eventStartMs,
+      record.definedAlarmAtMs,
+      record.allDay,
+      ZoneId.of(record.zoneId.ifEmpty { ZoneId.systemDefault().id }),
+    )
+
   private fun overdue(record: ReminderRecord, at: Long): Boolean =
-    record.routineId == null && OverduePolicy.isOverdue(overdueAt(record), record.completed, record.skipped, record.deleted, at)
-  private fun view(record: ReminderRecord, queryNow: Long = now(), zone: ZoneId = ZoneId.systemDefault()): Map<String, Any?> {
+    record.routineId == null &&
+      OverduePolicy.isOverdue(
+        overdueAt(record),
+        record.completed,
+        record.skipped,
+        record.deleted,
+        at,
+      )
+
+  private fun view(
+    record: ReminderRecord,
+    queryNow: Long = now(),
+    zone: ZoneId = ZoneId.systemDefault(),
+  ): Map<String, Any?> {
     val alert = alerts.find(record.id)
-    val adjustment = if (alert?.state == "Scheduled") content().records().history(record.id)
-      .lastOrNull { it.targetMs == alert.targetMs && it.kind in setOf("Snooze", "Postpone") }?.kind else null
+    val adjustment =
+      if (alert?.state == "Scheduled")
+        content()
+          .records()
+          .history(record.id)
+          .lastOrNull { it.targetMs == alert.targetMs && it.kind in setOf("Snooze", "Postpone") }
+          ?.kind
+      else null
     val segment = record.segmentId?.let { content().records().series(it) }
-    val rule = if(record.routineId != null) routines.recurrence(record) else segment?.let { RuleCodec.decode(it.rule) }
+    val rule =
+      if (record.routineId != null) routines.recurrence(record)
+      else segment?.let { RuleCodec.decode(it.rule) }
     val repeat = rule?.let { com.remilo.alarm.core.Agenda.summary(it) }
-    val repeatRule = rule?.let { RuleCodec.map(it).filterKeys { key -> key in setOf("frequency", "interval", "weekdays", "day", "ordinal", "weekday", "month", "count", "until") } +
-      mapOf("zoneMode" to if (it.zoneId == null) "floating" else "pinned") }
-    return mapOf("id" to record.id, "title" to record.title, "eventStartMs" to record.eventStartMs,
-      "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs, "agendaAtMs" to agendaAt(record, alert), "completed" to record.completed,
-      "revision" to record.revision, "nextAlertMs" to alert?.targetMs,
-      "generation" to (alert?.generation ?: 0L), "deliveryState" to (alert?.state ?: "Pending"),
-      "notes" to record.notes, "listId" to record.listId,
-      "listName" to record.listId?.let { content().records().list(it)?.name }.orEmpty(), "mode" to record.mode,
-      "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs), "allDay" to record.allDay,
-      "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id }, "dueLinked" to record.dueLinked,
-      "alarmLinked" to record.alarmLinked, "deleted" to record.deleted, "sound" to record.sound,
-      "vibration" to record.vibration, "overdue" to overdue(record, queryNow), "overdueAtMs" to if (record.routineId == null) overdueAt(record) else null,
+    val repeatRule = rule?.let {
+      RuleCodec.map(it).filterKeys { key ->
+        key in
+          setOf(
+            "frequency",
+            "interval",
+            "weekdays",
+            "day",
+            "ordinal",
+            "weekday",
+            "month",
+            "count",
+            "until",
+          )
+      } + mapOf("zoneMode" to if (it.zoneId == null) "floating" else "pinned")
+    }
+    return mapOf(
+      "id" to record.id,
+      "title" to record.title,
+      "eventStartMs" to record.eventStartMs,
+      "eventEndMs" to record.eventEndMs,
+      "dueAtMs" to record.dueAtMs,
+      "agendaAtMs" to agendaAt(record, alert),
+      "completed" to record.completed,
+      "revision" to record.revision,
+      "nextAlertMs" to alert?.targetMs,
+      "generation" to (alert?.generation ?: 0L),
+      "deliveryState" to (alert?.state ?: "Pending"),
+      "notes" to record.notes,
+      "listId" to record.listId,
+      "listName" to record.listId?.let { content().records().list(it)?.name }.orEmpty(),
+      "mode" to record.mode,
+      "alarmAtMs" to (record.definedAlarmAtMs ?: record.eventStartMs),
+      "allDay" to record.allDay,
+      "zoneId" to record.zoneId.ifEmpty { ZoneId.systemDefault().id },
+      "dueLinked" to record.dueLinked,
+      "alarmLinked" to record.alarmLinked,
+      "deleted" to record.deleted,
+      "sound" to record.sound,
+      "vibration" to record.vibration,
+      "overdue" to overdue(record, queryNow),
+      "overdueAtMs" to if (record.routineId == null) overdueAt(record) else null,
       "routine" to routines.projection(record),
-      "quickSnoozeMinutes" to (alert?.snoozeMinutes ?: (content().records().settings() ?: defaultSettings()).snoozeMinutes),
-      "segmentId" to record.segmentId, "nominalSlot" to record.nominalSlot, "exception" to record.exception, "skipped" to record.skipped,
+      "quickSnoozeMinutes" to
+        (alert?.snoozeMinutes
+          ?: (content().records().settings() ?: defaultSettings()).snoozeMinutes),
+      "segmentId" to record.segmentId,
+      "nominalSlot" to record.nominalSlot,
+      "exception" to record.exception,
+      "skipped" to record.skipped,
       "seriesId" to segment?.seriesId,
-      "seriesState" to (record.routineId?.let { content().routines().plan(it)?.state } ?: segment?.state), "repeatSummary" to repeat, "repeatRule" to repeatRule,
-      "alertAdjustment" to when (adjustment) { "Snooze" -> "Snoozed"; "Postpone" -> "Postponed"; else -> null },
-      "agendaGroup" to agendaGroup(record, queryNow, zone)) +
-      if (record.completed || record.deleted || record.skipped) mapOf("collectionAtMs" to collectionTime(record)) else emptyMap()
+      "seriesState" to
+        (record.routineId?.let { content().routines().plan(it)?.state } ?: segment?.state),
+      "repeatSummary" to repeat,
+      "repeatRule" to repeatRule,
+      "alertAdjustment" to
+        when (adjustment) {
+          "Snooze" -> "Snoozed"
+          "Postpone" -> "Postponed"
+          else -> null
+        },
+      "agendaGroup" to agendaGroup(record, queryNow, zone),
+    ) +
+      if (record.completed || record.deleted || record.skipped)
+        mapOf("collectionAtMs" to collectionTime(record))
+      else emptyMap()
   }
+
   private fun epoch(value: Any?, field: String): Long {
-    val number = (value as? Number)?.toDouble() ?: throw InputError(field, "Choose a valid date and time.")
-    validate(number.isFinite() && number >= 0 && number <= 8_640_000_000_000_000L && number % 1.0 == 0.0,
-      field, "Choose a valid date and time.")
+    val number =
+      (value as? Number)?.toDouble() ?: throw InputError(field, "Choose a valid date and time.")
+    validate(
+      number.isFinite() && number >= 0 && number <= 8_640_000_000_000_000L && number % 1.0 == 0.0,
+      field,
+      "Choose a valid date and time.",
+    )
     return number.toLong()
   }
+
   fun preview(draft: Map<String, Any?>): Map<String, Any> {
     prepareContentActions()
     val record = draft(draft + ("title" to (draft["title"] ?: "Preview")), "preview")
     val recurrence = draft["recurrence"] as? Map<String, Any?>
     val upcoming = recurrence?.let { series.preview(record, it) }
-    return mapOf("alarmAtMs" to record.definedAlarmAtMs!!, "eventStartMs" to record.eventStartMs,
-      "eventEndMs" to record.eventEndMs, "dueAtMs" to record.dueAtMs,
+    return mapOf(
+      "alarmAtMs" to record.definedAlarmAtMs!!,
+      "eventStartMs" to record.eventStartMs,
+      "eventEndMs" to record.eventEndMs,
+      "dueAtMs" to record.dueAtMs,
       "upcoming" to (upcoming ?: emptyList<Map<String, Any?>>()),
-      "warnings" to when {
-        upcoming != null && upcoming.isEmpty() -> listOf("No future occurrences. Change the repeat rule or its ending.")
-        upcoming != null -> if (upcoming.any { it["adjusted"] == true }) listOf("A daylight-saving gap shifts the affected time forward.") else emptyList<String>()
-        record.mode != "None" && record.definedAlarmAtMs <= now() -> listOf("The alert is in the past. Choose a future time before saving.")
-        else -> emptyList<String>() })
+      "warnings" to
+        when {
+          upcoming != null && upcoming.isEmpty() ->
+            listOf("No future occurrences. Change the repeat rule or its ending.")
+          upcoming != null ->
+            if (upcoming.any { it["adjusted"] == true })
+              listOf("A daylight-saving gap shifts the affected time forward.")
+            else emptyList<String>()
+          record.mode != "None" && record.definedAlarmAtMs <= now() ->
+            listOf("The alert is in the past. Choose a future time before saving.")
+          else -> emptyList<String>()
+        },
+    )
   }
-  private fun text(command: Map<String, Any?>, field: String, fallback: String, maximum: Int): String {
-    val value = if (command.containsKey(field)) command[field] as? String
-      ?: throw InputError(field, "Enter valid text.") else fallback
+
+  private fun text(
+    command: Map<String, Any?>,
+    field: String,
+    fallback: String,
+    maximum: Int,
+  ): String {
+    val value =
+      if (command.containsKey(field))
+        command[field] as? String ?: throw InputError(field, "Enter valid text.")
+      else fallback
     validate(value.length <= maximum, field, "Use at most $maximum characters.")
     return value
   }
+
   private fun flag(command: Map<String, Any?>, field: String, fallback: Boolean): Boolean =
-    if (command.containsKey(field)) command[field] as? Boolean
-      ?: throw InputError(field, "Choose a valid option.") else fallback
+    if (command.containsKey(field))
+      command[field] as? Boolean ?: throw InputError(field, "Choose a valid option.")
+    else fallback
+
   private fun integer(value: Any?, field: String, minimum: Int, maximum: Int): Int {
     val number = (value as? Number)?.toDouble() ?: throw InputError(field, "Enter a whole number.")
-    validate(number.isFinite() && number % 1 == 0.0 && number in minimum.toDouble()..maximum.toDouble(),
-      field, "Choose a whole number from $minimum to $maximum.")
+    validate(
+      number.isFinite() && number % 1 == 0.0 && number in minimum.toDouble()..maximum.toDouble(),
+      field,
+      "Choose a whole number from $minimum to $maximum.",
+    )
     return number.toInt()
   }
-  private fun draft(command: Map<String, Any?>, id: String, old: ReminderRecord? = null): ReminderRecord {
+
+  private fun draft(
+    command: Map<String, Any?>,
+    id: String,
+    old: ReminderRecord? = null,
+  ): ReminderRecord {
     val settings = content().records().settings() ?: defaultSettings()
     val title = text(command, "title", old?.title ?: "", 200).trim()
     validate(title.isNotEmpty(), "title", "Enter a title of 1–200 characters.")
     val mode = text(command, "mode", old?.mode ?: "Alarm", 20)
     validate(mode in setOf("Alarm", "Notification", "None"), "mode", "Choose an alert mode.")
-    val zoneName = text(command, "zoneId", old?.zoneId?.ifEmpty { ZoneId.systemDefault().id } ?: ZoneId.systemDefault().id, 100)
-    val zone = try { ZoneId.of(zoneName) } catch (_: Exception) { throw InputError("zoneId", "Choose a valid time zone.") }
+    val zoneName =
+      text(
+        command,
+        "zoneId",
+        old?.zoneId?.ifEmpty { ZoneId.systemDefault().id } ?: ZoneId.systemDefault().id,
+        100,
+      )
+    val zone =
+      try {
+        ZoneId.of(zoneName)
+      } catch (_: Exception) {
+        throw InputError("zoneId", "Choose a valid time zone.")
+      }
     val allDay = flag(command, "allDay", old?.allDay ?: false)
     val dueLinked = flag(command, "dueLinked", old?.dueLinked ?: true)
     val alarmLinked = flag(command, "alarmLinked", old?.alarmLinked ?: true)
-    val explicitAlarm = if (command.containsKey("alarmAtMs")) epoch(command["alarmAtMs"], "alarmAtMs") else null
-    val rawStart = epoch(command["eventStartMs"] ?: old?.eventStartMs ?: explicitAlarm ?: now() + 600_000, "eventStartMs")
+    val explicitAlarm =
+      if (command.containsKey("alarmAtMs")) epoch(command["alarmAtMs"], "alarmAtMs") else null
+    val rawStart =
+      epoch(
+        command["eventStartMs"] ?: old?.eventStartMs ?: explicitAlarm ?: now() + 600_000,
+        "eventStartMs",
+      )
     val day = Instant.ofEpochMilli(rawStart).atZone(zone).toLocalDate()
     val start = if (allDay) day.atStartOfDay(zone).toInstant().toEpochMilli() else rawStart
-    val end = if (allDay) day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-      else epoch(command["eventEndMs"] ?: old?.let { it.eventEndMs + start - it.eventStartMs } ?: start + 1_800_000, "eventEndMs")
+    val end =
+      if (allDay) day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+      else
+        epoch(
+          command["eventEndMs"]
+            ?: old?.let { it.eventEndMs + start - it.eventStartMs }
+            ?: start + 1_800_000,
+          "eventEndMs",
+        )
     validate(end > start, "eventEndMs", "Event end must follow event start.")
-    val defaultDue = if (allDay && dueLinked) end else old?.let { if (dueLinked) it.dueAtMs + start - it.eventStartMs else it.dueAtMs } ?: start
+    val defaultDue =
+      if (allDay && dueLinked) end
+      else old?.let { if (dueLinked) it.dueAtMs + start - it.eventStartMs else it.dueAtMs } ?: start
     val due = epoch(command["dueAtMs"] ?: defaultDue, "dueAtMs")
-    val allDayTime = old?.takeIf { it.allDay && it.alarmLinked }?.definedAlarmAtMs?.let {
-      Instant.ofEpochMilli(it).atZone(ZoneId.of(old.zoneId)).toLocalTime()
-    } ?: java.time.LocalTime.of(9, 0)
-    val defaultAlarm = if (allDay && alarmLinked) day.atTime(allDayTime).atZone(zone).toInstant().toEpochMilli()
-      else old?.let { (it.definedAlarmAtMs ?: it.eventStartMs) + if (alarmLinked) due - it.dueAtMs else 0 } ?: due
+    val allDayTime =
+      old
+        ?.takeIf { it.allDay && it.alarmLinked }
+        ?.definedAlarmAtMs
+        ?.let {
+          Instant.ofEpochMilli(it).atZone(ZoneId.of(old.zoneId)).toLocalTime()
+        } ?: java.time.LocalTime.of(9, 0)
+    val defaultAlarm =
+      if (allDay && alarmLinked) day.atTime(allDayTime).atZone(zone).toInstant().toEpochMilli()
+      else
+        old?.let {
+          (it.definedAlarmAtMs ?: it.eventStartMs) + if (alarmLinked) due - it.dueAtMs else 0
+        } ?: due
     val alarm = explicitAlarm ?: epoch(defaultAlarm, "alarmAtMs")
     val sound = text(command, "sound", old?.sound ?: settings.sound, 20)
-    validate(sound in setOf("remilo", "system"), "sound", "Choose Remilo tone or the system alarm tone.")
-    val listId = if (!command.containsKey("listId")) old?.listId else command["listId"]?.let {
-      validate(it is String && it.isNotBlank() && it.length <= 200, "listId", "Choose an existing list or No list.")
-      it as String
-    }
+    validate(
+      sound in setOf("remilo", "system"),
+      "sound",
+      "Choose Remilo tone or the system alarm tone.",
+    )
+    val listId =
+      if (!command.containsKey("listId")) old?.listId
+      else
+        command["listId"]?.let {
+          validate(
+            it is String && it.isNotBlank() && it.length <= 200,
+            "listId",
+            "Choose an existing list or No list.",
+          )
+          it as String
+        }
     val list = listId?.let { content().records().list(it) }
-    validate(listId == null || list != null, "listId", "This list was removed. Choose an existing list or No list.")
-    return ReminderRecord(id, title, start, end, due, old?.createdAtMs ?: now(), old?.completed ?: false,
-      (old?.revision ?: 0) + 1, text(command, "notes", old?.notes ?: "", 10_000),
-      list?.name.orEmpty(), mode, alarm, allDay, zone.id,
-      dueLinked, alarmLinked, old?.deleted ?: false, sound, flag(command, "vibration", old?.vibration ?: settings.vibration), listId = listId)
+    validate(
+      listId == null || list != null,
+      "listId",
+      "This list was removed. Choose an existing list or No list.",
+    )
+    return ReminderRecord(
+      id,
+      title,
+      start,
+      end,
+      due,
+      old?.createdAtMs ?: now(),
+      old?.completed ?: false,
+      (old?.revision ?: 0) + 1,
+      text(command, "notes", old?.notes ?: "", 10_000),
+      list?.name.orEmpty(),
+      mode,
+      alarm,
+      allDay,
+      zone.id,
+      dueLinked,
+      alarmLinked,
+      old?.deleted ?: false,
+      sound,
+      flag(command, "vibration", old?.vibration ?: settings.vibration),
+      listId = listId,
+    )
   }
-  private fun projection(operation: String, record: ReminderRecord, generation: Long): PendingSchedule =
-    PendingSchedule(operation, record.id, record.definedAlarmAtMs ?: record.eventStartMs, generation,
-      record.mode, record.sound, record.vibration, (content().records().settings() ?: defaultSettings()).snoozeMinutes,
-      !record.completed && !record.deleted && !record.skipped)
-  private fun modify(operation: String, command: Map<String, Any?>, preserveAdjustment: Boolean = false,
-    afterCommit: () -> Unit = {}, checkpoint: () -> Unit = {}): Map<String, Any?> {
+
+  private fun projection(
+    operation: String,
+    record: ReminderRecord,
+    generation: Long,
+  ): PendingSchedule =
+    PendingSchedule(
+      operation,
+      record.id,
+      record.definedAlarmAtMs ?: record.eventStartMs,
+      generation,
+      record.mode,
+      record.sound,
+      record.vibration,
+      (content().records().settings() ?: defaultSettings()).snoozeMinutes,
+      !record.completed && !record.deleted && !record.skipped,
+    )
+
+  private fun modify(
+    operation: String,
+    command: Map<String, Any?>,
+    preserveAdjustment: Boolean = false,
+    afterCommit: () -> Unit = {},
+    checkpoint: () -> Unit = {},
+  ): Map<String, Any?> {
     val db = content()
     val kind = command["kind"] as String
     val id = text(command, "occurrenceId", "", 200)
     db.records().receipt(operation)?.let {
-      validate(it.kind == kind && it.occurrenceId == id, "operationId", "This operation was already used. Refresh and try again.")
-      applyPending(db); return result(id)
+      validate(
+        it.kind == kind && it.occurrenceId == id,
+        "operationId",
+        "This operation was already used. Refresh and try again.",
+      )
+      applyPending(db)
+      return result(id)
     }
-    val old = db.records().find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
-    if (routines.trashed(old.routineId)) return mapOf("status" to "Rejected", "errorCode" to "IN_TRASH")
+    val old =
+      db.records().find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
+    if (routines.trashed(old.routineId))
+      return mapOf("status" to "Rejected", "errorCode" to "IN_TRASH")
     if (old.routineId != null && kind !in setOf("Delete", "UndoDelete"))
       return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
     val expected = epoch(command["expectedRevision"], "expectedRevision")
-    if (old.revision != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION",
-      "errorField" to "expectedRevision", "errorMessage" to "This reminder changed. Refresh before editing.")
-    val record = when (kind) {
-      "Edit" -> draft(command, id, old).copy(segmentId = old.segmentId, nominalSlot = old.nominalSlot,
-        exception = old.segmentId != null || old.exception, skipped = old.skipped).also {
-        val changedTime = it.definedAlarmAtMs != (old.definedAlarmAtMs ?: old.eventStartMs) || it.mode != old.mode
-        validate(!changedTime || it.mode == "None" || it.completed || it.definedAlarmAtMs!! > now(), "alarmAtMs", "Choose an alarm time in the future.")
+    if (old.revision != expected)
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_REVISION",
+        "errorField" to "expectedRevision",
+        "errorMessage" to "This reminder changed. Refresh before editing.",
+      )
+    val record =
+      when (kind) {
+        "Edit" ->
+          draft(command, id, old)
+            .copy(
+              segmentId = old.segmentId,
+              nominalSlot = old.nominalSlot,
+              exception = old.segmentId != null || old.exception,
+              skipped = old.skipped,
+            )
+            .also {
+              val changedTime =
+                it.definedAlarmAtMs != (old.definedAlarmAtMs ?: old.eventStartMs) ||
+                  it.mode != old.mode
+              validate(
+                !changedTime || it.mode == "None" || it.completed || it.definedAlarmAtMs!! > now(),
+                "alarmAtMs",
+                "Choose an alarm time in the future.",
+              )
+            }
+        "Done" -> old.copy(completed = true, revision = old.revision + 1)
+        "Reopen" ->
+          old.copy(
+            completed = false,
+            skipped = false,
+            exception = old.exception || old.segmentId != null,
+            revision = old.revision + 1,
+          )
+        "Delete" -> old.copy(deleted = true, revision = old.revision + 1)
+        "UndoDelete" ->
+          old.copy(
+            deleted = false,
+            exception = old.exception || old.segmentId != null,
+            revision = old.revision + 1,
+          )
+        "Skip" -> {
+          validate(
+            old.segmentId != null,
+            "occurrenceId",
+            "Only recurring occurrences can be skipped.",
+          )
+          old.copy(skipped = true, revision = old.revision + 1)
+        }
+        else -> error("Unsupported content command")
       }
-      "Done" -> old.copy(completed = true, revision = old.revision + 1)
-      "Reopen" -> old.copy(completed = false, skipped = false, exception = old.exception || old.segmentId != null, revision = old.revision + 1)
-      "Delete" -> old.copy(deleted = true, revision = old.revision + 1)
-      "UndoDelete" -> old.copy(deleted = false, exception = old.exception || old.segmentId != null, revision = old.revision + 1)
-      "Skip" -> { validate(old.segmentId != null, "occurrenceId", "Only recurring occurrences can be skipped."); old.copy(skipped = true, revision = old.revision + 1) }
-      else -> error("Unsupported content command")
-    }
     val previous = alerts.find(id)
-    val changedDefinition = record.definedAlarmAtMs != (old.definedAlarmAtMs ?: old.eventStartMs) || record.mode != old.mode
-    val affectsDelivery = kind != "Edit" || changedDefinition || record.sound != old.sound || record.vibration != old.vibration
+    val changedDefinition =
+      record.definedAlarmAtMs != (old.definedAlarmAtMs ?: old.eventStartMs) ||
+        record.mode != old.mode
+    val affectsDelivery =
+      kind != "Edit" ||
+        changedDefinition ||
+        record.sound != old.sound ||
+        record.vibration != old.vibration
     if (!affectsDelivery) {
       db.runInTransaction {
         db.records().update(record)
-        if (kind == "Edit" && !preserveAdjustment && calendarFieldsChanged(old, record)) calendarStore().sync.authored(id)
+        if (kind == "Edit" && !preserveAdjustment && calendarFieldsChanged(old, record))
+          calendarStore().sync.authored(id)
         db.records().receipt(CreationReceipt(operation, id, kind))
         db.records().history(HistoryRecord(operation, id, kind, now(), previous?.generation ?: 0))
         checkpoint()
       }
       previous?.sessionId?.let { RingingService.refresh(context, it) }
-      if (record.segmentId != null) { previous?.let { alerts.put(it.copy(exception = record.exception)) }; series.replenish(); series.materialize() }
-      afterCommit(); changed(calendarOpportunity = !preserveAdjustment && kind == "Edit" && calendarFieldsChanged(old, record)); return result(id)
+      if (record.segmentId != null) {
+        previous?.let { alerts.put(it.copy(exception = record.exception)) }
+        series.replenish()
+        series.materialize()
+      }
+      afterCommit()
+      changed(
+        calendarOpportunity =
+          !preserveAdjustment && kind == "Edit" && calendarFieldsChanged(old, record)
+      )
+      return result(id)
     }
-    val generation = maxOf(previous?.generation ?: 0, db.records().pending().filter { it.occurrenceId == id }.maxOfOrNull { it.generation } ?: 0) + 1
+    val generation =
+      maxOf(
+        previous?.generation ?: 0,
+        db.records().pending().filter { it.occurrenceId == id }.maxOfOrNull { it.generation } ?: 0,
+      ) + 1
     // Fence first. If the CE commit is interrupted, Changing is recovered from
     // the last committed definition, never from an obsolete outbox or callback.
-    alerts.put((previous ?: AlertRecord(id, record.definedAlarmAtMs!!, 0, "Pending"))
-      .copy(generation = generation, state = "Changing", sessionId = null, previousState = previous?.state))
+    alerts.put(
+      (previous ?: AlertRecord(id, record.definedAlarmAtMs!!, 0, "Pending")).copy(
+        generation = generation,
+        state = "Changing",
+        sessionId = null,
+        previousState = previous?.state,
+      )
+    )
     previous?.let {
-      try { scheduler.cancel(it) } catch (_: Exception) { /* stale generation remains fenced */ }
+      try {
+        scheduler.cancel(it)
+      } catch (_: Exception) {
+        /* stale generation remains fenced */
+      }
       it.sessionId?.let { session -> refreshOrEndSession(session) }
     }
     db.runInTransaction {
       db.records().update(record)
-      if (kind == "Edit" && !preserveAdjustment && calendarFieldsChanged(old, record)) calendarStore().sync.authored(id)
+      if (kind == "Edit" && !preserveAdjustment && calendarFieldsChanged(old, record))
+        calendarStore().sync.authored(id)
       if (kind == "Delete") calendarStore().removed(id, false)
       if (kind in setOf("Done", "Skip")) calendarStore().links.terminal(id)
       if (kind in setOf("UndoDelete", "Reopen")) calendarStore().links.restored(id)
-      db.records().pending(projection(operation, record, generation).copy(
-        targetMs = if (preserveAdjustment && previous != null && previous.targetMs > now() &&
-          previous.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)) previous.targetMs
-          else if (changedDefinition) record.definedAlarmAtMs!! else previous?.targetMs ?: record.definedAlarmAtMs!!))
+      db
+        .records()
+        .pending(
+          projection(operation, record, generation)
+            .copy(
+              targetMs =
+                if (
+                  preserveAdjustment &&
+                    previous != null &&
+                    previous.targetMs > now() &&
+                    previous.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)
+                )
+                  previous.targetMs
+                else if (changedDefinition) record.definedAlarmAtMs!!
+                else previous?.targetMs ?: record.definedAlarmAtMs!!
+            )
+        )
       db.records().receipt(CreationReceipt(operation, id, kind))
-      db.records().history(HistoryRecord(operation, id, kind, now(), generation, record.definedAlarmAtMs))
+      db
+        .records()
+        .history(HistoryRecord(operation, id, kind, now(), generation, record.definedAlarmAtMs))
       checkpoint()
     }
     afterCommit()
     AlarmNotifications(context).clearAttention(id)
-    applyPending(db); series.replenish(); series.materialize(); changed(calendarOpportunity = !preserveAdjustment && kind == "Edit" && calendarFieldsChanged(old, record))
+    applyPending(db)
+    series.replenish()
+    series.materialize()
+    changed(
+      calendarOpportunity =
+        !preserveAdjustment && kind == "Edit" && calendarFieldsChanged(old, record)
+    )
     return result(id)
   }
+
   private fun purge(operation: String, command: Map<String, Any?>): Map<String, Any?> {
-    val db = content(); val dao = db.records()
+    val db = content()
+    val dao = db.records()
     val id = text(command, "occurrenceId", "", 200)
     val expected = epoch(command["expectedRevision"], "expectedRevision")
     dao.receipt(operation)?.let {
-      validate(it.kind == "Purge" && it.occurrenceId == id && it.sourceId == expected.toString(),
-        "operationId", "This operation was already used. Refresh and try again.")
+      validate(
+        it.kind == "Purge" && it.occurrenceId == id && it.sourceId == expected.toString(),
+        "operationId",
+        "This operation was already used. Refresh and try again.",
+      )
       return mapOf("status" to "Applied")
     }
-    val record = dao.find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND",
-      "errorMessage" to "This reminder is no longer in Trash.")
-    if (record.revision != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION",
-      "errorMessage" to "This reminder changed. Refresh before deleting it permanently.")
+    val record =
+      dao.find(id)
+        ?: return mapOf(
+          "status" to "Rejected",
+          "errorCode" to "NOT_FOUND",
+          "errorMessage" to "This reminder is no longer in Trash.",
+        )
+    if (record.revision != expected)
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_REVISION",
+        "errorMessage" to "This reminder changed. Refresh before deleting it permanently.",
+      )
     validate(record.deleted, "occurrenceId", "Only reminders in Trash can be deleted permanently.")
     // Moving to Trash already fenced and cancelled delivery. The CE transaction
     // removes content/history together with the exclusion and exact retry receipt.
     db.runInTransaction {
       calendarStore().removed(id, true)
       dao.purge(PurgedOccurrence(id, record.segmentId, record.nominalSlot))
-      dao.purgePending(id); dao.purgeHistory(id); dao.purgeReminder(id)
+      dao.purgePending(id)
+      dao.purgeHistory(id)
+      dao.purgeReminder(id)
       routines.purge(id)
       dao.receipt(CreationReceipt(operation, id, "Purge", expected.toString()))
       purgeCheckpoint("before-commit")
@@ -642,52 +1411,114 @@ class AlarmEngine internal constructor(private val context: Context,
     purgeCheckpoint("committed")
     return mapOf("status" to "Applied")
   }
+
   fun settings(): Map<String, Any> {
     val settings = prepareContentActions().records().settings() ?: defaultSettings()
-    return mapOf("revision" to settings.revision, "snoozeMinutes" to settings.snoozeMinutes,
-      "tomorrowMorning" to settings.tomorrowMorning, "tomorrowAfternoon" to settings.tomorrowAfternoon,
-      "tomorrowEvening" to settings.tomorrowEvening, "sound" to settings.sound,
-      "vibration" to settings.vibration, "theme" to settings.theme, "atmosphere" to AppearancePolicy.selection(settings.atmosphere), "language" to settings.language)
+    return mapOf(
+      "revision" to settings.revision,
+      "snoozeMinutes" to settings.snoozeMinutes,
+      "tomorrowMorning" to settings.tomorrowMorning,
+      "tomorrowAfternoon" to settings.tomorrowAfternoon,
+      "tomorrowEvening" to settings.tomorrowEvening,
+      "sound" to settings.sound,
+      "vibration" to settings.vibration,
+      "theme" to settings.theme,
+      "atmosphere" to AppearancePolicy.selection(settings.atmosphere),
+      "language" to settings.language,
+    )
   }
+
   private fun listView(list: ListRecord): Map<String, Any> = listView(list, now())
-  private fun listView(list: ListRecord, queryNow: Long): Map<String, Any> = mapOf("id" to list.id, "name" to list.name,
-    "revision" to list.revision, "overdueCount" to content().records().all().count {
-      it.listId == list.id && overdue(it, queryNow)
-    })
+
+  private fun listView(list: ListRecord, queryNow: Long): Map<String, Any> =
+    mapOf(
+      "id" to list.id,
+      "name" to list.name,
+      "revision" to list.revision,
+      "overdueCount" to
+        content().records().all().count {
+          it.listId == list.id && overdue(it, queryNow)
+        },
+    )
+
   fun lists(): List<Map<String, Any>> {
     val records = prepareContentActions().records().lists()
     val queryNow = now()
     return records.map { listView(it, queryNow) }
   }
+
   private fun mutateList(operation: String, command: Map<String, Any?>): Map<String, Any?> {
-    val dao = content().records(); val kind = command["kind"] as String
-    val id = if (kind == "CreateList") UUID.nameUUIDFromBytes("remilo:list-create:$operation".toByteArray()).toString()
-      else text(command, "listId", "", 200).also { validate(it.isNotBlank(), "listId", "Choose an existing list.") }
+    val dao = content().records()
+    val kind = command["kind"] as String
+    val id =
+      if (kind == "CreateList")
+        UUID.nameUUIDFromBytes("remilo:list-create:$operation".toByteArray()).toString()
+      else
+        text(command, "listId", "", 200).also {
+          validate(it.isNotBlank(), "listId", "Choose an existing list.")
+        }
     dao.receipt(operation)?.let {
-      validate(it.kind == kind && it.occurrenceId == id, "operationId", "This operation was already used. Try again.")
+      validate(
+        it.kind == kind && it.occurrenceId == id,
+        "operationId",
+        "This operation was already used. Try again.",
+      )
       return mapOf("status" to "Applied", "list" to dao.list(id)?.let(::listView))
     }
     val old = dao.list(id)
     if (kind != "CreateList") {
-      if (old == null) return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND", "errorField" to "listId", "errorMessage" to "This list was removed.")
+      if (old == null)
+        return mapOf(
+          "status" to "Rejected",
+          "errorCode" to "NOT_FOUND",
+          "errorField" to "listId",
+          "errorMessage" to "This list was removed.",
+        )
       if (epoch(command["expectedRevision"], "expectedRevision") != old.revision)
-        return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION", "errorMessage" to "This list changed. Refresh before updating it.")
+        return mapOf(
+          "status" to "Rejected",
+          "errorCode" to "STALE_REVISION",
+          "errorMessage" to "This list changed. Refresh before updating it.",
+        )
     }
-    val name = if (kind == "RemoveList") null else ListNames.display(text(command, "name", "", 60)).also { value ->
-      validate(value.isNotEmpty(), "name", "Enter a list name.")
-      validate(dao.lists().none { it.id != id && it.normalizedName == ListNames.key(value) }, "name", "A list with this name already exists.")
+    val name =
+      if (kind == "RemoveList") null
+      else
+        ListNames.display(text(command, "name", "", 60)).also { value ->
+          validate(value.isNotEmpty(), "name", "Enter a list name.")
+          validate(
+            dao.lists().none { it.id != id && it.normalizedName == ListNames.key(value) },
+            "name",
+            "A list with this name already exists.",
+          )
+        }
+    val next = name?.let {
+      ListRecord(id, it, ListNames.key(it), (old?.revision ?: 0) + 1, old?.createdAtMs ?: now())
     }
-    val next = name?.let { ListRecord(id, it, ListNames.key(it), (old?.revision ?: 0) + 1, old?.createdAtMs ?: now()) }
     content().runInTransaction {
       when (kind) {
         "CreateList" -> dao.insertList(requireNotNull(next))
         "RenameList" -> dao.updateList(requireNotNull(next))
         "RemoveList" -> {
           routines.removeList(id)
-          dao.all().filter { it.listId == id }.forEach { dao.update(it.copy(listId = null, listName = "", revision = it.revision + 1)) }
+          dao
+            .all()
+            .filter { it.listId == id }
+            .forEach {
+              dao.update(it.copy(listId = null, listName = "", revision = it.revision + 1))
+            }
           dao.series().forEach { segment ->
             val template = BackupCodec.decodeRecord(org.json.JSONObject(segment.template))
-            if (template.listId == id) dao.series(segment.copy(template = org.json.JSONObject(BackupCodec.record(template.copy(listId = null, listName = ""))).toString(), revision = segment.revision + 1))
+            if (template.listId == id)
+              dao.series(
+                segment.copy(
+                  template =
+                    org.json
+                      .JSONObject(BackupCodec.record(template.copy(listId = null, listName = "")))
+                      .toString(),
+                  revision = segment.revision + 1,
+                )
+              )
           }
           dao.removeList(id)
         }
@@ -697,25 +1528,49 @@ class AlarmEngine internal constructor(private val context: Context,
     changed()
     return mapOf("status" to "Applied", "list" to next?.let(::listView))
   }
-  fun querySeries(): List<Map<String, Any?>> { prepareContentActions(); return series.list() }
+
+  fun querySeries(): List<Map<String, Any?>> {
+    prepareContentActions()
+    return series.list()
+  }
+
   fun queryRepeatFamilies(): List<Map<String, Any?>> {
     prepareContentActions()
     return series.families()
   }
+
   fun timeZones(atMs: Double): List<Map<String, Any>> = TimeZoneCatalog.list(epoch(atMs, "atMs"))
+
   fun convertTime(input: Map<String, Any?>): Map<String, Any> {
-    val id = input["zoneId"] as? String ?: throw IllegalArgumentException("Choose a valid time zone.")
-    require(input.containsKey("instantMs") != input.containsKey("local")) { "Choose one time to convert." }
-    return if (input.containsKey("instantMs")) CivilTime.fromInstant(id, epoch(input["instantMs"], "instantMs"))
-      else CivilTime.fromLocal(id, input["local"] as? String ?: throw IllegalArgumentException("Choose a valid local time."))
+    val id =
+      input["zoneId"] as? String ?: throw IllegalArgumentException("Choose a valid time zone.")
+    require(input.containsKey("instantMs") != input.containsKey("local")) {
+      "Choose one time to convert."
+    }
+    return if (input.containsKey("instantMs"))
+      CivilTime.fromInstant(id, epoch(input["instantMs"], "instantMs"))
+    else
+      CivilTime.fromLocal(
+        id,
+        input["local"] as? String ?: throw IllegalArgumentException("Choose a valid local time."),
+      )
   }
-  fun resolvePostponeTime(input: Map<String, Any?>): Map<String, Any> = PostponeTimePolicy.resolve(input)
+
+  fun resolvePostponeTime(input: Map<String, Any?>): Map<String, Any> =
+    PostponeTimePolicy.resolve(input)
+
   fun getSeries(id: String): Map<String, Any?>? {
     val db = prepareContentActions()
-    if (routines.trashed(db.records().series(id)?.let { series.template(it).routineId })) return null
+    if (routines.trashed(db.records().series(id)?.let { series.template(it).routineId }))
+      return null
     return series.get(id)
   }
-  fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> { prepareContentActions(); return series.editDraft(id, nominal) }
+
+  fun getSeriesDraft(id: String, nominal: String): Map<String, Any?> {
+    prepareContentActions()
+    return series.editDraft(id, nominal)
+  }
+
   private fun updateSettings(operation: String, command: Map<String, Any?>): Map<String, Any?> {
     val db = content()
     reconcileLanguage()
@@ -726,21 +1581,48 @@ class AlarmEngine internal constructor(private val context: Context,
       return mapOf("status" to "Applied")
     }
     if (epoch(command["expectedRevision"], "expectedRevision") != old.revision)
-      return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION", "errorMessage" to "Refresh settings and try again.")
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_REVISION",
+        "errorMessage" to "Refresh settings and try again.",
+      )
     val language = text(command, "language", old.language, 20)
     validate(language in LanguageCoordinator.selections, "language", "Choose a valid language.")
     val sound = text(command, "sound", old.sound, 20)
     val theme = text(command, "theme", old.theme, 20)
-    val atmosphere = if (command.containsKey("atmosphere")) text(command, "atmosphere", "automatic", 20) else old.atmosphere
+    val atmosphere =
+      if (command.containsKey("atmosphere")) text(command, "atmosphere", "automatic", 20)
+      else old.atmosphere
     validate(sound in setOf("remilo", "system"), "sound", "Choose a valid sound.")
     validate(theme in setOf("system", "light", "dark"), "theme", "Choose a valid appearance.")
-    validate(!command.containsKey("atmosphere") || atmosphere in AppearancePolicy.selections, "atmosphere", "Choose a valid atmosphere.")
-    val next = old.copy(revision = old.revision + 1,
-      snoozeMinutes = integer(command["snoozeMinutes"] ?: old.snoozeMinutes, "snoozeMinutes", 1, 1440),
-      tomorrowMorning = integer(command["tomorrowMorning"] ?: old.tomorrowMorning, "tomorrowMorning", 0, 1439),
-      tomorrowAfternoon = integer(command["tomorrowAfternoon"] ?: old.tomorrowAfternoon, "tomorrowAfternoon", 0, 1439),
-      tomorrowEvening = integer(command["tomorrowEvening"] ?: old.tomorrowEvening, "tomorrowEvening", 0, 1439),
-      sound = sound, vibration = flag(command, "vibration", old.vibration), theme = theme, atmosphere = atmosphere, language = language, lastOperationId = operation)
+    validate(
+      !command.containsKey("atmosphere") || atmosphere in AppearancePolicy.selections,
+      "atmosphere",
+      "Choose a valid atmosphere.",
+    )
+    val next =
+      old.copy(
+        revision = old.revision + 1,
+        snoozeMinutes =
+          integer(command["snoozeMinutes"] ?: old.snoozeMinutes, "snoozeMinutes", 1, 1440),
+        tomorrowMorning =
+          integer(command["tomorrowMorning"] ?: old.tomorrowMorning, "tomorrowMorning", 0, 1439),
+        tomorrowAfternoon =
+          integer(
+            command["tomorrowAfternoon"] ?: old.tomorrowAfternoon,
+            "tomorrowAfternoon",
+            0,
+            1439,
+          ),
+        tomorrowEvening =
+          integer(command["tomorrowEvening"] ?: old.tomorrowEvening, "tomorrowEvening", 0, 1439),
+        sound = sound,
+        vibration = flag(command, "vibration", old.vibration),
+        theme = theme,
+        atmosphere = atmosphere,
+        language = language,
+        lastOperationId = operation,
+      )
     db.records().settings(next)
     // CE is authority. A failed mirror leaves the same operation retryable; its
     // receipt branch above repairs DP before acknowledging the committed write.
@@ -748,464 +1630,1285 @@ class AlarmEngine internal constructor(private val context: Context,
     if (command.containsKey("language")) presentationChanged() else changed()
     return mapOf("status" to "Applied")
   }
+
   private fun mirrorAppearance(settings: SettingsRecord) {
-    val mirror = AppearanceRecord(atmosphere = AppearancePolicy.selection(settings.atmosphere), theme = AppearancePolicy.brightness(settings.theme))
-    if (alerts.appearance() != mirror) { beforeAppearanceWrite(); alerts.appearance(mirror) }
+    val mirror =
+      AppearanceRecord(
+        atmosphere = AppearancePolicy.selection(settings.atmosphere),
+        theme = AppearancePolicy.brightness(settings.theme),
+      )
+    if (alerts.appearance() != mirror) {
+      beforeAppearanceWrite()
+      alerts.appearance(mirror)
+    }
   }
+
   private fun syncProtectedSettings(settings: SettingsRecord, languageWrite: Boolean = false) {
     if (languageWrite) languages.commit(settings.language, settings.revision)
     presentation = languages.snapshot()
     var snoozeChanged = false
     operational.runInTransaction {
       mirrorAppearance(settings)
-      val postpone = PostponePreferencesRecord(tomorrowMorning = settings.tomorrowMorning,
-        tomorrowAfternoon = settings.tomorrowAfternoon, tomorrowEvening = settings.tomorrowEvening,
-        revision = settings.revision)
+      val postpone =
+        PostponePreferencesRecord(
+          tomorrowMorning = settings.tomorrowMorning,
+          tomorrowAfternoon = settings.tomorrowAfternoon,
+          tomorrowEvening = settings.tomorrowEvening,
+          revision = settings.revision,
+        )
       if (alerts.postponePreferences() != postpone) alerts.postponePreferences(postpone)
-      alerts.all().filter { it.snoozeMinutes != settings.snoozeMinutes }.forEach {
-        alerts.put(it.copy(snoozeMinutes = settings.snoozeMinutes)); snoozeChanged = true
-      }
-      alerts.plans().filter { it.snoozeMinutes != settings.snoozeMinutes }.forEach { alerts.plan(it.copy(snoozeMinutes = settings.snoozeMinutes)) }
+      alerts
+        .all()
+        .filter { it.snoozeMinutes != settings.snoozeMinutes }
+        .forEach {
+          alerts.put(it.copy(snoozeMinutes = settings.snoozeMinutes))
+          snoozeChanged = true
+        }
+      alerts
+        .plans()
+        .filter { it.snoozeMinutes != settings.snoozeMinutes }
+        .forEach { alerts.plan(it.copy(snoozeMinutes = settings.snoozeMinutes)) }
     }
     if (snoozeChanged) alerts.activeSession()?.let { RingingService.refresh(context, it.id) }
   }
+
   private fun resolveAppearance(): AppearancePolicy.Resolved {
-    val mirror = try { alerts.appearance() } catch (_: Exception) { null }
-    return try { AppearancePolicy.resolve(mirror?.atmosphere, mirror?.theme, now(), appearanceZone(), systemDark()) }
-    catch (_: Exception) { AppearancePolicy.captured(null, null) }
+    val mirror =
+      try {
+        alerts.appearance()
+      } catch (_: Exception) {
+        null
+      }
+    return try {
+      AppearancePolicy.resolve(
+        mirror?.atmosphere,
+        mirror?.theme,
+        now(),
+        appearanceZone(),
+        systemDark(),
+      )
+    } catch (_: Exception) {
+      AppearancePolicy.captured(null, null)
+    }
   }
-  fun diagnostics(): Map<String, Any> { prepareContentActions(); return mapOf("observedAtMs" to now(), "capabilities" to capabilities(),
-    "contentSchema" to ContentDatabase.VERSION, "operationalSchema" to OperationalDatabase.VERSION,
-    "states" to alerts.all().groupingBy { it.state }.eachCount(),
-    "pendingOperations" to (content().records().pending().size + alerts.completions().size)) }
+
+  fun diagnostics(): Map<String, Any> {
+    prepareContentActions()
+    return mapOf(
+      "observedAtMs" to now(),
+      "capabilities" to capabilities(),
+      "contentSchema" to ContentDatabase.VERSION,
+      "operationalSchema" to OperationalDatabase.VERSION,
+      "states" to alerts.all().groupingBy { it.state }.eachCount(),
+      "pendingOperations" to (content().records().pending().size + alerts.completions().size),
+    )
+  }
+
   fun exportBackup(): String {
     val db = prepareContentActions()
     val records = db.records().all().filter { !it.deleted || it.segmentId != null }
-    val targets = records.associate { record -> record.id to alerts.find(record.id)?.let { alert ->
-      if (!record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused")) alert.targetMs else null
-    } }
-    return BackupCodec.encode(records, targets, records.flatMap { db.records().history(it.id) }, now(), db.records().series(), db.records().lists(),
-      db.records().purged().filter { it.segmentId != null && db.records().series(it.segmentId) != null }, db.routines().plans(), db.routines().versions(), db.routines().sessions().filter { s -> records.any { it.id == s.occurrenceId } }, db.routines().images().filter { it.id in ExerciseImages(context).referenced(db) }, db.routines().purged())
+    val targets = records.associate { record ->
+      record.id to
+        alerts.find(record.id)?.let { alert ->
+          if (
+            !record.completed && alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused")
+          )
+            alert.targetMs
+          else null
+        }
+    }
+    return BackupCodec.encode(
+      records,
+      targets,
+      records.flatMap { db.records().history(it.id) },
+      now(),
+      db.records().series(),
+      db.records().lists(),
+      db.records().purged().filter {
+        it.segmentId != null && db.records().series(it.segmentId) != null
+      },
+      db.routines().plans(),
+      db.routines().versions(),
+      db.routines().sessions().filter { s -> records.any { it.id == s.occurrenceId } },
+      db.routines().images().filter { it.id in ExerciseImages(context).referenced(db) },
+      db.routines().purged(),
+    )
   }
+
   fun previewImport(json: String): Map<String, Any> {
     val bundle = BackupCodec.decode(json)
     val dao = prepareContentActions().records()
     val families = bundle.series.groupBy { it.seriesId }
     val localFamilies = dao.series().map { it.seriesId }.toSet()
-    val calendarCollisions = calendarStore().backupCollisions(bundle.records.filter { it.segmentId == null }.map { it.id } +
-      families.keys + bundle.series.map { it.id })
-    val items = bundle.records.filter { it.segmentId == null }.map {
-      val calendarTargets = calendarCollisions[it.id].orEmpty()
-      mapOf("id" to it.id, "title" to it.title, "conflict" to (dao.find(it.id) != null || dao.purged(it.id) != null || calendarTargets.isNotEmpty()),
-        "calendarCollision" to calendarTargets.isNotEmpty(), "currentOccurrenceIds" to calendarTargets,
-        "futureAlert" to (!it.completed && it.mode != "None" && (bundle.nextAlerts[it.id] ?: it.definedAlarmAtMs!!) > now()))
-    } + families.map { (id, segments) ->
-      val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
-      val calendarTargets = (calendarCollisions[id].orEmpty() + segments.flatMap { calendarCollisions[it.id].orEmpty() }).distinct().sorted()
-      mapOf("id" to id, "title" to "${series.template(segment).title} (series)",
-        "conflict" to (id in localFamilies || content().routines().purged(id) != null || segments.any { dao.series(it.id) != null } || calendarTargets.isNotEmpty()),
-        "calendarCollision" to calendarTargets.isNotEmpty(), "currentOccurrenceIds" to calendarTargets,
-        "futureAlert" to segments.any { current -> val mode = series.template(current).mode
-          current.state == "Active" && mode != "None" && Recurrence.future(RuleCodec.decode(current.rule), now(), ZoneId.systemDefault(), mode).any() })
-    }
+    val calendarCollisions =
+      calendarStore()
+        .backupCollisions(
+          bundle.records.filter { it.segmentId == null }.map { it.id } +
+            families.keys +
+            bundle.series.map { it.id }
+        )
+    val items =
+      bundle.records
+        .filter { it.segmentId == null }
+        .map {
+          val calendarTargets = calendarCollisions[it.id].orEmpty()
+          mapOf(
+            "id" to it.id,
+            "title" to it.title,
+            "conflict" to
+              (dao.find(it.id) != null ||
+                dao.purged(it.id) != null ||
+                calendarTargets.isNotEmpty()),
+            "calendarCollision" to calendarTargets.isNotEmpty(),
+            "currentOccurrenceIds" to calendarTargets,
+            "futureAlert" to
+              (!it.completed &&
+                it.mode != "None" &&
+                (bundle.nextAlerts[it.id] ?: it.definedAlarmAtMs!!) > now()),
+          )
+        } +
+        families.map { (id, segments) ->
+          val segment = segments.lastOrNull { it.state != "Archived" } ?: segments.last()
+          val calendarTargets =
+            (calendarCollisions[id].orEmpty() +
+                segments.flatMap { calendarCollisions[it.id].orEmpty() })
+              .distinct()
+              .sorted()
+          mapOf(
+            "id" to id,
+            "title" to "${series.template(segment).title} (series)",
+            "conflict" to
+              (id in localFamilies ||
+                content().routines().purged(id) != null ||
+                segments.any { dao.series(it.id) != null } ||
+                calendarTargets.isNotEmpty()),
+            "calendarCollision" to calendarTargets.isNotEmpty(),
+            "currentOccurrenceIds" to calendarTargets,
+            "futureAlert" to
+              segments.any { current ->
+                val mode = series.template(current).mode
+                current.state == "Active" &&
+                  mode != "None" &&
+                  Recurrence.future(
+                      RuleCodec.decode(current.rule),
+                      now(),
+                      ZoneId.systemDefault(),
+                      mode,
+                    )
+                    .any()
+              },
+          )
+        }
     val restored = restoredLists(bundle).first
-    return mapOf("count" to items.size, "items" to items, "lists" to bundle.lists.map { source ->
-      val target = restored.getValue(source.id)
-      mapOf("id" to source.id, "name" to source.name, "restoredName" to target.name,
-        "conflict" to (dao.list(source.id) != null || target.name != source.name))
-    })
+    return mapOf(
+      "count" to items.size,
+      "items" to items,
+      "lists" to
+        bundle.lists.map { source ->
+          val target = restored.getValue(source.id)
+          mapOf(
+            "id" to source.id,
+            "name" to source.name,
+            "restoredName" to target.name,
+            "conflict" to (dao.list(source.id) != null || target.name != source.name),
+          )
+        },
+    )
   }
+
   /** Preserve matching identities; distinct imported lists never merge by name. */
-  private fun restoredLists(bundle: BackupCodec.Bundle): Pair<Map<String, ListRecord>, List<ListRecord>> {
+  private fun restoredLists(
+    bundle: BackupCodec.Bundle
+  ): Pair<Map<String, ListRecord>, List<ListRecord>> {
     val local = content().records().lists().associateBy { it.id }
     val reserved = local.values.map { it.normalizedName }.toMutableSet()
     val rows = mutableListOf<ListRecord>()
-    val mapping = bundle.lists.sortedBy { it.id }.associate { source ->
-      val target = local[source.id] ?: run {
-        var name = source.name; var number = 1
-        while (ListNames.key(name) in reserved) {
-          val suffix = if (number == 1) " (restored)" else " (restored $number)"
-          name = source.name.take(60 - suffix.length).trimEnd() + suffix
-          number++
+    val mapping =
+      bundle.lists
+        .sortedBy { it.id }
+        .associate { source ->
+          val target =
+            local[source.id]
+              ?: run {
+                var name = source.name
+                var number = 1
+                while (ListNames.key(name) in reserved) {
+                  val suffix = if (number == 1) " (restored)" else " (restored $number)"
+                  name = source.name.take(60 - suffix.length).trimEnd() + suffix
+                  number++
+                }
+                source.copy(name = name, normalizedName = ListNames.key(name), revision = 1).also {
+                  rows.add(it)
+                }
+              }
+          reserved.add(target.normalizedName)
+          source.id to target
         }
-        source.copy(name = name, normalizedName = ListNames.key(name), revision = 1).also { rows.add(it) }
-      }
-      reserved.add(target.normalizedName)
-      source.id to target
-    }
     return mapping to rows
   }
-  fun importBackup(json: String, copyIds: List<String>, operation: String, requestFingerprint: String? = null): Map<String, Any?> {
+
+  fun importBackup(
+    json: String,
+    copyIds: List<String>,
+    operation: String,
+    requestFingerprint: String? = null,
+  ): Map<String, Any?> {
     var mutationStarted = false
     return try {
-    validate(operation.isNotBlank() && operation.length <= 200, "operationId", "Try this import again.")
-    val db = content()
-    validate(alerts.routineAlertReceipt(operation) == null, "operationId", "This operation was already used.")
-    validate(alerts.completionReceipt(operation) == null, "operationId", "This operation was already used.")
-    db.records().receipt(operation)?.let { receipt ->
-      validate(receipt.kind == "Import", "operationId", "This operation was already used.")
-      validate(receipt.sourceId == requestFingerprint, "operationId", "This operation was already used.")
-      // The receipt proves this operation already committed. Replay failure is
-      // uncertain even when its exception resembles input validation.
-      mutationStarted = true
+      validate(
+        operation.isNotBlank() && operation.length <= 200,
+        "operationId",
+        "Try this import again.",
+      )
+      val db = content()
+      validate(
+        alerts.routineAlertReceipt(operation) == null,
+        "operationId",
+        "This operation was already used.",
+      )
+      validate(
+        alerts.completionReceipt(operation) == null,
+        "operationId",
+        "This operation was already used.",
+      )
+      db.records().receipt(operation)?.let { receipt ->
+        validate(receipt.kind == "Import", "operationId", "This operation was already used.")
+        validate(
+          receipt.sourceId == requestFingerprint,
+          "operationId",
+          "This operation was already used.",
+        )
+        // The receipt proves this operation already committed. Replay failure is
+        // uncertain even when its exception resembles input validation.
+        mutationStarted = true
+        prepareContentActions()
+        applyPending(db)
+        series.recover()
+        return mapOf("status" to "Applied", "retry" to true)
+      }
       prepareContentActions()
-      applyPending(db); series.recover(); return mapOf("status" to "Applied", "retry" to true)
-    }
-    prepareContentActions()
-    val bundle = BackupCodec.decode(json) // Entire new import is validated before writing anything.
-    require(requestFingerprint != null || bundle.images.isEmpty()) { "Use a prepared archive to restore exercise photos." }
-    bundle.images.forEach { image -> require(ExerciseImages(context).file(image.id).let { it.isFile && it.length() == image.bytes }) }
-    val families = bundle.series.groupBy { it.seriesId }
-    val localFamilies = db.records().series().map { it.seriesId }.toSet()
-    val calendarCollisions = calendarStore().backupCollisions(bundle.records.filter { it.segmentId == null }.map { it.id } +
-      families.keys + bundle.series.map { it.id })
-    val conflicts = families.filter { (id, segments) -> id in localFamilies || db.routines().purged(id) != null || id in calendarCollisions ||
-      segments.any { db.records().series(it.id) != null || it.id in calendarCollisions } }.keys
-    val recordConflicts = bundle.records.filter { it.segmentId == null &&
-      (db.records().find(it.id) != null || db.records().purged(it.id) != null || it.id in calendarCollisions) }.map { it.id }.toSet()
-    validate(copyIds.all { id -> bundle.records.any { it.segmentId == null && it.id == id } || id in families }, "copyIds", "Choose conflicts from this backup.")
-    val acceptedFamilies = families.filter { (id, _) -> id !in conflicts || id in copyIds }
-    val segments = acceptedFamilies.values.flatten()
-    val segmentMap = segments.associate { it.id to if (it.seriesId !in conflicts) it.id
-      else UUID.nameUUIDFromBytes("$operation:segment:${it.id}".toByteArray()).toString() }
-    val accepted = bundle.records.filter { if (it.segmentId != null) it.segmentId in segmentMap
-      else it.id !in recordConflicts || it.id in copyIds }
-    val mapped = accepted.associate { record -> record.id to
-      if (record.segmentId != null) UUID.nameUUIDFromBytes("remilo:${segmentMap.getValue(record.segmentId)}:${record.nominalSlot}".toByteArray()).toString()
-      else if (record.id !in recordConflicts) record.id else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString() }
-    val (listMap, newLists) = restoredLists(bundle)
-    val routineMap = bundle.routines.filter { it.id in acceptedFamilies }.associate { it.id to
-      if (it.id !in conflicts) it.id else UUID.nameUUIDFromBytes("$operation:family:${it.id}".toByteArray()).toString() }
-    mutationStarted = true
-    db.runInTransaction {
-      bundle.images.forEach { image -> require(ExerciseImages(context).file(image.id).isFile); db.routines().image(image) }
-      bundle.purgedRoutines.forEach { if (db.routines().plan(it.id) == null) db.routines().purge(it) }
-      newLists.forEach(db.records()::insertList)
-      bundle.routines.filter { it.id in routineMap }.forEach { db.routines().plan(it.copy(id = routineMap.getValue(it.id))) }
-      bundle.routineVersions.filter { it.routineId in routineMap }.forEach { db.routines().version(it.copy(routineId = routineMap.getValue(it.routineId), listId = it.listId?.let { id -> listMap.getValue(id).id })) }
-      segments.forEach { source ->
-        val id = segmentMap.getValue(source.id)
-        val family = if (source.seriesId !in conflicts) source.seriesId else UUID.nameUUIDFromBytes("$operation:family:${source.seriesId}".toByteArray()).toString()
-        val template = BackupCodec.decodeRecord(org.json.JSONObject(source.template))
-        val list = template.listId?.let { listMap.getValue(it) }
-        db.records().series(source.copy(id = id, seriesId = family,
-          template = org.json.JSONObject(BackupCodec.record(template.copy(listId = list?.id, listName = list?.name.orEmpty(), routineId = template.routineId?.let { routineMap.getValue(it) }))).toString()))
-        if (source.seriesId in conflicts) { calendarStore().managed.localOnly(id); calendarStore().managed.localOnly(family) }
-        db.records().pendingSeries(PendingSeries("$operation:series:$id", id))
+      val bundle =
+        BackupCodec.decode(json) // Entire new import is validated before writing anything.
+      require(requestFingerprint != null || bundle.images.isEmpty()) {
+        "Use a prepared archive to restore exercise photos."
       }
-      bundle.purged.filter { it.segmentId in segmentMap }.forEach { source ->
-        val segment = segmentMap.getValue(source.segmentId!!)
-        val id = UUID.nameUUIDFromBytes("remilo:$segment:${source.nominalSlot}".toByteArray()).toString()
-        db.records().purge(source.copy(id = id, segmentId = segment))
+      bundle.images.forEach { image ->
+        require(
+          ExerciseImages(context).file(image.id).let { it.isFile && it.length() == image.bytes }
+        )
       }
-      accepted.forEach { source ->
-        val id = mapped.getValue(source.id)
-        val record = source.copy(id = id, segmentId = source.segmentId?.let { segmentMap.getValue(it) },
-          routineId = source.routineId?.let { routineMap.getValue(it) },
-          listId = source.listId?.let { listMap.getValue(it).id }, listName = source.listId?.let { listMap.getValue(it).name }.orEmpty(),
-          title = if (id == source.id || source.segmentId != null) source.title else "${source.title.take(193)} (copy)")
-        db.records().insert(record)
-        if (source.segmentId == null && source.id in recordConflicts) calendarStore().managed.localOnly(id)
-        db.records().pending(projection("$operation:$id", record, 1).copy(
-          targetMs = bundle.nextAlerts[source.id] ?: record.definedAlarmAtMs!!,
-          eligible = !record.completed && !record.deleted && !record.skipped && (record.mode == "None" || bundle.nextAlerts[source.id] != null)))
+      val families = bundle.series.groupBy { it.seriesId }
+      val localFamilies = db.records().series().map { it.seriesId }.toSet()
+      val calendarCollisions =
+        calendarStore()
+          .backupCollisions(
+            bundle.records.filter { it.segmentId == null }.map { it.id } +
+              families.keys +
+              bundle.series.map { it.id }
+          )
+      val conflicts =
+        families
+          .filter { (id, segments) ->
+            id in localFamilies ||
+              db.routines().purged(id) != null ||
+              id in calendarCollisions ||
+              segments.any { db.records().series(it.id) != null || it.id in calendarCollisions }
+          }
+          .keys
+      val recordConflicts =
+        bundle.records
+          .filter {
+            it.segmentId == null &&
+              (db.records().find(it.id) != null ||
+                db.records().purged(it.id) != null ||
+                it.id in calendarCollisions)
+          }
+          .map { it.id }
+          .toSet()
+      validate(
+        copyIds.all { id ->
+          bundle.records.any { it.segmentId == null && it.id == id } || id in families
+        },
+        "copyIds",
+        "Choose conflicts from this backup.",
+      )
+      val acceptedFamilies = families.filter { (id, _) -> id !in conflicts || id in copyIds }
+      val segments = acceptedFamilies.values.flatten()
+      val segmentMap = segments.associate {
+        it.id to
+          if (it.seriesId !in conflicts) it.id
+          else UUID.nameUUIDFromBytes("$operation:segment:${it.id}".toByteArray()).toString()
       }
-      bundle.history.filter { it.occurrenceId in mapped }.forEach { history ->
-        db.records().history(history.copy(operationId = UUID.nameUUIDFromBytes("$operation:${history.operationId}".toByteArray()).toString(),
-          occurrenceId = mapped.getValue(history.occurrenceId)))
+      val accepted =
+        bundle.records.filter {
+          if (it.segmentId != null) it.segmentId in segmentMap
+          else it.id !in recordConflicts || it.id in copyIds
+        }
+      val mapped = accepted.associate { record ->
+        record.id to
+          if (record.segmentId != null)
+            UUID.nameUUIDFromBytes(
+                "remilo:${segmentMap.getValue(record.segmentId)}:${record.nominalSlot}"
+                  .toByteArray()
+              )
+              .toString()
+          else if (record.id !in recordConflicts) record.id
+          else UUID.nameUUIDFromBytes("$operation:${record.id}".toByteArray()).toString()
       }
-      bundle.routineSessions.filter { it.occurrenceId in mapped }.forEach { s -> db.routines().session(s.copy(
-        occurrenceId = mapped.getValue(s.occurrenceId), routineId = routineMap.getValue(s.routineId))) }
-      db.records().receipt(CreationReceipt(operation, "import", "Import", requestFingerprint))
-    }
-    applyPending(db); series.recover(); routines.reconcile(); changed()
-    val blocked = mapped.values.count { alerts.find(it)?.state == "Blocked" }
-    val added = accepted.count { it.segmentId == null } + acceptedFamilies.size
-    mapOf("status" to if (blocked > 0) "Blocked" else "Applied", "added" to added,
-      "preserved" to bundle.records.count { it.segmentId == null } + families.size - added, "blocked" to blocked)
+      val (listMap, newLists) = restoredLists(bundle)
+      val routineMap =
+        bundle.routines
+          .filter { it.id in acceptedFamilies }
+          .associate {
+            it.id to
+              if (it.id !in conflicts) it.id
+              else UUID.nameUUIDFromBytes("$operation:family:${it.id}".toByteArray()).toString()
+          }
+      mutationStarted = true
+      db.runInTransaction {
+        bundle.images.forEach { image ->
+          require(ExerciseImages(context).file(image.id).isFile)
+          db.routines().image(image)
+        }
+        bundle.purgedRoutines.forEach {
+          if (db.routines().plan(it.id) == null) db.routines().purge(it)
+        }
+        newLists.forEach(db.records()::insertList)
+        bundle.routines
+          .filter { it.id in routineMap }
+          .forEach { db.routines().plan(it.copy(id = routineMap.getValue(it.id))) }
+        bundle.routineVersions
+          .filter { it.routineId in routineMap }
+          .forEach {
+            db
+              .routines()
+              .version(
+                it.copy(
+                  routineId = routineMap.getValue(it.routineId),
+                  listId = it.listId?.let { id -> listMap.getValue(id).id },
+                )
+              )
+          }
+        segments.forEach { source ->
+          val id = segmentMap.getValue(source.id)
+          val family =
+            if (source.seriesId !in conflicts) source.seriesId
+            else
+              UUID.nameUUIDFromBytes("$operation:family:${source.seriesId}".toByteArray())
+                .toString()
+          val template = BackupCodec.decodeRecord(org.json.JSONObject(source.template))
+          val list = template.listId?.let { listMap.getValue(it) }
+          db
+            .records()
+            .series(
+              source.copy(
+                id = id,
+                seriesId = family,
+                template =
+                  org.json
+                    .JSONObject(
+                      BackupCodec.record(
+                        template.copy(
+                          listId = list?.id,
+                          listName = list?.name.orEmpty(),
+                          routineId = template.routineId?.let { routineMap.getValue(it) },
+                        )
+                      )
+                    )
+                    .toString(),
+              )
+            )
+          if (source.seriesId in conflicts) {
+            calendarStore().managed.localOnly(id)
+            calendarStore().managed.localOnly(family)
+          }
+          db.records().pendingSeries(PendingSeries("$operation:series:$id", id))
+        }
+        bundle.purged
+          .filter { it.segmentId in segmentMap }
+          .forEach { source ->
+            val segment = segmentMap.getValue(source.segmentId!!)
+            val id =
+              UUID.nameUUIDFromBytes("remilo:$segment:${source.nominalSlot}".toByteArray())
+                .toString()
+            db.records().purge(source.copy(id = id, segmentId = segment))
+          }
+        accepted.forEach { source ->
+          val id = mapped.getValue(source.id)
+          val record =
+            source.copy(
+              id = id,
+              segmentId = source.segmentId?.let { segmentMap.getValue(it) },
+              routineId = source.routineId?.let { routineMap.getValue(it) },
+              listId = source.listId?.let { listMap.getValue(it).id },
+              listName = source.listId?.let { listMap.getValue(it).name }.orEmpty(),
+              title =
+                if (id == source.id || source.segmentId != null) source.title
+                else "${source.title.take(193)} (copy)",
+            )
+          db.records().insert(record)
+          if (source.segmentId == null && source.id in recordConflicts)
+            calendarStore().managed.localOnly(id)
+          db
+            .records()
+            .pending(
+              projection("$operation:$id", record, 1)
+                .copy(
+                  targetMs = bundle.nextAlerts[source.id] ?: record.definedAlarmAtMs!!,
+                  eligible =
+                    !record.completed &&
+                      !record.deleted &&
+                      !record.skipped &&
+                      (record.mode == "None" || bundle.nextAlerts[source.id] != null),
+                )
+            )
+        }
+        bundle.history
+          .filter { it.occurrenceId in mapped }
+          .forEach { history ->
+            db
+              .records()
+              .history(
+                history.copy(
+                  operationId =
+                    UUID.nameUUIDFromBytes("$operation:${history.operationId}".toByteArray())
+                      .toString(),
+                  occurrenceId = mapped.getValue(history.occurrenceId),
+                )
+              )
+          }
+        bundle.routineSessions
+          .filter { it.occurrenceId in mapped }
+          .forEach { s ->
+            db
+              .routines()
+              .session(
+                s.copy(
+                  occurrenceId = mapped.getValue(s.occurrenceId),
+                  routineId = routineMap.getValue(s.routineId),
+                )
+              )
+          }
+        db.records().receipt(CreationReceipt(operation, "import", "Import", requestFingerprint))
+      }
+      applyPending(db)
+      series.recover()
+      routines.reconcile()
+      changed()
+      val blocked = mapped.values.count { alerts.find(it)?.state == "Blocked" }
+      val added = accepted.count { it.segmentId == null } + acceptedFamilies.size
+      mapOf(
+        "status" to if (blocked > 0) "Blocked" else "Applied",
+        "added" to added,
+        "preserved" to bundle.records.count { it.segmentId == null } + families.size - added,
+        "blocked" to blocked,
+      )
     } catch (error: Exception) {
       // Only proven pre-mutation validation failures release the caller's frozen
       // operation. Once mutation starts, transport failure remains uncertain.
-      if (!mutationStarted && (error is IllegalArgumentException || error is org.json.JSONException || error is java.time.DateTimeException)) {
-        mapOf("status" to "Rejected", "errorCode" to if (json.toByteArray(Charsets.UTF_8).size > 10_000_000) "BACKUP_TOO_LARGE" else "INVALID_BACKUP",
+      if (
+        !mutationStarted &&
+          (error is IllegalArgumentException ||
+            error is org.json.JSONException ||
+            error is java.time.DateTimeException)
+      ) {
+        mapOf(
+          "status" to "Rejected",
+          "errorCode" to
+            if (json.toByteArray(Charsets.UTF_8).size > 10_000_000) "BACKUP_TOO_LARGE"
+            else "INVALID_BACKUP",
           "errorField" to ((error as? InputError)?.field ?: "backup"),
-          "errorMessage" to "This backup could not be restored. Check the file and your choices.")
+          "errorMessage" to "This backup could not be restored. Check the file and your choices.",
+        )
       } else throw error
     }
   }
+
   fun previewSound(sound: String, requestId: String): Map<String, Any> {
     validate(sound in setOf("remilo", "system"), "sound", "Choose a valid sound.")
-    validate(requestId.isNotBlank() && requestId.length <= 200, "requestId", "Try this preview again.")
+    validate(
+      requestId.isNotBlank() && requestId.length <= 200,
+      "requestId",
+      "Try this preview again.",
+    )
     return preview.start(sound, requestId, alerts.activeSession() == null)
   }
+
   fun stopSoundPreview(requestId: String): Map<String, Any>? = preview.stop(requestId)
+
   fun soundPreview(): Map<String, Any>? = preview.snapshot()
-  fun beforeAlarmPlayback(ready: () -> Unit) = submit { preview.stop(reason = "AlarmActive", afterStopped = ready) }
+
+  fun beforeAlarmPlayback(ready: () -> Unit) = submit {
+    preview.stop(reason = "AlarmActive", afterStopped = ready)
+  }
+
   fun apply(command: Map<String, Any?>): Map<String, Any?> {
-    val result = try { applyValidated(command) } catch (error: InputError) {
-      mapOf("status" to "Rejected", "errorCode" to "INVALID_INPUT", "errorField" to error.field,
-        "errorMessage" to error.message)
-    }
+    val result =
+      try {
+        applyValidated(command)
+      } catch (error: InputError) {
+        mapOf(
+          "status" to "Rejected",
+          "errorCode" to "INVALID_INPUT",
+          "errorField" to error.field,
+          "errorMessage" to error.message,
+        )
+      }
     val text = result["errorMessage"] as? String
     val message = text?.let(com.remilo.alarm.presentation.L10n::descriptor)
-    return if (message == null) result else result + mapOf("errorMessageKey" to message.key, "errorMessageArgs" to message.args)
+    return if (message == null) result
+    else result + mapOf("errorMessageKey" to message.key, "errorMessageArgs" to message.args)
   }
+
   private fun applyValidated(command: Map<String, Any?>): Map<String, Any?> {
-    val operationId = command["operationId"] as? String
-      ?: throw InputError("operationId", "Try this action again.")
-    validate(operationId.isNotBlank() && operationId.length <= 200, "operationId", "Try this action again.")
-    if (alerts.routineAlertReceipt(operationId) != null && command["kind"] !in setOf("DismissRoutineAlarm", "SnoozeRoutineAlarm"))
+    val operationId =
+      command["operationId"] as? String ?: throw InputError("operationId", "Try this action again.")
+    validate(
+      operationId.isNotBlank() && operationId.length <= 200,
+      "operationId",
+      "Try this action again.",
+    )
+    if (
+      alerts.routineAlertReceipt(operationId) != null &&
+        command["kind"] !in setOf("DismissRoutineAlarm", "SnoozeRoutineAlarm")
+    )
       return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-    if (command["kind"] !in setOf("Stop", "StopAll", "CompleteDelivery", "DoneAll", "SnoozeAll", "PostponeAll", "Snooze", "Postpone", "DismissRoutineAlarm", "SnoozeRoutineAlarm")) {
+    if (
+      command["kind"] !in
+        setOf(
+          "Stop",
+          "StopAll",
+          "CompleteDelivery",
+          "DoneAll",
+          "SnoozeAll",
+          "PostponeAll",
+          "Snooze",
+          "Postpone",
+          "DismissRoutineAlarm",
+          "SnoozeRoutineAlarm",
+        )
+    ) {
       prepareContentActions()
       if (content().calendar().operation(operationId) != null)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-      if (alerts.completionReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null)
+      if (
+        alerts.completionReceipt(operationId) != null ||
+          alerts.bulkSnoozeReceipt(operationId) != null
+      )
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-      if (content().routines().operation(operationId) != null && command["kind"] !in setOf("TrashRoutine", "RestoreRoutine", "PurgeRoutine", "CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "SetRoutineExercise", "CorrectRoutineExercise", "SkipRoutineDay", "UndoSkipRoutineDay"))
+      if (
+        content().routines().operation(operationId) != null &&
+          command["kind"] !in
+            setOf(
+              "TrashRoutine",
+              "RestoreRoutine",
+              "PurgeRoutine",
+              "CreateRoutine",
+              "EditRoutine",
+              "PauseRoutine",
+              "ResumeRoutine",
+              "SetRoutineExercise",
+              "CorrectRoutineExercise",
+              "SkipRoutineDay",
+              "UndoSkipRoutineDay",
+            )
+      )
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     }
     return when (command["kind"]) {
-      "TrashRoutine", "RestoreRoutine", "PurgeRoutine", "CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "SetRoutineExercise", "CorrectRoutineExercise", "SkipRoutineDay", "UndoSkipRoutineDay" -> {
-        val result = try { routines.command(command) } catch (error: IllegalArgumentException) { throw InputError("routine", error.message ?: "Choose a routine day.") }
-        changed(); result
+      "TrashRoutine",
+      "RestoreRoutine",
+      "PurgeRoutine",
+      "CreateRoutine",
+      "EditRoutine",
+      "PauseRoutine",
+      "ResumeRoutine",
+      "SetRoutineExercise",
+      "CorrectRoutineExercise",
+      "SkipRoutineDay",
+      "UndoSkipRoutineDay" -> {
+        val result =
+          try {
+            routines.command(command)
+          } catch (error: IllegalArgumentException) {
+            throw InputError("routine", error.message ?: "Choose a routine day.")
+          }
+        changed()
+        result
       }
       "Create" -> create(operationId, command)
-      "Edit", "Done", "Reopen", "Delete", "UndoDelete", "Skip" -> modify(operationId, command)
+      "Edit",
+      "Done",
+      "Reopen",
+      "Delete",
+      "UndoDelete",
+      "Skip" -> modify(operationId, command)
       "Purge" -> purge(operationId, command)
-      "CreateSeries", "EditSeries", "EditFollowing", "PauseSeries", "ResumeSeries" -> {
+      "CreateSeries",
+      "EditSeries",
+      "EditFollowing",
+      "PauseSeries",
+      "ResumeSeries" -> {
         if (command["kind"] != "CreateSeries") {
-          validate(text(command, "segmentId", "", 200).isNotBlank(), "segmentId", "Choose a series.")
+          validate(
+            text(command, "segmentId", "", 200).isNotBlank(),
+            "segmentId",
+            "Choose a series.",
+          )
           epoch(command["expectedRevision"], "expectedRevision")
-          if (content().records().series(command["segmentId"] as String)?.let { series.template(it).routineId != null } == true)
+          if (
+            content().records().series(command["segmentId"] as String)?.let {
+              series.template(it).routineId != null
+            } == true
+          )
             return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
         }
         if (command["kind"] in setOf("CreateSeries", "EditSeries", "EditFollowing"))
           validate(command["recurrence"] is Map<*, *>, "recurrence", "Choose a repeat rule.")
-        if (command["kind"] == "EditFollowing") validate(command["nominalSlot"] is String,
-          "nominalSlot", "Choose an original occurrence.")
+        if (command["kind"] == "EditFollowing")
+          validate(
+            command["nominalSlot"] is String,
+            "nominalSlot",
+            "Choose an original occurrence.",
+          )
         try {
           var calendarEdited = false
-          val result = when (command["kind"]) {
-            "CreateSeries" -> {
-              validate(command["calendarDisposition"] == null || command["calendarDisposition"] in setOf("Default", "Managed", "LocalOnly"),
-                "calendarDisposition", "Choose a Calendar option.")
-              series.create(operationId, draft(command, "template"), command["recurrence"] as Map<String, Any?>, checkpoint = {
-                val id = content().records().receipt(operationId)!!.occurrenceId
-                calendarStore().managed.authored(id, content().records().series(id)!!.revision, command["calendarDisposition"] as? String ?: "Default")
-              })
+          val result =
+            when (command["kind"]) {
+              "CreateSeries" -> {
+                validate(
+                  command["calendarDisposition"] == null ||
+                    command["calendarDisposition"] in setOf("Default", "Managed", "LocalOnly"),
+                  "calendarDisposition",
+                  "Choose a Calendar option.",
+                )
+                series.create(
+                  operationId,
+                  draft(command, "template"),
+                  command["recurrence"] as Map<String, Any?>,
+                  checkpoint = {
+                    val id = content().records().receipt(operationId)!!.occurrenceId
+                    calendarStore()
+                      .managed
+                      .authored(
+                        id,
+                        content().records().series(id)!!.revision,
+                        command["calendarDisposition"] as? String ?: "Default",
+                      )
+                  },
+                )
+              }
+              "EditSeries",
+              "EditFollowing" -> {
+                val old =
+                  series.editTemplate(
+                    command["segmentId"] as String,
+                    if (command["kind"] == "EditFollowing") command["nominalSlot"] as String
+                    else null,
+                  )
+                val id = command["segmentId"] as String
+                val prior = runCatching { calendarStore().links.fields(id) }.getOrNull()
+                series.mutate(
+                  operationId,
+                  command,
+                  draft(command, "template", old),
+                  checkpoint = {
+                    val current = runCatching { calendarStore().links.fields(id) }.getOrNull()
+                    calendarEdited =
+                      !com.remilo.alarm.calendar.CalendarLinkMapper.equal(prior, current)
+                    if (calendarEdited) calendarStore().sync.authored(id)
+                  },
+                )
+              }
+              else -> series.mutate(operationId, command)
             }
-            "EditSeries", "EditFollowing" -> {
-              val old = series.editTemplate(command["segmentId"] as String,
-                if (command["kind"] == "EditFollowing") command["nominalSlot"] as String else null)
-              val id = command["segmentId"] as String
-              val prior = runCatching { calendarStore().links.fields(id) }.getOrNull()
-              series.mutate(operationId, command, draft(command, "template", old), checkpoint = {
-                val current = runCatching { calendarStore().links.fields(id) }.getOrNull()
-                calendarEdited = !com.remilo.alarm.calendar.CalendarLinkMapper.equal(prior, current)
-                if (calendarEdited) calendarStore().sync.authored(id)
-              })
-            }
-            else -> series.mutate(operationId, command)
-          }
-          changed(calendarOpportunity = calendarEdited || command["kind"] == "CreateSeries"); result
-        } catch (error: InputError) { throw error }
-        catch (_: IllegalArgumentException) { mapOf("status" to "Rejected", "errorCode" to "INVALID_RECURRENCE", "errorField" to "recurrence",
-          "errorMessage" to "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.") }
+          changed(calendarOpportunity = calendarEdited || command["kind"] == "CreateSeries")
+          result
+        } catch (error: InputError) {
+          throw error
+        } catch (_: IllegalArgumentException) {
+          mapOf(
+            "status" to "Rejected",
+            "errorCode" to "INVALID_RECURRENCE",
+            "errorField" to "recurrence",
+            "errorMessage" to
+              "Choose a valid repeat rule and future ending. Intervals support 1–999, counts 1–100,000, and timing offsets up to one year.",
+          )
+        }
       }
       "Settings" -> updateSettings(operationId, command)
-      "CreateList", "RenameList", "RemoveList" -> mutateList(operationId, command)
+      "CreateList",
+      "RenameList",
+      "RemoveList" -> mutateList(operationId, command)
       "StopAll" -> stopAll(operationId, text(command, "expectedSessionId", "", 200))
-      "DoneAll", "SnoozeAll", "PostponeAll" -> {
+      "DoneAll",
+      "SnoozeAll",
+      "PostponeAll" -> {
         val sessionId = text(command, "expectedSessionId", "", 200)
         validate(sessionId.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
         val captured = capturedMembers(command["members"])
-        val minutes = if (command["kind"] == "SnoozeAll") integer(command["snoozeMinutes"], "snoozeMinutes", 1, 1440) else null
-        val target = if (command["kind"] == "PostponeAll") epoch(command["alarmAtMs"], "alarmAtMs") else null
-        applySessionAction(operationId, sessionId, captured, command["kind"] as String, minutes, target)
+        val minutes =
+          if (command["kind"] == "SnoozeAll")
+            integer(command["snoozeMinutes"], "snoozeMinutes", 1, 1440)
+          else null
+        val target =
+          if (command["kind"] == "PostponeAll") epoch(command["alarmAtMs"], "alarmAtMs") else null
+        applySessionAction(
+          operationId,
+          sessionId,
+          captured,
+          command["kind"] as String,
+          minutes,
+          target,
+        )
       }
-      "DismissRoutineAlarm", "SnoozeRoutineAlarm" -> routineAlertAction(operationId, command)
-      "Stop", "CompleteDelivery", "Snooze", "Postpone" -> {
-        val id = command["occurrenceId"] as? String
-          ?: throw InputError("occurrenceId", "Choose an existing reminder.")
-        validate(id.isNotBlank() && id.length <= 200, "occurrenceId", "Choose an existing reminder.")
-        val number = (command["expectedGeneration"] as? Number)?.toDouble()
-          ?: throw InputError("expectedGeneration", "Refresh this reminder and try again.")
-        validate(number.isFinite() && number >= 1 && number <= 9_007_199_254_740_991L && number % 1.0 == 0.0,
-          "expectedGeneration", "Refresh this reminder and try again.")
+      "DismissRoutineAlarm",
+      "SnoozeRoutineAlarm" -> routineAlertAction(operationId, command)
+      "Stop",
+      "CompleteDelivery",
+      "Snooze",
+      "Postpone" -> {
+        val id =
+          command["occurrenceId"] as? String
+            ?: throw InputError("occurrenceId", "Choose an existing reminder.")
+        validate(
+          id.isNotBlank() && id.length <= 200,
+          "occurrenceId",
+          "Choose an existing reminder.",
+        )
+        val number =
+          (command["expectedGeneration"] as? Number)?.toDouble()
+            ?: throw InputError("expectedGeneration", "Refresh this reminder and try again.")
+        validate(
+          number.isFinite() &&
+            number >= 1 &&
+            number <= 9_007_199_254_740_991L &&
+            number % 1.0 == 0.0,
+          "expectedGeneration",
+          "Refresh this reminder and try again.",
+        )
         val generation = number.toLong()
-        val at = if (command["kind"] == "Postpone") epoch(command["alarmAtMs"], "alarmAtMs") else null
-        val expectedMinutes = if (command["kind"] == "Snooze" && command.containsKey("expectedSnoozeMinutes"))
-          integer(command["expectedSnoozeMinutes"], "expectedSnoozeMinutes", 1, 1440) else null
-        val sessionId = if (command["kind"] == "Postpone" && command.containsKey("expectedSessionId"))
-          text(command, "expectedSessionId", "", 200).also {
-            validate(it.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
-          } else null
-        applyAction(id, generation, command["kind"] as String, operationId, at, expectedMinutes, sessionId)
+        val at =
+          if (command["kind"] == "Postpone") epoch(command["alarmAtMs"], "alarmAtMs") else null
+        val expectedMinutes =
+          if (command["kind"] == "Snooze" && command.containsKey("expectedSnoozeMinutes"))
+            integer(command["expectedSnoozeMinutes"], "expectedSnoozeMinutes", 1, 1440)
+          else null
+        val sessionId =
+          if (command["kind"] == "Postpone" && command.containsKey("expectedSessionId"))
+            text(command, "expectedSessionId", "", 200).also {
+              validate(it.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
+            }
+          else null
+        applyAction(
+          id,
+          generation,
+          command["kind"] as String,
+          operationId,
+          at,
+          expectedMinutes,
+          sessionId,
+        )
       }
-      else -> mapOf("status" to "Rejected", "errorCode" to "UNSUPPORTED_COMMAND", "errorField" to "kind")
+      else ->
+        mapOf("status" to "Rejected", "errorCode" to "UNSUPPORTED_COMMAND", "errorField" to "kind")
     }
   }
-  fun testAlarm(operationId: String): Map<String, Any?> = apply(mapOf(
-    "kind" to "Create", "operationId" to operationId, "title" to com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_414c66fb67ec()), "alarmAtMs" to now() + 15_000L, "calendarDisposition" to "LocalOnly"))
+
+  fun testAlarm(operationId: String): Map<String, Any?> =
+    apply(
+      mapOf(
+        "kind" to "Create",
+        "operationId" to operationId,
+        "title" to
+          com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_414c66fb67ec()),
+        "alarmAtMs" to now() + 15_000L,
+        "calendarDisposition" to "LocalOnly",
+      )
+    )
+
   fun calendarRecoveredPreview(ids: List<String>): Map<String, Any?> {
     prepareContentActions()
-    val store = calendarStore(); val rows = org.json.JSONArray()
-    val recovered = store.managed.dao.candidates().filter { candidate -> candidate.state == "Imported" &&
-      candidate.policySnapshot.takeIf(String::isNotBlank)?.let { org.json.JSONObject(it).optBoolean("initialRecovery") } == true &&
-      (ids.isEmpty() || candidate.localId in ids) }
+    val store = calendarStore()
+    val rows = org.json.JSONArray()
+    val recovered =
+      store.managed.dao.candidates().filter { candidate ->
+        candidate.state == "Imported" &&
+          candidate.policySnapshot.takeIf(String::isNotBlank)?.let {
+            org.json.JSONObject(it).optBoolean("initialRecovery")
+          } == true &&
+          (ids.isEmpty() || candidate.localId in ids)
+      }
     recovered.forEach { candidate ->
-      val id = candidate.localId; val record = store.links.record(id)
-      val row = org.json.JSONObject().put("itemId", "recovered:$id").put("kind", "RecoveredAlert").put("occurrenceId", id)
-        .put("title", record?.title.orEmpty()).put("ready", false).put("alertMode", "Alarm")
-      if (record != null && !record.completed && !record.deleted && !record.skipped && record.mode == "None") {
+      val id = candidate.localId
+      val record = store.links.record(id)
+      val row =
+        org.json
+          .JSONObject()
+          .put("itemId", "recovered:$id")
+          .put("kind", "RecoveredAlert")
+          .put("occurrenceId", id)
+          .put("title", record?.title.orEmpty())
+          .put("ready", false)
+          .put("alertMode", "Alarm")
+      if (
+        record != null &&
+          !record.completed &&
+          !record.deleted &&
+          !record.skipped &&
+          record.mode == "None"
+      ) {
         val segments = store.links.segments(id)
-        val pending = content().records().all().filter { it.segmentId in segments.map { segment -> segment.id } && !it.completed && !it.deleted && !it.skipped }
-        val ringing = alerts.find(id)?.sessionId != null || pending.any { alerts.find(it.id)?.sessionId != null }
-        val future = if (segments.isEmpty()) listOfNotNull(record.definedAlarmAtMs).filter { it > now() }
-          else segments.flatMap { segment -> Recurrence.future(RuleCodec.decode(segment.rule), now(), ZoneId.of(record.zoneId), "Alarm")
-            .filter { slot -> pending.none { it.segmentId == segment.id && it.nominalSlot == slot.nominal.toString() && it.exception } }
-            .take(3).map { it.alarmAtMs }.toList() } + pending.filter { it.exception && it.definedAlarmAtMs!! > now() }.map { it.definedAlarmAtMs!! }
+        val pending =
+          content().records().all().filter {
+            it.segmentId in segments.map { segment -> segment.id } &&
+              !it.completed &&
+              !it.deleted &&
+              !it.skipped
+          }
+        val ringing =
+          alerts.find(id)?.sessionId != null ||
+            pending.any { alerts.find(it.id)?.sessionId != null }
+        val future =
+          if (segments.isEmpty()) listOfNotNull(record.definedAlarmAtMs).filter { it > now() }
+          else
+            segments.flatMap { segment ->
+              Recurrence.future(
+                  RuleCodec.decode(segment.rule),
+                  now(),
+                  ZoneId.of(record.zoneId),
+                  "Alarm",
+                )
+                .filter { slot ->
+                  pending.none {
+                    it.segmentId == segment.id &&
+                      it.nominalSlot == slot.nominal.toString() &&
+                      it.exception
+                  }
+                }
+                .take(3)
+                .map { it.alarmAtMs }
+                .toList()
+            } +
+              pending
+                .filter { it.exception && it.definedAlarmAtMs!! > now() }
+                .map { it.definedAlarmAtMs!! }
         val elapsedOngoing = pending.any { it.eventEndMs > now() && it.definedAlarmAtMs!! <= now() }
         if (!ringing && !elapsedOngoing && future.isNotEmpty()) {
-          row.put("ready", true).put("alertAtMs", future.min()).put("revision", record.revision)
+          row
+            .put("ready", true)
+            .put("alertAtMs", future.min())
+            .put("revision", record.revision)
             .put("generation", alerts.find(id)?.generation ?: 0)
-            .put("segmentRevisions", org.json.JSONArray(segments.map { org.json.JSONObject().put("id", it.id).put("revision", it.revision) }))
-            .put("recordRevisions", org.json.JSONArray(pending.map { org.json.JSONObject().put("id", it.id).put("revision", it.revision)
-              .put("generation", alerts.find(it.id)?.generation ?: 0) }))
+            .put(
+              "segmentRevisions",
+              org.json.JSONArray(
+                segments.map { org.json.JSONObject().put("id", it.id).put("revision", it.revision) }
+              ),
+            )
+            .put(
+              "recordRevisions",
+              org.json.JSONArray(
+                pending.map {
+                  org.json
+                    .JSONObject()
+                    .put("id", it.id)
+                    .put("revision", it.revision)
+                    .put("generation", alerts.find(it.id)?.generation ?: 0)
+                }
+              ),
+            )
         } else row.put("reason", if (ringing) "Ringing" else "ElapsedAlert")
       } else row.put("reason", "LocalTerminal")
       rows.put(row)
     }
-    return store.managed.preview("RecoveredAlerts", org.json.JSONObject().put("items", rows).put("warnings", org.json.JSONArray())
-      .put("policy", org.json.JSONObject(store.managed.policyView())).put("complete", true))
+    return store.managed.preview(
+      "RecoveredAlerts",
+      org.json
+        .JSONObject()
+        .put("items", rows)
+        .put("warnings", org.json.JSONArray())
+        .put("policy", org.json.JSONObject(store.managed.policyView()))
+        .put("complete", true),
+    )
   }
+
   fun calendarRecoveredCapture(command: Map<String, Any?>): Map<String, Any?> {
-    val db = prepareContentActions(); val store = calendarStore(); val op = CalendarStore.string(command, "operationId")
+    val db = prepareContentActions()
+    val store = calendarStore()
+    val op = CalendarStore.string(command, "operationId")
     val selected = command["selectedItemIds"] as? List<*> ?: throw CalendarFailure("INVALID_INPUT")
-    if (selected.size > 500 || selected.distinct().size != selected.size) throw CalendarFailure("INVALID_INPUT")
-    val key = org.json.JSONArray(listOf(command["kind"], command["previewId"], org.json.JSONArray(selected.sortedBy { it as String }))).toString()
+    if (selected.size > 500 || selected.distinct().size != selected.size)
+      throw CalendarFailure("INVALID_INPUT")
+    val key =
+      org.json
+        .JSONArray(
+          listOf(
+            command["kind"],
+            command["previewId"],
+            org.json.JSONArray(selected.sortedBy { it as String }),
+          )
+        )
+        .toString()
     store.managed.dao.receipt(op)?.let {
       if (it.requestKey != key) throw CalendarFailure("OPERATION_REUSED")
-      applyPending(db); series.recover(); return com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(it.result))
+      applyPending(db)
+      series.recover()
+      return com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(it.result))
     }
-    if (db.records().receipt(op) != null || db.calendar().operation(op) != null || db.links().operation(op) != null) throw CalendarFailure("OPERATION_REUSED")
-    val preview = store.managed.reviewed(CalendarStore.string(command, "previewId"), "RecoveredAlerts")
+    if (
+      db.records().receipt(op) != null ||
+        db.calendar().operation(op) != null ||
+        db.links().operation(op) != null
+    )
+      throw CalendarFailure("OPERATION_REUSED")
+    val preview =
+      store.managed.reviewed(CalendarStore.string(command, "previewId"), "RecoveredAlerts")
     val items = org.json.JSONObject(preview.payload).getJSONArray("items")
-    val approved = selected.map { itemId -> (0 until items.length()).map(items::getJSONObject).firstOrNull { it.getString("itemId") == itemId && it.getBoolean("ready") }
-      ?: throw CalendarFailure("STALE_PREVIEW") }
+    val approved = selected.map { itemId ->
+      (0 until items.length()).map(items::getJSONObject).firstOrNull {
+        it.getString("itemId") == itemId && it.getBoolean("ready")
+      } ?: throw CalendarFailure("STALE_PREVIEW")
+    }
     for (item in approved) {
-      val id = item.getString("occurrenceId"); val record = store.links.record(id) ?: throw CalendarFailure("NOT_FOUND")
-      if (record.revision != item.getLong("revision") || record.mode != "None" || (alerts.find(id)?.generation ?: 0) != item.getLong("generation") ||
-        alerts.find(id)?.sessionId != null || record.completed || record.deleted || record.skipped) throw CalendarFailure("STALE_PREVIEW")
+      val id = item.getString("occurrenceId")
+      val record = store.links.record(id) ?: throw CalendarFailure("NOT_FOUND")
+      if (
+        record.revision != item.getLong("revision") ||
+          record.mode != "None" ||
+          (alerts.find(id)?.generation ?: 0) != item.getLong("generation") ||
+          alerts.find(id)?.sessionId != null ||
+          record.completed ||
+          record.deleted ||
+          record.skipped
+      )
+        throw CalendarFailure("STALE_PREVIEW")
       val segments = item.getJSONArray("segmentRevisions")
-      for (index in 0 until segments.length()) { val row = segments.getJSONObject(index)
-        if (db.records().series(row.getString("id"))?.revision != row.getLong("revision")) throw CalendarFailure("STALE_PREVIEW") }
+      for (index in 0 until segments.length()) {
+        val row = segments.getJSONObject(index)
+        if (db.records().series(row.getString("id"))?.revision != row.getLong("revision"))
+          throw CalendarFailure("STALE_PREVIEW")
+      }
       val records = item.getJSONArray("recordRevisions")
-      for (index in 0 until records.length()) { val row = records.getJSONObject(index); val local = db.records().find(row.getString("id")) ?: throw CalendarFailure("STALE_PREVIEW")
+      for (index in 0 until records.length()) {
+        val row = records.getJSONObject(index)
+        val local = db.records().find(row.getString("id")) ?: throw CalendarFailure("STALE_PREVIEW")
         val alert = alerts.find(local.id)
-        if (local.revision != row.getLong("revision") || (alert?.generation ?: 0) != row.getLong("generation") || alert?.sessionId != null) throw CalendarFailure("STALE_PREVIEW") }
+        if (
+          local.revision != row.getLong("revision") ||
+            (alert?.generation ?: 0) != row.getLong("generation") ||
+            alert?.sessionId != null
+        )
+          throw CalendarFailure("STALE_PREVIEW")
+      }
     }
     val result = mapOf("captured" to true, "operationId" to op, "count" to approved.size)
     db.runInTransaction {
       approved.forEach { item ->
-        val id = item.getString("occurrenceId"); val record = store.links.record(id)!!; val segments = store.links.segments(id)
+        val id = item.getString("occurrenceId")
+        val record = store.links.record(id)!!
+        val segments = store.links.segments(id)
         if (segments.isEmpty()) {
           val changed = record.copy(mode = "Alarm", revision = record.revision + 1)
           if (changed.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
-          db.records().update(changed); db.records().pending(projection("$op:$id", changed, (alerts.find(id)?.generation ?: 0) + 1))
+          db.records().update(changed)
+          db
+            .records()
+            .pending(projection("$op:$id", changed, (alerts.find(id)?.generation ?: 0) + 1))
         } else {
           segments.forEach { segment ->
             val template = series.template(segment).copy(mode = "Alarm")
-            db.records().series(segment.copy(template = org.json.JSONObject(BackupCodec.record(template)).toString(), revision = segment.revision + 1))
+            db
+              .records()
+              .series(
+                segment.copy(
+                  template = org.json.JSONObject(BackupCodec.record(template)).toString(),
+                  revision = segment.revision + 1,
+                )
+              )
             db.records().pendingSeries(PendingSeries("$op:${segment.id}", segment.id))
           }
-          db.records().all().filter { it.segmentId in segments.map { segment -> segment.id } && !it.completed && !it.deleted && !it.skipped &&
-            (it.definedAlarmAtMs ?: 0) > now() }.forEach { local ->
-            val updated = local.copy(mode = "Alarm", revision = local.revision + 1)
-            db.records().update(updated); db.records().pending(projection("$op:${local.id}", updated, (alerts.find(local.id)?.generation ?: 0) + 1))
-          }
+          db
+            .records()
+            .all()
+            .filter {
+              it.segmentId in segments.map { segment -> segment.id } &&
+                !it.completed &&
+                !it.deleted &&
+                !it.skipped &&
+                (it.definedAlarmAtMs ?: 0) > now()
+            }
+            .forEach { local ->
+              val updated = local.copy(mode = "Alarm", revision = local.revision + 1)
+              db.records().update(updated)
+              db
+                .records()
+                .pending(
+                  projection(
+                    "$op:${local.id}",
+                    updated,
+                    (alerts.find(local.id)?.generation ?: 0) + 1,
+                  )
+                )
+            }
         }
         store.sync.activity("$op:recovery:$id", id, "RecoveredAlertsEnabled", "")
       }
-      store.managed.dao.receipt(com.remilo.alarm.calendar.CalendarManagedReceipt(op, "EnableRecoveredCalendarAlerts", key, org.json.JSONObject(result).toString()))
+      store.managed.dao.receipt(
+        com.remilo.alarm.calendar.CalendarManagedReceipt(
+          op,
+          "EnableRecoveredCalendarAlerts",
+          key,
+          org.json.JSONObject(result).toString(),
+        )
+      )
     }
-    applyPending(db); series.recover(); changed(); return result
+    applyPending(db)
+    series.recover()
+    changed()
+    return result
   }
+
   fun calendarCapture(command: Map<String, Any?>): Map<String, Any?> {
     prepareContentActions()
     val store = calendarStore().links
     val generation = { id: String -> alerts.find(id)?.generation ?: 0L }
-    val result = if (command["kind"] == "ActivateCalendarLinks") store.captureActivationBatch(command, generation, ::calendarPreflight)
-      else { store.validateGeneration(command, generation); store.capture(command) }
-    changed(); return result
+    val result =
+      if (command["kind"] == "ActivateCalendarLinks")
+        store.captureActivationBatch(command, generation, ::calendarPreflight)
+      else {
+        store.validateGeneration(command, generation)
+        store.capture(command)
+      }
+    changed()
+    return result
   }
-  fun calendarPreflight(previewId: String, selections: Map<String, String?>): String? { return try {
-    prepareContentActions()
-    val (preview, desired) = calendarStore().links.proposed(previewId, selections)
-    if (preview.occurrenceId.isEmpty()) return calendarIncomingPreflight(preview, desired)
-    val old = calendarStore().links.record(preview.occurrenceId) ?: throw CalendarFailure("NOT_FOUND")
-    calendarStore().links.active(old)
-    val target = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(desired)), old.id, old)
-    val timingChanged = !com.remilo.alarm.calendar.CalendarLinkMapper.equal(desired.get("schedule"), calendarStore().links.fields(old.id).get("schedule"))
-    if (timingChanged) {
-      val segment = calendarStore().links.currentSeries(old.id)
-      if (alerts.find(old.id)?.sessionId != null || segment != null && alerts.all().any { it.segmentId in calendarStore().links.segments(old.id).map { row -> row.id } && it.sessionId != null }) throw CalendarFailure("RINGING_DEFERRED")
-      val recurring = desired.getJSONObject("schedule").optJSONArray("recurrence")
-      if (recurring == null) {
-        if (target.mode != "None" && target.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
-      } else {
-        val rule = com.remilo.alarm.calendar.CalendarRecurrence.decode(recurring,
-          Instant.ofEpochMilli(target.eventStartMs).atZone(ZoneId.of(target.zoneId)).toLocalDateTime(), target.zoneId, target.allDay,
-          if (target.allDay) 86_400_000 else target.eventEndMs - target.eventStartMs)
-        if (!Recurrence.future(rule, now(), ZoneId.of(target.zoneId), target.mode).any()) throw CalendarFailure("ELAPSED_ALERT")
-        val options = org.json.JSONObject(preview.choices)
-        val job = com.remilo.alarm.calendar.CalendarLinkOperation("preview", old.id, "", "ApplyCalendarResolution", "", preview.subject,
-          preview.calendar.id, preview.eventId, preview.calendar.name, preview.origin, old.revision, preview.generation, preview.linkRevision,
-          preview.connectionRevision, preview.etag, preview.remote, desired.toString(), org.json.JSONObject().put("calendarInstances", options.optJSONArray("instances")).toString(), "{}", false)
-        calendarInstances(job, segment?.id ?: old.id, target, series.rule(target, com.remilo.alarm.calendar.CalendarRecurrence.spec(rule)).copy(endExclusive = rule.endExclusive))
-        val children = options.optJSONArray("resources") ?: org.json.JSONArray()
-        val targets = desired.getJSONObject("schedule").optJSONArray("segments") ?: org.json.JSONArray()
-        for (index in 0 until children.length()) {
-          val source = children.getJSONObject(index); val fields = source.getJSONObject("fields")
-          if (!(0 until targets.length()).any { com.remilo.alarm.calendar.CalendarLinkMapper.equal(targets.get(it), fields) }) continue
-          val child = content().records().series(source.getString("segmentId")) ?: throw CalendarFailure("STALE_PREVIEW")
-          val childTarget = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(fields)), child.id, series.template(child))
-          val schedule = fields.getJSONObject("schedule")
-          val childRule = com.remilo.alarm.calendar.CalendarRecurrence.decode(schedule.getJSONArray("recurrence"),
-            Instant.ofEpochMilli(childTarget.eventStartMs).atZone(ZoneId.of(childTarget.zoneId)).toLocalDateTime(), childTarget.zoneId, childTarget.allDay,
-            if (childTarget.allDay) 86_400_000 else childTarget.eventEndMs - childTarget.eventStartMs)
-          if (!Recurrence.future(childRule, now(), ZoneId.of(childTarget.zoneId), childTarget.mode).any()) throw CalendarFailure("ELAPSED_ALERT")
-          calendarInstances(job.copy(desired = fields.toString(), draft = org.json.JSONObject().put("calendarInstances", source.optJSONArray("instances")).toString()), child.id, childTarget,
-            series.rule(childTarget, com.remilo.alarm.calendar.CalendarRecurrence.spec(childRule)).copy(endExclusive = childRule.endExclusive))
+
+  fun calendarPreflight(previewId: String, selections: Map<String, String?>): String? {
+    return try {
+      prepareContentActions()
+      val (preview, desired) = calendarStore().links.proposed(previewId, selections)
+      if (preview.occurrenceId.isEmpty()) return calendarIncomingPreflight(preview, desired)
+      val old =
+        calendarStore().links.record(preview.occurrenceId) ?: throw CalendarFailure("NOT_FOUND")
+      calendarStore().links.active(old)
+      val target =
+        draft(
+          com.remilo.alarm.calendar.CalendarLinkMapper.map(
+            com.remilo.alarm.calendar.CalendarLinkMapper.draft(desired)
+          ),
+          old.id,
+          old,
+        )
+      val timingChanged =
+        !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+          desired.get("schedule"),
+          calendarStore().links.fields(old.id).get("schedule"),
+        )
+      if (timingChanged) {
+        val segment = calendarStore().links.currentSeries(old.id)
+        if (
+          alerts.find(old.id)?.sessionId != null ||
+            segment != null &&
+              alerts.all().any {
+                it.segmentId in calendarStore().links.segments(old.id).map { row -> row.id } &&
+                  it.sessionId != null
+              }
+        )
+          throw CalendarFailure("RINGING_DEFERRED")
+        val recurring = desired.getJSONObject("schedule").optJSONArray("recurrence")
+        if (recurring == null) {
+          if (target.mode != "None" && target.definedAlarmAtMs!! <= now())
+            throw CalendarFailure("ELAPSED_ALERT")
+        } else {
+          val rule =
+            com.remilo.alarm.calendar.CalendarRecurrence.decode(
+              recurring,
+              Instant.ofEpochMilli(target.eventStartMs)
+                .atZone(ZoneId.of(target.zoneId))
+                .toLocalDateTime(),
+              target.zoneId,
+              target.allDay,
+              if (target.allDay) 86_400_000 else target.eventEndMs - target.eventStartMs,
+            )
+          if (!Recurrence.future(rule, now(), ZoneId.of(target.zoneId), target.mode).any())
+            throw CalendarFailure("ELAPSED_ALERT")
+          val options = org.json.JSONObject(preview.choices)
+          val job =
+            com.remilo.alarm.calendar.CalendarLinkOperation(
+              "preview",
+              old.id,
+              "",
+              "ApplyCalendarResolution",
+              "",
+              preview.subject,
+              preview.calendar.id,
+              preview.eventId,
+              preview.calendar.name,
+              preview.origin,
+              old.revision,
+              preview.generation,
+              preview.linkRevision,
+              preview.connectionRevision,
+              preview.etag,
+              preview.remote,
+              desired.toString(),
+              org.json
+                .JSONObject()
+                .put("calendarInstances", options.optJSONArray("instances"))
+                .toString(),
+              "{}",
+              false,
+            )
+          calendarInstances(
+            job,
+            segment?.id ?: old.id,
+            target,
+            series
+              .rule(target, com.remilo.alarm.calendar.CalendarRecurrence.spec(rule))
+              .copy(endExclusive = rule.endExclusive),
+          )
+          val children = options.optJSONArray("resources") ?: org.json.JSONArray()
+          val targets =
+            desired.getJSONObject("schedule").optJSONArray("segments") ?: org.json.JSONArray()
+          for (index in 0 until children.length()) {
+            val source = children.getJSONObject(index)
+            val fields = source.getJSONObject("fields")
+            if (
+              !(0 until targets.length()).any {
+                com.remilo.alarm.calendar.CalendarLinkMapper.equal(targets.get(it), fields)
+              }
+            )
+              continue
+            val child =
+              content().records().series(source.getString("segmentId"))
+                ?: throw CalendarFailure("STALE_PREVIEW")
+            val childTarget =
+              draft(
+                com.remilo.alarm.calendar.CalendarLinkMapper.map(
+                  com.remilo.alarm.calendar.CalendarLinkMapper.draft(fields)
+                ),
+                child.id,
+                series.template(child),
+              )
+            val schedule = fields.getJSONObject("schedule")
+            val childRule =
+              com.remilo.alarm.calendar.CalendarRecurrence.decode(
+                schedule.getJSONArray("recurrence"),
+                Instant.ofEpochMilli(childTarget.eventStartMs)
+                  .atZone(ZoneId.of(childTarget.zoneId))
+                  .toLocalDateTime(),
+                childTarget.zoneId,
+                childTarget.allDay,
+                if (childTarget.allDay) 86_400_000
+                else childTarget.eventEndMs - childTarget.eventStartMs,
+              )
+            if (
+              !Recurrence.future(childRule, now(), ZoneId.of(childTarget.zoneId), childTarget.mode)
+                .any()
+            )
+              throw CalendarFailure("ELAPSED_ALERT")
+            calendarInstances(
+              job.copy(
+                desired = fields.toString(),
+                draft =
+                  org.json
+                    .JSONObject()
+                    .put("calendarInstances", source.optJSONArray("instances"))
+                    .toString(),
+              ),
+              child.id,
+              childTarget,
+              series
+                .rule(childTarget, com.remilo.alarm.calendar.CalendarRecurrence.spec(childRule))
+                .copy(endExclusive = childRule.endExclusive),
+            )
+          }
         }
       }
+      null
+    } catch (error: CalendarFailure) {
+      error.code
+    } catch (_: IllegalArgumentException) {
+      "INVALID_INPUT"
     }
-    null
-  } catch (error: CalendarFailure) { error.code } catch (_: IllegalArgumentException) { "INVALID_INPUT" } }
-  private fun calendarIncomingPreflight(preview: com.remilo.alarm.calendar.CalendarLinkPreview, desired: org.json.JSONObject): String? {
+  }
+
+  private fun calendarIncomingPreflight(
+    preview: com.remilo.alarm.calendar.CalendarLinkPreview,
+    desired: org.json.JSONObject,
+  ): String? {
     val options = org.json.JSONObject(preview.choices)
     val input = com.remilo.alarm.calendar.CalendarLinkMapper.draft(desired)
     input.put("title", options.getString("title"))
-    for (field in listOf("mode", "alarmAtMs", "dueAtMs", "dueLinked", "alarmLinked", "sound", "vibration", "listId")) input.put(field, options.get(field))
-    val target = draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(input), "calendar-import-preview")
+    for (field in
+      listOf(
+        "mode",
+        "alarmAtMs",
+        "dueAtMs",
+        "dueLinked",
+        "alarmLinked",
+        "sound",
+        "vibration",
+        "listId",
+      )) input.put(field, options.get(field))
+    val target =
+      draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(input), "calendar-import-preview")
     val recurrence = desired.getJSONObject("schedule").optJSONArray("recurrence")
     if (recurrence == null) {
-      if (target.mode != "None" && target.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
+      if (target.mode != "None" && target.definedAlarmAtMs!! <= now())
+        throw CalendarFailure("ELAPSED_ALERT")
     } else {
-      val decoded = com.remilo.alarm.calendar.CalendarRecurrence.decode(recurrence,
-        Instant.ofEpochMilli(target.eventStartMs).atZone(ZoneId.of(target.zoneId)).toLocalDateTime(), target.zoneId, target.allDay,
-        if (target.allDay) 86_400_000 else target.eventEndMs - target.eventStartMs)
-      val rule = series.rule(target, com.remilo.alarm.calendar.CalendarRecurrence.spec(decoded)).copy(endExclusive = decoded.endExclusive)
-      val job = com.remilo.alarm.calendar.CalendarLinkOperation("preview", target.id, "", "ImportCalendarEvent", "", preview.subject,
-        preview.calendar.id, preview.eventId, preview.calendar.name, preview.origin, 0, 0, 0, preview.connectionRevision,
-        preview.etag, preview.remote, desired.toString(), org.json.JSONObject().put("calendarInstances", options.optJSONArray("instances")).toString(), "{}", false)
+      val decoded =
+        com.remilo.alarm.calendar.CalendarRecurrence.decode(
+          recurrence,
+          Instant.ofEpochMilli(target.eventStartMs)
+            .atZone(ZoneId.of(target.zoneId))
+            .toLocalDateTime(),
+          target.zoneId,
+          target.allDay,
+          if (target.allDay) 86_400_000 else target.eventEndMs - target.eventStartMs,
+        )
+      val rule =
+        series
+          .rule(target, com.remilo.alarm.calendar.CalendarRecurrence.spec(decoded))
+          .copy(endExclusive = decoded.endExclusive)
+      val job =
+        com.remilo.alarm.calendar.CalendarLinkOperation(
+          "preview",
+          target.id,
+          "",
+          "ImportCalendarEvent",
+          "",
+          preview.subject,
+          preview.calendar.id,
+          preview.eventId,
+          preview.calendar.name,
+          preview.origin,
+          0,
+          0,
+          0,
+          preview.connectionRevision,
+          preview.etag,
+          preview.remote,
+          desired.toString(),
+          org.json
+            .JSONObject()
+            .put("calendarInstances", options.optJSONArray("instances"))
+            .toString(),
+          "{}",
+          false,
+        )
       val exceptions = calendarInstances(job, target.id, target, rule)
-      if (!Recurrence.future(rule, now(), ZoneId.of(target.zoneId), target.mode).any() &&
-        exceptions.none { !it.first.skipped && it.first.eventEndMs > now() }) throw CalendarFailure("NO_UPCOMING_WORK")
+      if (
+        !Recurrence.future(rule, now(), ZoneId.of(target.zoneId), target.mode).any() &&
+          exceptions.none { !it.first.skipped && it.first.eventEndMs > now() }
+      )
+        throw CalendarFailure("NO_UPCOMING_WORK")
     }
     return null
   }
+
   /** Called only through request(), on the native mutation worker. */
   fun calendarLocal(operationId: String, executionRevision: Long? = null): Map<String, Any?> {
     prepareContentActions()
@@ -1214,120 +2917,345 @@ class AlarmEngine internal constructor(private val context: Context,
     store.check(job, executionRevision)
     if (job.localApplied) {
       store.currentSeries(job.occurrenceId)?.let { segment ->
-        applyPending(content()); series.recover(); return series.calendarStatus(segment.id).also { store.localStatus(operationId, it["status"] as String) }
+        applyPending(content())
+        series.recover()
+        return series.calendarStatus(segment.id).also {
+          store.localStatus(operationId, it["status"] as String)
+        }
       }
       applyPending(content())
-      return result(job.occurrenceId).also { store.localStatus(operationId, it["status"] as String) }
+      return result(job.occurrenceId).also {
+        store.localStatus(operationId, it["status"] as String)
+      }
     }
     if (job.kind != "ImportCalendarEvent") {
       val alert = alerts.find(job.occurrenceId)
       if ((alert?.generation ?: 0) != job.expectedGeneration) throw CalendarFailure("STALE_PREVIEW")
-      if (alert?.sessionId != null && !com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule")))
+      if (
+        alert?.sessionId != null &&
+          !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            store.fields(job.occurrenceId).get("schedule"),
+            org.json.JSONObject(job.desired).get("schedule"),
+          )
+      )
         throw CalendarFailure("RINGING_DEFERRED")
     }
-    val preparedDraft = com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(job.draft))
+    val preparedDraft =
+      com.remilo.alarm.calendar.CalendarLinkMapper.map(org.json.JSONObject(job.draft))
     val record = store.record(job.occurrenceId)
-    val recurring = org.json.JSONObject(job.desired).getJSONObject("schedule").optJSONArray("recurrence")
+    val recurring =
+      org.json.JSONObject(job.desired).getJSONObject("schedule").optJSONArray("recurrence")
     if (recurring != null) {
       val segment = store.currentSeries(job.occurrenceId)
-      if (job.kind != "ImportCalendarEvent" && segment == null) throw CalendarFailure("RECURRENCE_CHANGE_REQUIRES_REVIEW")
-      if (segment != null && !com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule")) &&
-        alerts.all().any { it.segmentId in store.segments(job.occurrenceId).map { row -> row.id } && it.sessionId != null }) throw CalendarFailure("RINGING_DEFERRED")
+      if (job.kind != "ImportCalendarEvent" && segment == null)
+        throw CalendarFailure("RECURRENCE_CHANGE_REQUIRES_REVIEW")
+      if (
+        segment != null &&
+          !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            store.fields(job.occurrenceId).get("schedule"),
+            org.json.JSONObject(job.desired).get("schedule"),
+          ) &&
+          alerts.all().any {
+            it.segmentId in store.segments(job.occurrenceId).map { row -> row.id } &&
+              it.sessionId != null
+          }
+      )
+        throw CalendarFailure("RINGING_DEFERRED")
       val start = (preparedDraft["eventStartMs"] as Number).toLong()
       val zone = ZoneId.of(preparedDraft["zoneId"] as String)
-      val rule = com.remilo.alarm.calendar.CalendarRecurrence.decode(recurring,
-        java.time.Instant.ofEpochMilli(start).atZone(zone).toLocalDateTime(), zone.id, preparedDraft["allDay"] == true,
-        if (preparedDraft["allDay"] == true) 86_400_000 else (preparedDraft["eventEndMs"] as Number).toLong() - start)
+      val rule =
+        com.remilo.alarm.calendar.CalendarRecurrence.decode(
+          recurring,
+          java.time.Instant.ofEpochMilli(start).atZone(zone).toLocalDateTime(),
+          zone.id,
+          preparedDraft["allDay"] == true,
+          if (preparedDraft["allDay"] == true) 86_400_000
+          else (preparedDraft["eventEndMs"] as Number).toLong() - start,
+        )
       val spec = com.remilo.alarm.calendar.CalendarRecurrence.spec(rule)
-      val target = draft(preparedDraft, segment?.id ?: job.occurrenceId, segment?.let(series::template))
+      val target =
+        draft(preparedDraft, segment?.id ?: job.occurrenceId, segment?.let(series::template))
       val effectiveRule = series.rule(target, spec).copy(endExclusive = rule.endExclusive)
       val additions = mutableListOf<SeriesCoordinator.CalendarUpdate>()
-      val instances = calendarInstances(job, segment?.id ?: job.occurrenceId, target, effectiveRule).toMutableList()
-      val childSources = org.json.JSONObject(job.draft).optJSONArray("calendarResources") ?: org.json.JSONArray()
-      val childTargets = org.json.JSONObject(job.desired).getJSONObject("schedule").optJSONArray("segments") ?: org.json.JSONArray()
-      if (segment != null && !com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule"))) {
+      val instances =
+        calendarInstances(job, segment?.id ?: job.occurrenceId, target, effectiveRule)
+          .toMutableList()
+      val childSources =
+        org.json.JSONObject(job.draft).optJSONArray("calendarResources") ?: org.json.JSONArray()
+      val childTargets =
+        org.json.JSONObject(job.desired).getJSONObject("schedule").optJSONArray("segments")
+          ?: org.json.JSONArray()
+      if (
+        segment != null &&
+          !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            store.fields(job.occurrenceId).get("schedule"),
+            org.json.JSONObject(job.desired).get("schedule"),
+          )
+      ) {
         for (index in 0 until childSources.length()) {
           val source = childSources.getJSONObject(index)
           val childFields = source.getJSONObject("fields")
           // Only native-captured source identities can receive inbound changes.
-          if (!(0 until childTargets.length()).any { com.remilo.alarm.calendar.CalendarLinkMapper.equal(childTargets.get(it), childFields) }) continue
-          val child = content().records().series(source.getString("segmentId")) ?: throw CalendarFailure("STALE_PREVIEW")
-          val childDraft = com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(childFields))
+          if (
+            !(0 until childTargets.length()).any {
+              com.remilo.alarm.calendar.CalendarLinkMapper.equal(childTargets.get(it), childFields)
+            }
+          )
+            continue
+          val child =
+            content().records().series(source.getString("segmentId"))
+              ?: throw CalendarFailure("STALE_PREVIEW")
+          val childDraft =
+            com.remilo.alarm.calendar.CalendarLinkMapper.map(
+              com.remilo.alarm.calendar.CalendarLinkMapper.draft(childFields)
+            )
           val childRecord = draft(childDraft, child.id, series.template(child))
           val childSchedule = childFields.getJSONObject("schedule")
-          val childRule = com.remilo.alarm.calendar.CalendarRecurrence.decode(childSchedule.getJSONArray("recurrence"),
-            Instant.ofEpochMilli(childRecord.eventStartMs).atZone(ZoneId.of(childRecord.zoneId)).toLocalDateTime(), childRecord.zoneId, childRecord.allDay,
-            if (childRecord.allDay) 86_400_000 else childRecord.eventEndMs - childRecord.eventStartMs)
-          val appliedRule = series.rule(childRecord, com.remilo.alarm.calendar.CalendarRecurrence.spec(childRule)).copy(endExclusive = childRule.endExclusive)
+          val childRule =
+            com.remilo.alarm.calendar.CalendarRecurrence.decode(
+              childSchedule.getJSONArray("recurrence"),
+              Instant.ofEpochMilli(childRecord.eventStartMs)
+                .atZone(ZoneId.of(childRecord.zoneId))
+                .toLocalDateTime(),
+              childRecord.zoneId,
+              childRecord.allDay,
+              if (childRecord.allDay) 86_400_000
+              else childRecord.eventEndMs - childRecord.eventStartMs,
+            )
+          val appliedRule =
+            series
+              .rule(childRecord, com.remilo.alarm.calendar.CalendarRecurrence.spec(childRule))
+              .copy(endExclusive = childRule.endExclusive)
           additions.add(SeriesCoordinator.CalendarUpdate(child, childRecord, appliedRule))
-          instances.addAll(calendarInstances(job.copy(desired = childFields.toString(), draft = org.json.JSONObject().put("calendarInstances", source.optJSONArray("instances")).toString()), child.id, childRecord, appliedRule))
+          instances.addAll(
+            calendarInstances(
+              job.copy(
+                desired = childFields.toString(),
+                draft =
+                  org.json
+                    .JSONObject()
+                    .put("calendarInstances", source.optJSONArray("instances"))
+                    .toString(),
+              ),
+              child.id,
+              childRecord,
+              appliedRule,
+            )
+          )
         }
       }
       val checkpoint = {
         instances.forEach { (row, generation) ->
           val old = content().records().find(row.id)
           val alert = alerts.find(row.id)
-          val postponed = old != null && alert != null && alert.targetMs > now() && alert.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)
-          if (content().records().find(row.id) == null) content().records().insert(row) else content().records().update(row)
-          if (generation > 0) content().records().pending(projection("$operationId:instance:${row.nominalSlot}", row, generation)
-            .let { if (postponed) it.copy(targetMs = alert!!.targetMs) else it })
+          val postponed =
+            old != null &&
+              alert != null &&
+              alert.targetMs > now() &&
+              alert.targetMs != (old.definedAlarmAtMs ?: old.eventStartMs)
+          if (content().records().find(row.id) == null) content().records().insert(row)
+          else content().records().update(row)
+          if (generation > 0)
+            content()
+              .records()
+              .pending(
+                projection("$operationId:instance:${row.nominalSlot}", row, generation).let {
+                  if (postponed) it.copy(targetMs = alert!!.targetMs) else it
+                }
+              )
         }
-        store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit")
+        store.localCommitted(operationId)
+        calendarCheckpoint("beforeLocalCommit")
       }
-      val after = { calendarCheckpoint("afterLocalCommit"); applyPending(content()) }
-      val result = if (segment == null) series.create(operationId, target, spec, job.occurrenceId, checkpoint, after, rule,
-        instances.any { (row, _) -> !row.skipped && !row.completed && !row.deleted && (if (row.mode == "None") row.eventEndMs else row.definedAlarmAtMs!!) > now() })
-      else if (com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId), org.json.JSONObject(job.desired))) {
-        content().runInTransaction { content().records().receipt(CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey)); checkpoint() }
-        after(); mapOf("status" to "Applied")
-      } else if (com.remilo.alarm.calendar.CalendarLinkMapper.equal(store.fields(job.occurrenceId).get("schedule"), org.json.JSONObject(job.desired).get("schedule")))
-        series.calendarMetadata(operationId, segment, target, checkpoint, after)
-      else series.calendarSchedule(operationId, segment, target, effectiveRule, checkpoint, after, additions)
+      val after = {
+        calendarCheckpoint("afterLocalCommit")
+        applyPending(content())
+      }
+      val result =
+        if (segment == null)
+          series.create(
+            operationId,
+            target,
+            spec,
+            job.occurrenceId,
+            checkpoint,
+            after,
+            rule,
+            instances.any { (row, _) ->
+              !row.skipped &&
+                !row.completed &&
+                !row.deleted &&
+                (if (row.mode == "None") row.eventEndMs else row.definedAlarmAtMs!!) > now()
+            },
+          )
+        else if (
+          com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            store.fields(job.occurrenceId),
+            org.json.JSONObject(job.desired),
+          )
+        ) {
+          content().runInTransaction {
+            content()
+              .records()
+              .receipt(
+                CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey)
+              )
+            checkpoint()
+          }
+          after()
+          mapOf("status" to "Applied")
+        } else if (
+          com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            store.fields(job.occurrenceId).get("schedule"),
+            org.json.JSONObject(job.desired).get("schedule"),
+          )
+        )
+          series.calendarMetadata(operationId, segment, target, checkpoint, after)
+        else
+          series.calendarSchedule(
+            operationId,
+            segment,
+            target,
+            effectiveRule,
+            checkpoint,
+            after,
+            additions,
+          )
       if (result["status"] == "Rejected") throw CalendarFailure("STALE_PREVIEW")
-      store.localStatus(operationId, result["status"] as String); changed(); return result
+      store.localStatus(operationId, result["status"] as String)
+      changed()
+      return result
     }
-    if (store.currentSeries(job.occurrenceId) != null) throw CalendarFailure("RECURRENCE_CHANGE_REQUIRES_REVIEW")
-    val result = if (record != null && com.remilo.alarm.calendar.CalendarLinkMapper.equal(
-        com.remilo.alarm.calendar.CalendarLinkMapper.fields(record), org.json.JSONObject(job.desired))) {
-      content().runInTransaction {
-        content().records().receipt(CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey))
-        store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit")
-      }
-      calendarCheckpoint("afterLocalCommit")
-      result(job.occurrenceId)
-    } else if (job.kind == "ImportCalendarEvent") create(operationId, preparedDraft, job.occurrenceId,
-      { calendarCheckpoint("afterLocalCommit") }) { store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit") }
-      else modify(operationId, preparedDraft + mapOf("kind" to "Edit", "occurrenceId" to job.occurrenceId,
-        "expectedRevision" to job.expectedRevision), true,
-        { calendarCheckpoint("afterLocalCommit") }) { store.localCommitted(operationId); calendarCheckpoint("beforeLocalCommit") }
+    if (store.currentSeries(job.occurrenceId) != null)
+      throw CalendarFailure("RECURRENCE_CHANGE_REQUIRES_REVIEW")
+    val result =
+      if (
+        record != null &&
+          com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(record),
+            org.json.JSONObject(job.desired),
+          )
+      ) {
+        content().runInTransaction {
+          content()
+            .records()
+            .receipt(
+              CreationReceipt(operationId, job.occurrenceId, "CalendarResolution", job.requestKey)
+            )
+          store.localCommitted(operationId)
+          calendarCheckpoint("beforeLocalCommit")
+        }
+        calendarCheckpoint("afterLocalCommit")
+        result(job.occurrenceId)
+      } else if (job.kind == "ImportCalendarEvent")
+        create(
+          operationId,
+          preparedDraft,
+          job.occurrenceId,
+          { calendarCheckpoint("afterLocalCommit") },
+        ) {
+          store.localCommitted(operationId)
+          calendarCheckpoint("beforeLocalCommit")
+        }
+      else
+        modify(
+          operationId,
+          preparedDraft +
+            mapOf(
+              "kind" to "Edit",
+              "occurrenceId" to job.occurrenceId,
+              "expectedRevision" to job.expectedRevision,
+            ),
+          true,
+          { calendarCheckpoint("afterLocalCommit") },
+        ) {
+          store.localCommitted(operationId)
+          calendarCheckpoint("beforeLocalCommit")
+        }
     if (result["status"] == "Rejected") throw CalendarFailure("STALE_PREVIEW")
     store.localStatus(operationId, result["status"] as String)
     return result
   }
-  /** Preflight every instance before any CE write or alarm fencing. Delivery-only adjustments remain local. */
-  private fun calendarInstances(job: com.remilo.alarm.calendar.CalendarLinkOperation, segmentId: String,
-    template: ReminderRecord, rule: com.remilo.alarm.core.RecurrenceRule): List<Pair<ReminderRecord, Long>> {
+
+  /**
+   * Preflight every instance before any CE write or alarm fencing. Delivery-only adjustments remain
+   * local.
+   */
+  private fun calendarInstances(
+    job: com.remilo.alarm.calendar.CalendarLinkOperation,
+    segmentId: String,
+    template: ReminderRecord,
+    rule: com.remilo.alarm.core.RecurrenceRule,
+  ): List<Pair<ReminderRecord, Long>> {
     val schedule = org.json.JSONObject(job.desired).getJSONObject("schedule")
     val desired = schedule.optJSONArray("exceptions") ?: org.json.JSONArray()
-    val source = org.json.JSONObject(job.draft).optJSONArray("calendarInstances") ?: org.json.JSONArray()
-    val targets = (0 until desired.length()).map { desired.getJSONObject(it) }.associateBy { it.getString("nominalSlot") }.toMutableMap()
-    content().records().all().filter { it.segmentId == segmentId && it.exception && !it.completed && !it.deleted && !it.skipped &&
-      (it.eventStartMs > now() || (it.definedAlarmAtMs ?: 0) > now()) }.forEach { row ->
-      val nominal = row.nominalSlot ?: return@forEach
-      if (nominal !in targets) {
-        val slot = Recurrence.resolve(rule, java.time.LocalDateTime.parse(nominal), ZoneId.of(template.zoneId))
-        targets[nominal] = org.json.JSONObject().put("nominalSlot", nominal).put("fields", com.remilo.alarm.calendar.CalendarLinkMapper.fields(
-          template.copy(eventStartMs = slot.eventStartMs, eventEndMs = slot.eventEndMs, zoneId = slot.zoneId)))
+    val source =
+      org.json.JSONObject(job.draft).optJSONArray("calendarInstances") ?: org.json.JSONArray()
+    val targets =
+      (0 until desired.length())
+        .map { desired.getJSONObject(it) }
+        .associateBy { it.getString("nominalSlot") }
+        .toMutableMap()
+    content()
+      .records()
+      .all()
+      .filter {
+        it.segmentId == segmentId &&
+          it.exception &&
+          !it.completed &&
+          !it.deleted &&
+          !it.skipped &&
+          (it.eventStartMs > now() || (it.definedAlarmAtMs ?: 0) > now())
       }
-    }
+      .forEach { row ->
+        val nominal = row.nominalSlot ?: return@forEach
+        if (nominal !in targets) {
+          val slot =
+            Recurrence.resolve(
+              rule,
+              java.time.LocalDateTime.parse(nominal),
+              ZoneId.of(template.zoneId),
+            )
+          targets[nominal] =
+            org.json
+              .JSONObject()
+              .put("nominalSlot", nominal)
+              .put(
+                "fields",
+                com.remilo.alarm.calendar.CalendarLinkMapper.fields(
+                  template.copy(
+                    eventStartMs = slot.eventStartMs,
+                    eventEndMs = slot.eventEndMs,
+                    zoneId = slot.zoneId,
+                  )
+                ),
+              )
+        }
+      }
     for (index in 0 until source.length()) {
-      val row = source.getJSONObject(index); val nominal = row.getString("nominalSlot")
-      if (row.optBoolean("cancelled") && job.kind != "ImportCalendarEvent" && content().records().all().any { it.segmentId == segmentId && it.nominalSlot == nominal && !it.completed && !it.deleted && !it.skipped })
+      val row = source.getJSONObject(index)
+      val nominal = row.getString("nominalSlot")
+      if (
+        row.optBoolean("cancelled") &&
+          job.kind != "ImportCalendarEvent" &&
+          content().records().all().any {
+            it.segmentId == segmentId &&
+              it.nominalSlot == nominal &&
+              !it.completed &&
+              !it.deleted &&
+              !it.skipped
+          }
+      )
         throw CalendarFailure("REMOTE_DELETED")
       if (row.optBoolean("cancelled") && job.kind == "ImportCalendarEvent") targets[nominal] = row
       // Quiet recovery retains an ongoing ordinary occurrence even though lazy future
       // materialization starts after now. Its original nominal identity stays ordinary.
-      if (job.kind == "ImportCalendarEvent" && template.mode == "None" && !row.optBoolean("cancelled") && !row.optBoolean("exception", true)) {
+      if (
+        job.kind == "ImportCalendarEvent" &&
+          template.mode == "None" &&
+          !row.optBoolean("cancelled") &&
+          !row.optBoolean("exception", true)
+      ) {
         val fields = row.optJSONObject("fields") ?: continue
         val timing = fields.getJSONObject("schedule")
         if (timing.getLong("eventStartMs") <= now() && timing.getLong("eventEndMs") > now())
@@ -1335,43 +3263,103 @@ class AlarmEngine internal constructor(private val context: Context,
       }
     }
     return targets.mapNotNull { (nominal, item) ->
-      val slot = Recurrence.resolve(rule, java.time.LocalDateTime.parse(nominal), ZoneId.of(template.zoneId))
+      val slot =
+        Recurrence.resolve(rule, java.time.LocalDateTime.parse(nominal), ZoneId.of(template.zoneId))
       val id = UUID.nameUUIDFromBytes("remilo:$segmentId:$nominal".toByteArray()).toString()
       if (content().records().purged(id) != null) return@mapNotNull null
       val old = content().records().find(id)
       if (old?.let { it.completed || it.deleted || it.skipped } == true) return@mapNotNull null
-      val normal = template.copy(id = id, eventStartMs = slot.eventStartMs, eventEndMs = slot.eventEndMs,
-        dueAtMs = slot.dueAtMs, definedAlarmAtMs = slot.alarmAtMs, segmentId = segmentId, nominalSlot = nominal, exception = !item.optBoolean("ordinary"))
-      val incoming = if (item.optBoolean("cancelled")) normal.copy(skipped = true) else
-        draft(com.remilo.alarm.calendar.CalendarLinkMapper.map(com.remilo.alarm.calendar.CalendarLinkMapper.draft(item.getJSONObject("fields"))), id, old ?: normal)
-          .copy(segmentId = segmentId, nominalSlot = nominal, exception = !item.optBoolean("ordinary"))
-      if (old != null && com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old), com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming))) return@mapNotNull null
+      val normal =
+        template.copy(
+          id = id,
+          eventStartMs = slot.eventStartMs,
+          eventEndMs = slot.eventEndMs,
+          dueAtMs = slot.dueAtMs,
+          definedAlarmAtMs = slot.alarmAtMs,
+          segmentId = segmentId,
+          nominalSlot = nominal,
+          exception = !item.optBoolean("ordinary"),
+        )
+      val incoming =
+        if (item.optBoolean("cancelled")) normal.copy(skipped = true)
+        else
+          draft(
+              com.remilo.alarm.calendar.CalendarLinkMapper.map(
+                com.remilo.alarm.calendar.CalendarLinkMapper.draft(item.getJSONObject("fields"))
+              ),
+              id,
+              old ?: normal,
+            )
+            .copy(
+              segmentId = segmentId,
+              nominalSlot = nominal,
+              exception = !item.optBoolean("ordinary"),
+            )
+      if (
+        old != null &&
+          com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(old),
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming),
+          )
+      )
+        return@mapNotNull null
       val alert = alerts.find(id)
-      val timingChanged = old == null || !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(old).get("schedule"),
-        com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming).get("schedule"))
+      val timingChanged =
+        old == null ||
+          !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(old).get("schedule"),
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(incoming).get("schedule"),
+          )
       if (timingChanged && alert?.sessionId != null) throw CalendarFailure("RINGING_DEFERRED")
-      if (timingChanged && !incoming.skipped && incoming.mode != "None" && incoming.definedAlarmAtMs!! <= now()) throw CalendarFailure("ELAPSED_ALERT")
+      if (
+        timingChanged &&
+          !incoming.skipped &&
+          incoming.mode != "None" &&
+          incoming.definedAlarmAtMs!! <= now()
+      )
+        throw CalendarFailure("ELAPSED_ALERT")
       incoming to if (timingChanged) (alert?.generation ?: 0) + 1 else 0L
     }
   }
-  private fun create(operationId: String, command: Map<String, Any?>, allocatedId: String? = null,
-    afterCommit: () -> Unit = {}, checkpoint: () -> Unit = {}): Map<String, Any?> {
+
+  private fun create(
+    operationId: String,
+    command: Map<String, Any?>,
+    allocatedId: String? = null,
+    afterCommit: () -> Unit = {},
+    checkpoint: () -> Unit = {},
+  ): Map<String, Any?> {
     val db = content()
     db.records().receipt(operationId)?.let {
-      validate(it.kind == "Create", "operationId", "This operation was already used. Refresh and try again.")
+      validate(
+        it.kind == "Create",
+        "operationId",
+        "This operation was already used. Refresh and try again.",
+      )
       applyPending(db)
       return result(it.occurrenceId)
     }
     val id = allocatedId ?: UUID.randomUUID().toString()
-    validate(command["calendarDisposition"] == null || command["calendarDisposition"] in setOf("Default", "Managed", "LocalOnly"),
-      "calendarDisposition", "Choose a Calendar option.")
+    validate(
+      command["calendarDisposition"] == null ||
+        command["calendarDisposition"] in setOf("Default", "Managed", "LocalOnly"),
+      "calendarDisposition",
+      "Choose a Calendar option.",
+    )
     val record = draft(command, id)
-    validate(record.mode == "None" || record.definedAlarmAtMs!! > now(), "alarmAtMs", "Choose an alarm time in the future.")
+    validate(
+      record.mode == "None" || record.definedAlarmAtMs!! > now(),
+      "alarmAtMs",
+      "Choose an alarm time in the future.",
+    )
     db.runInTransaction {
       db.records().insert(record)
       db.records().pending(projection(operationId, record, 1))
       db.records().receipt(CreationReceipt(operationId, id))
-      if (allocatedId == null) calendarStore().managed.authored(id, record.revision, command["calendarDisposition"] as? String ?: "Default")
+      if (allocatedId == null)
+        calendarStore()
+          .managed
+          .authored(id, record.revision, command["calendarDisposition"] as? String ?: "Default")
       checkpoint()
     }
     afterCommit()
@@ -1379,90 +3367,195 @@ class AlarmEngine internal constructor(private val context: Context,
     changed(calendarOpportunity = allocatedId == null)
     return result(id)
   }
+
   private fun result(id: String): Map<String, Any?> {
     val alert = alerts.find(id)
-    val status = when (alert?.state) { "Scheduled" -> "Scheduled"; "Blocked" -> "Blocked";
-      "Pending", "Changing", null -> "Pending"; else -> "Applied" }
+    val status =
+      when (alert?.state) {
+        "Scheduled" -> "Scheduled"
+        "Blocked" -> "Blocked"
+        "Pending",
+        "Changing",
+        null -> "Pending"
+        else -> "Applied"
+      }
     return mapOf("status" to status, "occurrence" to occurrence(id))
   }
+
   private fun register(alert: AlertRecord): AlertRecord {
-    val state = when {
-      alert.profile == RoutinePolicy.PROFILE && (alert.dayEnded || alert.expiresAtMs <= now()) -> "Expired"
-      alert.mode == "None" -> "NoAlert"
-      alert.profile == RoutinePolicy.PROFILE && alert.prompted -> "Available"
-      alert.profile == RoutinePolicy.PROFILE && alert.targetMs <= now() -> "Available"
-      alert.targetMs <= now() -> "Missed"
-      !(if (alert.profile == RoutinePolicy.PROFILE) routineReady(alert.mode) else ready(alert.mode)) -> "Blocked"
-      else -> try { scheduler.register(alert); "Scheduled" } catch (error: Exception) {
-        Log.w("Remilo", "Alarm registration failed: ${error.javaClass.simpleName}")
-        "Blocked"
+    val state =
+      when {
+        alert.profile == RoutinePolicy.PROFILE && (alert.dayEnded || alert.expiresAtMs <= now()) ->
+          "Expired"
+        alert.mode == "None" -> "NoAlert"
+        alert.profile == RoutinePolicy.PROFILE && alert.prompted -> "Available"
+        alert.profile == RoutinePolicy.PROFILE && alert.targetMs <= now() -> "Available"
+        alert.targetMs <= now() -> "Missed"
+        !(if (alert.profile == RoutinePolicy.PROFILE) routineReady(alert.mode)
+        else ready(alert.mode)) -> "Blocked"
+        else ->
+          try {
+            scheduler.register(alert)
+            "Scheduled"
+          } catch (error: Exception) {
+            Log.w("Remilo", "Alarm registration failed: ${error.javaClass.simpleName}")
+            "Blocked"
+          }
       }
-    }
     return alert.copy(state = state, sessionId = null).also { alerts.put(it) }
   }
+
   private fun applyPending(db: ContentDatabase) {
     for (pending in db.records().pending()) {
       val existing = alerts.find(pending.occurrenceId)
       // A native action may have advanced state while the content store was unavailable.
       // This outbox is never permitted to undo it.
-      if (existing != null && (existing.generation > pending.generation ||
-          (existing.generation == pending.generation && existing.state !in setOf("Pending", "Scheduled", "Blocked", "Changing")))) {
+      if (
+        existing != null &&
+          (existing.generation > pending.generation ||
+            (existing.generation == pending.generation &&
+              existing.state !in setOf("Pending", "Scheduled", "Blocked", "Changing")))
+      ) {
         db.records().acknowledge(pending.operationId)
         continue
       }
       val product = db.records().find(pending.occurrenceId)
       val segment = product?.segmentId?.let { db.records().series(it) }
-      val resolved = if (segment != null && product.nominalSlot != null && !product.exception &&
-          (if (product.mode == "None") product.eventStartMs else pending.targetMs) > now())
-        Recurrence.resolve(RuleCodec.decode(segment.rule), java.time.LocalDateTime.parse(product.nominalSlot), ZoneId.systemDefault()) else null
-      val desired = AlertRecord(pending.occurrenceId, resolved?.alarmAtMs ?: pending.targetMs, pending.generation,
-        when {
-          db.records().find(pending.occurrenceId)?.completed == true -> "Completed"
-          db.records().find(pending.occurrenceId)?.deleted == true -> "Deleted"
-          db.records().find(pending.occurrenceId)?.skipped == true -> "Skipped"
-          db.records().find(pending.occurrenceId)?.let { it.segmentId != null && !it.exception &&
-            db.records().series(it.segmentId)?.state == "Paused" &&
-            (if (it.mode == "None") it.eventStartMs else pending.targetMs) > now() } == true -> "Paused"
-          pending.eligible -> "Pending"
-          product?.routineId != null -> "Available"
-          else -> "Missed"
-        },
-        mode = pending.mode, sound = pending.sound, vibration = pending.vibration,
-        snoozeMinutes = (db.records().settings() ?: defaultSettings()).snoozeMinutes,
-        segmentId = db.records().find(pending.occurrenceId)?.segmentId,
-        nominalSlot = db.records().find(pending.occurrenceId)?.nominalSlot,
-        exception = db.records().find(pending.occurrenceId)?.exception ?: false,
-        resolvedZone = resolved?.zoneId ?: existing?.resolvedZone ?: product?.zoneId.orEmpty())
-        .let { if (product?.routineId != null) it.copy(profile = RoutinePolicy.PROFILE,
-          expiresAtMs = RoutinePolicy.end(java.time.LocalDate.parse(product.nominalSlot!!.substringBefore('T')), ZoneId.systemDefault()), dayEnded = existing?.dayEnded == true, prompted = existing?.prompted == true, dayStarted = existing?.dayStarted == true) else it }
+      val resolved =
+        if (
+          segment != null &&
+            product.nominalSlot != null &&
+            !product.exception &&
+            (if (product.mode == "None") product.eventStartMs else pending.targetMs) > now()
+        )
+          Recurrence.resolve(
+            RuleCodec.decode(segment.rule),
+            java.time.LocalDateTime.parse(product.nominalSlot),
+            ZoneId.systemDefault(),
+          )
+        else null
+      val desired =
+        AlertRecord(
+            pending.occurrenceId,
+            resolved?.alarmAtMs ?: pending.targetMs,
+            pending.generation,
+            when {
+              db.records().find(pending.occurrenceId)?.completed == true -> "Completed"
+              db.records().find(pending.occurrenceId)?.deleted == true -> "Deleted"
+              db.records().find(pending.occurrenceId)?.skipped == true -> "Skipped"
+              db.records().find(pending.occurrenceId)?.let {
+                it.segmentId != null &&
+                  !it.exception &&
+                  db.records().series(it.segmentId)?.state == "Paused" &&
+                  (if (it.mode == "None") it.eventStartMs else pending.targetMs) > now()
+              } == true -> "Paused"
+              pending.eligible -> "Pending"
+              product?.routineId != null -> "Available"
+              else -> "Missed"
+            },
+            mode = pending.mode,
+            sound = pending.sound,
+            vibration = pending.vibration,
+            snoozeMinutes = (db.records().settings() ?: defaultSettings()).snoozeMinutes,
+            segmentId = db.records().find(pending.occurrenceId)?.segmentId,
+            nominalSlot = db.records().find(pending.occurrenceId)?.nominalSlot,
+            exception = db.records().find(pending.occurrenceId)?.exception ?: false,
+            resolvedZone = resolved?.zoneId ?: existing?.resolvedZone ?: product?.zoneId.orEmpty(),
+          )
+          .let {
+            if (product?.routineId != null)
+              it.copy(
+                profile = RoutinePolicy.PROFILE,
+                expiresAtMs =
+                  RoutinePolicy.end(
+                    java.time.LocalDate.parse(product.nominalSlot!!.substringBefore('T')),
+                    ZoneId.systemDefault(),
+                  ),
+                dayEnded = existing?.dayEnded == true,
+                prompted = existing?.prompted == true,
+                dayStarted = existing?.dayStarted == true,
+              )
+            else it
+          }
       alerts.put(desired)
-      if (desired.state != "Pending" || register(desired).state != "Blocked") db.records().acknowledge(pending.operationId)
+      if (desired.state != "Pending" || register(desired).state != "Blocked")
+        db.records().acknowledge(pending.operationId)
     }
   }
+
   private fun replayHistory(db: ContentDatabase) {
     for (action in alerts.actions()) {
       if (db.records().purged(action.occurrenceId) == null)
-        db.records().history(HistoryRecord(action.operationId, action.occurrenceId, action.kind,
-          action.occurredAtMs, action.generation, action.targetMs))
+        db
+          .records()
+          .history(
+            HistoryRecord(
+              action.operationId,
+              action.occurrenceId,
+              action.kind,
+              action.occurredAtMs,
+              action.generation,
+              action.targetMs,
+            )
+          )
       alerts.acknowledge(action.operationId) // history insert is idempotent; no operational replay
     }
   }
-  private fun actionRecord(id: String, kind: String, generation: Long, operationId: String = UUID.randomUUID().toString(), targetMs: Long? = null) =
-    ActionRecord(operationId, id, kind, now(), generation, targetMs)
-  private fun acknowledgedActionResult(current: AlertRecord, kind: String, generation: Long, targetMs: Long?): Map<String, Any?> {
+
+  private fun actionRecord(
+    id: String,
+    kind: String,
+    generation: Long,
+    operationId: String = UUID.randomUUID().toString(),
+    targetMs: Long? = null,
+  ) = ActionRecord(operationId, id, kind, now(), generation, targetMs)
+
+  private fun acknowledgedActionResult(
+    current: AlertRecord,
+    kind: String,
+    generation: Long,
+    targetMs: Long?,
+  ): Map<String, Any?> {
     // A receipt acknowledges the mutation, but must not claim its unchanged target
     // was scheduled when registration is still blocked or pending. Later actions
     // retain their own state; replaying this receipt only acknowledges its old result.
-    val status = if (kind in setOf("Snooze", "Postpone") && current.generation == generation &&
-        targetMs != null && current.targetMs == targetMs && current.state in setOf("Blocked", "Pending")) current.state else "Applied"
-    return mapOf("status" to status, "generation" to if (kind == "Stop") current.generation else generation)
+    val status =
+      if (
+        kind in setOf("Snooze", "Postpone") &&
+          current.generation == generation &&
+          targetMs != null &&
+          current.targetMs == targetMs &&
+          current.state in setOf("Blocked", "Pending")
+      )
+        current.state
+      else "Applied"
+    return mapOf(
+      "status" to status,
+      "generation" to if (kind == "Stop") current.generation else generation,
+    )
   }
 
-  private fun applyAction(id: String, expected: Long, kind: String, operationId: String, targetMs: Long? = null,
-    expectedSnoozeMinutes: Int? = null, expectedSessionId: String? = null): Map<String, Any?> {
-    if (alerts.routineAlertReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+  private fun applyAction(
+    id: String,
+    expected: Long,
+    kind: String,
+    operationId: String,
+    targetMs: Long? = null,
+    expectedSnoozeMinutes: Int? = null,
+    expectedSessionId: String? = null,
+  ): Map<String, Any?> {
+    if (
+      alerts.routineAlertReceipt(operationId) != null ||
+        alerts.bulkSnoozeReceipt(operationId) != null
+    )
+      return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     alerts.completionReceipt(operationId)?.let { receipt ->
-      if (kind !in setOf("Stop", "CompleteDelivery") || receipt.kind != kind || receipt.occurrenceId != id || receipt.expectedGeneration != expected)
+      if (
+        kind !in setOf("Stop", "CompleteDelivery") ||
+          receipt.kind != kind ||
+          receipt.occurrenceId != id ||
+          receipt.expectedGeneration != expected
+      )
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       if (unlocked()) prepareContentActions()
       return completionResult(receipt)
@@ -1473,137 +3566,308 @@ class AlarmEngine internal constructor(private val context: Context,
     val old = alerts.find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
     val receipt = alerts.action(operationId)
     if (receipt != null) {
-      if (receipt.occurrenceId != id || receipt.kind != kind ||
-          (kind in setOf("Snooze", "Postpone") && (receipt.generation != expected + 1 ||
-            (kind == "Postpone" && receipt.targetMs != null && receipt.targetMs != targetMs))) ||
-          (kind == "Snooze" && expectedSnoozeMinutes != null &&
-            (receipt.targetMs == null || receipt.targetMs - receipt.occurredAtMs != expectedSnoozeMinutes * 60_000L)))
+      if (
+        receipt.occurrenceId != id ||
+          receipt.kind != kind ||
+          (kind in setOf("Snooze", "Postpone") &&
+            (receipt.generation != expected + 1 ||
+              (kind == "Postpone" && receipt.targetMs != null && receipt.targetMs != targetMs))) ||
+          (kind == "Snooze" &&
+            expectedSnoozeMinutes != null &&
+            (receipt.targetMs == null ||
+              receipt.targetMs - receipt.occurredAtMs != expectedSnoozeMinutes * 60_000L))
+      )
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       return acknowledgedActionResult(old, kind, receipt.generation, receipt.targetMs)
     }
-    if (unlocked()) content().records().receipt(operationId)?.let {
-      return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-    }
-    if (unlocked()) content().records().historyOperation(operationId)?.let {
-      val matches = it.kind == kind && it.occurrenceId == id && (kind !in setOf("Snooze", "Postpone") ||
-        (it.generation == expected + 1 && (kind != "Postpone" || it.targetMs == null || it.targetMs == targetMs))) &&
-        (kind != "Snooze" || expectedSnoozeMinutes == null ||
-          (it.targetMs != null && it.targetMs - it.occurredAtMs == expectedSnoozeMinutes * 60_000L))
-      return if (matches) acknowledgedActionResult(old, kind, it.generation, it.targetMs)
+    if (unlocked())
+      content().records().receipt(operationId)?.let {
+        return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+      }
+    if (unlocked())
+      content().records().historyOperation(operationId)?.let {
+        val matches =
+          it.kind == kind &&
+            it.occurrenceId == id &&
+            (kind !in setOf("Snooze", "Postpone") ||
+              (it.generation == expected + 1 &&
+                (kind != "Postpone" || it.targetMs == null || it.targetMs == targetMs))) &&
+            (kind != "Snooze" ||
+              expectedSnoozeMinutes == null ||
+              (it.targetMs != null &&
+                it.targetMs - it.occurredAtMs == expectedSnoozeMinutes * 60_000L))
+        return if (matches) acknowledgedActionResult(old, kind, it.generation, it.targetMs)
         else mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
-    }
-    if (old.generation != expected) return mapOf("status" to "Rejected", "errorCode" to "STALE_GENERATION",
-      "errorField" to "expectedGeneration", "generation" to old.generation)
-    if (old.profile == RoutinePolicy.PROFILE) return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
-    if (old.state in setOf("Completed", "Deleted", "Changing", "SeriesChanging", "Skipped", "Replaced", "Paused") || old.mode == "None")
-      return mapOf("status" to "Rejected", "errorCode" to "NOT_ELIGIBLE", "errorMessage" to "This reminder has no eligible alert. Refresh it first.")
-    if (expectedSessionId != null && (old.state != "Alerting" || old.sessionId != expectedSessionId ||
-        alerts.activeSession()?.id != expectedSessionId))
-      return mapOf("status" to "Rejected", "errorCode" to "STALE_SESSION", "errorMessage" to "That alarm session has ended. Refresh controls.")
-    if (kind == "Stop" && old.state != "Alerting") return mapOf("status" to "Rejected", "errorCode" to "NOT_RINGING")
-    if (kind == "CompleteDelivery" && old.state != "Alerting" && !(old.mode == "Notification" && old.state == "Notified"))
-      return mapOf("status" to "Rejected", "errorCode" to "NOT_DELIVERED", "errorMessage" to "That delivery has ended. Refresh this reminder.")
+      }
+    if (old.generation != expected)
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_GENERATION",
+        "errorField" to "expectedGeneration",
+        "generation" to old.generation,
+      )
+    if (old.profile == RoutinePolicy.PROFILE)
+      return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
+    if (
+      old.state in
+        setOf(
+          "Completed",
+          "Deleted",
+          "Changing",
+          "SeriesChanging",
+          "Skipped",
+          "Replaced",
+          "Paused",
+        ) || old.mode == "None"
+    )
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "NOT_ELIGIBLE",
+        "errorMessage" to "This reminder has no eligible alert. Refresh it first.",
+      )
+    if (
+      expectedSessionId != null &&
+        (old.state != "Alerting" ||
+          old.sessionId != expectedSessionId ||
+          alerts.activeSession()?.id != expectedSessionId)
+    )
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_SESSION",
+        "errorMessage" to "That alarm session has ended. Refresh controls.",
+      )
+    if (kind == "Stop" && old.state != "Alerting")
+      return mapOf("status" to "Rejected", "errorCode" to "NOT_RINGING")
+    if (
+      kind == "CompleteDelivery" &&
+        old.state != "Alerting" &&
+        !(old.mode == "Notification" && old.state == "Notified")
+    )
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "NOT_DELIVERED",
+        "errorMessage" to "That delivery has ended. Refresh this reminder.",
+      )
     if (kind in setOf("Stop", "CompleteDelivery")) {
       val receipt = CompletionReceipt(operationId, kind, id, expected, null, old.generation + 1, 1)
       completeDeliveries(listOf(old), receipt)
       return completionResult(receipt)
     }
-    if (kind == "Snooze" && expectedSnoozeMinutes != null && old.snoozeMinutes != expectedSnoozeMinutes)
-      return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE", "errorMessage" to "The Snooze duration changed. Refresh controls and try again.")
-    if (kind == "Postpone") validate(requireNotNull(targetMs) > now(), "alarmAtMs", "Choose an alert time in the future.")
+    if (
+      kind == "Snooze" &&
+        expectedSnoozeMinutes != null &&
+        old.snoozeMinutes != expectedSnoozeMinutes
+    )
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_SNOOZE",
+        "errorMessage" to "The Snooze duration changed. Refresh controls and try again.",
+      )
+    if (kind == "Postpone")
+      validate(requireNotNull(targetMs) > now(), "alarmAtMs", "Choose an alert time in the future.")
     val actionAt = now()
-    val next = old.copy(generation = old.generation + 1, sessionId = null,
-      exception = old.exception || (old.segmentId != null && kind in setOf("Snooze", "Postpone")),
-      targetMs = when (kind) { "Snooze" -> actionAt + old.snoozeMinutes * 60_000L;
-        "Postpone" -> requireNotNull(targetMs); else -> old.targetMs },
-      state = "Pending")
+    val next =
+      old.copy(
+        generation = old.generation + 1,
+        sessionId = null,
+        exception = old.exception || (old.segmentId != null && kind in setOf("Snooze", "Postpone")),
+        targetMs =
+          when (kind) {
+            "Snooze" -> actionAt + old.snoozeMinutes * 60_000L
+            "Postpone" -> requireNotNull(targetMs)
+            else -> old.targetMs
+          },
+        state = "Pending",
+      )
     operational.runInTransaction {
       alerts.put(next)
       alerts.action(ActionRecord(operationId, id, kind, actionAt, next.generation, next.targetMs))
     }
     old.sessionId?.let { refreshOrEndSession(it) }
-    try { scheduler.cancel(old) } catch (_: Exception) { /* generation already fences the old callback */ }
+    try {
+      scheduler.cancel(old)
+    } catch (_: Exception) {
+      /* generation already fences the old callback */
+    }
     val updated = if (kind in setOf("Snooze", "Postpone")) register(next) else next
     if (updated.state == "Blocked") AlarmNotifications(context).unresolved(updated)
     else AlarmNotifications(context).clearAttention(id)
-    series.replenish(); series.materialize()
+    series.replenish()
+    series.materialize()
     changed()
-    return mapOf("status" to if (updated.state == "Blocked") "Blocked" else "Applied", "generation" to updated.generation)
+    return mapOf(
+      "status" to if (updated.state == "Blocked") "Blocked" else "Applied",
+      "generation" to updated.generation,
+    )
   }
 
-  private fun routineAlertAction(operationId: String, command: Map<String, Any?>): Map<String, Any?> {
+  private fun routineAlertAction(
+    operationId: String,
+    command: Map<String, Any?>,
+  ): Map<String, Any?> {
     val kind = command["kind"] as String
-    val id = command["occurrenceId"] as? String ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
+    val id =
+      command["occurrenceId"] as? String
+        ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
     val date = command["date"] as? String ?: ""
     val expected = epoch(command["expectedGeneration"], "expectedGeneration")
     val session = command["expectedSessionId"] as? String ?: ""
-    val minutes = if (kind == "SnoozeRoutineAlarm") integer(command["expectedSnoozeMinutes"], "expectedSnoozeMinutes", 1, 1440) else null
+    val minutes =
+      if (kind == "SnoozeRoutineAlarm")
+        integer(command["expectedSnoozeMinutes"], "expectedSnoozeMinutes", 1, 1440)
+      else null
     validate(id.isNotBlank() && id.length <= 200, "occurrenceId", "Choose an existing reminder.")
     validate(expected >= 1, "expectedGeneration", "Refresh this reminder and try again.")
-    validate(session.isNotBlank() && session.length <= 200, "expectedSessionId", "Choose the current alarm session.")
-    validate(date.length == 10 && runCatching { java.time.LocalDate.parse(date) }.isSuccess, "date", "Choose a routine day.")
-    val fingerprint = org.json.JSONArray(listOf(kind, id, date, expected, session, minutes)).toString()
+    validate(
+      session.isNotBlank() && session.length <= 200,
+      "expectedSessionId",
+      "Choose the current alarm session.",
+    )
+    validate(
+      date.length == 10 && runCatching { java.time.LocalDate.parse(date) }.isSuccess,
+      "date",
+      "Choose a routine day.",
+    )
+    val fingerprint =
+      org.json.JSONArray(listOf(kind, id, date, expected, session, minutes)).toString()
     alerts.routineAlertReceipt(operationId)?.let { receipt ->
-      if (receipt.fingerprint != fingerprint || receipt.kind != kind || receipt.occurrenceId != id || receipt.date != date || receipt.expectedGeneration != expected ||
-          receipt.expectedSessionId != session || receipt.snoozeMinutes != minutes)
+      if (
+        receipt.fingerprint != fingerprint ||
+          receipt.kind != kind ||
+          receipt.occurrenceId != id ||
+          receipt.date != date ||
+          receipt.expectedGeneration != expected ||
+          receipt.expectedSessionId != session ||
+          receipt.snoozeMinutes != minutes
+      )
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       return settleRoutineAlert(receipt)
     }
-    if (alerts.completionReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null || alerts.action(operationId) != null ||
-        unlocked() && (content().records().receipt(operationId) != null || content().records().historyOperation(operationId) != null ||
-          content().routines().operation(operationId) != null || content().calendar().operation(operationId) != null ||
-          content().links().operation(operationId) != null || content().managedCalendar().receipt(operationId) != null || content().managedCalendar().operation(operationId) != null))
+    if (
+      alerts.completionReceipt(operationId) != null ||
+        alerts.bulkSnoozeReceipt(operationId) != null ||
+        alerts.action(operationId) != null ||
+        unlocked() &&
+          (content().records().receipt(operationId) != null ||
+            content().records().historyOperation(operationId) != null ||
+            content().routines().operation(operationId) != null ||
+            content().calendar().operation(operationId) != null ||
+            content().links().operation(operationId) != null ||
+            content().managedCalendar().receipt(operationId) != null ||
+            content().managedCalendar().operation(operationId) != null)
+    )
       return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     closeProtectedRoutineDays()
     val old = alerts.find(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
-    if (old.profile != RoutinePolicy.PROFILE || old.mode != "Alarm") return mapOf("status" to "Rejected", "errorCode" to "NOT_ELIGIBLE")
+    if (old.profile != RoutinePolicy.PROFILE || old.mode != "Alarm")
+      return mapOf("status" to "Rejected", "errorCode" to "NOT_ELIGIBLE")
     if (old.generation != expected || old.sessionId != session || old.state != "Alerting")
       return mapOf("status" to "Rejected", "errorCode" to "STALE_GENERATION")
-    if (old.nominalSlot?.substringBefore('T') != date || !RoutinePolicy.open(date, old.dayEnded, now(), ZoneId.systemDefault()))
+    if (
+      old.nominalSlot?.substringBefore('T') != date ||
+        !RoutinePolicy.open(date, old.dayEnded, now(), ZoneId.systemDefault())
+    )
       return mapOf("status" to "Rejected", "errorCode" to "DAY_ENDED")
-    if (minutes != null && minutes != old.snoozeMinutes) return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE")
-    if (kind == "SnoozeRoutineAlarm" && (minutes == null || minutes !in 1..1440)) return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE")
+    if (minutes != null && minutes != old.snoozeMinutes)
+      return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE")
+    if (kind == "SnoozeRoutineAlarm" && (minutes == null || minutes !in 1..1440))
+      return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE")
     val at = now()
     val target = minutes?.let { at + it * 60_000L }
-    if (target != null && target >= old.expiresAtMs) return mapOf("status" to "Rejected", "errorCode" to "DAY_ENDED", "errorMessage" to "Snooze would pass the end of today.")
-    val receipt = RoutineAlertReceipt(operationId, kind, id, date, expected, session, old.generation + 1, at, target, minutes, fingerprint)
+    if (target != null && target >= old.expiresAtMs)
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "DAY_ENDED",
+        "errorMessage" to "Snooze would pass the end of today.",
+      )
+    val receipt =
+      RoutineAlertReceipt(
+        operationId,
+        kind,
+        id,
+        date,
+        expected,
+        session,
+        old.generation + 1,
+        at,
+        target,
+        minutes,
+        fingerprint,
+      )
     operational.runInTransaction {
-      alerts.put(old.copy(generation = receipt.generation, sessionId = null, state = if (target == null) "Available" else "Pending",
-        targetMs = target ?: old.targetMs, prompted = target == null, exception = old.exception || target != null))
+      alerts.put(
+        old.copy(
+          generation = receipt.generation,
+          sessionId = null,
+          state = if (target == null) "Available" else "Pending",
+          targetMs = target ?: old.targetMs,
+          prompted = target == null,
+          exception = old.exception || target != null,
+        )
+      )
       alerts.routineAlertReceipt(receipt)
       alerts.action(ActionRecord(operationId, id, kind, at, receipt.generation, target))
     }
     routineAlertCheckpoint("routine-alert-committed")
     return settleRoutineAlert(receipt)
   }
+
   private fun settleRoutineAlert(receipt: RoutineAlertReceipt): Map<String, Any?> {
     closeProtectedRoutineDays()
     val current = alerts.find(receipt.occurrenceId)
     if (!receipt.settled) {
       refreshOrEndSession(receipt.expectedSessionId)
-      current?.let { try { scheduler.cancel(it.copy(generation = receipt.expectedGeneration)) } catch (_: Exception) { /* committed fence */ } }
+      current?.let {
+        try {
+          scheduler.cancel(it.copy(generation = receipt.expectedGeneration))
+        } catch (_: Exception) {
+          /* committed fence */
+        }
+      }
       AlarmNotifications(context).clearAttention(receipt.occurrenceId)
       routineAlertCheckpoint("routine-alert-detached")
-      if (receipt.targetMs != null && current?.generation == receipt.generation && current.state == "Pending" && !current.dayEnded && current.targetMs == receipt.targetMs)
+      if (
+        receipt.targetMs != null &&
+          current?.generation == receipt.generation &&
+          current.state == "Pending" &&
+          !current.dayEnded &&
+          current.targetMs == receipt.targetMs
+      )
         register(current)
       routineAlertCheckpoint("routine-alert-registered")
       val state = alerts.find(receipt.occurrenceId)
-      val status = if (receipt.targetMs != null && state?.generation == receipt.generation && state.state in setOf("Blocked", "Pending")) state.state else "Applied"
+      val status =
+        if (
+          receipt.targetMs != null &&
+            state?.generation == receipt.generation &&
+            state.state in setOf("Blocked", "Pending")
+        )
+          state.state
+        else "Applied"
       alerts.routineAlertReceipt(receipt.copy(settled = true, resultStatus = status))
       changed()
     }
     val settled = alerts.routineAlertReceipt(receipt.operationId) ?: receipt
-    return mapOf("status" to settled.resultStatus,
-      "generation" to receipt.generation, "occurrenceId" to receipt.occurrenceId, "date" to receipt.date)
+    return mapOf(
+      "status" to settled.resultStatus,
+      "generation" to receipt.generation,
+      "occurrenceId" to receipt.occurrenceId,
+      "date" to receipt.date,
+    )
   }
 
   private fun completionResult(receipt: CompletionReceipt): Map<String, Any?> =
-    mapOf("status" to "Applied") + if (receipt.occurrenceId == null) mapOf("count" to receipt.count)
-    else mapOf("generation" to receipt.generation)
+    mapOf("status" to "Applied") +
+      if (receipt.occurrenceId == null) mapOf("count" to receipt.count)
+      else mapOf("generation" to receipt.generation)
 
   private fun stopAll(operationId: String, sessionId: String): Map<String, Any?> {
     validate(sessionId.isNotBlank(), "expectedSessionId", "Choose the current alarm session.")
-    if (alerts.routineAlertReceipt(operationId) != null || alerts.bulkSnoozeReceipt(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+    if (
+      alerts.routineAlertReceipt(operationId) != null ||
+        alerts.bulkSnoozeReceipt(operationId) != null
+    )
+      return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     alerts.completionReceipt(operationId)?.let { receipt ->
       if (receipt.kind != "StopAll" || receipt.sessionId != sessionId)
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
@@ -1618,35 +3882,60 @@ class AlarmEngine internal constructor(private val context: Context,
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       }
     }
-    if (alerts.action(operationId) != null) return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
+    if (alerts.action(operationId) != null)
+      return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     val session = alerts.activeSession()
     if (session == null || session.id != sessionId)
-      return mapOf("status" to "Rejected", "errorCode" to "STALE_SESSION", "errorMessage" to "That alarm session has ended.")
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_SESSION",
+        "errorMessage" to "That alarm session has ended.",
+      )
     val members = alerts.members(session.id)
-    if (members.any { it.profile == RoutinePolicy.PROFILE }) return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
-    val receipt = CompletionReceipt(operationId, "StopAll", null, null, sessionId, null, members.size)
+    if (members.any { it.profile == RoutinePolicy.PROFILE })
+      return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
+    val receipt =
+      CompletionReceipt(operationId, "StopAll", null, null, sessionId, null, members.size)
     completeDeliveries(members, receipt)
     return completionResult(receipt)
   }
 
   private fun capturedMembers(input: Any?): List<DeliverySnapshot.Member> {
     validate(input is List<*> && input.isNotEmpty(), "members", "Refresh the current alarm group.")
-    val members = (input as List<*>).map { raw ->
-      validate(raw is Map<*, *>, "members", "Refresh the current alarm group.")
-      val member = raw as Map<*, *>
-      val id = member["occurrenceId"] as? String
-      validate(id != null && id.isNotBlank() && id.length <= 200, "members", "Choose a current alarm.")
-      val generation = epoch(member["expectedGeneration"], "expectedGeneration")
-      validate(generation >= 1, "expectedGeneration", "Refresh the current alarm group.")
-      DeliverySnapshot.Member(requireNotNull(id), generation)
-    }.sortedBy { it.occurrenceId }
-    validate(members.map { it.occurrenceId }.distinct().size == members.size, "members", "Choose each alarm only once.")
+    val members =
+      (input as List<*>)
+        .map { raw ->
+          validate(raw is Map<*, *>, "members", "Refresh the current alarm group.")
+          val member = raw as Map<*, *>
+          val id = member["occurrenceId"] as? String
+          validate(
+            id != null && id.isNotBlank() && id.length <= 200,
+            "members",
+            "Choose a current alarm.",
+          )
+          val generation = epoch(member["expectedGeneration"], "expectedGeneration")
+          validate(generation >= 1, "expectedGeneration", "Refresh the current alarm group.")
+          DeliverySnapshot.Member(requireNotNull(id), generation)
+        }
+        .sortedBy { it.occurrenceId }
+    validate(
+      members.map { it.occurrenceId }.distinct().size == members.size,
+      "members",
+      "Choose each alarm only once.",
+    )
     return members
   }
 
-  private fun applySessionAction(operationId: String, sessionId: String, captured: List<DeliverySnapshot.Member>,
-    kind: String, snoozeMinutes: Int?, targetMs: Long? = null): Map<String, Any?> {
-    val key = if (kind == "PostponeAll") DeliverySnapshot.postponeKey(captured, requireNotNull(targetMs))
+  private fun applySessionAction(
+    operationId: String,
+    sessionId: String,
+    captured: List<DeliverySnapshot.Member>,
+    kind: String,
+    snoozeMinutes: Int?,
+    targetMs: Long? = null,
+  ): Map<String, Any?> {
+    val key =
+      if (kind == "PostponeAll") DeliverySnapshot.postponeKey(captured, requireNotNull(targetMs))
       else DeliverySnapshot.key(captured, snoozeMinutes)
     alerts.completionReceipt(operationId)?.let { receipt ->
       if (kind != receipt.kind || receipt.sessionId != sessionId || receipt.snapshotKey != key)
@@ -1655,52 +3944,107 @@ class AlarmEngine internal constructor(private val context: Context,
       return completionResult(receipt)
     }
     alerts.bulkSnoozeReceipt(operationId)?.let { receipt ->
-      if (kind != receipt.kind || receipt.sessionId != sessionId || receipt.snapshotKey != key ||
-          (kind == "PostponeAll" && receipt.targetMs != targetMs))
+      if (
+        kind != receipt.kind ||
+          receipt.sessionId != sessionId ||
+          receipt.snapshotKey != key ||
+          (kind == "PostponeAll" && receipt.targetMs != targetMs)
+      )
         return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
       return resumeBulkSnooze(receipt)
     }
-    if (alerts.action(operationId) != null || (unlocked() &&
-        (content().records().receipt(operationId) != null || content().records().historyOperation(operationId) != null)))
+    if (
+      alerts.action(operationId) != null ||
+        (unlocked() &&
+          (content().records().receipt(operationId) != null ||
+            content().records().historyOperation(operationId) != null))
+    )
       return mapOf("status" to "Rejected", "errorCode" to "OPERATION_REUSED")
     if (kind != "DoneAll" && unlocked()) prepareContentActions()
     val session = alerts.activeSession()
-    if (session?.id != sessionId) return mapOf("status" to "Rejected", "errorCode" to "STALE_SESSION",
-      "errorMessage" to "That alarm session has ended. Refresh controls.")
+    if (session?.id != sessionId)
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_SESSION",
+        "errorMessage" to "That alarm session has ended. Refresh controls.",
+      )
     val members = captured.map { member -> alerts.find(member.occurrenceId) }
-    if (members.zip(captured).any { (record, member) -> record == null || record.state != "Alerting" ||
-        record.sessionId != sessionId || record.generation != member.expectedGeneration })
-      return mapOf("status" to "Rejected", "errorCode" to "STALE_MEMBERS", "errorMessage" to "The alarm group changed. Refresh controls and try again.")
+    if (
+      members.zip(captured).any { (record, member) ->
+        record == null ||
+          record.state != "Alerting" ||
+          record.sessionId != sessionId ||
+          record.generation != member.expectedGeneration
+      }
+    )
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_MEMBERS",
+        "errorMessage" to "The alarm group changed. Refresh controls and try again.",
+      )
     val current = members.filterNotNull()
-    if (current.any { it.profile == RoutinePolicy.PROFILE }) return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
+    if (current.any { it.profile == RoutinePolicy.PROFILE })
+      return mapOf("status" to "Rejected", "errorCode" to "ROUTINE_ACTION_REQUIRED")
     if (kind == "DoneAll") {
-      val receipt = CompletionReceipt(operationId, kind, null, null, sessionId, null, current.size, key)
+      val receipt =
+        CompletionReceipt(operationId, kind, null, null, sessionId, null, current.size, key)
       completeDeliveries(current, receipt)
       return completionResult(receipt)
     }
-    if (kind == "SnoozeAll" && current.any { it.snoozeMinutes != snoozeMinutes }) return mapOf("status" to "Rejected", "errorCode" to "STALE_SNOOZE",
-      "errorMessage" to "The Snooze duration changed. Refresh controls and try again.")
+    if (kind == "SnoozeAll" && current.any { it.snoozeMinutes != snoozeMinutes })
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_SNOOZE",
+        "errorMessage" to "The Snooze duration changed. Refresh controls and try again.",
+      )
     val at = now()
-    if (kind == "PostponeAll") validate(requireNotNull(targetMs) > at, "alarmAtMs", "Choose an alert time in the future.")
-    val receipt = BulkSnoozeReceipt(operationId, sessionId, key, at,
-      if (kind == "PostponeAll") requireNotNull(targetMs) else at + requireNotNull(snoozeMinutes) * 60_000L,
-      snoozeMinutes, kind = kind)
+    if (kind == "PostponeAll")
+      validate(requireNotNull(targetMs) > at, "alarmAtMs", "Choose an alert time in the future.")
+    val receipt =
+      BulkSnoozeReceipt(
+        operationId,
+        sessionId,
+        key,
+        at,
+        if (kind == "PostponeAll") requireNotNull(targetMs)
+        else at + requireNotNull(snoozeMinutes) * 60_000L,
+        snoozeMinutes,
+        kind = kind,
+      )
     operational.runInTransaction {
       alerts.bulkSnoozeReceipt(receipt)
       current.forEach { old ->
-        val next = old.copy(generation = old.generation + 1, state = "Pending", sessionId = null,
-          targetMs = receipt.targetMs, exception = old.exception || old.segmentId != null)
+        val next =
+          old.copy(
+            generation = old.generation + 1,
+            state = "Pending",
+            sessionId = null,
+            targetMs = receipt.targetMs,
+            exception = old.exception || old.segmentId != null,
+          )
         alerts.put(next)
-        alerts.bulkSnoozeMember(BulkSnoozeMember(operationId, old.occurrenceId, old.generation, next.generation))
+        alerts.bulkSnoozeMember(
+          BulkSnoozeMember(operationId, old.occurrenceId, old.generation, next.generation)
+        )
         val actionKind = if (kind == "PostponeAll") "Postpone" else "Snooze"
         val prefix = if (kind == "PostponeAll") "postponeall" else "snoozeall"
-        val child = UUID.nameUUIDFromBytes("remilo:$prefix:$operationId:${old.occurrenceId}".toByteArray()).toString()
-        alerts.action(ActionRecord(child, old.occurrenceId, actionKind, at, next.generation, receipt.targetMs))
+        val child =
+          UUID.nameUUIDFromBytes("remilo:$prefix:$operationId:${old.occurrenceId}".toByteArray())
+            .toString()
+        alerts.action(
+          ActionRecord(child, old.occurrenceId, actionKind, at, next.generation, receipt.targetMs)
+        )
       }
     }
     // Detach the exact captured group before registration or private projection.
     refreshOrEndSession(sessionId)
-    current.forEach { try { scheduler.cancel(it) } catch (_: Exception) { /* fenced */ } }
+    current.forEach {
+      try {
+        scheduler.cancel(it)
+      } catch (_: Exception) {
+        /* fenced */
+      }
+    }
     changed()
     bulkSnoozeCheckpoint("protected-committed")
     return resumeBulkSnooze(receipt)
@@ -1709,52 +4053,83 @@ class AlarmEngine internal constructor(private val context: Context,
   /** Resume only the frozen target/generations. A newer user action always wins. */
   private fun resumeBulkSnooze(receipt: BulkSnoozeReceipt): Map<String, Any?> {
     if (!receipt.settled) {
-      alerts.bulkSnoozeMembers(receipt.operationId).filter { it.status == "Pending" }.forEach { member ->
-        val current = alerts.find(member.occurrenceId)
-        val status = when {
-          current == null || current.generation != member.generation || current.targetMs != receipt.targetMs -> "Superseded"
-          current.state in setOf("Scheduled", "Alerting", "Notified") -> "Scheduled"
-          current.state == "Blocked" -> "Blocked"
-          current.state == "Missed" -> "Missed"
-          current.state != "Pending" -> "Superseded"
-          else -> {
-            try { scheduler.cancel(current.copy(generation = member.expectedGeneration)) } catch (_: Exception) { /* fenced */ }
-            register(current).state
-          }
+      alerts
+        .bulkSnoozeMembers(receipt.operationId)
+        .filter { it.status == "Pending" }
+        .forEach { member ->
+          val current = alerts.find(member.occurrenceId)
+          val status =
+            when {
+              current == null ||
+                current.generation != member.generation ||
+                current.targetMs != receipt.targetMs -> "Superseded"
+              current.state in setOf("Scheduled", "Alerting", "Notified") -> "Scheduled"
+              current.state == "Blocked" -> "Blocked"
+              current.state == "Missed" -> "Missed"
+              current.state != "Pending" -> "Superseded"
+              else -> {
+                try {
+                  scheduler.cancel(current.copy(generation = member.expectedGeneration))
+                } catch (_: Exception) {
+                  /* fenced */
+                }
+                register(current).state
+              }
+            }
+          bulkSnoozeCheckpoint("member-registered")
+          alerts.bulkSnoozeMember(member.copy(status = status))
+          if (status in setOf("Blocked", "Missed") && current != null)
+            AlarmNotifications(context).unresolved(alerts.find(current.occurrenceId) ?: current)
+          else if (status != "Superseded")
+            AlarmNotifications(context).clearAttention(member.occurrenceId)
+          bulkSnoozeCheckpoint("member-acknowledged")
         }
-        bulkSnoozeCheckpoint("member-registered")
-        alerts.bulkSnoozeMember(member.copy(status = status))
-        if (status in setOf("Blocked", "Missed") && current != null)
-          AlarmNotifications(context).unresolved(alerts.find(current.occurrenceId) ?: current)
-        else if (status != "Superseded") AlarmNotifications(context).clearAttention(member.occurrenceId)
-        bulkSnoozeCheckpoint("member-acknowledged")
-      }
       alerts.bulkSnoozeReceipt(receipt.copy(settled = true))
       bulkSnoozeCheckpoint("settled")
-      series.replenish(); series.materialize()
+      series.replenish()
+      series.materialize()
       changed()
     }
     val members = alerts.bulkSnoozeMembers(receipt.operationId)
-    val status = when {
-      members.all { it.status == "Scheduled" } -> "Applied"
-      members.all { it.status == "Blocked" } -> "Blocked"
-      members.all { it.status == "Pending" } -> "Pending"
-      else -> "Partial"
-    }
-    return mapOf("status" to status, "count" to members.size, "memberResults" to members.map {
-      mapOf("occurrenceId" to it.occurrenceId, "generation" to it.generation, "status" to it.status, "targetMs" to receipt.targetMs)
-    })
+    val status =
+      when {
+        members.all { it.status == "Scheduled" } -> "Applied"
+        members.all { it.status == "Blocked" } -> "Blocked"
+        members.all { it.status == "Pending" } -> "Pending"
+        else -> "Partial"
+      }
+    return mapOf(
+      "status" to status,
+      "count" to members.size,
+      "memberResults" to
+        members.map {
+          mapOf(
+            "occurrenceId" to it.occurrenceId,
+            "generation" to it.generation,
+            "status" to it.status,
+            "targetMs" to receipt.targetMs,
+          )
+        },
+    )
   }
 
   private fun completeDeliveries(members: List<AlertRecord>, receipt: CompletionReceipt) {
-    check(members.none { it.profile == RoutinePolicy.PROFILE }) { "Routine exercises require routine actions" }
+    check(members.none { it.profile == RoutinePolicy.PROFILE }) {
+      "Routine exercises require routine actions"
+    }
     val at = now()
     operational.runInTransaction {
       members.forEach { old ->
         val next = old.copy(state = "Completed", generation = old.generation + 1, sessionId = null)
         alerts.put(next)
-        val operation = if (receipt.occurrenceId != null) receipt.operationId else
-          UUID.nameUUIDFromBytes("remilo:${if (receipt.kind == "StopAll") "stopall" else "doneall"}:${receipt.operationId}:${old.occurrenceId}".toByteArray()).toString()
+        val operation =
+          if (receipt.occurrenceId != null) receipt.operationId
+          else
+            UUID.nameUUIDFromBytes(
+                "remilo:${if (receipt.kind == "StopAll") "stopall" else "doneall"}:${receipt.operationId}:${old.occurrenceId}"
+                  .toByteArray()
+              )
+              .toString()
         alerts.completion(PendingCompletion(operation, old.occurrenceId, next.generation, at))
       }
       alerts.completionReceipt(receipt)
@@ -1762,7 +4137,11 @@ class AlarmEngine internal constructor(private val context: Context,
     // Sound termination precedes private history/materialization, even if it fails.
     members.mapNotNull { it.sessionId }.distinct().forEach(::refreshOrEndSession)
     members.forEach { old ->
-      try { scheduler.cancel(old) } catch (_: Exception) { /* committed generation fence */ }
+      try {
+        scheduler.cancel(old)
+      } catch (_: Exception) {
+        /* committed generation fence */
+      }
       AlarmNotifications(context).clearAttention(old.occurrenceId)
     }
     changed()
@@ -1771,54 +4150,108 @@ class AlarmEngine internal constructor(private val context: Context,
     if (unlocked()) prepareContentActions()
   }
 
-  fun receive(intent: Intent, finished: () -> Unit) = submit(finished) {
-    reconcileDeliveryPresentation()
-    val purpose = intent.action?.substringAfterLast('.')
-    if (purpose in setOf("doneall", "snoozeall")) {
-      val sessionId = intent.getStringExtra("sessionId") ?: return@submit
-      val ids = intent.getStringArrayExtra("memberIds") ?: return@submit
-      val generations = intent.getLongArrayExtra("memberGenerations") ?: return@submit
-      if (ids.size != generations.size) return@submit
-      val command = mutableMapOf<String, Any?>("kind" to if (purpose == "doneall") "DoneAll" else "SnoozeAll",
-        "expectedSessionId" to sessionId, "members" to ids.indices.map { mapOf("occurrenceId" to ids[it], "expectedGeneration" to generations[it]) },
-        "operationId" to "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}")
-      if (purpose == "snoozeall") command["snoozeMinutes"] = intent.getIntExtra("snoozeMinutes", -1)
-      val result = apply(command)
-      if (result["status"] == "Rejected") RingingService.refresh(context, sessionId)
-      return@submit
-    }
-    if (intent.action?.substringAfterLast('.') == "stopall") {
-      val sessionId = intent.getStringExtra("sessionId") ?: return@submit
-      apply(mapOf("kind" to "StopAll", "expectedSessionId" to sessionId, "operationId" to "notification-stopall:$sessionId"))
-      return@submit
-    }
-    val id = intent.getStringExtra("occurrenceId") ?: return@submit
-    val generation = intent.getLongExtra("generation", -1)
-    when (intent.action?.substringAfterLast('.')) {
-      "fire" -> deliver(id, generation)
-      "done", "quicksnooze" -> {
-        val command = mutableMapOf<String, Any?>("kind" to if (purpose == "done") "CompleteDelivery" else "Snooze",
-          "occurrenceId" to id, "expectedGeneration" to generation,
-          "operationId" to "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}")
-        if (purpose == "quicksnooze") command["expectedSnoozeMinutes"] = intent.getIntExtra("snoozeMinutes", -1)
+  fun receive(intent: Intent, finished: () -> Unit) =
+    submit(finished) {
+      reconcileDeliveryPresentation()
+      val purpose = intent.action?.substringAfterLast('.')
+      if (purpose in setOf("doneall", "snoozeall")) {
+        val sessionId = intent.getStringExtra("sessionId") ?: return@submit
+        val ids = intent.getStringArrayExtra("memberIds") ?: return@submit
+        val generations = intent.getLongArrayExtra("memberGenerations") ?: return@submit
+        if (ids.size != generations.size) return@submit
+        val command =
+          mutableMapOf<String, Any?>(
+            "kind" to if (purpose == "doneall") "DoneAll" else "SnoozeAll",
+            "expectedSessionId" to sessionId,
+            "members" to
+              ids.indices.map {
+                mapOf("occurrenceId" to ids[it], "expectedGeneration" to generations[it])
+              },
+            "operationId" to
+              "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}",
+          )
+        if (purpose == "snoozeall")
+          command["snoozeMinutes"] = intent.getIntExtra("snoozeMinutes", -1)
         val result = apply(command)
-        if (result["status"] == "Rejected") alerts.find(id)?.let { current ->
-          current.sessionId?.let { RingingService.refresh(context, it) }
-          if (current.mode == "Notification" && current.state == "Notified")
-            AlarmNotifications(context).regular(current, memberContent(id)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()), resolveAppearance(), onlyAlertOnce = true)
+        if (result["status"] == "Rejected") RingingService.refresh(context, sessionId)
+        return@submit
+      }
+      if (intent.action?.substringAfterLast('.') == "stopall") {
+        val sessionId = intent.getStringExtra("sessionId") ?: return@submit
+        apply(
+          mapOf(
+            "kind" to "StopAll",
+            "expectedSessionId" to sessionId,
+            "operationId" to "notification-stopall:$sessionId",
+          )
+        )
+        return@submit
+      }
+      val id = intent.getStringExtra("occurrenceId") ?: return@submit
+      val generation = intent.getLongExtra("generation", -1)
+      when (intent.action?.substringAfterLast('.')) {
+        "fire" -> deliver(id, generation)
+        "done",
+        "quicksnooze" -> {
+          val command =
+            mutableMapOf<String, Any?>(
+              "kind" to if (purpose == "done") "CompleteDelivery" else "Snooze",
+              "occurrenceId" to id,
+              "expectedGeneration" to generation,
+              "operationId" to
+                "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}",
+            )
+          if (purpose == "quicksnooze")
+            command["expectedSnoozeMinutes"] = intent.getIntExtra("snoozeMinutes", -1)
+          val result = apply(command)
+          if (result["status"] == "Rejected")
+            alerts.find(id)?.let { current ->
+              current.sessionId?.let { RingingService.refresh(context, it) }
+              if (current.mode == "Notification" && current.state == "Notified")
+                AlarmNotifications(context)
+                  .regular(
+                    current,
+                    memberContent(id)?.title
+                      ?: com.remilo.alarm.presentation.L10n.text(
+                        context,
+                        NativeMessages.m_31757bbfa17e(),
+                      ),
+                    resolveAppearance(),
+                    onlyAlertOnce = true,
+                  )
+            }
         }
+        "routinedismiss",
+        "routinesnooze" -> {
+          val current = alerts.find(id) ?: return@submit
+          apply(
+            mapOf(
+              "kind" to
+                if (purpose == "routinedismiss") "DismissRoutineAlarm" else "SnoozeRoutineAlarm",
+              "occurrenceId" to id,
+              "date" to
+                (intent.getStringExtra("routineDate") ?: current.nominalSlot?.substringBefore('T')),
+              "expectedGeneration" to generation,
+              "expectedSessionId" to
+                (intent.getStringExtra("routineSessionId") ?: current.sessionId),
+              "expectedSnoozeMinutes" to
+                if (purpose == "routinesnooze") intent.getIntExtra("snoozeMinutes", -1) else null,
+              "operationId" to
+                "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}",
+            )
+          )
+        }
+        "stop",
+        "snooze" ->
+          applyAction(
+            id,
+            generation,
+            if (intent.action!!.endsWith("stop")) "Stop" else "Snooze",
+            "${intent.action}:$id:$generation",
+          )
       }
-      "routinedismiss", "routinesnooze" -> {
-        val current = alerts.find(id) ?: return@submit
-        apply(mapOf("kind" to if (purpose == "routinedismiss") "DismissRoutineAlarm" else "SnoozeRoutineAlarm",
-          "occurrenceId" to id, "date" to (intent.getStringExtra("routineDate") ?: current.nominalSlot?.substringBefore('T')), "expectedGeneration" to generation,
-          "expectedSessionId" to (intent.getStringExtra("routineSessionId") ?: current.sessionId), "expectedSnoozeMinutes" to if (purpose == "routinesnooze") intent.getIntExtra("snoozeMinutes", -1) else null,
-          "operationId" to "notification:$purpose:${UUID.nameUUIDFromBytes(intent.data.toString().toByteArray())}"))
-      }
-      "stop", "snooze" -> applyAction(id, generation,
-        if (intent.action!!.endsWith("stop")) "Stop" else "Snooze", "${intent.action}:$id:$generation")
     }
-  }
+
   private fun deliver(id: String, generation: Long) {
     var alert = alerts.find(id) ?: return
     if (alert.profile == RoutinePolicy.PROFILE) {
@@ -1827,73 +4260,171 @@ class AlarmEngine internal constructor(private val context: Context,
       val current = alerts.find(id) ?: return
       val date = current.nominalSlot?.substringBefore('T') ?: return
       if (!RoutinePolicy.open(date, current.dayEnded, now(), ZoneId.systemDefault())) return
-      if (generation == current.generation && now() < current.targetMs && current.state in setOf("Scheduled", "Pending")) { register(current); return }
+      if (
+        generation == current.generation &&
+          now() < current.targetMs &&
+          current.state in setOf("Scheduled", "Pending")
+      ) {
+        register(current)
+        return
+      }
       // An immediately edited open day retains its original occurrence identity.
       // Its DP exception can outlive that archived segment; Pause/Trash fence the
       // alert itself before commit. No CE content is required before unlock.
       val segmentState = current.segmentId?.let { alerts.plan(it)?.state }
       val ownedOpenDay = current.exception && current.dayStarted && segmentState == "Archived"
-      if (!RoutinePolicy.delivery(now(), current.targetMs, current.expiresAtMs, generation, current.generation,
-          !current.prompted && current.state in setOf("Scheduled", "Pending") && (segmentState == "Active" || ownedOpenDay))) return
-      if (!routineReady(current.mode)) { alerts.put(current.copy(state = "Blocked")); changed(); return }
+      if (
+        !RoutinePolicy.delivery(
+          now(),
+          current.targetMs,
+          current.expiresAtMs,
+          generation,
+          current.generation,
+          !current.prompted &&
+            current.state in setOf("Scheduled", "Pending") &&
+            (segmentState == "Active" || ownedOpenDay),
+        )
+      )
+        return
+      if (!routineReady(current.mode)) {
+        alerts.put(current.copy(state = "Blocked"))
+        changed()
+        return
+      }
       if (current.mode == "Notification") {
         alerts.put(current.copy(state = "Notified", prompted = true, dayStarted = true))
         val title = if (unlocked()) content().records().find(id)?.title else null
         AlarmNotifications(context).routine(current, title, resolveAppearance(), now())
       }
-      if (current.mode == "Notification") { series.replenish(); series.materialize(); changed(); return }
+      if (current.mode == "Notification") {
+        series.replenish()
+        series.materialize()
+        changed()
+        return
+      }
       alert = current
     }
-    when (AlarmPolicy.delivery(now(), alert.targetMs, generation, alert.generation,
-      alert.state in setOf("Scheduled", "Pending"), ready(alert.mode))) {
+    when (
+      AlarmPolicy.delivery(
+        now(),
+        alert.targetMs,
+        generation,
+        alert.generation,
+        alert.state in setOf("Scheduled", "Pending"),
+        ready(alert.mode),
+      )
+    ) {
       AlarmPolicy.Delivery.STALE -> return
-      AlarmPolicy.Delivery.EARLY -> { register(alert); return }
-      AlarmPolicy.Delivery.MISSED -> { alerts.put(alert.copy(state = if (alert.profile == RoutinePolicy.PROFILE) "Available" else "Missed", prompted = alert.prompted || alert.profile == RoutinePolicy.PROFILE)); series.replenish(); series.materialize(); changed(); return }
-      AlarmPolicy.Delivery.BLOCKED -> { alerts.put(alert.copy(state = "Blocked")); series.replenish(); series.materialize(); changed(); return }
+      AlarmPolicy.Delivery.EARLY -> {
+        register(alert)
+        return
+      }
+      AlarmPolicy.Delivery.MISSED -> {
+        alerts.put(
+          alert.copy(
+            state = if (alert.profile == RoutinePolicy.PROFILE) "Available" else "Missed",
+            prompted = alert.prompted || alert.profile == RoutinePolicy.PROFILE,
+          )
+        )
+        series.replenish()
+        series.materialize()
+        changed()
+        return
+      }
+      AlarmPolicy.Delivery.BLOCKED -> {
+        alerts.put(alert.copy(state = "Blocked"))
+        series.replenish()
+        series.materialize()
+        changed()
+        return
+      }
       AlarmPolicy.Delivery.RING -> Unit
     }
-    series.replenish(); series.materialize()
+    series.replenish()
+    series.materialize()
     if (alert.mode == "Notification") {
       alerts.put(alert.copy(state = "Notified"))
-      val title = memberContent(id)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())
+      val title =
+        memberContent(id)?.title
+          ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())
       AlarmNotifications(context).regular(alert, title, resolveAppearance())
-      changed(); return
+      changed()
+      return
     }
     preview.stop(reason = "AlarmActive")
     var session = alerts.activeSession()
-    if (session != null && session.deadlineElapsedMs > 0 && session.deadlineElapsedMs <= elapsed()) {
+    if (
+      session != null && session.deadlineElapsedMs > 0 && session.deadlineElapsedMs <= elapsed()
+    ) {
       endSession(session.id, "TimedOut")
       session = null
     }
     if (session == null) {
       val appearance = resolveAppearance()
-      session = SessionRecord(UUID.randomUUID().toString(), "Starting", sound = alert.sound, vibration = alert.vibration,
-        resolvedAtmosphere = appearance.atmosphere, resolvedBrightness = appearance.brightness)
+      session =
+        SessionRecord(
+          UUID.randomUUID().toString(),
+          "Starting",
+          sound = alert.sound,
+          vibration = alert.vibration,
+          resolvedAtmosphere = appearance.atmosphere,
+          resolvedBrightness = appearance.brightness,
+        )
     }
     val active = session
     operational.runInTransaction {
       alerts.session(active)
-      alerts.put(alert.copy(state = "Alerting", sessionId = active.id, prompted = alert.prompted || alert.profile == RoutinePolicy.PROFILE, dayStarted = alert.dayStarted || alert.profile == RoutinePolicy.PROFILE))
+      alerts.put(
+        alert.copy(
+          state = "Alerting",
+          sessionId = active.id,
+          prompted = alert.prompted || alert.profile == RoutinePolicy.PROFILE,
+          dayStarted = alert.dayStarted || alert.profile == RoutinePolicy.PROFILE,
+        )
+      )
     }
     try {
-      val initial = AlarmNotifications(context).ringing(active.id, memberViews(active.id),
-        AppearancePolicy.captured(active.resolvedAtmosphere, active.resolvedBrightness), now())
-      context.startForegroundService(Intent(context, RingingService::class.java)
-        .putExtra("sessionId", active.id).putExtra("sound", active.sound).putExtra("vibration", active.vibration)
-        .putExtra(RingingService.INITIAL_NOTIFICATION, initial))
-    } catch (_: Exception) { endSession(active.id, "Blocked") }
+      val initial =
+        AlarmNotifications(context)
+          .ringing(
+            active.id,
+            memberViews(active.id),
+            AppearancePolicy.captured(active.resolvedAtmosphere, active.resolvedBrightness),
+            now(),
+          )
+      context.startForegroundService(
+        Intent(context, RingingService::class.java)
+          .putExtra("sessionId", active.id)
+          .putExtra("sound", active.sound)
+          .putExtra("vibration", active.vibration)
+          .putExtra(RingingService.INITIAL_NOTIFICATION, initial)
+      )
+    } catch (_: Exception) {
+      endSession(active.id, "Blocked")
+    }
     changed()
   }
+
   fun audioStarted(sessionId: String, elapsed: Long) = submit {
     val session = alerts.session(sessionId) ?: return@submit
     if (session.state == "Starting") {
-      alerts.session(session.copy(state = "Active",
-        startedElapsedMs = elapsed, deadlineElapsedMs = elapsed + AlarmPolicy.SESSION_MILLIS))
-      Log.i("Remilo", "Session Active: elapsed=$elapsed deadline=${elapsed + AlarmPolicy.SESSION_MILLIS}")
+      alerts.session(
+        session.copy(
+          state = "Active",
+          startedElapsedMs = elapsed,
+          deadlineElapsedMs = elapsed + AlarmPolicy.SESSION_MILLIS,
+        )
+      )
+      Log.i(
+        "Remilo",
+        "Session Active: elapsed=$elapsed deadline=${elapsed + AlarmPolicy.SESSION_MILLIS}",
+      )
       changed()
     }
   }
+
   fun audioEnded(sessionId: String, reason: String) = submit { endSession(sessionId, reason) }
+
   private fun refreshOrEndSession(sessionId: String) {
     if (alerts.members(sessionId).isEmpty()) {
       // End the durable session before another delivery can join it. The
@@ -1902,6 +4433,7 @@ class AlarmEngine internal constructor(private val context: Context,
       RingingService.stopSession(sessionId)
     } else RingingService.refresh(context, sessionId)
   }
+
   private fun endSession(sessionId: String, reason: String) {
     val session = alerts.session(sessionId) ?: return
     if (session.state !in setOf("Active", "Starting")) return
@@ -1914,104 +4446,232 @@ class AlarmEngine internal constructor(private val context: Context,
         alerts.action(actionRecord(it.occurrenceId, reason, it.generation + 1))
       }
     }
-    members.forEach { val record = alerts.find(it.occurrenceId)!!
+    members.forEach {
+      val record = alerts.find(it.occurrenceId)!!
       if (record.profile != RoutinePolicy.PROFILE) AlarmNotifications(context).unresolved(record)
       else AlarmNotifications(context).clearAttention(record.occurrenceId)
     }
     changed(calendarOpportunity = true)
   }
+
   /** Service-owned deadline requests are guarded again by native civil-date state. */
-  fun expireRoutineDeliveries() = submit { closeProtectedRoutineDays(); changed() }
-  fun sessionMembers(sessionId: String, callback: (List<Pair<AlertRecord, String>>) -> Unit) = submit {
-    callback(memberViews(sessionId))
-  }
-  data class SessionMemberContent(val title: String, val eventStartMs: Long, val eventEndMs: Long,
-    val dueAtMs: Long, val allDay: Boolean, val zoneId: String, val dueLinked: Boolean)
-  data class SessionSnapshot(val id: String, val state: String, val members: List<Pair<AlertRecord, String>>,
-    val theme: String, val atmosphere: String, val content: Map<String, SessionMemberContent> = emptyMap(), val language: String = PresentationLanguage.language, val presentationRevision: Long = 0, val observedAtMs: Long = 0,
-    val postponePreferences: PostponePreferencesRecord? = null)
-  fun sessionSnapshot(sessionId: String, callback: (SessionSnapshot) -> Unit, failed: (String) -> Unit) = request({
-    reconcileDeliveryPresentation()
+  fun expireRoutineDeliveries() = submit {
     closeProtectedRoutineDays()
-    val session = alerts.session(sessionId)
-    val appearance = AppearancePolicy.captured(session?.resolvedAtmosphere, session?.resolvedBrightness)
-    val members = alerts.members(sessionId)
-    val content = members.mapNotNull { record -> memberContent(record.occurrenceId)?.let { record.occurrenceId to it } }.toMap()
-    SessionSnapshot(sessionId, session?.state ?: "Ended", members.map { it to (content[it.occurrenceId]?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())) },
-      appearance.brightness, appearance.atmosphere, content, presentationRevision = presentationRevision, observedAtMs = now(),
-      postponePreferences = alerts.postponePreferences())
-  }, { callback(it as SessionSnapshot) }, failed)
-  private fun memberViews(sessionId: String) = alerts.members(sessionId).map { it to
-    (memberContent(it.occurrenceId)?.title ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e())) }
-  private fun memberContent(id: String): SessionMemberContent? {
-    if (!unlocked()) return null
-    return try { prepareContentActions().records().find(id)?.let {
-      SessionMemberContent(it.title, it.eventStartMs, it.eventEndMs, it.dueAtMs, it.allDay, it.zoneId, it.dueLinked)
-    } } catch (_: Exception) { null /* DP actions remain available if private projection is unavailable. */ }
-  }
-  fun recover(finished: () -> Unit = {}) = submit(finished) {
-    reconcileDeliveryPresentation()
-    // Older catch-up rows labeled a reminder with no alert as Missed. Repair only
-    // this impossible delivery state, without moving targets or registering alarms.
-    alerts.all().filter { it.mode == "None" && it.state == "Missed" }.forEach { alerts.put(it.copy(state = "NoAlert")) }
-    if (unlocked()) {
-      val db = prepareContentActions()
-      applyPending(db)
-      series.recover()
-      alerts.all().filter { it.state == "Changing" }.forEach { alert ->
-        db.records().find(alert.occurrenceId)?.let { record ->
-          val eligible = !record.completed && !record.deleted && !record.skipped && (alert.previousState == null ||
-            alert.previousState in setOf("Scheduled", "Pending", "Blocked", "NoAlert"))
-          db.records().pending(projection("recover:${alert.occurrenceId}:${alert.generation}", record, alert.generation)
-            .copy(targetMs = alert.targetMs, eligible = eligible))
-        }
-      }
-      applyPending(db); replayHistory(db)
-      try { syncProtectedSettings(db.records().settings() ?: defaultSettings()) }
-      catch (_: Exception) { /* Leave mirror repair retryable, never block scheduling recovery. */ }
-    }
-    alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
-    alerts.pendingRoutineAlerts().forEach { settleRoutineAlert(it) }
-    closeProtectedRoutineDays()
-    alerts.all().filter { it.state in setOf("Scheduled", "Pending", "Blocked") }.forEach { register(it) }
-    series.recover()
-    if (unlocked()) routines.reconcile()
-    val caps = capabilities()
-    Log.i("Remilo", "Recovery finished: unlocked=${caps["unlocked"]} exact=${caps["exactAlarms"]} notifications=${caps["notifications"]} channel=${caps["channelEnabled"]}")
     changed()
   }
 
+  fun sessionMembers(sessionId: String, callback: (List<Pair<AlertRecord, String>>) -> Unit) =
+    submit {
+      callback(memberViews(sessionId))
+    }
+
+  data class SessionMemberContent(
+    val title: String,
+    val eventStartMs: Long,
+    val eventEndMs: Long,
+    val dueAtMs: Long,
+    val allDay: Boolean,
+    val zoneId: String,
+    val dueLinked: Boolean,
+  )
+
+  data class SessionSnapshot(
+    val id: String,
+    val state: String,
+    val members: List<Pair<AlertRecord, String>>,
+    val theme: String,
+    val atmosphere: String,
+    val content: Map<String, SessionMemberContent> = emptyMap(),
+    val language: String = PresentationLanguage.language,
+    val presentationRevision: Long = 0,
+    val observedAtMs: Long = 0,
+    val postponePreferences: PostponePreferencesRecord? = null,
+  )
+
+  fun sessionSnapshot(
+    sessionId: String,
+    callback: (SessionSnapshot) -> Unit,
+    failed: (String) -> Unit,
+  ) =
+    request(
+      {
+        reconcileDeliveryPresentation()
+        closeProtectedRoutineDays()
+        val session = alerts.session(sessionId)
+        val appearance =
+          AppearancePolicy.captured(session?.resolvedAtmosphere, session?.resolvedBrightness)
+        val members = alerts.members(sessionId)
+        val content =
+          members
+            .mapNotNull { record ->
+              memberContent(record.occurrenceId)?.let { record.occurrenceId to it }
+            }
+            .toMap()
+        SessionSnapshot(
+          sessionId,
+          session?.state ?: "Ended",
+          members.map {
+            it to
+              (content[it.occurrenceId]?.title
+                ?: com.remilo.alarm.presentation.L10n.text(
+                  context,
+                  NativeMessages.m_31757bbfa17e(),
+                ))
+          },
+          appearance.brightness,
+          appearance.atmosphere,
+          content,
+          presentationRevision = presentationRevision,
+          observedAtMs = now(),
+          postponePreferences = alerts.postponePreferences(),
+        )
+      },
+      { callback(it as SessionSnapshot) },
+      failed,
+    )
+
+  private fun memberViews(sessionId: String) =
+    alerts.members(sessionId).map {
+      it to
+        (memberContent(it.occurrenceId)?.title
+          ?: com.remilo.alarm.presentation.L10n.text(context, NativeMessages.m_31757bbfa17e()))
+    }
+
+  private fun memberContent(id: String): SessionMemberContent? {
+    if (!unlocked()) return null
+    return try {
+      prepareContentActions().records().find(id)?.let {
+        SessionMemberContent(
+          it.title,
+          it.eventStartMs,
+          it.eventEndMs,
+          it.dueAtMs,
+          it.allDay,
+          it.zoneId,
+          it.dueLinked,
+        )
+      }
+    } catch (_: Exception) {
+      null /* DP actions remain available if private projection is unavailable. */
+    }
+  }
+
+  fun recover(finished: () -> Unit = {}) =
+    submit(finished) {
+      reconcileDeliveryPresentation()
+      // Older catch-up rows labeled a reminder with no alert as Missed. Repair only
+      // this impossible delivery state, without moving targets or registering alarms.
+      alerts
+        .all()
+        .filter { it.mode == "None" && it.state == "Missed" }
+        .forEach { alerts.put(it.copy(state = "NoAlert")) }
+      if (unlocked()) {
+        val db = prepareContentActions()
+        applyPending(db)
+        series.recover()
+        alerts
+          .all()
+          .filter { it.state == "Changing" }
+          .forEach { alert ->
+            db.records().find(alert.occurrenceId)?.let { record ->
+              val eligible =
+                !record.completed &&
+                  !record.deleted &&
+                  !record.skipped &&
+                  (alert.previousState == null ||
+                    alert.previousState in setOf("Scheduled", "Pending", "Blocked", "NoAlert"))
+              db
+                .records()
+                .pending(
+                  projection(
+                      "recover:${alert.occurrenceId}:${alert.generation}",
+                      record,
+                      alert.generation,
+                    )
+                    .copy(targetMs = alert.targetMs, eligible = eligible)
+                )
+            }
+          }
+        applyPending(db)
+        replayHistory(db)
+        try {
+          syncProtectedSettings(db.records().settings() ?: defaultSettings())
+        } catch (_: Exception) {
+          /* Leave mirror repair retryable, never block scheduling recovery. */
+        }
+      }
+      alerts.pendingBulkSnoozes().forEach { resumeBulkSnooze(it) }
+      alerts.pendingRoutineAlerts().forEach { settleRoutineAlert(it) }
+      closeProtectedRoutineDays()
+      alerts
+        .all()
+        .filter { it.state in setOf("Scheduled", "Pending", "Blocked") }
+        .forEach { register(it) }
+      series.recover()
+      if (unlocked()) routines.reconcile()
+      val caps = capabilities()
+      Log.i(
+        "Remilo",
+        "Recovery finished: unlocked=${caps["unlocked"]} exact=${caps["exactAlarms"]} notifications=${caps["notifications"]} channel=${caps["channelEnabled"]}",
+      )
+      changed()
+    }
+
   internal fun close() {
-    worker.submit { preview.close(); content?.close(); operational.close() }.get(10, TimeUnit.SECONDS)
+    worker
+      .submit {
+        preview.close()
+        content?.close()
+        operational.close()
+      }
+      .get(10, TimeUnit.SECONDS)
     worker.shutdown()
   }
 
   private fun closeProtectedRoutineDays() {
-    val zone = ZoneId.systemDefault(); val today = RoutinePolicy.date(now(), zone).toString()
-    alerts.all().filter { it.profile == RoutinePolicy.PROFILE }.forEach { alert ->
-      val date = alert.nominalSlot?.substringBefore('T') ?: return@forEach
-      if (date < today || alert.dayEnded || alert.dayStarted && date != today) {
-        val state = if (alert.state in setOf("Completed", "Skipped", "Deleted", "Replaced")) alert.state else "Expired"
-        if (!alert.dayEnded || state != alert.state || alert.sessionId != null) {
-          alerts.put(alert.copy(state = state, dayEnded = true, generation = alert.generation + 1, sessionId = null))
-          alert.sessionId?.let(::refreshOrEndSession)
-          try { scheduler.cancel(alert) } catch (_: Exception) { }
-        }
-        AlarmNotifications(context).clearAttention(alert.occurrenceId)
-      } else if (date == today) {
-        val expiry = RoutinePolicy.end(java.time.LocalDate.parse(date), zone)
-        if (expiry != alert.expiresAtMs) {
-          alerts.put(alert.copy(expiresAtMs = expiry))
-          alert.sessionId?.let { RingingService.refresh(context, it) }
+    val zone = ZoneId.systemDefault()
+    val today = RoutinePolicy.date(now(), zone).toString()
+    alerts
+      .all()
+      .filter { it.profile == RoutinePolicy.PROFILE }
+      .forEach { alert ->
+        val date = alert.nominalSlot?.substringBefore('T') ?: return@forEach
+        if (date < today || alert.dayEnded || alert.dayStarted && date != today) {
+          val state =
+            if (alert.state in setOf("Completed", "Skipped", "Deleted", "Replaced")) alert.state
+            else "Expired"
+          if (!alert.dayEnded || state != alert.state || alert.sessionId != null) {
+            alerts.put(
+              alert.copy(
+                state = state,
+                dayEnded = true,
+                generation = alert.generation + 1,
+                sessionId = null,
+              )
+            )
+            alert.sessionId?.let(::refreshOrEndSession)
+            try {
+              scheduler.cancel(alert)
+            } catch (_: Exception) {}
+          }
+          AlarmNotifications(context).clearAttention(alert.occurrenceId)
+        } else if (date == today) {
+          val expiry = RoutinePolicy.end(java.time.LocalDate.parse(date), zone)
+          if (expiry != alert.expiresAtMs) {
+            alerts.put(alert.copy(expiresAtMs = expiry))
+            alert.sessionId?.let { RingingService.refresh(context, it) }
+          }
         }
       }
-    }
   }
 
   companion object {
     @Volatile private var instance: AlarmEngine? = null
-    fun get(context: Context): AlarmEngine = instance ?: synchronized(this) {
-      instance ?: AlarmEngine(context.applicationContext).also { instance = it }
-    }
+
+    fun get(context: Context): AlarmEngine =
+      instance
+        ?: synchronized(this) {
+          instance ?: AlarmEngine(context.applicationContext).also { instance = it }
+        }
   }
 }

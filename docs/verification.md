@@ -10,12 +10,13 @@ in the relevant task or [backlog](backlog.md).
 
 | Command | Coverage |
 |---|---|
-| `npm run verify` | Localization, local docs links, current assets/presentation, TypeScript, ESLint, shared tests and Node tooling fixtures |
+| `npm run verify` | Prettier, localization, local docs links, current assets/presentation, TypeScript, ESLint, shared tests and Node tooling fixtures |
+| `npm run verify:expo` | Installed dependency versions against the current Expo SDK's compatibility recommendations |
 | `npm run verify:docs` | Maintained Markdown links/images/local anchors; no network |
 | `npm run verify:assets` | Current manifests, file facts, copies and generated presentation; `verify:design` is an alias |
 | `npm run verify:localization` | Bilingual messages, argument/plural shape, escaping and generated-output determinism |
 | `npm run test:tooling` | Controlled host/process/build/device fixtures without real installation |
-| `npm run verify:android` | Native unit tests, module/app lint and bundled release assembly |
+| `npm run verify:android` | Spotless, native unit tests, module/app lint and bundled release assembly |
 | `npm run verify:all` | Shared plus Android checks and assembly, with a private summary |
 | `npm run release:prepare` | Combined checks and existing-key signed assembly; no installation/publication |
 
@@ -32,6 +33,48 @@ Asset checks establish current file integrity and selection consistency. Encoded
 header checks do not establish decoded pixels or visual quality; deterministic
 export/audit fixtures use Pillow for those claims. Authorized asset edits update
 the current manifest, without historical commits, approval files or deletion lists.
+
+## Expo dependency compatibility
+
+Run `npm ci`, then `npm run verify:expo` from the repository root. This runs
+`expo install --check --json` with the installed CLI and reports mismatches without
+editing the manifest or lockfile. The shared CI job runs this check on dependency
+pull requests. Local `npm run verify` and release preparation keep their existing
+checks.
+
+If Expo reports a mismatch, use `npx expo install <package>` for the affected
+packages, review the manifest and lockfile changes, then run `npm ci` and
+`npm run verify:expo` again. Keep fixes within the current SDK. If the CLI falls
+back to the bundled version map because Expo is unreachable, rerun with network
+access to confirm the current recommendation.
+
+## Source formatting
+
+From the repository root, run `npm run format` to format JavaScript and TypeScript
+or `npm run format:check` to check without writing. VS Code recommends the Prettier
+extension and uses it for those languages. Enable format on save in your editor
+settings if you want it.
+
+For Kotlin, run the Gradle wrapper from `android/`. Use `spotlessApply` to format
+app and alarm module source and tests, or `spotlessCheck` to check without writing.
+
+```powershell
+.\gradlew.bat :app:spotlessApply :remilo-alarm:spotlessApply
+.\gradlew.bat :app:spotlessCheck :remilo-alarm:spotlessCheck
+```
+
+```sh
+./gradlew :app:spotlessApply :remilo-alarm:spotlessApply
+./gradlew :app:spotlessCheck :remilo-alarm:spotlessCheck
+```
+
+Both formatters skip generated source. The localization and asset checks verify
+that those files still match their generators.
+
+CI runs shared and Android verification separately and cancels older runs for the
+same PR or branch and event type. The Android job reuses Gradle downloads. If
+Android verification fails after producing lint or unit test reports, find them
+in the failed run's `android-verification-reports` artifact for seven days.
 
 ## Match validation to the change
 

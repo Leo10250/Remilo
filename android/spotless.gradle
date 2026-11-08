@@ -1,0 +1,24 @@
+// Keep this plugin off the root classpath. React Native dependencies pin their own Spotless versions.
+buildscript {
+  repositories {
+    gradlePluginPortal()
+  }
+  dependencies {
+    classpath('com.diffplug.spotless:spotless-plugin-gradle:8.10.3')
+  }
+}
+
+apply plugin: com.diffplug.gradle.spotless.SpotlessPlugin
+
+spotless {
+  kotlin {
+    target 'src/**/*.kt'
+    targetExclude 'src/**/AtmosphereTokens.kt', 'src/**/MessageCatalog.kt', 'src/**/NativeMessages.kt'
+    // Preserve the Expo splash block, including its marker lines and indentation.
+    toggleOffOnRegex(
+      '(?m)(^[ \\t]*// @generated begin expo-splashscreen[^\\n]*\\n' +
+        '[\\s\\S]*?^[ \\t]*// @generated end expo-splashscreen[^\\n]*$)'
+    )
+    ktfmt('0.64').googleStyle().configure { it.setRemoveUnusedImports(false) }
+  }
+}

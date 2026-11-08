@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { headerBlendBounds, headerScrimGeometry, headerSurfaceOpacity } from '../ui/header-transition';
+import {
+  headerBlendBounds,
+  headerScrimGeometry,
+  headerSurfaceOpacity,
+} from '../ui/header-transition';
 
 it('begins only in the final decorative span and reaches an opaque pinned toolbar', () => {
   expect(headerBlendBounds(144)).toEqual({ start: 80, end: 144 });
@@ -10,14 +14,19 @@ it('begins only in the final decorative span and reaches an opaque pinned toolba
 
 it('remains continuous at both blend boundaries', () => {
   for (const edge of [80, 144]) {
-    expect(Math.abs(headerSurfaceOpacity(edge + 0.01, 144) - headerSurfaceOpacity(edge - 0.01, 144))).toBeLessThan(0.00001);
+    expect(
+      Math.abs(headerSurfaceOpacity(edge + 0.01, 144) - headerSurfaceOpacity(edge - 0.01, 144)),
+    ).toBeLessThan(0.00001);
   }
 });
 
 it('has bounded monotone opacity with exactly reversible intermediate states', () => {
   const offsets = Array.from({ length: 201 }, (_, i) => i);
-  const forward = offsets.map(y => headerSurfaceOpacity(y, 144));
-  const reverse = offsets.toReversed().map(y => headerSurfaceOpacity(y, 144)).toReversed();
+  const forward = offsets.map((y) => headerSurfaceOpacity(y, 144));
+  const reverse = offsets
+    .toReversed()
+    .map((y) => headerSurfaceOpacity(y, 144))
+    .toReversed();
   expect(reverse).toEqual(forward);
   for (let i = 1; i < forward.length; i++) {
     expect(forward[i]).toBeGreaterThanOrEqual(forward[i - 1]);

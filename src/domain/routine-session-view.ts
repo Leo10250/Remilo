@@ -2,8 +2,9 @@ export type RoutineSessionRequest = { routineId: string; date: string | null; ep
 
 /** Unresolved lookups belong to one view; resolved days share the native dated cache. */
 export function routineSessionQueryKey(request: RoutineSessionRequest, viewId: string) {
-  return request.date === null ? ['routine-session', request.routineId, null, viewId, request.epoch] as const :
-    ['routine-session', request.routineId, request.date] as const;
+  return request.date === null
+    ? (['routine-session', request.routineId, null, viewId, request.epoch] as const)
+    : (['routine-session', request.routineId, request.date] as const);
 }
 
 /** A mounted view keeps the first native-resolved day until Open today is explicit. */
@@ -16,7 +17,8 @@ export class RoutineSessionViewDates {
   }
 
   resolve(request: RoutineSessionRequest, date: string): boolean {
-    if (request.epoch !== this.epoch || request.date !== null || this.dates.has(request.routineId)) return false;
+    if (request.epoch !== this.epoch || request.date !== null || this.dates.has(request.routineId))
+      return false;
     this.dates.set(request.routineId, date);
     return true;
   }

@@ -4,18 +4,26 @@ const config = getDefaultConfig(__dirname);
 // Opt-in fixture preview for visual review only. Android always resolves the real module.
 if (process.env.REMILO_UI_PREVIEW === '1') {
   config.resolver.resolveRequest = (context, name, platform) => {
-    if (platform === 'web' && name.endsWith('/RemiloAlarmModule')) return {
-      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/preview-engine.ts'),
-    };
-    if (platform === 'web' && name.endsWith('/presentation-preview')) return {
-      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/presentation-preview.tsx'),
-    };
-    if (platform === 'web' && name === 'expo-file-system') return {
-      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/preview-files.ts'),
-    };
-    if (platform === 'web' && name === 'expo-sharing') return {
-      type: 'sourceFile', filePath: path.join(__dirname, 'verification/ui/preview-sharing.ts'),
-    };
+    if (platform === 'web' && name.endsWith('/RemiloAlarmModule'))
+      return {
+        type: 'sourceFile',
+        filePath: path.join(__dirname, 'verification/ui/preview-engine.ts'),
+      };
+    if (platform === 'web' && name.endsWith('/presentation-preview'))
+      return {
+        type: 'sourceFile',
+        filePath: path.join(__dirname, 'verification/ui/presentation-preview.tsx'),
+      };
+    if (platform === 'web' && name === 'expo-file-system')
+      return {
+        type: 'sourceFile',
+        filePath: path.join(__dirname, 'verification/ui/preview-files.ts'),
+      };
+    if (platform === 'web' && name === 'expo-sharing')
+      return {
+        type: 'sourceFile',
+        filePath: path.join(__dirname, 'verification/ui/preview-sharing.ts'),
+      };
     return context.resolveRequest(context, name, platform);
   };
 }

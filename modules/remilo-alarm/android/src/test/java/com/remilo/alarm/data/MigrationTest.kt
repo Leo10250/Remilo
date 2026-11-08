@@ -15,221 +15,537 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class MigrationTest {
-  @Test fun chooserCredentialVersion13PreservesPostponeHistoryAndAuthoredTimingThroughRoutineUpgrade17() {
+  @Test
+  fun chooserCredentialVersion13PreservesPostponeHistoryAndAuthoredTimingThroughRoutineUpgrade17() {
     val context = RuntimeEnvironment.getApplication()
     val name = "chooser-content-v13.db"
     legacy(context, "com.remilo.alarm.data.ContentDatabase", name, 13).use { raw ->
-      raw.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,definedAlarmAtMs,notes) VALUES ('postponed','Retained reminder',1000,2000,1500,500,0,7,1200,'Retained notes')")
-      raw.execSQL("INSERT INTO history (operationId,occurrenceId,kind,occurredAtMs,generation,targetMs) VALUES ('postpone-history','postponed','Postpone',1300,8,99000)")
+      raw.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,definedAlarmAtMs,notes) VALUES ('postponed','Retained reminder',1000,2000,1500,500,0,7,1200,'Retained notes')"
+      )
+      raw.execSQL(
+        "INSERT INTO history (operationId,occurrenceId,kind,occurredAtMs,generation,targetMs) VALUES ('postpone-history','postponed','Postpone',1300,8,99000)"
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, name).allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, name)
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       val reminder = db.records().find("postponed")!!
-      assertEquals("Retained reminder", reminder.title); assertEquals("Retained notes", reminder.notes)
-      assertEquals(1000L, reminder.eventStartMs); assertEquals(2000L, reminder.eventEndMs)
-      assertEquals(1500L, reminder.dueAtMs); assertEquals(1200L, reminder.definedAlarmAtMs)
-      assertFalse(reminder.completed); assertEquals(7L, reminder.revision)
+      assertEquals("Retained reminder", reminder.title)
+      assertEquals("Retained notes", reminder.notes)
+      assertEquals(1000L, reminder.eventStartMs)
+      assertEquals(2000L, reminder.eventEndMs)
+      assertEquals(1500L, reminder.dueAtMs)
+      assertEquals(1200L, reminder.definedAlarmAtMs)
+      assertFalse(reminder.completed)
+      assertEquals(7L, reminder.revision)
       val history = db.records().history("postponed").single()
-      assertEquals("Postpone", history.kind); assertEquals(99000L, history.targetMs); assertEquals(8L, history.generation)
+      assertEquals("Postpone", history.kind)
+      assertEquals(99000L, history.targetMs)
+      assertEquals(8L, history.generation)
       assertEquals(17, db.openHelper.readableDatabase.version)
-    } finally { db.close(); context.deleteDatabase(name) }
+    } finally {
+      db.close()
+      context.deleteDatabase(name)
+    }
   }
 
-
-  @Test fun protectedV7PostponeMigrationPreservesPendingAndSettledSnoozeReceipts() {
+  @Test
+  fun protectedV7PostponeMigrationPreservesPendingAndSettledSnoozeReceipts() {
     val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
-    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v7-postpone.db", 7).use { db ->
-      db.execSQL("INSERT INTO bulk_snooze_receipts VALUES ('pending','session','key',50000,650000,10,0)")
-      db.execSQL("INSERT INTO bulk_snooze_receipts VALUES ('settled','session','other',60000,960000,15,1)")
-      db.execSQL("INSERT INTO bulk_snooze_members VALUES ('pending','one',7,8,'Pending')")
-      db.execSQL("INSERT INTO bulk_snooze_members VALUES ('settled','two',2,3,'Blocked')")
-    }
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v7-postpone.db").allowMainThreadQueries()
-      .addMigrations(*OperationalDatabase.MIGRATIONS).build()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v7-postpone.db", 7)
+      .use { db ->
+        db.execSQL(
+          "INSERT INTO bulk_snooze_receipts VALUES ('pending','session','key',50000,650000,10,0)"
+        )
+        db.execSQL(
+          "INSERT INTO bulk_snooze_receipts VALUES ('settled','session','other',60000,960000,15,1)"
+        )
+        db.execSQL("INSERT INTO bulk_snooze_members VALUES ('pending','one',7,8,'Pending')")
+        db.execSQL("INSERT INTO bulk_snooze_members VALUES ('settled','two',2,3,'Blocked')")
+      }
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v7-postpone.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
-      assertEquals(BulkSnoozeReceipt("pending", "session", "key", 50000, 650000, 10), db.records().bulkSnoozeReceipt("pending"))
-      assertEquals(BulkSnoozeReceipt("settled", "session", "other", 60000, 960000, 15, true), db.records().bulkSnoozeReceipt("settled"))
-      assertEquals(listOf(BulkSnoozeMember("pending", "one", 7, 8)), db.records().bulkSnoozeMembers("pending"))
+      assertEquals(
+        BulkSnoozeReceipt("pending", "session", "key", 50000, 650000, 10),
+        db.records().bulkSnoozeReceipt("pending"),
+      )
+      assertEquals(
+        BulkSnoozeReceipt("settled", "session", "other", 60000, 960000, 15, true),
+        db.records().bulkSnoozeReceipt("settled"),
+      )
+      assertEquals(
+        listOf(BulkSnoozeMember("pending", "one", 7, 8)),
+        db.records().bulkSnoozeMembers("pending"),
+      )
       assertEquals("Blocked", db.records().bulkSnoozeMembers("settled").single().status)
       assertNull(db.records().postponePreferences())
-      val postpone = BulkSnoozeReceipt("postpone", "session", "postpone-key", 60000, 999999, null, kind = "PostponeAll")
+      val postpone =
+        BulkSnoozeReceipt(
+          "postpone",
+          "session",
+          "postpone-key",
+          60000,
+          999999,
+          null,
+          kind = "PostponeAll",
+        )
       db.records().bulkSnoozeReceipt(postpone)
       assertEquals(postpone, db.records().bulkSnoozeReceipt("postpone"))
-      val mirror = PostponePreferencesRecord(tomorrowMorning = 630, tomorrowAfternoon = 900, tomorrowEvening = 1080, revision = 17)
+      val mirror =
+        PostponePreferencesRecord(
+          tomorrowMorning = 630,
+          tomorrowAfternoon = 900,
+          tomorrowEvening = 1080,
+          revision = 17,
+        )
       db.records().postponePreferences(mirror)
       assertEquals(mirror, db.records().postponePreferences())
       val columns = mutableListOf<String>()
-      db.openHelper.readableDatabase.query("PRAGMA table_info(postpone_preferences)").use { cursor ->
+      db.openHelper.readableDatabase.query("PRAGMA table_info(postpone_preferences)").use { cursor
+        ->
         while (cursor.moveToNext()) columns.add(cursor.getString(1))
       }
-      assertEquals(listOf("id", "tomorrowMorning", "tomorrowAfternoon", "tomorrowEvening", "revision"), columns)
-    } finally { db.close(); context.deleteDatabase("protected-v7-postpone.db") }
+      assertEquals(
+        listOf("id", "tomorrowMorning", "tomorrowAfternoon", "tomorrowEvening", "revision"),
+        columns,
+      )
+    } finally {
+      db.close()
+      context.deleteDatabase("protected-v7-postpone.db")
+    }
   }
 
-  @Test fun languageMigrationPreservesContentAndMapsOnlyKnownCalendarCopy() {
+  @Test
+  fun languageMigrationPreservesContentAndMapsOnlyKnownCalendarCopy() {
     val context = RuntimeEnvironment.getApplication()
-    legacy(context, "com.remilo.alarm.data.ContentDatabase", "language-migration.db", 12).use { db ->
-      db.execSQL("INSERT INTO settings VALUES ('app',9,10,600,840,1020,'remilo',1,'dark','retained','night')")
-      db.execSQL("INSERT INTO calendar_connection VALUES ('google',5,1,'subject','owner@example.test','owned','Owned','UTC','Google account connected. Review Calendar setup to continue.')")
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','My title 标题',1000,2000,1500,500,0,7,'Private notes')")
+    legacy(context, "com.remilo.alarm.data.ContentDatabase", "language-migration.db", 12).use { db
+      ->
+      db.execSQL(
+        "INSERT INTO settings VALUES ('app',9,10,600,840,1020,'remilo',1,'dark','retained','night')"
+      )
+      db.execSQL(
+        "INSERT INTO calendar_connection VALUES ('google',5,1,'subject','owner@example.test','owned','Owned','UTC','Google account connected. Review Calendar setup to continue.')"
+      )
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','My title 标题',1000,2000,1500,500,0,7,'Private notes')"
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "language-migration.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "language-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       val settings = db.records().settings()!!
-      assertEquals("en", settings.language); assertEquals(9L, settings.revision)
-      assertEquals("dark", settings.theme); assertEquals("night", settings.atmosphere)
+      assertEquals("en", settings.language)
+      assertEquals(9L, settings.revision)
+      assertEquals("dark", settings.theme)
+      assertEquals("night", settings.atmosphere)
       assertEquals("My title 标题", db.records().find("one")!!.title)
       assertEquals("Private notes", db.records().find("one")!!.notes)
       assertEquals(7L, db.records().find("one")!!.revision)
       val connection = db.calendar().connection()!!
       assertTrue(connection.messageKey.isNotEmpty())
-      assertEquals("Google account connected. Review Calendar setup to continue.", connection.message)
+      assertEquals(
+        "Google account connected. Review Calendar setup to continue.",
+        connection.message,
+      )
       assertEquals(5L, connection.revision)
-    } finally { db.close(); context.deleteDatabase("language-migration.db") }
+    } finally {
+      db.close()
+      context.deleteDatabase("language-migration.db")
+    }
   }
-  @Test fun protectedLanguageMigrationStoresOnlyEnglishAndReconciliationMetadata() {
+
+  @Test
+  fun protectedLanguageMigrationStoresOnlyEnglishAndReconciliationMetadata() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.OperationalDatabase", "language-protected.db", 6).close()
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "language-protected.db").allowMainThreadQueries()
-      .addMigrations(*OperationalDatabase.MIGRATIONS).build()
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "language-protected.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
       assertEquals(LanguageRecord(preference = "en"), db.records().language())
       val fields = LanguageRecord::class.java.declaredFields.map { it.name }.toSet()
-      assertFalse(fields.any { it.contains("title", true) || it.contains("notes", true) || it.contains("args", true) || it.contains("calendar", true) })
-    } finally { db.close(); context.deleteDatabase("language-protected.db") }
+      assertFalse(
+        fields.any {
+          it.contains("title", true) ||
+            it.contains("notes", true) ||
+            it.contains("args", true) ||
+            it.contains("calendar", true)
+        }
+      )
+    } finally {
+      db.close()
+      context.deleteDatabase("language-protected.db")
+    }
   }
-  @Test fun managedMigrationRecordsExistingInstallationWithoutGrantingPermission() {
+
+  @Test
+  fun managedMigrationRecordsExistingInstallationWithoutGrantingPermission() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "managed-migration.db", 11).use { db ->
-      db.execSQL("INSERT INTO calendar_connection VALUES ('google',5,1,'subject','owner@example.test','owned','Owned','UTC','Retained')")
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Local title',1000,2000,1500,500,0,7,'Retained notes')")
+      db.execSQL(
+        "INSERT INTO calendar_connection VALUES ('google',5,1,'subject','owner@example.test','owned','Owned','UTC','Retained')"
+      )
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Local title',1000,2000,1500,500,0,7,'Retained notes')"
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "managed-migration.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "managed-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       assertEquals("ExistingInstallation", db.managedCalendar().installation()!!.origin)
       val installationId = db.managedCalendar().installation()!!.installationId
       assertEquals(installationId, java.util.UUID.fromString(installationId).toString())
       assertEquals(installationId, db.managedCalendar().installation()!!.installationId)
-      assertNull(db.managedCalendar().binding()); assertNull(db.managedCalendar().policy())
-      assertTrue(db.managedCalendar().candidates().isEmpty()); assertTrue(db.managedCalendar().exports().isEmpty())
-      assertEquals(5L, db.calendar().connection()!!.revision); assertEquals("Retained notes", db.records().find("one")!!.notes)
+      assertNull(db.managedCalendar().binding())
+      assertNull(db.managedCalendar().policy())
+      assertTrue(db.managedCalendar().candidates().isEmpty())
+      assertTrue(db.managedCalendar().exports().isEmpty())
+      assertEquals(5L, db.calendar().connection()!!.revision)
+      assertEquals("Retained notes", db.records().find("one")!!.notes)
       db.close()
-      val reopened = Room.databaseBuilder(context, ContentDatabase::class.java, "managed-migration.db").allowMainThreadQueries().build()
-      try { assertEquals(installationId, reopened.managedCalendar().installation()!!.installationId) } finally { reopened.close() }
-    } finally { db.close(); context.deleteDatabase("managed-migration.db") }
+      val reopened =
+        Room.databaseBuilder(context, ContentDatabase::class.java, "managed-migration.db")
+          .allowMainThreadQueries()
+          .build()
+      try {
+        assertEquals(installationId, reopened.managedCalendar().installation()!!.installationId)
+      } finally {
+        reopened.close()
+      }
+    } finally {
+      db.close()
+      context.deleteDatabase("managed-migration.db")
+    }
   }
-  @Test fun newManagedSchemaRecordsFreshOrigin() {
-    val context = RuntimeEnvironment.getApplication(); context.deleteDatabase("remilo-content.db")
+
+  @Test
+  fun newManagedSchemaRecordsFreshOrigin() {
+    val context = RuntimeEnvironment.getApplication()
+    context.deleteDatabase("remilo-content.db")
     val db = ContentDatabase.open(context)
     try {
-      db.openHelper.writableDatabase.query("SELECT origin FROM calendar_installation_origin").use { cursor -> assertTrue(cursor.moveToFirst()); assertEquals("FreshInstallation", cursor.getString(0)) }
-      val installationId = db.openHelper.writableDatabase.query("SELECT installationId FROM calendar_installation_origin").use { cursor -> assertTrue(cursor.moveToFirst()); cursor.getString(0) }
+      db.openHelper.writableDatabase.query("SELECT origin FROM calendar_installation_origin").use {
+        cursor ->
+        assertTrue(cursor.moveToFirst())
+        assertEquals("FreshInstallation", cursor.getString(0))
+      }
+      val installationId =
+        db.openHelper.writableDatabase
+          .query("SELECT installationId FROM calendar_installation_origin")
+          .use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            cursor.getString(0)
+          }
       assertEquals(installationId, java.util.UUID.fromString(installationId).toString())
-      db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM calendar_managed_binding").use { cursor -> assertTrue(cursor.moveToFirst()); assertEquals(0, cursor.getInt(0)) }
+      db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM calendar_managed_binding").use {
+        cursor ->
+        assertTrue(cursor.moveToFirst())
+        assertEquals(0, cursor.getInt(0))
+      }
       db.close()
       val reopened = ContentDatabase.open(context)
-      try { reopened.openHelper.writableDatabase.query("SELECT installationId FROM calendar_installation_origin").use { cursor ->
-        assertTrue(cursor.moveToFirst()); assertEquals(installationId, cursor.getString(0))
-      } } finally { reopened.close() }
+      try {
+        reopened.openHelper.writableDatabase
+          .query("SELECT installationId FROM calendar_installation_origin")
+          .use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(installationId, cursor.getString(0))
+          }
+      } finally {
+        reopened.close()
+      }
+    } finally {
+      db.close()
+      context.deleteDatabase("remilo-content.db")
     }
-    finally { db.close(); context.deleteDatabase("remilo-content.db") }
   }
-  @Test fun observationMigrationPreservesLinksAndDoesNotInferRemoteDeletionFromOldMessages() {
+
+  @Test
+  fun observationMigrationPreservesLinksAndDoesNotInferRemoteDeletionFromOldMessages() {
     val context = RuntimeEnvironment.getApplication()
-    legacy(context, "com.remilo.alarm.data.ContentDatabase", "observations-migration.db", 8).use { db ->
-      db.execSQL("INSERT INTO calendar_connection VALUES ('google',5,1,'subject','original@example.test','owned','Owned','UTC','Retained')")
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Local title',1000,2000,1500,500,0,7,'Retained notes')")
-      db.execSQL("INSERT INTO calendar_links (occurrenceId,remoteKey,subject,calendarId,eventId,calendarName,origin,baseline,etag,state,message,htmlLink,revision,erased,checkedAtMs) VALUES ('one','identity','subject','owned','event','Owned','Imported','common values','reviewed etag','Suspended','Removed or cancelled','',3,0,1234)")
-      db.execSQL("INSERT INTO calendar_links (occurrenceId,remoteKey,subject,calendarId,eventId,calendarName,origin,baseline,etag,state,message,htmlLink,revision,erased,checkedAtMs) VALUES ('other','other-identity','other-subject','other','event','Other','Imported','other values','other etag','Detached','Unlinked','',2,0,2345)")
-      db.execSQL("INSERT INTO pending_schedules (operationId,occurrenceId,targetMs,generation) VALUES ('pending','one',9000,8)")
+    legacy(context, "com.remilo.alarm.data.ContentDatabase", "observations-migration.db", 8).use {
+      db ->
+      db.execSQL(
+        "INSERT INTO calendar_connection VALUES ('google',5,1,'subject','original@example.test','owned','Owned','UTC','Retained')"
+      )
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Local title',1000,2000,1500,500,0,7,'Retained notes')"
+      )
+      db.execSQL(
+        "INSERT INTO calendar_links (occurrenceId,remoteKey,subject,calendarId,eventId,calendarName,origin,baseline,etag,state,message,htmlLink,revision,erased,checkedAtMs) VALUES ('one','identity','subject','owned','event','Owned','Imported','common values','reviewed etag','Suspended','Removed or cancelled','',3,0,1234)"
+      )
+      db.execSQL(
+        "INSERT INTO calendar_links (occurrenceId,remoteKey,subject,calendarId,eventId,calendarName,origin,baseline,etag,state,message,htmlLink,revision,erased,checkedAtMs) VALUES ('other','other-identity','other-subject','other','event','Other','Imported','other values','other etag','Detached','Unlinked','',2,0,2345)"
+      )
+      db.execSQL(
+        "INSERT INTO pending_schedules (operationId,occurrenceId,targetMs,generation) VALUES ('pending','one',9000,8)"
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "observations-migration.db").allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "observations-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       val link = db.links().link("one")!!
-      assertEquals("Unknown", link.availability); assertNull(link.observedAtMs); assertEquals(1234L, link.lastCheckAttemptAtMs)
-      assertTrue(link.requiresReview); assertEquals("original@example.test", link.accountEmail)
-      assertEquals("common values", link.baseline); assertEquals(3L, link.revision); assertEquals("reviewed etag", link.etag)
-      assertEquals("", db.links().link("other")!!.accountEmail); assertEquals("Detached", db.links().link("other")!!.state)
-      assertEquals("Retained notes", db.records().find("one")!!.notes); assertEquals(8L, db.records().pending().single().generation)
-    } finally { db.close(); context.deleteDatabase("observations-migration.db") }
+      assertEquals("Unknown", link.availability)
+      assertNull(link.observedAtMs)
+      assertEquals(1234L, link.lastCheckAttemptAtMs)
+      assertTrue(link.requiresReview)
+      assertEquals("original@example.test", link.accountEmail)
+      assertEquals("common values", link.baseline)
+      assertEquals(3L, link.revision)
+      assertEquals("reviewed etag", link.etag)
+      assertEquals("", db.links().link("other")!!.accountEmail)
+      assertEquals("Detached", db.links().link("other")!!.state)
+      assertEquals("Retained notes", db.records().find("one")!!.notes)
+      assertEquals(8L, db.records().pending().single().generation)
+    } finally {
+      db.close()
+      context.deleteDatabase("observations-migration.db")
+    }
   }
-  @Test fun linkMigrationPreservesPublicationJobsAndDoesNotOptInOrBackfill() {
+
+  @Test
+  fun linkMigrationPreservesPublicationJobsAndDoesNotOptInOrBackfill() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "links-migration.db", 7).use { db ->
-      db.execSQL("INSERT INTO calendar_connection VALUES ('google',5,1,'subject','private@example.test','owned','Owned','UTC','Retained connection')")
-      val values = linkedMapOf<String, Any>("operationId" to "publish", "occurrenceId" to "one", "requestKey" to "immutable",
-        "reminderRevision" to 3, "connectionRevision" to 5, "subject" to "subject", "email" to "private@example.test",
-        "calendarId" to "owned", "calendarName" to "Owned", "zoneId" to "UTC", "eventId" to "stable-id",
-        "fingerprint" to "saved-hash", "payload" to "immutable private payload", "state" to "Unconfirmed",
-        "attempted" to 1, "readOnly" to 0, "message" to "Retained", "htmlLink" to "", "etag" to "reviewed", "publishedAtMs" to 100)
-      db.execSQL("INSERT INTO calendar_operations (" + values.keys.joinToString(",") + ") VALUES (" + values.keys.joinToString(",") { "?" } + ")", values.values.toTypedArray())
+      db.execSQL(
+        "INSERT INTO calendar_connection VALUES ('google',5,1,'subject','private@example.test','owned','Owned','UTC','Retained connection')"
+      )
+      val values =
+        linkedMapOf<String, Any>(
+          "operationId" to "publish",
+          "occurrenceId" to "one",
+          "requestKey" to "immutable",
+          "reminderRevision" to 3,
+          "connectionRevision" to 5,
+          "subject" to "subject",
+          "email" to "private@example.test",
+          "calendarId" to "owned",
+          "calendarName" to "Owned",
+          "zoneId" to "UTC",
+          "eventId" to "stable-id",
+          "fingerprint" to "saved-hash",
+          "payload" to "immutable private payload",
+          "state" to "Unconfirmed",
+          "attempted" to 1,
+          "readOnly" to 0,
+          "message" to "Retained",
+          "htmlLink" to "",
+          "etag" to "reviewed",
+          "publishedAtMs" to 100,
+        )
+      db.execSQL(
+        "INSERT INTO calendar_operations (" +
+          values.keys.joinToString(",") +
+          ") VALUES (" +
+          values.keys.joinToString(",") { "?" } +
+          ")",
+        values.values.toTypedArray(),
+      )
       db.execSQL("INSERT INTO calendar_publications VALUES ('one','publish')")
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "links-migration.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "links-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       assertEquals(5L, db.calendar().connection()!!.revision)
       assertEquals("stable-id", db.calendar().operation("publish")!!.eventId)
       assertEquals("immutable private payload", db.calendar().operation("publish")!!.payload)
       assertEquals("Unconfirmed", db.calendar().operation("publish")!!.state)
       assertEquals("publish", db.calendar().binding("one")!!.operationId)
-      assertTrue(db.links().links().isEmpty()); assertTrue(db.links().operations().isEmpty())
-    } finally { db.close(); context.deleteDatabase("links-migration.db") }
+      assertTrue(db.links().links().isEmpty())
+      assertTrue(db.links().operations().isEmpty())
+    } finally {
+      db.close()
+      context.deleteDatabase("links-migration.db")
+    }
   }
-  @Test fun calendarMigrationPreservesVersionSixContentAndPendingAlarmState() {
+
+  @Test
+  fun calendarMigrationPreservesVersionSixContentAndPendingAlarmState() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "calendar-migration.db", 6).use { db ->
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Private',1000,2000,1500,500,0,7,'Retained')")
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,notes) VALUES ('one','Private',1000,2000,1500,500,0,7,'Retained')"
+      )
       db.execSQL("INSERT INTO history VALUES ('done','one','Done',600,2,1000)")
-      db.execSQL("INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings','night')")
+      db.execSQL(
+        "INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings','night')"
+      )
       db.execSQL("INSERT INTO lists VALUES ('empty','Empty','empty',3,500)")
       db.execSQL("INSERT INTO purged_occurrences VALUES ('purged',NULL,NULL)")
-      db.execSQL("INSERT INTO pending_schedules (operationId,occurrenceId,targetMs,generation) VALUES ('pending','one',9000,8)")
+      db.execSQL(
+        "INSERT INTO pending_schedules (operationId,occurrenceId,targetMs,generation) VALUES ('pending','one',9000,8)"
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "calendar-migration.db").allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "calendar-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_6_7,
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
-      assertEquals("Retained", db.records().find("one")!!.notes); assertEquals(7L, db.records().find("one")!!.revision)
-      assertEquals("Done", db.records().history("one").single().kind); assertEquals("night", db.records().settings()!!.atmosphere)
-      assertEquals("Empty", db.records().list("empty")!!.name); assertNotNull(db.records().purged("purged"))
-      assertEquals(8L, db.records().pending().single().generation); assertEquals(9000L, db.records().pending().single().targetMs)
-      assertNull(db.calendar().connection()); assertTrue(db.calendar().operations().isEmpty())
-    } finally { db.close(); context.deleteDatabase("calendar-migration.db") }
+      assertEquals("Retained", db.records().find("one")!!.notes)
+      assertEquals(7L, db.records().find("one")!!.revision)
+      assertEquals("Done", db.records().history("one").single().kind)
+      assertEquals("night", db.records().settings()!!.atmosphere)
+      assertEquals("Empty", db.records().list("empty")!!.name)
+      assertNotNull(db.records().purged("purged"))
+      assertEquals(8L, db.records().pending().single().generation)
+      assertEquals(9000L, db.records().pending().single().targetMs)
+      assertNull(db.calendar().connection())
+      assertTrue(db.calendar().operations().isEmpty())
+    } finally {
+      db.close()
+      context.deleteDatabase("calendar-migration.db")
+    }
   }
-  @Test fun purgeMigrationRetainsExistingTrashHistorySettingsAndLists() {
+
+  @Test
+  fun purgeMigrationRetainsExistingTrashHistorySettingsAndLists() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-v5-purge.db", 5).use { db ->
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,deleted,notes) VALUES ('old','Private',1000,2000,1500,500,0,7,1,'Keep until confirmed')")
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,deleted,notes) VALUES ('old','Private',1000,2000,1500,500,0,7,1,'Keep until confirmed')"
+      )
       db.execSQL("INSERT INTO history VALUES ('trash','old','Delete',600,2,1000)")
-      db.execSQL("INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings','night')")
+      db.execSQL(
+        "INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings','night')"
+      )
       db.execSQL("INSERT INTO lists VALUES ('empty','Empty','empty',3,500)")
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v5-purge.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "content-v5-purge.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_5_6,
+          ContentDatabase.MIGRATION_6_7,
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       assertEquals("Keep until confirmed", db.records().find("old")!!.notes)
-      assertTrue(db.records().find("old")!!.deleted); assertEquals(7L, db.records().find("old")!!.revision)
+      assertTrue(db.records().find("old")!!.deleted)
+      assertEquals(7L, db.records().find("old")!!.revision)
       assertEquals("Delete", db.records().history("old").single().kind)
-      assertEquals("night", db.records().settings()!!.atmosphere); assertEquals("dark", db.records().settings()!!.theme)
-      assertEquals("Empty", db.records().list("empty")!!.name); assertTrue(db.records().purged().isEmpty())
-    } finally { db.close(); context.deleteDatabase("content-v5-purge.db") }
+      assertEquals("night", db.records().settings()!!.atmosphere)
+      assertEquals("dark", db.records().settings()!!.theme)
+      assertEquals("Empty", db.records().list("empty")!!.name)
+      assertTrue(db.records().purged().isEmpty())
+    } finally {
+      db.close()
+      context.deleteDatabase("content-v5-purge.db")
+    }
   }
-  private fun legacy(context: Context, database: String, name: String, version: Int = 1): SQLiteDatabase {
+
+  private fun legacy(
+    context: Context,
+    database: String,
+    name: String,
+    version: Int = 1,
+  ): SQLiteDatabase {
     context.deleteDatabase(name)
     val path = context.getDatabasePath(name)
     path.parentFile!!.mkdirs()
-    val source = javaClass.getResourceAsStream("/$database/$version.json")!!.bufferedReader().use { it.readText() }
+    val source =
+      javaClass.getResourceAsStream("/$database/$version.json")!!.bufferedReader().use {
+        it.readText()
+      }
     val schema = JSONObject(source).getJSONObject("database")
     return SQLiteDatabase.openOrCreateDatabase(path, null).also { db ->
       val entities = schema.getJSONArray("entities")
       for (index in 0 until entities.length()) {
         val entity = entities.getJSONObject(index)
-        db.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName")))
+        db.execSQL(
+          entity.getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName"))
+        )
         val indices = entity.optJSONArray("indices") ?: org.json.JSONArray()
         for (indexIndex in 0 until indices.length()) {
-          db.execSQL(indices.getJSONObject(indexIndex).getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName")))
+          db.execSQL(
+            indices
+              .getJSONObject(indexIndex)
+              .getString("createSql")
+              .replace("\${TABLE_NAME}", entity.getString("tableName"))
+          )
         }
       }
       val setup = schema.getJSONArray("setupQueries")
@@ -237,15 +553,39 @@ class MigrationTest {
       db.version = version
     }
   }
-  @Test fun contentUpgradeRetainsDefinitionsReceiptsAndHistory() {
+
+  @Test
+  fun contentUpgradeRetainsDefinitionsReceiptsAndHistory() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-migration.db").use { db ->
-      db.execSQL("INSERT INTO reminders VALUES ('old', 'Migration probe', 1000, 2000, 1500, 500, 0, 7)")
+      db.execSQL(
+        "INSERT INTO reminders VALUES ('old', 'Migration probe', 1000, 2000, 1500, 500, 0, 7)"
+      )
       db.execSQL("INSERT INTO creation_receipts VALUES ('creation', 'old')")
       db.execSQL("INSERT INTO history VALUES ('action', 'old', 'Snooze', 900, 3)")
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-migration.db")
-      .allowMainThreadQueries().addMigrations(ContentDatabase.MIGRATION_1_2, ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "content-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_1_2,
+          ContentDatabase.MIGRATION_2_3,
+          ContentDatabase.MIGRATION_3_4,
+          ContentDatabase.MIGRATION_4_5,
+          ContentDatabase.MIGRATION_5_6,
+          ContentDatabase.MIGRATION_6_7,
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       val record = db.records().find("old")!!
       assertEquals("Migration probe", record.title)
@@ -254,16 +594,25 @@ class MigrationTest {
       assertEquals("Create", db.records().receipt("creation")!!.kind)
       assertEquals("Snooze", db.records().history("old").single().kind)
       assertNull(db.records().settings())
-    } finally { db.close(); context.deleteDatabase("content-migration.db") }
+    } finally {
+      db.close()
+      context.deleteDatabase("content-migration.db")
+    }
   }
-  @Test fun protectedUpgradeRetainsSnoozedTargetAndGeneration() {
+
+  @Test
+  fun protectedUpgradeRetainsSnoozedTargetAndGeneration() {
     val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
-    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-migration.db").use { db ->
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-migration.db").use { db
+      ->
       db.execSQL("INSERT INTO alerts VALUES ('old', 60000, 3, 'Scheduled', NULL)")
       db.execSQL("INSERT INTO actions VALUES ('snooze', 'old', 'Snooze', 900, 3)")
     }
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-migration.db")
-      .allowMainThreadQueries().addMigrations(*OperationalDatabase.MIGRATIONS).build()
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-migration.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
       val alert = db.records().find("old")!!
       assertEquals(60000L, alert.targetMs)
@@ -272,108 +621,260 @@ class MigrationTest {
       assertEquals("Snooze", db.records().actions().single().kind)
       assertEquals(10, alert.snoozeMinutes)
       assertNull(alert.previousState)
-    } finally { db.close(); context.deleteDatabase("protected-migration.db") }
+    } finally {
+      db.close()
+      context.deleteDatabase("protected-migration.db")
+    }
   }
-  @Test fun secondBetaContentUpgradeKeepsSettingsAndIndependentTiming() {
+
+  @Test
+  fun secondBetaContentUpgradeKeepsSettingsAndIndependentTiming() {
     val context = RuntimeEnvironment.getApplication()
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-v2.db", 2).use { db ->
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,definedAlarmAtMs,notes) VALUES ('v2','Private',1000,2000,1500,500,0,8,1800,'Retained')")
-      db.execSQL("INSERT INTO settings VALUES ('app',4,15,600,840,1020,'system',1,'dark','preferences')")
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,definedAlarmAtMs,notes) VALUES ('v2','Private',1000,2000,1500,500,0,8,1800,'Retained')"
+      )
+      db.execSQL(
+        "INSERT INTO settings VALUES ('app',4,15,600,840,1020,'system',1,'dark','preferences')"
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v2.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_2_3, ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "content-v2.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_2_3,
+          ContentDatabase.MIGRATION_3_4,
+          ContentDatabase.MIGRATION_4_5,
+          ContentDatabase.MIGRATION_5_6,
+          ContentDatabase.MIGRATION_6_7,
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       assertEquals(1800L, db.records().find("v2")!!.definedAlarmAtMs)
       assertEquals("Retained", db.records().find("v2")!!.notes)
       assertEquals(15, db.records().settings()!!.snoozeMinutes)
       assertEquals("dark", db.records().settings()!!.theme)
       assertTrue(db.records().series().isEmpty())
-    } finally { db.close(); context.deleteDatabase("content-v2.db") }
+    } finally {
+      db.close()
+      context.deleteDatabase("content-v2.db")
+    }
   }
-  @Test fun secondBetaProtectedUpgradeKeepsCurrentTargetAndSoundProfile() {
+
+  @Test
+  fun secondBetaProtectedUpgradeKeepsCurrentTargetAndSoundProfile() {
     val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
     legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v2.db", 2).use { db ->
-      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,mode,sound,vibration,snoozeMinutes) VALUES ('v2',60000,9,'Scheduled','Alarm','system',1,15)")
+      db.execSQL(
+        "INSERT INTO alerts (occurrenceId,targetMs,generation,state,mode,sound,vibration,snoozeMinutes) VALUES ('v2',60000,9,'Scheduled','Alarm','system',1,15)"
+      )
     }
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v2.db").allowMainThreadQueries()
-      .addMigrations(*OperationalDatabase.MIGRATIONS).build()
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v2.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
       val alert = db.records().find("v2")!!
-      assertEquals(60000L, alert.targetMs); assertEquals(9L, alert.generation)
-      assertEquals("system", alert.sound); assertTrue(alert.vibration)
-      assertNull(alert.segmentId); assertTrue(db.records().plans().isEmpty())
-    } finally { db.close(); context.deleteDatabase("protected-v2.db") }
+      assertEquals(60000L, alert.targetMs)
+      assertEquals(9L, alert.generation)
+      assertEquals("system", alert.sound)
+      assertTrue(alert.vibration)
+      assertNull(alert.segmentId)
+      assertTrue(db.records().plans().isEmpty())
+    } finally {
+      db.close()
+      context.deleteDatabase("protected-v2.db")
+    }
   }
-  @Test fun listMigrationPreservesExactNamesAndAllRetainedTemplateMemberships() {
+
+  @Test
+  fun listMigrationPreservesExactNamesAndAllRetainedTemplateMemberships() {
     val context = RuntimeEnvironment.getApplication()
-    val work = ReminderRecord("template", "Repeat", 1000, 2000, 1500, 500, listName = "Work", definedAlarmAtMs = 1000, zoneId = "UTC")
+    val work =
+      ReminderRecord(
+        "template",
+        "Repeat",
+        1000,
+        2000,
+        1500,
+        500,
+        listName = "Work",
+        definedAlarmAtMs = 1000,
+        zoneId = "UTC",
+      )
     val spaced = work.copy(listName = " Work ")
     legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-v3-lists.db", 3).use { db ->
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,listName) VALUES ('a','A',1000,2000,1500,500,0,8,'Work')")
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,listName,deleted) VALUES ('b','B',1000,2000,1500,500,1,9,'work',1)")
-      db.execSQL("INSERT INTO series VALUES ('active','family',?,'{}',4,'Paused',500)", arrayOf(JSONObject(BackupCodec.record(work)).toString()))
-      db.execSQL("INSERT INTO series VALUES ('old','family',?,'{}',5,'Archived',500)", arrayOf(JSONObject(BackupCodec.record(spaced)).toString()))
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,listName) VALUES ('a','A',1000,2000,1500,500,0,8,'Work')"
+      )
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision,listName,deleted) VALUES ('b','B',1000,2000,1500,500,1,9,'work',1)"
+      )
+      db.execSQL(
+        "INSERT INTO series VALUES ('active','family',?,'{}',4,'Paused',500)",
+        arrayOf(JSONObject(BackupCodec.record(work)).toString()),
+      )
+      db.execSQL(
+        "INSERT INTO series VALUES ('old','family',?,'{}',5,'Archived',500)",
+        arrayOf(JSONObject(BackupCodec.record(spaced)).toString()),
+      )
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v3-lists.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_3_4, ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "content-v3-lists.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_3_4,
+          ContentDatabase.MIGRATION_4_5,
+          ContentDatabase.MIGRATION_5_6,
+          ContentDatabase.MIGRATION_6_7,
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       assertEquals(setOf("Work", "work", " Work "), db.records().lists().map { it.name }.toSet())
       assertEquals(3, db.records().lists().map { it.id }.toSet().size)
       assertEquals(ListNames.legacyId("Work"), db.records().find("a")!!.listId)
       assertEquals(ListNames.legacyId("work"), db.records().find("b")!!.listId)
-      assertTrue(db.records().find("b")!!.completed); assertTrue(db.records().find("b")!!.deleted)
+      assertTrue(db.records().find("b")!!.completed)
+      assertTrue(db.records().find("b")!!.deleted)
       assertEquals(8L, db.records().find("a")!!.revision)
-      val active = db.records().series("active")!!; val archived = db.records().series("old")!!
-      assertEquals("Paused", active.state); assertEquals(4L, active.revision)
-      assertEquals("Archived", archived.state); assertEquals(5L, archived.revision)
-      assertEquals(ListNames.legacyId("Work"), BackupCodec.decodeRecord(JSONObject(active.template)).listId)
-      assertEquals(ListNames.legacyId(" Work "), BackupCodec.decodeRecord(JSONObject(archived.template)).listId)
-    } finally { db.close(); context.deleteDatabase("content-v3-lists.db") }
-  }
-  @Test fun atmosphereUpgradePreservesBrightnessAndSettingReceiptWithoutTouchingContent() {
-    val context = RuntimeEnvironment.getApplication()
-    legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-v4-appearance.db", 4).use { db ->
-      db.execSQL("INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings')")
-      db.execSQL("INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision) VALUES ('old','Private',1000,2000,1500,500,0,7)")
+      val active = db.records().series("active")!!
+      val archived = db.records().series("old")!!
+      assertEquals("Paused", active.state)
+      assertEquals(4L, active.revision)
+      assertEquals("Archived", archived.state)
+      assertEquals(5L, archived.revision)
+      assertEquals(
+        ListNames.legacyId("Work"),
+        BackupCodec.decodeRecord(JSONObject(active.template)).listId,
+      )
+      assertEquals(
+        ListNames.legacyId(" Work "),
+        BackupCodec.decodeRecord(JSONObject(archived.template)).listId,
+      )
+    } finally {
+      db.close()
+      context.deleteDatabase("content-v3-lists.db")
     }
-    val db = Room.databaseBuilder(context, ContentDatabase::class.java, "content-v4-appearance.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_4_5, ContentDatabase.MIGRATION_5_6, ContentDatabase.MIGRATION_6_7, ContentDatabase.MIGRATION_7_8, ContentDatabase.MIGRATION_8_9, ContentDatabase.MIGRATION_9_10, ContentDatabase.MIGRATION_10_11, ContentDatabase.MIGRATION_11_12, ContentDatabase.MIGRATION_12_13, ContentDatabase.MIGRATION_13_14, ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
+  }
+
+  @Test
+  fun atmosphereUpgradePreservesBrightnessAndSettingReceiptWithoutTouchingContent() {
+    val context = RuntimeEnvironment.getApplication()
+    legacy(context, "com.remilo.alarm.data.ContentDatabase", "content-v4-appearance.db", 4).use { db
+      ->
+      db.execSQL(
+        "INSERT INTO settings VALUES ('app',9,15,620,840,1040,'system',1,'dark','saved-settings')"
+      )
+      db.execSQL(
+        "INSERT INTO reminders (id,title,eventStartMs,eventEndMs,dueAtMs,createdAtMs,completed,revision) VALUES ('old','Private',1000,2000,1500,500,0,7)"
+      )
+    }
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "content-v4-appearance.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_4_5,
+          ContentDatabase.MIGRATION_5_6,
+          ContentDatabase.MIGRATION_6_7,
+          ContentDatabase.MIGRATION_7_8,
+          ContentDatabase.MIGRATION_8_9,
+          ContentDatabase.MIGRATION_9_10,
+          ContentDatabase.MIGRATION_10_11,
+          ContentDatabase.MIGRATION_11_12,
+          ContentDatabase.MIGRATION_12_13,
+          ContentDatabase.MIGRATION_13_14,
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
     try {
       val settings = db.records().settings()!!
-      assertEquals("automatic", settings.atmosphere); assertEquals("dark", settings.theme)
-      assertEquals(9L, settings.revision); assertEquals("saved-settings", settings.lastOperationId)
+      assertEquals("automatic", settings.atmosphere)
+      assertEquals("dark", settings.theme)
+      assertEquals(9L, settings.revision)
+      assertEquals("saved-settings", settings.lastOperationId)
       assertEquals(7L, db.records().find("old")!!.revision)
-    } finally { db.close(); context.deleteDatabase("content-v4-appearance.db") }
-  }
-  @Test fun appearanceProtectedUpgradeKeepsDeliveryAndDoesNotInventSessionCapture() {
-    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
-    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v3-appearance.db", 3).use { db ->
-      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,sessionId) VALUES ('old',60000,7,'Alerting','session')")
-      db.execSQL("INSERT INTO sessions VALUES ('session','Active',1000,301000,'system',1)")
+    } finally {
+      db.close()
+      context.deleteDatabase("content-v4-appearance.db")
     }
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v3-appearance.db").allowMainThreadQueries()
-      .addMigrations(*OperationalDatabase.MIGRATIONS).build()
+  }
+
+  @Test
+  fun appearanceProtectedUpgradeKeepsDeliveryAndDoesNotInventSessionCapture() {
+    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v3-appearance.db", 3)
+      .use { db ->
+        db.execSQL(
+          "INSERT INTO alerts (occurrenceId,targetMs,generation,state,sessionId) VALUES ('old',60000,7,'Alerting','session')"
+        )
+        db.execSQL("INSERT INTO sessions VALUES ('session','Active',1000,301000,'system',1)")
+      }
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v3-appearance.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
       assertNull(db.records().appearance())
       val session = db.records().activeSession()!!
-      assertNull(session.resolvedAtmosphere); assertNull(session.resolvedBrightness)
-      assertEquals(301000L, session.deadlineElapsedMs); assertEquals("system", session.sound)
-      assertEquals(7L, db.records().find("old")!!.generation); assertEquals(60000L, db.records().find("old")!!.targetMs)
+      assertNull(session.resolvedAtmosphere)
+      assertNull(session.resolvedBrightness)
+      assertEquals(301000L, session.deadlineElapsedMs)
+      assertEquals("system", session.sound)
+      assertEquals(7L, db.records().find("old")!!.generation)
+      assertEquals(60000L, db.records().find("old")!!.targetMs)
       val columns = mutableListOf<String>()
-      db.openHelper.readableDatabase.query("PRAGMA table_info(appearance_preferences)").use { cursor ->
+      db.openHelper.readableDatabase.query("PRAGMA table_info(appearance_preferences)").use { cursor
+        ->
         while (cursor.moveToNext()) columns.add(cursor.getString(1))
       }
       assertEquals(listOf("id", "atmosphere", "theme"), columns)
-    } finally { db.close(); context.deleteDatabase("protected-v3-appearance.db") }
-  }
-  @Test fun protectedV4UpgradeKeepsLegacyStopsAndAddsOnlyCompletionIdentityTables() {
-    val context = RuntimeEnvironment.getApplication()
-    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v4-completion.db", 4).use { db ->
-      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state) VALUES ('legacy',60000,7,'Stopped')")
-      db.execSQL("INSERT INTO actions (operationId,occurrenceId,kind,occurredAtMs,generation) VALUES ('old-stop','legacy','Stop',50000,7)")
+    } finally {
+      db.close()
+      context.deleteDatabase("protected-v3-appearance.db")
     }
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v4-completion.db").allowMainThreadQueries()
-      .addMigrations(*OperationalDatabase.MIGRATIONS).build()
+  }
+
+  @Test
+  fun protectedV4UpgradeKeepsLegacyStopsAndAddsOnlyCompletionIdentityTables() {
+    val context = RuntimeEnvironment.getApplication()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v4-completion.db", 4)
+      .use { db ->
+        db.execSQL(
+          "INSERT INTO alerts (occurrenceId,targetMs,generation,state) VALUES ('legacy',60000,7,'Stopped')"
+        )
+        db.execSQL(
+          "INSERT INTO actions (operationId,occurrenceId,kind,occurredAtMs,generation) VALUES ('old-stop','legacy','Stop',50000,7)"
+        )
+      }
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v4-completion.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
       assertEquals("Stopped", db.records().find("legacy")!!.state)
       assertEquals("Stop", db.records().action("old-stop")!!.kind)
@@ -384,22 +885,37 @@ class MigrationTest {
         db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { cursor ->
           while (cursor.moveToNext()) columns.add(cursor.getString(1))
         }
-        assertFalse(columns.any { it in setOf("title", "notes", "listName", "template", "credentials") })
+        assertFalse(
+          columns.any { it in setOf("title", "notes", "listName", "template", "credentials") }
+        )
       }
-    } finally { db.close(); context.deleteDatabase("protected-v4-completion.db") }
-  }
-  @Test fun protectedV5UpgradeRetainsLegacyCompletionFingerprintsAndSnoozeProfiles() {
-    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
-    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v5-actions.db", 5).use { db ->
-      db.execSQL("INSERT INTO alerts (occurrenceId,targetMs,generation,state,snoozeMinutes) VALUES ('old',60000,7,'Completed',15)")
-      db.execSQL("INSERT INTO completion_receipts VALUES ('done','Stop','old',6,NULL,7,1)")
-      db.execSQL("INSERT INTO pending_completions VALUES ('done','old',7,50000)")
+    } finally {
+      db.close()
+      context.deleteDatabase("protected-v4-completion.db")
     }
-    val db = Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v5-actions.db").allowMainThreadQueries()
-      .addMigrations(*OperationalDatabase.MIGRATIONS).build()
+  }
+
+  @Test
+  fun protectedV5UpgradeRetainsLegacyCompletionFingerprintsAndSnoozeProfiles() {
+    val context = RuntimeEnvironment.getApplication().createDeviceProtectedStorageContext()
+    legacy(context, "com.remilo.alarm.data.OperationalDatabase", "protected-v5-actions.db", 5)
+      .use { db ->
+        db.execSQL(
+          "INSERT INTO alerts (occurrenceId,targetMs,generation,state,snoozeMinutes) VALUES ('old',60000,7,'Completed',15)"
+        )
+        db.execSQL("INSERT INTO completion_receipts VALUES ('done','Stop','old',6,NULL,7,1)")
+        db.execSQL("INSERT INTO pending_completions VALUES ('done','old',7,50000)")
+      }
+    val db =
+      Room.databaseBuilder(context, OperationalDatabase::class.java, "protected-v5-actions.db")
+        .allowMainThreadQueries()
+        .addMigrations(*OperationalDatabase.MIGRATIONS)
+        .build()
     try {
       val receipt = db.records().completionReceipt("done")!!
-      assertEquals("Stop", receipt.kind); assertEquals(6L, receipt.expectedGeneration); assertNull(receipt.snapshotKey)
+      assertEquals("Stop", receipt.kind)
+      assertEquals(6L, receipt.expectedGeneration)
+      assertNull(receipt.snapshotKey)
       assertEquals(15, db.records().find("old")!!.snoozeMinutes)
       assertEquals(50000L, db.records().completions().single().occurredAtMs)
       assertTrue(db.records().pendingBulkSnoozes().isEmpty())
@@ -408,33 +924,90 @@ class MigrationTest {
         db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { cursor ->
           while (cursor.moveToNext()) columns.add(cursor.getString(1))
         }
-        assertFalse(columns.any { it in setOf("title", "notes", "listName", "template", "credentials") })
+        assertFalse(
+          columns.any { it in setOf("title", "notes", "listName", "template", "credentials") }
+        )
       }
-    } finally { db.close(); context.deleteDatabase("protected-v5-actions.db") }
-  }
-  @Test fun routineImmutableRevisionMigrationPreservesEveryDatedReference() {
-    val context = RuntimeEnvironment.getApplication()
-    val days = org.json.JSONArray((0..6).map { day -> mapOf("type" to "Exercises", "exercises" to listOf(
-      mapOf("id" to "step-$day", "name" to "Exercise $day", "target" to "3 x 10", "notes" to "", "illustration" to ""))) }).toString()
-    val steps = org.json.JSONArray(days).getJSONObject(1).getJSONArray("exercises").toString()
-    legacy(context,"com.remilo.alarm.data.ContentDatabase","routine-revisions.db",14).use { db ->
-      db.execSQL("INSERT INTO routine_plans VALUES ('plan',4,'2026-10-12','Active','[]')")
-      db.execSQL("INSERT INTO routine_versions VALUES ('plan','2026-10-12','Monday',540,'Notification',NULL,?)",arrayOf(days))
-      db.execSQL("INSERT INTO routine_versions VALUES ('plan','2026-10-13','Tuesday',600,'None',NULL,?)",arrayOf(days))
-      db.execSQL("INSERT INTO routine_sessions VALUES ('tuesday','plan','2026-10-13','2026-10-13',?,'[]',1,7,'[]')",arrayOf(steps))
+    } finally {
+      db.close()
+      context.deleteDatabase("protected-v5-actions.db")
     }
-    val db = Room.databaseBuilder(context,ContentDatabase::class.java,"routine-revisions.db").allowMainThreadQueries()
-      .addMigrations(ContentDatabase.MIGRATION_14_15, ContentDatabase.MIGRATION_15_16, ContentDatabase.MIGRATION_16_17).build()
-    try {
-      assertEquals(listOf(1L,2L),db.routines().versions("plan").map { it.revision })
-      val session = db.routines().session("tuesday")!!
-      assertEquals(2L,session.versionRevision); assertEquals("2026-10-13",session.versionDate)
-      assertEquals(steps,session.steps); assertEquals(7L,session.revision); assertTrue(session.ended)
-      assertEquals("Tuesday",db.routines().versions("plan").single { it.revision == session.versionRevision }.title)
-      assertEquals(4L,db.routines().plan("plan")!!.revision)
-      assertTrue(db.routines().versions("plan").all { it.notes.isEmpty() && it.sound == "remilo" && !it.vibration })
-      assertTrue(db.routines().versions("plan").all { it.authoringMode == "ByWeekday" && it.presentationPreset == "Exercise" })
-    } finally { db.close(); context.deleteDatabase("routine-revisions.db") }
   }
 
+  @Test
+  fun routineImmutableRevisionMigrationPreservesEveryDatedReference() {
+    val context = RuntimeEnvironment.getApplication()
+    val days =
+      org.json
+        .JSONArray(
+          (0..6).map { day ->
+            mapOf(
+              "type" to "Exercises",
+              "exercises" to
+                listOf(
+                  mapOf(
+                    "id" to "step-$day",
+                    "name" to "Exercise $day",
+                    "target" to "3 x 10",
+                    "notes" to "",
+                    "illustration" to "",
+                  )
+                ),
+            )
+          }
+        )
+        .toString()
+    val steps = org.json.JSONArray(days).getJSONObject(1).getJSONArray("exercises").toString()
+    legacy(context, "com.remilo.alarm.data.ContentDatabase", "routine-revisions.db", 14).use { db ->
+      db.execSQL("INSERT INTO routine_plans VALUES ('plan',4,'2026-10-12','Active','[]')")
+      db.execSQL(
+        "INSERT INTO routine_versions VALUES ('plan','2026-10-12','Monday',540,'Notification',NULL,?)",
+        arrayOf(days),
+      )
+      db.execSQL(
+        "INSERT INTO routine_versions VALUES ('plan','2026-10-13','Tuesday',600,'None',NULL,?)",
+        arrayOf(days),
+      )
+      db.execSQL(
+        "INSERT INTO routine_sessions VALUES ('tuesday','plan','2026-10-13','2026-10-13',?,'[]',1,7,'[]')",
+        arrayOf(steps),
+      )
+    }
+    val db =
+      Room.databaseBuilder(context, ContentDatabase::class.java, "routine-revisions.db")
+        .allowMainThreadQueries()
+        .addMigrations(
+          ContentDatabase.MIGRATION_14_15,
+          ContentDatabase.MIGRATION_15_16,
+          ContentDatabase.MIGRATION_16_17,
+        )
+        .build()
+    try {
+      assertEquals(listOf(1L, 2L), db.routines().versions("plan").map { it.revision })
+      val session = db.routines().session("tuesday")!!
+      assertEquals(2L, session.versionRevision)
+      assertEquals("2026-10-13", session.versionDate)
+      assertEquals(steps, session.steps)
+      assertEquals(7L, session.revision)
+      assertTrue(session.ended)
+      assertEquals(
+        "Tuesday",
+        db.routines().versions("plan").single { it.revision == session.versionRevision }.title,
+      )
+      assertEquals(4L, db.routines().plan("plan")!!.revision)
+      assertTrue(
+        db.routines().versions("plan").all {
+          it.notes.isEmpty() && it.sound == "remilo" && !it.vibration
+        }
+      )
+      assertTrue(
+        db.routines().versions("plan").all {
+          it.authoringMode == "ByWeekday" && it.presentationPreset == "Exercise"
+        }
+      )
+    } finally {
+      db.close()
+      context.deleteDatabase("routine-revisions.db")
+    }
+  }
 }

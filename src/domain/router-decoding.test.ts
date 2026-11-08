@@ -5,12 +5,15 @@ import { describe, expect, it } from 'vitest';
 // Exercise the actual Router dependency after the decode-uri-component override.
 const require = createRequire(import.meta.url);
 const routerRequire = createRequire(require.resolve('expo-router/package.json'));
-const queryString = routerRequire('query-string') as { parse: (input: string) => Record<string, unknown> };
+const queryString = routerRequire('query-string') as {
+  parse: (input: string) => Record<string, unknown>;
+};
 
 describe('Router decoding compatibility', () => {
   it('retains ordinary Unicode and repeated query parameters', () => {
     expect(queryString.parse('title=Caf%C3%A9&tag=home&tag=work')).toMatchObject({
-      title: 'Café', tag: ['home', 'work'],
+      title: 'Café',
+      tag: ['home', 'work'],
     });
   });
   it('handles a long malformed percent sequence without recursive decoding', () => {

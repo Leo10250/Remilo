@@ -20,25 +20,49 @@ export default function RootLayout() {
   useEffect(() => {
     const refresh = () => void client.invalidateQueries();
     const app = AppState.addEventListener('change', (state) => {
-      if (state === 'active') { void RemiloAlarm?.reconcile(); refresh(); }
+      if (state === 'active') {
+        void RemiloAlarm?.reconcile();
+        refresh();
+      }
     });
     const native = RemiloAlarm?.addListener('onChange', refresh);
     // Presentation refresh only: due status and date groups change while a screen stays open.
-    const dateRefresh = setInterval(() => { if (AppState.currentState === 'active') refresh(); }, 60_000);
-    return () => { app.remove(); native?.remove(); clearInterval(dateRefresh); };
+    const dateRefresh = setInterval(() => {
+      if (AppState.currentState === 'active') refresh();
+    }, 60_000);
+    return () => {
+      app.remove();
+      native?.remove();
+      clearInterval(dateRefresh);
+    };
   }, []);
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider>
-      <QueryClientProvider client={client}>
-        <TimeDisplayProvider><ThemeProvider><PresentationPreview><Navigation /><ConfirmationHost /></PresentationPreview></ThemeProvider></TimeDisplayProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider></GestureHandlerRootView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={client}>
+          <TimeDisplayProvider>
+            <ThemeProvider>
+              <PresentationPreview>
+                <Navigation />
+                <ConfirmationHost />
+              </PresentationPreview>
+            </ThemeProvider>
+          </TimeDisplayProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 function Navigation() {
   'use no memo';
   useLocale();
   const colors = useTheme();
-  return <><StatusBar style={colors.dark ? 'light' : 'dark'} />
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} /></>;
+  return (
+    <>
+      <StatusBar style={colors.dark ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+      />
+    </>
+  );
 }

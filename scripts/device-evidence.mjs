@@ -12,28 +12,64 @@ import { collectRemiloCrashes, validateEvidenceLogOptions } from './lib/crash-ev
 
 await cli(async () => {
   const [mode, ...args] = process.argv.slice(2);
-  if (mode === '--help') return console.log('node scripts/device-evidence.mjs logs|capture [--device SERIAL] [--follow | --crashes (logs only)]\n--crashes: bounded crash-buffer snapshot; only exact com.remilo.app AndroidRuntime PID blocks are saved. Cannot follow.');
-  const flags = options(args, ['device']); allowedOptions(flags, mode === 'logs' ? ['device', 'follow', 'crashes', 'help'] : ['device', 'help']);
-  if (flags.help) return console.log(`npm run device:${mode} -- [--device SERIAL]${mode === 'logs' ? ' [--follow | --crashes]\n--crashes saves only exact com.remilo.app AndroidRuntime PID blocks from a bounded crash-buffer snapshot; cannot combine with --follow.' : ''}\nPrivate local evidence only. No data clearing, navigation, log clearing or device setting changes.`);
-  if (!['logs', 'capture'].includes(mode)) throw new WorkflowError('ARGUMENT', 'Expected logs or capture.');
+  if (mode === '--help')
+    return console.log(
+      'node scripts/device-evidence.mjs logs|capture [--device SERIAL] [--follow | --crashes (logs only)]\n--crashes: bounded crash-buffer snapshot; only exact com.remilo.app AndroidRuntime PID blocks are saved. Cannot follow.',
+    );
+  const flags = options(args, ['device']);
+  allowedOptions(
+    flags,
+    mode === 'logs' ? ['device', 'follow', 'crashes', 'help'] : ['device', 'help'],
+  );
+  if (flags.help)
+    return console.log(
+      `npm run device:${mode} -- [--device SERIAL]${mode === 'logs' ? ' [--follow | --crashes]\n--crashes saves only exact com.remilo.app AndroidRuntime PID blocks from a bounded crash-buffer snapshot; cannot combine with --follow.' : ''}\nPrivate local evidence only. No data clearing, navigation, log clearing or device setting changes.`,
+    );
+  if (!['logs', 'capture'].includes(mode))
+    throw new WorkflowError('ARGUMENT', 'Expected logs or capture.');
   validateEvidenceLogOptions(flags);
-  const tools = androidTools(), target = await targetDevice(tools, flags.device);
-  const directory = join(localEvidence, mode); mkdirSync(directory, { recursive: true });
-  const path = join(directory, `${new Date().toISOString().replaceAll(':', '-')}-${randomUUID()}.${mode === 'logs' ? 'log' : 'png'}`);
+  const tools = androidTools(),
+    target = await targetDevice(tools, flags.device);
+  const directory = join(localEvidence, mode);
+  mkdirSync(directory, { recursive: true });
+  const path = join(
+    directory,
+    `${new Date().toISOString().replaceAll(':', '-')}-${randomUUID()}.${mode === 'logs' ? 'log' : 'png'}`,
+  );
   if (mode === 'logs' && flags.crashes) {
     const result = await collectRemiloCrashes(target.serial, {
-      run: args => execute(tools.adb, args, { env: tools.env, timeout: 30_000 }),
-      persist: text => writeFileSync(path, text),
+      run: (args) => execute(tools.adb, args, { env: tools.env, timeout: 30_000 }),
+      persist: (text) => writeFileSync(path, text),
     });
-    console.log(`Remilo AndroidRuntime crash blocks: ${result.blocks}; ${path}${result.blocks ? '' : ' (no matching block in this bounded snapshot)'}`);
+    console.log(
+      `Remilo AndroidRuntime crash blocks: ${result.blocks}; ${path}${result.blocks ? '' : ' (no matching block in this bounded snapshot)'}`,
+    );
   } else if (mode === 'logs') {
-    const output = createWriteStream(path); output.on('error', () => {});
+    const output = createWriteStream(path);
+    output.on('error', () => {});
     console.log(`Remilo-tagged logs: ${path}${flags.follow ? ' (Ctrl+C to finish)' : ''}`);
-    try { await checked(tools.adb, logArguments(target.serial, flags.follow), { env: tools.env, outputFile: output, timeout: flags.follow ? 0 : 30_000, cancelIsSuccess: Boolean(flags.follow) }); }
-    finally { output.end(); await finished(output); }
+    try {
+      await checked(tools.adb, logArguments(target.serial, flags.follow), {
+        env: tools.env,
+        outputFile: output,
+        timeout: flags.follow ? 0 : 30_000,
+        cancelIsSuccess: Boolean(flags.follow),
+      });
+    } finally {
+      output.end();
+      await finished(output);
+    }
   } else {
-    const result = await checked(tools.adb, ['-s', target.serial, 'exec-out', 'screencap', '-p'], { env: tools.env, binary: true });
-    if (!result.stdout.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new WorkflowError('SCREENSHOT', 'Device did not return a valid PNG. No stale image was reused.');
-    writeFileSync(path, result.stdout); console.log(`Screenshot: ${path}`);
+    const result = await checked(tools.adb, ['-s', target.serial, 'exec-out', 'screencap', '-p'], {
+      env: tools.env,
+      binary: true,
+    });
+    if (!result.stdout.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
+      throw new WorkflowError(
+        'SCREENSHOT',
+        'Device did not return a valid PNG. No stale image was reused.',
+      );
+    writeFileSync(path, result.stdout);
+    console.log(`Screenshot: ${path}`);
   }
 });

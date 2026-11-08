@@ -13,13 +13,19 @@ export class CommandError extends Error {
   field?: string;
   code?: string;
   constructor(result: CommandResult) {
-    super(result.errorMessageKey ? ownedMessage({ key: result.errorMessageKey as MessageKey, args: result.errorMessageArgs }) : errorText({ code: result.errorCode, message: result.errorMessage }, t('m_064837cfb680')));
+    super(
+      result.errorMessageKey
+        ? ownedMessage({ key: result.errorMessageKey as MessageKey, args: result.errorMessageArgs })
+        : errorText({ code: result.errorCode, message: result.errorMessage }, t('m_064837cfb680')),
+    );
     this.field = result.errorField;
     this.code = result.errorCode;
   }
 }
 export async function apply(command: Command) {
-  const clean = Object.fromEntries(Object.entries(command).filter(([, value]) => value !== undefined)) as Command;
+  const clean = Object.fromEntries(
+    Object.entries(command).filter(([, value]) => value !== undefined),
+  ) as Command;
   const result = await engine().applyCommand(clean);
   if (result.status === 'Rejected') throw new CommandError(result);
   return result;
@@ -29,17 +35,44 @@ export function useCommand() {
   return useMutation({ mutationFn: apply, onSettled: () => void client.invalidateQueries() });
 }
 export function useSettings() {
-  const query = useQuery({ queryKey: ['settings'], queryFn: () => engine().getSettings(), enabled: !!Alarm });
-  const state = useSyncExternalStore(preferences.subscribe, preferences.snapshot, preferences.snapshot);
-  useEffect(() => { if (query.data) preferences.prime(query.data); }, [query.data]);
-  return { ...query, data: state.data ?? query.data, saving: state.saving, saveError: state.error ? ownedMessage(state.error) : undefined, preferenceFields: state.fields ?? [] };
+  const query = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => engine().getSettings(),
+    enabled: !!Alarm,
+  });
+  const state = useSyncExternalStore(
+    preferences.subscribe,
+    preferences.snapshot,
+    preferences.snapshot,
+  );
+  useEffect(() => {
+    if (query.data) preferences.prime(query.data);
+  }, [query.data]);
+  return {
+    ...query,
+    data: state.data ?? query.data,
+    saving: state.saving,
+    saveError: state.error ? ownedMessage(state.error) : undefined,
+    preferenceFields: state.fields ?? [],
+  };
 }
 export const preferences = new Preferences({
   read: () => engine().getSettings(),
   id: () => engine().createOperationId(),
-  write: async (job) => { await apply({ ...job.patch, kind: 'Settings', expectedRevision: job.revision, operationId: job.operationId }); },
+  write: async (job) => {
+    await apply({
+      ...job.patch,
+      kind: 'Settings',
+      expectedRevision: job.revision,
+      operationId: job.operationId,
+    });
+  },
 });
 export function useCapabilities() {
-  return useQuery({ queryKey: ['capabilities'], queryFn: () => engine().getCapabilities(), enabled: !!Alarm });
+  return useQuery({
+    queryKey: ['capabilities'],
+    queryFn: () => engine().getCapabilities(),
+    enabled: !!Alarm,
+  });
 }
 export const nativeAvailable = !!Alarm;

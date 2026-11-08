@@ -9,7 +9,8 @@ const directory = join(root, 'node_modules/decode-uri-component');
 const sourcePath = join(directory, 'index.js');
 const packagePath = join(directory, 'package.json');
 const metadata = JSON.parse(readFileSync(packagePath, 'utf8'));
-if (metadata.version !== '0.5.0') throw new Error('Review decoder compatibility before changing its version.');
+if (metadata.version !== '0.5.0')
+  throw new Error('Review decoder compatibility before changing its version.');
 const source = readFileSync(sourcePath, 'utf8');
 const upstream = 'export default function decodeUriComponent(encodedURI) {';
 const commonjs = 'module.exports = function decodeUriComponent(encodedURI) {';

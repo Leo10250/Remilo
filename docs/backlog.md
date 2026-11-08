@@ -21,6 +21,7 @@ authorize scaffolding or change current behavior.
 | AI-04 | Optional local natural-language drafting | After AI-02. Offline deterministic parsing remains usable; AI is opt-in, capability-gated and cannot bypass confirmation. |
 | FUT-ICON | Optional dynamic/themed launcher icons | Separate scope decision; current production has one static Classic identity. |
 | FUT-TASK-ICON | Optional local task categories/icons | Low priority after Calendar and Android daily-workflow/assistant foundations. Suggestions allow preset correction, preserve explicit choices and retain a neutral fallback. Independent of save/scheduling/delivery; no per-reminder themes or alarm scenes. |
+| QA-ANDROID-SMOKE | Android emulator smoke test for offline reminder persistence | Start with a manual run on a clean API 34 emulator using the bundled APK. Go offline, save a uniquely titled future **No alert** reminder, restart the app process without clearing its data, then verify the title, date, time, and alert mode. Keep alarm delivery and physical-device checks separate. |
 | P5 | Optional Android cloud/primary-device coordination | After local Android/Calendar foundations. Define foreground/manual sync and honest device handoff; preserve offline authority. |
 | P6 | Optional iOS feasibility/port | Final phase after Android expansion and cloud/coordination decisions. Establish real iPhone capabilities before implementation. |
 
