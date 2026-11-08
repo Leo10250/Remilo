@@ -48,6 +48,8 @@ example
 android/local.properties
 android/signing.properties
 verification/local/
+# Local Codex chat attachments
+/.codex-remote-attachments/
 __pycache__/
 *.keystore
 .env

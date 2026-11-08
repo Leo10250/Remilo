@@ -70,8 +70,8 @@ export default function Settings() {
     preferenceOwner?.[0] === group && (query.saving || query.saveError) ? <PreferenceFeedback fields={[...preferenceOwner[1]]} /> : undefined;
   const permission = permissionSummary(caps.data, !!caps.error);
   const openAlarmCheck = () => { if (!running.current) router.push({ pathname: '/alarm-check', params: routeParams }); };
-  const permissionRefresh = caps.data && (caps.error || caps.isFetching)
-    ? t('m_c56e51fc430f', { arg0: String(shortDateTime(caps.data.observedAtMs)), arg1: String(caps.error ? t('m_d6d1cdc660d1') : t('m_eb50add3d378')) }) : undefined;
+  const permissionRefreshError = caps.data && caps.error
+    ? t('m_9f70c8e0c9ba', { arg0: String(shortDateTime(caps.data.observedAtMs)) }) : undefined;
   return <Page title={t('m_74a883a037bc')} scrollKey={`settings:${rootKey(origin)}`} scrollReady={!!settings || !query.isLoading}
     onBack={() => router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))}>
     <View style={{ gap: space.md }}>
@@ -79,7 +79,7 @@ export default function Settings() {
         emptyMessage={nativeAvailable ? t('m_de367fa1d4a6') : t('m_eb0582ac36eb')} onRetry={nativeAvailable ? () => void query.refetch() : undefined} />
       {nativeAvailable && permission.needsAttention && <ConnectedGroup>
         <View><RowSupport><ActionFeedback message={permission.message} tone={permission.tone} />
-          {permissionRefresh && <Copy muted size={14}>{permissionRefresh}</Copy>}
+          {permissionRefreshError && <Copy muted size={14}>{permissionRefreshError}</Copy>}
           <Button label={t('m_0146bbb12bf3')} variant="secondary" disabled={pending} onPress={openAlarmCheck} />
         </RowSupport></View>
       </ConnectedGroup>}
@@ -101,7 +101,7 @@ export default function Settings() {
       </>}
       <ConnectedGroup><WidgetSetupRow disabled={pending} /></ConnectedGroup>
       <ConnectedGroup><SettingRow intent="navigation" key="permissions" icon="alarm" label={t('m_b7902c54f3ec')} value={nativeAvailable ? permission.message : t('m_9abfcd6cc71c')}
-        description={permissionRefresh} disabled={pending} onPress={openAlarmCheck} /></ConnectedGroup>
+        description={permissionRefreshError} disabled={pending} onPress={openAlarmCheck} /></ConnectedGroup>
       <ConnectedGroup><SettingRow intent="navigation" key="google-calendar" icon="event" label={t('m_b074310e911f')} description={t('m_e75d471ec00e')} disabled={pending}
         onPress={() => router.push({ pathname: '/calendar', params: routeParams })} /></ConnectedGroup>
       <ConnectedGroup title={t('m_3334fee2c77f')} footer={<><Copy muted size={14}>{t('m_a7b215af0d49')}</Copy>

@@ -6,10 +6,7 @@ retain history. Missing historical test paperwork is not an open defect.
 
 ## Actionable
 
-| ID | Task | Status | Next action |
-|---|---|---|---|
-| BETA-04 | Investigate Recents afterimage | Ready | Reproduce the previously reported afterimage on the current build and isolate its lifecycle/window cause. Current reproducibility and root cause are unestablished. |
-| L10N-01 | Align individual Exercise form labels with the scoped Chinese glossary | Ready | Exercise-specific name/add/edit keys currently use 步骤名称/添加步骤/编辑步骤 despite fitness-item call sites. Review those labels in context against 动作 terminology; keep shared weekday counts as 步骤. |
+No actionable items are currently listed.
 
 ## Later
 
@@ -18,7 +15,6 @@ authorize scaffolding or change current behavior.
 
 | ID | Capability | Dependencies and boundary |
 |---|---|---|
-| RW-04 | Optional Today/agenda digest | Builds on dated routines/Today. Opt-in local time, quiet dismissal, no duplicate notification or alarm-channel behavior. |
 | AI-01 | Android assistant/intent research | Establish current official support and limitations for intents, Gemini/AppFunctions and Samsung/Bixby before choosing integrations. |
 | AI-02 | External create-reminder/alarm actions | After AI-01: supported entry points create a draft, obtain explicit confirmation and save once through the native engine. |
 | AI-03 | Assistant-specific discovery/registration | After AI-01/02, where supported; test relevant providers and handle unsupported assistants honestly. |
