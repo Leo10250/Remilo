@@ -9,8 +9,16 @@ export function PreferenceFeedback({ fields }: { fields: (keyof PreferencePatch)
   const t = useTranslation();
   const settings = useSettings();
   if (!settings.preferenceFields.some((field) => fields.includes(field))) return null;
-  return <>
-    <ActionFeedback loading={settings.saving} message={settings.saveError ?? (settings.saving ? t('m_395207583eb8') : undefined)} tone={settings.saveError ? 'danger' : 'muted'} />
-    {!!settings.saveError && <Button label={t('m_fafe71022b85')} variant="secondary" onPress={preferences.retry} />}
-  </>;
+  return (
+    <>
+      <ActionFeedback
+        loading={settings.saving}
+        message={settings.saveError ?? (settings.saving ? t('m_395207583eb8') : undefined)}
+        tone={settings.saveError ? 'danger' : 'muted'}
+      />
+      {!!settings.saveError && (
+        <Button label={t('m_fafe71022b85')} variant="secondary" onPress={preferences.retry} />
+      )}
+    </>
+  );
 }

@@ -9,9 +9,11 @@ internal object AlarmChildWindowPolicy {
   fun inherit(child: Window, parent: Window) {
     // Activity.setShowWhenLocked is ActivityRecord policy, not a copyable Window flag.
     // Give this native child its own eligibility without dismissing keyguard or waking again.
-    val mask = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_SECURE
-    val flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-      (parent.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE)
+    val mask =
+      WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_SECURE
+    val flags =
+      WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+        (parent.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE)
     child.setFlags(flags, mask)
   }
 }

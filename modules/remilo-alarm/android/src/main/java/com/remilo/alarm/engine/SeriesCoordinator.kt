@@ -1,264 +1,614 @@
 package com.remilo.alarm.engine
 
-import android.os.UserManager
 import android.content.Context
+import android.os.UserManager
 import com.remilo.alarm.core.*
 import com.remilo.alarm.data.*
 import com.remilo.alarm.system.AlarmRegistrar
-import org.json.JSONObject
 import java.time.*
 import java.util.UUID
+import org.json.JSONObject
 
 /** Called only on AlarmEngine's serialized worker; never starts another state owner. */
-internal class SeriesCoordinator(private val context: Context, private val db: () -> ContentDatabase,
-  private val operational: OperationalDatabase, private val scheduler: AlarmRegistrar,
-  private val now: () -> Long, private val register: (AlertRecord) -> AlertRecord) {
-  private val alerts get() = operational.records()
-  data class CalendarUpdate(val segment: SeriesRecord, val record: ReminderRecord, val rule: RecurrenceRule)
+internal class SeriesCoordinator(
+  private val context: Context,
+  private val db: () -> ContentDatabase,
+  private val operational: OperationalDatabase,
+  private val scheduler: AlarmRegistrar,
+  private val now: () -> Long,
+  private val register: (AlertRecord) -> AlertRecord,
+) {
+  private val alerts
+    get() = operational.records()
+
+  data class CalendarUpdate(
+    val segment: SeriesRecord,
+    val record: ReminderRecord,
+    val rule: RecurrenceRule,
+  )
+
   private fun unlocked() = context.getSystemService(UserManager::class.java).isUserUnlocked
+
   private fun zone() = ZoneId.systemDefault()
-  private fun routineDateEligible(routineId: String?, occurrenceId: String, nominal: String): Boolean {
+
+  private fun routineDateEligible(
+    routineId: String?,
+    occurrenceId: String,
+    nominal: String,
+  ): Boolean {
     if (routineId == null) return true
-    if (db().routines().plan(routineId)?.state == "Trashed" || db().routines().purged(routineId) != null) return false
+    if (
+      db().routines().plan(routineId)?.state == "Trashed" ||
+        db().routines().purged(routineId) != null
+    )
+      return false
     if (alerts.find(occurrenceId)?.dayEnded == true) return false
     val saved = db().routines().dated(routineId, nominal.substringBefore('T')) ?: return true
     return saved.occurrenceId == occurrenceId && !saved.ended
   }
+
   private fun scheduledAt(slot: ResolvedSlot, mode: String): Long =
     if (mode == "None") slot.eventStartMs else slot.alarmAtMs
+
   private fun scheduledAt(alert: AlertRecord, rule: RecurrenceRule): Long {
     if (alert.mode != "None") return alert.targetMs
-    val resolved = Recurrence.resolve(if (alert.resolvedZone.isEmpty()) rule else rule.copy(zoneId = alert.resolvedZone),
-      LocalDateTime.parse(alert.nominalSlot), zone())
+    val resolved =
+      Recurrence.resolve(
+        if (alert.resolvedZone.isEmpty()) rule else rule.copy(zoneId = alert.resolvedZone),
+        LocalDateTime.parse(alert.nominalSlot),
+        zone(),
+      )
     return resolved.eventStartMs
   }
-  fun template(series: SeriesRecord): ReminderRecord = BackupCodec.decodeRecord(JSONObject(series.template)).let { record ->
-    record.copy(listName = record.listId?.let { db().records().list(it)?.name }.orEmpty())
-  }
-  private fun encodeTemplate(record: ReminderRecord) = JSONObject(BackupCodec.record(record)).toString()
-  private fun JSONObject.toMap(): Map<String, Any?> = keys().asSequence().associateWith { key ->
-    val value = get(key); if (value == JSONObject.NULL) null else value
-  }
+
+  fun template(series: SeriesRecord): ReminderRecord =
+    BackupCodec.decodeRecord(JSONObject(series.template)).let { record ->
+      record.copy(listName = record.listId?.let { db().records().list(it)?.name }.orEmpty())
+    }
+
+  private fun encodeTemplate(record: ReminderRecord) =
+    JSONObject(BackupCodec.record(record)).toString()
+
+  private fun JSONObject.toMap(): Map<String, Any?> =
+    keys().asSequence().associateWith { key ->
+      val value = get(key)
+      if (value == JSONObject.NULL) null else value
+    }
+
   fun rule(record: ReminderRecord, spec: Map<String, Any?>): RecurrenceRule {
     val recordZone = ZoneId.of(record.zoneId)
     val anchor = Instant.ofEpochMilli(record.eventStartMs).atZone(recordZone).toLocalDateTime()
     fun integer(key: String, fallback: Int): Int {
       val number = spec[key] ?: return fallback
-      require(number is Number && number.toDouble().isFinite() && number.toDouble() % 1 == 0.0 &&
-        number.toDouble() in -1.0..100_000.0) { "Enter a valid recurrence number." }
+      require(
+        number is Number &&
+          number.toDouble().isFinite() &&
+          number.toDouble() % 1 == 0.0 &&
+          number.toDouble() in -1.0..100_000.0
+      ) {
+        "Enter a valid recurrence number."
+      }
       return number.toInt()
     }
     fun local(at: Long) = Instant.ofEpochMilli(at).atZone(recordZone).toLocalDateTime()
-    val weekdays = (spec["weekdays"] as? List<*>)?.map { number ->
-      require(number is Number && number.toDouble() % 1 == 0.0 && number.toDouble() in 1.0..7.0); number.toInt()
-    } ?: listOf(anchor.dayOfWeek.value)
+    val weekdays =
+      (spec["weekdays"] as? List<*>)?.map { number ->
+        require(number is Number && number.toDouble() % 1 == 0.0 && number.toDouble() in 1.0..7.0)
+        number.toInt()
+      } ?: listOf(anchor.dayOfWeek.value)
     require(spec["zoneMode"] == null || spec["zoneMode"] in setOf("floating", "pinned"))
-    return RecurrenceRule(anchor, spec["frequency"] as? String ?: error("Choose a repeat rule."),
-      integer("interval", 1), weekdays, integer("day", anchor.dayOfMonth), integer("ordinal", 1),
-      integer("weekday", anchor.dayOfWeek.value), integer("month", anchor.monthValue),
+    return RecurrenceRule(
+      anchor,
+      spec["frequency"] as? String ?: error("Choose a repeat rule."),
+      integer("interval", 1),
+      weekdays,
+      integer("day", anchor.dayOfMonth),
+      integer("ordinal", 1),
+      integer("weekday", anchor.dayOfWeek.value),
+      integer("month", anchor.monthValue),
       if (spec["count"] == null) null else integer("count", 1),
       (spec["until"] as? String)?.let { LocalDate.parse(it) },
-      if (spec["zoneMode"] == "pinned") recordZone.id else null, allDay = record.allDay,
+      if (spec["zoneMode"] == "pinned") recordZone.id else null,
+      allDay = record.allDay,
       endOffsetMs = if (record.allDay) 86_400_000 else record.eventEndMs - record.eventStartMs,
-      dueOffsetMs = if (record.allDay && record.dueLinked) 86_400_000 else Duration.between(anchor, local(record.dueAtMs)).toMillis(),
-      alarmOffsetMs = if (record.allDay && record.alarmLinked) 9 * 3_600_000 else
-        Duration.between(anchor, local(record.definedAlarmAtMs ?: record.eventStartMs)).toMillis())
+      dueOffsetMs =
+        if (record.allDay && record.dueLinked) 86_400_000
+        else Duration.between(anchor, local(record.dueAtMs)).toMillis(),
+      alarmOffsetMs =
+        if (record.allDay && record.alarmLinked) 9 * 3_600_000
+        else
+          Duration.between(anchor, local(record.definedAlarmAtMs ?: record.eventStartMs))
+            .toMillis(),
+    )
   }
+
   fun preview(record: ReminderRecord, spec: Map<String, Any?>): List<Map<String, Any?>> {
     val rule = rule(record, spec)
-    return Recurrence.future(rule, now(), zone(), record.mode).take(3).map { slot ->
-      mapOf("nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs,
-        "dueAtMs" to slot.dueAtMs, "alarmAtMs" to slot.alarmAtMs, "adjusted" to slot.adjusted, "zoneId" to slot.zoneId)
-    }.toList()
+    return Recurrence.future(rule, now(), zone(), record.mode)
+      .take(3)
+      .map { slot ->
+        mapOf(
+          "nominalSlot" to slot.nominal.toString(),
+          "eventStartMs" to slot.eventStartMs,
+          "dueAtMs" to slot.dueAtMs,
+          "alarmAtMs" to slot.alarmAtMs,
+          "adjusted" to slot.adjusted,
+          "zoneId" to slot.zoneId,
+        )
+      }
+      .toList()
   }
-  private fun occurrenceId(segment: String, nominal: String) = UUID.nameUUIDFromBytes("remilo:$segment:$nominal".toByteArray()).toString()
+
+  private fun occurrenceId(segment: String, nominal: String) =
+    UUID.nameUUIDFromBytes("remilo:$segment:$nominal".toByteArray()).toString()
+
   fun calendarOccurrence(segmentId: String, nominal: String): ReminderRecord =
-    resolveRecord(requireNotNull(db().records().series(segmentId)), nominal, occurrenceId(segmentId, nominal))
-  private fun resolveRecord(segment: SeriesRecord, nominal: String, id: String, resolvedZone: String = ""): ReminderRecord {
+    resolveRecord(
+      requireNotNull(db().records().series(segmentId)),
+      nominal,
+      occurrenceId(segmentId, nominal),
+    )
+
+  private fun resolveRecord(
+    segment: SeriesRecord,
+    nominal: String,
+    id: String,
+    resolvedZone: String = "",
+  ): ReminderRecord {
     val original = template(segment)
     val rule = RuleCodec.decode(segment.rule)
-    val slot = Recurrence.resolve(if (resolvedZone.isEmpty()) rule else rule.copy(zoneId = resolvedZone), LocalDateTime.parse(nominal), zone())
-    return original.copy(id = id, eventStartMs = slot.eventStartMs, eventEndMs = slot.eventEndMs,
-      dueAtMs = slot.dueAtMs, definedAlarmAtMs = slot.alarmAtMs, zoneId = slot.zoneId,
-      segmentId = segment.id, nominalSlot = nominal, completed = false, deleted = false, revision = 1)
+    val slot =
+      Recurrence.resolve(
+        if (resolvedZone.isEmpty()) rule else rule.copy(zoneId = resolvedZone),
+        LocalDateTime.parse(nominal),
+        zone(),
+      )
+    return original.copy(
+      id = id,
+      eventStartMs = slot.eventStartMs,
+      eventEndMs = slot.eventEndMs,
+      dueAtMs = slot.dueAtMs,
+      definedAlarmAtMs = slot.alarmAtMs,
+      zoneId = slot.zoneId,
+      segmentId = segment.id,
+      nominalSlot = nominal,
+      completed = false,
+      deleted = false,
+      revision = 1,
+    )
   }
+
   fun materialize() {
     if (!unlocked()) return
     val dao = db().records()
-    alerts.all().filter { it.segmentId != null && it.nominalSlot != null }.forEach { alert ->
-      if (dao.purged(alert.occurrenceId) != null) return@forEach
-      val segment = dao.series(alert.segmentId!!) ?: return@forEach
-      val existing = dao.find(alert.occurrenceId)
-      val resolved = resolveRecord(segment, alert.nominalSlot!!, alert.occurrenceId, alert.resolvedZone)
-      if (existing == null) dao.insert(resolved.copy(exception = alert.exception, skipped = alert.state in setOf("Skipped", "Replaced")))
-      else if (alert.exception && !existing.exception) dao.update(existing.copy(exception = true))
-      // Eligibility uses the retained private schedule. Travel can move a future
-      // No alert slot into the past; its newly resolved DP zone must still project.
-      else if (!existing.exception && !alert.exception && (if (alert.mode == "None") existing.eventStartMs else alert.targetMs) > now() &&
-        alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused", "NoAlert"))
-        dao.update(resolved.copy(revision = existing.revision, createdAtMs = existing.createdAtMs,
-          completed = existing.completed, deleted = existing.deleted, skipped = existing.skipped))
-      if (alert.state == "Replaced" && existing != null && !existing.skipped &&
-        (existing.routineId == null || db().routines().session(existing.id) == null))
-        dao.update(existing.copy(skipped = true, revision = existing.revision + 1))
+    alerts
+      .all()
+      .filter { it.segmentId != null && it.nominalSlot != null }
+      .forEach { alert ->
+        if (dao.purged(alert.occurrenceId) != null) return@forEach
+        val segment = dao.series(alert.segmentId!!) ?: return@forEach
+        val existing = dao.find(alert.occurrenceId)
+        val resolved =
+          resolveRecord(segment, alert.nominalSlot!!, alert.occurrenceId, alert.resolvedZone)
+        if (existing == null)
+          dao.insert(
+            resolved.copy(
+              exception = alert.exception,
+              skipped = alert.state in setOf("Skipped", "Replaced"),
+            )
+          )
+        else if (alert.exception && !existing.exception) dao.update(existing.copy(exception = true))
+        // Eligibility uses the retained private schedule. Travel can move a future
+        // No alert slot into the past; its newly resolved DP zone must still project.
+        else if (
+          !existing.exception &&
+            !alert.exception &&
+            (if (alert.mode == "None") existing.eventStartMs else alert.targetMs) > now() &&
+            alert.state in setOf("Scheduled", "Pending", "Blocked", "Paused", "NoAlert")
+        )
+          dao.update(
+            resolved.copy(
+              revision = existing.revision,
+              createdAtMs = existing.createdAtMs,
+              completed = existing.completed,
+              deleted = existing.deleted,
+              skipped = existing.skipped,
+            )
+          )
+        if (
+          alert.state == "Replaced" &&
+            existing != null &&
+            !existing.skipped &&
+            (existing.routineId == null || db().routines().session(existing.id) == null)
+        )
+          dao.update(existing.copy(skipped = true, revision = existing.revision + 1))
+      }
+  }
+
+  fun get(id: String): Map<String, Any?>? =
+    db().records().series(id)?.let { series ->
+      val rule = RuleCodec.decode(series.rule)
+      val rows = alerts.all().filter { it.segmentId == id }
+      val original = template(series)
+      val future =
+        Recurrence.future(rule, now(), zone(), original.mode)
+          .filter {
+            routineDateEligible(
+              original.routineId,
+              occurrenceId(id, it.nominal.toString()),
+              it.nominal.toString(),
+            )
+          }
+          .take(3)
+          .toList()
+      mapOf(
+        "id" to series.id,
+        "seriesId" to series.seriesId,
+        "revision" to series.revision,
+        "state" to series.state,
+        "exhausted" to future.isEmpty(),
+        "template" to BackupCodec.record(original),
+        "rule" to RuleCodec.map(rule),
+        "registered" to
+          rows.count { !it.exception && it.state == "Scheduled" && it.targetMs > now() },
+        "pending" to rows.count { !it.exception && it.state == "Blocked" && it.targetMs > now() },
+        "upcoming" to
+          future.map {
+            mapOf(
+              "nominalSlot" to it.nominal.toString(),
+              "eventStartMs" to it.eventStartMs,
+              "alarmAtMs" to it.alarmAtMs,
+            )
+          },
+      )
     }
-  }
-  fun get(id: String): Map<String, Any?>? = db().records().series(id)?.let { series ->
-    val rule = RuleCodec.decode(series.rule)
-    val rows = alerts.all().filter { it.segmentId == id }
-    val original = template(series)
-    val future = Recurrence.future(rule, now(), zone(), original.mode).filter {
-      routineDateEligible(original.routineId, occurrenceId(id, it.nominal.toString()), it.nominal.toString())
-    }.take(3).toList()
-    mapOf("id" to series.id, "seriesId" to series.seriesId, "revision" to series.revision,
-      "state" to series.state, "exhausted" to future.isEmpty(), "template" to BackupCodec.record(original),
-      "rule" to RuleCodec.map(rule), "registered" to rows.count { !it.exception && it.state == "Scheduled" && it.targetMs > now() },
-      "pending" to rows.count { !it.exception && it.state == "Blocked" && it.targetMs > now() },
-      "upcoming" to future.map { mapOf("nominalSlot" to it.nominal.toString(), "eventStartMs" to it.eventStartMs, "alarmAtMs" to it.alarmAtMs) })
-  }
-  fun list(): List<Map<String, Any?>> = db().records().series().filter { it.state != "Archived" && db().routines().plan(it.seriesId)?.state != "Trashed" }.mapNotNull { get(it.id) }
+
+  fun list(): List<Map<String, Any?>> =
+    db()
+      .records()
+      .series()
+      .filter { it.state != "Archived" && db().routines().plan(it.seriesId)?.state != "Trashed" }
+      .mapNotNull { get(it.id) }
+
   /** Family identity survives splits and replacement; this projection never registers an alert. */
   fun families(): List<Map<String, Any?>> {
     val dao = db().records()
     val records = dao.all().associateBy { it.id }
     val deliveries = alerts.all().associateBy { it.occurrenceId }
     val at = now()
-    return dao.series().filter { db().routines().plan(it.seriesId)?.state != "Trashed" }.groupBy { it.seriesId }.map { (familyId, segments) ->
-      val ordinary = segments.filter { it.state != "Archived" }
-      val representative = (ordinary.ifEmpty { segments }).sortedWith(
-        compareByDescending<SeriesRecord> { it.createdAtMs }.thenBy { it.id }).first()
-      val candidates = ordinary.flatMap { segment ->
-        val original = template(segment)
-        Recurrence.future(RuleCodec.decode(segment.rule), at, zone(), original.mode).filter { slot ->
-          val id = occurrenceId(segment.id, slot.nominal.toString())
-          val record = records[id]
-          val delivery = deliveries[id]
-          record?.completed != true && record?.deleted != true && record?.skipped != true &&
-            record?.exception != true && delivery?.exception != true &&
-            delivery?.state !in setOf("Completed", "Deleted", "Skipped", "Replaced") &&
-            routineDateEligible(original.routineId, id, slot.nominal.toString())
-        }.take(3).map { slot -> segment to slot }.toList()
-      }.sortedWith(compareBy<Pair<SeriesRecord, ResolvedSlot>> { it.second.eventStartMs }
-        .thenBy { it.first.id }.thenBy { it.second.nominal })
-      val ids = segments.map { it.id }.toSet()
-      mapOf("seriesId" to familyId, "current" to requireNotNull(get(representative.id)),
-        "state" to when { candidates.isEmpty() -> "Ended"; candidates.all { it.first.state == "Paused" } -> "Paused"; else -> "Active" },
-        "upcoming" to candidates.take(3).map { (segment, slot) -> mapOf("segmentId" to segment.id,
-          "nominalSlot" to slot.nominal.toString(), "eventStartMs" to slot.eventStartMs, "alarmAtMs" to slot.alarmAtMs,
-          "zoneId" to slot.zoneId, "mode" to template(segment).mode, "state" to segment.state) },
-        "unfinishedCount" to records.values.count { it.segmentId in ids && !it.completed && !it.deleted && !it.skipped &&
-          (it.routineId == null || it.nominalSlot!!.substringBefore('T') >= RoutinePolicy.date(at, zone()).toString() &&
-            routineDateEligible(it.routineId, it.id, it.nominalSlot!!)) })
-    }.sortedBy { it["seriesId"] as String }
+    return dao
+      .series()
+      .filter { db().routines().plan(it.seriesId)?.state != "Trashed" }
+      .groupBy { it.seriesId }
+      .map { (familyId, segments) ->
+        val ordinary = segments.filter { it.state != "Archived" }
+        val representative =
+          (ordinary.ifEmpty { segments })
+            .sortedWith(compareByDescending<SeriesRecord> { it.createdAtMs }.thenBy { it.id })
+            .first()
+        val candidates =
+          ordinary
+            .flatMap { segment ->
+              val original = template(segment)
+              Recurrence.future(RuleCodec.decode(segment.rule), at, zone(), original.mode)
+                .filter { slot ->
+                  val id = occurrenceId(segment.id, slot.nominal.toString())
+                  val record = records[id]
+                  val delivery = deliveries[id]
+                  record?.completed != true &&
+                    record?.deleted != true &&
+                    record?.skipped != true &&
+                    record?.exception != true &&
+                    delivery?.exception != true &&
+                    delivery?.state !in setOf("Completed", "Deleted", "Skipped", "Replaced") &&
+                    routineDateEligible(original.routineId, id, slot.nominal.toString())
+                }
+                .take(3)
+                .map { slot -> segment to slot }
+                .toList()
+            }
+            .sortedWith(
+              compareBy<Pair<SeriesRecord, ResolvedSlot>> { it.second.eventStartMs }
+                .thenBy { it.first.id }
+                .thenBy { it.second.nominal }
+            )
+        val ids = segments.map { it.id }.toSet()
+        mapOf(
+          "seriesId" to familyId,
+          "current" to requireNotNull(get(representative.id)),
+          "state" to
+            when {
+              candidates.isEmpty() -> "Ended"
+              candidates.all { it.first.state == "Paused" } -> "Paused"
+              else -> "Active"
+            },
+          "upcoming" to
+            candidates.take(3).map { (segment, slot) ->
+              mapOf(
+                "segmentId" to segment.id,
+                "nominalSlot" to slot.nominal.toString(),
+                "eventStartMs" to slot.eventStartMs,
+                "alarmAtMs" to slot.alarmAtMs,
+                "zoneId" to slot.zoneId,
+                "mode" to template(segment).mode,
+                "state" to segment.state,
+              )
+            },
+          "unfinishedCount" to
+            records.values.count {
+              it.segmentId in ids &&
+                !it.completed &&
+                !it.deleted &&
+                !it.skipped &&
+                (it.routineId == null ||
+                  it.nominalSlot!!.substringBefore('T') >=
+                    RoutinePolicy.date(at, zone()).toString() &&
+                    routineDateEligible(it.routineId, it.id, it.nominalSlot!!))
+            },
+        )
+      }
+      .sortedBy { it["seriesId"] as String }
   }
+
   fun editTemplate(id: String, nominal: String?): ReminderRecord {
     val series = requireNotNull(db().records().series(id))
     return if (nominal == null) template(series) else resolveRecord(series, nominal, "editor")
   }
+
   fun editDraft(id: String, nominal: String): Map<String, Any?> {
     val segment = requireNotNull(db().records().series(id))
     val rule = RuleCodec.decode(segment.rule)
-    val selected = Recurrence.future(rule, -367L * 86_400_000, zone(), template(segment).mode)
-      .takeWhile { it.nominal <= LocalDateTime.parse(nominal) }.lastOrNull()
+    val selected =
+      Recurrence.future(rule, -367L * 86_400_000, zone(), template(segment).mode)
+        .takeWhile { it.nominal <= LocalDateTime.parse(nominal) }
+        .lastOrNull()
     require(selected?.nominal.toString() == nominal) { "Choose an original series slot." }
-    return mapOf("template" to BackupCodec.record(editTemplate(id, nominal)),
-      "remainingCount" to rule.count?.let { it - selected!!.index + 1 })
+    return mapOf(
+      "template" to BackupCodec.record(editTemplate(id, nominal)),
+      "remainingCount" to rule.count?.let { it - selected!!.index + 1 },
+    )
   }
-  fun create(operation: String, record: ReminderRecord, spec: Map<String, Any?>, allocatedId: String? = null,
-    checkpoint: () -> Unit = {}, afterCommit: () -> Unit = {}, calendarRule: RecurrenceRule? = null,
-    calendarFutureWork: Boolean = false): Map<String, Any?> {
+
+  fun create(
+    operation: String,
+    record: ReminderRecord,
+    spec: Map<String, Any?>,
+    allocatedId: String? = null,
+    checkpoint: () -> Unit = {},
+    afterCommit: () -> Unit = {},
+    calendarRule: RecurrenceRule? = null,
+    calendarFutureWork: Boolean = false,
+  ): Map<String, Any?> {
     val dao = db().records()
     dao.receipt(operation)?.let {
-      require(it.kind == "CreateSeries"); recover(); return mapOf("status" to "Applied", "segmentId" to it.occurrenceId)
+      require(it.kind == "CreateSeries")
+      recover()
+      return mapOf("status" to "Applied", "segmentId" to it.occurrenceId)
     }
-    val rule = rule(record, spec).let { if (calendarRule == null) it else it.copy(endExclusive = calendarRule.endExclusive) }
-    require(Recurrence.future(rule, now(), zone(), record.mode).any() || calendarRule != null && calendarFutureWork) { "No future occurrences. Change the rule or its ending." }
+    val rule =
+      rule(record, spec).let {
+        if (calendarRule == null) it else it.copy(endExclusive = calendarRule.endExclusive)
+      }
+    require(
+      Recurrence.future(rule, now(), zone(), record.mode).any() ||
+        calendarRule != null && calendarFutureWork
+    ) {
+      "No future occurrences. Change the rule or its ending."
+    }
     val id = allocatedId ?: UUID.randomUUID().toString()
-    val series = SeriesRecord(id, id, encodeTemplate(record), RuleCodec.encode(rule), createdAtMs = now())
+    val series =
+      SeriesRecord(id, id, encodeTemplate(record), RuleCodec.encode(rule), createdAtMs = now())
     db().runInTransaction {
-      dao.series(series); dao.pendingSeries(PendingSeries(operation, id)); dao.receipt(CreationReceipt(operation, id, "CreateSeries")); checkpoint()
+      dao.series(series)
+      dao.pendingSeries(PendingSeries(operation, id))
+      dao.receipt(CreationReceipt(operation, id, "CreateSeries"))
+      checkpoint()
     }
     afterCommit()
     recover()
     return response(id)
   }
-  private fun response(id: String) = mapOf("status" to when {
-      alerts.all().any { it.segmentId == id && it.state == "Blocked" } -> "Blocked"
-      alerts.all().any { it.segmentId == id && it.state == "Scheduled" } -> "Scheduled"
-      else -> "Applied" },
-    "segmentId" to id)
+
+  private fun response(id: String) =
+    mapOf(
+      "status" to
+        when {
+          alerts.all().any { it.segmentId == id && it.state == "Blocked" } -> "Blocked"
+          alerts.all().any { it.segmentId == id && it.state == "Scheduled" } -> "Scheduled"
+          else -> "Applied"
+        },
+      "segmentId" to id,
+    )
+
   fun calendarStatus(id: String): Map<String, Any?> = response(id)
+
   /** Calendar keeps its original segment/nominal identities when editing a master. */
-  fun calendarSchedule(operation: String, segment: SeriesRecord, record: ReminderRecord,
-    rule: RecurrenceRule, checkpoint: () -> Unit, afterCommit: () -> Unit,
-    additional: List<CalendarUpdate> = emptyList()): Map<String, Any?> {
+  fun calendarSchedule(
+    operation: String,
+    segment: SeriesRecord,
+    record: ReminderRecord,
+    rule: RecurrenceRule,
+    checkpoint: () -> Unit,
+    afterCommit: () -> Unit,
+    additional: List<CalendarUpdate> = emptyList(),
+  ): Map<String, Any?> {
     val updates = listOf(CalendarUpdate(segment, record, rule)) + additional
-    updates.forEach { update -> require(Recurrence.future(update.rule, now(), zone(), update.record.mode).any()) { "No future occurrences." } }
     updates.forEach { update ->
-      if (update.segment.rule != RuleCodec.encode(update.rule) ||
-        !com.remilo.alarm.calendar.CalendarLinkMapper.equal(com.remilo.alarm.calendar.CalendarLinkMapper.fields(template(update.segment)).get("schedule"),
-          com.remilo.alarm.calendar.CalendarLinkMapper.fields(update.record).get("schedule"))) fence(update.segment)
+      require(Recurrence.future(update.rule, now(), zone(), update.record.mode).any()) {
+        "No future occurrences."
+      }
+    }
+    updates.forEach { update ->
+      if (
+        update.segment.rule != RuleCodec.encode(update.rule) ||
+          !com.remilo.alarm.calendar.CalendarLinkMapper.equal(
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(template(update.segment))
+              .get("schedule"),
+            com.remilo.alarm.calendar.CalendarLinkMapper.fields(update.record).get("schedule"),
+          )
+      )
+        fence(update.segment)
     }
     db().runInTransaction {
       updates.forEach { update ->
-        db().records().series(update.segment.copy(template = encodeTemplate(update.record), rule = RuleCodec.encode(update.rule), revision = update.segment.revision + 1))
-        db().records().pendingSeries(PendingSeries("$operation:${update.segment.id}", update.segment.id))
+        db()
+          .records()
+          .series(
+            update.segment.copy(
+              template = encodeTemplate(update.record),
+              rule = RuleCodec.encode(update.rule),
+              revision = update.segment.revision + 1,
+            )
+          )
+        db()
+          .records()
+          .pendingSeries(PendingSeries("$operation:${update.segment.id}", update.segment.id))
       }
-      db().records().receipt(CreationReceipt(operation, segment.id, "CalendarSeriesSchedule")); checkpoint()
+      db().records().receipt(CreationReceipt(operation, segment.id, "CalendarSeriesSchedule"))
+      checkpoint()
     }
-    afterCommit(); recover(); return response(segment.id)
+    afterCommit()
+    recover()
+    return response(segment.id)
   }
-  fun calendarMetadata(operation: String, segment: SeriesRecord, record: ReminderRecord,
-    checkpoint: () -> Unit, afterCommit: () -> Unit): Map<String, Any?> {
+
+  fun calendarMetadata(
+    operation: String,
+    segment: SeriesRecord,
+    record: ReminderRecord,
+    checkpoint: () -> Unit,
+    afterCommit: () -> Unit,
+  ): Map<String, Any?> {
     val dao = db().records()
     db().runInTransaction {
       dao.series(segment.copy(template = encodeTemplate(record), revision = segment.revision + 1))
-      dao.all().filter { it.segmentId == segment.id && !it.exception && !it.completed && !it.deleted && !it.skipped }.forEach {
-        dao.update(it.copy(title = record.title, notes = record.notes, revision = it.revision + 1))
-      }
-      dao.receipt(CreationReceipt(operation, segment.id, "CalendarSeriesMetadata")); checkpoint()
+      dao
+        .all()
+        .filter {
+          it.segmentId == segment.id && !it.exception && !it.completed && !it.deleted && !it.skipped
+        }
+        .forEach {
+          dao.update(
+            it.copy(title = record.title, notes = record.notes, revision = it.revision + 1)
+          )
+        }
+      dao.receipt(CreationReceipt(operation, segment.id, "CalendarSeriesMetadata"))
+      checkpoint()
     }
-    afterCommit(); return response(segment.id)
+    afterCommit()
+    return response(segment.id)
   }
+
   private fun fence(series: SeriesRecord, from: LocalDateTime? = null) {
     alerts.plan(series.id)?.let { alerts.plan(it.copy(state = "Changing")) }
     val rule = RuleCodec.decode(series.rule)
-    alerts.all().filter { it.segmentId == series.id && !it.exception && scheduledAt(it, rule) > now() &&
-      it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert", "Paused") &&
-      (from == null || LocalDateTime.parse(it.nominalSlot) >= from) }.forEach { alert ->
-      alerts.put(alert.copy(state = "SeriesChanging", previousState = alert.state, generation = alert.generation + 1))
-      try { scheduler.cancel(alert) } catch (_: Exception) { /* fenced */ }
-    }
+    alerts
+      .all()
+      .filter {
+        it.segmentId == series.id &&
+          !it.exception &&
+          scheduledAt(it, rule) > now() &&
+          it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert", "Paused") &&
+          (from == null || LocalDateTime.parse(it.nominalSlot) >= from)
+      }
+      .forEach { alert ->
+        alerts.put(
+          alert.copy(
+            state = "SeriesChanging",
+            previousState = alert.state,
+            generation = alert.generation + 1,
+          )
+        )
+        try {
+          scheduler.cancel(alert)
+        } catch (_: Exception) {
+          /* fenced */
+        }
+      }
   }
-  fun mutate(operation: String, command: Map<String, Any?>, record: ReminderRecord? = null,
-    checkpoint: () -> Unit = {}, afterCommit: () -> Unit = {}): Map<String, Any?> {
+
+  fun mutate(
+    operation: String,
+    command: Map<String, Any?>,
+    record: ReminderRecord? = null,
+    checkpoint: () -> Unit = {},
+    afterCommit: () -> Unit = {},
+  ): Map<String, Any?> {
     val dao = db().records()
     val kind = command["kind"] as String
     val id = command["segmentId"] as? String ?: error("Choose a series.")
-    dao.receipt(operation)?.let { require(it.kind == kind && it.sourceId == id); recover(); return response(it.occurrenceId) }
+    dao.receipt(operation)?.let {
+      require(it.kind == kind && it.sourceId == id)
+      recover()
+      return response(it.occurrenceId)
+    }
     val old = dao.series(id) ?: return mapOf("status" to "Rejected", "errorCode" to "NOT_FOUND")
     if ((command["expectedRevision"] as? Number)?.toDouble() != old.revision.toDouble())
-      return mapOf("status" to "Rejected", "errorCode" to "STALE_REVISION", "errorMessage" to "This series changed. Reload before saving.")
-    require(old.state != "Archived") { "This series segment was replaced. Open its current series." }
+      return mapOf(
+        "status" to "Rejected",
+        "errorCode" to "STALE_REVISION",
+        "errorMessage" to "This series changed. Reload before saving.",
+      )
+    require(old.state != "Archived") {
+      "This series segment was replaced. Open its current series."
+    }
     val priorRule = RuleCodec.decode(old.rule)
-    val following = if (kind == "EditFollowing") LocalDateTime.parse(command["nominalSlot"] as String) else null
+    val following =
+      if (kind == "EditFollowing") LocalDateTime.parse(command["nominalSlot"] as String) else null
     if (following != null) {
-      require(following >= priorRule.anchor && (priorRule.endExclusive == null || following < priorRule.endExclusive))
+      require(
+        following >= priorRule.anchor &&
+          (priorRule.endExclusive == null || following < priorRule.endExclusive)
+      )
       editDraft(id, following.toString()) // Only an actual original slot can split a series.
     }
-    val nextRule = if (record != null) rule(record, command["recurrence"] as Map<String, Any?>) else priorRule
-    if (record != null) require(Recurrence.future(nextRule, now(), zone(), record.mode).any()) { "No future occurrences. Change the rule or its ending." }
+    val nextRule =
+      if (record != null) rule(record, command["recurrence"] as Map<String, Any?>) else priorRule
+    if (record != null)
+      require(Recurrence.future(nextRule, now(), zone(), record.mode).any()) {
+        "No future occurrences. Change the rule or its ending."
+      }
     val nextId = if (record == null) id else UUID.randomUUID().toString()
-    val related = dao.series().filter { it.seriesId == old.seriesId && it.state != "Archived" &&
-      (following == null || it.id == old.id || RuleCodec.decode(it.rule).anchor >= following) }
+    val related =
+      dao.series().filter {
+        it.seriesId == old.seriesId &&
+          it.state != "Archived" &&
+          (following == null || it.id == old.id || RuleCodec.decode(it.rule).anchor >= following)
+      }
     related.forEach { fence(it, if (it.id == old.id) following else null) }
     db().runInTransaction {
-      if (record == null) related.forEach { dao.series(it.copy(state = if (kind == "PauseSeries") "Paused" else "Active", revision = it.revision + 1)) }
+      if (record == null)
+        related.forEach {
+          dao.series(
+            it.copy(
+              state = if (kind == "PauseSeries") "Paused" else "Active",
+              revision = it.revision + 1,
+            )
+          )
+        }
       else {
-        related.forEach { segment -> dao.series(segment.copy(state = if (following == null || segment.id != old.id) "Archived" else old.state,
-          rule = if (following != null && segment.id == old.id) RuleCodec.encode(priorRule.copy(endExclusive = following)) else segment.rule,
-          revision = segment.revision + 1)) }
-        dao.series(SeriesRecord(nextId, old.seriesId, encodeTemplate(record), RuleCodec.encode(nextRule), state = old.state, createdAtMs = now()))
+        related.forEach { segment ->
+          dao.series(
+            segment.copy(
+              state = if (following == null || segment.id != old.id) "Archived" else old.state,
+              rule =
+                if (following != null && segment.id == old.id)
+                  RuleCodec.encode(priorRule.copy(endExclusive = following))
+                else segment.rule,
+              revision = segment.revision + 1,
+            )
+          )
+        }
+        dao.series(
+          SeriesRecord(
+            nextId,
+            old.seriesId,
+            encodeTemplate(record),
+            RuleCodec.encode(nextRule),
+            state = old.state,
+            createdAtMs = now(),
+          )
+        )
         dao.pendingSeries(PendingSeries("$operation:new", nextId))
       }
       related.forEach { dao.pendingSeries(PendingSeries("$operation:${it.id}", it.id)) }
@@ -266,13 +616,24 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       checkpoint()
     }
     afterCommit()
-    recover(); return response(nextId)
+    recover()
+    return response(nextId)
   }
+
   /** Recover CE intents when unlocked; protected rules remain sufficient when locked. */
-  fun replaceRoutine(operation: String, family: String, record: ReminderRecord, spec: Map<String, Any?>,
-    boundary: LocalDateTime, checkpoint: () -> Unit) {
+  fun replaceRoutine(
+    operation: String,
+    family: String,
+    record: ReminderRecord,
+    spec: Map<String, Any?>,
+    boundary: LocalDateTime,
+    checkpoint: () -> Unit,
+  ) {
     val dao = db().records()
-    dao.receipt(operation)?.let { recover(); return }
+    dao.receipt(operation)?.let {
+      recover()
+      return
+    }
     val old = dao.series().filter { it.seriesId == family && it.state != "Archived" }
     require(old.isNotEmpty())
     val nextRule = rule(record, spec)
@@ -281,32 +642,70 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
     db().runInTransaction {
       old.forEach { segment ->
         val prior = RuleCodec.decode(segment.rule)
-        dao.series(segment.copy(state = if (prior.anchor >= boundary) "Archived" else segment.state,
-          rule = RuleCodec.encode(prior.copy(endExclusive = minOf(prior.endExclusive ?: boundary, boundary))), revision = segment.revision + 1))
+        dao.series(
+          segment.copy(
+            state = if (prior.anchor >= boundary) "Archived" else segment.state,
+            rule =
+              RuleCodec.encode(
+                prior.copy(endExclusive = minOf(prior.endExclusive ?: boundary, boundary))
+              ),
+            revision = segment.revision + 1,
+          )
+        )
         dao.pendingSeries(PendingSeries("$operation:${segment.id}", segment.id))
       }
-      dao.series(SeriesRecord(nextId, family, encodeTemplate(record), RuleCodec.encode(nextRule),
-        state = old.last().state, createdAtMs = now()))
+      dao.series(
+        SeriesRecord(
+          nextId,
+          family,
+          encodeTemplate(record),
+          RuleCodec.encode(nextRule),
+          state = old.last().state,
+          createdAtMs = now(),
+        )
+      )
       dao.pendingSeries(PendingSeries(operation, nextId))
       dao.receipt(CreationReceipt(operation, nextId, "RoutineReplace", family))
       checkpoint()
     }
     recover()
   }
+
   /** Recover CE intents when unlocked; protected rules remain sufficient when locked. */
   fun recover() {
     if (unlocked()) {
       val dao = db().records()
       // Restore identity exclusions before any replenishment, including Direct Boot.
-      dao.purged().filter { it.segmentId != null }.forEach { exclusion ->
-        val old = alerts.find(exclusion.id)
-        if (old?.state != "Deleted") {
-          old?.let { try { scheduler.cancel(it) } catch (_: Exception) { /* generation fenced below */ } }
-          alerts.put(AlertRecord(exclusion.id, 0, (old?.generation ?: 0) + 1, "Deleted",
-            segmentId = exclusion.segmentId, nominalSlot = exclusion.nominalSlot, exception = true))
+      dao
+        .purged()
+        .filter { it.segmentId != null }
+        .forEach { exclusion ->
+          val old = alerts.find(exclusion.id)
+          if (old?.state != "Deleted") {
+            old?.let {
+              try {
+                scheduler.cancel(it)
+              } catch (_: Exception) {
+                /* generation fenced below */
+              }
+            }
+            alerts.put(
+              AlertRecord(
+                exclusion.id,
+                0,
+                (old?.generation ?: 0) + 1,
+                "Deleted",
+                segmentId = exclusion.segmentId,
+                nominalSlot = exclusion.nominalSlot,
+                exception = true,
+              )
+            )
+          }
         }
-      }
-      val ids = (dao.pendingSeries().map { it.segmentId } + alerts.plans().filter { it.state == "Changing" }.map { it.id }).distinct()
+      val ids =
+        (dao.pendingSeries().map { it.segmentId } +
+            alerts.plans().filter { it.state == "Changing" }.map { it.id })
+          .distinct()
       ids.forEach { id ->
         val series = dao.series(id) ?: return@forEach
         val private = template(series)
@@ -316,41 +715,102 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
             // Fence already-owned dates before publishing a replacement's DP
             // rule. A crash before registration must not let Direct Boot revive
             // a different occurrence for an existing dated session.
-            db().routines().sessions().filter { it.routineId == private.routineId }.forEach { saved ->
-              val nominal = LocalDate.parse(saved.date).atTime(rule.anchor.toLocalTime())
-              if (nominal >= rule.anchor && (rule.endExclusive == null || nominal < rule.endExclusive) &&
-                nominal.dayOfWeek.value in rule.weekdays) {
-                val occurrence = occurrenceId(id, nominal.toString())
-                if (occurrence != saved.occurrenceId) {
-                  val prior = alerts.find(occurrence)
-                  val slot = Recurrence.resolve(rule, nominal, zone())
-                  if (prior == null) alerts.put(AlertRecord(occurrence, slot.alarmAtMs, 1, "Expired", mode = private.mode,
-                    sound = private.sound, vibration = private.vibration, segmentId = id, nominalSlot = nominal.toString(),
-                    resolvedZone = slot.zoneId, profile = RoutinePolicy.PROFILE,
-                    expiresAtMs = RoutinePolicy.end(nominal.toLocalDate(), zone()), dayEnded = true))
-                  else if (!prior.dayEnded) {
-                    alerts.put(prior.copy(state = "Expired", dayEnded = true, generation = prior.generation + 1))
-                    try { scheduler.cancel(prior) } catch (_: Exception) { }
+            db()
+              .routines()
+              .sessions()
+              .filter { it.routineId == private.routineId }
+              .forEach { saved ->
+                val nominal = LocalDate.parse(saved.date).atTime(rule.anchor.toLocalTime())
+                if (
+                  nominal >= rule.anchor &&
+                    (rule.endExclusive == null || nominal < rule.endExclusive) &&
+                    nominal.dayOfWeek.value in rule.weekdays
+                ) {
+                  val occurrence = occurrenceId(id, nominal.toString())
+                  if (occurrence != saved.occurrenceId) {
+                    val prior = alerts.find(occurrence)
+                    val slot = Recurrence.resolve(rule, nominal, zone())
+                    if (prior == null)
+                      alerts.put(
+                        AlertRecord(
+                          occurrence,
+                          slot.alarmAtMs,
+                          1,
+                          "Expired",
+                          mode = private.mode,
+                          sound = private.sound,
+                          vibration = private.vibration,
+                          segmentId = id,
+                          nominalSlot = nominal.toString(),
+                          resolvedZone = slot.zoneId,
+                          profile = RoutinePolicy.PROFILE,
+                          expiresAtMs = RoutinePolicy.end(nominal.toLocalDate(), zone()),
+                          dayEnded = true,
+                        )
+                      )
+                    else if (!prior.dayEnded) {
+                      alerts.put(
+                        prior.copy(
+                          state = "Expired",
+                          dayEnded = true,
+                          generation = prior.generation + 1,
+                        )
+                      )
+                      try {
+                        scheduler.cancel(prior)
+                      } catch (_: Exception) {}
+                    }
                   }
                 }
               }
+          }
+          alerts.plan(
+            SeriesPlan(
+              id,
+              RuleCodec.encode(rule),
+              series.state,
+              private.mode,
+              private.sound,
+              private.vibration,
+              (dao.settings() ?: SettingsRecord()).snoozeMinutes,
+              rule.zone(zone()).id,
+              alerts.plan(id)?.materializedThrough,
+              if (private.routineId != null) RoutinePolicy.PROFILE else "Reminder",
+            )
+          )
+          alerts
+            .all()
+            .filter { it.segmentId == id && it.state == "SeriesChanging" }
+            .forEach { alert ->
+              val nominal = LocalDateTime.parse(alert.nominalSlot)
+              val belongs =
+                Recurrence.future(rule, now(), zone(), private.mode)
+                  .takeWhile { it.nominal <= nominal }
+                  .any { it.nominal == nominal }
+              val replaced =
+                series.state == "Archived" ||
+                  !belongs ||
+                  (rule.endExclusive != null && nominal >= rule.endExclusive)
+              alerts.put(
+                alert.copy(
+                  state =
+                    when {
+                      replaced -> "Replaced"
+                      series.state == "Paused" -> "Paused"
+                      else -> "Pending"
+                    },
+                  previousState = null,
+                )
+              )
             }
-          }
-          alerts.plan(SeriesPlan(id, RuleCodec.encode(rule), series.state, private.mode, private.sound,
-            private.vibration, (dao.settings() ?: SettingsRecord()).snoozeMinutes, rule.zone(zone()).id,
-            alerts.plan(id)?.materializedThrough, if (private.routineId != null) RoutinePolicy.PROFILE else "Reminder"))
-          alerts.all().filter { it.segmentId == id && it.state == "SeriesChanging" }.forEach { alert ->
-            val nominal = LocalDateTime.parse(alert.nominalSlot)
-            val belongs = Recurrence.future(rule, now(), zone(), private.mode).takeWhile { it.nominal <= nominal }.any { it.nominal == nominal }
-            val replaced = series.state == "Archived" || !belongs || (rule.endExclusive != null && nominal >= rule.endExclusive)
-            alerts.put(alert.copy(state = when { replaced -> "Replaced"; series.state == "Paused" -> "Paused"; else -> "Pending" }, previousState = null))
-          }
         }
       }
       dao.pendingSeries().forEach { dao.acknowledgeSeries(it.operationId) }
     }
-    replenish(); materialize()
+    replenish()
+    materialize()
   }
+
   /** Two independent normal future slots per segment, in addition to exceptions. */
   fun replenish() {
     for (plan in alerts.plans().filter { it.state == "Active" }) {
@@ -361,48 +821,133 @@ internal class SeriesCoordinator(private val context: Context, private val db: (
       plan.materializedThrough?.let { cursor ->
         val nominal = LocalDateTime.parse(cursor)
         val boundary = scheduledAt(Recurrence.resolve(rule, nominal, zone()), plan.mode)
-        val elapsedSlots = Recurrence.future(rule, boundary - 1, zone(), plan.mode).filter { it.nominal > nominal }
-          .takeWhile { scheduledAt(it, plan.mode) <= now() }.toList()
-        operational.runInTransaction { elapsedSlots.forEach { slot ->
-          val id = occurrenceId(plan.id, slot.nominal.toString())
-          if (alerts.find(id) == null) alerts.put(AlertRecord(id, slot.alarmAtMs, 1, if (plan.mode == "None") "NoAlert" else if (plan.profile == RoutinePolicy.PROFILE) "Available" else "Missed", mode = plan.mode,
-            sound = plan.sound, vibration = plan.vibration, snoozeMinutes = plan.snoozeMinutes,
-            segmentId = plan.id, nominalSlot = slot.nominal.toString(), resolvedZone = slot.zoneId,
-            profile = plan.profile, expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(slot.zoneId)) else 0))
-        } }
+        val elapsedSlots =
+          Recurrence.future(rule, boundary - 1, zone(), plan.mode)
+            .filter { it.nominal > nominal }
+            .takeWhile { scheduledAt(it, plan.mode) <= now() }
+            .toList()
+        operational.runInTransaction {
+          elapsedSlots.forEach { slot ->
+            val id = occurrenceId(plan.id, slot.nominal.toString())
+            if (alerts.find(id) == null)
+              alerts.put(
+                AlertRecord(
+                  id,
+                  slot.alarmAtMs,
+                  1,
+                  if (plan.mode == "None") "NoAlert"
+                  else if (plan.profile == RoutinePolicy.PROFILE) "Available" else "Missed",
+                  mode = plan.mode,
+                  sound = plan.sound,
+                  vibration = plan.vibration,
+                  snoozeMinutes = plan.snoozeMinutes,
+                  segmentId = plan.id,
+                  nominalSlot = slot.nominal.toString(),
+                  resolvedZone = slot.zoneId,
+                  profile = plan.profile,
+                  expiresAtMs =
+                    if (plan.profile == RoutinePolicy.PROFILE)
+                      RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(slot.zoneId))
+                    else 0,
+                )
+              )
+          }
+        }
       }
       val rows = alerts.all().filter { it.segmentId == plan.id }
       // Elapsed delivery is never revived by travel/recovery. The receiver itself
       // may still handle its ordinary callback within the lateness window.
-      rows.filter { !it.exception && scheduledAt(it, rule) <= now() && it.state in setOf("Paused") }.forEach {
-        alerts.put(it.copy(state = if (it.mode == "None") "NoAlert" else if (it.profile == RoutinePolicy.PROFILE) "Available" else "Missed", generation = it.generation + 1))
-      }
-      if (plan.resolvedZone != resolvedZone) {
-        rows.filter { !it.exception && (scheduledAt(it, rule) > now() || it.profile == RoutinePolicy.PROFILE && !it.dayEnded && it.nominalSlot!!.substringBefore('T') > RoutinePolicy.date(now(), zone()).toString()) && it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert") }.forEach { old ->
-          val slot = Recurrence.resolve(rule, LocalDateTime.parse(old.nominalSlot), zone())
-          alerts.put(old.copy(targetMs = slot.alarmAtMs, resolvedZone = resolvedZone, generation = old.generation + 1, state = "Pending",
-            expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(resolvedZone)) else 0))
-          try { scheduler.cancel(old) } catch (_: Exception) { /* old callback fenced */ }
+      rows
+        .filter { !it.exception && scheduledAt(it, rule) <= now() && it.state in setOf("Paused") }
+        .forEach {
+          alerts.put(
+            it.copy(
+              state =
+                if (it.mode == "None") "NoAlert"
+                else if (it.profile == RoutinePolicy.PROFILE) "Available" else "Missed",
+              generation = it.generation + 1,
+            )
+          )
         }
+      if (plan.resolvedZone != resolvedZone) {
+        rows
+          .filter {
+            !it.exception &&
+              (scheduledAt(it, rule) > now() ||
+                it.profile == RoutinePolicy.PROFILE &&
+                  !it.dayEnded &&
+                  it.nominalSlot!!.substringBefore('T') >
+                    RoutinePolicy.date(now(), zone()).toString()) &&
+              it.state in setOf("Scheduled", "Pending", "Blocked", "NoAlert")
+          }
+          .forEach { old ->
+            val slot = Recurrence.resolve(rule, LocalDateTime.parse(old.nominalSlot), zone())
+            alerts.put(
+              old.copy(
+                targetMs = slot.alarmAtMs,
+                resolvedZone = resolvedZone,
+                generation = old.generation + 1,
+                state = "Pending",
+                expiresAtMs =
+                  if (plan.profile == RoutinePolicy.PROFILE)
+                    RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(resolvedZone))
+                  else 0,
+              )
+            )
+            try {
+              scheduler.cancel(old)
+            } catch (_: Exception) {
+              /* old callback fenced */
+            }
+          }
         alerts.plan(plan.copy(resolvedZone = resolvedZone))
       }
       val eligible = setOf("Scheduled", "Pending", "Blocked", "Paused", "NoAlert")
-      val candidates = Recurrence.future(rule, now(), zone(), plan.mode).filter { slot ->
-        val existing = alerts.find(occurrenceId(plan.id, slot.nominal.toString()))
-        existing == null || (!existing.exception && scheduledAt(existing, rule) > now() && existing.state in eligible)
-      }.take(2).toList()
+      val candidates =
+        Recurrence.future(rule, now(), zone(), plan.mode)
+          .filter { slot ->
+            val existing = alerts.find(occurrenceId(plan.id, slot.nominal.toString()))
+            existing == null ||
+              (!existing.exception &&
+                scheduledAt(existing, rule) > now() &&
+                existing.state in eligible)
+          }
+          .take(2)
+          .toList()
       candidates.forEach { slot ->
         val nominal = slot.nominal.toString()
         val id = occurrenceId(plan.id, nominal)
         val old = alerts.find(id)
-        val desired = old ?: AlertRecord(id, slot.alarmAtMs, 1, "Pending", mode = plan.mode,
-          sound = plan.sound, vibration = plan.vibration, snoozeMinutes = plan.snoozeMinutes,
-          segmentId = plan.id, nominalSlot = nominal, resolvedZone = slot.zoneId, profile = plan.profile,
-          expiresAtMs = if (plan.profile == RoutinePolicy.PROFILE) RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(slot.zoneId)) else 0)
-        if (desired.state != "Scheduled" && desired.state != "NoAlert") register(desired.copy(state = "Pending"))
+        val desired =
+          old
+            ?: AlertRecord(
+              id,
+              slot.alarmAtMs,
+              1,
+              "Pending",
+              mode = plan.mode,
+              sound = plan.sound,
+              vibration = plan.vibration,
+              snoozeMinutes = plan.snoozeMinutes,
+              segmentId = plan.id,
+              nominalSlot = nominal,
+              resolvedZone = slot.zoneId,
+              profile = plan.profile,
+              expiresAtMs =
+                if (plan.profile == RoutinePolicy.PROFILE)
+                  RoutinePolicy.end(slot.nominal.toLocalDate(), ZoneId.of(slot.zoneId))
+                else 0,
+            )
+        if (desired.state != "Scheduled" && desired.state != "NoAlert")
+          register(desired.copy(state = "Pending"))
       }
-      val latest = alerts.all().filter { it.segmentId == plan.id }.mapNotNull { it.nominalSlot }.maxOrNull()
-      alerts.plan((alerts.plan(plan.id) ?: plan).copy(materializedThrough = latest ?: plan.materializedThrough))
+      val latest =
+        alerts.all().filter { it.segmentId == plan.id }.mapNotNull { it.nominalSlot }.maxOrNull()
+      alerts.plan(
+        (alerts.plan(plan.id) ?: plan).copy(
+          materializedThrough = latest ?: plan.materializedThrough
+        )
+      )
     }
   }
 }

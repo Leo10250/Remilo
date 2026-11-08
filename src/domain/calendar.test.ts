@@ -1,59 +1,144 @@
 import { describe, expect, it } from 'vitest';
 import { calendarError, publicationCommand, publicationCheckFeedback } from './calendar';
 import { previewCalendar } from '../../verification/ui/preview-calendar';
-import type { CalendarPublication, CalendarPublicationPreview, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type {
+  CalendarPublication,
+  CalendarPublicationPreview,
+  Occurrence,
+} from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarReviewReason } from './calendar-presentation';
 import { calendarDispositionLabel } from './calendar-managed';
 import { readFileSync } from 'node:fs';
 
 describe('Calendar publication boundary', () => {
   it('explains checked outcomes without claiming a removed reminder remains active', () => {
-    const publication = { state: 'Unconfirmed', readOnly: true, message: '' } as CalendarPublication;
+    const publication = {
+      state: 'Unconfirmed',
+      readOnly: true,
+      message: '',
+    } as CalendarPublication;
     expect(publicationCheckFeedback(publication)).toMatchObject({ tone: 'warning' });
     expect(publicationCheckFeedback(publication).message).toContain('cannot restore a reminder');
-    expect(publicationCheckFeedback({ ...publication, state: 'Published' })).toMatchObject({ tone: 'success' });
-    expect(publicationCheckFeedback({ ...publication, state: 'Cancelled' }).message).toContain('before it was sent');
-    expect(publicationCheckFeedback({ ...publication, readOnly: false, message: 'Original account access required' }).message).toBe('Original account access required');
+    expect(publicationCheckFeedback({ ...publication, state: 'Published' })).toMatchObject({
+      tone: 'success',
+    });
+    expect(publicationCheckFeedback({ ...publication, state: 'Cancelled' }).message).toContain(
+      'before it was sent',
+    );
+    expect(
+      publicationCheckFeedback({
+        ...publication,
+        readOnly: false,
+        message: 'Original account access required',
+      }).message,
+    ).toBe('Original account access required');
     expect(calendarReviewReason('UNCONFIRMED_RESOURCE')).not.toContain('UNCONFIRMED_RESOURCE');
-    expect(calendarDispositionLabel({ occurrenceId: 'removed', revision: 0, disposition: 'Default', state: 'Ineligible',
-      calendarName: 'Synthetic', message: 'LocalTerminal' })).toBe('Calendar sync inactive');
+    expect(
+      calendarDispositionLabel({
+        occurrenceId: 'removed',
+        revision: 0,
+        disposition: 'Default',
+        state: 'Ineligible',
+        calendarName: 'Synthetic',
+        message: 'LocalTerminal',
+      }),
+    ).toBe('Calendar sync inactive');
   });
   it('gives phase-specific recovery for uncertain creation, incomplete discovery and ownership', () => {
     expect(calendarError({ code: 'CREATION_UNCONFIRMED' })).toContain('original request result');
-    expect(calendarError({ code: 'DISCOVERY_INCOMPLETE' })).toBe('Calendar discovery hasn’t finished. Check again before choosing or creating a calendar.');
+    expect(calendarError({ code: 'DISCOVERY_INCOMPLETE' })).toBe(
+      'Calendar discovery hasn’t finished. Check again before choosing or creating a calendar.',
+    );
     expect(calendarError({ code: 'OWNERSHIP_UNKNOWN' })).toContain('ownership');
     expect(calendarError({ code: 'MEETING_EVENT' })).toContain('Google event is kept');
   });
   it('sends native guards and identity without accepting replacement private content', () => {
-    const preview = { occurrenceId: 'one', reminderRevision: 3, connectionRevision: 4, fingerprint: 'hash', title: 'Private', notes: 'Secret' } as CalendarPublicationPreview;
-    expect(publicationCommand(preview, 'operation')).toEqual({ kind: 'PublishOneOff', operationId: 'operation', occurrenceId: 'one', expectedRevision: 3, expectedConnectionRevision: 4, fingerprint: 'hash' });
+    const preview = {
+      occurrenceId: 'one',
+      reminderRevision: 3,
+      connectionRevision: 4,
+      fingerprint: 'hash',
+      title: 'Private',
+      notes: 'Secret',
+    } as CalendarPublicationPreview;
+    expect(publicationCommand(preview, 'operation')).toEqual({
+      kind: 'PublishOneOff',
+      operationId: 'operation',
+      occurrenceId: 'one',
+      expectedRevision: 3,
+      expectedConnectionRevision: 4,
+      fingerprint: 'hash',
+    });
   });
   it('isolated fixtures cannot authorize accounts or perform network writes', () => {
     const source = readFileSync('verification/ui/preview-calendar.ts', 'utf8');
-    expect(source).not.toMatch(/fetch\s*\(|XMLHttpRequest|https:\/\/|RemiloAlarmModule|AuthorizationClient|requireNativeModule|axios/);
+    expect(source).not.toMatch(
+      /fetch\s*\(|XMLHttpRequest|https:\/\/|RemiloAlarmModule|AuthorizationClient|requireNativeModule|axios/,
+    );
   });
   it('fixture cancellation preserves confirmed configuration', async () => {
-    const fixture = previewCalendar(new URLSearchParams('reviewCalendarConsent=cancel'), () => undefined, () => {});
-    const before = await fixture.getCalendarConnection(); await fixture.authorizeCalendar(null); expect(await fixture.getCalendarConnection()).toEqual(before);
+    const fixture = previewCalendar(
+      new URLSearchParams('reviewCalendarConsent=cancel'),
+      () => undefined,
+      () => {},
+    );
+    const before = await fixture.getCalendarConnection();
+    await fixture.authorizeCalendar(null);
+    expect(await fixture.getCalendarConnection()).toEqual(before);
   });
   it('connecting alone leaves publication blocked until a destination is deliberately selected', async () => {
-    const item = { id: 'one', revision: 1, zoneId: 'UTC', title: 'Synthetic', notes: '', eventStartMs: 1000, eventEndMs: 2000 } as Occurrence;
-    const fixture = previewCalendar(new URLSearchParams('reviewCalendar=disconnected'), () => item, () => {});
+    const item = {
+      id: 'one',
+      revision: 1,
+      zoneId: 'UTC',
+      title: 'Synthetic',
+      notes: '',
+      eventStartMs: 1000,
+      eventEndMs: 2000,
+    } as Occurrence;
+    const fixture = previewCalendar(
+      new URLSearchParams('reviewCalendar=disconnected'),
+      () => item,
+      () => {},
+    );
     await fixture.authorizeCalendar(null);
     const connection = await fixture.getCalendarConnection();
-    expect(connection.connected).toBe(true); expect(connection.calendarId).toBe('');
-    await expect(fixture.previewCalendarPublication('one')).rejects.toMatchObject({ code: 'NEEDS_CONNECTION' });
+    expect(connection.connected).toBe(true);
+    expect(connection.calendarId).toBe('');
+    await expect(fixture.previewCalendarPublication('one')).rejects.toMatchObject({
+      code: 'NEEDS_CONNECTION',
+    });
     const page = await fixture.listOwnedCalendars(null);
-    await fixture.applyCalendarCommand({ kind: 'SelectCalendar', operationId: 'choose', expectedConnectionRevision: connection.revision, calendarId: page.items[0].id });
+    await fixture.applyCalendarCommand({
+      kind: 'SelectCalendar',
+      operationId: 'choose',
+      expectedConnectionRevision: connection.revision,
+      calendarId: page.items[0].id,
+    });
     expect((await fixture.previewCalendarPublication('one')).calendarName).toBe(page.items[0].name);
     expect(await fixture.getCalendarPublications()).toEqual([]);
   });
   it('fixture lost reply retains authority and exact retry without replacing publication', async () => {
-    const item = { id: 'one', revision: 1, zoneId: 'UTC', title: 'Synthetic', notes: '', eventStartMs: 1000, eventEndMs: 2000 } as Occurrence;
-    const fixture = previewCalendar(new URLSearchParams('reviewLostReply=1&reviewCalendarOffline=1'), () => item, () => {});
+    const item = {
+      id: 'one',
+      revision: 1,
+      zoneId: 'UTC',
+      title: 'Synthetic',
+      notes: '',
+      eventStartMs: 1000,
+      eventEndMs: 2000,
+    } as Occurrence;
+    const fixture = previewCalendar(
+      new URLSearchParams('reviewLostReply=1&reviewCalendarOffline=1'),
+      () => item,
+      () => {},
+    );
     const cmd = publicationCommand(await fixture.previewCalendarPublication('one'), 'operation');
-    await expect(fixture.applyCalendarCommand(cmd)).rejects.toThrow('reply lost'); await fixture.applyCalendarCommand(cmd);
+    await expect(fixture.applyCalendarCommand(cmd)).rejects.toThrow('reply lost');
+    await fixture.applyCalendarCommand(cmd);
     expect(await fixture.getCalendarPublications()).toHaveLength(1);
-    await expect(fixture.previewCalendarPublication('one')).rejects.toMatchObject({ code: 'ALREADY_PUBLISHED' });
+    await expect(fixture.previewCalendarPublication('one')).rejects.toMatchObject({
+      code: 'ALREADY_PUBLISHED',
+    });
   });
 });

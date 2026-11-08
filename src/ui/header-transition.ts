@@ -15,7 +15,11 @@ export function headerSurfaceOpacity(offset: number, decoration: number) {
   return headerTransition.minimumOpacity + (1 - headerTransition.minimumOpacity) * blend;
 }
 
-export function headerScrimGeometry(opening: number, toolbar: number, subtitleHeight: number | null) {
+export function headerScrimGeometry(
+  opening: number,
+  toolbar: number,
+  subtitleHeight: number | null,
+) {
   // Protect the whole opening until the optional label has actually been measured.
   const plateau = Math.min(opening, subtitleHeight === null ? opening : toolbar + subtitleHeight);
   const height = Math.min(opening, plateau + headerTransition.feather);

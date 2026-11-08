@@ -5,7 +5,8 @@ import { TestAlarmOperation } from './test-alarm';
 describe('identified native Test alarm', () => {
   it('retains the same identity after a lost reply, then allocates a new deliberate test', async () => {
     let next = 0;
-    const schedule = vi.fn<(id: string) => Promise<CommandResult>>()
+    const schedule = vi
+      .fn<(id: string) => Promise<CommandResult>>()
       .mockRejectedValueOnce(new Error('Reply lost'))
       .mockResolvedValueOnce({ status: 'Applied', retry: true })
       .mockResolvedValueOnce({ status: 'Scheduled' });
@@ -19,7 +20,12 @@ describe('identified native Test alarm', () => {
   });
   it('coalesces simultaneous presses and releases definitive rejection', async () => {
     let resolve!: (result: CommandResult) => void;
-    const schedule = vi.fn(() => new Promise<CommandResult>((done) => { resolve = done; }));
+    const schedule = vi.fn(
+      () =>
+        new Promise<CommandResult>((done) => {
+          resolve = done;
+        }),
+    );
     const operation = new TestAlarmOperation({ id: () => 'test-1', schedule });
     const first = operation.run();
     expect(operation.run()).toBe(first);

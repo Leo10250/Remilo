@@ -10,7 +10,10 @@ class LanguageReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action != Intent.ACTION_LOCALE_CHANGED) return
     val pending = goAsync()
-    try { AlarmEngine.get(context).presentationChanged { pending.finish() } }
-    catch (_: Exception) { pending.finish() }
+    try {
+      AlarmEngine.get(context).presentationChanged { pending.finish() }
+    } catch (_: Exception) {
+      pending.finish()
+    }
   }
 }

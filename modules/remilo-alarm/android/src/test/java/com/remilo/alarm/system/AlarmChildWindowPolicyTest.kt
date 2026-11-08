@@ -14,19 +14,28 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class AlarmChildWindowPolicyTest {
   @Suppress("DEPRECATION")
-  @Test fun pickerGetsExplicitLockscreenEligibilityAndParentSecurityWithoutUnlockOrWakeFlags() {
+  @Test
+  fun pickerGetsExplicitLockscreenEligibilityAndParentSecurityWithoutUnlockOrWakeFlags() {
     val context = RuntimeEnvironment.getApplication()
     val parent = requireNotNull(Dialog(context).window)
     val child = requireNotNull(Dialog(context).window)
-    parent.addFlags(WindowManager.LayoutParams.FLAG_SECURE or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
-    child.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
+    parent.addFlags(
+      WindowManager.LayoutParams.FLAG_SECURE or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+    )
+    child.clearFlags(
+      WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+    )
     AlarmChildWindowPolicy.inherit(child, parent)
     assertTrue(child.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED != 0)
     assertTrue(child.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0)
     assertEquals(0, child.attributes.flags and WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
     assertEquals(0, child.attributes.flags and WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
   }
-  @Test fun aNonSecureParentDoesNotLeaveAnOldSecurePolicyOnTheChild() {
+
+  @Test
+  fun aNonSecureParentDoesNotLeaveAnOldSecurePolicyOnTheChild() {
     val context = RuntimeEnvironment.getApplication()
     val parent = requireNotNull(Dialog(context).window)
     val child = requireNotNull(Dialog(context).window)

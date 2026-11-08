@@ -1,11 +1,40 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
-import { type TimeDisplayPreferences, type CalendarConnection, type CalendarPublication, type CalendarPublicationPreview, type CalendarPage, type CalendarCommand, type AppSettings, type Capabilities, type Command, type CommandResult, type ImportPreview, type Occurrence, type ReminderDraft, type ReminderFilter, type ReminderPage, type RemiloAlarmModuleEvents, type SchedulePreview, type RecurrenceDraft, type Series, type RepeatFamily, type TimeZoneOption, type TimeConversion, type TimeConversionInput, type ListRecord, type SoundPreviewSnapshot, type ResolvedReminderDraft } from './RemiloAlarm.types';
-
+import {
+  type TimeDisplayPreferences,
+  type CalendarConnection,
+  type CalendarPublication,
+  type CalendarPublicationPreview,
+  type CalendarPage,
+  type CalendarCommand,
+  type AppSettings,
+  type Capabilities,
+  type Command,
+  type CommandResult,
+  type ImportPreview,
+  type Occurrence,
+  type ReminderDraft,
+  type ReminderFilter,
+  type ReminderPage,
+  type RemiloAlarmModuleEvents,
+  type SchedulePreview,
+  type RecurrenceDraft,
+  type Series,
+  type RepeatFamily,
+  type TimeZoneOption,
+  type TimeConversion,
+  type TimeConversionInput,
+  type ListRecord,
+  type SoundPreviewSnapshot,
+  type ResolvedReminderDraft,
+} from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   createOperationId(): string;
   chooseExercisePhoto(request: string): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
-  getExerciseImage(id: string, lease: string | null): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
+  getExerciseImage(
+    id: string,
+    lease: string | null,
+  ): Promise<import('./RemiloAlarm.types').ExercisePhoto | null>;
   releaseExerciseImage(lease: string): Promise<boolean>;
   prepareBackupExport(): Promise<{ uri: string; imageCount: number; bytes: number }>;
   prepareBackupImport(uri: string): Promise<ImportPreview & { handle: string; imageCount: number }>;
@@ -17,48 +46,106 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getCapabilities(): Promise<Capabilities>;
   queryReminders(filter: ReminderFilter, cursor: string | null): Promise<ReminderPage>;
   getOccurrence(id: string): Promise<Occurrence | null>;
-  previewSchedule(draft: ReminderDraft & { recurrence?: RecurrenceDraft }): Promise<SchedulePreview>;
+  previewSchedule(
+    draft: ReminderDraft & { recurrence?: RecurrenceDraft },
+  ): Promise<SchedulePreview>;
   querySeries(): Promise<Series[]>;
   queryRoutines(): Promise<import('./RemiloAlarm.types').RoutinePlan[]>;
-  previewRoutine(input: import('./RemiloAlarm.types').RoutineDraft & { startsOn: string; routineId?: string }): Promise<{ nextAlertMs: number | null; today: string; effectiveDate: string }>;
-  getRoutineSession(id: string, date: string | null): Promise<import('./RemiloAlarm.types').RoutineSession | null>;
-  queryRoutineHistory(id: string, cursor: string | null): Promise<{ items: import('./RemiloAlarm.types').RoutineSession[]; total: number; nextCursor: string | null }>;
+  previewRoutine(
+    input: import('./RemiloAlarm.types').RoutineDraft & { startsOn: string; routineId?: string },
+  ): Promise<{ nextAlertMs: number | null; today: string; effectiveDate: string }>;
+  getRoutineSession(
+    id: string,
+    date: string | null,
+  ): Promise<import('./RemiloAlarm.types').RoutineSession | null>;
+  queryRoutineHistory(
+    id: string,
+    cursor: string | null,
+  ): Promise<{
+    items: import('./RemiloAlarm.types').RoutineSession[];
+    total: number;
+    nextCursor: string | null;
+  }>;
   queryRepeatFamilies(): Promise<RepeatFamily[]>;
   getTimeZones(atMs: number): Promise<TimeZoneOption[]>;
   convertTime(input: TimeConversionInput): Promise<TimeConversion>;
-  resolvePostponeTime(input: import('./RemiloAlarm.types').PostponeTimeInput): Promise<TimeConversion>;
+  resolvePostponeTime(
+    input: import('./RemiloAlarm.types').PostponeTimeInput,
+  ): Promise<TimeConversion>;
   getSeries(id: string): Promise<Series | null>;
-  getSeriesDraft(id: string, nominal: string): Promise<{ template: ResolvedReminderDraft; remainingCount: number | null }>;
+  getSeriesDraft(
+    id: string,
+    nominal: string,
+  ): Promise<{ template: ResolvedReminderDraft; remainingCount: number | null }>;
   applyCommand(command: Command): Promise<CommandResult>;
   scheduleTestAlarm(operationId: string): Promise<CommandResult>;
   getSettings(): Promise<AppSettings>;
   getCalendarConnection(): Promise<CalendarConnection>;
-  listCalendarEvents(query: import('./RemiloAlarm.types').CalendarEventQuery): Promise<import('./RemiloAlarm.types').CalendarEventPage>;
-  previewCalendarImport(event: import('./RemiloAlarm.types').CalendarEventRef, choices: import('./RemiloAlarm.types').CalendarImportChoices): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
+  listCalendarEvents(
+    query: import('./RemiloAlarm.types').CalendarEventQuery,
+  ): Promise<import('./RemiloAlarm.types').CalendarEventPage>;
+  previewCalendarImport(
+    event: import('./RemiloAlarm.types').CalendarEventRef,
+    choices: import('./RemiloAlarm.types').CalendarImportChoices,
+  ): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   previewCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   previewCalendarUpdate(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   checkCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLink>;
   getCalendarLinks(): Promise<import('./RemiloAlarm.types').CalendarLink[]>;
-  getCalendarContext(id: string): Promise<import('./RemiloAlarm.types').Occurrence & { calendarSeriesId?: string } | null>;
+  getCalendarContext(
+    id: string,
+  ): Promise<(import('./RemiloAlarm.types').Occurrence & { calendarSeriesId?: string }) | null>;
   getCalendarSyncSummary(): Promise<import('./RemiloAlarm.types').CalendarSyncSummary>;
   getManagedCalendarState(): Promise<import('./RemiloAlarm.types').ManagedCalendarState>;
-  getCalendarOperationStatus(operationId: string): Promise<import('./RemiloAlarm.types').CalendarOperationStatus | null>;
-  beginCalendarAuthorization(requestId: string, operationId: string | null): Promise<{ operationId: string; launched: boolean }>;
-  getCalendarReminderDisposition(id: string): Promise<import('./RemiloAlarm.types').CalendarReminderDisposition | null>;
-  previewManagedCalendarSetup(choices: import('./RemiloAlarm.types').ManagedCalendarSetupChoices): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
-  previewManagedCalendarPolicyChange(choices: import('./RemiloAlarm.types').ManagedCalendarPolicyChoices): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
+  getCalendarOperationStatus(
+    operationId: string,
+  ): Promise<import('./RemiloAlarm.types').CalendarOperationStatus | null>;
+  beginCalendarAuthorization(
+    requestId: string,
+    operationId: string | null,
+  ): Promise<{ operationId: string; launched: boolean }>;
+  getCalendarReminderDisposition(
+    id: string,
+  ): Promise<import('./RemiloAlarm.types').CalendarReminderDisposition | null>;
+  previewManagedCalendarSetup(
+    choices: import('./RemiloAlarm.types').ManagedCalendarSetupChoices,
+  ): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
+  previewManagedCalendarPolicyChange(
+    choices: import('./RemiloAlarm.types').ManagedCalendarPolicyChoices,
+  ): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
   previewManagedCalendarResume(): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
-  previewManagedCalendarCandidate(candidateId: string, choices: import('./RemiloAlarm.types').CalendarImportChoices): Promise<import('./RemiloAlarm.types').ManagedCalendarCandidatePreview>;
-  previewManagedCalendarRecoveredAlerts(ids: string[]): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
-  getCalendarReviewIssues(cursor: string | null): Promise<import('./RemiloAlarm.types').CalendarReviewPage>;
-  previewCalendarActivation(ids: string[]): Promise<import('./RemiloAlarm.types').CalendarActivationReview>;
+  previewManagedCalendarCandidate(
+    candidateId: string,
+    choices: import('./RemiloAlarm.types').CalendarImportChoices,
+  ): Promise<import('./RemiloAlarm.types').ManagedCalendarCandidatePreview>;
+  previewManagedCalendarRecoveredAlerts(
+    ids: string[],
+  ): Promise<import('./RemiloAlarm.types').ManagedCalendarPreview>;
+  getCalendarReviewIssues(
+    cursor: string | null,
+  ): Promise<import('./RemiloAlarm.types').CalendarReviewPage>;
+  previewCalendarActivation(
+    ids: string[],
+  ): Promise<import('./RemiloAlarm.types').CalendarActivationReview>;
   syncCalendarNow(id: string | null): Promise<import('./RemiloAlarm.types').CalendarRunSummary>;
   getCalendarOperations(): Promise<import('./RemiloAlarm.types').CalendarLinkedOperation[]>;
   getCalendarPublications(): Promise<CalendarPublication[]>;
   previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
   authorizeCalendar(publicationId: string | null): Promise<void>;
   listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
-  applyCalendarCommand(command: CalendarCommand): Promise<CalendarConnection | CalendarPublication | import('./RemiloAlarm.types').CalendarLinkedOperation | import('./RemiloAlarm.types').CalendarImportBatchResult | import('./RemiloAlarm.types').ManagedCalendarState | import('./RemiloAlarm.types').CalendarReminderDisposition | { enabled: boolean; revision: number } | { disconnected: boolean } | { unlinked: boolean }>;
+  applyCalendarCommand(
+    command: CalendarCommand,
+  ): Promise<
+    | CalendarConnection
+    | CalendarPublication
+    | import('./RemiloAlarm.types').CalendarLinkedOperation
+    | import('./RemiloAlarm.types').CalendarImportBatchResult
+    | import('./RemiloAlarm.types').ManagedCalendarState
+    | import('./RemiloAlarm.types').CalendarReminderDisposition
+    | { enabled: boolean; revision: number }
+    | { disconnected: boolean }
+    | { unlinked: boolean }
+  >;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;
   getDiagnostics(): Promise<Record<string, unknown>>;

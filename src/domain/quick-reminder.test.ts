@@ -4,7 +4,12 @@ import { commandFeedback, quickReminder } from './quick-reminder';
 describe('quick reminder input', () => {
   it('uses one stable operation identity and a resolved concrete time', () => {
     const draft = quickReminder('  Pick up parcel  ', '10', 1_000_000, 'retry-id');
-    expect(draft).toEqual({ kind: 'Create', operationId: 'retry-id', title: 'Pick up parcel', alarmAtMs: 1_600_000 });
+    expect(draft).toEqual({
+      kind: 'Create',
+      operationId: 'retry-id',
+      title: 'Pick up parcel',
+      alarmAtMs: 1_600_000,
+    });
   });
   it.each(['', 'NaN', '-1', '0', 'Infinity', '1e100'])('rejects unsafe delay %s', (delay) => {
     expect(() => quickReminder('Reminder', delay, 1_000_000, 'id')).toThrow();
@@ -21,7 +26,9 @@ describe('honest command feedback', () => {
     expect(commandFeedback({ status: 'Pending' })).toContain('still pending');
   });
   it('reports new completion actions and never infers work state from a legacy Stop receipt', () => {
-    expect(commandFeedback({ status: 'Rejected', errorCode: 'STALE_GENERATION' })).toContain('Refresh');
+    expect(commandFeedback({ status: 'Rejected', errorCode: 'STALE_GENERATION' })).toContain(
+      'Refresh',
+    );
     expect(commandFeedback({ status: 'Applied' }, 'Stop')).toContain('Check the reminder status');
     expect(commandFeedback({ status: 'Applied' }, 'Done')).toContain('completed');
     expect(commandFeedback({ status: 'Applied' }, 'CompleteDelivery')).toContain('completed');
@@ -30,10 +37,21 @@ describe('honest command feedback', () => {
     expect(commandFeedback({ status: 'Applied' }, 'PostponeAll')).toContain('unfinished');
     expect(commandFeedback({ status: 'Applied' }, 'Done')).not.toContain('unfinished');
   });
-  it.each(['SnoozeAll', 'PostponeAll'] as const)('never reports a partial %s schedule as completed or wholly scheduled', kind => {
-    expect(commandFeedback({ status: 'Partial', memberResults: [
-      { occurrenceId: 'a', generation: 2, status: 'Scheduled' },
-      { occurrenceId: 'b', generation: 2, status: 'Blocked' },
-    ] }, kind)).toContain('1 of 2 alerts scheduled');
-  });
+  it.each(['SnoozeAll', 'PostponeAll'] as const)(
+    'never reports a partial %s schedule as completed or wholly scheduled',
+    (kind) => {
+      expect(
+        commandFeedback(
+          {
+            status: 'Partial',
+            memberResults: [
+              { occurrenceId: 'a', generation: 2, status: 'Scheduled' },
+              { occurrenceId: 'b', generation: 2, status: 'Blocked' },
+            ],
+          },
+          kind,
+        ),
+      ).toContain('1 of 2 alerts scheduled');
+    },
+  );
 });

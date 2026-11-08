@@ -1,15 +1,13 @@
 package com.remilo.app
-import expo.modules.splashscreen.SplashScreenManager
 
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-
 import expo.modules.ReactActivityDelegateWrapper
+import expo.modules.splashscreen.SplashScreenManager
 
 class MainActivity : ReactActivity() {
   override fun onNewIntent(intent: Intent) {
@@ -17,10 +15,12 @@ class MainActivity : ReactActivity() {
     setIntent(intent)
     super.onNewIntent(intent)
   }
+
   override fun onResume() {
     super.onResume()
     com.remilo.alarm.calendar.CalendarWork.reconcile(applicationContext, opportunity = true)
   }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     (application as MainApplication).initializeUi()
     // Set the theme to AppTheme BEFORE onCreate to support
@@ -45,31 +45,35 @@ class MainActivity : ReactActivity() {
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate {
     return ReactActivityDelegateWrapper(
+      this,
+      BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+      object :
+        DefaultReactActivityDelegate(
           this,
+          mainComponentName,
           BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
-          object : DefaultReactActivityDelegate(
-              this,
-              mainComponentName,
-              BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-          ){})
+        ) {},
+    )
   }
 
   /**
-    * Align the back button behavior with Android S
-    * where moving root activities to background instead of finishing activities.
-    * @see <a href="https://developer.android.com/reference/android/app/Activity#onBackPressed()">onBackPressed</a>
-    */
+   * Align the back button behavior with Android S where moving root activities to background
+   * instead of finishing activities.
+   *
+   * @see <a
+   *   href="https://developer.android.com/reference/android/app/Activity#onBackPressed()">onBackPressed</a>
+   */
   override fun invokeDefaultOnBackPressed() {
-      if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
-          if (!moveTaskToBack(false)) {
-              // For non-root activities, use the default implementation to finish them.
-              super.invokeDefaultOnBackPressed()
-          }
-          return
+    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+      if (!moveTaskToBack(false)) {
+        // For non-root activities, use the default implementation to finish them.
+        super.invokeDefaultOnBackPressed()
       }
+      return
+    }
 
-      // Use the default back button implementation on Android S
-      // because it's doing more than [Activity.moveTaskToBack] in fact.
-      super.invokeDefaultOnBackPressed()
+    // Use the default back button implementation on Android S
+    // because it's doing more than [Activity.moveTaskToBack] in fact.
+    super.invokeDefaultOnBackPressed()
   }
 }

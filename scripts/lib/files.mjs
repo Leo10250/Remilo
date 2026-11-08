@@ -7,6 +7,9 @@ export const fileHash = (path) => sha256(readFileSync(path));
 export function writeJson(path, data) {
   mkdirSync(dirname(path), { recursive: true });
   const temp = `${path}.${randomUUID()}.tmp`;
-  writeFileSync(temp, JSON.stringify(data, null, 2) + '\n'); renameSync(temp, path);
+  writeFileSync(temp, JSON.stringify(data, null, 2) + '\n');
+  renameSync(temp, path);
 }
-export function readJson(path) { return existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null; }
+export function readJson(path) {
+  return existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null;
+}

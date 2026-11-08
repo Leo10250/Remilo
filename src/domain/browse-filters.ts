@@ -12,7 +12,11 @@ export type BrowseFilterField = keyof BrowseFilters;
 export type BrowseFilterChip = { field: BrowseFilterField; label: string };
 
 /** Only applied foreground preferences reach a native query; a sheet draft stays local. */
-export function normalizeBrowseFilters(kind: BrowseKind, filters: BrowseFilters, fixedListId?: string | null): BrowseFilters {
+export function normalizeBrowseFilters(
+  kind: BrowseKind,
+  filters: BrowseFilters,
+  fixedListId?: string | null,
+): BrowseFilters {
   return {
     listId: fixedListId !== undefined ? fixedListId : filters.listId,
     overdueOnly: kind === 'agenda' && filters.overdueOnly,
@@ -21,38 +25,73 @@ export function normalizeBrowseFilters(kind: BrowseKind, filters: BrowseFilters,
   };
 }
 export function resetBrowseFilters(kind: BrowseKind, fixedListId?: string | null): BrowseFilters {
-  return normalizeBrowseFilters(kind, { listId: undefined, overdueOnly: false, deliveryIssuesOnly: false, includeSkipped: false }, fixedListId);
+  return normalizeBrowseFilters(
+    kind,
+    { listId: undefined, overdueOnly: false, deliveryIssuesOnly: false, includeSkipped: false },
+    fixedListId,
+  );
 }
 export function sameBrowseFilters(left: BrowseFilters, right: BrowseFilters) {
-  return left.listId === right.listId && left.overdueOnly === right.overdueOnly &&
-    left.deliveryIssuesOnly === right.deliveryIssuesOnly && left.includeSkipped === right.includeSkipped;
+  return (
+    left.listId === right.listId &&
+    left.overdueOnly === right.overdueOnly &&
+    left.deliveryIssuesOnly === right.deliveryIssuesOnly &&
+    left.includeSkipped === right.includeSkipped
+  );
 }
 /** Null rejects an edit while selection or a captured operation owns the displayed dataset. */
-export function commitBrowseFilters(kind: BrowseKind, current: BrowseFilters, draft: BrowseFilters,
-  options: { fixedListId?: string | null; guarded?: boolean; selecting?: boolean } = {}): BrowseFilters | null {
+export function commitBrowseFilters(
+  kind: BrowseKind,
+  current: BrowseFilters,
+  draft: BrowseFilters,
+  options: { fixedListId?: string | null; guarded?: boolean; selecting?: boolean } = {},
+): BrowseFilters | null {
   if (options.guarded || options.selecting) return null;
   const next = normalizeBrowseFilters(kind, draft, options.fixedListId);
   return sameBrowseFilters(current, next) ? current : next;
 }
-export function removeBrowseFilter(filters: BrowseFilters, field: BrowseFilterField): BrowseFilters {
+export function removeBrowseFilter(
+  filters: BrowseFilters,
+  field: BrowseFilterField,
+): BrowseFilters {
   return field === 'listId' ? { ...filters, listId: undefined } : { ...filters, [field]: false };
 }
-export function browseFilterChips(kind: BrowseKind, filters: BrowseFilters, lists: readonly ListRecord[] = [], fixedListId?: string | null): BrowseFilterChip[] {
-  const current = normalizeBrowseFilters(kind, filters, fixedListId), chips: BrowseFilterChip[] = [];
-  if (fixedListId === undefined && current.listId !== undefined) chips.push({ field: 'listId', label: current.listId === null ? t('m_eacd31d849f9') :
-    t('m_8e644ee1deea') + (lists.find(list => list.id === current.listId)?.name ?? t('m_e7f6d340d947')) });
+export function browseFilterChips(
+  kind: BrowseKind,
+  filters: BrowseFilters,
+  lists: readonly ListRecord[] = [],
+  fixedListId?: string | null,
+): BrowseFilterChip[] {
+  const current = normalizeBrowseFilters(kind, filters, fixedListId),
+    chips: BrowseFilterChip[] = [];
+  if (fixedListId === undefined && current.listId !== undefined)
+    chips.push({
+      field: 'listId',
+      label:
+        current.listId === null
+          ? t('m_eacd31d849f9')
+          : t('m_8e644ee1deea') +
+            (lists.find((list) => list.id === current.listId)?.name ?? t('m_e7f6d340d947')),
+    });
   if (current.overdueOnly) chips.push({ field: 'overdueOnly', label: t('m_d660945bc299') });
-  if (current.deliveryIssuesOnly) chips.push({ field: 'deliveryIssuesOnly', label: t('m_e4a303aaa9c2') });
+  if (current.deliveryIssuesOnly)
+    chips.push({ field: 'deliveryIssuesOnly', label: t('m_e4a303aaa9c2') });
   if (current.includeSkipped) chips.push({ field: 'includeSkipped', label: t('m_b43cd4ceac14') });
   return chips;
 }
-export function browseReminderFilter(kind: BrowseKind, filters: BrowseFilters,
-  context: { view: ReminderFilter['view']; search: string; fixedListId?: string | null }): ReminderFilter {
+export function browseReminderFilter(
+  kind: BrowseKind,
+  filters: BrowseFilters,
+  context: { view: ReminderFilter['view']; search: string; fixedListId?: string | null },
+): ReminderFilter {
   const current = normalizeBrowseFilters(kind, filters, context.fixedListId);
   return {
-    view: context.view, search: context.search,
+    view: context.view,
+    search: context.search,
     ...(current.listId !== undefined ? { listId: current.listId } : {}),
-    ...(kind === 'agenda' ? { overdueOnly: current.overdueOnly, deliveryIssuesOnly: current.deliveryIssuesOnly } : {}),
+    ...(kind === 'agenda'
+      ? { overdueOnly: current.overdueOnly, deliveryIssuesOnly: current.deliveryIssuesOnly }
+      : {}),
     ...(kind === 'completed' ? { includeSkipped: current.includeSkipped } : {}),
   };
 }

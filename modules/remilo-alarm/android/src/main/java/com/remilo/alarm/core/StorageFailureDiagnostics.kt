@@ -4,7 +4,8 @@ import java.util.IdentityHashMap
 
 /** Narrow diagnostic allowlist. Never return exception messages, SQL, paths, hashes or content. */
 object StorageFailureDiagnostics {
-  private val missingMigration = Regex("^A migration from ([0-9]{1,10}) to ([0-9]{1,10}) was required but not found\\.")
+  private val missingMigration =
+    Regex("^A migration from ([0-9]{1,10}) to ([0-9]{1,10}) was required but not found\\.")
   private val exceptionName = Regex("[A-Za-z_][A-Za-z0-9_]{0,79}")
 
   fun summary(error: Throwable): String {
@@ -23,7 +24,10 @@ object StorageFailureDiagnostics {
         if (from != null && from > 0 && to != null && to > 0)
           return "type=room_missing_migration from=$from to=$to exception=$name"
       }
-      if (message.startsWith("Room cannot verify the data integrity.") && message.contains("Expected identity hash:"))
+      if (
+        message.startsWith("Room cannot verify the data integrity.") &&
+          message.contains("Expected identity hash:")
+      )
         return "type=room_identity_mismatch exception=$name"
       current = runCatching { cause.cause }.getOrNull()
     }

@@ -7,6 +7,10 @@ it('projects the selected zone across civil-day boundaries', () => {
 });
 it('uses picker offset instead of the host timezone, and merges only the edited parts', () => {
   expect(pickerCivil(Date.parse('2026-11-01T09:30:00Z'), -480)).toBe('2026-11-01T01:30:00');
-  expect(mergeCivil('2026-10-05T09:45:12', '2026-10-08T12:00:00', 'date')).toBe('2026-10-08T09:45:12');
-  expect(mergeCivil('2026-10-05T09:45:12', '2026-10-08T14:20:00', 'time')).toBe('2026-10-05T14:20:00');
+  expect(mergeCivil('2026-10-05T09:45:12', '2026-10-08T12:00:00', 'date')).toBe(
+    '2026-10-08T09:45:12',
+  );
+  expect(mergeCivil('2026-10-05T09:45:12', '2026-10-08T14:20:00', 'time')).toBe(
+    '2026-10-05T14:20:00',
+  );
 });

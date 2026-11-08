@@ -12,15 +12,27 @@ class RecoveryReceiver : BroadcastReceiver() {
     com.remilo.alarm.widget.WidgetWork.request(context)
     Log.i("Remilo", "Recovery received: ${intent.action}")
     val pending = goAsync()
-    try { AlarmEngine.get(context).recover {
-      if (intent.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) com.remilo.alarm.calendar.CalendarWork.reconcile(context, opportunity = true)
+    try {
+      AlarmEngine.get(context).recover {
+        if (intent.action != Intent.ACTION_LOCKED_BOOT_COMPLETED)
+          com.remilo.alarm.calendar.CalendarWork.reconcile(context, opportunity = true)
+        pending.finish()
+      }
+    } catch (_: Exception) {
       pending.finish()
-    } }
-    catch (_: Exception) { pending.finish() }
+    }
   }
+
   companion object {
-    private val ACTIONS = setOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_BOOT_COMPLETED,
-      Intent.ACTION_USER_UNLOCKED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED,
-      Intent.ACTION_TIMEZONE_CHANGED, "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED")
+    private val ACTIONS =
+      setOf(
+        Intent.ACTION_LOCKED_BOOT_COMPLETED,
+        Intent.ACTION_BOOT_COMPLETED,
+        Intent.ACTION_USER_UNLOCKED,
+        Intent.ACTION_MY_PACKAGE_REPLACED,
+        Intent.ACTION_TIME_CHANGED,
+        Intent.ACTION_TIMEZONE_CHANGED,
+        "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
+      )
   }
 }

@@ -28,7 +28,12 @@ describe('retry-safe backup restore', () => {
 
   it('coalesces a second press while native is processing', async () => {
     let acknowledge!: (result: CommandResult) => void;
-    const restore = vi.fn(() => new Promise<CommandResult>((resolve) => { acknowledge = resolve; }));
+    const restore = vi.fn(
+      () =>
+        new Promise<CommandResult>((resolve) => {
+          acknowledge = resolve;
+        }),
+    );
     const operation = new RestoreOperation({ restore, id: () => 'restore-1' });
     const first = operation.run('backup-a', ['family-a']);
     const second = operation.run('backup-b', []);
@@ -41,14 +46,19 @@ describe('retry-safe backup restore', () => {
 
   it('allows reviewed changes after an explicit rejection and allocates a new operation', async () => {
     let nextId = 0;
-    const restore = vi.fn<(job: RestoreJob) => Promise<CommandResult>>()
+    const restore = vi
+      .fn<(job: RestoreJob) => Promise<CommandResult>>()
       .mockResolvedValueOnce({ status: 'Rejected', errorMessage: 'Selection invalid' })
       .mockResolvedValueOnce({ status: 'Applied' });
     const operation = new RestoreOperation({ restore, id: () => 'restore-' + ++nextId });
     await expect(operation.run('backup-a', ['bad'])).rejects.toThrow('Selection invalid');
     expect(operation.pending).toBe(false);
     await operation.run('backup-a', ['good']);
-    expect(restore.mock.calls[1][0]).toEqual({ json: 'backup-a', copies: ['good'], operationId: 'restore-2' });
+    expect(restore.mock.calls[1][0]).toEqual({
+      json: 'backup-a',
+      copies: ['good'],
+      operationId: 'restore-2',
+    });
   });
 
   it('accepts a confirmed restore with blocked delivery without retaining an uncertain job', async () => {
