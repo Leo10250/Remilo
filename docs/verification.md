@@ -11,6 +11,7 @@ in the relevant task or [backlog](backlog.md).
 | Command | Coverage |
 |---|---|
 | `npm run verify` | Prettier, localization, local docs links, current assets/presentation, TypeScript, ESLint, shared tests and Node tooling fixtures |
+| `npm run verify:expo` | Installed dependency versions against the current Expo SDK's compatibility recommendations |
 | `npm run verify:docs` | Maintained Markdown links/images/local anchors; no network |
 | `npm run verify:assets` | Current manifests, file facts, copies and generated presentation; `verify:design` is an alias |
 | `npm run verify:localization` | Bilingual messages, argument/plural shape, escaping and generated-output determinism |
@@ -32,6 +33,20 @@ Asset checks establish current file integrity and selection consistency. Encoded
 header checks do not establish decoded pixels or visual quality; deterministic
 export/audit fixtures use Pillow for those claims. Authorized asset edits update
 the current manifest, without historical commits, approval files or deletion lists.
+
+## Expo dependency compatibility
+
+Run `npm ci`, then `npm run verify:expo` from the repository root. This runs
+`expo install --check --json` with the installed CLI and reports mismatches without
+editing the manifest or lockfile. The shared CI job runs this check on dependency
+pull requests. Local `npm run verify` and release preparation keep their existing
+checks.
+
+If Expo reports a mismatch, use `npx expo install <package>` for the affected
+packages, review the manifest and lockfile changes, then run `npm ci` and
+`npm run verify:expo` again. Keep fixes within the current SDK. If the CLI falls
+back to the bundled version map because Expo is unreachable, rerun with network
+access to confirm the current recommendation.
 
 ## Source formatting
 
