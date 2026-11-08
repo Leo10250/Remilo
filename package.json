@@ -33,6 +33,7 @@
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
+    "prettier": "3.9.10",
     "typescript": "~6.0.3",
     "vitest": "^5.0.3"
   },
@@ -42,6 +43,8 @@
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "format": "node scripts/format.mjs --write",
+    "format:check": "node scripts/format.mjs --check",
     "test": "vitest run",
     "verify": "node scripts/verify.mjs",
     "verify:design": "node scripts/verify-assets.mjs",

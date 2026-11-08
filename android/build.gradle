@@ -14,6 +14,10 @@ buildscript {
   }
 }
 
+configure([project(':app'), project(':remilo-alarm')]) {
+  apply from: rootProject.file('spotless.gradle')
+}
+
 allprojects {
   ['com.android.application', 'com.android.library'].each { pluginId ->
     plugins.withId(pluginId) {

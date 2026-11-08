@@ -92,12 +92,13 @@ For Windows Ninja path limits, ignored `android/local.properties` can set
 
 | Command | Purpose |
 |---|---|
-| `npm run verify` | Localization, docs, assets/presentation, TypeScript, ESLint, shared tests and tooling fixtures |
+| `npm run format` / `npm run format:check` | Apply or check Prettier formatting for JavaScript and TypeScript |
+| `npm run verify` | Prettier, localization, docs, assets/presentation, TypeScript, ESLint, shared tests and tooling fixtures |
 | `npm run verify:docs` | Local Markdown links, images and anchors |
 | `npm run verify:assets` | Current asset/copy/presentation integrity; `verify:design` is an alias |
 | `npm run verify:localization` | Catalog structure, bindings and generated-output freshness |
 | `npm run test:tooling` | Controlled host workflow fixtures |
-| `npm run verify:android` | Native unit tests, lint and release assembly |
+| `npm run verify:android` | Spotless, native unit tests, lint and release assembly |
 | `npm run verify:all` | Combined shared/native checks with a private summary |
 | `npm run build:beta` | Signed bundled beta APK |
 | `npm run release:prepare` | Combined checks and required signed assembly; no installation |

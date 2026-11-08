@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { root, checked, localNode, WorkflowError } from '../tools.mjs';
+import { prettierArguments } from '../format.mjs';
 import { readJson } from './files.mjs';
 import { runComposeAlignedRelease } from './compose-classpath.mjs';
 import { androidTools, checkSigning, configuredVersions, inspectApk, validateApk, toolVersions } from './android-tools.mjs';
@@ -8,6 +9,7 @@ import { androidTools, checkSigning, configuredVersions, inspectApk, validateApk
 export async function verifyShared({ json = false } = {}) {
   const checks = [];
   const tasks = [
+    ['Prettier formatting', prettierArguments('--check')],
     ['localization catalogs', [join(root, 'scripts/localization.mjs'), '--check']],
     ['documentation links', [join(root, 'scripts/verify-docs.mjs')]],
     ['current assets and presentation', [join(root, 'scripts/verify-assets.mjs')]],
@@ -51,7 +53,16 @@ export async function buildRelease({ abi = 'arm64-v8a', verify = false, requireS
   if (!existsSync(join(root, 'node_modules/expo/package.json'))) throw new WorkflowError('DEPENDENCIES_MISSING', 'Install project dependencies with npm ci before building.');
   const wrapper = join(root, 'android/gradle/wrapper/gradle-wrapper.jar');
   if (!existsSync(wrapper)) throw new WorkflowError('WRAPPER_MISSING', 'Restore the committed Android Gradle wrapper from Git.');
-  const tasks = verify ? [':remilo-alarm:testDebugUnitTest', ':remilo-alarm:lintDebug', ':app:lintRelease', ':app:assembleRelease'] : [':app:assembleRelease'];
+  const tasks = verify
+    ? [
+        ':app:spotlessCheck',
+        ':remilo-alarm:spotlessCheck',
+        ':remilo-alarm:testDebugUnitTest',
+        ':remilo-alarm:lintDebug',
+        ':app:lintRelease',
+        ':app:assembleRelease',
+      ]
+    : [':app:assembleRelease'];
   // Invoke the committed wrapper JAR directly to preserve arguments on Windows, including paths with spaces.
   const gradle = (requestedTasks, { stream, timeout }) => checked(tools.java, ['-Xmx64m', '-Xms64m', '-Dorg.gradle.appname=gradlew', '-classpath', wrapper,
     'org.gradle.wrapper.GradleWrapperMain', ...requestedTasks, ...(requireSigning ? ['-Premilo.requireSigning=true'] : []),

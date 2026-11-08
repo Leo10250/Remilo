@@ -13,7 +13,7 @@ test('release preparation checks signing, verifies and assembles without install
   });
   assert.deepEqual(calls, ['signing', ['shared', { json: true }], ['assemble', { abi: 'x86_64', verify: true, requireSigning: true, json: true }]]);
   assert.deepEqual(summary, { schemaVersion: 3, ok: true, preparedAt: 'captured', build,
-    checks: [...checks, { command: 'Android unit tests, module/app lint, release assembly', result: 'passed', completedAt: build.builtAt }], installed: false, published: false });
+    checks: [...checks, { command: 'Spotless, Android unit tests, module/app lint, release assembly', result: 'passed', completedAt: build.builtAt }], installed: false, published: false });
   assert.equal(checks.length, 1);
 });
 test('missing signing stops preparation before checks or assembly', async () => {

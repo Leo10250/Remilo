@@ -10,6 +10,19 @@ const ts = require('typescript');
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 
+function findSyntax(node, predicate) {
+  return predicate(node) ? node : ts.forEachChild(node, (child) => findSyntax(child, predicate));
+}
+
+function readKotlin(file) {
+  return read(file)
+    .replace(/,\s*(?=\))/g, '')
+    .replace(/\s*;\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\(\s+|\s+\)/g, (match) => match.trim())
+    .replace(/\s*(\?\.|\.)\s*(?=\w)/g, '$1');
+}
+
 function metroResolver(preview) {
   const fallback = (context, name, platform) => context.resolveRequest(context, name, platform);
   const module = { exports: { resolver: { resolveRequest: fallback } } };
@@ -383,10 +396,43 @@ test('ordinary reminder rows expose leading completion independently from openin
   const glyph = binding.elements.find((element) => element.name.getText(rowSource) === 'glyph');
   assert.equal(glyph?.initializer?.text, 'event');
   const openingKey = Object.entries(JSON.parse(read('localization/catalog.json')).messages).find(([, value]) => value.en === 'Open reminder: ')[0];
-  const body = component.getText(rowSource), completionPosition = body.indexOf('{doneControl}'), openingPosition = body.indexOf(`accessibilityLabel={t('${openingKey}') + summary}`);
-  assert.ok(completionPosition >= 0 && openingPosition > completionPosition, 'The independent completion control precedes opening the reminder.');
-  assert.match(body, /accessibilityRole="checkbox" aria-checked=\{item.completed\} accessibilityLabel=\{actionLabel \+ ': ' \+ summary\}/);
-  assert.match(body, /accessibilityState=\{\{ checked: item.completed, disabled: busy \}\} disabled=\{busy\} onPress=\{act\}/);
+  const isPressable = (node) => ts.isJsxOpeningElement(node) && node.tagName.getText(rowSource) === 'Pressable';
+  const attribute = (node, name) => node.attributes.properties.find((property) =>
+    ts.isJsxAttribute(property) && property.name.getText(rowSource) === name)?.initializer;
+  const expression = (node, name) => {
+    const initializer = attribute(node, name);
+    return initializer && ts.isJsxExpression(initializer) ? initializer.expression : undefined;
+  };
+  const isPlus = (node) => node && ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken;
+  const completion = findSyntax(component, (node) => ts.isVariableDeclaration(node) && node.name.getText(rowSource) === 'doneControl');
+  assert.ok(completion?.initializer);
+  const checkbox = findSyntax(completion.initializer, isPressable);
+  assert.ok(checkbox);
+  assert.equal(attribute(checkbox, 'accessibilityRole')?.text, 'checkbox');
+  assert.equal(expression(checkbox, 'aria-checked')?.getText(rowSource), 'item.completed');
+  const label = expression(checkbox, 'accessibilityLabel');
+  assert.ok(isPlus(label) && isPlus(label.left) && ts.isStringLiteral(label.left.right));
+  assert.equal(label.left.left.getText(rowSource), 'actionLabel');
+  assert.equal(label.left.right.text, ': ');
+  assert.equal(label.right.getText(rowSource), 'summary');
+  const state = expression(checkbox, 'accessibilityState');
+  assert.ok(state && ts.isObjectLiteralExpression(state));
+  assert.deepEqual(Object.fromEntries(state.properties.map((property) => {
+    assert.ok(ts.isPropertyAssignment(property));
+    return [property.name.getText(rowSource), property.initializer.getText(rowSource)];
+  })), { checked: 'item.completed', disabled: 'busy' });
+  assert.equal(expression(checkbox, 'disabled')?.getText(rowSource), 'busy');
+  assert.equal(expression(checkbox, 'onPress')?.getText(rowSource), 'act');
+  const completionSlot = findSyntax(component, (node) => ts.isJsxExpression(node) && node.expression?.getText(rowSource) === 'doneControl');
+  const opening = findSyntax(component, (node) => {
+    if (!isPressable(node)) return false;
+    const label = expression(node, 'accessibilityLabel');
+    return isPlus(label) && label.right.getText(rowSource) === 'summary' && ts.isCallExpression(label.left) &&
+      label.left.expression.getText(rowSource) === 't' && label.left.arguments.length === 1 &&
+      ts.isStringLiteral(label.left.arguments[0]) && label.left.arguments[0].text === openingKey;
+  });
+  assert.ok(completionSlot && opening && completionSlot.getStart(rowSource) < opening.getStart(rowSource),
+    'The independent completion control precedes opening the reminder.');
   for (const file of ['src/app/index.tsx', 'src/app/records.tsx', 'src/app/series/[id].tsx']) {
     const source = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
     const attributes = [];
@@ -403,15 +449,15 @@ test('ordinary reminder rows expose leading completion independently from openin
 });
 
 test('native atmosphere rendering leaves observation, guarded actions and confirmed dismissal in the activity', () => {
-  const activity = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt');
-  const controls = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt');
-  const sessionGuard = read('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt');
+  const activity = readKotlin('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmActivity.kt');
+  const controls = readKotlin('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system/AlarmControlsScreen.kt');
+  const sessionGuard = readKotlin('modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core/SessionPresentation.kt');
   assert.match(activity, /AtmosphereTokens\.colors\(current\?\.atmosphere/);
   const refreshStart = activity.indexOf('private fun refresh()');
   const refreshEnd = activity.indexOf('private fun act(', refreshStart);
   assert.ok(refreshStart >= 0 && refreshEnd > refreshStart, 'Inspect the native refresh owner separately from action handlers.');
   const refresh = activity.slice(refreshStart, refreshEnd);
-  assert.match(refresh, /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null;\s*select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
+  assert.match(refresh, /if \(SessionRefreshGuard\.mayDismiss\(current\.state, pendingCommand != null, busy\.value, unconfirmed\.value \|\| navigatingRoutine\)\)\s*\{\s*discardPostpone\(\)\s*val incoming = deferredIntent\s*if \(incoming != null\)\s*\{\s*deferredIntent = null\s+select\(incoming\)\s*\}\s*else finish\(\)\s*\}/,
     'Only confirmed terminal state clears the draft, then selects a queued session or finishes when none exists.');
   assert.equal([...refresh.matchAll(/\bfinish\(\)/g)].length, 1, 'Refresh has no dismissal path outside the guarded terminal branch.');
   assert.match(sessionGuard, /fun mayDismiss\([^)]*\)\s*=\s*ended\(state\) && !pending && !busy && !unconfirmed/,
@@ -428,12 +474,12 @@ test('native atmosphere rendering leaves observation, guarded actions and confir
     'Only an acknowledged Start routine action opens private routine content.');
   assert.match(activity, /if \(keyguard\.isKeyguardLocked\) \{\s+navigatingRoutine = true\s+keyguard\.requestDismissKeyguard/,
     'Retain the activity before requesting unlock, so the ended session cannot discard its continuation.');
-  assert.match(activity, /override fun onDismissSucceeded\(\) \{ navigatingRoutine = false; startActivity\(open\); refresh\(\) \}/,
+  assert.match(activity, /override fun onDismissSucceeded\(\) \{ navigatingRoutine = false startActivity\(open\) refresh\(\) \}/,
     'Successful unlock opens the captured routine and then releases dismissal retention.');
   for (const callback of ['onDismissCancelled', 'onDismissError']) {
     const body = activity.match(new RegExp(`override fun ${callback}\\(\\) \\{([^}]+)\\}`))?.[1];
     assert.ok(body, `${callback} must handle the pending routine continuation.`);
-    assert.match(body, /navigatingRoutine = false; refresh\(\)/,
+    assert.match(body, /navigatingRoutine = false refresh\(\)/,
       `${callback} releases retention and refreshes the ended session.`);
     assert.doesNotMatch(body, /startActivity/,
       `${callback} must not open private content after an unsuccessful unlock.`);

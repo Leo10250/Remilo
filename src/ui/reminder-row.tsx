@@ -64,8 +64,9 @@ export function ReminderRow({ item, onOpen, onDone: suppliedOnDone, onMore, onTr
   const finalize = useCallback((_event: unknown, success: boolean) => { if (!success) settle(revealed); }, [revealed, settle]);
   const pan = Gesture.Pan().enabled(canSwipe).runOnJS(true).activeOffsetX([-12, 12]).failOffsetY([-8, 8])
     // Gesture builder setters only register these callbacks; refs are read later by input events.
-    // eslint-disable-next-line react-hooks/refs
+    /* eslint-disable react-hooks/refs */
     .onBegin(begin).onUpdate(update).onEnd(end).onFinalize(finalize);
+  /* eslint-enable react-hooks/refs */
   const zone = item.zoneId || deviceZone();
   const delivery = alertPresentation(item, false, nowMs), repeat = repeatSummary(item) || (item.segmentId ? t('m_c794c2de4bf4') : '');
   const active = !item.completed && !item.skipped && !item.deleted;

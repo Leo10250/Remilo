@@ -6,6 +6,7 @@ import fsp from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import ts from 'typescript';
 import { verifyAssets, localPath, vectorMetadata } from '../verify-assets.mjs';
 import { classicPlan, copyClassic, selectorPaths } from '../brand.mjs';
 const repo=path.resolve(import.meta.dirname,'../..');
@@ -57,8 +58,19 @@ test('illustration catalog coverage grows with consumers rather than a frozen il
  const file='assets/exercises/new-illustration-v1.webp';write(root,file,fs.readFileSync(path.join(root,asset.outputs.runtime.path)));asset.outputs.runtime.path=file;
  manifest.assets['new-illustration']=asset;write(root,manifests[2],manifest);
  assert.ok(verifyAssets(root,{generated:false}).findings.some(f=>f.check==='exercise-selection'));
- const catalog=fs.readFileSync(path.join(root,'src/ui/exercise-illustrations.tsx'),'utf8').replace('}];',"}, { id: 'new-illustration-v1', labelKey: 'exercise_walking', descriptionKey: 'exercise_walking_description', source: require('../../assets/exercises/new-illustration-v1.webp') }];");
- write(root,'src/ui/exercise-illustrations.tsx',catalog);assert.deepEqual(verifyAssets(root,{generated:false}).findings,[]);
+ const catalogPath = 'src/ui/exercise-illustrations.tsx';
+ const catalog = fs.readFileSync(path.join(root, catalogPath), 'utf8');
+ const source = ts.createSourceFile(catalogPath, catalog, ts.ScriptTarget.Latest);
+ const array = source.statements
+   .filter(ts.isVariableStatement)
+   .flatMap((statement) => [...statement.declarationList.declarations])
+   .find((declaration) => declaration.name.getText(source) === 'exerciseIllustrations')?.initializer;
+ assert.ok(array && ts.isArrayLiteralExpression(array));
+ const end = array.getEnd() - 1;
+ const separator = array.elements.length && !array.elements.hasTrailingComma ? ',' : '';
+ const added = `{ id: 'new-illustration-v1', labelKey: 'exercise_walking', descriptionKey: 'exercise_walking_description', source: require('../../assets/exercises/new-illustration-v1.webp') }`;
+ write(root, catalogPath, `${catalog.slice(0, end)}${separator}\n${added}\n${catalog.slice(end)}`);
+ assert.deepEqual(verifyAssets(root, { generated: false }).findings, []);
 });
 test('schema-1 registries and path escapes fail instead of restoring historical approval behavior',t=>{
  const {root}=fixture(t),manifest=read(root,manifests[0]);manifest.schemaVersion=1;write(root,manifests[0],manifest);
