@@ -219,7 +219,7 @@ public final class RemiloAlarmModule: Module {
             try? RemiloIOSGoogleCalendarRuntime.reconcileManualLinkPurges()
           }
         }
-        return try await RemiloIOSEngine.shared.apply(command)
+        return try await RemiloIOSEngine.shared.apply(command, managedExportScope: RemiloIOSGoogleCalendarRuntime.captureManagedExport)
       }
     }
     AsyncFunction("scheduleTestAlarm") { (operationId: String, promise: Promise) in

@@ -100,6 +100,7 @@ struct EngineChecks {
         try await datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore()
         try routineAlarmActionsKeepDatedProgress()
         try await calendarCreateUsesExactLocalReceiptAndBounds()
+        try await calendarExportIntentSurvivesInterruptedAcknowledgement()
         try calendarInstallationOriginComesFromNativeStateCreation()
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
@@ -242,6 +243,64 @@ struct EngineChecks {
 
     private static func createCommand(id: String) -> [String: Any] {
         ["kind": "Create", "operationId": id, "title": "Private title", "alarmAtMs": iosMillis(Date()) + 3_600_000]
+    }
+
+    private static func calendarExportIntentSurvivesInterruptedAcknowledgement() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.onRegister = nil
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let initial = store.engine()
+        let old = try await initial.apply(createCommand(id: "calendar-export-before-setup"))
+        let oldID = old["occurrenceId"] as! String
+        let scope = IOSCalendarExportIntent.Scope(setupID: UUID(), bindingRevision: 3, authEpoch: 2, accountGeneration: 1)
+        var excluded = createCommand(id: "calendar-export-local-only")
+        excluded["calendarDisposition"] = "LocalOnly"
+        let local = try await initial.apply(excluded, managedExportScope: { _ in
+            preconditionFailure("Local only must not consult or capture a managed binding")
+        })
+        let localID = local["occurrenceId"] as! String
+
+        let command = createCommand(id: "calendar-export-managed")
+        RemiloIOSDelivery.onRegister = { _ in store.interruptNextWrite = true }
+        do {
+            _ = try await initial.apply(command, managedExportScope: { _ in scope })
+            preconditionFailure("Expected a write interruption after the reminder and intent commit")
+        } catch FixtureStore.Failure.writeInterrupted {}
+        RemiloIOSDelivery.onRegister = nil
+        let committed = try store.load()
+        guard let exported = committed.reminders.values.first(where: { $0.calendarExportIntent?.scope == scope }),
+              let captured = exported.calendarExportIntent else { preconditionFailure("No intent on the committed reminder") }
+        precondition(committed.reminders[oldID]?.calendarExportIntent == nil &&
+                     committed.reminders[localID]?.calendarExportIntent == nil)
+        let backup = try RemiloIOSPortableContent.encode(committed, now: iosMillis(Date()))
+        let restored = try RemiloIOSPortableContent.decode(backup, availableImageIDs: [])
+        precondition(restored.reminders[exported.id] != nil &&
+                     restored.reminders.values.allSatisfy { $0.calendarExportIntent == nil })
+        let restarted = store.engine()
+        let result = try await restarted.apply(command, managedExportScope: { _ in
+            preconditionFailure("A durable create receipt must never acquire a new export binding")
+        })
+        precondition(result["occurrenceId"] as? String == exported.id)
+        let afterReplay = try store.load()
+        precondition(afterReplay.reminders.count == 3 && afterReplay.reminders[exported.id]?.calendarExportIntent == captured)
+
+        func apply(_ kind: String) async throws {
+            let current = try store.load().reminders[exported.id]!
+            _ = try await restarted.apply([
+                "kind": kind, "operationId": "calendar-export-" + kind, "occurrenceId": exported.id,
+                "expectedRevision": current.revision,
+            ])
+        }
+        try await apply("Delete")
+        try await apply("UndoDelete")
+        let afterRestore = try store.load()
+        precondition(afterRestore.reminders[exported.id]?.active == true &&
+                     afterRestore.reminders[exported.id]?.calendarExportIntent == nil,
+                     "Restoring local work must not restart a retired publication")
     }
 
     private static func recurringPauseAndSplitPreserveIndependentOccurrences() async throws {

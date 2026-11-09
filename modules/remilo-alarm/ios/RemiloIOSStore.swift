@@ -1,6 +1,18 @@
 import CoreFoundation
 import Foundation
 
+struct IOSCalendarExportIntent: Codable, Equatable, Sendable {
+    struct Scope: Codable, Equatable, Sendable {
+        let setupID: UUID
+        let bindingRevision: Int
+        let authEpoch: Int
+        let accountGeneration: Int
+    }
+
+    let operationID: UUID
+    let scope: Scope
+}
+
 struct IOSReminder: Codable {
     var id: String
     var title: String
@@ -27,6 +39,7 @@ struct IOSReminder: Codable {
     var revision = 1
     // The last authored revision that changed one-time Calendar authority.
     var calendarLifecycleRevision: Int? = nil
+    var calendarExportIntent: IOSCalendarExportIntent? = nil
     var generation = 0
     var deliveryState = "NoAlert"
     var nextAlertMs: Int64?

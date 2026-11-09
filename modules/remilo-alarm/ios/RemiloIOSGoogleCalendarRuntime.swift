@@ -504,6 +504,15 @@ final class RemiloIOSGoogleCalendarRuntime {
         try RemiloIOSGoogleCalendarManualLinkStore.local().redactPurged(purged)
     }
 
+    /// This synchronous callback captures a saved binding; it does not need a
+    /// token and cannot make a network request from the local engine.
+    static func captureManagedExport(explicit: Bool) -> IOSCalendarExportIntent.Scope? {
+        let runtime = live ?? (try? configuredForegroundRuntime())
+        guard let binding = try? runtime?.managedSetup?.outgoingBinding(explicit: explicit) else { return nil }
+        return .init(setupID: binding.operationID, bindingRevision: binding.revision,
+                     authEpoch: binding.authEpoch, accountGeneration: binding.account.accountGeneration)
+    }
+
     /// Missing or mismatched signed-bundle configuration keeps the runtime
     /// unavailable without opening protected storage.
     static func configuredForegroundRuntime() throws -> RemiloIOSGoogleCalendarRuntime? {

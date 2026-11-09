@@ -31,7 +31,7 @@ final class RemiloIOSEngine {
         self.collectImages = collectImages
     }
 
-    func apply(_ payload: [String: Any]) async throws -> [String: Any] {
+    func apply(_ payload: [String: Any], managedExportScope: ((Bool) -> IOSCalendarExportIntent.Scope?)? = nil) async throws -> [String: Any] {
         await acquire()
         defer { release() }
         do {
@@ -43,7 +43,7 @@ final class RemiloIOSEngine {
                   payload["nativeCalendarEndExclusive"] == nil, payload["nativeCalendarExceptions"] == nil else {
                 throw IOSInputFailure("UNSUPPORTED")
             }
-            return try await execute(input, kind: kind)
+            return try await execute(input, kind: kind, managedExportScope: managedExportScope)
         } catch let error as IOSInputFailure {
             return error.bridge
         } catch let error as RemiloIOSRecurrence.InvalidRule {
@@ -320,7 +320,8 @@ final class RemiloIOSEngine {
         _ input: IOSInput, kind: String, loadImport: (() async throws -> IOSPreparedImport)? = nil,
         calendarBounds: (anchor: String, endExclusive: String?)? = nil,
         calendarPermit: (@MainActor @Sendable () throws -> Bool)? = nil,
-        calendarInbound: (snapshot: IOSCalendarOneTimeSnapshot, change: IOSCalendarInboundChange)? = nil
+        calendarInbound: (snapshot: IOSCalendarOneTimeSnapshot, change: IOSCalendarInboundChange)? = nil,
+        managedExportScope: ((Bool) -> IOSCalendarExportIntent.Scope?)? = nil
     ) async throws -> [String: Any] {
         let operationID = try input.text("operationId", maximum: 200)
         guard !operationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw input.invalid("operationId") }
@@ -352,13 +353,16 @@ final class RemiloIOSEngine {
             guard draft.values["recurrence"] == nil || draft.values["recurrence"] is NSNull else {
                 throw IOSInputFailure("UNSUPPORTED", field: "recurrence")
             }
-            if let disposition = draft.values["calendarDisposition"] as? String, disposition == "Managed" {
-                throw IOSInputFailure("UNSUPPORTED", field: "calendarDisposition")
-            }
             var record = try RemiloIOSProjection.draft(draft, id: id, previous: nil, state: state, now: now)
             record.createdAtMs = now
             guard record.mode == "None" || record.alarmAtMs > now else { throw input.invalid("alarmAtMs") }
             record.isTest = kind == "TestAlarm"
+            let choice = draft.values["calendarDisposition"] as? String ?? "Default"
+            let scope = kind == "Create" && calendarPermit == nil && ["Default", "Managed"].contains(choice)
+                ? managedExportScope?(choice == "Managed") : nil
+            if choice == "Managed", scope == nil { throw IOSInputFailure("UNSUPPORTED", field: "calendarDisposition") }
+            // Commit the intent alongside the reminder, before delivery awaits.
+            record.calendarExportIntent = scope.map { .init(operationID: UUID(), scope: $0) }
             record.history.append(IOSHistory(kind: "Create", atMs: now, targetMs: nil))
             replaceRegistration(&record, target: record.alarmAtMs, state: &state, now: now)
             state.reminders[id] = record
@@ -610,6 +614,7 @@ final class RemiloIOSEngine {
         if !["Snooze", "Postpone"].contains(kind) { record.revision += 1 }
         if record.isCalendarOneTime, ["Done", "CompleteDelivery", "Stop", "Delete", "Reopen", "UndoDelete"].contains(kind) {
             record.calendarLifecycleRevision = record.revision
+            record.calendarExportIntent = nil
         }
         record.history.append(IOSHistory(kind: historyKind, atMs: now, targetMs: target))
         if changeRegistration {

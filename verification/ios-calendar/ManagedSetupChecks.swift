@@ -53,7 +53,7 @@ enum ManagedSetupChecks {
                 preconditionFailure("A newly appeared calendar requires another review")
             } catch Setup.Journal.Rejection.selectionRequired {}
             precondition(fixture.posts == 0, "Recheck discovery after consent before claiming a send")
-            let policy = Setup.Journal.Policy(allDayAlarmMinutes: 495)
+            let policy = Setup.Journal.Policy(exportNewReminders: false, allDayAlarmMinutes: 495)
             let replacement = try await setup.preview(expectedRevision: revision, policy: policy, zoneID: "UTC", replacement: true)
             guard let review = replacement.review, review.target == .select(calendarID: Fixture.calendarID) else {
                 preconditionFailure("Review the available calendar before adoption")
@@ -72,6 +72,10 @@ enum ManagedSetupChecks {
             let result = try await setup.advance(selected, expectedRevision: revision)
             guard case .finished(let entry) = result, entry.phase == .confirmed else { preconditionFailure("Adopt the exact reviewed calendar") }
             let saved = try setup.view(expectedRevision: revision)
+            let defaultExport = try setup.outgoingBinding(explicit: false)
+            let explicitExport = try setup.outgoingBinding(explicit: true)
+            precondition(defaultExport == nil && explicitExport == saved.binding,
+                         "Disabling default export leaves an explicit per-reminder choice available")
             let old = try setup.operation(id, expectedRevision: revision)
             precondition(saved.binding?.record.id == Fixture.calendarID && saved.binding?.initialImport == review.initialImport &&
                          old?.retired == true && fixture.posts == 0)
@@ -146,6 +150,10 @@ enum ManagedSetupChecks {
                                                                               canRead: { true })
             let replacementReview = try journal.review(rediscovered, account: authorized.account, calendarZoneID: "UTC")
             _ = try journal.capture(operationID: UUID(), review: replacementReview, currentAccount: authorized.account)
+            do {
+                _ = try setup.outgoingBinding(explicit: true)
+                preconditionFailure("Do not capture even an explicit export against a binding being replaced")
+            } catch Failure.staleConnection {}
             let revoked = try resumedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
             precondition(revoked.isEmpty, "Starting a replacement fences existing managed links")
             do {

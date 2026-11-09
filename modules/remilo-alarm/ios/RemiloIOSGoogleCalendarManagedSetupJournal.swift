@@ -161,10 +161,22 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func incomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope {
         let state = try read()
+        let binding = try Self.activeBinding(in: state, account: account)
+        guard state.policy.automaticImport else { throw Failure.staleConnection }
+        return .init(binding: binding, policy: state.policy)
+    }
+
+    func outgoingBinding(_ account: Account, explicit: Bool) throws -> Binding? {
+        let state = try read()
+        guard explicit || state.policy.exportNewReminders else { return nil }
+        return try Self.activeBinding(in: state, account: account)
+    }
+
+    private static func activeBinding(in state: State, account: Account) throws -> Binding {
         guard let binding = state.binding, binding.belongs(to: account), binding.account.accountGeneration == account.accountGeneration,
               binding.revision == state.bindingRevision, binding.authEpoch == state.authEpoch,
-              state.pendingOperationID == nil, state.policy.automaticImport else { throw Failure.staleConnection }
-        return .init(binding: binding, policy: state.policy)
+              state.pendingOperationID == nil else { throw Failure.staleConnection }
+        return binding
     }
 
     func managedInbox() -> RemiloIOSGoogleCalendarManagedInbox { .init(directory: directory) }
