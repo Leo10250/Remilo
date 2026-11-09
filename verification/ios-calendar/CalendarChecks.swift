@@ -87,6 +87,7 @@ enum CalendarChecks {
         }
         try await ConnectionChecks.run(configuration: configuration, access: access, now: now)
         try EventChecks.run()
+        try await PublicationChecks.run(access: access, now: now)
         print("Swift Google Calendar checks passed")
     }
 
