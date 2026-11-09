@@ -67,16 +67,21 @@ enum WidgetProjectionChecks {
         let engine = store.engine()
         let zone = TimeZone.current
         let today = RemiloIOSRoutineAuthoring.localDate(Date(), in: zone)
-        let steps = [
-            ["id": "first", "name": "Private first", "target": "", "notes": ""],
-            ["id": "second", "name": "Private second", "target": "", "notes": ""],
-        ]
+        let days = (0..<7).map { day -> [String: Any] in
+            [
+                "type": "Exercises",
+                "exercises": [
+                    ["id": "first-\(day)", "name": "Private first", "target": "", "notes": ""],
+                    ["id": "second-\(day)", "name": "Private second", "target": "", "notes": ""],
+                ],
+            ]
+        }
         let created = try await engine.apply([
             "kind": "CreateRoutine", "startsOn": today, "operationId": "create-widget-routine",
             "title": "Private routine", "mode": "None", "minutes": 720,
-            "days": Array(repeating: ["type": "Exercises", "exercises": steps] as [String: Any], count: 7),
+            "days": days,
         ])
-        precondition(created["status"] as? String == "Applied")
+        precondition(created["status"] as? String == "Applied", "Routine fixture was rejected: \(created["errorCode"] ?? "unknown")")
         let now = iosMillis(Date())
         let projected = try RemiloIOSWidgetProjection.snapshot(store.load(), at: now, in: zone, language: "en").routines[0]
         let first = RemiloWidgetDoneAction(
