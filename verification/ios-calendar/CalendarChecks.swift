@@ -86,8 +86,15 @@ enum CalendarChecks {
             _ = try await http.request(URLRequest(url: URL(string: "https://calendar.example.test/")!), budget: budget)
         }
         try await ConnectionChecks.run(configuration: configuration, access: access, now: now)
+        try await RuntimeChecks.run(configuration: configuration, access: access, now: date)
         try EventChecks.run()
-        try await PublicationChecks.run(access: access, now: now)
+        let writeGrant = try RemiloIOSGoogleCalendarGrant(token: "fixture-bearer", scopes: Purpose.writeOwnedEvents.required,
+                                                          expiresAt: date.addingTimeInterval(3_600))
+        let writeAccess = try await auth.verify(writeGrant, configuration: configuration, expectedSubject: "subject-A",
+                                                purpose: .writeOwnedEvents)
+        try check(!access.supports(.writeOwnedEvents, now: date) && writeAccess.supports(.ownedCalendars, now: date),
+                  "write grants can read and browse grants cannot write")
+        try await PublicationChecks.run(access: writeAccess, readOnly: access, now: now)
         ComparisonChecks.run()
         try await ImportChecks.run()
         print("Swift Google Calendar checks passed")
@@ -114,6 +121,9 @@ enum CalendarChecks {
         let redirect = try required(fields["redirect_uri"], "include redirect")
         try check(state.count == 43 && fields["access_type"] == "online" && fields["code_challenge_method"] == "S256",
                   "require an ephemeral S256 code grant")
+        let scopes = Set((fields["scope"] ?? "").split(separator: " ").map(String.init))
+        try check(scopes.contains("https://www.googleapis.com/auth/calendar.events.owned.readonly") &&
+                  !scopes.contains("https://www.googleapis.com/auth/calendar.events.owned"), "browse consent only requests read access")
         let malformed = URL(string: redirect + "?state=wrong&code=fixture")!
         let repeated = URL(string: redirect + "?state=\(state)&code=fixture&code=other")!
         let denied = URL(string: redirect + "?state=\(state)&error=access_denied")!

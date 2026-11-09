@@ -31,20 +31,27 @@ struct RemiloIOSGoogleCalendarConfiguration: Equatable, Sendable {
 
 enum RemiloIOSGoogleCalendarPurpose: Equatable, Sendable {
     case ownedCalendars
+    case writeOwnedEvents
     case createManagedCalendar
 
     private static let emailAlias = "https://www.googleapis.com/auth/userinfo.email"
+    private static let readEvents = "https://www.googleapis.com/auth/calendar.events.owned.readonly"
+    private static let writeEvents = "https://www.googleapis.com/auth/calendar.events.owned"
     private static let creation = "https://www.googleapis.com/auth/calendar.app.created"
 
     var required: Set<String> {
-        let base: Set<String> = ["openid", "email", "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
-                                 "https://www.googleapis.com/auth/calendar.events.owned"]
-        return self == .ownedCalendars ? base : base.union([Self.creation])
+        let base: Set<String> = ["openid", "email", "https://www.googleapis.com/auth/calendar.calendarlist.readonly"]
+        switch self {
+        case .ownedCalendars: return base.union([Self.readEvents])
+        case .writeOwnedEvents: return base.union([Self.writeEvents])
+        case .createManagedCalendar: return base.union([Self.writeEvents, Self.creation])
+        }
     }
 
     func verify(_ scopes: Set<String>) throws {
         var normalized = scopes
         if normalized.remove(Self.emailAlias) != nil { normalized.insert("email") }
+        if normalized.contains(Self.writeEvents) { normalized.insert(Self.readEvents) }
         guard required.isSubset(of: normalized) else { throw RemiloIOSGoogleCalendarFailure.needsAccess }
     }
 }
@@ -111,8 +118,8 @@ struct RemiloIOSGoogleCalendarAccess: Sendable {
         self.grant = grant
     }
 
-    func authorize(_ request: inout URLRequest, now: Date) throws {
-        try grant.authorize(&request, for: .ownedCalendars, now: now)
+    func authorize(_ request: inout URLRequest, for purpose: RemiloIOSGoogleCalendarPurpose = .ownedCalendars, now: Date) throws {
+        try grant.authorize(&request, for: purpose, now: now)
     }
 
     func supports(_ purpose: RemiloIOSGoogleCalendarPurpose, now: Date) -> Bool {

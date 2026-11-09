@@ -201,7 +201,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json; charset=UTF-8", forHTTPHeaderField: "Content-Type")
         if let etag { request.setValue(etag, forHTTPHeaderField: "If-Match") }
-        try access.authorize(&request, now: now())
+        try access.authorize(&request, for: .writeOwnedEvents, now: now())
         request.httpBody = try JSONEncoder().encode(payload)
         return request
     }

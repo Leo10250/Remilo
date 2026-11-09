@@ -8,7 +8,9 @@ and device-protected storage. [Product](product.md) owns local behavior and
 
 The integration is available on Android. iOS Calendar operations remain internal
 while reviewed changes are connected to the native engine and verified with a
-signed app and a Google account.
+signed app and a Google account. The iOS browse and import preview use read-only
+access to owned calendars. Publication requires a separate write grant.
+[Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)
 
 ## Connection, permissions and relationship types
 

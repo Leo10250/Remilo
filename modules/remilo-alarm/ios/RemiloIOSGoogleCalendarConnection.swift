@@ -28,6 +28,7 @@ actor RemiloIOSGoogleCalendarConnection {
     typealias State = RemiloIOSCalendarConnectionState
     typealias Transport = RemiloIOSGoogleCalendarTransport
     typealias Event = RemiloIOSGoogleCalendarEvent
+    typealias Import = RemiloIOSGoogleCalendarImport
     typealias Authorize = @Sendable (_ expectedSubject: String?, _ purpose: Purpose) async throws -> RemiloIOSGoogleCalendarAccess
 
     enum Consent: Equatable, Sendable {
@@ -264,6 +265,23 @@ actor RemiloIOSGoogleCalendarConnection {
                          calendarName: calendar.displayName ?? "")
     }
 
+    func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String) async throws -> Import.Review {
+        let live = try requireAccess(expectedRevision)
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        let calendar = try await read(live) { transport, access in
+            try await transport.ownedCalendar(access, id: calendarID, budget: budget)
+        }
+        let lookup = try await read(live) { transport, access in
+            try await transport.lookup(access, calendarID: calendar.id, eventID: eventID, budget: budget)
+        }
+        guard case .found(let event) = lookup, !event.cancelled else { throw Import.Failure.staleRemote }
+        let fence = live.fence
+        let account = Import.Account(subject: fence.subject, clientID: fence.clientID,
+                                     connectionRevision: fence.revision, accountGeneration: fence.accountGeneration)
+        let reviewedAt = Int64((now().timeIntervalSince1970 * 1_000).rounded())
+        return try Import.Review(account: account, calendar: calendar, event: event, now: reviewedAt)
+    }
+
     /// A fresh explicit scan clears prior observations. A resumed scan continues
     /// the exact native cursor and yields after ten pages or its shared I/O budget.
     func discoverOwnedCalendars(expectedRevision: Int, resume: UUID? = nil) async throws -> Discovery {
@@ -334,6 +352,7 @@ actor RemiloIOSGoogleCalendarConnection {
             throw error
         }
         _ = try current(live.fence)
+        guard live.access.supports(.ownedCalendars, now: now()) else { throw Failure.needsAccess }
         try Task.checkCancellation()
         return result
     }

@@ -8,7 +8,8 @@ enum PublicationChecks {
     private static let calendar = "owned/id@example.test"
     private static let zone = "America/Los_Angeles"
 
-    static func run(access: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date) async throws {
+    static func run(access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess,
+                    now: @escaping @Sendable () -> Date) async throws {
         let request = try makeRequest(access)
         precondition(request.eventID == "93ef9c833ce630dbb744728da6abc718")
         let replay = try JSONDecoder().decode(Publication.Request.self, from: JSONEncoder().encode(request))
@@ -19,6 +20,12 @@ enum PublicationChecks {
         precondition(anotherOperation.operationID != request.operationID && anotherOperation.eventID == request.eventID)
 
         let noPermit = Fixture(.missing, request: request)
+        do {
+            _ = try await writer(noPermit, now).publish(request, access: readOnly, phase: .notSent) { _ in
+                preconditionFailure("Read-only access must not reach the send checkpoint")
+            }
+            preconditionFailure("Read-only access must not authorize a POST")
+        } catch RemiloIOSGoogleCalendarFailure.needsAccess {}
         let denied = try await writer(noPermit, now).publish(request, access: access, phase: .notSent) { _ in .denied(.needsAccess) }
         guard case .notSent(.needsAccess) = denied else { preconditionFailure("No owner permission must mean no POST") }
         let deniedWrites = await noPermit.writes
@@ -75,19 +82,26 @@ enum PublicationChecks {
         }
         guard case .conflict(.removed) = removedResult else { preconditionFailure("An explicit cancellation is a conflict") }
 
-        try await patchChecks(request: request, access: access, now: now)
+        try await patchChecks(request: request, access: access, readOnly: readOnly, now: now)
         let allDay = try Event.fields(["start": ["date": "2027-03-14"], "end": ["date": "2027-03-15"]], calendarZone: zone)
         let bounds = try Publication.Bounds(allDay.fields.schedule)
         precondition(bounds.start.date == "2027-03-14" && bounds.end.date == "2027-03-15" && bounds.end.dateTime == nil)
     }
 
     private static func patchChecks(request: Publication.Request, access: RemiloIOSGoogleCalendarAccess,
+                                    readOnly: RemiloIOSGoogleCalendarAccess,
                                     now: @escaping @Sendable () -> Date) async throws {
         let original = try Fixture.remote(request: request, edited: false)
         let desired = Event.Fields(title: request.fields.title, notes: "只改备注", schedule: request.fields.schedule)
         let patch = try Writer.Patch(operationID: UUID(), account: request.account, local: request.local, calendarID: calendar,
                                      reviewedRemote: original, calendarZone: zone, desired: desired)
         let stale = Fixture(.stalePatch, request: request)
+        do {
+            _ = try await writer(stale, now).patch(patch, access: readOnly, phase: .notSent) { _ in
+                preconditionFailure("Read-only access must not reach the send checkpoint")
+            }
+            preconditionFailure("Read-only access must not authorize a PATCH")
+        } catch RemiloIOSGoogleCalendarFailure.needsAccess {}
         let staleResult = try await writer(stale, now).patch(patch, access: access, phase: .notSent) { _ in await stale.permit() }
         guard case .staleRemote = staleResult else { preconditionFailure("HTTP 412 must require fresh comparison") }
         let staleWrites = await stale.writes
@@ -96,7 +110,7 @@ enum PublicationChecks {
         let delayedWriter = writer(delayed, now)
         let patched = try await delayedWriter.patch(patch, access: access, phase: .notSent) { _ in await delayed.permit() }
         guard case .confirmed = patched else { preconditionFailure("A matching sparse patch must reconcile read-only") }
-        let patchedRetry = try await delayedWriter.patch(patch, access: access, phase: .sent) { _ in
+        let patchedRetry = try await delayedWriter.patch(patch, access: readOnly, phase: .sent) { _ in
             preconditionFailure("A sent patch retry cannot request a second PATCH")
         }
         guard case .confirmed = patchedRetry else { preconditionFailure("Retain the matching readback") }
