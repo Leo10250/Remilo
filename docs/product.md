@@ -16,8 +16,13 @@ ownership and recovery; [Calendar](calendar.md) defines the optional integration
 Android 14+ is the primary platform. Google Calendar is optional and cannot become
 a dependency of local use. Assistant actions, category suggestions, cloud
 coordination and dynamic launcher icons are future work until separately
-implemented. iOS comes last, after the Android extensions and optional cloud phase;
-do not add unused platform or integration scaffolding.
+implemented.
+
+The iOS implementation targets iPhone and iPad on iOS/iPadOS 26 or later. It
+covers offline ordinary and recurring reminders, lists, history, appearance and
+language settings, and routines with dated progress and photos. WidgetKit and
+Google Calendar are still under development for iOS.
+The iOS app is pending a native build and physical verification.
 
 The app has one static Classic ring/check/sun identity. Appearance is global:
 By time of day, Sunrise, Sky, Evening or Night, independently of Color mode:
@@ -33,10 +38,10 @@ Match device, Light or Dark. Automatic uses the device-local clock:
 Missing/invalid atmosphere preferences resolve to Automatic without rewriting an
 unknown stored value; existing brightness is preserved. Manual selections persist.
 These are clock periods, not weather, location or astronomical observations.
-Every app-owned page and new native full-screen alarm uses the shared atmosphere
-and brightness roles. Android owns notification, permission, picker, sharing,
-authorization and launcher presentation. Per-reminder themes, task-specific alarm
-scenes and automatic launcher switching are outside current behavior.
+Every app-owned page and new Android full-screen alarm uses the shared atmosphere
+and brightness roles. The operating system owns notification, permission, picker,
+sharing, authorization and launcher presentation. Per-reminder themes,
+task-specific alarm scenes and automatic launcher switching are outside current behavior.
 
 ## Reminder timing and delivery
 
@@ -50,9 +55,9 @@ Modes are Alarm, Notification and No alert. New ordinary reminders default to Al
 direct routine creation defaults to Notification. These creation defaults never
 replace an existing or explicitly selected mode when routes or presets change.
 Never silently substitute another mode when access or registration fails.
-Notification may use approximate delivery when
-exact delivery is unavailable; this is disclosed and does not turn Alarm into
-Notification. No alert retains a scheduled When and creates no delivery.
+On Android, Notification may use approximate delivery when exact delivery is
+unavailable. The app discloses this. No alert retains a scheduled When and creates
+no delivery.
 
 Ordinary unfinished work is Overdue strictly after its original authored Alert for
 Alarm/Notification, its When for timed No alert, or the next local midnight after
@@ -60,39 +65,48 @@ its date for all-day No alert. Independent Due, a future Snooze/Postpone, and de
 outcomes do not move this boundary. Missed, Timed out and Interrupted are delivery
 outcomes, not completion. Historical Stopped work stays unfinished.
 
-Each occurrence is independently registered. An eligible callback no more than five
-minutes late may deliver; a later ordinary callback becomes Missed. Recovery after
-reboot, upgrade, restore, process interruption or clock travel never replays elapsed
-alerts or interrupted sound. Permission/capability displays and a scheduled result
-are not proof of audibility.
+Each alerting occurrence is independently registered. On Android an eligible
+callback no more than five minutes late may deliver; a later ordinary callback
+becomes Missed. Recovery after reboot, upgrade, restore, process interruption or
+clock travel never replays elapsed alerts or interrupted sound. Permission/capability
+displays and a scheduled result are not proof of audibility.
 
-A ringing session plays one sound for at most five minutes from its original start.
-Later arrivals retain that deadline and first-member sound/vibration. Members remain
-independently actionable; one member's action must not silently resolve another.
-Timeout, interruption, system Back and dismissing a notification leave unfinished
-work unfinished. Sound-preview Stop ends preview only.
+An Android ringing session plays one sound for at most five minutes from its original
+start. Later arrivals retain that deadline and first-member sound/vibration. Members
+remain independently actionable. Timeout, interruption, system Back and dismissing
+a notification leave unfinished work unfinished. Sound-preview Stop ends preview only.
 
-Before first unlock, native controls use generic content, operational time and
-allowlisted non-private preferences. Titles, notes, list names, images, Calendar
+Before first unlock on Android, native controls use generic content, operational time
+and allowlisted non-private preferences. Titles, notes, list names, images, Calendar
 content and credentials remain private. Unlocking does not authorize revealing
 private content on public notifications. Android may restrict full-screen, exact
 alarm, notification and audio behavior; no overlay permission or forced takeover
 is part of the product. Power off, force-stop, locked Private Space, revoked access
 and OEM restrictions can prevent delivery.
 
+On iOS, Alarm uses AlarmKit and Notification uses local notifications, with
+separate authorization. Both show generic text on system surfaces. iOS owns the
+alarm presentation and audio lifetime. AlarmKit Dismiss leaves the reminder open.
+Reminder actions opens the captured reminder with Done and Postpone. The
+notification exposes Mark as done and Postpone directly. The app validates the
+delivery generation before applying a selected postpone time. A routine alarm can
+open the dated session or be dismissed while leaving all steps unchanged. iOS
+registers a bounded window of upcoming repeats and replenishes it when Remilo can
+reconcile.
+
 ## Completion and postponement
 
-Every ordinary work-completion action is labeled **Mark as done**; group completion
-is **Mark all as done (N)**. Completion silences/cancels that occurrence and records
-it completed. Native legacy Stop commands retain compatible completion semantics;
-old Stopped history is not rewritten. Done selecting and keyboard Done retain their
-own interaction meaning.
+Remilo labels ordinary work completion **Mark as done** and group completion
+**Mark all as done (N)**. Completion silences/cancels that occurrence and records
+it completed. Native legacy Stop commands retain compatible completion semantics.
+Old Stopped history stays as recorded. Done selecting and keyboard Done retain
+their own interaction meaning.
 
-Ordinary ringing native controls and Reminder Details offer Mark as done/Postpone.
-Ordinary Alarm and Notification notifications expose those actions from their first
-post; unresolved notifications retain eligible Postpone. Group actions apply only
-to an ordinary-only captured group. Capture displayed occurrence IDs/generations,
-session and count; later arrivals are excluded. Mixed ordinary/routine groups keep
+Android ringing native controls and Reminder Details offer Mark as done/Postpone.
+Android Alarm and Notification notifications expose those actions from their first
+post. Unresolved notifications retain eligible Postpone. Android group actions apply
+only to an ordinary-only captured group. Capture displayed occurrence IDs/generations,
+session and count. Mixed ordinary/routine groups keep
 per-member actions rather than ambiguous bulk completion or Postpone.
 On main Agenda, Ringing now shows the current group's members and actions above
 the reminder results, including during search and filtering. Search results have
@@ -101,7 +115,7 @@ displayed session. List-scoped pages retain per-member actions.
 
 Postpone changes only the captured occurrences' next delivery and leaves them
 unfinished. It preserves original overdue, Event/Due and future recurring slots.
-Native alarms and app presentation use one eight-choice chooser: 15, 30 and 60
+Android native alarms and both apps use one eight-choice chooser: 15, 30 and 60
 minutes; 1 day; three saved Tomorrow clocks; and Custom. The default selected target
 is now plus 15 minutes. The default Tomorrow clocks are 10:00, 14:00 and 17:00.
 Legacy Snooze intents and the global quick-Snooze preference remain compatible;
@@ -117,8 +131,9 @@ future date/time; an expired target requires another selection.
 Custom is a provisional Date/Time step. Use this time commits the selection to the
 draft; Back to choices discards provisional edits. Back closes a picker, then the
 custom step, then the chooser. Opening, choosing and cancelling never mutate work
-or stop playback; the original sound deadline continues. The native chooser stays
-inside the lock-capable alarm Activity; private Home remains behind keyguard.
+or stop Android playback; the original Android sound deadline continues. The Android
+native chooser stays inside the lock-capable alarm Activity; private Home remains
+behind keyguard.
 
 Notification Postpone and Agenda More > Postpone open the same chooser over Home
 after any required unlock. Repeated/cold/warm requests preserve captured scope;
@@ -222,6 +237,8 @@ Validation bounds are application limits, not claims about Android alarm capacit
 
 ## Routines and widgets
 
+Routines and widgets are available on Android.
+
 The Routines library groups saved plans under Your routines and keeps New routine
 in the bottom action bar. The routine row opens today's device-local view and
 offers Edit and management in its overflow. On rest days, the view explains that
@@ -297,9 +314,10 @@ was allowed. People can collapse the details while recovery stays visible.
 
 English and Simplified Chinese are required for every new or changed app-owned feature,
 including native/widget/notification/accessibility copy and error/recovery states.
-System default, English and 简体中文 are persisted interface choices synchronized
-with Android's per-app selector. Fresh installations follow supported system languages;
-upgrades preserve English until changed. Authored/imported content is never translated.
+System default, English and 简体中文 are persisted interface choices. Android
+synchronizes them with its per-app selector. Fresh installations follow supported
+system languages. Android upgrades preserve English until changed. Authored/imported
+content is never translated.
 Device 12/24-hour preference remains independent. See the [localization contract](../localization/README.md)
 for contextual vocabulary and evidence-based Chinese review.
 

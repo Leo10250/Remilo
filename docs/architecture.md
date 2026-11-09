@@ -1,8 +1,9 @@
 # Architecture
 
-React Native presents Remilo's main interface. Ordinary Kotlin classes own durable
-content, scheduling, actions and recovery. Expo module instances, React contexts,
-activities, JavaScript timers and network availability are not engine lifetimes.
+React Native presents Remilo's main interface. Native Kotlin classes on Android
+and native Swift classes on iOS own durable content, scheduling, actions and
+recovery. The engines have process-owned lifetimes independent of Expo module
+instances, React contexts, app screens, JavaScript timers and network availability.
 [Product](product.md) owns user-visible semantics; [Calendar](calendar.md) owns the
 optional integration protocol; [verification](verification.md) owns how changes
 are checked. Exact versions and data structures remain executable source.
@@ -11,11 +12,12 @@ are checked. Exact versions and data structures remain executable source.
 
 | Area | Source |
 |---|---|
-| Engine and one serialized mutation path | [AlarmEngine](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/AlarmEngine.kt), [SeriesCoordinator](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/SeriesCoordinator.kt), [RoutineCoordinator](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/RoutineCoordinator.kt) |
-| Private content and operational storage | [ContentDatabase](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/ContentDatabase.kt), [OperationalDatabase](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/OperationalDatabase.kt) |
-| Pure timing/identity policies | [core](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core) |
+| Android engine and serialized mutations | [AlarmEngine](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/AlarmEngine.kt), [SeriesCoordinator](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/SeriesCoordinator.kt), [RoutineCoordinator](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/engine/RoutineCoordinator.kt) |
+| Android private content and operational storage | [ContentDatabase](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/ContentDatabase.kt), [OperationalDatabase](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/OperationalDatabase.kt) |
+| Android pure timing/identity policies | [core](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/core) |
 | Android registration, delivery, audio and presentation | [system](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/system) |
-| Native bridge and public types | [RemiloAlarmModule](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/RemiloAlarmModule.kt), [bridge types](../modules/remilo-alarm/src/RemiloAlarm.types.ts) |
+| iOS engine, storage and delivery | [Swift module](../modules/remilo-alarm/ios), [iOS host](../ios) |
+| Native bridges and public types | [Android module](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/RemiloAlarmModule.kt), [iOS module](../modules/remilo-alarm/ios/RemiloAlarmModule.swift), [bridge types](../modules/remilo-alarm/src/RemiloAlarm.types.ts) |
 | Main routes, presentation and process-only controllers | [src/app](../src/app), [src/ui](../src/ui), [src/domain](../src/domain) |
 | Calendar native ownership/transport | [calendar](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/calendar) |
 | Native widget projection/actions | [widget](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/widget) |
@@ -38,13 +40,13 @@ same request; an acknowledgement is distinct from successful OS registration or
 remote synchronization. Report Scheduled, Blocked, Pending, Partial and rejection
 according to actual native outcomes.
 
-Database commits and Android registration are not atomic. Fence older generations
+Database commits and OS registration are not atomic. Fence older generations
 before acknowledging alarm-affecting commands; durable pending projections/outboxes
 reconcile OS effects idempotently. Every callback rechecks eligibility and generation.
 Journals recording old history cannot overwrite newer operational state. Unknown
 outcomes never justify an automatically allocated replacement operation.
 
-## Storage, privacy and compatibility
+## Android storage, privacy and compatibility
 
 | Store | Authority and allowed data | Exclusions |
 |---|---|---|
@@ -142,6 +144,42 @@ with engine requests. It owns identified callbacks and five-second audio release
 backgrounding, replacement and real alarm startup stop it. Module instances only
 observe/query. An accepted request is not Playing until actual playback confirms,
 and fallback/failure is exposed. Preview failure cannot prevent a real alarm.
+
+## iOS storage, delivery and recovery
+
+The [Swift engine](../modules/remilo-alarm/ios/RemiloIOSEngine.swift) serializes UI
+commands, native actions and registration reconciliation. Its atomic app-private
+snapshot persists authored content, nominal recurrence slots, settings, command
+receipts and a delivery outbox. The snapshot uses iOS file protection until first
+authentication. Unsupported schemas preserve their bytes. AlarmKit and local
+notification records carry generic text and opaque delivery identities.
+
+AlarmKit dismissal leaves a reminder open because a swipe or hardware button can
+invoke the same intent as the displayed stop control. The authenticated secondary
+action opens reminder details for explicit completion or postponement. For
+routines it opens the dated session without marking exercises complete. An
+explicit notification Done reaches the engine through the native delegate, and
+notification Postpone hands the occurrence and generation to the foreground
+chooser. Only confirmation changes the target. [Apple AlarmKit FAQ](https://developer.apple.com/forums/thread/797158)
+
+A bounded window of repeat occurrences has independent registrations. The
+[native recovery coordinator](../modules/remilo-alarm/ios/RemiloIOSRecovery.swift)
+reconciles on activation and coalesces protected-data, clock, time-zone,
+AlarmKit and authorization changes while the app is active. A short background
+refresh can replenish coverage and retry pending delivery work when iOS grants
+runtime. iOS chooses whether and when to run it, and force-quitting the app
+normally prevents a background relaunch until the next manual open.
+[Apple background task guidance](https://developer.apple.com/documentation/uikit/using-background-tasks-to-update-your-app)
+[Apple background execution limits](https://developer.apple.com/forums/thread/685525)
+
+Apple expects successfully scheduled alarms to persist across a crash, reboot,
+or force quit. AlarmKit capacity varies with device resources. AlarmKit has no
+guaranteed winner for overlapping alarms, and iOS Home Screen app locking or
+hiding can suppress AlarmKit delivery. The app's protected state is accessible
+after the first unlock following reboot. The AlarmKit secondary action is also
+available after that unlock. [Apple AlarmKit FAQ](https://developer.apple.com/forums/thread/797158)
+[Apple alarm configuration](https://developer.apple.com/documentation/alarmkit/alarmmanager/alarmconfiguration)
+[Apple file protection](https://developer.apple.com/documentation/foundation/fileprotectiontype/completeuntilfirstuserauthentication)
 
 ## Civil recurrence and queries
 
@@ -278,10 +316,11 @@ Preferences, Postpone, save/restore and bulk controllers retain exact pending co
 None is a second durable authority. Route/search/selection guards precede navigation.
 
 The opt-in UI fixture preview is web-only, memory-only and uses a Metro replacement
-restricted to platform=web. Android always resolves the real bridge. Fixture controls
-cannot authorize Google, access durable data, schedule alarms or prove native behavior.
+restricted to platform=web. Android and iOS resolve their native bridges. Fixture
+controls cannot authorize Google, access durable data, schedule alarms or prove
+native behavior.
 
-The owned native app/module compile against the app's selected Compose runtime API.
+The owned Android app/module compile against the app's selected Compose runtime API.
 Release tooling compares resolved compile/runtime graphs before tests/lint/assembly;
 module-only tests do not establish packaged binary compatibility. Pinned Robolectric
 SDK/resource jars are resolved through Gradle before tests; download failure is not

@@ -22,7 +22,13 @@ export function preferenceRecoveryOwner(fields: (keyof PreferencePatch)[]) {
 }
 type PermissionAccess = Pick<
   Capabilities,
-  'exactAlarms' | 'notifications' | 'channelEnabled' | 'notificationChannelEnabled' | 'fullScreen'
+  | 'exactAlarms'
+  | 'notifications'
+  | 'channelEnabled'
+  | 'notificationChannelEnabled'
+  | 'fullScreen'
+  | 'alarmAuthorization'
+  | 'notificationAuthorization'
 >;
 export type PermissionSummary = {
   message: string;
@@ -41,6 +47,26 @@ export function permissionSummary(access?: PermissionAccess, failed = false): Pe
       stale: false,
     };
   const issues: string[] = [];
+  if (access.alarmAuthorization !== undefined) {
+    if (access.alarmAuthorization !== 'authorized') issues.push(t('m_f7c1307035cf'));
+    if (access.notificationAuthorization === 'denied') issues.push(t('m_9b91d39d87a6'));
+    const message =
+      issues.length > 1
+        ? t('m_a363480cd2c7', { arg0: String(issues.length) })
+        : (issues[0] ??
+          (access.notificationAuthorization === 'notDetermined'
+            ? t('ios_permission_not_requested')
+            : t('m_cf0a4ebe2cad')));
+    return {
+      message: failed
+        ? t('m_69094fed8df9', { arg0: String(message[0].toLowerCase() + message.slice(1)) })
+        : message,
+      tone: issues.length ? 'warning' : 'muted',
+      needsAttention:
+        issues.length > 0 || access.notificationAuthorization === 'notDetermined' || failed,
+      stale: failed,
+    };
+  }
   if (!access.exactAlarms) issues.push(t('m_f7c1307035cf'));
   if (!access.notifications) issues.push(t('m_9b91d39d87a6'));
   else {

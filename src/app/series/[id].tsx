@@ -31,7 +31,7 @@ import {
   SettingRow,
   Status,
 } from '../../ui/components';
-import { engine, nativeAvailable } from '../../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../../ui/native';
 
 import { repeatLabel } from '../../ui/recurrence';
 import { ReminderRow } from '../../ui/reminder-row';
@@ -59,12 +59,12 @@ export default function SeriesDetails() {
   const links = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const publications = useQuery({
     queryKey: ['calendar', 'publications'],
     queryFn: () => engine().getCalendarPublications(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const familyId = requestedFamily ?? query.data?.seriesId;
   const family = families.data?.find(

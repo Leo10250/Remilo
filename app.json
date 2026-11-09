@@ -3,9 +3,7 @@
     "name": "Remilo",
     "slug": "remilo",
     "version": "0.4.0",
-    "platforms": [
-      "android"
-    ],
+    "platforms": ["android", "ios"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "remilo",
@@ -20,6 +18,12 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
+    },
+    "ios": {
+      "bundleIdentifier": "com.remilo.app",
+      "buildNumber": "1",
+      "deploymentTarget": "26.0",
+      "supportsTablet": true
     },
     "web": {
       "output": "static",

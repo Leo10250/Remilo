@@ -6,7 +6,9 @@ retain history. Missing historical test paperwork is not an open defect.
 
 ## Actionable
 
-No actionable items are currently listed.
+| ID | Status | Work |
+|---|---|---|
+| QA-IOS-SMOKE | Ready | Compile Remilo on macOS, then sign and exercise the bundled app on iPhone/iPad. Use the [iOS build and physical checks](verification.md#ios-build). |
 
 ## Later
 
@@ -23,7 +25,6 @@ authorize scaffolding or change current behavior.
 | FUT-TASK-ICON | Optional local task categories/icons | Low priority after Calendar and Android daily-workflow/assistant foundations. Suggestions allow preset correction, preserve explicit choices and retain a neutral fallback. Independent of save/scheduling/delivery; no per-reminder themes or alarm scenes. |
 | QA-ANDROID-SMOKE | Android emulator smoke test for offline reminder persistence | Start with a manual run on a clean API 34 emulator using the bundled APK. Go offline, save a uniquely titled future **No alert** reminder, restart the app process without clearing its data, then verify the title, date, time, and alert mode. Keep alarm delivery and physical-device checks separate. |
 | P5 | Optional Android cloud/primary-device coordination | After local Android/Calendar foundations. Define foreground/manual sync and honest device handoff; preserve offline authority. |
-| P6 | Optional iOS feasibility/port | Final phase after Android expansion and cloud/coordination decisions. Establish real iPhone capabilities before implementation. |
 
 Category icons should match the shared family and remain distinct from selection,
 overdue, failure and successful scheduling. Meaning cannot depend on color alone.

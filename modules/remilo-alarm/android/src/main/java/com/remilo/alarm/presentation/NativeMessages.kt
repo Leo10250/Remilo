@@ -2434,4 +2434,8 @@ object NativeMessages {
   fun calendar_automatic_off_body(): L10n.Message = L10n.Message("calendar_automatic_off_body")
   fun calendar_turn_off_automatic(): L10n.Message = L10n.Message("calendar_turn_off_automatic")
   fun calendar_sync_scope_help(): L10n.Message = L10n.Message("calendar_sync_scope_help")
+  fun ios_alarm_permission_usage(): L10n.Message = L10n.Message("ios_alarm_permission_usage")
+  fun ios_picker_continue(): L10n.Message = L10n.Message("ios_picker_continue")
+  fun ios_permission_not_requested(): L10n.Message = L10n.Message("ios_permission_not_requested")
+  fun ios_notification_mode_description(): L10n.Message = L10n.Message("ios_notification_mode_description")
 }

@@ -23,7 +23,7 @@ import {
   QueryState,
   type IconName,
 } from '../ui/components';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../ui/native';
 import { ZoneSummary } from '../ui/schedule';
 import { useFontScaleOverride, useTheme } from '../ui/theme';
 import { typography } from '../ui/tokens';
@@ -63,10 +63,10 @@ export default function Activity() {
   const { shortTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; filter?: string }>(),
     { id } = params;
-  const calendarOnly = params.filter === 'calendar';
+  const calendarOnly = !iosReminders && params.filter === 'calendar';
   const query = useQuery({
     queryKey: ['occurrence', id],
-    queryFn: () => engine().getCalendarContext(id),
+    queryFn: () => (iosReminders ? engine().getOccurrence(id) : engine().getCalendarContext(id)),
     enabled: nativeAvailable,
   });
   const colors = useTheme(),

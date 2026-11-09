@@ -65,10 +65,14 @@ export function saveFeedback(
   const blocker =
     fresh &&
     mode !== 'None' &&
-    (!access.notifications ||
-      (mode === 'Alarm'
-        ? !access.exactAlarms || !access.channelEnabled
-        : !access.notificationChannelEnabled));
+    (access.alarmAuthorization !== undefined
+      ? mode === 'Alarm'
+        ? access.alarmAuthorization !== 'authorized'
+        : !access.notifications
+      : !access.notifications ||
+        (mode === 'Alarm'
+          ? !access.exactAlarms || !access.channelEnabled
+          : !access.notificationChannelEnabled));
   const problem = ['Blocked', 'Pending', 'Partial'].includes(result.status) || mixed;
   return {
     ...feedback,

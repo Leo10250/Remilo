@@ -1,8 +1,8 @@
 # Remilo
 
 Android-first offline reminders, recurring plans and home-screen widgets. React
-Native/Expo presents the interface; an autonomous Kotlin engine owns Room, exact
-alarms, actions and audio. Local use needs no account, Metro or network.
+Native/Expo presents the interface. Native Kotlin on Android and Swift on iOS own
+durable state, delivery and actions. Local use needs no account, Metro or network.
 Optional [Google Calendar integration](docs/calendar.md) supports reviewed publishing,
 import and synchronization while preserving independent local delivery.
 
@@ -32,6 +32,9 @@ them. Other hosts use their configured environment. Keep `android/gradlew`
 executable on macOS/Linux. `npm run doctor -- --json` diagnoses prerequisites
 without downloading tools, accepting terms or creating keys.
 
+The iOS project targets iPhone and iPad on iOS/iPadOS 26 or later. See the
+[macOS build and verification commands](docs/verification.md#ios-build).
+
 ## Develop and preview
 
 ```sh
@@ -40,9 +43,10 @@ npm run android
 npm run preview:ui
 ```
 
-Use an Expo development build. `android/` is owned source: edit native files
-directly and never run Prebuild. Release builds bundle JavaScript. The memory-only
-web preview defaults to port 8092; `--port NUMBER` changes it and Ctrl+C stops it.
+Use an Expo development build. `android/` and `ios/` are owned source. Edit native
+files directly and never run Prebuild. Release builds bundle JavaScript. The
+memory-only web preview defaults to port 8092. `--port NUMBER` changes it and
+Ctrl+C stops it.
 It is isolated from phone data and Google.
 
 Follow [visual direction](docs/visual-direction.md) and shared components/tokens.
@@ -120,12 +124,13 @@ does not install, publish, commit or push.
 ## Code map
 
 - `src/app/`, `src/ui/`, `src/domain/`: screens, shared presentation and domain logic.
-- `modules/remilo-alarm/`: bridge, Kotlin engine, storage and Android integration.
+- `modules/remilo-alarm/`: bridge, native engines, storage and delivery adapters.
 - `android/`: owned Android application and build configuration.
+- `ios/`: owned iPhone/iPad application and build configuration.
 - `localization/`: canonical bilingual catalog and language guidance.
 - `assets/`: artwork, presentation configuration and current technical manifests.
 - `verification/ui/`: isolated production-component preview fixtures.
 - `scripts/`: build, deployment, checks and asset maintenance.
 - `.agents/skills/`: visual preparation, localization and Android workflows.
 
-Cloud and iOS are future work; iOS remains last. There is no OTA update mechanism.
+Cloud is future work. There is no OTA update mechanism.

@@ -83,6 +83,7 @@ import { notify } from '../ui/feedback';
 import {
   CommandError,
   engine,
+  iosReminders,
   nativeAvailable,
   useCommand,
   useSettings,
@@ -376,25 +377,26 @@ function EditorForm({
   const managed = useQuery({
     queryKey: ['calendar', 'managed'],
     queryFn: () => engine().getManagedCalendarState(),
-    enabled: nativeAvailable && creation && !routine,
+    enabled: nativeAvailable && !iosReminders && creation && !routine,
   });
   const [calendarDisposition, setCalendarDisposition] =
     useState<CalendarCreationDisposition>('Default');
   const calendar = useQuery({
     queryKey: ['calendar', 'publications'],
     queryFn: () => engine().getCalendarPublications(),
-    enabled: nativeAvailable && !!editingId && !editingSeries,
+    enabled: nativeAvailable && !iosReminders && !!editingId && !editingSeries,
   });
   // An unavailable publication read must not let a coincident published event move.
   const calendarLinks = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable && !!editingId && !editingSeries,
+    enabled: nativeAvailable && !iosReminders && !!editingId && !editingSeries,
   });
   const hasCalendarContext =
     calendar.data?.some((item) => item.occurrenceId === editingId) ||
     calendarLinks.data?.some((item) => item.occurrenceId === editingId);
   const preserveEvent =
+    !iosReminders &&
     !!editingId &&
     !editingSeries &&
     (!calendar.data ||
@@ -1479,8 +1481,11 @@ function EditorForm({
             </View>
           </Disclosure>
         )}
-        {draft.mode === 'Alarm' && (
-          <Disclosure title={t('m_8c648567f73c')} forceOpen={!!invalid(['sound', 'vibration'])}>
+        {(draft.mode === 'Alarm' || (iosReminders && draft.mode === 'Notification')) && (
+          <Disclosure
+            title={t(iosReminders ? 'm_46124e023603' : 'm_8c648567f73c')}
+            forceOpen={!!invalid(['sound', 'vibration'])}
+          >
             <ConnectedGroup>
               <SoundPicker
                 key="sound"
@@ -1488,14 +1493,16 @@ function EditorForm({
                 onChange={(sound) => patch({ sound })}
                 disabled={frozen}
               />
-              <Toggle
-                key="vibration"
-                icon="vibration"
-                label={t('m_59e1fd02f6c2')}
-                value={draft.vibration ?? settings.data?.vibration ?? true}
-                disabled={frozen}
-                onChange={(vibration) => patch({ vibration })}
-              />
+              {!iosReminders && (
+                <Toggle
+                  key="vibration"
+                  icon="vibration"
+                  label={t('m_59e1fd02f6c2')}
+                  value={draft.vibration ?? settings.data?.vibration ?? true}
+                  disabled={frozen}
+                  onChange={(vibration) => patch({ vibration })}
+                />
+              )}
             </ConnectedGroup>
           </Disclosure>
         )}

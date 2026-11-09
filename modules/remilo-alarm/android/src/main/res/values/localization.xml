@@ -2515,4 +2515,8 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_calendar_automatic_off_body">Automatic updates for this calendar are off.</string>
   <string name="l10n_calendar_turn_off_automatic">Turn off automatic sync…</string>
   <string name="l10n_calendar_sync_scope_help">Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions.</string>
+  <string name="l10n_ios_alarm_permission_usage">Remilo uses alarms to ring for the reminders you choose.</string>
+  <string name="l10n_ios_picker_continue">Continue</string>
+  <string name="l10n_ios_permission_not_requested">Not requested</string>
+  <string name="l10n_ios_notification_mode_description">Shows a notification.</string>
 </resources>

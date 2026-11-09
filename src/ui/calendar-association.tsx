@@ -17,7 +17,7 @@ import {
   calendarSummary,
 } from '../domain/calendar-presentation';
 import { calendarDispositionLabel } from '../domain/calendar-managed';
-import { engine, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable } from './native';
 import { Button, ConnectedGroup, Copy, SettingRow } from './components';
 import { useTimeFormatting } from './time-display';
 
@@ -25,12 +25,12 @@ export function useCalendarAssociation(ids: readonly string[], enabled = true) {
   const links = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable && enabled,
+    enabled: nativeAvailable && !iosReminders && enabled,
   });
   const publications = useQuery({
     queryKey: ['calendar', 'publications'],
     queryFn: () => engine().getCalendarPublications(),
-    enabled: nativeAvailable && enabled,
+    enabled: nativeAvailable && !iosReminders && enabled,
   });
   return (
     (links.data || []).some((link) => ids.includes(link.occurrenceId)) ||
@@ -58,7 +58,7 @@ export function CalendarSummaryRow({
   const disposition = useQuery({
     queryKey: ['calendar', 'disposition', id],
     queryFn: () => engine().getCalendarReminderDisposition(id),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   if (!link && !publication && !jobs.length && !disposition.data) return null;
   const summary =

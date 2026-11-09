@@ -2488,4 +2488,8 @@
   <string name="l10n_calendar_automatic_off_body">此日历的自动更新已关闭。</string>
   <string name="l10n_calendar_turn_off_automatic">关闭自动同步…</string>
   <string name="l10n_calendar_sync_scope_help">“立即同步”会检查所有已开启自动同步的日历事项，单个事项仍可设为仅本地。自动同步控制仅适用于所选 Remilo 日历，其他日历保留各自的关联权限。</string>
+  <string name="l10n_ios_alarm_permission_usage">Remilo 需要使用闹钟为你选定的提醒响铃。</string>
+  <string name="l10n_ios_picker_continue">继续</string>
+  <string name="l10n_ios_permission_not_requested">尚未请求</string>
+  <string name="l10n_ios_notification_mode_description">显示一条通知。</string>
 </resources>

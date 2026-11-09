@@ -11,6 +11,8 @@ import { ThemeProvider, useTheme } from '../ui/theme';
 import PresentationPreview from '../ui/presentation-preview';
 import { TimeDisplayProvider } from '../ui/time-display';
 import { ConfirmationHost } from '../ui/confirmation-dialog';
+import { iosReminders } from '../ui/native';
+import { useNativeDeliveryRequests } from '../ui/postpone-host';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -21,7 +23,7 @@ export default function RootLayout() {
     const refresh = () => void client.invalidateQueries();
     const app = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        void RemiloAlarm?.reconcile();
+        if (!iosReminders) void RemiloAlarm?.reconcile();
         refresh();
       }
     });
@@ -56,13 +58,27 @@ export default function RootLayout() {
 function Navigation() {
   'use no memo';
   useLocale();
+  useNativeDeliveryRequests();
   const colors = useTheme();
   return (
     <>
       <StatusBar style={colors.dark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
-      />
+      >
+        <Stack.Protected guard={!iosReminders}>
+          <Stack.Screen name="calendar" />
+          <Stack.Screen name="calendar-activate" />
+          <Stack.Screen name="calendar-import" />
+          <Stack.Screen name="calendar-import-all" />
+          <Stack.Screen name="calendar-manage" />
+          <Stack.Screen name="calendar-managed" />
+          <Stack.Screen name="calendar-publish" />
+          <Stack.Screen name="calendar-review" />
+          <Stack.Screen name="calendar-reviews" />
+          <Stack.Screen name="diagnostics" />
+        </Stack.Protected>
+      </Stack>
     </>
   );
 }

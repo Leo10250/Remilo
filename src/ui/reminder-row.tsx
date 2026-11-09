@@ -16,6 +16,7 @@ import {
   recordedCompletionTime,
   repeatSummary,
   spokenDateTime,
+  stateTone,
   type CardContext,
 } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
@@ -570,7 +571,11 @@ export function ReminderRow({
                     />
                   )}
                   {!item.routine && !!browsing.warning && (
-                    <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />
+                    <MetadataLine
+                      icon={item.deliveryState === 'DeliveryUnconfirmed' ? 'warning' : 'error'}
+                      label={browsing.warning}
+                      color={colors[stateTone(item)]}
+                    />
                   )}
                 </>
               )}

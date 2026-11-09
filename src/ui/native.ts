@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Alarm from '../../modules/remilo-alarm/src/RemiloAlarmModule';
 import type { Command, CommandResult } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { useEffect, useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 import { Preferences } from '../domain/preferences';
 
 export function engine() {
@@ -76,3 +77,4 @@ export function useCapabilities() {
   });
 }
 export const nativeAvailable = !!Alarm;
+export const iosReminders = Platform.OS === 'ios';

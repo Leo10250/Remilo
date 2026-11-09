@@ -72,6 +72,13 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   resolvePostponeTime(
     input: import('./RemiloAlarm.types').PostponeTimeInput,
   ): Promise<TimeConversion>;
+  takePendingDeliveryRequests?(): Promise<
+    (
+      | { kind: 'Single'; occurrenceId: string; expectedGeneration: number }
+      | { kind: 'ReminderActions'; occurrenceId: string }
+      | { kind: 'Routine'; routineId: string; date: string }
+    )[]
+  >;
   getSeries(id: string): Promise<Series | null>;
   getSeriesDraft(
     id: string,

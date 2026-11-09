@@ -41,7 +41,14 @@ import {
   Status,
   Toggle,
 } from '../ui/components';
-import { engine, nativeAvailable, preferences, useCapabilities, useSettings } from '../ui/native';
+import {
+  engine,
+  iosReminders,
+  nativeAvailable,
+  preferences,
+  useCapabilities,
+  useSettings,
+} from '../ui/native';
 import { PreferenceFeedback } from '../ui/preference-feedback';
 import { SoundPicker } from '../ui/sound-picker';
 import { BackupContentsDisclosure } from '../ui/backup-contents';
@@ -161,7 +168,7 @@ export default function Settings() {
         {!!settings && (
           <>
             <ConnectedGroup
-              title={t('m_5fb7b58aa419')}
+              title={t(iosReminders ? 'm_46124e023603' : 'm_5fb7b58aa419')}
               footer={
                 <>
                   <Copy muted size={14}>
@@ -177,14 +184,16 @@ export default function Settings() {
                 onChange={(sound) => save({ sound })}
                 disabled={pending}
               />
-              <Toggle
-                key="vibration"
-                icon="vibration"
-                label={t('m_59e1fd02f6c2')}
-                value={settings.vibration}
-                disabled={pending}
-                onChange={(vibration) => save({ vibration })}
-              />
+              {!iosReminders && (
+                <Toggle
+                  key="vibration"
+                  icon="vibration"
+                  label={t('m_59e1fd02f6c2')}
+                  value={settings.vibration}
+                  disabled={pending}
+                  onChange={(vibration) => save({ vibration })}
+                />
+              )}
             </ConnectedGroup>
             <ConnectedGroup title={t('m_f21ec393fe6b')} footer={preferenceFeedback('postponement')}>
               <SettingRow
@@ -270,20 +279,24 @@ export default function Settings() {
             disabled={pending}
             onPress={openAlarmCheck}
           />
-          <WidgetSetupRow
-            key="widget"
-            description={t('ui_widget_settings_description')}
-            disabled={pending}
-          />
-          <SettingRow
-            intent="navigation"
-            key="google-calendar"
-            icon="event"
-            label={t('m_b074310e911f')}
-            description={t('ui_calendar_settings_description')}
-            disabled={pending}
-            onPress={() => router.push({ pathname: '/calendar', params: routeParams })}
-          />
+          {!iosReminders && (
+            <WidgetSetupRow
+              key="widget"
+              description={t('ui_widget_settings_description')}
+              disabled={pending}
+            />
+          )}
+          {!iosReminders && (
+            <SettingRow
+              intent="navigation"
+              key="google-calendar"
+              icon="event"
+              label={t('m_b074310e911f')}
+              description={t('ui_calendar_settings_description')}
+              disabled={pending}
+              onPress={() => router.push({ pathname: '/calendar', params: routeParams })}
+            />
+          )}
         </ConnectedGroup>
         <ConnectedGroup title={t('m_3334fee2c77f')}>
           <View key="export">
@@ -327,26 +340,28 @@ export default function Settings() {
           />
           <BackupContentsDisclosure key="contents" />
         </ConnectedGroup>
-        <ConnectedGroup
-          title={t('m_b79cac926e0b')}
-          footer={
-            <>
-              <Copy>{t('m_f65890724d03')}</Copy>
-              <Copy muted size={14}>
-                {t('m_cf96192a609d')}
-              </Copy>
-            </>
-          }
-        >
-          <SettingRow
-            intent="navigation"
-            key="diagnostics"
-            icon="info"
-            label={t('m_268f14bbfe11')}
-            disabled={pending}
-            onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })}
-          />
-        </ConnectedGroup>
+        {!iosReminders && (
+          <ConnectedGroup
+            title={t('m_b79cac926e0b')}
+            footer={
+              <>
+                <Copy>{t('m_f65890724d03')}</Copy>
+                <Copy muted size={14}>
+                  {t('m_cf96192a609d')}
+                </Copy>
+              </>
+            }
+          >
+            <SettingRow
+              intent="navigation"
+              key="diagnostics"
+              icon="info"
+              label={t('m_268f14bbfe11')}
+              disabled={pending}
+              onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })}
+            />
+          </ConnectedGroup>
+        )}
         <Sheet
           title={t('m_a4fe65264ef7')}
           visible={languagePicker}

@@ -17,6 +17,8 @@ in the relevant task or [backlog](backlog.md).
 | `npm run verify:localization` | Bilingual messages, argument/plural shape, escaping and generated-output determinism |
 | `npm run test:tooling` | Controlled host/process/build/device fixtures without real installation |
 | `npm run verify:android` | Spotless, native unit tests, module/app lint and bundled release assembly |
+| `sh verification/ios-engine/run.sh` (macOS) | Swift storage, commands, simulated delivery, civil recurrence and dated routine progress |
+| `sh verification/ios-archive/run.sh` and `sh verification/ios-media/run.sh` (macOS, after `pod install`) | Portable archives and normalized routine photos |
 | `npm run verify:all` | Shared plus Android checks and assembly, with a private summary |
 | `npm run release:prepare` | Combined checks and existing-key signed assembly; no installation/publication |
 
@@ -24,7 +26,7 @@ Run focused tests during changes and the appropriate integrated check afterwards
 Repeat broader suites only for changed inputs, failures or unresolved concerns.
 Preserve behavioral assertions when retiring historical documentation/audit tests.
 
-Native tests cover policy, Room migration/recovery, command identities and lifecycle
+Android tests cover policy, Room migration/recovery, command identities and lifecycle
 simulations. Robolectric's pinned API 34 SDK/resource dependencies are staged through
 Gradle; resolution failure is not a skipped/passing behavioral check. Host tests do
 not establish physical audio, OEM presentation, real idle timing or accessibility.
@@ -97,7 +99,7 @@ in the failed run's `android-verification-reports` artifact for seven days.
 `npm run preview:ui -- --port 8092` runs memory-only fixtures through production
 components. Preview variables remain child-only and are stripped from release
 builds. Fixtures cannot initialize real scheduling, credentials, Google transport,
-persistence or Android actions.
+persistence or native actions.
 
 Inspect affected empty/loading/error/recovery states. Cover atmosphere/brightness
 variants for shared theme changes and larger text/narrow widths for layout/copy.
@@ -122,6 +124,9 @@ Select relevant scenarios from this reusable release smoke menu:
 - Changed UI/native/widget behavior, English/Chinese, text scaling/accessibility.
 - Live Calendar authorization, both directions, conflicts, uncertain writes and
   relevant background/reconnection opportunities.
+- On iPhone or iPad, separate AlarmKit/Notification authorization, delivery while
+  locked or the app is closed, system Done/Postpone, and replenishment of repeats
+  after reopening. Check both supported languages and system-owned control labels.
 
 This is a menu, not a full matrix required for every feature. A reported failure
 remains actionable; absence of old paperwork alone is not a failure. Describe the
@@ -150,6 +155,33 @@ optional launch have separate outcomes.
 `verify:device -- --device SERIAL --json` compares optional local/installed APK
 hashes. Missing/different artifacts are diagnostic; inspection errors fail. A
 match establishes bytes, not source attribution or physical alarm behavior.
+
+### iOS build
+
+Use macOS with CocoaPods and Xcode 26.4 or newer for Expo SDK 57. Select the Node
+version in `.nvmrc` and run these commands from the repository root.
+[Expo SDK 57 toolchain reference](https://docs.expo.dev/versions/v57.0.0/#support-for-android-and-ios-versions).
+
+```sh
+npm ci
+sh verification/ios-engine/run.sh
+(cd ios && pod install)
+sh verification/ios-archive/run.sh
+sh verification/ios-media/run.sh
+xcodebuild -workspace ios/Remilo.xcworkspace -scheme Remilo \
+  -configuration Release -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO build
+```
+
+`ios/` is owned source. Edit it directly and never run Prebuild. Windows can run
+shared verification and export the JavaScript bundle. Xcode compiles and links
+the native iPhone/iPad app on macOS.
+
+The [iOS build workflow](../.github/workflows/build-ios.yml) runs Swift engine,
+archive and photo checks and builds an unsigned Release app on macOS. It checks for bundled JavaScript, sound,
+App Intents metadata and iPhone/iPad device families before packaging the IPA.
+Device installation requires separate signing. The AlarmKit probe checks OS
+feasibility. Physical acceptance uses a signed build of Remilo itself.
 
 ## Private diagnostics and handoff
 

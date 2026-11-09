@@ -4,6 +4,9 @@ import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.type
 import type { Tone } from './actions';
 import { repeatLabel } from './repeat';
 import { civilAt, deviceZone } from './time';
+
+const deliveryWarnings = ['Missed', 'TimedOut', 'Interrupted', 'DeliveryUnconfirmed'];
+
 export function repeatSummary(item: Pick<Occurrence, 'repeatRule' | 'repeatSummary'>) {
   return item.repeatRule
     ? repeatLabel(item.repeatRule)
@@ -17,7 +20,7 @@ export function stateTone(
   if (item.completed) return 'success';
   if (item.skipped || item.mode === 'None') return 'muted';
   if (['Blocked', 'Failed'].includes(item.deliveryState)) return 'danger';
-  if (['Missed', 'TimedOut', 'Interrupted'].includes(item.deliveryState)) return 'warning';
+  if (deliveryWarnings.includes(item.deliveryState)) return 'warning';
   return item.deliveryState === 'Alerting' ? 'accent' : 'muted';
 }
 export function nextAlertTime(item: Occurrence) {
@@ -52,6 +55,7 @@ export function stateLabel(
         Missed: t('m_5c12863b4f4d'),
         TimedOut: t('m_ba0c9f7afee3'),
         Interrupted: t('m_a48a8f6a3fa3'),
+        DeliveryUnconfirmed: t('m_3229d16ca643'),
         Blocked: t('m_4bf68dddf882'),
         Failed: item.mode === 'Notification' ? t('m_8d3fa6513897') : t('m_c7102925c08a'),
         Paused: t('m_e159b06187d3'),
@@ -122,7 +126,7 @@ export function stateIcon(
   if (item.skipped) return 'cancel' as const;
   if (item.deliveryState === 'NoAlert') return 'alarm_off' as const;
   if (['Blocked', 'Failed'].includes(item.deliveryState)) return 'error' as const;
-  if (['Missed', 'TimedOut', 'Interrupted'].includes(item.deliveryState)) return 'warning' as const;
+  if (deliveryWarnings.includes(item.deliveryState)) return 'warning' as const;
   const icons = {
     Alerting: 'alarm',
     Stopped: 'stop',
@@ -433,6 +437,10 @@ export function reminderBrowsingPresentation(
     overdue = overduePresentation(item, now, options.resolvedLanguage);
   const ringing = !terminal && item.mode !== 'None' && item.deliveryState === 'Alerting';
   const { timing, spokenTiming } = cardTimingPresentation(item, now, context, options);
+  const unconfirmed =
+    !terminal && item.mode !== 'None' && item.deliveryState === 'DeliveryUnconfirmed'
+      ? t('m_3229d16ca643', undefined, options.resolvedLanguage)
+      : null;
   let status: BrowsingStatus | null = null;
   if (terminal) {
     const label = item.deleted
@@ -459,6 +467,8 @@ export function reminderBrowsingPresentation(
       icon: 'alarm',
     };
   else if (overdue) status = { ...overdue, tone: 'warning', icon: 'warning' };
+  else if (unconfirmed)
+    status = { label: unconfirmed, spokenLabel: unconfirmed, tone: 'warning', icon: 'warning' };
   else if (item.mode !== 'None' && item.deliveryState === 'Failed') {
     const label =
       item.mode === 'Notification'
@@ -479,7 +489,9 @@ export function reminderBrowsingPresentation(
       ? item.mode === 'Notification'
         ? t('m_8d3fa6513897', undefined, options.resolvedLanguage)
         : t('m_c7102925c08a', undefined, options.resolvedLanguage)
-      : null;
+      : overdue
+        ? unconfirmed
+        : null;
   const spokenLabel = [
     spokenTiming,
     status?.spokenLabel,

@@ -38,9 +38,14 @@ yarn-error.*
 
 example
 
-# generated native folders
-/ios
-# Android is owned source, not disposable generated output.
+# Android and iOS project sources are owned. Ignore only local build output.
+/ios/Pods/
+/ios/Remilo.xcworkspace/
+/ios/Remilo.xcodeproj/project.xcworkspace/
+/ios/.xcode.env.local
+/ios/DerivedData/
+/ios/*.ipa
+xcuserdata/
 .tooling/
 .gradle/
 .cxx/

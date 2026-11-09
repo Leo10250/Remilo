@@ -10,7 +10,7 @@ import { useLocalizedState, useLocale, useTranslation } from '../localization/re
 import { t, ownedMessage, currentLanguage, type LocalizedMessage } from '../localization';
 import { useTimeFormatting, useTimeDisplay } from './time-display';
 
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1310,9 +1310,17 @@ export function DateField({
   const t = useTranslation();
   const { shortTime, shortDateTime } = useTimeFormatting();
   const timeDisplay = useTimeDisplay();
+  const colors = useTheme();
   const connected = useContext(ConnectedRowContext) !== null;
   const [message, setMessage] = useLocalizedState('');
   const [picking, setPicking] = useState(false);
+  const [iosDraft, setIOSDraft] = useState<{
+    mode: 'date' | 'time';
+    base: string;
+    selection: string;
+    instant: number;
+  }>();
+  const [confirming, setConfirming] = useState(false);
   useAppearanceHold(picking);
   const live = useRef(true),
     ticket = useRef(0);
@@ -1323,7 +1331,16 @@ export function DateField({
     };
   }, []);
   const pick = () => {
-    if (Platform.OS !== 'android' || disabled) return;
+    if (disabled) return;
+    if (Platform.OS === 'ios') {
+      const base = civilAt(value, zoneId);
+      ++ticket.current;
+      setMessage('');
+      setPicking(true);
+      setIOSDraft({ mode: timeOnly ? 'time' : 'date', base, selection: base, instant: value });
+      return;
+    }
+    if (Platform.OS !== 'android') return;
     const current = ++ticket.current;
     setPicking(true);
     setMessage('');
@@ -1372,6 +1389,47 @@ export function DateField({
       fail();
     }
   };
+  const closeIOSPicker = () => {
+    ++ticket.current;
+    setIOSDraft(undefined);
+    setPicking(false);
+    setConfirming(false);
+  };
+  const acceptIOSPicker = async () => {
+    if (!iosDraft || confirming || disabled) return;
+    const current = ++ticket.current;
+    setConfirming(true);
+    try {
+      const result = await engine().convertTime({
+        zoneId,
+        local: mergeCivil(iosDraft.base, iosDraft.selection, iosDraft.mode),
+      });
+      if (!live.current || current !== ticket.current) return;
+      if (iosDraft.mode === 'date' && !dateOnly) {
+        setIOSDraft({
+          mode: 'time',
+          base: result.local,
+          selection: result.local,
+          instant: result.instantMs,
+        });
+      } else {
+        closeIOSPicker();
+        onChange(result.instantMs);
+        if (result.adjustment !== 'none')
+          setMessage(
+            result.adjustment === 'gapForward' ? t('m_d242331f3d81') : t('m_9365adde07dc'),
+          );
+      }
+    } catch {
+      if (!live.current || current !== ticket.current) return;
+      closeIOSPicker();
+      const text = t('m_67a437769493');
+      setMessage(text);
+      onError?.(text);
+    } finally {
+      if (live.current && current === ticket.current) setConfirming(false);
+    }
+  };
   const formatted = timeOnly
     ? shortTime(value, zoneId)
     : dateOnly
@@ -1389,6 +1447,46 @@ export function DateField({
         accessibilityLabel={accessibilityLabel ? accessibilityLabel + ', ' + formatted : undefined}
         onPress={pick}
       />
+      {iosDraft && (
+        <Sheet
+          title={label}
+          visible
+          onClose={closeIOSPicker}
+          footer={
+            <View style={{ padding: space.gutter, gap: space.sm }}>
+              <Button
+                label={t(
+                  iosDraft.mode === 'date' && !dateOnly ? 'ios_picker_continue' : 'm_11a6767d5674',
+                )}
+                disabled={disabled || confirming}
+                onPress={() => void acceptIOSPicker()}
+              />
+              <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={closeIOSPicker} />
+            </View>
+          }
+        >
+          <DateTimePicker
+            key={iosDraft.mode}
+            accessibilityLabel={accessibilityLabel ?? label}
+            mode={iosDraft.mode}
+            display="spinner"
+            themeVariant={colors.dark ? 'dark' : 'light'}
+            timeZoneName={zoneId}
+            value={new Date(iosDraft.instant)}
+            disabled={confirming || disabled}
+            onValueChange={({ nativeEvent }) => {
+              setIOSDraft(
+                (draft) =>
+                  draft && {
+                    ...draft,
+                    instant: nativeEvent.timestamp,
+                    selection: pickerCivil(nativeEvent.timestamp, nativeEvent.utcOffset),
+                  },
+              );
+            }}
+          />
+        </Sheet>
+      )}
       {!!message &&
         (connected ? (
           <RowSupport>

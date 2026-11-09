@@ -389,6 +389,15 @@ describe('concise work-state browsing', () => {
     expect(failed.status?.label).toBe('Overdue · 3 min');
     expect(failed.warning).toBe('Notification could not be sent');
   });
+  it('surfaces an unconfirmed delivery alongside overdue work without promising another alert', () => {
+    const item = { ...overdue, deliveryState: 'DeliveryUnconfirmed' };
+    const result = reminderBrowsingPresentation(item, start);
+    expect(result.status?.label).toBe('Overdue · 3 min');
+    expect(result.warning).toBe('Unconfirmed');
+    expect(stateLabel(item)).toBe('Unconfirmed');
+    expect(alertPresentation(item, false, start).confirmed).toBe(false);
+    expect(alertPresentation(item, false, start).target).toBeNull();
+  });
   it('omits routine duplicate chips and preserves repeat metadata independently', () => {
     for (const deliveryState of ['Scheduled', 'Pending', 'Changing', 'SeriesChanging', 'Notified'])
       expect(reminderBrowsingPresentation({ ...normal, deliveryState }, start).status).toBeNull();

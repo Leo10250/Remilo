@@ -1,5 +1,16 @@
 {
   "version": 1,
+  "iosDelivery": {
+    "reminder": "m_31757bbfa17e",
+    "done": "m_62aa4b87cc52",
+    "postpone": "m_63fb48d94634",
+    "actions": "m_3ddd2c824c07",
+    "dismiss": "routine_alarm_dismiss",
+    "routine": "routine_title",
+    "startRoutine": "routine_alarm_start",
+    "testAlarm": "m_414c66fb67ec",
+    "permission": "ios_alarm_permission_usage"
+  },
   "messages": {
     "ui_your_routines": {
       "en": "Your routines",
@@ -16803,6 +16814,34 @@
     "calendar_automatic_paused_body": { "en": "Automatic updates are paused.", "zh-Hans": "自动更新已暂停。", "args": {}, "context": "Calendar overview", "calendarStatus": false },
     "calendar_automatic_off_body": { "en": "Automatic updates for this calendar are off.", "zh-Hans": "此日历的自动更新已关闭。", "args": {}, "context": "Calendar overview", "calendarStatus": false },
     "calendar_turn_off_automatic": { "en": "Turn off automatic sync…", "zh-Hans": "关闭自动同步…", "args": {}, "context": "Calendar overview", "calendarStatus": false },
-    "calendar_sync_scope_help": { "en": "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions.", "zh-Hans": "“立即同步”会检查所有已开启自动同步的日历事项，单个事项仍可设为仅本地。自动同步控制仅适用于所选 Remilo 日历，其他日历保留各自的关联权限。", "args": {}, "context": "Calendar overview", "calendarStatus": false }
+    "calendar_sync_scope_help": { "en": "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions.", "zh-Hans": "“立即同步”会检查所有已开启自动同步的日历事项，单个事项仍可设为仅本地。自动同步控制仅适用于所选 Remilo 日历，其他日历保留各自的关联权限。", "args": {}, "context": "Calendar overview", "calendarStatus": false },
+    "ios_alarm_permission_usage": {
+      "en": "Remilo uses alarms to ring for the reminders you choose.",
+      "zh-Hans": "Remilo 需要使用闹钟为你选定的提醒响铃。",
+      "args": {},
+      "context": "Shown by iOS when Remilo first requests permission to schedule alarms for reminders.",
+      "calendarStatus": false
+    },
+    "ios_picker_continue": {
+      "en": "Continue",
+      "zh-Hans": "继续",
+      "args": {},
+      "context": "In the iOS date and time chooser, move from the date step to the time step.",
+      "calendarStatus": false
+    },
+    "ios_permission_not_requested": {
+      "en": "Not requested",
+      "zh-Hans": "尚未请求",
+      "args": {},
+      "context": "Alarm Check permission status before Remilo has asked iOS to show the system prompt.",
+      "calendarStatus": false
+    },
+    "ios_notification_mode_description": {
+      "en": "Shows a notification.",
+      "zh-Hans": "显示一条通知。",
+      "args": {},
+      "context": "Describes ordinary iOS Notification mode in the editor and as an accessibility hint.",
+      "calendarStatus": false
+    }
   }
 }

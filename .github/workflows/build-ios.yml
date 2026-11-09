@@ -1,0 +1,81 @@
+name: Build Remilo iOS
+on:
+  workflow_dispatch:
+  push:
+    branches: [Add-iOS-support]
+    paths:
+      - ios/**
+      - src/**
+      - modules/remilo-alarm/**
+      - assets/**
+      - localization/**
+      - verification/fixtures/recurrence.json
+      - verification/ios-archive/**
+      - verification/ios-engine/**
+      - verification/ios-media/**
+      - app.config.js
+      - app.json
+      - package*.json
+      - .nvmrc
+      - .github/workflows/build-ios.yml
+concurrency:
+  group: remilo-ios-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  unsigned-ipa:
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check the Swift engine and recurrence policies
+        run: |
+          xcodebuild -version
+          sh verification/ios-engine/run.sh
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Install iOS dependencies
+        working-directory: ios
+        run: pod install
+      - name: Check portable archives and routine photos
+        run: |
+          sh verification/ios-archive/run.sh
+          sh verification/ios-media/run.sh
+      - name: Build Remilo for iPhone and iPad
+        shell: bash
+        run: |
+          xcodebuild \
+            -workspace ios/Remilo.xcworkspace \
+            -scheme Remilo \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/Remilo-build" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Verify and package the unsigned iOS app
+        shell: bash
+        run: |
+          app="$RUNNER_TEMP/Remilo-build/Build/Products/Release-iphoneos/Remilo.app"
+          stage="$RUNNER_TEMP/remilo-ipa"
+          ipa="$RUNNER_TEMP/Remilo-unsigned.ipa"
+          test -s "$app/main.jsbundle"
+          test -s "$app/remilo_alarm.wav"
+          test -d "$app/Metadata.appintents"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :DTPlatformName' "$app/Info.plist")" = 'iphoneos'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UIDeviceFamily:0' "$app/Info.plist")" = '1'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UIDeviceFamily:1' "$app/Info.plist")" = '2'
+          mkdir -p "$stage/Payload"
+          ditto "$app" "$stage/Payload/Remilo.app"
+          ditto -c -k --keepParent "$stage/Payload" "$ipa"
+          unzip -tq "$ipa"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Remilo-unsigned
+          path: ${{ runner.temp }}/Remilo-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 3

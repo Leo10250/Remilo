@@ -51,7 +51,14 @@ import {
   Status,
 } from '../../ui/components';
 
-import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
+import {
+  CommandError,
+  engine,
+  iosReminders,
+  nativeAvailable,
+  useCommand,
+  useSettings,
+} from '../../ui/native';
 import { space, typography } from '../../ui/tokens';
 import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
@@ -135,18 +142,18 @@ export default function ReminderDetails() {
   const calendar = useQuery({
     queryKey: ['calendar', 'publications'],
     queryFn: () => engine().getCalendarPublications(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const publication = calendar.data?.find((value) => value.occurrenceId === id);
   const calendarLinks = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const calendarOperations = useQuery({
     queryKey: ['calendar', 'operations'],
     queryFn: () => engine().getCalendarOperations(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const calendarLink = calendarLinks.data?.find(
     (value) => value.occurrenceId === id || (!!item?.seriesId && value.seriesId === item.seriesId),
@@ -724,7 +731,8 @@ export default function ReminderDetails() {
         {item && !item.deleted && (
           <SettingRow intent="action" icon="edit" label={t('m_464c4ffd019e')} onPress={edit} />
         )}
-        {active &&
+        {!iosReminders &&
+          active &&
           !item.segmentId &&
           !calendarLink &&
           (!publication || publication.state === 'Cancelled') && (

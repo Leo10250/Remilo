@@ -2497,6 +2497,10 @@ object MessageCatalog {
     "calendar_automatic_paused_body" to Entry(R.string.l10n_calendar_automatic_paused_body, false, listOf(), "Automatic updates are paused.", false),
     "calendar_automatic_off_body" to Entry(R.string.l10n_calendar_automatic_off_body, false, listOf(), "Automatic updates for this calendar are off.", false),
     "calendar_turn_off_automatic" to Entry(R.string.l10n_calendar_turn_off_automatic, false, listOf(), "Turn off automatic sync…", false),
-    "calendar_sync_scope_help" to Entry(R.string.l10n_calendar_sync_scope_help, false, listOf(), "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions.", false)
+    "calendar_sync_scope_help" to Entry(R.string.l10n_calendar_sync_scope_help, false, listOf(), "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions.", false),
+    "ios_alarm_permission_usage" to Entry(R.string.l10n_ios_alarm_permission_usage, false, listOf(), "Remilo uses alarms to ring for the reminders you choose.", false),
+    "ios_picker_continue" to Entry(R.string.l10n_ios_picker_continue, false, listOf(), "Continue", false),
+    "ios_permission_not_requested" to Entry(R.string.l10n_ios_permission_not_requested, false, listOf(), "Not requested", false),
+    "ios_notification_mode_description" to Entry(R.string.l10n_ios_notification_mode_description, false, listOf(), "Shows a notification.", false)
   )
 }

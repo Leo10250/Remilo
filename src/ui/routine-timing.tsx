@@ -17,7 +17,7 @@ import {
 import { AlertModeSelector } from './alert-mode-selector';
 import { DateTimeFields } from './date-time-fields';
 import { useAppearanceConfirmation } from './confirmation';
-import { useCapabilities, engine } from './native';
+import { useCapabilities, engine, iosReminders } from './native';
 import { SoundPicker } from './sound-picker';
 import { useTimeFormatting } from './time-display';
 
@@ -189,19 +189,23 @@ export function RoutineTimingField({
                 <Copy muted size={14}>
                   {t('routine_no_catchup')}
                 </Copy>
-                {caps.data && (!caps.data.notifications || !caps.data.routineChannelEnabled) && (
-                  <ActionFeedback tone="warning" message={t('routine_notification_warning')} />
-                )}
-                {caps.data?.routineChannelQuiet === false && (
+                {!iosReminders &&
+                  caps.data &&
+                  (!caps.data.notifications || !caps.data.routineChannelEnabled) && (
+                    <ActionFeedback tone="warning" message={t('routine_notification_warning')} />
+                  )}
+                {!iosReminders && caps.data?.routineChannelQuiet === false && (
                   <Copy muted size={14}>
                     {t('routine_channel_changed')}
                   </Copy>
                 )}
-                <Button
-                  label={t('routine_channel_settings')}
-                  variant="neutral"
-                  onPress={() => void engine().openSettings('routineChannel')}
-                />
+                {!iosReminders && (
+                  <Button
+                    label={t('routine_channel_settings')}
+                    variant="neutral"
+                    onPress={() => void engine().openSettings('routineChannel')}
+                  />
+                )}
               </>
             )}
             {draft.mode === 'Alarm' && (
@@ -211,12 +215,14 @@ export function RoutineTimingField({
                   disabled={disabled}
                   onChange={(sound) => setDraft({ ...draft, sound })}
                 />
-                <Toggle
-                  label={t('m_59e1fd02f6c2')}
-                  value={draft.vibration ?? false}
-                  disabled={disabled}
-                  onChange={(vibration) => setDraft({ ...draft, vibration })}
-                />
+                {!iosReminders && (
+                  <Toggle
+                    label={t('m_59e1fd02f6c2')}
+                    value={draft.vibration ?? false}
+                    disabled={disabled}
+                    onChange={(vibration) => setDraft({ ...draft, vibration })}
+                  />
+                )}
               </ConnectedGroup>
             )}
           </>

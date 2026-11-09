@@ -25,7 +25,7 @@ import {
   Status,
 } from '../ui/components';
 import { useAppearanceConfirmation } from '../ui/confirmation';
-import { engine, nativeAvailable, useCapabilities } from '../ui/native';
+import { engine, iosReminders, nativeAvailable, useCapabilities } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
 import { space } from '../ui/tokens';
 
@@ -118,7 +118,12 @@ export default function AlarmCheck() {
     });
   const openPermission = (kind: PermissionKind, requestNotification = true) =>
     void run('permissions', async () => {
-      if (kind === 'notifications' && requestNotification && caps.data?.notifications === false) {
+      if (
+        !iosReminders &&
+        kind === 'notifications' &&
+        requestNotification &&
+        caps.data?.notifications === false
+      ) {
         const result = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
         );
@@ -148,23 +153,35 @@ export default function AlarmCheck() {
     if (router.canGoBack()) router.back();
     else router.replace({ pathname: '/settings', params: routeParams });
   };
-  const permissionLabel = (enabled?: boolean, limited = false) =>
-    enabled === undefined
-      ? !nativeAvailable || (caps.error && !caps.data)
-        ? t('m_ca1844969742')
-        : t('m_0dfe1d63c9d8')
-      : enabled
-        ? t('m_1bb201d18835')
-        : limited
-          ? t('m_e5125d9f63d2')
-          : t('m_18f2a0947f9d');
-  const permission = (enabled?: boolean, limited = false) => (
+  const permissionLabel = (enabled?: boolean, limited = false, unrequested = false) =>
+    unrequested
+      ? t('ios_permission_not_requested')
+      : enabled === undefined
+        ? !nativeAvailable || (caps.error && !caps.data)
+          ? t('m_ca1844969742')
+          : t('m_0dfe1d63c9d8')
+        : enabled
+          ? t('m_1bb201d18835')
+          : limited
+            ? t('m_e5125d9f63d2')
+            : t('m_18f2a0947f9d');
+  const permission = (enabled?: boolean, limited = false, unrequested = false) => (
     <Status
-      label={permissionLabel(enabled, limited)}
-      tone={enabled === undefined ? 'muted' : enabled ? 'success' : limited ? 'warning' : 'danger'}
+      label={permissionLabel(enabled, limited, unrequested)}
+      tone={
+        unrequested || enabled === undefined
+          ? 'muted'
+          : enabled
+            ? 'success'
+            : limited
+              ? 'warning'
+              : 'danger'
+      }
     />
   );
   const summary = permissionSummary(caps.data, !!caps.error);
+  const alarmUnrequested = caps.data?.alarmAuthorization === 'notDetermined';
+  const notificationUnrequested = caps.data?.notificationAuthorization === 'notDetermined';
   const notificationBlocked =
     !!caps.data &&
     (!caps.data.notifications ||
@@ -218,83 +235,121 @@ export default function AlarmCheck() {
             </>
           }
         >
-          <SettingRow
-            intent="action"
-            key="exact"
-            icon="schedule"
-            label={t('m_142c2ae8d0bb')}
-            description={caps.data?.exactAlarms === false ? t('m_9ac9a33b0a76') : undefined}
-            disabled={frozen || !nativeAvailable}
-            statusLabel={permissionLabel(caps.data?.exactAlarms)}
-            onPress={() => access('exact')}
-          >
-            {permission(caps.data?.exactAlarms)}
-          </SettingRow>
-          <View key="notifications">
-            <SettingRow
-              intent="action"
-              icon="notifications"
-              label={t('m_788011833a5a')}
-              description={notificationBlocked ? t('m_07607efa8ec3') : undefined}
-              disabled={frozen || !nativeAvailable}
-              statusLabel={permissionLabel(
-                caps.data
-                  ? caps.data.notifications &&
-                      caps.data.channelEnabled &&
-                      caps.data.notificationChannelEnabled
-                  : undefined,
-              )}
-              onPress={() => access('notifications')}
-            >
-              {permission(
-                caps.data
-                  ? caps.data.notifications &&
-                      caps.data.channelEnabled &&
-                      caps.data.notificationChannelEnabled
-                  : undefined,
-              )}
-            </SettingRow>
-            {!!caps.data && (
-              <RowSupport>
-                <Disclosure title={t('m_c33ea23d51f1')} inset autoOpen={notificationBlocked}>
-                  {(
-                    [
-                      [t('m_31d7ae351725'), caps.data.notifications],
-                      [t('m_9cbbfcb9624f'), caps.data.channelEnabled],
-                      [t('m_261078774b32'), caps.data.notificationChannelEnabled],
-                    ] as const
-                  ).map(([label, allowed]) => (
-                    <ReadOnlyRow compact key={label} label={label} value={permission(allowed)} />
-                  ))}
-                  {!caps.data.notifications && (
-                    <Copy muted size={14}>
-                      {t('ui_notifications_app_blocked')}
-                    </Copy>
-                  )}
-                </Disclosure>
-                {(notificationBlocked || notificationDenied) && (
-                  <Button
-                    label={t('m_c6885c8ebcb2')}
-                    variant="secondary"
-                    disabled={frozen || !nativeAvailable}
-                    onPress={() => openPermission('notifications', false)}
-                  />
+          {iosReminders ? (
+            <>
+              <SettingRow
+                intent="action"
+                key="alarm"
+                icon="alarm"
+                label={t('m_f3b679573579')}
+                statusLabel={permissionLabel(caps.data?.exactAlarms, false, alarmUnrequested)}
+                disabled={frozen || !nativeAvailable}
+                onPress={() => access('exact')}
+              >
+                {permission(caps.data?.exactAlarms, false, alarmUnrequested)}
+              </SettingRow>
+              <SettingRow
+                intent="action"
+                key="notifications"
+                icon="notifications"
+                label={t('m_788011833a5a')}
+                statusLabel={permissionLabel(
+                  caps.data?.notifications,
+                  false,
+                  notificationUnrequested,
                 )}
-              </RowSupport>
-            )}
-          </View>
-          <SettingRow
-            intent="action"
-            key="lock-screen"
-            icon="lock"
-            label={t('m_66b41af0ba4b')}
-            description={caps.data?.fullScreen === false ? t('m_69bbfaef0807') : undefined}
-            disabled={frozen || !nativeAvailable}
-            statusLabel={permissionLabel(caps.data?.fullScreen, true)}
-            onPress={() => access('fullScreen')}
-          >
-            {permission(caps.data?.fullScreen, true)}
-          </SettingRow>
+                disabled={frozen || !nativeAvailable}
+                onPress={() => access('notifications')}
+              >
+                {permission(caps.data?.notifications, false, notificationUnrequested)}
+              </SettingRow>
+            </>
+          ) : (
+            <>
+              <SettingRow
+                intent="action"
+                key="exact"
+                icon="schedule"
+                label={t('m_142c2ae8d0bb')}
+                description={caps.data?.exactAlarms === false ? t('m_9ac9a33b0a76') : undefined}
+                disabled={frozen || !nativeAvailable}
+                statusLabel={permissionLabel(caps.data?.exactAlarms)}
+                onPress={() => access('exact')}
+              >
+                {permission(caps.data?.exactAlarms)}
+              </SettingRow>
+              <View key="notifications">
+                <SettingRow
+                  intent="action"
+                  icon="notifications"
+                  label={t('m_788011833a5a')}
+                  description={notificationBlocked ? t('m_07607efa8ec3') : undefined}
+                  disabled={frozen || !nativeAvailable}
+                  statusLabel={permissionLabel(
+                    caps.data
+                      ? caps.data.notifications &&
+                          caps.data.channelEnabled &&
+                          caps.data.notificationChannelEnabled
+                      : undefined,
+                  )}
+                  onPress={() => access('notifications')}
+                >
+                  {permission(
+                    caps.data
+                      ? caps.data.notifications &&
+                          caps.data.channelEnabled &&
+                          caps.data.notificationChannelEnabled
+                      : undefined,
+                  )}
+                </SettingRow>
+                {!!caps.data && (
+                  <RowSupport>
+                    <Disclosure title={t('m_c33ea23d51f1')} inset autoOpen={notificationBlocked}>
+                      {(
+                        [
+                          [t('m_31d7ae351725'), caps.data.notifications],
+                          [t('m_9cbbfcb9624f'), caps.data.channelEnabled],
+                          [t('m_261078774b32'), caps.data.notificationChannelEnabled],
+                        ] as const
+                      ).map(([label, allowed]) => (
+                        <ReadOnlyRow
+                          compact
+                          key={label}
+                          label={label}
+                          value={permission(allowed)}
+                        />
+                      ))}
+                      {!caps.data.notifications && (
+                        <Copy muted size={14}>
+                          {t('ui_notifications_app_blocked')}
+                        </Copy>
+                      )}
+                    </Disclosure>
+                    {(notificationBlocked || notificationDenied) && (
+                      <Button
+                        label={t('m_c6885c8ebcb2')}
+                        variant="secondary"
+                        disabled={frozen || !nativeAvailable}
+                        onPress={() => openPermission('notifications', false)}
+                      />
+                    )}
+                  </RowSupport>
+                )}
+              </View>
+              <SettingRow
+                intent="action"
+                key="lock-screen"
+                icon="lock"
+                label={t('m_66b41af0ba4b')}
+                description={caps.data?.fullScreen === false ? t('m_69bbfaef0807') : undefined}
+                disabled={frozen || !nativeAvailable}
+                statusLabel={permissionLabel(caps.data?.fullScreen, true)}
+                onPress={() => access('fullScreen')}
+              >
+                {permission(caps.data?.fullScreen, true)}
+              </SettingRow>
+            </>
+          )}
         </ConnectedGroup>
         <ConnectedGroup
           title={t('m_94ff0d164e2e')}

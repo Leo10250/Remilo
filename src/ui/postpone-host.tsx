@@ -35,26 +35,101 @@ function draftFor(capture: PostponeCapture | null) {
   return draft;
 }
 /** A single in-memory owner survives a Home route replacement during a warm link. */
+function getHomeController() {
+  return (homeController ??= new PostponeController({
+    read: async (request) => {
+      const members =
+        request.kind === 'Single' ? [{ occurrenceId: request.occurrenceId }] : request.members;
+      const [items, settings, capabilities] = await Promise.all([
+        Promise.all(members.map((member) => engine().getOccurrence(member.occurrenceId))),
+        engine().getSettings(),
+        request.kind === 'Group' ? engine().getCapabilities() : Promise.resolve(null),
+      ]);
+      return { items, settings, sessionId: capabilities?.activeSessionId };
+    },
+    send: (command) => engine().applyCommand(command),
+    id: () => engine().createOperationId(),
+    now: Date.now,
+    zone: deviceZone,
+  }));
+}
+
+export function useNativeDeliveryRequests() {
+  useEffect(() => {
+    if (!nativeAvailable) return;
+    const module = engine();
+    if (!module.takePendingDeliveryRequests) return;
+    let reading = false;
+    let queued = false;
+    let mounted = true;
+    type Request = Awaited<
+      ReturnType<NonNullable<typeof module.takePendingDeliveryRequests>>
+    >[number];
+    const pending: Request[] = [];
+    const controller = getHomeController();
+    const present = () => {
+      if (!mounted || controller.isGuarded() || AppState.currentState !== 'active') return;
+      const request = pending.shift();
+      if (request?.kind === 'ReminderActions') {
+        router.navigate({ pathname: '/reminder/[id]', params: { id: request.occurrenceId } });
+      } else if (request?.kind === 'Routine') {
+        router.navigate({
+          pathname: '/routine-session',
+          params: { id: request.routineId, date: request.date },
+        });
+      }
+    };
+    const receive = () => {
+      if (!mounted || (AppState.currentState && AppState.currentState !== 'active')) return;
+      if (reading) {
+        queued = true;
+        return;
+      }
+      reading = true;
+      void module.takePendingDeliveryRequests!()
+        .then((requests) => {
+          if (!mounted) return;
+          let opened = false;
+          for (const request of requests) {
+            if (request.kind !== 'Single') {
+              pending.push(request);
+              continue;
+            }
+            const parsed = parsePostponeRequest(JSON.stringify(request));
+            if (parsed.kind === 'valid') {
+              controller.open(parsed.request, 'home');
+              opened = true;
+            } else if (parsed.kind === 'invalid') controller.invalidRequest();
+          }
+          if (opened && !controller.isGuarded()) router.navigate('/');
+          else present();
+        })
+        .catch(() => getHomeController().invalidRequest())
+        .finally(() => {
+          reading = false;
+          if (queued) {
+            queued = false;
+            receive();
+          }
+        });
+    };
+    const native = module.addListener('onDeliveryRequested', receive);
+    const unsubscribe = controller.subscribe(present);
+    const app = AppState.addEventListener('change', (state) => {
+      if (state === 'active') receive();
+    });
+    receive();
+    return () => {
+      mounted = false;
+      native.remove();
+      app.remove();
+      unsubscribe();
+    };
+  }, []);
+}
+
 export function usePostponeController() {
-  const [controller] = useState(
-    () =>
-      (homeController ??= new PostponeController({
-        read: async (request) => {
-          const members =
-            request.kind === 'Single' ? [{ occurrenceId: request.occurrenceId }] : request.members;
-          const [items, settings, capabilities] = await Promise.all([
-            Promise.all(members.map((member) => engine().getOccurrence(member.occurrenceId))),
-            engine().getSettings(),
-            request.kind === 'Group' ? engine().getCapabilities() : Promise.resolve(null),
-          ]);
-          return { items, settings, sessionId: capabilities?.activeSessionId };
-        },
-        send: (command) => engine().applyCommand(command),
-        id: () => engine().createOperationId(),
-        now: Date.now,
-        zone: deviceZone,
-      })),
-  );
+  const [controller] = useState(getHomeController);
   const state = useSyncExternalStore(
     controller.subscribe,
     controller.snapshot,

@@ -15,6 +15,7 @@ export type TimeDisplayPreferences = {
 };
 export type RemiloAlarmModuleEvents = {
   onChange: (params: Record<string, never>) => void;
+  onDeliveryRequested: (params: Record<string, never>) => void;
   onSoundPreviewState: (snapshot: SoundPreviewSnapshot) => void;
   onTimeDisplayPreferencesChanged: (preferences: TimeDisplayPreferences) => void;
 };
@@ -26,6 +27,8 @@ export type SessionActions = {
   snoozeMinutes: number;
 };
 export type Capabilities = {
+  alarmAuthorization?: 'notDetermined' | 'denied' | 'authorized';
+  notificationAuthorization?: 'notDetermined' | 'denied' | 'authorized';
   exactAlarms: boolean;
   notifications: boolean;
   channelEnabled: boolean;

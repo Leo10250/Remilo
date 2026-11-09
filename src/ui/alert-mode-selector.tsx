@@ -6,6 +6,7 @@ import { Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-nati
 import type { ReminderDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { Choice, Copy, Icon, SettingRow, Sheet, type IconName } from './components';
 import { useFontScaleOverride, useFoundationStyle, useTheme } from './theme';
+import { iosReminders } from './native';
 
 type AlertMode = NonNullable<ReminderDraft['mode']>;
 const choices: { value: AlertMode; label: string; icon: IconName; description: string }[] = live(
@@ -15,7 +16,7 @@ const choices: { value: AlertMode; label: string; icon: IconName; description: s
       value: 'Notification',
       label: t('m_7d31b8331399'),
       icon: 'notifications',
-      description: t('m_8028ab0fb62f'),
+      description: t(iosReminders ? 'ios_notification_mode_description' : 'm_8028ab0fb62f'),
     },
     {
       value: 'None',

@@ -2506,7 +2506,11 @@ export const catalogs = {
     "calendar_automatic_paused_body": "Automatic updates are paused.",
     "calendar_automatic_off_body": "Automatic updates for this calendar are off.",
     "calendar_turn_off_automatic": "Turn off automatic sync…",
-    "calendar_sync_scope_help": "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions."
+    "calendar_sync_scope_help": "Sync now checks all Calendar items with automatic sync enabled. Individual reminders can remain local only. Automatic sync controls apply to the selected Remilo calendar; other calendars keep their own link permissions.",
+    "ios_alarm_permission_usage": "Remilo uses alarms to ring for the reminders you choose.",
+    "ios_picker_continue": "Continue",
+    "ios_permission_not_requested": "Not requested",
+    "ios_notification_mode_description": "Shows a notification."
   },
   "zh-Hans": {
     "ui_your_routines": "你的日常计划",
@@ -4989,7 +4993,11 @@ export const catalogs = {
     "calendar_automatic_paused_body": "自动更新已暂停。",
     "calendar_automatic_off_body": "此日历的自动更新已关闭。",
     "calendar_turn_off_automatic": "关闭自动同步…",
-    "calendar_sync_scope_help": "“立即同步”会检查所有已开启自动同步的日历事项，单个事项仍可设为仅本地。自动同步控制仅适用于所选 Remilo 日历，其他日历保留各自的关联权限。"
+    "calendar_sync_scope_help": "“立即同步”会检查所有已开启自动同步的日历事项，单个事项仍可设为仅本地。自动同步控制仅适用于所选 Remilo 日历，其他日历保留各自的关联权限。",
+    "ios_alarm_permission_usage": "Remilo 需要使用闹钟为你选定的提醒响铃。",
+    "ios_picker_continue": "继续",
+    "ios_permission_not_requested": "尚未请求",
+    "ios_notification_mode_description": "显示一条通知。"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -7425,4 +7433,8 @@ export interface MessageArguments {
   calendar_automatic_off_body: Record<string, never>;
   calendar_turn_off_automatic: Record<string, never>;
   calendar_sync_scope_help: Record<string, never>;
+  ios_alarm_permission_usage: Record<string, never>;
+  ios_picker_continue: Record<string, never>;
+  ios_permission_not_requested: Record<string, never>;
+  ios_notification_mode_description: Record<string, never>;
 }

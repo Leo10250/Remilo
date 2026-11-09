@@ -63,7 +63,7 @@ import {
 import { resolveRingingMembers, sameRingingScope } from '../domain/ringing-session';
 import { dismissNotice, useNotice } from '../ui/feedback';
 import { useReducedMotion } from '../ui/motion';
-import { engine, nativeAvailable, useCapabilities } from '../ui/native';
+import { engine, iosReminders, nativeAvailable, useCapabilities } from '../ui/native';
 import { ReminderRow } from '../ui/reminder-row';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../ui/theme';
 import {
@@ -306,12 +306,12 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   const calendarLinks = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const calendarSummary = useQuery({
     queryKey: ['calendar', 'sync-summary'],
     queryFn: () => engine().getCalendarSyncSummary(),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && !iosReminders,
   });
   const calendarByReminder = new Map(calendarLinks.data?.map((link) => [link.occurrenceId, link]));
   const calendarFor = (item: Occurrence) =>
@@ -504,15 +504,21 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   };
   const caps = capabilities.data,
     warning = caps
-      ? !caps.exactAlarms
-        ? t('m_7289470d5860')
-        : !caps.notifications
-          ? t('m_8276fc8f3d9a')
-          : !caps.channelEnabled
-            ? t('m_35a1741a1501')
-            : !caps.fullScreen
-              ? t('m_aaeb8e7dbd8f')
-              : ''
+      ? iosReminders
+        ? caps.alarmAuthorization !== 'authorized'
+          ? t('m_7289470d5860')
+          : caps.notificationAuthorization === 'denied'
+            ? t('m_8276fc8f3d9a')
+            : ''
+        : !caps.exactAlarms
+          ? t('m_7289470d5860')
+          : !caps.notifications
+            ? t('m_8276fc8f3d9a')
+            : !caps.channelEnabled
+              ? t('m_35a1741a1501')
+              : !caps.fullScreen
+                ? t('m_aaeb8e7dbd8f')
+                : ''
       : '';
   const focused = useIsFocused();
   useEffect(() => {

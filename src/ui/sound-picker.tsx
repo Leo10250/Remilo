@@ -7,11 +7,12 @@ import type {
   SoundPreviewSnapshot,
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { ActionFeedback, Choice, Copy, IconButton, SettingRow, Sheet } from './components';
-import { engine, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable } from './native';
 
 type Sound = NonNullable<ReminderDraft['sound']>;
 type Preview = SoundPreviewSnapshot;
-const label = (sound: Sound) => (sound === 'system' ? t('m_6a05d9e751b1') : 'Remilo');
+const label = (sound: Sound) =>
+  sound === 'system' ? t(iosReminders ? 'm_b0459211f9f7' : 'm_6a05d9e751b1') : 'Remilo';
 function reasonMessage(reason?: string) {
   return (
     (
@@ -179,16 +180,18 @@ export function SoundPicker({
                   }}
                 />
               </View>
-              <IconButton
-                icon={active ? 'stop' : 'play_arrow'}
-                label={
-                  (active ? t('m_366e0f21b8af') : t('m_a1e923026def')) +
-                  label(sound) +
-                  t('m_0025da04e552')
-                }
-                disabled={!nativeAvailable || playback.stopping}
-                onPress={() => void (active ? playback.stop() : playback.play(sound))}
-              />
+              {(!iosReminders || sound === 'remilo') && (
+                <IconButton
+                  icon={active ? 'stop' : 'play_arrow'}
+                  label={
+                    (active ? t('m_366e0f21b8af') : t('m_a1e923026def')) +
+                    label(sound) +
+                    t('m_0025da04e552')
+                  }
+                  disabled={!nativeAvailable || playback.stopping}
+                  onPress={() => void (active ? playback.stop() : playback.play(sound))}
+                />
+              )}
             </View>
           );
         })}

@@ -5,7 +5,7 @@ import type { View } from 'react-native';
 import { useTranslation } from '../localization/react';
 import { CommandRecovery, useCapturedCommand } from './navigation';
 import { notify } from './feedback';
-import { engine, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable } from './native';
 import { QueryState, SettingRow, Sheet } from './components';
 import { WidgetSetupRow } from './widget-setup';
 
@@ -124,7 +124,13 @@ export function RoutineActions({
             )
           }
         />
-        <WidgetSetupRow routineId={target?.id} disabled={action.guarded || !plan} onOpen={close} />
+        {!iosReminders && (
+          <WidgetSetupRow
+            routineId={target?.id}
+            disabled={action.guarded || !plan}
+            onOpen={close}
+          />
+        )}
         <SettingRow
           intent="navigation"
           label={t('routine_duplicate')}
