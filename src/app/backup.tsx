@@ -25,7 +25,7 @@ import {
   SectionStack,
   SettingRow,
 } from '../ui/components';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { space } from '../ui/tokens';
@@ -85,7 +85,9 @@ export default function Backup() {
     try {
       const selected = await DocumentPicker.getDocumentAsync({
         copyToCacheDirectory: true,
-        type: ['application/json', 'application/zip', 'text/plain', 'application/octet-stream'],
+        type: iosReminders
+          ? '*/*'
+          : ['application/json', 'application/zip', 'text/plain', 'application/octet-stream'],
       });
       if (selected.canceled) return;
       const asset = selected.assets[0];

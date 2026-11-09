@@ -2,6 +2,7 @@ import { errorText, t } from '../localization';
 import { useLocalizedState, useTranslation } from '../localization/react';
 import { useTimeFormatting, useTimeDisplay } from '../ui/time-display';
 import { router, useLocalSearchParams } from 'expo-router';
+import Constants from 'expo-constants';
 import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useEffect, useRef, useState } from 'react';
@@ -340,28 +341,28 @@ export default function Settings() {
           />
           <BackupContentsDisclosure key="contents" />
         </ConnectedGroup>
-        {!iosReminders && (
-          <ConnectedGroup
-            title={t('m_b79cac926e0b')}
-            footer={
-              <>
-                <Copy>{t('m_f65890724d03')}</Copy>
-                <Copy muted size={14}>
-                  {t('m_cf96192a609d')}
-                </Copy>
-              </>
-            }
-          >
-            <SettingRow
-              intent="navigation"
-              key="diagnostics"
-              icon="info"
-              label={t('m_268f14bbfe11')}
-              disabled={pending}
-              onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })}
-            />
-          </ConnectedGroup>
-        )}
+        <ConnectedGroup
+          title={t('m_b79cac926e0b')}
+          footer={
+            <>
+              <Copy>{t('m_f65890724d03')}</Copy>
+              <Copy muted size={14}>
+                {iosReminders
+                  ? [Constants.expoConfig?.version, 'iOS'].filter(Boolean).join(' · ')
+                  : t('m_cf96192a609d')}
+              </Copy>
+            </>
+          }
+        >
+          <SettingRow
+            intent="navigation"
+            key="diagnostics"
+            icon="info"
+            label={t('m_268f14bbfe11')}
+            disabled={pending}
+            onPress={() => router.push({ pathname: '/diagnostics', params: routeParams })}
+          />
+        </ConnectedGroup>
         <Sheet
           title={t('m_a4fe65264ef7')}
           visible={languagePicker}

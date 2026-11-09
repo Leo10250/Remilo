@@ -1,4 +1,8 @@
-import type { Occurrence, SessionActions } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type {
+  Occurrence,
+  SessionActionMember,
+  SessionActions,
+} from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
 type RingingOccurrence = Pick<
   Occurrence,
@@ -41,4 +45,15 @@ export function sameRingingScope(captured: SessionActions, current?: SessionActi
         member.expectedGeneration === current.members[index]?.expectedGeneration,
     )
   );
+}
+
+export function ringingMembersRemain(
+  captured: readonly SessionActionMember[],
+  current?: SessionActions | null,
+) {
+  if (!current || !captured.length) return false;
+  const live = new Map(
+    current.members.map((member) => [member.occurrenceId, member.expectedGeneration]),
+  );
+  return captured.every((member) => live.get(member.occurrenceId) === member.expectedGeneration);
 }

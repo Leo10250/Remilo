@@ -2263,6 +2263,11 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_widget_not_started">Not started yet</string>
   <string name="l10n_widget_today_reminders">Today\'s reminders</string>
   <string name="l10n_widget_empty">No reminders for today.</string>
+  <string name="l10n_ios_widget_open_refresh">Open Remilo to refresh this widget.</string>
+  <plurals name="l10n_ios_widget_reminder_count">
+    <item quantity="one">%1$s reminder</item>
+    <item quantity="other">%1$s reminders</item>
+  </plurals>
   <string name="l10n_widget_reminder_count">%1$s reminders</string>
   <string name="l10n_widget_agenda">View Agenda</string>
   <string name="l10n_widget_agenda_count">View Agenda (%1$s)</string>

@@ -263,6 +263,15 @@ controls. Launcher refresh can lag; command guards remain authoritative. No Reac
 JS timer, network or second progress store is involved; widget configuration/actions
 are local and excluded from portable backup.
 
+The iOS WidgetKit extension reads an atomic, protected App Group presentation
+snapshot from the app. Today and Routine Focus use independent configurations.
+Direct Done in supported widget sizes captures the occurrence, civil date,
+session revision and step identity. A Live Activity intent runs the existing
+`SetRoutineExercise` command in the app process and publishes the committed
+snapshot before returning. Equal captures share one operation receipt.
+WidgetKit can display an older timeline, so the native date and revision
+checks govern whether the action applies. [Apple interactive widgets](https://developer.apple.com/documentation/widgetkit/adding-interactivity-to-widgets-and-live-activities)
+
 ## Portable data and platform handoffs
 
 [BackupCodec](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/BackupCodec.kt)

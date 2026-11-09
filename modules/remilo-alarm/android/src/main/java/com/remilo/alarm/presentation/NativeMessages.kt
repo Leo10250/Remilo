@@ -2185,6 +2185,8 @@ object NativeMessages {
   fun widget_not_started(): L10n.Message = L10n.Message("widget_not_started")
   fun widget_today_reminders(): L10n.Message = L10n.Message("widget_today_reminders")
   fun widget_empty(): L10n.Message = L10n.Message("widget_empty")
+  fun ios_widget_open_refresh(): L10n.Message = L10n.Message("ios_widget_open_refresh")
+  fun ios_widget_reminder_count(count: Number): L10n.Message = L10n.Message("ios_widget_reminder_count", mapOf("count" to count.toString()))
   fun widget_reminder_count(count: Number): L10n.Message = L10n.Message("widget_reminder_count", mapOf("count" to count.toString()))
   fun widget_agenda(): L10n.Message = L10n.Message("widget_agenda")
   fun widget_agenda_count(count: Number): L10n.Message = L10n.Message("widget_agenda_count", mapOf("count" to count.toString()))

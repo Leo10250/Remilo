@@ -109,6 +109,7 @@ struct IOSOperationReceipt: Codable {
     var seriesSegmentID: String? = nil
     var seriesRevision: Int? = nil
     var importRegistrationIDs: Set<UUID>? = nil
+    var groupRegistrationIDs: [String: UUID]? = nil
     var result: Data
     var finalized: Bool
 }

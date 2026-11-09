@@ -9,7 +9,12 @@ extension RemiloIOSEngine {
     func mergeImport(_ additions: RemiloIOSPortableContent.Bundle, state: inout IOSDatabase, now: Int64) {
         state.lists.merge(additions.lists) { existing, _ in existing }
         state.series.merge(additions.series) { existing, _ in existing }
-        state.routines.merge(additions.routines) { existing, _ in existing }
+        let today = RemiloIOSRoutineAuthoring.localDate(iosDate(now), in: .current)
+        let importBoundary = try? RemiloIOSRoutineAuthoring.date(today, plusDays: -1)
+        for (id, var plan) in additions.routines where state.routines[id] == nil {
+            plan.historyThrough = importBoundary
+            state.routines[id] = plan
+        }
         state.routineSessions.merge(additions.routineSessions) { existing, _ in existing }
         state.purgedRoutines = (state.purgedRoutines ?? []).union(additions.purgedRoutines)
         var exclusions = state.portableExclusions ?? [:]

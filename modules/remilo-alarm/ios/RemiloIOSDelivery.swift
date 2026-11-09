@@ -188,11 +188,11 @@ enum RemiloIOSDelivery {
         let isRoutine = registration.isRoutine == true
         let titleCopy = registration.isTest == true ? IOSDeliveryCopy.testAlarm : isRoutine ? IOSDeliveryCopy.routine : IOSDeliveryCopy.reminder
         let title = LocalizedStringResource(stringLiteral: titleCopy.forLanguage(language))
-        let actionsCopy = isRoutine ? IOSDeliveryCopy.startRoutine : IOSDeliveryCopy.actions
+        let actionsCopy = isRoutine ? IOSDeliveryCopy.routineActions : IOSDeliveryCopy.actions
         let actions = registration.isTest == true ? nil : AlarmButton(
             text: LocalizedStringResource(stringLiteral: actionsCopy.forLanguage(language)),
             textColor: .white,
-            systemImageName: isRoutine ? "play.fill" : "ellipsis"
+            systemImageName: "ellipsis"
         )
         let behavior: AlarmPresentation.Alert.SecondaryButtonBehavior? = actions == nil ? nil : .custom
         let alert: AlarmPresentation.Alert
@@ -255,6 +255,7 @@ struct RemiloOpenAlarmIntent: LiveActivityIntent {
     @Parameter(title: "Reminder ID") var occurrenceID: String
     @Parameter(title: "Delivery generation") var generation: Int
     @Parameter(title: "Routine delivery") var isRoutine: Bool
+    @Parameter(title: "Alarm registration") var registrationID: String?
 
     init() {}
 
@@ -262,12 +263,19 @@ struct RemiloOpenAlarmIntent: LiveActivityIntent {
         occurrenceID = registration.occurrenceID
         generation = registration.generation
         isRoutine = registration.isRoutine == true
+        registrationID = registration.systemID.uuidString
     }
 
     @MainActor
     func perform() async throws -> some IntentResult {
         if isRoutine {
-            try await RemiloIOSDeliveryRequests.startRoutine(occurrenceID: occurrenceID, generation: generation)
+            let expected = registrationID.flatMap(UUID.init(uuidString:))
+            if registrationID == nil || expected != nil,
+               let capture = try? RemiloIOSEngine.shared.captureRoutineAlarm(
+                   occurrenceID: occurrenceID, generation: generation, registrationID: expected
+               ) {
+                RemiloIOSDeliveryRequests.enqueue(.routineAlarm(capture))
+            }
         } else {
             RemiloIOSDeliveryRequests.enqueue(.reminder(occurrenceID))
         }
@@ -285,6 +293,7 @@ enum RemiloIOSDeliveryRequests {
         case postpone(String, Int)
         case reminder(String)
         case routine(String, String)
+        case routineAlarm(IOSRoutineAlarmCapture)
 
         var bridge: [String: Any] {
             switch self {
@@ -294,6 +303,8 @@ enum RemiloIOSDeliveryRequests {
                 return ["kind": "ReminderActions", "occurrenceId": id]
             case let .routine(id, date):
                 return ["kind": "Routine", "routineId": id, "date": date]
+            case let .routineAlarm(capture):
+                return capture.bridge
             }
         }
     }

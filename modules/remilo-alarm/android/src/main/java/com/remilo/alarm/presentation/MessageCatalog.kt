@@ -2243,6 +2243,8 @@ object MessageCatalog {
     "widget_not_started" to Entry(R.string.l10n_widget_not_started, false, listOf(), "Not started yet", false),
     "widget_today_reminders" to Entry(R.string.l10n_widget_today_reminders, false, listOf(), "Today's reminders", false),
     "widget_empty" to Entry(R.string.l10n_widget_empty, false, listOf(), "No reminders for today.", false),
+    "ios_widget_open_refresh" to Entry(R.string.l10n_ios_widget_open_refresh, false, listOf(), "Open Remilo to refresh this widget.", false),
+    "ios_widget_reminder_count" to Entry(R.plurals.l10n_ios_widget_reminder_count, true, listOf("count"), "{count} reminders", false),
     "widget_reminder_count" to Entry(R.string.l10n_widget_reminder_count, false, listOf("count"), "{count} reminders", false),
     "widget_agenda" to Entry(R.string.l10n_widget_agenda, false, listOf(), "View Agenda", false),
     "widget_agenda_count" to Entry(R.string.l10n_widget_agenda_count, false, listOf("count"), "View Agenda ({count})", false),
@@ -2298,11 +2300,11 @@ object MessageCatalog {
     "routine_focus_announcement" to Entry(R.string.l10n_routine_focus_announcement, false, listOf("name", "position", "total"), "Current step: {name}. {position} of {total}.", false),
     "routine_day_names_more" to Entry(R.string.l10n_routine_day_names_more, false, listOf("names", "count"), "{names} · +{count} more", false),
     "routine_exercise_removed_named" to Entry(R.string.l10n_routine_exercise_removed_named, false, listOf("name"), "{name} removed", false),
-    "routine_undo_removed_named" to Entry(R.string.l10n_routine_undo_removed_named, false, listOf("name"), "Undo removal of {name}", false),
-    "routine_first_exercise_hint" to Entry(R.string.l10n_routine_first_exercise_hint, false, listOf(), "Choose a day to add your first exercise.", false),
-    "routine_change_summary" to Entry(R.string.l10n_routine_change_summary, false, listOf("count"), "{count} days changed", false)
+    "routine_undo_removed_named" to Entry(R.string.l10n_routine_undo_removed_named, false, listOf("name"), "Undo removal of {name}", false)
   )
   private fun chunk28(): Map<String, Entry> = mapOf(
+    "routine_first_exercise_hint" to Entry(R.string.l10n_routine_first_exercise_hint, false, listOf(), "Choose a day to add your first exercise.", false),
+    "routine_change_summary" to Entry(R.string.l10n_routine_change_summary, false, listOf("count"), "{count} days changed", false),
     "routine_change_details" to Entry(R.string.l10n_routine_change_details, false, listOf(), "Review changes", false),
     "routine_time_validation" to Entry(R.string.l10n_routine_time_validation, false, listOf(), "Choose a routine time.", false),
     "routine_repeat_empty" to Entry(R.string.l10n_routine_repeat_empty, false, listOf(), "Every week · Choose workout days", false),
@@ -2380,11 +2382,11 @@ object MessageCatalog {
     "widget_preview_next" to Entry(R.string.l10n_widget_preview_next, false, listOf(), "Next: Side plank", false),
     "widget_refresh" to Entry(R.string.l10n_widget_refresh, false, listOf(), "Refresh", false),
     "widget_preview_compact" to Entry(R.string.l10n_widget_preview_compact, false, listOf(), "Compact", false),
-    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false),
-    "publication_checked_confirmed" to Entry(R.string.l10n_publication_checked_confirmed, false, listOf(), "Publication checked. The original Google Calendar copy is confirmed.", false),
-    "publication_checked_cancelled" to Entry(R.string.l10n_publication_checked_cancelled, false, listOf(), "Publication was cancelled before it was sent. No Google event was created.", false)
+    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false)
   )
   private fun chunk29(): Map<String, Entry> = mapOf(
+    "publication_checked_confirmed" to Entry(R.string.l10n_publication_checked_confirmed, false, listOf(), "Publication checked. The original Google Calendar copy is confirmed.", false),
+    "publication_checked_cancelled" to Entry(R.string.l10n_publication_checked_cancelled, false, listOf(), "Publication was cancelled before it was sent. No Google event was created.", false),
     "publication_checked_inactive" to Entry(R.string.l10n_publication_checked_inactive, false, listOf(), "The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.", false),
     "publication_checked_unconfirmed" to Entry(R.string.l10n_publication_checked_unconfirmed, false, listOf(), "Google has not confirmed the original publication. Check again later or review the event in Google Calendar.", true),
     "publication_inactive_context" to Entry(R.string.l10n_publication_inactive_context, false, listOf(), "This publication is read-only. Checking its result does not restore a reminder or change Google Calendar.", false),
@@ -2462,11 +2464,11 @@ object MessageCatalog {
     "postpone_failed_schedule" to Entry(R.string.l10n_postpone_failed_schedule, false, listOf(), "Could not schedule Postpone. Review alert problems in Remilo.", false),
     "postpone_partial" to Entry(R.string.l10n_postpone_partial, false, listOf("scheduled", "count"), "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.", false),
     "postpone_selected" to Entry(R.string.l10n_postpone_selected, false, listOf(), "Selected", false),
-    "postpone_invalid_request" to Entry(R.string.l10n_postpone_invalid_request, false, listOf(), "This Postpone request is invalid. Close and choose the reminder again.", false),
-    "postpone_request_waiting" to Entry(R.string.l10n_postpone_request_waiting, false, listOf(), "Finish the current postponement before opening another.", false),
-    "postpone_load_failed" to Entry(R.string.l10n_postpone_load_failed, false, listOf(), "Could not load these reminders. Try again.", false)
+    "postpone_invalid_request" to Entry(R.string.l10n_postpone_invalid_request, false, listOf(), "This Postpone request is invalid. Close and choose the reminder again.", false)
   )
   private fun chunk30(): Map<String, Entry> = mapOf(
+    "postpone_request_waiting" to Entry(R.string.l10n_postpone_request_waiting, false, listOf(), "Finish the current postponement before opening another.", false),
+    "postpone_load_failed" to Entry(R.string.l10n_postpone_load_failed, false, listOf(), "Could not load these reminders. Try again.", false),
     "postpone_return_home" to Entry(R.string.l10n_postpone_return_home, false, listOf(), "Return to Home", false),
     "calendar_sync_up_to_date" to Entry(R.string.l10n_calendar_sync_up_to_date, false, listOf(), "Up to date", false),
     "calendar_sync_up_to_date_body" to Entry(R.string.l10n_calendar_sync_up_to_date_body, false, listOf(), "No pending changes at the last completed check.", false),

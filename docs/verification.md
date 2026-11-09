@@ -19,6 +19,7 @@ in the relevant task or [backlog](backlog.md).
 | `npm run verify:android` | Spotless, native unit tests, module/app lint and bundled release assembly |
 | `sh verification/ios-engine/run.sh` (macOS) | Swift storage, commands, simulated delivery, civil recurrence and dated routine progress |
 | `sh verification/ios-archive/run.sh` and `sh verification/ios-media/run.sh` (macOS, after `pod install`) | Portable archives and normalized routine photos |
+| `sh verification/ios-calendar/run.sh` (macOS) | Protected Google account state, authorization fences and event normalization fixtures |
 | `npm run verify:all` | Shared plus Android checks and assembly, with a private summary |
 | `npm run release:prepare` | Combined checks and existing-key signed assembly; no installation/publication |
 
@@ -177,11 +178,70 @@ xcodebuild -workspace ios/Remilo.xcworkspace -scheme Remilo \
 shared verification and export the JavaScript bundle. Xcode compiles and links
 the native iPhone/iPad app on macOS.
 
-The [iOS build workflow](../.github/workflows/build-ios.yml) runs Swift engine,
-archive and photo checks and builds an unsigned Release app on macOS. It checks for bundled JavaScript, sound,
-App Intents metadata and iPhone/iPad device families before packaging the IPA.
+The [iOS build workflow](../.github/workflows/build-ios.yml) runs the Swift
+engine, widget policy, Calendar, archive and photo checks on macOS. It compiles
+the optional WidgetKit extension separately. The standard unsigned Release
+package checks for bundled JavaScript, sound, App Intents metadata and
+iPhone/iPad device families.
 Device installation requires separate signing. The AlarmKit probe checks OS
 feasibility. Physical acceptance uses a signed build of Remilo itself.
+
+#### iPad or iPhone from Windows
+
+1. Open a successful iOS workflow run and download the **Remilo-unsigned**
+   artifact. Extract the ZIP and put **Remilo-unsigned.ipa** in Files on the
+   device.
+2. Start AltServer on Windows. Connect and trust the device by USB, or use
+   the same network after Wi-Fi sync is set up.
+3. On the device, open **AltStore → My Apps → +** and choose the IPA from
+   Files. Open Remilo after installation.
+4. In Remilo, use **Settings → Permissions & alarm check → Alarm** to allow
+   alarms, then tap **Test alarm**. Test a real reminder and inspect its state
+   after dismissing the alarm. Test the explicit Done and Postpone actions
+   separately.
+
+[AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
+
+#### iOS widget build
+
+The standard unsigned Remilo build omits the widget extension. To build the
+widget-enabled app, use one Apple development team authorized for both App IDs
+(`com.remilo.app` and `com.remilo.app.widgets`) and give both profiles the
+`group.com.remilo.app.widgets` App Group. Select that team and build the
+extension before the app with the same configuration and build directory.
+[Apple App Groups setup](https://developer.apple.com/documentation/xcode/configuring-app-groups)
+
+```sh
+REMILO_WIDGET_FIXTURE=1 sh verification/ios-engine/run.sh
+export REMILO_DEVELOPMENT_TEAM=YOUR_TEAM_ID
+build_dir="$PWD/verification/local/RemiloWidgets-build"
+xcodebuild -project ios/Remilo.xcodeproj -scheme RemiloWidgets \
+  -configuration Release -destination 'generic/platform=iOS' \
+  -derivedDataPath "$build_dir" DEVELOPMENT_TEAM="$REMILO_DEVELOPMENT_TEAM" build
+xcodebuild -workspace ios/Remilo.xcworkspace -scheme Remilo \
+  -configuration Release -destination 'generic/platform=iOS' \
+  -derivedDataPath "$build_dir" DEVELOPMENT_TEAM="$REMILO_DEVELOPMENT_TEAM" \
+  REMILO_WIDGETS_ENABLED=YES build
+app="$build_dir/Build/Products/Release-iphoneos/Remilo.app"
+codesign -d --entitlements :- "$app"
+codesign -d --entitlements :- "$app/PlugIns/RemiloWidgets.appex"
+```
+
+Confirm the App Group in both signatures. On a signed iPhone or iPad, open
+Remilo once, add both widgets from the Home Screen gallery, and exercise
+configuration, refresh after a reminder change, exact dated navigation, large
+text, both languages, and behavior across lock, midnight, and time-zone changes.
+In a medium or large Routine Focus widget, tap Done while Remilo is closed and
+confirm only the displayed step changes. Tap an older rendering after changing
+the dated session in Remilo and check that stale progress stays unchanged.
+
+For an AltStore Classic test, the input IPA needs the widget embedded and the
+App Group present in both original code signatures so AltStore can read and
+re-provision it. Keep the widget extension during sideloading. The extension
+uses an additional App ID, and App Group provisioning must succeed for the
+Apple account used to sign. The standard unsigned IPA covers app-only testing.
+[AltStore App IDs](https://faq.altstore.io/altstore-classic/app-ids)
+[AltStore provisioning implementation](https://github.com/altstoreio/AltStore/blob/develop/AltStore/Operations/FetchProvisioningProfilesOperation.swift)
 
 ## Private diagnostics and handoff
 

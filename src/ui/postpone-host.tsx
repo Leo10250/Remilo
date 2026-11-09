@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore, type RefObject } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
 import { AppState, View } from 'react-native';
 import { router, useIsFocused } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
@@ -13,15 +13,18 @@ import {
 } from '../domain/postpone-request';
 import { commandFeedback, recoveryPresentation } from '../domain/actions';
 import { deviceZone } from '../domain/time';
+import { ringingMembersRemain } from '../domain/ringing-session';
 import { errorText } from '../localization';
 import { useTranslation } from '../localization/react';
 import { ActionFeedback, BottomActionBar, Button, Copy, Sheet } from './components';
-import { engine, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable } from './native';
 import { PostponeChooser } from './postpone-chooser';
 import { useAppearanceConfirmation } from './confirmation';
 import { useAppearanceHold } from './theme';
 import { useTimeFormatting } from './time-display';
 import { notify } from './feedback';
+import type { RoutineAlarmActionRequest } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import { RoutineAlarmActions } from './routine-alarm-actions';
 
 let homeController: PostponeController | undefined;
 const drafts = new WeakMap<PostponeCapture, PostponeDraft>();
@@ -45,7 +48,13 @@ function getHomeController() {
         engine().getSettings(),
         request.kind === 'Group' ? engine().getCapabilities() : Promise.resolve(null),
       ]);
-      return { items, settings, sessionId: capabilities?.activeSessionId };
+      const sessionId =
+        iosReminders &&
+        request.kind === 'Group' &&
+        ringingMembersRemain(request.members, capabilities?.activeSessionActions)
+          ? request.expectedSessionId
+          : capabilities?.activeSessionId;
+      return { items, settings, sessionId };
     },
     send: (command) => engine().applyCommand(command),
     id: () => engine().createOperationId(),
@@ -54,7 +63,10 @@ function getHomeController() {
   }));
 }
 
-export function useNativeDeliveryRequests() {
+export function NativeDeliveryRequestHost() {
+  const [routineAlarm, setRoutineAlarm] = useState<RoutineAlarmActionRequest>();
+  const currentRoutineAlarm = useRef<RoutineAlarmActionRequest | undefined>(undefined);
+  const presentNext = useRef<(() => void) | undefined>(undefined);
   useEffect(() => {
     if (!nativeAvailable) return;
     const module = engine();
@@ -67,8 +79,24 @@ export function useNativeDeliveryRequests() {
     >[number];
     const pending: Request[] = [];
     const controller = getHomeController();
+    const openPostpone = (request: Extract<Request, { kind: 'Single' }>) => {
+      const parsed = parsePostponeRequest(JSON.stringify(request));
+      if (parsed.kind === 'valid') {
+        controller.open(parsed.request, 'home');
+        return true;
+      }
+      if (parsed.kind === 'invalid') controller.invalidRequest();
+      return false;
+    };
     const present = () => {
-      if (!mounted || controller.isGuarded() || AppState.currentState !== 'active') return;
+      if (
+        !mounted ||
+        currentRoutineAlarm.current ||
+        controller.isGuarded() ||
+        AppState.currentState !== 'active'
+      )
+        return;
+      if (pending[0]?.kind === 'RoutineAlarmActions' && controller.snapshot().request) return;
       const request = pending.shift();
       if (request?.kind === 'ReminderActions') {
         router.navigate({ pathname: '/reminder/[id]', params: { id: request.occurrenceId } });
@@ -77,6 +105,11 @@ export function useNativeDeliveryRequests() {
           pathname: '/routine-session',
           params: { id: request.routineId, date: request.date },
         });
+      } else if (request?.kind === 'RoutineAlarmActions') {
+        currentRoutineAlarm.current = request;
+        setRoutineAlarm(request);
+      } else if (request?.kind === 'Single' && openPostpone(request) && !controller.isGuarded()) {
+        router.navigate('/');
       }
     };
     const receive = () => {
@@ -91,15 +124,21 @@ export function useNativeDeliveryRequests() {
           if (!mounted) return;
           let opened = false;
           for (const request of requests) {
-            if (request.kind !== 'Single') {
-              pending.push(request);
+            if (
+              request.kind === 'RoutineAlarmActions' &&
+              (currentRoutineAlarm.current?.expectedSessionId === request.expectedSessionId ||
+                pending.some(
+                  (next) =>
+                    next.kind === 'RoutineAlarmActions' &&
+                    next.expectedSessionId === request.expectedSessionId,
+                ))
+            )
+              continue;
+            if (request.kind === 'Single' && !currentRoutineAlarm.current) {
+              opened = openPostpone(request) || opened;
               continue;
             }
-            const parsed = parsePostponeRequest(JSON.stringify(request));
-            if (parsed.kind === 'valid') {
-              controller.open(parsed.request, 'home');
-              opened = true;
-            } else if (parsed.kind === 'invalid') controller.invalidRequest();
+            pending.push(request);
           }
           if (opened && !controller.isGuarded()) router.navigate('/');
           else present();
@@ -118,14 +157,27 @@ export function useNativeDeliveryRequests() {
     const app = AppState.addEventListener('change', (state) => {
       if (state === 'active') receive();
     });
+    presentNext.current = present;
     receive();
     return () => {
       mounted = false;
+      presentNext.current = undefined;
       native.remove();
       app.remove();
       unsubscribe();
     };
   }, []);
+  return routineAlarm ? (
+    <RoutineAlarmActions
+      key={routineAlarm.expectedSessionId}
+      capture={routineAlarm}
+      onClose={() => {
+        currentRoutineAlarm.current = undefined;
+        setRoutineAlarm(undefined);
+        presentNext.current?.();
+      }}
+    />
+  ) : null;
 }
 
 export function usePostponeController() {

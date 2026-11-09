@@ -5,11 +5,48 @@
     "done": "m_62aa4b87cc52",
     "postpone": "m_63fb48d94634",
     "actions": "m_3ddd2c824c07",
+    "routineActions": "m_8c648567f73c",
     "dismiss": "routine_alarm_dismiss",
     "routine": "routine_title",
     "startRoutine": "routine_alarm_start",
     "testAlarm": "m_414c66fb67ec",
     "permission": "ios_alarm_permission_usage"
+  },
+  "iosWidget": {
+    "today": "widget_remilo_today",
+    "focus": "widget_focus",
+    "todayHint": "widget_today_hint",
+    "focusHint": "widget_routine_hint",
+    "chooseRoutine": "widget_choose_routine",
+    "chooseRoutineHint": "widget_choose_routine_help",
+    "unavailable": "widget_unavailable",
+    "notStarted": "widget_not_started",
+    "rest": "routine_rest",
+    "skipped": "routine_skipped",
+    "completed": "routine_completed",
+    "paused": "routine_paused",
+    "openToRefresh": "ios_widget_open_refresh",
+    "done": "widget_done",
+    "markDone": "routine_mark_named",
+    "empty": "widget_empty",
+    "agendaCount": "widget_agenda_count",
+    "reminderCount": "ios_widget_reminder_count",
+    "progress": "widget_done_count",
+    "next": "widget_next",
+    "overdue": "m_d660945bc299",
+    "example": "widget_example_label",
+    "exampleRoutine": "widget_example_routine_title",
+    "exampleReminder": "widget_example_reminder_title",
+    "exampleStep": "widget_example_intervals",
+    "exampleTarget": "widget_example_intervals_target",
+    "sets": "exercise_count_sets",
+    "reps": "exercise_count_reps",
+    "repsRange": "exercise_range_reps",
+    "seconds": "exercise_seconds_short",
+    "minutes": "exercise_minutes_short",
+    "hours": "exercise_hours_short",
+    "perSet": "exercise_per_set",
+    "eachSide": "exercise_each_side_summary"
   },
   "messages": {
     "ui_your_routines": {
@@ -15210,6 +15247,27 @@
       "zh-Hans": "今天没有提醒。",
       "args": {},
       "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "ios_widget_open_refresh": {
+      "en": "Open Remilo to refresh this widget.",
+      "zh-Hans": "打开 Remilo 刷新小组件。",
+      "args": {},
+      "context": "iOS Home Screen widget has no current protected app snapshot. Tapping opens the app so it can publish today's data.",
+      "calendarStatus": false
+    },
+    "ios_widget_reminder_count": {
+      "en": {
+        "one": "{count} reminder",
+        "other": "{count} reminders"
+      },
+      "zh-Hans": {
+        "other": "{count} 项提醒"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "iOS Today widget compact summary. Total across today's and overdue unfinished reminders.",
       "calendarStatus": false
     },
     "widget_reminder_count": {

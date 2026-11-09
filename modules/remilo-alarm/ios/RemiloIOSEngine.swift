@@ -214,6 +214,7 @@ final class RemiloIOSEngine {
         var registrationID: UUID?
         var seriesSegmentID: String?
         var imported: RemiloIOSPortableContent.Bundle?
+        var groupRegistrationIDs: [String: UUID]?
         switch kind {
         case "Create", "TestAlarm":
             let id = UUID().uuidString
@@ -271,11 +272,21 @@ final class RemiloIOSEngine {
         case "StartRoutineDelivery", "DismissRoutineDelivery":
             applied = try mutateRoutineDelivery(kind, input: input, state: &state, now: now)
             occurrenceID = input.values["occurrenceId"] as? String
+        case "DismissRoutineAlarm", "SnoozeRoutineAlarm":
+            let record = try mutateRoutineAlarm(kind, input: input, state: &state, now: now)
+            occurrenceID = record.id
+            registrationID = record.registration?.systemID
+            applied = result(for: record, state: state, now: now, scheduling: registrationID != nil)
         case "CreateList", "RenameList", "RemoveList":
             applied = try mutateList(kind, input: input, state: &state, now: now)
         case "Settings":
             try mutateSettings(input, state: &state)
             applied = ["status": "Applied"]
+        case "DoneAll", "StopAll", "SnoozeAll", "PostponeAll":
+            let observed = try await RemiloIOSDelivery.observedStates()
+            let group = try mutateDeliveryGroup(kind, input: input, state: &state, now: now, observed: observed)
+            applied = group.result
+            groupRegistrationIDs = group.registrations
         case "Import":
             guard let loadImport, let copies = input.values["copyIds"] as? [String] else {
                 throw IOSInputFailure("UNSUPPORTED")
@@ -303,19 +314,21 @@ final class RemiloIOSEngine {
                 return included ? record.registration?.systemID : nil
             })
         }
+        let needsDeliveryResult = registrationID != nil || seriesSegmentID != nil
+            || importRegistrationIDs != nil || groupRegistrationIDs != nil
         state.receipts[operationID] = IOSOperationReceipt(
             fingerprint: fingerprint, occurrenceID: occurrenceID, registrationID: registrationID,
             seriesSegmentID: seriesSegmentID, seriesRevision: seriesSegmentID.flatMap { state.series[$0]?.revision },
-            importRegistrationIDs: importRegistrationIDs, result: try JSONSerialization.data(withJSONObject: applied),
-            finalized: registrationID == nil && seriesSegmentID == nil && importRegistrationIDs == nil
+            importRegistrationIDs: importRegistrationIDs, groupRegistrationIDs: groupRegistrationIDs,
+            result: try JSONSerialization.data(withJSONObject: applied), finalized: !needsDeliveryResult
         )
         try commit(state)
         try await drain()
-        if registrationID != nil || seriesSegmentID != nil || importRegistrationIDs != nil { return try finalize(operationID) }
+        if needsDeliveryResult { return try finalize(operationID) }
         return applied
     }
 
-    private func mutate(
+    func mutate(
         _ record: inout IOSReminder, kind: String, input: IOSInput, state: inout IOSDatabase, now: Int64
     ) throws -> Bool {
         let deliveryAction = ["CompleteDelivery", "Stop", "DismissDelivery", "Snooze", "Postpone"].contains(kind)
@@ -444,6 +457,18 @@ final class RemiloIOSEngine {
     @discardableResult
     private func drain(maximumOperations: Int? = nil) async throws -> Int {
         var state = try read()
+        let now = iosMillis(Date())
+        let notifications = state.reminders.values.compactMap { record -> RemiloIOSCoverage.Candidate? in
+            guard record.active, let delivery = record.registration, delivery.mode == "Notification",
+                  delivery.targetMs > now else { return nil }
+            let source = record.independent == true ? nil : record.routineID ?? record.segmentID
+            return RemiloIOSCoverage.Candidate(
+                occurrenceID: record.id, targetMs: delivery.targetMs, rollingSourceID: source,
+                retain: record.deliveryState == "Scheduled"
+            )
+        }
+        // Leave headroom below the OS's observed pending-request capacity.
+        let admitted = RemiloIOSCoverage.admitted(notifications, limit: 48, now: now)
         state.outbox.sort { lhs, rhs in
             if lhs.action != rhs.action { return lhs.action == .cancel }
             return (lhs.registration.targetMs, lhs.registration.systemID.uuidString)
@@ -476,6 +501,10 @@ final class RemiloIOSEngine {
                   record.registration?.systemID == registration.systemID else {
                 state.outbox.remove(at: index)
                 try commit(state, notify: false)
+                continue
+            }
+            if registration.mode == "Notification", registration.targetMs > now, !admitted.contains(id) {
+                index += 1
                 continue
             }
             var removeWork = true
@@ -550,6 +579,9 @@ final class RemiloIOSEngine {
                 guard let registration = $0.registration, ids.contains(registration.systemID) else { return false }
                 return !["Scheduled", "Alerting", "Notified"].contains($0.deliveryState)
             }.count
+        }
+        if !receipt.finalized, let ids = receipt.groupRegistrationIDs {
+            output = finalizeDeliveryGroup(output, registrations: ids, state: state)
         }
         receipt.result = try JSONSerialization.data(withJSONObject: output)
         receipt.finalized = true

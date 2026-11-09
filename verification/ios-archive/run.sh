@@ -12,6 +12,7 @@ xcrun swiftc -swift-version 5 -module-name ZIPFoundation -emit-module -emit-libr
 xcrun swiftc -swift-version 5 -I "$build_dir" -L "$build_dir" -lZIPFoundation -o "$build_dir/checks" \
   modules/remilo-alarm/ios/RemiloIOSPortableArchive.swift \
   modules/remilo-alarm/ios/RemiloIOSPortableContent.swift \
+  modules/remilo-alarm/ios/RemiloIOSLegacyBackup.swift \
   modules/remilo-alarm/ios/RemiloIOSPortableRoutines.swift \
   modules/remilo-alarm/ios/RemiloIOSStore.swift \
   modules/remilo-alarm/ios/RemiloIOSProjection.swift \
@@ -20,5 +21,5 @@ xcrun swiftc -swift-version 5 -I "$build_dir" -L "$build_dir" -lZIPFoundation -o
   modules/remilo-alarm/ios/RemiloIOSTime.swift \
   modules/remilo-alarm/ios/RemiloIOSRoutine.swift \
   modules/remilo-alarm/ios/RemiloIOSRoutineAuthoring.swift \
-  verification/ios-archive/ArchiveChecks.swift
+  verification/ios-archive/ArchiveChecks.swift verification/ios-archive/LegacyChecks.swift
 DYLD_LIBRARY_PATH="$build_dir" "$build_dir/checks"

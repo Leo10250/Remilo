@@ -373,6 +373,16 @@ export type RoutineCommand =
       stepId?: string;
       completed?: boolean;
     };
+export type RoutineAlarmActionRequest = {
+  kind: 'RoutineAlarmActions';
+  occurrenceId: string;
+  routineId: string;
+  date: string;
+  expectedGeneration: number;
+  expectedSessionId: string;
+  expectedSnoozeMinutes: number;
+  closesAtMs: number;
+};
 export type RoutineAlarmCommand = {
   occurrenceId: string;
   date: string;

@@ -8,6 +8,6 @@
   },
   "apple": {
     "modules": ["RemiloAlarmModule"],
-    "appDelegateSubscribers": ["RemiloIOSAppDelegateSubscriber"]
+    "appDelegateSubscribers": ["RemiloIOSAppDelegateSubscriber", "RemiloIOSWidgetAppDelegateSubscriber"]
   }
 }

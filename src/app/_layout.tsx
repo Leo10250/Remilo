@@ -12,7 +12,7 @@ import PresentationPreview from '../ui/presentation-preview';
 import { TimeDisplayProvider } from '../ui/time-display';
 import { ConfirmationHost } from '../ui/confirmation-dialog';
 import { iosReminders } from '../ui/native';
-import { useNativeDeliveryRequests } from '../ui/postpone-host';
+import { NativeDeliveryRequestHost } from '../ui/postpone-host';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -58,7 +58,6 @@ export default function RootLayout() {
 function Navigation() {
   'use no memo';
   useLocale();
-  useNativeDeliveryRequests();
   const colors = useTheme();
   return (
     <>
@@ -76,9 +75,9 @@ function Navigation() {
           <Stack.Screen name="calendar-publish" />
           <Stack.Screen name="calendar-review" />
           <Stack.Screen name="calendar-reviews" />
-          <Stack.Screen name="diagnostics" />
         </Stack.Protected>
       </Stack>
+      <NativeDeliveryRequestHost />
     </>
   );
 }

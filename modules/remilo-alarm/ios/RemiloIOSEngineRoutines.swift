@@ -220,7 +220,8 @@ extension RemiloIOSEngine {
         let zone = TimeZone.current
         let today = RemiloIOSRoutineAuthoring.localDate(iosDate(now), in: zone)
         var changed = false
-        for plan in state.routines.values.sorted(by: { $0.id < $1.id }) {
+        var historyBudget = 256
+        for var plan in state.routines.values.sorted(by: { $0.id < $1.id }) {
             let existing = state.routineSessions.values.filter { $0.routineID == plan.id }
             var dates = Set(existing.filter { $0.date >= today && !$0.ended }.map(\.date))
             if plan.state == "Active" {
@@ -235,8 +236,20 @@ extension RemiloIOSEngine {
                     if future == 2 { break }
                 }
             }
-            for var session in existing where !session.ended && session.date < today {
+            for var session in existing where !session.ended
+                && (session.date < today || (session.started == true && session.date != today)) {
+                if session.started == false,
+                   let record = state.reminders[session.occurrenceID],
+                   try routineWasUnavailable(plan, date: session.date, record: record, zone: zone) {
+                    var cancelled = record
+                    replaceRegistration(&cancelled, target: nil, state: &state, now: now)
+                    state.routineSessions.removeValue(forKey: session.occurrenceID)
+                    state.reminders.removeValue(forKey: session.occurrenceID)
+                    changed = true
+                    continue
+                }
                 session.ended = true
+                session.started = true
                 session.revision += 1
                 state.routineSessions[session.occurrenceID] = session
                 if var record = state.reminders[session.occurrenceID], record.active {
@@ -249,8 +262,72 @@ extension RemiloIOSEngine {
             for date in dates.sorted() {
                 if try reconcileRoutineDate(date, plan: plan, state: &state, now: now, zone: zone) { changed = true }
             }
+            let cursor = plan.historyThrough
+            try catchUpRoutineHistory(&plan, before: today, zone: zone, state: &state, budget: &historyBudget)
+            if plan.historyThrough != cursor {
+                state.routines[plan.id] = plan
+                changed = true
+            }
         }
         return changed
+    }
+
+    private func catchUpRoutineHistory(
+        _ plan: inout IOSRoutinePlan, before today: String, zone: TimeZone, state: inout IOSDatabase, budget: inout Int
+    ) throws {
+        guard plan.startsOn < today else { return }
+        var date = try plan.historyThrough.map { try RemiloIOSRoutineAuthoring.date($0, plusDays: 1) } ?? plan.startsOn
+        date = max(date, plan.startsOn)
+        while date < today && budget > 0 {
+            budget -= 1
+            plan.historyThrough = date
+            let id = RemiloIOSSeries.occurrenceID(plan.id, date)
+            if state.routineSessions[id] == nil, !routineDateExcluded(date, plan: plan),
+               let version = plan.version(on: date) {
+                let steps = try RemiloIOSRoutineAuthoring.day(date, in: version).exercises
+                if !steps.isEmpty {
+                    var record = try routineReminder(id: id, planID: plan.id, date: date, version: version, zone: zone)
+                    if try !routineWasUnavailable(plan, date: date, record: record, zone: zone) {
+                        record.deliveryState = version.mode == "None" ? "NoAlert" : "Expired"
+                        state.reminders[id] = record
+                        state.routineSessions[id] = IOSRoutineSession(
+                            routineID: plan.id, occurrenceID: id, date: date, versionRevision: version.revision,
+                            steps: steps, ended: true, started: true
+                        )
+                    }
+                }
+            }
+            date = try RemiloIOSRoutineAuthoring.date(date, plusDays: 1)
+        }
+    }
+
+    private func routineWasUnavailable(
+        _ plan: IOSRoutinePlan, date: String, record: IOSReminder, zone: TimeZone
+    ) throws -> Bool {
+        if plan.pauses.contains(where: { $0.contains(record.alarmAtMs) }) { return true }
+        let start = try RemiloIOSRoutineAuthoring.time(date, minutes: 0, in: zone)
+        let end = try RemiloIOSRoutineAuthoring.closeAt(date, in: zone)
+        return plan.trashIntervals.contains { interval in
+            interval.fromMs <= start && (interval.untilMs.map { $0 >= end } ?? true)
+        }
+    }
+
+    private func routineDateExcluded(_ date: String, plan: IOSRoutinePlan) -> Bool {
+        plan.portableExclusions?.values.contains(where: { $0.nominalSlot.hasPrefix(date + "T") }) == true
+    }
+
+    private func routineReminder(
+        id: String, planID: String, date: String, version: IOSRoutineVersion, zone: TimeZone
+    ) throws -> IOSReminder {
+        let start = try RemiloIOSRoutineAuthoring.time(date, minutes: 0, in: zone)
+        let close = try RemiloIOSRoutineAuthoring.closeAt(date, in: zone)
+        let prompt = try RemiloIOSRoutineAuthoring.time(date, minutes: version.minutes, in: zone)
+        return IOSReminder(
+            id: id, title: version.title, notes: version.notes, listID: version.listID, eventStartMs: start,
+            eventEndMs: close, dueAtMs: prompt, alarmAtMs: prompt, zoneID: zone.identifier, mode: version.mode,
+            allDay: true, dueLinked: false, alarmLinked: false, sound: version.sound, routineID: planID, nominalSlot: date,
+            vibration: version.vibration
+        )
     }
 
     private func reconcileRoutineDate(
@@ -258,39 +335,38 @@ extension RemiloIOSEngine {
     ) throws -> Bool {
         let id = RemiloIOSSeries.occurrenceID(plan.id, date)
         let existing = state.routineSessions[id]
-        if existing == nil,
-           plan.portableExclusions?.values.contains(where: { $0.nominalSlot.hasPrefix(date + "T") }) == true {
-            return false
-        }
+        let isToday = date == RemiloIOSRoutineAuthoring.localDate(iosDate(now), in: zone)
+        if existing == nil && routineDateExcluded(date, plan: plan) { return false }
         guard existing?.ended != true, let version = plan.version(on: date) else { return false }
         let steps = try RemiloIOSRoutineAuthoring.day(date, in: version).exercises
         let suppressed = plan.state != "Active" || steps.isEmpty
-        let start = try RemiloIOSRoutineAuthoring.time(date, minutes: 0, in: zone)
-        let close = try RemiloIOSRoutineAuthoring.closeAt(date, in: zone)
-        let prompt = try RemiloIOSRoutineAuthoring.time(date, minutes: version.minutes, in: zone)
         if existing == nil {
             guard !suppressed else { return false }
-            var record = IOSReminder(
-                id: id, title: version.title, notes: version.notes, listID: version.listID, eventStartMs: start,
-                eventEndMs: close, dueAtMs: prompt, alarmAtMs: prompt, zoneID: zone.identifier, mode: version.mode,
-                allDay: true, dueLinked: false, alarmLinked: false, sound: version.sound,
-                routineID: plan.id, nominalSlot: date
-            )
-            if prompt > now { replaceRegistration(&record, target: prompt, state: &state, now: now) }
+            var record = try routineReminder(id: id, planID: plan.id, date: date, version: version, zone: zone)
+            if record.alarmAtMs > now {
+                replaceRegistration(&record, target: record.alarmAtMs, state: &state, now: now)
+            }
             state.reminders[id] = record
             state.routineSessions[id] = IOSRoutineSession(
-                routineID: plan.id, occurrenceID: id, date: date, versionRevision: version.revision, steps: steps
+                routineID: plan.id, occurrenceID: id, date: date, versionRevision: version.revision, steps: steps,
+                started: isToday
             )
             return true
         }
         guard var session = existing, var record = state.reminders[id] else { return false }
+        let start = try RemiloIOSRoutineAuthoring.time(date, minutes: 0, in: zone)
+        let close = try RemiloIOSRoutineAuthoring.closeAt(date, in: zone)
+        let prompt = try RemiloIOSRoutineAuthoring.time(date, minutes: version.minutes, in: zone)
         let edited = version.revision != session.versionRevision
         let moved = record.zoneID != zone.identifier
         let needsRegistration = record.active && record.mode != "None" && record.registration == nil
             && record.deliveryState == "Pending" && (record.nextAlertMs ?? prompt) > now
-        if !edited && !moved && !needsRegistration && (suppressed ? record.deliveryState == "Paused" : record.deliveryState != "Paused") {
+        let justStarted = isToday && !suppressed && session.started == false
+        if !edited && !moved && !needsRegistration && !justStarted
+            && (suppressed ? record.deliveryState == "Paused" : record.deliveryState != "Paused") {
             return false
         }
+        if justStarted { session.started = true }
         let wasPaused = record.deliveryState == "Paused"
         let oldMode = record.mode
         let oldPrompt = record.alarmAtMs
@@ -309,6 +385,7 @@ extension RemiloIOSEngine {
             record.notes = version.notes
             record.listID = version.listID
             record.sound = version.sound
+            record.vibration = version.vibration
             record.mode = version.mode
         }
         record.eventStartMs = start

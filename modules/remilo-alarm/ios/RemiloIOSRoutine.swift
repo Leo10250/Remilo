@@ -19,6 +19,7 @@ struct IOSRoutinePlan: Codable {
     var trashIntervals: [IOSRoutinePause] = []
     var trashedAtMs: Int64?
     var preTrashState: String?
+    var historyThrough: String?
     // Preserve Android's wire lineage without feeding it to iOS series delivery.
     var portableSegments: [IOSSeriesSegment]?
     var portableVersionRevision: Int?
@@ -66,6 +67,7 @@ struct IOSRoutineSession: Codable {
     var ended = false
     var done: Set<String> = []
     var changes: [IOSRoutineChange] = []
+    var started: Bool? = nil
 
     func bridge(record: IOSReminder, plan: IOSRoutinePlan, now: Int64, zone: TimeZone) -> [String: Any]? {
         guard let version = plan.versions.first(where: { $0.revision == versionRevision }),

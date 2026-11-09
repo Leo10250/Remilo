@@ -66,6 +66,7 @@ struct ArchiveChecks {
         precondition(leftovers.isEmpty)
         try verifyV9Content()
         try verifyRoutineV9(image: image)
+        try verifyLegacy()
         print("iOS portable archive checks passed")
     }
 

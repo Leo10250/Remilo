@@ -2237,6 +2237,10 @@
   <string name="l10n_widget_not_started">尚未开始</string>
   <string name="l10n_widget_today_reminders">今天的提醒</string>
   <string name="l10n_widget_empty">今天没有提醒。</string>
+  <string name="l10n_ios_widget_open_refresh">打开 Remilo 刷新小组件。</string>
+  <plurals name="l10n_ios_widget_reminder_count">
+    <item quantity="other">%1$s 项提醒</item>
+  </plurals>
   <string name="l10n_widget_reminder_count">%1$s 项提醒</string>
   <string name="l10n_widget_agenda">查看日程</string>
   <string name="l10n_widget_agenda_count">查看日程（%1$s）</string>

@@ -20,7 +20,7 @@ import {
   SettingRow,
   Status,
 } from '../ui/components';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../ui/native';
 import { usePageHandoff } from '../ui/handoff';
 import { space } from '../ui/tokens';
 
@@ -29,6 +29,7 @@ const stateNames: Record<string, string> = live(() => ({
   Stopped: t('m_f36a51f323bf'),
   TimedOut: t('m_ba0c9f7afee3'),
   Interrupted: t('m_a48a8f6a3fa3'),
+  DeliveryUnconfirmed: t('m_3229d16ca643'),
   Missed: t('m_14d64a9f7100'),
   Blocked: t('m_4bf68dddf882'),
   Failed: t('m_b486522010d5'),
@@ -43,6 +44,7 @@ const stateNames: Record<string, string> = live(() => ({
   Skipped: t('m_12698ce1ea5c'),
   Paused: t('m_e159b06187d3'),
   Replaced: t('m_27386b1c065f'),
+  Expired: t('m_7cdc804e6996'),
 }));
 type Feedback = { message: string; tone: 'success' | 'danger' | 'muted' };
 export default function Diagnostics() {
@@ -125,6 +127,13 @@ export default function Diagnostics() {
       ]
     : [];
   const capability = (key: string, limited = false) => {
+    if (
+      iosReminders &&
+      ((key === 'exactAlarms' && caps?.alarmAuthorization === 'notDetermined') ||
+        (key === 'notifications' && caps?.notificationAuthorization === 'notDetermined'))
+    ) {
+      return <Status label={t('ios_permission_not_requested')} tone="muted" />;
+    }
     const value = caps?.[key];
     if (typeof value !== 'boolean') return <Status label={t('m_ca1844969742')} tone="muted" />;
     if (value) return <Status label={t('m_1bb201d18835')} tone="success" />;
@@ -236,7 +245,7 @@ export default function Diagnostics() {
                 )}
                 <ReadOnlyRow
                   key="exact"
-                  label={t('m_142c2ae8d0bb')}
+                  label={t(iosReminders ? 'm_f3b679573579' : 'm_142c2ae8d0bb')}
                   value={capability('exactAlarms')}
                 />
                 <ReadOnlyRow
@@ -244,32 +253,40 @@ export default function Diagnostics() {
                   label={t('m_31d7ae351725')}
                   value={capability('notifications')}
                 />
-                <ReadOnlyRow
-                  key="alarm-channel"
-                  label={t('m_aa3c57bf2387')}
-                  value={capability('channelEnabled')}
-                />
-                <ReadOnlyRow
-                  key="notification-channel"
-                  label={t('m_c2728d07deea')}
-                  value={capability('notificationChannelEnabled')}
-                />
-                <ReadOnlyRow
-                  key="full-screen"
-                  label={t('m_66b41af0ba4b')}
-                  value={capability('fullScreen', true)}
-                />
-                <ReadOnlyRow
-                  key="unlocked"
-                  label={t('m_de5a4fcc9fd1')}
-                  value={
-                    caps.unlocked === true
-                      ? t('m_531c7b28abf2')
-                      : caps.unlocked === false
-                        ? t('m_a424e33d9093')
-                        : t('m_ca1844969742')
-                  }
-                />
+                {!iosReminders && (
+                  <ReadOnlyRow
+                    key="alarm-channel"
+                    label={t('m_aa3c57bf2387')}
+                    value={capability('channelEnabled')}
+                  />
+                )}
+                {!iosReminders && (
+                  <ReadOnlyRow
+                    key="notification-channel"
+                    label={t('m_c2728d07deea')}
+                    value={capability('notificationChannelEnabled')}
+                  />
+                )}
+                {!iosReminders && (
+                  <ReadOnlyRow
+                    key="full-screen"
+                    label={t('m_66b41af0ba4b')}
+                    value={capability('fullScreen', true)}
+                  />
+                )}
+                {!iosReminders && (
+                  <ReadOnlyRow
+                    key="unlocked"
+                    label={t('m_de5a4fcc9fd1')}
+                    value={
+                      caps.unlocked === true
+                        ? t('m_531c7b28abf2')
+                        : caps.unlocked === false
+                          ? t('m_a424e33d9093')
+                          : t('m_ca1844969742')
+                    }
+                  />
+                )}
               </ConnectedGroup>
             )}
             <ConnectedGroup title={t('m_fc7383580184')}>
@@ -278,11 +295,13 @@ export default function Diagnostics() {
                 label={t('m_e3ba2b050694')}
                 value={String(report.data.contentSchema ?? '—')}
               />
-              <ReadOnlyRow
-                key="operational"
-                label={t('m_1fb397289be3')}
-                value={String(report.data.operationalSchema ?? '—')}
-              />
+              {!iosReminders && (
+                <ReadOnlyRow
+                  key="operational"
+                  label={t('m_1fb397289be3')}
+                  value={String(report.data.operationalSchema ?? '—')}
+                />
+              )}
             </ConnectedGroup>
           </>
         )}

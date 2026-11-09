@@ -3,6 +3,13 @@ import Foundation
 enum RemiloIOSProjection {
     static let epoch: ClosedRange<Int64> = 0...253_402_300_799_999
 
+    static func diagnostics(_ state: IOSDatabase, now: Int64) -> [String: Any] {
+        var counts: [String: Int] = [:]
+        for record in state.reminders.values { counts[record.deliveryState, default: 0] += 1 }
+        return ["observedAtMs": now, "contentSchema": state.schemaVersion,
+                "states": counts, "pendingOperations": state.outbox.count]
+    }
+
     static func draft(
         _ input: IOSInput, id: String, previous: IOSReminder?, state: IOSDatabase, now: Int64
     ) throws -> IOSReminder {

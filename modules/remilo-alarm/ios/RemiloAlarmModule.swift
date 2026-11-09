@@ -43,7 +43,23 @@ public final class RemiloAlarmModule: Module {
       resolve(promise) { try RemiloIOSEngine.shared.settings() }
     }
     AsyncFunction("getCapabilities") { (promise: Promise) in
-      resolve(promise) { await RemiloIOSDelivery.capabilities() }
+      resolve(promise) {
+        var capabilities = await RemiloIOSDelivery.capabilities()
+        if capabilities["unlocked"] as? Bool == true, capabilities["exactAlarms"] as? Bool == true,
+           let group = try? await RemiloIOSEngine.shared.activeDeliveryGroup() {
+          capabilities["activeSessionId"] = group["sessionId"]
+          capabilities["activeSessionActions"] = group
+        }
+        return capabilities
+      }
+    }
+    AsyncFunction("getDiagnostics") { (promise: Promise) in
+      resolve(promise) {
+        let state = try RemiloIOSEngine.shared.read()
+        var report = RemiloIOSProjection.diagnostics(state, now: iosMillis(Date()))
+        report["capabilities"] = await RemiloIOSDelivery.capabilities()
+        return report
+      }
     }
     AsyncFunction("queryReminders") { (filter: [String: Any], cursor: String?, promise: Promise) in
       resolve(promise) { try RemiloIOSEngine.shared.query(filter, cursor: cursor) }

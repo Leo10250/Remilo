@@ -11,6 +11,7 @@ struct IOSDeliveryCopy {
     static let done = IOSDeliveryCopy(en: "Mark as done", zhHans: "标记为完成")
     static let postpone = IOSDeliveryCopy(en: "Postpone", zhHans: "推迟提醒")
     static let actions = IOSDeliveryCopy(en: "Reminder actions", zhHans: "提醒操作")
+    static let routineActions = IOSDeliveryCopy(en: "Alarm options", zhHans: "闹钟选项")
     static let dismiss = IOSDeliveryCopy(en: "Dismiss alarm", zhHans: "关闭闹钟")
     static let routine = IOSDeliveryCopy(en: "Routine", zhHans: "日常计划")
     static let startRoutine = IOSDeliveryCopy(en: "Start routine", zhHans: "开始计划")

@@ -35,27 +35,28 @@ enum RemiloIOSPortableContent {
 
     static func decode(_ metadata: Data, availableImageIDs: Set<String> = []) throws -> Bundle {
         guard metadata.count <= 10_000_000,
-              let root = try JSONSerialization.jsonObject(with: metadata) as? [String: Any],
-              root["format"] as? String == "Remilo",
-              try IOSInput(values: root).integer("version", range: 9...9) == 9 else {
+              let source = try JSONSerialization.jsonObject(with: metadata) as? [String: Any],
+              source["format"] as? String == "Remilo" else {
             throw IOSInputFailure("UNSUPPORTED")
         }
-        try allow(root, keys: [
+        let version = try IOSInput(values: source).integer("version", range: 1...9)
+        try allow(source, keys: [
             "format", "version", "exportedAtMs", "lists", "series", "reminders", "history",
             "purgedOccurrences", "routines", "routineVersions", "routineSessions", "images", "purgedRoutines"
         ])
+        let root = version == 9 ? source : try RemiloIOSLegacyBackup.upgrade(source, version: Int(version))
         _ = try IOSInput(values: root).integer("exportedAtMs", range: clockRange)
         let imageIDs = try verifiedImageIDs(root)
         guard imageIDs == availableImageIDs else { throw IOSInputFailure("INVALID_INPUT", field: "images") }
 
         var bundle = Bundle()
-        var names = Set<String>()
+        var names = Set<Data>()
         for values in try objects(root, key: "lists") {
             try allow(values, keys: ["id", "name", "createdAtMs"])
             let input = IOSInput(values: values)
             let id = try nonblank(input, "id")
             let name = try nonblank(input, "name", maximum: 60)
-            guard bundle.lists[id] == nil, names.insert(name).inserted else { throw input.invalid("lists") }
+            guard bundle.lists[id] == nil, names.insert(Data(name.utf8)).inserted else { throw input.invalid("lists") }
             bundle.lists[id] = IOSList(id: id, name: name, createdAtMs: try input.integer("createdAtMs", range: clockRange))
         }
         for values in try objects(root, key: "series", optional: true) {

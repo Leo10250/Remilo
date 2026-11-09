@@ -2255,6 +2255,11 @@ export const catalogs = {
     "widget_not_started": "Not started yet",
     "widget_today_reminders": "Today's reminders",
     "widget_empty": "No reminders for today.",
+    "ios_widget_open_refresh": "Open Remilo to refresh this widget.",
+    "ios_widget_reminder_count": {
+      "one": "{count} reminder",
+      "other": "{count} reminders"
+    },
     "widget_reminder_count": "{count} reminders",
     "widget_agenda": "View Agenda",
     "widget_agenda_count": "View Agenda ({count})",
@@ -4743,6 +4748,10 @@ export const catalogs = {
     "widget_not_started": "尚未开始",
     "widget_today_reminders": "今天的提醒",
     "widget_empty": "今天没有提醒。",
+    "ios_widget_open_refresh": "打开 Remilo 刷新小组件。",
+    "ios_widget_reminder_count": {
+      "other": "{count} 项提醒"
+    },
     "widget_reminder_count": "{count} 项提醒",
     "widget_agenda": "查看日程",
     "widget_agenda_count": "查看日程（{count}）",
@@ -7184,6 +7193,8 @@ export interface MessageArguments {
   widget_not_started: Record<string, never>;
   widget_today_reminders: Record<string, never>;
   widget_empty: Record<string, never>;
+  ios_widget_open_refresh: Record<string, never>;
+  ios_widget_reminder_count: { count: number };
   widget_reminder_count: { count: number };
   widget_agenda: Record<string, never>;
   widget_agenda_count: { count: number };

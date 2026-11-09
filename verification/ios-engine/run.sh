@@ -4,17 +4,31 @@ set -eu
 cd "$(dirname "$0")/../.."
 build_dir="$(mktemp -d)"
 trap 'rm -f "$build_dir/checks" "$build_dir/recurrence-checks" "$build_dir/coverage-checks"; rmdir "$build_dir"' EXIT
+set --
+if [ "${REMILO_WIDGET_FIXTURE:-0}" = 1 ]; then
+  set -- -D REMILO_WIDGET_FIXTURE \
+    modules/remilo-alarm/ios/WidgetShared/RemiloWidgetSnapshot.swift \
+    modules/remilo-alarm/ios/WidgetShared/RemiloWidgetCopy.generated.swift \
+    modules/remilo-alarm/ios/WidgetShared/RemiloWidgetDoneAction.swift \
+    modules/remilo-alarm/ios/RemiloIOSWidgetProjection.swift \
+    verification/ios-engine/WidgetProjectionChecks.swift
+fi
 xcrun swiftc -swift-version 5 -o "$build_dir/checks" \
+  "$@" \
   modules/remilo-alarm/ios/RemiloIOSStore.swift \
   modules/remilo-alarm/ios/RemiloIOSProjection.swift \
+  modules/remilo-alarm/ios/RemiloIOSCoverage.swift \
+  modules/remilo-alarm/ios/RemiloIOSDeliveryGroup.swift \
   modules/remilo-alarm/ios/RemiloIOSEngine.swift \
   modules/remilo-alarm/ios/RemiloIOSEngineSeries.swift \
   modules/remilo-alarm/ios/RemiloIOSEngineRoutines.swift \
   modules/remilo-alarm/ios/RemiloIOSEnginePortable.swift \
   modules/remilo-alarm/ios/RemiloIOSPortableContent.swift \
+  modules/remilo-alarm/ios/RemiloIOSLegacyBackup.swift \
   modules/remilo-alarm/ios/RemiloIOSPortableRoutines.swift \
   modules/remilo-alarm/ios/RemiloIOSRecurrence.swift \
   modules/remilo-alarm/ios/RemiloIOSRoutine.swift \
+  modules/remilo-alarm/ios/RemiloIOSRoutineAlarm.swift \
   modules/remilo-alarm/ios/RemiloIOSRoutineAuthoring.swift \
   modules/remilo-alarm/ios/RemiloIOSSeries.swift \
   modules/remilo-alarm/ios/RemiloIOSTime.swift \

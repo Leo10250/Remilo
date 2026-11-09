@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionActions } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { resolveRingingMembers, sameRingingScope } from './ringing-session';
+import { resolveRingingMembers, ringingMembersRemain, sameRingingScope } from './ringing-session';
 
 const scope: SessionActions = {
   sessionId: 'session',
@@ -48,6 +48,20 @@ describe('displayed ringing scope', () => {
         ...scope,
         members: [scope.members[0], { ...scope.members[1], expectedGeneration: 4 }],
       }),
+    ).toBe(false);
+  });
+
+  it('preserves an already opened iOS group chooser when another alarm arrives', () => {
+    const late = { occurrenceId: 'late', expectedGeneration: 1 };
+    expect(
+      ringingMembersRemain(scope.members, {
+        ...scope,
+        sessionId: 'larger-scope',
+        members: [...scope.members, late],
+      }),
+    ).toBe(true);
+    expect(
+      ringingMembersRemain(scope.members, { ...scope, members: [scope.members[0], late] }),
     ).toBe(false);
   });
 });

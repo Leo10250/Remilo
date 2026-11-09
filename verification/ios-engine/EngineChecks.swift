@@ -32,6 +32,7 @@ extension Notification.Name {
 @MainActor
 enum RemiloIOSDelivery {
     static var registrations: [UUID: IOSReminderRegistration] = [:]
+    static var alerting = Set<UUID>()
     static var attempts: [UUID] = []
     static var onRegister: ((IOSReminderRegistration) throws -> Void)?
     static var denied = false
@@ -48,7 +49,7 @@ enum RemiloIOSDelivery {
     }
 
     static func observedStates() async throws -> [UUID: String] {
-        registrations.mapValues { _ in "Scheduled" }
+        registrations.mapValues { alerting.contains($0.systemID) ? "Alerting" : "Scheduled" }
     }
 }
 
@@ -91,7 +92,13 @@ struct EngineChecks {
         try await expiredAcceptedRegistrationIsNotReplayed()
         try await alarmDismissalLeavesReminderOpen()
         try await routineEditsRetainProgressAndTrashRestoresFamily()
+        try routineAlarmActionsKeepDatedProgress()
+        try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
+        try await groupCompletionDoesNotTouchLaterArrivals()
         try await preparedImportCommitsOnceAndReplaysAfterStageRemoval()
+        #if REMILO_WIDGET_FIXTURE
+        try await WidgetProjectionChecks.run()
+        #endif
         print("Remilo iOS native engine checks passed")
     }
 
@@ -345,6 +352,79 @@ struct EngineChecks {
         precondition(restored?["completedCount"] as? Int == 1)
     }
 
+    private static func routineAlarmActionsKeepDatedProgress() throws {
+        let date = "2026-07-20"
+        let zone = TimeZone(secondsFromGMT: 0)!
+        let start = try RemiloIOSRoutineAuthoring.time(date, minutes: 0, in: zone)
+        let close = try RemiloIOSRoutineAuthoring.closeAt(date, in: zone)
+        let prompt = close - 30 * 60_000
+        let now = close - 20 * 60_000
+        let registration = IOSReminderRegistration(
+            occurrenceID: "day", generation: 3, systemID: UUID(), targetMs: prompt,
+            mode: "Alarm", language: "en", isRoutine: true
+        )
+        var reminder = IOSReminder(
+            id: "day", title: "Routine", notes: "", listID: nil, eventStartMs: start, eventEndMs: close,
+            dueAtMs: prompt, alarmAtMs: prompt, zoneID: zone.identifier, mode: "Alarm", allDay: true,
+            dueLinked: false, alarmLinked: false, routineID: "plan", nominalSlot: date
+        )
+        reminder.generation = 3
+        reminder.registration = registration
+        reminder.deliveryState = "Alerting"
+        reminder.nextAlertMs = prompt
+        let steps = ["first", "second"].map {
+            IOSRoutineStep(id: $0, name: $0, target: "", notes: "", illustration: nil,
+                           customImageId: nil, sharedStepId: nil, exerciseTarget: nil)
+        }
+        var seed = IOSDatabase()
+        seed.reminders[reminder.id] = reminder
+        seed.routines["plan"] = IOSRoutinePlan(id: "plan", startsOn: date, versions: [])
+        seed.routineSessions[reminder.id] = IOSRoutineSession(
+            routineID: "plan", occurrenceID: reminder.id, date: date, versionRevision: 1, steps: steps,
+            revision: 2, done: ["first"], started: true
+        )
+        let engine = RemiloIOSEngine(loadDatabase: { seed })
+        let capture = try engine.captureRoutineAlarm(occurrenceID: reminder.id, generation: 3,
+                                                     registrationID: registration.systemID, now: now, zone: zone)
+        precondition(capture.date == date && capture.snoozeMinutes == 10 && capture.closesAtMs == close)
+        let input: [String: Any] = [
+            "occurrenceId": reminder.id, "expectedGeneration": 3, "expectedSessionId": capture.registrationID.uuidString,
+            "date": date, "expectedSnoozeMinutes": 10,
+        ]
+        func rejects(_ code: String, at time: Int64? = nil, changed: [String: Any] = [:]) throws {
+            var state = seed
+            do {
+                _ = try engine.mutateRoutineAlarm("SnoozeRoutineAlarm", input: IOSInput(values: input.merging(changed) { _, new in new }),
+                                                  state: &state, now: time ?? now, zone: zone)
+                preconditionFailure("Expected \(code)")
+            } catch let failure as IOSInputFailure {
+                precondition(failure.code == code)
+                precondition(state.reminders[reminder.id]?.registration?.systemID == capture.registrationID)
+                precondition(state.outbox.isEmpty)
+            }
+        }
+        try rejects("STALE_GENERATION", changed: ["expectedSessionId": UUID().uuidString])
+        try rejects("STALE_GENERATION", changed: ["expectedGeneration": 2])
+        try rejects("STALE_SNOOZE", changed: ["expectedSnoozeMinutes": 15])
+        try rejects("DAY_ENDED", changed: ["date": "2026-07-19"])
+        try rejects("DAY_ENDED", at: close - 10 * 60_000)
+        try rejects("DAY_ENDED", at: close)
+
+        var snoozed = seed
+        let moved = try engine.mutateRoutineAlarm("SnoozeRoutineAlarm", input: IOSInput(values: input),
+                                                  state: &snoozed, now: now, zone: zone)
+        precondition(moved.nextAlertMs == now + 10 * 60_000 && moved.generation == 4 && moved.alarmAtMs == prompt)
+        precondition(snoozed.outbox.map(\.action) == [.cancel, .register])
+        precondition(snoozed.routineSessions[reminder.id]?.done == Set(["first"]) && !moved.completed)
+
+        var dismissed = seed
+        let stopped = try engine.mutateRoutineAlarm("DismissRoutineAlarm", input: IOSInput(values: input),
+                                                    state: &dismissed, now: now, zone: zone)
+        precondition(stopped.registration == nil && stopped.deliveryState == "Stopped" && !stopped.completed)
+        precondition(dismissed.routineSessions[reminder.id]?.done == Set(["first"]))
+        precondition(dismissed.routineSessions[reminder.id]?.revision == 2)
+    }
+
     private static func preparedImportCommitsOnceAndReplaysAfterStageRemoval() async throws {
         let store = FixtureStore()
         defer { store.remove() }
@@ -369,5 +449,88 @@ struct EngineChecks {
         precondition(recovered["added"] as? Int == 1)
         let persisted = try store.load()
         precondition(persisted.reminders.count == 1)
+    }
+
+    private static func pausedRoutineDoesNotCreateHistoryForUnopenedDates() async throws {
+        let store = FixtureStore()
+        defer { store.remove() }
+        let engine = store.engine()
+        let today = RemiloIOSRoutineAuthoring.localDate(Date(), in: .current)
+        let days: [[String: Any]] = (0..<7).map {
+            ["type": "Exercises", "exercises": [["id": "step-\($0)", "name": "Read", "target": "", "notes": ""]]]
+        }
+        let created = try await engine.apply([
+            "kind": "CreateRoutine", "operationId": "daily-routine", "title": "Read", "mode": "None",
+            "startsOn": today, "minutes": 720, "days": days,
+        ])
+        let id = (created["routine"] as! [String: Any])["id"] as! String
+        var unattended = try store.load()
+        let missedDay = try RemiloIOSRoutineAuthoring.date(today, plusDays: 3)
+        let followingWeek = try RemiloIOSRoutineAuthoring.time(
+            RemiloIOSRoutineAuthoring.date(today, plusDays: 6), minutes: 720, in: .current
+        )
+        _ = try engine.replenishRoutines(state: &unattended, now: followingWeek)
+        let missedID = RemiloIOSSeries.occurrenceID(id, missedDay)
+        precondition(unattended.routineSessions[missedID]?.ended == true)
+        precondition(unattended.reminders[missedID]?.registration == nil)
+
+        _ = try await engine.apply([
+            "kind": "PauseRoutine", "operationId": "pause-daily-routine", "routineId": id, "expectedRevision": 1,
+        ])
+        var state = try store.load()
+        let skipped = try RemiloIOSRoutineAuthoring.date(today, plusDays: 1)
+        let now = try RemiloIOSRoutineAuthoring.time(
+            RemiloIOSRoutineAuthoring.date(today, plusDays: 2), minutes: 720, in: .current
+        )
+        _ = try engine.replenishRoutines(state: &state, now: now)
+        precondition(state.routineSessions[RemiloIOSSeries.occurrenceID(id, skipped)] == nil)
+        precondition(state.routineSessions[RemiloIOSSeries.occurrenceID(id, today)]?.ended == true)
+    }
+
+    private static func groupCompletionDoesNotTouchLaterArrivals() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.alerting = []
+        }
+        let past = iosMillis(Date()) - 1_000
+        var state = IOSDatabase()
+        for id in ["one", "two", "later"] {
+            var record = IOSReminder(
+                id: id, title: id, notes: "", listID: nil, eventStartMs: past,
+                eventEndMs: past + 60_000, dueAtMs: past, alarmAtMs: past,
+                zoneID: "UTC", mode: "Alarm", allDay: false, dueLinked: true, alarmLinked: true
+            )
+            record.generation = 1
+            record.deliveryState = "Alerting"
+            let registration = IOSReminderRegistration(
+                occurrenceID: id, generation: 1, systemID: UUID(), targetMs: past, mode: "Alarm", language: "en"
+            )
+            record.registration = registration
+            RemiloIOSDelivery.registrations[registration.systemID] = registration
+            if id != "later" { RemiloIOSDelivery.alerting.insert(registration.systemID) }
+            state.reminders[id] = record
+        }
+        try store.save(state)
+        let engine = store.engine()
+        let captured = try await engine.activeDeliveryGroup()!
+        RemiloIOSDelivery.alerting.insert(state.reminders["later"]!.registration!.systemID)
+        let second = state.reminders["two"]!.registration!.systemID
+        let command: [String: Any] = [
+            "kind": "DoneAll", "operationId": "complete-captured",
+            "expectedSessionId": captured["sessionId"]!, "members": captured["members"]!,
+        ]
+        RemiloIOSDelivery.alerting.remove(second)
+        let stale = try await engine.apply(command)
+        precondition(stale["errorCode"] as? String == "STALE_MEMBERS")
+        let afterStale = try store.load()
+        precondition(afterStale.reminders["one"]?.completed == false)
+        RemiloIOSDelivery.alerting.insert(second)
+        let result = try await engine.apply(command)
+        let updated = try store.load()
+        precondition(result["count"] as? Int == 2)
+        precondition(updated.reminders["one"]?.completed == true && updated.reminders["two"]?.completed == true)
+        precondition(updated.reminders["later"]?.completed == false && RemiloIOSDelivery.registrations.count == 1)
     }
 }
