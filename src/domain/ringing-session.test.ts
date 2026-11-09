@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionActions } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { resolveRingingMembers, ringingMembersRemain, sameRingingScope } from './ringing-session';
+import {
+  resolveAlarmReminderAction,
+  resolveRingingMembers,
+  ringingMembersRemain,
+  sameRingingScope,
+} from './ringing-session';
 
 const scope: SessionActions = {
   sessionId: 'session',
@@ -22,6 +27,22 @@ const rows = scope.members.map((member) => ({
 }));
 
 describe('displayed ringing scope', () => {
+  it('accepts an exact AlarmKit handoff before Alerting and rejects stale or terminal details', () => {
+    const capture = scope.members[0];
+    const scheduled = { ...rows[0], deliveryState: 'Scheduled' };
+    expect(resolveAlarmReminderAction(capture, scheduled)).toBe(scheduled);
+    for (const current of [
+      null,
+      rows[1],
+      { ...scheduled, generation: capture.expectedGeneration + 1 },
+      { ...scheduled, mode: 'Notification' as const },
+      { ...scheduled, completed: true },
+      { ...scheduled, deleted: true },
+      { ...scheduled, skipped: true },
+    ])
+      expect(resolveAlarmReminderAction(capture, current)).toBeNull();
+  });
+
   it('resolves only the complete and ordered set of current ringing reminders', () => {
     expect(resolveRingingMembers(scope, rows)).toEqual(rows);
     expect(resolveRingingMembers(scope, [rows[0], null])).toBeNull();

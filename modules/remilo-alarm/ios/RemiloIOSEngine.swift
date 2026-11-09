@@ -188,6 +188,16 @@ final class RemiloIOSEngine {
         }
     }
 
+    func canOpenAlarmReminderActions(occurrenceID: String, generation: Int, registrationID: UUID?,
+                                     now: Int64 = iosMillis(Date())) throws -> Bool {
+        guard let record = try read().reminders[occurrenceID], record.active, !record.isTest,
+              record.routineID == nil, record.mode == "Alarm", record.generation == generation,
+              let registration = record.registration, registration.mode == "Alarm",
+              registrationID == nil || registration.systemID == registrationID else { return false }
+        // The intent can arrive before reconciliation projects the AlarmKit alerting state.
+        return registration.targetMs <= now
+    }
+
     func performRoutineDelivery(kind: String, occurrenceID: String, generation: Int) async throws -> [String: Any] {
         guard ["StartRoutineDelivery", "DismissRoutineDelivery"].contains(kind) else { throw IOSInputFailure("UNSUPPORTED") }
         let result = try await apply([

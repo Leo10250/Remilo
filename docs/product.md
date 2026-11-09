@@ -88,9 +88,10 @@ and OEM restrictions can prevent delivery.
 On iOS, Alarm uses AlarmKit and Notification uses local notifications, with
 separate authorization. Both show generic text on system surfaces. iOS owns the
 alarm presentation and audio lifetime. AlarmKit Dismiss leaves the reminder open.
-Reminder actions opens the captured reminder with Done and Postpone. The
-notification exposes Mark as done and Postpone directly. The app validates the
-delivery generation before applying a selected postpone time. A routine alarm can
+Reminder actions opens Done and Postpone for the captured alarm while that
+delivery generation is current. The notification exposes Mark as done and
+Postpone directly. The app validates the captured generation before applying
+these actions. A routine alarm can
 open the dated session or be dismissed while leaving all steps unchanged. iOS
 registers a bounded window of upcoming repeats and replenishes it when Remilo can
 reconcile.

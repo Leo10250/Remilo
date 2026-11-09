@@ -275,16 +275,18 @@ struct RemiloOpenAlarmIntent: LiveActivityIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        let expected = registrationID.flatMap(UUID.init(uuidString:))
+        guard registrationID == nil || expected != nil else { return .result() }
         if isRoutine {
-            let expected = registrationID.flatMap(UUID.init(uuidString:))
-            if registrationID == nil || expected != nil,
-               let capture = try? RemiloIOSEngine.shared.captureRoutineAlarm(
-                   occurrenceID: occurrenceID, generation: generation, registrationID: expected
-               ) {
+            if let capture = try? RemiloIOSEngine.shared.captureRoutineAlarm(
+                occurrenceID: occurrenceID, generation: generation, registrationID: expected
+            ) {
                 RemiloIOSDeliveryRequests.enqueue(.routineAlarm(capture))
             }
-        } else {
-            RemiloIOSDeliveryRequests.enqueue(.reminder(occurrenceID))
+        } else if (try? RemiloIOSEngine.shared.canOpenAlarmReminderActions(
+            occurrenceID: occurrenceID, generation: generation, registrationID: expected
+        )) == true {
+            RemiloIOSDeliveryRequests.enqueue(.alarmReminder(occurrenceID, generation))
         }
         return .result()
     }
@@ -299,6 +301,7 @@ enum RemiloIOSDeliveryRequests {
     enum Request: Equatable {
         case postpone(String, Int)
         case reminder(String)
+        case alarmReminder(String, Int)
         case routine(String, String)
         case routineAlarm(IOSRoutineAlarmCapture)
 
@@ -308,6 +311,8 @@ enum RemiloIOSDeliveryRequests {
                 return ["kind": "Single", "occurrenceId": id, "expectedGeneration": generation]
             case let .reminder(id):
                 return ["kind": "ReminderActions", "occurrenceId": id]
+            case let .alarmReminder(id, generation):
+                return ["kind": "AlarmReminderActions", "occurrenceId": id, "expectedGeneration": generation]
             case let .routine(id, date):
                 return ["kind": "Routine", "routineId": id, "date": date]
             case let .routineAlarm(capture):
@@ -336,7 +341,15 @@ enum RemiloIOSDeliveryRequests {
     static func takeAll() -> [[String: Any]] {
         let requests = waiting
         waiting.removeAll()
-        return requests.map(\.bridge)
+        return requests.compactMap { request in
+            if case let .alarmReminder(id, generation) = request,
+               (try? RemiloIOSEngine.shared.canOpenAlarmReminderActions(
+                   occurrenceID: id, generation: generation, registrationID: nil
+               )) != true {
+                return nil
+            }
+            return request.bridge
+        }
     }
 }
 

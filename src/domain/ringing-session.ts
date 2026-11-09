@@ -9,6 +9,22 @@ type RingingOccurrence = Pick<
   'id' | 'generation' | 'deliveryState' | 'mode' | 'completed' | 'deleted' | 'skipped' | 'routine'
 >;
 
+export function resolveAlarmReminderAction<T extends Omit<RingingOccurrence, 'deliveryState'>>(
+  scope: SessionActionMember,
+  item: T | null | undefined,
+) {
+  // AlarmKit can open Details before its Alerting projection reaches the app.
+  return item?.id === scope.occurrenceId &&
+    item.generation === scope.expectedGeneration &&
+    item.mode === 'Alarm' &&
+    !item.completed &&
+    !item.deleted &&
+    !item.skipped &&
+    !item.routine
+    ? item
+    : null;
+}
+
 /** Missing, stale and ineligible members invalidate the whole displayed scope. */
 export function resolveRingingMembers<T extends RingingOccurrence>(
   scope: SessionActions,

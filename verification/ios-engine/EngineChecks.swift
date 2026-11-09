@@ -173,6 +173,22 @@ struct EngineChecks {
         try await engine.reconcile()
         let recovered = try engine.occurrence(id)
         precondition(recovered?["deliveryState"] as? String == "Scheduled")
+        let originalRegistration = try store.load().reminders[id]!.registration!
+        let currentHandoff = try engine.canOpenAlarmReminderActions(
+            occurrenceID: id, generation: oldGeneration, registrationID: originalRegistration.systemID,
+            now: originalRegistration.targetMs
+        )
+        let legacyHandoff = try engine.canOpenAlarmReminderActions(
+            occurrenceID: id, generation: oldGeneration, registrationID: nil, now: originalRegistration.targetMs
+        )
+        let prematureHandoff = try engine.canOpenAlarmReminderActions(
+            occurrenceID: id, generation: oldGeneration, registrationID: originalRegistration.systemID,
+            now: originalRegistration.targetMs - 1
+        )
+        let mismatchedHandoff = try engine.canOpenAlarmReminderActions(
+            occurrenceID: id, generation: oldGeneration, registrationID: UUID(), now: originalRegistration.targetMs
+        )
+        precondition(currentHandoff && legacyHandoff && !prematureHandoff && !mismatchedHandoff)
         let exact = try await engine.apply(command)
         precondition(exact["status"] as? String == "Blocked")
 
@@ -185,6 +201,15 @@ struct EngineChecks {
         precondition(moved["overdueAtMs"] as? Int64 == recovered?["overdueAtMs"] as? Int64)
         precondition(moved["nextAlertMs"] as? Int64 != recovered?["nextAlertMs"] as? Int64)
         precondition(RemiloIOSDelivery.registrations.count == 1)
+        let replacement = try store.load().reminders[id]!.registration!
+        let staleHandoff = try engine.canOpenAlarmReminderActions(
+            occurrenceID: id, generation: oldGeneration, registrationID: nil, now: replacement.targetMs
+        )
+        let replacementHandoff = try engine.canOpenAlarmReminderActions(
+            occurrenceID: id, generation: replacement.generation, registrationID: replacement.systemID,
+            now: replacement.targetMs
+        )
+        precondition(!staleHandoff && replacementHandoff)
         try await engine.performSystemAction(kind: "CompleteDelivery", occurrenceID: id, generation: oldGeneration)
         let afterStaleAction = try engine.occurrence(id)
         precondition(afterStaleAction?["completed"] as? Bool == false)

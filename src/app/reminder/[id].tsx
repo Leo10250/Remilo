@@ -34,6 +34,7 @@ import {
   stateTone,
 } from '../../domain/presentation';
 import { canPostponeReminder } from '../../domain/postpone';
+import { resolveAlarmReminderAction } from '../../domain/ringing-session';
 import { PostponeHost, usePostponeController } from '../../ui/postpone-host';
 import {
   ActionFeedback,
@@ -97,8 +98,20 @@ export default function ReminderDetails() {
   'use no memo';
   const t = useTranslation();
   const { formatDate, formatTime, scheduleDateTime } = useTimeFormatting();
-  const params = useLocalSearchParams<OriginParams & { id: string; action?: string }>(),
-    { id, action } = params;
+  const params = useLocalSearchParams<
+    OriginParams & { id: string; action?: string; alarmGeneration?: string }
+  >();
+  const { id, alarmGeneration } = params;
+  const alarmScoped = iosReminders && alarmGeneration !== undefined;
+  const generation =
+    typeof alarmGeneration === 'string' && /^\d+$/.test(alarmGeneration)
+      ? Number(alarmGeneration)
+      : NaN;
+  const alarmScope =
+    alarmScoped && Number.isSafeInteger(generation)
+      ? { occurrenceId: id, expectedGeneration: generation }
+      : null;
+  const action = alarmScoped ? undefined : params.action;
   const origin = useMemo(
     () =>
       creationOrigin({
@@ -125,20 +138,28 @@ export default function ReminderDetails() {
     ],
   );
   const query = useQuery({
-    queryKey: ['occurrence', id],
+    queryKey: alarmScoped
+      ? ['occurrence', id, 'alarm', alarmScope?.expectedGeneration]
+      : ['occurrence', id],
     queryFn: () => engine().getOccurrence(id),
-    enabled: nativeAvailable,
+    enabled: nativeAvailable && (!alarmScoped || !!alarmScope),
+    refetchOnMount: alarmScoped ? 'always' : undefined,
+    networkMode: alarmScoped ? 'always' : undefined,
   });
+  const item = alarmScoped
+    ? alarmScope && query.isFetchedAfterMount && !query.error
+      ? resolveAlarmReminderAction(alarmScope, query.data)
+      : null
+    : query.data;
   useEffect(() => {
-    const routine = query.data?.routine;
-    if (routine && !query.data?.deleted)
+    const routine = item?.routine;
+    if (routine && !item.deleted)
       router.replace({
         pathname: '/routine-session',
         params: { id: routine.routineId, date: routine.date },
       });
-  }, [query.data]);
-  const item = query.data,
-    settings = useSettings(),
+  }, [item]);
+  const settings = useSettings(),
     command = useCommand(),
     colors = useTheme();
   const { available: canPublish, publications: calendar } = useCalendarPublications();
@@ -272,6 +293,7 @@ export default function ReminderDetails() {
   const content = async (kind: ContentCommand['kind'], captured = item) => {
     if (
       !captured ||
+      (alarmScoped && !item) ||
       command.isPending ||
       postponeAction.controller.isGuarded() ||
       pendingOperation.current
@@ -304,17 +326,19 @@ export default function ReminderDetails() {
     alarmAtMs?: number,
   ) => {
     const captured = item;
+    const completesAlarm = !!alarmScope && kind === 'CompleteDelivery';
     if (
       !captured ||
       command.isPending ||
       postponeAction.controller.isGuarded() ||
       pendingOperation.current ||
-      !canAdjustAlert(captured) ||
+      (!completesAlarm && !canAdjustAlert(captured)) ||
       (kind === 'Stop' && captured.deliveryState !== 'Alerting')
     )
       return;
     if (
       kind === 'CompleteDelivery' &&
+      !completesAlarm &&
       captured.deliveryState !== 'Alerting' &&
       !(captured.mode === 'Notification' && captured.deliveryState === 'Notified')
     )
@@ -323,7 +347,7 @@ export default function ReminderDetails() {
       command: {
         kind,
         occurrenceId: captured.id,
-        expectedGeneration: captured.generation,
+        expectedGeneration: alarmScope?.expectedGeneration ?? captured.generation,
         alarmAtMs,
         ...(kind === 'Snooze' ? { expectedSnoozeMinutes: captured.quickSnoozeMinutes } : {}),
         operationId: engine().createOperationId(),
@@ -350,7 +374,11 @@ export default function ReminderDetails() {
     )
       return;
     postponeAction.controller.open(
-      { kind: 'Single', occurrenceId: item.id, expectedGeneration: item.generation },
+      {
+        kind: 'Single',
+        occurrenceId: item.id,
+        expectedGeneration: alarmScope?.expectedGeneration ?? item.generation,
+      },
       'details',
     );
   };
@@ -386,6 +414,8 @@ export default function ReminderDetails() {
   const explanation = item ? deliveryExplanation(item) : null;
   const overdueStatus = item ? overduePresentation(item) : null;
   const recovery = recoveryPresentation(recoveryKind);
+  const occurrenceLoading =
+    query.isLoading || (alarmScoped && !query.isFetchedAfterMount && query.isFetching);
   return (
     <Page
       title={t('m_31757bbfa17e')}
@@ -433,7 +463,7 @@ export default function ReminderDetails() {
                       label={t('m_62aa4b87cc52')}
                       disabled={command.isPending || uncertain}
                       onPress={() =>
-                        void (item.deliveryState === 'Alerting'
+                        void (alarmScope || item.deliveryState === 'Alerting'
                           ? delivery('CompleteDelivery')
                           : content('Done'))
                       }
@@ -479,10 +509,16 @@ export default function ReminderDetails() {
       }
     >
       <QueryState
-        loading={query.isLoading && nativeAvailable && !item}
+        loading={occurrenceLoading && nativeAvailable && !item}
         error={!item ? query.error : undefined}
-        empty={!item && !query.isLoading && !uncertain && !command.isPending}
-        emptyMessage={t('m_7f00c5392527')}
+        empty={
+          !item &&
+          !occurrenceLoading &&
+          !uncertain &&
+          !command.isPending &&
+          !(alarmScoped && feedback?.tone === 'success')
+        }
+        emptyMessage={t(alarmScoped ? 'm_a7d0dbaafd75' : 'm_7f00c5392527')}
         onRetry={nativeAvailable ? () => void query.refetch() : undefined}
       />
       {feedback && !uncertain && <ActionFeedback {...feedback} />}
@@ -734,7 +770,7 @@ export default function ReminderDetails() {
       )}
       <Sheet
         title={t('m_3ddd2c824c07')}
-        visible={menu}
+        visible={menu && (!alarmScoped || !!item)}
         onClose={() => setMenu(false)}
         returnFocusRef={menuTrigger}
         returnFocusWhen={() => focused && !!item}
@@ -886,7 +922,7 @@ export default function ReminderDetails() {
         )}
       </Sheet>
       <TrashConfirmation
-        item={trashItem}
+        item={alarmScoped && !item ? null : trashItem}
         onCancel={() => setTrashItem(null)}
         onConfirm={() => {
           if (
@@ -902,7 +938,7 @@ export default function ReminderDetails() {
         }}
       />
       <PurgeConfirmation
-        items={purgeItem ? [purgeItem] : []}
+        items={purgeItem && (!alarmScoped || item) ? [purgeItem] : []}
         onCancel={() => setPurgeItem(null)}
         onConfirm={() => {
           if (

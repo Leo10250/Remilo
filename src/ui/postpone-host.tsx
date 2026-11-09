@@ -100,6 +100,14 @@ export function NativeDeliveryRequestHost() {
       const request = pending.shift();
       if (request?.kind === 'ReminderActions') {
         router.navigate({ pathname: '/reminder/[id]', params: { id: request.occurrenceId } });
+      } else if (iosReminders && request?.kind === 'AlarmReminderActions') {
+        router.push({
+          pathname: '/reminder/[id]',
+          params: {
+            id: request.occurrenceId,
+            alarmGeneration: String(request.expectedGeneration),
+          },
+        });
       } else if (request?.kind === 'Routine') {
         router.navigate({
           pathname: '/routine-session',

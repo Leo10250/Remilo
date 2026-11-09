@@ -89,6 +89,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
     (
       | { kind: 'Single'; occurrenceId: string; expectedGeneration: number }
       | { kind: 'ReminderActions'; occurrenceId: string }
+      | { kind: 'AlarmReminderActions'; occurrenceId: string; expectedGeneration: number }
       | { kind: 'Routine'; routineId: string; date: string }
       | import('./RemiloAlarm.types').RoutineAlarmActionRequest
     )[]
