@@ -67,7 +67,7 @@ enum RemiloIOSDelivery {
             content.title = titleCopy.forLanguage(registration.language)
             if registration.isRoutine != true {
                 content.sound = registration.sound == "remilo"
-                    ? .named(UNNotificationSoundName(rawValue: RemiloIOSSound.resourceName))
+                    ? UNNotificationSound(named: UNNotificationSoundName(rawValue: RemiloIOSSound.resourceName))
                     : .default
             }
             content.categoryIdentifier = RemiloNotificationActions.categoryID(registration.language, routine: registration.isRoutine == true)
