@@ -6,6 +6,8 @@ enum ManagedSetupChecks {
     private typealias Failure = RemiloIOSGoogleCalendarFailure
     private typealias HTTP = RemiloIOSGoogleCalendarHTTP
     private typealias Runtime = RemiloIOSGoogleCalendarRuntime
+    private typealias LinkRuntime = RemiloIOSGoogleCalendarManualLinkRuntime
+    private typealias Publication = RemiloIOSGoogleCalendarPublicationRuntime
 
     static func run(configuration: RemiloIOSGoogleCalendarConfiguration, readOnly: RemiloIOSGoogleCalendarAccess,
                     creation: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date) async throws {
@@ -96,27 +98,61 @@ enum ManagedSetupChecks {
             let scheduler = Runtime.ImportJournal.Scheduler(receipt: { await local.receipts[$0.id] }, create: { command, permit in
                 try await local.create(command, permit: permit)
             })
-            func runtime() -> Runtime {
-                Runtime(connection: connection, canUseForeground: { true },
-                        importJournal: .init(directory: directory, now: { Int64((now().timeIntervalSince1970 * 1_000).rounded()) }),
-                        scheduler: scheduler, managedSetupJournal: .init(directory: directory), managedImportSound: { .system }) { _, _ in
+            let nowMs: @Sendable () -> Int64 = { Int64((now().timeIntervalSince1970 * 1_000).rounded()) }
+            let publication = Publication(connection: connection, journal: .init(directory: directory),
+                local: .init(read: { local.snapshot($0) }, permit: { _, _ in preconditionFailure("Import attachment never publishes") }),
+                canUseForeground: { true }, now: nowMs)
+            func runtime() -> (Runtime, LinkRuntime) {
+                let imports = Runtime.ImportJournal(directory: directory, now: nowMs)
+                let setupJournal = Setup.Journal(directory: directory)
+                let links = LinkRuntime(connection: connection, publication: publication, imports: imports, store: .init(directory: directory),
+                    local: .init(read: { local.snapshot($0) }, permit: { snapshot, commit in
+                        guard local.snapshot(snapshot.version.occurrenceID) == snapshot else { throw LinkRuntime.Link.Failure.stalePreview }
+                        return try commit()
+                    }, lifecycleRevision: { local.snapshot($0) == nil ? nil : 0 }),
+                    canUseForeground: { true }, now: nowMs,
+                    allowsManagedLease: { try setupJournal.permitsIncomingLink($0, account: $1) })
+                let calendar = Runtime(connection: connection, canUseForeground: { true },
+                        importJournal: imports, scheduler: scheduler, manualLink: links,
+                        managedSetupJournal: setupJournal, managedImportSound: { .system }) { _, _ in
                     preconditionFailure("Managed import uses the saved grant")
                 }
+                return (calendar, links)
             }
             do {
-                _ = try await runtime().syncManagedIncoming(expectedRevision: revision)
+                _ = try await runtime().0.syncManagedIncoming(expectedRevision: revision)
                 preconditionFailure("Simulate interruption after the scheduler has stored the local receipt")
             } catch LocalImports.Failure.interrupted {}
-            let resumed = try await runtime().syncManagedIncoming(expectedRevision: revision)
-            precondition(resumed.imported == 2 && resumed.needsReview == 1 && local.commands.count == 2,
-                         "Recover the committed receipt and reject the event that changed between list and lookup")
+            let (resumedRuntime, resumedLinks) = runtime()
+            let resumed = try await resumedRuntime.syncManagedIncoming(expectedRevision: revision)
+            precondition(resumed.imported == 2 && resumed.linked == 2 && resumed.needsReview == 1 && local.commands.count == 2,
+                         "Recover and attach the committed receipt, and reject the event that changed between list and lookup")
             let allDay = local.commands.first { $0.title == "all-day" }
             let recovered = local.commands.first { $0.title == "recovered" }
             let alarm = try Runtime.Import.Event.timestamp("2030-01-01T08:15:00Z")
             precondition(allDay?.mode == .some(.alarm) && allDay?.alarmAtMs == alarm && allDay?.alarmLinked == true && allDay?.sound == .system)
             precondition(recovered?.mode == .some(.none) && !local.commands.contains { $0.title == "continuing" })
-            let repeated = try await runtime().syncManagedIncoming(expectedRevision: revision)
-            precondition(repeated.imported == 0 && local.commands.count == 2, "No duplicate local creates after recovery")
+            let repeated = try await runtime().0.syncManagedIncoming(expectedRevision: revision)
+            precondition(repeated.imported == 0 && repeated.linked == 0 && local.commands.count == 2 && fixture.posts == 0,
+                         "An import checkpoint cannot duplicate a reminder or send a write to Google")
+            let candidates = try resumedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
+            guard let lease = saved.binding?.linkLease, candidates.count == 2,
+                  let recoveredLink = candidates.first(where: { $0.source.eventID == "recovered" }),
+                  let activation = recoveredLink.automatic?.activationRevision else {
+                preconditionFailure("Both links are ready to inspect")
+            }
+            precondition(candidates.allSatisfy { $0.automatic?.managedLease == lease && $0.baseline != nil })
+            let rediscovered = try await connection.discoverManagedCalendars(expectedRevision: revision, savedID: Fixture.calendarID,
+                                                                              canRead: { true })
+            let replacementReview = try journal.review(rediscovered, account: authorized.account, calendarZoneID: "UTC")
+            _ = try journal.capture(operationID: UUID(), review: replacementReview, currentAccount: authorized.account)
+            let revoked = try resumedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
+            precondition(revoked.isEmpty, "Starting a replacement fences existing managed links")
+            do {
+                _ = try await resumedLinks.syncAutomatic(recoveredLink.occurrenceID, expectedConnectionRevision: revision,
+                    expectedLinkRevision: recoveredLink.revision, expectedActivationRevision: activation)
+                preconditionFailure("A direct retry must also reject a retired managed link")
+            } catch LinkRuntime.Link.Failure.ineligible {}
             return
         }
 
@@ -148,6 +184,12 @@ enum ManagedSetupChecks {
         enum Failure: Error { case interrupted }
         private(set) var receipts: [String: Runtime.ImportJournal.LocalReceipt] = [:]
         private(set) var commands: [Runtime.Import.Command] = []
+
+        func snapshot(_ id: String) -> Publication.LocalSnapshot? {
+            guard let command = commands.first(where: { $0.id == id }) else { return nil }
+            return .init(version: .init(occurrenceID: id, revision: 1, generation: 1),
+                         fields: .init(title: command.title, notes: command.notes, schedule: command.schedule))
+        }
 
         func create(_ command: Runtime.Import.Command, permit: Runtime.ImportJournal.Scheduler.Permit) throws -> Runtime.ImportJournal.LocalResult {
             guard try permit() else { return .rejected("STALE_CONNECTION") }

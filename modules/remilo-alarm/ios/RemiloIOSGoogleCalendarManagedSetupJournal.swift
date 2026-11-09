@@ -85,6 +85,10 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         func belongs(to account: Account) -> Bool {
             self.account.subject == account.subject && self.account.clientID == account.clientID
         }
+
+        var linkLease: RemiloIOSGoogleCalendarManualLink.ManagedLease {
+            .init(setupID: operationID, bindingRevision: revision, authEpoch: authEpoch, calendarID: record.id, zoneID: record.zoneId)
+        }
     }
 
     struct View: Equatable, Sendable {
@@ -164,6 +168,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     }
 
     func managedInbox() -> RemiloIOSGoogleCalendarManagedInbox { .init(directory: directory) }
+
+    func permitsIncomingLink(_ lease: RemiloIOSGoogleCalendarManualLink.ManagedLease, account: Account) throws -> Bool {
+        do { return try incomingScope(account).binding.linkLease == lease }
+        catch Failure.staleConnection { return false }
+    }
 
     func review(_ discovery: Connection.ManagedDiscoveryResult, account: Account, policy: Policy? = nil,
                 calendarZoneID: String, replacing: UUID? = nil, freshInstallation: Bool = false) throws -> Review {

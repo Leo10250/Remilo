@@ -398,6 +398,8 @@ final class RemiloIOSGoogleCalendarConnection {
     }
 
     func observeManualLink(_ evidence: RemiloIOSGoogleCalendarManualLink.Evidence, account: Import.Account,
+                           managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil,
+                           budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
                            canRead: @escaping @MainActor @Sendable () -> Bool) async throws
         -> RemiloIOSGoogleCalendarManualLink.Observation {
         let live = try requireAccess(account.connectionRevision)
@@ -405,9 +407,9 @@ final class RemiloIOSGoogleCalendarConnection {
         guard live.fence.importAccount == account, source.belongs(to: account) else { throw Failure.staleConnection }
         let beforeRead = importReadPermission(account, canRead: canRead)
         let observation = try await read(live) { transport, access in
-            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
             try await beforeRead()
             let calendar = try await transport.ownedCalendar(access, id: source.calendarID, budget: budget)
+            try managedLease?.verify(calendar, email: access.account.email)
             try await beforeRead()
             let result = try await transport.lookup(access, calendarID: calendar.id, eventID: source.eventID, budget: budget)
             return try RemiloIOSGoogleCalendarManualLink.Observation(evidence: evidence, calendar: calendar, lookup: result)

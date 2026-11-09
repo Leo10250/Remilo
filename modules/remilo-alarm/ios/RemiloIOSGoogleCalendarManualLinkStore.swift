@@ -56,6 +56,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let accountGeneration: Int
         let operationID: UUID?
         fileprivate(set) var issue: AutomaticIssue? = nil
+        var managedLease: Link.ManagedLease? = nil
     }
 
     struct Record: Codable, Equatable, Sendable {
@@ -396,6 +397,32 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         return try commit(record, operationID: operationID, fingerprint: fingerprint, digest: digest, account: account, state: &state)
     }
 
+    /// The import receipt and this record witness the same source. An existing
+    /// manual or detached record must never regain automatic consent here.
+    func attachManagedImport(viewingAs account: Account, occurrenceID: String, remote: Link.Observation,
+                             lifecycleRevision: Int, lease: Link.ManagedLease, observedAtMs: Int64) throws -> Record {
+        let source = remote.source
+        let baseline = Baseline(title: remote.fields.title, notes: remote.fields.notes, schedule: remote.fields.schedule)
+        guard Self.belongs(source, to: account), source.calendarID == lease.calendarID,
+              remote.calendarZone == lease.zoneID, Self.valid(source), Self.validID(occurrenceID, maximum: 200),
+              Self.valid(baseline), remote.calendarName.utf8.count <= 4_096, Self.epoch.contains(observedAtMs),
+              (1...Self.maximumRevision).contains(account.accountGeneration), (0...Self.maximumRevision).contains(lifecycleRevision),
+              lease.bindingRevision > 0, lease.authEpoch > 0 else { throw Failure.invalidInput }
+        var state = try read()
+        if let existing = state.links[occurrenceID] {
+            guard existing.source == source, existing.origin == .imported else { throw Rejection.ineligible }
+            return existing
+        }
+        try requireUnreserved(occurrenceID, source: source, in: state)
+        let consent = AutomaticConsent(phase: .active, activationRevision: 1, lifecycleRevision: lifecycleRevision,
+                                       accountGeneration: account.accountGeneration, operationID: nil, managedLease: lease)
+        let record = Record(occurrenceID: occurrenceID, source: source, origin: .imported, revision: 1, state: .linked,
+                            baseline: baseline, calendarName: remote.calendarName, observedAtMs: observedAtMs, automatic: consent)
+        state.links[occurrenceID] = record
+        try write(state)
+        return record
+    }
+
     func detach(operationID: UUID, fingerprint: Data, viewingAs account: Account, occurrenceID: String,
                 expectedRevision: Int) throws -> Receipt {
         guard Self.validID(occurrenceID, maximum: 200), fingerprint.count == 32,
@@ -486,7 +513,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         switch transfer.automatic?.kind {
         case .activation:
             guard var record = state.links[transfer.occurrenceID], record.state == .linked, record.automatic?.phase != .pending,
-                  let authority = transfer.automatic else { throw Rejection.ineligible }
+                  let authority = transfer.automatic, authority.managedLease == nil else { throw Rejection.ineligible }
             record.automatic = AutomaticConsent(phase: .pending, activationRevision: authority.activationRevision,
                                                 lifecycleRevision: authority.lifecycleRevision,
                                                 accountGeneration: transfer.account.accountGeneration, operationID: id)
@@ -610,7 +637,8 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
             let consent = try requireAutomaticAuthority(transfer, in: state)
             let automatic = consent.map {
                 AutomaticConsent(phase: .active, activationRevision: $0.activationRevision,
-                                 lifecycleRevision: $0.lifecycleRevision, accountGeneration: $0.accountGeneration, operationID: nil)
+                                 lifecycleRevision: $0.lifecycleRevision, accountGeneration: $0.accountGeneration,
+                                 operationID: nil, managedLease: $0.managedLease)
             }
             let desired = transfer.desired
             let baseline = Baseline(title: desired.title, notes: desired.notes, schedule: desired.schedule)
@@ -706,6 +734,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         guard let record = state.links[transfer.occurrenceID], record.state == .linked,
               let consent = record.automatic, consent.activationRevision == authority.activationRevision,
               consent.lifecycleRevision == authority.lifecycleRevision,
+              consent.managedLease == authority.managedLease,
               consent.accountGeneration == transfer.account.accountGeneration else { throw Rejection.stalePreview }
         switch authority.kind {
         case .activation:

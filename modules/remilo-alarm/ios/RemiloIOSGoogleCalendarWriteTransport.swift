@@ -36,6 +36,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         private let evidence: RemiloIOSGoogleCalendarManualLink.Evidence?
         private let schedule: Event.Schedule?
         fileprivate let calendarZone: String
+        fileprivate let managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease?
 
         init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
              reviewedRemote: Transport.Event, calendarZone: String, desired: Event.Fields,
@@ -59,12 +60,14 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             try self.init(operationID: transfer.operationID, account: transfer.account, local: transfer.local.version,
                           calendarID: transfer.remote.source.calendarID, eventID: transfer.remote.source.eventID,
                           etag: transfer.remote.etag, before: before, calendarZone: transfer.remote.calendarZone,
-                          desired: desired, suppressGoogleReminders: false, evidence: transfer.evidence)
+                          desired: desired, suppressGoogleReminders: false, evidence: transfer.evidence,
+                          managedLease: transfer.automatic?.managedLease)
         }
 
         private init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
                      eventID: String, etag: String, before: Event.Fields, calendarZone: String, desired: Event.Fields,
-                     suppressGoogleReminders: Bool, evidence: RemiloIOSGoogleCalendarManualLink.Evidence?) throws {
+                     suppressGoogleReminders: Bool, evidence: RemiloIOSGoogleCalendarManualLink.Evidence?,
+                     managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil) throws {
             guard Transport.Event.validatedStrongETag(etag) != nil,
                   account.connectionRevision > 0, account.accountGeneration > 0, local.revision > 0, local.generation >= 0,
                   !local.occurrenceID.isEmpty, !calendarID.isEmpty, !eventID.isEmpty,
@@ -89,6 +92,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             self.evidence = evidence
             self.schedule = schedule
             self.calendarZone = calendarZone
+            self.managedLease = managedLease
             let switchesRepresentation = before.schedule.allDay != desired.schedule.allDay
             payload = PatchPayload(summary: title, description: notes,
                                    start: bounds.map { PatchBound(value: $0.start, switchesRepresentation: switchesRepresentation) },
@@ -307,6 +311,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                permitSend: @Sendable (Patch) async throws -> Permission) async throws -> PatchOutcome {
         guard patch.account.matches(access) else { throw Failure.accountChanged }
         let calendar = try await transport.ownedCalendar(access, id: patch.calendarID, budget: budget)
+        if phase == .notSent { try patch.managedLease?.verify(calendar, email: access.account.email) }
         if phase == .notSent, (calendar.timeZone ?? "") != patch.calendarZone { return .staleRemote }
         let lookup = try await transport.lookup(access, calendarID: patch.calendarID, eventID: patch.eventID, budget: budget)
         guard case .found(let observed) = lookup else {

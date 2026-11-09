@@ -75,6 +75,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
     private let canUseForeground: @MainActor @Sendable () -> Bool
     private let now: @Sendable () -> Int64
     private let notifyStatusChange: @MainActor @Sendable () -> Void
+    private let allowsManagedLease: @MainActor @Sendable (Link.ManagedLease, Account) throws -> Bool
     private var reviews: [Link.Review] = []
     private var running = Set<UUID>()
     private var checkingLinks = Set<String>()
@@ -83,6 +84,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
     init(connection: Connection, publication: Publication, imports: ImportJournal, store: Store,
          local: LocalAuthority, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
          now: @escaping @Sendable () -> Int64 = { Int64((Date().timeIntervalSince1970 * 1_000).rounded()) },
+         allowsManagedLease: @escaping @MainActor @Sendable (Link.ManagedLease, Account) throws -> Bool = { _, _ in false },
          notifyStatusChange: @escaping @MainActor @Sendable () -> Void = {}) {
         self.connection = connection
         self.publication = publication
@@ -91,7 +93,43 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         self.local = local
         self.canUseForeground = canUseForeground
         self.now = now
+        self.allowsManagedLease = allowsManagedLease
         self.notifyStatusChange = notifyStatusChange
+    }
+
+    /// A settled import can establish its common baseline without writing to
+    /// either copy. Reopen and retry the durable receipt if interrupted here.
+    func attachManagedImport(_ work: ImportJournal.ManagedLinkWork, expectedConnectionRevision: Int,
+                             budget: RemiloIOSGoogleCalendarHTTP.Budget) async throws {
+        let account = try viewer(expectedConnectionRevision)
+        let lease = work.permit.scope.binding.linkLease
+        let receipt = work.receipt
+        guard receipt.relationship == .automaticRequested, let imported = receipt.local, imported.kind == .reminder,
+              receipt.source == work.permit.source, receipt.reviewedETag == work.permit.observation.etag,
+              try permitsManagedLease(lease, account: account) else { throw Link.Failure.stalePreview }
+        let source = Link.Source(subject: receipt.source.subject, clientID: account.clientID,
+                                 calendarID: receipt.source.calendarID, eventID: receipt.source.eventID)
+        if let existing = try store.link(imported.id) {
+            guard existing.source == source, existing.origin == .imported else { throw Link.Failure.ineligible }
+            return
+        }
+        guard let snapshot = try local.read(imported.id), let lifecycle = try local.lifecycleRevision(imported.id) else {
+            throw Link.Failure.ineligible
+        }
+        let evidence = Link.Evidence.imported(source)
+        let remote = try await connection.observeManualLink(evidence, account: account, managedLease: lease, budget: budget,
+            canRead: { [canUseForeground, allowsManagedLease] in
+                canUseForeground() && (try? allowsManagedLease(lease, account)) == true
+            })
+        guard remote.etag == receipt.reviewedETag, remote.fields == snapshot.fields else { throw Link.Failure.staleRemote }
+        let checkpoint = try await local.permit(snapshot) { [self] in
+            guard canUseForeground(), try connection.isCurrentAccount(account),
+                  try permitsManagedLease(lease, account: account),
+                  try local.lifecycleRevision(imported.id) == lifecycle else { throw Link.Failure.stalePreview }
+            return .observation(try store.attachManagedImport(viewingAs: account, occurrenceID: imported.id, remote: remote,
+                                                              lifecycleRevision: lifecycle, lease: lease, observedAtMs: now()))
+        }
+        guard case .observation = checkpoint else { throw Failure.invalidResponse }
     }
 
     func preview(_ occurrenceID: String, expectedConnectionRevision: Int, superseding: UUID? = nil) async throws -> Link.Review {
@@ -302,6 +340,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             guard !blocked.contains(id), record.state == .linked, record.check?.requiresReview != true,
                   let consent = record.automatic, consent.phase == .active, consent.issue != .review,
                   consent.accountGeneration == account.accountGeneration,
+                  try permitsManagedLease(consent.managedLease, account: account),
                   try local.lifecycleRevision(id) == consent.lifecycleRevision,
                   let snapshot = try local.read(id) else { return false }
             return inspectUnchanged || !matchesBaseline(snapshot.fields, record.baseline)
@@ -314,7 +353,8 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         let account = try viewer(expectedConnectionRevision)
         guard let record = try store.link(occurrenceID), record.source.belongs(to: account), record.state == .linked,
               let consent = record.automatic, consent.phase == .active, consent.issue != .review,
-              record.check?.requiresReview != true, consent.accountGeneration == account.accountGeneration else {
+              record.check?.requiresReview != true, consent.accountGeneration == account.accountGeneration,
+              try permitsManagedLease(consent.managedLease, account: account) else {
             throw Link.Failure.ineligible
         }
         guard record.revision == expectedLinkRevision, consent.activationRevision == expectedActivationRevision,
@@ -336,7 +376,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         let attemptedAt = now()
         let evidence = try await resolveEvidence(occurrenceID, account: account)
         guard evidence.source == record.source, evidence.origin == record.origin else { throw Link.Failure.stalePreview }
-        let result = try await inspectLink(evidence, account: account)
+        let result = try await inspectLink(evidence, account: account, managedLease: consent.managedLease)
         guard case .available(let remote) = result else {
             return .observed(try await recordObservation(record, result: result, snapshot: snapshot, account: account,
                                                         attemptedAt: attemptedAt))
@@ -352,7 +392,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         }
         let operationID = requestedID ?? UUID()
         let authority = Link.AutomaticAuthority(kind: .transfer, activationRevision: consent.activationRevision,
-                                                lifecycleRevision: consent.lifecycleRevision)
+                                                lifecycleRevision: consent.lifecycleRevision, managedLease: consent.managedLease)
         let transfer = Link.Transfer(operationID: operationID, account: account, evidence: evidence, local: snapshot,
                                      remote: remote, desired: desired, linkRevision: record.revision, checkedAtMs: attemptedAt,
                                      automatic: authority)
@@ -390,6 +430,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         }
         guard let record = try store.link(occurrenceID), record.revision == expectedLinkRevision,
               let consent = record.automatic, consent.activationRevision == expectedActivationRevision,
+              try permitsManagedLease(consent.managedLease, account: account),
               try local.lifecycleRevision(occurrenceID) == consent.lifecycleRevision else { throw Link.Failure.stalePreview }
         guard !checkingLinks.contains(occurrenceID) else { throw Store.Rejection.operationPending }
         try connection.requireManualLinkWrite(account: account)
@@ -450,6 +491,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
               record.source == request.source, record.revision == (transfer?.resultLinkRevision ?? request.linkRevision),
               let consent = record.automatic, consent.phase == .active,
               consent.activationRevision == request.activationRevision, consent.accountGeneration == account.accountGeneration,
+              try permitsManagedLease(consent.managedLease, account: account),
               try local.lifecycleRevision(request.occurrenceID) == request.lifecycleRevision else { return false }
         return true
     }
@@ -519,12 +561,13 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
               let record = try store.link(operation.occurrenceID), record.revision == operation.linkRevision,
               record.source == operation.source, let consent = record.automatic, consent.phase == .active,
               consent.accountGeneration == account.accountGeneration,
+              try permitsManagedLease(consent.managedLease, account: account),
               try local.lifecycleRevision(operation.occurrenceID) == consent.lifecycleRevision,
               let snapshot = try local.read(operation.occurrenceID) else { return }
         let attemptedAt = now()
         let evidence = try await resolveEvidence(operation.occurrenceID, account: account)
         guard evidence.source == operation.source, evidence.origin == operation.origin else { throw Link.Failure.stalePreview }
-        let result = try await inspectLink(evidence, account: account)
+        let result = try await inspectLink(evidence, account: account, managedLease: consent.managedLease)
         if case .available(let remote) = result,
            !Link.Comparison.compare(local: snapshot.fields, remote: remote.fields, baseline: record.baseline).conflicts.isEmpty {
             _ = try await recordAutomaticIssue(.review, record: record, snapshot: snapshot, account: account)
@@ -586,7 +629,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         try requireLive(transfer)
         try store.requireTransferAuthority(transfer, phase: current.phase)
         if current.phase == .waiting {
-            let observed = try await observe(transfer.evidence, account: account)
+            let observed = try await observe(transfer.evidence, account: account, managedLease: transfer.automatic?.managedLease)
             guard transfer.remote.matches(observed) else { throw Link.Failure.staleRemote }
             if transfer.needsLocal {
                 let applied = try await local.apply(transfer) { [self] in
@@ -633,7 +676,8 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
                 return try store.failTransfer(transfer, reason: failure.rawValue)
             }
         }
-        let observed = try await observe(transfer.evidence, account: account)
+        let observed = try await observe(transfer.evidence, account: account,
+                                         managedLease: transfer.needsRemote ? nil : transfer.automatic?.managedLease)
         if observed.fields != transfer.desired {
             let latest = try currentOperation(transfer.operationID, account: account)
             if latest.phase == .sent { return latest }
@@ -703,12 +747,13 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
               record.revision == transfer.linkRevision, record.source == transfer.evidence.source,
               record.check?.requiresReview != true, let consent = record.automatic, consent.phase == .active,
               consent.activationRevision == authority.activationRevision, consent.lifecycleRevision == authority.lifecycleRevision,
+              consent.managedLease == authority.managedLease, try permitsManagedLease(consent.managedLease, account: account),
               consent.accountGeneration == account.accountGeneration else { return false }
         return try local.lifecycleRevision(transfer.occurrenceID) == authority.lifecycleRevision
     }
 
-    private func observe(_ evidence: Link.Evidence, account: Account) async throws -> Link.Observation {
-        try await connection.observeManualLink(evidence, account: account, canRead: canUseForeground)
+    private func observe(_ evidence: Link.Evidence, account: Account, managedLease: Link.ManagedLease? = nil) async throws -> Link.Observation {
+        try await connection.observeManualLink(evidence, account: account, managedLease: managedLease, canRead: canUseForeground)
     }
 
     private func recordObservation(_ record: Store.Record, result: Store.CheckResult, snapshot: Publication.LocalSnapshot,
@@ -760,9 +805,9 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         return nil
     }
 
-    private func inspectLink(_ evidence: Link.Evidence, account: Account) async throws -> Store.CheckResult {
+    private func inspectLink(_ evidence: Link.Evidence, account: Account, managedLease: Link.ManagedLease? = nil) async throws -> Store.CheckResult {
         do {
-            return .available(try await observe(evidence, account: account))
+            return .available(try await observe(evidence, account: account, managedLease: managedLease))
         } catch let failure as Failure {
             if let result = sourceLoss(failure) { return result }
             switch failure {
@@ -788,11 +833,17 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         guard try viewer(transfer.account.connectionRevision) == transfer.account else { throw Failure.staleConnection }
         guard try connection.isCurrentAccount(transfer.account) else { throw Failure.needsAccess }
         if let automatic = transfer.automatic {
-            guard try local.lifecycleRevision(transfer.occurrenceID) == automatic.lifecycleRevision else {
+            guard try local.lifecycleRevision(transfer.occurrenceID) == automatic.lifecycleRevision,
+                  try permitsManagedLease(automatic.managedLease, account: transfer.account) else {
                 throw Link.Failure.stalePreview
             }
             try connection.requireManualLinkWrite(account: transfer.account)
         }
+    }
+
+    private func permitsManagedLease(_ lease: Link.ManagedLease?, account: Account) throws -> Bool {
+        guard let lease else { return true }
+        return try allowsManagedLease(lease, account)
     }
 
     private func currentOperation(_ id: UUID, account: Account) throws -> Store.Operation {

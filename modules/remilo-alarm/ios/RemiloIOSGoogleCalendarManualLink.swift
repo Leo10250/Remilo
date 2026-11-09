@@ -118,12 +118,27 @@ enum RemiloIOSGoogleCalendarManualLink {
         }
     }
 
+    struct ManagedLease: Codable, Equatable, Sendable {
+        let setupID: UUID
+        let bindingRevision: Int
+        let authEpoch: Int
+        let calendarID: String
+        let zoneID: String
+
+        func verify(_ calendar: Transport.OwnedCalendar, email: String) throws {
+            let record = try RemiloIOSCalendarOwnedRecord(calendar)
+            guard record.id == calendarID, record.zoneId == zoneID else { throw Failure.staleRemote }
+            if let failure = RemiloIOSGoogleCalendarManagedDiscovery.eligibility(record, verifiedEmail: email) { throw failure }
+        }
+    }
+
     struct AutomaticAuthority: Codable, Equatable, Sendable {
         enum Kind: String, Codable, Sendable { case activation, transfer }
 
         let kind: Kind
         let activationRevision: Int
         let lifecycleRevision: Int
+        var managedLease: ManagedLease? = nil
     }
 
     struct Transfer: Codable, Equatable, Sendable {

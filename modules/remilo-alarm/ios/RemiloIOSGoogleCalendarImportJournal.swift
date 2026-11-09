@@ -44,6 +44,16 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let permit: RemiloIOSGoogleCalendarManagedInbox.Permit
     }
 
+    struct ManagedLinkWork: Sendable {
+        let permit: RemiloIOSGoogleCalendarManagedInbox.Permit
+        let receipt: Receipt
+    }
+
+    private enum ManagedLinkDisposition: Codable {
+        case settled
+        case needsReview(String)
+    }
+
     struct Receipt: Codable, Equatable, Sendable {
         enum Suppression: String, Codable, Sendable { case none, deferredUntilLocalDelivery, requiresRemoteCheck, suspended }
 
@@ -105,6 +115,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var submitted = false
         var receipt: Receipt?
         var managed: RemiloIOSGoogleCalendarManagedInbox.Permit?
+        var managedLink: ManagedLinkDisposition?
     }
 
     private struct State: Codable {
@@ -169,6 +180,26 @@ actor RemiloIOSGoogleCalendarImportJournal {
     func managedPermit(_ id: UUID, viewingAs account: Import.Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Permit? {
         guard let permit = try read().entries[id]?.managed, permit.scope.binding.belongs(to: account) else { return nil }
         return permit
+    }
+
+    func pendingManagedLinks(viewingAs account: Import.Account) throws -> [ManagedLinkWork] {
+        try read().entries.sorted { ($0.value.createdAtMs ?? 0, $0.key.uuidString) < ($1.value.createdAtMs ?? 0, $1.key.uuidString) }
+            .compactMap { _, entry in
+                guard entry.managedLink == nil, let permit = entry.managed, permit.scope.binding.belongs(to: account),
+                      let receipt = entry.receipt, receipt.local?.kind == .reminder,
+                      receipt.relationship == .automaticRequested else { return nil }
+                return ManagedLinkWork(permit: permit, receipt: receipt)
+            }
+    }
+
+    func finishManagedLink(_ work: ManagedLinkWork, reason: String?) throws {
+        var state = try read()
+        let id = work.receipt.operationID
+        guard var entry = state.entries[id], entry.receipt == work.receipt, entry.managed == work.permit else { throw Failure.operationReused }
+        guard entry.managedLink == nil else { return }
+        entry.managedLink = reason.map(ManagedLinkDisposition.needsReview) ?? .settled
+        state.entries[id] = entry
+        try write(state)
     }
 
     private func capture(operationID: UUID, review: Import.Review, choices: Import.Choices,

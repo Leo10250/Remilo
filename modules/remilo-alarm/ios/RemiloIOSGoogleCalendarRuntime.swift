@@ -32,6 +32,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var pages = 0
         var imported = 0
         var needsReview = 0
+        var linked = 0
         var continuation = false
     }
 
@@ -193,6 +194,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var result = ManagedImportPass()
         var attempted = 0
         do {
+            try await attachPendingManagedLinks(account: account, budget: budget, result: &result)
             for pending in try await importJournal.pendingManaged(viewingAs: account) {
                 guard attempted < 10, budget.hasTimeRemaining else {
                     result.continuation = true
@@ -254,9 +256,38 @@ final class RemiloIOSGoogleCalendarRuntime {
                     result.needsReview += 1
                 }
             }
+            try await attachPendingManagedLinks(account: account, budget: budget, result: &result)
         } catch Failure.budget { result.continuation = true }
         return result
     }
+
+    private func attachPendingManagedLinks(account: Import.Account, budget: RemiloIOSGoogleCalendarHTTP.Budget,
+                                           result: inout ManagedImportPass) async throws {
+        guard let manualLink else { return }
+        let work = try await importJournal.pendingManagedLinks(viewingAs: account)
+        for item in work.prefix(10) {
+            try requireCurrentAccount(account)
+            guard budget.hasTimeRemaining else { throw Failure.budget }
+            let reason: String?
+            do {
+                try await manualLink.attachManagedImport(item, expectedConnectionRevision: account.connectionRevision, budget: budget)
+                result.linked += 1
+                reason = nil
+            } catch let error as ManualLinkFailure {
+                reason = error.rawValue
+            } catch let error as RemiloIOSGoogleCalendarManualLinkStore.Rejection {
+                reason = error.rawValue
+            } catch let error as Failure where [.notOwner, .ownershipUnknown, .notFound, .remoteUnavailable, .invalidZone].contains(error) {
+                reason = error.rawValue
+            }
+            try requireCurrentAccount(account)
+            try await importJournal.finishManagedLink(item, reason: reason)
+            if reason != nil { result.needsReview += 1 }
+        }
+        if work.count > 10 { result.continuation = true }
+    }
+
+    private typealias ManualLinkFailure = RemiloIOSGoogleCalendarManualLink.Failure
 
     private func finishManagedImport(_ receipt: ImportJournal.Receipt, permit: RemiloIOSGoogleCalendarManagedInbox.Permit,
                                      account: Import.Account, result: inout ManagedImportPass) throws {
@@ -484,12 +515,14 @@ final class RemiloIOSGoogleCalendarRuntime {
         let presenter = RemiloIOSGoogleCalendarWebAuthorization()
         let canUseForeground: @MainActor @Sendable () -> Bool = { Self.foregroundWindow() != nil }
         let imports = try ImportJournal.local()
+        let managed = try RemiloIOSGoogleCalendarManagedSetupJournal.local()
         let publication = try RemiloIOSGoogleCalendarPublicationRuntime(
             connection: connection, journal: .local(), local: .localEngine(.shared), canUseForeground: canUseForeground
         )
         let manualLink = try RemiloIOSGoogleCalendarManualLinkRuntime(
             connection: connection, publication: publication, imports: imports, store: .local(),
             local: .localEngine(.shared), canUseForeground: canUseForeground,
+            allowsManagedLease: { lease, account in try managed.permitsIncomingLink(lease, account: account) },
             notifyStatusChange: {
                 NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
             }
@@ -497,7 +530,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,
             importJournal: imports, scheduler: .localEngine(.shared), publication: publication, manualLink: manualLink,
-            managedSetupJournal: try RemiloIOSGoogleCalendarManagedSetupJournal.local(),
+            managedSetupJournal: managed,
             managedSetupFreshInstallation: { try RemiloIOSEngine.shared.read().isFreshCalendarInstallation },
             managedImportSound: { try RemiloIOSEngine.shared.read().settings.alertSound == "system" ? .system : .remilo }
         ) {
