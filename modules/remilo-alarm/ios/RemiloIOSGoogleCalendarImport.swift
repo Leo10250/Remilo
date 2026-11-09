@@ -254,10 +254,13 @@ enum RemiloIOSGoogleCalendarImport {
 
     static func observe(_ key: SourceKey, account: Account, access: RemiloIOSGoogleCalendarAccess,
                         transport: Transport, budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
+                        canRead: @MainActor @Sendable () -> Bool = { true },
                         audit: (@Sendable (Transport.OwnedCalendar, Transport.Event) async throws -> RecurrenceEvidence)? = nil)
         async throws -> Observation {
         guard account.matches(access), key.subject == account.subject else { throw Failure.staleConnection }
+        guard await canRead() else { throw CancellationError() }
         let calendar = try await transport.ownedCalendar(access, id: key.calendarID, budget: budget)
+        guard await canRead() else { throw CancellationError() }
         let result = try await transport.lookup(access, calendarID: key.calendarID, eventID: key.eventID, budget: budget)
         guard case .found(let event) = result, !event.cancelled else { throw Failure.staleRemote }
         let source = try Source(account: account, calendar: calendar, event: event)

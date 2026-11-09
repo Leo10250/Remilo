@@ -20,9 +20,10 @@ struct RemiloIOSCalendarOwnedRecord: Codable, Equatable, Sendable {
     }
 }
 
-/// One process-owned actor serializes the protected connection and discovery
-/// checkpoints. It never owns reminder state or holds a lock across HTTP.
-actor RemiloIOSGoogleCalendarConnection {
+/// One process-owned connection serializes protected metadata. Sharing the
+/// scheduler's isolation lets a native commit check permission synchronously.
+@MainActor
+final class RemiloIOSGoogleCalendarConnection {
     typealias Failure = RemiloIOSGoogleCalendarFailure
     typealias Purpose = RemiloIOSGoogleCalendarPurpose
     typealias State = RemiloIOSCalendarConnectionState
@@ -99,6 +100,11 @@ actor RemiloIOSGoogleCalendarConnection {
             subject = account.subject
             clientID = account.clientID
         }
+
+        var importAccount: Import.Account {
+            Import.Account(subject: subject, clientID: clientID, connectionRevision: revision,
+                           accountGeneration: accountGeneration)
+        }
     }
 
     private struct LiveAccess: Sendable {
@@ -130,7 +136,8 @@ actor RemiloIOSGoogleCalendarConnection {
 
     /// The presenter must be invoked by an explicit user action. Its UIKit
     /// implementation also checks foreground and protected-data availability.
-    func connectFromUserAction(expectedRevision: Int, consent: Consent, authorize: Authorize) async throws -> View {
+    func connectFromUserAction(expectedRevision: Int, consent: Consent, canCommit: @MainActor () -> Bool = { true },
+                               authorize: Authorize) async throws -> View {
         guard let configuration else { throw Failure.invalidConfiguration }
         guard revocationInFlight == nil else { throw Failure.revocationInProgress }
         guard !consentInFlight else { throw Failure.needsAccess }
@@ -177,6 +184,7 @@ actor RemiloIOSGoogleCalendarConnection {
         current.revocation = .notRequested
         current.discovery = nil
         guard let fence = Fence(current) else { throw Failure.staleConnection }
+        guard canCommit() else { throw Failure.needsAccess }
         try store.write(current)
         cancelReads()
         credentials = LiveAccess(fence: fence, access: access)
@@ -242,16 +250,19 @@ actor RemiloIOSGoogleCalendarConnection {
 
     func browseEvents(expectedRevision: Int, calendarID: String, from: String, until: String,
                       nextCursor: EventCursor? = nil, zone: TimeZone = .current,
-                      dispositions: [Event.SourceKey: Event.SourceDisposition] = [:]) async throws -> EventPage {
+                      dispositions: [Event.SourceKey: Event.SourceDisposition] = [:],
+                      canRead: @MainActor () -> Bool = { true }) async throws -> EventPage {
         let live = try requireAccess(expectedRevision)
         let range = try Event.Range(from: from, until: until, zone: zone)
         if let nextCursor, nextCursor.fence != live.fence || nextCursor.calendarID != calendarID || nextCursor.range != range {
             throw Failure.staleCursor
         }
+        guard canRead() else { throw Failure.needsAccess }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()
         let calendar = try await read(live) { transport, access in
             try await transport.ownedCalendar(access, id: calendarID, budget: budget)
         }
+        guard canRead() else { throw Failure.needsAccess }
         let page = try await read(live) { transport, access in
             try await transport.events(access, calendarID: calendarID, listing: .masters(from: range.from, until: range.until),
                                        next: nextCursor?.page, budget: budget)
@@ -265,21 +276,40 @@ actor RemiloIOSGoogleCalendarConnection {
                          calendarName: calendar.displayName ?? "")
     }
 
-    func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String) async throws -> Import.Review {
+    func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String,
+                             canRead: @MainActor () -> Bool) async throws -> Import.Review {
         let live = try requireAccess(expectedRevision)
+        guard canRead() else { throw Failure.needsAccess }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()
         let calendar = try await read(live) { transport, access in
             try await transport.ownedCalendar(access, id: calendarID, budget: budget)
         }
+        guard canRead() else { throw Failure.needsAccess }
         let lookup = try await read(live) { transport, access in
             try await transport.lookup(access, calendarID: calendar.id, eventID: eventID, budget: budget)
         }
         guard case .found(let event) = lookup, !event.cancelled else { throw Import.Failure.staleRemote }
-        let fence = live.fence
-        let account = Import.Account(subject: fence.subject, clientID: fence.clientID,
-                                     connectionRevision: fence.revision, accountGeneration: fence.accountGeneration)
         let reviewedAt = Int64((now().timeIntervalSince1970 * 1_000).rounded())
-        return try Import.Review(account: account, calendar: calendar, event: event, now: reviewedAt)
+        return try Import.Review(account: live.fence.importAccount, calendar: calendar, event: event, now: reviewedAt)
+    }
+
+    func account(expectedRevision: Int) throws -> Import.Account {
+        try requireAccess(expectedRevision).fence.importAccount
+    }
+
+    func isCurrentAccount(_ captured: Import.Account) throws -> Bool {
+        do { return try account(expectedRevision: captured.connectionRevision) == captured }
+        catch Failure.staleConnection { return false }
+        catch Failure.needsAccess { return false }
+    }
+
+    func observeImport(_ captured: Import.Account, source: Import.SourceKey,
+                       canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Import.Observation {
+        let live = try requireAccess(captured.connectionRevision)
+        guard live.fence.importAccount == captured else { throw Failure.staleConnection }
+        return try await read(live) { transport, access in
+            try await Import.observe(source, account: captured, access: access, transport: transport, canRead: canRead)
+        }
     }
 
     /// A fresh explicit scan clears prior observations. A resumed scan continues

@@ -6,10 +6,11 @@ cursors and permissions are credential-protected and excluded from portable back
 and device-protected storage. [Product](product.md) owns local behavior and
 [architecture](architecture.md) owns the serialized native mutation boundary.
 
-The integration is available on Android. iOS Calendar operations remain internal
-while reviewed changes are connected to the native engine and verified with a
-signed app and a Google account. The iOS browse and import preview use read-only
-access to owned calendars. Publication requires a separate write grant.
+The integration is available on Android. On iOS, browsing and reviewed one-off
+import use read-only access to owned calendars. The native scheduler checks
+the current account and grant immediately before saving a reminder. Publication
+requires a separate write grant. iOS Calendar remains internal pending signed
+app verification and support in the shared screens.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)
 
 ## Connection, permissions and relationship types

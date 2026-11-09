@@ -10,31 +10,39 @@ import UIKit
 final class RemiloIOSGoogleCalendarRuntime {
     typealias Connection = RemiloIOSGoogleCalendarConnection
     typealias Failure = RemiloIOSGoogleCalendarFailure
+    typealias Import = RemiloIOSGoogleCalendarImport
+    typealias ImportJournal = RemiloIOSGoogleCalendarImportJournal
 
     enum Authorization: Equatable { case connectOrChangeAccount, reauthorizeCurrentAccount }
 
     private let connection: Connection
     private let canUseForeground: @MainActor @Sendable () -> Bool
     private let authorize: Connection.Authorize
+    private let importJournal: ImportJournal
+    private let scheduler: ImportJournal.Scheduler
+    private var reviews: [Import.Review] = []
 
     init(connection: Connection, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
+         importJournal: ImportJournal, scheduler: ImportJournal.Scheduler,
          authorize: @escaping Connection.Authorize) {
         self.connection = connection
         self.canUseForeground = canUseForeground
+        self.importJournal = importJournal
+        self.scheduler = scheduler
         self.authorize = authorize
     }
 
     func view() async throws -> Connection.View {
         try requireForeground()
-        let view = try await connection.view()
-        try requireForeground()
-        return view
+        return try connection.view()
     }
 
     func authorizeFromUserAction(expectedRevision: Int, intent: Authorization) async throws -> Connection.View {
         try requireForeground()
         let consent: Connection.Consent = intent == .connectOrChangeAccount ? .connectOrChangeAccount : .reauthorizeCurrentAccount
-        let view = try await connection.connectFromUserAction(expectedRevision: expectedRevision, consent: consent) {
+        let view = try await connection.connectFromUserAction(
+            expectedRevision: expectedRevision, consent: consent, canCommit: canUseForeground
+        ) {
             [authorize, canUseForeground] subject, purpose in
             guard await canUseForeground() else { throw Failure.needsAccess }
             let access = try await authorize(subject, purpose)
@@ -42,12 +50,15 @@ final class RemiloIOSGoogleCalendarRuntime {
             return access
         }
         try requireForeground()
+        reviews.removeAll()
         return view
     }
 
     func disconnectFromUserAction(operationID: String, expectedRevision: Int) async throws -> Connection.DisconnectResult {
         try requireForeground()
-        return try await connection.disconnect(operationID: operationID, expectedRevision: expectedRevision)
+        let disconnected = try await connection.disconnect(operationID: operationID, expectedRevision: expectedRevision)
+        reviews.removeAll { $0.account.connectionRevision <= expectedRevision }
+        return disconnected
     }
 
     func ownedCalendars(expectedRevision: Int, cursor: Connection.Cursor? = nil) async throws -> Connection.OwnedPage {
@@ -62,9 +73,13 @@ final class RemiloIOSGoogleCalendarRuntime {
                        cursor: Connection.EventCursor? = nil, zone: TimeZone = .current) async throws -> Connection.EventPage {
         try requireForeground()
         let page = try await connection.browseEvents(expectedRevision: expectedRevision, calendarID: calendarID,
-                                                     from: from, until: until, nextCursor: cursor, zone: zone)
+                                                     from: from, until: until, nextCursor: cursor, zone: zone, canRead: canUseForeground)
         try requireForeground()
-        let rows = page.items.map { row in
+        let account = try connection.account(expectedRevision: page.connectionRevision)
+        let reserved = try await importJournal.reservedEvents(subject: account.subject, calendarID: calendarID)
+        try requireCurrentAccount(account)
+        let rows = page.items.compactMap { row -> Connection.Event.Row? in
+            guard !reserved.contains(row.eventId) else { return nil }
             guard row.fields?.schedule.recurrence != nil else { return row }
             return Connection.Event.Row(eventId: row.eventId, title: row.title, fields: nil, unsupportedReason: .unsupportedRecurrence,
                                         occurrenceId: row.occurrenceId, erased: row.erased)
@@ -73,11 +88,61 @@ final class RemiloIOSGoogleCalendarRuntime {
                                     calendarName: page.calendarName)
     }
 
-    func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String) async throws -> Connection.Import.Review {
+    func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String) async throws -> Import.Review {
         try requireForeground()
-        let review = try await connection.prepareOneOffImport(expectedRevision: expectedRevision, calendarID: calendarID, eventID: eventID)
+        let review = try await connection.prepareOneOffImport(expectedRevision: expectedRevision, calendarID: calendarID,
+                                                             eventID: eventID, canRead: canUseForeground)
         try requireForeground()
+        let source = review.source.key
+        let reserved = try await importJournal.reservedEvents(subject: source.subject, calendarID: source.calendarID)
+        try requireCurrentAccount(review.account)
+        guard !reserved.contains(source.eventID) else { throw Import.Failure.alreadyImported }
+        reviews.removeAll { $0.source.key == review.source.key || !$0.valid(at: review.checkedAtMs) }
+        if reviews.count == 8 { reviews.removeFirst() }
+        reviews.append(review)
         return review
+    }
+
+    func confirmOneOffImport(operationID: UUID, reviewID: UUID, expectedRevision: Int,
+                             choices: Import.Choices) async throws -> ImportJournal.Receipt {
+        try requireForeground()
+        let account = try connection.account(expectedRevision: expectedRevision)
+        guard let review = reviews.first(where: { $0.id == reviewID }), review.account == account else {
+            throw Import.Failure.stalePreview
+        }
+        guard !choices.automaticSync, !choices.disableGoogleReminders else { throw Import.Failure.invalidInput }
+        let saved = try await importJournal.capture(operationID: operationID, review: review, choices: choices)
+        if let saved {
+            try requireCurrentAccount(account)
+            return saved
+        }
+        return try await runImport(operationID, viewingAs: account)
+    }
+
+    func recoverOneOffImport(operationID: UUID, expectedRevision: Int) async throws -> ImportJournal.Receipt {
+        try requireForeground()
+        let viewer = try connection.account(expectedRevision: expectedRevision)
+        guard let original = try await importJournal.account(for: operationID),
+              original.subject == viewer.subject, original.clientID == viewer.clientID else { throw Import.Failure.notFound }
+        try requireCurrentAccount(viewer)
+        return try await runImport(operationID, viewingAs: viewer)
+    }
+
+    private func runImport(_ operationID: UUID, viewingAs viewer: Import.Account) async throws -> ImportJournal.Receipt {
+        let authority = ImportJournal.Authority(current: { [connection, canUseForeground] captured in
+            guard canUseForeground() else { return false }
+            return try connection.isCurrentAccount(captured)
+        }, observe: { [connection, canUseForeground] captured, source in
+            try await connection.observeImport(captured, source: source, canRead: canUseForeground)
+        })
+        let receipt = try await importJournal.run(operationID, authority: authority, scheduler: scheduler)
+        try requireCurrentAccount(viewer)
+        return receipt
+    }
+
+    private func requireCurrentAccount(_ account: Import.Account) throws {
+        try requireForeground()
+        guard try connection.isCurrentAccount(account) else { throw Failure.staleConnection }
     }
 
     private func requireForeground() throws {
@@ -95,7 +160,10 @@ final class RemiloIOSGoogleCalendarRuntime {
         if let live { return live }
         let connection = try Connection(configuration: configuration, store: .local())
         let presenter = RemiloIOSGoogleCalendarWebAuthorization()
-        let runtime = RemiloIOSGoogleCalendarRuntime(connection: connection, canUseForeground: { Self.foregroundWindow() != nil }) {
+        let runtime = RemiloIOSGoogleCalendarRuntime(
+            connection: connection, canUseForeground: { Self.foregroundWindow() != nil },
+            importJournal: try .local(), scheduler: .localEngine(.shared)
+        ) {
             subject, purpose in
             try await Self.authorize(presenter: presenter, subject: subject, purpose: purpose)
         }

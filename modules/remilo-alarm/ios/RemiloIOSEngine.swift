@@ -50,14 +50,13 @@ final class RemiloIOSEngine {
 
     /// Native Calendar capture only. The ordinary Expo command entry never
     /// supplies these exact source-derived recurrence bounds.
-    func applyCalendarCreate(_ payload: [String: Any], authorize: @Sendable () async throws -> Bool) async throws -> [String: Any] {
+    func applyCalendarCreate(_ payload: [String: Any], authorize: @escaping @MainActor @Sendable () throws -> Bool) async throws -> [String: Any] {
         await acquire()
         defer { release() }
         do {
             let input = IOSInput(values: payload)
             let kind = try input.text("kind", maximum: 60)
             if let recovered = try calendarCreateReceipt(payload) { return recovered }
-            guard try await authorize() else { throw IOSInputFailure("STALE_CONNECTION") }
             try Task.checkCancellation()
             let bounds: (anchor: String, endExclusive: String?)?
             if kind == "CreateSeries" {
@@ -72,7 +71,7 @@ final class RemiloIOSEngine {
                 }
                 bounds = nil
             }
-            _ = try await execute(input, kind: kind, calendarBounds: bounds)
+            _ = try await execute(input, kind: kind, calendarBounds: bounds, calendarPermit: authorize)
             guard let committed = try calendarCreateReceipt(payload) else { throw IOSInputFailure("NOT_FOUND") }
             return committed
         } catch let error as IOSInputFailure {
@@ -261,7 +260,8 @@ final class RemiloIOSEngine {
 
     private func execute(
         _ input: IOSInput, kind: String, loadImport: (() async throws -> IOSPreparedImport)? = nil,
-        calendarBounds: (anchor: String, endExclusive: String?)? = nil
+        calendarBounds: (anchor: String, endExclusive: String?)? = nil,
+        calendarPermit: (@MainActor @Sendable () throws -> Bool)? = nil
     ) async throws -> [String: Any] {
         let operationID = try input.text("operationId", maximum: 200)
         guard !operationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw input.invalid("operationId") }
@@ -409,6 +409,11 @@ final class RemiloIOSEngine {
             importRegistrationIDs: importRegistrationIDs, groupRegistrationIDs: groupRegistrationIDs,
             result: try JSONSerialization.data(withJSONObject: applied), finalized: !needsDeliveryResult
         )
+        if let calendarPermit {
+            try Task.checkCancellation()
+            // Calendar connection authority and this durable write share MainActor.
+            guard try calendarPermit() else { throw IOSInputFailure("STALE_CONNECTION") }
+        }
         try commit(state)
         try await drain()
         if needsDeliveryResult { return try finalize(operationID) }

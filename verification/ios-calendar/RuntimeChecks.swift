@@ -6,6 +6,8 @@ enum RuntimeChecks {
     private typealias Connection = Runtime.Connection
     private typealias Failure = Runtime.Failure
     private typealias ImportFailure = Connection.Import.Failure
+    private typealias Import = Runtime.Import
+    private typealias Journal = Runtime.ImportJournal
     private typealias HTTP = RemiloIOSGoogleCalendarHTTP
 
     static func run(configuration: RemiloIOSGoogleCalendarConfiguration, access: RemiloIOSGoogleCalendarAccess,
@@ -23,9 +25,17 @@ enum RuntimeChecks {
             otherGrant, configuration: configuration, expectedSubject: "subject-B"
         )
         let accounts = Accounts(original: access, other: otherAccount)
-        let runtime = Runtime(connection: connection, canUseForeground: { foreground.active }) { subject, purpose in
+        let local = LocalImports()
+        let scheduler = Journal.Scheduler(receipt: { await local.receipts[$0.id] }, create: { try await local.create($0, permit: $1) })
+        let authorize: Connection.Authorize = { subject, purpose in
             try await accounts.authorize(expectedSubject: subject, purpose: purpose)
         }
+        func newRuntime() -> Runtime {
+            let journal = Journal(directory: path, now: { Int64((clock.now().timeIntervalSince1970 * 1_000).rounded()) })
+            return Runtime(connection: connection, canUseForeground: { foreground.active },
+                           importJournal: journal, scheduler: scheduler, authorize: authorize)
+        }
+        let runtime = newRuntime()
 
         foreground.active = false
         try await rejects(.needsAccess) { _ = try await runtime.view() }
@@ -66,21 +76,57 @@ enum RuntimeChecks {
             } catch let error as ImportFailure { precondition(error == expected) }
         }
 
+        let choices = Import.Choices(mode: .none, automaticSync: false)
+        await fixture.changeEventTag()
+        let staleReview = try await runtime.confirmOneOffImport(operationID: UUID(), reviewID: reviewed.id,
+                                                               expectedRevision: connected.revision, choices: choices)
+        precondition(staleReview.errorCode == ImportFailure.staleRemote.rawValue && local.receipts.isEmpty)
+        let fresh = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
+        do {
+            _ = try await runtime.confirmOneOffImport(operationID: UUID(), reviewID: fresh.id,
+                                                     expectedRevision: connected.revision, choices: .init(mode: .none))
+            preconditionFailure("One-off import cannot enable automatic Google actions")
+        } catch ImportFailure.invalidInput {}
+        let operationID = UUID()
+        let imported = try await runtime.confirmOneOffImport(operationID: operationID, reviewID: fresh.id,
+                                                             expectedRevision: connected.revision, choices: choices)
+        precondition(imported.local?.id == "local-fixture" && imported.relationship == .manual && imported.suppression == .none)
+        precondition(local.receipts.count == 1)
+        let afterImport = try await page(runtime, revision: connected.revision)
+        precondition(afterImport.items.map(\.eventId) == ["family"] && afterImport.nextCursor != nil)
+        do {
+            _ = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
+            preconditionFailure("A direct review cannot bypass a source reservation")
+        } catch ImportFailure.alreadyImported {}
+
         let refresh = try await runtime.authorizeFromUserAction(expectedRevision: connected.revision, intent: .reauthorizeCurrentAccount)
         precondition(refresh.revision == 2 && refresh.accountGeneration == connected.accountGeneration)
         try await rejects(.staleCursor) { _ = try await page(runtime, revision: refresh.revision, cursor: cursor) }
         try await rejects(.staleConnection) {
             _ = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
         }
+        let relaunched = newRuntime()
+        let recovered = try await relaunched.recoverOneOffImport(operationID: operationID, expectedRevision: refresh.revision)
+        precondition(recovered == imported && local.receipts.count == 1)
 
         await fixture.holdEvents()
         let backgroundRead = Task {
-            try await runtime.prepareOneOffImport(expectedRevision: refresh.revision, calendarID: "owned", eventID: "ordinary")
+            try await runtime.prepareOneOffImport(expectedRevision: refresh.revision, calendarID: "owned", eventID: "next")
         }
         await fixture.waitForHeldEvents()
         foreground.active = false
         await fixture.releaseEvents()
         try await rejects(.needsAccess) { _ = try await backgroundRead.value }
+        foreground.active = true
+
+        await fixture.holdOwnership()
+        let backgroundBeforeEvent = Task {
+            try await runtime.prepareOneOffImport(expectedRevision: refresh.revision, calendarID: "owned", eventID: "no-event-expected")
+        }
+        await fixture.waitForHeldEvents()
+        foreground.active = false
+        await fixture.releaseEvents()
+        try await rejects(.needsAccess) { _ = try await backgroundBeforeEvent.value }
         foreground.active = true
 
         await accounts.selectOtherAccount()
@@ -96,6 +142,10 @@ enum RuntimeChecks {
         precondition(switched.revision == 3 && switched.accountGeneration == 2 && switched.email == refresh.email)
         await fixture.releaseEvents()
         try await rejects(.staleConnection) { _ = try await oldAccountRead.value }
+        do {
+            _ = try await relaunched.recoverOneOffImport(operationID: operationID, expectedRevision: switched.revision)
+            preconditionFailure("Another Google subject cannot recover the prior receipt")
+        } catch ImportFailure.notFound {}
 
         await fixture.holdEvents()
         let expiring = Task { try await page(runtime, revision: switched.revision) }
@@ -132,6 +182,19 @@ enum RuntimeChecks {
     @MainActor
     private final class Foreground { var active = true }
 
+    @MainActor
+    private final class LocalImports {
+        private(set) var receipts: [String: Journal.LocalReceipt] = [:]
+
+        func create(_ command: Import.Command, permit: Journal.Scheduler.Permit) throws -> Journal.LocalResult {
+            guard try permit() else { return .rejected(ImportFailure.staleConnection.rawValue) }
+            precondition(command.title == "更新后的标题" && command.notes == "  Original notes\n" && command.mode == .none)
+            let receipt = Journal.LocalReceipt(id: "local-fixture", kind: .reminder, status: .applied, eligibleForLink: true)
+            precondition(receipts.updateValue(receipt, forKey: command.id) == nil)
+            return .acknowledged(receipt)
+        }
+    }
+
     private final class Clock: @unchecked Sendable {
         private let lock = NSLock()
         private var value: Date
@@ -164,12 +227,16 @@ enum RuntimeChecks {
     }
 
     private actor Fixture {
-        private var holdNext = false
+        private enum ReadKind: Equatable { case ownership, event }
+        private var holdNext: ReadKind?
         private var held: CheckedContinuation<Void, Never>?
         private var waiting: CheckedContinuation<Void, Never>?
+        private var eventTag = "exact"
         private(set) var revocations = 0
 
-        func holdEvents() { holdNext = true }
+        func holdEvents() { holdNext = .event }
+        func holdOwnership() { holdNext = .ownership }
+        func changeEventTag() { eventTag = "updated" }
 
         func waitForHeldEvents() async {
             if held != nil { return }
@@ -181,9 +248,9 @@ enum RuntimeChecks {
             held = nil
         }
 
-        private func pauseIfHeld() async {
-            guard holdNext else { return }
-            holdNext = false
+        private func pauseIfHeld(_ kind: ReadKind) async {
+            guard holdNext == kind else { return }
+            holdNext = nil
             await withCheckedContinuation { continuation in
                 held = continuation
                 waiting?.resume()
@@ -207,12 +274,16 @@ enum RuntimeChecks {
             case "/calendar/v3/users/me/calendarList":
                 return reply(#"{"items":[{"id":"owned","accessRole":"owner","timeZone":"America/Los_Angeles"},{"id":"writer","accessRole":"writer"}]}"#)
             case "/calendar/v3/users/me/calendarList/owned":
+                await pauseIfHeld(.ownership)
                 return reply(#"{"id":"owned","accessRole":"owner","timeZone":"America/Los_Angeles","summary":"Owned"}"#)
             case "/calendar/v3/users/me/calendarList/writer":
                 return reply(#"{"id":"writer","accessRole":"writer"}"#)
             case "/calendar/v3/calendars/owned/events/ordinary":
-                await pauseIfHeld()
-                return reply(#"{"id":"ordinary","etag":"\"exact\"","summary":"更新后的标题","description":"  Original notes\n","start":{"date":"2027-03-14"},"end":{"date":"2027-03-15"},"reminders":{"useDefault":false}}"#)
+                await pauseIfHeld(.event)
+                return reply(#"{"id":"ordinary","etag":"\"\#(eventTag)\"","summary":"更新后的标题","description":"  Original notes\n","start":{"date":"2027-03-14"},"end":{"date":"2027-03-15"},"reminders":{"useDefault":false}}"#)
+            case "/calendar/v3/calendars/owned/events/next":
+                await pauseIfHeld(.event)
+                return reply(#"{"id":"next","etag":"\"next\"","summary":"Next","start":{"date":"2027-03-14"},"end":{"date":"2027-03-15"}}"#)
             case "/calendar/v3/calendars/owned/events/weak":
                 return reply(#"{"id":"weak","etag":"W/\"stale\""}"#)
             case "/calendar/v3/calendars/owned/events/missing":
@@ -225,7 +296,7 @@ enum RuntimeChecks {
                 let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
                 precondition(query.contains(.init(name: "timeMin", value: "2027-03-14T08:00:00Z")))
                 precondition(query.contains(.init(name: "timeMax", value: "2027-03-15T07:00:00Z")))
-                await pauseIfHeld()
+                await pauseIfHeld(.event)
                 if query.contains(.init(name: "pageToken", value: "next-page")) {
                     return reply(#"{"items":[{"id":"next","start":{"date":"2027-03-14"},"end":{"date":"2027-03-15"}}]}"#)
                 }

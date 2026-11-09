@@ -95,6 +95,7 @@ struct EngineChecks {
         try await datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore()
         try routineAlarmActionsKeepDatedProgress()
         try await calendarCreateUsesExactLocalReceiptAndBounds()
+        try await queuedCalendarCreateChecksAuthorityBeforeWriting()
         try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
         try await groupCompletionDoesNotTouchLaterArrivals()
         try await preparedImportCommitsOnceAndReplaysAfterStageRemoval()
@@ -627,6 +628,59 @@ struct EngineChecks {
                                                 calendarBounds: ("2018-11-04T00:00", nil))
         let gapSlots = try RemiloIOSRecurrence.future(allDayRule, afterMs: gapStart - 1, deviceZone: .current, limit: 2)
         precondition(gapSlots.count == 2 && gapSlots[0].alarmAtMs == gapAlert && gapSlots[1].alarmAtMs == nextMidnight + 9 * 3_600_000)
+    }
+
+    private static func queuedCalendarCreateChecksAuthorityBeforeWriting() async throws {
+        let store = FixtureStore()
+        defer { store.remove() }
+        let engine = store.engine()
+        let (held, markHeld) = AsyncStream<Void>.makeStream()
+        let (release, resume) = AsyncStream<Void>.makeStream()
+        let earlier = Task {
+            try await engine.applyImport(handle: "queue-hold", copies: [], operationID: "queue-hold") {
+                markHeld.yield(())
+                markHeld.finish()
+                for await _ in release { break }
+                return IOSPreparedImport(content: .init())
+            }
+        }
+        var heldIterator = held.makeAsyncIterator()
+        _ = await heldIterator.next()
+        let proof = CalendarCommitProof()
+        let draft = createCommand(id: "ios-calendar-import:" + UUID().uuidString.lowercased())
+        let (queued, markQueued) = AsyncStream<Void>.makeStream()
+        let later = Task {
+            markQueued.yield(())
+            markQueued.finish()
+            return try await engine.applyCalendarCreate(draft) {
+                proof.checks += 1
+                return proof.current
+            }
+        }
+        var queuedIterator = queued.makeAsyncIterator()
+        _ = await queuedIterator.next()
+        precondition(proof.checks == 0)
+        proof.current = false
+        resume.yield(())
+        resume.finish()
+        _ = try await earlier.value
+        let denied = try await later.value
+        let saved = try store.load()
+        let receipt = try engine.calendarCreateReceipt(draft)
+        precondition(denied["errorCode"] as? String == "STALE_CONNECTION" && proof.checks == 1)
+        precondition(saved.reminders.isEmpty && saved.outbox.isEmpty && receipt == nil)
+        var invalid = draft
+        invalid["title"] = ""
+        let invalidResult = try await engine.applyCalendarCreate(invalid) {
+            preconditionFailure("Invalid commands must fail validation before the commit permit")
+        }
+        precondition(invalidResult["errorCode"] as? String == "INVALID_INPUT" && invalidResult["errorField"] as? String == "title")
+    }
+
+    @MainActor
+    private final class CalendarCommitProof {
+        var current = true
+        var checks = 0
     }
 
     private static func preparedImportCommitsOnceAndReplaysAfterStageRemoval() async throws {

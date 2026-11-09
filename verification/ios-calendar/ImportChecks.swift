@@ -27,6 +27,8 @@ enum ImportChecks {
         let available = authority(review.source)
         _ = try await journal.capture(operationID: operation, review: review, choices: choices)
         _ = try await journal.capture(operationID: operation, review: review, choices: choices)
+        let capturedAccount = try await journal.account(for: operation)
+        precondition(capturedAccount == account)
         try await rejects(.operationPending) {
             _ = try await journal.capture(operationID: UUID(), review: review, choices: choices)
         }
@@ -45,6 +47,9 @@ enum ImportChecks {
         precondition(recovered.local?.status == .blocked && recovered.relationship == .suspended && recovered.suppression == .suspended)
         let exact = try await recreated.capture(operationID: operation, review: review, choices: choices)
         precondition(exact == recovered)
+        let recoveredAccount = try await recreated.account(for: operation)
+        let unknownAccount = try await recreated.account(for: UUID())
+        precondition(recoveredAccount == account && unknownAccount == nil)
         let attempts = await scheduled.attempts
         precondition(attempts == 1)
         let state = try String(contentsOf: path.appendingPathComponent("import-journal.json"), encoding: .utf8)
@@ -69,8 +74,42 @@ enum ImportChecks {
         _ = try await journal.capture(operationID: pendingOperation, review: pendingReview, choices: choices)
         let pending = try await journal.run(pendingOperation, authority: authority(pendingReview.source), scheduler: adapter(healthy))
         precondition(pending.local?.status == .pending && pending.relationship == .manual && pending.suppression == .deferredUntilLocalDelivery)
+        try await revokedBeforeCommit(journal, calendar: calendar, now: now)
         try expiryAndRecurrence(calendar, now: now)
     }
+
+    @MainActor
+    private static func revokedBeforeCommit(_ journal: Journal, calendar: Transport.OwnedCalendar, now: Int64) async throws {
+        let event = try remote(id: "revoked-before-commit", etag: #""etag""#)
+        let review = try Import.Review(account: account, calendar: calendar, event: event, now: now)
+        let operation = UUID()
+        _ = try await journal.capture(operationID: operation, review: review, choices: .init())
+        let epoch = AuthorityFixture()
+        let authority = Journal.Authority(current: { $0 == account && epoch.available }, observe: { _, _ in
+            Import.Observation(source: review.source, recurrenceEvidence: nil)
+        })
+        let fixture = LocalFixture(loseReply: false, status: .scheduled)
+        let (queued, markQueued) = AsyncStream<Void>.makeStream()
+        let (release, resume) = AsyncStream<Void>.makeStream()
+        let scheduler = Journal.Scheduler(receipt: { try await fixture.receipt($0) }, create: { command, permit in
+            markQueued.yield(())
+            markQueued.finish()
+            for await _ in release { break }
+            return try await fixture.create(command, permit: permit)
+        })
+        let pending = Task { try await journal.run(operation, authority: authority, scheduler: scheduler) }
+        var entered = queued.makeAsyncIterator()
+        _ = await entered.next()
+        epoch.available = false
+        resume.yield(())
+        resume.finish()
+        let denied = try await pending.value
+        let attempts = await fixture.attempts
+        precondition(denied.errorCode == "STALE_CONNECTION" && denied.local == nil && attempts == 0)
+    }
+
+    @MainActor
+    private final class AuthorityFixture { var available = true }
 
     private static func expiryAndRecurrence(_ calendar: Transport.OwnedCalendar, now: Int64) throws {
         let past = try remote(id: "past", etag: #""past""#, date: "2027-03-14")

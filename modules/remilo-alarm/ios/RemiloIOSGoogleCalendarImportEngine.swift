@@ -20,7 +20,7 @@ extension RemiloIOSGoogleCalendarImportJournal.Scheduler {
     }
 
     @MainActor
-    private static func apply(_ engine: RemiloIOSEngine, command: RemiloIOSGoogleCalendarImport.Command, permit: Permit)
+    private static func apply(_ engine: RemiloIOSEngine, command: RemiloIOSGoogleCalendarImport.Command, permit: @escaping Permit)
         async throws -> RemiloIOSGoogleCalendarImportJournal.LocalResult {
         let output = try await engine.applyCalendarCreate(command.payload, authorize: permit)
         if output["status"] as? String == "Rejected" {

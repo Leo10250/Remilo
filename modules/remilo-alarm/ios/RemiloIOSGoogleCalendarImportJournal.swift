@@ -20,13 +20,13 @@ actor RemiloIOSGoogleCalendarImportJournal {
     enum LocalResult: Sendable { case acknowledged(LocalReceipt), rejected(String) }
 
     struct Scheduler: Sendable {
-        typealias Permit = @Sendable () async throws -> Bool
+        typealias Permit = @MainActor @Sendable () throws -> Bool
         let receipt: @Sendable (Import.Command) async throws -> LocalReceipt?
-        let create: @Sendable (Import.Command, Permit) async throws -> LocalResult
+        let create: @Sendable (Import.Command, @escaping Permit) async throws -> LocalResult
     }
 
     struct Authority: Sendable {
-        let current: @Sendable (Import.Account) async throws -> Bool
+        let current: @MainActor @Sendable (Import.Account) throws -> Bool
         let observe: @Sendable (Import.Account, Import.SourceKey) async throws -> Import.Observation
     }
 
@@ -109,6 +109,19 @@ actor RemiloIOSGoogleCalendarImportJournal {
         return nil
     }
 
+    func account(for operationID: UUID) throws -> Import.Account? {
+        let entry = try read().entries[operationID]
+        return entry?.receipt?.account ?? entry?.capture?.review.account
+    }
+
+    func reservedEvents(subject: String, calendarID: String) throws -> Set<String> {
+        Set(try read().entries.values.compactMap { entry in
+            guard entry.source.subject == subject, entry.source.calendarID == calendarID,
+                  entry.receipt == nil || entry.receipt?.local != nil else { return nil }
+            return entry.source.eventID
+        })
+    }
+
     func run(_ operationID: UUID, authority: Authority, scheduler: Scheduler) async throws -> Receipt {
         let state = try read()
         guard let entry = state.entries[operationID] else { throw Failure.notFound }
@@ -151,9 +164,8 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let result: LocalResult
         do {
             result = try await scheduler.create(capture.command) {
-                guard try await authority.current(capture.review.account) else { return false }
                 _ = try Import.Capture(operationID: operationID, review: capture.review, choices: capture.choices, now: clock())
-                return true
+                return try authority.current(capture.review.account)
             }
         } catch let failure as Failure {
             result = .rejected(failure.rawValue)

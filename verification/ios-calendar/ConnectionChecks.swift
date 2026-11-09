@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 enum ConnectionChecks {
     private typealias Connection = RemiloIOSGoogleCalendarConnection
     private typealias Failure = RemiloIOSGoogleCalendarFailure
@@ -19,7 +20,7 @@ enum ConnectionChecks {
             return access
         }
 
-        let initial = try await connection.view()
+        let initial = try connection.view()
         precondition(initial.revision == 0 && initial.available && initial.access == .disconnected)
         try await rejects(.needsAccess) { _ = try await connection.ownedCalendars(expectedRevision: 0) }
         let connected = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount,
@@ -28,19 +29,19 @@ enum ConnectionChecks {
         try await rejects(.needsAccess) {
             _ = try await connection.connectFromUserAction(expectedRevision: 1, consent: .managedCreation, authorize: authorize)
         }
-        let stillConnected = try await connection.view()
+        let stillConnected = try connection.view()
         precondition(stillConnected.revision == 1 && stillConnected.access == .ownedCalendars)
         let bytes = try String(contentsOf: directory.appendingPathComponent("connection.json"), encoding: .utf8)
         precondition(bytes.contains("subject-A") && !bytes.contains("fixture-bearer") && !bytes.contains("refresh_token"))
 
         let relaunched = Connection(configuration: configuration, store: store, http: http, now: now)
-        let retained = try await relaunched.view()
+        let retained = try relaunched.view()
         precondition(retained.connected && retained.access == .needsAccess && retained.revision == 1)
         try await rejects(.needsAccess) { _ = try await relaunched.ownedCalendars(expectedRevision: 1) }
 
         let first = try await connection.discoverOwnedCalendars(expectedRevision: 1)
         precondition(first.items.count == 10 && !first.complete)
-        let checkpoint = try await connection.discoveryProgress(expectedRevision: 1)
+        let checkpoint = try connection.discoveryProgress(expectedRevision: 1)
         precondition(checkpoint?.id == first.id && checkpoint?.items == first.items)
         let completed = try await connection.discoverOwnedCalendars(expectedRevision: 1, resume: first.id)
         precondition(completed.complete && completed.items.count == 12)
@@ -75,7 +76,7 @@ enum ConnectionChecks {
         await fixture.readGate.waitUntilHeld()
         let disconnect = Task { try await connection.disconnect(operationID: "disconnect", expectedRevision: 1) }
         await fixture.revokeGate.waitUntilHeld()
-        let during = try await connection.view()
+        let during = try connection.view()
         precondition(!during.connected && during.revision == 2 && during.accountGeneration == 2 && during.revocation == .pending)
         let pendingReplay = try await connection.disconnect(operationID: "disconnect", expectedRevision: 1)
         precondition(pendingReplay.revision == 2 && pendingReplay.revocation == .pending)
@@ -108,7 +109,7 @@ enum ConnectionChecks {
         precondition(noLiveGrant.revision == 3 && noLiveGrant.revocation == .unconfirmed)
         await consentGate.release()
         try await rejects(.staleConnection) { _ = try await delayedConsent.value }
-        let final = try await connection.view()
+        let final = try connection.view()
         precondition(!final.connected && final.revocation == .unconfirmed && final.revision == 3)
 
         let future = Data(#"{"schemaVersion":99}"#.utf8)
