@@ -2534,7 +2534,13 @@ export const catalogs = {
     "ios_calendar_revoked": "Disconnected. Remilo’s access to Google Calendar was revoked.",
     "ios_calendar_import_unconfirmed": "Remilo hasn’t confirmed whether it saved this reminder. Retry the same import.",
     "ios_calendar_review_outdated": "This review is out of date. Go back and select the event again.",
-    "ios_calendar_owned_sources": "Only calendars you own are shown."
+    "ios_calendar_owned_sources": "Only calendars you own are shown.",
+    "ios_calendar_publish_settings_description": "Import events and publish individual reminders to Google Calendar.",
+    "ios_calendar_allow_publish": "Allow publishing to Google Calendar",
+    "ios_calendar_allow_publish_detail": "This permission lets Remilo add events to Google calendars you own. You’ll confirm each event before it is sent.",
+    "ios_calendar_publish_waiting_access": "Cancel this request to review the event again with your current Calendar access.",
+    "ios_calendar_cancel_publication": "Cancel pending publication",
+    "ios_calendar_publish_readback_access": "Reconnect the original Google account to check this publication."
   },
   "zh-Hans": {
     "ui_your_routines": "你的日常计划",
@@ -5044,7 +5050,13 @@ export const catalogs = {
     "ios_calendar_revoked": "已断开连接，Remilo 的 Google 日历访问权限已撤销。",
     "ios_calendar_import_unconfirmed": "尚未确认提醒是否已保存。请重试此次导入。",
     "ios_calendar_review_outdated": "导入预览已失效。请返回并重新选择日程。",
-    "ios_calendar_owned_sources": "仅显示你拥有的日历。"
+    "ios_calendar_owned_sources": "仅显示你拥有的日历。",
+    "ios_calendar_publish_settings_description": "从 Google 日历导入日程，也可将单次提醒添加到 Google 日历。",
+    "ios_calendar_allow_publish": "允许添加到 Google 日历",
+    "ios_calendar_allow_publish_detail": "此权限允许 Remilo 向你拥有的 Google 日历添加日程。每次添加前仍需你确认。",
+    "ios_calendar_publish_waiting_access": "请取消此次添加请求，再使用当前日历权限重新核对日程。",
+    "ios_calendar_cancel_publication": "取消此次添加请求",
+    "ios_calendar_publish_readback_access": "请重新连接原 Google 账号，查看此次添加结果。"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -7505,4 +7517,10 @@ export interface MessageArguments {
   ios_calendar_import_unconfirmed: Record<string, never>;
   ios_calendar_review_outdated: Record<string, never>;
   ios_calendar_owned_sources: Record<string, never>;
+  ios_calendar_publish_settings_description: Record<string, never>;
+  ios_calendar_allow_publish: Record<string, never>;
+  ios_calendar_allow_publish_detail: Record<string, never>;
+  ios_calendar_publish_waiting_access: Record<string, never>;
+  ios_calendar_cancel_publication: Record<string, never>;
+  ios_calendar_publish_readback_access: Record<string, never>;
 }

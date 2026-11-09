@@ -2543,4 +2543,10 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_ios_calendar_import_unconfirmed">Remilo hasn’t confirmed whether it saved this reminder. Retry the same import.</string>
   <string name="l10n_ios_calendar_review_outdated">This review is out of date. Go back and select the event again.</string>
   <string name="l10n_ios_calendar_owned_sources">Only calendars you own are shown.</string>
+  <string name="l10n_ios_calendar_publish_settings_description">Import events and publish individual reminders to Google Calendar.</string>
+  <string name="l10n_ios_calendar_allow_publish">Allow publishing to Google Calendar</string>
+  <string name="l10n_ios_calendar_allow_publish_detail">This permission lets Remilo add events to Google calendars you own. You’ll confirm each event before it is sent.</string>
+  <string name="l10n_ios_calendar_publish_waiting_access">Cancel this request to review the event again with your current Calendar access.</string>
+  <string name="l10n_ios_calendar_cancel_publication">Cancel pending publication</string>
+  <string name="l10n_ios_calendar_publish_readback_access">Reconnect the original Google account to check this publication.</string>
 </resources>

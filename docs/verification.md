@@ -268,6 +268,16 @@ result. Check that the cancelled date is absent from upcoming dates and the
 moved reminder in Agenda keeps its authored time. With a second repeat, change
 an instance after opening Review and verify that confirmation requests a fresh
 review even when the series details stay the same.
+
+For one-time publication, select a publishing destination that the same Google
+account owns and grant access to `calendar.events.owned` from the publish
+review. Check that the destination still has the same events after consent.
+Review and confirm a local one-time reminder. Verify its title, notes, date,
+and time in Google Calendar, then edit the local reminder and inspect the
+saved result.
+Reopen Remilo and verify the published status is available from saved data. If
+the initial response was interrupted after sending, reauthorize the same
+account and check that the retry recovers a single event with the original ID.
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

@@ -26,7 +26,6 @@ import {
   ActionFeedback,
   ActionPair,
   Button,
-  Choice,
   ConnectedGroup,
   Copy,
   DateField,
@@ -35,7 +34,11 @@ import {
   SettingRow,
   Sheet,
 } from '../ui/components';
-import { calendarConnectionNeedsRefresh, calendarReadAccess } from '../ui/calendar-local-import';
+import {
+  CalendarOwnedChoices,
+  calendarConnectionNeedsRefresh,
+  calendarReadAccess,
+} from '../ui/calendar-local-import';
 import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
 
@@ -366,31 +369,17 @@ export default function CalendarImportBrowser() {
         }}
       >
         <Copy muted>{t(iosReminders ? 'ios_calendar_owned_sources' : 'm_8c7cc2cc4d98')}</Copy>
-        <ConnectedGroup>
-          {calendars.map((row) => (
-            <Choice
-              key={row.id}
-              label={row.name}
-              description={row.zoneId}
-              selected={calendar?.id === row.id}
-              disabled={busy}
-              onPress={() => {
-                setCalendar(row);
-                setSourceRevision(revision!);
-                setSelecting(false);
-              }}
-            />
-          ))}
-        </ConnectedGroup>
-        {calendarCursor && (
-          <Button
-            label={t('m_bea5fb6b1e61')}
-            variant="secondary"
-            disabled={busy}
-            onPress={() => void loadCalendars(calendarCursor)}
-          />
-        )}
-        {!calendars.length && !busy && <Copy>{t('m_0e913a16bf22')}</Copy>}
+        <CalendarOwnedChoices
+          items={calendars}
+          selectedId={calendar?.id}
+          busy={busy}
+          onSelect={(row) => {
+            setCalendar(row);
+            setSourceRevision(revision!);
+            setSelecting(false);
+          }}
+          onMore={calendarCursor ? () => void loadCalendars(calendarCursor) : undefined}
+        />
         {!!error && <ActionFeedback message={error} tone="warning" />}
       </Sheet>
     </Page>

@@ -20,6 +20,7 @@ import { calendarDispositionLabel } from '../domain/calendar-managed';
 import { engine, iosReminders, nativeAvailable } from './native';
 import { Button, ConnectedGroup, Copy, SettingRow } from './components';
 import { useTimeFormatting } from './time-display';
+import { useCalendarPublications } from './calendar-publication';
 
 export function useCalendarAssociation(ids: readonly string[], enabled = true) {
   const links = useQuery({
@@ -27,11 +28,7 @@ export function useCalendarAssociation(ids: readonly string[], enabled = true) {
     queryFn: () => engine().getCalendarLinks(),
     enabled: nativeAvailable && !iosReminders && enabled,
   });
-  const publications = useQuery({
-    queryKey: ['calendar', 'publications'],
-    queryFn: () => engine().getCalendarPublications(),
-    enabled: nativeAvailable && !iosReminders && enabled,
-  });
+  const { publications } = useCalendarPublications(enabled);
   return (
     (links.data || []).some((link) => ids.includes(link.occurrenceId)) ||
     (publications.data || []).some((pub) => ids.includes(pub.occurrenceId))
@@ -82,7 +79,7 @@ export function CalendarSummaryRow({
         }
         onPress={() =>
           router.push({
-            pathname: '/calendar-manage',
+            pathname: iosReminders ? '/calendar-publish' : '/calendar-manage',
             params: { id: link?.occurrenceId ?? id, ...origin, originReminderId: id },
           } as Href)
         }

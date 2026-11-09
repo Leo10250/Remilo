@@ -17040,6 +17040,48 @@
       "args": {},
       "context": "Source picker for a reviewed Google Calendar import.",
       "calendarStatus": false
+    },
+    "ios_calendar_publish_settings_description": {
+      "en": "Import events and publish individual reminders to Google Calendar.",
+      "zh-Hans": "从 Google 日历导入日程，也可将单次提醒添加到 Google 日历。",
+      "args": {},
+      "context": "iOS Settings and Calendar overview when reviewed local imports and one-time publication are available.",
+      "calendarStatus": false
+    },
+    "ios_calendar_allow_publish": {
+      "en": "Allow publishing to Google Calendar",
+      "zh-Hans": "允许添加到 Google 日历",
+      "args": {},
+      "context": "Button and accessible label opening Google write consent. Confirm publication is a later separate action.",
+      "calendarStatus": false
+    },
+    "ios_calendar_allow_publish_detail": {
+      "en": "This permission lets Remilo add events to Google calendars you own. You’ll confirm each event before it is sent.",
+      "zh-Hans": "此权限允许 Remilo 向你拥有的 Google 日历添加日程。每次添加前仍需你确认。",
+      "args": {},
+      "context": "Publication review explanation before opening Google write consent.",
+      "calendarStatus": false
+    },
+    "ios_calendar_publish_waiting_access": {
+      "en": "Cancel this request to review the event again with your current Calendar access.",
+      "zh-Hans": "请取消此次添加请求，再使用当前日历权限重新核对日程。",
+      "args": {},
+      "context": "Recovery guidance for an unsent publication whose old Calendar authority can no longer send it.",
+      "calendarStatus": false
+    },
+    "ios_calendar_cancel_publication": {
+      "en": "Cancel pending publication",
+      "zh-Hans": "取消此次添加请求",
+      "args": {},
+      "context": "Button and accessible label that cancels an unsent publication request. Its local reminder is retained.",
+      "calendarStatus": false
+    },
+    "ios_calendar_publish_readback_access": {
+      "en": "Reconnect the original Google account to check this publication.",
+      "zh-Hans": "请重新连接原 Google 账号，查看此次添加结果。",
+      "args": {},
+      "context": "Recovery guidance for an already submitted request. Reconnection permits a read-only result check.",
+      "calendarStatus": false
     }
   }
 }

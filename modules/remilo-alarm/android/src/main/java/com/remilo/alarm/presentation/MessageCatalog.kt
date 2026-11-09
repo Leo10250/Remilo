@@ -2522,6 +2522,12 @@ object MessageCatalog {
     "ios_calendar_revoked" to Entry(R.string.l10n_ios_calendar_revoked, false, listOf(), "Disconnected. Remilo’s access to Google Calendar was revoked.", false),
     "ios_calendar_import_unconfirmed" to Entry(R.string.l10n_ios_calendar_import_unconfirmed, false, listOf(), "Remilo hasn’t confirmed whether it saved this reminder. Retry the same import.", false),
     "ios_calendar_review_outdated" to Entry(R.string.l10n_ios_calendar_review_outdated, false, listOf(), "This review is out of date. Go back and select the event again.", false),
-    "ios_calendar_owned_sources" to Entry(R.string.l10n_ios_calendar_owned_sources, false, listOf(), "Only calendars you own are shown.", false)
+    "ios_calendar_owned_sources" to Entry(R.string.l10n_ios_calendar_owned_sources, false, listOf(), "Only calendars you own are shown.", false),
+    "ios_calendar_publish_settings_description" to Entry(R.string.l10n_ios_calendar_publish_settings_description, false, listOf(), "Import events and publish individual reminders to Google Calendar.", false),
+    "ios_calendar_allow_publish" to Entry(R.string.l10n_ios_calendar_allow_publish, false, listOf(), "Allow publishing to Google Calendar", false),
+    "ios_calendar_allow_publish_detail" to Entry(R.string.l10n_ios_calendar_allow_publish_detail, false, listOf(), "This permission lets Remilo add events to Google calendars you own. You’ll confirm each event before it is sent.", false),
+    "ios_calendar_publish_waiting_access" to Entry(R.string.l10n_ios_calendar_publish_waiting_access, false, listOf(), "Cancel this request to review the event again with your current Calendar access.", false),
+    "ios_calendar_cancel_publication" to Entry(R.string.l10n_ios_calendar_cancel_publication, false, listOf(), "Cancel pending publication", false),
+    "ios_calendar_publish_readback_access" to Entry(R.string.l10n_ios_calendar_publish_readback_access, false, listOf(), "Reconnect the original Google account to check this publication.", false)
   )
 }

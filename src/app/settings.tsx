@@ -295,7 +295,9 @@ export default function Settings() {
               label={t('m_b074310e911f')}
               description={t(
                 iosReminders
-                  ? 'ios_calendar_settings_description'
+                  ? caps.data?.calendarOneOffPublish
+                    ? 'ios_calendar_publish_settings_description'
+                    : 'ios_calendar_settings_description'
                   : 'ui_calendar_settings_description',
               )}
               disabled={pending}

@@ -11,7 +11,7 @@ import { ThemeProvider, useTheme } from '../ui/theme';
 import PresentationPreview from '../ui/presentation-preview';
 import { TimeDisplayProvider } from '../ui/time-display';
 import { ConfirmationHost } from '../ui/confirmation-dialog';
-import { iosReminders, useIOSCalendarImport } from '../ui/native';
+import { iosReminders, useIOSCalendarImport, useIOSCalendarPublish } from '../ui/native';
 import { NativeDeliveryRequestHost } from '../ui/postpone-host';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
@@ -60,6 +60,7 @@ function Navigation() {
   useLocale();
   const colors = useTheme();
   const iosCalendarImport = useIOSCalendarImport();
+  const iosCalendarPublish = useIOSCalendarPublish();
   return (
     <>
       <StatusBar style={colors.dark ? 'light' : 'dark'} />
@@ -71,12 +72,14 @@ function Navigation() {
           <Stack.Screen name="calendar-import" />
           <Stack.Screen name="calendar-review" />
         </Stack.Protected>
+        <Stack.Protected guard={!iosReminders || iosCalendarPublish}>
+          <Stack.Screen name="calendar-publish" />
+        </Stack.Protected>
         <Stack.Protected guard={!iosReminders}>
           <Stack.Screen name="calendar-activate" />
           <Stack.Screen name="calendar-import-all" />
           <Stack.Screen name="calendar-manage" />
           <Stack.Screen name="calendar-managed" />
-          <Stack.Screen name="calendar-publish" />
           <Stack.Screen name="calendar-reviews" />
         </Stack.Protected>
         <Stack.Protected guard={iosReminders}>

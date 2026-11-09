@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { calendarError, publicationCommand, publicationCheckFeedback } from './calendar';
+import {
+  calendarError,
+  iosPublicationRetryAction,
+  publicationCommand,
+  publicationCheckFeedback,
+} from './calendar';
 import { previewCalendar } from '../../verification/ui/preview-calendar';
 import type {
   CalendarPublication,
@@ -11,6 +16,18 @@ import { calendarDispositionLabel } from './calendar-managed';
 import { readFileSync } from 'node:fs';
 
 describe('Calendar publication boundary', () => {
+  it('requires a new review for an unsent iOS publication when write access or its scope changed', () => {
+    expect(iosPublicationRetryAction({ state: 'Waiting', retryMode: 'send' })).toBe('send');
+    expect(iosPublicationRetryAction({ state: 'Waiting', retryMode: 'none' })).toBeNull();
+    expect(iosPublicationRetryAction({ state: 'NeedsAccess', retryMode: 'send' })).toBeNull();
+    expect(iosPublicationRetryAction({ state: 'Failed', retryMode: 'none' })).toBeNull();
+  });
+  it('uses read-only recovery for an uncertain iOS publication before and after reauthorization', () => {
+    expect(iosPublicationRetryAction({ state: 'Unconfirmed', retryMode: 'check' })).toBe('check');
+    expect(iosPublicationRetryAction({ state: 'NeedsAccess', retryMode: 'check' })).toBe(
+      'reauthorizeCheck',
+    );
+  });
   it('explains checked outcomes without claiming a removed reminder remains active', () => {
     const publication = {
       state: 'Unconfirmed',

@@ -6,6 +6,7 @@ import { usePreventRemove } from 'expo-router/react-navigation';
 import { useCallback, useRef, useState } from 'react';
 import type { View } from 'react-native';
 import type {
+  CalendarPage,
   CalendarCommand,
   CalendarConnection,
   ManagedCalendarCommand,
@@ -45,11 +46,12 @@ import {
   useCalendarAction,
 } from '../ui/calendar-sync';
 import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../ui/native';
-import { CalendarPublicationStatus } from '../ui/calendar-publication';
+import { CalendarPublicationStatus, useCalendarPublications } from '../ui/calendar-publication';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
 import {
   calendarAuthorizationError,
   calendarReadAccess,
+  CalendarOwnedChoices,
   LocalCalendarOperation,
   rememberCalendarConnection,
 } from '../ui/calendar-local-import';
@@ -68,10 +70,14 @@ function LocalCalendarSettings() {
   const origin = retainedOriginParams(useLocalSearchParams<OriginParams>());
   const confirm = useAppearanceConfirmation();
   const available = useIOSCalendarImport();
+  const { available: publishing, publications } = useCalendarPublications();
   const action = useCalendarAction();
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useLocalizedState('');
   const [lastRetry, setLastRetry] = useState<string | null>(null);
+  const [selectingDestination, setSelectingDestination] = useState(false);
+  const [destinationPage, setDestinationPage] = useState<CalendarPage>();
+  const destinationTrigger = useRef<View>(null);
   const running = useRef(false);
   const connection = useQuery({
     queryKey: ['calendar', 'connection'],
@@ -81,6 +87,8 @@ function LocalCalendarSettings() {
   const current = connection.error ? undefined : connection.data;
   const ready = available && calendarReadAccess(current);
   const revision = current?.revision;
+  const destination =
+    ready && destinationPage?.connectionRevision === revision ? destinationPage : undefined;
   const jobs = useQuery({
     queryKey: ['calendar', 'operations', revision],
     queryFn: () => engine().getCalendarOperations(revision!),
@@ -115,6 +123,36 @@ function LocalCalendarSettings() {
       const next = await engine().authorizeCalendarFromUserAction!(current.revision, intent);
       await rememberCalendarConnection(client, next);
     }, true);
+  };
+  const loadDestinations = (cursor: string | null) => {
+    if (!ready || revision === undefined || action.unknown || running.current) return;
+    setSelectingDestination(true);
+    void run(async () => {
+      const page = await engine().listOwnedCalendars(cursor, revision);
+      if (page.connectionRevision !== revision) return;
+      setDestinationPage((previous) => {
+        if (!cursor || previous?.connectionRevision !== revision) return page;
+        const known = new Set(previous.items.map((calendar) => calendar.id));
+        return {
+          ...page,
+          items: [...previous.items, ...page.items.filter((calendar) => !known.has(calendar.id))],
+        };
+      });
+    });
+  };
+  const selectDestination = (calendarId: string) => {
+    if (!ready || revision === undefined || action.unknown || running.current) return;
+    setSelectingDestination(false);
+    void run(async () => {
+      const next = await action.submit({
+        kind: 'SelectCalendar',
+        operationId: engine().createOperationId(),
+        calendarId,
+        expectedConnectionRevision: revision,
+      });
+      if (typeof next.revision === 'number' && typeof next.connected === 'boolean')
+        await rememberCalendarConnection(client, next as CalendarConnection);
+    });
   };
   const disconnect = () => {
     if (!current) return;
@@ -169,7 +207,11 @@ function LocalCalendarSettings() {
               ? t('ios_calendar_unavailable')
               : current.connected && !ready
                 ? t('m_326e71c82f32')
-                : t('ios_calendar_settings_description')
+                : t(
+                    publishing
+                      ? 'ios_calendar_publish_settings_description'
+                      : 'ios_calendar_settings_description',
+                  )
           }
           tone={ready ? 'success' : current.connected ? 'warning' : 'muted'}
           announce
@@ -210,6 +252,17 @@ function LocalCalendarSettings() {
       )}
       {available && current?.available && current.connected && (
         <ConnectedGroup>
+          {publishing && (
+            <SettingRow
+              intent="picker"
+              icon="event"
+              label={t('m_3994b5141305')}
+              value={current.calendarName || t('m_df12aeba9bb9')}
+              buttonRef={destinationTrigger}
+              disabled={!ready || busy || action.unknown}
+              onPress={() => loadDestinations(null)}
+            />
+          )}
           <SettingRow
             intent="action"
             label={t('m_2da87a0fec50')}
@@ -246,6 +299,38 @@ function LocalCalendarSettings() {
           }
         />
       ))}
+      {publishing &&
+        current &&
+        !publications.error &&
+        publications.data
+          ?.filter((job) => job.retryMode === 'send' || job.retryMode === 'check' || job.canCancel)
+          .map((job) => (
+            <CalendarPublicationStatus
+              key={job.operationId}
+              publication={job}
+              iosConnection={current}
+            />
+          ))}
+      <Sheet
+        title={t('m_3994b5141305')}
+        visible={selectingDestination && ready}
+        returnFocusRef={destinationTrigger}
+        onClose={() => {
+          if (!busy) setSelectingDestination(false);
+        }}
+      >
+        <Copy muted>{t('ios_calendar_owned_sources')}</Copy>
+        <CalendarOwnedChoices
+          items={destination?.items ?? []}
+          selectedId={current?.calendarId}
+          busy={busy || action.unknown}
+          onSelect={(calendar) => selectDestination(calendar.id)}
+          onMore={
+            destination?.nextCursor ? () => loadDestinations(destination.nextCursor) : undefined
+          }
+        />
+        {!!feedback && <ActionFeedback message={feedback} tone="warning" />}
+      </Sheet>
     </Page>
   );
 }

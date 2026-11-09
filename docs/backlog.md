@@ -9,7 +9,7 @@ retain history. Missing historical test paperwork is not an open defect.
 | ID | Status | Work |
 |---|---|---|
 | QA-IOS-SMOKE | Ready | Sign and exercise the bundled app on iPhone/iPad. Verify the optional signed WidgetKit build separately. Use the [iOS build and physical checks](verification.md#ios-build). |
-| QA-IOS-CALENDAR | Ready | Exercise signed iOS Google consent, one-off import, and exact recovery with a tester account. Use the [Calendar sideloading checks](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad). |
+| QA-IOS-CALENDAR | Ready | Exercise signed iOS Google consent, one-off and recurring import, one-time publication, and exact recovery with a tester account. Use the [Calendar sideloading checks](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad). |
 
 ## Later
 

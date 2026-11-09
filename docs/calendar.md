@@ -12,6 +12,10 @@ owned calendars and reviewed local copies of one-off events and supported
 recurring masters. A recurring copy retains verified cancellations as skips and
 changed instances at their authored times. The native scheduler checks the
 current account and grant immediately before saving a reminder or series.
+One-time publication uses a separately granted write scope and an explicitly
+selected owned destination. Remilo confirms the exact local reminder and
+connection before sending. Recovery after a sent request reads the original
+Google event identity.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)

@@ -2515,4 +2515,10 @@
   <string name="l10n_ios_calendar_import_unconfirmed">尚未确认提醒是否已保存。请重试此次导入。</string>
   <string name="l10n_ios_calendar_review_outdated">导入预览已失效。请返回并重新选择日程。</string>
   <string name="l10n_ios_calendar_owned_sources">仅显示你拥有的日历。</string>
+  <string name="l10n_ios_calendar_publish_settings_description">从 Google 日历导入日程，也可将单次提醒添加到 Google 日历。</string>
+  <string name="l10n_ios_calendar_allow_publish">允许添加到 Google 日历</string>
+  <string name="l10n_ios_calendar_allow_publish_detail">此权限允许 Remilo 向你拥有的 Google 日历添加日程。每次添加前仍需你确认。</string>
+  <string name="l10n_ios_calendar_publish_waiting_access">请取消此次添加请求，再使用当前日历权限重新核对日程。</string>
+  <string name="l10n_ios_calendar_cancel_publication">取消此次添加请求</string>
+  <string name="l10n_ios_calendar_publish_readback_access">请重新连接原 Google 账号，查看此次添加结果。</string>
 </resources>

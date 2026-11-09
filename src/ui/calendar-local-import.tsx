@@ -4,13 +4,14 @@ import type { QueryClient } from '@tanstack/react-query';
 import type {
   CalendarConnection,
   CalendarLinkedOperation,
+  OwnedCalendar,
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarError } from '../domain/calendar';
 import { calendarOperationRetryable } from '../domain/calendar-link';
 import type { OriginParams } from '../domain/navigation';
 import { t } from '../localization';
 import { useTranslation } from '../localization/react';
-import { ActionFeedback, Button, ConnectedGroup, Copy, Status } from './components';
+import { ActionFeedback, Button, Choice, ConnectedGroup, Copy, Status } from './components';
 
 export function calendarReadAccess(connection: CalendarConnection | undefined) {
   return (
@@ -39,6 +40,42 @@ export async function rememberCalendarConnection(client: QueryClient, next: Cale
   await client.cancelQueries({ queryKey });
   client.setQueryData<CalendarConnection>(queryKey, (previous) =>
     previous && previous.revision > next.revision ? previous : next,
+  );
+}
+
+export function CalendarOwnedChoices({
+  items,
+  selectedId,
+  busy,
+  onSelect,
+  onMore,
+}: {
+  items: OwnedCalendar[];
+  selectedId?: string;
+  busy: boolean;
+  onSelect: (calendar: OwnedCalendar) => void;
+  onMore?: () => void;
+}) {
+  const t = useTranslation();
+  return (
+    <>
+      <ConnectedGroup>
+        {items.map((calendar) => (
+          <Choice
+            key={calendar.id}
+            label={calendar.name}
+            description={calendar.zoneId}
+            selected={selectedId === calendar.id}
+            disabled={busy}
+            onPress={() => onSelect(calendar)}
+          />
+        ))}
+      </ConnectedGroup>
+      {onMore && (
+        <Button label={t('m_bea5fb6b1e61')} variant="secondary" disabled={busy} onPress={onMore} />
+      )}
+      {!items.length && !busy && <Copy>{t('m_0e913a16bf22')}</Copy>}
+    </>
   );
 }
 

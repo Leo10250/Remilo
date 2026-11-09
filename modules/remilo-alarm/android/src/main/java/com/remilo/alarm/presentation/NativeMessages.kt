@@ -2459,4 +2459,10 @@ object NativeMessages {
   fun ios_calendar_import_unconfirmed(): L10n.Message = L10n.Message("ios_calendar_import_unconfirmed")
   fun ios_calendar_review_outdated(): L10n.Message = L10n.Message("ios_calendar_review_outdated")
   fun ios_calendar_owned_sources(): L10n.Message = L10n.Message("ios_calendar_owned_sources")
+  fun ios_calendar_publish_settings_description(): L10n.Message = L10n.Message("ios_calendar_publish_settings_description")
+  fun ios_calendar_allow_publish(): L10n.Message = L10n.Message("ios_calendar_allow_publish")
+  fun ios_calendar_allow_publish_detail(): L10n.Message = L10n.Message("ios_calendar_allow_publish_detail")
+  fun ios_calendar_publish_waiting_access(): L10n.Message = L10n.Message("ios_calendar_publish_waiting_access")
+  fun ios_calendar_cancel_publication(): L10n.Message = L10n.Message("ios_calendar_cancel_publication")
+  fun ios_calendar_publish_readback_access(): L10n.Message = L10n.Message("ios_calendar_publish_readback_access")
 }

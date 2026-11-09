@@ -37,6 +37,7 @@ export type Capabilities = {
   alarmAuthorization?: 'notDetermined' | 'denied' | 'authorized';
   notificationAuthorization?: 'notDetermined' | 'denied' | 'authorized';
   calendarOneOffImport?: boolean;
+  calendarOneOffPublish?: boolean;
   exactAlarms: boolean;
   notifications: boolean;
   channelEnabled: boolean;
@@ -477,6 +478,7 @@ export type CalendarConnection = {
   calendarId: string;
   calendarName: string;
   message: string;
+  canWriteOwnedEvents?: boolean;
 };
 export type OwnedCalendar = { id: string; name: string; zoneId: string };
 export type CalendarPage = {
@@ -519,6 +521,9 @@ export type CalendarPublication = {
   publishedAtMs: number | null;
   differs: boolean;
   readOnly: boolean;
+  retryMode?: 'send' | 'check' | 'none';
+  canReviewAgain?: boolean;
+  canCancel?: boolean;
 };
 export type CalendarFields = {
   title: string;
@@ -999,7 +1004,8 @@ export type CalendarLegacyCommand =
       expectedConnectionRevision: number;
     }
   | { kind: 'DisconnectCalendar'; operationId: string; expectedConnectionRevision: number }
-  | { kind: 'RetryPublication'; operationId: string }
+  | { kind: 'RetryPublication'; operationId: string; expectedConnectionRevision?: number }
+  | { kind: 'CancelPublication'; operationId: string; expectedConnectionRevision: number }
   | {
       kind:
         | 'ImportCalendarEvent'

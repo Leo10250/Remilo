@@ -21,6 +21,13 @@ export function publicationCommand(
 export function canRetryPublication(publication: CalendarPublication) {
   return ['Waiting', 'Unconfirmed', 'NeedsAccess', 'Failed'].includes(publication.state);
 }
+export function iosPublicationRetryAction(
+  publication: Pick<CalendarPublication, 'retryMode' | 'state'>,
+) {
+  if (publication.retryMode === 'check')
+    return publication.state === 'NeedsAccess' ? 'reauthorizeCheck' : 'check';
+  return publication.retryMode === 'send' && publication.state === 'Waiting' ? 'send' : null;
+}
 export function publicationCheckFeedback(publication: CalendarPublication) {
   if (publication.state === 'Published')
     return { message: t('publication_checked_confirmed'), tone: 'success' as const };

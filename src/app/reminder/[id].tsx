@@ -66,6 +66,7 @@ import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
 import { CalendarExceptionNotice, CalendarSummaryRow } from '../../ui/calendar-association';
+import { useCalendarPublications } from '../../ui/calendar-publication';
 import { calendarCaptureRejected } from '../../domain/calendar-link';
 import { calendarError } from '../../domain/calendar';
 
@@ -139,11 +140,7 @@ export default function ReminderDetails() {
     settings = useSettings(),
     command = useCommand(),
     colors = useTheme();
-  const calendar = useQuery({
-    queryKey: ['calendar', 'publications'],
-    queryFn: () => engine().getCalendarPublications(),
-    enabled: nativeAvailable && !iosReminders,
-  });
+  const { available: canPublish, publications: calendar } = useCalendarPublications();
   const publication = calendar.data?.find((value) => value.occurrenceId === id);
   const calendarLinks = useQuery({
     queryKey: ['calendar', 'links'],
@@ -731,7 +728,7 @@ export default function ReminderDetails() {
         {item && !item.deleted && (
           <SettingRow intent="action" icon="edit" label={t('m_464c4ffd019e')} onPress={edit} />
         )}
-        {!iosReminders &&
+        {canPublish &&
           active &&
           !item.segmentId &&
           !calendarLink &&

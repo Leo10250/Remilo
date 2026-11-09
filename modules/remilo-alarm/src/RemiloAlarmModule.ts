@@ -124,7 +124,7 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   ): Promise<import('./RemiloAlarm.types').CalendarOperationStatus | null>;
   authorizeCalendarFromUserAction?(
     expectedRevision: number,
-    intent: 'connectOrChangeAccount' | 'reauthorizeCurrentAccount',
+    intent: 'connectOrChangeAccount' | 'reauthorizeCurrentAccount' | 'authorizeOwnedCalendarWrites',
   ): Promise<CalendarConnection>;
   beginCalendarAuthorization(
     requestId: string,
@@ -157,8 +157,11 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getCalendarOperations(
     expectedConnectionRevision?: number,
   ): Promise<import('./RemiloAlarm.types').CalendarLinkedOperation[]>;
-  getCalendarPublications(): Promise<CalendarPublication[]>;
-  previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
+  getCalendarPublications(expectedConnectionRevision?: number): Promise<CalendarPublication[]>;
+  previewCalendarPublication(
+    id: string,
+    expectedConnectionRevision?: number,
+  ): Promise<CalendarPublicationPreview>;
   authorizeCalendar(publicationId: string | null): Promise<void>;
   listOwnedCalendars(
     cursor: string | null,
