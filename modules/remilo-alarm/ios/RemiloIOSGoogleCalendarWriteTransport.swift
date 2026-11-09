@@ -12,6 +12,19 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
     enum Phase: Equatable, Sendable { case notSent, sent }
     enum Permission: Sendable { case granted, alreadySent, denied(Failure) }
 
+    struct ManagedCreation: Codable, Equatable, Sendable {
+        let operationID: UUID
+        let account: Publication.Account
+        let zoneID: String
+    }
+
+    enum ManagedCreationOutcome: Sendable {
+        case returnedID(String)
+        case notSent(Failure)
+        case rejected(Failure)
+        case unconfirmed(Failure?)
+    }
+
     struct Patch: Sendable {
         let operationID: UUID
         let account: Publication.Account
@@ -168,6 +181,12 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         let reminders = NoReminders()
     }
 
+    private struct ManagedCalendarPayload: Encodable {
+        let summary = "Remilo"
+        let description: String
+        let timeZone: String
+    }
+
     private enum Response {
         case accepted(Transport.Event)
         case duplicate
@@ -184,6 +203,54 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         self.http = http
         self.transport = Transport(http: http, now: now)
         self.now = now
+    }
+
+    /// Google assigns the ID. After the sent checkpoint, only the caller's
+    /// read-only recovery may run. The caller saves a returned ID before validation.
+    func createManagedCalendar(_ captured: ManagedCreation, access: RemiloIOSGoogleCalendarAccess, phase: Phase,
+                               budget: HTTP.Budget = .init(),
+                               permitSend: @Sendable (ManagedCreation) async throws -> Permission) async throws -> ManagedCreationOutcome {
+        guard captured.account.matches(access) else { throw Failure.accountChanged }
+        guard captured.account.connectionRevision > 0, captured.account.accountGeneration > 0 else { throw Failure.invalidInput }
+        guard phase == .notSent else { return .unconfirmed(nil) }
+        guard (try? Event.namedZone(captured.zoneID)) != nil else { throw Failure.invalidZone }
+        let url = try HTTP.url(host: "www.googleapis.com", path: ["calendar", "v3", "calendars"])
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json; charset=UTF-8", forHTTPHeaderField: "Content-Type")
+        try access.authorize(&request, for: .createManagedCalendar, now: now())
+        request.httpBody = try JSONEncoder().encode(ManagedCalendarPayload(
+            description: RemiloIOSGoogleCalendarManagedDiscovery.marker(captured.operationID), timeZone: captured.zoneID
+        ))
+        guard !Task.isCancelled else { return .notSent(.cancelled) }
+        guard budget.hasTimeRemaining else { return .notSent(.budget) }
+        switch try await permitSend(captured) {
+        case .granted: break
+        case .alreadySent: return .unconfirmed(nil)
+        case .denied(let failure): return .notSent(failure)
+        }
+        let response: HTTP.Response
+        do { response = try await http.request(request, budget: budget) }
+        catch let failure as Failure { return .unconfirmed(failure) }
+        catch { return .unconfirmed(.network) }
+        switch response.status {
+        case 200, 201:
+            guard let id = Self.object(response.body)?["id"] as? String, Transport.validIdentity(id) else {
+                return .unconfirmed(.invalidResponse)
+            }
+            return .returnedID(id)
+        case 400: return .rejected(.badRequest)
+        case 401: return .rejected(.auth)
+        case 403:
+            switch Transport.reason(response.body) {
+            case "rateLimitExceeded", "userRateLimitExceeded": return .unconfirmed(.retry)
+            case "insufficientPermissions": return .rejected(.auth)
+            default: return .rejected(.forbidden)
+            }
+        case 429, 500...599: return .unconfirmed(.retry)
+        default: return .unconfirmed(.apiError)
+        }
     }
 
     func publish(_ request: Publication.Request, access: RemiloIOSGoogleCalendarAccess, phase: Phase,
@@ -292,9 +359,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         case 400: return .rejected(.badRequest)
         case 401: return .rejected(.auth)
         case 403:
-            let error = Self.object(response.body)?["error"] as? [String: Any]
-            let reason = (error?["errors"] as? [[String: Any]])?.first?["reason"] as? String
-            switch reason {
+            switch Transport.reason(response.body) {
             case "rateLimitExceeded", "userRateLimitExceeded": return .rejected(.retry)
             case "insufficientPermissions": return .rejected(.auth)
             default: return .rejected(.forbidden)

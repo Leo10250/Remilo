@@ -110,7 +110,8 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         let response = try await get(access, path: ["users", "me", "calendarList", id], budget: budget)
         try Self.validate(response)
         let result = try calendar(Self.object(response.body))
-        guard result.id == id, result.isOwned else { throw Failure.notOwner }
+        guard result.id == id else { throw Failure.invalidResponse }
+        guard result.isOwned else { throw Failure.notOwner }
         return result
     }
 
@@ -227,7 +228,7 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         return text
     }
 
-    private static func validIdentity(_ value: String) -> Bool {
+    static func validIdentity(_ value: String) -> Bool {
         (1...4096).contains(value.utf8.count) && value != "." && value != ".."
             && !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) })
     }
@@ -252,7 +253,7 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         return object
     }
 
-    private static func reason(_ data: Data) -> String? {
+    static func reason(_ data: Data) -> String? {
         let error = (try? object(data))?["error"] as? [String: Any]
         return (error?["errors"] as? [[String: Any]])?.first?["reason"] as? String
     }

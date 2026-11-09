@@ -86,6 +86,7 @@ enum CalendarChecks {
             _ = try await http.request(URLRequest(url: URL(string: "https://calendar.example.test/")!), budget: budget)
         }
         try await ConnectionChecks.run(configuration: configuration, access: access, now: now)
+        try await ManagedDiscoveryChecks.run(configuration: configuration, access: access, now: now)
         try await RuntimeChecks.run(configuration: configuration, access: access, now: date)
         try EventChecks.run()
         try await RecurringReviewChecks.run(configuration: configuration, access: access, now: now)
@@ -96,6 +97,11 @@ enum CalendarChecks {
         try check(!access.supports(.writeOwnedEvents, now: date) && writeAccess.supports(.ownedCalendars, now: date),
                   "write grants can read and browse grants cannot write")
         try await PublicationChecks.run(configuration: configuration, access: writeAccess, readOnly: access, now: now)
+        let creationGrant = try RemiloIOSGoogleCalendarGrant(token: "fixture-bearer", scopes: Purpose.createManagedCalendar.required,
+                                                             expiresAt: date.addingTimeInterval(3_600))
+        let creationAccess = try await auth.verify(creationGrant, configuration: configuration, expectedSubject: "subject-A",
+                                                   purpose: .createManagedCalendar)
+        try await ManagedCreationChecks.run(access: creationAccess, writeOnly: writeAccess, now: now)
         ComparisonChecks.run()
         try await ManualLinkStoreChecks.run()
         try await ImportChecks.run()

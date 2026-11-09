@@ -34,7 +34,12 @@ struct RemiloIOSCalendarConnectionState: Codable, Sendable {
     }
 
     struct Discovery: Codable, Sendable {
+        enum Purpose: Codable, Equatable, Sendable { case setup, recoverCreation(UUID) }
+
+        static let currentCaptureVersion = 1
         let id: UUID
+        var captureVersion: Int? = nil
+        var purpose: Purpose? = nil
         var candidates: [String: RemiloIOSCalendarOwnedRecord] = [:]
         var next: RemiloIOSGoogleCalendarTransport.PageCursor?
         var complete = false
@@ -80,6 +85,12 @@ struct RemiloIOSGoogleCalendarStore: Sendable {
             if let destination = state.publicationDestination,
                !state.connected || !destination.matches(state.account) || destination.calendar.id.isEmpty {
                 throw Failure.invalidState
+            }
+            if let discovery = state.discovery {
+                guard discovery.captureVersion == nil || discovery.captureVersion == RemiloIOSCalendarConnectionState.Discovery.currentCaptureVersion,
+                      (discovery.captureVersion == nil) == (discovery.purpose == nil),
+                      discovery.candidates.count <= 10_000, !discovery.complete || discovery.next == nil,
+                      discovery.candidates.allSatisfy({ $0.key == $0.value.id }) else { throw Failure.invalidState }
             }
             return state
         } catch CocoaError.fileReadNoSuchFile {

@@ -7,8 +7,10 @@ struct RemiloIOSCalendarOwnedRecord: Codable, Equatable, Sendable {
     let underlyingName: String?
     let dataOwner: String?
     let primary: Bool
+    let setupReference: UUID?
 
     init(_ calendar: RemiloIOSGoogleCalendarTransport.OwnedCalendar) throws {
+        guard calendar.isOwned else { throw RemiloIOSGoogleCalendarFailure.notOwner }
         guard [calendar.displayName, calendar.summary, calendar.timeZone, calendar.dataOwner]
             .allSatisfy({ ($0?.utf8.count ?? 0) <= 4096 }) else { throw RemiloIOSGoogleCalendarFailure.responseLimit }
         id = calendar.id
@@ -17,6 +19,7 @@ struct RemiloIOSCalendarOwnedRecord: Codable, Equatable, Sendable {
         underlyingName = calendar.summary
         dataOwner = calendar.dataOwner
         primary = calendar.primary == true
+        setupReference = RemiloIOSGoogleCalendarManagedDiscovery.setupReference(calendar.description)
     }
 }
 
@@ -31,6 +34,7 @@ final class RemiloIOSGoogleCalendarConnection {
     typealias WriteTransport = RemiloIOSGoogleCalendarWriteTransport
     typealias Event = RemiloIOSGoogleCalendarEvent
     typealias Import = RemiloIOSGoogleCalendarImport
+    typealias ManagedDiscovery = RemiloIOSGoogleCalendarManagedDiscovery
     typealias Authorize = @Sendable (_ expectedSubject: String?, _ purpose: Purpose) async throws -> RemiloIOSGoogleCalendarAccess
 
     enum Consent: Equatable, Sendable {
@@ -93,6 +97,18 @@ final class RemiloIOSGoogleCalendarConnection {
         let connectionRevision: Int
         let items: [RemiloIOSCalendarOwnedRecord]
         let complete: Bool
+    }
+
+    struct ManagedDiscoveryResult: Sendable {
+        let scanID: UUID
+        let connectionRevision: Int
+        let selection: ManagedDiscovery.Selection
+    }
+
+    enum ManagedCreationCheck: Sendable {
+        case incomplete(resume: UUID?)
+        case unconfirmed
+        case verified(RemiloIOSCalendarOwnedRecord)
     }
 
     fileprivate struct Fence: Equatable, Sendable {
@@ -493,25 +509,40 @@ final class RemiloIOSGoogleCalendarConnection {
     /// the exact native cursor and yields after ten pages or its shared I/O budget.
     func discoverOwnedCalendars(expectedRevision: Int, resume: UUID? = nil) async throws -> Discovery {
         guard !discoveryInFlight else { throw Failure.invalidInput }
-        let live = try requireAccess(expectedRevision)
-        var state = try current(live.fence)
-        var checkpoint: State.Discovery
-        if let resume {
-            guard let saved = state.discovery, saved.id == resume else { throw Failure.staleConnection }
-            checkpoint = saved
-        } else {
-            checkpoint = State.Discovery(id: UUID())
-            state.discovery = checkpoint
-            try store.write(state)
-        }
         discoveryInFlight = true
         defer { discoveryInFlight = false }
-        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        return try await scanOwnedCalendars(try requireAccess(expectedRevision), purpose: .setup, resume: resume,
+                                            canRead: { true }, budget: .init())
+    }
+
+    private func scanOwnedCalendars(_ live: LiveAccess, purpose: State.Discovery.Purpose, resume: UUID?,
+                                    canRead: @escaping @MainActor @Sendable () -> Bool,
+                                    budget: RemiloIOSGoogleCalendarHTTP.Budget) async throws -> Discovery {
+        guard canRead() else { throw CancellationError() }
+        try Task.checkCancellation()
+        var state = try current(live.fence)
+        var checkpoint: State.Discovery?
+        if let resume {
+            guard let saved = state.discovery, saved.id == resume else { throw Failure.staleConnection }
+            if saved.captureVersion == State.Discovery.currentCaptureVersion {
+                guard saved.purpose == purpose else { throw Failure.staleCursor }
+                checkpoint = saved
+            }
+        }
+        if checkpoint == nil {
+            let fresh = State.Discovery(id: UUID(), captureVersion: State.Discovery.currentCaptureVersion, purpose: purpose)
+            checkpoint = fresh
+            state.discovery = fresh
+            try store.write(state)
+        }
+        guard var checkpoint else { throw Failure.invalidResponse }
+        let beforeRead = importReadPermission(live.fence.importAccount, canRead: canRead)
         for _ in 0..<10 where !checkpoint.complete {
             let page: Transport.Page<Transport.OwnedCalendar>
             do {
-                page = try await readOwnedPage(live, next: checkpoint.next, budget: budget)
+                page = try await readOwnedPage(live, next: checkpoint.next, budget: budget, beforeRead: beforeRead)
             } catch Failure.budget { break }
+            guard canRead() else { throw CancellationError() }
             var current = try current(live.fence)
             guard current.discovery?.id == checkpoint.id else { throw Failure.staleConnection }
             for calendar in page.items { checkpoint.candidates[calendar.id] = try RemiloIOSCalendarOwnedRecord(calendar) }
@@ -524,6 +555,108 @@ final class RemiloIOSGoogleCalendarConnection {
         return project(checkpoint, revision: live.fence.revision)
     }
 
+    func discoverManagedCalendars(expectedRevision: Int, resume: UUID? = nil, savedID: String? = nil,
+                                  selectedID: String? = nil, replacingUnavailable: Bool = false,
+                                  canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> ManagedDiscoveryResult {
+        guard !discoveryInFlight else { throw Failure.invalidInput }
+        discoveryInFlight = true
+        defer { discoveryInFlight = false }
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        let live = try requireAccess(expectedRevision)
+        let scan = try await scanOwnedCalendars(live, purpose: .setup, resume: resume, canRead: canRead, budget: budget)
+        let beforeRead = importReadPermission(live.fence.importAccount, canRead: canRead)
+        let result: (ManagedDiscovery.Selection) -> ManagedDiscoveryResult = {
+            ManagedDiscoveryResult(scanID: scan.id, connectionRevision: scan.connectionRevision, selection: $0)
+        }
+        var savedLookup: ManagedDiscovery.SavedLookup?
+        if scan.complete, let savedID {
+            do {
+                savedLookup = .found(try await readOwnedRecord(live, id: savedID, budget: budget, beforeRead: beforeRead))
+            } catch Failure.notFound {
+                savedLookup = .unavailable
+            } catch Failure.remoteUnavailable {
+                savedLookup = .unavailable
+            } catch Failure.notOwner {
+                savedLookup = .notOwner
+            } catch Failure.budget {
+                try validateDiscovery(scan.id, live: live, canRead: canRead)
+                return result(.init(outcome: .incomplete))
+            }
+        }
+        try validateDiscovery(scan.id, live: live, canRead: canRead)
+        let verifiedEmail = live.access.account.email
+        let selection = try ManagedDiscovery.select(scan.items, complete: scan.complete, verifiedEmail: verifiedEmail,
+                                                    savedID: savedID, savedLookup: savedLookup, selectedID: selectedID,
+                                                    replacingUnavailable: replacingUnavailable)
+        guard let candidate = selection.selected, candidate.recognition != .bound else { return result(selection) }
+
+        // A resumable list only provides discovery hints. A proposal uses the exact current
+        // resource and must still match discovery and ownership before it can reach review.
+        let record: RemiloIOSCalendarOwnedRecord
+        do {
+            record = try await readOwnedRecord(live, id: candidate.record.id, budget: budget, beforeRead: beforeRead)
+        } catch Failure.budget {
+            try validateDiscovery(scan.id, live: live, canRead: canRead)
+            return result(.init(outcome: .incomplete))
+        }
+        try validateDiscovery(scan.id, live: live, canRead: canRead)
+        if let failure = ManagedDiscovery.eligibility(record, verifiedEmail: verifiedEmail) { throw failure }
+        return try result(ManagedDiscovery.select(scan.items.map { $0.id == record.id ? record : $0 }, complete: true,
+                                                  verifiedEmail: verifiedEmail, savedID: savedID, savedLookup: savedLookup,
+                                                  selectedID: record.id, replacingUnavailable: replacingUnavailable))
+    }
+
+    /// A sent operation can be inspected using current read access to the same
+    /// account. Observing a result grants no authority to activate a binding.
+    func checkManagedCreation(_ captured: WriteTransport.ManagedCreation, expectedRevision: Int, returnedID: String?,
+                              resume: UUID? = nil, canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> ManagedCreationCheck {
+        guard !discoveryInFlight, returnedID == nil || resume == nil else { throw Failure.invalidInput }
+        discoveryInFlight = true
+        defer { discoveryInFlight = false }
+        let live = try requireAccess(expectedRevision)
+        guard captured.account.matches(live.access) else { throw Failure.accountChanged }
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        let beforeRead = importReadPermission(live.fence.importAccount, canRead: canRead)
+        let calendarID: String
+        var scanID: UUID?
+        if let returnedID {
+            calendarID = returnedID
+        } else {
+            let scan = try await scanOwnedCalendars(live, purpose: .recoverCreation(captured.operationID), resume: resume,
+                                                    canRead: canRead, budget: budget)
+            try validateDiscovery(scan.id, live: live, canRead: canRead)
+            scanID = scan.id
+            guard scan.complete else { return .incomplete(resume: scan.id) }
+            guard let matched = ManagedDiscovery.recoveredID(scan.items, complete: scan.complete, operationID: captured.operationID,
+                                                             verifiedEmail: live.access.account.email) else { return .unconfirmed }
+            calendarID = matched
+        }
+        let record: RemiloIOSCalendarOwnedRecord
+        do {
+            record = try await readOwnedRecord(live, id: calendarID, budget: budget, beforeRead: beforeRead)
+        } catch Failure.budget {
+            try await beforeRead()
+            return .incomplete(resume: scanID)
+        } catch Failure.notFound {
+            try await beforeRead()
+            return .unconfirmed
+        } catch Failure.remoteUnavailable {
+            try await beforeRead()
+            return .unconfirmed
+        }
+        if let scanID { try validateDiscovery(scanID, live: live, canRead: canRead) }
+        else { try await beforeRead() }
+        if let failure = ManagedDiscovery.eligibility(record, verifiedEmail: live.access.account.email) { throw failure }
+        guard record.setupReference == captured.operationID else { return .unconfirmed }
+        return .verified(record)
+    }
+
+    private func validateDiscovery(_ id: UUID, live: LiveAccess, canRead: @MainActor () -> Bool) throws {
+        try requireCurrentImportRead(live.fence.importAccount, canRead: canRead)
+        try Task.checkCancellation()
+        guard try current(live.fence).discovery?.id == id else { throw Failure.staleConnection }
+    }
+
     func discoveryProgress(expectedRevision: Int) throws -> Discovery? {
         let state = try store.read()
         guard state.revision == expectedRevision else { throw Failure.staleConnection }
@@ -531,10 +664,21 @@ final class RemiloIOSGoogleCalendarConnection {
         return state.discovery.map { project($0, revision: state.revision) }
     }
 
-    private func readOwnedPage(_ live: LiveAccess, next: Transport.PageCursor?, budget: RemiloIOSGoogleCalendarHTTP.Budget)
+    private func readOwnedPage(_ live: LiveAccess, next: Transport.PageCursor?, budget: RemiloIOSGoogleCalendarHTTP.Budget,
+                               beforeRead: @escaping @Sendable () async throws -> Void = {})
         async throws -> Transport.Page<Transport.OwnedCalendar> {
         try await read(live) { transport, access in
-            try await transport.ownedCalendars(access, next: next, budget: budget)
+            try await beforeRead()
+            return try await transport.ownedCalendars(access, next: next, budget: budget)
+        }
+    }
+
+    private func readOwnedRecord(_ live: LiveAccess, id: String, budget: RemiloIOSGoogleCalendarHTTP.Budget,
+                                 beforeRead: @escaping @Sendable () async throws -> Void) async throws -> RemiloIOSCalendarOwnedRecord {
+        try await read(live) { transport, access in
+            try await beforeRead()
+            let calendar = try await transport.ownedCalendar(access, id: id, budget: budget)
+            return try RemiloIOSCalendarOwnedRecord(calendar)
         }
     }
 
@@ -602,7 +746,8 @@ final class RemiloIOSGoogleCalendarConnection {
 
     private func project(_ discovery: State.Discovery, revision: Int) -> Discovery {
         let items = discovery.candidates.values.sorted { ($0.name, $0.id) < ($1.name, $1.id) }
-        return Discovery(id: discovery.id, connectionRevision: revision, items: items, complete: discovery.complete)
+        return Discovery(id: discovery.id, connectionRevision: revision, items: items,
+                         complete: discovery.captureVersion == State.Discovery.currentCaptureVersion && discovery.complete)
     }
 
     private func revocation(_ stored: RemiloIOSCalendarRevocation, inFlight: Bool) -> RemiloIOSCalendarRevocation {

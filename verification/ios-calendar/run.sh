@@ -10,6 +10,7 @@ xcrun swiftc -swift-version 5 -parse-as-library -o "$build_dir/checks" \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarOAuth.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarTransport.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarStore.swift \
+  modules/remilo-alarm/ios/RemiloIOSGoogleCalendarManagedDiscovery.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarConnection.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarRuntime.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarEvent.swift \
@@ -29,6 +30,8 @@ xcrun swiftc -swift-version 5 -parse-as-library -o "$build_dir/checks" \
   modules/remilo-alarm/ios/RemiloIOSTime.swift \
   verification/ios-calendar/CalendarChecks.swift \
   verification/ios-calendar/ConnectionChecks.swift \
+  verification/ios-calendar/ManagedDiscoveryChecks.swift \
+  verification/ios-calendar/ManagedCreationChecks.swift \
   verification/ios-calendar/RuntimeChecks.swift \
   verification/ios-calendar/EventChecks.swift \
   verification/ios-calendar/RecurringReviewChecks.swift \

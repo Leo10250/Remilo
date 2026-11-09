@@ -21,6 +21,8 @@ enum RemiloIOSGoogleCalendarFailure: String, Error {
     case retry = "RETRY"
     case forbidden = "FORBIDDEN"
     case notOwner = "NOT_OWNER"
+    case ownershipUnknown = "OWNERSHIP_UNKNOWN"
+    case invalidZone = "INVALID_ZONE"
     case notFound = "NOT_FOUND"
     case syncTokenExpired = "SYNC_TOKEN_EXPIRED"
     case remoteUnavailable = "REMOTE_UNAVAILABLE"
@@ -46,6 +48,7 @@ struct RemiloIOSGoogleCalendarHTTP: Sendable {
 
     struct Budget: Sendable {
         fileprivate let deadline: ContinuousClock.Instant
+        var hasTimeRemaining: Bool { ContinuousClock.now < deadline }
 
         init(duration: Duration = .seconds(120)) {
             deadline = ContinuousClock.now.advanced(by: duration)
@@ -64,11 +67,11 @@ struct RemiloIOSGoogleCalendarHTTP: Sendable {
             throw RemiloIOSGoogleCalendarFailure.invalidInput
         }
         guard !Task.isCancelled else { throw RemiloIOSGoogleCalendarFailure.cancelled }
-        guard ContinuousClock.now < budget.deadline else { throw RemiloIOSGoogleCalendarFailure.budget }
+        guard budget.hasTimeRemaining else { throw RemiloIOSGoogleCalendarFailure.budget }
         do {
             let result = try await send(request, budget, limit)
             guard !Task.isCancelled else { throw RemiloIOSGoogleCalendarFailure.cancelled }
-            guard ContinuousClock.now < budget.deadline else { throw RemiloIOSGoogleCalendarFailure.budget }
+            guard budget.hasTimeRemaining else { throw RemiloIOSGoogleCalendarFailure.budget }
             let maximum = (200..<300).contains(result.status) ? limit : 16_384
             guard result.body.count <= maximum else {
                 throw RemiloIOSGoogleCalendarFailure.responseLimit
