@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "Remilo Alarm Test";
+"NSAlarmKitUsageDescription" = "Remilo uses alarms to test whether reminders ring while your iPhone is locked.";

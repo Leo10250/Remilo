@@ -1,0 +1,49 @@
+name: Build iPhone AlarmKit probe
+
+on:
+  push:
+    branches: [Add-iOS-support]
+    paths:
+      - verification/ios-alarmkit/**
+      - .github/workflows/ios-alarmkit-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  unsigned-ipa:
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: verification/ios-alarmkit
+      - name: Build for a physical iPhone
+        shell: bash
+        run: |
+          xcodebuild -version
+          xcodebuild \
+            -project verification/ios-alarmkit/AlarmKitProbe.xcodeproj \
+            -scheme AlarmKitProbe \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/AlarmKitProbe" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Package the unsigned app
+        shell: bash
+        run: |
+          app="$RUNNER_TEMP/AlarmKitProbe/Build/Products/Release-iphoneos/AlarmKitProbe.app"
+          stage="$RUNNER_TEMP/probe-ipa"
+          ipa="$RUNNER_TEMP/AlarmKitProbe-unsigned.ipa"
+          test -f "$app/Info.plist"
+          mkdir -p "$stage/Payload"
+          ditto "$app" "$stage/Payload/AlarmKitProbe.app"
+          ditto -c -k --keepParent "$stage/Payload" "$ipa"
+          unzip -tq "$ipa"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: AlarmKitProbe-unsigned
+          path: ${{ runner.temp }}/AlarmKitProbe-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 3

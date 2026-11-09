@@ -1,0 +1,247 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A11000000000000000000001 /* AlarmKitProbeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11000000000000000000005 /* AlarmKitProbeApp.swift */; };
+		A11000000000000000000002 /* ProbeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11000000000000000000006 /* ProbeEngine.swift */; };
+		A11000000000000000000003 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A11000000000000000000017 /* Localizable.strings */; };
+		A11000000000000000000004 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A11000000000000000000018 /* InfoPlist.strings */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A11000000000000000000005 /* AlarmKitProbeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKitProbeApp.swift; sourceTree = "<group>"; };
+		A11000000000000000000006 /* ProbeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProbeEngine.swift; sourceTree = "<group>"; };
+		A11000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A11000000000000000000008 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A11000000000000000000009 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		A1100000000000000000000A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1100000000000000000000B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		A1100000000000000000000C /* AlarmKitProbe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlarmKitProbe.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1100000000000000000000D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1100000000000000000000E = {
+			isa = PBXGroup;
+			children = (
+				A1100000000000000000000F /* Probe */,
+				A11000000000000000000010 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1100000000000000000000F /* Probe */ = {
+			isa = PBXGroup;
+			children = (
+				A11000000000000000000005 /* AlarmKitProbeApp.swift */,
+				A11000000000000000000006 /* ProbeEngine.swift */,
+				A11000000000000000000007 /* Info.plist */,
+				A11000000000000000000017 /* Localizable.strings */,
+				A11000000000000000000018 /* InfoPlist.strings */,
+			);
+			path = Probe;
+			sourceTree = "<group>";
+		};
+		A11000000000000000000010 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1100000000000000000000C /* AlarmKitProbe.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A11000000000000000000011 /* AlarmKitProbe */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A11000000000000000000016 /* Build configuration list for PBXNativeTarget "AlarmKitProbe" */;
+			buildPhases = (
+				A11000000000000000000014 /* Sources */,
+				A1100000000000000000000D /* Frameworks */,
+				A11000000000000000000013 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = AlarmKitProbe;
+			productName = AlarmKitProbe;
+			productReference = A1100000000000000000000C /* AlarmKitProbe.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A11000000000000000000012 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A11000000000000000000011 = {CreatedOnToolsVersion = 26.0; };
+				};
+			};
+			buildConfigurationList = A11000000000000000000015 /* Build configuration list for PBXProject "AlarmKitProbe" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				"zh-Hans",
+			);
+			mainGroup = A1100000000000000000000E;
+			productRefGroup = A11000000000000000000010 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A11000000000000000000011 /* AlarmKitProbe */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A11000000000000000000013 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A11000000000000000000003 /* Localizable.strings in Resources */,
+				A11000000000000000000004 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A11000000000000000000014 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A11000000000000000000001 /* AlarmKitProbeApp.swift in Sources */,
+				A11000000000000000000002 /* ProbeEngine.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		A11000000000000000000017 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A11000000000000000000008 /* en */,
+				A11000000000000000000009 /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		A11000000000000000000018 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A1100000000000000000000A /* en */,
+				A1100000000000000000000B /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A11000000000000000000019 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1100000000000000000001A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A1100000000000000000001B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Probe/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Remilo Alarm Test";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.remilo.alarmkit-probe";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A1100000000000000000001C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Probe/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Remilo Alarm Test";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.remilo.alarmkit-probe";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A11000000000000000000015 /* Build configuration list for PBXProject "AlarmKitProbe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A11000000000000000000019 /* Debug */,
+				A1100000000000000000001A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A11000000000000000000016 /* Build configuration list for PBXNativeTarget "AlarmKitProbe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1100000000000000000001B /* Debug */,
+				A1100000000000000000001C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A11000000000000000000012 /* Project object */;
+}
