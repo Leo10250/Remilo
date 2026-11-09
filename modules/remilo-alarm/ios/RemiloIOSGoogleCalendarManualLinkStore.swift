@@ -397,11 +397,12 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         return try commit(record, operationID: operationID, fingerprint: fingerprint, digest: digest, account: account, state: &state)
     }
 
-    /// The import receipt and this record witness the same source. An existing
+    /// The transfer receipt and this record witness the same source. An existing
     /// manual or detached record must never regain automatic consent here.
-    func attachManagedImport(viewingAs account: Account, occurrenceID: String, remote: Link.Observation,
-                             lifecycleRevision: Int, lease: Link.ManagedLease, observedAtMs: Int64) throws -> Record {
+    func attachManaged(viewingAs account: Account, occurrenceID: String, remote: Link.Observation,
+                       lifecycleRevision: Int, lease: Link.ManagedLease, observedAtMs: Int64) throws -> Record {
         let source = remote.source
+        let origin: Link.Origin = lease.publication == true ? .published : .imported
         let baseline = Baseline(title: remote.fields.title, notes: remote.fields.notes, schedule: remote.fields.schedule)
         guard Self.belongs(source, to: account), source.calendarID == lease.calendarID,
               remote.calendarZone == lease.zoneID, Self.valid(source), Self.validID(occurrenceID, maximum: 200),
@@ -410,7 +411,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
               lease.bindingRevision > 0, lease.authEpoch > 0 else { throw Failure.invalidInput }
         var state = try read()
         if let existing = state.links[occurrenceID] {
-            guard existing.source == source, existing.origin == .imported else { throw Rejection.ineligible }
+            guard existing.source == source, existing.origin == origin else { throw Rejection.ineligible }
             return existing
         }
         try requireUnreserved(occurrenceID, source: source, in: state)
@@ -418,7 +419,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                                        accountGeneration: account.accountGeneration, operationID: nil, managedLease: lease)
         // Revision one is the activation checkpoint. An active link always
         // has a newer record revision than the consent that established it.
-        let record = Record(occurrenceID: occurrenceID, source: source, origin: .imported, revision: 2, state: .linked,
+        let record = Record(occurrenceID: occurrenceID, source: source, origin: origin, revision: 2, state: .linked,
                             baseline: baseline, calendarName: remote.calendarName, observedAtMs: observedAtMs, automatic: consent)
         state.links[occurrenceID] = record
         try write(state)

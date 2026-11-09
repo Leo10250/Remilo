@@ -432,7 +432,9 @@ final class RemiloIOSGoogleCalendarRuntime {
     }
 
     private func runAutomaticPass(_ opportunity: AutomaticOpportunity) async {
-        guard let manualLink, let view = try? connection.view(), view.canWriteOwnedEvents else { return }
+        guard let view = try? connection.view(), view.connected else { return }
+        try? await syncManagedOutgoing(expectedRevision: view.revision)
+        guard let manualLink, view.canWriteOwnedEvents else { return }
         let inspectUnchanged = opportunity == .foreground
         if inspectUnchanged { try? manualLink.resumeAssociationRequests(expectedConnectionRevision: view.revision, limit: 2) }
         guard let candidates = try? manualLink.automaticCandidates(expectedConnectionRevision: view.revision,
@@ -509,8 +511,59 @@ final class RemiloIOSGoogleCalendarRuntime {
     static func captureManagedExport(explicit: Bool) -> IOSCalendarExportIntent.Scope? {
         let runtime = live ?? (try? configuredForegroundRuntime())
         guard let binding = try? runtime?.managedSetup?.outgoingBinding(explicit: explicit) else { return nil }
+        return exportScope(binding)
+    }
+
+    private static func exportScope(_ binding: RemiloIOSGoogleCalendarManagedSetupJournal.Binding) -> IOSCalendarExportIntent.Scope {
         return .init(setupID: binding.operationID, bindingRevision: binding.revision,
                      authEpoch: binding.authEpoch, accountGeneration: binding.account.accountGeneration)
+    }
+
+    private func syncManagedOutgoing(expectedRevision: Int) async throws {
+        guard let publication else { return }
+        var candidates: [RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate] = []
+        if let binding = try? managedSetup?.outgoingBinding(explicit: true) {
+            let scope = Self.exportScope(binding)
+            for reminder in try RemiloIOSEngine.shared.read().reminders.values where reminder.active {
+                guard let intent = reminder.calendarExportIntent, intent.scope == scope else { continue }
+                candidates.append(.init(occurrenceID: reminder.id, operationID: intent.operationID,
+                                        lease: binding.exportLease, calendarName: binding.record.name))
+            }
+        }
+        let changed = try await publication.syncManaged(candidates, expectedConnectionRevision: expectedRevision)
+        let linked = try await attachManagedPublications(publication, expectedRevision: expectedRevision)
+        if !changed.isEmpty || linked {
+            NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+        }
+    }
+
+    private func attachManagedPublications(_ publication: RemiloIOSGoogleCalendarPublicationRuntime,
+                                           expectedRevision: Int) async throws -> Bool {
+        guard let manualLink else { return false }
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        var settled = false
+        for entry in try publication.pendingManagedLinks(expectedConnectionRevision: expectedRevision).prefix(4) {
+            guard !Task.isCancelled, budget.hasTimeRemaining else { break }
+            let reason: String?
+            if try publication.permitsManagedLink(entry, viewingAs: account) {
+                do {
+                    try await manualLink.attachManagedPublication(entry, expectedConnectionRevision: expectedRevision, budget: budget)
+                    reason = nil
+                } catch ManualLinkFailure.stalePreview { continue }
+                catch let failure as ManualLinkFailure { reason = failure.rawValue }
+                catch let failure as RemiloIOSGoogleCalendarManualLinkStore.Rejection { reason = failure.rawValue }
+                catch let failure as Failure where [.notOwner, .ownershipUnknown, .notFound, .remoteUnavailable, .invalidZone].contains(failure) {
+                    reason = failure.rawValue
+                } catch is Failure { continue }
+            } else {
+                reason = entry.confirmation?.remoteDiffers == true ? ManualLinkFailure.staleRemote.rawValue : ManualLinkFailure.stalePreview.rawValue
+            }
+            guard try connection.savedAccount(expectedRevision: expectedRevision) == account else { break }
+            try publication.finishManagedLink(entry, reason: reason)
+            settled = true
+        }
+        return settled
     }
 
     /// Missing or mismatched signed-bundle configuration keeps the runtime
@@ -525,13 +578,22 @@ final class RemiloIOSGoogleCalendarRuntime {
         let canUseForeground: @MainActor @Sendable () -> Bool = { Self.foregroundWindow() != nil }
         let imports = try ImportJournal.local()
         let managed = try RemiloIOSGoogleCalendarManagedSetupJournal.local()
+        var publicationAuthority = RemiloIOSGoogleCalendarPublicationRuntime.LocalAuthority.localEngine(.shared)
+        publicationAuthority.permitsManagedExport = { id, operationID, lease, account in
+            guard let reminder = try RemiloIOSEngine.shared.read().reminders[id], reminder.active,
+                  let intent = reminder.calendarExportIntent, intent.operationID == operationID else { return false }
+            do {
+                guard let binding = try managed.outgoingBinding(account, explicit: true) else { return false }
+                return binding.exportLease == lease && Self.exportScope(binding) == intent.scope
+            } catch Failure.staleConnection { return false }
+        }
         let publication = try RemiloIOSGoogleCalendarPublicationRuntime(
-            connection: connection, journal: .local(), local: .localEngine(.shared), canUseForeground: canUseForeground
+            connection: connection, journal: .local(), local: publicationAuthority, canUseForeground: canUseForeground
         )
         let manualLink = try RemiloIOSGoogleCalendarManualLinkRuntime(
             connection: connection, publication: publication, imports: imports, store: .local(),
             local: .localEngine(.shared), canUseForeground: canUseForeground,
-            allowsManagedLease: { lease, account in try managed.permitsIncomingLink(lease, account: account) },
+            allowsManagedLease: { lease, account in try managed.permitsLink(lease, account: account) },
             notifyStatusChange: {
                 NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
             }

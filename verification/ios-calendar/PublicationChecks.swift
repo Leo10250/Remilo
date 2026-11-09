@@ -86,6 +86,9 @@ enum PublicationChecks {
         try await patchChecks(request: request, access: access, readOnly: readOnly, now: now)
         try await journalChecks(request: request, readOnly: readOnly, now: now)
         try await runtimeChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
+        try await managedPublicationChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
+        try await managedPublicationChecks(configuration: configuration, request: request, access: access,
+                                           readOnly: readOnly, now: now, retireBeforeReadback: true)
         try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
         try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly,
                                        now: now, superseding: true)
@@ -367,6 +370,109 @@ enum PublicationChecks {
     }
 
     @MainActor
+    private static func managedPublicationChecks(
+        configuration: RemiloIOSGoogleCalendarConfiguration, request: Publication.Request,
+        access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
+        retireBeforeReadback: Bool = false
+    ) async throws {
+        typealias Runtime = RemiloIOSGoogleCalendarPublicationRuntime
+        typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-managed-publication-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: path) }
+        let fixture = Fixture(.missing, request: request)
+        await fixture.setCalendarOwner("different@example.test")
+        let http = HTTP(send: { wire, _, _ in try await fixture.send(wire) })
+        let connection = Runtime.Connection(configuration: configuration, store: .init(directory: path), http: http, now: now)
+        let connected = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount) { _, _ in readOnly }
+        let granted = try await connection.connectFromUserAction(expectedRevision: connected.revision, consent: .writeOwnedEvents) { _, _ in access }
+        precondition(granted.publicationDestination == nil, "Managed export does not use the manual destination")
+        let clock: @Sendable () -> Int64 = { Int64(now().timeIntervalSince1970 * 1_000) }
+        let lease = Runtime.ManagedLease(setupID: UUID(), bindingRevision: 3, authEpoch: 2, calendarID: calendar, zoneID: zone,
+                                        publication: true)
+        let candidate = Runtime.ManagedCandidate(occurrenceID: request.local.occurrenceID, operationID: request.operationID,
+                                                 lease: lease, calendarName: "Remilo")
+        let firstVersion = Publication.Local(occurrenceID: request.local.occurrenceID, revision: 1, generation: request.local.generation)
+        let previous = Event.Fields(title: "Before edit", notes: request.fields.notes, schedule: request.fields.schedule)
+        let local = RuntimeLocal(.init(version: firstVersion, fields: previous))
+        let authority = Runtime.LocalAuthority(read: { _ in local.snapshot }, permit: { expected, checkpoint in
+            guard local.snapshot == expected else { throw Runtime.Rejection.stalePreview }
+            if local.invalidateAtPermit {
+                local.managedAllowed = false
+                local.invalidateAtPermit = false
+            }
+            let result = try checkpoint()
+            if case .granted = result { _ = await fixture.permit() }
+            return result
+        }, permitsManagedExport: { id, operation, actual, account in
+            local.managedAllowed && local.snapshot != nil && id == candidate.occurrenceID &&
+                operation == candidate.operationID && actual == lease && account.accountGeneration == granted.accountGeneration
+        })
+        func runtime() -> Runtime {
+            Runtime(connection: connection, journal: .init(directory: path, now: clock), local: authority,
+                    canUseForeground: { true }, now: clock)
+        }
+        _ = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
+        let wrongOwnerWrites = await fixture.writes
+        precondition(wrongOwnerWrites == 0)
+
+        await fixture.setCalendarOwner(access.account.email)
+        local.invalidateAtPermit = true
+        _ = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
+        let staleWrites = await fixture.writes
+        precondition(!local.managedAllowed && staleWrites == 0, "Check live authority after the provider lookup")
+
+        local.managedAllowed = true
+        local.snapshot = .init(version: request.local, fields: request.fields)
+        let sent = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
+        precondition(sent.count == 1 && sent[0].phase == .sent && sent[0].identity.local == request.local,
+                     "An unsent edit replaces the snapshot under the same intent")
+        let waiting = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
+        precondition(waiting.allSatisfy { $0.phase == .sent && $0.identity == sent[0].identity },
+                     "A missing read-back preserves the sent checkpoint")
+        if retireBeforeReadback {
+            local.snapshot = nil
+            local.managedAllowed = false
+        } else {
+            local.snapshot = .init(
+                version: .init(occurrenceID: request.local.occurrenceID, revision: 3, generation: request.local.generation),
+                fields: .init(title: "Edited after send", notes: request.fields.notes, schedule: request.fields.schedule))
+        }
+        try await fixture.completeRemotePublication()
+        let renewed = try await connection.connectFromUserAction(expectedRevision: granted.revision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
+        let reopened = runtime()
+        let recovered = try await reopened.syncManaged([], expectedConnectionRevision: renewed.revision)
+        let writes = await fixture.writes
+        precondition(recovered.count == 1 && recovered[0].phase == .published &&
+                     recovered[0].identity == sent[0].identity && writes == 1,
+                     "Read-back always uses the original Google event")
+        let pending = try reopened.pendingManagedLinks(expectedConnectionRevision: renewed.revision)
+        precondition(pending == recovered, "Restart can resume link attachment separately from the POST")
+        let manual = Manual(connection: connection, publication: reopened, imports: .init(directory: path),
+            store: .init(directory: path), local: .init(read: { _ in local.snapshot }, permit: { expected, commit in
+                guard local.snapshot == expected else { throw Manual.Link.Failure.stalePreview }
+                return try commit()
+            }, lifecycleRevision: { _ in local.lifecycleRevision }), canUseForeground: { true }, now: clock)
+        if retireBeforeReadback {
+            do {
+                try await manual.attachManagedPublication(pending[0], expectedConnectionRevision: renewed.revision, budget: .init())
+                preconditionFailure("Retiring the local intent must prevent automatic linking")
+            } catch Manual.Link.Failure.stalePreview {}
+            let links = try manual.links(expectedConnectionRevision: renewed.revision)
+            precondition(links.isEmpty)
+        } else {
+            try await manual.attachManagedPublication(pending[0], expectedConnectionRevision: renewed.revision, budget: .init())
+            try await manual.attachManagedPublication(pending[0], expectedConnectionRevision: renewed.revision, budget: .init())
+            let links = try manual.links(expectedConnectionRevision: renewed.revision)
+            precondition(links.count == 1 && links[0].baseline?.title == request.fields.title &&
+                         links[0].automatic?.managedLease == lease && links[0].origin == .published,
+                         "Use the confirmed send as the baseline so a later local edit remains pending")
+            try reopened.finishManagedLink(pending[0], reason: nil)
+            let remaining = try runtime().pendingManagedLinks(expectedConnectionRevision: renewed.revision)
+            precondition(remaining.isEmpty)
+        }
+    }
+
+    @MainActor
     private static func manualLinkChecks(
         connection: RemiloIOSGoogleCalendarConnection, publication: RemiloIOSGoogleCalendarPublicationRuntime,
         local: RuntimeLocal, snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot,
@@ -467,6 +573,7 @@ enum PublicationChecks {
     private final class RuntimeLocal {
         var snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot?
         var invalidateAtPermit = false
+        var managedAllowed = true
         var lifecycleRevision = 0
         var manualReceipts: [UUID: RemiloIOSGoogleCalendarManualLinkRuntime.LocalResult] = [:]
 
@@ -630,6 +737,7 @@ enum PublicationChecks {
         private var result: Data?
         private var pendingManualResult: Data?
         private var manualRead: HTTP.Response?
+        private var calendarOwner: String?
         private(set) var writes = 0
 
         init(_ scenario: Scenario, request: Publication.Request) {
@@ -642,6 +750,8 @@ enum PublicationChecks {
             sent = true
             return .granted
         }
+
+        func setCalendarOwner(_ email: String) { calendarOwner = email }
 
         func completeRemotePublication() throws {
             precondition(writes == 1)
@@ -688,7 +798,8 @@ enum PublicationChecks {
             precondition(url.absoluteString.contains("owned%2Fid%40example.test"))
             if url.path.contains("/calendarList/") {
                 let zone = scenario == .changedCalendarZone ? "America/New_York" : PublicationChecks.zone
-                let calendar = ["id": PublicationChecks.calendar, "accessRole": "owner", "timeZone": zone]
+                var calendar = ["id": PublicationChecks.calendar, "accessRole": "owner", "timeZone": zone]
+                calendar["dataOwner"] = calendarOwner
                 return HTTP.Response(status: 200, body: try JSONSerialization.data(withJSONObject: calendar))
             }
             if wire.httpMethod == nil || wire.httpMethod == "GET" {
@@ -746,6 +857,7 @@ enum PublicationChecks {
             }
             precondition(wire.httpMethod == "POST" && wire.value(forHTTPHeaderField: "If-Match") == nil)
             precondition(body["id"] as? String == request.eventID && body["attendees"] == nil)
+            if calendarOwner != nil { precondition(body["summary"] as? String == request.fields.title) }
             precondition(body["visibility"] as? String == "private" && body["transparency"] as? String == "opaque")
             precondition((body["start"] as? [String: String])?["dateTime"] == "2027-03-15T16:00:00.123Z")
             precondition((body["start"] as? [String: String])?["timeZone"] == PublicationChecks.zone)

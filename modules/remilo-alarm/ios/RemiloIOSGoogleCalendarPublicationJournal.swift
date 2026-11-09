@@ -7,6 +7,7 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
     typealias Publication = RemiloIOSGoogleCalendarPublication
     typealias Writer = RemiloIOSGoogleCalendarWriteTransport
     typealias Failure = RemiloIOSGoogleCalendarFailure
+    typealias ManagedLease = RemiloIOSGoogleCalendarManualLink.ManagedLease
 
     enum Rejection: String, Error {
         case alreadyPublished = "ALREADY_PUBLISHED"
@@ -19,16 +20,23 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
         var reservesIdentity: Bool { self == .waiting || self == .sent || self == .published }
     }
 
+    enum ManagedLinkDisposition: Codable, Equatable, Sendable {
+        case attached
+        case needsReview(String)
+    }
+
     struct Entry: Codable, Equatable, Sendable {
         let identity: Publication.ReadbackIdentity
         let reviewFingerprint: String
         let calendarName: String
         let capturedAtMs: Int64
+        let managedLease: ManagedLease?
         fileprivate(set) var phase: Phase = .waiting
         fileprivate(set) var retired = false
         fileprivate(set) var confirmation: Publication.Confirmation?
         fileprivate(set) var confirmedAtMs: Int64?
         fileprivate(set) var reason: String?
+        fileprivate(set) var managedLink: ManagedLinkDisposition?
     }
 
     private struct State: Codable {
@@ -51,17 +59,31 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
         return RemiloIOSGoogleCalendarPublicationJournal(directory: support.appendingPathComponent("google-calendar", isDirectory: true))
     }
 
-    func capture(_ request: Publication.Request, reviewFingerprint: String, calendarName: String) throws -> Entry {
+    func capture(_ request: Publication.Request, reviewFingerprint: String, calendarName: String,
+                 managedLease: ManagedLease? = nil) throws -> Entry {
         let identity = try request.validated().readbackIdentity()
-        guard Data(base64Encoded: reviewFingerprint)?.count == 32 else { throw Failure.invalidInput }
+        guard Data(base64Encoded: reviewFingerprint)?.count == 32,
+              managedLease.map({ $0.publication == true && $0.calendarID == identity.calendarID }) ?? true else { throw Failure.invalidInput }
+        guard calendarName.utf8.count <= 4096 else { throw Failure.responseLimit }
         var state = try read()
         if let existing = state.operations[request.operationID] {
-            guard existing.identity == identity, existing.reviewFingerprint == reviewFingerprint else { throw Failure.operationReused }
-            return existing
+            guard existing.managedLease == managedLease else { throw Failure.operationReused }
+            if existing.identity == identity, existing.reviewFingerprint == reviewFingerprint { return existing }
+            // Managed intents can refresh their snapshot before dispatch. The
+            // event identity and binding stay fixed across edits and retries.
+            guard managedLease != nil, existing.phase == .waiting,
+                  Self.sameOwner(existing.identity.account, identity.account),
+                  existing.identity.account.accountGeneration == identity.account.accountGeneration,
+                  existing.identity.account.connectionRevision <= identity.account.connectionRevision,
+                  existing.identity.local.occurrenceID == identity.local.occurrenceID,
+                  existing.identity.local.revision <= identity.local.revision,
+                  existing.identity.local.generation <= identity.local.generation,
+                  existing.identity.eventID == identity.eventID else { throw Failure.operationReused }
+        } else {
+            try requireUnreserved(identity.local.occurrenceID, in: state)
         }
-        try requireUnreserved(identity.local.occurrenceID, in: state)
-        guard calendarName.utf8.count <= 4096 else { throw Failure.responseLimit }
-        let entry = Entry(identity: identity, reviewFingerprint: reviewFingerprint, calendarName: calendarName, capturedAtMs: now())
+        let entry = Entry(identity: identity, reviewFingerprint: reviewFingerprint, calendarName: calendarName,
+                          capturedAtMs: state.operations[request.operationID]?.capturedAtMs ?? now(), managedLease: managedLease)
         state.operations[request.operationID] = entry
         try write(state)
         return entry
@@ -89,6 +111,17 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
                   entry.phase.reservesIdentity else { return nil }
             return entry.identity.eventID
         })
+    }
+
+    func finishManagedLink(_ entry: Entry, reason: String?) throws {
+        var state = try read()
+        let id = entry.identity.operationID
+        guard var saved = state.operations[id], saved.identity == entry.identity,
+              saved.phase == .published, saved.managedLease != nil else { throw Failure.operationReused }
+        guard saved.managedLink == nil else { return }
+        saved.managedLink = reason.map(ManagedLinkDisposition.needsReview) ?? .attached
+        state.operations[id] = saved
+        try write(state)
     }
 
     /// Call only inside the engine permit after rechecking the active local

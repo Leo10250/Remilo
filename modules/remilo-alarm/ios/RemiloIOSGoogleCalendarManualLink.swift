@@ -124,6 +124,7 @@ enum RemiloIOSGoogleCalendarManualLink {
         let authEpoch: Int
         let calendarID: String
         let zoneID: String
+        var publication: Bool? = nil
 
         func verify(_ calendar: Transport.OwnedCalendar, email: String) throws {
             let record = try RemiloIOSCalendarOwnedRecord(calendar)

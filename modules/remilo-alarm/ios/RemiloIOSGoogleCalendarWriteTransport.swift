@@ -264,11 +264,18 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
 
     func publish(_ request: Publication.Request, access: RemiloIOSGoogleCalendarAccess, phase: Phase,
                  budget: HTTP.Budget = .init(),
+                 managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil,
                  permitSend: @Sendable (Publication.Request) async throws -> Permission) async throws -> Publication.Outcome {
         let request = try request.validated()
         guard request.account.matches(access) else { throw Failure.accountChanged }
         let identity = try request.readbackIdentity()
-        _ = try await transport.ownedCalendar(access, id: request.calendarID, budget: budget)
+        let calendar = try await transport.ownedCalendar(access, id: request.calendarID, budget: budget)
+        if phase == .notSent, let managedLease {
+            try managedLease.verify(calendar, email: access.account.email)
+            if request.fields.schedule.allDay, request.fields.schedule.zoneId != managedLease.zoneID {
+                return .notSent(.invalidZone)
+            }
+        }
         let existing = try await transport.lookup(access, calendarID: request.calendarID, eventID: request.eventID, budget: budget)
         if let known = Publication.inspect(existing, for: identity) { return known }
         guard phase == .notSent else { return .unconfirmed(nil) }

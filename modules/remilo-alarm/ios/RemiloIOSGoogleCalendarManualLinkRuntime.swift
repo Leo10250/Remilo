@@ -126,8 +126,38 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             guard canUseForeground(), try connection.isCurrentAccount(account),
                   try permitsManagedLease(lease, account: account),
                   try local.lifecycleRevision(imported.id) == lifecycle else { throw Link.Failure.stalePreview }
-            return .observation(try store.attachManagedImport(viewingAs: account, occurrenceID: imported.id, remote: remote,
-                                                              lifecycleRevision: lifecycle, lease: lease, observedAtMs: now()))
+            return .observation(try store.attachManaged(viewingAs: account, occurrenceID: imported.id, remote: remote,
+                                                        lifecycleRevision: lifecycle, lease: lease, observedAtMs: now()))
+        }
+        guard case .observation = checkpoint else { throw Failure.invalidResponse }
+    }
+
+    func attachManagedPublication(_ entry: Publication.Journal.Entry, expectedConnectionRevision: Int,
+                                  budget: RemiloIOSGoogleCalendarHTTP.Budget) async throws {
+        let account = try viewer(expectedConnectionRevision)
+        let identity = entry.identity
+        let id = identity.local.occurrenceID
+        guard let lease = entry.managedLease, lease.publication == true,
+              try publication.permitsManagedLink(entry, viewingAs: account) else { throw Link.Failure.stalePreview }
+        let evidence = Link.Evidence.published(identity)
+        if let existing = try store.link(id) {
+            guard existing.source == evidence.source, existing.origin == .published else { throw Link.Failure.ineligible }
+            return
+        }
+        guard let snapshot = try local.read(id), let lifecycle = try local.lifecycleRevision(id) else { throw Link.Failure.ineligible }
+        let remote = try await connection.observeManualLink(evidence, account: account, managedLease: lease, budget: budget,
+            canRead: { [self] in
+                canUseForeground() && (try? publication.permitsManagedLink(entry, viewingAs: account)) == true
+            })
+        // The exact sent fields are the baseline even if the user has edited
+        // the reminder since dispatch. The next link pass can send that edit.
+        guard try identity.matches(remote.fields) else { throw Link.Failure.staleRemote }
+        let checkpoint = try await local.permit(snapshot) { [self] in
+            guard canUseForeground(), try connection.isCurrentAccount(account),
+                  try publication.permitsManagedLink(entry, viewingAs: account),
+                  try local.lifecycleRevision(id) == lifecycle else { throw Link.Failure.stalePreview }
+            return .observation(try store.attachManaged(viewingAs: account, occurrenceID: id, remote: remote,
+                                                        lifecycleRevision: lifecycle, lease: lease, observedAtMs: now()))
         }
         guard case .observation = checkpoint else { throw Failure.invalidResponse }
     }

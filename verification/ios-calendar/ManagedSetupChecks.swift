@@ -115,7 +115,7 @@ enum ManagedSetupChecks {
                         return try commit()
                     }, lifecycleRevision: { local.snapshot($0) == nil ? nil : 0 }),
                     canUseForeground: { true }, now: nowMs,
-                    allowsManagedLease: { try setupJournal.permitsIncomingLink($0, account: $1) })
+                    allowsManagedLease: { try setupJournal.permitsLink($0, account: $1) })
                 let calendar = Runtime(connection: connection, canUseForeground: { true },
                         importJournal: imports, scheduler: scheduler, manualLink: links,
                         managedSetupJournal: setupJournal, managedImportSound: { .system }) { _, _ in
