@@ -50,7 +50,7 @@ enum RuntimeChecks {
         precondition(calendars.items.map(\.id) == ["owned"] && calendars.connectionRevision == connected.revision)
         let first = try await page(runtime, revision: connected.revision)
         precondition(first.items.map(\.eventId) == ["ordinary", "family"] && first.items[0].fields?.title == "提醒")
-        precondition(first.items[1].fields?.schedule.recurrence == ["RRULE:FREQ=DAILY;COUNT=3"])
+        precondition(first.items[1].fields?.schedule.recurrence == ["RRULE:FREQ=DAILY;INTERVAL=1;WKST=MO;COUNT=3"])
         precondition(first.items[1].unsupportedReason == nil)
         let cursor = first.nextCursor!
         let next = try await page(runtime, revision: connected.revision, cursor: cursor)
