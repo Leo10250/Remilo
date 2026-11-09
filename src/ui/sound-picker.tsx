@@ -122,6 +122,7 @@ export function SoundPicker({
   'use no memo';
   const t = useTranslation();
   const [open, setOpen] = useState(false);
+  const trigger = useRef<View>(null);
   const playback = useSoundPreview(open);
   const playing = !!playback.preview && ['Starting', 'Playing'].includes(playback.preview.state);
   const close = () => {
@@ -159,9 +160,10 @@ export function SoundPicker({
         icon="volume_up"
         value={label(value)}
         disabled={disabled}
+        buttonRef={trigger}
         onPress={() => setOpen(true)}
       />
-      <Sheet title={t('m_0fb95a89117b')} visible={open} onClose={close}>
+      <Sheet title={t('m_0fb95a89117b')} visible={open} returnFocusRef={trigger} onClose={close}>
         <Copy muted>{t('m_2dd2503b3307')}</Copy>
         {(['remilo', 'system'] as const).map((sound) => {
           const active = playing && preview?.sound === sound;

@@ -398,7 +398,6 @@ export function ReminderRow({
         backgroundColor: colors.surface,
         overflow: 'hidden',
         borderRadius: shape.field,
-        marginBottom: presentation === 'tile' || !compact ? space.md : 0,
       }}
     >
       {canSwipe && (
@@ -538,7 +537,7 @@ export function ReminderRow({
                 </>
               ) : (
                 <>
-                  {browsing.status?.label === 'Ringing' && (
+                  {browsing.ringing && (
                     <MetadataLine icon="alarm" label={t('m_426a858eacbb')} color={colors.accent} />
                   )}
                   <MetadataLine
@@ -563,15 +562,13 @@ export function ReminderRow({
                       label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')}
                     />
                   )}
-                  {(!item.routine || terminal) &&
-                    !!browsing.status &&
-                    browsing.status.label !== 'Ringing' && (
-                      <MetadataLine
-                        icon={active ? browsing.status.icon : undefined}
-                        label={active ? browsing.status.label : terminalState}
-                        color={colors[browsing.status.tone]}
-                      />
-                    )}
+                  {(!item.routine || terminal) && !!browsing.status && !browsing.ringing && (
+                    <MetadataLine
+                      icon={browsing.status.icon}
+                      label={active ? browsing.status.label : terminalState}
+                      color={colors[browsing.status.tone]}
+                    />
+                  )}
                   {!item.routine && !!browsing.warning && (
                     <MetadataLine icon="error" label={browsing.warning} color={colors.danger} />
                   )}

@@ -137,6 +137,24 @@ describe('serialized preference writes', () => {
     expect(f.saved.revision).toBe(2);
     expect(f.controller.snapshot().data?.vibration).toBe(false);
   });
+  it('retries only the edited Tomorrow slot, even when its time duplicates another slot', async () => {
+    const f = fixture();
+    f.read.mockRejectedValueOnce(new Error('Read failed'));
+    f.controller.change({ tomorrowMorning: initial.tomorrowEvening });
+    await settled(f.controller);
+    expect(f.controller.snapshot().fields).toEqual(['tomorrowMorning']);
+    expect(f.controller.snapshot().data?.tomorrowMorning).toBe(initial.tomorrowMorning);
+
+    f.controller.retry();
+    await settled(f.controller);
+    expect(f.write.mock.calls[1][0]).toEqual(f.write.mock.calls[0][0]);
+    expect(f.saved).toMatchObject({
+      tomorrowMorning: initial.tomorrowEvening,
+      tomorrowAfternoon: initial.tomorrowAfternoon,
+      tomorrowEvening: initial.tomorrowEvening,
+      revision: 2,
+    });
+  });
   it('refreshes external revisions and retains newer selections after a stale rejection', async () => {
     const f = fixture();
     await f.write({ revision: 1, operationId: 'external', patch: { sound: 'system' } });

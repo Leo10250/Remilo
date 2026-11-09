@@ -7,15 +7,18 @@ import { Platform, Pressable, View } from 'react-native';
 import type { Atmosphere, AtmosphereSelection, Brightness } from '../domain/appearance';
 import { clockPreferenceDate, clockPreferenceFromPicker } from '../domain/clock-preferences';
 import { atmosphereNames } from '../domain/settings-presentation';
-import { ActionFeedback, Copy, Icon, SettingRow, Sheet } from './components';
+import { ActionFeedback, Choice, Copy, Icon, RowSupport, SettingRow, Sheet } from './components';
 import { atmosphereColors } from './colors';
+import { nativeAvailable } from './native';
 import { useAppearanceHold, useAtmosphere, useTheme } from './theme';
 
 export function ClockPreferenceRow({
+  label,
   minutes,
   onChange,
   disabled = false,
 }: {
+  label: string;
   minutes: number;
   onChange: (minutes: number) => void;
   disabled?: boolean;
@@ -26,8 +29,11 @@ export function ClockPreferenceRow({
   const timeDisplay = useTimeDisplay();
   const [picking, setPicking] = useState(false),
     [error, setError] = useLocalizedState('');
+  const trigger = useRef<View>(null);
   const mounted = useRef(true),
     request = useRef(0);
+  // The native module is only available on web through the opt-in fixture resolver.
+  const preview = Platform.OS === 'web' && nativeAvailable;
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -36,7 +42,12 @@ export function ClockPreferenceRow({
   }, []);
   useAppearanceHold(picking);
   const pick = () => {
-    if (disabled || picking || Platform.OS !== 'android') return;
+    if (disabled || picking) return;
+    if (preview) {
+      setPicking(true);
+      return;
+    }
+    if (Platform.OS !== 'android') return;
     const current = ++request.current;
     const active = () => mounted.current && request.current === current;
     const fail = () => {
@@ -80,11 +91,37 @@ export function ClockPreferenceRow({
       <SettingRow
         intent="picker"
         icon="schedule"
-        label={clockPreferenceLabel(minutes)}
-        disabled={disabled || picking}
+        label={label}
+        value={clockPreferenceLabel(minutes)}
+        buttonRef={trigger}
+        disabled={disabled || picking || (!preview && Platform.OS !== 'android')}
         onPress={pick}
       />
-      {!!error && <ActionFeedback message={error} tone="danger" />}
+      {!!error && (
+        <RowSupport>
+          <ActionFeedback message={error} tone="danger" />
+        </RowSupport>
+      )}
+      {preview && (
+        <Sheet
+          title={label}
+          visible={picking}
+          returnFocusRef={trigger}
+          onClose={() => setPicking(false)}
+        >
+          {[...new Set([minutes, 480, 600, 840, 1020])].map((value) => (
+            <Choice
+              key={value}
+              label={clockPreferenceLabel(value)}
+              selected={value === minutes}
+              onPress={() => {
+                setPicking(false);
+                if (value !== minutes) onChange(value);
+              }}
+            />
+          ))}
+        </Sheet>
+      )}
     </View>
   );
 }
@@ -205,6 +242,7 @@ export function AtmospherePicker({
   const t = useTranslation();
   const [open, setOpen] = useState(false),
     { scene, brightness } = useAtmosphere();
+  const trigger = useRef<View>(null);
   return (
     <>
       <SettingRow
@@ -218,10 +256,16 @@ export function AtmospherePicker({
             : undefined
         }
         onPress={() => setOpen(true)}
+        buttonRef={trigger}
       >
         {value !== 'automatic' && <AtmosphereSwatch scene={value} brightness={brightness} />}
       </SettingRow>
-      <Sheet title={t('m_402b3d52f2b5')} visible={open} onClose={() => setOpen(false)}>
+      <Sheet
+        title={t('m_402b3d52f2b5')}
+        visible={open}
+        returnFocusRef={trigger}
+        onClose={() => setOpen(false)}
+      >
         {(['automatic', 'sunrise', 'sky', 'evening', 'night'] as const).map((choice) => (
           <AtmosphereChoice
             key={choice}

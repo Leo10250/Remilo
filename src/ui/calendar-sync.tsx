@@ -17,6 +17,7 @@ import {
 } from '../domain/calendar-ux';
 import { managedCalendarItemReason } from '../domain/calendar-managed';
 import { calendarError } from '../domain/calendar';
+import { modeLabel } from '../domain/presentation';
 import {
   ActionFeedback,
   Button,
@@ -25,7 +26,9 @@ import {
   Copy,
   Icon,
   RowSupport,
+  SectionStack,
   SettingRow,
+  Status,
   type IconName,
 } from './components';
 import { engine, nativeAvailable } from './native';
@@ -542,83 +545,95 @@ export function CalendarReviewItems({
   const { scheduleDateTime } = useTimeFormatting();
   const ready = items.filter((item) => item.ready),
     review = items.filter((item) => !item.ready);
+  if (!items.length) return null;
   return (
-    <>
+    <SectionStack>
       {!!ready.length && (
-        <Copy heading>
-          {t('m_bbee1723dacc')}
-          {ready.length}
-        </Copy>
-      )}
-      {ready.map((item) => (
-        <ConnectedGroup key={item.itemId}>
-          <View>
-            <CheckRow
-              label={item.title}
-              description={[item.calendarName, item.scope].filter(Boolean).join(' · ')}
-              selected={selected.includes(item.itemId)}
-              disabled={disabled}
-              onPress={() => onToggle(item.itemId)}
-            />
-            <RowSupport>
-              <Copy
-                muted={!item.alertAtMs}
-                heading={!!item.alertAtMs}
-                size={item.alertAtMs ? 16 : 14}
-              >
-                {item.alertMode === 'None'
-                  ? t('m_d1af410eb4d0')
-                  : item.alertAtMs
-                    ? `${item.alertMode || 'Alarm'} · ${scheduleDateTime(item.alertAtMs)}`
-                    : calendarTransferText(item.inbound, item.outbound)}
-              </Copy>
-              {!!((item.inbound?.length || 0) + (item.outbound?.length || 0)) &&
-                !!item.alertAtMs && (
-                  <Copy muted size={14}>
-                    {calendarTransferText(item.inbound, item.outbound)}
-                  </Copy>
-                )}
-              {!!item.localStatus && (
-                <Copy muted size={14}>
-                  {t('m_f44f870665fc')}
-                  {item.localStatus}
+        <ConnectedGroup title={t('ui_calendar_ready_count', { count: ready.length })}>
+          {ready.map((item) => (
+            <View key={item.itemId}>
+              <CheckRow
+                label={item.title}
+                description={[item.calendarName, item.scope].filter(Boolean).join(' · ')}
+                selected={selected.includes(item.itemId)}
+                disabled={disabled}
+                onPress={() => onToggle(item.itemId)}
+              />
+              <RowSupport>
+                <Copy
+                  muted={!item.alertAtMs}
+                  heading={!!item.alertAtMs}
+                  size={item.alertAtMs ? 16 : 14}
+                >
+                  {item.alertMode === 'None'
+                    ? t('m_d1af410eb4d0')
+                    : item.alertAtMs
+                      ? `${modeLabel(item.alertMode)} · ${scheduleDateTime(item.alertAtMs)}`
+                      : calendarTransferText(item.inbound, item.outbound)}
                 </Copy>
-              )}
-            </RowSupport>
-          </View>
+                {!!((item.inbound?.length || 0) + (item.outbound?.length || 0)) &&
+                  !!item.alertAtMs && (
+                    <Copy muted size={14}>
+                      {calendarTransferText(item.inbound, item.outbound)}
+                    </Copy>
+                  )}
+                {!!item.localStatus && (
+                  <Status
+                    label={localReviewStatus(item.localStatus)}
+                    tone={item.localStatus === 'Blocked' ? 'danger' : 'muted'}
+                  />
+                )}
+              </RowSupport>
+            </View>
+          ))}
         </ConnectedGroup>
-      ))}
-      {!!review.length && (
-        <Copy heading>
-          {t('m_33071713d5e1')}
-          {review.length}
-        </Copy>
       )}
-      {review.map((item) => (
-        <ConnectedGroup key={item.itemId}>
-          <View>
-            <SettingRow
-              intent="action"
-              prominent
-              label={item.title}
-              description={[item.calendarName, item.scope].filter(Boolean).join(' · ')}
-            />
-            <RowSupport>
-              <Copy muted size={14}>
-                {managedCalendarItemReason(item)}
-              </Copy>
-              {(item.occurrenceId || item.candidateId) && (
-                <Button
-                  label={item.reason === 'ElapsedAlert' ? t('m_2d2f0c2ff330') : t('m_6a47708f4e14')}
-                  variant="secondary"
-                  disabled={disabled}
-                  onPress={() => onReview(item)}
-                />
-              )}
-            </RowSupport>
-          </View>
+      {!!review.length && (
+        <ConnectedGroup title={t('ui_calendar_review_count', { count: review.length })}>
+          {review.map((item) => {
+            const reason = managedCalendarItemReason(item);
+            const supporting = (
+              <Status
+                label={reason}
+                tone={
+                  ['AccessRequired', 'AccountChanged'].includes(item.reason || '')
+                    ? 'danger'
+                    : 'warning'
+                }
+              />
+            );
+            return (
+              <SettingRow
+                key={item.itemId}
+                prominent
+                label={item.title}
+                description={[item.calendarName, item.scope].filter(Boolean).join(' · ')}
+                statusLabel={reason}
+                supporting={supporting}
+                {...(item.occurrenceId || item.candidateId
+                  ? { intent: 'navigation' as const, disabled, onPress: () => onReview(item) }
+                  : { onPress: undefined })}
+              />
+            );
+          })}
         </ConnectedGroup>
-      ))}
-    </>
+      )}
+    </SectionStack>
   );
+}
+function localReviewStatus(status: string) {
+  switch (status) {
+    case 'Scheduled':
+      return t('m_4724f344c1c0');
+    case 'Pending':
+      return t('m_9b69a5f441b4');
+    case 'Blocked':
+      return t('m_9b71e79182a6');
+    case 'Applied':
+      return t('m_0c79a9c22284');
+    case 'NoAlert':
+      return modeLabel('None');
+    default:
+      return t('m_3229d16ca643');
+  }
 }

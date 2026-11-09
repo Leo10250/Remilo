@@ -371,6 +371,10 @@ export function detailSchedulePresentation(
     changed: delivery.changed,
     target: instant,
     targetZone: primaryZone,
+    nextRegisteredAt:
+      delivery.confirmed && item.nextAlertMs != null && item.nextAlertMs > now
+        ? item.nextAlertMs
+        : null,
   };
 }
 /** Relative age uses the native original scheduling reference, never the next delivery. */
@@ -487,7 +491,7 @@ export function reminderBrowsingPresentation(
   ]
     .filter(Boolean)
     .join('. ');
-  return { timing, status, warning, overdue, spokenLabel };
+  return { timing, status, warning, overdue, spokenLabel, ringing };
 }
 export function canAdjustAlert(
   item: Pick<Occurrence, 'completed' | 'deleted' | 'skipped' | 'mode' | 'deliveryState'>,

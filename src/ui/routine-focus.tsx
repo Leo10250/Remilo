@@ -396,22 +396,24 @@ export function RoutineSessionContent({
       <Copy muted size={14}>
         {formatDate(new Date(session.date + 'T12:00:00').getTime())}
       </Copy>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Icon
-          name={
-            mode === 'Alarm' ? 'alarm' : mode === 'Notification' ? 'notifications' : 'alarm_off'
-          }
-          size={20}
-        />
-        <View style={{ flex: 1 }}>
-          <Copy muted size={14}>
-            {alert}
-            {mode !== 'None' && session.minutes != null
-              ? ' · ' + clockPreferenceLabel(session.minutes)
-              : ''}
-          </Copy>
+      {state !== 'Rest' && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon
+            name={
+              mode === 'Alarm' ? 'alarm' : mode === 'Notification' ? 'notifications' : 'alarm_off'
+            }
+            size={20}
+          />
+          <View style={{ flex: 1 }}>
+            <Copy muted size={14}>
+              {alert}
+              {mode !== 'None' && session.minutes != null
+                ? ' · ' + clockPreferenceLabel(session.minutes)
+                : ''}
+            </Copy>
+          </View>
         </View>
-      </View>
+      )}
       {!!session.totalCount ? (
         <RoutineProgress
           done={session.completedCount}
@@ -442,8 +444,8 @@ export function RoutineSessionContent({
         <Copy muted>
           {t(
             session.presentationPreset === 'General'
-              ? 'routine_no_steps_today'
-              : 'routine_rest_hint',
+              ? 'ui_routine_rest_steps'
+              : 'ui_routine_rest_exercises',
           )}
         </Copy>
       )}

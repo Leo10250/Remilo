@@ -6,7 +6,7 @@ import type {
   Occurrence,
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 
-export const calendarImportIndependence = t('m_8b7100b79478');
+export const calendarImportIndependence = () => t('m_8b7100b79478');
 export function calendarCancellation(
   item: Pick<Occurrence, 'mode' | 'deleted' | 'completed' | 'skipped'> &
     Partial<Pick<Occurrence, 'segmentId' | 'nominalSlot'>>,

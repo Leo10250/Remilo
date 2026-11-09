@@ -56,6 +56,7 @@ const names = [
   '../ui/presentation-preview',
   'expo-file-system',
   'expo-sharing',
+  'expo-document-picker',
 ];
 for (const preview of [undefined, '0', 'true', '']) {
   test(`preview environment ${String(preview)} preserves normal web and native resolution`, () => {
@@ -86,6 +87,10 @@ test('only the explicit preview web bundle substitutes the fixture bridge, leavi
   assert.deepEqual(
     { ...resolve(context, names[4], 'web') },
     { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-sharing.ts') },
+  );
+  assert.deepEqual(
+    { ...resolve(context, names[5], 'web') },
+    { type: 'sourceFile', filePath: path.join(root, 'verification/ui/preview-document-picker.ts') },
   );
   for (const platform of ['android', 'ios'])
     for (const name of names) {
@@ -608,6 +613,7 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
             './scroll-chrome': { ScrollChromeProvider: 'ScrollChrome' },
             './snackbar-timeout': {},
             './confirmation-state': compile('src/ui/confirmation-state.ts'),
+            './disclosure-state': compile('src/ui/disclosure-state.ts'),
           });
           // Model the header's foreground and scenic-control context; a Modal retains both.
           contexts.find((context) => context.value === false).value = true;

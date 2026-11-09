@@ -7,10 +7,12 @@ import { engine, nativeAvailable } from './native';
 
 export function WidgetSetupRow({
   routineId,
+  description,
   disabled = false,
   onOpen,
 }: {
   routineId?: string;
+  description?: string;
   disabled?: boolean;
   onOpen?: () => void;
 }) {
@@ -30,6 +32,7 @@ export function WidgetSetupRow({
       <SettingRow
         intent={routineId ? 'action' : 'navigation'}
         label={t(routineId ? 'widget_add' : 'widget_name')}
+        description={description}
         icon="event"
         disabled={disabled || busy || !nativeAvailable}
         onPress={() => {

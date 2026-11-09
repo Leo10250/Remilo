@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useRef, useState } from 'react';
+import type { View } from 'react-native';
 import type {
   CalendarCommand,
   ManagedCalendarCommand,
@@ -23,14 +24,17 @@ import {
 import {
   ActionFeedback,
   Button,
+  Choice,
   ConnectedGroup,
   Copy,
   Disclosure,
   Page,
   QueryState,
+  ReadOnlyRow,
   RowSupport,
   SettingRow,
   Sheet,
+  Status,
   Toggle,
 } from '../ui/components';
 import {
@@ -55,6 +59,7 @@ export default function CalendarSettings() {
     client = useQueryClient(),
     confirm = useAppearanceConfirmation();
   const { scheduleDateTime } = useTimeFormatting();
+  const calendarTrigger = useRef<View>(null);
   const connection = useQuery({
     queryKey: ['calendar', 'connection'],
     queryFn: () => engine().getCalendarConnection(),
@@ -86,6 +91,7 @@ export default function CalendarSettings() {
     enabled: nativeAvailable,
   });
   const syncRequest = useCalendarSync({ kind: 'AllAuthorized' }, sync.data?.syncRequestId);
+  const [automaticExpanded, setAutomaticExpanded] = useState(false);
   const [selecting, setSelecting] = useState(false),
     [busy, setBusy] = useState(false),
     [feedback, setFeedback] = useLocalizedState('');
@@ -290,6 +296,10 @@ export default function CalendarSettings() {
       managed.data.pendingExportCount + (managed.data.pendingChangeCount ?? 0))
     : 0;
   const held = managed.data?.progress?.held ?? managed.data?.heldExportCount ?? 0;
+  const reviewCount = sync.data?.reviewCount ?? 0;
+  const reviewLabel = reviewCount
+    ? t('ui_calendar_review_items_count', { count: reviewCount })
+    : undefined;
   const locked =
     busy ||
     unknown ||
@@ -301,6 +311,7 @@ export default function CalendarSettings() {
     syncRequest.statusLoading;
   return (
     <Page
+      sectionSpacing
       title={t('m_b074310e911f')}
       scrollKey="calendar-settings"
       onBack={() =>
@@ -329,7 +340,15 @@ export default function CalendarSettings() {
             (syncRequest.statusLoading && presentation.action === 'None')
           }
           disabled={locked}
-          action={connection.data?.available === false ? undefined : mainAction}
+          action={
+            connection.data?.available === false ||
+            (presentation.action === 'Resume' &&
+              managed.data?.mode === 'Paused' &&
+              !!managed.data.calendarId &&
+              automaticExpanded)
+              ? undefined
+              : mainAction
+          }
         >
           {!!feedback && <ActionFeedback message={feedback} />}
           {!feedback && !!calendarAction.error && (
@@ -356,11 +375,14 @@ export default function CalendarSettings() {
           {connection.data?.available === false && (
             <ActionFeedback message={t('m_e351735905e7')} tone="warning" />
           )}
-          <Copy muted size={14}>
-            {presentation.state === 'Paused' || presentation.state === 'Setup'
-              ? t('calendar_managed_scope')
-              : t('calendar_global_scope')}
-          </Copy>
+          {connection.data?.connected &&
+            (presentation.state !== 'Setup' || !!managed.data?.calendarId) && (
+              <Copy muted size={14}>
+                {presentation.state === 'Paused' || presentation.state === 'Setup'
+                  ? t('calendar_managed_scope')
+                  : t('calendar_global_scope')}
+              </Copy>
+            )}
           {presentation.checkedAtMs != null && (
             <Copy muted size={14}>
               {t('calendar_sync_checked_at', { time: scheduleDateTime(presentation.checkedAtMs) })}
@@ -375,10 +397,12 @@ export default function CalendarSettings() {
           )}
         </CalendarStatusCard>
       )}
-      {managed.data?.calendarId && (
+      {!!managed.data?.calendarId && (
         <ConnectedGroup title={t('m_fc7921108075')}>
           <Disclosure
             title={t('calendar_automatic_sync')}
+            expanded={automaticExpanded}
+            onExpandedChange={setAutomaticExpanded}
             value={automatic?.value}
             summary={
               automatic ? `${t('calendar_managed_scope')} · ${automatic.summary}` : undefined
@@ -413,7 +437,7 @@ export default function CalendarSettings() {
             </Copy>
           </Disclosure>
           <SettingRow
-            intent="action"
+            intent="navigation"
             icon="download"
             label={t('m_59909a83ae12')}
             value={managed.data.policy.automaticImport ? t('m_b4ec2d7e78ce') : t('m_192bc55a3400')}
@@ -421,7 +445,7 @@ export default function CalendarSettings() {
             onPress={() => setup('policy')}
           />
           <SettingRow
-            intent="action"
+            intent="navigation"
             icon="upload"
             label={t('m_40a3bf59729e')}
             value={
@@ -433,7 +457,7 @@ export default function CalendarSettings() {
           {(pending > 0 || held > 0) && <ViewSummary pending={pending} held={held} />}
           {!!managed.data.recoveryCount && (
             <SettingRow
-              intent="action"
+              intent="navigation"
               icon="alarm"
               label={t('m_2b92a414df3c')}
               value={t('m_e0fad4b7a1fb', { arg0: String(managed.data.recoveryCount) })}
@@ -445,14 +469,9 @@ export default function CalendarSettings() {
       )}
       {managed.data && connection.data?.connected && (
         <ConnectedGroup title={t('m_4daf4f599e5c')}>
+          <ReadOnlyRow label={t('m_7da2bcb6bb6b')} value={connection.data.email} />
           <SettingRow
-            intent="action"
-            icon="event"
-            label={t('m_7da2bcb6bb6b')}
-            value={connection.data.email}
-          />
-          <SettingRow
-            intent="action"
+            intent="navigation"
             icon="event"
             label={t('m_d1f78591d052')}
             value={managed.data.calendarName || t('m_7498e51581fd')}
@@ -466,41 +485,48 @@ export default function CalendarSettings() {
           />
         </ConnectedGroup>
       )}
-      {managed.data?.calendarId && (
+      {!!managed.data?.calendarId && (
         <ConnectedGroup>
           <Disclosure title={t('m_358299bb64a8')} icon="info">
             <Copy muted size={14}>
               {t('calendar_sync_scope_help')}
             </Copy>
-            <Copy muted size={14}>
-              {managed.data.calendarName} · {connection.data?.email}
-            </Copy>
-            <Copy muted size={14}>
-              {managed.data.calendarZone}
-            </Copy>
+            {!!managed.data.calendarName && (
+              <ReadOnlyRow compact label={t('m_d5d0a30b517e')} value={managed.data.calendarName} />
+            )}
+            {!!connection.data?.email && (
+              <ReadOnlyRow compact label={t('m_7da2bcb6bb6b')} value={connection.data.email} />
+            )}
+            {!!managed.data.calendarZone && (
+              <ReadOnlyRow compact label={t('m_b9fe1464783e')} value={managed.data.calendarZone} />
+            )}
             {managed.data.lastObservedAtMs != null && (
-              <Copy muted size={14}>
-                {t('m_3ca2b1323cd4')}
-                {scheduleDateTime(managed.data.lastObservedAtMs)}
-              </Copy>
+              <ReadOnlyRow
+                compact
+                label={t('m_3ca2b1323cd4')}
+                value={scheduleDateTime(managed.data.lastObservedAtMs)}
+              />
             )}
             {managed.data.successfulAtMs != null && (
-              <Copy muted size={14}>
-                {t('m_07330d3b86d7')}
-                {scheduleDateTime(managed.data.successfulAtMs)}
-              </Copy>
+              <ReadOnlyRow
+                compact
+                label={t('m_07330d3b86d7')}
+                value={scheduleDateTime(managed.data.successfulAtMs)}
+              />
             )}
             {managed.data.attemptedAtMs != null && (
-              <Copy muted size={14}>
-                {t('m_6b01b7236ce1')}
-                {scheduleDateTime(managed.data.attemptedAtMs)}
-              </Copy>
+              <ReadOnlyRow
+                compact
+                label={t('m_6b01b7236ce1')}
+                value={scheduleDateTime(managed.data.attemptedAtMs)}
+              />
             )}
             {managed.data.failedAtMs != null && (
-              <Copy muted size={14}>
-                {t('m_50f0f027b7fa')}
-                {scheduleDateTime(managed.data.failedAtMs)}
-              </Copy>
+              <ReadOnlyRow
+                compact
+                label={t('m_50f0f027b7fa')}
+                value={scheduleDateTime(managed.data.failedAtMs)}
+              />
             )}
             <Copy muted size={14}>
               {t('m_6ed0e8d64c24')}
@@ -513,8 +539,14 @@ export default function CalendarSettings() {
           intent="navigation"
           icon="event"
           label={t('m_4e680674ef4c')}
-          value={t('item_count', { count: sync.data?.reviewCount ?? 0 })}
+          value={sync.data && !reviewLabel ? t('item_count', { count: reviewCount }) : undefined}
           description={t('m_86a0b9633d1a')}
+          statusLabel={reviewLabel}
+          supporting={
+            reviewLabel ? (
+              <Status label={reviewLabel} tone={sync.data?.attention?.tone ?? 'warning'} />
+            ) : undefined
+          }
           onPress={() => router.push({ pathname: '/calendar-reviews', params: origin })}
         />
         {!!manualCount && (
@@ -551,16 +583,18 @@ export default function CalendarSettings() {
           <Copy muted size={14}>
             {t('m_7b1f363121ad')}
           </Copy>
-          <Button
+          <SettingRow
+            intent="navigation"
+            icon="download"
             label={t('m_357bcb0ce661')}
-            variant="secondary"
             disabled={locked || !connection.data?.connected}
             onPress={() => router.push({ pathname: '/calendar-import', params: origin })}
           />
           <SettingRow
-            intent="action"
+            intent="picker"
             icon="event"
             label={t('m_3994b5141305')}
+            buttonRef={calendarTrigger}
             value={connection.data?.calendarName || t('m_df12aeba9bb9')}
             disabled={locked || !connection.data?.connected}
             onPress={() => {
@@ -611,6 +645,7 @@ export default function CalendarSettings() {
       <Sheet
         visible={selecting}
         title={t('m_3994b5141305')}
+        returnFocusRef={calendarTrigger}
         onClose={() => {
           if (!busy && !selection.current) setSelecting(false);
         }}
@@ -618,11 +653,11 @@ export default function CalendarSettings() {
         <Copy muted>{t('m_da51f269c894')}</Copy>
         <ConnectedGroup>
           {rows.map((calendar) => (
-            <SettingRow
-              intent="action"
+            <Choice
               key={calendar.id}
               label={calendar.name}
               description={calendar.zoneId}
+              selected={calendar.id === connection.data?.calendarId}
               disabled={busy || selectionPending}
               onPress={() => void select(calendar)}
             />

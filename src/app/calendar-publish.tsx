@@ -13,6 +13,7 @@ import {
 } from '../domain/navigation';
 import { publicationCommand, calendarError } from '../domain/calendar';
 import {
+  ActionPair,
   ActionFeedback,
   BottomActionBar,
   Button,
@@ -20,6 +21,7 @@ import {
   Copy,
   Page,
   QueryState,
+  ReadOnlyRow,
 } from '../ui/components';
 import { civilAt } from '../domain/time';
 import { engine, nativeAvailable } from '../ui/native';
@@ -86,22 +88,25 @@ export default function CalendarPublish() {
   };
   return (
     <Page
+      sectionSpacing
       title={publication ? t('m_6f6b42de13f4') : t('m_3a4c8285963f')}
       onBack={back}
       footer={
         !publication && preview.data ? (
           <BottomActionBar>
-            <Button
-              label={uncertain ? t('m_f122e37c423b') : t('m_859390eb495b')}
-              disabled={busy}
-              onPress={() => void publish()}
-            />
-            <Button
-              label={t('m_19766ed6ccb2')}
-              variant="secondary"
-              disabled={busy || uncertain}
-              onPress={back}
-            />
+            <ActionPair>
+              <Button
+                label={uncertain ? t('m_f122e37c423b') : t('m_859390eb495b')}
+                disabled={busy}
+                onPress={() => void publish()}
+              />
+              <Button
+                label={t('m_19766ed6ccb2')}
+                variant="secondary"
+                disabled={busy || uncertain}
+                onPress={back}
+              />
+            </ActionPair>
           </BottomActionBar>
         ) : undefined
       }
@@ -141,22 +146,20 @@ export default function CalendarPublish() {
                       })
                     : `${scheduleDateTime(preview.data.eventStartMs, preview.data.zoneId)} – ${scheduleDateTime(preview.data.eventEndMs, preview.data.zoneId)}`}
                 </Copy>
-                <Copy muted>
-                  {preview.data.allDay ? t('m_7d93cadaf7ad') : ''}
-                  {preview.data.zoneId}
-                </Copy>
+                {preview.data.allDay && <Copy muted>{t('m_34233e542b7b')}</Copy>}
                 {!!preview.data.recurrence?.length && <Copy>{t('m_0158ffecbd50')}</Copy>}
-                <Copy>
-                  {preview.data.calendarName} · {preview.data.email}
-                </Copy>
               </View>
+              <ReadOnlyRow key="zone" label={t('m_b9fe1464783e')} value={preview.data.zoneId} />
+              <ReadOnlyRow
+                key="calendar"
+                label={t('m_d5d0a30b517e')}
+                value={preview.data.calendarName}
+              />
+              <ReadOnlyRow key="account" label={t('m_7da2bcb6bb6b')} value={preview.data.email} />
             </ConnectedGroup>
             <Copy muted>{t('m_d8811e01b3a3')}</Copy>
             {preview.data.pinsZone && (
-              <Copy muted>
-                {t('m_dd83acb79e4a')}
-                {preview.data.zoneId} {t('m_e497b292f139')}
-              </Copy>
+              <Copy muted>{t('ui_calendar_pinned_zone', { zone: preview.data.zoneId })}</Copy>
             )}
           </>
         )

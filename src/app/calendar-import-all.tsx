@@ -23,6 +23,7 @@ import {
   type OriginParams,
 } from '../domain/navigation';
 import {
+  ActionPair,
   ActionFeedback,
   BottomActionBar,
   Button,
@@ -31,9 +32,11 @@ import {
   Copy,
   Field,
   Page,
+  ReadOnlyRow,
   SelectRow,
   SettingRow,
   Sheet,
+  Status,
   Toggle,
 } from '../ui/components';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
@@ -47,6 +50,8 @@ type Entry = { eventId: string; preview: CalendarLinkPreview };
 export default function CalendarImportAll() {
   'use no memo';
   const t = useTranslation();
+  const eventButtons = useRef(new Map<string, View>());
+  const eventTrigger = useRef<View>(null);
   const params = useLocalSearchParams<
       OriginParams & { calendarId: string; from: string; until: string; managedHistory?: string }
     >(),
@@ -242,32 +247,37 @@ export default function CalendarImportAll() {
   return (
     <Page
       compact
+      sectionSpacing
       title={t('m_ecb8f0a7dc25')}
       onBack={back}
       footer={
         !operationIds.length && ready && entries.length ? (
           <BottomActionBar>
-            <Button
-              label={
-                uncertain
-                  ? t('m_1936752a4785')
-                  : t('calendar_import_all_count', { count: entries.length })
-              }
-              disabled={busy || (!uncertain && invalid.length > 0)}
-              onPress={() => void apply()}
-            />
-            <Button
-              label={t('m_19766ed6ccb2')}
-              variant="secondary"
-              disabled={busy || uncertain}
-              onPress={back}
-            />
+            <ActionPair>
+              <Button
+                label={
+                  uncertain
+                    ? t('m_1936752a4785')
+                    : t('calendar_import_all_count', { count: entries.length })
+                }
+                disabled={busy || (!uncertain && invalid.length > 0)}
+                onPress={() => void apply()}
+              />
+              <Button
+                label={t('m_19766ed6ccb2')}
+                variant="secondary"
+                disabled={busy || uncertain}
+                onPress={back}
+              />
+            </ActionPair>
           </BottomActionBar>
         ) : undefined
       }
     >
-      <Copy muted>{t('m_6c2e4493af7d')}</Copy>
-      <Copy muted>{calendarImportIndependence}</Copy>
+      <View style={{ gap: 8 }}>
+        <Copy muted>{t('m_6c2e4493af7d')}</Copy>
+        <Copy muted>{calendarImportIndependence()}</Copy>
+      </View>
       {!!error && <ActionFeedback message={error} tone="warning" />}
       {reading && <ActionFeedback message={message || t('m_e65119545c4b')} loading />}
       {!reading && !ready && (
@@ -275,16 +285,38 @@ export default function CalendarImportAll() {
       )}
       {ready && !operationIds.length && (
         <>
-          <Copy>
-            {account}
-            {entries[0] ? ' · ' + entries[0].preview.calendarName : ''}
-          </Copy>
+          {(!!account || !!entries[0]) && (
+            <ConnectedGroup title={t('m_0e570ca6fabe')}>
+              {!!entries[0] && (
+                <ReadOnlyRow label={t('m_d5d0a30b517e')} value={entries[0].preview.calendarName} />
+              )}
+              {!!account && <ReadOnlyRow label={t('m_7da2bcb6bb6b')} value={account} />}
+            </ConnectedGroup>
+          )}
           <Copy heading>
-            {entries.length ? entries.length + t('m_5d113e0a9329') : t('m_7364e461ad6c')}
+            {entries.length
+              ? t('ui_calendar_import_review_count', { count: entries.length })
+              : t('m_7364e461ad6c')}
           </Copy>
           {!!entries.length && (
             <>
-              <ConnectedGroup title={t('m_b97900d1be7c')}>
+              <ConnectedGroup
+                title={t('m_b97900d1be7c')}
+                footer={
+                  <View style={{ gap: 8 }}>
+                    <Copy muted size={14}>
+                      {t(
+                        automaticSync
+                          ? 'ui_calendar_import_bulk_linked'
+                          : 'ui_calendar_import_bulk_local',
+                      )}
+                    </Copy>
+                    <Copy muted size={14}>
+                      {t('m_bb57a0ef8ae0')}
+                    </Copy>
+                  </View>
+                }
+              >
                 <Toggle
                   key="automatic"
                   label={t('m_23a71272299e')}
@@ -293,7 +325,6 @@ export default function CalendarImportAll() {
                   onChange={setAutomaticSync}
                 />
               </ConnectedGroup>
-              <Copy muted>{t('m_bb57a0ef8ae0')}</Copy>
               <ConnectedGroup title={t('m_a2b3a106795d')}>
                 <View key="modes" style={{ padding: 16 }}>
                   {(['Alarm', 'Notification', 'None'] as const).map((value) => (
@@ -348,24 +379,36 @@ export default function CalendarImportAll() {
                 />
               </ConnectedGroup>
               <Copy muted>
-                {t('m_514c71c7cda7')}
-                {entries.some((entry) => choices(entry).mode !== 'None')
-                  ? t('m_0e928a7cd037')
-                  : t('m_59a98c6d525c')}{' '}
-                {t('m_566d757c1ea8')}
+                {[
+                  t('m_514c71c7cda7'),
+                  t(
+                    entries.some((entry) => choices(entry).mode !== 'None')
+                      ? 'm_0e928a7cd037'
+                      : 'm_59a98c6d525c',
+                  ),
+                  t('m_566d757c1ea8'),
+                ].join(' ')}
               </Copy>
               {!!invalid.length && (
-                <ActionFeedback tone="warning" message={invalid.length + t('m_b00778eb0515')} />
+                <ActionFeedback
+                  tone="warning"
+                  message={t('ui_calendar_import_invalid_count', { count: invalid.length })}
+                />
               )}
               <ConnectedGroup title={t('m_cde20fd4af8a')}>
                 {entries.map((entry) => (
                   <SettingRow
                     intent="action"
+                    icon="edit"
                     key={entry.eventId}
                     label={title(entry) || t('m_c9a0236cbef6')}
                     disabled={locked}
-                    description={
-                      (entry.preview.remote.schedule.allDay
+                    buttonRef={(node) => {
+                      if (node) eventButtons.current.set(entry.eventId, node);
+                      else eventButtons.current.delete(entry.eventId);
+                    }}
+                    description={[
+                      entry.preview.remote.schedule.allDay
                         ? formatDate(
                             entry.preview.remote.schedule.eventStartMs,
                             entry.preview.remote.schedule.zoneId,
@@ -373,18 +416,27 @@ export default function CalendarImportAll() {
                         : scheduleDateTime(
                             entry.preview.remote.schedule.eventStartMs,
                             entry.preview.remote.schedule.zoneId,
-                          )) +
-                      ' · ' +
-                      (choices(entry).mode === 'None'
-                        ? t('m_d1af410eb4d0')
-                        : choices(entry).mode +
-                          ' ' +
-                          scheduleDateTime(alert(entry), entry.preview.remote.schedule.zoneId)) +
-                      ' · ' +
-                      entry.preview.remote.schedule.zoneId +
-                      (invalid.includes(entry) ? t('m_54d1fff3c636') : '')
+                          ),
+                      modeLabel(choices(entry).mode),
+                      choices(entry).mode === 'None'
+                        ? ''
+                        : scheduleDateTime(alert(entry), entry.preview.remote.schedule.zoneId),
+                      entry.preview.remote.schedule.zoneId,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                    statusLabel={
+                      invalid.includes(entry) ? t('ui_calendar_needs_review') : undefined
                     }
-                    onPress={() => setSelected(entry.eventId)}
+                    supporting={
+                      invalid.includes(entry) ? (
+                        <Status label={t('ui_calendar_needs_review')} tone="warning" />
+                      ) : undefined
+                    }
+                    onPress={() => {
+                      eventTrigger.current = eventButtons.current.get(entry.eventId) ?? null;
+                      setSelected(entry.eventId);
+                    }}
                   />
                 ))}
               </ConnectedGroup>
@@ -401,10 +453,12 @@ export default function CalendarImportAll() {
       {!!operationIds.length && (
         <>
           <Copy heading>
-            {operationIds.length} {t('m_07d91a999423')}
+            {t('ui_calendar_import_requests_count', { count: operationIds.length })}
           </Copy>
           <Copy>
-            {jobs.filter((job) => job.localApplied).length} {t('m_74a1cf35a88d')}
+            {t('ui_calendar_import_saved_count', {
+              count: jobs.filter((job) => job.localApplied).length,
+            })}
           </Copy>
           {jobs.map((job) => (
             <CalendarOperationStatus key={job.operationId} operation={job} />
@@ -412,7 +466,12 @@ export default function CalendarImportAll() {
           <Button label={t('m_6f92c8203bdb')} variant="secondary" onPress={back} />
         </>
       )}
-      <Sheet title={t('m_926bb62635ac')} visible={!!edited} onClose={() => setSelected(null)}>
+      <Sheet
+        title={t('m_926bb62635ac')}
+        visible={!!edited}
+        onClose={() => setSelected(null)}
+        returnFocusRef={eventTrigger}
+      >
         {edited && (
           <>
             <Copy>{edited.preview.remote.title || t('m_a79be2403a6c')}</Copy>
@@ -429,11 +488,11 @@ export default function CalendarImportAll() {
               )}{' '}
               · {edited.preview.remote.schedule.zoneId}
             </Copy>
-            <Copy muted>
-              {t('m_0efd92a33590')}
-              {scheduleDateTime(edited.preview.checkedAtMs)}
-              {t('m_92e1bce4f7e8')}
-            </Copy>
+            <ReadOnlyRow
+              compact
+              label={t('m_0efd92a33590')}
+              value={scheduleDateTime(edited.preview.checkedAtMs)}
+            />
             <Field
               label={t('m_7e8cd2056da7')}
               required
@@ -477,6 +536,13 @@ export default function CalendarImportAll() {
               disabled={locked}
               onChange={(value) => change(edited.eventId, { automaticSync: value })}
             />
+            <Copy muted>
+              {t(
+                (choices(edited).automaticSync ?? true)
+                  ? 'ui_calendar_import_linked'
+                  : 'ui_calendar_import_local_only',
+              )}
+            </Copy>
             <Copy muted>
               {edited.preview.googleReminders ? t('m_655959e9775d') : t('m_bd37e9edaee2')}
             </Copy>

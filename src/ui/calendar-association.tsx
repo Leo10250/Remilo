@@ -72,11 +72,13 @@ export function CalendarSummaryRow({
         icon="event"
         label={t('m_b074310e911f')}
         disabled={disabled}
+        value={summary}
         description={
-          summary +
-          (link?.successfulAtMs != null
-            ? t('m_00fe18e6060b') + scheduleDateTime(link.successfulAtMs)
-            : '')
+          link?.successfulAtMs != null
+            ? t('ui_calendar_last_successful_sync', {
+                time: scheduleDateTime(link.successfulAtMs),
+              })
+            : undefined
         }
         onPress={() =>
           router.push({
