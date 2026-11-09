@@ -7,12 +7,15 @@ enum RemiloIOSTime {
   static func timeZones(at milliseconds: Double) throws -> [[String: Any]] {
     let date = try instant(milliseconds)
     let names = Set(TimeZone.knownTimeZoneIdentifiers + ["UTC", TimeZone.current.identifier])
-    let zones = names.compactMap { name in
-      TimeZone(identifier: name).map { (id: name, offset: $0.secondsFromGMT(for: date)) }
-    }.sorted {
-      $0.offset == $1.offset ? $0.id < $1.id : $0.offset < $1.offset
+    let zones: [(id: String, offset: Int)] = names.compactMap { name in
+      guard let zone = TimeZone(identifier: name) else { return nil }
+      return (id: name, offset: zone.secondsFromGMT(for: date))
     }
-    return zones.map { zone in
+    let sorted = zones.sorted { first, second in
+      if first.offset == second.offset { return first.id < second.id }
+      return first.offset < second.offset
+    }
+    return sorted.map { zone in
       ["id": zone.id, "label": zone.id.replacingOccurrences(of: "_", with: " "),
        "region": zone.id.split(separator: "/").first.map(String.init) ?? zone.id,
        "offsetSeconds": zone.offset]
