@@ -92,6 +92,7 @@ enum RemiloIOSGoogleCalendarImport {
         let id: UUID
         let account: Account
         let source: Source
+        let calendarName: String?
         let checkedAtMs: Int64
         let googleReminders: GoogleReminders
         let auditedSlots: [AuditedSlot]?
@@ -121,11 +122,26 @@ enum RemiloIOSGoogleCalendarImport {
             id = UUID()
             self.account = account
             self.source = source
+            calendarName = calendar.displayName.flatMap { $0.utf8.count <= 4_096 ? $0 : nil }
             checkedAtMs = now
             googleReminders = RemiloIOSGoogleCalendarImport.reminders(object, defaults: calendarDefaultReminders)
         }
 
         func valid(at now: Int64) -> Bool { now >= checkedAtMs && now - checkedAtMs <= 600_000 }
+
+        func timing(_ choices: Choices) throws -> (due: Int64, alert: Int64) {
+            let schedule = source.fields.schedule
+            let due = schedule.allDay ? schedule.eventEndMs : schedule.eventStartMs
+            let alert: Int64
+            if let explicit = choices.alarmAtMs { alert = explicit }
+            else if schedule.allDay {
+                let zone = try Event.namedZone(schedule.zoneId)
+                let day = String(Event.nominal(schedule.eventStartMs, zone: zone).prefix(10))
+                alert = try Event.resolveNominal(day + "T09:00", zone: zone)
+            } else { alert = schedule.eventStartMs }
+            guard RemiloIOSGoogleCalendarImport.epoch.contains(alert) else { throw Failure.invalidInput }
+            return (due, alert)
+        }
 
         func matches(_ observation: Observation) -> Bool {
             guard observation.source == source else { return false }
@@ -221,14 +237,7 @@ enum RemiloIOSGoogleCalendarImport {
                   choices.listID?.isEmpty != true else { throw Failure.invalidInput }
             let schedule = fields.schedule
             let zone = try Event.namedZone(schedule.zoneId)
-            let due = schedule.allDay ? schedule.eventEndMs : schedule.eventStartMs
-            let alert: Int64
-            if let explicit = choices.alarmAtMs { alert = explicit }
-            else if schedule.allDay {
-                let day = String(Event.nominal(schedule.eventStartMs, zone: zone).prefix(10))
-                alert = try Event.resolveNominal(day + "T09:00", zone: zone)
-            } else { alert = schedule.eventStartMs }
-            guard RemiloIOSGoogleCalendarImport.epoch.contains(alert) else { throw Failure.invalidInput }
+            let (due, alert) = try review.timing(choices)
             let rule = try RemiloIOSGoogleCalendarImport.recurrence(review.source)
             if let rule {
                 let offset = try RemiloIOSRecurrence.civilOffset(alert, fromNominal: rule.anchor, zone: zone)

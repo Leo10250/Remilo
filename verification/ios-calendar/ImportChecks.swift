@@ -29,6 +29,12 @@ enum ImportChecks {
         _ = try await journal.capture(operationID: operation, review: review, choices: choices)
         let capturedAccount = try await journal.account(for: operation)
         precondition(capturedAccount == account)
+        let resumedOwner = Import.Account(subject: account.subject, clientID: account.clientID, connectionRevision: 3, accountGeneration: 2)
+        let otherAccount = Import.Account(subject: "subject-B", clientID: account.clientID, connectionRevision: 3, accountGeneration: 2)
+        let waiting = try await journal.savedOperation(operation, viewingAs: resumedOwner)
+        let hidden = try await journal.savedOperation(operation, viewingAs: otherAccount)
+        let foreignList = try await journal.savedOperations(viewingAs: otherAccount)
+        precondition(waiting?.phase == .waiting && waiting?.title == "读书" && hidden == nil && foreignList.isEmpty)
         try await rejects(.operationPending) {
             _ = try await journal.capture(operationID: UUID(), review: review, choices: choices)
         }
@@ -50,6 +56,8 @@ enum ImportChecks {
         let recoveredAccount = try await recreated.account(for: operation)
         let unknownAccount = try await recreated.account(for: UUID())
         precondition(recoveredAccount == account && unknownAccount == nil)
+        let confirmed = try await recreated.savedOperation(operation, viewingAs: resumedOwner)
+        precondition(confirmed?.phase == .settled && confirmed?.title == nil && confirmed?.receipt?.local?.status == .blocked)
         let attempts = await scheduled.attempts
         precondition(attempts == 1)
         let state = try String(contentsOf: path.appendingPathComponent("import-journal.json"), encoding: .utf8)

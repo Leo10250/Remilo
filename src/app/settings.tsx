@@ -287,13 +287,17 @@ export default function Settings() {
             )}
             disabled={pending}
           />
-          {!iosReminders && (
+          {(!iosReminders || caps.data?.calendarOneOffImport === true) && (
             <SettingRow
               intent="navigation"
               key="google-calendar"
               icon="event"
               label={t('m_b074310e911f')}
-              description={t('ui_calendar_settings_description')}
+              description={t(
+                iosReminders
+                  ? 'ios_calendar_settings_description'
+                  : 'ui_calendar_settings_description',
+              )}
               disabled={pending}
               onPress={() => router.push({ pathname: '/calendar', params: routeParams })}
             />

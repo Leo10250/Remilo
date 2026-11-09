@@ -71,6 +71,7 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("getCapabilities") { (promise: Promise) in
       resolve(promise) {
         var capabilities = await RemiloIOSDelivery.capabilities()
+        capabilities["calendarOneOffImport"] = RemiloIOSGoogleCalendarBridge.available
         if capabilities["unlocked"] as? Bool == true, capabilities["exactAlarms"] as? Bool == true,
            let group = try? await RemiloIOSEngine.shared.activeDeliveryGroup() {
           capabilities["activeSessionId"] = group["sessionId"]
@@ -247,6 +248,30 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("getSoundPreview") { (promise: Promise) in
       resolve(promise) { RemiloIOSSoundPreview.shared.snapshot }
     }
+    AsyncFunction("getCalendarConnection") { (promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.connection() }
+    }
+    AsyncFunction("authorizeCalendarFromUserAction") { (expectedRevision: Double?, intent: String, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.authorize(expectedRevision: expectedRevision, intent: intent) }
+    }
+    AsyncFunction("listOwnedCalendars") { (cursor: String?, expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.ownedCalendars(cursor: cursor, expectedRevision: expectedRevision) }
+    }
+    AsyncFunction("listCalendarEvents") { (query: [String: Any], promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.events(query) }
+    }
+    AsyncFunction("previewCalendarImport") { (event: [String: Any], choices: [String: Any], promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewImport(event, choices: choices) }
+    }
+    AsyncFunction("applyCalendarCommand") { (command: [String: Any], promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.apply(command) }
+    }
+    AsyncFunction("getCalendarOperationStatus") { (id: String, expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.operation(id, expectedRevision: expectedRevision) }
+    }
+    AsyncFunction("getCalendarOperations") { (expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.operations(expectedRevision: expectedRevision) }
+    }
   }
 
   private static var widgetProfilesAvailable: Bool {
@@ -260,6 +285,16 @@ public final class RemiloAlarmModule: Module {
       do { promise.resolve(try await action()) }
       catch let failure as IOSInputFailure { promise.reject(failure.code, failure.code) }
       catch { promise.reject(error) }
+    }
+  }
+
+  private func resolveCalendar(_ promise: Promise, _ action: @MainActor @escaping () async throws -> Any?) {
+    Task { @MainActor in
+      do { promise.resolve(try await action()) }
+      catch {
+        let code = RemiloIOSGoogleCalendarBridge.errorCode(error)
+        promise.reject(code, code)
+      }
     }
   }
 

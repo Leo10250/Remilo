@@ -31,6 +31,7 @@ export function calendarCaptureRejected(error: unknown) {
     'OPERATION_PENDING',
     'TITLE_REQUIRED',
     'ELAPSED_ALERT',
+    'ALERT_EXPIRED',
     'IMPORT_LIMIT',
     'RESOLUTION_REQUIRED',
     'CONTENT_LIMIT',

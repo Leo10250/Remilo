@@ -1,12 +1,13 @@
 import { useLocalizedState, useTranslation } from '../localization/react';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { View } from 'react-native';
 import type {
   CalendarCommand,
+  CalendarConnection,
   ManagedCalendarCommand,
   OwnedCalendar,
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -43,14 +44,218 @@ import {
   useCalendarSync,
   useCalendarAction,
 } from '../ui/calendar-sync';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../ui/native';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
+import {
+  calendarAuthorizationError,
+  calendarReadAccess,
+  LocalCalendarOperation,
+  rememberCalendarConnection,
+} from '../ui/calendar-local-import';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { useTimeFormatting } from '../ui/time-display';
 
 export default function CalendarSettings() {
+  return iosReminders ? <LocalCalendarSettings /> : <ManagedCalendarSettings />;
+}
+
+function LocalCalendarSettings() {
+  'use no memo';
+  const t = useTranslation();
+  const client = useQueryClient();
+  const origin = retainedOriginParams(useLocalSearchParams<OriginParams>());
+  const confirm = useAppearanceConfirmation();
+  const available = useIOSCalendarImport();
+  const action = useCalendarAction();
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useLocalizedState('');
+  const [lastRetry, setLastRetry] = useState<string | null>(null);
+  const running = useRef(false);
+  const connection = useQuery({
+    queryKey: ['calendar', 'connection'],
+    queryFn: () => engine().getCalendarConnection(),
+    enabled: available,
+  });
+  const current = connection.error ? undefined : connection.data;
+  const ready = available && calendarReadAccess(current);
+  const revision = current?.revision;
+  const jobs = useQuery({
+    queryKey: ['calendar', 'operations', revision],
+    queryFn: () => engine().getCalendarOperations(revision!),
+    enabled: available && ready,
+  });
+  useFocusEffect(
+    useCallback(() => {
+      if (available) void client.invalidateQueries({ queryKey: ['calendar'] });
+    }, [available, client]),
+  );
+  useAppearanceHold(busy || action.unknown);
+  usePreventRemove(busy || action.unknown, () => confirm(t('m_0c849c393ca3'), t('m_e71fd74c140f')));
+  const run = async (perform: () => Promise<unknown>, authorization = false) => {
+    if (running.current) return;
+    running.current = true;
+    setBusy(true);
+    setFeedback('');
+    try {
+      await perform();
+    } catch (error) {
+      setFeedback(authorization ? calendarAuthorizationError(error) : calendarError(error));
+    } finally {
+      await client.invalidateQueries({ queryKey: ['calendar'] });
+      running.current = false;
+      setBusy(false);
+    }
+  };
+  const authorize = (changeAccount: boolean) => {
+    if (!current || action.unknown) return;
+    const intent = changeAccount ? 'connectOrChangeAccount' : 'reauthorizeCurrentAccount';
+    void run(async () => {
+      const next = await engine().authorizeCalendarFromUserAction!(current.revision, intent);
+      await rememberCalendarConnection(client, next);
+    }, true);
+  };
+  const disconnect = () => {
+    if (!current) return;
+    confirm(t('m_e51cd852cc99'), t('ios_calendar_disconnect_detail'), [
+      { text: t('m_19766ed6ccb2'), style: 'cancel' },
+      {
+        text: t('m_acfc5be785a9'),
+        onPress: () =>
+          void run(async () => {
+            const next = await action.submit({
+              kind: 'DisconnectCalendar',
+              operationId: engine().createOperationId(),
+              expectedConnectionRevision: current.revision,
+            });
+            if (typeof next.revision === 'number' && next.connected === false)
+              await rememberCalendarConnection(client, next as CalendarConnection);
+          }),
+      },
+    ]);
+  };
+  const localJobs =
+    ready && !jobs.error
+      ? (jobs.data ?? []).filter(
+          (job) =>
+            job.operationId === lastRetry ||
+            ['Waiting', 'Unconfirmed', 'NeedsAccess'].includes(job.state),
+        )
+      : [];
+  return (
+    <Page
+      sectionSpacing
+      title={t('m_b074310e911f')}
+      scrollKey="calendar-settings"
+      onBack={() =>
+        router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin))
+      }
+    >
+      <QueryState
+        loading={available && connection.isLoading}
+        error={connection.error}
+        empty={!available}
+        emptyMessage={t('ios_calendar_unavailable')}
+        onRetry={available ? () => void connection.refetch() : undefined}
+      />
+      {available && current && (
+        <CalendarStatusCard
+          title={t(
+            ready ? 'm_f8278bd3d08e' : current.connected ? 'm_b724411569e0' : 'm_0303e1824670',
+          )}
+          description={
+            !current.available
+              ? t('ios_calendar_unavailable')
+              : current.connected && !ready
+                ? t('m_326e71c82f32')
+                : t('ios_calendar_settings_description')
+          }
+          tone={ready ? 'success' : current.connected ? 'warning' : 'muted'}
+          announce
+          busy={busy}
+          disabled={action.unknown}
+          label={t(
+            ready ? 'm_357bcb0ce661' : current.connected ? 'm_b724411569e0' : 'm_c04f9d6a937e',
+          )}
+          action={
+            !current.available
+              ? undefined
+              : ready
+                ? () => router.push({ pathname: '/calendar-import', params: origin })
+                : () => authorize(!current.connected)
+          }
+        >
+          {current.connected && !!current.email && (
+            <ReadOnlyRow label={t('m_7da2bcb6bb6b')} value={current.email} />
+          )}
+          {current.revocation === 'revoked' && (
+            <ActionFeedback message={t('ios_calendar_revoked')} tone="success" />
+          )}
+          {current.revocation === 'unconfirmed' && (
+            <ActionFeedback message={t('m_8a2bb7e48742')} tone="warning" />
+          )}
+        </CalendarStatusCard>
+      )}
+      {!!(feedback || action.error) && (
+        <ActionFeedback message={feedback || action.error} tone="warning" />
+      )}
+      {available && action.unknown && (
+        <Button
+          label={t('m_16003a1a9190')}
+          variant="secondary"
+          disabled={busy}
+          onPress={() => void run(action.retry)}
+        />
+      )}
+      {available && current?.available && current.connected && (
+        <ConnectedGroup>
+          <SettingRow
+            intent="action"
+            label={t('m_2da87a0fec50')}
+            disabled={busy || action.unknown}
+            onPress={() => authorize(true)}
+          />
+          <SettingRow
+            intent="action"
+            label={t('m_1f4e6793ca99')}
+            disabled={busy || action.unknown}
+            onPress={disconnect}
+          />
+        </ConnectedGroup>
+      )}
+      {ready && jobs.error && (
+        <QueryState loading={false} error={jobs.error} onRetry={() => void jobs.refetch()} />
+      )}
+      {localJobs.map((job) => (
+        <LocalCalendarOperation
+          key={job.operationId}
+          operation={job}
+          busy={busy || action.unknown}
+          onOpen={() =>
+            router.push({
+              pathname: '/reminder/[id]',
+              params: { id: job.occurrenceId, ...origin },
+            })
+          }
+          onRetry={() =>
+            void run(async () => {
+              await engine().applyCalendarCommand({
+                kind: 'RetryCalendarOperation',
+                operationId: job.operationId,
+                expectedConnectionRevision: revision!,
+              });
+              setLastRetry(job.operationId);
+              await client.invalidateQueries({ queryKey: ['reminders'] });
+            })
+          }
+        />
+      ))}
+    </Page>
+  );
+}
+
+function ManagedCalendarSettings() {
   'use no memo';
   const t = useTranslation();
   const calendarAction = useCalendarAction();

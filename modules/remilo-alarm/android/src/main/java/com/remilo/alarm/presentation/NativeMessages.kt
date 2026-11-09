@@ -2451,4 +2451,12 @@ object NativeMessages {
   fun ios_picker_continue(): L10n.Message = L10n.Message("ios_picker_continue")
   fun ios_permission_not_requested(): L10n.Message = L10n.Message("ios_permission_not_requested")
   fun ios_notification_mode_description(): L10n.Message = L10n.Message("ios_notification_mode_description")
+  fun ios_calendar_settings_description(): L10n.Message = L10n.Message("ios_calendar_settings_description")
+  fun ios_calendar_browse_intro(): L10n.Message = L10n.Message("ios_calendar_browse_intro")
+  fun ios_calendar_unavailable(): L10n.Message = L10n.Message("ios_calendar_unavailable")
+  fun ios_calendar_disconnect_detail(): L10n.Message = L10n.Message("ios_calendar_disconnect_detail")
+  fun ios_calendar_revoked(): L10n.Message = L10n.Message("ios_calendar_revoked")
+  fun ios_calendar_import_unconfirmed(): L10n.Message = L10n.Message("ios_calendar_import_unconfirmed")
+  fun ios_calendar_review_outdated(): L10n.Message = L10n.Message("ios_calendar_review_outdated")
+  fun ios_calendar_owned_sources(): L10n.Message = L10n.Message("ios_calendar_owned_sources")
 }

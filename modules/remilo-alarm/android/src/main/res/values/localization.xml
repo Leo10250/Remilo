@@ -2535,4 +2535,12 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_ios_picker_continue">Continue</string>
   <string name="l10n_ios_permission_not_requested">Not requested</string>
   <string name="l10n_ios_notification_mode_description">Shows a notification.</string>
+  <string name="l10n_ios_calendar_settings_description">Import individual events from Google Calendar.</string>
+  <string name="l10n_ios_calendar_browse_intro">Choose an event to review and import. Events with a completed or pending import are hidden.</string>
+  <string name="l10n_ios_calendar_unavailable">Google Calendar isn’t configured for this build.</string>
+  <string name="l10n_ios_calendar_disconnect_detail">Your Google events and Remilo reminders are kept.</string>
+  <string name="l10n_ios_calendar_revoked">Disconnected. Remilo’s access to Google Calendar was revoked.</string>
+  <string name="l10n_ios_calendar_import_unconfirmed">Remilo hasn’t confirmed whether it saved this reminder. Retry the same import.</string>
+  <string name="l10n_ios_calendar_review_outdated">This review is out of date. Go back and select the event again.</string>
+  <string name="l10n_ios_calendar_owned_sources">Only calendars you own are shown.</string>
 </resources>

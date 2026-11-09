@@ -128,6 +128,22 @@ final class RemiloIOSGoogleCalendarRuntime {
         return try await runImport(operationID, viewingAs: viewer)
     }
 
+    func savedImportOperation(_ id: UUID, expectedRevision: Int) async throws -> ImportJournal.SavedOperation? {
+        try requireForeground()
+        let viewer = try connection.account(expectedRevision: expectedRevision)
+        let result = try await importJournal.savedOperation(id, viewingAs: viewer)
+        try requireCurrentAccount(viewer)
+        return result
+    }
+
+    func savedImportOperations(expectedRevision: Int) async throws -> [ImportJournal.SavedOperation] {
+        try requireForeground()
+        let viewer = try connection.account(expectedRevision: expectedRevision)
+        let result = try await importJournal.savedOperations(viewingAs: viewer)
+        try requireCurrentAccount(viewer)
+        return result
+    }
+
     private func runImport(_ operationID: UUID, viewingAs viewer: Import.Account) async throws -> ImportJournal.Receipt {
         let authority = ImportJournal.Authority(current: { [connection, canUseForeground] captured in
             guard canUseForeground() else { return false }

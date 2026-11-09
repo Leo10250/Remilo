@@ -35,7 +35,8 @@ import {
   SettingRow,
   Sheet,
 } from '../ui/components';
-import { engine, nativeAvailable } from '../ui/native';
+import { calendarConnectionNeedsRefresh, calendarReadAccess } from '../ui/calendar-local-import';
+import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
 
 export default function CalendarImportBrowser() {
@@ -43,39 +44,47 @@ export default function CalendarImportBrowser() {
   const t = useTranslation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
   const sourceTrigger = useRef<View>(null);
+  const localImport = useIOSCalendarImport();
+  const available = nativeAvailable && (!iosReminders || localImport);
   const rawParams = useLocalSearchParams<
       OriginParams & { managedHistory?: string; calendarId?: string }
     >(),
     params = retainedOriginParams(rawParams);
+  const managedHistory = !iosReminders && rawParams.managedHistory === 'true';
   const connection = useQuery({
     queryKey: ['calendar', 'connection'],
     queryFn: () => engine().getCalendarConnection(),
-    enabled: nativeAvailable,
+    enabled: available,
   });
+  const current = iosReminders && connection.error ? undefined : connection.data;
+  const ready = available && calendarReadAccess(current);
+  const revision = current?.revision;
   const links = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable,
+    enabled: available && !iosReminders,
   });
   const operations = useQuery({
-    queryKey: ['calendar', 'operations'],
-    queryFn: () => engine().getCalendarOperations(),
-    enabled: nativeAvailable,
+    queryKey: iosReminders ? ['calendar', 'operations', revision] : ['calendar', 'operations'],
+    queryFn: () =>
+      iosReminders ? engine().getCalendarOperations(revision!) : engine().getCalendarOperations(),
+    enabled: available && (!iosReminders || ready),
   });
   const managed = useQuery({
     queryKey: ['calendar', 'managed'],
     queryFn: () => engine().getManagedCalendarState(),
-    enabled: nativeAvailable && rawParams.managedHistory === 'true',
+    enabled: available && managedHistory,
   });
   const refetchLinks = links.refetch,
-    refetchOperations = operations.refetch;
+    refetchOperations = operations.refetch,
+    refetchConnection = connection.refetch;
   useFocusEffect(
     useCallback(() => {
-      if (nativeAvailable) {
-        void refetchLinks();
-        void refetchOperations();
-      }
-    }, [refetchLinks, refetchOperations]),
+      if (!available) return;
+      if (iosReminders) void refetchConnection();
+      else void refetchLinks();
+      if (!iosReminders || ready) void refetchOperations();
+    }, [available, ready, refetchConnection, refetchLinks, refetchOperations]),
   );
   const [savedCalendars, setCalendars] = useState<OwnedCalendar[]>([]),
     [savedCalendarCursor, setCalendarCursor] = useState<string | null>(null);
@@ -83,16 +92,12 @@ export default function CalendarImportBrowser() {
     [sourceRevision, setSourceRevision] = useState<number | null>(null);
   const [selecting, setSelecting] = useState(false),
     [savedCalendar, setCalendar] = useState<OwnedCalendar | null>(null);
-  const calendars = calendarsRevision === connection.data?.revision ? savedCalendars : [];
-  const calendarCursor =
-    calendarsRevision === connection.data?.revision ? savedCalendarCursor : null;
+  const calendars = ready && calendarsRevision === revision ? savedCalendars : [];
+  const calendarCursor = ready && calendarsRevision === revision ? savedCalendarCursor : null;
   const calendar =
-    sourceRevision === connection.data?.revision
+    ready && sourceRevision === revision
       ? savedCalendar
-      : rawParams.managedHistory === 'true' &&
-          connection.data?.connected &&
-          managed.data &&
-          managed.data.calendarId === rawParams.calendarId
+      : managedHistory && ready && managed.data && managed.data.calendarId === rawParams.calendarId
         ? {
             id: managed.data.calendarId,
             name: managed.data.calendarName,
@@ -102,13 +107,13 @@ export default function CalendarImportBrowser() {
   const [from, setFrom] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    if (rawParams.managedHistory === 'true') d.setDate(d.getDate() - 30);
+    if (managedHistory) d.setDate(d.getDate() - 30);
     return d.getTime();
   });
   const [end, setEnd] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + (rawParams.managedHistory === 'true' ? -1 : 29));
+    d.setDate(d.getDate() + (managedHistory ? -1 : 29));
     return d.getTime();
   });
   const [rows, setRows] = useState<CalendarEventPage['items']>([]),
@@ -121,7 +126,8 @@ export default function CalendarImportBrowser() {
     calendar?.id,
     range.from,
     range.until,
-    connection.data?.revision,
+    revision,
+    ...(iosReminders ? [ready] : []),
   ]);
   const [resultKey, setResultKey] = useState('');
   const excluded = excludedCalendarImports(
@@ -129,8 +135,9 @@ export default function CalendarImportBrowser() {
     links.data || [],
     operations.data || [],
   );
-  const visibleRows = resultKey === filterKey ? remainingCalendarImports(rows, excluded) : [],
-    visibleCursor = resultKey === filterKey ? cursor : null;
+  const visibleRows =
+      ready && resultKey === filterKey ? remainingCalendarImports(rows, excluded) : [],
+    visibleCursor = ready && resultKey === filterKey ? cursor : null;
   const ticket = useRef(0),
     running = useRef(false);
   useEffect(() => {
@@ -143,15 +150,16 @@ export default function CalendarImportBrowser() {
     [],
   );
   const loadCalendars = async (next: string | null = null) => {
-    if (running.current) return;
+    if (running.current || !available || !ready || revision === undefined) return;
     running.current = true;
     setBusy(true);
     setError('');
     setSelecting(true);
-    const current = ++ticket.current,
-      revision = connection.data?.revision;
+    const current = ++ticket.current;
     try {
-      const page = await engine().listOwnedCalendars(next);
+      const page = iosReminders
+        ? await engine().listOwnedCalendars(next, revision)
+        : await engine().listOwnedCalendars(next);
       if (current !== ticket.current || page.connectionRevision !== revision) return;
       setCalendars((old) =>
         next
@@ -161,14 +169,15 @@ export default function CalendarImportBrowser() {
       setCalendarsRevision(page.connectionRevision);
       setCalendarCursor(page.nextCursor);
     } catch (e) {
-      setError(calendarError(e));
+      if (current === ticket.current) setError(calendarError(e));
+      if (iosReminders && calendarConnectionNeedsRefresh(e)) await refetchConnection();
     } finally {
       running.current = false;
       setBusy(false);
     }
   };
   const load = async (next: string | null = null) => {
-    if (!calendar || running.current || !range.valid) return;
+    if (!calendar || running.current || !range.valid || !ready || revision === undefined) return;
     const current = ++ticket.current;
     running.current = true;
     setBusy(true);
@@ -179,9 +188,9 @@ export default function CalendarImportBrowser() {
         from: range.from,
         until: range.until,
         cursor: next,
+        ...(iosReminders ? { expectedConnectionRevision: revision } : {}),
       });
-      if (current !== ticket.current || page.connectionRevision !== connection.data?.revision)
-        return;
+      if (current !== ticket.current || page.connectionRevision !== revision) return;
       setRows((old) =>
         next
           ? [
@@ -195,6 +204,7 @@ export default function CalendarImportBrowser() {
       setResultKey(filterKey);
     } catch (e) {
       if (current === ticket.current) setError(calendarError(e));
+      if (iosReminders && calendarConnectionNeedsRefresh(e)) await refetchConnection();
     } finally {
       running.current = false;
       setBusy(false);
@@ -214,9 +224,13 @@ export default function CalendarImportBrowser() {
         router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(params))
       }
     >
-      <Copy muted>{t('m_0c6c8e7982cd')}</Copy>
-      {rawParams.managedHistory === 'true' && <Copy muted>{t('m_e921a8b153e9')}</Copy>}
-      {!connection.data?.connected && (
+      <Copy muted>{t(iosReminders ? 'ios_calendar_browse_intro' : 'm_0c6c8e7982cd')}</Copy>
+      {managedHistory && <Copy muted>{t('m_e921a8b153e9')}</Copy>}
+      {!available && iosReminders && <Copy muted>{t('ios_calendar_unavailable')}</Copy>}
+      {iosReminders && connection.error && (
+        <ActionFeedback message={calendarError(connection.error)} tone="warning" />
+      )}
+      {available && !ready && (
         <Button
           label={t('m_3b9b76bc9d82')}
           onPress={() => router.push({ pathname: '/calendar', params })}
@@ -226,7 +240,7 @@ export default function CalendarImportBrowser() {
         <ReadOnlyRow
           key="account"
           label={t('m_7da2bcb6bb6b')}
-          value={connection.data?.email || t('m_0303e1824670')}
+          value={((!iosReminders || current?.connected) && current?.email) || t('m_0303e1824670')}
         />
         <SettingRow
           intent="picker"
@@ -235,7 +249,7 @@ export default function CalendarImportBrowser() {
           label={t('m_cd51d907caec')}
           value={calendar?.name || t('m_28d7adf0d759')}
           buttonRef={sourceTrigger}
-          disabled={busy || !connection.data?.connected}
+          disabled={busy || !ready}
           onPress={() => void loadCalendars()}
         />
         <DateField
@@ -262,14 +276,14 @@ export default function CalendarImportBrowser() {
       <ActionPair>
         <Button
           label={t('m_8d71009f1092')}
-          disabled={busy || !calendar || !connection.data?.connected || !range.valid}
+          disabled={busy || !calendar || !ready || !range.valid}
           onPress={() => void load()}
         />
-        {calendar && loaded && resultKey === filterKey && (
+        {!iosReminders && calendar && loaded && resultKey === filterKey && (
           <Button
             label={t('m_3843add32c04')}
             variant="secondary"
-            disabled={busy || !range.valid || !connection.data?.connected}
+            disabled={busy || !range.valid || !ready}
             onPress={() =>
               router.push({
                 pathname: '/calendar-import-all',
@@ -287,7 +301,7 @@ export default function CalendarImportBrowser() {
       </ActionPair>
       {!!error && <ActionFeedback message={error} tone="warning" />}
       {busy && <ActionFeedback loading message={t('m_5136714ef7f2')} />}
-      {loaded && resultKey === filterKey && visibleRows.length === 0 && (
+      {ready && loaded && resultKey === filterKey && visibleRows.length === 0 && (
         <Copy>
           {[t('m_7474f431c818'), t(visibleCursor ? 'm_c0da945b464e' : 'm_df0e214cb7cf')]
             .map((part) => part.trim())
@@ -325,7 +339,9 @@ export default function CalendarImportBrowser() {
                     ...params,
                     calendarId: calendar!.id,
                     eventId: event.eventId,
-                    managedHistory: rawParams.managedHistory,
+                    ...(iosReminders
+                      ? { expectedConnectionRevision: String(revision) }
+                      : { managedHistory: rawParams.managedHistory }),
                   },
                 } as Href)
               }
@@ -349,7 +365,7 @@ export default function CalendarImportBrowser() {
           if (!busy) setSelecting(false);
         }}
       >
-        <Copy muted>{t('m_8c7cc2cc4d98')}</Copy>
+        <Copy muted>{t(iosReminders ? 'ios_calendar_owned_sources' : 'm_8c7cc2cc4d98')}</Copy>
         <ConnectedGroup>
           {calendars.map((row) => (
             <Choice
@@ -360,7 +376,7 @@ export default function CalendarImportBrowser() {
               disabled={busy}
               onPress={() => {
                 setCalendar(row);
-                setSourceRevision(connection.data!.revision);
+                setSourceRevision(revision!);
                 setSelecting(false);
               }}
             />

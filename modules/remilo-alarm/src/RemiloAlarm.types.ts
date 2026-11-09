@@ -36,6 +36,7 @@ export type SessionActions = {
 export type Capabilities = {
   alarmAuthorization?: 'notDetermined' | 'denied' | 'authorized';
   notificationAuthorization?: 'notDetermined' | 'denied' | 'authorized';
+  calendarOneOffImport?: boolean;
   exactAlarms: boolean;
   notifications: boolean;
   channelEnabled: boolean;
@@ -470,6 +471,8 @@ export type CalendarConnection = {
   revision: number;
   connected: boolean;
   available: boolean;
+  access?: 'unavailable' | 'disconnected' | 'needsAccess' | 'ownedCalendars' | 'managedCreation';
+  revocation?: 'notRequested' | 'pending' | 'revoked' | 'unconfirmed';
   email: string;
   calendarId: string;
   calendarName: string;
@@ -539,12 +542,17 @@ export type CalendarImportChoices = {
   disableReminders?: boolean;
   automaticSync?: boolean;
 };
-export type CalendarEventRef = { calendarId: string; eventId: string };
+export type CalendarEventRef = {
+  calendarId: string;
+  eventId: string;
+  expectedConnectionRevision?: number;
+};
 export type CalendarEventQuery = {
   calendarId: string;
   from: string;
   until: string;
   cursor: string | null;
+  expectedConnectionRevision?: number;
 };
 export type CalendarEventPage = {
   items: {
@@ -561,6 +569,7 @@ export type CalendarEventPage = {
 };
 export type CalendarLinkPreview = {
   previewId: string;
+  connectionRevision?: number;
   occurrenceId: string;
   calendarName: string;
   email: string;
@@ -569,7 +578,7 @@ export type CalendarLinkPreview = {
   baseline: Partial<CalendarFields> | null;
   selections: CalendarSelections | null;
   choices: CalendarImportChoices & { dueAtMs: number; alarmAtMs: number };
-  googleReminders: boolean;
+  googleReminders: boolean | null;
   checkedAtMs: number;
   nextAlertMs: number | null;
   recurrence?: RecurrenceDraft | null;
@@ -748,6 +757,7 @@ export type CalendarLinkedOperation = {
   kind: string;
   calendarName: string;
   title?: string;
+  reason?: string;
   state:
     | 'Waiting'
     | 'Sending'
@@ -997,6 +1007,7 @@ export type CalendarLegacyCommand =
         | 'EnableAutomaticCalendarSync';
       operationId: string;
       previewId: string;
+      expectedConnectionRevision?: number;
       selections?: CalendarSelections;
       automaticSync?: boolean;
     }
@@ -1018,7 +1029,7 @@ export type CalendarLegacyCommand =
       occurrenceId: string;
       expectedLinkRevision: number;
     }
-  | { kind: 'RetryCalendarOperation'; operationId: string };
+  | { kind: 'RetryCalendarOperation'; operationId: string; expectedConnectionRevision?: number };
 export type CalendarCommand =
   | CalendarLegacyCommand
   | ManagedCalendarCommand

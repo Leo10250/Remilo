@@ -2,7 +2,7 @@ import { useLocalizedState, useTranslation } from '../localization/react';
 import { t as currentText } from '../localization';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -11,6 +11,7 @@ import type {
   CalendarFields,
   CalendarImportChoices,
   CalendarLinkPreview,
+  CalendarLinkedOperation,
   CalendarSelections,
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarError } from '../domain/calendar';
@@ -38,40 +39,80 @@ import {
 } from '../ui/components';
 import { useCalendarAction } from '../ui/calendar-sync';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
+import {
+  calendarAuthorizationError,
+  calendarConnectionNeedsRefresh,
+  calendarErrorHasCode,
+  calendarReadAccess,
+  LocalCalendarOperation,
+  rememberCalendarConnection,
+} from '../ui/calendar-local-import';
 import { calendarImportIndependence } from '../domain/calendar-presentation';
 import { modeLabel } from '../domain/presentation';
 import { DateTimeFields } from '../ui/date-time-fields';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../ui/native';
 import { useTimeFormatting } from '../ui/time-display';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { notify } from '../ui/feedback';
 
-export default function CalendarReview() {
+type CalendarReviewParams = OriginParams & {
+  id?: string;
+  calendarId?: string;
+  eventId?: string;
+  expectedConnectionRevision?: string;
+  automatic?: string;
+  candidateId?: string;
+  candidateRevision?: string;
+  managedHistory?: string;
+};
+
+export default function CalendarReviewRoute() {
+  const params = useLocalSearchParams<CalendarReviewParams>();
+  const sourceKey = iosReminders
+    ? JSON.stringify([params.expectedConnectionRevision, params.calendarId, params.eventId])
+    : 'calendar-review';
+  return <CalendarReview key={sourceKey} params={params} />;
+}
+
+function CalendarReview({ params }: { params: CalendarReviewParams }) {
   'use no memo';
   const t = useTranslation();
   const calendarAction = useCalendarAction();
-  const params = useLocalSearchParams<
-      OriginParams & {
-        id?: string;
-        calendarId?: string;
-        eventId?: string;
-        automatic?: string;
-        candidateId?: string;
-        candidateRevision?: string;
-        managedHistory?: string;
-      }
-    >(),
-    origin = retainedOriginParams(params);
-  const imported = !params.id,
+  const localImport = useIOSCalendarImport();
+  const available = nativeAvailable && (!iosReminders || localImport);
+  const origin = retainedOriginParams(params);
+  const imported = iosReminders || !params.id,
     client = useQueryClient(),
     confirm = useAppearanceConfirmation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
-  const [preview, setPreview] = useState<CalendarLinkPreview | null>(null),
+  const [savedPreview, setPreview] = useState<CalendarLinkPreview | null>(null),
     [choices, setChoices] = useState<CalendarImportChoices>(
-      params.managedHistory === 'true' ? { mode: 'None' } : {},
+      !iosReminders && params.managedHistory === 'true' ? { mode: 'None' } : {},
     );
-  const adopting = imported && !!params.candidateId && !!preview?.local;
+  const connection = useQuery({
+    queryKey: ['calendar', 'connection'],
+    queryFn: () => engine().getCalendarConnection(),
+    enabled: available && iosReminders,
+  });
+  const current = !connection.error ? connection.data : undefined;
+  const ready = iosReminders && available && calendarReadAccess(current);
+  const revision = current?.revision;
+  const sameSource =
+    ready &&
+    revision !== undefined &&
+    params.expectedConnectionRevision === String(revision) &&
+    !!params.calendarId &&
+    !!params.eventId &&
+    !params.id &&
+    !params.candidateId &&
+    !params.automatic &&
+    !params.managedHistory;
+  const preview =
+    !iosReminders || (sameSource && savedPreview?.connectionRevision === revision)
+      ? savedPreview
+      : null;
+  const adopting = !iosReminders && imported && !!params.candidateId && !!preview?.local;
   const [selections, setSelections] = useState<CalendarSelections>({
     title: null,
     notes: null,
@@ -79,7 +120,7 @@ export default function CalendarReview() {
   });
   const [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false),
-    [uncertain, setUncertain] = useState(false),
+    [uncertainCapture, setUncertain] = useState(false),
     [error, setError] = useLocalizedState('');
   const [capturing, setCapturing] = useState(false),
     [candidateRevision, setCandidateRevision] = useState<number | null>(() =>
@@ -87,8 +128,15 @@ export default function CalendarReview() {
     );
   const [sourceUnavailable, setSourceUnavailable] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
+  const [localResult, setLocalResult] = useState<{
+    revision: number;
+    operation: CalendarLinkedOperation;
+  } | null>(null);
   const [ignored, setIgnored] = useState(false);
   const captured = useRef<CalendarCommand | null>(null),
+    localCapture = useRef<{ operationId: string; previewId: string; revision: number } | null>(
+      null,
+    ),
     running = useRef(false),
     live = useRef(true);
   const [now, setNow] = useState(Date.now);
@@ -98,28 +146,52 @@ export default function CalendarReview() {
     return () => clearInterval(timer);
   }, []);
   const operations = useQuery({
-    queryKey: ['calendar', 'operations'],
-    queryFn: () => engine().getCalendarOperations(),
-    enabled: nativeAvailable,
+    queryKey: iosReminders ? ['calendar', 'operations', revision] : ['calendar', 'operations'],
+    queryFn: () =>
+      iosReminders ? engine().getCalendarOperations(revision!) : engine().getCalendarOperations(),
+    enabled: available && (!iosReminders || (ready && !!operationId)),
   });
+  useFocusEffect(
+    useCallback(() => {
+      if (available && iosReminders)
+        void client.invalidateQueries({ queryKey: ['calendar', 'connection'] });
+    }, [available, client]),
+  );
   const links = useQuery({
     queryKey: ['calendar', 'links'],
     queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable,
+    enabled: available && !iosReminders,
   });
   const lists = useQuery({
     queryKey: ['lists'],
     queryFn: () => engine().getLists(),
-    enabled: nativeAvailable && imported,
+    enabled: available && imported,
   });
-  const link = links.data?.find((item) => item.occurrenceId === params.id),
-    job = operations.data?.find((item) => item.operationId === operationId);
+  const link = links.data?.find((item) => item.occurrenceId === params.id);
+  const job = iosReminders
+    ? ready
+      ? (!operations.error &&
+          operations.data?.find((item) => item.operationId.toLowerCase() === operationId)) ||
+        (localResult?.revision === revision ? localResult?.operation : undefined)
+      : undefined
+    : operations.data?.find((item) => item.operationId === operationId);
+  const finalLocalJob =
+    iosReminders && job && ['Confirmed', 'Conflict', 'Failed'].includes(job.state);
+  const uncertain = uncertainCapture && !finalLocalJob;
   const enable = !link || link.state === 'Detached';
-  const activating = params.automatic === 'true';
+  const activating = !iosReminders && params.automatic === 'true';
   useAppearanceHold(busy || uncertain);
-  usePreventRemove(capturing || uncertain, () => confirm(t('m_12dd26f54ada'), t('m_b6cae41bec3a')));
+  usePreventRemove(capturing || (!iosReminders && uncertain), () =>
+    confirm(t('m_12dd26f54ada'), t('m_b6cae41bec3a')),
+  );
   const load = useCallback(async () => {
-    if (running.current || captured.current) return;
+    if (
+      running.current ||
+      captured.current ||
+      localCapture.current ||
+      (iosReminders && !sameSource)
+    )
+      return;
     running.current = true;
     setBusy(true);
     setError('');
@@ -132,8 +204,14 @@ export default function CalendarReview() {
           ? await engine().previewManagedCalendarCandidate(params.candidateId, choices)
           : imported
             ? await engine().previewCalendarImport(
-                { calendarId: params.calendarId!, eventId: params.eventId! },
-                choices,
+                {
+                  calendarId: params.calendarId!,
+                  eventId: params.eventId!,
+                  ...(iosReminders ? { expectedConnectionRevision: revision } : {}),
+                },
+                iosReminders
+                  ? { ...choices, automaticSync: false, disableReminders: false }
+                  : choices,
               )
             : enable
               ? await engine().previewCalendarLink(params.id!)
@@ -141,13 +219,15 @@ export default function CalendarReview() {
       if (!next)
         throw new Error(activation?.items[0]?.excludedReason || currentText('m_2f283f72b9c9'));
       if (!live.current || ticket !== readTicket.current) return;
+      if (iosReminders && next.connectionRevision !== revision) return;
       setPreview(next);
       setSelections(next.selections || { title: null, notes: null, schedule: null });
       setDirty(false);
+      if (iosReminders) setSourceUnavailable(false);
       if ('candidateRevision' in next && typeof next.candidateRevision === 'number')
         setCandidateRevision(next.candidateRevision);
     } catch (e) {
-      if (live.current) {
+      if (live.current && (!iosReminders || ticket === readTicket.current)) {
         setError(calendarError(e));
         setSourceUnavailable(
           !!e &&
@@ -156,15 +236,20 @@ export default function CalendarReview() {
             ['NOT_FOUND', 'ALREADY_IMPORTED'].some((code) => String(e.code).includes(code)),
         );
       }
+      if (iosReminders && calendarConnectionNeedsRefresh(e))
+        await client.invalidateQueries({ queryKey: ['calendar', 'connection'] });
     } finally {
       running.current = false;
       if (live.current) setBusy(false);
     }
   }, [
     choices,
+    client,
     imported,
     enable,
     activating,
+    revision,
+    sameSource,
     params.calendarId,
     params.eventId,
     params.id,
@@ -185,13 +270,106 @@ export default function CalendarReview() {
       live.current = false;
       tickets.current++;
     };
-  }, [params.id, params.eventId, params.calendarId, params.candidateId]);
+  }, [params.id, params.eventId, params.calendarId, params.candidateId, sameSource, revision]);
   const change = (next: CalendarImportChoices) => {
-    if (busy || captured.current || operationId) return;
+    if (busy || captured.current || localCapture.current || operationId) return;
     setChoices((old) => ({ ...old, ...next }));
     setDirty(true);
   };
+  const applyLocal = async () => {
+    if (running.current || !ready || revision === undefined || (!preview && !localCapture.current))
+      return;
+    if (dirty && !localCapture.current) {
+      await load();
+      return;
+    }
+    const recovering = localCapture.current !== null;
+    const request = (localCapture.current ??= {
+      operationId: engine().createOperationId(),
+      previewId: preview!.previewId,
+      revision,
+    });
+    const submit = () =>
+      engine().applyCalendarCommand({
+        kind: 'ImportCalendarEvent',
+        operationId: request.operationId,
+        previewId: request.previewId,
+        expectedConnectionRevision: request.revision,
+        automaticSync: false,
+      });
+    running.current = true;
+    setBusy(true);
+    setCapturing(true);
+    setError('');
+    setOperationId(request.operationId.toLowerCase());
+    try {
+      let result;
+      if (recovering) {
+        try {
+          result = await engine().applyCalendarCommand({
+            kind: 'RetryCalendarOperation',
+            operationId: request.operationId,
+            expectedConnectionRevision: revision,
+          });
+        } catch (error) {
+          // A native miss may mean the first attempt never reached the journal.
+          // Only the originally reviewed connection may submit that preview.
+          if (
+            !calendarErrorHasCode(error, 'NOT_FOUND') ||
+            request.revision !== revision ||
+            !preview
+          )
+            throw error;
+          result = await submit();
+        }
+      } else result = await submit();
+      if (
+        !('localApplied' in result) ||
+        result.operationId.toLowerCase() !== request.operationId.toLowerCase()
+      )
+        throw new Error('Unexpected Calendar operation receipt');
+      setLocalResult({ revision, operation: result });
+      localCapture.current = null;
+      setUncertain(false);
+    } catch (error) {
+      if (
+        calendarCaptureRejected(error) &&
+        !calendarErrorHasCode(error, 'STALE_CONNECTION', 'OPERATION_PENDING')
+      ) {
+        localCapture.current = null;
+        setUncertain(false);
+        setOperationId(null);
+        setPreview(null);
+      } else setUncertain(true);
+      setError(calendarError(error));
+    } finally {
+      await client.invalidateQueries();
+      running.current = false;
+      setBusy(false);
+      setCapturing(false);
+    }
+  };
+  const reauthorize = async () => {
+    if (!current?.connected || running.current || !engine().authorizeCalendarFromUserAction) return;
+    running.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      const next = await engine().authorizeCalendarFromUserAction!(
+        current.revision,
+        'reauthorizeCurrentAccount',
+      );
+      await rememberCalendarConnection(client, next);
+    } catch (error) {
+      setError(calendarAuthorizationError(error));
+    } finally {
+      await client.invalidateQueries({ queryKey: ['calendar'] });
+      running.current = false;
+      setBusy(false);
+    }
+  };
   const apply = async () => {
+    if (iosReminders) return applyLocal();
     if (running.current || (!preview && !captured.current)) return;
     if (dirty && !captured.current) {
       await load();
@@ -299,9 +477,10 @@ export default function CalendarReview() {
   };
   const recurring = !!preview?.recurrence;
   const syncSelected =
-    activating ||
-    !!params.candidateId ||
-    (choices.automaticSync ?? preview?.choices.automaticSync ?? (imported || enable));
+    !iosReminders &&
+    (activating ||
+      !!params.candidateId ||
+      (choices.automaticSync ?? preview?.choices.automaticSync ?? (imported || enable)));
   const invalid =
     imported && !adopting
       ? !title.trim() ||
@@ -367,36 +546,74 @@ export default function CalendarReview() {
         {imported && !adopting && <Copy muted>{calendarImportIndependence()}</Copy>}
       </View>
       {params.candidateId && !adopting && <Copy heading>{t('m_b89457145742')}</Copy>}
-      {!!error && <ActionFeedback message={error} tone="warning" />}
+      {!!error && !finalLocalJob && <ActionFeedback message={error} tone="warning" />}
+      {iosReminders && !available && <ActionFeedback message={t('ios_calendar_unavailable')} />}
+      {iosReminders && available && !sameSource && !busy && !job && (
+        <>
+          <ActionFeedback
+            loading={connection.isLoading}
+            message={
+              connection.isLoading
+                ? t('m_9673886fee4f')
+                : connection.error
+                  ? calendarError(connection.error)
+                  : ready
+                    ? t('ios_calendar_review_outdated')
+                    : t('m_326e71c82f32')
+            }
+          />
+          {!connection.isLoading && !ready && current?.connected && (
+            <Button
+              label={t('m_b724411569e0')}
+              variant="secondary"
+              onPress={() => void reauthorize()}
+            />
+          )}
+          {connection.error && (
+            <Button label={t('m_16003a1a9190')} onPress={() => void connection.refetch()} />
+          )}
+        </>
+      )}
       {busy && (
         <ActionFeedback loading message={capturing ? t('m_57571c98a715') : t('m_9673886fee4f')} />
       )}
-      {!preview && !busy && !sourceUnavailable && (
-        <Button
-          label={t('m_ba805b089799')}
-          variant="secondary"
-          disabled={!nativeAvailable}
-          onPress={() => void load()}
-        />
-      )}
+      {!preview &&
+        !busy &&
+        !sourceUnavailable &&
+        (!iosReminders || (sameSource && !operationId)) && (
+          <Button
+            label={t('m_ba805b089799')}
+            variant="secondary"
+            disabled={!available}
+            onPress={() => void load()}
+          />
+        )}
       {sourceUnavailable && (
         <Button
-          label={t('m_80c4a2d9d196')}
+          label={t(iosReminders ? 'm_76900f1bfd16' : 'm_80c4a2d9d196')}
           variant="secondary"
-          onPress={() => router.replace({ pathname: '/calendar-reviews', params: origin })}
+          onPress={
+            iosReminders
+              ? back
+              : () => router.replace({ pathname: '/calendar-reviews', params: origin })
+          }
         />
       )}
-      {!preview && uncertain && (
+      {!iosReminders && !preview && uncertain && (
         <Button label={t('m_16003a1a9190')} disabled={busy} onPress={() => void apply()} />
       )}
-      {params.candidateId && candidateRevision !== null && !operationId && !sourceUnavailable && (
-        <Button
-          label={t('m_b839153e19bb')}
-          variant="secondary"
-          disabled={busy || uncertain}
-          onPress={ignore}
-        />
-      )}
+      {!iosReminders &&
+        params.candidateId &&
+        candidateRevision !== null &&
+        !operationId &&
+        !sourceUnavailable && (
+          <Button
+            label={t('m_b839153e19bb')}
+            variant="secondary"
+            disabled={busy || uncertain}
+            onPress={ignore}
+          />
+        )}
       {preview && !operationId && (
         <>
           <ConnectedGroup title={t('m_0e570ca6fabe')}>
@@ -408,38 +625,42 @@ export default function CalendarReview() {
               value={scheduleDateTime(preview.checkedAtMs)}
             />
           </ConnectedGroup>
-          <ConnectedGroup title={t('m_b97900d1be7c')}>
-            <View key="sync">
-              {activating || params.candidateId ? (
-                <SettingRow
-                  icon="event"
-                  label={t('m_41a8bf8da139')}
-                  description={t('m_bf02ddb833cf')}
-                />
-              ) : (
-                <Toggle
-                  label={t('m_23a71272299e')}
-                  value={syncSelected}
-                  disabled={busy || uncertain}
-                  onChange={(value) => {
-                    setChoices((old) => ({ ...old, automaticSync: value }));
-                    if (imported) setDirty(true);
-                  }}
-                />
-              )}
-              <RowSupport>
-                <Copy muted size={14}>
-                  {imported && !adopting
-                    ? t(
-                        syncSelected
-                          ? 'ui_calendar_import_linked'
-                          : 'ui_calendar_import_local_only',
-                      )
-                    : t('m_1e631f4fb0c8')}
-                </Copy>
-              </RowSupport>
-            </View>
-          </ConnectedGroup>
+          {iosReminders ? (
+            <Copy muted>{t('ui_calendar_import_local_only')}</Copy>
+          ) : (
+            <ConnectedGroup title={t('m_b97900d1be7c')}>
+              <View key="sync">
+                {activating || params.candidateId ? (
+                  <SettingRow
+                    icon="event"
+                    label={t('m_41a8bf8da139')}
+                    description={t('m_bf02ddb833cf')}
+                  />
+                ) : (
+                  <Toggle
+                    label={t('m_23a71272299e')}
+                    value={syncSelected}
+                    disabled={busy || uncertain}
+                    onChange={(value) => {
+                      setChoices((old) => ({ ...old, automaticSync: value }));
+                      if (imported) setDirty(true);
+                    }}
+                  />
+                )}
+                <RowSupport>
+                  <Copy muted size={14}>
+                    {imported && !adopting
+                      ? t(
+                          syncSelected
+                            ? 'ui_calendar_import_linked'
+                            : 'ui_calendar_import_local_only',
+                        )
+                      : t('m_1e631f4fb0c8')}
+                  </Copy>
+                </RowSupport>
+              </View>
+            </ConnectedGroup>
+          )}
           {imported && !adopting ? (
             <>
               <ConnectedGroup title={t('m_f74c0be05e82')}>
@@ -520,23 +741,27 @@ export default function CalendarReview() {
                   onChange={(value) => change({ listId: value || null })}
                 />
               )}
-              <ConnectedGroup title={t('m_381bba430663')}>
-                <Toggle
-                  key="suppress"
-                  label={t('m_99ee4355f56a')}
-                  value={choices.disableReminders || false}
-                  disabled={busy || uncertain}
-                  onChange={(value) => change({ disableReminders: value })}
-                />
-              </ConnectedGroup>
-              <Copy muted>
-                {preview.googleReminders
-                  ? mode === 'None'
-                    ? t('m_1cfe6b952cb6')
-                    : t('m_08c3cea793a9')
-                  : t('m_f798f7a243db')}
-              </Copy>
-              <Copy muted>{t('m_e65ddfec7900')}</Copy>
+              {!iosReminders && (
+                <>
+                  <ConnectedGroup title={t('m_381bba430663')}>
+                    <Toggle
+                      key="suppress"
+                      label={t('m_99ee4355f56a')}
+                      value={choices.disableReminders || false}
+                      disabled={busy || uncertain}
+                      onChange={(value) => change({ disableReminders: value })}
+                    />
+                  </ConnectedGroup>
+                  <Copy muted>
+                    {preview.googleReminders
+                      ? mode === 'None'
+                        ? t('m_1cfe6b952cb6')
+                        : t('m_08c3cea793a9')
+                      : t('m_f798f7a243db')}
+                  </Copy>
+                  <Copy muted>{t('m_e65ddfec7900')}</Copy>
+                </>
+              )}
               {dirty && <ActionFeedback message={t('m_eba734df0aa9')} tone="warning" />}
             </>
           ) : (
@@ -625,7 +850,29 @@ export default function CalendarReview() {
           )}
         </>
       )}
-      {job && (
+      {iosReminders && job && (
+        <LocalCalendarOperation
+          operation={job}
+          busy={busy}
+          onOpen={() =>
+            router.push({ pathname: '/reminder/[id]', params: { id: job.occurrenceId, ...origin } })
+          }
+          onRetry={() => void applyLocal()}
+          onReviewAgain={() => {
+            if (!sameSource) {
+              back();
+              return;
+            }
+            localCapture.current = null;
+            setUncertain(false);
+            setOperationId(null);
+            setLocalResult(null);
+            setPreview(null);
+            void load();
+          }}
+        />
+      )}
+      {!iosReminders && job && (
         <>
           <CalendarOperationStatus operation={job} />
           {job.localApplied && (
@@ -660,7 +907,19 @@ export default function CalendarReview() {
           )}
         </>
       )}
-      {operationId && !job && <ActionFeedback loading message={t('m_83743f87492a')} />}
+      {operationId && !job && (!iosReminders || uncertain) && (
+        <>
+          <ActionFeedback
+            loading={!iosReminders || busy}
+            message={t(
+              iosReminders && uncertain ? 'ios_calendar_import_unconfirmed' : 'm_83743f87492a',
+            )}
+          />
+          {iosReminders && ready && uncertain && (
+            <Button label={t('m_16003a1a9190')} disabled={busy} onPress={() => void applyLocal()} />
+          )}
+        </>
+      )}
     </Page>
   );
 }

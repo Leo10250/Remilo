@@ -69,12 +69,17 @@ export const preferences = new Preferences({
     });
   },
 });
-export function useCapabilities() {
+export function useCapabilities(enabled = true) {
   return useQuery({
     queryKey: ['capabilities'],
     queryFn: () => engine().getCapabilities(),
-    enabled: !!Alarm,
+    enabled: !!Alarm && enabled,
   });
 }
 export const nativeAvailable = !!Alarm;
 export const iosReminders = Platform.OS === 'ios';
+
+export function useIOSCalendarImport() {
+  const { data } = useCapabilities(iosReminders);
+  return iosReminders && data?.calendarOneOffImport === true;
+}

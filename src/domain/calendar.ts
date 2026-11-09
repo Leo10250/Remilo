@@ -49,12 +49,13 @@ export function calendarError(error: unknown): string {
   if (code.includes('OPERATION_PENDING')) return t('m_0a8739d15b5a');
   if (code.includes('ALREADY_IMPORTED')) return t('m_d6e970618b8f');
   if (code.includes('TITLE_REQUIRED')) return t('m_acf167bd0281');
-  if (code.includes('ELAPSED_ALERT')) return t('m_ba9f77b2ffd9');
+  if (code.includes('ELAPSED_ALERT') || code.includes('ALERT_EXPIRED')) return t('m_ba9f77b2ffd9');
   if (code.includes('IMPORT_LIMIT')) return t('m_b5f04921f0d2');
   if (code.includes('INVALID_RANGE')) return t('m_d84a7bff4fba');
   if (code.includes('RESOLUTION_REQUIRED')) return t('m_e7ff061cb4f9');
   if (code.includes('NEEDS_CONNECTION')) return t('m_60bac12b7cf2');
-  if (code.includes('NEEDS') || code.includes('AUTH')) return t('m_326e71c82f32');
+  if (code.includes('NEEDS') || code.includes('AUTH') || code.includes('ACCOUNT_CHANGED'))
+    return t('m_326e71c82f32');
   if (code.includes('INELIGIBLE')) return t('m_f7e8af2c017b');
   if (code.includes('INVALID_ZONE')) return t('m_b5946340deb0');
   if (code.includes('ALREADY')) return t('m_afa72b693f9d');

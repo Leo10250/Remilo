@@ -43,6 +43,34 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let errorCode: String?
     }
 
+    struct SavedOperation: Sendable {
+        enum Phase: Equatable, Sendable { case waiting, checking, creating, submitted, settled }
+
+        let operationID: UUID
+        let account: Import.Account
+        let source: Import.SourceKey
+        let phase: Phase
+        let calendarName: String?
+        let title: String?
+        let receipt: Receipt?
+
+        init(receipt: Receipt) {
+            self.init(operationID: receipt.operationID, account: receipt.account, source: receipt.source,
+                      phase: .settled, calendarName: nil, title: nil, receipt: receipt)
+        }
+
+        fileprivate init(operationID: UUID, account: Import.Account, source: Import.SourceKey, phase: Phase,
+                         calendarName: String?, title: String?, receipt: Receipt?) {
+            self.operationID = operationID
+            self.account = account
+            self.source = source
+            self.phase = phase
+            self.calendarName = calendarName
+            self.title = title
+            self.receipt = receipt
+        }
+    }
+
     private struct Request: Encodable {
         let operationID: UUID
         let review: Import.Review
@@ -58,6 +86,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
     private struct Entry: Codable {
         let fingerprint: Data
         let source: Import.SourceKey
+        var createdAtMs: Int64?
         var capture: Import.Capture?
         var submitted = false
         var receipt: Receipt?
@@ -103,8 +132,9 @@ actor RemiloIOSGoogleCalendarImportJournal {
             if existing.receipt?.local != nil { throw Failure.alreadyImported }
             if existing.receipt == nil { throw Failure.operationPending }
         }
-        let capture = try Import.Capture(operationID: operationID, review: review, choices: choices, now: now())
-        state.entries[operationID] = Entry(fingerprint: fingerprint, source: review.source.key, capture: capture)
+        let capturedAt = now()
+        let capture = try Import.Capture(operationID: operationID, review: review, choices: choices, now: capturedAt)
+        state.entries[operationID] = Entry(fingerprint: fingerprint, source: review.source.key, createdAtMs: capturedAt, capture: capture)
         try write(state)
         return nil
     }
@@ -112,6 +142,36 @@ actor RemiloIOSGoogleCalendarImportJournal {
     func account(for operationID: UUID) throws -> Import.Account? {
         let entry = try read().entries[operationID]
         return entry?.receipt?.account ?? entry?.capture?.review.account
+    }
+
+    func savedOperation(_ operationID: UUID, viewingAs viewer: Import.Account) throws -> SavedOperation? {
+        guard let entry = try read().entries[operationID] else { return nil }
+        return savedOperation(operationID, entry: entry, viewingAs: viewer)
+    }
+
+    func savedOperations(viewingAs viewer: Import.Account) throws -> [SavedOperation] {
+        let entries = try read().entries
+        let visible = entries.compactMap { operationID, entry -> (SavedOperation, Int64)? in
+            guard let operation = savedOperation(operationID, entry: entry, viewingAs: viewer) else { return nil }
+            return (operation, entry.createdAtMs ?? entry.capture?.review.checkedAtMs ?? 0)
+        }
+        return visible.sorted { lhs, rhs in
+            if (lhs.0.receipt == nil) != (rhs.0.receipt == nil) { return lhs.0.receipt == nil }
+            if lhs.1 != rhs.1 { return lhs.1 > rhs.1 }
+            return lhs.0.operationID.uuidString < rhs.0.operationID.uuidString
+        }.prefix(64).map { $0.0 }
+    }
+
+    private func savedOperation(_ operationID: UUID, entry: Entry, viewingAs viewer: Import.Account) -> SavedOperation? {
+        guard let owner = entry.receipt?.account ?? entry.capture?.review.account,
+              owner.subject == viewer.subject, owner.clientID == viewer.clientID else { return nil }
+        if let receipt = entry.receipt { return SavedOperation(receipt: receipt) }
+        guard let capture = entry.capture else { return nil }
+        let phase: SavedOperation.Phase
+        if running.contains(operationID) { phase = entry.submitted ? .creating : .checking }
+        else { phase = entry.submitted ? .submitted : .waiting }
+        return SavedOperation(operationID: operationID, account: owner, source: entry.source, phase: phase,
+                              calendarName: capture.review.calendarName, title: capture.command.title, receipt: nil)
     }
 
     func reservedEvents(subject: String, calendarID: String) throws -> Set<String> {

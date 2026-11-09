@@ -2526,7 +2526,15 @@ export const catalogs = {
     "ios_alarm_permission_usage": "Remilo uses alarms to ring for the reminders you choose.",
     "ios_picker_continue": "Continue",
     "ios_permission_not_requested": "Not requested",
-    "ios_notification_mode_description": "Shows a notification."
+    "ios_notification_mode_description": "Shows a notification.",
+    "ios_calendar_settings_description": "Import individual events from Google Calendar.",
+    "ios_calendar_browse_intro": "Choose an event to review and import. Events with a completed or pending import are hidden.",
+    "ios_calendar_unavailable": "Google Calendar isn’t configured for this build.",
+    "ios_calendar_disconnect_detail": "Your Google events and Remilo reminders are kept.",
+    "ios_calendar_revoked": "Disconnected. Remilo’s access to Google Calendar was revoked.",
+    "ios_calendar_import_unconfirmed": "Remilo hasn’t confirmed whether it saved this reminder. Retry the same import.",
+    "ios_calendar_review_outdated": "This review is out of date. Go back and select the event again.",
+    "ios_calendar_owned_sources": "Only calendars you own are shown."
   },
   "zh-Hans": {
     "ui_your_routines": "你的日常计划",
@@ -5028,7 +5036,15 @@ export const catalogs = {
     "ios_alarm_permission_usage": "Remilo 需要使用闹钟为你选定的提醒响铃。",
     "ios_picker_continue": "继续",
     "ios_permission_not_requested": "尚未请求",
-    "ios_notification_mode_description": "显示一条通知。"
+    "ios_notification_mode_description": "显示一条通知。",
+    "ios_calendar_settings_description": "从 Google 日历逐项导入日程。",
+    "ios_calendar_browse_intro": "选择一项日程，核对详情后导入。已导入或导入结果待确认的日程不会显示。",
+    "ios_calendar_unavailable": "此版本尚未配置 Google 日历。",
+    "ios_calendar_disconnect_detail": "Google 日历中的日程和 Remilo 中的提醒均会保留。",
+    "ios_calendar_revoked": "已断开连接，Remilo 的 Google 日历访问权限已撤销。",
+    "ios_calendar_import_unconfirmed": "尚未确认提醒是否已保存。请重试此次导入。",
+    "ios_calendar_review_outdated": "导入预览已失效。请返回并重新选择日程。",
+    "ios_calendar_owned_sources": "仅显示你拥有的日历。"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -7481,4 +7497,12 @@ export interface MessageArguments {
   ios_picker_continue: Record<string, never>;
   ios_permission_not_requested: Record<string, never>;
   ios_notification_mode_description: Record<string, never>;
+  ios_calendar_settings_description: Record<string, never>;
+  ios_calendar_browse_intro: Record<string, never>;
+  ios_calendar_unavailable: Record<string, never>;
+  ios_calendar_disconnect_detail: Record<string, never>;
+  ios_calendar_revoked: Record<string, never>;
+  ios_calendar_import_unconfirmed: Record<string, never>;
+  ios_calendar_review_outdated: Record<string, never>;
+  ios_calendar_owned_sources: Record<string, never>;
 }

@@ -120,7 +120,12 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   getManagedCalendarState(): Promise<import('./RemiloAlarm.types').ManagedCalendarState>;
   getCalendarOperationStatus(
     operationId: string,
+    expectedConnectionRevision?: number,
   ): Promise<import('./RemiloAlarm.types').CalendarOperationStatus | null>;
+  authorizeCalendarFromUserAction?(
+    expectedRevision: number,
+    intent: 'connectOrChangeAccount' | 'reauthorizeCurrentAccount',
+  ): Promise<CalendarConnection>;
   beginCalendarAuthorization(
     requestId: string,
     operationId: string | null,
@@ -149,11 +154,16 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
     ids: string[],
   ): Promise<import('./RemiloAlarm.types').CalendarActivationReview>;
   syncCalendarNow(id: string | null): Promise<import('./RemiloAlarm.types').CalendarRunSummary>;
-  getCalendarOperations(): Promise<import('./RemiloAlarm.types').CalendarLinkedOperation[]>;
+  getCalendarOperations(
+    expectedConnectionRevision?: number,
+  ): Promise<import('./RemiloAlarm.types').CalendarLinkedOperation[]>;
   getCalendarPublications(): Promise<CalendarPublication[]>;
   previewCalendarPublication(id: string): Promise<CalendarPublicationPreview>;
   authorizeCalendar(publicationId: string | null): Promise<void>;
-  listOwnedCalendars(cursor: string | null): Promise<CalendarPage>;
+  listOwnedCalendars(
+    cursor: string | null,
+    expectedConnectionRevision?: number,
+  ): Promise<CalendarPage>;
   applyCalendarCommand(
     command: CalendarCommand,
   ): Promise<
