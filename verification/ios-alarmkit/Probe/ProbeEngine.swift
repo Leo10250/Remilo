@@ -162,16 +162,28 @@ final class ProbeEngine {
     }
 
     private static func attributes() -> AlarmAttributes<ProbeMetadata> {
-        let title: LocalizedStringResource = "alarm.title"
-        let postpone = AlarmButton(text: "alarm.postpone", textColor: .white, systemImageName: "clock")
+        let title = alarmLabel("alarm.title", fallback: "Remilo test alarm")
+        let postpone = AlarmButton(
+            text: alarmLabel("alarm.postpone", fallback: "Postpone"),
+            textColor: .white, systemImageName: "clock"
+        )
         let alert: AlarmPresentation.Alert
         if #available(iOS 26.1, *) {
             alert = .init(title: title, secondaryButton: postpone, secondaryButtonBehavior: .custom)
         } else {
-            let done = AlarmButton(text: "alarm.done", textColor: .white, systemImageName: "checkmark")
+            let done = AlarmButton(
+                text: alarmLabel("alarm.done", fallback: "Mark as done"),
+                textColor: .white, systemImageName: "checkmark"
+            )
             alert = .init(title: title, stopButton: done, secondaryButton: postpone, secondaryButtonBehavior: .custom)
         }
         return AlarmAttributes(presentation: AlarmPresentation(alert: alert), metadata: ProbeMetadata(), tintColor: .blue)
+    }
+
+    private static func alarmLabel(_ key: StaticString, fallback: String.LocalizationValue) -> LocalizedStringResource {
+        // Give the lock screen resolved text even when it cannot look up the app's strings.
+        let text = String(localized: key, defaultValue: fallback)
+        return LocalizedStringResource(stringLiteral: text)
     }
 
     private func recordURL() throws -> URL {
