@@ -152,10 +152,7 @@ export function ClockPreferenceRow({
             disabled={disabled}
             onValueChange={({ nativeEvent }) => {
               try {
-                const value = clockPreferenceFromPicker(
-                  nativeEvent.timestamp,
-                  nativeEvent.utcOffset,
-                );
+                const value = clockPreferenceFromPicker(nativeEvent.timestamp, 0);
                 setIOSDraft((current) => (current == null ? current : value));
               } catch {
                 closeIOSPicker();

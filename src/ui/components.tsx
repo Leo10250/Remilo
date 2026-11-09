@@ -1547,7 +1547,8 @@ export function DateField({
                   draft && {
                     ...draft,
                     instant: nativeEvent.timestamp,
-                    selection: pickerCivil(nativeEvent.timestamp, nativeEvent.utcOffset),
+                    // The iOS Fabric picker sends the instant without the zone offset.
+                    selection: civilAt(nativeEvent.timestamp, zoneId),
                   },
               );
             }}

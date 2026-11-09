@@ -310,9 +310,9 @@ public final class RemiloAlarmModule: Module {
   private static func timePreferences() throws -> [String: Any] {
     let preference = try RemiloIOSEngine.shared.settings()["language"] as? String ?? "system"
     let language = RemiloIOSLanguage.resolve(preference)
-    let clockPattern = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: .current)
+    let hourCycle = Locale.autoupdatingCurrent.hourCycle
     return [
-      "uses24HourClock": clockPattern?.contains("H") == true || clockPattern?.contains("k") == true,
+      "uses24HourClock": hourCycle == .zeroToTwentyThree || hourCycle == .oneToTwentyFour,
       "localeTag": language,
       "languagePreference": preference,
       "resolvedLanguage": language

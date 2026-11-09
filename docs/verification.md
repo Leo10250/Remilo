@@ -197,9 +197,13 @@ feasibility. Physical acceptance uses a signed build of Remilo itself.
 3. On the device, open **AltStore → My Apps → +** and choose the IPA from
    Files. Open Remilo after installation.
 4. In Remilo, use **Settings → Permissions & alarm check → Alarm** to allow
-   alarms, then tap **Test alarm**. Test a real reminder and inspect its state
-   after dismissing the alarm. Test the explicit Done and Postpone actions
-   separately.
+   alarms, then tap **Test alarm**. Create a real reminder and choose a PM time
+   that falls on the next UTC date in its zone, such as 9:09 PM Pacific. Check
+   the time after closing the picker, saving, and reopening the reminder.
+   Repeat with the device's 24-Hour Time setting on and off and check that
+   the picker and reminder use the same clock format.
+   Inspect its state after dismissing the alarm. Test the explicit Done and
+   Postpone actions separately.
 5. Open **Settings → Tomorrow shortcuts** and edit a time. Confirm Done saves
    the exact minute and Cancel discards the edit. Check the new time in the
    postpone chooser with both system clock formats.
