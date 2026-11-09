@@ -231,7 +231,12 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         case .denied(let failure): return .notSent(failure)
         }
         let response: HTTP.Response
-        do { response = try await http.request(request, budget: budget) }
+        do {
+            // The checkpoint has been recorded. Finish bounded I/O even if the
+            // foreground caller goes away so a returned ID can still be saved.
+            let wire = request
+            response = try await Task { try await http.request(wire, budget: budget) }.value
+        }
         catch let failure as Failure { return .unconfirmed(failure) }
         catch { return .unconfirmed(.network) }
         switch response.status {

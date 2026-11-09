@@ -34,7 +34,7 @@ struct RemiloIOSCalendarConnectionState: Codable, Sendable {
     }
 
     struct Discovery: Codable, Sendable {
-        enum Purpose: Codable, Equatable, Sendable { case setup, recoverCreation(UUID) }
+        enum Purpose: Codable, Equatable, Sendable { case setup, prepareCreation(UUID), recoverCreation(UUID) }
 
         static let currentCaptureVersion = 1
         let id: UUID

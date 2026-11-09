@@ -102,6 +102,7 @@ enum CalendarChecks {
         let creationAccess = try await auth.verify(creationGrant, configuration: configuration, expectedSubject: "subject-A",
                                                    purpose: .createManagedCalendar)
         try await ManagedCreationChecks.run(access: creationAccess, writeOnly: writeAccess, now: now)
+        try await ManagedSetupChecks.run(configuration: configuration, readOnly: access, creation: creationAccess, now: now)
         ComparisonChecks.run()
         try await ManualLinkStoreChecks.run()
         try await ImportChecks.run()

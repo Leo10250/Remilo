@@ -22,7 +22,9 @@ The iOS implementation targets iPhone and iPad on iOS/iPadOS 26 or later. It
 covers offline ordinary and recurring reminders, lists, history, appearance and
 language settings, and routines with dated progress and photos. An optional
 signed WidgetKit build provides routine profiles and widget actions. A configured
-iOS test build provides reviewed imports of one-off Google Calendar events.
+iOS test build supports reviewed Calendar imports, one-time publication, and
+manual or foreground automatic sync of eligible individual links. See
+[Calendar support on iOS](calendar.md) for the exact supported flows.
 The app, widget, and configured Calendar flow still require physical verification.
 
 The app has one static Classic ring/check/sun identity. Appearance is global:

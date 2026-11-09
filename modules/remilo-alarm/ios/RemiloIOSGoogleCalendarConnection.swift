@@ -101,8 +101,18 @@ final class RemiloIOSGoogleCalendarConnection {
 
     struct ManagedDiscoveryResult: Sendable {
         let scanID: UUID
-        let connectionRevision: Int
+        let account: Import.Account
         let selection: ManagedDiscovery.Selection
+        let preparingCreation: UUID?
+
+        var connectionRevision: Int { account.connectionRevision }
+
+        fileprivate init(scanID: UUID, account: Import.Account, selection: ManagedDiscovery.Selection, preparingCreation: UUID?) {
+            self.scanID = scanID
+            self.account = account
+            self.selection = selection
+            self.preparingCreation = preparingCreation
+        }
     }
 
     enum ManagedCreationCheck: Sendable {
@@ -557,16 +567,18 @@ final class RemiloIOSGoogleCalendarConnection {
 
     func discoverManagedCalendars(expectedRevision: Int, resume: UUID? = nil, savedID: String? = nil,
                                   selectedID: String? = nil, replacingUnavailable: Bool = false,
+                                  preparingCreation: UUID? = nil,
                                   canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> ManagedDiscoveryResult {
         guard !discoveryInFlight else { throw Failure.invalidInput }
         discoveryInFlight = true
         defer { discoveryInFlight = false }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()
         let live = try requireAccess(expectedRevision)
-        let scan = try await scanOwnedCalendars(live, purpose: .setup, resume: resume, canRead: canRead, budget: budget)
+        let purpose = preparingCreation.map(State.Discovery.Purpose.prepareCreation) ?? .setup
+        let scan = try await scanOwnedCalendars(live, purpose: purpose, resume: resume, canRead: canRead, budget: budget)
         let beforeRead = importReadPermission(live.fence.importAccount, canRead: canRead)
         let result: (ManagedDiscovery.Selection) -> ManagedDiscoveryResult = {
-            ManagedDiscoveryResult(scanID: scan.id, connectionRevision: scan.connectionRevision, selection: $0)
+            ManagedDiscoveryResult(scanID: scan.id, account: live.fence.importAccount, selection: $0, preparingCreation: preparingCreation)
         }
         var savedLookup: ManagedDiscovery.SavedLookup?
         if scan.complete, let savedID {
@@ -651,10 +663,63 @@ final class RemiloIOSGoogleCalendarConnection {
         return .verified(record)
     }
 
+    func verifyManagedAdoption(calendarID: String, account: Import.Account,
+                               canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> RemiloIOSCalendarOwnedRecord {
+        let live = try requireAccess(account.connectionRevision)
+        guard live.fence.importAccount == account else { throw Failure.staleConnection }
+        let beforeRead = importReadPermission(account, canRead: canRead)
+        let record = try await readOwnedRecord(live, id: calendarID, budget: .init(), beforeRead: beforeRead)
+        try requireCurrentImportRead(account, canRead: canRead)
+        if let failure = ManagedDiscovery.eligibility(record, verifiedEmail: live.access.account.email) { throw failure }
+        return record
+    }
+
     private func validateDiscovery(_ id: UUID, live: LiveAccess, canRead: @MainActor () -> Bool) throws {
         try requireCurrentImportRead(live.fence.importAccount, canRead: canRead)
         try Task.checkCancellation()
         guard try current(live.fence).discovery?.id == id else { throw Failure.staleConnection }
+    }
+
+    /// The journal supplies both synchronous checkpoints. Do not wrap this send
+    /// in `read`: disconnect fences the permit, but a sent response is still a
+    /// receipt for the original operation and must be saved before verification.
+    func sendManagedCreation(_ captured: WriteTransport.ManagedCreation, discovery: ManagedDiscoveryResult,
+                             canSend: @escaping @MainActor @Sendable () -> Bool,
+                             permit: @escaping @MainActor @Sendable (WriteTransport.ManagedCreation) throws -> WriteTransport.Permission,
+                             rememberReturnedID: @MainActor (String, WriteTransport.ManagedCreation) throws -> Void)
+        async throws -> WriteTransport.ManagedCreationOutcome {
+        let live = try managedCreationAccess(captured, discovery: discovery, canSend: canSend)
+        let writer = WriteTransport(http: http, now: now)
+        let outcome = try await writer.createManagedCalendar(captured, access: live.access, phase: .notSent) { request in
+            try await self.managedCreationPermit(request, discovery: discovery, canSend: canSend, permit: permit)
+        }
+        if case .returnedID(let id) = outcome { try rememberReturnedID(id, captured) }
+        return outcome
+    }
+
+    private func managedCreationPermit(_ captured: WriteTransport.ManagedCreation, discovery: ManagedDiscoveryResult,
+                                       canSend: @MainActor () -> Bool,
+                                       permit: @MainActor (WriteTransport.ManagedCreation) throws -> WriteTransport.Permission)
+        throws -> WriteTransport.Permission {
+        _ = try managedCreationAccess(captured, discovery: discovery, canSend: canSend)
+        try Task.checkCancellation()
+        return try permit(captured)
+    }
+
+    private func managedCreationAccess(_ captured: WriteTransport.ManagedCreation, discovery: ManagedDiscoveryResult,
+                                       canSend: @MainActor () -> Bool) throws -> LiveAccess {
+        guard canSend() else { throw Failure.needsAccess }
+        guard discovery.selection.outcome == .create else { throw Failure.invalidInput }
+        let live = try requireAccess(captured.account.connectionRevision)
+        guard live.fence.importAccount == captured.account, discovery.account == captured.account,
+              discovery.preparingCreation == captured.operationID,
+              let saved = try current(live.fence).discovery, saved.id == discovery.scanID,
+              saved.captureVersion == State.Discovery.currentCaptureVersion,
+              saved.purpose == .prepareCreation(captured.operationID), saved.complete else {
+            throw Failure.staleConnection
+        }
+        guard live.access.supports(.createManagedCalendar, now: now()) else { throw Failure.needsAccess }
+        return live
     }
 
     func discoveryProgress(expectedRevision: Int) throws -> Discovery? {
@@ -662,6 +727,16 @@ final class RemiloIOSGoogleCalendarConnection {
         guard state.revision == expectedRevision else { throw Failure.staleConnection }
         guard state.connected, configuration?.clientID == state.account?.clientID else { return nil }
         return state.discovery.map { project($0, revision: state.revision) }
+    }
+
+    func managedDiscoveryContinuation(_ account: Import.Account, purpose: State.Discovery.Purpose,
+                                      allowCompleted: Bool = false) throws -> UUID? {
+        let live = try requireAccess(account.connectionRevision)
+        guard live.fence.importAccount == account else { throw Failure.staleConnection }
+        guard let discovery = try current(live.fence).discovery,
+              discovery.captureVersion == State.Discovery.currentCaptureVersion,
+              discovery.purpose == purpose, allowCompleted || !discovery.complete else { return nil }
+        return discovery.id
     }
 
     private func readOwnedPage(_ live: LiveAccess, next: Transport.PageCursor?, budget: RemiloIOSGoogleCalendarHTTP.Budget,

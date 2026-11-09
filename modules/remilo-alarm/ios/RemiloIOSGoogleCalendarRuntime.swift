@@ -23,12 +23,14 @@ final class RemiloIOSGoogleCalendarRuntime {
     private let scheduler: ImportJournal.Scheduler
     let publication: RemiloIOSGoogleCalendarPublicationRuntime?
     let manualLink: RemiloIOSGoogleCalendarManualLinkRuntime?
+    let managedSetup: RemiloIOSGoogleCalendarManagedSetup?
     private var reviews: [Import.Review] = []
 
     init(connection: Connection, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
          importJournal: ImportJournal, scheduler: ImportJournal.Scheduler,
          publication: RemiloIOSGoogleCalendarPublicationRuntime? = nil,
          manualLink: RemiloIOSGoogleCalendarManualLinkRuntime? = nil,
+         managedSetupJournal: RemiloIOSGoogleCalendarManagedSetupJournal? = nil,
          authorize: @escaping Connection.Authorize) {
         self.connection = connection
         self.canUseForeground = canUseForeground
@@ -36,6 +38,9 @@ final class RemiloIOSGoogleCalendarRuntime {
         self.scheduler = scheduler
         self.publication = publication
         self.manualLink = manualLink
+        self.managedSetup = managedSetupJournal.map {
+            RemiloIOSGoogleCalendarManagedSetup(connection: connection, journal: $0, canUseForeground: canUseForeground, authorize: authorize)
+        }
         self.authorize = authorize
     }
 
@@ -379,7 +384,8 @@ final class RemiloIOSGoogleCalendarRuntime {
         )
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,
-            importJournal: imports, scheduler: .localEngine(.shared), publication: publication, manualLink: manualLink
+            importJournal: imports, scheduler: .localEngine(.shared), publication: publication, manualLink: manualLink,
+            managedSetupJournal: try RemiloIOSGoogleCalendarManagedSetupJournal.local()
         ) {
             subject, purpose in
             try await Self.authorize(presenter: presenter, subject: subject, purpose: purpose)
