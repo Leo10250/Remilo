@@ -77,7 +77,7 @@ import {
   type ReminderType,
   type WeeklyEditorDraft,
 } from '../domain/routine-editor-draft';
-import { AlertModeSelector } from '../ui/alert-mode-selector';
+import { AlertModePicker, AlertModeSelector } from '../ui/alert-mode-selector';
 import { DateTimeFields } from '../ui/date-time-fields';
 import { notify } from '../ui/feedback';
 import {
@@ -853,6 +853,7 @@ function EditorForm({
     !draft.title.trim() ||
     (routine && !validRoutineDays(weekly.days));
   const frozen = busy || retrySave || !!review;
+  const AlertControl = routine ? AlertModeSelector : AlertModePicker;
   const resolvedDraft = { ...draft, ...preview.data };
   const noAlert = draft.mode === 'None';
   const timingLabel = noAlert ? t('m_75ba69e3a8b7') : modeLabel(draft.mode) + t('m_4a8f540240f1');
@@ -1120,7 +1121,7 @@ function EditorForm({
             </View>
           )}
           <View key="alert">
-            <AlertModeSelector
+            <AlertControl
               value={draft.mode ?? 'Alarm'}
               disabled={frozen}
               onChange={(mode) => patch({ mode })}

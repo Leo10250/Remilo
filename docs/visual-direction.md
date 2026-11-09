@@ -52,7 +52,8 @@ Sheets/dialogs restore ordinary surface roles rather than inherit scenic header 
 
 Cards emphasize title and actual alert/No alert information, followed by supporting
 timing, recurrence and status. Group related rows into connected items, with shared
-corners/seams and space between independent groups. Long content wraps or stacks;
+corners/seams and a larger section gap. Standalone reminder lists own their card
+spacing. Read-only label/value rows share an inset and can stack. Long content wraps or stacks;
 large text must not squeeze essential controls or obscure Save behind the keyboard.
 
 Use neutral structural icons and supporting text. The atmosphere primary role is
@@ -64,7 +65,8 @@ A confirmed scheduled result does not promise audibility.
 Chevrons indicate navigation, picker arrows indicate choosing, disclosures indicate
 expansion, and checks/radios/switches communicate selection. Ordinary menu commands
 do not acquire generic navigation chevrons. Reuse the neutral reminder/list glyphs;
-automatic category icons remain future scope.
+use the numbered-list glyph for routines. In split destinations, a separate overflow
+target has an item-specific accessible label and its own visible boundary.
 
 Agenda, Lists, Completed and Trash share destination controls. Constrained widths
 or large text may use the existing compact destination menu; preserve labels,
@@ -80,7 +82,8 @@ states. Use shared target sizes and contrast roles from code/configuration.
 
 Brief app-owned confirmations use the shared opaque dialog; richer reviews/forms
 use the common sheet. Cancellation preserves the draft and captured choice; focus
-returns only to a valid initiating control. Native alarms use captured appearance
+returns only to a valid initiating control. Paired actions share a height and
+stack when constrained. Forced-open sections present a static heading. Native alarms use captured appearance
 and language with privacy-safe pre-unlock content.
 
 Android owns permission/authentication, keyboard, system picker, notification,

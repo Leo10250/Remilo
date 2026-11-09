@@ -1,6 +1,486 @@
 {
   "version": 1,
   "messages": {
+    "ui_your_routines": {
+      "en": "Your routines",
+      "zh-Hans": "你的日常计划",
+      "args": {},
+      "context": "Heading for the saved routine rows on the Routines screen.",
+      "calendarStatus": false
+    },
+    "ui_routine_days_opens_today": {
+      "en": "{days} · Opens today",
+      "zh-Hans": "{days} · 打开今日计划",
+      "args": { "days": "string" },
+      "context": "A routine row shows its scheduled weekdays and opens the view for today's date, including rest days.",
+      "calendarStatus": false
+    },
+    "ui_routine_day_range": {
+      "en": "{first}–{last}",
+      "zh-Hans": "{first}至{last}",
+      "args": { "first": "string", "last": "string" },
+      "context": "Inclusive run of consecutive weekdays scheduled for a routine.",
+      "calendarStatus": false
+    },
+    "ui_calendar_ready_activate_count": {
+      "en": "Ready to turn on ({count})",
+      "zh-Hans": "可开启（{count} 项）",
+      "args": { "count": "number" },
+      "context": "Number of Calendar links ready to activate.",
+      "calendarStatus": false
+    },
+    "ui_calendar_needs_review": {
+      "en": "Needs review",
+      "zh-Hans": "需要检查",
+      "args": {},
+      "context": "Calendar change that needs the user's review.",
+      "calendarStatus": false
+    },
+    "ui_calendar_pinned_zone": {
+      "en": "This reminder keeps {zone} when you travel. Its current event, due, and alert instants stay the same.",
+      "zh-Hans": "更换时区后，此提醒仍使用 {zone}。当前日程、截止和提醒的实际时间点保持不变。",
+      "args": { "zone": "string" },
+      "context": "Pinned time zone explanation before saving Calendar-linked changes.",
+      "calendarStatus": false
+    },
+    "ui_app_preferences": {
+      "en": "App preferences",
+      "zh-Hans": "应用偏好设置",
+      "args": {},
+      "context": "Settings group for appearance and interface language.",
+      "calendarStatus": false
+    },
+    "ui_settings_tools": {
+      "en": "Tools",
+      "zh-Hans": "工具",
+      "args": {},
+      "context": "Settings group for permissions, widget, and Google Calendar.",
+      "calendarStatus": false
+    },
+    "ui_calendar_settings_description": {
+      "en": "Optional sync, manual import, or adding reminders to Calendar",
+      "zh-Hans": "可选择同步，也可手动导入或将提醒添加到日历",
+      "args": {},
+      "context": "Settings summary for the Google Calendar destination.",
+      "calendarStatus": false
+    },
+    "ui_widget_settings_description": {
+      "en": "Add a reminder widget to your home screen",
+      "zh-Hans": "将提醒小组件添加到主屏幕",
+      "args": {},
+      "context": "Settings summary for Android widget setup.",
+      "calendarStatus": false
+    },
+    "ui_export_backup_description": {
+      "en": "Create and share a backup",
+      "zh-Hans": "创建并分享备份",
+      "args": {},
+      "context": "Export backup row. Prepares a file before Android sharing.",
+      "calendarStatus": false
+    },
+    "ui_restore_backup_description": {
+      "en": "Choose a file and review what will be restored",
+      "zh-Hans": "选择文件并查看将要恢复的内容",
+      "args": {},
+      "context": "Restore backup row. The user reviews before applying.",
+      "calendarStatus": false
+    },
+    "ui_export_backup_privacy": {
+      "en": "Backup files are unencrypted. Share them only with people or apps you trust.",
+      "zh-Hans": "备份文件未加密。请只分享给你信任的人或应用。",
+      "args": {},
+      "context": "Notice beside the backup export action.",
+      "calendarStatus": false
+    },
+    "ui_shortcut_morning": {
+      "en": "Morning",
+      "zh-Hans": "上午",
+      "args": {},
+      "context": "First Tomorrow shortcut slot; its saved time may be any clock time.",
+      "calendarStatus": false
+    },
+    "ui_shortcut_times": {
+      "en": "Shortcut times",
+      "zh-Hans": "快捷时间",
+      "args": {},
+      "context": "Group heading for the three saved times on Tomorrow shortcuts.",
+      "calendarStatus": false
+    },
+    "ui_shortcut_afternoon": {
+      "en": "Afternoon",
+      "zh-Hans": "下午",
+      "args": {},
+      "context": "Second Tomorrow shortcut slot; its saved time may be any clock time.",
+      "calendarStatus": false
+    },
+    "ui_shortcut_evening": {
+      "en": "Evening",
+      "zh-Hans": "晚上",
+      "args": {},
+      "context": "Third Tomorrow shortcut slot; its saved time may be any clock time.",
+      "calendarStatus": false
+    },
+    "ui_notifications_app_blocked": {
+      "en": "Android blocks delivery while app notifications are off, even when a notification channel is allowed.",
+      "zh-Hans": "应用通知关闭时，即使通知渠道显示为允许，Android 也不会发送通知。",
+      "args": {},
+      "context": "Explains app permission versus channel settings in Alarm Check.",
+      "calendarStatus": false
+    },
+    "ui_pending_reminder_updates_detail": {
+      "en": "Includes pending updates to reminder records and queued completions. This count excludes other recovery work.",
+      "zh-Hans": "包括待更新的提醒记录，以及等待处理的完成操作。此数量不包含其他恢复任务。",
+      "args": {},
+      "context": "Explains the pending reminder updates diagnostic count.",
+      "calendarStatus": false
+    },
+    "ui_diagnostics_shared": {
+      "en": "Diagnostic report opened in the share sheet.",
+      "zh-Hans": "诊断报告已在分享面板中打开。",
+      "args": {},
+      "context": "Diagnostic sharing handoff feedback. It does not claim external delivery.",
+      "calendarStatus": false
+    },
+    "ui_diagnostics_shared_observed": {
+      "en": "Diagnostic report opened in the share sheet. Snapshot observed at {time}.",
+      "zh-Hans": "诊断报告已在分享面板中打开。数据采集时间：{time}。",
+      "args": {
+        "time": "string"
+      },
+      "context": "Diagnostic sharing handoff with time the data was observed.",
+      "calendarStatus": false
+    },
+    "ui_backup_restore_review": {
+      "en": "Review backup",
+      "zh-Hans": "恢复前检查",
+      "args": {},
+      "context": "Heading for the selected backup and prepared import counts.",
+      "calendarStatus": false
+    },
+    "ui_backup_file": {
+      "en": "Backup file",
+      "zh-Hans": "备份文件",
+      "args": {},
+      "context": "Restore backup section containing the file picker and backup scope help.",
+      "calendarStatus": false
+    },
+    "ui_repeats_summary": {
+      "en": "Manage repeating reminders",
+      "zh-Hans": "管理重复提醒",
+      "args": {},
+      "context": "Lists built-in Repeats summary.",
+      "calendarStatus": false
+    },
+    "ui_routines_summary": {
+      "en": "Track routine progress",
+      "zh-Hans": "查看日常计划的步骤进度",
+      "args": {},
+      "context": "Lists built-in Routines summary.",
+      "calendarStatus": false
+    },
+    "ui_search_results": {
+      "en": "Search results",
+      "zh-Hans": "搜索结果",
+      "args": {},
+      "context": "Section heading for reminders that match a search.",
+      "calendarStatus": false
+    },
+    "ui_search_empty": {
+      "en": "No matching reminders.",
+      "zh-Hans": "没有找到匹配的提醒。",
+      "args": {},
+      "context": "Empty search results under the Search results heading.",
+      "calendarStatus": false
+    },
+    "ui_repeat_unfinished_count": {
+      "en": { "one": "{count} unfinished occurrence", "other": "{count} unfinished occurrences" },
+      "zh-Hans": { "other": "{count} 项提醒未完成" },
+      "args": { "count": "number" },
+      "context": "Unfinished occurrence count in a repeating reminder family.",
+      "calendarStatus": false
+    },
+    "ui_search_chip": {
+      "en": "Search: {query}",
+      "zh-Hans": "搜索：{query}",
+      "args": {
+        "query": "string"
+      },
+      "context": "Retained query chip; query is entered by the user.",
+      "calendarStatus": false
+    },
+    "ui_remove_search": {
+      "en": "Clear search: {query}",
+      "zh-Hans": "清除搜索内容：{query}",
+      "args": {
+        "query": "string"
+      },
+      "context": "Accessible action on the retained query chip.",
+      "calendarStatus": false
+    },
+    "ui_ringing_now": {
+      "en": "Ringing now",
+      "zh-Hans": "正在响铃",
+      "args": {},
+      "context": "Main Agenda section with active alarms and actions for that session.",
+      "calendarStatus": false
+    },
+    "ui_ringing_completed_count": {
+      "en": { "one": "{count} ringing reminder completed.", "other": "{count} ringing reminders completed." },
+      "zh-Hans": { "other": "已完成 {count} 项正在响铃的提醒。" },
+      "args": { "count": "number" },
+      "context": "Feedback after the captured ringing group is marked done.",
+      "calendarStatus": false
+    },
+    "ui_ringing_loading": {
+      "en": "Checking which reminders are ringing…",
+      "zh-Hans": "正在确认哪些提醒在响铃…",
+      "args": {},
+      "context": "Loading member details for an active alarm session.",
+      "calendarStatus": false
+    },
+    "ui_ringing_unavailable": {
+      "en": "Couldn’t confirm which reminders are ringing. Refresh to try again.",
+      "zh-Hans": "无法确认哪些提醒在响铃，请刷新后重试。",
+      "args": {},
+      "context": "Shown when some session members cannot be matched; bulk actions are unavailable.",
+      "calendarStatus": false
+    },
+    "ui_routine_rest_steps": {
+      "en": "No steps or alert are scheduled for this day.",
+      "zh-Hans": "这一天没有安排步骤，也不会发送提醒。",
+      "args": {},
+      "context": "Rest-day state for a general routine.",
+      "calendarStatus": false
+    },
+    "ui_routine_rest_exercises": {
+      "en": "No exercises or alert are scheduled for this day.",
+      "zh-Hans": "这一天没有安排动作，也不会发送提醒。",
+      "args": {},
+      "context": "Rest-day state for an exercise routine.",
+      "calendarStatus": false
+    },
+    "ui_more_actions": {
+      "en": "More actions for {name}",
+      "zh-Hans": "更多操作：{name}",
+      "args": {
+        "name": "string"
+      },
+      "context": "Accessible split destination overflow label; name is authored text.",
+      "calendarStatus": false
+    },
+    "ui_list_overdue_count": {
+      "en": "{count} overdue",
+      "zh-Hans": "{count} 项逾期",
+      "args": { "count": "number" },
+      "context": "Compact list summary of overdue reminder occurrences.",
+      "calendarStatus": false
+    },
+    "ui_list_overdue_spoken_count": {
+      "en": { "one": "{count} overdue occurrence", "other": "{count} overdue occurrences" },
+      "zh-Hans": { "other": "{count} 项逾期提醒" },
+      "args": { "count": "number" },
+      "context": "Spoken list summary of overdue reminder occurrences.",
+      "calendarStatus": false
+    },
+    "ui_calendar_last_confirmed": {
+      "en": "Last confirmed",
+      "zh-Hans": "上次确认",
+      "args": {},
+      "context": "Label for the previously confirmed field value in Calendar review.",
+      "calendarStatus": false
+    },
+    "ui_calendar_retained_alert_time": {
+      "en": "Keeps the alert time set by Snooze or Postpone: {time}",
+      "zh-Hans": "保留稍后提醒或推迟后设定的提醒时间：{time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Calendar review preserves the locally adjusted alert.",
+      "calendarStatus": false
+    },
+    "ui_calendar_last_successful_sync": {
+      "en": "Last successful sync: {time}",
+      "zh-Hans": "上次成功同步：{time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Calendar linked reminder status timestamp.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_linked": {
+      "en": "Remilo saves the reminder locally and syncs its title, notes, and event times with Google Calendar.",
+      "zh-Hans": "Remilo 会在本地保存此提醒，并与 Google 日历同步标题、备注和日程时间。",
+      "args": {},
+      "context": "Single event import with linked updates selected.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_local_only": {
+      "en": "Remilo saves the reminder locally. Its title, notes, and event times won’t sync with Google Calendar.",
+      "zh-Hans": "Remilo 会在本地保存此提醒。标题、备注和日程时间不会与 Google 日历同步。",
+      "args": {},
+      "context": "Single event import with local-only scope.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_bulk_linked": {
+      "en": "Imported reminders sync with Google Calendar by default. You can change this for individual events.",
+      "zh-Hans": "导入的提醒默认与 Google 日历同步，可单独更改每项日程的设置。",
+      "args": {},
+      "context": "Bulk Calendar import default linked choice; exceptions may be set per event.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_bulk_local": {
+      "en": "Imported reminders are local only by default. You can turn on sync for individual events.",
+      "zh-Hans": "导入的提醒默认仅保存在本地，可单独为每项日程开启同步。",
+      "args": {},
+      "context": "Bulk Calendar import default local-only choice.",
+      "calendarStatus": false
+    },
+    "ui_calendar_ready_count": {
+      "en": "Ready to apply ({count})",
+      "zh-Hans": "可应用（{count} 项）",
+      "args": {
+        "count": "number"
+      },
+      "context": "Count of reviewed Calendar changes ready to apply.",
+      "calendarStatus": false
+    },
+    "ui_calendar_review_count": {
+      "en": "Needs review ({count})",
+      "zh-Hans": "需要检查（{count} 项）",
+      "args": {
+        "count": "number"
+      },
+      "context": "Heading for Calendar changes still requiring review.",
+      "calendarStatus": false
+    },
+    "ui_reminder_task_status": {
+      "en": "Task status",
+      "zh-Hans": "任务状态",
+      "args": {},
+      "context": "Reminder Details heading that separates completion status from alert timing.",
+      "calendarStatus": false
+    },
+    "ui_reminder_unfinished": {
+      "en": "Unfinished",
+      "zh-Hans": "未完成",
+      "args": {},
+      "context": "An active reminder that is not overdue, completed, skipped or in Trash.",
+      "calendarStatus": false
+    },
+    "ui_reminder_completed_at": {
+      "en": "Completed · {time}",
+      "zh-Hans": "已完成 · {time}",
+      "args": {
+        "time": "string"
+      },
+      "context": "Reminder Details status with its recorded completion time.",
+      "calendarStatus": false
+    },
+    "ui_next_alarm": {
+      "en": "Next alarm",
+      "zh-Hans": "下次闹钟",
+      "args": {},
+      "context": "Future registered alarm shown in Reminder Details.",
+      "calendarStatus": false
+    },
+    "ui_next_notification": {
+      "en": "Next notification",
+      "zh-Hans": "下次通知",
+      "args": {},
+      "context": "Future registered notification shown in Reminder Details.",
+      "calendarStatus": false
+    },
+    "ui_notification_time": {
+      "en": "Notification time",
+      "zh-Hans": "通知时间",
+      "args": {},
+      "context": "Historical or elapsed notification time label.",
+      "calendarStatus": false
+    },
+    "ui_backup_review_count": {
+      "en": {
+        "one": "{count} reminder or routine to review",
+        "other": "{count} reminders or routines to review"
+      },
+      "zh-Hans": {
+        "other": "{count} 项提醒或日常计划待检查"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Number of prepared reminder or routine items in backup review.",
+      "calendarStatus": false
+    },
+    "ui_calendar_review_items_count": {
+      "en": {
+        "one": "{count} item needs review",
+        "other": "{count} items need review"
+      },
+      "zh-Hans": {
+        "other": "{count} 项需要检查"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Calendar review destination status.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_review_count": {
+      "en": {
+        "one": "{count} event to import",
+        "other": "{count} events to import"
+      },
+      "zh-Hans": {
+        "other": "{count} 个待导入日程"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Prepared bulk Calendar import count.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_invalid_count": {
+      "en": {
+        "one": "{count} event needs attention before import. Open it to review its title, recurrence, and alert.",
+        "other": "{count} events need attention before import. Open them to review their titles, recurrence, and alerts."
+      },
+      "zh-Hans": {
+        "other": "有 {count} 个日程需要处理后才能导入。请打开相应日程，检查标题、重复安排和提醒设置。"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Invalid events in a bulk Calendar import review.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_requests_count": {
+      "en": {
+        "one": "{count} import request saved",
+        "other": "{count} import requests saved"
+      },
+      "zh-Hans": {
+        "other": "已保存 {count} 项导入请求"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Acknowledged Calendar import requests, before individual outcomes.",
+      "calendarStatus": false
+    },
+    "ui_calendar_import_saved_count": {
+      "en": {
+        "one": "{count} local reminder saved. Google and alert outcomes appear below.",
+        "other": "{count} local reminders saved. Google and alert outcomes appear below."
+      },
+      "zh-Hans": {
+        "other": "已保存 {count} 项本地提醒。下方显示 Google 操作和本地提醒安排的结果。"
+      },
+      "args": {
+        "count": "number"
+      },
+      "context": "Confirmed local reminder count after bulk import.",
+      "calendarStatus": false
+    },
     "exercise_sets": { "en": "Sets", "zh-Hans": "组数" },
     "exercise_reps": { "en": "Reps per set", "zh-Hans": "每组次数" },
     "exercise_time": { "en": "Time per set", "zh-Hans": "每组时长" },
@@ -3772,28 +4252,28 @@
       "calendarStatus": false
     },
     "m_941c12b896c0": {
-      "en": "{arg0} reminders",
-      "zh-Hans": "{arg0} 项提醒",
+      "en": { "one": "{count} reminder", "other": "{count} reminders" },
+      "zh-Hans": { "other": "{count} 项提醒" },
       "args": {
-        "arg0": "string | number"
+        "count": "number"
       },
       "context": "src\\app\\calendar-reviews.tsx",
       "calendarStatus": false
     },
     "m_6f590bbcaf8e": {
-      "en": "{arg0} incoming events",
-      "zh-Hans": "{arg0} 项待导入日程",
+      "en": { "one": "{count} incoming event", "other": "{count} incoming events" },
+      "zh-Hans": { "other": "{count} 项待导入日程" },
       "args": {
-        "arg0": "string | number"
+        "count": "number"
       },
       "context": "src\\app\\calendar-reviews.tsx",
       "calendarStatus": false
     },
     "m_bfbb89b5c707": {
-      "en": "{arg0} setup issues",
-      "zh-Hans": "{arg0} 项设置问题",
+      "en": { "one": "{count} setup issue", "other": "{count} setup issues" },
+      "zh-Hans": { "other": "{count} 项设置问题" },
       "args": {
-        "arg0": "string | number"
+        "count": "number"
       },
       "context": "src\\app\\calendar-reviews.tsx",
       "calendarStatus": false
@@ -7616,8 +8096,8 @@
       "calendarStatus": false
     },
     "m_8b7100b79478": {
-      "en": "This creates a Remilo reminder with its own alert. Deleting the Google event will not stop that alert. Move the reminder to Trash in Remilo to stop it.",
-      "zh-Hans": "将创建独立的 Remilo 提醒，并按设置提醒。删除 Google 日程不会停止本地提醒；如需停止，请在 Remilo 中将其移至回收站。",
+      "en": "Remilo schedules any local alerts you choose. Deleting an event in Google Calendar won’t cancel those alerts. To stop a local alert, move its reminder to Trash in Remilo.",
+      "zh-Hans": "Remilo 会按你的设置安排本地提醒。删除 Google 日历中的日程不会取消这些提醒。如需停止本地提醒，请在 Remilo 中将对应提醒移至回收站。",
       "args": {},
       "context": "src\\domain\\calendar-presentation.ts",
       "calendarStatus": false

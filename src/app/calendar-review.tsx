@@ -21,6 +21,7 @@ import {
   type OriginParams,
 } from '../domain/navigation';
 import {
+  ActionPair,
   ActionFeedback,
   BottomActionBar,
   Button,
@@ -29,6 +30,7 @@ import {
   Copy,
   Field,
   Page,
+  ReadOnlyRow,
   RowSupport,
   SelectRow,
   SettingRow,
@@ -296,6 +298,10 @@ export default function CalendarReview() {
     );
   };
   const recurring = !!preview?.recurrence;
+  const syncSelected =
+    activating ||
+    !!params.candidateId ||
+    (choices.automaticSync ?? preview?.choices.automaticSync ?? (imported || enable));
   const invalid =
     imported && !adopting
       ? !title.trim() ||
@@ -311,6 +317,7 @@ export default function CalendarReview() {
   return (
     <Page
       compact
+      sectionSpacing
       title={
         adopting
           ? t('m_a30fc352c641')
@@ -326,35 +333,39 @@ export default function CalendarReview() {
       footer={
         !operationId && preview ? (
           <BottomActionBar>
-            <Button
-              label={
-                uncertain
-                  ? t('m_16003a1a9190')
-                  : dirty
-                    ? t('m_ceda88a9a0fd')
-                    : imported && !adopting
-                      ? t('m_91178678e720')
-                      : activating
-                        ? t('m_e62e9fadeb09')
-                        : t('m_71e50031d9c2')
-              }
-              disabled={busy || (!uncertain && !dirty && invalid)}
-              onPress={() => void apply()}
-            />
-            <Button
-              label={t('m_19766ed6ccb2')}
-              variant="secondary"
-              disabled={busy || uncertain}
-              onPress={back}
-            />
+            <ActionPair>
+              <Button
+                label={
+                  uncertain
+                    ? t('m_16003a1a9190')
+                    : dirty
+                      ? t('m_ceda88a9a0fd')
+                      : imported && !adopting
+                        ? t('m_91178678e720')
+                        : activating
+                          ? t('m_e62e9fadeb09')
+                          : t('m_71e50031d9c2')
+                }
+                disabled={busy || (!uncertain && !dirty && invalid)}
+                onPress={() => void apply()}
+              />
+              <Button
+                label={t('m_19766ed6ccb2')}
+                variant="secondary"
+                disabled={busy || uncertain}
+                onPress={back}
+              />
+            </ActionPair>
           </BottomActionBar>
         ) : undefined
       }
     >
-      <Copy muted>
-        {adopting ? t('m_62b005b2d47b') : imported ? t('m_b0fb1f750602') : t('m_c672ed8175e2')}
-      </Copy>
-      {imported && !adopting && <Copy muted>{calendarImportIndependence}</Copy>}
+      <View style={{ gap: 8 }}>
+        <Copy muted>
+          {adopting ? t('m_62b005b2d47b') : imported ? t('m_b0fb1f750602') : t('m_c672ed8175e2')}
+        </Copy>
+        {imported && !adopting && <Copy muted>{calendarImportIndependence()}</Copy>}
+      </View>
       {params.candidateId && !adopting && <Copy heading>{t('m_b89457145742')}</Copy>}
       {!!error && <ActionFeedback message={error} tone="warning" />}
       {busy && (
@@ -389,21 +400,18 @@ export default function CalendarReview() {
       {preview && !operationId && (
         <>
           <ConnectedGroup title={t('m_0e570ca6fabe')}>
-            <View key="source" style={{ padding: 16, gap: 12 }}>
-              <Copy>
-                {preview.calendarName} · {preview.email}
-              </Copy>
-              <Copy muted>
-                {t('m_0efd92a33590')}
-                {scheduleDateTime(preview.checkedAtMs)}.
-              </Copy>
-            </View>
+            <ReadOnlyRow key="calendar" label={t('m_d5d0a30b517e')} value={preview.calendarName} />
+            <ReadOnlyRow key="account" label={t('m_7da2bcb6bb6b')} value={preview.email} />
+            <ReadOnlyRow
+              key="checked"
+              label={t('m_0efd92a33590')}
+              value={scheduleDateTime(preview.checkedAtMs)}
+            />
           </ConnectedGroup>
           <ConnectedGroup title={t('m_b97900d1be7c')}>
             <View key="sync">
               {activating || params.candidateId ? (
                 <SettingRow
-                  intent="action"
                   icon="event"
                   label={t('m_41a8bf8da139')}
                   description={t('m_bf02ddb833cf')}
@@ -411,9 +419,7 @@ export default function CalendarReview() {
               ) : (
                 <Toggle
                   label={t('m_23a71272299e')}
-                  value={
-                    choices.automaticSync ?? preview.choices.automaticSync ?? (imported || enable)
-                  }
+                  value={syncSelected}
                   disabled={busy || uncertain}
                   onChange={(value) => {
                     setChoices((old) => ({ ...old, automaticSync: value }));
@@ -423,7 +429,13 @@ export default function CalendarReview() {
               )}
               <RowSupport>
                 <Copy muted size={14}>
-                  {t('m_1e631f4fb0c8')}
+                  {imported && !adopting
+                    ? t(
+                        syncSelected
+                          ? 'ui_calendar_import_linked'
+                          : 'ui_calendar_import_local_only',
+                      )
+                    : t('m_1e631f4fb0c8')}
                 </Copy>
               </RowSupport>
             </View>
@@ -543,10 +555,12 @@ export default function CalendarReview() {
                   >
                     <View key="choices" style={{ padding: 16, gap: 8 }}>
                       {preview.baseline && (
-                        <Copy muted>
-                          {t('m_90550f10b09d')}
-                          {fieldText(field, preview.baseline)}
-                        </Copy>
+                        <View style={{ gap: 4 }}>
+                          <Copy muted size={14}>
+                            {t('ui_calendar_last_confirmed')}
+                          </Copy>
+                          <Copy>{fieldText(field, preview.baseline)}</Copy>
+                        </View>
                       )}
                       <Choice
                         label={t('m_ab4821c44cdf')}
@@ -574,17 +588,20 @@ export default function CalendarReview() {
                       <Copy>{fieldText('schedule', resolved)}</Copy>
                       {timing && (
                         <>
-                          <Copy>
-                            {t('m_df5b477708b5')}
-                            {scheduleDateTime(timing.dueAtMs, resolved.schedule.zoneId)}
-                          </Copy>
-                          <Copy>
-                            {timing.mode === 'None'
-                              ? t('m_d1af410eb4d0')
-                              : timing.mode +
-                                ': ' +
-                                scheduleDateTime(timing.alarmAtMs, resolved.schedule.zoneId)}
-                          </Copy>
+                          <ReadOnlyRow
+                            label={t('m_9071738f1459')}
+                            value={scheduleDateTime(timing.dueAtMs, resolved.schedule.zoneId)}
+                          />
+                          {timing.mode === 'None' ? (
+                            <Copy>{modeLabel('None')}</Copy>
+                          ) : (
+                            <ReadOnlyRow
+                              label={modeLabel(
+                                timing.mode === 'Notification' ? 'Notification' : 'Alarm',
+                              )}
+                              value={scheduleDateTime(timing.alarmAtMs, resolved.schedule.zoneId)}
+                            />
+                          )}
                         </>
                       )}
                     </View>
@@ -594,8 +611,9 @@ export default function CalendarReview() {
                 {elapsedChange && <ActionFeedback tone="warning" message={t('m_8d7bb691765b')} />}
                 {preview.nextAlertMs !== null && (
                   <Copy>
-                    {t('m_4c0b9ea1de89')}
-                    {scheduleDateTime(preview.nextAlertMs)}.
+                    {t('ui_calendar_retained_alert_time', {
+                      time: scheduleDateTime(preview.nextAlertMs),
+                    })}
                   </Copy>
                 )}
                 <Copy muted>{t('m_b2ab1c6e45a0')}</Copy>

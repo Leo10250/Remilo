@@ -349,7 +349,16 @@ describe('concise work-state browsing', () => {
   });
   it('prioritizes ringing visually without erasing the spoken overdue state', () => {
     const result = reminderBrowsingPresentation({ ...overdue, deliveryState: 'Alerting' }, start);
+    expect(result.ringing).toBe(true);
     expect(result.status?.label).toBe('Ringing');
+    const localized = reminderBrowsingPresentation(
+      { ...overdue, deliveryState: 'Alerting' },
+      start,
+      undefined,
+      { resolvedLanguage: 'zh-Hans' },
+    );
+    expect(localized.ringing).toBe(true);
+    expect(localized.status?.label).toBe('正在响铃');
     expect(result.timing).toContain('Alarm time');
     expect(result.spokenLabel).toContain('Alarm ringing');
     expect(result.spokenLabel).toContain('Overdue by 3 minutes');
@@ -517,5 +526,21 @@ describe('card and Details timing authority', () => {
     const noAlert = detailSchedulePresentation({ ...normal, mode: 'None' }, start);
     expect(noAlert.label).toBe('Scheduled for');
     expect(noAlert.value).toBe(eventRange(normal, start));
+  });
+  it('only presents a next alert for a future registered occurrence', () => {
+    const future = start + 600_000;
+    expect(
+      detailSchedulePresentation({ ...normal, nextAlertMs: future }, start).nextRegisteredAt,
+    ).toBe(future);
+    for (const state of [
+      { nextAlertMs: null },
+      { nextAlertMs: start },
+      { nextAlertMs: future, deliveryState: 'Blocked' },
+      { nextAlertMs: future, completed: true },
+    ]) {
+      expect(
+        detailSchedulePresentation({ ...normal, ...state }, start).nextRegisteredAt,
+      ).toBeNull();
+    }
   });
 });

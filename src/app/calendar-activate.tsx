@@ -27,6 +27,7 @@ import {
   Page,
   RowSupport,
   SettingRow,
+  Status,
 } from '../ui/components';
 import {
   CalendarOperationProgress,
@@ -137,6 +138,7 @@ export default function CalendarActivation() {
   return (
     <Page
       compact
+      sectionSpacing
       title={t('m_41103efd431d')}
       onBack={() =>
         router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin))
@@ -194,65 +196,56 @@ export default function CalendarActivation() {
             />
           )}
           {!!ready.length && (
-            <Copy heading>
-              {t('m_8ceca6d37b3b')}
-              {ready.length}
-            </Copy>
-          )}
-          {ready.map((item) => (
-            <ConnectedGroup key={item.occurrenceId}>
-              <View>
-                <CheckRow
-                  label={item.preview!.local?.title || item.title || t('m_10208d7687ad')}
-                  description={[item.preview!.calendarName, item.preview!.email]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  selected={selected.includes(item.occurrenceId)}
-                  disabled={busy || unknown}
-                  onPress={() =>
-                    setSelected((old) =>
-                      old.includes(item.occurrenceId)
-                        ? old.filter((id) => id !== item.occurrenceId)
-                        : [...old, item.occurrenceId],
-                    )
-                  }
-                />
-                <RowSupport>
-                  <CalendarReviewTiming id={item.occurrenceId} />
-                  <Copy muted size={14}>
-                    {calendarTransferText(
-                      item.preview!.transfers.inbound,
-                      item.preview!.transfers.outbound,
-                      item.preview!.equal,
-                    )}
-                  </Copy>
-                </RowSupport>
-              </View>
+            <ConnectedGroup title={t('ui_calendar_ready_activate_count', { count: ready.length })}>
+              {ready.map((item) => (
+                <View key={item.occurrenceId}>
+                  <CheckRow
+                    label={item.preview!.local?.title || item.title || t('m_10208d7687ad')}
+                    description={[item.preview!.calendarName, item.preview!.email]
+                      .filter(Boolean)
+                      .join(' · ')}
+                    selected={selected.includes(item.occurrenceId)}
+                    disabled={busy || unknown}
+                    onPress={() =>
+                      setSelected((old) =>
+                        old.includes(item.occurrenceId)
+                          ? old.filter((id) => id !== item.occurrenceId)
+                          : [...old, item.occurrenceId],
+                      )
+                    }
+                  />
+                  <RowSupport>
+                    <CalendarReviewTiming id={item.occurrenceId} />
+                    <Copy muted size={14}>
+                      {calendarTransferText(
+                        item.preview!.transfers.inbound,
+                        item.preview!.transfers.outbound,
+                        item.preview!.equal,
+                      )}
+                    </Copy>
+                  </RowSupport>
+                </View>
+              ))}
             </ConnectedGroup>
-          ))}
-          {!!attention.length && (
-            <Copy heading>
-              {t('m_33071713d5e1')}
-              {attention.length}
-            </Copy>
           )}
-          {attention.map((item) => (
-            <ConnectedGroup key={item.occurrenceId}>
-              <View>
-                <SettingRow
-                  intent="action"
-                  prominent
-                  label={item.preview?.local?.title || item.title || t('m_10208d7687ad')}
-                  description={[item.calendarName, item.email].filter(Boolean).join(' · ')}
-                />
-                <RowSupport>
-                  <CalendarReviewTiming id={item.occurrenceId} />
-                  <Copy muted size={14}>
-                    {item.excludedReason || t('m_497da54032fc')}
-                  </Copy>
-                  <Button
-                    label={t('m_6a47708f4e14')}
-                    variant="secondary"
+          {!!attention.length && (
+            <ConnectedGroup title={t('ui_calendar_review_count', { count: attention.length })}>
+              {attention.map((item) => {
+                const reason = item.excludedReason || t('m_497da54032fc');
+                return (
+                  <SettingRow
+                    intent="navigation"
+                    key={item.occurrenceId}
+                    prominent
+                    label={item.preview?.local?.title || item.title || t('m_10208d7687ad')}
+                    description={[item.calendarName, item.email].filter(Boolean).join(' · ')}
+                    statusLabel={reason}
+                    supporting={
+                      <>
+                        <CalendarReviewTiming id={item.occurrenceId} />
+                        <Status label={reason} tone="warning" />
+                      </>
+                    }
                     disabled={busy || unknown}
                     onPress={() =>
                       router.push({
@@ -261,10 +254,10 @@ export default function CalendarActivation() {
                       })
                     }
                   />
-                </RowSupport>
-              </View>
+                );
+              })}
             </ConnectedGroup>
-          ))}
+          )}
           {review && !review.items.length && <Copy>{t('m_f77790b654f9')}</Copy>}
           {!!review?.items.length && (
             <Copy muted size={14}>

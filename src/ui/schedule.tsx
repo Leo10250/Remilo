@@ -1,9 +1,10 @@
-import { useLocale, useTranslation } from '../localization/react';
+import { useTranslation } from '../localization/react';
 
 import { useTimeFormatting } from './time-display';
 import { useQuery } from '@tanstack/react-query';
 import { Children, type PropsWithChildren } from 'react';
 import { View } from 'react-native';
+import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import {
   modeLabel,
   ordinaryDue,
@@ -11,29 +12,41 @@ import {
   type ScheduleItem,
 } from '../domain/presentation';
 import { deviceZone } from '../domain/time';
-import { ConnectedGroup, Copy, Disclosure, Group, InformationRow } from './components';
+import { ConnectedGroup, Copy, Disclosure, Group, InformationRow, RowSupport } from './components';
 import { engine, nativeAvailable } from './native';
 import { typography } from './tokens';
 export { InformationRow } from './components';
 
-export function SchedulePrimary({ item }: { item: ScheduleItem }) {
+export function SchedulePrimary({ item, children }: PropsWithChildren<{ item: Occurrence }>) {
   'use no memo';
-  useLocale();
-  const { detailSchedulePresentation } = useTimeFormatting();
+  const t = useTranslation();
+  const { detailSchedulePresentation, scheduleDateTime } = useTimeFormatting();
   const primary = detailSchedulePresentation(item);
+  const target = primary.nextRegisteredAt;
+  const label =
+    target != null
+      ? t(item.mode === 'Notification' ? 'ui_next_notification' : 'ui_next_alarm')
+      : item.deliveryState === 'Scheduled' && primary.changed && item.mode !== 'None'
+        ? t(item.mode === 'Notification' ? 'ui_notification_time' : 'm_eaf9eb2fb8f9')
+        : primary.label;
   return (
-    <ConnectedGroup>
-      <InformationRow
-        intent="navigation"
-        key="alert"
-        prominent
-        icon={
-          item.mode === 'None' ? 'event' : item.mode === 'Notification' ? 'notifications' : 'alarm'
-        }
-        label={primary.label}
-        value={primary.value}
-        supporting={item.mode === 'None' ? primary.supporting : undefined}
-      />
+    <ConnectedGroup title={t('m_44a57b22e03d')}>
+      <View>
+        <InformationRow
+          intent="action"
+          icon={
+            item.mode === 'None'
+              ? 'event'
+              : item.mode === 'Notification'
+                ? 'notifications'
+                : 'alarm'
+          }
+          label={label}
+          value={target != null ? scheduleDateTime(target, primary.targetZone) : primary.value}
+          supporting={item.mode === 'None' ? primary.supporting : undefined}
+        />
+        {children && <RowSupport>{children}</RowSupport>}
+      </View>
     </ConnectedGroup>
   );
 }

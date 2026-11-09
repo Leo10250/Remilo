@@ -4,20 +4,25 @@ import { useTimeFormatting } from '../ui/time-display';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Share } from 'react-native';
+import { Share, View } from 'react-native';
 import { retainedOriginParams, type OriginParams } from '../domain/navigation';
 import {
   ActionFeedback,
   Button,
+  ConnectedGroup,
   Copy,
-  Group,
   IconButton,
   Page,
   QueryState,
+  ReadOnlyRow,
+  RowSupport,
+  SectionStack,
   SettingRow,
+  Status,
 } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { usePageHandoff } from '../ui/handoff';
+import { space } from '../ui/tokens';
 
 const stateNames: Record<string, string> = live(() => ({
   Alerting: t('m_426a858eacbb'),
@@ -94,10 +99,9 @@ export default function Diagnostics() {
         handoff.commit(page, () =>
           setShareFeedback({
             message:
-              t('m_76ea31a09077') +
-              (sharedAt != null
-                ? t('m_5c8658f6dc34', { arg0: String(shortDateTime(sharedAt)) })
-                : '.'),
+              sharedAt != null
+                ? t('ui_diagnostics_shared_observed', { time: shortDateTime(sharedAt) })
+                : t('ui_diagnostics_shared'),
             tone: 'muted',
           }),
         );
@@ -120,14 +124,17 @@ export default function Diagnostics() {
           .sort(),
       ]
     : [];
-  const capability = (key: string, limited = false) =>
-    typeof caps?.[key] !== 'boolean'
-      ? t('m_ca1844969742')
-      : caps[key]
-        ? t('m_1bb201d18835')
-        : limited
-          ? t('m_e5125d9f63d2')
-          : t('m_18f2a0947f9d');
+  const capability = (key: string, limited = false) => {
+    const value = caps?.[key];
+    if (typeof value !== 'boolean') return <Status label={t('m_ca1844969742')} tone="muted" />;
+    if (value) return <Status label={t('m_1bb201d18835')} tone="success" />;
+    return (
+      <Status
+        label={limited ? t('m_e5125d9f63d2') : t('m_18f2a0947f9d')}
+        tone={limited ? 'warning' : 'danger'}
+      />
+    );
+  };
   return (
     <Page
       compact
@@ -146,138 +153,160 @@ export default function Diagnostics() {
         />
       }
     >
-      <Copy muted>{t('m_adaf7b842e82')}</Copy>
-      {observed != null && (
-        <Copy muted size={14}>
-          {t('m_64fa8a14a90f')}
-          {shortDateTime(observed)}
-        </Copy>
-      )}
-      <ActionFeedback
-        message={
-          report.isFetching && report.data
-            ? t('m_84d68f15bfc0')
-            : report.error && report.data
-              ? t('m_0fb119b19650')
-              : refreshFeedback?.message
-        }
-        tone={report.error ? 'danger' : refreshFeedback?.tone}
-        loading={report.isFetching && !!report.data}
-      />
-      {report.error && report.data && (
-        <Button
-          label={t('m_942087cc2d41')}
-          variant="secondary"
-          disabled={report.isFetching}
-          onPress={() => void refresh()}
-        />
-      )}
-      <QueryState
-        loading={nativeAvailable && report.isLoading && !report.data}
-        error={!report.data ? report.error : undefined}
-        empty={(!report.data && !report.isLoading) || !nativeAvailable}
-        emptyMessage={!nativeAvailable ? t('m_66a36ca67b95') : t('m_d6ef34ee8c3e')}
-        onRetry={nativeAvailable ? () => void refresh() : undefined}
-      />
-      {!!report.data && (
-        <>
-          <Group title={t('m_1adbb2ee4d86')}>
-            <Copy muted size={14}>
-              {t('m_62c5c0e4db3f')}
-            </Copy>
-            {!stateOrder.length && <Copy muted>{t('m_fedeca67dfed')}</Copy>}
-            {stateOrder.map((state) => (
-              <SettingRow
-                intent="action"
-                key={state}
-                label={stateNames[state] ?? state}
-                value={String(counts![state])}
-              />
-            ))}
-            <SettingRow
-              intent="action"
-              label={t('m_99d490c3f215')}
-              value={String(report.data.pendingOperations ?? '—')}
+      <SectionStack>
+        <View style={{ gap: space.sm }}>
+          <Copy muted>{t('m_adaf7b842e82')}</Copy>
+          <ActionFeedback
+            message={
+              report.isFetching && report.data
+                ? t('m_84d68f15bfc0')
+                : report.error && report.data
+                  ? t('m_0fb119b19650')
+                  : refreshFeedback?.message
+            }
+            tone={report.error ? 'danger' : refreshFeedback?.tone}
+            loading={report.isFetching && !!report.data}
+          />
+          {report.error && report.data && (
+            <Button
+              label={t('m_942087cc2d41')}
+              variant="secondary"
+              disabled={report.isFetching}
+              onPress={() => void refresh()}
             />
-            <Copy muted size={14}>
-              {t('m_573a58a1e38d')}
-            </Copy>
-          </Group>
-          {caps && (
-            <Group title={t('m_9794e36a7e73')}>
-              {typeof caps.observedAtMs === 'number' && (
-                <Copy muted size={14}>
-                  {t('m_fa28a8a6b6bf')}
-                  {shortDateTime(caps.observedAtMs)}
-                </Copy>
-              )}
-              <SettingRow
-                intent="action"
-                label={t('m_142c2ae8d0bb')}
-                value={capability('exactAlarms')}
-              />
-              <SettingRow
-                intent="action"
-                label={t('m_31d7ae351725')}
-                value={capability('notifications')}
-              />
-              <SettingRow
-                intent="action"
-                label={t('m_aa3c57bf2387')}
-                value={capability('channelEnabled')}
-              />
-              <SettingRow
-                intent="action"
-                label={t('m_c2728d07deea')}
-                value={capability('notificationChannelEnabled')}
-              />
-              <SettingRow
-                intent="action"
-                label={t('m_66b41af0ba4b')}
-                value={capability('fullScreen', true)}
-              />
-              <SettingRow
-                intent="action"
-                label={t('m_de5a4fcc9fd1')}
-                value={
-                  caps.unlocked === true
-                    ? t('m_531c7b28abf2')
-                    : caps.unlocked === false
-                      ? t('m_a424e33d9093')
-                      : t('m_ca1844969742')
-                }
-              />
-            </Group>
           )}
-          <Group title={t('m_fc7383580184')}>
-            <SettingRow
-              intent="action"
-              label={t('m_e3ba2b050694')}
-              value={String(report.data.contentSchema ?? '—')}
-            />
-            <SettingRow
-              intent="action"
-              label={t('m_1fb397289be3')}
-              value={String(report.data.operationalSchema ?? '—')}
-            />
-          </Group>
-        </>
-      )}
-      <Group>
-        <SettingRow
-          intent="action"
-          label={t('m_a209f4b78d70')}
-          icon="upload"
-          description={t('m_c593c4c6d04c')}
-          disabled={!report.data || sharing}
-          onPress={() => void share()}
-        />
-        <ActionFeedback
-          message={sharing ? t('m_7f84c3c63516') : shareFeedback?.message}
-          loading={sharing}
-          tone={shareFeedback?.tone}
-        />
-      </Group>
+          <QueryState
+            loading={nativeAvailable && report.isLoading && !report.data}
+            error={!report.data ? report.error : undefined}
+            empty={(!report.data && !report.isLoading) || !nativeAvailable}
+            emptyMessage={!nativeAvailable ? t('m_66a36ca67b95') : t('m_d6ef34ee8c3e')}
+            onRetry={nativeAvailable ? () => void refresh() : undefined}
+          />
+        </View>
+        {!!report.data && (
+          <>
+            <ConnectedGroup
+              title={t('m_1adbb2ee4d86')}
+              footer={
+                <>
+                  <Copy muted size={14}>
+                    {t('m_62c5c0e4db3f')}
+                  </Copy>
+                  <Copy muted size={14}>
+                    {t('ui_pending_reminder_updates_detail')}
+                  </Copy>
+                </>
+              }
+            >
+              {observed != null && (
+                <ReadOnlyRow
+                  key="observed"
+                  label={t('m_64fa8a14a90f')}
+                  value={shortDateTime(observed)}
+                />
+              )}
+              {!stateOrder.length && (
+                <View key="empty" style={{ paddingTop: space.md }}>
+                  <RowSupport>
+                    <Copy muted>{t('m_fedeca67dfed')}</Copy>
+                  </RowSupport>
+                </View>
+              )}
+              {stateOrder.map((state) => (
+                <ReadOnlyRow
+                  key={state}
+                  label={stateNames[state] ?? state}
+                  value={String(counts![state])}
+                />
+              ))}
+              <ReadOnlyRow
+                key="pending"
+                label={t('m_99d490c3f215')}
+                value={String(report.data.pendingOperations ?? '—')}
+              />
+            </ConnectedGroup>
+            {caps && (
+              <ConnectedGroup title={t('m_9794e36a7e73')}>
+                {typeof caps.observedAtMs === 'number' && (
+                  <ReadOnlyRow
+                    key="observed"
+                    label={t('m_fa28a8a6b6bf')}
+                    value={shortDateTime(caps.observedAtMs)}
+                  />
+                )}
+                <ReadOnlyRow
+                  key="exact"
+                  label={t('m_142c2ae8d0bb')}
+                  value={capability('exactAlarms')}
+                />
+                <ReadOnlyRow
+                  key="notifications"
+                  label={t('m_31d7ae351725')}
+                  value={capability('notifications')}
+                />
+                <ReadOnlyRow
+                  key="alarm-channel"
+                  label={t('m_aa3c57bf2387')}
+                  value={capability('channelEnabled')}
+                />
+                <ReadOnlyRow
+                  key="notification-channel"
+                  label={t('m_c2728d07deea')}
+                  value={capability('notificationChannelEnabled')}
+                />
+                <ReadOnlyRow
+                  key="full-screen"
+                  label={t('m_66b41af0ba4b')}
+                  value={capability('fullScreen', true)}
+                />
+                <ReadOnlyRow
+                  key="unlocked"
+                  label={t('m_de5a4fcc9fd1')}
+                  value={
+                    caps.unlocked === true
+                      ? t('m_531c7b28abf2')
+                      : caps.unlocked === false
+                        ? t('m_a424e33d9093')
+                        : t('m_ca1844969742')
+                  }
+                />
+              </ConnectedGroup>
+            )}
+            <ConnectedGroup title={t('m_fc7383580184')}>
+              <ReadOnlyRow
+                key="content"
+                label={t('m_e3ba2b050694')}
+                value={String(report.data.contentSchema ?? '—')}
+              />
+              <ReadOnlyRow
+                key="operational"
+                label={t('m_1fb397289be3')}
+                value={String(report.data.operationalSchema ?? '—')}
+              />
+            </ConnectedGroup>
+          </>
+        )}
+        <ConnectedGroup
+          footer={
+            (sharing || shareFeedback) && (
+              <ActionFeedback
+                message={sharing ? t('m_7f84c3c63516') : shareFeedback?.message}
+                loading={sharing}
+                tone={shareFeedback?.tone}
+              />
+            )
+          }
+        >
+          <SettingRow
+            intent="action"
+            label={t('m_a209f4b78d70')}
+            icon="upload"
+            description={t('m_c593c4c6d04c')}
+            disabled={!report.data || sharing}
+            onPress={() => void share()}
+          />
+        </ConnectedGroup>
+      </SectionStack>
     </Page>
   );
 }

@@ -175,7 +175,13 @@ export function RootNavigation({
         aria-hidden
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={{ position: 'absolute', width: available, opacity: 0 }}
+        style={{
+          position: 'absolute',
+          width: available,
+          height: 0,
+          overflow: 'hidden',
+          opacity: 0,
+        }}
       >
         {rootEntries.map((entry) => (
           <Text

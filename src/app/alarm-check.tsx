@@ -18,13 +18,16 @@ import {
   Disclosure,
   Page,
   QueryState,
+  ReadOnlyRow,
   RowSupport,
+  SectionStack,
   SettingRow,
   Status,
 } from '../ui/components';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { engine, nativeAvailable, useCapabilities } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
+import { space } from '../ui/tokens';
 
 type Action = 'test' | 'permissions';
 type Feedback = { message: string; tone: Tone };
@@ -169,189 +172,184 @@ export default function AlarmCheck() {
       !caps.data.notificationChannelEnabled);
   return (
     <Page title={t('m_b7902c54f3ec')} compact onBack={back}>
-      {!nativeAvailable && <QueryState loading={false} empty emptyMessage={t('m_a5562ad3cf7a')} />}
-      {nativeAvailable && (
-        <>
-          {summary.needsAttention && !caps.error && (
-            <ActionFeedback message={summary.message} tone={summary.tone} />
-          )}
-          {caps.error && (
-            <ActionFeedback
-              tone="warning"
-              message={
-                caps.data
-                  ? t('m_9f70c8e0c9ba', { arg0: String(shortDateTime(caps.data.observedAtMs)) })
-                  : t('m_9461fb5601f6')
-              }
-            />
-          )}
-          {caps.error && (
-            <Button
-              label={t('m_4fbcda2801db')}
-              variant="secondary"
-              disabled={caps.isFetching || frozen}
-              onPress={retryPermissions}
-            />
-          )}
-          {caps.isLoading && <ActionFeedback loading message={t('m_9c3f5ca13afe')} />}
-        </>
-      )}
-      <ConnectedGroup
-        title={t('m_abccc78cc93c')}
-        footer={
-          <>
-            {(pending === 'permissions' || feedback.permissions) && (
-              <ActionFeedback
-                loading={pending === 'permissions'}
-                message={
-                  pending === 'permissions' ? t('m_e824800717b4') : feedback.permissions?.message
-                }
-                tone={feedback.permissions?.tone}
-              />
-            )}
-            {notificationDenied && (
-              <Button
-                label={t('m_c6885c8ebcb2')}
-                variant="secondary"
-                disabled={frozen}
-                onPress={() => openPermission('notifications', false)}
-              />
-            )}
-          </>
-        }
-      >
-        <SettingRow
-          intent="action"
-          key="exact"
-          icon="schedule"
-          label={t('m_142c2ae8d0bb')}
-          description={caps.data?.exactAlarms === false ? t('m_9ac9a33b0a76') : undefined}
-          disabled={frozen || !nativeAvailable}
-          statusLabel={permissionLabel(caps.data?.exactAlarms)}
-          onPress={() => access('exact')}
-        >
-          {permission(caps.data?.exactAlarms)}
-        </SettingRow>
-        <View key="notifications">
-          <SettingRow
-            intent="action"
-            icon="notifications"
-            label={t('m_788011833a5a')}
-            description={notificationBlocked ? t('m_07607efa8ec3') : undefined}
-            disabled={frozen || !nativeAvailable}
-            statusLabel={permissionLabel(
-              caps.data
-                ? caps.data.notifications &&
-                    caps.data.channelEnabled &&
-                    caps.data.notificationChannelEnabled
-                : undefined,
-            )}
-            onPress={() => access('notifications')}
-          >
-            {permission(
-              caps.data
-                ? caps.data.notifications &&
-                    caps.data.channelEnabled &&
-                    caps.data.notificationChannelEnabled
-                : undefined,
-            )}
-          </SettingRow>
-          {!!caps.data && (
-            <RowSupport>
-              <Disclosure title={t('m_c33ea23d51f1')} forceOpen={notificationBlocked}>
-                {(
-                  [
-                    [t('m_31d7ae351725'), caps.data.notifications],
-                    [t('m_9cbbfcb9624f'), caps.data.channelEnabled],
-                    [t('m_261078774b32'), caps.data.notificationChannelEnabled],
-                  ] as const
-                ).map(([label, allowed]) => (
-                  <View
-                    key={label}
-                    style={{
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      justifyContent: 'space-between',
-                      columnGap: 12,
-                      rowGap: 4,
-                    }}
-                  >
-                    <Copy>{label}</Copy>
-                    <Copy muted size={14}>
-                      {allowed ? t('m_1bb201d18835') : t('m_18f2a0947f9d')}
-                    </Copy>
-                  </View>
-                ))}
-              </Disclosure>
-            </RowSupport>
-          )}
-        </View>
-        <SettingRow
-          intent="action"
-          key="lock-screen"
-          icon="lock"
-          label={t('m_66b41af0ba4b')}
-          description={caps.data?.fullScreen === false ? t('m_69bbfaef0807') : undefined}
-          disabled={frozen || !nativeAvailable}
-          statusLabel={permissionLabel(caps.data?.fullScreen, true)}
-          onPress={() => access('fullScreen')}
-        >
-          {permission(caps.data?.fullScreen, true)}
-        </SettingRow>
-      </ConnectedGroup>
-      <ConnectedGroup
-        title={t('m_94ff0d164e2e')}
-        footer={
-          <Copy muted size={14}>
-            {t('m_cf04d66fee50')}
-          </Copy>
-        }
-      >
-        <View key="test">
-          <SettingRow
-            intent="action"
-            icon="alarm"
-            label={test && !uncertainTest ? t('m_95e37a41ce17') : t('m_a16e4f038ad7')}
-            description={t('m_076475e48b36')}
-            disabled={frozen || !nativeAvailable}
-            onPress={scheduleTest}
-          />
-          {(pending === 'test' || feedback.test || uncertainTest) && (
-            <RowSupport>
-              {(pending === 'test' || feedback.test) && (
-                <ActionFeedback
-                  loading={pending === 'test'}
-                  message={pending === 'test' ? t('m_617e1821a820') : feedback.test?.message}
-                  tone={feedback.test?.tone}
-                />
-              )}
-              {uncertainTest && (
-                <Button
-                  label={t('m_1a57cd6677a5')}
-                  variant="secondary"
-                  disabled={busy}
-                  onPress={scheduleTest}
-                />
-              )}
-            </RowSupport>
-          )}
-        </View>
-        {test?.occurrence && !uncertainTest && (
-          <SettingRow
-            intent="navigation"
-            key="view-test"
-            label={t('m_e3193f30edce')}
-            disabled={frozen}
-            onPress={() => {
-              if (running.current || frozen) return;
-              router.push({
-                pathname: '/reminder/[id]',
-                params: { id: test.occurrence!.id, ...routeParams },
-              });
-            }}
-          />
+      <SectionStack>
+        {!nativeAvailable && (
+          <QueryState loading={false} empty emptyMessage={t('m_a5562ad3cf7a')} />
         )}
-      </ConnectedGroup>
+        {nativeAvailable && (
+          <>
+            {summary.needsAttention && !caps.error && (
+              <ActionFeedback message={summary.message} tone={summary.tone} />
+            )}
+            {caps.error && (
+              <View style={{ gap: space.sm }}>
+                <ActionFeedback
+                  tone="warning"
+                  message={
+                    caps.data
+                      ? t('m_9f70c8e0c9ba', { arg0: String(shortDateTime(caps.data.observedAtMs)) })
+                      : t('m_9461fb5601f6')
+                  }
+                />
+                <Button
+                  label={t('m_4fbcda2801db')}
+                  variant="secondary"
+                  disabled={caps.isFetching || frozen}
+                  onPress={retryPermissions}
+                />
+              </View>
+            )}
+            {caps.isLoading && <ActionFeedback loading message={t('m_9c3f5ca13afe')} />}
+          </>
+        )}
+        <ConnectedGroup
+          title={t('m_abccc78cc93c')}
+          footer={
+            <>
+              {(pending === 'permissions' || feedback.permissions) && (
+                <ActionFeedback
+                  loading={pending === 'permissions'}
+                  message={
+                    pending === 'permissions' ? t('m_e824800717b4') : feedback.permissions?.message
+                  }
+                  tone={feedback.permissions?.tone}
+                />
+              )}
+            </>
+          }
+        >
+          <SettingRow
+            intent="action"
+            key="exact"
+            icon="schedule"
+            label={t('m_142c2ae8d0bb')}
+            description={caps.data?.exactAlarms === false ? t('m_9ac9a33b0a76') : undefined}
+            disabled={frozen || !nativeAvailable}
+            statusLabel={permissionLabel(caps.data?.exactAlarms)}
+            onPress={() => access('exact')}
+          >
+            {permission(caps.data?.exactAlarms)}
+          </SettingRow>
+          <View key="notifications">
+            <SettingRow
+              intent="action"
+              icon="notifications"
+              label={t('m_788011833a5a')}
+              description={notificationBlocked ? t('m_07607efa8ec3') : undefined}
+              disabled={frozen || !nativeAvailable}
+              statusLabel={permissionLabel(
+                caps.data
+                  ? caps.data.notifications &&
+                      caps.data.channelEnabled &&
+                      caps.data.notificationChannelEnabled
+                  : undefined,
+              )}
+              onPress={() => access('notifications')}
+            >
+              {permission(
+                caps.data
+                  ? caps.data.notifications &&
+                      caps.data.channelEnabled &&
+                      caps.data.notificationChannelEnabled
+                  : undefined,
+              )}
+            </SettingRow>
+            {!!caps.data && (
+              <RowSupport>
+                <Disclosure title={t('m_c33ea23d51f1')} inset autoOpen={notificationBlocked}>
+                  {(
+                    [
+                      [t('m_31d7ae351725'), caps.data.notifications],
+                      [t('m_9cbbfcb9624f'), caps.data.channelEnabled],
+                      [t('m_261078774b32'), caps.data.notificationChannelEnabled],
+                    ] as const
+                  ).map(([label, allowed]) => (
+                    <ReadOnlyRow compact key={label} label={label} value={permission(allowed)} />
+                  ))}
+                  {!caps.data.notifications && (
+                    <Copy muted size={14}>
+                      {t('ui_notifications_app_blocked')}
+                    </Copy>
+                  )}
+                </Disclosure>
+                {(notificationBlocked || notificationDenied) && (
+                  <Button
+                    label={t('m_c6885c8ebcb2')}
+                    variant="secondary"
+                    disabled={frozen || !nativeAvailable}
+                    onPress={() => openPermission('notifications', false)}
+                  />
+                )}
+              </RowSupport>
+            )}
+          </View>
+          <SettingRow
+            intent="action"
+            key="lock-screen"
+            icon="lock"
+            label={t('m_66b41af0ba4b')}
+            description={caps.data?.fullScreen === false ? t('m_69bbfaef0807') : undefined}
+            disabled={frozen || !nativeAvailable}
+            statusLabel={permissionLabel(caps.data?.fullScreen, true)}
+            onPress={() => access('fullScreen')}
+          >
+            {permission(caps.data?.fullScreen, true)}
+          </SettingRow>
+        </ConnectedGroup>
+        <ConnectedGroup
+          title={t('m_94ff0d164e2e')}
+          footer={
+            <Copy muted size={14}>
+              {t('m_cf04d66fee50')}
+            </Copy>
+          }
+        >
+          <View key="test">
+            <SettingRow
+              intent="action"
+              icon="alarm"
+              label={test && !uncertainTest ? t('m_95e37a41ce17') : t('m_a16e4f038ad7')}
+              description={t('m_076475e48b36')}
+              disabled={frozen || !nativeAvailable}
+              onPress={scheduleTest}
+            />
+            {(pending === 'test' || feedback.test || uncertainTest) && (
+              <RowSupport>
+                {(pending === 'test' || feedback.test) && (
+                  <ActionFeedback
+                    loading={pending === 'test'}
+                    message={pending === 'test' ? t('m_617e1821a820') : feedback.test?.message}
+                    tone={feedback.test?.tone}
+                  />
+                )}
+                {uncertainTest && (
+                  <Button
+                    label={t('m_1a57cd6677a5')}
+                    variant="secondary"
+                    disabled={busy}
+                    onPress={scheduleTest}
+                  />
+                )}
+              </RowSupport>
+            )}
+          </View>
+          {test?.occurrence && !uncertainTest && (
+            <SettingRow
+              intent="navigation"
+              key="view-test"
+              label={t('m_e3193f30edce')}
+              disabled={frozen}
+              onPress={() => {
+                if (running.current || frozen) return;
+                router.push({
+                  pathname: '/reminder/[id]',
+                  params: { id: test.occurrence!.id, ...routeParams },
+                });
+              }}
+            />
+          )}
+        </ConnectedGroup>
+      </SectionStack>
     </Page>
   );
 }

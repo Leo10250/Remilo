@@ -1,4 +1,4 @@
-import { chineseTextMetrics } from '../ui/tokens';
+import { chineseTextMetrics, space, typography } from '../ui/tokens';
 import { errorText, currentLanguage } from '../localization';
 import { useLocalizedState, useLocale, useTranslation } from '../localization/react';
 
@@ -13,13 +13,17 @@ import {
   Pressable,
   SectionList,
   Text,
-  TextInput,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ListRecord, Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
+import type {
+  Capabilities,
+  ListRecord,
+  Occurrence,
+} from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { commandFeedback, editDestination, reopenCompleted } from '../domain/actions';
 import { groupTitle } from '../domain/presentation';
 import { canPostponeReminder } from '../domain/postpone';
@@ -27,8 +31,10 @@ import { parsePostponeRequest, type PostponeRequest } from '../domain/postpone-r
 import { PostponeHost, usePostponeController } from '../ui/postpone-host';
 import {
   ActionFeedback,
+  ActionPair,
   AtmosphericHeader,
   Button,
+  ConnectedGroup,
   Copy,
   Icon,
   IconButton,
@@ -48,7 +54,13 @@ import {
   type BrowseFilterField,
   type BrowseFilters,
 } from '../domain/browse-filters';
-import { BrowseFilterButton, BrowseFilterChips, BrowseFilterSheet } from '../ui/browse-filters';
+import {
+  BrowseControls,
+  BrowseFilterButton,
+  BrowseFilterChips,
+  BrowseFilterSheet,
+} from '../ui/browse-filters';
+import { resolveRingingMembers, sameRingingScope } from '../domain/ringing-session';
 import { dismissNotice, useNotice } from '../ui/feedback';
 import { useReducedMotion } from '../ui/motion';
 import { engine, nativeAvailable, useCapabilities } from '../ui/native';
@@ -140,6 +152,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     [collapsed, setCollapsed] = useRootState<string[]>(key + ':collapsed', []);
   const filterOpen = filterDraft !== null;
   const searchInput = useRef<TextInput>(null),
+    filterTrigger = useRef<View>(null),
     searchFocusRequested = useRef(false);
   const [selected, setSelected] = useState<Occurrence | null>(null),
     [toast, setToast] = useLocalizedState<Toast | null>(null);
@@ -206,6 +219,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
   });
   const postpone = usePostponeController(),
     postponeFocus = useRef<View>(null),
+    ringingPostpone = useRef<View>(null),
     moreButtons = useRef(new Map<string, View>());
   const handledPostponeLink = useRef<string | null>(null);
   const guarded = action.guarded || listGuarded || postpone.guarded;
@@ -562,6 +576,41 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     [key, searching],
   );
   const onScroll = useChromeScroll(chrome, rememberScroll);
+  const ringingScope = scoped ? null : caps?.activeSessionActions;
+  const ringing = useQuery({
+    queryKey: ['agenda-ringing-members', ringingScope?.sessionId, ringingScope?.members],
+    enabled: nativeAvailable && !!caps?.unlocked && !!ringingScope?.members.length,
+    queryFn: async () => {
+      const scope = ringingScope!;
+      const rows = await Promise.all(
+        scope.members.map((member) => engine().getOccurrence(member.occurrenceId)),
+      );
+      return resolveRingingMembers(scope, rows);
+    },
+  });
+  const ringingItems = caps?.unlocked ? ringing.data : null;
+  const ringingUnavailable =
+    !caps?.unlocked ||
+    capabilities.isError ||
+    ringing.isError ||
+    (!ringing.isFetching && !ringingItems);
+  const ringingDisabled = guarded || ringingUnavailable || ringing.isFetching || !ringingItems;
+  const captureRinging = () => {
+    const current = client.getQueryData<Capabilities>(['capabilities']);
+    if (
+      isGuarded() ||
+      ringingDisabled ||
+      !ringingScope ||
+      !current?.unlocked ||
+      !sameRingingScope(ringingScope, current.activeSessionActions)
+    )
+      return null;
+    return {
+      expectedSessionId: ringingScope.sessionId,
+      members: ringingScope.members.map((member) => ({ ...member })),
+    };
+  };
+  const showSearchResults = searching || !!search.trim();
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
@@ -588,21 +637,20 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
               onBack={back}
               actions={
                 <>
-                  <IconButton
-                    icon="search"
-                    label={searching ? t('m_1655ed829a84') : t('m_be16218d3058')}
-                    disabled={guarded}
-                    onPress={() => {
-                      if (isGuarded()) return;
-                      if (searching) closeSearch();
-                      else {
+                  {!searching && (
+                    <IconButton
+                      icon="search"
+                      label={t('m_be16218d3058')}
+                      disabled={guarded}
+                      onPress={() => {
+                        if (isGuarded()) return;
                         priorScroll.current = scrollY.current;
                         searchFocusRequested.current = true;
                         animate();
                         setSearching(true);
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  )}
                   <RootMore
                     origin={destination}
                     disabled={guarded}
@@ -624,6 +672,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                   ref={list}
                   sections={sections}
                   keyExtractor={(item) => item.id}
+                  ItemSeparatorComponent={() => <View style={{ height: space.md }} />}
                   stickySectionHeadersEnabled
                   contentContainerStyle={{
                     paddingHorizontal: 16,
@@ -637,130 +686,91 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                   onLayout={(event) => setListHeight(event.nativeEvent.layout.height)}
                   ListHeaderComponent={
                     <>
-                      <View style={{ height: chrome.decoration }} />{' '}
-                      {searching && (
-                        <View
-                          style={{
-                            marginHorizontal: 16,
-                            marginBottom: 8,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            borderRadius: 16,
-                            backgroundColor: colors.surface,
+                      <View style={{ height: chrome.decoration }} />
+                      <View style={{ paddingVertical: space.sm }}>
+                        <BrowseControls
+                          searching={searching}
+                          query={search}
+                          inputRef={searchInput}
+                          disabled={guarded}
+                          onChangeQuery={(value) => {
+                            if (!isGuarded()) setSearch(value);
                           }}
-                        >
-                          <IconButton
-                            icon="arrow_back"
-                            label={t('m_1655ed829a84')}
-                            onPress={closeSearch}
-                          />
-                          <TextInput
-                            ref={searchInput}
-                            accessibilityLabel={t('m_608e5f5e0f40')}
-                            value={search}
-                            onChangeText={(value) => {
-                              if (!isGuarded()) setSearch(value);
-                            }}
-                            placeholder={t('m_be16218d3058')}
-                            editable={!guarded}
-                            placeholderTextColor={colors.muted}
-                            style={{
-                              flex: 1,
-                              minHeight: 48,
-                              padding: 8,
-                              color: colors.ink,
-                              fontSize: 16 * scale,
-                              ...chineseTextMetrics(16, scale),
-                            }}
-                          />
-                          {!!search && (
-                            <IconButton
-                              icon="close"
-                              label={t('m_48a1982ccf79')}
+                          onExitSearch={() => {
+                            if (!isGuarded()) closeSearch();
+                          }}
+                          filter={
+                            <BrowseFilterButton
+                              buttonRef={filterTrigger}
+                              count={chips.length}
                               disabled={guarded}
-                              onPress={() => {
-                                if (!isGuarded()) setSearch('');
-                              }}
+                              expanded={filterOpen}
+                              onPress={openFilters}
                             />
-                          )}
-                        </View>
-                      )}
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          flexWrap: 'wrap',
-                          gap: 8,
-                          paddingHorizontal: 16,
-                          paddingVertical: 8,
-                        }}
-                      >
-                        <View
-                          accessibilityRole="tablist"
-                          style={{
-                            flexGrow: 1,
-                            flexBasis: 190,
-                            flexDirection: 'row',
-                            flexWrap: 'wrap',
-                            gap: 8,
-                          }}
+                          }
                         >
-                          {(
-                            [
-                              { value: 'agenda', label: t('m_a52ace420f21') },
-                              { value: 'today', label: t('m_2b065c7c9ce4') },
-                              { value: 'upcoming', label: t('m_5f1a2542e4e4') },
-                            ] as const
-                          ).map((tab) => (
-                            <Pressable
-                              key={tab.value}
-                              accessibilityRole="tab"
-                              aria-selected={view === tab.value}
-                              accessibilityState={{
-                                selected: view === tab.value,
-                                disabled: guarded,
-                              }}
-                              disabled={guarded}
-                              onPress={() => {
-                                if (!isGuarded()) setView(tab.value);
-                              }}
-                              style={{
-                                flexGrow: 1,
-                                minHeight: 48,
-                                paddingHorizontal: 10,
-                                paddingVertical: 8,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: 24,
-                                backgroundColor: view === tab.value ? colors.accent : colors.soft,
-                              }}
-                            >
-                              <Text
+                          <View
+                            accessibilityRole="tablist"
+                            style={{
+                              flexGrow: 1,
+                              flexBasis: 190,
+                              flexDirection: 'row',
+                              flexWrap: 'wrap',
+                              gap: 8,
+                            }}
+                          >
+                            {(
+                              [
+                                { value: 'agenda', label: t('m_a52ace420f21') },
+                                { value: 'today', label: t('m_2b065c7c9ce4') },
+                                { value: 'upcoming', label: t('m_5f1a2542e4e4') },
+                              ] as const
+                            ).map((tab) => (
+                              <Pressable
+                                key={tab.value}
+                                accessibilityRole="tab"
+                                aria-selected={view === tab.value}
+                                accessibilityState={{
+                                  selected: view === tab.value,
+                                  disabled: guarded,
+                                }}
+                                disabled={guarded}
+                                onPress={() => {
+                                  if (!isGuarded()) setView(tab.value);
+                                }}
                                 style={{
-                                  color: view === tab.value ? colors.accentInk : colors.ink,
-                                  fontSize: 14 * scale,
-                                  lineHeight: 14 * scale * 1.4,
-                                  fontWeight: view === tab.value ? '600' : '400',
-                                  ...chineseTextMetrics(
-                                    14,
-                                    scale,
-                                    view === tab.value ? '600' : '400',
-                                  ),
+                                  flexGrow: 1,
+                                  minHeight: 48,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 8,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  borderRadius: 24,
+                                  backgroundColor: view === tab.value ? colors.accent : colors.soft,
                                 }}
                               >
-                                {tab.label}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                        <BrowseFilterButton
-                          count={chips.length}
-                          disabled={guarded}
-                          expanded={filterOpen}
-                          onPress={openFilters}
-                        />
+                                <Text
+                                  style={{
+                                    color: view === tab.value ? colors.accentInk : colors.ink,
+                                    fontSize: 14 * scale,
+                                    lineHeight: 14 * scale * 1.4,
+                                    fontWeight: view === tab.value ? '600' : '400',
+                                    ...chineseTextMetrics(
+                                      14,
+                                      scale,
+                                      view === tab.value ? '600' : '400',
+                                    ),
+                                  }}
+                                >
+                                  {tab.label}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        </BrowseControls>
                       </View>
                       {!!chips.length && (
-                        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+                        <View style={{ paddingBottom: space.sm }}>
                           <BrowseFilterChips
                             chips={chips}
                             disabled={guarded}
@@ -768,17 +778,6 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                             onReset={resetFilters}
                           />
                         </View>
-                      )}
-                      {!!search && !searching && (
-                        <SettingRow
-                          intent="action"
-                          label={t('m_3363e5f143b7') + search}
-                          value={t('m_3b7ea51793e9')}
-                          disabled={guarded}
-                          onPress={() => {
-                            if (!isGuarded()) setSearch('');
-                          }}
-                        />
                       )}
                       {missingList && (
                         <View style={{ padding: 16, gap: 8 }}>
@@ -838,57 +837,98 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                           />
                         </View>
                       )}
-                      {!!caps?.activeSessionActions?.members.length && (
-                        <View
-                          style={{
-                            marginHorizontal: 16,
-                            marginBottom: 8,
-                            flexDirection: 'row',
-                            flexWrap: 'wrap',
-                            gap: 8,
-                          }}
-                        >
-                          <View style={{ flexGrow: 1, flexBasis: 160 }}>
-                            <Button
-                              icon="check"
-                              label={t('mark_all_done_count', {
-                                count: caps.activeSessionActions.members.length,
-                              })}
-                              disabled={guarded}
-                              onPress={() => {
-                                const captured = caps.activeSessionActions!;
-                                void action.execute({
-                                  command: {
-                                    kind: 'DoneAll',
-                                    expectedSessionId: captured.sessionId,
-                                    members: captured.members.map((member) => ({ ...member })),
-                                    operationId: engine().createOperationId(),
-                                  },
-                                  success: captured.members.length + t('m_a6167e44d2cf'),
-                                });
-                              }}
-                            />
-                          </View>
-                          <View style={{ flexGrow: 1, flexBasis: 160 }}>
-                            <Button
-                              icon="schedule"
-                              label={t('postpone_all_action', {
-                                count: caps.activeSessionActions.members.length,
-                              })}
-                              variant="secondary"
-                              disabled={guarded}
-                              buttonRef={postponeFocus}
-                              onPress={() => {
-                                const captured = caps.activeSessionActions!;
-                                openPostpone({
-                                  kind: 'Group',
-                                  expectedSessionId: captured.sessionId,
-                                  members: captured.members.map((member) => ({ ...member })),
-                                });
-                              }}
-                            />
-                          </View>
+                      {!!ringingScope?.members.length && (
+                        <View style={{ marginTop: space.md, marginBottom: space.lg }}>
+                          <ConnectedGroup title={t('ui_ringing_now')}>
+                            {ringingItems?.map((item) => (
+                              <SettingRow
+                                key={item.id}
+                                intent="navigation"
+                                label={item.title}
+                                description={item.listName || undefined}
+                                icon="alarm"
+                                disabled={guarded}
+                                onPress={() => {
+                                  if (!isGuarded()) open(item);
+                                }}
+                              />
+                            ))}
+                            {(ringingUnavailable || !ringingItems) && (
+                              <View
+                                key="ringing-feedback"
+                                style={{ padding: space.gutter, gap: space.sm }}
+                              >
+                                <ActionFeedback
+                                  message={t(
+                                    ringingUnavailable
+                                      ? 'ui_ringing_unavailable'
+                                      : 'ui_ringing_loading',
+                                  )}
+                                  loading={!ringingUnavailable}
+                                  tone={ringingUnavailable ? 'warning' : 'muted'}
+                                />
+                                {ringingUnavailable && (
+                                  <Button
+                                    label={t('m_942087cc2d41')}
+                                    disabled={guarded || refreshing}
+                                    variant="secondary"
+                                    onPress={() => void refreshAgenda()}
+                                  />
+                                )}
+                              </View>
+                            )}
+                            {!!ringingItems?.length && (
+                              <View key="ringing-actions" style={{ padding: space.gutter }}>
+                                <ActionPair>
+                                  <Button
+                                    icon="check"
+                                    label={t('mark_all_done_count', {
+                                      count: ringingItems.length,
+                                    })}
+                                    disabled={ringingDisabled}
+                                    onPress={() => {
+                                      const captured = captureRinging();
+                                      if (!captured) return;
+                                      void action.execute({
+                                        command: {
+                                          kind: 'DoneAll',
+                                          ...captured,
+                                          operationId: engine().createOperationId(),
+                                        },
+                                        success: t('ui_ringing_completed_count', {
+                                          count: captured.members.length,
+                                        }),
+                                      });
+                                    }}
+                                  />
+                                  <Button
+                                    icon="schedule"
+                                    label={t('postpone_all_action', {
+                                      count: ringingItems.length,
+                                    })}
+                                    variant="secondary"
+                                    disabled={ringingDisabled}
+                                    buttonRef={ringingPostpone}
+                                    onPress={() => {
+                                      const captured = captureRinging();
+                                      if (!captured) return;
+                                      postponeFocus.current = ringingPostpone.current;
+                                      openPostpone({
+                                        kind: 'Group',
+                                        ...captured,
+                                      });
+                                    }}
+                                  />
+                                </ActionPair>
+                              </View>
+                            )}
+                          </ConnectedGroup>
                         </View>
+                      )}
+                      {showSearchResults && (
+                        <Copy heading size={typography.heading}>
+                          {t('ui_search_results')}
+                        </Copy>
                       )}
                       {!!reminders.error && !!items.length && (
                         <View>
@@ -966,15 +1006,17 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                         emptyMessage={
                           !nativeAvailable
                             ? t('m_2ff2d9a672c5')
-                            : search || chips.length
-                              ? t('m_75bf15d2c28d')
-                              : view === 'today'
-                                ? t('m_fc926e22caaa')
-                                : view === 'upcoming'
-                                  ? t('m_e22b01420e5f')
-                                  : scoped
-                                    ? t('m_284f8a392982')
-                                    : t('m_057d33f49512')
+                            : search.trim()
+                              ? t('ui_search_empty')
+                              : chips.length
+                                ? t('m_75bf15d2c28d')
+                                : view === 'today'
+                                  ? t('m_fc926e22caaa')
+                                  : view === 'upcoming'
+                                    ? t('m_e22b01420e5f')
+                                    : scoped
+                                      ? t('m_284f8a392982')
+                                      : t('m_057d33f49512')
                         }
                         onRetry={() => void reminders.refetch()}
                       />
@@ -984,24 +1026,6 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                           buttonRef={creationTrigger}
                           disabled={guarded}
                           onPress={create}
-                        />
-                      )}
-                      {!!search && (
-                        <Button
-                          label={t('m_3b7ea51793e9')}
-                          variant="secondary"
-                          disabled={guarded}
-                          onPress={() => {
-                            if (!isGuarded()) setSearch('');
-                          }}
-                        />
-                      )}
-                      {!!chips.length && (
-                        <Button
-                          label={t('m_10afa98480f2')}
-                          variant="secondary"
-                          disabled={guarded}
-                          onPress={resetFilters}
                         />
                       )}
                     </View>
@@ -1080,6 +1104,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                 <RootNavigation destination="agenda" disabled={guarded} isGuarded={isGuarded} />
               )}
               <BrowseFilterSheet
+                returnFocusRef={filterTrigger}
                 title={t('m_76d11d556a30')}
                 kind="agenda"
                 draft={filterDraft}

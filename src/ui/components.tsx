@@ -65,6 +65,7 @@ import { ScrollChromeProvider, usePageChrome, useScrollChrome } from './scroll-c
 import { headerScrimGeometry, headerTransition } from './header-transition';
 import { scheduleSnackbarDismiss } from './snackbar-timeout';
 import { rememberConfirmationFocus } from './confirmation-state';
+import { disclosureAutoOpen } from './disclosure-state';
 
 type ConnectedCorners = Pick<
   ViewStyle,
@@ -74,6 +75,7 @@ type ConnectedCorners = Pick<
   | 'borderBottomRightRadius'
 >;
 const ConnectedRowContext = createContext<ConnectedCorners | null>(null);
+const StretchActionContext = createContext(false);
 export const useConnectedRowCorners = () => useContext(ConnectedRowContext);
 
 function RowFocus({ corners }: { corners: ConnectedCorners }) {
@@ -135,6 +137,7 @@ export type IconName =
   | 'menu'
   | 'language'
   | 'checklist'
+  | 'format_list_numbered'
   | 'restore'
   | 'delete_forever'
   | 'task_alt'
@@ -378,6 +381,7 @@ export function Button({
     scale = useFontScaleOverride();
   const foundation = useFoundationStyle(),
     state = usePresentationState(),
+    stretch = useContext(StretchActionContext),
     [focused, setFocused] = useState(false);
   const c = foundation?.colors,
     blocked = disabled || busy;
@@ -466,6 +470,7 @@ export function Button({
                 ? shape.roundAction
                 : (foundation?.tokens.shape.action ?? shape.action),
             borderWidth: c || round ? 2 : 0,
+            flexGrow: stretch ? 1 : undefined,
             flexDirection: 'row',
             alignItems: 'center',
             gap: space.sm,
@@ -700,6 +705,22 @@ export function PickerField({
     </View>
   );
 }
+type SettingRowContent = PropsWithChildren<{
+  label: string;
+  value?: string;
+  icon?: IconName;
+  description?: string;
+  supporting?: ReactNode;
+  minHeight?: number;
+  disabled?: boolean;
+  destructive?: boolean;
+  statusLabel?: string;
+  compact?: boolean;
+  prominent?: boolean;
+  accessibilityLabel?: string;
+  buttonRef?: Ref<View>;
+}>;
+
 export function SettingRow({
   label,
   value,
@@ -717,27 +738,11 @@ export function SettingRow({
   prominent = false,
   accessibilityLabel,
   buttonRef,
-}: PropsWithChildren<
-  {
-    label: string;
-    value?: string;
-    icon?: IconName;
-    description?: string;
-    supporting?: ReactNode;
-    minHeight?: number;
-    onPress?: () => void;
-    disabled?: boolean;
-    destructive?: boolean;
-    statusLabel?: string;
-    compact?: boolean;
-    prominent?: boolean;
-    accessibilityLabel?: string;
-    buttonRef?: Ref<View>;
-  } & (
+}: SettingRowContent &
+  (
     | { onPress: () => void; intent: 'navigation' | 'action' | 'picker' }
     | { onPress?: undefined; intent?: 'navigation' | 'action' | 'picker' }
-  )
->) {
+  )) {
   'use no memo';
   useLocale();
   const colors = useTheme(),
@@ -746,14 +751,14 @@ export function SettingRow({
   const corners = useContext(ConnectedRowContext),
     [focused, setFocused] = useState(false);
   const { fontScale } = useWindowDimensions();
-  const stackedStatus = corners !== null && Math.max(scale, fontScale) >= 1.6;
+  const stackedStatus = Math.max(scale, fontScale) >= 1.6;
   const body = (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: compact ? space.sm : space.md,
-        minHeight,
+        minHeight: onPress ? Math.max(48, minHeight) : minHeight,
         paddingVertical: compact ? space.sm : space.md,
         paddingHorizontal: compact ? space.md : space.gutter,
       }}
@@ -772,7 +777,7 @@ export function SettingRow({
           <Icon name={icon} size={compact ? 20 : 24} />
         </View>
       )}
-      <View style={{ flex: 1, gap: space.xs }}>
+      <View style={{ flex: 1, minWidth: 0, gap: space.xs }}>
         {destructive ? (
           <Text
             style={{
@@ -789,7 +794,7 @@ export function SettingRow({
             {label}
           </Copy>
         )}
-        {value && (
+        {!!value && (
           <Text
             style={{
               color: colors.muted,
@@ -849,6 +854,108 @@ export function SettingRow({
     </Pressable>
   ) : (
     body
+  );
+}
+export function SplitDestinationRow({
+  overflowLabel,
+  onOverflowPress,
+  overflowButtonRef,
+  ...row
+}: SettingRowContent & {
+  onPress: () => void;
+  overflowLabel: string;
+  onOverflowPress: () => void;
+  overflowButtonRef?: Ref<View>;
+}) {
+  const colors = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const largeText = Math.max(fontScale, useFontScaleOverride()) >= 1.6;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <SettingRow
+          {...row}
+          intent="navigation"
+          icon={largeText && width < 400 ? undefined : row.icon}
+        />
+      </View>
+      <View style={{ borderStartWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+        <IconButton
+          icon="more_vert"
+          label={overflowLabel}
+          onPress={onOverflowPress}
+          buttonRef={overflowButtonRef}
+          disabled={row.disabled}
+        />
+      </View>
+    </View>
+  );
+}
+
+export function SectionStack({ children }: PropsWithChildren) {
+  return <View style={{ gap: space.lg }}>{children}</View>;
+}
+
+export function ReadOnlyRow({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: ReactNode;
+  compact?: boolean;
+}) {
+  const { fontScale } = useWindowDimensions();
+  const stacked = Math.max(fontScale, useFontScaleOverride()) >= 1.6;
+  return (
+    <View
+      style={{
+        flexDirection: stacked ? 'column' : 'row',
+        alignItems: stacked ? 'flex-start' : 'baseline',
+        gap: stacked ? space.xs : space.md,
+        minHeight: 48,
+        paddingHorizontal: compact ? space.xs : space.gutter,
+        paddingVertical: space.sm,
+      }}
+    >
+      <View style={stacked ? undefined : { flex: 1, minWidth: 0 }}>
+        <Copy>{label}</Copy>
+      </View>
+      <View style={{ flexShrink: 1, maxWidth: stacked ? '100%' : '60%' }}>
+        {typeof value === 'string' || typeof value === 'number' ? <Copy>{value}</Copy> : value}
+      </View>
+    </View>
+  );
+}
+
+/** Pair primary and secondary actions without squeezing long localized labels. */
+export function ActionPair({ children }: PropsWithChildren) {
+  const { width, fontScale } = useWindowDimensions();
+  const scale = Math.max(fontScale, useFontScaleOverride());
+  const [measuredWidth, setWidth] = useState<number>();
+  const items = Children.toArray(children);
+  const stacked = scale >= 1.6 || (measuredWidth ?? width - 2 * space.gutter) < 152 * items.length;
+  return (
+    <StretchActionContext.Provider value={!stacked && items.length > 1}>
+      <View
+        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+        style={{
+          width: '100%',
+          flexDirection: stacked ? 'column' : 'row',
+          alignItems: 'stretch',
+          gap: space.sm,
+        }}
+      >
+        {items.map((item, index) => (
+          <View
+            key={isValidElement(item) ? item.key : index}
+            style={stacked ? undefined : { flex: 1 }}
+          >
+            {item}
+          </View>
+        ))}
+      </View>
+    </StretchActionContext.Provider>
   );
 }
 export function Group({ title, children }: PropsWithChildren<{ title?: string }>) {
@@ -1561,6 +1668,7 @@ export function Page({
   scrollResetToken,
   header,
   compact = false,
+  sectionSpacing = false,
 }: PropsWithChildren<{
   title: string;
   subtitle?: string;
@@ -1574,6 +1682,7 @@ export function Page({
   scrollResetToken?: number;
   header?: ReactNode;
   compact?: boolean;
+  sectionSpacing?: boolean;
 }>) {
   'use no memo';
   useLocale();
@@ -1606,7 +1715,7 @@ export function Page({
               scrollKey={scrollKey}
               scrollReady={scrollReady}
               scrollResetToken={scrollResetToken}
-              contentStyle={styles.page}
+              contentStyle={sectionSpacing ? [styles.page, { gap: space.lg }] : styles.page}
             >
               {subtitle && (
                 <Copy muted size={14}>
@@ -1664,9 +1773,20 @@ export function Sheet({
     const timer = setTimeout(
       () => {
         const target = returnFocusRef.current;
-        if (target && (focusGuard.current?.() ?? true)) {
-          target.focus();
-          if (Platform.OS === 'android') AccessibilityInfo.sendAccessibilityEvent(target, 'focus');
+        if (
+          target &&
+          (target as View & { isConnected?: boolean }).isConnected !== false &&
+          (focusGuard.current?.() ?? true)
+        ) {
+          if (Platform.OS === 'web') {
+            (target as View & { focus(options: { preventScroll: boolean }): void }).focus({
+              preventScroll: true,
+            });
+          } else {
+            target.focus();
+            if (Platform.OS === 'android')
+              AccessibilityInfo.sendAccessibilityEvent(target, 'focus');
+          }
         }
       },
       reduced ? 0 : 350,
@@ -1785,6 +1905,7 @@ export function Choice({
   'use no memo';
   useLocale();
   const colors = useTheme();
+  const [focused, setFocused] = useState(false);
   return (
     <Pressable
       disabled={disabled}
@@ -1792,14 +1913,19 @@ export function Choice({
       aria-checked={selected}
       accessibilityState={{ checked: selected, disabled }}
       onPress={onPress}
-      style={{
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={({ pressed }) => ({
         minHeight: 48,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
         paddingHorizontal: 16,
         paddingVertical: 12,
-      }}
+        borderRadius: shape.field,
+        backgroundColor: pressed ? colors.soft : undefined,
+        opacity: disabled ? 0.6 : 1,
+      })}
     >
       <View
         style={{
@@ -1825,12 +1951,13 @@ export function Choice({
       {thumbnail}
       <View style={{ flex: 1, gap: 4 }}>
         <Copy>{label}</Copy>
-        {description && (
+        {!!description && (
           <Copy muted size={typography.supporting}>
             {description}
           </Copy>
         )}
       </View>
+      {focused && <RowFocus corners={{}} />}
     </Pressable>
   );
 }
@@ -1894,7 +2021,7 @@ export function CheckRow({
         <Copy heading size={typography.heading}>
           {label}
         </Copy>
-        {description && (
+        {!!description && (
           <Copy muted size={14}>
             {description}
           </Copy>
@@ -1952,6 +2079,11 @@ export function Disclosure({
   children,
   initial = false,
   forceOpen = false,
+  autoOpen = false,
+  inset = false,
+  prominent = false,
+  expanded,
+  onExpandedChange,
   icon,
 }: PropsWithChildren<{
   title: string;
@@ -1959,15 +2091,23 @@ export function Disclosure({
   value?: string;
   initial?: boolean;
   forceOpen?: boolean;
+  autoOpen?: boolean;
+  inset?: boolean;
+  prominent?: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   icon?: IconName;
 }>) {
   'use no memo';
   useLocale();
-  const colors = useTheme(),
-    corners = useContext(ConnectedRowContext);
-  const [selected, setOpen] = useState(initial);
+  const colors = useTheme();
+  const connected = useContext(ConnectedRowContext);
+  const corners = inset ? null : connected;
+  const [visibility, setVisibility] = useState({ autoOpen, open: initial || autoOpen });
+  const nextVisibility = disclosureAutoOpen(visibility, autoOpen);
+  if (nextVisibility !== visibility) setVisibility(nextVisibility);
   const [focused, setFocused] = useState(false);
-  const open = selected || forceOpen;
+  const open = (expanded ?? nextVisibility.open) || forceOpen;
   const headerCorners = corners && {
     ...corners,
     ...(open
@@ -1977,85 +2117,101 @@ export function Disclosure({
         }
       : {}),
   };
+  const headerStyle: ViewStyle = {
+    ...headerCorners,
+    minHeight: corners ? 56 : 48,
+    flexDirection: 'row',
+    paddingHorizontal: corners ? space.gutter : space.xs,
+    paddingVertical: corners ? space.md : 0,
+    alignItems: 'center',
+    gap: corners ? space.md : space.sm,
+  };
+  const header = (
+    <>
+      {icon &&
+        (corners ? (
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              borderRadius: 16,
+              backgroundColor: colors.soft,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name={icon} />
+          </View>
+        ) : (
+          <Icon name={icon} />
+        ))}
+      <View
+        style={{
+          flex: 1,
+          minWidth: 0,
+          paddingVertical: !corners && summary ? space.sm : 0,
+          gap: space.xs,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            columnGap: space.md,
+            rowGap: space.xs,
+          }}
+        >
+          <Copy heading={inset || prominent || forceOpen}>{title}</Copy>
+          {!!value && <Copy>{value}</Copy>}
+        </View>
+        {!!summary && (corners || !open) && (
+          <Copy muted size={typography.supporting}>
+            {summary}
+          </Copy>
+        )}
+      </View>
+    </>
+  );
   return (
     <View
       style={
         !corners && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
+          borderTopWidth: inset ? StyleSheet.hairlineWidth : undefined,
+          borderBottomWidth: inset ? undefined : StyleSheet.hairlineWidth,
+          borderColor: colors.border,
         }
       }
     >
-      <Pressable
-        accessibilityRole="button"
-        aria-expanded={open}
-        accessibilityState={{ expanded: open }}
-        onPress={() => setOpen(!open)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={({ pressed }) => ({
-          ...headerCorners,
-          minHeight: corners ? 56 : 48,
-          flexDirection: 'row',
-          paddingHorizontal: corners ? space.gutter : space.xs,
-          paddingVertical: corners ? space.md : 0,
-          alignItems: 'center',
-          gap: corners ? space.md : space.sm,
-          backgroundColor: pressed ? colors.soft : 'transparent',
-        })}
-      >
-        {icon &&
-          (corners ? (
-            <View
-              style={{
-                width: 40,
-                height: 40,
-                flexShrink: 0,
-                borderRadius: 16,
-                backgroundColor: colors.soft,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name={icon} />
-            </View>
-          ) : (
-            <Icon name={icon} />
-          ))}
-        <View
-          style={{
-            flex: 1,
-            minWidth: 0,
-            paddingVertical: !corners && summary ? space.sm : 0,
-            gap: space.xs,
+      {forceOpen ? (
+        <View style={headerStyle}>{header}</View>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          aria-expanded={open}
+          accessibilityState={{ expanded: open }}
+          onPress={() => {
+            if (expanded === undefined) setVisibility({ autoOpen, open: !open });
+            onExpandedChange?.(!open);
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={({ pressed }) => [
+            headerStyle,
+            { backgroundColor: pressed ? colors.soft : 'transparent' },
+          ]}
         >
-          <View
-            style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              columnGap: space.md,
-              rowGap: space.xs,
-            }}
-          >
-            <Copy>{title}</Copy>
-            {value && <Copy>{value}</Copy>}
-          </View>
-          {summary && (corners || !open) && (
-            <Copy muted size={typography.supporting}>
-              {summary}
-            </Copy>
-          )}
-        </View>
-        <Icon name={open ? 'expand_less' : 'expand_more'} size={corners ? 20 : 24} />
-        {headerCorners && focused && <RowFocus corners={headerCorners} />}
-      </Pressable>
+          {header}
+          <Icon name={open ? 'expand_less' : 'expand_more'} size={corners ? 20 : 24} />
+          {focused && <RowFocus corners={headerCorners ?? {}} />}
+        </Pressable>
+      )}
       {open && (
         <View
           style={{
-            paddingHorizontal: corners ? space.gutter : space.xs,
+            paddingHorizontal: corners ? space.gutter : inset ? 0 : space.xs,
             paddingBottom: space.md,
             gap: space.sm,
           }}

@@ -35,16 +35,17 @@ import {
   Page,
   QueryState,
   RowSupport,
+  SectionStack,
   SettingRow,
   Sheet,
+  Status,
   Toggle,
 } from '../ui/components';
 import { engine, nativeAvailable, preferences, useCapabilities, useSettings } from '../ui/native';
 import { PreferenceFeedback } from '../ui/preference-feedback';
 import { SoundPicker } from '../ui/sound-picker';
-import { ClockPreferenceRow } from '../ui/settings-controls';
+import { BackupContentsDisclosure } from '../ui/backup-contents';
 import { usePageHandoff } from '../ui/handoff';
-import { space } from '../ui/tokens';
 
 type Feedback = { message: string; tone: Tone };
 function appearanceSummary(settings: AppSettings) {
@@ -62,9 +63,9 @@ export default function Settings() {
     caps = useCapabilities(),
     settings = query.data;
   const [languagePicker, setLanguagePicker] = useState(false),
-    [snoozePicker, setSnoozePicker] = useState(false),
-    [shortcuts, setShortcuts] = useState(false),
-    [backupInfo, setBackupInfo] = useState(false);
+    [snoozePicker, setSnoozePicker] = useState(false);
+  const languageTrigger = useRef<View>(null),
+    snoozeTrigger = useRef<View>(null);
   const [minutes, setMinutes] = useState('10'),
     [feedback, setFeedback] = useLocalizedState<Feedback>(),
     [pending, setPending] = useState(false);
@@ -149,7 +150,7 @@ export default function Settings() {
         router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(routeParams))
       }
     >
-      <View style={{ gap: space.md }}>
+      <SectionStack>
         <QueryState
           loading={!settings && query.isLoading && nativeAvailable}
           error={!settings ? query.error : undefined}
@@ -157,26 +158,6 @@ export default function Settings() {
           emptyMessage={nativeAvailable ? t('m_de367fa1d4a6') : t('m_eb0582ac36eb')}
           onRetry={nativeAvailable ? () => void query.refetch() : undefined}
         />
-        {nativeAvailable && permission.needsAttention && (
-          <ConnectedGroup>
-            <View>
-              <RowSupport>
-                <ActionFeedback message={permission.message} tone={permission.tone} />
-                {permissionRefreshError && (
-                  <Copy muted size={14}>
-                    {permissionRefreshError}
-                  </Copy>
-                )}
-                <Button
-                  label={t('m_0146bbb12bf3')}
-                  variant="secondary"
-                  disabled={pending}
-                  onPress={openAlarmCheck}
-                />
-              </RowSupport>
-            </View>
-          </ConnectedGroup>
-        )}
         {!!settings && (
           <>
             <ConnectedGroup
@@ -213,6 +194,7 @@ export default function Settings() {
                 label={t('m_3f030a6921b9')}
                 value={t('m_1c3c36c66261', { count: settings.snoozeMinutes })}
                 disabled={pending}
+                buttonRef={snoozeTrigger}
                 onPress={() => {
                   setMinutes(String(settings.snoozeMinutes));
                   setSnoozePicker(true);
@@ -231,10 +213,15 @@ export default function Settings() {
                   .map((value) => clockPreferenceLabel(value))
                   .join(' · ')}
                 disabled={pending}
-                onPress={() => setShortcuts(true)}
+                onPress={() =>
+                  router.push({ pathname: '/tomorrow-shortcuts', params: routeParams })
+                }
               />
             </ConnectedGroup>
-            <ConnectedGroup footer={preferenceFeedback('appearance')}>
+            <ConnectedGroup
+              title={t('ui_app_preferences')}
+              footer={preferenceFeedback('appearance') ?? preferenceFeedback('language')}
+            >
               <SettingRow
                 intent="navigation"
                 key="appearance"
@@ -244,8 +231,6 @@ export default function Settings() {
                 disabled={pending}
                 onPress={() => router.push({ pathname: '/appearance', params: routeParams })}
               />
-            </ConnectedGroup>
-            <ConnectedGroup footer={preferenceFeedback('language')}>
               <SettingRow
                 intent="picker"
                 key="language"
@@ -259,91 +244,88 @@ export default function Settings() {
                       : '简体中文'
                 }
                 disabled={pending}
+                buttonRef={languageTrigger}
                 onPress={() => setLanguagePicker(true)}
               />
             </ConnectedGroup>
           </>
         )}
-        <ConnectedGroup>
-          <WidgetSetupRow disabled={pending} />
-        </ConnectedGroup>
-        <ConnectedGroup>
+        <ConnectedGroup title={t('ui_settings_tools')}>
           <SettingRow
             intent="navigation"
             key="permissions"
             icon="alarm"
             label={t('m_b7902c54f3ec')}
-            value={nativeAvailable ? permission.message : t('m_9abfcd6cc71c')}
+            value={nativeAvailable ? undefined : t('m_9abfcd6cc71c')}
+            statusLabel={nativeAvailable ? permission.message : undefined}
             description={permissionRefreshError}
+            supporting={
+              nativeAvailable && (
+                <Status
+                  label={permission.message}
+                  tone={caps.data && !permission.needsAttention ? 'success' : permission.tone}
+                />
+              )
+            }
             disabled={pending}
             onPress={openAlarmCheck}
           />
-        </ConnectedGroup>
-        <ConnectedGroup>
+          <WidgetSetupRow
+            key="widget"
+            description={t('ui_widget_settings_description')}
+            disabled={pending}
+          />
           <SettingRow
             intent="navigation"
             key="google-calendar"
             icon="event"
             label={t('m_b074310e911f')}
-            description={t('m_e75d471ec00e')}
+            description={t('ui_calendar_settings_description')}
             disabled={pending}
             onPress={() => router.push({ pathname: '/calendar', params: routeParams })}
           />
         </ConnectedGroup>
-        <ConnectedGroup
-          title={t('m_3334fee2c77f')}
-          footer={
-            <>
-              <Copy muted size={14}>
-                {t('m_a7b215af0d49')}
-              </Copy>
-              <Button
-                label={t('m_95365d0f81ab')}
-                variant="secondary"
-                disabled={pending}
-                onPress={() => setBackupInfo(true)}
-              />
-            </>
-          }
-        >
+        <ConnectedGroup title={t('m_3334fee2c77f')}>
           <View key="export">
             <SettingRow
               intent="action"
               icon="upload"
               label={t('m_d6dfd0f08280')}
+              description={t('ui_export_backup_description')}
               disabled={pending || !nativeAvailable}
               onPress={exportFile}
             />
-            {(pending || feedback || preparedExport) && (
-              <RowSupport>
-                {(pending || feedback) && (
-                  <ActionFeedback
-                    loading={pending}
-                    message={pending ? t('m_580447a9d871') : feedback?.message}
-                    tone={feedback?.tone}
-                  />
-                )}
-                {preparedExport && (
-                  <Button
-                    label={t('m_6b88c0d8044d')}
-                    variant="secondary"
-                    disabled={pending}
-                    onPress={() =>
-                      void runExport((ticket) => sharePrepared(preparedExport, ticket))
-                    }
-                  />
-                )}
-              </RowSupport>
-            )}
+            <RowSupport>
+              <Copy muted size={14}>
+                {t('ui_export_backup_privacy')}
+              </Copy>
+              {(pending || feedback) && (
+                <ActionFeedback
+                  loading={pending}
+                  message={pending ? t('m_580447a9d871') : feedback?.message}
+                  tone={feedback?.tone}
+                />
+              )}
+              {preparedExport && (
+                <Button
+                  label={t('m_6b88c0d8044d')}
+                  variant="secondary"
+                  disabled={pending}
+                  onPress={() => void runExport((ticket) => sharePrepared(preparedExport, ticket))}
+                />
+              )}
+            </RowSupport>
           </View>
           <SettingRow
             intent="navigation"
             key="restore"
             icon="download"
             label={t('m_6da1c554212c')}
+            description={t('ui_restore_backup_description')}
             disabled={pending}
             onPress={() => router.push({ pathname: '/backup', params: routeParams })}
           />
+          <BackupContentsDisclosure key="contents" />
         </ConnectedGroup>
         <ConnectedGroup
           title={t('m_b79cac926e0b')}
@@ -368,6 +350,7 @@ export default function Settings() {
         <Sheet
           title={t('m_a4fe65264ef7')}
           visible={languagePicker}
+          returnFocusRef={languageTrigger}
           onClose={() => setLanguagePicker(false)}
         >
           <Choice
@@ -408,6 +391,7 @@ export default function Settings() {
         <Sheet
           title={t('m_3f030a6921b9')}
           visible={snoozePicker}
+          returnFocusRef={snoozeTrigger}
           onClose={() => setSnoozePicker(false)}
           footer={
             <BottomActionBar>
@@ -447,36 +431,7 @@ export default function Settings() {
             error={!snoozeValid ? t('m_da461edf6be4') : undefined}
           />
         </Sheet>
-        <Sheet title={t('m_9b0f67429df4')} visible={shortcuts} onClose={() => setShortcuts(false)}>
-          <Copy muted size={14}>
-            {t('m_c03efc02ebc8')}
-          </Copy>
-          {!!settings && (
-            <ConnectedGroup>
-              {(['tomorrowMorning', 'tomorrowAfternoon', 'tomorrowEvening'] as const).map((key) => (
-                <ClockPreferenceRow
-                  key={key}
-                  minutes={settings[key]}
-                  disabled={pending}
-                  onChange={(value) => save({ [key]: value })}
-                />
-              ))}
-            </ConnectedGroup>
-          )}
-          <PreferenceFeedback
-            fields={['tomorrowMorning', 'tomorrowAfternoon', 'tomorrowEvening']}
-          />
-        </Sheet>
-        <Sheet
-          title={t('m_417b6c80d6e4')}
-          visible={backupInfo}
-          onClose={() => setBackupInfo(false)}
-        >
-          <Copy>{t('m_03588484b7c5')}</Copy>
-          <Copy>{t('m_a9a1a38b9395')}</Copy>
-          <Copy>{t('m_6d3b4ca3720b')}</Copy>
-        </Sheet>
-      </View>
+      </SectionStack>
     </Page>
   );
 }

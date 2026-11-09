@@ -1,4 +1,5 @@
 import { useTranslation } from '../localization/react';
+import { useIsFocused } from 'expo-router';
 
 import type { PreferencePatch } from '../domain/preferences';
 import { ActionFeedback, Button } from './components';
@@ -7,8 +8,9 @@ import { preferences, useSettings } from './native';
 export function PreferenceFeedback({ fields }: { fields: (keyof PreferencePatch)[] }) {
   'use no memo';
   const t = useTranslation();
+  const focused = useIsFocused();
   const settings = useSettings();
-  if (!settings.preferenceFields.some((field) => fields.includes(field))) return null;
+  if (!focused || !settings.preferenceFields.some((field) => fields.includes(field))) return null;
   return (
     <>
       <ActionFeedback

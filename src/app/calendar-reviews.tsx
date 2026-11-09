@@ -12,7 +12,15 @@ import {
   calendarReviewIssueText,
   calendarReviewRoute,
 } from '../domain/calendar-managed';
-import { Button, ConnectedGroup, Copy, Page, QueryState, SettingRow } from '../ui/components';
+import {
+  Button,
+  ConnectedGroup,
+  Copy,
+  Page,
+  QueryState,
+  SettingRow,
+  Status,
+} from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { RootNotice } from '../ui/navigation';
 import { useCalendarReviewTiming } from '../ui/calendar-sync';
@@ -42,6 +50,7 @@ export default function CalendarReviews() {
   return (
     <Page
       compact
+      sectionSpacing
       title={t('m_4e680674ef4c')}
       footer={<RootNotice />}
       onBack={() =>
@@ -52,9 +61,9 @@ export default function CalendarReviews() {
       {counts && counts.total > 0 && (
         <Copy muted size={14}>
           {[
-            counts.reminders ? t('m_941c12b896c0', { arg0: String(counts.reminders) }) : '',
-            counts.candidates ? t('m_6f590bbcaf8e', { arg0: String(counts.candidates) }) : '',
-            counts.setup ? t('m_bfbb89b5c707', { arg0: String(counts.setup) }) : '',
+            counts.reminders ? t('m_941c12b896c0', { count: counts.reminders }) : '',
+            counts.candidates ? t('m_6f590bbcaf8e', { count: counts.candidates }) : '',
+            counts.setup ? t('m_bfbb89b5c707', { count: counts.setup }) : '',
           ]
             .filter(Boolean)
             .join(' · ')}
@@ -108,22 +117,27 @@ function CalendarIssueRow({ issue, onPress }: { issue: CalendarReviewIssue; onPr
     issue.kind === 'Association' ? issue.occurrenceId : undefined,
   );
   const title = issue.title || (issue.kind === 'Setup' ? t('m_eb79753ab339') : t('m_f6e8452bebf4'));
-  const reason = calendarReviewIssueText(issue) + ' · ' + calendarReviewIssueReason(issue);
+  const scope = calendarReviewIssueText(issue);
+  const reason = calendarReviewIssueReason(issue);
+  const tone = ['AccessRequired', 'AccountChanged'].includes(issue.reason) ? 'danger' : 'warning';
   return (
     <SettingRow
-      intent="action"
+      intent="navigation"
       prominent
       icon="event"
       label={title}
-      description={reason}
+      description={scope}
       supporting={
-        timing ? (
-          <Copy heading size={16}>
-            {timing}
-          </Copy>
-        ) : undefined
+        <>
+          {timing && (
+            <Copy heading size={16}>
+              {timing}
+            </Copy>
+          )}
+          <Status label={reason} tone={tone} />
+        </>
       }
-      accessibilityLabel={[title, timing, reason].filter(Boolean).join('. ')}
+      accessibilityLabel={[title, timing, scope, reason].filter(Boolean).join('. ')}
       minHeight={56}
       onPress={onPress}
     />

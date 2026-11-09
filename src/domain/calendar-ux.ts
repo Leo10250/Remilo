@@ -206,6 +206,8 @@ export function calendarLinkStatus(
   description: string;
   tone: Tone;
   action: 'None' | 'Connect' | 'Review' | 'Inspect' | 'Activate' | 'Setup';
+  paused?: true;
+  lastSyncedAtMs?: number | null;
 } {
   if (link.state === 'Detached')
     return {
@@ -253,6 +255,7 @@ export function calendarLinkStatus(
         description: t('m_7dceba352771'),
         tone: 'muted',
         action: 'None',
+        paused: true,
       };
     if (managed.mode === 'Disabled')
       return {
@@ -318,6 +321,7 @@ export function calendarLinkStatus(
     description: '',
     tone: 'muted',
     action: link.syncMode !== 'Automatic' && !link.readOnly ? 'Activate' : 'None',
+    ...(link.syncMode === 'Automatic' ? { lastSyncedAtMs: link.successfulAtMs } : {}),
   };
 }
 export function calendarActivityLabel(kind: string, groups: string[] = []) {
