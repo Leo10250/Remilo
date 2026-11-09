@@ -260,6 +260,33 @@ enum ImportChecks {
         let unchanged = try await reopened.reconcileManagedSeries(scan([master, moved, skipped]), viewingAs: account, limit: 10)
         precondition(unchanged.count == 3 && !unchanged.contains(where: \.recordedIssue),
                      "Exact reviewed exceptions survive recovery, including a sparse cancelled instance")
+        let newTag = #""master-text-v2""#
+        let oldProof = review.recurrenceEvidence!
+        let oldMaster = try remote(id: master.eventID, etag: newTag, recurrence: review.source.fields.schedule.recurrence)
+        var updatedJSON = try JSONSerialization.jsonObject(with: oldMaster.json) as! [String: Any]
+        updatedJSON["summary"] = "Reviewed series title"
+        let updatedMaster = Transport.Event(id: master.eventID, etag: newTag, cancelled: false,
+                                            json: try JSONSerialization.data(withJSONObject: updatedJSON))
+        let newProof = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: oldProof.alertPolicy, masterETag: newTag,
+                                                 exceptions: oldProof.exceptions, ordinarySlots: oldProof.ordinarySlots)
+        let updatedReview = try Import.Review(account: account, calendar: calendar, event: updatedMaster, now: now, recurrenceEvidence: newProof)
+        let textObservation = Inbox.Observation(eventID: master.eventID, etag: newTag, kind: .recurringMaster,
+                                                 importMode: .none, initialRecovery: false)
+        let work = try await reopened.reconcileManagedSeries(scan([textObservation]), viewingAs: account, limit: 10, allowTextTransfers: true)
+        guard let text = work.first?.textWork else { preconditionFailure("A changed master has a comparison baseline") }
+        let id = recovered.local!.id
+        let before = IOSCalendarSeriesTextSnapshot(segmentID: id, revision: 1, title: review.source.fields.title, notes: review.source.fields.notes)
+        let conflict = IOSCalendarSeriesTextSnapshot(segmentID: id, revision: 2, title: "Local title", notes: before.notes)
+        let after = IOSCalendarSeriesTextSnapshot(segmentID: id, revision: 2, title: updatedReview.source.fields.title, notes: before.notes)
+        let accepted = try text.accepts(local: before, review: updatedReview)
+        let competing = try text.accepts(local: conflict, review: updatedReview)
+        let recoveredCommit = try text.accepts(local: after, review: updatedReview)
+        precondition(accepted && !competing && recoveredCommit)
+        let replayedWork = try await restarted.reconcileManagedSeries(scan([textObservation]), viewingAs: account, limit: 10, allowTextTransfers: true)
+        precondition(replayedWork.first?.textWork?.operationKey == text.operationKey)
+        try await reopened.finishSeriesText(text, confirmed: updatedReview, reason: nil)
+        let settledText = try await restarted.reconcileManagedSeries(scan([textObservation]), viewingAs: account, limit: 10, allowTextTransfers: true)
+        precondition(settledText.first?.textWork == nil && settledText.first?.recordedIssue == false)
         let providerUpdate = Inbox.Observation(eventID: moved.eventID, etag: #""moved-v2""#, kind: moved.kind,
                                                 importMode: .none, initialRecovery: false, instanceCancelled: false)
         let staleBinding = Inbox.Journal.Binding(operationID: UUID(), account: account, record: binding.record,
@@ -277,7 +304,7 @@ enum ImportChecks {
         let removedOperation = try await restarted.savedOperation(operation, viewingAs: account)
         precondition(removedOperation?.recurringIssue?.code == "REMOTE_REMOVED" && removedOperation?.receipt == recovered)
         let persisted = try String(contentsOf: directory.appendingPathComponent("import-journal.json"), encoding: .utf8)
-        precondition(!persisted.contains("moved notes") && persisted.contains("google-skip"))
+        precondition(!persisted.contains("moved notes") && !persisted.contains("Reviewed series title") && persisted.contains("google-skip"))
     }
 
     private static func finalAllDayAlarm(_ calendar: Transport.OwnedCalendar) throws {

@@ -158,6 +158,60 @@ final class RemiloIOSEngine {
         return record.calendarLifecycleRevision ?? 0
     }
 
+    func calendarSeriesTextSnapshot(_ segmentID: String) throws -> IOSCalendarSeriesTextSnapshot? {
+        Self.calendarSeriesTextSnapshot(segmentID, in: try read())
+    }
+
+    private static func calendarSeriesTextSnapshot(_ segmentID: String, in state: IOSDatabase) -> IOSCalendarSeriesTextSnapshot? {
+        guard let segment = state.series[segmentID], segment.state == "Active", segment.id == segment.familyID,
+              !state.series.values.contains(where: { $0.familyID == segment.familyID && $0.id != segment.id && $0.state != "Archived" }),
+              state.receipts.contains(where: { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == segmentID }) else { return nil }
+        return .init(segmentID: segmentID, revision: segment.revision, title: segment.template.title, notes: segment.template.notes)
+    }
+
+    func applyCalendarSeriesText(operationKey: String, snapshot: IOSCalendarSeriesTextSnapshot, title: String, notes: String,
+                                 authorize: @MainActor @Sendable () throws -> Bool) async throws -> Bool {
+        await acquire()
+        defer { release() }
+        let operationID = Self.calendarInboundPrefix + "series:" + operationKey
+        let input = IOSInput(values: ["operationId": operationID, "segmentId": snapshot.segmentID, "title": title, "notes": notes])
+        let fingerprint = try fingerprint(input)
+        var state = try read()
+        try Task.checkCancellation()
+        let current = Self.calendarSeriesTextSnapshot(snapshot.segmentID, in: state)
+        if let receipt = state.receipts[operationID] {
+            guard receipt.fingerprint == fingerprint else { throw IOSInputFailure("OPERATION_REUSED") }
+            guard current?.title == title, current?.notes == notes else { return false }
+            return try authorize()
+        }
+        guard (1...200).contains(title.utf16.count), title == title.trimmingCharacters(in: .whitespacesAndNewlines),
+              notes.utf16.count <= 10_000 else { throw IOSInputFailure("INVALID_INPUT") }
+        guard current == snapshot,
+              var segment = state.series[snapshot.segmentID], try authorize() else { return false }
+        if snapshot.title == title && snapshot.notes == notes { return true }
+
+        segment.template.title = title
+        segment.template.notes = notes
+        segment.revision += 1
+        state.series[segment.id] = segment
+        let now = iosMillis(Date())
+        for (id, var record) in state.reminders where record.segmentID == segment.id && record.active &&
+            (record.eventEndMs > now || record.agendaAtMs > now) {
+            // Imported exceptions have Create history. Local authored overrides
+            // have Edit history. A postponement alone still inherits series text.
+            if record.independent == true && record.history.contains(where: { $0.kind == "Create" || $0.kind == "Edit" }) { continue }
+            if record.title == snapshot.title { record.title = title }
+            if record.notes == snapshot.notes { record.notes = notes }
+            guard record.title != state.reminders[id]?.title || record.notes != state.reminders[id]?.notes else { continue }
+            record.revision += 1
+            state.reminders[id] = record
+        }
+        state.receipts[operationID] = IOSOperationReceipt(fingerprint: fingerprint, occurrenceID: nil, registrationID: nil,
+            result: try JSONSerialization.data(withJSONObject: ["status": "Applied"]), finalized: true)
+        try commit(state)
+        return true
+    }
+
     func scheduleTestAlarm(operationId: String) async throws -> [String: Any] {
         await acquire()
         defer { release() }

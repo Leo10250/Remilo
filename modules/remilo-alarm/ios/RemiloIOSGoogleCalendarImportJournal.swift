@@ -64,9 +64,10 @@ actor RemiloIOSGoogleCalendarImportJournal {
     struct RecurringObservationResult: Sendable {
         let observation: Inbox.Observation
         let recordedIssue: Bool
+        var textWork: SeriesTextWork? = nil
     }
 
-    private struct RecurringInstanceVersion: Codable {
+    struct RecurringInstanceVersion: Codable, Equatable, Sendable {
         let identity: Import.Event.InstanceIdentity
         let etag: String?
 
@@ -74,6 +75,62 @@ actor RemiloIOSGoogleCalendarImportJournal {
             guard identity.eventID == observation.eventID, identity.cancelled == observation.instanceCancelled else { return false }
             if identity.cancelled { return true }
             return etag != nil && etag == observation.etag
+        }
+    }
+
+    struct SeriesTextBaseline: Codable, Equatable, Sendable {
+        let etag: String
+        private let title: Data
+        private let notes: Data
+        private let schedule: Data
+
+        init(_ source: Import.Source) throws {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            etag = source.etag
+            title = Self.digest(source.fields.title)
+            notes = Self.digest(source.fields.notes)
+            schedule = Data(SHA256.hash(data: try encoder.encode(source.fields.schedule)))
+        }
+
+        func accepts(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source) throws -> Bool {
+            let next = try Self(remote)
+            // Apply inbound text only when each group is already equal or
+            // still has the last common value on the local side.
+            return schedule == next.schedule && (title == Self.digest(local.title) || next.title == Self.digest(local.title)) &&
+                (notes == Self.digest(local.notes) || next.notes == Self.digest(local.notes))
+        }
+
+        fileprivate static func digest(_ value: String) -> Data {
+            Data(SHA256.hash(data: Data(value.utf8)))
+        }
+    }
+
+    struct SeriesTextWork: Sendable {
+        let receipt: Receipt
+        let permit: Inbox.Permit
+        let baseline: SeriesTextBaseline?
+        let exceptions: [RecurringInstanceVersion]?
+
+        var operationKey: String {
+            receipt.operationID.uuidString.lowercased() + ":" + SeriesTextBaseline.digest(permit.observation.etag ?? "").base64EncodedString()
+        }
+
+        func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review) throws -> Bool {
+            let source = review.source
+            guard source.key == receipt.source, source.etag == permit.observation.etag,
+                  let proof = review.recurrenceEvidence, !source.fields.title.isEmpty else { return false }
+            if let baseline {
+                guard try baseline.accepts(local: local, remote: source) else { return false }
+                // An exception can age out of this audit window. Any exception
+                // returned now must match the provider version we imported.
+                return proof.exceptions.allSatisfy { candidate in
+                    exceptions?.contains(where: { known in
+                        known.identity == candidate.identity && (known.identity.cancelled || known.etag == candidate.etag)
+                    }) == true
+                }
+            }
+            return source.etag == receipt.reviewedETag && local.title == source.fields.title && local.notes == source.fields.notes
         }
     }
 
@@ -143,6 +200,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var managedLink: ManagedLinkDisposition?
         var recurringInstances: [RecurringInstanceVersion]?
         var recurringIssue: RecurringIssue?
+        var seriesTextBaseline: SeriesTextBaseline?
     }
 
     private struct State: Codable {
@@ -232,7 +290,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
     /// Save changes against an existing series before clearing observations
     /// from the inbox. Replaying the same provider version is harmless.
     func reconcileManagedSeries(_ scan: Inbox.Progress, viewingAs account: Import.Account,
-                                limit: Int) throws -> [RecurringObservationResult] {
+                                limit: Int, allowTextTransfers: Bool = false) throws -> [RecurringObservationResult] {
         guard limit > 0, scan.initialComplete, !scan.continuation, scan.scope.binding.belongs(to: account),
               scan.scope.binding.account.accountGeneration == account.accountGeneration,
               scan.scope.policy.automaticImport else { return [] }
@@ -251,11 +309,25 @@ actor RemiloIOSGoogleCalendarImportJournal {
             if case .changedInstance(let id) = observation.kind { masterID = id }
             else { masterID = observation.eventID }
             guard let id = masters[masterID], var entry = state.entries[id], let receipt = entry.receipt else { continue }
+            let reviewedVersion = entry.seriesTextBaseline?.etag ?? receipt.reviewedETag
+            let needsTextCheck = entry.seriesTextBaseline == nil ? observation.etag == reviewedVersion : observation.etag != reviewedVersion
+            if allowTextTransfers, observation.kind == .recurringMaster, observation.etag != nil, entry.recurringIssue == nil,
+               needsTextCheck,
+               !scan.pending.contains(where: { item in
+                   guard item.kind == .changedInstance(masterID: masterID) else { return false }
+                   return entry.recurringInstances?.contains(where: { $0.matches(item) }) != true
+               }) {
+                results.append(.init(observation: observation, recordedIssue: false,
+                    textWork: .init(receipt: receipt, permit: .init(scope: scan.scope, observation: observation),
+                                    baseline: entry.seriesTextBaseline, exceptions: entry.recurringInstances)))
+                if results.count == limit { break }
+                continue
+            }
             let unchanged: Bool
             if case .changedInstance = observation.kind {
                 unchanged = entry.recurringInstances?.contains(where: { $0.matches(observation) }) == true
             } else {
-                unchanged = observation.kind == .recurringMaster && receipt.reviewedETag == observation.etag
+                unchanged = observation.kind == .recurringMaster && reviewedVersion == observation.etag
             }
             var recorded = false
             if !unchanged {
@@ -278,6 +350,29 @@ actor RemiloIOSGoogleCalendarImportJournal {
         }
         if results.contains(where: \.recordedIssue) { try write(state) }
         return results
+    }
+
+    func finishSeriesText(_ work: SeriesTextWork, confirmed review: Import.Review?, reason: String?) throws {
+        var state = try read()
+        let id = work.receipt.operationID
+        guard var entry = state.entries[id], entry.receipt == work.receipt, entry.seriesTextBaseline == work.baseline,
+              entry.recurringIssue == nil, entry.managed?.scope.binding.linkLease == work.permit.scope.binding.linkLease else {
+            throw Failure.stalePreview
+        }
+        if let review {
+            guard reason == nil, review.source.key == work.receipt.source, review.source.etag == work.permit.observation.etag,
+                  let proof = review.recurrenceEvidence else { throw Failure.staleRemote }
+            entry.seriesTextBaseline = try SeriesTextBaseline(review.source)
+            if entry.recurringInstances == nil {
+                entry.recurringInstances = proof.exceptions.map { .init(identity: $0.identity, etag: $0.etag) }
+            }
+        } else if let reason {
+            entry.recurringIssue = .init(eventID: work.permit.observation.eventID, etag: work.permit.observation.etag, code: reason)
+        } else {
+            throw Failure.invalidInput
+        }
+        state.entries[id] = entry
+        try write(state)
     }
 
     private func capture(operationID: UUID, review: Import.Review, choices: Import.Choices,
@@ -443,6 +538,9 @@ actor RemiloIOSGoogleCalendarImportJournal {
         if let confirmed = entry.receipt { return confirmed }
         if receipt.local?.kind == .series, let proof = entry.capture?.review.recurrenceEvidence {
             entry.recurringInstances = proof.exceptions.map { .init(identity: $0.identity, etag: $0.etag) }
+            if entry.managed != nil, let source = entry.capture?.review.source {
+                entry.seriesTextBaseline = try SeriesTextBaseline(source)
+            }
         }
         entry.capture = nil // no completed preview content in the recovery journal
         entry.receipt = receipt

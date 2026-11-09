@@ -103,6 +103,7 @@ struct EngineChecks {
         try await calendarExportIntentSurvivesInterruptedAcknowledgement()
         try calendarInstallationOriginComesFromNativeStateCreation()
         try await calendarSeriesExceptionsAreAtomicAndBounded()
+        try await calendarSeriesTextPreservesDelivery()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
         try await queuedCalendarReviewRechecksLocalVersion()
@@ -935,6 +936,62 @@ struct EngineChecks {
         try await restoredStore.engine().reconcile()
         precondition(RemiloIOSDelivery.registrations.count == 10)
         precondition(RemiloIOSDelivery.registrations.values.contains { $0.occurrenceID == dormant.id })
+    }
+
+    private static func calendarSeriesTextPreservesDelivery() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let start = iosMillis(Date()) / 60_000 * 60_000 + 7_200_000
+        let zone = TimeZone(identifier: "UTC")!
+        let anchor = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(start, zone: zone))
+        let created = try await engine.applyCalendarCreate([
+            "kind": "CreateSeries", "operationId": "ios-calendar-import:" + UUID().uuidString,
+            "title": "Old series title", "notes": "Old notes", "mode": "Alarm", "zoneId": "UTC",
+            "eventStartMs": start, "eventEndMs": start + 1_800_000, "dueAtMs": start, "alarmAtMs": start,
+            "nativeCalendarAnchor": anchor, "recurrence": ["frequency": "daily", "count": 5, "zoneMode": "pinned"],
+            "nativeCalendarExceptions": [calendarOverride(nominal: anchor, actual: start + 3_600_000, title: "Moved exception")],
+        ], authorize: { true })
+        let segment = created["localId"] as! String
+        let exceptionID = RemiloIOSSeries.occurrenceID(segment, anchor)
+        let initial = try store.load()
+        let ordinary = initial.reminders.values.filter { $0.segmentID == segment && $0.independent != true }
+            .min(by: { $0.eventStartMs < $1.eventStartMs })!
+        let postponed = try await engine.apply([
+            "kind": "Postpone", "operationId": "fixture-postpone-series-text", "occurrenceId": ordinary.id,
+            "expectedGeneration": ordinary.generation, "alarmAtMs": ordinary.alarmAtMs + 600_000,
+        ])
+        precondition(postponed["status"] as? String == "Scheduled")
+        let baseline = try store.load()
+        let snapshot = try engine.calendarSeriesTextSnapshot(segment)!
+        let attemptCount = RemiloIOSDelivery.attempts.count
+        let key = UUID().uuidString
+        let fenced = try await engine.applyCalendarSeriesText(operationKey: key, snapshot: snapshot, title: "Google title",
+                                                              notes: "Google notes", authorize: { false })
+        let untouched = try store.load()
+        precondition(!fenced && untouched.series[segment]?.template.title == "Old series title")
+        let applied = try await engine.applyCalendarSeriesText(operationKey: key, snapshot: snapshot, title: "Google title",
+                                                               notes: "Google notes", authorize: { true })
+        let restarted = store.engine()
+        let committed = try restarted.calendarSeriesTextSnapshot(segment)!
+        let replay = try await restarted.applyCalendarSeriesText(operationKey: key, snapshot: committed, title: "Google title",
+                                                                 notes: "Google notes", authorize: { true })
+        let after = try store.load()
+        precondition(applied && replay && committed.revision == snapshot.revision + 1 && after.series[segment]?.revision == committed.revision)
+        precondition(after.reminders[exceptionID]?.title == "Moved exception" && after.reminders[exceptionID]?.notes == "Authored exception")
+        precondition(after.reminders[ordinary.id]?.title == "Google title" && after.reminders[ordinary.id]?.notes == "Google notes")
+        precondition(after.reminders[ordinary.id]?.registration?.targetMs == ordinary.alarmAtMs + 600_000 &&
+                     after.reminders[ordinary.id]?.registration?.systemID == baseline.reminders[ordinary.id]?.registration?.systemID)
+        precondition(Set(after.reminders.keys) == Set(baseline.reminders.keys) && RemiloIOSDelivery.attempts.count == attemptCount)
+        _ = try await restarted.apply([
+            "kind": "PauseSeries", "operationId": "fixture-pause-series-text", "segmentId": segment, "expectedRevision": committed.revision,
+        ])
+        let paused = try restarted.calendarSeriesTextSnapshot(segment)
+        precondition(paused == nil)
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {

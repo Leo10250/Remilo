@@ -25,6 +25,7 @@ xcrun swiftc -swift-version 5 -o "$build_dir/checks" \
   modules/remilo-alarm/ios/RemiloIOSEngine.swift \
   modules/remilo-alarm/ios/RemiloIOSEngineCalendarPublication.swift \
   modules/remilo-alarm/ios/RemiloIOSEngineCalendarInbound.swift \
+  modules/remilo-alarm/ios/RemiloIOSCalendarSeriesText.swift \
   modules/remilo-alarm/ios/RemiloIOSEngineSeries.swift \
   modules/remilo-alarm/ios/RemiloIOSEngineRoutines.swift \
   modules/remilo-alarm/ios/RemiloIOSEnginePortable.swift \
