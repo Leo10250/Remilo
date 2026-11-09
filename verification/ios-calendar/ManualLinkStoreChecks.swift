@@ -142,6 +142,7 @@ enum ManualLinkStoreChecks {
         precondition(preserved == future)
         try transferChecks(in: path.appendingPathComponent("transfer", isDirectory: true), time: firstObserved)
         try supersedingChecks(in: path.appendingPathComponent("superseding", isDirectory: true), time: firstObserved)
+        try checkChecks(in: path.appendingPathComponent("check", isDirectory: true), time: firstObserved)
     }
 
     private static func transferChecks(in path: URL, time: Int64) throws {
@@ -347,6 +348,103 @@ enum ManualLinkStoreChecks {
                                                    observedAtMs: time + 3, advanceLink: true)
         let attached = try reopened.link(old.occurrenceID)
         precondition(settled.phase == .confirmed && attached?.baseline?.title == fresh.fields.title)
+    }
+
+    private static func checkChecks(in path: URL, time: Int64) throws {
+        let store = Store(directory: path)
+        let owner = account("owner")
+        let other = account("other")
+        let source = source(owner, event: "checked-event")
+        let evidence = Store.Link.Evidence.imported(source)
+        let agreed = try observation(evidence, title: "Attached title", notes: "Attached notes")
+        let foreign = try observation(.imported(Self.source(other, event: source.eventID)), title: agreed.fields.title, notes: "")
+        let differing = try observation(evidence, title: "Private observed title", notes: "Private observed notes")
+        let baseline = Store.Baseline(title: agreed.fields.title, notes: agreed.fields.notes, schedule: agreed.fields.schedule)
+        let localID = "checked-reminder"
+        let fingerprint = Data(repeating: 66, count: 32)
+        _ = try store.attach(operationID: UUID(), fingerprint: fingerprint, viewingAs: owner, occurrenceID: localID,
+                             source: source, origin: .imported, expectedRevision: 0, calendarName: "Owned",
+                             baseline: baseline, observedAtMs: time)
+        let original = try store.link(localID)!
+        precondition(original.check == nil)
+        try rejects(Failure.accountChanged) {
+            _ = try store.observe(original, viewingAs: other, result: .available(agreed), at: time + 1)
+        }
+        try rejects(Store.Link.Failure.staleRemote) {
+            _ = try store.observe(original, viewingAs: owner, result: .available(foreign), at: time + 1)
+        }
+        let checked = try store.observe(original, viewingAs: owner, result: .available(differing), at: time + 2)
+        precondition(checked.revision == 1 && checked.baseline == baseline && checked.check?.remoteDiffers == true)
+        precondition(checked.check?.availability == .available && checked.check?.observedAtMs == time + 2)
+        let sameTime = try store.observe(checked, viewingAs: owner, result: .failed("RETRY"), at: time + 2)
+        precondition(sameTime.check?.attemptedAtMs == time + 2 && sameTime.check?.errorCode == "RETRY")
+        try rejects(Rejection.stalePreview) {
+            _ = try store.observe(checked, viewingAs: owner, result: .available(agreed), at: time + 2)
+        }
+        let failed = try Store(directory: path).observe(sameTime, viewingAs: owner, result: .failed("NETWORK"), at: time + 3)
+        precondition(failed.check?.attemptedAtMs == time + 3 && failed.check?.errorCode == "NETWORK")
+        precondition(failed.check?.observedAtMs == time + 2 && failed.check?.remoteDiffers == true && failed.check?.availability == .available)
+        let text = try String(contentsOf: path.appendingPathComponent("manual-links.json"), encoding: .utf8)
+        precondition(!text.contains("Private observed"))
+        try rejects(Rejection.stalePreview) {
+            _ = try store.observe(original, viewingAs: owner, result: .available(agreed), at: time + 50)
+        }
+        let clockCorrected = try store.observe(failed, viewingAs: owner, result: .failed("NETWORK"), at: time - 1)
+        precondition(clockCorrected.check?.attemptedAtMs == time - 1 && clockCorrected.check?.observedAtMs == time + 2)
+        let persistedCorrection = try Store(directory: path).link(localID)
+        precondition(persistedCorrection == clockCorrected)
+
+        let snapshot = Store.LocalSnapshot(version: .init(occurrenceID: localID, revision: 1, generation: 0), fields: agreed.fields)
+        let sent = Store.Transfer(operationID: UUID(), account: owner, evidence: evidence, local: snapshot, remote: differing,
+                                  desired: agreed.fields, linkRevision: 1, checkedAtMs: time + 3)
+        _ = try store.captureTransfer(sent, fingerprint: fingerprint)
+        _ = try store.recordLocal(sent, after: snapshot, status: nil)
+        guard case .granted = try store.beginSend(sent, after: snapshot) else { preconditionFailure("Original send") }
+
+        let unavailable = try store.observe(clockCorrected, viewingAs: owner, result: .unavailable("NOT_FOUND"), at: time + 4)
+        precondition(unavailable.revision == 2 && unavailable.check?.availability == .unavailable)
+        precondition(unavailable.check?.availabilityReason == "NOT_FOUND" && unavailable.check?.requiresReview == true)
+        let deleted = try store.observe(unavailable, viewingAs: owner, result: .deleted("untrusted provider detail"), at: time + 5)
+        precondition(deleted.revision == 2 && deleted.check?.availability == .deleted && deleted.check?.errorCode == "")
+        precondition(deleted.check?.availabilityReason == "REMOTE_DELETED")
+        let restored = try store.observe(deleted, viewingAs: owner, result: .available(agreed), at: time + 6)
+        precondition(restored.revision == 2 && restored.check?.availability == .available && restored.check?.remoteDiffers == false)
+        precondition(restored.check?.requiresReview == true && restored.baseline == baseline)
+        try rejects(Rejection.stalePreview) {
+            _ = try store.confirmTransfer(sent, observedLocal: snapshot, observedRemote: agreed, observedAtMs: time + 6, advanceLink: true)
+        }
+        let readBack = try store.confirmReadback(sent.operationID, viewingAs: owner, observedRemote: agreed)
+        let afterReadback = try store.link(localID)
+        precondition(readBack.phase == .confirmed && readBack.resultLinkRevision == nil && afterReadback == restored)
+
+        let reviewed = Store.Transfer(operationID: UUID(), account: owner, evidence: evidence, local: snapshot, remote: agreed,
+                                      desired: agreed.fields, linkRevision: 2, checkedAtMs: time + 7)
+        _ = try store.captureTransfer(reviewed, fingerprint: fingerprint)
+        _ = try store.recordLocal(reviewed, after: snapshot, status: nil)
+        _ = try store.confirmTransfer(reviewed, observedLocal: snapshot, observedRemote: agreed, observedAtMs: time + 7, advanceLink: true)
+        let linkedAgain = try store.link(localID)!
+        precondition(linkedAgain.revision == 3 && linkedAgain.check == nil)
+        let beforeUnlink = try store.observe(linkedAgain, viewingAs: owner, result: .available(agreed), at: time + 8)
+        _ = try store.detach(operationID: UUID(), fingerprint: fingerprint, viewingAs: owner, occurrenceID: localID, expectedRevision: 3)
+        let detached = try store.link(localID)!
+        precondition(detached.state == .detached && detached.check == nil)
+        try rejects(Rejection.stalePreview) {
+            _ = try store.observe(beforeUnlink, viewingAs: owner, result: .available(differing), at: time + 9)
+        }
+
+        _ = try store.attach(operationID: UUID(), fingerprint: fingerprint, viewingAs: owner, occurrenceID: localID,
+                             source: source, origin: .imported, expectedRevision: 4, calendarName: "Owned",
+                             baseline: baseline, observedAtMs: time + 10)
+        let beforeLoss = try store.link(localID)!
+        let unsent = Store.Transfer(operationID: UUID(), account: owner, evidence: evidence, local: snapshot, remote: differing,
+                                    desired: agreed.fields, linkRevision: beforeLoss.revision, checkedAtMs: time + 10)
+        _ = try store.captureTransfer(unsent, fingerprint: fingerprint)
+        let lost = try store.observe(beforeLoss, viewingAs: owner, result: .unavailable("NOT_OWNER"), at: time + 11)
+        precondition(lost.revision == beforeLoss.revision + 1)
+        try rejects(Rejection.stalePreview) { try store.requireTransferAuthority(unsent) }
+        try store.redactPurged([localID])
+        let purged = try store.link(localID)!
+        precondition(purged.state == .detached && purged.check == nil && purged.baseline == nil)
     }
 
     private static func observation(_ evidence: Store.Link.Evidence, title: String, notes: String, etag: String = #""reviewed""#)

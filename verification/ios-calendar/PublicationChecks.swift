@@ -310,8 +310,14 @@ enum PublicationChecks {
         let saved = try store.link(occurrenceID)
         precondition(linked.phase == .confirmed && !linked.localApplied && !linked.remoteAttempted
                      && saved?.baseline?.title == snapshot.fields.title)
+        let verified = try await manualStatusChecks(runtime, fixture: fixture, record: saved!, connectionRevision: revision)
+        precondition(local.snapshot == snapshot)
         let detached = try runtime.unlink(operationID: UUID(), occurrenceID: occurrenceID, expectedConnectionRevision: revision,
-                                          expectedLinkRevision: linked.resultLinkRevision!)
+                                          expectedLinkRevision: verified.revision)
+        do {
+            _ = try await runtime.check(occurrenceID, expectedConnectionRevision: revision, expectedLinkRevision: detached.revision)
+            preconditionFailure("A detached link cannot be checked as an active relationship")
+        } catch Runtime.Link.Failure.ineligible {}
         let replay = try await runtime.resolve(operationID: operation, reviewID: review.id,
                                                expectedConnectionRevision: revision, choices: [:], updating: false)
         let afterReplay = try store.link(occurrenceID)
@@ -329,6 +335,48 @@ enum PublicationChecks {
                                                   expectedConnectionRevision: revision, choices: [.title: .remilo])
             preconditionFailure("A divergent review cannot be attached as an agreement")
         } catch Runtime.Link.Failure.resolutionRequired {}
+    }
+
+    @MainActor
+    private static func manualStatusChecks(
+        _ runtime: RemiloIOSGoogleCalendarManualLinkRuntime, fixture: Fixture,
+        record: RemiloIOSGoogleCalendarManualLinkStore.Record, connectionRevision: Int
+    ) async throws -> RemiloIOSGoogleCalendarManualLinkStore.Record {
+        typealias Runtime = RemiloIOSGoogleCalendarManualLinkRuntime
+        let id = record.occurrenceID
+        let first = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: record.revision)
+        precondition(first.revision == record.revision && first.check?.availability == .available && first.check?.remoteDiffers == false)
+
+        try await fixture.respondToManualRead(.edited)
+        let edited = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: first.revision)
+        precondition(edited.baseline == record.baseline && edited.check?.remoteDiffers == true)
+        try await fixture.respondToManualRead(.failed)
+        let failed = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: edited.revision)
+        precondition(failed.check?.errorCode == "RETRY" && failed.check?.observedAtMs == edited.check?.observedAtMs)
+        precondition(failed.check?.availability == .available && failed.check?.remoteDiffers == true)
+
+        try await fixture.respondToManualRead(.missing)
+        let missing = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: failed.revision)
+        precondition(missing.revision == record.revision + 1 && missing.check?.availability == .unavailable)
+        precondition(missing.check?.availabilityReason == "REMOTE_UNAVAILABLE" && missing.check?.requiresReview == true)
+        do {
+            _ = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: record.revision)
+            preconditionFailure("The suspended link requires the new link revision")
+        } catch Runtime.Link.Failure.stalePreview {}
+
+        try await fixture.respondToManualRead(.deleted)
+        let deleted = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: missing.revision)
+        precondition(deleted.revision == missing.revision && deleted.check?.availability == .deleted)
+        precondition(deleted.check?.availabilityReason == "REMOTE_DELETED" && deleted.check?.requiresReview == true)
+        try await fixture.respondToManualRead(nil)
+        let restored = try await runtime.check(id, expectedConnectionRevision: connectionRevision, expectedLinkRevision: deleted.revision)
+        precondition(restored.check?.availability == .available && restored.check?.requiresReview == true)
+        let review = try await runtime.preview(id, expectedConnectionRevision: connectionRevision)
+        let confirmed = try await runtime.resolve(operationID: UUID(), reviewID: review.id,
+                                                   expectedConnectionRevision: connectionRevision, choices: [:], updating: true)
+        let linked = try runtime.links(expectedConnectionRevision: connectionRevision).first(where: { $0.occurrenceID == id })!
+        precondition(confirmed.phase == .confirmed && linked.revision == restored.revision + 1 && linked.check == nil)
+        return linked
     }
 
     @MainActor
@@ -488,11 +536,15 @@ enum PublicationChecks {
             case duplicate, uncertainButCreated, missing, existingEdited, foreign, removed, stalePatch, uncertainPatch
             case schedulePatch, changedCalendarZone, manualTransfer
         }
+        enum ManualRead {
+            case edited, failed, missing, deleted
+        }
         private let scenario: Scenario
         private let request: Publication.Request
         private var sent = false
         private var result: Data?
         private var pendingManualResult: Data?
+        private var manualRead: HTTP.Response?
         private(set) var writes = 0
 
         init(_ scenario: Scenario, request: Publication.Request) {
@@ -529,6 +581,23 @@ enum PublicationChecks {
             result = pendingManualResult
         }
 
+        func respondToManualRead(_ mode: ManualRead?) throws {
+            switch mode {
+            case nil:
+                manualRead = nil
+            case .edited:
+                let event = try Self.remote(request: request, edited: true)
+                manualRead = .init(status: 200, body: event.json)
+            case .failed:
+                manualRead = .init(status: 503, body: Data())
+            case .missing:
+                manualRead = .init(status: 404, body: Data())
+            case .deleted:
+                let cancelled = ["id": request.eventID, "status": "cancelled"]
+                manualRead = .init(status: 200, body: try JSONSerialization.data(withJSONObject: cancelled))
+            }
+        }
+
         func send(_ wire: URLRequest) throws -> HTTP.Response {
             let url = wire.url!
             precondition(url.absoluteString.contains("owned%2Fid%40example.test"))
@@ -539,6 +608,7 @@ enum PublicationChecks {
             }
             if wire.httpMethod == nil || wire.httpMethod == "GET" {
                 precondition(url.path.hasSuffix(request.eventID))
+                if let manualRead { return manualRead }
                 if let result { return HTTP.Response(status: 200, body: result) }
                 switch scenario {
                 case .existingEdited, .foreign, .stalePatch, .uncertainPatch, .schedulePatch:

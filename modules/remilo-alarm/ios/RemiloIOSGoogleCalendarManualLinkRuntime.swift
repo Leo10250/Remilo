@@ -16,6 +16,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
 
     enum Checkpoint: Sendable {
         case agreement(Store.Receipt)
+        case observation(Store.Record)
         case transfer(Store.Operation)
         case send(Writer.Permission)
     }
@@ -61,6 +62,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
     private let now: @Sendable () -> Int64
     private var reviews: [Link.Review] = []
     private var running = Set<UUID>()
+    private var checkingLinks = Set<String>()
 
     init(connection: Connection, publication: Publication, imports: ImportJournal, store: Store,
          local: LocalAuthority, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
@@ -116,6 +118,31 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             _ = try existingLink(occurrenceID, evidence: evidence)
             return try local.read(occurrenceID) != nil
         } catch Link.Failure.ineligible { return false }
+    }
+
+    func check(_ occurrenceID: String, expectedConnectionRevision: Int, expectedLinkRevision: Int) async throws -> Store.Record {
+        let account = try viewer(expectedConnectionRevision)
+        guard let record = try store.link(occurrenceID), record.source.belongs(to: account),
+              record.state == .linked, try local.read(occurrenceID) != nil else {
+            throw Link.Failure.ineligible
+        }
+        guard record.revision == expectedLinkRevision else { throw Link.Failure.stalePreview }
+        guard checkingLinks.insert(occurrenceID).inserted else { throw Store.Rejection.operationPending }
+        defer { checkingLinks.remove(occurrenceID) }
+
+        let attemptedAt = now()
+        let evidence = try await resolveEvidence(occurrenceID, account: account)
+        guard evidence.source == record.source, evidence.origin == record.origin else { throw Link.Failure.stalePreview }
+        let result = try await inspectLink(evidence, account: account)
+        try Task.checkCancellation()
+        guard let snapshot = try local.read(occurrenceID) else { throw Link.Failure.stalePreview }
+        let checkpoint = try await local.permit(snapshot) { [self] in
+            try Task.checkCancellation()
+            guard try viewer(expectedConnectionRevision) == account else { throw Failure.staleConnection }
+            return .observation(try store.observe(record, viewingAs: account, result: result, at: attemptedAt))
+        }
+        guard case .observation(let observed) = checkpoint else { throw Failure.invalidResponse }
+        return observed
     }
 
     func confirmAgreement(operationID: UUID, reviewID: UUID, expectedConnectionRevision: Int,
@@ -355,6 +382,32 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
 
     private func observe(_ evidence: Link.Evidence, account: Account) async throws -> Link.Observation {
         try await connection.observeManualLink(evidence, account: account, canRead: canUseForeground)
+    }
+
+    private func inspectLink(_ evidence: Link.Evidence, account: Account) async throws -> Store.CheckResult {
+        do {
+            return .available(try await observe(evidence, account: account))
+        } catch let failure as Link.Failure {
+            switch failure {
+            case .remoteRemoved: return .deleted("REMOTE_DELETED")
+            case .foreignIdentity, .unsupported: return .unavailable(failure.rawValue)
+            default: throw failure
+            }
+        } catch let failure as Failure {
+            switch failure {
+            case .remoteUnavailable, .notFound, .notOwner, .forbidden:
+                return .unavailable(failure.rawValue)
+            case .auth, .needsAccess, .network, .retry:
+                return .failed(failure.rawValue)
+            case .budget:
+                return .failed(Failure.retry.rawValue)
+            case .invalidResponse, .responseLimit, .badRequest, .apiError:
+                return .failed(Failure.apiError.rawValue)
+            default: throw failure
+            }
+        } catch is Link.Event.Reason {
+            return .failed(Failure.apiError.rawValue)
+        }
     }
 
     private func requireLive(_ transfer: Link.Transfer) throws {

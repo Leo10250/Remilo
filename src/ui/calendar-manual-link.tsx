@@ -14,7 +14,8 @@ import {
   manualCalendarNeedsWrite,
   resolvedCalendarFields,
 } from '../domain/calendar-link';
-import { calendarSummary, currentCalendarOperations } from '../domain/calendar-presentation';
+import { calendarCheckFailure, currentCalendarOperations } from '../domain/calendar-presentation';
+import { calendarLinkStatus } from '../domain/calendar-ux';
 import { secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { useLocalizedState, useTranslation } from '../localization/react';
 import { CalendarOperationStatus, isUnconfirmedManualCalendarSend } from './calendar-linked';
@@ -62,6 +63,7 @@ export function IOSCalendarManualLink({
   const ready = calendarReadAccess(current);
   const link = links.data?.find((entry) => entry.occurrenceId === id);
   const linked = !!link && link.state !== 'Detached';
+  const canCheck = !review && ready && links.isSuccess && linked && !!link.source && !link.readOnly;
   const jobs = useQuery({
     queryKey: ['calendar', 'operations', revision],
     queryFn: () => engine().getCalendarOperations(revision!),
@@ -91,8 +93,13 @@ export function IOSCalendarManualLink({
   }>();
   const [captured, setCaptured] = useState<CalendarCommand>();
   const [choices, setChoices] = useState<{ previewId: string; selections: CalendarSelections }>();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<'change' | 'authorize' | 'check'>();
   const [error, setError] = useLocalizedState('');
+  const [checkResult, setCheckResult] = useState<{
+    connectionRevision: number;
+    linkRevision: number;
+    attemptedAtMs: number | null;
+  }>();
   const running = useRef(false);
   const unlink = useCalendarAction();
   const shown = review
@@ -174,25 +181,30 @@ export function IOSCalendarManualLink({
           : {}),
       },
     });
-  const working = busy || unlink.busy;
-  useAppearanceHold(working || unlink.unknown);
-  usePreventRemove(working || unlink.unknown, () =>
-    confirm(t('m_0c849c393ca3'), t('m_e71fd74c140f')),
-  );
+  const working = !!busy || unlink.busy;
+  const guarded = busy === 'change' || busy === 'authorize' || unlink.busy || unlink.unknown;
+  useAppearanceHold(guarded);
+  usePreventRemove(guarded, () => confirm(t('m_0c849c393ca3'), t('m_e71fd74c140f')));
 
-  const run = async (action: () => Promise<void>, authorization = false) => {
+  const run = async (action: () => Promise<void>, kind: typeof busy = 'change') => {
     if (running.current || unlink.busy) return;
     running.current = true;
-    setBusy(true);
+    setBusy(kind);
     setError('');
     try {
       await action();
     } catch (e) {
-      setError(authorization ? calendarAuthorizationError(e) : iosManualCalendarError(e));
+      setError(kind === 'authorize' ? calendarAuthorizationError(e) : iosManualCalendarError(e));
     } finally {
-      await client.invalidateQueries();
+      if (kind === 'check') {
+        await Promise.all([
+          client.invalidateQueries({ queryKey: ['calendar', 'connection'], exact: true }),
+          client.invalidateQueries({ queryKey: ['calendar', 'links', revision], exact: true }),
+          client.invalidateQueries({ queryKey: ['calendar', 'operations', revision], exact: true }),
+        ]);
+      } else await client.invalidateQueries();
       running.current = false;
-      setBusy(false);
+      setBusy(undefined);
     }
   };
   const authorize = (write: boolean) => {
@@ -203,7 +215,19 @@ export function IOSCalendarManualLink({
         write ? 'authorizeOwnedCalendarWrites' : 'reauthorizeCurrentAccount',
       );
       await rememberCalendarConnection(client, next);
-    }, true);
+    }, 'authorize');
+  };
+  const check = () => {
+    if (!canCheck || revision === undefined || unlink.unknown) return;
+    void run(async () => {
+      setCheckResult(undefined);
+      const next = await engine().checkCalendarLink(id, revision, link.revision);
+      setCheckResult({
+        connectionRevision: revision,
+        linkRevision: next.revision,
+        attemptedAtMs: next.lastCheckAttemptAtMs,
+      });
+    }, 'check');
   };
   const apply = () => {
     if (!ready || revision === undefined || !reviewed || reviewed.connectionRevision !== revision)
@@ -286,6 +310,24 @@ export function IOSCalendarManualLink({
     preview.isLoading;
   const reviewForm = review && (!shown || canReadFresh || retryFreshCapture) && reviewed?.local;
   const retryUnknown = !!captured && (!shown || retryFreshCapture);
+  const linkStatus = link ? calendarLinkStatus(link, pending) : null;
+  const observedAtMs = link?.observedAtMs ?? link?.checkedAtMs;
+  const checkFeedback =
+    !working &&
+    links.isSuccess &&
+    link &&
+    !link.lastCheckErrorCode &&
+    checkResult?.connectionRevision === revision &&
+    checkResult?.linkRevision === link.revision &&
+    checkResult?.attemptedAtMs === link.lastCheckAttemptAtMs
+      ? t(
+          link.availability !== 'Available' || link.requiresReview
+            ? 'm_85913f35260d'
+            : link.remoteDiffers || link.differs
+              ? 'm_593d897121c1'
+              : 'm_22064353be47',
+        )
+      : null;
   const statusJobs = review
     ? shown && !reviewForm
       ? [shown]
@@ -333,7 +375,12 @@ export function IOSCalendarManualLink({
       }
     >
       <QueryState loading={loading} />
-      {busy && <ActionFeedback loading message={t('m_5474eef8d0f1')} />}
+      {busy && (
+        <ActionFeedback
+          loading
+          message={t(busy === 'check' ? 'm_965b072ffff9' : 'm_5474eef8d0f1')}
+        />
+      )}
       {!manual && <Copy muted>{t('ios_calendar_unavailable')}</Copy>}
       {manual && !loading && !current?.connected && !connection.error && (
         <Button label={t('m_3b9b76bc9d82')} variant="secondary" onPress={openSettings} />
@@ -364,19 +411,44 @@ export function IOSCalendarManualLink({
         !problem &&
         !shown && <Copy muted>{t('ios_calendar_manual_unavailable')}</Copy>}
       {!review && link && (
-        <ConnectedGroup title={t('m_0e570ca6fabe')}>
-          <ReadOnlyRow
-            key="status"
-            label={t('m_b074310e911f')}
-            value={calendarSummary(link, undefined, pending)}
-          />
+        <ConnectedGroup
+          title={t('m_0e570ca6fabe')}
+          footer={
+            <>
+              {!!linkStatus?.description && <Copy muted>{linkStatus.description}</Copy>}
+              {!!link.lastCheckErrorCode && (
+                <ActionFeedback
+                  message={calendarCheckFailure(link.lastCheckErrorCode)}
+                  tone="warning"
+                />
+              )}
+              {checkFeedback && <ActionFeedback message={checkFeedback} />}
+              {canCheck && (
+                <Button
+                  label={t('m_5da755d1690f')}
+                  variant="secondary"
+                  disabled={working || unlink.unknown}
+                  onPress={check}
+                />
+              )}
+            </>
+          }
+        >
+          <ReadOnlyRow key="status" label={t('m_b074310e911f')} value={linkStatus?.title} />
           <ReadOnlyRow key="calendar" label={t('m_d5d0a30b517e')} value={link.calendarName} />
           <ReadOnlyRow key="account" label={t('m_7da2bcb6bb6b')} value={link.accountEmail} />
-          {link.checkedAtMs !== null && (
+          {observedAtMs != null && (
             <ReadOnlyRow
-              key="checked"
-              label={t('m_0efd92a33590')}
-              value={scheduleDateTime(link.checkedAtMs)}
+              key="observed"
+              label={t('m_3ca2b1323cd4')}
+              value={scheduleDateTime(observedAtMs)}
+            />
+          )}
+          {link.lastCheckAttemptAtMs != null && (
+            <ReadOnlyRow
+              key="check-attempt"
+              label={t('m_57bbbcf15421')}
+              value={scheduleDateTime(link.lastCheckAttemptAtMs)}
             />
           )}
         </ConnectedGroup>
@@ -384,9 +456,9 @@ export function IOSCalendarManualLink({
       {(!review || reviewForm) && manual && (
         <Copy muted>{t('ios_calendar_manual_link_detail')}</Copy>
       )}
-      {!review && candidate.eligible && !pending.length && (
+      {!review && candidate.eligible && !link?.readOnly && !pending.length && (
         <Button
-          label={t(linked ? 'm_6a47708f4e14' : link ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
+          label={t(linked ? 'm_9e636d2d17ec' : link ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
           variant="secondary"
           disabled={working || unlink.unknown}
           onPress={() => openReview()}

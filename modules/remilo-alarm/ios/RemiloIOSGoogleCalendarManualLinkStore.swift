@@ -24,6 +24,27 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
 
     enum LinkState: String, Codable, Equatable, Sendable { case linked, detached }
 
+    enum Availability: String, Codable, Equatable, Sendable {
+        case available = "Available", unavailable = "Unavailable", deleted = "Deleted"
+    }
+
+    struct Check: Codable, Equatable, Sendable {
+        let attemptedAtMs: Int64
+        let observedAtMs: Int64?
+        let availability: Availability?
+        let availabilityReason: String
+        let remoteDiffers: Bool?
+        let errorCode: String
+        let requiresReview: Bool
+    }
+
+    enum CheckResult: Sendable {
+        case available(Link.Observation)
+        case unavailable(String)
+        case deleted(String)
+        case failed(String)
+    }
+
     struct Record: Codable, Equatable, Sendable {
         let occurrenceID: String
         let source: Source
@@ -33,6 +54,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let baseline: Baseline?
         let calendarName: String
         let observedAtMs: Int64?
+        fileprivate(set) var check: Check? = nil
     }
 
     struct Receipt: Codable, Equatable, Sendable {
@@ -139,6 +161,49 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
 
     func links(viewingAs account: Account) throws -> [Record] {
         try read().links.values.filter { Self.belongs($0.source, to: account) }.sorted { $0.occurrenceID < $1.occurrenceID }
+    }
+
+    /// An explicit check records an observation, never new authority or a baseline.
+    /// Compare the captured record after I/O. Wall-clock timestamps are display metadata.
+    func observe(_ record: Record, viewingAs account: Account, result: CheckResult, at time: Int64) throws -> Record {
+        guard Self.epoch.contains(time) else { throw Failure.invalidInput }
+        guard record.source.belongs(to: account) else { throw Failure.accountChanged }
+        var state = try read()
+        guard let current = state.links[record.occurrenceID], current.source.belongs(to: account) else { throw Failure.notFound }
+        guard current == record else { throw Rejection.stalePreview }
+        guard current.state == .linked else { throw Rejection.ineligible }
+        let previous = current.check
+        let requiresReview = previous?.requiresReview == true
+        let check: Check
+        switch result {
+        case .available(let observed):
+            guard observed.source == current.source else { throw Link.Failure.staleRemote }
+            check = Check(attemptedAtMs: time, observedAtMs: time, availability: .available, availabilityReason: "",
+                          remoteDiffers: Self.remoteDiffers(observed.fields, baseline: current.baseline), errorCode: "",
+                          requiresReview: requiresReview)
+        case .unavailable(let reason):
+            check = Check(attemptedAtMs: time, observedAtMs: time, availability: .unavailable,
+                          availabilityReason: Self.checkCode(reason, fallback: "REMOTE_UNAVAILABLE"), remoteDiffers: nil,
+                          errorCode: "", requiresReview: true)
+        case .deleted(let reason):
+            check = Check(attemptedAtMs: time, observedAtMs: time, availability: .deleted,
+                          availabilityReason: Self.checkCode(reason, fallback: "REMOTE_DELETED"), remoteDiffers: nil,
+                          errorCode: "", requiresReview: true)
+        case .failed(let code):
+            check = Check(attemptedAtMs: time, observedAtMs: previous?.observedAtMs, availability: previous?.availability,
+                          availabilityReason: previous?.availabilityReason ?? "", remoteDiffers: previous?.remoteDiffers,
+                          errorCode: Self.checkCode(code, fallback: "API_ERROR"), requiresReview: requiresReview)
+        }
+        let fence = check.requiresReview && !requiresReview
+        guard !fence || current.revision < Self.maximumRevision else { throw RemiloIOSGoogleCalendarStore.Failure.invalidState }
+        let updated = Record(occurrenceID: current.occurrenceID, source: current.source, origin: current.origin,
+                             revision: current.revision + (fence ? 1 : 0), state: .linked, baseline: current.baseline,
+                             calendarName: current.calendarName, observedAtMs: current.observedAtMs, check: check)
+        if updated != current {
+            state.links[current.occurrenceID] = updated
+            try write(state)
+        }
+        return updated
     }
 
     func reservedEvents(viewingAs account: Account, calendarID: String) throws -> Set<String> {
@@ -505,6 +570,40 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         return true
     }
 
+    private static func remoteDiffers(_ fields: Link.Event.Fields, baseline: Baseline?) -> Bool? {
+        guard let baseline else { return nil }
+        let changes = [
+            baseline.title.map { $0 != fields.title },
+            baseline.notes.map { $0 != fields.notes },
+            baseline.schedule.map { $0 != fields.schedule },
+        ].compactMap { $0 }
+        return changes.isEmpty ? nil : changes.contains(true)
+    }
+
+    private static func checkCode(_ code: String, fallback: String) -> String {
+        if Failure(rawValue: code) != nil || Link.Failure(rawValue: code) != nil || Link.Event.Reason(rawValue: code) != nil
+            || code == "REMOTE_DELETED" { return code }
+        return fallback
+    }
+
+    private static func validCheck(_ record: Record) -> Bool {
+        guard let check = record.check else { return true }
+        guard record.state == .linked, epoch.contains(check.attemptedAtMs),
+              check.errorCode.isEmpty || checkCode(check.errorCode, fallback: "") == check.errorCode else { return false }
+        if let observed = check.observedAtMs, !epoch.contains(observed) { return false }
+        switch check.availability {
+        case .available:
+            return check.observedAtMs != nil && check.availabilityReason.isEmpty
+        case .unavailable, .deleted:
+            return check.observedAtMs != nil && !check.availabilityReason.isEmpty
+                && checkCode(check.availabilityReason, fallback: "") == check.availabilityReason
+                && check.remoteDiffers == nil && check.requiresReview
+        case nil:
+            return check.observedAtMs == nil && check.availabilityReason.isEmpty && check.remoteDiffers == nil
+                && !check.requiresReview && !check.errorCode.isEmpty
+        }
+    }
+
     private static func valid(_ transfer: Transfer) -> Bool {
         let source = transfer.evidence.source
         let version = transfer.local.version
@@ -559,7 +658,8 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                 }
                 guard id == record.occurrenceID, Self.validID(id, maximum: 200),
                       (1...Self.maximumRevision).contains(record.revision), Self.valid(record.source), Self.valid(record.baseline),
-                      record.calendarName.utf8.count <= 4_096, observationValid, reservations.insert(Reservation(record.source)).inserted else {
+                      record.calendarName.utf8.count <= 4_096, observationValid, Self.validCheck(record),
+                      reservations.insert(Reservation(record.source)).inserted else {
                     throw RemiloIOSGoogleCalendarStore.Failure.invalidState
                 }
             }

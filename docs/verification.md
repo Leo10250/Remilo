@@ -291,8 +291,15 @@ alert time. If a write result is interrupted, reconnect
 the same account with read access and check the result against the original
 event. If the outcome is still unconfirmed and the event has since changed,
 open a fresh review and confirm. Verify the old operation is cancelled and
-the new result reflects the reviewed event. Unlink and verify that the reminder
-and Google event remain.
+the new result reflects the reviewed event.
+
+Use Check for changes on a manual link after editing the Google event. Verify
+the saved check reports the difference while the Remilo reminder keeps its
+title and alert. Turn off network access and check again to verify the last
+observation stays visible. Delete the Google event and check that a confirmed
+deletion appears on Agenda and Details. If the same event is restored, check
+that the link still requires review. Unlink and verify that the reminder and
+restored Google event remain.
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

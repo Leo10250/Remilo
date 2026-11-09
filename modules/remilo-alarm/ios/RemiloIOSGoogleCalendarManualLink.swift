@@ -12,6 +12,7 @@ enum RemiloIOSGoogleCalendarManualLink {
     enum Failure: String, Error {
         case stalePreview = "STALE_PREVIEW"
         case staleRemote = "STALE_REMOTE"
+        case foreignIdentity = "FOREIGN_IDENTITY"
         case ineligible = "INELIGIBLE"
         case remoteRemoved = "REMOTE_REMOVED"
         case unsupported = "UNSUPPORTED_CALENDAR_CHANGE"
@@ -74,7 +75,8 @@ enum RemiloIOSGoogleCalendarManualLink {
                 throw RemiloIOSGoogleCalendarFailure.remoteUnavailable
             }
             guard !event.cancelled else { throw Failure.remoteRemoved }
-            guard evidence.identifies(event), let etag = event.strongETag else { throw Failure.staleRemote }
+            guard evidence.identifies(event) else { throw Failure.foreignIdentity }
+            guard let etag = event.strongETag else { throw RemiloIOSGoogleCalendarFailure.invalidResponse }
             guard let object = (try? JSONSerialization.jsonObject(with: event.json)) as? [String: Any] else {
                 throw RemiloIOSGoogleCalendarFailure.invalidResponse
             }

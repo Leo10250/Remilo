@@ -74,6 +74,8 @@ export function iosManualCalendarError(error: unknown) {
     typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (code.includes('RINGING_DEFERRED')) return t('ios_calendar_manual_ringing');
   if (code.includes('REMOTE_REMOVED')) return t('m_136210e056b8');
+  if (code.includes('FOREIGN_IDENTITY') || code.includes('REMOTE_UNAVAILABLE'))
+    return t('m_9c2e96e2faec');
   if (code.includes('UNSUPPORTED_CALENDAR_CHANGE')) return t('m_9fbeface7dc1');
   return calendarError(error);
 }

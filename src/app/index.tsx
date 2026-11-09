@@ -95,6 +95,7 @@ import { CreationMenu } from '../ui/creation-menu';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
 import { calendarCancellation, calendarRowNotice } from '../domain/calendar-presentation';
+import { useCalendarLinks } from '../ui/calendar-links';
 import { CalendarAttentionCard } from '../ui/calendar-sync';
 import {
   ScrollChromeProvider,
@@ -303,11 +304,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     queryFn: () => engine().queryLists(),
     enabled: nativeAvailable,
   });
-  const calendarLinks = useQuery({
-    queryKey: ['calendar', 'links'],
-    queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable && !iosReminders,
-  });
+  const { links: calendarLinks } = useCalendarLinks();
   const calendarSummary = useQuery({
     queryKey: ['calendar', 'sync-summary'],
     queryFn: () => engine().getCalendarSyncSummary(),

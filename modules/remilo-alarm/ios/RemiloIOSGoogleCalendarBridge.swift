@@ -170,6 +170,22 @@ final class RemiloIOSGoogleCalendarBridge {
         return try Self.linkRuntime(runtime).links(expectedConnectionRevision: revision).map { try Self.link($0, connection: view) }
     }
 
+    func checkLink(_ id: String, expectedConnectionRevision: Double?, expectedLinkRevision: Double?) async throws -> [String: Any] {
+        try Self.validateOccurrenceID(id)
+        let revision = try Self.revision(expectedConnectionRevision)
+        let linkRevision = try Self.revision(expectedLinkRevision)
+        guard linkRevision > 0 else { throw Failure.invalidInput }
+        let runtime = try runtime()
+        let manual = try Self.linkRuntime(runtime)
+        let record = try await manual.check(id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision)
+        defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil) }
+        let view = try await runtime.view()
+        guard view.revision == revision, view.connected else { throw Failure.staleConnection }
+        let current = try manual.links(expectedConnectionRevision: revision).first { $0.occurrenceID == id }
+        guard current == record else { throw Link.Failure.stalePreview }
+        return try Self.link(record, connection: view)
+    }
+
     func previewLink(_ id: String, expectedRevision: Double?, superseding: String?) async throws -> [String: Any] {
         try Self.validateOccurrenceID(id)
         let revision = try Self.revision(expectedRevision)
@@ -485,13 +501,28 @@ final class RemiloIOSGoogleCalendarBridge {
                 record.baseline?.schedule.map { $0 != current.schedule } == true
         } ?? false
         let detached = record.state == .detached
+        let check = record.check
+        let requiresReview = check?.requiresReview == true
+        let checkError = check?.errorCode ?? ""
+        let errorCode = checkError == "ACCOUNT_CHANGED" ? "ACCOUNT_MISMATCH" : bridgeErrorCode(checkError)
+        let accessFailed = ["AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH"].contains(errorCode)
+        let state: String
+        if detached { state = "Detached" }
+        else if accessFailed { state = "NeedsAccess" }
+        else if requiresReview { state = "Suspended" }
+        else if !hasReadAccess(view) { state = "NeedsAccess" }
+        else { state = "Linked" }
+        let availability = check?.availability
+        let availabilityReason = check?.availabilityReason
         return [
             "occurrenceId": record.occurrenceID, "revision": record.revision, "calendarName": record.calendarName,
-            "state": detached ? "Detached" : (hasReadAccess(view) ? "Linked" : "NeedsAccess"), "syncMode": "Manual",
-            "syncStatus": "Confirmed", "accountEmail": view.email, "checkedAtMs": iosBridgeValue(record.observedAtMs),
-            "message": "", "htmlLink": "", "availability": detached ? "Unknown" : "Available", "availabilityReason": "",
-            "readOnly": local == nil, "differs": differs, "observedAtMs": iosBridgeValue(record.observedAtMs),
-            "lastCheckAttemptAtMs": NSNull(), "lastCheckErrorCode": "", "remoteDiffers": NSNull(), "requiresReview": false,
+            "state": state, "syncMode": "Manual", "syncStatus": !detached && requiresReview ? "Paused" : "Confirmed",
+            "accountEmail": view.email, "checkedAtMs": iosBridgeValue(check?.attemptedAtMs ?? record.observedAtMs),
+            "message": "", "htmlLink": "", "availability": availability?.rawValue ?? (detached ? "Unknown" : "Available"),
+            "availabilityReason": availabilityReason.map(bridgeErrorCode) ?? "", "readOnly": local == nil, "differs": differs,
+            "observedAtMs": iosBridgeValue(check?.observedAtMs ?? record.observedAtMs),
+            "lastCheckAttemptAtMs": iosBridgeValue(check?.attemptedAtMs), "lastCheckErrorCode": errorCode,
+            "remoteDiffers": iosBridgeValue(check?.remoteDiffers), "requiresReview": requiresReview,
             "source": ["calendarId": record.source.calendarID, "eventId": record.source.eventID, "expectedConnectionRevision": view.revision],
         ]
     }

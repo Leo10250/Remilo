@@ -25,6 +25,10 @@ update, and records a new baseline after both sides agree. After a send,
 recovery checks the original event without repeating the write. If the
 outcome stays unconfirmed and Google has a different event version, an
 explicitly confirmed fresh review can replace the outstanding operation.
+Check for changes reads the linked event and saves its availability and
+whether it differs from the baseline. An interrupted check preserves the
+last observation. If Google confirms the event was removed or the source
+becomes unavailable, the link stays suspended until an explicit review.
 Unlinking ends the relationship and leaves the reminder and Google event
 in place.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
