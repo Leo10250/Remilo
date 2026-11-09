@@ -11,7 +11,7 @@ import { t, ownedMessage, currentLanguage, type LocalizedMessage } from '../loca
 import { useTimeFormatting, useTimeDisplay } from './time-display';
 
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { SymbolView, unstable_getMaterialSymbolSourceAsync } from 'expo-symbols';
+import { SymbolView, unstable_getMaterialSymbolSourceAsync, type SFSymbol } from 'expo-symbols';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -157,6 +157,73 @@ export type IconName =
   | 'link_off'
   | 'open_in_new'
   | 'image';
+
+const iosSymbolNames = {
+  arrow_back: 'arrow.left',
+  settings: 'gearshape',
+  search: 'magnifyingglass',
+  filter_list: 'line.3.horizontal.decrease',
+  add: 'plus',
+  repeat: 'repeat',
+  more_vert: 'ellipsis',
+  close: 'xmark',
+  check: 'checkmark',
+  check_circle: 'checkmark.circle',
+  radio_button_unchecked: 'circle',
+  remove_circle_outline: 'minus.circle',
+  expand_more: 'chevron.down',
+  expand_less: 'chevron.up',
+  chevron_right: 'chevron.right',
+  alarm: 'alarm',
+  notifications: 'bell',
+  lock: 'lock',
+  volume_up: 'speaker.wave.2',
+  vibration: 'iphone.radiowaves.left.and.right',
+  snooze: 'zzz',
+  schedule: 'clock',
+  palette: 'paintpalette',
+  download: 'tray.and.arrow.down',
+  upload: 'tray.and.arrow.up',
+  delete: 'trash',
+  info: 'info.circle',
+  warning: 'exclamationmark.triangle',
+  error: 'exclamationmark.circle',
+  edit: 'pencil',
+  content_copy: 'doc.on.doc',
+  pause: 'pause.fill',
+  play_arrow: 'play.fill',
+  event: 'calendar',
+  folder: 'folder',
+  notes: 'text.alignleft',
+  undo: 'arrow.uturn.backward',
+  refresh: 'arrow.clockwise',
+  history: 'clock.arrow.circlepath',
+  stop: 'stop.fill',
+  menu: 'line.3.horizontal',
+  language: 'globe',
+  checklist: 'checklist',
+  format_list_numbered: 'list.number',
+  restore: 'arrow.counterclockwise',
+  delete_forever: 'trash.fill',
+  task_alt: 'checkmark.circle.fill',
+  cancel: 'xmark.circle',
+  alarm_off: 'bell.slash',
+  hourglass_empty: 'hourglass',
+  block: 'nosign',
+  notification_important: 'bell.badge',
+  medication: 'pills',
+  eco: 'leaf',
+  fitness_center: 'dumbbell',
+  restaurant: 'fork.knife',
+  celebration: 'party.popper',
+  book: 'book',
+  bedtime: 'moon.stars',
+  home: 'house',
+  link_off: 'personalhotspot.slash',
+  open_in_new: 'arrow.up.right.square',
+  image: 'photo',
+} satisfies Record<IconName, SFSymbol>;
+
 export function Icon({
   name,
   color,
@@ -180,7 +247,7 @@ export function Icon({
         <AndroidSymbol name={name} color={color ?? colors.muted} size={size} />
       ) : (
         <SymbolView
-          name={{ android: name, web: name }}
+          name={{ ios: iosSymbolNames[name], android: name, web: name }}
           size={size}
           tintColor={color ?? colors.muted}
           style={{ width: size, height: size }}
