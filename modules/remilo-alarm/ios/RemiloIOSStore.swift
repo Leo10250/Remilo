@@ -25,6 +25,8 @@ struct IOSReminder: Codable {
     var completed = false
     var deleted = false
     var revision = 1
+    // The last authored revision that changed one-time Calendar authority.
+    var calendarLifecycleRevision: Int? = nil
     var generation = 0
     var deliveryState = "NoAlert"
     var nextAlertMs: Int64?
@@ -37,6 +39,7 @@ struct IOSReminder: Codable {
     var vibration: Bool? = nil
 
     var active: Bool { !completed && !deleted && skipped != true }
+    var isCalendarOneTime: Bool { !isTest && segmentID == nil && routineID == nil }
     var agendaAtMs: Int64 { mode == "None" ? eventStartMs : (nextAlertMs ?? alarmAtMs) }
     var overdueAtMs: Int64 {
         if mode != "None" { return alarmAtMs }

@@ -53,7 +53,7 @@ import {
   useIOSCalendarManualLink,
 } from '../ui/native';
 import { CalendarPublicationStatus, useCalendarPublications } from '../ui/calendar-publication';
-import { CalendarOperationStatus } from '../ui/calendar-linked';
+import { CalendarOperationStatus, isAutomaticCalendarOperation } from '../ui/calendar-linked';
 import {
   calendarAuthorizationError,
   calendarReadAccess,
@@ -313,7 +313,7 @@ function LocalCalendarSettings() {
         jobs.data
           ?.filter(
             (job) =>
-              isManualCalendarOperation(job) &&
+              (isManualCalendarOperation(job) || isAutomaticCalendarOperation(job)) &&
               ['Waiting', 'Sending', 'Unconfirmed', 'NeedsAccess', 'Blocked'].includes(job.state),
           )
           .map((job) => (

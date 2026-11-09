@@ -18,7 +18,11 @@ import { calendarCheckFailure, currentCalendarOperations } from '../domain/calen
 import { calendarLinkStatus } from '../domain/calendar-ux';
 import { secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { useLocalizedState, useTranslation } from '../localization/react';
-import { CalendarOperationStatus, isUnconfirmedManualCalendarSend } from './calendar-linked';
+import {
+  CalendarOperationStatus,
+  isAutomaticCalendarOperation,
+  isUnconfirmedManualCalendarSend,
+} from './calendar-linked';
 import { useCalendarLinks, useIOSCalendarLinkCandidate } from './calendar-links';
 import {
   calendarAuthorizationError,
@@ -26,7 +30,7 @@ import {
   rememberCalendarConnection,
 } from './calendar-local-import';
 import { CalendarResolutionFields } from './calendar-resolution-fields';
-import { useCalendarAction } from './calendar-sync';
+import { CalendarOperationProgress, useCalendarAction, useCalendarSync } from './calendar-sync';
 import {
   ActionFeedback,
   ActionPair,
@@ -39,9 +43,20 @@ import {
   ReadOnlyRow,
 } from './components';
 import { useAppearanceConfirmation } from './confirmation';
-import { engine } from './native';
+import { engine, useIOSCalendarAutomaticLink } from './native';
 import { useAppearanceHold } from './theme';
 import { useTimeFormatting } from './time-display';
+
+type LinkReviewCommand = Extract<
+  CalendarCommand,
+  {
+    kind:
+      | 'ImportCalendarEvent'
+      | 'EnableCalendarLink'
+      | 'ApplyCalendarResolution'
+      | 'EnableAutomaticCalendarSync';
+  }
+> & { expectedConnectionRevision: number };
 
 export function IOSCalendarManualLink({
   id,
@@ -58,28 +73,47 @@ export function IOSCalendarManualLink({
   const confirm = useAppearanceConfirmation();
   const { scheduleDateTime } = useTimeFormatting();
   const { manual, current, connection, links } = useCalendarLinks();
+  const automatic = useIOSCalendarAutomaticLink();
   const candidate = useIOSCalendarLinkCandidate(id, current);
   const revision = current?.revision;
   const ready = calendarReadAccess(current);
   const link = links.data?.find((entry) => entry.occurrenceId === id);
   const linked = !!link && link.state !== 'Detached';
+  const automaticConsent =
+    automatic && linked && (link.syncMode === 'Automatic' || link.syncMode === 'Pending');
+  const activationSource =
+    automatic &&
+    linked &&
+    !link.readOnly &&
+    !!link.source &&
+    link.syncMode !== 'Pending' &&
+    (link.availability === 'Available' || link.availability === 'Unknown');
   const canCheck = !review && ready && links.isSuccess && linked && !!link.source && !link.readOnly;
   const jobs = useQuery({
     queryKey: ['calendar', 'operations', revision],
     queryFn: () => engine().getCalendarOperations(revision!),
     enabled: manual && !!current?.connected,
   });
-  const manualJobs = !jobs.error
-    ? (jobs.data ?? []).filter((job) => job.occurrenceId === id && isManualCalendarOperation(job))
+  const linkJobs = !jobs.error
+    ? (jobs.data ?? []).filter(
+        (job) =>
+          job.occurrenceId === id &&
+          (isManualCalendarOperation(job) || (automatic && isAutomaticCalendarOperation(job))),
+      )
     : [];
-  const pending = currentCalendarOperations(manualJobs);
-  const { reviewSentId, reviewSentRevision } = useLocalSearchParams<{
+  const pending = currentCalendarOperations(linkJobs);
+  const { activateLink, reviewSentId, reviewSentRevision } = useLocalSearchParams<{
+    activateLink?: string;
     reviewSentId?: string;
     reviewSentRevision?: string;
   }>();
+  const activating = review && activateLink === 'true';
   const [freshReview, setFreshReview] = useState<{ id: string; revision: number } | undefined>(
     () =>
-      review && typeof reviewSentId === 'string' && typeof reviewSentRevision === 'string'
+      review &&
+      !activating &&
+      typeof reviewSentId === 'string' &&
+      typeof reviewSentRevision === 'string'
         ? { id: reviewSentId.toLowerCase(), revision: Number(reviewSentRevision) }
         : undefined,
   );
@@ -91,7 +125,7 @@ export function IOSCalendarManualLink({
     revision: number;
     job: CalendarLinkedOperation;
   }>();
-  const [captured, setCaptured] = useState<CalendarCommand>();
+  const [captured, setCaptured] = useState<LinkReviewCommand>();
   const [choices, setChoices] = useState<{ previewId: string; selections: CalendarSelections }>();
   const [busy, setBusy] = useState<'change' | 'authorize' | 'check'>();
   const [error, setError] = useLocalizedState('');
@@ -102,14 +136,30 @@ export function IOSCalendarManualLink({
   }>();
   const running = useRef(false);
   const unlink = useCalendarAction();
+  const disableAutomatic = useCalendarAction('disable-automatic');
+  const syncScope =
+    automatic && !review && link && revision !== undefined
+      ? {
+          connectionRevision: revision,
+          linkRevision: link.revision,
+          activationRevision: link.activationRevision ?? 0,
+        }
+      : undefined;
+  const syncRequest = useCalendarSync(
+    { kind: 'Association', occurrenceId: id },
+    syncScope ? link?.syncRequestId : undefined,
+    syncScope,
+  );
   const shown = review
-    ? (manualJobs.find((job) => job.operationId.toLowerCase() === operationId) ??
+    ? (linkJobs.find((job) => job.operationId.toLowerCase() === operationId) ??
       (lastResult?.revision === revision ? lastResult?.job : undefined) ??
-      manualJobs.find((job) => job.operationId.toLowerCase() === fresh?.id) ??
+      linkJobs.find((job) => job.operationId.toLowerCase() === fresh?.id) ??
       pending[0])
     : undefined;
   const canReview = ready && candidate.eligible && links.isSuccess && jobs.isSuccess;
+  const canLoadReview = canReview && (activating ? activationSource : !automaticConsent);
   const canReadFresh =
+    !activating &&
     !!shown &&
     shown.operationId.toLowerCase() === fresh?.id &&
     isUnconfirmedManualCalendarSend(shown);
@@ -120,30 +170,44 @@ export function IOSCalendarManualLink({
   const preview = useQuery({
     queryKey: [
       'calendar',
-      'manual-review',
+      activating ? 'activation-review' : 'manual-review',
       id,
       revision,
       fresh ? ['sent', fresh.id] : link?.revision,
       previewVersion,
     ],
-    queryFn: () =>
-      linked
+    queryFn: async () => {
+      if (activating) {
+        const activation = await engine().previewCalendarActivation(
+          [id],
+          revision!,
+          link!.revision,
+        );
+        const next = activation.items.find((item) => item.occurrenceId === id)?.preview;
+        if (!next?.activation || next.occurrenceId !== id || next.connectionRevision !== revision)
+          throw Object.assign(new Error(), { code: 'STALE_PREVIEW' });
+        return next;
+      }
+      return linked
         ? engine().previewCalendarUpdate(id, revision!, fresh?.id)
-        : engine().previewCalendarLink(id, revision!, fresh?.id),
-    enabled: review && canReview && !shown && !fresh,
-    retry: fresh ? false : undefined,
+        : engine().previewCalendarLink(id, revision!, fresh?.id);
+    },
+    enabled: review && canLoadReview && !shown && !fresh && !captured,
+    retry: activating || fresh ? false : undefined,
     // A preview stays fixed while the user chooses values. Refresh explicitly or on a new scope.
     staleTime: 'static',
     gcTime: 0,
   });
   const refetchPreview = preview.refetch;
   useEffect(() => {
-    if (!canReview || !canReadFresh || !fresh || requestedPreview.current === fresh) return;
+    if (!canLoadReview || !canReadFresh || !fresh || requestedPreview.current === fresh) return;
     requestedPreview.current = fresh;
     void refetchPreview();
-  }, [canReview, canReadFresh, fresh, refetchPreview]);
+  }, [canLoadReview, canReadFresh, fresh, refetchPreview]);
   const reviewed =
-    canReview && !preview.error && preview.data?.connectionRevision === revision
+    (canLoadReview || (activating && captured)) &&
+    !preview.error &&
+    preview.data?.connectionRevision === revision
       ? preview.data
       : undefined;
   const selections =
@@ -155,9 +219,8 @@ export function IOSCalendarManualLink({
     : null;
   const needsWrite =
     !!reviewed &&
-    !!resolved &&
-    manualCalendarNeedsWrite(resolved, reviewed.remote) &&
-    current?.canWriteOwnedEvents !== true;
+    current?.canWriteOwnedEvents !== true &&
+    (activating || (!!resolved && manualCalendarNeedsWrite(resolved, reviewed.remote)));
   const block = selections.schedule === 'google' ? reviewed?.manualScheduleBlocked : null;
   const blockedMessage =
     block === 'ELAPSED_ALERT'
@@ -169,25 +232,34 @@ export function IOSCalendarManualLink({
     router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin));
   const openSettings = () =>
     router.push({ pathname: '/calendar', params: { ...origin, originReminderId: id } });
-  const openReview = (sent?: CalendarLinkedOperation) =>
+  const openReview = (activate = false, sent?: CalendarLinkedOperation) =>
     router.push({
       pathname: '/calendar-review',
       params: {
         ...origin,
         id,
         originReminderId: id,
-        ...(sent && revision !== undefined
+        ...(activate ? { activateLink: 'true' } : {}),
+        ...(!activate && sent && revision !== undefined
           ? { reviewSentId: sent.operationId, reviewSentRevision: String(revision) }
           : {}),
       },
     });
-  const working = !!busy || unlink.busy;
-  const guarded = busy === 'change' || busy === 'authorize' || unlink.busy || unlink.unknown;
+  const relationshipBusy = unlink.busy || disableAutomatic.busy;
+  const relationshipUnknown = unlink.unknown || disableAutomatic.unknown;
+  const actionUnknown = relationshipUnknown || syncRequest.unknown;
+  const working = !!busy || relationshipBusy || syncRequest.busy;
+  const guarded =
+    busy === 'change' ||
+    busy === 'authorize' ||
+    relationshipBusy ||
+    syncRequest.busy ||
+    actionUnknown;
   useAppearanceHold(guarded);
   usePreventRemove(guarded, () => confirm(t('m_0c849c393ca3'), t('m_e71fd74c140f')));
 
   const run = async (action: () => Promise<void>, kind: typeof busy = 'change') => {
-    if (running.current || unlink.busy) return;
+    if (running.current || relationshipBusy || syncRequest.busy || actionUnknown) return;
     running.current = true;
     setBusy(kind);
     setError('');
@@ -218,7 +290,7 @@ export function IOSCalendarManualLink({
     }, 'authorize');
   };
   const check = () => {
-    if (!canCheck || revision === undefined || unlink.unknown) return;
+    if (!canCheck || revision === undefined) return;
     void run(async () => {
       setCheckResult(undefined);
       const next = await engine().checkCalendarLink(id, revision, link.revision);
@@ -230,17 +302,29 @@ export function IOSCalendarManualLink({
     }, 'check');
   };
   const apply = () => {
-    if (!ready || revision === undefined || !reviewed || reviewed.connectionRevision !== revision)
-      return;
+    const request: LinkReviewCommand | undefined =
+      captured ??
+      (canLoadReview &&
+      reviewed &&
+      revision !== undefined &&
+      !needsWrite &&
+      resolved?.title.trim() &&
+      !blockedMessage
+        ? {
+            kind: activating
+              ? 'EnableAutomaticCalendarSync'
+              : linked
+                ? 'ApplyCalendarResolution'
+                : 'EnableCalendarLink',
+            previewId: reviewed.previewId,
+            operationId: engine().createOperationId(),
+            expectedConnectionRevision: revision,
+            selections,
+            automaticSync: activating,
+          }
+        : undefined);
+    if (!request) return;
     void run(async () => {
-      const request: CalendarCommand = captured ?? {
-        kind: linked ? 'ApplyCalendarResolution' : 'EnableCalendarLink',
-        previewId: reviewed.previewId,
-        operationId: engine().createOperationId(),
-        expectedConnectionRevision: revision,
-        selections,
-        automaticSync: false,
-      };
       setCaptured(request);
       setOperationId(request.operationId.toLowerCase());
       try {
@@ -250,7 +334,7 @@ export function IOSCalendarManualLink({
           result.operationId.toLowerCase() !== request.operationId.toLowerCase()
         )
           throw new Error('Unexpected Calendar link receipt');
-        setLastResult({ revision, job: result });
+        setLastResult({ revision: request.expectedConnectionRevision, job: result });
         setCaptured(undefined);
       } catch (e) {
         if (calendarCaptureRejected(e)) {
@@ -263,19 +347,43 @@ export function IOSCalendarManualLink({
     });
   };
   const reviewAgain = (job?: CalendarLinkedOperation) => {
-    if (!canReview || working || preview.isFetching || captured || unlink.unknown) return;
+    if (!canLoadReview || working || preview.isFetching || captured || actionUnknown) return;
     setLastResult(undefined);
     setOperationId(null);
     setError('');
     setFreshReview(
-      revision !== undefined && job && isUnconfirmedManualCalendarSend(job)
+      !activating && revision !== undefined && job && isUnconfirmedManualCalendarSend(job)
         ? { id: job.operationId.toLowerCase(), revision }
         : undefined,
     );
     setPreviewVersion((version) => version + 1);
   };
+  const usesActivationReview = (job: CalendarLinkedOperation) =>
+    automaticConsent || (automatic && isAutomaticCalendarOperation(job));
+  const reviewJob = (job: CalendarLinkedOperation) => {
+    const activate = usesActivationReview(job);
+    if (review && activating === activate) reviewAgain(job);
+    else openReview(activate, isUnconfirmedManualCalendarSend(job) ? job : undefined);
+  };
+  const confirmDisable = () => {
+    if (!automaticConsent || revision === undefined || working || actionUnknown) return;
+    confirm(t('ios_calendar_automatic_disable_title'), t('ios_calendar_automatic_disable_detail'), [
+      { text: t('m_19766ed6ccb2'), style: 'cancel' },
+      {
+        text: t('ios_calendar_automatic_disable_action'),
+        onPress: () =>
+          void disableAutomatic.run({
+            kind: 'DisableAutomaticCalendarSync',
+            operationId: engine().createOperationId(),
+            occurrenceId: id,
+            expectedLinkRevision: link.revision,
+            expectedConnectionRevision: revision,
+          }),
+      },
+    ]);
+  };
   const confirmUnlink = () => {
-    if (!linked || revision === undefined || working || unlink.unknown) return;
+    if (!linked || revision === undefined || working || actionUnknown) return;
     confirm(
       t('m_b89208529acc'),
       t(
@@ -299,7 +407,11 @@ export function IOSCalendarManualLink({
       ],
     );
   };
-  const title = review ? t(linked ? 'm_9e636d2d17ec' : 'm_45f738fd2ff1') : t('m_b074310e911f');
+  const title = activating
+    ? t('m_020858872d16')
+    : review
+      ? t(linked ? 'm_9e636d2d17ec' : 'm_45f738fd2ff1')
+      : t('m_b074310e911f');
   const previewError = !fresh || canReadFresh ? preview.error : null;
   const problem = connection.error || links.error || jobs.error || candidate.error || previewError;
   const loading =
@@ -311,6 +423,39 @@ export function IOSCalendarManualLink({
   const reviewForm = review && (!shown || canReadFresh || retryFreshCapture) && reviewed?.local;
   const retryUnknown = !!captured && (!shown || retryFreshCapture);
   const linkStatus = link ? calendarLinkStatus(link, pending) : null;
+  const canTurnOn =
+    activationSource && canReview && !pending.length && linkStatus?.action === 'Activate';
+  const canStartSync =
+    !!syncScope &&
+    syncScope.activationRevision > 0 &&
+    links.isSuccess &&
+    jobs.isSuccess &&
+    ready &&
+    current?.canWriteOwnedEvents === true &&
+    link?.syncMode === 'Automatic' &&
+    link.state === 'Linked' &&
+    activationSource &&
+    !link.requiresReview &&
+    (link.syncStatus === 'Confirmed' || link.syncStatus === 'UpdatePending') &&
+    !pending.length &&
+    !syncRequest.statusLoading &&
+    !syncRequest.statusError &&
+    !syncRequest.status?.pending;
+  const showSyncResult =
+    !!syncScope &&
+    !!syncRequest.requestId &&
+    (syncRequest.showResult || syncRequest.statusLoading || !!syncRequest.statusError);
+  const syncJob = linkJobs.find(
+    (job) => job.operationId.toLowerCase() === syncRequest.requestId?.toLowerCase(),
+  );
+  const syncAction = syncRequest.status?.action;
+  const canUseSyncAction =
+    !working &&
+    !actionUnknown &&
+    (syncAction === 'Retry' ||
+      syncAction === 'Connect' ||
+      syncAction === 'Authorize' ||
+      (syncAction === 'ReviewItems' && activationSource));
   const observedAtMs = link?.observedAtMs ?? link?.checkedAtMs;
   const checkFeedback =
     !working &&
@@ -334,7 +479,7 @@ export function IOSCalendarManualLink({
       : []
     : pending.length
       ? pending
-      : manualJobs.slice(0, 1);
+      : linkJobs.slice(0, 1);
 
   return (
     <Page
@@ -343,7 +488,7 @@ export function IOSCalendarManualLink({
       title={title}
       onBack={back}
       footer={
-        reviewForm && (
+        (reviewForm || (activating && retryUnknown)) && (
           <BottomActionBar>
             <ActionPair>
               <Button
@@ -352,12 +497,16 @@ export function IOSCalendarManualLink({
                     ? 'm_16003a1a9190'
                     : needsWrite
                       ? 'ios_calendar_manual_allow_write'
-                      : 'm_71e50031d9c2',
+                      : activating
+                        ? 'm_e62e9fadeb09'
+                        : 'm_71e50031d9c2',
                 )}
                 disabled={
                   working ||
-                  !ready ||
-                  (!retryUnknown && (!resolved?.title.trim() || !!blockedMessage))
+                  (!ready && !(activating && retryUnknown)) ||
+                  (!retryUnknown &&
+                    !(activating && needsWrite) &&
+                    (!resolved?.title.trim() || !!blockedMessage))
                 }
                 onPress={needsWrite && !retryUnknown ? () => authorize(true) : apply}
               />
@@ -386,6 +535,7 @@ export function IOSCalendarManualLink({
         <Button label={t('m_3b9b76bc9d82')} variant="secondary" onPress={openSettings} />
       )}
       {manual &&
+        (!activating || automatic) &&
         current?.connected &&
         !ready &&
         (!shown || shown.recoveryMode === 'ReviewAgain') &&
@@ -397,19 +547,32 @@ export function IOSCalendarManualLink({
             onPress={() => authorize(false)}
           />
         )}
-      {!!(error || unlink.error || problem) && (
+      {!!(error || unlink.error || disableAutomatic.error || syncRequest.error || problem) && (
         <ActionFeedback
           tone="warning"
-          message={error || unlink.error || iosManualCalendarError(problem)}
+          message={
+            error ||
+            unlink.error ||
+            disableAutomatic.error ||
+            syncRequest.error ||
+            iosManualCalendarError(problem)
+          }
         />
       )}
       {manual &&
+        !activating &&
         !loading &&
         ready &&
         !candidate.eligible &&
         (review || !link) &&
         !problem &&
         !shown && <Copy muted>{t('ios_calendar_manual_unavailable')}</Copy>}
+      {activating &&
+        manual &&
+        !loading &&
+        !shown &&
+        !captured &&
+        (!automatic || (ready && !activationSource)) && <Copy muted>{t('m_2f283f72b9c9')}</Copy>}
       {!review && link && (
         <ConnectedGroup
           title={t('m_0e570ca6fabe')}
@@ -427,8 +590,16 @@ export function IOSCalendarManualLink({
                 <Button
                   label={t('m_5da755d1690f')}
                   variant="secondary"
-                  disabled={working || unlink.unknown}
+                  disabled={working || actionUnknown || syncRequest.working}
                   onPress={check}
+                />
+              )}
+              {canStartSync && (
+                <Button
+                  label={t('m_885e8f48bd70')}
+                  variant="secondary"
+                  disabled={working || actionUnknown || syncRequest.working}
+                  onPress={() => void syncRequest.start()}
                 />
               )}
             </>
@@ -437,6 +608,13 @@ export function IOSCalendarManualLink({
           <ReadOnlyRow key="status" label={t('m_b074310e911f')} value={linkStatus?.title} />
           <ReadOnlyRow key="calendar" label={t('m_d5d0a30b517e')} value={link.calendarName} />
           <ReadOnlyRow key="account" label={t('m_7da2bcb6bb6b')} value={link.accountEmail} />
+          {automaticConsent && link.successfulAtMs != null && (
+            <ReadOnlyRow
+              key="successful-sync"
+              label={t('m_07330d3b86d7')}
+              value={scheduleDateTime(link.successfulAtMs)}
+            />
+          )}
           {observedAtMs != null && (
             <ReadOnlyRow
               key="observed"
@@ -453,15 +631,65 @@ export function IOSCalendarManualLink({
           )}
         </ConnectedGroup>
       )}
-      {(!review || reviewForm) && manual && (
-        <Copy muted>{t('ios_calendar_manual_link_detail')}</Copy>
+      {showSyncResult && syncRequest.requestId && (
+        <CalendarOperationProgress
+          operationId={syncRequest.requestId}
+          expectedConnectionRevision={revision}
+          onAction={
+            canUseSyncAction
+              ? (status) => {
+                  if (status.action === 'Retry') void syncRequest.retryRequest();
+                  else if (status.action === 'ReviewItems') openReview(true);
+                  else if (status.action === 'Authorize' || status.action === 'Connect')
+                    authorize(!syncJob?.remoteAttempted);
+                }
+              : undefined
+          }
+        />
       )}
-      {!review && candidate.eligible && !link?.readOnly && !pending.length && (
+      {syncRequest.unknown && (
         <Button
-          label={t(linked ? 'm_9e636d2d17ec' : link ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
+          label={t('m_16003a1a9190')}
           variant="secondary"
-          disabled={working || unlink.unknown}
-          onPress={() => openReview()}
+          disabled={working || relationshipUnknown}
+          onPress={() => void syncRequest.retryRequest()}
+        />
+      )}
+      {(!review || reviewForm) && manual && (
+        <Copy muted>
+          {t(
+            activating || automaticConsent
+              ? 'ios_calendar_automatic_scope'
+              : 'ios_calendar_manual_link_detail',
+          )}
+        </Copy>
+      )}
+      {!review && canTurnOn && (
+        <Button
+          label={t('m_bde67edae89d')}
+          variant="secondary"
+          disabled={working || actionUnknown}
+          onPress={() => openReview(true)}
+        />
+      )}
+      {(!review || (!activating && automaticConsent && !shown && !captured)) &&
+        candidate.eligible &&
+        !link?.readOnly &&
+        !pending.length &&
+        (!automaticConsent || activationSource) && (
+          <Button
+            label={t(linked ? 'm_9e636d2d17ec' : link ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
+            variant="secondary"
+            disabled={working || actionUnknown}
+            onPress={() => openReview(automaticConsent)}
+          />
+        )}
+      {!review && ((automaticConsent && links.isSuccess) || disableAutomatic.unknown) && (
+        <Button
+          label={t(disableAutomatic.unknown ? 'm_16003a1a9190' : 'calendar_turn_off_automatic')}
+          variant="outlined"
+          disabled={working || unlink.unknown || syncRequest.unknown}
+          onPress={disableAutomatic.unknown ? () => void disableAutomatic.retry() : confirmDisable}
         />
       )}
       {!review && (linked || unlink.unknown) && (
@@ -469,29 +697,33 @@ export function IOSCalendarManualLink({
           label={t(unlink.unknown ? 'm_3a8c6f6adf3a' : 'm_d9203b69027f')}
           variant="outlined"
           icon="link_off"
-          disabled={working}
+          disabled={working || disableAutomatic.unknown || syncRequest.unknown}
           onPress={unlink.unknown ? () => void unlink.retry() : confirmUnlink}
         />
       )}
       {current &&
-        statusJobs.map((job) => (
-          <CalendarOperationStatus
-            key={job.operationId}
-            operation={job}
-            iosConnection={current}
-            onReviewAgain={
-              canReview && !working && !preview.isFetching && !captured && !unlink.unknown
-                ? () =>
-                    review
-                      ? reviewAgain(job)
-                      : openReview(isUnconfirmedManualCalendarSend(job) ? job : undefined)
-                : undefined
-            }
-          />
-        ))}
+        statusJobs
+          .filter((job) => !showSyncResult || !syncRequest.status || job !== syncJob)
+          .map((job) => (
+            <CalendarOperationStatus
+              key={job.operationId}
+              operation={job}
+              iosConnection={current}
+              onReviewAgain={
+                canReview &&
+                (!usesActivationReview(job) || activationSource) &&
+                !working &&
+                !preview.isFetching &&
+                !captured &&
+                !actionUnknown
+                  ? () => reviewJob(job)
+                  : undefined
+              }
+            />
+          ))}
       {reviewForm && reviewed && (
         <>
-          <Copy muted>{t('m_c672ed8175e2')}</Copy>
+          <Copy muted>{t(activating ? 'm_1e631f4fb0c8' : 'm_c672ed8175e2')}</Copy>
           <ConnectedGroup title={t('m_0e570ca6fabe')}>
             <ReadOnlyRow key="calendar" label={t('m_d5d0a30b517e')} value={reviewed.calendarName} />
             <ReadOnlyRow key="account" label={t('m_7da2bcb6bb6b')} value={reviewed.email} />
@@ -517,7 +749,13 @@ export function IOSCalendarManualLink({
             }
           />
           {needsWrite && !retryUnknown && (
-            <Copy muted>{t('ios_calendar_manual_allow_write_detail')}</Copy>
+            <Copy muted>
+              {t(
+                activating
+                  ? 'ios_calendar_automatic_allow_write_detail'
+                  : 'ios_calendar_manual_allow_write_detail',
+              )}
+            </Copy>
           )}
           {!retryUnknown && (
             <Button
@@ -529,7 +767,7 @@ export function IOSCalendarManualLink({
           )}
         </>
       )}
-      {review && !reviewForm && !shown && !loading && canReview && (
+      {review && !reviewForm && !shown && !loading && canLoadReview && !retryUnknown && (
         <Button
           label={t('m_962d33506a8f')}
           variant="secondary"

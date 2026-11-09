@@ -74,6 +74,7 @@ public final class RemiloAlarmModule: Module {
         capabilities["calendarOneOffImport"] = RemiloIOSGoogleCalendarBridge.available
         capabilities["calendarOneOffPublish"] = RemiloIOSGoogleCalendarBridge.available
         capabilities["calendarManualLink"] = RemiloIOSGoogleCalendarBridge.available
+        capabilities["calendarAutomaticLink"] = RemiloIOSGoogleCalendarBridge.available
         if capabilities["unlocked"] as? Bool == true, capabilities["exactAlarms"] as? Bool == true,
            let group = try? await RemiloIOSEngine.shared.activeDeliveryGroup() {
           capabilities["activeSessionId"] = group["sessionId"]
@@ -300,6 +301,13 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("previewCalendarUpdate") { (id: String, expectedRevision: Double?, superseding: String?, promise: Promise) in
       resolveCalendar(promise) {
         try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision, superseding: superseding)
+      }
+    }
+    AsyncFunction("previewCalendarActivation") { (ids: [String], expectedConnectionRevision: Double?, expectedLinkRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) {
+        try await RemiloIOSGoogleCalendarBridge.shared.previewActivation(
+          ids, expectedConnectionRevision: expectedConnectionRevision, expectedLinkRevision: expectedLinkRevision
+        )
       }
     }
     AsyncFunction("applyCalendarCommand") { (command: [String: Any], promise: Promise) in

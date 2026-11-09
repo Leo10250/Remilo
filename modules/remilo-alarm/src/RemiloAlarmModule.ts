@@ -168,6 +168,8 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   ): Promise<import('./RemiloAlarm.types').CalendarReviewPage>;
   previewCalendarActivation(
     ids: string[],
+    expectedConnectionRevision?: number,
+    expectedLinkRevision?: number,
   ): Promise<import('./RemiloAlarm.types').CalendarActivationReview>;
   syncCalendarNow(id: string | null): Promise<import('./RemiloAlarm.types').CalendarRunSummary>;
   getCalendarOperations(
@@ -195,6 +197,8 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
     | { enabled: boolean; revision: number }
     | { disconnected: boolean }
     | { unlinked: boolean }
+    | { disabled: boolean }
+    | { operationId: string; captured: boolean }
   >;
   getLists(): Promise<ListRecord[]>;
   queryLists(): Promise<ListRecord[]>;

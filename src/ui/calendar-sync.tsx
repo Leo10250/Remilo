@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type {
+  CalendarConnection,
   CalendarOperationStatus,
   CalendarSyncScope,
   ManagedCalendarReviewItem,
@@ -31,7 +32,7 @@ import {
   Status,
   type IconName,
 } from './components';
-import { engine, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable } from './native';
 import { useTheme } from './theme';
 import { useTimeFormatting } from './time-display';
 
@@ -121,16 +122,23 @@ export function CalendarStatusCard({
 export function CalendarOperationProgress({
   operationId,
   onAction,
+  expectedConnectionRevision,
 }: {
   operationId: string;
   onAction?: (status: CalendarOperationStatus) => void;
+  expectedConnectionRevision?: number;
 }) {
   'use no memo';
   const t = useTranslation();
   const query = useQuery({
-    queryKey: ['calendar', 'operation-status', operationId],
-    queryFn: () => engine().getCalendarOperationStatus(operationId),
-    enabled: nativeAvailable,
+    queryKey: iosReminders
+      ? ['calendar', 'operation-status', operationId, expectedConnectionRevision]
+      : ['calendar', 'operation-status', operationId],
+    queryFn: () =>
+      iosReminders
+        ? engine().getCalendarOperationStatus(operationId, expectedConnectionRevision)
+        : engine().getCalendarOperationStatus(operationId),
+    enabled: nativeAvailable && (!iosReminders || expectedConnectionRevision !== undefined),
     refetchInterval: (query) =>
       query.state.data &&
       [
@@ -173,7 +181,11 @@ export function CalendarOperationProgress({
             ? t('m_b724411569e0')
             : value.action === 'ReviewItems'
               ? t('m_e6bc867f7622')
-              : undefined
+              : iosReminders && value.action === 'Authorize'
+                ? t('m_b724411569e0')
+                : iosReminders && value.action === 'Retry'
+                  ? t(value.stage === 'Unconfirmed' ? 'm_b4227f3ca91f' : 'm_942087cc2d41')
+                  : undefined
         }
         action={onAction ? () => onAction(value) : undefined}
       >
@@ -303,10 +315,16 @@ export function useCalendarAction(scopeKey = 'calendar') {
       scopeKey,
       controller: new CalendarAction(
         (command) => engine().applyCalendarCommand(command),
-        (id) => engine().getCalendarOperationStatus(id),
+        (id) => {
+          if (!iosReminders) return engine().getCalendarOperationStatus(id);
+          const current = client.getQueryData<CalendarConnection>(['calendar', 'connection']);
+          return current?.connected
+            ? engine().getCalendarOperationStatus(id, current.revision)
+            : Promise.resolve(null);
+        },
       ),
     }),
-    [scopeKey],
+    [client, scopeKey],
   );
   const controller = owner.controller;
   const state = useSyncExternalStore(
@@ -333,36 +351,64 @@ export function useCalendarAction(scopeKey = 'calendar') {
   };
   return { ...state, run, submit, retry };
 }
-export function useCalendarSync(scope: CalendarSyncScope, savedId?: string | null) {
+export function useCalendarSync(
+  scope: CalendarSyncScope,
+  savedId?: string | null,
+  association?: { connectionRevision: number; linkRevision: number; activationRevision: number },
+) {
   const action = useCalendarAction(scope.kind === 'Association' ? scope.occurrenceId : 'all');
   const starting = useRef(false),
     [settling, setSettling] = useState(false);
   // Native's latest scope wins after refresh, including a request made by another screen.
   const requestId = savedId || action.operationId;
   const status = useQuery({
-    queryKey: ['calendar', 'operation-status', requestId],
-    queryFn: () => engine().getCalendarOperationStatus(requestId!),
-    enabled: nativeAvailable && !!requestId,
+    queryKey: iosReminders
+      ? ['calendar', 'operation-status', requestId, association?.connectionRevision]
+      : ['calendar', 'operation-status', requestId],
+    queryFn: () =>
+      iosReminders
+        ? engine().getCalendarOperationStatus(requestId!, association?.connectionRevision)
+        : engine().getCalendarOperationStatus(requestId!),
+    enabled: nativeAvailable && !!requestId && (!iosReminders || !!association),
     refetchInterval: (query) =>
       query.state.data && ['Waiting', 'CheckingEvents'].includes(query.state.data.stage)
         ? 1000
         : false,
   });
   const start = async () => {
-    if (starting.current) return false;
+    if (starting.current || (iosReminders && !association)) return false;
     starting.current = true;
     setSettling(true);
     try {
       return await action.run({
         kind: 'RequestCalendarSync',
         operationId:
-          status.data?.stage === 'Waiting' && requestId ? requestId : engine().createOperationId(),
+          !iosReminders && status.data?.stage === 'Waiting' && requestId
+            ? requestId
+            : engine().createOperationId(),
         scope,
+        ...(iosReminders && association
+          ? {
+              expectedConnectionRevision: association.connectionRevision,
+              expectedLinkRevision: association.linkRevision,
+              expectedActivationRevision: association.activationRevision,
+            }
+          : {}),
       });
     } finally {
       starting.current = false;
       setSettling(false);
     }
+  };
+  const retryRequest = () => {
+    if (action.unknown) return action.retry();
+    return iosReminders && association && requestId
+      ? action.run({
+          kind: 'RetryCalendarOperation',
+          operationId: requestId,
+          expectedConnectionRevision: association.connectionRevision,
+        })
+      : start();
   };
   // Capture acknowledgement precedes query invalidation: keep the action guarded through both.
   return {
@@ -381,6 +427,7 @@ export function useCalendarSync(scope: CalendarSyncScope, savedId?: string | nul
       status.data?.stage === 'CheckingEvents' ||
       (status.data?.stage === 'Waiting' && status.data.syncResult?.outcome === 'Checking'),
     start,
+    retryRequest,
   };
 }
 export function CalendarAttentionCard({

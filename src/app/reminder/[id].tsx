@@ -68,6 +68,7 @@ import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
 import { CalendarExceptionNotice, CalendarSummaryRow } from '../../ui/calendar-association';
 import { useCalendarLinks, useIOSCalendarLinkCandidate } from '../../ui/calendar-links';
+import { isAutomaticCalendarOperation } from '../../ui/calendar-linked';
 import { useCalendarPublications } from '../../ui/calendar-publication';
 import { calendarCaptureRejected, isManualCalendarOperation } from '../../domain/calendar-link';
 import { calendarError } from '../../domain/calendar';
@@ -189,7 +190,10 @@ export default function ReminderDetails() {
   });
   const calendarJobs = (calendarOperations.data ?? []).filter(
     (operation) =>
-      operation.occurrenceId === id && (!iosReminders || isManualCalendarOperation(operation)),
+      operation.occurrenceId === id &&
+      (!iosReminders ||
+        isManualCalendarOperation(operation) ||
+        isAutomaticCalendarOperation(operation)),
   );
   const calendarLink = calendarLinks.data?.find(
     (value) => value.occurrenceId === id || (!!item?.seriesId && value.seriesId === item.seriesId),

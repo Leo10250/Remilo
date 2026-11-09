@@ -45,16 +45,30 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         case failed(String)
     }
 
+    enum AutomaticIssue: String, Codable, Equatable, Sendable { case review, ringing }
+
+    struct AutomaticConsent: Codable, Equatable, Sendable {
+        enum Phase: String, Codable, Equatable, Sendable { case pending, active }
+
+        let phase: Phase
+        let activationRevision: Int
+        let lifecycleRevision: Int
+        let accountGeneration: Int
+        let operationID: UUID?
+        fileprivate(set) var issue: AutomaticIssue? = nil
+    }
+
     struct Record: Codable, Equatable, Sendable {
         let occurrenceID: String
         let source: Source
         let origin: Origin
-        let revision: Int
+        fileprivate(set) var revision: Int
         let state: LinkState
         let baseline: Baseline?
         let calendarName: String
         let observedAtMs: Int64?
         fileprivate(set) var check: Check? = nil
+        fileprivate(set) var automatic: AutomaticConsent? = nil
     }
 
     struct Receipt: Codable, Equatable, Sendable {
@@ -91,6 +105,27 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         fileprivate(set) var erased = false
     }
 
+    enum AssociationOutcome: String, Codable, Equatable, Sendable {
+        case noChanges = "NoChanges", synced = "Synced", needsReview = "NeedsReview"
+        case accessRequired = "AccessRequired", paused = "Paused", failed = "Failed", scopeChanged = "ScopeChanged"
+    }
+
+    struct AssociationRequest: Codable, Equatable, Sendable {
+        let operationID: UUID
+        let account: Account
+        let occurrenceID: String
+        let source: Source
+        let linkRevision: Int
+        let activationRevision: Int
+        let lifecycleRevision: Int
+        let startedAtMs: Int64
+        fileprivate(set) var outcome: AssociationOutcome? = nil
+        fileprivate(set) var finishedAtMs: Int64? = nil
+        fileprivate(set) var checked = false
+        fileprivate(set) var changed = false
+        fileprivate(set) var reason: String? = nil
+    }
+
     private struct Reservation: Hashable {
         let subject: String
         let calendarID: String
@@ -120,6 +155,13 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         var links: [String: Record] = [:]
         var receipts: [UUID: StoredReceipt] = [:]
         var transfers: [UUID: StoredTransfer]?
+        var associationRequests: [UUID: StoredAssociationRequest]?
+    }
+
+    private struct StoredAssociationRequest: Codable {
+        let fingerprint: Data
+        let sequence: Int
+        var request: AssociationRequest
     }
 
     private struct StoredTransfer: Codable {
@@ -136,6 +178,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let source: Source?
         let origin: Origin?
         let baseline: Baseline?
+        var disabling: Account? = nil
 
         func digest() throws -> Data {
             let encoder = JSONEncoder()
@@ -161,6 +204,84 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
 
     func links(viewingAs account: Account) throws -> [Record] {
         try read().links.values.filter { Self.belongs($0.source, to: account) }.sorted { $0.occurrenceID < $1.occurrenceID }
+    }
+
+    func associationRequest(_ id: UUID, viewingAs account: Account, fingerprint: Data? = nil) throws -> AssociationRequest? {
+        let state = try read()
+        guard let saved = state.associationRequests?[id], saved.request.source.belongs(to: account) else { return nil }
+        if let fingerprint, fingerprint != saved.fingerprint { throw Failure.operationReused }
+        return saved.request
+    }
+
+    func captureAssociationRequest(_ id: UUID, fingerprint: Data, record: Record,
+                                   viewingAs account: Account, at time: Int64) throws -> AssociationRequest {
+        guard fingerprint.count == 32, Self.epoch.contains(time) else { throw Failure.invalidInput }
+        var state = try read()
+        if let saved = state.associationRequests?[id] {
+            guard saved.fingerprint == fingerprint, saved.request.account == account else { throw Failure.operationReused }
+            return saved.request
+        }
+        guard state.receipts[id] == nil, state.transfers?[id] == nil else { throw Failure.operationReused }
+        guard state.links[record.occurrenceID] == record else { throw Rejection.stalePreview }
+        guard record.source.belongs(to: account), record.state == .linked, record.check?.requiresReview != true,
+              let consent = record.automatic, consent.phase == .active, consent.accountGeneration == account.accountGeneration else {
+            throw Rejection.ineligible
+        }
+        try requireUnreserved(record.occurrenceID, source: record.source, in: state)
+        if (state.associationRequests ?? [:]).values.contains(where: {
+            $0.request.occurrenceID == record.occurrenceID && $0.request.linkRevision == record.revision
+                && $0.request.outcome == nil && $0.request.account == account
+        }) { throw Rejection.operationPending }
+        let request = AssociationRequest(operationID: id, account: account, occurrenceID: record.occurrenceID, source: record.source,
+                                         linkRevision: record.revision, activationRevision: consent.activationRevision,
+                                         lifecycleRevision: consent.lifecycleRevision, startedAtMs: time)
+        var requests = state.associationRequests ?? [:]
+        requests[id] = StoredAssociationRequest(fingerprint: fingerprint, sequence: requests.count + 1, request: request)
+        state.associationRequests = requests
+        try write(state)
+        return request
+    }
+
+    func finishAssociationRequest(_ request: AssociationRequest, outcome: AssociationOutcome, at time: Int64,
+                                  checked: Bool, changed: Bool = false, reason: String? = nil) throws -> AssociationRequest {
+        guard Self.epoch.contains(time), reason.map(Self.validReason) ?? true,
+              !changed || (checked && outcome == .synced) else { throw Failure.invalidInput }
+        var state = try read()
+        guard var saved = state.associationRequests?[request.operationID], saved.request.account == request.account else {
+            throw Failure.notFound
+        }
+        if saved.request.outcome != nil { return saved.request }
+        guard saved.request == request else { throw Rejection.stalePreview }
+        saved.request.outcome = outcome
+        saved.request.finishedAtMs = time
+        saved.request.checked = checked
+        saved.request.changed = changed
+        saved.request.reason = reason
+        state.associationRequests?[request.operationID] = saved
+        try write(state)
+        return saved.request
+    }
+
+    func pendingAssociationOccurrenceIDs(viewingAs account: Account) throws -> Set<String> {
+        let state = try read()
+        return Set((state.associationRequests ?? [:]).values.compactMap { saved in
+            let request = saved.request
+            guard request.outcome == nil, request.account == account,
+                  state.links[request.occurrenceID]?.revision == request.linkRevision else { return nil }
+            return request.occurrenceID
+        })
+    }
+
+    func pendingAssociationRequests(viewingAs account: Account) throws -> [AssociationRequest] {
+        try (read().associationRequests ?? [:]).values
+            .filter { $0.request.outcome == nil && $0.request.account == account }
+            .sorted { $0.sequence < $1.sequence }.map(\.request)
+    }
+
+    func latestAssociationRequests(viewingAs account: Account) throws -> [String: UUID] {
+        let ordered = try (read().associationRequests ?? [:]).values
+            .filter { $0.request.source.belongs(to: account) }.sorted { $0.sequence > $1.sequence }
+        return Dictionary(ordered.map { ($0.request.occurrenceID, $0.request.operationID) }, uniquingKeysWith: { first, _ in first })
     }
 
     /// An explicit check records an observation, never new authority or a baseline.
@@ -194,16 +315,38 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                           availabilityReason: previous?.availabilityReason ?? "", remoteDiffers: previous?.remoteDiffers,
                           errorCode: Self.checkCode(code, fallback: "API_ERROR"), requiresReview: requiresReview)
         }
-        let fence = check.requiresReview && !requiresReview
+        let lostSource: Bool
+        switch result {
+        case .unavailable, .deleted: lostSource = true
+        case .available, .failed: lostSource = false
+        }
+        let fence = check.requiresReview && !requiresReview || lostSource && current.automatic != nil
         guard !fence || current.revision < Self.maximumRevision else { throw RemiloIOSGoogleCalendarStore.Failure.invalidState }
-        let updated = Record(occurrenceID: current.occurrenceID, source: current.source, origin: current.origin,
-                             revision: current.revision + (fence ? 1 : 0), state: .linked, baseline: current.baseline,
-                             calendarName: current.calendarName, observedAtMs: current.observedAtMs, check: check)
+        var updated = current
+        updated.check = check
+        if fence { updated.revision += 1 }
+        if lostSource { updated.automatic = nil }
         if updated != current {
             state.links[current.occurrenceID] = updated
             try write(state)
         }
         return updated
+    }
+
+    func recordAutomaticIssue(_ record: Record, viewingAs account: Account, issue: AutomaticIssue) throws -> Record {
+        guard record.source.belongs(to: account) else { throw Failure.accountChanged }
+        var state = try read()
+        guard var current = state.links[record.occurrenceID], current == record else { throw Rejection.stalePreview }
+        guard current.state == .linked, current.check?.requiresReview != true, let consent = current.automatic,
+              consent.phase == .active, consent.accountGeneration == account.accountGeneration,
+              consent.issue != .review || issue == .review else { throw Rejection.ineligible }
+        try requireUnreserved(current.occurrenceID, source: current.source, in: state)
+        if consent.issue != issue {
+            current.automatic?.issue = issue
+            state.links[current.occurrenceID] = current
+            try write(state)
+        }
+        return current
     }
 
     func reservedEvents(viewingAs account: Account, calendarID: String) throws -> Set<String> {
@@ -271,6 +414,25 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         return try commit(record, operationID: operationID, fingerprint: fingerprint, digest: digest, account: account, state: &state)
     }
 
+    func disableAutomatic(operationID: UUID, fingerprint: Data, viewingAs account: Account, occurrenceID: String,
+                          expectedRevision: Int) throws -> Receipt {
+        guard Self.validID(occurrenceID, maximum: 200), fingerprint.count == 32,
+              (1..<Self.maximumRevision).contains(expectedRevision),
+              (1...Self.maximumRevision).contains(account.connectionRevision),
+              (1...Self.maximumRevision).contains(account.accountGeneration) else { throw Failure.invalidInput }
+        let request = Request(state: .linked, occurrenceID: occurrenceID, expectedRevision: expectedRevision,
+                              source: nil, origin: nil, baseline: nil, disabling: account)
+        let digest = try request.digest()
+        var state = try read()
+        if let replay = try replay(operationID, fingerprint: fingerprint, digest: digest, account: account, in: state) { return replay }
+        guard var record = state.links[occurrenceID], record.source.belongs(to: account) else { throw Failure.notFound }
+        guard record.revision == expectedRevision else { throw Rejection.stalePreview }
+        guard record.state == .linked, record.automatic != nil else { throw Rejection.ineligible }
+        record.automatic = nil
+        record.revision += 1
+        return try commit(record, operationID: operationID, fingerprint: fingerprint, digest: digest, account: account, state: &state)
+    }
+
     func pendingTransfer(occurrenceID: String, source: Source, viewingAs account: Account) throws -> Operation? {
         guard source.belongs(to: account) else { return nil }
         let state = try read()
@@ -280,17 +442,30 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     }
 
     func captureTransfer(_ transfer: Transfer, fingerprint: Data, superseding: UUID? = nil) throws -> Operation {
-        guard fingerprint.count == 32, Self.valid(transfer) else { throw Failure.invalidInput }
+        guard fingerprint.count == 32, Self.valid(transfer), transfer.automatic == nil || superseding == nil else {
+            throw Failure.invalidInput
+        }
         let digest = try transferDigest(transfer)
         let id = transfer.operationID
         var state = try read()
         guard state.receipts[id] == nil else { throw Failure.operationReused }
+        if let request = state.associationRequests?[id]?.request {
+            guard request.account == transfer.account, request.occurrenceID == transfer.occurrenceID,
+                  request.source == transfer.evidence.source, request.linkRevision == transfer.linkRevision,
+                  transfer.automatic?.kind == .transfer, transfer.automatic?.activationRevision == request.activationRevision,
+                  transfer.automatic?.lifecycleRevision == request.lifecycleRevision else { throw Failure.operationReused }
+            if request.outcome != nil, state.transfers?[id] == nil { throw Failure.operationReused }
+        }
         if let saved = state.transfers?[id] {
             guard saved.fingerprint == fingerprint, saved.requestDigest == digest, saved.superseding == superseding else {
                 throw Failure.operationReused
             }
             return saved.operation
         }
+        if (state.associationRequests ?? [:]).values.contains(where: {
+            $0.request.operationID != id && $0.request.occurrenceID == transfer.occurrenceID
+                && $0.request.linkRevision == transfer.linkRevision && $0.request.account == transfer.account && $0.request.outcome == nil
+        }) { throw Rejection.operationPending }
         let source = transfer.evidence.source
         let origin = transfer.evidence.origin
         try requireLink(transfer.occurrenceID, source: source, origin: origin, revision: transfer.linkRevision, in: state)
@@ -307,7 +482,30 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
             state.transfers?[superseding] = previous
         }
         try requireUnreserved(transfer.occurrenceID, source: source, in: state)
-        let kind = state.links[transfer.occurrenceID]?.state == .linked ? "ApplyCalendarResolution" : "EnableCalendarLink"
+        let kind: String
+        switch transfer.automatic?.kind {
+        case .activation:
+            guard var record = state.links[transfer.occurrenceID], record.state == .linked, record.automatic?.phase != .pending,
+                  let authority = transfer.automatic else { throw Rejection.ineligible }
+            record.automatic = AutomaticConsent(phase: .pending, activationRevision: authority.activationRevision,
+                                                lifecycleRevision: authority.lifecycleRevision,
+                                                accountGeneration: transfer.account.accountGeneration, operationID: id)
+            state.links[record.occurrenceID] = record
+            kind = "EnableAutomaticCalendarSync"
+        case .transfer:
+            _ = try requireAutomaticAuthority(transfer, in: state)
+            let comparison = Link.Comparison.compare(local: transfer.local.fields, remote: transfer.remote.fields,
+                                                     baseline: state.links[transfer.occurrenceID]?.baseline)
+            guard comparison.conflicts.isEmpty, comparison.desired == transfer.desired else { throw Link.Failure.resolutionRequired }
+            kind = "AutomaticCalendarTransfer"
+        case nil:
+            kind = state.links[transfer.occurrenceID]?.state == .linked ? "ApplyCalendarResolution" : "EnableCalendarLink"
+            if let superseding, state.links[transfer.occurrenceID]?.automatic?.operationID == superseding {
+                // The replacement is already bound to this exact link revision. Its reservation
+                // and cancellation of the old job fence the superseded Pending activation.
+                state.links[transfer.occurrenceID]?.automatic = nil
+            }
+        }
         let operation = Operation(operationID: id, account: transfer.account, source: source, origin: origin,
                                   occurrenceID: transfer.occurrenceID, linkRevision: transfer.linkRevision,
                                   kind: kind, calendarName: transfer.remote.calendarName, checkedAtMs: transfer.checkedAtMs,
@@ -342,6 +540,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         }
         try requireLink(transfer.occurrenceID, source: transfer.evidence.source, origin: transfer.evidence.origin,
                         revision: transfer.linkRevision, in: state)
+        _ = try requireAutomaticAuthority(transfer, in: state)
     }
 
     /// The engine receipt is already authoritative at this point. Record it
@@ -375,6 +574,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         guard transfer.needsRemote, saved.operation.localAfter == snapshot else { throw Rejection.stalePreview }
         try requireLink(transfer.occurrenceID, source: transfer.evidence.source, origin: transfer.evidence.origin,
                         revision: transfer.linkRevision, in: state)
+        _ = try requireAutomaticAuthority(transfer, in: state)
         saved.operation.phase = .sent
         saved.operation.remoteAttempted = true
         saved.operation.readback = try transfer.readback()
@@ -383,7 +583,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     }
 
     func confirmTransfer(_ transfer: Transfer, observedLocal: LocalSnapshot?, observedRemote: Link.Observation,
-                         observedAtMs: Int64, advanceLink: Bool) throws -> Operation {
+                         observedAtMs: Int64, advanceLink: Bool, acceptNewerAutomaticLocal: Bool = false) throws -> Operation {
         var state = try read()
         var saved = try exactTransfer(transfer, in: state)
         guard saved.operation.phase.pending else { return saved.operation }
@@ -393,17 +593,32 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
             throw Link.Failure.staleRemote
         }
         if advanceLink {
-            guard !saved.operation.erased, let observedLocal, observedLocal == saved.operation.localAfter else {
+            guard !saved.operation.erased, let observedLocal, let agreedLocal = saved.operation.localAfter else {
                 throw Rejection.stalePreview
+            }
+            if observedLocal != agreedLocal {
+                let agreed = agreedLocal.version
+                let current = observedLocal.version
+                guard acceptNewerAutomaticLocal, saved.operation.phase == .sent, transfer.automatic?.kind == .transfer,
+                      agreedLocal.fields == transfer.desired, current.occurrenceID == agreed.occurrenceID,
+                      (agreed.revision...Self.maximumRevision).contains(current.revision),
+                      (agreed.generation...Self.maximumRevision).contains(current.generation),
+                      current.revision > agreed.revision || current.generation > agreed.generation else { throw Rejection.stalePreview }
             }
             try requireLink(transfer.occurrenceID, source: transfer.evidence.source, origin: transfer.evidence.origin,
                             revision: transfer.linkRevision, in: state)
+            let consent = try requireAutomaticAuthority(transfer, in: state)
+            let automatic = consent.map {
+                AutomaticConsent(phase: .active, activationRevision: $0.activationRevision,
+                                 lifecycleRevision: $0.lifecycleRevision, accountGeneration: $0.accountGeneration, operationID: nil)
+            }
             let desired = transfer.desired
             let baseline = Baseline(title: desired.title, notes: desired.notes, schedule: desired.schedule)
             let revision = transfer.linkRevision + 1
             state.links[transfer.occurrenceID] = Record(
                 occurrenceID: transfer.occurrenceID, source: transfer.evidence.source, origin: transfer.evidence.origin,
-                revision: revision, state: .linked, baseline: baseline, calendarName: observedRemote.calendarName, observedAtMs: observedAtMs
+                revision: revision, state: .linked, baseline: baseline, calendarName: observedRemote.calendarName,
+                observedAtMs: observedAtMs, automatic: automatic
             )
             saved.operation.resultLinkRevision = revision
         } else if saved.operation.phase != .sent {
@@ -486,6 +701,23 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         }
     }
 
+    private func requireAutomaticAuthority(_ transfer: Transfer, in state: State) throws -> AutomaticConsent? {
+        guard let authority = transfer.automatic else { return nil }
+        guard let record = state.links[transfer.occurrenceID], record.state == .linked,
+              let consent = record.automatic, consent.activationRevision == authority.activationRevision,
+              consent.lifecycleRevision == authority.lifecycleRevision,
+              consent.accountGeneration == transfer.account.accountGeneration else { throw Rejection.stalePreview }
+        switch authority.kind {
+        case .activation:
+            guard consent.phase == .pending, consent.operationID == transfer.operationID else { throw Rejection.stalePreview }
+        case .transfer:
+            guard consent.phase == .active, consent.issue != .review, record.check?.requiresReview != true else {
+                throw Rejection.stalePreview
+            }
+        }
+        return consent
+    }
+
     private func requireUnreserved(_ occurrenceID: String, source: Source, in state: State) throws {
         let reservation = Reservation(source)
         if (state.transfers ?? [:]).values.contains(where: {
@@ -520,15 +752,23 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     }
 
     private func save(_ saved: StoredTransfer, state: inout State) throws -> Operation {
+        let operation = saved.operation
+        if !operation.phase.pending, var record = state.links[operation.occurrenceID],
+           record.automatic?.phase == .pending, record.automatic?.operationID == operation.operationID {
+            guard record.revision < Self.maximumRevision else { throw RemiloIOSGoogleCalendarStore.Failure.invalidState }
+            record.revision += 1
+            record.automatic = nil
+            state.links[operation.occurrenceID] = record
+        }
         var transfers = state.transfers ?? [:]
-        transfers[saved.operation.operationID] = saved
+        transfers[operation.operationID] = saved
         state.transfers = transfers
         try write(state)
-        return saved.operation
+        return operation
     }
 
     private func replay(_ operationID: UUID, fingerprint: Data, digest: Data, account: Account, in state: State) throws -> Receipt? {
-        guard state.transfers?[operationID] == nil else { throw Failure.operationReused }
+        guard state.transfers?[operationID] == nil, state.associationRequests?[operationID] == nil else { throw Failure.operationReused }
         guard let saved = state.receipts[operationID] else { return nil }
         guard saved.belongs(to: account), saved.fingerprint == fingerprint, saved.requestDigest == digest else {
             throw Failure.operationReused
@@ -610,6 +850,14 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let desired = transfer.desired
         let remote = transfer.remote.fields
         let local = transfer.local.fields
+        if let authority = transfer.automatic {
+            guard (1..<maximumRevision).contains(authority.activationRevision),
+                  authority.lifecycleRevision >= 0, authority.lifecycleRevision <= version.revision else { return false }
+            switch authority.kind {
+            case .activation: guard authority.activationRevision == transfer.linkRevision else { return false }
+            case .transfer: guard authority.activationRevision < transfer.linkRevision else { return false }
+            }
+        }
         return source.belongs(to: transfer.account) && valid(source) && transfer.remote.source == source
             && (1...maximumRevision).contains(transfer.account.connectionRevision)
             && (1...maximumRevision).contains(transfer.account.accountGeneration)
@@ -641,6 +889,28 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         (1...96).contains(reason.utf8.count) && reason.utf8.allSatisfy { (65...90).contains($0) || (48...57).contains($0) || $0 == 95 }
     }
 
+    private static func validConsent(_ record: Record, in state: State) -> Bool {
+        guard let consent = record.automatic else { return true }
+        guard record.state == .linked, (1..<maximumRevision).contains(consent.activationRevision),
+              (0...maximumRevision).contains(consent.lifecycleRevision),
+              (1...maximumRevision).contains(consent.accountGeneration) else { return false }
+        switch consent.phase {
+        case .active:
+            return consent.operationID == nil && consent.activationRevision < record.revision
+                && record.check?.requiresReview != true && record.baseline?.title != nil
+                && record.baseline?.notes != nil && record.baseline?.schedule != nil
+        case .pending:
+            guard let id = consent.operationID, let operation = state.transfers?[id]?.operation,
+                  let authority = operation.transfer?.automatic else { return false }
+            return operation.phase.pending && operation.kind == "EnableAutomaticCalendarSync"
+                && operation.occurrenceID == record.occurrenceID && operation.source == record.source
+                && operation.origin == record.origin && operation.linkRevision == record.revision
+                && consent.activationRevision == record.revision && authority.kind == .activation
+                && authority.activationRevision == consent.activationRevision && authority.lifecycleRevision == consent.lifecycleRevision
+                && operation.account.accountGeneration == consent.accountGeneration && consent.issue == nil
+        }
+    }
+
     private func read() throws -> State {
         do {
             let bytes = try Data(contentsOf: file)
@@ -658,7 +928,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                 }
                 guard id == record.occurrenceID, Self.validID(id, maximum: 200),
                       (1...Self.maximumRevision).contains(record.revision), Self.valid(record.source), Self.valid(record.baseline),
-                      record.calendarName.utf8.count <= 4_096, observationValid, Self.validCheck(record),
+                      record.calendarName.utf8.count <= 4_096, observationValid, Self.validCheck(record), Self.validConsent(record, in: state),
                       reservations.insert(Reservation(record.source)).inserted else {
                     throw RemiloIOSGoogleCalendarStore.Failure.invalidState
                 }
@@ -673,8 +943,40 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                 }
             }
             try validateTransfers(state)
+            try validateAssociationRequests(state)
             return state
         } catch CocoaError.fileReadNoSuchFile { return State() }
+    }
+
+    private func validateAssociationRequests(_ state: State) throws {
+        let invalid = RemiloIOSGoogleCalendarStore.Failure.invalidState
+        var sequences = Set<Int>()
+        for (id, saved) in state.associationRequests ?? [:] {
+            let request = saved.request
+            guard request.operationID == id, state.receipts[id] == nil, saved.fingerprint.count == 32,
+                  (1...(state.associationRequests?.count ?? 1)).contains(saved.sequence), sequences.insert(saved.sequence).inserted,
+                  Self.valid(request.source), request.source.belongs(to: request.account),
+                  (1...Self.maximumRevision).contains(request.account.connectionRevision),
+                  (1...Self.maximumRevision).contains(request.account.accountGeneration),
+                  Self.validID(request.occurrenceID, maximum: 200),
+                  (1...Self.maximumRevision).contains(request.linkRevision),
+                  (1...request.linkRevision).contains(request.activationRevision),
+                  (0...Self.maximumRevision).contains(request.lifecycleRevision), Self.epoch.contains(request.startedAtMs),
+                  let record = state.links[request.occurrenceID], record.source == request.source,
+                  record.revision >= request.linkRevision else { throw invalid }
+            if let transfer = state.transfers?[id]?.operation {
+                guard transfer.kind == "AutomaticCalendarTransfer", transfer.account == request.account,
+                      transfer.occurrenceID == request.occurrenceID, transfer.source == request.source,
+                      transfer.linkRevision == request.linkRevision else { throw invalid }
+            }
+            if let finished = request.finishedAtMs {
+                guard request.outcome != nil, Self.epoch.contains(finished),
+                      !request.changed || (request.checked && request.outcome == .synced),
+                      request.reason.map(Self.validReason) ?? true else { throw invalid }
+            } else {
+                guard request.outcome == nil, !request.checked, !request.changed, request.reason == nil else { throw invalid }
+            }
+        }
     }
 
     private func validateTransfers(_ state: State) throws {
@@ -684,6 +986,8 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let invalid = RemiloIOSGoogleCalendarStore.Failure.invalidState
         for (id, saved) in state.transfers ?? [:] {
             let operation = saved.operation
+            let manual = ["EnableCalendarLink", "ApplyCalendarResolution"].contains(operation.kind)
+            let automatic = ["EnableAutomaticCalendarSync", "AutomaticCalendarTransfer"].contains(operation.kind)
             guard id == operation.operationID, state.receipts[id] == nil, saved.fingerprint.count == 32,
                   saved.requestDigest.count == 32, Self.valid(operation.source), operation.source.belongs(to: operation.account),
                   (1...Self.maximumRevision).contains(operation.account.connectionRevision),
@@ -691,7 +995,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                   (0..<Self.maximumRevision).contains(operation.linkRevision), Self.epoch.contains(operation.checkedAtMs),
                   Self.validID(operation.occurrenceID, maximum: 200), operation.calendarName.utf8.count <= 4_096,
                   !operation.erased || operation.calendarName.isEmpty,
-                  ["EnableCalendarLink", "ApplyCalendarResolution"].contains(operation.kind),
+                  manual || (automatic && operation.linkRevision > 0 && saved.superseding == nil),
                   Self.validLocalStatus(operation.localStatus, applied: operation.localApplied),
                   operation.reason.map(Self.validReason) ?? true else { throw invalid }
             if let predecessor = saved.superseding {
@@ -720,6 +1024,11 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                       transfer.evidence.source == operation.source, transfer.evidence.origin == operation.origin,
                       transfer.occurrenceID == operation.occurrenceID, transfer.linkRevision == operation.linkRevision,
                       transfer.checkedAtMs == operation.checkedAtMs, try transferDigest(transfer) == saved.requestDigest else { throw invalid }
+                switch transfer.automatic?.kind {
+                case .activation: guard operation.kind == "EnableAutomaticCalendarSync" else { throw invalid }
+                case .transfer: guard operation.kind == "AutomaticCalendarTransfer" else { throw invalid }
+                case nil: guard manual else { throw invalid }
+                }
                 if let after = operation.localAfter {
                     guard Self.validLocalResult(after, transfer: transfer), operation.localApplied == transfer.needsLocal else { throw invalid }
                 }

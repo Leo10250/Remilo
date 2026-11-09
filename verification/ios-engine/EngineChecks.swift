@@ -104,6 +104,7 @@ struct EngineChecks {
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
         try await queuedCalendarReviewRechecksLocalVersion()
+        try await calendarLifecycleTracksTerminalRoundTrips()
         try await calendarInboundPreservesDeliveryAndFencesRinging()
         try await calendarInboundReplaysInterruptedDelivery()
         try calendarInboundProjectsIndependentAndAllDayTiming()
@@ -326,6 +327,7 @@ struct EngineChecks {
             zoneID: "UTC", mode: "Alarm", allDay: false, dueLinked: true, alarmLinked: true
         )
         record.generation = 1
+        record.calendarLifecycleRevision = record.revision
         record.deliveryState = "Alerting"
         var database = IOSDatabase()
         database.reminders[record.id] = record
@@ -338,6 +340,7 @@ struct EngineChecks {
         let dismissed = state.reminders[record.id]
         precondition(dismissed?.completed == false && dismissed?.deliveryState == "Stopped")
         precondition(dismissed?.history.map(\.kind) == ["Stop"])
+        precondition(dismissed?.calendarLifecycleRevision == record.revision)
     }
 
     private static func routineEditsRetainProgressAndTrashRestoresFamily() async throws {
@@ -1016,6 +1019,79 @@ struct EngineChecks {
         } catch IOSCalendarOneTimeSnapshot.Failure.ineligible {}
     }
 
+    private static func calendarLifecycleTracksTerminalRoundTrips() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        var engine = store.engine()
+        let created = try await engine.apply(createCommand(id: "calendar-lifecycle-create"))
+        let id = created["occurrenceId"] as! String
+        func record() throws -> IOSReminder { try store.load().reminders[id]! }
+        func check(_ epoch: Int?, active: Bool) throws {
+            let persisted = try record()
+            let actual = try engine.calendarLifecycleRevision(id)
+            let expected: Int? = active ? (epoch ?? 0) : nil
+            precondition(persisted.calendarLifecycleRevision == epoch)
+            precondition(actual == expected)
+        }
+        func authored(_ kind: String, operation: String) throws -> [String: Any] {
+            ["kind": kind, "occurrenceId": id, "operationId": operation, "expectedRevision": try record().revision]
+        }
+        try check(nil, active: true)
+        let done = try authored("Done", operation: "calendar-lifecycle-done")
+        _ = try await engine.apply(done)
+        try check(2, active: false)
+
+        engine = store.engine()
+        _ = try await engine.apply(authored("Reopen", operation: "calendar-lifecycle-reopen"))
+        try check(3, active: true)
+        _ = try await engine.apply(done)
+        try check(3, active: true)
+
+        var edit = try authored("Edit", operation: "calendar-lifecycle-edit")
+        edit["title"] = "Renamed without reopening"
+        _ = try await engine.apply(edit)
+        try check(3, active: true)
+        let edited = try record()
+        precondition(edited.revision == 4)
+        try await engine.performSystemAction(kind: "Snooze", occurrenceID: id, generation: edited.generation)
+        try check(3, active: true)
+        let snoozed = try record()
+        _ = try await engine.apply([
+            "kind": "Postpone", "occurrenceId": id, "operationId": "calendar-lifecycle-postpone",
+            "expectedGeneration": snoozed.generation, "alarmAtMs": iosMillis(Date()) + 3_600_000,
+        ])
+        try check(3, active: true)
+
+        let delete = try authored("Delete", operation: "calendar-lifecycle-delete")
+        _ = try await engine.apply(delete)
+        try check(5, active: false)
+        _ = try await engine.apply(authored("UndoDelete", operation: "calendar-lifecycle-restore"))
+        try check(6, active: true)
+        _ = try await engine.apply(delete)
+        try check(6, active: true)
+
+        let restored = try record()
+        try await engine.performSystemAction(kind: "CompleteDelivery", occurrenceID: id, generation: restored.generation)
+        try check(7, active: false)
+        _ = try await engine.apply(authored("Reopen", operation: "calendar-lifecycle-reopen-delivery"))
+        try check(8, active: true)
+        let reopened = try record()
+        _ = try await engine.apply([
+            "kind": "Stop", "occurrenceId": id, "operationId": "calendar-lifecycle-legacy-stop",
+            "expectedGeneration": reopened.generation,
+        ])
+        try check(9, active: false)
+
+        let archive = try RemiloIOSPortableContent.encode(store.load(), now: iosMillis(Date()))
+        let portable = try RemiloIOSPortableContent.decode(archive, availableImageIDs: [])
+        precondition(!String(decoding: archive, as: UTF8.self).contains("calendarLifecycleRevision"))
+        precondition(portable.reminders[id]?.completed == true && portable.reminders[id]?.calendarLifecycleRevision == nil)
+    }
+
     private static func calendarInboundPreservesDeliveryAndFencesRinging() async throws {
         let store = FixtureStore()
         defer {
@@ -1371,5 +1447,7 @@ struct EngineChecks {
         precondition(result["count"] as? Int == 2)
         precondition(updated.reminders["one"]?.completed == true && updated.reminders["two"]?.completed == true)
         precondition(updated.reminders["later"]?.completed == false && RemiloIOSDelivery.registrations.count == 1)
+        precondition(updated.reminders["one"]?.calendarLifecycleRevision == 2 && updated.reminders["two"]?.calendarLifecycleRevision == 2)
+        precondition(updated.reminders["later"]?.calendarLifecycleRevision == nil)
     }
 }

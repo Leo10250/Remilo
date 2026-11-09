@@ -429,7 +429,10 @@ public final class RemiloIOSAppDelegateSubscriber: ExpoAppDelegateSubscriber {
         let center = UNUserNotificationCenter.current()
         center.delegate = RemiloNotificationActions.shared
         center.setNotificationCategories(RemiloNotificationActions.categories())
-        MainActor.assumeIsolated { RemiloIOSRecovery.shared.install() }
+        MainActor.assumeIsolated {
+            RemiloIOSRecovery.shared.install()
+            RemiloIOSGoogleCalendarRuntime.installAutomaticForegroundCoordinator()
+        }
         return true
     }
 }

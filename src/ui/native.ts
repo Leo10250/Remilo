@@ -93,3 +93,8 @@ export function useIOSCalendarManualLink() {
   const { data } = useCapabilities(iosReminders);
   return iosReminders && data?.calendarManualLink === true;
 }
+
+export function useIOSCalendarAutomaticLink() {
+  const { data } = useCapabilities(iosReminders);
+  return iosReminders && data?.calendarAutomaticLink === true;
+}

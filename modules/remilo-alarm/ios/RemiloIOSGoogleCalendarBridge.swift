@@ -51,7 +51,7 @@ final class RemiloIOSGoogleCalendarBridge {
         let revision = try Self.revision(expectedRevision)
         let view = try await runtime().authorizeFromUserAction(expectedRevision: revision, intent: authorization)
         discard(before: view.revision)
-        NotificationCenter.default.post(name: .remiloIOSChange, object: nil)
+        NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true])
         return Self.connection(view)
     }
 
@@ -167,7 +167,13 @@ final class RemiloIOSGoogleCalendarBridge {
         let view = try await runtime.view()
         guard view.revision == revision else { throw Failure.staleConnection }
         guard view.connected else { return [] }
-        return try Self.linkRuntime(runtime).links(expectedConnectionRevision: revision).map { try Self.link($0, connection: view) }
+        let manual = try Self.linkRuntime(runtime)
+        let records = try manual.links(expectedConnectionRevision: revision)
+        let operations = records.contains { $0.automatic != nil }
+            ? try manual.transferOperations(expectedConnectionRevision: revision) : []
+        let pending = Dictionary(uniqueKeysWithValues: operations.filter { $0.phase.pending }.map { ($0.occurrenceID, $0) })
+        let requests = try manual.latestAssociationRequests(expectedConnectionRevision: revision)
+        return try records.map { try Self.link($0, connection: view, pending: pending[$0.occurrenceID], request: requests[$0.occurrenceID]) }
     }
 
     func checkLink(_ id: String, expectedConnectionRevision: Double?, expectedLinkRevision: Double?) async throws -> [String: Any] {
@@ -178,12 +184,16 @@ final class RemiloIOSGoogleCalendarBridge {
         let runtime = try runtime()
         let manual = try Self.linkRuntime(runtime)
         let record = try await manual.check(id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision)
-        defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil) }
+        defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true]) }
         let view = try await runtime.view()
         guard view.revision == revision, view.connected else { throw Failure.staleConnection }
         let current = try manual.links(expectedConnectionRevision: revision).first { $0.occurrenceID == id }
         guard current == record else { throw Link.Failure.stalePreview }
-        return try Self.link(record, connection: view)
+        let pending = record.automatic == nil ? nil : try manual.transferOperations(expectedConnectionRevision: revision).first {
+            $0.occurrenceID == id && $0.phase.pending
+        }
+        let request = try manual.latestAssociationRequests(expectedConnectionRevision: revision)[id]
+        return try Self.link(record, connection: view, pending: pending, request: request)
     }
 
     func previewLink(_ id: String, expectedRevision: Double?, superseding: String?) async throws -> [String: Any] {
@@ -195,19 +205,52 @@ final class RemiloIOSGoogleCalendarBridge {
         let review = try await Self.linkRuntime(runtime).preview(id, expectedConnectionRevision: revision, superseding: operation)
         let view = try await runtime.view()
         guard view.revision == revision, review.account.connectionRevision == revision else { throw Failure.staleConnection }
+        return try Self.linkPreview(review, connection: view, automatic: false)
+    }
+
+    func previewActivation(_ ids: [String], expectedConnectionRevision: Double?, expectedLinkRevision: Double?) async throws -> [String: Any] {
+        guard ids.count == 1, let id = ids.first else { throw Failure.invalidInput }
+        try Self.validateOccurrenceID(id)
+        let revision = try Self.revision(expectedConnectionRevision)
+        let linkRevision = try Self.revision(expectedLinkRevision)
+        guard linkRevision > 0 else { throw Failure.invalidInput }
+        let runtime = try runtime()
+        let review = try await Self.linkRuntime(runtime).previewActivation(
+            id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision
+        )
+        let view = try await runtime.view()
+        guard view.connected, view.revision == revision, review.account.connectionRevision == revision,
+              review.account.accountGeneration == view.accountGeneration else { throw Failure.staleConnection }
+        let comparison = Link.Comparison.compare(local: review.local.fields, remote: review.remote.fields, baseline: review.baseline)
+        var preview = try Self.linkPreview(review, connection: view, automatic: true)
+        preview["automaticSync"] = true
+        preview["activation"] = true
+        preview["equal"] = review.local.fields == review.remote.fields
+        preview["transfers"] = ["inbound": comparison.inbound.map(\.rawValue).sorted(),
+                                "outbound": comparison.outbound.map(\.rawValue).sorted()]
+        let reason: String? = comparison.conflicts.isEmpty ? nil : "ChangesNeedReview"
+        let item: [String: Any] = [
+            "occurrenceId": id, "title": review.local.fields.title, "calendarName": review.remote.calendarName,
+            "email": view.email, "preview": preview, "excludedReason": iosBridgeValue(reason),
+        ]
+        return ["items": [item]]
+    }
+
+    private static func linkPreview(_ review: Link.Review, connection view: Connection.View,
+                                    automatic: Bool) throws -> [String: Any] {
         let selections = review.suggestedSelections
         guard let timing = review.remiloTiming else { throw Failure.invalidResponse }
         let local = review.local.fields
         let choices: [String: Any] = [
             "mode": timing.mode, "title": local.title, "dueAtMs": timing.dueAtMs, "alarmAtMs": timing.alarmAtMs,
-            "automaticSync": false, "disableReminders": false,
+            "automaticSync": automatic, "disableReminders": false,
         ]
         let timings: [String: Any] = [
             "remilo": Self.timing(timing),
             "google": iosBridgeValue(review.googleTiming.map(Self.timing)),
         ]
         return [
-            "previewId": review.id.uuidString, "occurrenceId": review.local.version.occurrenceID, "connectionRevision": revision,
+            "previewId": review.id.uuidString, "occurrenceId": review.local.version.occurrenceID, "connectionRevision": view.revision,
             "calendarName": review.remote.calendarName, "email": view.email, "remote": Self.fields(review.remote.fields),
             "local": Self.fields(local), "baseline": iosBridgeValue(review.baseline.map(Self.baseline)),
             "selections": ["title": iosBridgeValue(selections[.title]?.rawValue), "notes": iosBridgeValue(selections[.notes]?.rawValue),
@@ -224,7 +267,7 @@ final class RemiloIOSGoogleCalendarBridge {
         let revision = try Self.revision(input)
         let operation = try Self.uuid(input, "operationId")
         let runtime = try runtime()
-        defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil) }
+        defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true]) }
         switch kind {
         case "DisconnectCalendar":
             let result = try await runtime.disconnectFromUserAction(operationID: operation.uuidString, expectedRevision: revision)
@@ -270,6 +313,21 @@ final class RemiloIOSGoogleCalendarBridge {
                 choices: Self.selections(input), updating: kind == "ApplyCalendarResolution"
             )
             return try await transferResult(result, runtime: runtime, revision: revision)
+        case "EnableAutomaticCalendarSync":
+            guard try input.flag("automaticSync", fallback: true) else { throw Failure.invalidInput }
+            let result = try await Self.linkRuntime(runtime).resolve(
+                operationID: operation, reviewID: Self.uuid(input, "previewId"), expectedConnectionRevision: revision,
+                choices: Self.selections(input), updating: true, activating: true
+            )
+            return try await transferResult(result, runtime: runtime, revision: revision)
+        case "DisableAutomaticCalendarSync":
+            let id = try input.text("occurrenceId", maximum: 200)
+            try Self.validateOccurrenceID(id)
+            let linkRevision = try Int(input.integer("expectedLinkRevision", range: 1...9_007_199_254_740_991))
+            _ = try Self.linkRuntime(runtime).disableAutomatic(
+                operationID: operation, occurrenceID: id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision
+            )
+            return ["disabled": true]
         case "UnlinkCalendar":
             let id = try input.text("occurrenceId", maximum: 200)
             try Self.validateOccurrenceID(id)
@@ -277,7 +335,24 @@ final class RemiloIOSGoogleCalendarBridge {
             _ = try Self.linkRuntime(runtime).unlink(operationID: operation, occurrenceID: id, expectedConnectionRevision: revision,
                                                      expectedLinkRevision: linkRevision)
             return ["unlinked": true]
+        case "RequestCalendarSync":
+            guard let values = command["scope"] as? [String: Any], values["kind"] as? String == "Association" else {
+                throw Failure.invalidInput
+            }
+            let id = try IOSInput(values: values).text("occurrenceId", maximum: 200)
+            try Self.validateOccurrenceID(id)
+            let linkRevision = try Int(input.integer("expectedLinkRevision", range: 1...9_007_199_254_740_991))
+            let activationRevision = try Int(input.integer("expectedActivationRevision", range: 1...9_007_199_254_740_991))
+            let request = try Self.linkRuntime(runtime).requestAssociationSync(
+                operation, occurrenceID: id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision,
+                expectedActivationRevision: activationRevision
+            )
+            return ["operationId": request.operationID.uuidString, "captured": true]
         case "RetryCalendarOperation":
+            if let manual = runtime.manualLink, try manual.associationStatus(operation, expectedConnectionRevision: revision) != nil {
+                try manual.retryAssociation(operation, expectedConnectionRevision: revision)
+                return ["operationId": operation.uuidString, "captured": true]
+            }
             if let manual = runtime.manualLink, try manual.transferOperation(operation, expectedConnectionRevision: revision) != nil {
                 let result = try await manual.retry(operation, expectedConnectionRevision: revision)
                 return try await transferResult(result, runtime: runtime, revision: revision)
@@ -295,9 +370,15 @@ final class RemiloIOSGoogleCalendarBridge {
         let view = try await runtime.view()
         guard view.revision == revision else { throw Failure.staleConnection }
         guard view.connected else { return nil }
-        if let transfer = try runtime.manualLink?.transferOperation(id, expectedConnectionRevision: revision) {
+        if let association = try runtime.manualLink?.associationStatus(id, expectedConnectionRevision: revision) {
+            return Self.associationStatus(association, connection: view)
+        }
+        if let manual = runtime.manualLink, let transfer = try manual.transferOperation(id, expectedConnectionRevision: revision) {
             let local = try Self.localLinkSnapshot(transfer.occurrenceID)
-            let presentation = Self.transferPresentation(transfer, local: local, connection: view)
+            let record = transfer.transfer?.automatic == nil ? nil : try manual.links(expectedConnectionRevision: revision).first {
+                $0.occurrenceID == transfer.occurrenceID
+            }
+            let presentation = try Self.transferPresentation(transfer, local: local, connection: view, record: record)
             return [
                 "operationId": transfer.operationID.uuidString, "kind": transfer.kind, "stage": presentation.stage,
                 "reason": transfer.reason.map(Self.bridgeErrorCode) ?? "", "action": presentation.action,
@@ -324,8 +405,11 @@ final class RemiloIOSGoogleCalendarBridge {
         }
         let current = try await runtime.view()
         guard current.revision == revision else { throw Failure.staleConnection }
-        let transfers = try runtime.manualLink?.transferOperations(expectedConnectionRevision: revision) ?? []
-        return imports + (try transfers.map { try Self.transfer($0, connection: current) })
+        guard let manual = runtime.manualLink else { return imports }
+        let transfers = try manual.transferOperations(expectedConnectionRevision: revision)
+        let records = transfers.contains { $0.transfer?.automatic != nil } ? try manual.links(expectedConnectionRevision: revision) : []
+        let byID = Dictionary(uniqueKeysWithValues: records.map { ($0.occurrenceID, $0) })
+        return imports + (try transfers.map { try Self.transfer($0, connection: current, record: byID[$0.occurrenceID]) })
     }
 
     private func runtime() throws -> Runtime {
@@ -354,7 +438,10 @@ final class RemiloIOSGoogleCalendarBridge {
                                 revision: Int) async throws -> [String: Any] {
         let view = try await runtime.view()
         guard view.revision == revision else { throw Failure.staleConnection }
-        return try Self.transfer(operation, connection: view)
+        let record = operation.transfer?.automatic == nil ? nil : try Self.linkRuntime(runtime).links(expectedConnectionRevision: revision).first {
+            $0.occurrenceID == operation.occurrenceID
+        }
+        return try Self.transfer(operation, connection: view, record: record)
     }
 
     private func discard(before revision: Int) {
@@ -493,9 +580,11 @@ final class RemiloIOSGoogleCalendarBridge {
          "retainedAlertMs": iosBridgeValue(value.retainedAlertMs)]
     }
 
-    private static func link(_ record: LinkStore.Record, connection view: Connection.View) throws -> [String: Any] {
-        let local = try localLinkSnapshot(record.occurrenceID)?.fields
-        let differs = local.map { current in
+    private static func link(_ record: LinkStore.Record, connection view: Connection.View,
+                             pending: LinkStore.Operation?, request: UUID?) throws -> [String: Any] {
+        let local = try localLinkSnapshot(record.occurrenceID)
+        let fields = local?.fields
+        let differs = fields.map { current in
             record.baseline?.title.map { $0 != current.title } == true ||
                 record.baseline?.notes.map { $0 != current.notes } == true ||
                 record.baseline?.schedule.map { $0 != current.schedule } == true
@@ -514,9 +603,15 @@ final class RemiloIOSGoogleCalendarBridge {
         else { state = "Linked" }
         let availability = check?.availability
         let availabilityReason = check?.availabilityReason
+        let sync = try linkSyncStatus(record, connection: view, pending: pending, local: local, differs: differs,
+                                      accessFailed: accessFailed)
         return [
             "occurrenceId": record.occurrenceID, "revision": record.revision, "calendarName": record.calendarName,
-            "state": state, "syncMode": "Manual", "syncStatus": !detached && requiresReview ? "Paused" : "Confirmed",
+            "state": state, "syncMode": sync.mode, "syncStatus": sync.status, "pauseReason": sync.reason,
+            "activationRevision": record.automatic?.activationRevision ?? 0, "baselineVersion": record.baseline == nil ? 0 : record.revision,
+            "syncRequestId": iosBridgeValue(request?.uuidString),
+            "successfulAtMs": iosBridgeValue(record.automatic?.phase == .active ? record.observedAtMs : nil),
+            "attemptedAtMs": iosBridgeValue(pending?.transfer?.automatic == nil ? nil : pending?.checkedAtMs),
             "accountEmail": view.email, "checkedAtMs": iosBridgeValue(check?.attemptedAtMs ?? record.observedAtMs),
             "message": "", "htmlLink": "", "availability": availability?.rawValue ?? (detached ? "Unknown" : "Available"),
             "availabilityReason": availabilityReason.map(bridgeErrorCode) ?? "", "readOnly": local == nil, "differs": differs,
@@ -525,6 +620,79 @@ final class RemiloIOSGoogleCalendarBridge {
             "remoteDiffers": iosBridgeValue(check?.remoteDiffers), "requiresReview": requiresReview,
             "source": ["calendarId": record.source.calendarID, "eventId": record.source.eventID, "expectedConnectionRevision": view.revision],
         ]
+    }
+
+    private static func associationStatus(_ status: LinkRuntime.AssociationStatus, connection view: Connection.View) -> [String: Any] {
+        let request = status.request
+        let sent = status.transfer?.phase == .sent
+        let presentation: (stage: String, action: String, outcome: String)
+        if let result = request.outcome {
+            switch result {
+            case .noChanges, .synced:
+                presentation = status.currentScope ? ("Confirmed", "None", result.rawValue) : ("Paused", "None", "ScopeChanged")
+            case .needsReview: presentation = ("NeedsReview", "ReviewItems", result.rawValue)
+            case .accessRequired: presentation = ("NeedsAccess", "Authorize", result.rawValue)
+            case .paused, .scopeChanged: presentation = ("Paused", "None", result.rawValue)
+            case .failed: presentation = ("Failed", "None", result.rawValue)
+            }
+        } else if status.running {
+            presentation = ("CheckingEvents", "None", "Checking")
+        } else if !hasReadAccess(view) || (!sent && status.currentScope && !view.canWriteOwnedEvents) {
+            presentation = ("NeedsAccess", "Authorize", "AccessRequired")
+        } else if sent {
+            presentation = ("Unconfirmed", "Retry", "Unconfirmed")
+        } else {
+            presentation = ("Waiting", "Retry", "Pending")
+        }
+        let result: [String: Any] = [
+            "scope": ["kind": "Association", "occurrenceId": request.occurrenceID],
+            "outcome": presentation.outcome, "checked": request.checked ? 1 : 0, "changed": request.changed ? 1 : 0,
+            "imported": 0, "published": 0, "startedAtMs": request.startedAtMs, "finishedAtMs": iosBridgeValue(request.finishedAtMs),
+        ]
+        return [
+            "operationId": request.operationID.uuidString, "kind": "RequestCalendarSync", "stage": presentation.stage,
+            "reason": request.reason.map(bridgeErrorCode) ?? "", "action": presentation.action,
+            "confirmed": request.checked ? 1 : 0, "pending": request.outcome == nil ? 1 : 0,
+            "review": request.outcome == .needsReview ? 1 : 0, "held": request.outcome == .paused ? 1 : 0,
+            "children": [String](), "currentScope": status.currentScope, "syncResult": result,
+        ]
+    }
+
+    private static func linkSyncStatus(_ record: LinkStore.Record, connection view: Connection.View, pending: LinkStore.Operation?,
+                                       local: PublicationRuntime.LocalSnapshot?, differs: Bool, accessFailed: Bool) throws
+        -> (mode: String, status: String, reason: String) {
+        guard record.state == .linked else { return ("Manual", "Confirmed", "") }
+        guard let consent = record.automatic else {
+            guard record.check?.requiresReview == true else { return ("Manual", "Confirmed", "") }
+            switch record.check?.availability {
+            case .deleted: return ("Manual", "Paused", "RemoteDeleted")
+            case .unavailable:
+                let reason = record.check?.availabilityReason == "NOT_OWNER" ? "NotOwner" : "RemoteUnavailable"
+                return ("Manual", "Paused", reason)
+            default: return ("Manual", "Paused", "ReviewRequired")
+            }
+        }
+        let mode = consent.phase == .active ? "Automatic" : "Pending"
+        guard consent.accountGeneration == view.accountGeneration else { return (mode, "Paused", "AccountChanged") }
+        guard local != nil else { return (mode, "Paused", "LocalTerminal") }
+        guard try RemiloIOSEngine.shared.calendarLifecycleRevision(record.occurrenceID) == consent.lifecycleRevision else {
+            return (mode, "Paused", "StaleAuthorization")
+        }
+        guard hasReadAccess(view), view.canWriteOwnedEvents, !accessFailed else { return (mode, "Paused", "AccessRequired") }
+        let currentOperation = pending.flatMap { operation -> LinkStore.Operation? in
+            guard let authority = operation.transfer?.automatic, operation.linkRevision == record.revision,
+                  operation.account.accountGeneration == consent.accountGeneration,
+                  authority.activationRevision == consent.activationRevision,
+                  authority.lifecycleRevision == consent.lifecycleRevision else { return nil }
+            return operation
+        }
+        if currentOperation?.phase == .sent { return (mode, "Unconfirmed", "UnconfirmedWrite") }
+        if consent.issue == .review { return (mode, "Review", "ChangesNeedReview") }
+        if consent.issue == .ringing { return (mode, "Deferred", "Ringing") }
+        if consent.phase == .pending || currentOperation != nil || differs || record.check?.remoteDiffers == true {
+            return (mode, "UpdatePending", "")
+        }
+        return (mode, "Confirmed", "")
     }
 
     private static func hasReadAccess(_ view: Connection.View) -> Bool {
@@ -536,9 +704,10 @@ final class RemiloIOSGoogleCalendarBridge {
         catch is IOSCalendarOneTimeSnapshot.Failure { return nil }
     }
 
-    private static func transfer(_ operation: LinkStore.Operation, connection view: Connection.View) throws -> [String: Any] {
+    private static func transfer(_ operation: LinkStore.Operation, connection view: Connection.View,
+                                 record: LinkStore.Record?) throws -> [String: Any] {
         let local = try localLinkSnapshot(operation.occurrenceID)
-        let presentation = transferPresentation(operation, local: local, connection: view)
+        let presentation = try transferPresentation(operation, local: local, connection: view, record: record)
         let source = operation.erased ? nil : [
             "calendarId": operation.source.calendarID, "eventId": operation.source.eventID,
         ]
@@ -558,9 +727,11 @@ final class RemiloIOSGoogleCalendarBridge {
     }
 
     private static func transferPresentation(
-        _ operation: LinkStore.Operation, local: PublicationRuntime.LocalSnapshot?, connection view: Connection.View
-    ) -> (stage: String, state: String, recovery: String, action: String, currentScope: Bool) {
-        let current = operation.account.connectionRevision == view.revision && operation.account.accountGeneration == view.accountGeneration
+        _ operation: LinkStore.Operation, local: PublicationRuntime.LocalSnapshot?, connection view: Connection.View,
+        record: LinkStore.Record?
+    ) throws -> (stage: String, state: String, recovery: String, action: String, currentScope: Bool) {
+        let currentAccount = operation.account.connectionRevision == view.revision && operation.account.accountGeneration == view.accountGeneration
+        let current = currentAccount ? try hasAutomaticAuthority(operation, record: record) : false
         let canReview = !operation.erased && local != nil
         switch operation.phase {
         case .waiting, .localApplied:
@@ -570,7 +741,8 @@ final class RemiloIOSGoogleCalendarBridge {
             let mayRecoverLocal = operation.phase == .waiting && operation.transfer?.needsLocal == true
             let mayResume = current && canReview && (local == expected || mayRecoverLocal)
             let recovery = mayResume ? "Retry" : "ConfirmOutcome"
-            if current && (!hasReadAccess(view) || (mayResume && operation.transfer?.needsRemote == true && !view.canWriteOwnedEvents)) {
+            let requiresWrite = operation.transfer?.needsRemote == true || operation.transfer?.automatic != nil
+            if current && (!hasReadAccess(view) || (mayResume && requiresWrite && !view.canWriteOwnedEvents)) {
                 return ("NeedsAccess", "NeedsAccess", recovery, "Authorize", current)
             }
             return ("Waiting", "Waiting", recovery, "Retry", current)
@@ -585,6 +757,18 @@ final class RemiloIOSGoogleCalendarBridge {
         case .cancelled:
             let reviewAgain = canReview && operation.reason != "SUPERSEDED"
             return ("Cancelled", "Cancelled", reviewAgain ? "ReviewAgain" : "None", reviewAgain ? "ReviewItems" : "None", current)
+        }
+    }
+
+    private static func hasAutomaticAuthority(_ operation: LinkStore.Operation, record: LinkStore.Record?) throws -> Bool {
+        guard let authority = operation.transfer?.automatic else { return true }
+        guard let record, record.revision == operation.linkRevision, let consent = record.automatic,
+              consent.activationRevision == authority.activationRevision, consent.lifecycleRevision == authority.lifecycleRevision,
+              consent.accountGeneration == operation.account.accountGeneration,
+              try RemiloIOSEngine.shared.calendarLifecycleRevision(record.occurrenceID) == authority.lifecycleRevision else { return false }
+        switch authority.kind {
+        case .activation: return consent.phase == .pending && consent.operationID == operation.operationID
+        case .transfer: return consent.phase == .active && consent.issue != .review && record.check?.requiresReview != true
         }
     }
 

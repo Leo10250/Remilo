@@ -17104,6 +17104,41 @@
       "context": "The selected field values require a Google write grant. Granting access does not apply the update.",
       "calendarStatus": false
     },
+    "ios_calendar_automatic_scope": {
+      "en": "On iPhone and iPad, Remilo checks for changes when you open or return to the app, or edit a linked reminder. Automatic sync requires access to Google Calendar.",
+      "zh-Hans": "在 iPhone 和 iPad 上，Remilo 会在你打开应用、回到应用或编辑已关联的提醒时检查更改。自动同步需要 Google 日历访问权限。",
+      "args": {},
+      "context": "Individual iOS Calendar link activation and management. Foreground activation and authored edits offer bounded automatic checks with a live Google grant.",
+      "calendarStatus": false
+    },
+    "ios_calendar_automatic_allow_write_detail": {
+      "en": "Automatic sync needs permission to update the linked Google Calendar event. After granting access, review both copies again and confirm to turn on automatic sync.",
+      "zh-Hans": "自动同步需要权限才能更新 Google 日历中的关联日程。授权后，请重新核对两边的内容，再确认开启自动同步。",
+      "args": {},
+      "context": "Before individual iOS activation. Access is needed for future updates even when the copies agree. Granting access refreshes the review before confirmation.",
+      "calendarStatus": false
+    },
+    "ios_calendar_automatic_disable_detail": {
+      "en": "This reminder stays linked to the Google Calendar event for manual updates. Google may still finish processing updates already sent.",
+      "zh-Hans": "此提醒仍与 Google 日历中的日程关联，之后可手动更新。Google 仍可能处理已经发出的更新。",
+      "args": {},
+      "context": "Confirmation for disabling automatic sync on a single iOS Calendar link. The link remains and any already sent request may finish.",
+      "calendarStatus": false
+    },
+    "ios_calendar_automatic_disable_title": {
+      "en": "Turn off automatic sync?",
+      "zh-Hans": "关闭自动同步？",
+      "args": {},
+      "context": "Title of the confirmation for disabling automatic sync for this one iOS reminder.",
+      "calendarStatus": false
+    },
+    "ios_calendar_automatic_disable_action": {
+      "en": "Turn off automatic sync",
+      "zh-Hans": "关闭自动同步",
+      "args": {},
+      "context": "Confirmation button for disabling automatic sync for this one iOS reminder and keeping the manual link.",
+      "calendarStatus": false
+    },
     "ios_calendar_manual_unavailable": {
       "en": "Linking this reminder requires an eligible Google Calendar event from this account.",
       "zh-Hans": "要关联此提醒，当前 Google 账号中必须有符合条件的日程。",

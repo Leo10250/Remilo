@@ -22,6 +22,13 @@ import {
 } from './calendar-local-import';
 import { engine } from './native';
 
+export function isAutomaticCalendarOperation(operation: Pick<CalendarLinkedOperation, 'kind'>) {
+  return (
+    operation.kind === 'EnableAutomaticCalendarSync' ||
+    operation.kind === 'AutomaticCalendarTransfer'
+  );
+}
+
 export function isUnconfirmedManualCalendarSend(operation: CalendarLinkedOperation) {
   return (
     isManualCalendarOperation(operation) &&

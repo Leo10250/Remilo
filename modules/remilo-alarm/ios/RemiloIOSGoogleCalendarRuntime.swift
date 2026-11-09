@@ -12,6 +12,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     typealias Failure = RemiloIOSGoogleCalendarFailure
     typealias Import = RemiloIOSGoogleCalendarImport
     typealias ImportJournal = RemiloIOSGoogleCalendarImportJournal
+    nonisolated static let automaticStatusChangeKey = "calendarStatusOnly"
 
     enum Authorization: Equatable { case connectOrChangeAccount, reauthorizeCurrentAccount, writeOwnedEvents }
 
@@ -45,6 +46,9 @@ final class RemiloIOSGoogleCalendarRuntime {
 
     func authorizeFromUserAction(expectedRevision: Int, intent: Authorization) async throws -> Connection.View {
         try requireForeground()
+        #if os(iOS)
+        let previousAccountGeneration = try connection.view().accountGeneration
+        #endif
         let consent: Connection.Consent
         switch intent {
         case .connectOrChangeAccount: consent = .connectOrChangeAccount
@@ -62,6 +66,11 @@ final class RemiloIOSGoogleCalendarRuntime {
         }
         try requireForeground()
         reviews.removeAll()
+        #if os(iOS)
+        if Self.live === self, view.canWriteOwnedEvents, view.accountGeneration == previousAccountGeneration {
+            requestAutomaticPass(.foreground)
+        }
+        #endif
         return view
     }
 
@@ -186,7 +195,159 @@ final class RemiloIOSGoogleCalendarRuntime {
     }
 
     #if os(iOS)
+    private typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
+
+    private enum AutomaticOpportunity: Equatable { case foreground, localChange }
+
+    private struct AutomaticLocalVersion {
+        let activationRevision: Int
+        let localRevision: Int
+        let generation: Int
+        let deliveryState: String
+
+        init(activationRevision: Int, local: IOSReminder) {
+            self.activationRevision = activationRevision
+            localRevision = local.revision
+            generation = local.generation
+            deliveryState = local.deliveryState
+        }
+
+        func covers(_ consent: Manual.Store.AutomaticConsent, local: IOSReminder) -> Bool {
+            guard activationRevision == consent.activationRevision, localRevision == local.revision else { return false }
+            return consent.issue != .ringing || (generation == local.generation && deliveryState == local.deliveryState)
+        }
+    }
+
     private static var live: RemiloIOSGoogleCalendarRuntime?
+    private static var automaticObservers: [NSObjectProtocol] = []
+    private static let automaticBudget = 4
+    private var automaticWork: Task<Void, Never>?
+    private var requestedAutomaticPass: AutomaticOpportunity?
+    private var automaticAccountGeneration: Int?
+    private var automaticCursor: String?
+    private var automaticLocalVersions: [String: AutomaticLocalVersion] = [:]
+
+    /// Observe application opportunities independently of the Calendar screen and delivery worker.
+    static func installAutomaticForegroundCoordinator() {
+        guard automaticObservers.isEmpty, RemiloIOSGoogleCalendarConfiguration() != nil else { return }
+        let center = NotificationCenter.default
+        for name in [UIApplication.didBecomeActiveNotification, UIScene.didActivateNotification,
+                     UIApplication.protectedDataDidBecomeAvailableNotification] {
+            automaticObservers.append(center.addObserver(forName: name, object: nil, queue: nil) { _ in
+                Task { @MainActor in
+                    guard Self.isAutomaticForeground, let runtime = try? Self.configuredForegroundRuntime() else { return }
+                    runtime.requestAutomaticPass(.foreground)
+                }
+            })
+        }
+        for name in [UIApplication.willResignActiveNotification, UIScene.willDeactivateNotification,
+                     UIApplication.protectedDataWillBecomeUnavailableNotification] {
+            automaticObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated {
+                    Self.live?.requestedAutomaticPass = nil
+                    Self.live?.automaticWork?.cancel()
+                }
+            })
+        }
+        automaticObservers.append(center.addObserver(forName: .remiloIOSChange, object: nil, queue: nil) { notification in
+            guard notification.userInfo?[Self.automaticStatusChangeKey] as? Bool != true else { return }
+            Task { @MainActor in Self.live?.requestAutomaticPass(.localChange) }
+        })
+    }
+
+    private static var isAutomaticForeground: Bool {
+        UIApplication.shared.applicationState == .active && foregroundWindow() != nil
+    }
+
+    private func requestAutomaticPass(_ opportunity: AutomaticOpportunity) {
+        guard Self.isAutomaticForeground else { return }
+        if requestedAutomaticPass != .foreground { requestedAutomaticPass = opportunity }
+        guard automaticWork == nil else { return }
+        automaticWork = Task { [weak self] in
+            guard let self else { return }
+            await drainAutomaticPasses()
+        }
+    }
+
+    private func drainAutomaticPasses() async {
+        defer {
+            automaticWork = nil
+            if let queued = requestedAutomaticPass { requestAutomaticPass(queued) }
+        }
+        while !Task.isCancelled, Self.isAutomaticForeground, requestedAutomaticPass != nil {
+            // An activation and its protected-data notification can describe the same transition.
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled, Self.isAutomaticForeground, let opportunity = requestedAutomaticPass else { return }
+            requestedAutomaticPass = nil
+            await runAutomaticPass(opportunity)
+        }
+    }
+
+    private func runAutomaticPass(_ opportunity: AutomaticOpportunity) async {
+        guard let manualLink, let view = try? connection.view(), view.canWriteOwnedEvents else { return }
+        let inspectUnchanged = opportunity == .foreground
+        if inspectUnchanged { try? manualLink.resumeAssociationRequests(expectedConnectionRevision: view.revision, limit: 2) }
+        guard let candidates = try? manualLink.automaticCandidates(expectedConnectionRevision: view.revision,
+                                                                    inspectUnchanged: inspectUnchanged),
+              let local = try? RemiloIOSEngine.shared.read() else { return }
+        if automaticAccountGeneration != view.accountGeneration {
+            automaticAccountGeneration = view.accountGeneration
+            automaticCursor = nil
+            automaticLocalVersions.removeAll()
+        }
+        automaticLocalVersions = automaticLocalVersions.filter { local.reminders[$0.key]?.active == true }
+        var eligible: [Manual.Store.Record] = []
+        for record in candidates {
+            let id = record.occurrenceID
+            guard let consent = record.automatic, let reminder = local.reminders[id] else { continue }
+            if inspectUnchanged || automaticLocalVersions[id]?.covers(consent, local: reminder) != true {
+                eligible.append(record)
+            }
+            // An inbound write must not make a dirty candidate beyond the batch look newly edited.
+            automaticLocalVersions[id] = AutomaticLocalVersion(activationRevision: consent.activationRevision, local: reminder)
+        }
+        guard !eligible.isEmpty else { return }
+        let start = automaticCursor.flatMap { cursor in eligible.firstIndex { $0.occurrenceID > cursor } } ?? 0
+        let batch = (0..<min(eligible.count, Self.automaticBudget)).map { eligible[(start + $0) % eligible.count] }
+        let ids = Set(batch.map(\.occurrenceID))
+        guard let before = try? automaticOperations(manualLink, ids: ids, revision: view.revision) else { return }
+
+        for record in batch {
+            guard !Task.isCancelled, Self.isAutomaticForeground,
+                  let current = try? connection.view(), current.revision == view.revision, current.canWriteOwnedEvents else { break }
+            let id = record.occurrenceID
+            guard let consent = record.automatic,
+                  let reminder = try? RemiloIOSEngine.shared.read().reminders[id], reminder.active else { continue }
+            automaticCursor = id
+            automaticLocalVersions[id] = AutomaticLocalVersion(activationRevision: consent.activationRevision, local: reminder)
+            _ = try? await manualLink.syncAutomatic(id, expectedConnectionRevision: view.revision,
+                                                    expectedLinkRevision: record.revision,
+                                                    expectedActivationRevision: consent.activationRevision,
+                                                    inspectUnchanged: inspectUnchanged)
+        }
+
+        guard Self.isAutomaticForeground,
+              let after = try? automaticOperations(manualLink, ids: ids, revision: view.revision),
+              let links = try? manualLink.links(expectedConnectionRevision: view.revision).filter({ ids.contains($0.occurrenceID) }) else { return }
+        for operation in after where operation.localApplied {
+            // The engine also emits a change for an inbound edit. Remember that exact revision
+            // while its operation is pending so it cannot turn into a new local opportunity.
+            let id = operation.occurrenceID
+            guard let authority = operation.transfer?.automatic, let applied = operation.localAfter,
+                  let reminder = try? RemiloIOSEngine.shared.read().reminders[id],
+                  reminder.revision == applied.version.revision else { continue }
+            automaticLocalVersions[id] = AutomaticLocalVersion(activationRevision: authority.activationRevision, local: reminder)
+        }
+        if before != after || batch.sorted(by: { $0.occurrenceID < $1.occurrenceID }) != links {
+            NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+        }
+    }
+
+    private func automaticOperations(_ manualLink: Manual, ids: Set<String>, revision: Int) throws -> [Manual.Store.Operation] {
+        try manualLink.transferOperations(expectedConnectionRevision: revision).filter {
+            $0.kind == "AutomaticCalendarTransfer" && ids.contains($0.occurrenceID)
+        }
+    }
 
     static func reconcileManualLinkPurges() throws {
         guard foregroundWindow() != nil else { return }
@@ -211,7 +372,10 @@ final class RemiloIOSGoogleCalendarRuntime {
         )
         let manualLink = try RemiloIOSGoogleCalendarManualLinkRuntime(
             connection: connection, publication: publication, imports: imports, store: .local(),
-            local: .localEngine(.shared), canUseForeground: canUseForeground
+            local: .localEngine(.shared), canUseForeground: canUseForeground,
+            notifyStatusChange: {
+                NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+            }
         )
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,

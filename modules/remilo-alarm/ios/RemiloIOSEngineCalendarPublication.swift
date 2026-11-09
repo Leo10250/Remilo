@@ -116,7 +116,7 @@ extension RemiloIOSGoogleCalendarManualLinkRuntime.LocalAuthority {
                                                                    change: change(transfer.desired), authorize: authorize)
                 return try localResult(result, occurrenceID: transfer.occurrenceID)
             } catch let failure as IOSInputFailure { throw Manual.LocalFailure(code: failure.code) }
-        })
+        }, lifecycleRevision: { try engine.calendarLifecycleRevision($0) })
     }
 
     private static func change(_ fields: Manual.Event.Fields) -> IOSCalendarInboundChange {

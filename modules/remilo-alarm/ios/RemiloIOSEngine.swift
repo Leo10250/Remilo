@@ -152,6 +152,12 @@ final class RemiloIOSEngine {
         return try commit()
     }
 
+    func calendarLifecycleRevision(_ occurrenceID: String) throws -> Int? {
+        guard let record = try read().reminders[occurrenceID], record.id == occurrenceID,
+              record.active, record.isCalendarOneTime else { return nil }
+        return record.calendarLifecycleRevision ?? 0
+    }
+
     func scheduleTestAlarm(operationId: String) async throws -> [String: Any] {
         await acquire()
         defer { release() }
@@ -602,6 +608,9 @@ final class RemiloIOSEngine {
         }
 
         if !["Snooze", "Postpone"].contains(kind) { record.revision += 1 }
+        if record.isCalendarOneTime, ["Done", "CompleteDelivery", "Stop", "Delete", "Reopen", "UndoDelete"].contains(kind) {
+            record.calendarLifecycleRevision = record.revision
+        }
         record.history.append(IOSHistory(kind: historyKind, atMs: now, targetMs: target))
         if changeRegistration {
             replaceRegistration(&record, target: target, state: &state, now: now)

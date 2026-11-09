@@ -300,6 +300,15 @@ observation stays visible. Delete the Google event and check that a confirmed
 deletion appears on Agenda and Details. If the same event is restored, check
 that the link still requires review. Unlink and verify that the reminder and
 restored Google event remain.
+
+On a healthy one-time link, turn on automatic sync after reviewing the two
+copies and granting write access. Change the Remilo title and Google notes,
+then check the same link with Sync now. Verify both edits converge and a
+second check reports no changes. Change the same field on both sides and
+verify the association requests review. Complete and reopen the reminder
+before another check. Verify the original permission stays paused, then
+review again or turn off automatic sync. The reminder and Google event
+should remain linked when automatic sync is turned off.
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

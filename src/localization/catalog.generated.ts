@@ -2544,6 +2544,11 @@ export const catalogs = {
     "ios_calendar_manual_link_detail": "Remilo transfers changes between the linked reminder and event after you review and confirm them.",
     "ios_calendar_manual_allow_write": "Allow updates in Google Calendar",
     "ios_calendar_manual_allow_write_detail": "Your choices would change the Google event. Review and confirm again after granting access.",
+    "ios_calendar_automatic_scope": "On iPhone and iPad, Remilo checks for changes when you open or return to the app, or edit a linked reminder. Automatic sync requires access to Google Calendar.",
+    "ios_calendar_automatic_allow_write_detail": "Automatic sync needs permission to update the linked Google Calendar event. After granting access, review both copies again and confirm to turn on automatic sync.",
+    "ios_calendar_automatic_disable_detail": "This reminder stays linked to the Google Calendar event for manual updates. Google may still finish processing updates already sent.",
+    "ios_calendar_automatic_disable_title": "Turn off automatic sync?",
+    "ios_calendar_automatic_disable_action": "Turn off automatic sync",
     "ios_calendar_manual_unavailable": "Linking this reminder requires an eligible Google Calendar event from this account.",
     "ios_calendar_manual_reconnect_check": "Reconnect the original Google account to check this saved update.",
     "ios_calendar_manual_waiting": "This request is saved. Retry to continue it.",
@@ -5068,6 +5073,11 @@ export const catalogs = {
     "ios_calendar_manual_link_detail": "你核对并确认后，Remilo 才会将所选更改应用到关联的日程或提醒。",
     "ios_calendar_manual_allow_write": "允许更新 Google 日历中的日程",
     "ios_calendar_manual_allow_write_detail": "所选内容会更改 Google 日历中的日程。授予权限后，请重新核对并确认。",
+    "ios_calendar_automatic_scope": "在 iPhone 和 iPad 上，Remilo 会在你打开应用、回到应用或编辑已关联的提醒时检查更改。自动同步需要 Google 日历访问权限。",
+    "ios_calendar_automatic_allow_write_detail": "自动同步需要权限才能更新 Google 日历中的关联日程。授权后，请重新核对两边的内容，再确认开启自动同步。",
+    "ios_calendar_automatic_disable_detail": "此提醒仍与 Google 日历中的日程关联，之后可手动更新。Google 仍可能处理已经发出的更新。",
+    "ios_calendar_automatic_disable_title": "关闭自动同步？",
+    "ios_calendar_automatic_disable_action": "关闭自动同步",
     "ios_calendar_manual_unavailable": "要关联此提醒，当前 Google 账号中必须有符合条件的日程。",
     "ios_calendar_manual_reconnect_check": "请重新连接原 Google 账号，查看此更新的结果。",
     "ios_calendar_manual_waiting": "此更新请求已保存。请重试以继续处理。",
@@ -7542,6 +7552,11 @@ export interface MessageArguments {
   ios_calendar_manual_link_detail: Record<string, never>;
   ios_calendar_manual_allow_write: Record<string, never>;
   ios_calendar_manual_allow_write_detail: Record<string, never>;
+  ios_calendar_automatic_scope: Record<string, never>;
+  ios_calendar_automatic_allow_write_detail: Record<string, never>;
+  ios_calendar_automatic_disable_detail: Record<string, never>;
+  ios_calendar_automatic_disable_title: Record<string, never>;
+  ios_calendar_automatic_disable_action: Record<string, never>;
   ios_calendar_manual_unavailable: Record<string, never>;
   ios_calendar_manual_reconnect_check: Record<string, never>;
   ios_calendar_manual_waiting: Record<string, never>;

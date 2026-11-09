@@ -131,7 +131,7 @@ enum PublicationChecks {
             local.snapshot = snapshot
             local.manualReceipts[transfer.operationID] = .init(snapshot: snapshot, status: "Scheduled")
             throw RemiloIOSGoogleCalendarFailure.network // Engine commit survived the interrupted response.
-        })
+        }, lifecycleRevision: { _ in local.lifecycleRevision })
         func newRuntime() -> Manual {
             Manual(connection: connection, publication: publication, imports: .init(directory: path),
                    store: .init(directory: path), local: authority, canUseForeground: { true }, now: clock)
@@ -188,6 +188,8 @@ enum PublicationChecks {
             let writes = await fixture.writes
             precondition(confirmed.phase == .confirmed && confirmed.resultLinkRevision == 1)
             precondition(retired.phase == .cancelled && retired.reason == "SUPERSEDED" && retired.remoteAttempted && writes == 1)
+            try await automaticActivationChecks(runtime, connection: connection, readOnly: readOnly, fixture: fixture,
+                                                local: local, revision: write.revision, linkRevision: confirmed.resultLinkRevision!)
             return
         }
         try await fixture.completeManualTransfer()
@@ -197,6 +199,88 @@ enum PublicationChecks {
         let writes = await fixture.writes
         precondition(verified.phase == .confirmed && verified.resultLinkRevision == nil && savedLinks.isEmpty && writes == 1)
         precondition(verified.transfer == nil && local.manualReceipts.count == 1)
+    }
+
+    @MainActor
+    private static func automaticActivationChecks(
+        _ runtime: RemiloIOSGoogleCalendarManualLinkRuntime, connection: RemiloIOSGoogleCalendarConnection,
+        readOnly: RemiloIOSGoogleCalendarAccess, fixture: Fixture, local: RuntimeLocal, revision: Int, linkRevision: Int
+    ) async throws {
+        typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
+        let id = local.snapshot!.version.occurrenceID
+        let stale = try await runtime.previewActivation(id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision)
+        local.lifecycleRevision += 1 // Simulate completion and reopen while the preview is displayed.
+        do {
+            _ = try await runtime.resolve(operationID: UUID(), reviewID: stale.id, expectedConnectionRevision: revision,
+                                          choices: [:], updating: true, activating: true)
+            preconditionFailure("An intervening local lifecycle change requires fresh activation")
+        } catch Manual.Link.Failure.stalePreview {}
+
+        let review = try await runtime.previewActivation(id, expectedConnectionRevision: revision, expectedLinkRevision: linkRevision)
+        let enabled = try await runtime.resolve(operationID: UUID(), reviewID: review.id, expectedConnectionRevision: revision,
+                                                choices: [:], updating: true, activating: true)
+        let active = try runtime.links(expectedConnectionRevision: revision).first { $0.occurrenceID == id }!
+        precondition(enabled.phase == .confirmed && !enabled.localApplied && !enabled.remoteAttempted)
+        precondition(active.automatic?.phase == .active && active.automatic?.lifecycleRevision == local.lifecycleRevision)
+        let activationRevision = active.automatic!.activationRevision
+        let foreground = try runtime.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
+        let dirty = try runtime.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: false)
+        precondition(foreground == [active] && dirty.isEmpty)
+        let checked = try await runtime.syncAutomatic(id, expectedConnectionRevision: revision, expectedLinkRevision: active.revision,
+                                                       expectedActivationRevision: activationRevision)
+        guard case .observed(let unchanged) = checked else { preconditionFailure("Agreement needs no transfer") }
+        precondition(unchanged.check?.remoteDiffers == false && unchanged.revision == active.revision)
+        let requestID = UUID()
+        let request = try runtime.requestAssociationSync(requestID, occurrenceID: id, expectedConnectionRevision: revision,
+                                                         expectedLinkRevision: active.revision, expectedActivationRevision: activationRevision)
+        precondition(request.outcome == nil && request.operationID == requestID)
+        var result: Manual.AssociationStatus?
+        for _ in 0..<100 {
+            result = try runtime.associationStatus(requestID, expectedConnectionRevision: revision)
+            if result?.request.outcome != nil { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        precondition(result?.request.outcome == .noChanges && result?.request.checked == true && result?.request.changed == false)
+        let replayedRequest = try runtime.requestAssociationSync(requestID, occurrenceID: id, expectedConnectionRevision: revision,
+                                                                 expectedLinkRevision: active.revision, expectedActivationRevision: activationRevision)
+        let latest = try runtime.latestAssociationRequests(expectedConnectionRevision: revision)
+        precondition(replayedRequest == result?.request && latest[id] == requestID && result?.currentScope == true)
+
+        let agreed = local.snapshot!
+        let edited = Event.Fields(title: "A later local edit", notes: agreed.fields.notes, schedule: agreed.fields.schedule)
+        local.snapshot = .init(version: .init(occurrenceID: id, revision: agreed.version.revision + 1,
+                                              generation: agreed.version.generation), fields: edited)
+        let changed = try runtime.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: false)
+        precondition(changed.map(\.occurrenceID) == [id])
+        try await fixture.respondToManualRead(.edited)
+        let pass = try await runtime.syncAutomatic(id, expectedConnectionRevision: revision, expectedLinkRevision: active.revision,
+                                                    expectedActivationRevision: activationRevision)
+        guard case .observed(let conflict) = pass else { preconditionFailure("A conflicting change needs review") }
+        precondition(conflict.automatic?.issue == .review && local.snapshot?.fields == edited)
+        let blocked = try runtime.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
+        precondition(blocked.isEmpty)
+        let writes = await fixture.writes
+        precondition(writes == 1)
+        try await fixture.respondToManualRead(nil)
+        local.snapshot = .init(version: .init(occurrenceID: id, revision: agreed.version.revision + 2,
+                                              generation: agreed.version.generation), fields: agreed.fields)
+
+        let refreshed = try await connection.connectFromUserAction(expectedRevision: revision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
+        let operation = UUID()
+        let disabled = try runtime.disableAutomatic(operationID: operation, occurrenceID: id, expectedConnectionRevision: refreshed.revision,
+                                                    expectedLinkRevision: active.revision)
+        let replay = try runtime.disableAutomatic(operationID: operation, occurrenceID: id, expectedConnectionRevision: refreshed.revision,
+                                                  expectedLinkRevision: active.revision)
+        precondition(disabled == replay && disabled.revision == active.revision + 1)
+        let readReview = try await runtime.previewActivation(id, expectedConnectionRevision: refreshed.revision,
+                                                             expectedLinkRevision: disabled.revision)
+        do {
+            _ = try await runtime.resolve(operationID: UUID(), reviewID: readReview.id, expectedConnectionRevision: refreshed.revision,
+                                          choices: [:], updating: true, activating: true)
+            preconditionFailure("Even a no-op activation grants future writes and needs explicit write access")
+        } catch Manual.Failure.needsAccess {}
+        let saved = try runtime.links(expectedConnectionRevision: refreshed.revision).first { $0.occurrenceID == id }
+        precondition(saved?.automatic == nil && saved?.revision == disabled.revision)
     }
 
     @MainActor
@@ -383,6 +467,7 @@ enum PublicationChecks {
     private final class RuntimeLocal {
         var snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot?
         var invalidateAtPermit = false
+        var lifecycleRevision = 0
         var manualReceipts: [UUID: RemiloIOSGoogleCalendarManualLinkRuntime.LocalResult] = [:]
 
         init(_ snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot) { self.snapshot = snapshot }

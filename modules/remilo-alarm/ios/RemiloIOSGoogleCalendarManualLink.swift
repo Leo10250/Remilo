@@ -118,6 +118,14 @@ enum RemiloIOSGoogleCalendarManualLink {
         }
     }
 
+    struct AutomaticAuthority: Codable, Equatable, Sendable {
+        enum Kind: String, Codable, Sendable { case activation, transfer }
+
+        let kind: Kind
+        let activationRevision: Int
+        let lifecycleRevision: Int
+    }
+
     struct Transfer: Codable, Equatable, Sendable {
         let operationID: UUID
         let account: Publication.Account
@@ -127,6 +135,7 @@ enum RemiloIOSGoogleCalendarManualLink {
         let desired: Event.Fields
         let linkRevision: Int
         let checkedAtMs: Int64
+        var automatic: AutomaticAuthority? = nil
 
         var occurrenceID: String { local.version.occurrenceID }
         var needsLocal: Bool { local.fields != desired }
@@ -150,6 +159,7 @@ enum RemiloIOSGoogleCalendarManualLink {
         var googleTiming: Timing? = nil
         var manualScheduleBlocked: String? = nil
         var supersedingOperationID: UUID? = nil
+        var activationLifecycleRevision: Int? = nil
 
         func valid(at time: Int64) -> Bool {
             time >= checkedAtMs && time - checkedAtMs <= 600_000

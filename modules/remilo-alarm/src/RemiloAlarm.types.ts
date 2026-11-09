@@ -39,6 +39,7 @@ export type Capabilities = {
   calendarOneOffImport?: boolean;
   calendarOneOffPublish?: boolean;
   calendarManualLink?: boolean;
+  calendarAutomaticLink?: boolean;
   exactAlarms: boolean;
   notifications: boolean;
   channelEnabled: boolean;
@@ -1043,8 +1044,22 @@ export type CalendarLegacyCommand =
       expectedLinkRevision: number;
       expectedConnectionRevision?: number;
     }
+  | {
+      kind: 'DisableAutomaticCalendarSync';
+      operationId: string;
+      occurrenceId: string;
+      expectedLinkRevision: number;
+      expectedConnectionRevision: number;
+    }
   | { kind: 'RetryCalendarOperation'; operationId: string; expectedConnectionRevision?: number };
 export type CalendarCommand =
   | CalendarLegacyCommand
   | ManagedCalendarCommand
-  | { kind: 'RequestCalendarSync'; operationId: string; scope: CalendarSyncScope };
+  | {
+      kind: 'RequestCalendarSync';
+      operationId: string;
+      scope: CalendarSyncScope;
+      expectedConnectionRevision?: number;
+      expectedLinkRevision?: number;
+      expectedActivationRevision?: number;
+    };

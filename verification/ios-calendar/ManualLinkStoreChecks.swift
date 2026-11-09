@@ -143,6 +143,7 @@ enum ManualLinkStoreChecks {
         try transferChecks(in: path.appendingPathComponent("transfer", isDirectory: true), time: firstObserved)
         try supersedingChecks(in: path.appendingPathComponent("superseding", isDirectory: true), time: firstObserved)
         try checkChecks(in: path.appendingPathComponent("check", isDirectory: true), time: firstObserved)
+        try automaticConsentChecks(in: path.appendingPathComponent("automatic", isDirectory: true), time: firstObserved)
     }
 
     private static func transferChecks(in path: URL, time: Int64) throws {
@@ -445,6 +446,150 @@ enum ManualLinkStoreChecks {
         try store.redactPurged([localID])
         let purged = try store.link(localID)!
         precondition(purged.state == .detached && purged.check == nil && purged.baseline == nil)
+    }
+
+    private static func automaticConsentChecks(in path: URL, time: Int64) throws {
+        let store = Store(directory: path)
+        let owner = account("owner")
+        let refreshed = account("owner", revision: 2)
+        let reconnected = account("owner", revision: 3, generation: 2)
+        let source = source(owner, event: "automatic-event")
+        let evidence = Store.Link.Evidence.imported(source)
+        let remote = try observation(evidence, title: "Title", notes: "Original notes")
+        let changedRemote = try observation(evidence, title: "Title", notes: "Synchronized notes", etag: #""changed""#)
+        let id = "automatic-reminder"
+        let fingerprint = Data(repeating: 94, count: 32)
+        let baseline = Store.Baseline(title: remote.fields.title, notes: remote.fields.notes, schedule: remote.fields.schedule)
+        let agreed = Store.LocalSnapshot(version: .init(occurrenceID: id, revision: 4, generation: 7), fields: remote.fields)
+        let changed = Store.LocalSnapshot(version: .init(occurrenceID: id, revision: 5, generation: 7), fields: changedRemote.fields)
+        _ = try store.attach(operationID: UUID(), fingerprint: fingerprint, viewingAs: owner, occurrenceID: id,
+                             source: source, origin: .imported, expectedRevision: 0, calendarName: "Owned",
+                             baseline: baseline, observedAtMs: time)
+
+        func makeTransfer(_ kind: Store.Link.AutomaticAuthority.Kind, linkRevision: Int, activationRevision: Int,
+                          account: Store.Account, local: Store.LocalSnapshot, observed: Store.Link.Observation) -> Store.Transfer {
+            .init(operationID: UUID(), account: account, evidence: evidence, local: local, remote: observed,
+                  desired: local.fields, linkRevision: linkRevision, checkedAtMs: time,
+                  automatic: .init(kind: kind, activationRevision: activationRevision, lifecycleRevision: 2))
+        }
+
+        let activation = makeTransfer(.activation, linkRevision: 1, activationRevision: 1, account: owner, local: agreed, observed: remote)
+        let captured = try store.captureTransfer(activation, fingerprint: fingerprint)
+        let reopened = Store(directory: path)
+        let pending = try reopened.link(id)!
+        let replay = try reopened.captureTransfer(activation, fingerprint: fingerprint)
+        precondition(captured == replay && captured.kind == "EnableAutomaticCalendarSync" && captured.phase == .waiting)
+        precondition(pending.automatic?.phase == .pending && pending.automatic?.operationID == activation.operationID)
+        precondition(pending.revision == 1 && pending.baseline == baseline)
+        let duplicateActivation = makeTransfer(.activation, linkRevision: 1, activationRevision: 1,
+                                               account: owner, local: agreed, observed: remote)
+        try rejects(Rejection.operationPending) { _ = try reopened.captureTransfer(duplicateActivation, fingerprint: fingerprint) }
+        _ = try reopened.recordLocal(activation, after: agreed, status: nil)
+        try rejects(Store.Link.Failure.staleRemote) {
+            _ = try reopened.confirmTransfer(activation, observedLocal: agreed, observedRemote: changedRemote,
+                                              observedAtMs: time, advanceLink: true)
+        }
+        let activated = try reopened.confirmTransfer(activation, observedLocal: agreed, observedRemote: remote,
+                                                     observedAtMs: time, advanceLink: true)
+        let active = try reopened.link(id)!
+        precondition(activated.phase == .confirmed && !activated.localApplied && !activated.remoteAttempted)
+        precondition(active.revision == 2 && active.automatic?.phase == .active && active.automatic?.operationID == nil)
+        precondition(active.automatic?.activationRevision == 1 && active.automatic?.lifecycleRevision == 2)
+
+        let ringing = try reopened.recordAutomaticIssue(active, viewingAs: refreshed, issue: .ringing)
+        precondition(ringing.revision == active.revision && ringing.automatic?.issue == .ringing)
+        try rejects(Rejection.stalePreview) { _ = try reopened.recordAutomaticIssue(active, viewingAs: refreshed, issue: .review) }
+        let wrongGeneration = makeTransfer(.transfer, linkRevision: 2, activationRevision: 1,
+                                           account: reconnected, local: changed, observed: remote)
+        try rejects(Rejection.stalePreview) { _ = try reopened.captureTransfer(wrongGeneration, fingerprint: fingerprint) }
+        let automatic = makeTransfer(.transfer, linkRevision: 2, activationRevision: 1,
+                                      account: refreshed, local: changed, observed: remote)
+        let forged = Store.Transfer(operationID: UUID(), account: refreshed, evidence: evidence, local: changed, remote: remote,
+                                    desired: remote.fields, linkRevision: 2, checkedAtMs: time, automatic: automatic.automatic)
+        try rejects(Store.Link.Failure.resolutionRequired) { _ = try reopened.captureTransfer(forged, fingerprint: fingerprint) }
+        let transfer = try reopened.captureTransfer(automatic, fingerprint: fingerprint)
+        precondition(transfer.kind == "AutomaticCalendarTransfer")
+        try reopened.requireTransferAuthority(automatic)
+        _ = try reopened.recordLocal(automatic, after: changed, status: nil)
+        guard case .granted = try reopened.beginSend(automatic, after: changed) else { preconditionFailure("Automatic send") }
+        let laterFields = Store.Link.Event.Fields(title: changed.fields.title, notes: "Newer authored notes", schedule: changed.fields.schedule)
+        let later = Store.LocalSnapshot(version: .init(occurrenceID: id, revision: 6, generation: 8), fields: laterFields)
+        try rejects(Rejection.stalePreview) {
+            _ = try reopened.confirmTransfer(automatic, observedLocal: later, observedRemote: changedRemote,
+                                              observedAtMs: time, advanceLink: true)
+        }
+        let settled = try reopened.confirmTransfer(automatic, observedLocal: later, observedRemote: changedRemote,
+                                                   observedAtMs: time, advanceLink: true, acceptNewerAutomaticLocal: true)
+        let advanced = try reopened.link(id)!
+        precondition(settled.phase == .confirmed && settled.remoteAttempted && settled.resultLinkRevision == 3)
+        precondition(advanced.automatic?.activationRevision == 1 && advanced.automatic?.issue == nil)
+        precondition(advanced.baseline?.notes == changed.fields.notes && advanced.baseline?.notes != later.fields.notes)
+        let review = try reopened.recordAutomaticIssue(advanced, viewingAs: refreshed, issue: .review)
+        try rejects(Rejection.ineligible) { _ = try reopened.recordAutomaticIssue(review, viewingAs: refreshed, issue: .ringing) }
+        let reviewBlocked = makeTransfer(.transfer, linkRevision: 3, activationRevision: 1,
+                                         account: refreshed, local: later, observed: changedRemote)
+        try rejects(Rejection.stalePreview) { _ = try reopened.captureTransfer(reviewBlocked, fingerprint: fingerprint) }
+
+        let reactivation = makeTransfer(.activation, linkRevision: 3, activationRevision: 3,
+                                         account: refreshed, local: later, observed: changedRemote)
+        _ = try reopened.captureTransfer(reactivation, fingerprint: fingerprint)
+        _ = try reopened.recordLocal(reactivation, after: later, status: nil)
+        guard case .granted = try reopened.beginSend(reactivation, after: later) else { preconditionFailure("Activation send") }
+        let disableID = UUID()
+        try rejects(Rejection.stalePreview) {
+            _ = try reopened.disableAutomatic(operationID: disableID, fingerprint: fingerprint, viewingAs: refreshed,
+                                              occurrenceID: id, expectedRevision: 2)
+        }
+        let disabled = try reopened.disableAutomatic(operationID: disableID, fingerprint: fingerprint, viewingAs: refreshed,
+                                                     occurrenceID: id, expectedRevision: 3)
+        let disableReplay = try Store(directory: path).disableAutomatic(operationID: disableID, fingerprint: fingerprint,
+                                                                        viewingAs: refreshed, occurrenceID: id, expectedRevision: 3)
+        let disabledRecord = try reopened.link(id)!
+        precondition(disabled == disableReplay && disabled.revision == 4 && disabledRecord.automatic == nil)
+        precondition(disabledRecord.baseline == advanced.baseline && disabledRecord.state == .linked)
+        try rejects(Failure.operationReused) {
+            _ = try reopened.disableAutomatic(operationID: disableID, fingerprint: fingerprint, viewingAs: reconnected,
+                                              occurrenceID: id, expectedRevision: 3)
+        }
+        let readback = try observation(evidence, title: later.fields.title, notes: later.fields.notes, etag: #""readback""#)
+        try rejects(Rejection.stalePreview) {
+            _ = try reopened.confirmTransfer(reactivation, observedLocal: later, observedRemote: readback,
+                                              observedAtMs: time, advanceLink: true)
+        }
+        let acknowledged = try reopened.confirmReadback(reactivation.operationID, viewingAs: reconnected, observedRemote: readback)
+        let afterReadback = try reopened.link(id)
+        precondition(acknowledged.phase == .confirmed && acknowledged.resultLinkRevision == nil && afterReadback == disabledRecord)
+
+        let failed = makeTransfer(.activation, linkRevision: 4, activationRevision: 4,
+                                  account: refreshed, local: later, observed: readback)
+        _ = try reopened.captureTransfer(failed, fingerprint: fingerprint)
+        _ = try reopened.failTransfer(failed, reason: "STALE_CONNECTION")
+        let afterFailure = try reopened.link(id)!
+        precondition(afterFailure.revision == 5 && afterFailure.automatic == nil)
+        let losesAccess = makeTransfer(.activation, linkRevision: 5, activationRevision: 5,
+                                       account: refreshed, local: later, observed: readback)
+        _ = try reopened.captureTransfer(losesAccess, fingerprint: fingerprint)
+        let awaiting = try reopened.link(id)!
+        let lost = try reopened.observe(awaiting, viewingAs: refreshed, result: .deleted("REMOTE_DELETED"), at: time)
+        precondition(lost.revision == 6 && lost.automatic == nil && lost.check?.requiresReview == true)
+        try rejects(Rejection.stalePreview) { try reopened.requireTransferAuthority(losesAccess) }
+        _ = try reopened.failTransfer(losesAccess, reason: "REMOTE_DELETED")
+        let restored = try reopened.observe(lost, viewingAs: refreshed, result: .available(readback), at: time)
+        precondition(restored.automatic == nil && restored.check?.requiresReview == true)
+        let newConsent = makeTransfer(.activation, linkRevision: 6, activationRevision: 6,
+                                      account: refreshed, local: later, observed: readback)
+        _ = try reopened.captureTransfer(newConsent, fingerprint: fingerprint)
+        _ = try reopened.recordLocal(newConsent, after: later, status: nil)
+        _ = try reopened.confirmTransfer(newConsent, observedLocal: later, observedRemote: readback,
+                                         observedAtMs: time, advanceLink: true)
+        let manuallyReviewed = Store.Transfer(operationID: UUID(), account: refreshed, evidence: evidence, local: later,
+                                              remote: readback, desired: later.fields, linkRevision: 7, checkedAtMs: time)
+        _ = try reopened.captureTransfer(manuallyReviewed, fingerprint: fingerprint)
+        _ = try reopened.recordLocal(manuallyReviewed, after: later, status: nil)
+        _ = try reopened.confirmTransfer(manuallyReviewed, observedLocal: later, observedRemote: readback,
+                                         observedAtMs: time, advanceLink: true)
+        let final = try reopened.link(id)!
+        precondition(final.revision == 8 && final.automatic == nil && final.check == nil)
     }
 
     private static func observation(_ evidence: Store.Link.Evidence, title: String, notes: String, etag: String = #""reviewed""#)

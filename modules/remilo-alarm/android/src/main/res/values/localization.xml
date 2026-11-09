@@ -2552,6 +2552,11 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_ios_calendar_manual_link_detail">Remilo transfers changes between the linked reminder and event after you review and confirm them.</string>
   <string name="l10n_ios_calendar_manual_allow_write">Allow updates in Google Calendar</string>
   <string name="l10n_ios_calendar_manual_allow_write_detail">Your choices would change the Google event. Review and confirm again after granting access.</string>
+  <string name="l10n_ios_calendar_automatic_scope">On iPhone and iPad, Remilo checks for changes when you open or return to the app, or edit a linked reminder. Automatic sync requires access to Google Calendar.</string>
+  <string name="l10n_ios_calendar_automatic_allow_write_detail">Automatic sync needs permission to update the linked Google Calendar event. After granting access, review both copies again and confirm to turn on automatic sync.</string>
+  <string name="l10n_ios_calendar_automatic_disable_detail">This reminder stays linked to the Google Calendar event for manual updates. Google may still finish processing updates already sent.</string>
+  <string name="l10n_ios_calendar_automatic_disable_title">Turn off automatic sync?</string>
+  <string name="l10n_ios_calendar_automatic_disable_action">Turn off automatic sync</string>
   <string name="l10n_ios_calendar_manual_unavailable">Linking this reminder requires an eligible Google Calendar event from this account.</string>
   <string name="l10n_ios_calendar_manual_reconnect_check">Reconnect the original Google account to check this saved update.</string>
   <string name="l10n_ios_calendar_manual_waiting">This request is saved. Retry to continue it.</string>

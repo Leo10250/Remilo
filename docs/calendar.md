@@ -31,6 +31,14 @@ last observation. If Google confirms the event was removed or the source
 becomes unavailable, the link stays suspended until an explicit review.
 Unlinking ends the relationship and leaves the reminder and Google event
 in place.
+
+On an existing one-time link, iOS can separately activate individual
+automatic sync after review and write consent. It checks during protected
+foreground opportunities while the current Google grant is available.
+Sync now on a linked reminder checks that association and records its result.
+Turning off automatic sync leaves the link in manual mode. Completion,
+Trash, and a lost source fence the old authorization, so reopening or
+restoring either copy requires review before automatic work resumes.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)
