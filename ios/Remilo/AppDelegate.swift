@@ -2,7 +2,7 @@ internal import Expo
 import AppIntents
 import React
 import ReactAppDependencyProvider
-import RemiloAlarm
+internal import RemiloAlarm
 
 @main
 class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
