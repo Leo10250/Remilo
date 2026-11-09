@@ -148,18 +148,13 @@ enum RemiloIOSSeries {
         _ segment: IOSSeriesSegment, in state: IOSDatabase, now: Int64, limit: Int, includePaused: Bool = false
     ) throws -> [Slot] {
         guard segment.state == "Active" || (includePaused && segment.state == "Paused") else { return [] }
-        let blocked = state.reminders.values.filter {
-            $0.segmentID == segment.id && (!$0.active || $0.independent == true || $0.agendaAtMs <= now)
-        }.count
-        let candidates = try RemiloIOSRecurrence.future(
-            segment.rule, afterMs: now, deviceZone: .current, mode: segment.template.mode,
-            limit: min(100_000, limit + blocked + state.excludedOccurrences.count)
-        )
-        return Array(candidates.lazy.filter { slot in
+        return try RemiloIOSRecurrence.future(segment.rule, afterMs: now, deviceZone: .current, mode: segment.template.mode, limit: limit) { slot in
             let id = occurrenceID(segment.id, slot.nominalSlot)
-            if state.excludedOccurrences.contains(id) { return false }
-            return state.reminders[id].map { $0.active && $0.independent != true && $0.agendaAtMs > now } ?? true
-        }.prefix(limit))
+            if state.isPurgedOccurrence(id) { return false }
+            guard let saved = state.reminders[id] else { return true }
+            return saved.segmentID == segment.id && saved.nominalSlot == slot.nominalSlot && saved.active
+                && saved.independent != true && saved.agendaAtMs > now
+        }
     }
 
     static func deliveryTime(_ slot: Slot, mode: String) -> Int64 {

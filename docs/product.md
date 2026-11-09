@@ -238,7 +238,8 @@ Validation bounds are application limits, not claims about Android alarm capacit
 
 ## Routines and widgets
 
-Routines and widgets are available on Android.
+Routines are available on Android and iOS. The optional signed iOS build uses
+WidgetKit for the Home Screen widgets.
 
 The Routines library groups saved plans under Your routines and keeps New routine
 in the bottom action bar. The routine row opens today's device-local view and
@@ -280,9 +281,11 @@ today cancels delivery. Ended dates retain exact immutable snapshots. Elapsed or
 already-posted prompts never replay. Direct today/future step editing uses the same
 validated form and captured revision; ordinary reminder commands reject routine targets.
 
-Routine Trash/Restore/Purge operates on the whole family, retaining prior child
-completion, skip, deletion and ended state. Photos are full-frame authored content,
-not decorative replacement artwork. History and Trash retain referenced images.
+Trash/Restore/Purge from the Routines library operates on the whole family,
+retaining prior child completion, skip, deletion and ended state. In Records,
+the same actions target only the selected dated session. Permanently deleting a
+date prevents its session from being recreated. Photos are full-frame authored
+content. History and Trash retain referenced images.
 
 Native widgets support independent Routine Focus and Today configurations. Focus
 shows the current unfinished step, intact target and count, direct Done, conditional

@@ -43,6 +43,10 @@ struct IOSRoutinePlan: Codable {
             ($0.effectiveDate, $0.revision) < ($1.effectiveDate, $1.revision)
         }
     }
+
+    func excludesDate(_ date: String) -> Bool {
+        portableExclusions?.values.contains(where: { $0.nominalSlot.hasPrefix(date + "T") }) == true
+    }
 }
 
 struct IOSRoutineChange: Codable {

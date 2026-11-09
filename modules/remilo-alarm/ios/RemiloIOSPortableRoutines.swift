@@ -50,28 +50,7 @@ extension RemiloIOSPortableContent {
                 guard var record = state.reminders[session.occurrenceID], let version = versionByRevision[session.versionRevision] else {
                     throw IOSInputFailure("INVALID_INPUT", field: "routineSessions")
                 }
-                let slot: IOSPortableExclusion
-                if let original = plan.portableSlots?[session.date] {
-                    slot = original
-                } else {
-                    let nominal = nominalForRoutine(session.date, minutes: version.minutes)
-                    let preferredID = segmentID(plan.id, version.revision)
-                    if let segment = segmentsByID[preferredID],
-                       !unboundIDs.contains(RemiloIOSSeries.occurrenceID(segment.id, nominal)) {
-                        slot = IOSPortableExclusion(segmentID: segment.id, nominalSlot: nominal)
-                    } else {
-                        let fallback = try routineSegment(plan: plan, version: version, state: "Archived", end: nil)
-                        let fallbackID = RemiloIOSSeries.namedUUID("remilo:routine-history:\(fallback.id)")
-                        segmentsByID[fallbackID] = IOSSeriesSegment(
-                            id: fallbackID, familyID: plan.id, template: fallback.template, rule: fallback.rule,
-                            createdAtMs: fallback.createdAtMs, state: "Archived"
-                        )
-                        slot = IOSPortableExclusion(segmentID: fallbackID, nominalSlot: nominal)
-                    }
-                }
-                guard segmentsByID[slot.segmentID] != nil else {
-                    throw IOSInputFailure("INVALID_INPUT", field: "routineSessions")
-                }
+                let slot = try routineSlot(session.date, version: version, plan: plan, unboundIDs: unboundIDs, segments: &segmentsByID)
                 record.id = RemiloIOSSeries.occurrenceID(slot.segmentID, slot.nominalSlot)
                 record.segmentID = slot.segmentID
                 record.nominalSlot = slot.nominalSlot
@@ -87,6 +66,50 @@ extension RemiloIOSPortableContent {
             wire.series.append(contentsOf: segmentsByID.values)
         }
         return wire
+    }
+
+    /// Preserve the same wire identity an export would have used for this day.
+    static func excludeRoutineSession(_ session: IOSRoutineSession, from plan: inout IOSRoutinePlan) throws {
+        guard let version = plan.versions.first(where: { $0.revision == session.versionRevision }) else {
+            throw IOSInputFailure("INVALID_INPUT", field: "routineSessions")
+        }
+        var indexed: [String: IOSSeriesSegment] = [:]
+        for segment in try segments(for: plan) {
+            guard indexed.updateValue(segment, forKey: segment.id) == nil else {
+                throw IOSInputFailure("INVALID_INPUT", field: "series")
+            }
+        }
+        let knownIDs = Set(indexed.keys)
+        let unboundIDs = Set((plan.portableUnboundReminders ?? []).map(\.id))
+        let slot = try routineSlot(session.date, version: version, plan: plan, unboundIDs: unboundIDs, segments: &indexed)
+        if !knownIDs.contains(slot.segmentID), let fallback = indexed[slot.segmentID] {
+            plan.portableSegments = (plan.portableSegments ?? []) + [fallback]
+        }
+        let id = RemiloIOSSeries.occurrenceID(slot.segmentID, slot.nominalSlot)
+        var exclusions = plan.portableExclusions ?? [:]
+        exclusions[id] = slot
+        plan.portableExclusions = exclusions
+        plan.portableSlots?.removeValue(forKey: session.date)
+    }
+
+    private static func routineSlot(_ date: String, version: IOSRoutineVersion, plan: IOSRoutinePlan,
+                                    unboundIDs: Set<String>, segments: inout [String: IOSSeriesSegment]) throws -> IOSPortableExclusion {
+        if let original = plan.portableSlots?[date] {
+            guard segments[original.segmentID] != nil else { throw IOSInputFailure("INVALID_INPUT", field: "routineSessions") }
+            return original
+        }
+        let nominal = nominalForRoutine(date, minutes: version.minutes)
+        let preferredID = segmentID(plan.id, version.revision)
+        if segments[preferredID] != nil, !unboundIDs.contains(RemiloIOSSeries.occurrenceID(preferredID, nominal)) {
+            return IOSPortableExclusion(segmentID: preferredID, nominalSlot: nominal)
+        }
+        let fallbackID = RemiloIOSSeries.namedUUID("remilo:routine-history:\(preferredID)")
+        if segments[fallbackID] == nil {
+            let fallback = try routineSegment(plan: plan, version: version, state: "Archived", end: nil)
+            segments[fallbackID] = IOSSeriesSegment(id: fallbackID, familyID: plan.id, template: fallback.template,
+                                                   rule: fallback.rule, createdAtMs: fallback.createdAtMs, state: "Archived")
+        }
+        return IOSPortableExclusion(segmentID: fallbackID, nominalSlot: nominal)
     }
 
     private static func planFields(_ plan: IOSRoutinePlan) -> [String: Any] {
@@ -386,7 +409,7 @@ extension RemiloIOSPortableContent {
             for session in sessions[original.id] ?? [] {
                 let occurrenceID = RemiloIOSSeries.occurrenceID(id, session.date)
                 guard var record = bundle.reminders[session.occurrenceID], state.reminders[occurrenceID] == nil,
-                      !state.excludedOccurrences.contains(occurrenceID), additions.reminders[occurrenceID] == nil else {
+                      !state.isPurgedOccurrence(occurrenceID), additions.reminders[occurrenceID] == nil else {
                     throw IOSInputFailure("INVALID_INPUT", field: "routineSessions")
                 }
                 record.id = occurrenceID

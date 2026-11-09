@@ -92,11 +92,14 @@ struct EngineChecks {
         try await expiredAcceptedRegistrationIsNotReplayed()
         try await alarmDismissalLeavesReminderOpen()
         try await routineEditsRetainProgressAndTrashRestoresFamily()
+        try await datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore()
         try routineAlarmActionsKeepDatedProgress()
         try await calendarCreateUsesExactLocalReceiptAndBounds()
         try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
         try await groupCompletionDoesNotTouchLaterArrivals()
         try await preparedImportCommitsOnceAndReplaysAfterStageRemoval()
+        try await purgedOneOffRequiresExplicitBackupCopyAfterRestart()
+        try await materializationRespectsOccupiedAndPurgedOccurrenceIDs()
         #if REMILO_WIDGET_FIXTURE
         try await WidgetProjectionChecks.run()
         #endif
@@ -353,6 +356,121 @@ struct EngineChecks {
         precondition(restored?["completedCount"] as? Int == 1)
     }
 
+    private static func datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore() async throws {
+        let store = FixtureStore()
+        let receiver = FixtureStore()
+        defer { store.remove(); receiver.remove() }
+        let engine = store.engine()
+        let zone = TimeZone.current
+        let today = RemiloIOSRoutineAuthoring.localDate(Date(), in: zone)
+        let tomorrow = try RemiloIOSRoutineAuthoring.date(today, plusDays: 1)
+        let created = try await engine.apply(routineDraft().merging([
+            "kind": "CreateRoutine", "startsOn": today, "operationId": "create-for-dated-trash",
+        ]) { _, new in new })
+        let routineID = (created["routine"] as! [String: Any])["id"] as! String
+        let id = RemiloIOSSeries.occurrenceID(routineID, today)
+        let nextID = RemiloIOSSeries.occurrenceID(routineID, tomorrow)
+
+        func content(_ kind: String, revision: Int? = nil) async throws -> [String: Any] {
+            let state = try store.load()
+            return try await engine.apply([
+                "kind": kind, "operationId": UUID().uuidString, "occurrenceId": id,
+                "expectedRevision": revision ?? state.reminders[id]!.revision,
+            ])
+        }
+        func progress(_ kind: String) async throws -> [String: Any] {
+            let saved = try store.load().routineSessions[id]!
+            return try await engine.apply([
+                "kind": kind, "operationId": UUID().uuidString, "occurrenceId": id, "date": today,
+                "expectedRevision": saved.revision, "stepId": saved.steps[0].id, "completed": true,
+            ])
+        }
+        let skipped = try await progress("SkipRoutineDay")
+        precondition(skipped["status"] as? String == "Applied")
+        let captured = try store.load().routineSessions[id]!.revision
+        let stale = try await content("Delete", revision: 0)
+        precondition(stale["errorCode"] as? String == "STALE_REVISION")
+        let trashSkipped = try await content("Delete")
+        precondition(trashSkipped["status"] as? String == "Applied")
+        let restoreSkipped = try await content("UndoDelete")
+        precondition(restoreSkipped["status"] as? String == "Applied")
+        let skipRestored = try store.load()
+        precondition(skipRestored.reminders[id]?.skipped == true && skipRestored.reminders[id]?.registration == nil)
+        let oldDayAction = try await engine.apply([
+            "kind": "UndoSkipRoutineDay", "operationId": "old-day-action", "occurrenceId": id, "date": today,
+            "expectedRevision": captured,
+        ])
+        precondition(oldDayAction["errorCode"] as? String == "STALE_REVISION")
+
+        _ = try await progress("UndoSkipRoutineDay")
+        _ = try await progress("SetRoutineExercise")
+        let completed = try store.load()
+        let steps = completed.routineSessions[id]!.done
+        precondition(completed.reminders[id]?.completed == true && steps.count == 1 && completed.reminders[nextID] != nil)
+        let trashDone = try await content("Delete")
+        precondition(trashDone["status"] as? String == "Applied")
+        let trashRows = try engine.query(["view": "deleted"], cursor: nil)["items"] as! [[String: Any]]
+        precondition(trashRows.count == 1 && trashRows[0]["id"] as? String == id && trashRows[0]["routineFamily"] == nil)
+        let restoreDone = try await content("UndoDelete")
+        precondition(restoreDone["status"] as? String == "Applied")
+        let doneRestored = try store.load()
+        precondition(doneRestored.routineSessions[id]?.done == steps && doneRestored.reminders[id]?.completed == true)
+        precondition(doneRestored.reminders[id]?.registration == nil && doneRestored.routines[routineID]?.state == "Active")
+
+        _ = try await content("Delete")
+        let now = iosMillis(Date())
+        let inTrash = try store.load()
+        let oldBackup = try RemiloIOSPortableContent.encode(inTrash, now: now)
+        let olderBundle = try RemiloIOSPortableContent.decode(oldBackup)
+        let originalSlot = olderBundle.routines[routineID]!.portableSlots![today]!
+        let wireID = RemiloIOSSeries.occurrenceID(originalSlot.segmentID, originalSlot.nominalSlot)
+        let purged = try await content("Purge")
+        precondition(purged["status"] as? String == "Applied")
+        let restarted = store.engine()
+        try await restarted.reconcile()
+        let persisted = try store.load()
+        precondition(persisted.reminders[id] == nil && persisted.routineSessions[id] == nil && persisted.isPurgedOccurrence(id))
+        precondition(persisted.routineSessions[nextID]?.date == tomorrow && persisted.routines[routineID]?.state == "Active")
+        let missing = try await restarted.getRoutineSession(routineID, date: today)
+        precondition(missing == nil)
+        let newerBundle = try RemiloIOSPortableContent.decode(RemiloIOSPortableContent.encode(persisted, now: now))
+        precondition(newerBundle.routines[routineID]?.portableExclusions?[wireID]?.nominalSlot == originalSlot.nominalSlot)
+        precondition(newerBundle.routineSessions[id] == nil && newerBundle.routineSessions[nextID] != nil)
+        var nextDay = persisted
+        let nextDayTime = try RemiloIOSRoutineAuthoring.closeAt(today, in: zone) + 60_000
+        _ = try restarted.replenishRoutines(state: &nextDay, now: nextDayTime)
+        precondition(nextDay.routines[routineID]?.historyThrough == today && nextDay.routineSessions[id] == nil)
+
+        let incoming = receiver.engine()
+        _ = try await incoming.applyImport(handle: "older-routine", copies: [], operationID: "restore-routine-before-purge") {
+            IOSPreparedImport(content: olderBundle)
+        }
+        let imported = try receiver.load()
+        precondition(imported.reminders[id]?.deleted == true)
+        let purgedImported = try await incoming.apply([
+            "kind": "Purge", "operationId": "purge-imported-date", "occurrenceId": id,
+            "expectedRevision": imported.reminders[id]!.revision,
+        ])
+        precondition(purgedImported["status"] as? String == "Applied")
+        let roundTrip = try RemiloIOSPortableContent.decode(RemiloIOSPortableContent.encode(receiver.load(), now: now))
+        precondition(roundTrip.routines[routineID]?.portableExclusions?[wireID]?.segmentID == originalSlot.segmentID)
+        precondition(roundTrip.routineSessions[id] == nil && roundTrip.routineSessions[nextID] != nil)
+        receiver.remove()
+        let fresh = receiver.engine()
+        _ = try await fresh.applyImport(handle: "routine-after-purge", copies: [], operationID: "restore-routine-exclusion") {
+            IOSPreparedImport(content: roundTrip)
+        }
+        let restoredMissing = try await fresh.getRoutineSession(routineID, date: today)
+        precondition(restoredMissing == nil)
+    }
+
+    private static func routineDraft() -> [String: Any] {
+        let days: [[String: Any]] = (0..<7).map { day in
+            ["type": "Exercises", "exercises": [["id": "step-\(day)", "name": "Read", "target": "", "notes": ""]]]
+        }
+        return ["title": "Dated routine", "mode": "None", "minutes": 720, "days": days]
+    }
+
     private static func routineAlarmActionsKeepDatedProgress() throws {
         let date = "2026-07-20"
         let zone = TimeZone(secondsFromGMT: 0)!
@@ -535,6 +653,106 @@ struct EngineChecks {
         precondition(recovered["added"] as? Int == 1)
         let persisted = try store.load()
         precondition(persisted.reminders.count == 1)
+    }
+
+    private static func purgedOneOffRequiresExplicitBackupCopyAfterRestart() async throws {
+        let store = FixtureStore()
+        defer { store.remove() }
+        let engine = store.engine()
+        let now = iosMillis(Date())
+        var command = createCommand(id: "create-before-purge")
+        command["mode"] = "None"
+        let created = try await engine.apply(command)
+        let id = created["occurrenceId"] as! String
+        let beforeTrash = try store.load()
+        let oldBackup = try RemiloIOSPortableContent.encode(beforeTrash, now: now)
+        let bundle = try RemiloIOSPortableContent.decode(oldBackup)
+        precondition(bundle.reminders[id] != nil)
+
+        let trashed = try await engine.apply([
+            "kind": "Delete", "operationId": "trash-before-purge", "occurrenceId": id,
+            "expectedRevision": beforeTrash.reminders[id]!.revision,
+        ])
+        precondition(trashed["status"] as? String == "Applied")
+        let inTrash = try store.load()
+        let beforePurgeBackup = try RemiloIOSPortableContent.encode(inTrash, now: now)
+        let purged = try await engine.apply([
+            "kind": "Purge", "operationId": "purge-one-off", "occurrenceId": id,
+            "expectedRevision": inTrash.reminders[id]!.revision,
+        ])
+        precondition(purged["status"] as? String == "Applied")
+
+        let restarted = store.engine()
+        let persisted = try restarted.read()
+        precondition(persisted.reminders[id] == nil && persisted.isPurgedOccurrence(id))
+        let afterPurgeBackup = try RemiloIOSPortableContent.encode(persisted, now: now)
+        precondition(beforePurgeBackup == afterPurgeBackup)
+        let preview = try RemiloIOSPortableContent.preview(bundle, against: persisted, now: now)
+        let rows = preview["items"] as! [[String: Any]]
+        precondition(rows.count == 1 && rows[0]["id"] as? String == id && rows[0]["conflict"] as? Bool == true)
+        let preserved = try await restarted.applyImport(handle: "older-backup", copies: [], operationID: "keep-purged") {
+            IOSPreparedImport(content: bundle)
+        }
+        precondition(preserved["added"] as? Int == 0 && preserved["preserved"] as? Int == 1)
+        let stillPurged = try store.load()
+        precondition(stillPurged.reminders.isEmpty && stillPurged.isPurgedOccurrence(id))
+
+        let copied = try await restarted.applyImport(handle: "older-backup", copies: [id], operationID: "copy-purged") {
+            IOSPreparedImport(content: bundle)
+        }
+        precondition(copied["added"] as? Int == 1 && copied["preserved"] as? Int == 0)
+        let withCopy = try store.load()
+        let copyID = RemiloIOSSeries.namedUUID("copy-purged:\(id)")
+        precondition(copyID != id && withCopy.reminders.count == 1 && withCopy.reminders[id] == nil)
+        precondition(withCopy.reminders[copyID]?.title == bundle.reminders[id]?.title && withCopy.isPurgedOccurrence(id))
+    }
+
+    private static func materializationRespectsOccupiedAndPurgedOccurrenceIDs() async throws {
+        let store = FixtureStore()
+        defer { store.remove() }
+        let now = iosMillis(Date())
+        let zone = TimeZone.current
+        let today = RemiloIOSRoutineAuthoring.localDate(iosDate(now), in: zone)
+        let tomorrow = try RemiloIOSRoutineAuthoring.date(today, plusDays: 1)
+        let routineID = "collision-routine"
+        let seriesID = "collision-series"
+        let occupiedDate = RemiloIOSSeries.occurrenceID(routineID, today)
+        let purgedDate = RemiloIOSSeries.occurrenceID(routineID, tomorrow)
+        let version = try RemiloIOSRoutineAuthoring.version(routineDraft(), effectiveDate: today, revision: 1,
+                                                          previous: nil, listExists: { _ in false }, imageExists: { _ in false })
+        let start = now + 3_600_000
+        let utc = TimeZone(secondsFromGMT: 0)!
+        let rule = try RemiloIOSRecurrence.Rule(anchor: RemiloIOSSeries.civil(start, zone: utc), frequency: "daily",
+                                               zoneID: utc.identifier)
+        let slots = try RemiloIOSRecurrence.future(rule, afterMs: now, deviceZone: zone, mode: "None", limit: 4)
+        let slotIDs = slots.map { RemiloIOSSeries.occurrenceID(seriesID, $0.nominalSlot) }
+        func reminder(_ id: String, title: String) -> IOSReminder {
+            IOSReminder(id: id, title: title, notes: "Existing one-off", listID: nil, eventStartMs: start,
+                        eventEndMs: start + 1_800_000, dueAtMs: start, alarmAtMs: start, zoneID: utc.identifier,
+                        mode: "None", allDay: false, dueLinked: true, alarmLinked: true)
+        }
+        var seeded = IOSDatabase()
+        seeded.routines[routineID] = IOSRoutinePlan(id: routineID, startsOn: today, versions: [version])
+        seeded.series[seriesID] = IOSSeriesSegment(id: seriesID, familyID: seriesID, template: reminder("template", title: "Daily"),
+                                                  rule: rule, createdAtMs: now)
+        seeded.reminders[slotIDs[0]] = reminder(slotIDs[0], title: "Occupied series ID")
+        seeded.reminders[occupiedDate] = reminder(occupiedDate, title: "Occupied routine ID")
+        seeded.purgedLocalOccurrences = [slotIDs[1], purgedDate]
+        try store.save(seeded)
+
+        let engine = store.engine()
+        try await engine.reconcile()
+        let state = try store.load()
+        precondition(state.reminders[slotIDs[0]]?.title == "Occupied series ID" && state.reminders[slotIDs[0]]?.segmentID == nil)
+        precondition(state.reminders[slotIDs[1]] == nil && state.reminders[slotIDs[2]]?.segmentID == seriesID)
+        precondition(state.reminders[slotIDs[3]]?.segmentID == seriesID)
+        precondition(state.reminders[occupiedDate]?.title == "Occupied routine ID" && state.routineSessions[occupiedDate] == nil)
+        precondition(state.reminders[purgedDate] == nil && state.routineSessions[purgedDate] == nil)
+        let laterDates = try [2, 3].map { try RemiloIOSRoutineAuthoring.date(today, plusDays: $0) }
+        precondition(laterDates.allSatisfy { state.routineSessions[RemiloIOSSeries.occurrenceID(routineID, $0)]?.date == $0 })
+        let occupiedSession = try await engine.getRoutineSession(routineID, date: today)
+        let purgedSession = try await engine.getRoutineSession(routineID, date: tomorrow)
+        precondition(occupiedSession == nil && purgedSession == nil)
     }
 
     private static func pausedRoutineDoesNotCreateHistoryForUnopenedDates() async throws {

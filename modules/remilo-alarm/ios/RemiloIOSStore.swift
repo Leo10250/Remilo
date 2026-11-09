@@ -129,6 +129,7 @@ struct IOSDatabase: Codable {
     var outbox: [IOSDeliveryWork] = []
     private var seriesSegments: [String: IOSSeriesSegment]?
     private var seriesExclusions: Set<String>?
+    var purgedLocalOccurrences: Set<String>?
     var portableExclusions: [String: IOSPortableExclusion]?
     var purgedRoutines: Set<String>?
     private var routinePlans: [String: IOSRoutinePlan]?
@@ -142,6 +143,10 @@ struct IOSDatabase: Codable {
     var excludedOccurrences: Set<String> {
         get { seriesExclusions ?? [] }
         set { seriesExclusions = newValue }
+    }
+
+    func isPurgedOccurrence(_ id: String) -> Bool {
+        seriesExclusions?.contains(id) == true || purgedLocalOccurrences?.contains(id) == true
     }
 
     var routines: [String: IOSRoutinePlan] {

@@ -309,21 +309,40 @@ final class RemiloIOSEngine {
         case "Edit", "Done", "Reopen", "Delete", "UndoDelete", "Skip", "Purge", "CompleteDelivery", "Stop", "DismissDelivery", "Snooze", "Postpone":
             let id = try input.text("occurrenceId", maximum: 200)
             guard var record = state.reminders[id] else { throw IOSInputFailure("NOT_FOUND") }
-            guard record.routineID == nil else { throw IOSInputFailure("NOT_ELIGIBLE") }
+            if let routineID = record.routineID {
+                guard ["Delete", "UndoDelete", "Purge"].contains(kind) else { throw IOSInputFailure("NOT_ELIGIBLE") }
+                guard let plan = state.routines[routineID], state.routineSessions[id]?.routineID == routineID else {
+                    throw IOSInputFailure("NOT_FOUND")
+                }
+                guard plan.state != "Trashed" else { throw IOSInputFailure("IN_TRASH") }
+            }
             occurrenceID = id
             let schedules = try mutate(&record, kind: kind, input: input, state: &state, now: now)
             if kind == "Purge" {
                 state.reminders.removeValue(forKey: id)
-                if let segmentID = record.segmentID, let nominal = record.nominalSlot {
+                if let routineID = record.routineID {
+                    guard let session = state.routineSessions.removeValue(forKey: id), var plan = state.routines[routineID] else {
+                        throw IOSInputFailure("NOT_FOUND")
+                    }
+                    try RemiloIOSPortableContent.excludeRoutineSession(session, from: &plan)
+                    state.routines[plan.id] = plan
+                    state.purgedLocalOccurrences = (state.purgedLocalOccurrences ?? []).union([id])
+                } else if let segmentID = record.segmentID, let nominal = record.nominalSlot {
                     state.excludedOccurrences.insert(id)
                     var exclusions = state.portableExclusions ?? [:]
                     exclusions[id] = IOSPortableExclusion(segmentID: segmentID, nominalSlot: nominal)
                     state.portableExclusions = exclusions
+                } else if record.segmentID == nil {
+                    // One-off tombstones are local. Portable exclusions require a recurrence slot.
+                    state.purgedLocalOccurrences = (state.purgedLocalOccurrences ?? []).union([id])
                 }
                 try redactReceipts(for: id, state: &state)
                 applied = ["status": "Applied", "occurrenceId": id]
             } else {
                 state.reminders[id] = record
+                if record.routineID != nil && (kind == "Delete" || kind == "UndoDelete") {
+                    state.routineSessions[id]?.revision += 1
+                }
                 registrationID = schedules ? record.registration?.systemID : nil
                 applied = result(for: record, state: state, now: now, scheduling: registrationID != nil)
             }
@@ -419,6 +438,7 @@ final class RemiloIOSEngine {
         var changeRegistration = true
         var historyKind = kind
         var adjustment = record.adjustment
+        var restoredRoutineState: String?
         switch kind {
         case "Edit":
             guard !record.deleted else { throw IOSInputFailure("IN_TRASH") }
@@ -460,7 +480,15 @@ final class RemiloIOSEngine {
             record.deleted = false
             if record.segmentID != nil { record.independent = true }
             target = record.retainedAlertMs ?? record.alarmAtMs
-            if record.active { record.retainedAlertMs = nil }
+            if record.active {
+                record.retainedAlertMs = nil
+                if record.mode != "None", let session = state.routineSessions[record.id], let plan = state.routines[session.routineID] {
+                    let close = try RemiloIOSRoutineAuthoring.closeAt(session.date, in: .current)
+                    if session.ended || now >= close { restoredRoutineState = "Expired" }
+                    else if plan.state != "Active" { restoredRoutineState = "Paused" }
+                    if restoredRoutineState != nil || (target ?? close) >= close { target = nil }
+                }
+            }
         case "Skip":
             guard record.segmentID != nil, record.active else { throw IOSInputFailure("STALE_REVISION") }
             record.retainedAlertMs = record.nextAlertMs ?? record.retainedAlertMs
@@ -491,6 +519,7 @@ final class RemiloIOSEngine {
             replaceRegistration(&record, target: target, state: &state, now: now)
             record.adjustment = adjustment
             if kind == "DismissDelivery" { record.deliveryState = "Stopped" }
+            if let restoredRoutineState { record.deliveryState = restoredRoutineState }
         }
         return changeRegistration && record.registration != nil
     }

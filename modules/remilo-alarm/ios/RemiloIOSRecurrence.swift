@@ -80,7 +80,8 @@ enum RemiloIOSRecurrence {
     }
 
     static func future(
-        _ rule: Rule, afterMs: Int64, deviceZone: TimeZone, mode: String = "Alarm", limit: Int
+        _ rule: Rule, afterMs: Int64, deviceZone: TimeZone, mode: String = "Alarm", limit: Int,
+        including: (Slot) -> Bool = { _ in true }
     ) throws -> [Slot] {
         let prepared = try Prepared(rule)
         guard (0...100_000).contains(limit) else { throw InvalidRule(field: "limit") }
@@ -95,12 +96,15 @@ enum RemiloIOSRecurrence {
         let bound = instant(afterMs - offset - 18 * 3_600_000)
         let zone = prepared.zone ?? deviceZone
         var slots: [Slot] = []
+        var inspected = 0
         try visitNominals(rule, prepared, seekFrom: bound) { nominal, index in
             // Count valid past slots without resolving zones for ones that cannot qualify.
             guard nominal > bound else { return true }
             let slot = try resolved(rule, nominal, index, zone)
-            if (noAlert ? slot.eventStartMs : slot.alarmAtMs) > afterMs { slots.append(slot) }
-            return slots.count < limit
+            guard (noAlert ? slot.eventStartMs : slot.alarmAtMs) > afterMs else { return true }
+            inspected += 1
+            if including(slot) { slots.append(slot) }
+            return slots.count < limit && inspected < 100_000
         }
         return slots
     }

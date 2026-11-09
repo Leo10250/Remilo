@@ -194,7 +194,7 @@ extension RemiloIOSEngine {
             guard RemiloIOSSeries.deliveryTime(slot, mode: segment.template.mode) <= now else { break }
             if count == 256 { return (latest, true) }
             let id = RemiloIOSSeries.occurrenceID(segment.id, slot.nominalSlot)
-            if state.reminders[id] == nil && !state.excludedOccurrences.contains(id) {
+            if state.reminders[id] == nil && !state.isPurgedOccurrence(id) {
                 var record = RemiloIOSSeries.makeOccurrence(segment, slot: slot)
                 record.deliveryState = record.mode == "None" ? "NoAlert" : "Missed"
                 state.reminders[id] = record

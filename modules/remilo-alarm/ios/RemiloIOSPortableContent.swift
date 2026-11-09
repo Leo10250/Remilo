@@ -258,7 +258,7 @@ enum RemiloIOSPortableContent {
         for source in bundle.exclusions.values {
             guard let segment = segmentIDs[source.segmentID] else { continue }
             let id = RemiloIOSSeries.occurrenceID(segment, source.nominalSlot)
-            guard state.reminders[id] == nil, !state.excludedOccurrences.contains(id),
+            guard state.reminders[id] == nil, !state.isPurgedOccurrence(id),
                   additions.exclusions[id] == nil else { throw IOSInputFailure("INVALID_INPUT", field: "purgedOccurrences") }
             additions.exclusions[id] = IOSPortableExclusion(segmentID: segment, nominalSlot: source.nominalSlot)
         }
@@ -272,7 +272,7 @@ enum RemiloIOSPortableContent {
                 if preserved.contains(source.id) { continue }
                 if conflicts.contains(source.id) { record.id = RemiloIOSSeries.namedUUID("\(operationID):\(source.id)") }
             }
-            guard state.reminders[record.id] == nil, !state.excludedOccurrences.contains(record.id),
+            guard state.reminders[record.id] == nil, !state.isPurgedOccurrence(record.id),
                   additions.reminders[record.id] == nil, additions.exclusions[record.id] == nil else {
                 throw IOSInputFailure("INVALID_INPUT", field: "reminders")
             }
@@ -286,7 +286,7 @@ enum RemiloIOSPortableContent {
         let localFamilies = Set(state.series.values.map(\.familyID)).union(state.routines.keys)
         var result = Set(bundle.reminders.values.lazy.filter {
             $0.segmentID == nil && $0.routineID == nil &&
-            (state.reminders[$0.id] != nil || state.excludedOccurrences.contains($0.id))
+            (state.reminders[$0.id] != nil || state.isPurgedOccurrence($0.id))
         }.map(\.id))
         for segment in bundle.series.values {
             if localFamilies.contains(segment.familyID) || state.series[segment.id] != nil {
@@ -295,13 +295,13 @@ enum RemiloIOSPortableContent {
         }
         for record in bundle.reminders.values {
             if let segment = record.segmentID.flatMap({ bundle.series[$0] }),
-               state.reminders[record.id] != nil || state.excludedOccurrences.contains(record.id) {
+               state.reminders[record.id] != nil || state.isPurgedOccurrence(record.id) {
                 result.insert(segment.familyID)
             }
         }
         for (id, exclusion) in bundle.exclusions {
             if let segment = bundle.series[exclusion.segmentID],
-               state.reminders[id] != nil || state.excludedOccurrences.contains(id) {
+               state.reminders[id] != nil || state.isPurgedOccurrence(id) {
                 result.insert(segment.familyID)
             }
         }
@@ -309,7 +309,7 @@ enum RemiloIOSPortableContent {
             result.insert(id)
         }
         for session in bundle.routineSessions.values where state.reminders[session.occurrenceID] != nil ||
-            state.excludedOccurrences.contains(session.occurrenceID) {
+            state.isPurgedOccurrence(session.occurrenceID) {
             result.insert(session.routineID)
         }
         return result
