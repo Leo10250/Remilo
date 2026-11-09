@@ -50,13 +50,18 @@ jobs:
       - name: Build Remilo for iPhone and iPad
         shell: bash
         run: |
-          xcodebuild \
+          log="$RUNNER_TEMP/remilo-xcodebuild.log"
+          if ! xcodebuild -quiet \
             -workspace ios/Remilo.xcworkspace \
             -scheme Remilo \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -derivedDataPath "$RUNNER_TEMP/Remilo-build" \
-            CODE_SIGNING_ALLOWED=NO build
+            CODE_SIGNING_ALLOWED=NO build >"$log" 2>&1; then
+            grep -inE 'error:|undefined symbols|command .* failed|^ld:' "$log" | tail -n 60 || true
+            tail -n 120 "$log"
+            exit 1
+          fi
       - name: Verify and package the unsigned iOS app
         shell: bash
         run: |
