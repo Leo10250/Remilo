@@ -2265,7 +2265,7 @@ export const catalogs = {
     "ios_widget_profile_unavailable": "Widget profile unavailable",
     "ios_widget_profile_pending": "Retry the pending widget action before editing this profile.",
     "ios_widget_remove_profile": "Remove profile",
-    "ios_widget_remove_profile_detail": "Choose another profile in any widgets using “{name}”. This will discard any pending widget action.",
+    "ios_widget_remove_profile_detail": "Choose another profile for any widgets using “{name}”. After removal, you can no longer retry an unconfirmed action from this profile.",
     "ios_widget_open_refresh": "Open Remilo to refresh this widget.",
     "ios_widget_reminder_count": {
       "one": "{count} reminder",
@@ -4769,7 +4769,7 @@ export const catalogs = {
     "ios_widget_profile_unavailable": "小组件配置不可用",
     "ios_widget_profile_pending": "请先在小组件中重试待处理的操作，再编辑此配置。",
     "ios_widget_remove_profile": "移除配置",
-    "ios_widget_remove_profile_detail": "请为使用“{name}”的小组件重新选择配置。此配置中待处理的操作将被放弃。",
+    "ios_widget_remove_profile_detail": "请为使用“{name}”的小组件另选一项配置。移除后，无法再重试此配置中尚未确认的操作。",
     "ios_widget_open_refresh": "打开 Remilo 刷新小组件。",
     "ios_widget_reminder_count": {
       "other": "{count} 项提醒"

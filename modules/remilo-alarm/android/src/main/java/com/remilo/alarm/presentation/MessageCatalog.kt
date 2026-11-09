@@ -2253,7 +2253,7 @@ object MessageCatalog {
     "ios_widget_profile_unavailable" to Entry(R.string.l10n_ios_widget_profile_unavailable, false, listOf(), "Widget profile unavailable", false),
     "ios_widget_profile_pending" to Entry(R.string.l10n_ios_widget_profile_pending, false, listOf(), "Retry the pending widget action before editing this profile.", false),
     "ios_widget_remove_profile" to Entry(R.string.l10n_ios_widget_remove_profile, false, listOf(), "Remove profile", false),
-    "ios_widget_remove_profile_detail" to Entry(R.string.l10n_ios_widget_remove_profile_detail, false, listOf("name"), "Choose another profile in any widgets using “{name}”. This will discard any pending widget action.", false),
+    "ios_widget_remove_profile_detail" to Entry(R.string.l10n_ios_widget_remove_profile_detail, false, listOf("name"), "Choose another profile for any widgets using “{name}”. After removal, you can no longer retry an unconfirmed action from this profile.", false),
     "ios_widget_open_refresh" to Entry(R.string.l10n_ios_widget_open_refresh, false, listOf(), "Open Remilo to refresh this widget.", false),
     "ios_widget_reminder_count" to Entry(R.plurals.l10n_ios_widget_reminder_count, true, listOf("count"), "{count} reminders", false),
     "widget_reminder_count" to Entry(R.string.l10n_widget_reminder_count, false, listOf("count"), "{count} reminders", false),

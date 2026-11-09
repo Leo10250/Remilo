@@ -2273,7 +2273,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_ios_widget_profile_unavailable">Widget profile unavailable</string>
   <string name="l10n_ios_widget_profile_pending">Retry the pending widget action before editing this profile.</string>
   <string name="l10n_ios_widget_remove_profile">Remove profile</string>
-  <string name="l10n_ios_widget_remove_profile_detail">Choose another profile in any widgets using “%1$s”. This will discard any pending widget action.</string>
+  <string name="l10n_ios_widget_remove_profile_detail">Choose another profile for any widgets using “%1$s”. After removal, you can no longer retry an unconfirmed action from this profile.</string>
   <string name="l10n_ios_widget_open_refresh">Open Remilo to refresh this widget.</string>
   <plurals name="l10n_ios_widget_reminder_count">
     <item quantity="one">%1$s reminder</item>
