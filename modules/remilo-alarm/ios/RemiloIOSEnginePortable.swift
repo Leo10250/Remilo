@@ -32,8 +32,18 @@ extension RemiloIOSEngine {
                 if record.deliveryState == "Pending" { record.nextAlertMs = target }
             } else if record.segmentID == nil || record.independent == true {
                 let pending = additions.reminders[id]?.nextAlertMs
-                replaceRegistration(&record, target: pending, state: &state, now: now)
-                if pending == nil && record.alarmAtMs > now { record.deliveryState = "Stopped" }
+                let adjustment = record.history.last { $0.targetMs != nil }
+                let explicitTarget = adjustment.map {
+                    ["Snooze", "Postpone", "Reopen", "UndoDelete"].contains($0.kind) && $0.targetMs == pending
+                } ?? false
+                if record.segmentID != nil, let pending, pending == record.alarmAtMs, pending > now, !explicitTarget {
+                    // v9 preserves authored exceptions and their targets without
+                    // identifying the provider that supplied the original edit.
+                    record.deferSeriesOverride(target: pending)
+                } else {
+                    replaceRegistration(&record, target: pending, state: &state, now: now)
+                    if pending == nil && record.alarmAtMs > now { record.deliveryState = "Stopped" }
+                }
             } else if let segmentID = record.segmentID, state.series[segmentID]?.state == "Paused" {
                 record.deliveryState = "Paused"
                 record.nextAlertMs = target > now ? target : nil

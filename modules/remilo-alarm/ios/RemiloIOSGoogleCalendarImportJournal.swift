@@ -27,7 +27,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
 
     struct Authority: Sendable {
         let current: @MainActor @Sendable (Import.Account) throws -> Bool
-        let observe: @Sendable (Import.Account, Import.SourceKey) async throws -> Import.Observation
+        let observe: @Sendable (Import.Review) async throws -> Import.Observation
     }
 
     struct Receipt: Codable, Equatable, Sendable {
@@ -200,12 +200,14 @@ actor RemiloIOSGoogleCalendarImportJournal {
         do {
             guard capture.review.valid(at: now()) else { throw Failure.stalePreview }
             guard try await authority.current(capture.review.account) else { throw Failure.staleConnection }
-            let observed = try await authority.observe(capture.review.account, capture.review.source.key)
+            let observed = try await authority.observe(capture.review)
             guard capture.review.matches(observed) else { throw Failure.staleRemote }
             guard try await authority.current(capture.review.account) else { throw Failure.staleConnection }
             let revalidated = try Import.Capture(operationID: operationID, review: capture.review, choices: capture.choices, now: now())
             guard revalidated.command == capture.command else { throw Failure.operationReused }
         } catch let failure as Failure {
+            return try reject(capture, code: failure.rawValue)
+        } catch let failure as RemiloIOSGoogleCalendarRecurringReview.Failure {
             return try reject(capture, code: failure.rawValue)
         } catch is Import.Event.Reason {
             return try reject(capture, code: Failure.staleRemote.rawValue)

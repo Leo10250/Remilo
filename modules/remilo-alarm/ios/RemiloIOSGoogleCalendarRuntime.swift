@@ -90,8 +90,8 @@ final class RemiloIOSGoogleCalendarRuntime {
 
     func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String) async throws -> Import.Review {
         try requireForeground()
-        let review = try await connection.prepareOneOffImport(expectedRevision: expectedRevision, calendarID: calendarID,
-                                                             eventID: eventID, canRead: canUseForeground)
+        let review = try await connection.prepareImport(expectedRevision: expectedRevision, calendarID: calendarID,
+                                                       eventID: eventID, recurringChoices: nil, canRead: canUseForeground)
         try requireForeground()
         let source = review.source.key
         let reserved = try await importJournal.reservedEvents(subject: source.subject, calendarID: source.calendarID)
@@ -148,8 +148,8 @@ final class RemiloIOSGoogleCalendarRuntime {
         let authority = ImportJournal.Authority(current: { [connection, canUseForeground] captured in
             guard canUseForeground() else { return false }
             return try connection.isCurrentAccount(captured)
-        }, observe: { [connection, canUseForeground] captured, source in
-            try await connection.observeImport(captured, source: source, canRead: canUseForeground)
+        }, observe: { [connection, canUseForeground] review in
+            try await connection.observeImport(review, canRead: canUseForeground)
         })
         let receipt = try await importJournal.run(operationID, authority: authority, scheduler: scheduler)
         try requireCurrentAccount(viewer)

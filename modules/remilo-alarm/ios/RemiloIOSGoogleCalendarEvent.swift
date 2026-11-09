@@ -53,7 +53,7 @@ enum RemiloIOSGoogleCalendarEvent {
         case hidden
     }
 
-    struct InstanceIdentity: Equatable, Sendable {
+    struct InstanceIdentity: Codable, Equatable, Sendable {
         let eventID: String
         let masterID: String
         let nominalSlot: String

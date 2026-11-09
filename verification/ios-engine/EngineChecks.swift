@@ -11,6 +11,7 @@ struct IOSReminderRegistration: Codable {
     var isTest: Bool? = nil
     var sound: String? = nil
     var isRoutine: Bool? = nil
+    var deferredSeriesOverride: Bool? = nil
 }
 
 enum IOSDeliveryFailure: Error { case denied, elapsed }
@@ -35,6 +36,7 @@ enum RemiloIOSDelivery {
     static var alerting = Set<UUID>()
     static var attempts: [UUID] = []
     static var onRegister: ((IOSReminderRegistration) throws -> Void)?
+    static var onCancel: ((IOSReminderRegistration) throws -> Void)?
     static var denied = false
 
     static func register(_ registration: IOSReminderRegistration) async throws {
@@ -45,6 +47,7 @@ enum RemiloIOSDelivery {
     }
 
     static func cancel(_ registration: IOSReminderRegistration) async throws {
+        try onCancel?(registration)
         registrations.removeValue(forKey: registration.systemID)
     }
 
@@ -95,6 +98,8 @@ struct EngineChecks {
         try await datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore()
         try routineAlarmActionsKeepDatedProgress()
         try await calendarCreateUsesExactLocalReceiptAndBounds()
+        try await calendarSeriesExceptionsAreAtomicAndBounded()
+        try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
         try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
         try await groupCompletionDoesNotTouchLaterArrivals()
@@ -628,6 +633,211 @@ struct EngineChecks {
                                                 calendarBounds: ("2018-11-04T00:00", nil))
         let gapSlots = try RemiloIOSRecurrence.future(allDayRule, afterMs: gapStart - 1, deviceZone: .current, limit: 2)
         precondition(gapSlots.count == 2 && gapSlots[0].alarmAtMs == gapAlert && gapSlots[1].alarmAtMs == nextMidnight + 9 * 3_600_000)
+    }
+
+    private static func calendarSeriesExceptionsAreAtomicAndBounded() async throws {
+        let store = FixtureStore()
+        let restoredStore = FixtureStore()
+        defer {
+            store.remove()
+            restoredStore.remove()
+            RemiloIOSDelivery.onRegister = nil
+            RemiloIOSDelivery.onCancel = nil
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let zone = TimeZone(identifier: "UTC")!
+        let now = iosMillis(Date())
+        let start = now / 60_000 * 60_000 + 7_200_000
+        let day: Int64 = 86_400_000
+        let anchor = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(start, zone: zone))
+        var originals = [anchor]
+        var exceptions: [[String: Any]] = [["kind": "Skip", "nominalSlot": anchor]]
+        for index in 1...10 {
+            let original = start + Int64(index) * day
+            let nominal = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(original, zone: zone))
+            originals.append(nominal)
+            let actual = original + (index == 10 ? -10 * day + 3_600_000 : 3_600_000)
+            exceptions.append(calendarOverride(nominal: nominal, actual: actual, title: "Moved \(index)"))
+        }
+        let historicalOriginal = start + 11 * day
+        let historicalNominal = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(historicalOriginal, zone: zone))
+        let historicalActual = start - 5 * 3_600_000
+        originals.append(historicalNominal)
+        exceptions.append(calendarOverride(nominal: historicalNominal, actual: historicalActual,
+                                           title: "Historical move", alertEligible: false))
+        let operationID = "ios-calendar-import:" + UUID().uuidString.lowercased()
+        let series: [String: Any] = [
+            "kind": "CreateSeries", "operationId": operationID, "title": "Calendar series",
+            "mode": "Alarm", "sound": "system", "zoneId": "UTC", "eventStartMs": start, "eventEndMs": start + 1_800_000,
+            "dueAtMs": start, "alarmAtMs": start, "nativeCalendarAnchor": anchor,
+            "recurrence": ["frequency": "daily", "count": 15, "zoneMode": "pinned"],
+            "nativeCalendarExceptions": exceptions,
+        ]
+        var publicSeries = series
+        publicSeries["operationId"] = "fixture-public-series"
+        publicSeries.removeValue(forKey: "nativeCalendarAnchor")
+        let publicResult = try await engine.apply(publicSeries)
+        precondition(publicResult["errorCode"] as? String == "UNSUPPORTED")
+        var oneOff = createCommand(id: operationID)
+        oneOff["nativeCalendarExceptions"] = exceptions
+        let oneOffResult = try await engine.applyCalendarCreate(oneOff, authorize: { true })
+        precondition(oneOffResult["errorCode"] as? String == "UNSUPPORTED")
+        var duplicate = series
+        duplicate["nativeCalendarExceptions"] = exceptions + [exceptions[0]]
+        let duplicateResult = try await engine.applyCalendarCreate(duplicate, authorize: { true })
+        precondition(duplicateResult["errorCode"] as? String == "INVALID_INPUT")
+        var expired = series
+        var expiredRows = exceptions
+        expiredRows[1]["alarmAtMs"] = now - 1
+        expired["nativeCalendarExceptions"] = expiredRows
+        let expiredResult = try await engine.applyCalendarCreate(expired, authorize: { true })
+        precondition(expiredResult["errorCode"] as? String == "ALERT_EXPIRED")
+        var ineligible = series
+        var ineligibleRows = exceptions
+        ineligibleRows[1]["alertEligible"] = false
+        ineligible["nativeCalendarExceptions"] = ineligibleRows
+        let ineligibleResult = try await engine.applyCalendarCreate(ineligible, authorize: { true })
+        precondition(ineligibleResult["errorCode"] as? String == "INVALID_INPUT")
+        let stale = try await engine.applyCalendarCreate(series, authorize: { false })
+        precondition(stale["errorCode"] as? String == "STALE_CONNECTION")
+        let rejected = try store.load()
+        precondition(rejected.series.isEmpty && rejected.reminders.isEmpty && rejected.receipts.isEmpty
+                     && RemiloIOSDelivery.attempts.isEmpty)
+
+        RemiloIOSDelivery.onRegister = { _ in
+            let durable = try store.load()
+            let id = durable.receipts[operationID]!.seriesSegmentID!
+            let captured = originals.map { durable.reminders[RemiloIOSSeries.occurrenceID(id, $0)] }
+            precondition(captured.allSatisfy { $0?.independent == true } && captured[0]?.skipped == true)
+        }
+        let result = try await engine.applyCalendarCreate(series, authorize: { true })
+        RemiloIOSDelivery.onRegister = nil
+        precondition(result["status"] as? String == "Scheduled" && result["localKind"] as? String == "series")
+        let segmentID = result["localId"] as! String
+        let ids = originals.map { RemiloIOSSeries.occurrenceID(segmentID, $0) }
+        let committed = try store.load()
+        precondition(committed.reminders[ids[0]]?.deliveryState == "Skipped" && committed.reminders[ids[0]]?.registration == nil)
+        let moved = committed.reminders[ids[10]]!
+        precondition(moved.nominalSlot == originals[10] && moved.eventStartMs == start + 3_600_000)
+        precondition(moved.title == "Moved 10" && moved.notes == "Authored exception" && moved.sound == "system")
+        precondition(moved.registration?.targetMs == moved.alarmAtMs && RemiloIOSDelivery.registrations.count == 10)
+        let historical = committed.reminders[ids[11]]!
+        precondition(historical.eventStartMs == historicalActual && historical.nominalSlot == historicalNominal)
+        precondition(historical.deliveryState == "Missed" && historical.nextAlertMs == nil && historical.registration == nil)
+        let dormant = committed.reminders[ids[8]]!
+        precondition(dormant.deliveryState == "Pending" && dormant.nextAlertMs == dormant.alarmAtMs && dormant.registration == nil)
+        var recoveredState = committed
+        _ = try engine.replenishSeries(state: &recoveredState, now: dormant.alarmAtMs + 1)
+        precondition(recoveredState.reminders[dormant.id]?.deliveryState == "Missed")
+        precondition(recoveredState.reminders[ids[9]]?.registration?.targetMs == committed.reminders[ids[9]]?.alarmAtMs)
+        precondition(recoveredState.reminders[historical.id]?.eventStartMs == historicalActual
+                     && recoveredState.reminders[historical.id]?.registration == nil)
+
+        let restarted = store.engine()
+        let recovered = try await restarted.applyCalendarCreate(series) {
+            preconditionFailure("The durable series receipt must not reauthorize")
+        }
+        precondition(recovered["localId"] as? String == segmentID && RemiloIOSDelivery.attempts.count == 10)
+        let changed = try await restarted.applyCalendarCreate(duplicate, authorize: { true })
+        precondition(changed["errorCode"] as? String == "OPERATION_REUSED")
+        let explicitTarget = moved.alarmAtMs + 600_000
+        _ = try await restarted.apply([
+            "kind": "Postpone", "operationId": "override-postpone", "occurrenceId": moved.id,
+            "expectedGeneration": moved.generation, "alarmAtMs": explicitTarget,
+        ])
+        _ = try await restarted.apply([
+            "kind": "PauseSeries", "operationId": "pause-imported-series", "segmentId": segmentID, "expectedRevision": 1,
+        ])
+        let paused = try store.load()
+        precondition(paused.reminders[moved.id]?.deferredSeriesOverride == nil)
+        precondition(paused.reminders[moved.id]?.registration?.targetMs == explicitTarget)
+        precondition(paused.reminders[dormant.id]?.registration != nil && RemiloIOSDelivery.registrations.count == 9)
+
+        let archive = try RemiloIOSPortableContent.decode(RemiloIOSPortableContent.encode(paused, now: now))
+        precondition(archive.reminders[moved.id]?.nominalSlot == originals[10] && archive.reminders[ids[0]]?.skipped == true)
+        let preview = try RemiloIOSPortableContent.preview(archive, against: IOSDatabase(), now: now)
+        let families = preview["items"] as! [[String: Any]]
+        precondition(families.first?["futureAlert"] as? Bool == true)
+        let copy = try RemiloIOSPortableContent.planImport(archive, against: paused, copyIDs: [segmentID], operationID: "copy-family")
+        let copiedSegment = copy.additions.series.values.first!
+        precondition(copy.additions.reminders[RemiloIOSSeries.occurrenceID(copiedSegment.id, anchor)]?.skipped == true)
+        RemiloIOSDelivery.registrations = [:]
+        _ = try await restoredStore.engine().applyImport(handle: "fixture", copies: [], operationID: "restore-series") {
+            IOSPreparedImport(content: archive)
+        }
+        let restored = try restoredStore.load()
+        precondition(restored.reminders[moved.id]?.registration?.targetMs == explicitTarget)
+        precondition(restored.reminders[ids[9]]?.registration == nil && restored.reminders[ids[9]]?.nextAlertMs != nil)
+        precondition(restored.reminders[ids[0]]?.skipped == true && RemiloIOSDelivery.registrations.count == 9)
+        precondition(restored.reminders[historical.id]?.deliveryState == "Missed"
+                     && restored.reminders[historical.id]?.eventStartMs == historicalActual)
+
+        let earlierStart = start - 3_600_000
+        let earlier = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(earlierStart, zone: zone))
+        let earlierSeries: [String: Any] = [
+            "kind": "CreateSeries", "operationId": "ios-calendar-import:" + UUID().uuidString,
+            "title": "Earlier Calendar series", "mode": "Alarm", "zoneId": "UTC", "nativeCalendarAnchor": earlier,
+            "eventStartMs": earlierStart, "eventEndMs": earlierStart + 1_800_000, "dueAtMs": earlierStart, "alarmAtMs": earlierStart,
+            "recurrence": ["frequency": "daily", "count": 1, "zoneMode": "pinned"],
+            "nativeCalendarExceptions": [calendarOverride(nominal: earlier, actual: earlierStart, title: "Earlier move")],
+        ]
+        RemiloIOSDelivery.onCancel = { _ in throw IOSDeliveryFailure.denied }
+        let earlierResult = try await restoredStore.engine().applyCalendarCreate(earlierSeries, authorize: { true })
+        let earlierID = RemiloIOSSeries.occurrenceID(earlierResult["localId"] as! String, earlier)
+        precondition(earlierResult["status"] as? String == "Pending" && RemiloIOSDelivery.registrations.count == 9)
+        precondition(!RemiloIOSDelivery.registrations.values.contains { $0.occurrenceID == earlierID })
+        RemiloIOSDelivery.onCancel = nil
+        try await restoredStore.engine().reconcile()
+        precondition(RemiloIOSDelivery.registrations.count == 9)
+        precondition(RemiloIOSDelivery.registrations.values.contains { $0.occurrenceID == earlierID })
+
+        let admitted = try restoredStore.load().reminders[earlierID]!.registration!
+        RemiloIOSDelivery.onCancel = { registration in
+            if registration.systemID == admitted.systemID { throw IOSDeliveryFailure.denied }
+        }
+        let retargeted = try await restoredStore.engine().apply([
+            "kind": "Postpone", "operationId": "retarget-admitted-override", "occurrenceId": earlierID,
+            "expectedGeneration": admitted.generation, "alarmAtMs": admitted.targetMs + 120_000,
+        ])
+        let queued = try restoredStore.load()
+        precondition(retargeted["status"] as? String == "Pending" && queued.reminders[earlierID]?.deferredSeriesOverride == nil)
+        precondition(queued.outbox.contains {
+            $0.action == .cancel && $0.registration.systemID == admitted.systemID && $0.registration.deferredSeriesOverride == true
+        })
+        precondition(RemiloIOSDelivery.registrations.count == 9)
+        precondition(!RemiloIOSDelivery.registrations.values.contains { $0.occurrenceID == dormant.id })
+        RemiloIOSDelivery.onCancel = nil
+        try await restoredStore.engine().reconcile()
+        precondition(RemiloIOSDelivery.registrations.count == 10)
+        precondition(RemiloIOSDelivery.registrations.values.contains { $0.occurrenceID == dormant.id })
+    }
+
+    private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {
+        let store = FixtureStore()
+        defer { store.remove() }
+        let now = iosMillis(Date())
+        let original = now / 60_000 * 60_000 - 86_400_000
+        let actual = original + 2 * 86_400_000
+        let anchor = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(original, zone: TimeZone(identifier: "UTC")!))
+        let result = try await store.engine().applyCalendarCreate([
+            "kind": "CreateSeries", "operationId": "ios-calendar-import:" + UUID().uuidString,
+            "title": "Finite Calendar series", "mode": "None", "zoneId": "UTC", "nativeCalendarAnchor": anchor,
+            "eventStartMs": original, "eventEndMs": original + 1_800_000, "dueAtMs": original, "alarmAtMs": original,
+            "recurrence": ["frequency": "daily", "count": 1, "zoneMode": "pinned"],
+            "nativeCalendarExceptions": [calendarOverride(nominal: anchor, actual: actual, title: "Future move", alertEligible: false)],
+        ], authorize: { true })
+        let id = RemiloIOSSeries.occurrenceID(result["localId"] as! String, anchor)
+        let persisted = try store.load()
+        precondition(persisted.reminders.count == 1 && persisted.reminders[id]?.eventStartMs == actual)
+        precondition(persisted.reminders[id]?.deliveryState == "NoAlert" && persisted.reminders[id]?.nextAlertMs == nil)
+    }
+
+    private static func calendarOverride(nominal: String, actual: Int64, title: String, alertEligible: Bool = true) -> [String: Any] {
+        ["kind": "Override", "nominalSlot": nominal, "title": title, "notes": "Authored exception",
+         "eventStartMs": actual, "eventEndMs": actual + 1_800_000, "allDay": false, "zoneId": "UTC",
+         "dueAtMs": actual, "alarmAtMs": actual - 300_000, "alarmLinked": false, "alertEligible": alertEligible]
     }
 
     private static func queuedCalendarCreateChecksAuthorityBeforeWriting() async throws {

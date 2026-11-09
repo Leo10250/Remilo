@@ -276,8 +276,8 @@ final class RemiloIOSGoogleCalendarConnection {
                          calendarName: calendar.displayName ?? "")
     }
 
-    func prepareOneOffImport(expectedRevision: Int, calendarID: String, eventID: String,
-                             canRead: @MainActor () -> Bool) async throws -> Import.Review {
+    func prepareImport(expectedRevision: Int, calendarID: String, eventID: String, recurringChoices: Import.Choices?,
+                       canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Import.Review {
         let live = try requireAccess(expectedRevision)
         guard canRead() else { throw Failure.needsAccess }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()
@@ -290,7 +290,22 @@ final class RemiloIOSGoogleCalendarConnection {
         }
         guard case .found(let event) = lookup, !event.cancelled else { throw Import.Failure.staleRemote }
         let reviewedAt = Int64((now().timeIntervalSince1970 * 1_000).rounded())
-        return try Import.Review(account: live.fence.importAccount, calendar: calendar, event: event, now: reviewedAt)
+        let account = live.fence.importAccount
+        var evidence: Import.RecurrenceEvidence?
+        if let recurringChoices {
+            let source = try Import.Source(account: account, calendar: calendar, event: event)
+            if source.fields.schedule.recurrence != nil {
+                let policy = try Import.alertPolicy(for: source, choices: recurringChoices)
+                let beforeRead = importReadPermission(account, canRead: canRead)
+                evidence = try await read(live) { transport, access in
+                    try await RemiloIOSGoogleCalendarRecurringReview.inspect(
+                        access: access, calendar: calendar, master: event, now: reviewedAt, alertPolicy: policy,
+                        transport: transport, budget: budget, beforeRead: beforeRead
+                    )
+                }
+            }
+        }
+        return try Import.Review(account: account, calendar: calendar, event: event, now: reviewedAt, recurrenceEvidence: evidence)
     }
 
     func account(expectedRevision: Int) throws -> Import.Account {
@@ -303,13 +318,35 @@ final class RemiloIOSGoogleCalendarConnection {
         catch Failure.needsAccess { return false }
     }
 
-    func observeImport(_ captured: Import.Account, source: Import.SourceKey,
+    func observeImport(_ review: Import.Review,
                        canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Import.Observation {
+        let captured = review.account
         let live = try requireAccess(captured.connectionRevision)
         guard live.fence.importAccount == captured else { throw Failure.staleConnection }
+        let beforeRead = importReadPermission(captured, canRead: canRead)
         return try await read(live) { transport, access in
-            try await Import.observe(source, account: captured, access: access, transport: transport, canRead: canRead)
+            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+            return try await Import.observe(review.source.key, account: captured, access: access, transport: transport,
+                                            budget: budget, beforeRead: beforeRead) { calendar, event in
+                guard let previous = review.recurrenceEvidence, event.strongETag == previous.masterETag else {
+                    throw Import.Failure.staleRemote
+                }
+                return try await RemiloIOSGoogleCalendarRecurringReview.inspect(
+                    access: access, calendar: calendar, master: event, now: previous.referenceMs, alertPolicy: previous.alertPolicy,
+                    transport: transport, budget: budget, beforeRead: beforeRead
+                )
+            }
         }
+    }
+
+    private func importReadPermission(_ account: Import.Account, canRead: @escaping @MainActor @Sendable () -> Bool)
+        -> @Sendable () async throws -> Void {
+        { [self] in try await requireCurrentImportRead(account, canRead: canRead) }
+    }
+
+    private func requireCurrentImportRead(_ account: Import.Account, canRead: @MainActor () -> Bool) throws {
+        guard canRead() else { throw CancellationError() }
+        guard try isCurrentAccount(account) else { throw Failure.staleConnection }
     }
 
     /// A fresh explicit scan clears prior observations. A resumed scan continues

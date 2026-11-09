@@ -39,7 +39,9 @@ final class RemiloIOSEngine {
             guard kind != "TestAlarm" else { throw IOSInputFailure("UNSUPPORTED") }
             let operationID = try input.text("operationId", maximum: 200)
             guard !operationID.hasPrefix(Self.calendarCreatePrefix), payload["nativeCalendarAnchor"] == nil,
-                  payload["nativeCalendarEndExclusive"] == nil else { throw IOSInputFailure("UNSUPPORTED") }
+                  payload["nativeCalendarEndExclusive"] == nil, payload["nativeCalendarExceptions"] == nil else {
+                throw IOSInputFailure("UNSUPPORTED")
+            }
             return try await execute(input, kind: kind)
         } catch let error as IOSInputFailure {
             return error.bridge
@@ -49,7 +51,7 @@ final class RemiloIOSEngine {
     }
 
     /// Native Calendar capture only. The ordinary Expo command entry never
-    /// supplies these exact source-derived recurrence bounds.
+    /// supplies these exact source-derived recurrence bounds and exceptions.
     func applyCalendarCreate(_ payload: [String: Any], authorize: @escaping @MainActor @Sendable () throws -> Bool) async throws -> [String: Any] {
         await acquire()
         defer { release() }
@@ -66,7 +68,8 @@ final class RemiloIOSEngine {
                     ? nil : try input.text("nativeCalendarEndExclusive", maximum: 24)
                 bounds = (anchor, end)
             } else {
-                guard payload["nativeCalendarAnchor"] == nil, payload["nativeCalendarEndExclusive"] == nil else {
+                guard payload["nativeCalendarAnchor"] == nil, payload["nativeCalendarEndExclusive"] == nil,
+                      payload["nativeCalendarExceptions"] == nil else {
                     throw IOSInputFailure("UNSUPPORTED")
                 }
                 bounds = nil
@@ -449,7 +452,8 @@ final class RemiloIOSEngine {
             guard !record.deleted else { throw IOSInputFailure("IN_TRASH") }
             let updated = try RemiloIOSProjection.draft(input, id: record.id, previous: record, state: state, now: now)
             let timeChanged = updated.mode != record.mode || updated.alarmAtMs != record.alarmAtMs
-            changeRegistration = timeChanged || (updated.sound ?? "remilo") != (record.sound ?? "remilo")
+            let soundChanged = (updated.sound ?? "remilo") != (record.sound ?? "remilo")
+            changeRegistration = timeChanged || (soundChanged && (record.deferredSeriesOverride != true || record.registration != nil))
             if timeChanged, updated.active, updated.mode != "None", updated.alarmAtMs <= now {
                 throw input.invalid("alarmAtMs")
             }
@@ -459,6 +463,7 @@ final class RemiloIOSEngine {
             if timeChanged {
                 adjustment = nil
                 record.retainedAlertMs = nil
+                record.deferredSeriesOverride = nil
             }
         case "Done", "CompleteDelivery", "Stop":
             guard record.active else { throw IOSInputFailure("STALE_REVISION") }
@@ -476,6 +481,7 @@ final class RemiloIOSEngine {
             if record.segmentID != nil { record.independent = true }
             target = record.retainedAlertMs ?? record.alarmAtMs
             record.retainedAlertMs = nil
+            record.deferredSeriesOverride = nil
         case "Delete":
             guard !record.deleted else { throw IOSInputFailure("STALE_REVISION") }
             record.retainedAlertMs = record.nextAlertMs ?? record.retainedAlertMs
@@ -487,6 +493,7 @@ final class RemiloIOSEngine {
             target = record.retainedAlertMs ?? record.alarmAtMs
             if record.active {
                 record.retainedAlertMs = nil
+                record.deferredSeriesOverride = nil
                 if record.mode != "None", let session = state.routineSessions[record.id], let plan = state.routines[session.routineID] {
                     let close = try RemiloIOSRoutineAuthoring.closeAt(session.date, in: .current)
                     if session.ended || now >= close { restoredRoutineState = "Expired" }
@@ -507,12 +514,14 @@ final class RemiloIOSEngine {
             }
             target = now + Int64(state.settings.snoozeMinutes) * 60_000
             if record.segmentID != nil { record.independent = true }
+            record.deferredSeriesOverride = nil
             adjustment = "Snoozed"
         case "Postpone":
             let time = try input.integer("alarmAtMs", range: RemiloIOSProjection.epoch)
             guard time > now else { throw input.invalid("alarmAtMs") }
             target = time
             if record.segmentID != nil { record.independent = true }
+            record.deferredSeriesOverride = nil
             adjustment = "Postponed"
         default:
             throw IOSInputFailure("UNSUPPORTED")
@@ -548,7 +557,8 @@ final class RemiloIOSEngine {
         let registration = IOSReminderRegistration(
             occurrenceID: record.id, generation: record.generation, systemID: UUID(),
             targetMs: target, mode: record.mode, language: deliveryLanguage(state.settings.language),
-            isTest: record.isTest ? true : nil, sound: record.sound ?? "remilo", isRoutine: record.routineID == nil ? nil : true
+            isTest: record.isTest ? true : nil, sound: record.sound ?? "remilo", isRoutine: record.routineID == nil ? nil : true,
+            deferredSeriesOverride: record.deferredSeriesOverride
         )
         record.registration = registration
         record.nextAlertMs = target
@@ -569,7 +579,7 @@ final class RemiloIOSEngine {
         let notifications = state.reminders.values.compactMap { record -> RemiloIOSCoverage.Candidate? in
             guard record.active, let delivery = record.registration, delivery.mode == "Notification",
                   delivery.targetMs > now else { return nil }
-            let source = record.independent == true ? nil : record.routineID ?? record.segmentID
+            let source = record.independent == true && record.deferredSeriesOverride != true ? nil : record.routineID ?? record.segmentID
             return RemiloIOSCoverage.Candidate(
                 occurrenceID: record.id, targetMs: delivery.targetMs, rollingSourceID: source,
                 retain: record.deliveryState == "Scheduled"
@@ -583,6 +593,7 @@ final class RemiloIOSEngine {
                 < (rhs.registration.targetMs, rhs.registration.systemID.uuidString)
         }
         var blockedOccurrences = Set<String>()
+        var pendingOverrideCancellation = false
         var operations = 0
         var index = 0
         while index < state.outbox.count && operations < (maximumOperations ?? .max) {
@@ -590,13 +601,20 @@ final class RemiloIOSEngine {
             let work = state.outbox[index]
             let registration = work.registration
             let id = registration.occurrenceID
-            if blockedOccurrences.contains(id) { index += 1; continue }
+            let cancelsFutureOverride = work.action == .cancel && registration.targetMs > now
+                && registration.deferredSeriesOverride == true
+            if blockedOccurrences.contains(id) {
+                pendingOverrideCancellation = pendingOverrideCancellation || cancelsFutureOverride
+                index += 1
+                continue
+            }
             if work.action == .cancel {
                 operations += 1
                 do {
                     try await RemiloIOSDelivery.cancel(registration)
                 } catch {
                     blockedOccurrences.insert(id)
+                    pendingOverrideCancellation = pendingOverrideCancellation || cancelsFutureOverride
                     index += 1
                     continue
                 }
@@ -612,6 +630,10 @@ final class RemiloIOSEngine {
                 continue
             }
             if registration.mode == "Notification", registration.targetMs > now, !admitted.contains(id) {
+                index += 1
+                continue
+            }
+            if pendingOverrideCancellation && registration.deferredSeriesOverride == true {
                 index += 1
                 continue
             }
@@ -675,12 +697,17 @@ final class RemiloIOSEngine {
         }
         if !receipt.finalized, let id = receipt.seriesSegmentID, let segment = state.series[id],
            segment.revision == receipt.seriesRevision {
+            let includesOverrides = operationID.hasPrefix(Self.calendarCreatePrefix)
             let states = Set(state.reminders.values.lazy.filter {
-                $0.segmentID == id && $0.independent != true && $0.active && $0.registration != nil
+                $0.segmentID == id && $0.active && $0.registration != nil
+                    && ($0.independent != true || (includesOverrides && $0.deferredSeriesOverride == true))
             }.map(\.deliveryState))
             if states.contains("Blocked") { output["status"] = "Blocked" }
             else if states.contains("Pending") { output["status"] = "Pending" }
             else if states.contains("Scheduled") { output["status"] = "Scheduled" }
+            else if includesOverrides, state.reminders.values.contains(where: {
+                $0.segmentID == id && $0.active && $0.deferredSeriesOverride == true && $0.deliveryState == "Pending"
+            }) { output["status"] = "Pending" }
         }
         if !receipt.finalized, let ids = receipt.importRegistrationIDs {
             output["blocked"] = state.reminders.values.filter {

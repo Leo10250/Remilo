@@ -20,6 +20,7 @@ struct IOSReminder: Codable {
     var routineID: String? = nil
     var nominalSlot: String? = nil
     var independent: Bool? = nil
+    var deferredSeriesOverride: Bool? = nil
     var skipped: Bool? = nil
     var completed = false
     var deleted = false
@@ -47,6 +48,12 @@ struct IOSReminder: Codable {
     }
 
     func overdue(at now: Int64) -> Bool { routineID == nil && active && overdueAtMs < now }
+
+    mutating func deferSeriesOverride(target: Int64) {
+        deferredSeriesOverride = true
+        nextAlertMs = target
+        deliveryState = "Pending"
+    }
 }
 
 struct IOSHistory: Codable {

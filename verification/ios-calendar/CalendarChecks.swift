@@ -88,6 +88,7 @@ enum CalendarChecks {
         try await ConnectionChecks.run(configuration: configuration, access: access, now: now)
         try await RuntimeChecks.run(configuration: configuration, access: access, now: date)
         try EventChecks.run()
+        try await RecurringReviewChecks.run(configuration: configuration, access: access, now: now)
         let writeGrant = try RemiloIOSGoogleCalendarGrant(token: "fixture-bearer", scopes: Purpose.writeOwnedEvents.required,
                                                           expiresAt: date.addingTimeInterval(3_600))
         let writeAccess = try await auth.verify(writeGrant, configuration: configuration, expectedSubject: "subject-A",

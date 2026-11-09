@@ -46,7 +46,7 @@ enum ImportChecks {
             preconditionFailure("Expected a lost scheduler reply")
         } catch LocalFixture.LostReply.outcomeUnknown {}
         let recreated = Journal(directory: path, now: { now + 3_600_000 })
-        let disconnected = Journal.Authority(current: { _ in false }, observe: { _, _ in
+        let disconnected = Journal.Authority(current: { _ in false }, observe: { _ in
             preconditionFailure("An existing durable scheduler receipt must be checked before the stale remote")
         })
         let recovered = try await recreated.run(operation, authority: disconnected, scheduler: scheduler)
@@ -84,6 +84,7 @@ enum ImportChecks {
         precondition(pending.local?.status == .pending && pending.relationship == .manual && pending.suppression == .deferredUntilLocalDelivery)
         try await revokedBeforeCommit(journal, calendar: calendar, now: now)
         try expiryAndRecurrence(calendar, now: now)
+        try await exactRecurringExceptions(journal, calendar: calendar, now: now)
     }
 
     @MainActor
@@ -93,7 +94,7 @@ enum ImportChecks {
         let operation = UUID()
         _ = try await journal.capture(operationID: operation, review: review, choices: .init())
         let epoch = AuthorityFixture()
-        let authority = Journal.Authority(current: { $0 == account && epoch.available }, observe: { _, _ in
+        let authority = Journal.Authority(current: { $0 == account && epoch.available }, observe: { _ in
             Import.Observation(source: review.source, recurrenceEvidence: nil)
         })
         let fixture = LocalFixture(loseReply: false, status: .scheduled)
@@ -138,13 +139,77 @@ enum ImportChecks {
                                               nominalSlot: "2027-03-15T09:00", cancelled: false)
         let slot = try Import.AuditedSlot(identity: identity, startMs: Event.timestamp("2027-03-15T09:00:00Z"),
                                           endMs: Event.timestamp("2027-03-15T09:30:00Z"))
-        let proof = Import.RecurrenceEvidence(etag: #""master""#, inspectedExceptions: true, ordinarySlots: [slot])
+        let proof = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: .init(enabled: true, offsetMs: nil),
+                                             masterETag: #""master""#, exceptions: [], ordinarySlots: [slot])
         let reviewed = try Import.Review(account: account, calendar: calendar, event: master, now: now, recurrenceEvidence: proof)
         let capture = try Import.Capture(operationID: UUID(), review: reviewed, choices: .init(), now: now)
         precondition(capture.command.rule?.endExclusive == "2027-03-16T08:30:00.001")
         precondition(capture.command.rule?.payload["zoneMode"] as? String == "pinned")
         precondition(reviewed.matches(Import.Observation(source: reviewed.source, recurrenceEvidence: proof)))
         precondition(!reviewed.matches(Import.Observation(source: reviewed.source, recurrenceEvidence: nil)))
+    }
+
+    private static func exactRecurringExceptions(_ journal: Journal, calendar: Transport.OwnedCalendar, now: Int64) async throws {
+        typealias Exception = RemiloIOSGoogleCalendarRecurringReview.Exception
+        let master = try remote(id: "exception-master", etag: #""master""#, recurrence: ["RRULE:FREQ=DAILY;COUNT=5"])
+        let skipped = Exception(identity: Event.InstanceIdentity(eventID: "google-skip", masterID: master.id,
+                                                                 nominalSlot: "2027-03-15T09:00", cancelled: true), etag: nil, fields: nil)
+        let movedIdentity = Event.InstanceIdentity(eventID: "google-move", masterID: master.id,
+                                                   nominalSlot: "2027-03-16T09:00", cancelled: false)
+        let movedStart = try Event.timestamp("2027-03-17T10:00:00Z")
+        let moved = Event.Fields(title: "", notes: "  moved notes\n", schedule: Event.Schedule(
+            eventStartMs: movedStart, eventEndMs: movedStart + 1_800_000, allDay: false, zoneId: "UTC", recurrence: nil
+        ))
+        let movedException = Exception(identity: movedIdentity, etag: #""moved-v1""#, fields: moved)
+        let ordinary = try (17...19).map { day in
+            let identity = Event.InstanceIdentity(eventID: "ordinary-\(day)", masterID: master.id,
+                                                  nominalSlot: "2027-03-\(day)T09:00", cancelled: false)
+            let start = try Event.timestamp("2027-03-\(day)T09:00:00Z")
+            return Import.AuditedSlot(identity: identity, startMs: start, endMs: start + 1_800_000)
+        }
+        let evidence = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: .init(enabled: true, offsetMs: -1_800_000), masterETag: #""master""#,
+                                                 exceptions: [skipped, movedException], ordinarySlots: ordinary)
+        let review = try Import.Review(account: account, calendar: calendar, event: master, now: now, recurrenceEvidence: evidence)
+        let decoded = try JSONDecoder().decode(Import.Review.self, from: JSONEncoder().encode(review))
+        precondition(decoded == review)
+        let choices = Import.Choices(mode: .alarm, alarmAtMs: now + 1_800_000, automaticSync: false)
+        let id = UUID()
+        let capture = try Import.Capture(operationID: id, review: review, choices: choices, now: now)
+        let overrides = capture.command.payload["nativeCalendarExceptions"] as! [[String: Any]]
+        precondition(overrides[0]["kind"] as? String == "Skip" && overrides[0]["nominalSlot"] as? String == skipped.identity.nominalSlot)
+        precondition(overrides[1]["kind"] as? String == "Override" && overrides[1]["nominalSlot"] as? String == movedIdentity.nominalSlot)
+        precondition(overrides[1]["title"] as? String == "读书" && overrides[1]["notes"] as? String == moved.notes)
+        precondition(overrides[1]["alarmAtMs"] as? Int64 == movedStart - 1_800_000 && overrides[1]["dueAtMs"] as? Int64 == movedStart)
+        precondition(overrides[1]["alertEligible"] as? Bool == true)
+        do {
+            _ = try Import.Capture(operationID: UUID(), review: review, choices: .init(mode: .none), now: now)
+            preconditionFailure("A changed delivery policy needs a fresh exception scan")
+        } catch Import.Failure.recurrenceReviewRequired {}
+
+        let historicalFields = Event.Fields(title: "Historical move", notes: "", schedule: .init(
+            eventStartMs: now - 3_600_000, eventEndMs: now - 1_800_000, allDay: false, zoneId: "UTC", recurrence: nil
+        ))
+        let historical = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: evidence.alertPolicy, masterETag: evidence.masterETag,
+                                                    exceptions: [skipped, Exception(identity: movedIdentity, etag: movedException.etag, fields: historicalFields)],
+                                                    ordinarySlots: ordinary)
+        let historicalReview = try Import.Review(account: account, calendar: calendar, event: master, now: now, recurrenceEvidence: historical)
+        let historicalCapture = try Import.Capture(operationID: UUID(), review: historicalReview, choices: choices, now: now)
+        let historicalOverrides = historicalCapture.command.payload["nativeCalendarExceptions"] as! [[String: Any]]
+        precondition(historicalOverrides[1]["nominalSlot"] as? String == movedIdentity.nominalSlot)
+        precondition(historicalOverrides[1]["alertEligible"] as? Bool == false)
+
+        let changed = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: evidence.alertPolicy, masterETag: evidence.masterETag, exceptions: [
+            skipped, Exception(identity: movedIdentity, etag: #""moved-v2""#, fields: moved),
+        ], ordinarySlots: ordinary)
+        _ = try await journal.capture(operationID: id, review: review, choices: choices)
+        let authority = Journal.Authority(current: { $0 == account }, observe: { capture in
+            precondition(capture.recurrenceEvidence?.referenceMs == now)
+            return Import.Observation(source: review.source, recurrenceEvidence: changed)
+        })
+        let local = LocalFixture(loseReply: false, status: .scheduled)
+        let rejected = try await journal.run(id, authority: authority, scheduler: adapter(local))
+        let attempts = await local.attempts
+        precondition(rejected.errorCode == "STALE_REMOTE" && rejected.local == nil && attempts == 0)
     }
 
     private static func remote(id: String, etag: String, date: String = "2027-03-15", recurrence: [String]? = nil) throws -> Transport.Event {
@@ -158,8 +223,8 @@ enum ImportChecks {
     }
 
     private static func authority(_ source: Import.Source) -> Journal.Authority {
-        Journal.Authority(current: { $0 == account }, observe: { _, key in
-            precondition(key == source.key)
+        Journal.Authority(current: { $0 == account }, observe: { review in
+            precondition(review.source.key == source.key)
             return Import.Observation(source: source, recurrenceEvidence: nil)
         })
     }

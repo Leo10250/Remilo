@@ -17,6 +17,7 @@ struct IOSReminderRegistration: Codable {
     var isTest: Bool? = nil
     var sound: String? = nil
     var isRoutine: Bool? = nil
+    var deferredSeriesOverride: Bool? = nil
 }
 
 enum IOSDeliveryFailure: Error {

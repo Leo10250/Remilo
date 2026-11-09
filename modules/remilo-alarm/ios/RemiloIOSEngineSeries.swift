@@ -76,7 +76,8 @@ extension RemiloIOSEngine {
         template.segmentID = nil
         template.nominalSlot = nil
         let rule = try RemiloIOSSeries.rule(for: template, spec: spec, calendarBounds: calendarBounds)
-        guard try !RemiloIOSRecurrence.future(rule, afterMs: now, deviceZone: .current, mode: template.mode, limit: 1).isEmpty else {
+        if calendarBounds == nil,
+           try RemiloIOSRecurrence.future(rule, afterMs: now, deviceZone: .current, mode: template.mode, limit: 1).isEmpty {
             throw input.invalid("recurrence")
         }
         if let old {
@@ -102,7 +103,70 @@ extension RemiloIOSEngine {
             createdAtMs: now, state: old?.state ?? "Active"
         )
         state.series[id] = segment
+        if calendarBounds != nil {
+            let hasOverride = try installCalendarExceptions(input, segment: segment, state: &state, now: now)
+            if !hasOverride, try RemiloIOSSeries.eligibleFuture(segment, in: state, now: now, limit: 1).isEmpty {
+                throw input.invalid("recurrence")
+            }
+        }
         return segment
+    }
+
+    private func installCalendarExceptions(
+        _ input: IOSInput, segment: IOSSeriesSegment, state: inout IOSDatabase, now: Int64
+    ) throws -> Bool {
+        guard let raw = input.values["nativeCalendarExceptions"] else { return false }
+        guard let rows = raw as? [[String: Any]], rows.count <= 500 else { throw input.invalid("nativeCalendarExceptions") }
+        let identityFields: Set<String> = ["kind", "nominalSlot"]
+        let overrideFields = identityFields.union([
+            "title", "notes", "eventStartMs", "eventEndMs", "allDay", "zoneId", "dueAtMs", "alarmAtMs", "alarmLinked", "alertEligible",
+        ])
+        var hasUpcomingOverride = false
+        for values in rows {
+            let entry = IOSInput(values: values)
+            let kind = try entry.choice("kind", fallback: "", from: ["Skip", "Override"])
+            let nominal = try entry.text("nominalSlot", maximum: 24)
+            let expectedFields = kind == "Skip" ? identityFields : overrideFields
+            guard Set(values.keys) == expectedFields, try RemiloIOSRecurrence.canonicalNominal(nominal) == nominal,
+                  let index = try RemiloIOSRecurrence.index(nominal, in: segment.rule) else {
+                throw input.invalid("nativeCalendarExceptions")
+            }
+            let slot = try RemiloIOSRecurrence.resolve(segment.rule, nominal: nominal, deviceZone: .current, index: index)
+            var record = RemiloIOSSeries.makeOccurrence(segment, slot: slot)
+            guard state.reminders[record.id] == nil, !state.isPurgedOccurrence(record.id) else {
+                throw input.invalid("nativeCalendarExceptions")
+            }
+            record.independent = true
+            record.createdAtMs = now
+            if kind == "Skip" {
+                record.skipped = true
+                record.deliveryState = "Skipped"
+                record.history.append(IOSHistory(kind: "Skip", atMs: now, targetMs: nil))
+            } else {
+                let alertEligible = try entry.flag("alertEligible", fallback: false)
+                record = try RemiloIOSProjection.draft(entry, id: record.id, previous: record, state: state, now: now)
+                let epoch = RemiloIOSProjection.epoch
+                guard try record.eventStartMs == entry.integer("eventStartMs", range: epoch),
+                      try record.eventEndMs == entry.integer("eventEndMs", range: epoch),
+                      record.dueAtMs == (record.allDay ? record.eventEndMs : record.eventStartMs) else {
+                    throw input.invalid("nativeCalendarExceptions")
+                }
+                record.dueLinked = true
+                if record.mode == "None" {
+                    hasUpcomingOverride = hasUpcomingOverride || record.eventEndMs > now
+                } else if alertEligible {
+                    guard record.alarmAtMs > now else { throw IOSInputFailure("ALERT_EXPIRED") }
+                    record.deferSeriesOverride(target: record.alarmAtMs)
+                    hasUpcomingOverride = true
+                } else {
+                    guard record.alarmAtMs <= now else { throw entry.invalid("alertEligible") }
+                    record.deliveryState = "Missed"
+                }
+                record.history.append(IOSHistory(kind: "Create", atMs: now, targetMs: nil))
+            }
+            state.reminders[record.id] = record
+        }
+        return hasUpcomingOverride
     }
 
     private func fenceSeries(_ segmentID: String, from boundary: String?, paused: Bool, state: inout IOSDatabase, now: Int64) {
@@ -176,6 +240,45 @@ extension RemiloIOSEngine {
                 }
             }
             state.series[segment.id] = segment
+        }
+        let changedOverrides = replenishSeriesOverrides(state: &state, now: now)
+        return changed || changedOverrides
+    }
+
+    private func replenishSeriesOverrides(state: inout IOSDatabase, now: Int64) -> Bool {
+        // Keep a separate bounded window for authored independent exceptions.
+        let limit = 8
+        let overrides = state.reminders.values.filter { $0.active && $0.deferredSeriesOverride == true }
+        let future = overrides.compactMap { record -> (id: String, target: Int64)? in
+            guard let target = record.nextAlertMs, target > now else { return nil }
+            return (record.id, target)
+        }.sorted { ($0.target, $0.id) < ($1.target, $1.id) }
+
+        // Keep nearly due registrations intact while earlier newly reviewed work
+        // can take a place reserved for a more distant exception.
+        var wanted = Set(future.filter { item in
+            item.target <= now + 60_000 && state.reminders[item.id]?.registration != nil
+        }.map { $0.id })
+        for item in future where wanted.count < limit {
+            wanted.insert(item.id)
+        }
+        var changed = false
+        for var record in overrides {
+            guard let target = record.nextAlertMs else { continue }
+            if target <= now {
+                guard record.registration == nil else { continue }
+                record.nextAlertMs = nil
+                record.deliveryState = "Missed"
+            } else if wanted.contains(record.id) {
+                guard record.registration == nil else { continue }
+                replaceRegistration(&record, target: target, state: &state, now: now)
+            } else {
+                guard record.registration != nil else { continue }
+                replaceRegistration(&record, target: nil, state: &state, now: now)
+                record.deferSeriesOverride(target: target)
+            }
+            state.reminders[record.id] = record
+            changed = true
         }
         return changed
     }

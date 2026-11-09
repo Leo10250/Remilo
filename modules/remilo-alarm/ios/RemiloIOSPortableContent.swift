@@ -193,6 +193,12 @@ enum RemiloIOSPortableContent {
     static func preview(_ bundle: Bundle, against state: IOSDatabase, now: Int64) throws -> [String: Any] {
         let conflicts = conflicts(bundle, against: state)
         let families = Dictionary(grouping: bundle.series.values, by: \.familyID)
+        let independentFutureFamilies = Set(bundle.reminders.values.compactMap { record -> String? in
+            guard record.routineID == nil, record.independent == true, record.active,
+                  record.mode != "None", let target = record.nextAlertMs, target > now,
+                  let segmentID = record.segmentID else { return nil }
+            return bundle.series[segmentID]?.familyID
+        })
         var rows = bundle.reminders.values.filter { $0.segmentID == nil && $0.routineID == nil }.sorted { $0.id < $1.id }.map {
             [
                 "id": $0.id, "title": $0.title, "conflict": conflicts.contains($0.id),
@@ -207,7 +213,8 @@ enum RemiloIOSPortableContent {
                 guard segment.state == "Active", segment.template.mode != "None" else { return false }
                 return !(try RemiloIOSRecurrence.future(segment.rule, afterMs: now, deviceZone: .current, limit: 1)).isEmpty
             }
-            rows.append(["id": id, "title": latest.template.title, "conflict": conflicts.contains(id), "futureAlert": future])
+            rows.append(["id": id, "title": latest.template.title, "conflict": conflicts.contains(id),
+                         "futureAlert": future || independentFutureFamilies.contains(id)])
         }
         for plan in bundle.routines.values.sorted(by: { $0.id < $1.id }) {
             guard let version = plan.latest else { continue }

@@ -2,6 +2,7 @@ import Foundation
 
 /// Civil recurrence policy. UTC dates are used only as a coordinate system for nominal slots.
 enum RemiloIOSRecurrence {
+    static let maximumOffsetMs: Int64 = 366 * dayMs
     struct InvalidRule: Error, Equatable { let field: String }
 
     struct Rule: Codable, Equatable {
@@ -72,6 +73,11 @@ enum RemiloIOSRecurrence {
     static func civilOffset(_ targetMs: Int64, fromNominal anchor: String, zone: TimeZone) throws -> Int64 {
         let nominal = try parse(anchor, field: "anchor")
         return milliseconds(localCoordinate(instant(targetMs), in: zone)) - milliseconds(nominal)
+    }
+
+    static func resolveOffset(_ anchor: String, by offset: Int64, in zone: TimeZone) throws -> Int64 {
+        let nominal = try parse(anchor, field: "nominalSlot")
+        return milliseconds(try RemiloIOSTime.resolveNominal(instant(milliseconds(nominal) + offset), in: zone).instant)
     }
 
     static func resolve(_ rule: Rule, nominal: String, deviceZone: TimeZone, index: Int = 0) throws -> Slot {
@@ -243,7 +249,7 @@ enum RemiloIOSRecurrence {
             guard (1...7).contains(rule.weekday) else { throw InvalidRule(field: "weekday") }
             guard (1...12).contains(rule.month) else { throw InvalidRule(field: "month") }
             if let count = rule.count, !(1...100_000).contains(count) { throw InvalidRule(field: "count") }
-            let offsetLimit: Int64 = 366 * RemiloIOSRecurrence.dayMs
+            let offsetLimit = RemiloIOSRecurrence.maximumOffsetMs
             guard (1...offsetLimit).contains(rule.endOffsetMs) else { throw InvalidRule(field: "endOffsetMs") }
             guard (-offsetLimit...offsetLimit).contains(rule.dueOffsetMs) else { throw InvalidRule(field: "dueOffsetMs") }
             guard (-offsetLimit...offsetLimit).contains(rule.alarmOffsetMs) else { throw InvalidRule(field: "alarmOffsetMs") }

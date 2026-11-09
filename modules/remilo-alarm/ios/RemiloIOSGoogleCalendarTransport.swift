@@ -17,6 +17,8 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         fileprivate let accessRole: String?
         fileprivate let deleted: Bool?
 
+        var isOwned: Bool { accessRole == "owner" && deleted != true }
+
         var displayName: String? {
             if let summaryOverride, !summaryOverride.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 return summaryOverride
@@ -31,6 +33,12 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         let cancelled: Bool
         /// Bounded provider data for native inspection, before an allowlisted cache projection.
         let json: Data
+
+        var strongETag: String? {
+            guard let etag, (2...512).contains(etag.utf8.count), etag.first == "\"", etag.last == "\"",
+                  etag.utf8.dropFirst().dropLast().allSatisfy({ $0 == 33 || (35...126).contains($0) }) else { return nil }
+            return etag
+        }
     }
 
     enum EventLookup: Sendable {
@@ -91,7 +99,7 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         let request = PageRequest(identity: Identity(access), path: ["users", "me", "calendarList"],
                                   parameters: [.init("minAccessRole", "owner"), .init("maxResults", "100"), .init("showHidden", "true")])
         let page = try await fetchPage(access, request, next: next, budget: budget)
-        let items = try page.items.map { try calendar($0) }.filter { $0.accessRole == "owner" && $0.deleted != true }
+        let items = try page.items.map { try calendar($0) }.filter(\.isOwned)
         return Page(items: items, next: page.next, checkpoint: nil)
     }
 
@@ -100,7 +108,7 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         let response = try await get(access, path: ["users", "me", "calendarList", id], budget: budget)
         try Self.validate(response)
         let result = try calendar(Self.object(response.body))
-        guard result.id == id, result.accessRole == "owner", result.deleted != true else { throw Failure.notOwner }
+        guard result.id == id, result.isOwned else { throw Failure.notOwner }
         return result
     }
 
@@ -156,6 +164,18 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         let event = try Self.event(Self.object(response.body))
         guard event.id == eventID else { throw Failure.invalidResponse }
         return .found(event)
+    }
+
+    func instance(_ access: RemiloIOSGoogleCalendarAccess, calendarID: String, masterID: String, originalStart: String,
+                  budget: HTTP.Budget) async throws -> Event? {
+        guard [calendarID, masterID, originalStart].allSatisfy(Self.validIdentity) else { throw Failure.invalidInput }
+        let request = PageRequest(
+            identity: Identity(access), path: ["calendars", calendarID, "events", masterID, "instances"],
+            parameters: [.init("showDeleted", "true"), .init("maxResults", "100"), .init("originalStart", originalStart)]
+        )
+        let page = try await fetchPage(access, request, next: nil, budget: budget)
+        guard page.next == nil, page.sync == nil, page.items.count <= 1 else { throw Failure.invalidResponse }
+        return try page.items.first.map(Self.event)
     }
 
     private func fetchPage(_ access: RemiloIOSGoogleCalendarAccess, _ request: PageRequest,
