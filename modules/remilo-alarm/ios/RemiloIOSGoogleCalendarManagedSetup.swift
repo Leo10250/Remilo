@@ -96,6 +96,14 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         return try journal.outgoingBinding(account, explicit: explicit)
     }
 
+    func hasActiveIncomingBinding(expectedRevision: Int) throws -> Bool {
+        let account = try currentAccount(expectedRevision)
+        do {
+            _ = try journal.incomingScope(account)
+            return true
+        } catch Failure.staleConnection { return false }
+    }
+
     func permitsIncoming(_ permit: Inbox.Permit, account: Account) throws -> Bool {
         guard canUseForeground(), try connection.isCurrentAccount(account) else { return false }
         let scope: Inbox.Scope

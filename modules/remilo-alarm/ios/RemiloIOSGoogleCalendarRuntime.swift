@@ -434,6 +434,14 @@ final class RemiloIOSGoogleCalendarRuntime {
     private func runAutomaticPass(_ opportunity: AutomaticOpportunity) async {
         guard let view = try? connection.view(), view.connected else { return }
         try? await syncManagedOutgoing(expectedRevision: view.revision)
+        // Resolve outbound identities first so a just-published event is
+        // reserved before the incoming scan can discover it.
+        if opportunity == .foreground, Self.isAutomaticForeground,
+           (try? managedSetup?.hasActiveIncomingBinding(expectedRevision: view.revision)) == true,
+           let result = try? await syncManagedIncoming(expectedRevision: view.revision),
+           result.imported > 0 || result.linked > 0 || result.needsReview > 0 {
+            NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+        }
         guard let manualLink, view.canWriteOwnedEvents else { return }
         let inspectUnchanged = opportunity == .foreground
         if inspectUnchanged { try? manualLink.resumeAssociationRequests(expectedConnectionRevision: view.revision, limit: 2) }

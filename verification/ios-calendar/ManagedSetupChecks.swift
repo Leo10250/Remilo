@@ -28,6 +28,8 @@ enum ManagedSetupChecks {
         let setup = Setup(connection: connection, journal: journal, canUseForeground: { true }, freshInstallation: { true }, now: now) { subject, purpose in
             try await fixture.consent(subject, purpose)
         }
+        let incomingBeforeSetup = try setup.hasActiveIncomingBinding(expectedRevision: connected.revision)
+        precondition(!incomingBeforeSetup, "A connected account alone does not trigger managed imports")
         let proposal = try await setup.preview(expectedRevision: connected.revision, zoneID: "UTC")
         guard let review = proposal.review, review.target == .create(zoneID: "UTC") else {
             preconditionFailure("Complete read-only discovery must precede a proposed creation")
@@ -72,6 +74,8 @@ enum ManagedSetupChecks {
             let result = try await setup.advance(selected, expectedRevision: revision)
             guard case .finished(let entry) = result, entry.phase == .confirmed else { preconditionFailure("Adopt the exact reviewed calendar") }
             let saved = try setup.view(expectedRevision: revision)
+            let incomingAfterSetup = try setup.hasActiveIncomingBinding(expectedRevision: revision)
+            precondition(incomingAfterSetup)
             let defaultExport = try setup.outgoingBinding(explicit: false)
             let explicitExport = try setup.outgoingBinding(explicit: true)
             precondition(defaultExport == nil && explicitExport == saved.binding,
@@ -150,6 +154,8 @@ enum ManagedSetupChecks {
                                                                               canRead: { true })
             let replacementReview = try journal.review(rediscovered, account: authorized.account, calendarZoneID: "UTC")
             _ = try journal.capture(operationID: UUID(), review: replacementReview, currentAccount: authorized.account)
+            let incomingDuringReplacement = try setup.hasActiveIncomingBinding(expectedRevision: revision)
+            precondition(!incomingDuringReplacement)
             do {
                 _ = try setup.outgoingBinding(explicit: true)
                 preconditionFailure("Do not capture even an explicit export against a binding being replaced")
