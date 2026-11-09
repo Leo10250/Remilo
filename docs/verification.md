@@ -210,6 +210,57 @@ feasibility. Physical acceptance uses a signed build of Remilo itself.
 
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 
+#### Google Calendar on a sideloaded iPhone or iPad
+
+Use an app-only build that includes the iOS Calendar UI. First install the
+unconfigured Remilo IPA through AltStore. Use the bundle identifier reported
+by the installed device, since AltStore can assign a different identifier when
+it signs the app. Keep the same AltStore account and signing team for the
+configured build. [AltStore provisioning implementation](https://github.com/altstoreio/AltStore/blob/develop/AltStore/Operations/FetchProvisioningProfilesOperation.swift)
+
+On Windows, connect and trust the device over USB. With `pymobiledevice3`
+installed according to its documentation, run this in PowerShell. Use the
+single identifier for the Remilo installation you just installed.
+[pymobiledevice3 installation](https://doronz88.github.io/pymobiledevice3/master/installation/)
+
+```powershell
+$installed = py -m pymobiledevice3 apps list --type User | Out-String | ConvertFrom-Json
+$installed.PSObject.Properties |
+  Where-Object { $_.Value.ALTBundleIdentifier -eq 'com.remilo.app' -or $_.Value.CFBundleDisplayName -eq 'Remilo' } |
+  Select-Object -ExpandProperty Name
+```
+
+In Google Cloud, enable the Calendar API and create an OAuth client of type
+**iOS** for that exact identifier. For an External app in Testing, add the
+Google account you will use on the device as a test user. The first read-only
+import requests `openid`, `email`, `calendar.calendarlist.readonly`, and
+`calendar.events.owned.readonly`. Select the OAuth client ID shown in Google
+Cloud. [iOS OAuth clients](https://developers.google.com/identity/sign-in/ios/api-access)
+[OAuth test users](https://support.google.com/cloud/answer/15549945)
+[Calendar scope reference](https://developers.google.com/workspace/calendar/api/auth)
+
+Put the original unsigned IPA in `verification/local`. From the repository,
+set these two variables to your actual values and run the helper. On macOS use
+`python3` with the same arguments.
+
+```powershell
+$bundleId = 'ACTUAL_INSTALLED_BUNDLE_ID'
+$clientId = 'YOUR_IOS_OAUTH_CLIENT_ID'
+py scripts/configure-ios-test-ipa.py verification/local/Remilo-unsigned.ipa verification/local/Remilo-calendar-test.ipa --bundle-id $bundleId --client-id $clientId
+```
+
+The helper writes a new app-only IPA using public OAuth configuration. It
+preserves the input app identifier and existing URL schemes and rejects a
+host app signature, provisioning profile, or embedded extension. Put
+`Remilo-calendar-test.ipa` in Files and select it in AltStore under
+**My Apps → +** to install over the baseline. Open Remilo, connect the test
+Google account, and import one future event from a calendar that account owns.
+Check the local reminder time and delivery mode. Relaunch and confirm saved
+status can be inspected after reconnecting the same account. Change an event
+after opening its review and verify that confirmation asks for fresh review.
+Keep the configured test IPA local.
+[AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
+
 #### iOS widget build
 
 The standard unsigned Remilo build omits the widget extension. To build the

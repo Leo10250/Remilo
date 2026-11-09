@@ -14,6 +14,7 @@ on:
       - verification/ios-calendar/**
       - verification/ios-engine/**
       - verification/ios-media/**
+      - scripts/configure-ios-test-ipa.py
       - app.config.js
       - app.json
       - package*.json
@@ -81,6 +82,11 @@ jobs:
           ditto "$app" "$stage/Payload/Remilo.app"
           ditto -c -k --keepParent "$stage/Payload" "$ipa"
           unzip -tq "$ipa"
+      - name: Check local Calendar configuration on the packaged app
+        run: |
+          python3 scripts/configure-ios-test-ipa.py \
+            "$RUNNER_TEMP/Remilo-unsigned.ipa" "$RUNNER_TEMP/Remilo-calendar-fixture.ipa" \
+            --bundle-id com.remilo.app.FIXTUREABC --client-id 123-fixture.apps.googleusercontent.com
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: Remilo-unsigned
@@ -96,6 +102,8 @@ jobs:
           persist-credentials: false
       - name: Check Calendar authorization, connection and browse policies
         run: sh verification/ios-calendar/run.sh
+      - name: Check the unsigned IPA configuration helper
+        run: python3 verification/ios-calendar/configure-ipa-check.py
       - name: Check host signing settings for both widget modes
         if: ${{ !cancelled() }}
         shell: bash
