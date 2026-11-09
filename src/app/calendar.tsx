@@ -232,12 +232,7 @@ function LocalCalendarSettings() {
           key={job.operationId}
           operation={job}
           busy={busy || action.unknown}
-          onOpen={() =>
-            router.push({
-              pathname: '/reminder/[id]',
-              params: { id: job.occurrenceId, ...origin },
-            })
-          }
+          origin={origin}
           onRetry={() =>
             void run(async () => {
               await engine().applyCalendarCommand({

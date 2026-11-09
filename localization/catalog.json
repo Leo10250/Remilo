@@ -16986,17 +16986,17 @@
       "calendarStatus": false
     },
     "ios_calendar_settings_description": {
-      "en": "Import individual events from Google Calendar.",
-      "zh-Hans": "从 Google 日历逐项导入日程。",
+      "en": "Import one-time or repeating events from Google Calendar.",
+      "zh-Hans": "从 Google 日历导入单次或重复日程。",
       "args": {},
-      "context": "Settings row for iOS one-off imports into Remilo.",
+      "context": "iOS Settings row and disconnected Calendar screen. Imports are reviewed local copies.",
       "calendarStatus": false
     },
     "ios_calendar_browse_intro": {
       "en": "Choose an event to review and import. Events with a completed or pending import are hidden.",
       "zh-Hans": "选择一项日程，核对详情后导入。已导入或导入结果待确认的日程不会显示。",
       "args": {},
-      "context": "One-off import browser, where native reservations hide pending or completed imports.",
+      "context": "Import browser for one-time and repeating events. Native reservations hide pending or completed imports.",
       "calendarStatus": false
     },
     "ios_calendar_unavailable": {
@@ -17010,7 +17010,7 @@
       "en": "Your Google events and Remilo reminders are kept.",
       "zh-Hans": "Google 日历中的日程和 Remilo 中的提醒均会保留。",
       "args": {},
-      "context": "Disconnect confirmation for iOS one-off imports. Existing local reminders remain available.",
+      "context": "iOS Calendar disconnect confirmation. Existing local reminders remain available.",
       "calendarStatus": false
     },
     "ios_calendar_revoked": {
@@ -17038,7 +17038,7 @@
       "en": "Only calendars you own are shown.",
       "zh-Hans": "仅显示你拥有的日历。",
       "args": {},
-      "context": "Source picker for a one-off Google Calendar import.",
+      "context": "Source picker for a reviewed Google Calendar import.",
       "calendarStatus": false
     }
   }

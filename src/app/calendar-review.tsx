@@ -709,13 +709,16 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
                 <View key="repeat" style={{ padding: 16, gap: 8 }}>
                   <Copy heading>{t('m_235d9592dab2')}</Copy>
                   {preview.upcoming?.map((slot) => (
-                    <Copy key={slot.eventStartMs}>
+                    <Copy key={slot.nominalSlot ?? slot.eventStartMs}>
                       {scheduleDateTime(
                         mode === 'None' ? slot.eventStartMs : slot.alarmAtMs,
                         preview.remote.schedule.zoneId,
                       )}
                     </Copy>
                   ))}
+                  {iosReminders && !dirty && !preview.upcoming?.length && (
+                    <ActionFeedback tone="warning" message={t('m_030d2322d0da')} />
+                  )}
                   <Copy muted>{t('m_9b75e12ec2d4')}</Copy>
                 </View>
               )}
@@ -854,9 +857,7 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
         <LocalCalendarOperation
           operation={job}
           busy={busy}
-          onOpen={() =>
-            router.push({ pathname: '/reminder/[id]', params: { id: job.occurrenceId, ...origin } })
-          }
+          origin={origin}
           onRetry={() => void applyLocal()}
           onReviewAgain={() => {
             if (!sameSource) {

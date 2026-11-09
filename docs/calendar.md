@@ -8,9 +8,11 @@ and device-protected storage. [Product](product.md) owns local behavior and
 
 Android supports the integration described here. A configured iOS test build
 uses the shared Settings, Import, and Review screens for read-only browsing of
-owned calendars and reviewed local copies of one-off events. The native
-scheduler checks the current account and grant immediately before saving a
-reminder. [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
+owned calendars and reviewed local copies of one-off events and supported
+recurring masters. A recurring copy retains verified cancellations as skips and
+changed instances at their authored times. The native scheduler checks the
+current account and grant immediately before saving a reminder or series.
+[The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)
 

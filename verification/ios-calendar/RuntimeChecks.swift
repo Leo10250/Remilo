@@ -36,6 +36,7 @@ enum RuntimeChecks {
                            importJournal: journal, scheduler: scheduler, authorize: authorize)
         }
         let runtime = newRuntime()
+        let choices = Import.Choices(mode: .none, automaticSync: false)
 
         foreground.active = false
         try await rejects(.needsAccess) { _ = try await runtime.view() }
@@ -49,69 +50,95 @@ enum RuntimeChecks {
         precondition(calendars.items.map(\.id) == ["owned"] && calendars.connectionRevision == connected.revision)
         let first = try await page(runtime, revision: connected.revision)
         precondition(first.items.map(\.eventId) == ["ordinary", "family"] && first.items[0].fields?.title == "提醒")
-        precondition(first.items[1].fields == nil && first.items[1].unsupportedReason == .unsupportedRecurrence)
+        precondition(first.items[1].fields?.schedule.recurrence == ["RRULE:FREQ=DAILY;COUNT=3"])
+        precondition(first.items[1].unsupportedReason == nil)
         let cursor = first.nextCursor!
         let next = try await page(runtime, revision: connected.revision, cursor: cursor)
         precondition(next.items.map(\.eventId) == ["next"] && next.nextCursor == nil)
         try await rejects(.notOwner) { _ = try await page(runtime, revision: connected.revision, calendarID: "writer") }
         try await rejects(.invalidRange) {
-            _ = try await runtime.browseOneOffs(expectedRevision: connected.revision, calendarID: "owned",
+            _ = try await runtime.browseEvents(expectedRevision: connected.revision, calendarID: "owned",
                                                from: "2027-03-15", until: "2028-03-16")
         }
-        let reviewed = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
+        let reviewed = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                       eventID: "ordinary", choices: choices)
         precondition(reviewed.account.subject == "subject-A" && reviewed.account.accountGeneration == connected.accountGeneration)
         precondition(reviewed.account.connectionRevision == connected.revision && reviewed.source.key.calendarID == "owned")
         precondition(reviewed.source.etag == "\"exact\"" && reviewed.source.fields.title == "更新后的标题")
         precondition(reviewed.source.fields.notes == "  Original notes\n" && reviewed.googleReminders == .disabled)
         try await rejects(.notOwner) {
-            _ = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "writer", eventID: "ordinary")
+            _ = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "writer",
+                                                eventID: "ordinary", choices: choices)
         }
         let rejectedEvents: [(String, ImportFailure)] = [
-            ("weak", .staleRemote), ("missing", .staleRemote), ("removed", .staleRemote), ("family", .recurrenceReviewRequired),
+            ("weak", .staleRemote), ("missing", .staleRemote), ("removed", .staleRemote),
         ]
         for (eventID, expected) in rejectedEvents {
             do {
-                _ = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: eventID)
+                _ = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                    eventID: eventID, choices: choices)
                 preconditionFailure("Expected a reviewed import rejection")
             } catch let error as ImportFailure { precondition(error == expected) }
         }
 
-        let choices = Import.Choices(mode: .none, automaticSync: false)
         await fixture.changeEventTag()
-        let staleReview = try await runtime.confirmOneOffImport(operationID: UUID(), reviewID: reviewed.id,
-                                                               expectedRevision: connected.revision, choices: choices)
+        let staleReview = try await runtime.confirmImport(operationID: UUID(), reviewID: reviewed.id,
+                                                          expectedRevision: connected.revision, choices: choices)
         precondition(staleReview.errorCode == ImportFailure.staleRemote.rawValue && local.receipts.isEmpty)
-        let fresh = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
+        let fresh = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                    eventID: "ordinary", choices: choices)
         do {
-            _ = try await runtime.confirmOneOffImport(operationID: UUID(), reviewID: fresh.id,
-                                                     expectedRevision: connected.revision, choices: .init(mode: .none))
+            _ = try await runtime.confirmImport(operationID: UUID(), reviewID: fresh.id,
+                                                expectedRevision: connected.revision, choices: .init(mode: .none))
             preconditionFailure("One-off import cannot enable automatic Google actions")
         } catch ImportFailure.invalidInput {}
         let operationID = UUID()
-        let imported = try await runtime.confirmOneOffImport(operationID: operationID, reviewID: fresh.id,
-                                                             expectedRevision: connected.revision, choices: choices)
+        let imported = try await runtime.confirmImport(operationID: operationID, reviewID: fresh.id,
+                                                        expectedRevision: connected.revision, choices: choices)
         precondition(imported.local?.id == "local-fixture" && imported.relationship == .manual && imported.suppression == .none)
         precondition(local.receipts.count == 1)
         let afterImport = try await page(runtime, revision: connected.revision)
         precondition(afterImport.items.map(\.eventId) == ["family"] && afterImport.nextCursor != nil)
         do {
-            _ = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
+            _ = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                eventID: "ordinary", choices: choices)
             preconditionFailure("A direct review cannot bypass a source reservation")
         } catch ImportFailure.alreadyImported {}
+
+        let staleSeries = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                           eventID: "family", choices: choices)
+        await fixture.changeCancellationTag()
+        let rejectedSeries = try await runtime.confirmImport(operationID: UUID(), reviewID: staleSeries.id,
+                                                             expectedRevision: connected.revision, choices: choices)
+        precondition(rejectedSeries.errorCode == ImportFailure.staleRemote.rawValue && local.receipts.count == 1)
+        let recurring = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                        eventID: "family", choices: choices)
+        precondition(recurring.recurrenceEvidence?.exceptions.map(\.identity.nominalSlot) == ["2027-03-15T00:00"])
+        precondition(recurring.recurrenceEvidence?.ordinarySlots.map(\.nominalSlot) == ["2027-03-14T00:00", "2027-03-16T00:00"])
+        let recurringOperation = UUID()
+        let importedSeries = try await runtime.confirmImport(operationID: recurringOperation, reviewID: recurring.id,
+                                                              expectedRevision: connected.revision, choices: choices)
+        precondition(importedSeries.local?.id == "series-fixture" && importedSeries.local?.kind == .series
+                     && importedSeries.relationship == .manual && importedSeries.suppression == .none)
+        let afterSeries = try await page(runtime, revision: connected.revision)
+        precondition(afterSeries.items.isEmpty && afterSeries.nextCursor != nil)
 
         let refresh = try await runtime.authorizeFromUserAction(expectedRevision: connected.revision, intent: .reauthorizeCurrentAccount)
         precondition(refresh.revision == 2 && refresh.accountGeneration == connected.accountGeneration)
         try await rejects(.staleCursor) { _ = try await page(runtime, revision: refresh.revision, cursor: cursor) }
         try await rejects(.staleConnection) {
-            _ = try await runtime.prepareOneOffImport(expectedRevision: connected.revision, calendarID: "owned", eventID: "ordinary")
+            _ = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
+                                                eventID: "ordinary", choices: choices)
         }
         let relaunched = newRuntime()
-        let recovered = try await relaunched.recoverOneOffImport(operationID: operationID, expectedRevision: refresh.revision)
-        precondition(recovered == imported && local.receipts.count == 1)
+        let recovered = try await relaunched.recoverImport(operationID: operationID, expectedRevision: refresh.revision)
+        let recoveredSeries = try await relaunched.recoverImport(operationID: recurringOperation, expectedRevision: refresh.revision)
+        precondition(recovered == imported && recoveredSeries == importedSeries && local.receipts.count == 2)
 
         await fixture.holdEvents()
         let backgroundRead = Task {
-            try await runtime.prepareOneOffImport(expectedRevision: refresh.revision, calendarID: "owned", eventID: "next")
+            try await runtime.prepareImport(expectedRevision: refresh.revision, calendarID: "owned",
+                                            eventID: "next", choices: choices)
         }
         await fixture.waitForHeldEvents()
         foreground.active = false
@@ -121,7 +148,8 @@ enum RuntimeChecks {
 
         await fixture.holdOwnership()
         let backgroundBeforeEvent = Task {
-            try await runtime.prepareOneOffImport(expectedRevision: refresh.revision, calendarID: "owned", eventID: "no-event-expected")
+            try await runtime.prepareImport(expectedRevision: refresh.revision, calendarID: "owned",
+                                            eventID: "no-event-expected", choices: choices)
         }
         await fixture.waitForHeldEvents()
         foreground.active = false
@@ -143,7 +171,7 @@ enum RuntimeChecks {
         await fixture.releaseEvents()
         try await rejects(.staleConnection) { _ = try await oldAccountRead.value }
         do {
-            _ = try await relaunched.recoverOneOffImport(operationID: operationID, expectedRevision: switched.revision)
+            _ = try await relaunched.recoverImport(operationID: operationID, expectedRevision: switched.revision)
             preconditionFailure("Another Google subject cannot recover the prior receipt")
         } catch ImportFailure.notFound {}
 
@@ -168,8 +196,8 @@ enum RuntimeChecks {
 
     private static func page(_ runtime: Runtime, revision: Int, calendarID: String = "owned",
                              cursor: Connection.EventCursor? = nil) async throws -> Connection.EventPage {
-        try await runtime.browseOneOffs(expectedRevision: revision, calendarID: calendarID, from: "2027-03-14",
-                                        until: "2027-03-15", cursor: cursor, zone: TimeZone(identifier: "America/Los_Angeles")!)
+        try await runtime.browseEvents(expectedRevision: revision, calendarID: calendarID, from: "2027-03-14",
+                                       until: "2027-03-15", cursor: cursor, zone: TimeZone(identifier: "America/Los_Angeles")!)
     }
 
     private static func rejects(_ expected: Failure, _ block: () async throws -> Void) async throws {
@@ -188,8 +216,16 @@ enum RuntimeChecks {
 
         func create(_ command: Import.Command, permit: Journal.Scheduler.Permit) throws -> Journal.LocalResult {
             guard try permit() else { return .rejected(ImportFailure.staleConnection.rawValue) }
-            precondition(command.title == "更新后的标题" && command.notes == "  Original notes\n" && command.mode == .none)
-            let receipt = Journal.LocalReceipt(id: "local-fixture", kind: .reminder, status: .applied, eligibleForLink: true)
+            let receipt: Journal.LocalReceipt
+            precondition(command.mode == .none)
+            if let rule = command.rule {
+                precondition(command.title == "Family" && rule.count == 3)
+                precondition(command.exceptions == [.skip(nominalSlot: "2027-03-15T00:00")])
+                receipt = .init(id: "series-fixture", kind: .series, status: .applied, eligibleForLink: true)
+            } else {
+                precondition(command.title == "更新后的标题" && command.notes == "  Original notes\n")
+                receipt = .init(id: "local-fixture", kind: .reminder, status: .applied, eligibleForLink: true)
+            }
             precondition(receipts.updateValue(receipt, forKey: command.id) == nil)
             return .acknowledged(receipt)
         }
@@ -232,11 +268,13 @@ enum RuntimeChecks {
         private var held: CheckedContinuation<Void, Never>?
         private var waiting: CheckedContinuation<Void, Never>?
         private var eventTag = "exact"
+        private var cancellationTag = "initial"
         private(set) var revocations = 0
 
         func holdEvents() { holdNext = .event }
         func holdOwnership() { holdNext = .ownership }
         func changeEventTag() { eventTag = "updated" }
+        func changeCancellationTag() { cancellationTag = "changed" }
 
         func waitForHeldEvents() async {
             if held != nil { return }
@@ -292,8 +330,20 @@ enum RuntimeChecks {
                 return reply(#"{"id":"removed","status":"cancelled"}"#)
             case "/calendar/v3/calendars/owned/events/family":
                 return reply(#"{"id":"family","etag":"\"family\"","summary":"Family","start":{"date":"2027-03-14"},"end":{"date":"2027-03-15"},"recurrence":["RRULE:FREQ=DAILY;COUNT=3"]}"#)
+            case "/calendar/v3/calendars/owned/events/family/instances":
+                let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+                let original = query?.first(where: { $0.name == "originalStart" })?.value
+                guard let original, ["2027-03-14", "2027-03-16"].contains(original),
+                      let day = Int(original.suffix(2)) else { preconditionFailure("Unexpected ordinary instance") }
+                return reply(#"{"items":[{"id":"instance-\#(day)","summary":"Family","recurringEventId":"family","originalStartTime":{"date":"\#(original)"},"start":{"date":"\#(original)"},"end":{"date":"2027-03-\#(day + 1)"}}]}"#)
             case "/calendar/v3/calendars/owned/events":
                 let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+                if query.contains(.init(name: "showDeleted", value: "true")) {
+                    if query.contains(.init(name: "syncToken", value: "family-snapshot")) {
+                        return reply(#"{"nextSyncToken":"family-current"}"#)
+                    }
+                    return reply(#"{"items":[{"id":"cancelled-15","etag":"\"\#(cancellationTag)\"","recurringEventId":"family","status":"cancelled","originalStartTime":{"date":"2027-03-15"}}],"nextSyncToken":"family-snapshot"}"#)
+                }
                 precondition(query.contains(.init(name: "timeMin", value: "2027-03-14T08:00:00Z")))
                 precondition(query.contains(.init(name: "timeMax", value: "2027-03-15T07:00:00Z")))
                 await pauseIfHeld(.event)

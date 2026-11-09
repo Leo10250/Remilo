@@ -83,6 +83,12 @@ enum RemiloIOSGoogleCalendarImport {
         let recurrenceEvidence: RecurrenceEvidence?
     }
 
+    struct Upcoming: Equatable {
+        let nominalSlot: String
+        let eventStartMs: Int64
+        let alarmAtMs: Int64
+    }
+
     struct Review: Codable, Equatable, Sendable {
         let id: UUID
         let account: Account
@@ -132,6 +138,65 @@ enum RemiloIOSGoogleCalendarImport {
             observation.source == source && observation.recurrenceEvidence == recurrenceEvidence
         }
 
+        func recurrenceSpec() throws -> RuleSpec? {
+            try RemiloIOSGoogleCalendarImport.recurrence(source).map(RuleSpec.init)
+        }
+
+        func upcoming(_ choices: Choices, after now: Int64) throws -> [Upcoming] {
+            guard let rule = try RemiloIOSGoogleCalendarImport.recurrence(source) else { return [] }
+            guard valid(at: now) else { throw Failure.stalePreview }
+            let title = (choices.title ?? source.fields.title).trimmingCharacters(in: .whitespacesAndNewlines)
+            return try recurringPlan(rule, choices: choices, title: title, after: now, limit: 3).upcoming
+        }
+
+        fileprivate func recurringPlan(_ rule: RemiloIOSRecurrence.Rule, choices: Choices, title: String, after now: Int64, limit: Int)
+            throws -> (upcoming: [Upcoming], exceptions: [LocalException]) {
+            let policy = try RemiloIOSGoogleCalendarImport.alertPolicy(for: source, choices: choices)
+            guard let evidence = recurrenceEvidence, evidence.alertPolicy == policy else { throw Failure.recurrenceReviewRequired }
+            let effective = try policy.applying(to: rule)
+            let zone = try Event.namedZone(source.fields.schedule.zoneId)
+            let excluded = Set(evidence.exceptions.map(\.identity.nominalSlot))
+            let exceptions = try evidence.exceptions.map {
+                try Self.localException($0, title: title, policy: policy, referenceMs: evidence.referenceMs, now: now)
+            }
+            let ordinary = try RemiloIOSRecurrence.future(effective, afterMs: now, deviceZone: zone,
+                                                         mode: choices.mode.rawValue, limit: limit) {
+                !excluded.contains($0.nominalSlot)
+            }
+            let moved = exceptions.compactMap { exception -> Upcoming? in
+                guard case .override(let nominal, let fields, _, let target, _, let eligible) = exception else { return nil }
+                let start = fields.schedule.eventStartMs
+                guard policy.enabled ? eligible && target > now : start > now else { return nil }
+                return Upcoming(nominalSlot: nominal, eventStartMs: start, alarmAtMs: target)
+            }
+            let candidates = ordinary.map {
+                Upcoming(nominalSlot: $0.nominalSlot, eventStartMs: $0.eventStartMs, alarmAtMs: $0.alarmAtMs)
+            } + moved
+            let sorted = candidates.sorted { lhs, rhs in
+                let left = policy.enabled ? lhs.alarmAtMs : lhs.eventStartMs
+                let right = policy.enabled ? rhs.alarmAtMs : rhs.eventStartMs
+                return left == right ? lhs.nominalSlot < rhs.nominalSlot : left < right
+            }
+            return (Array(sorted.prefix(limit)), exceptions)
+        }
+
+        private static func localException(_ exception: RemiloIOSGoogleCalendarRecurringReview.Exception, title: String,
+                                           policy: RecurringAlertPolicy, referenceMs: Int64, now: Int64) throws -> LocalException {
+            let nominal = exception.identity.nominalSlot
+            if exception.identity.cancelled { return .skip(nominalSlot: nominal) }
+            guard let authored = exception.fields else { throw Failure.recurrenceReviewRequired }
+            let schedule = authored.schedule
+            let zone = try Event.namedZone(schedule.zoneId)
+            let due = schedule.allDay ? schedule.eventEndMs : schedule.eventStartMs
+            let alert = try policy.target(startMs: schedule.eventStartMs, allDay: schedule.allDay, in: zone)
+            guard RemiloIOSGoogleCalendarImport.epoch.contains(alert) else { throw Failure.invalidInput }
+            let eligible = policy.enabled && alert > referenceMs
+            if policy.enabled, (eligible ? alert <= now : schedule.eventStartMs > referenceMs) { throw Failure.alertExpired }
+            let fields = Event.Fields(title: authored.title.isEmpty ? title : authored.title, notes: authored.notes, schedule: schedule)
+            return .override(nominalSlot: nominal, fields: fields, dueAtMs: due, alarmAtMs: alert,
+                             alarmLinked: policy.offsetMs == nil, alertEligible: eligible)
+        }
+
         private static func validate(_ proof: RecurrenceEvidence, source: Source, rule: RemiloIOSRecurrence.Rule,
                                      now: Int64) throws {
             guard proof.referenceMs == now, proof.masterETag == source.etag, proof.exceptions.count <= 500,
@@ -150,12 +215,8 @@ enum RemiloIOSGoogleCalendarImport {
                     throw Failure.recurrenceReviewRequired
                 }
             }
-            let slots = try RemiloIOSRecurrence.future(rule, afterMs: now, deviceZone: zone, mode: "None", limit: 3) {
-                !excluded.contains($0.nominalSlot)
-            }
-            guard proof.ordinarySlots.count == slots.count, !slots.isEmpty || !excluded.isEmpty else {
-                throw Failure.recurrenceReviewRequired
-            }
+            let slots = try proof.alertPolicy.ordinarySlotsToAudit(rule, after: now, in: zone, excluding: excluded)
+            guard proof.ordinarySlots.count == slots.count else { throw Failure.recurrenceReviewRequired }
             for (expected, observed) in zip(slots, proof.ordinarySlots) {
                 guard observed.masterID == source.key.eventID, !observed.cancelled, !observed.eventID.isEmpty,
                       eventIDs.insert(observed.eventID).inserted, observed.nominalSlot == expected.nominalSlot,
@@ -267,33 +328,13 @@ enum RemiloIOSGoogleCalendarImport {
             guard title.utf16.count <= 200, (choices.listID?.utf8.count ?? 0) <= 200,
                   choices.listID?.isEmpty != true else { throw Failure.invalidInput }
             let schedule = fields.schedule
-            let zone = try Event.namedZone(schedule.zoneId)
             let (due, alert) = try review.timing(choices)
             let rule = try RemiloIOSGoogleCalendarImport.recurrence(review.source)
             var exceptions: [LocalException] = []
             if let rule {
-                let policy = try RemiloIOSGoogleCalendarImport.alertPolicy(for: review.source, choices: choices)
-                guard let evidence = review.recurrenceEvidence, evidence.alertPolicy == policy else { throw Failure.recurrenceReviewRequired }
-                let offset = try RemiloIOSRecurrence.civilOffset(alert, fromNominal: rule.anchor, zone: zone)
-                let effective = try RemiloIOSRecurrence.Rule(
-                    anchor: rule.anchor, frequency: rule.frequency, interval: rule.interval, weekdays: rule.weekdays,
-                    day: rule.day, ordinal: rule.ordinal, weekday: rule.weekday, month: rule.month,
-                    count: rule.count, until: rule.until, zoneID: rule.zoneID, endExclusive: rule.endExclusive,
-                    allDay: rule.allDay, endOffsetMs: rule.endOffsetMs, dueOffsetMs: rule.dueOffsetMs, alarmOffsetMs: offset
-                )
-                exceptions = try evidence.exceptions.map {
-                    try Self.localException($0, title: title, policy: policy, referenceMs: evidence.referenceMs, now: now)
-                }
-                let excluded = Set(evidence.exceptions.map(\.identity.nominalSlot))
-                let available = try RemiloIOSRecurrence.future(effective, afterMs: now, deviceZone: zone,
-                                                              mode: choices.mode.rawValue, limit: 1) {
-                    !excluded.contains($0.nominalSlot)
-                }
-                let upcomingException = exceptions.contains { exception in
-                    guard case .override(_, let fields, _, let target, _, let eligible) = exception else { return false }
-                    return choices.mode == .none ? fields.schedule.eventStartMs > now : eligible && target > now
-                }
-                guard !available.isEmpty || upcomingException else { throw Failure.alertExpired }
+                let plan = try review.recurringPlan(rule, choices: choices, title: title, after: now, limit: 1)
+                guard !plan.upcoming.isEmpty else { throw Failure.alertExpired }
+                exceptions = plan.exceptions
             } else if choices.mode != .none && alert <= now { throw Failure.alertExpired }
             self.operationID = operationID
             self.review = review
@@ -302,23 +343,6 @@ enum RemiloIOSGoogleCalendarImport {
                               mode: choices.mode, sound: choices.sound, listID: choices.listID, schedule: schedule,
                               dueAtMs: due, alarmAtMs: alert, alarmLinked: choices.alarmAtMs == nil, rule: rule.map(RuleSpec.init),
                               exceptions: exceptions.isEmpty ? nil : exceptions)
-        }
-
-        private static func localException(_ exception: RemiloIOSGoogleCalendarRecurringReview.Exception, title: String,
-                                           policy: RecurringAlertPolicy, referenceMs: Int64, now: Int64) throws -> LocalException {
-            let nominal = exception.identity.nominalSlot
-            if exception.identity.cancelled { return .skip(nominalSlot: nominal) }
-            guard let authored = exception.fields else { throw Failure.recurrenceReviewRequired }
-            let schedule = authored.schedule
-            let zone = try Event.namedZone(schedule.zoneId)
-            let due = schedule.allDay ? schedule.eventEndMs : schedule.eventStartMs
-            let alert = try policy.target(startMs: schedule.eventStartMs, allDay: schedule.allDay, in: zone)
-            guard RemiloIOSGoogleCalendarImport.epoch.contains(alert) else { throw Failure.invalidInput }
-            let eligible = policy.enabled && alert > referenceMs
-            if policy.enabled, (eligible ? alert <= now : schedule.eventStartMs > referenceMs) { throw Failure.alertExpired }
-            let fields = Event.Fields(title: authored.title.isEmpty ? title : authored.title, notes: authored.notes, schedule: schedule)
-            return .override(nominalSlot: nominal, fields: fields, dueAtMs: due, alarmAtMs: alert,
-                             alarmLinked: policy.offsetMs == nil, alertEligible: eligible)
         }
     }
 

@@ -2507,7 +2507,7 @@
   <string name="l10n_ios_picker_continue">继续</string>
   <string name="l10n_ios_permission_not_requested">尚未请求</string>
   <string name="l10n_ios_notification_mode_description">显示一条通知。</string>
-  <string name="l10n_ios_calendar_settings_description">从 Google 日历逐项导入日程。</string>
+  <string name="l10n_ios_calendar_settings_description">从 Google 日历导入单次或重复日程。</string>
   <string name="l10n_ios_calendar_browse_intro">选择一项日程，核对详情后导入。已导入或导入结果待确认的日程不会显示。</string>
   <string name="l10n_ios_calendar_unavailable">此版本尚未配置 Google 日历。</string>
   <string name="l10n_ios_calendar_disconnect_detail">Google 日历中的日程和 Remilo 中的提醒均会保留。</string>

@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import type { QueryClient } from '@tanstack/react-query';
 import type {
   CalendarConnection,
@@ -6,6 +7,7 @@ import type {
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { calendarError } from '../domain/calendar';
 import { calendarOperationRetryable } from '../domain/calendar-link';
+import type { OriginParams } from '../domain/navigation';
 import { t } from '../localization';
 import { useTranslation } from '../localization/react';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Status } from './components';
@@ -43,13 +45,13 @@ export async function rememberCalendarConnection(client: QueryClient, next: Cale
 export function LocalCalendarOperation({
   operation,
   busy,
-  onOpen,
+  origin,
   onRetry,
   onReviewAgain,
 }: {
   operation: CalendarLinkedOperation;
   busy: boolean;
-  onOpen?: () => void;
+  origin: OriginParams;
   onRetry?: () => void;
   onReviewAgain?: () => void;
 }) {
@@ -59,6 +61,12 @@ export function LocalCalendarOperation({
   const waiting = operation.state === 'Waiting' || operation.state === 'Unconfirmed';
   const needsAccess = operation.state === 'NeedsAccess';
   const retryable = calendarOperationRetryable(operation);
+  const { segmentId, occurrenceId } = operation;
+  const route = segmentId
+    ? { pathname: '/series/[id]' as const, params: { ...origin, id: segmentId } }
+    : occurrenceId
+      ? { pathname: '/reminder/[id]' as const, params: { ...origin, id: occurrenceId } }
+      : null;
   return (
     <ConnectedGroup>
       <View style={{ padding: 16, gap: 12 }}>
@@ -81,12 +89,12 @@ export function LocalCalendarOperation({
             }
           />
         )}
-        {operation.localApplied && onOpen && (
+        {operation.localApplied && route && (
           <Button
-            label={t('m_40ed00ddaacf')}
+            label={t(segmentId ? 'm_0f5bb15eea00' : 'm_40ed00ddaacf')}
             variant="secondary"
             disabled={busy}
-            onPress={onOpen}
+            onPress={() => router.push(route)}
           />
         )}
         {!operation.localApplied && retryable && onRetry && (

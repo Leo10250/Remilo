@@ -73,7 +73,7 @@ final class RemiloIOSGoogleCalendarBridge {
         case nil: next = nil
         default: throw Failure.staleCursor
         }
-        let page = try await runtime().browseOneOffs(
+        let page = try await runtime().browseEvents(
             expectedRevision: revision, calendarID: input.text("calendarId", maximum: 4_096),
             from: input.text("from", maximum: 10), until: input.text("until", maximum: 10), cursor: next
         )
@@ -87,13 +87,19 @@ final class RemiloIOSGoogleCalendarBridge {
         let revision = try Self.revision(input)
         let runtime = try runtime()
         let reviewedChoices = try Self.choices(IOSInput(values: choices))
-        let review = try await runtime.prepareOneOffImport(expectedRevision: revision, calendarID: input.text("calendarId", maximum: 4_096),
-                                                           eventID: input.text("eventId", maximum: 4_096))
+        let review = try await runtime.prepareImport(expectedRevision: revision, calendarID: input.text("calendarId", maximum: 4_096),
+                                                     eventID: input.text("eventId", maximum: 4_096), choices: reviewedChoices)
         let view = try await runtime.view()
         guard view.revision == revision else { throw Failure.staleConnection }
         guard view.access == .ownedCalendars || view.access == .managedCreation else { throw Failure.needsAccess }
         let timing = try review.timing(reviewedChoices)
         let now = iosMillis(Date())
+        let recurrence = try review.recurrenceSpec()
+        let upcoming = try recurrence.map { _ in try review.upcoming(reviewedChoices, after: now) }
+        let nextAlert: Int64?
+        if reviewedChoices.mode == .none { nextAlert = nil }
+        else if let upcoming { nextAlert = upcoming.map(\.alarmAtMs).min() }
+        else { nextAlert = timing.alert > now ? timing.alert : nil }
         previews.removeAll { $0.revision != revision || $0.expiresAtMs < now }
         if previews.count == 8 { previews.removeFirst() }
         previews.append(PreviewChoices(id: review.id, revision: revision, expiresAtMs: review.checkedAtMs + 600_000, choices: reviewedChoices))
@@ -107,7 +113,10 @@ final class RemiloIOSGoogleCalendarBridge {
             "choices": ["mode": reviewedChoices.mode.rawValue, "title": title, "dueAtMs": timing.due, "alarmAtMs": timing.alert,
                         "listId": iosBridgeValue(reviewedChoices.listID), "automaticSync": false, "disableReminders": false] as [String: Any],
             "googleReminders": iosBridgeValue(reminders), "checkedAtMs": review.checkedAtMs,
-            "nextAlertMs": iosBridgeValue(reviewedChoices.mode != .none && timing.alert > now ? timing.alert : nil),
+            "nextAlertMs": iosBridgeValue(nextAlert), "recurrence": iosBridgeValue(recurrence?.payload),
+            "upcoming": iosBridgeValue(upcoming?.map { slot -> [String: Any] in
+                ["nominalSlot": slot.nominalSlot, "eventStartMs": slot.eventStartMs, "alarmAtMs": slot.alarmAtMs]
+            }),
         ]
     }
 
@@ -128,10 +137,10 @@ final class RemiloIOSGoogleCalendarBridge {
             guard try !input.flag("automaticSync", fallback: false), command["selections"] == nil else { throw Failure.invalidInput }
             let id = try Self.uuid(input, "previewId")
             guard let capture = previews.first(where: { $0.id == id && $0.revision == revision }) else { throw Import.Failure.stalePreview }
-            let receipt = try await runtime.confirmOneOffImport(operationID: operation, reviewID: id, expectedRevision: revision, choices: capture.choices)
+            let receipt = try await runtime.confirmImport(operationID: operation, reviewID: id, expectedRevision: revision, choices: capture.choices)
             return Self.linked(Operation(receipt: receipt))
         case "RetryCalendarOperation":
-            let receipt = try await runtime.recoverOneOffImport(operationID: operation, expectedRevision: revision)
+            let receipt = try await runtime.recoverImport(operationID: operation, expectedRevision: revision)
             return Self.linked(Operation(receipt: receipt))
         default: throw Failure.invalidInput
         }
@@ -231,13 +240,18 @@ final class RemiloIOSGoogleCalendarBridge {
     private static func linked(_ operation: Operation) -> [String: Any] {
         let result = presentation(operation)
         let local = operation.receipt?.local
-        return ["operationId": operation.operationID.uuidString, "occurrenceId": local?.id ?? "", "kind": "ImportCalendarEvent",
-                "calendarName": operation.calendarName ?? "", "title": operation.title ?? "", "state": result.state,
-                "recoveryMode": result.recovery, "message": "", "reason": operation.receipt?.errorCode.map(bridgeErrorCode) ?? "",
-                "localApplied": local != nil,
-                "localStatus": local?.status.rawValue ?? "", "remoteAttempted": false, "readOnly": result.recovery == "None",
-                "localResult": iosBridgeValue(local.map { ["status": $0.status.rawValue] }),
-                "source": ["calendarId": operation.source.calendarID, "eventId": operation.source.eventID]]
+        var resultFields: [String: Any] = [
+            "operationId": operation.operationID.uuidString, "occurrenceId": local?.kind == .reminder ? (local?.id ?? "") : "",
+            "kind": "ImportCalendarEvent",
+            "calendarName": operation.calendarName ?? "", "title": operation.title ?? "", "state": result.state,
+            "recoveryMode": result.recovery, "message": "", "reason": operation.receipt?.errorCode.map(bridgeErrorCode) ?? "",
+            "localApplied": local != nil,
+            "localStatus": local?.status.rawValue ?? "", "remoteAttempted": false, "readOnly": result.recovery == "None",
+            "localResult": iosBridgeValue(local.map { ["status": $0.status.rawValue] }),
+            "source": ["calendarId": operation.source.calendarID, "eventId": operation.source.eventID],
+        ]
+        if let local, local.kind == .series { resultFields["segmentId"] = local.id }
+        return resultFields
     }
 
     private static func status(_ operation: Operation, revision: Int) -> [String: Any] {
@@ -258,7 +272,8 @@ final class RemiloIOSGoogleCalendarBridge {
         case .settled:
             if operation.receipt?.local != nil { return ("Confirmed", "Confirmed", "None", "None") }
             switch operation.receipt?.errorCode {
-            case "STALE_CONNECTION", "STALE_REMOTE", "STALE_PREVIEW", "ALERT_EXPIRED", "TITLE_REQUIRED":
+            case "STALE_CONNECTION", "STALE_REMOTE", "STALE_PREVIEW", "ALERT_EXPIRED", "TITLE_REQUIRED",
+                 "RECURRENCE_MISMATCH", "RECURRENCE_REVIEW_LIMIT":
                 return ("NeedsReview", "Conflict", "ReviewAgain", "ReviewItems")
             default: return ("Failed", "Failed", "None", "None")
             }
@@ -269,7 +284,8 @@ final class RemiloIOSGoogleCalendarBridge {
         switch error {
         case let failure as Failure: return failure.rawValue
         case let failure as Import.Failure: return bridgeErrorCode(failure.rawValue)
-        case let failure as Connection.Event.Reason: return failure.rawValue
+        case let failure as RemiloIOSGoogleCalendarRecurringReview.Failure: return bridgeErrorCode(failure.rawValue)
+        case let failure as Connection.Event.Reason: return bridgeErrorCode(failure.rawValue)
         case let failure as IOSInputFailure: return failure.code
         case is CancellationError: return "CANCELLED"
         case CocoaError.fileReadNoPermission: return "NEEDS_ACCESS"
@@ -280,7 +296,8 @@ final class RemiloIOSGoogleCalendarBridge {
     private nonisolated static func bridgeErrorCode(_ code: String) -> String {
         switch code {
         case "ALERT_EXPIRED": "ELAPSED_ALERT"
-        case "RECURRENCE_REVIEW_REQUIRED": "UNSUPPORTED_RECURRENCE"
+        case "RECURRENCE_REVIEW_REQUIRED", "RECURRENCE_MISMATCH", "RECURRENCE_REVIEW_LIMIT", "INVALID_INSTANCE":
+            "UNSUPPORTED_RECURRENCE"
         default: code
         }
     }

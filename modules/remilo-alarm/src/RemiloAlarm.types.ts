@@ -582,7 +582,7 @@ export type CalendarLinkPreview = {
   checkedAtMs: number;
   nextAlertMs: number | null;
   recurrence?: RecurrenceDraft | null;
-  upcoming?: { eventStartMs: number; alarmAtMs: number }[] | null;
+  upcoming?: { eventStartMs: number; alarmAtMs: number; nominalSlot?: string }[] | null;
   timings: Record<'remilo' | 'google', { mode: string; dueAtMs: number; alarmAtMs: number }> | null;
 };
 export type CalendarLink = {
@@ -754,6 +754,7 @@ export type CalendarRunSummary = {
 export type CalendarLinkedOperation = {
   operationId: string;
   occurrenceId: string;
+  segmentId?: string | null;
   kind: string;
   calendarName: string;
   title?: string;

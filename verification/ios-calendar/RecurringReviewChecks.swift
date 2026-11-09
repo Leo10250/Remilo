@@ -28,6 +28,12 @@ enum RecurringReviewChecks {
         let morning = try await inspect(access, now: now, fixture: Fixture(.valid), cutoff: "2027-03-14T15:00:00Z",
                                         alertPolicy: .init(enabled: true, offsetMs: nil))
         precondition(morning.exceptions.first?.identity.eventID == "cancelled")
+        let lastAllDay = Fixture(.lastAllDay)
+        let finalMorning = try await inspect(access, now: now, fixture: lastAllDay, cutoff: "2027-03-14T15:59:00Z",
+                                             alertPolicy: .init(enabled: true, offsetMs: nil))
+        let lastOriginal = await lastAllDay.originalStarts
+        precondition(finalMorning.exceptions.isEmpty && finalMorning.ordinarySlots.map(\.nominalSlot) == ["2027-03-14T00:00"])
+        precondition(lastOriginal == ["2027-03-14"])
 
         let stale = Fixture(.staleMaster)
         do {
@@ -112,7 +118,7 @@ enum RecurringReviewChecks {
     private actor Fixture {
         enum Scenario: Equatable {
             case valid, staleMaster, mismatchedSlot, changedChild, newChild, deletedChild
-            case expiredCheckpoint, lostOwnership, deltaPageLimit
+            case expiredCheckpoint, lostOwnership, deltaPageLimit, lastAllDay
         }
         let scenario: Scenario
         private(set) var originalStarts: [String] = []
@@ -157,6 +163,9 @@ enum RecurringReviewChecks {
                 if let token = query["syncToken"] {
                     precondition(token == "complete+/=" && url.absoluteString.contains("syncToken=complete%2B%2F%3D"))
                     return try delta(page: query["pageToken"])
+                }
+                if scenario == .lastAllDay {
+                    return try reply(["items": [master(etag: "\"master-v1\"")], "nextSyncToken": "complete+/="])
                 }
                 if query["pageToken"] == nil {
                     return try reply(["items": [["id": "unrelated", "recurringEventId": "other"]], "nextPageToken": "next+/="])
@@ -205,7 +214,7 @@ enum RecurringReviewChecks {
 
         private func master(etag: String) -> [String: Any] {
             ["id": masterID, "etag": etag, "summary": "Read", "start": ["date": "2027-03-13"], "end": ["date": "2027-03-14"],
-             "recurrence": ["RRULE:FREQ=DAILY;COUNT=7"]]
+             "recurrence": ["RRULE:FREQ=DAILY;COUNT=\(scenario == .lastAllDay ? 2 : 7)"]]
         }
 
         private func reply(_ object: [String: Any]) throws -> HTTP.Response {

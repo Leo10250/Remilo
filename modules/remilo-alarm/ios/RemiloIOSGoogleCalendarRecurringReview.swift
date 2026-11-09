@@ -33,6 +33,27 @@ enum RemiloIOSGoogleCalendarRecurringReview {
 
         static let eventsOnly = AlertPolicy(enabled: false, offsetMs: nil)
 
+        func applying(to rule: Recurrence.Rule) throws -> Recurrence.Rule {
+            guard let offsetMs, offsetMs != rule.alarmOffsetMs else { return rule }
+            return try Recurrence.Rule(
+                anchor: rule.anchor, frequency: rule.frequency, interval: rule.interval, weekdays: rule.weekdays,
+                day: rule.day, ordinal: rule.ordinal, weekday: rule.weekday, month: rule.month,
+                count: rule.count, until: rule.until, zoneID: rule.zoneID, endExclusive: rule.endExclusive,
+                allDay: rule.allDay, endOffsetMs: rule.endOffsetMs, dueOffsetMs: rule.dueOffsetMs, alarmOffsetMs: offsetMs
+            )
+        }
+
+        func ordinarySlotsToAudit(_ rule: Recurrence.Rule, after now: Int64, in zone: TimeZone,
+                                  excluding: Set<String>) throws -> [Recurrence.Slot] {
+            let effective = try applying(to: rule)
+            // Include events that have already started when their reviewed alert is still due.
+            // A negative alert offset must not hide upcoming event dates from the audit.
+            let mode = enabled && effective.alarmOffsetMs > 0 ? "Alarm" : "None"
+            return try Recurrence.future(effective, afterMs: now, deviceZone: zone, mode: mode, limit: 3) {
+                !excluding.contains($0.nominalSlot)
+            }
+        }
+
         func target(startMs: Int64, allDay: Bool, in zone: TimeZone) throws -> Int64 {
             if offsetMs == nil, !allDay { return startMs }
             let civil = Event.nominal(startMs, zone: zone)
@@ -65,9 +86,7 @@ enum RemiloIOSGoogleCalendarRecurringReview {
         let scan = try await exceptionScan(access: access, calendar: calendar, master: master,
                                            rule: rule, zone: zone, now: now, alertPolicy: alertPolicy, transport: transport,
                                            budget: budget, beforeRead: beforeRead)
-        let upcoming = try Recurrence.future(rule, afterMs: now, deviceZone: zone, mode: "None", limit: 3) {
-            scan.exceptions[$0.nominalSlot] == nil
-        }
+        let upcoming = try alertPolicy.ordinarySlotsToAudit(rule, after: now, in: zone, excluding: Set(scan.exceptions.keys))
         var identities = scan.childIDs
         var ordinary: [Import.AuditedSlot] = []
         for slot in upcoming {

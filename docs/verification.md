@@ -258,6 +258,12 @@ Google account, and import one future event from a calendar that account owns.
 Check the local reminder time and delivery mode. Relaunch and confirm saved
 status can be inspected after reconnecting the same account. Change an event
 after opening its review and verify that confirmation asks for fresh review.
+Review a supported repeating event with one cancelled date and one moved date.
+Check the next dates in Review, then open the saved repeat from its import
+result. Check that the cancelled date is absent from upcoming dates and the
+moved reminder in Agenda keeps its authored time. With a second repeat, change
+an instance after opening Review and verify that confirmation requests a fresh
+review even when the series details stay the same.
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

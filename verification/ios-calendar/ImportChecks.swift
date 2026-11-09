@@ -84,6 +84,7 @@ enum ImportChecks {
         precondition(pending.local?.status == .pending && pending.relationship == .manual && pending.suppression == .deferredUntilLocalDelivery)
         try await revokedBeforeCommit(journal, calendar: calendar, now: now)
         try expiryAndRecurrence(calendar, now: now)
+        try finalAllDayAlarm(calendar)
         try await exactRecurringExceptions(journal, calendar: calendar, now: now)
     }
 
@@ -173,6 +174,9 @@ enum ImportChecks {
         let decoded = try JSONDecoder().decode(Import.Review.self, from: JSONEncoder().encode(review))
         precondition(decoded == review)
         let choices = Import.Choices(mode: .alarm, alarmAtMs: now + 1_800_000, automaticSync: false)
+        let upcoming = try review.upcoming(choices, after: now)
+        precondition(upcoming.map(\.nominalSlot) == ["2027-03-17T09:00", movedIdentity.nominalSlot, "2027-03-18T09:00"])
+        precondition(upcoming[1].eventStartMs == movedStart && upcoming[1].alarmAtMs == movedStart - 1_800_000)
         let id = UUID()
         let capture = try Import.Capture(operationID: id, review: review, choices: choices, now: now)
         let overrides = capture.command.payload["nativeCalendarExceptions"] as! [[String: Any]]
@@ -193,6 +197,8 @@ enum ImportChecks {
                                                     exceptions: [skipped, Exception(identity: movedIdentity, etag: movedException.etag, fields: historicalFields)],
                                                     ordinarySlots: ordinary)
         let historicalReview = try Import.Review(account: account, calendar: calendar, event: master, now: now, recurrenceEvidence: historical)
+        let historicalUpcoming = try historicalReview.upcoming(choices, after: now)
+        precondition(historicalUpcoming.map(\.nominalSlot) == ordinary.map(\.nominalSlot))
         let historicalCapture = try Import.Capture(operationID: UUID(), review: historicalReview, choices: choices, now: now)
         let historicalOverrides = historicalCapture.command.payload["nativeCalendarExceptions"] as! [[String: Any]]
         precondition(historicalOverrides[1]["nominalSlot"] as? String == movedIdentity.nominalSlot)
@@ -210,6 +216,34 @@ enum ImportChecks {
         let rejected = try await journal.run(id, authority: authority, scheduler: adapter(local))
         let attempts = await local.attempts
         precondition(rejected.errorCode == "STALE_REMOTE" && rejected.local == nil && attempts == 0)
+    }
+
+    private static func finalAllDayAlarm(_ calendar: Transport.OwnedCalendar) throws {
+        let id = "last-all-day"
+        let etag = #""last-all-day""#
+        let json = try JSONSerialization.data(withJSONObject: [
+            "id": id, "etag": etag, "summary": "Read",
+            "start": ["date": "2027-03-13"], "end": ["date": "2027-03-14"],
+            "recurrence": ["RRULE:FREQ=DAILY;COUNT=2"],
+        ] as [String: Any])
+        let master = Transport.Event(id: id, etag: etag, cancelled: false, json: json)
+        let last = Event.InstanceIdentity(eventID: "last-slot", masterID: id, nominalSlot: "2027-03-14T00:00", cancelled: false)
+        let start = try Event.timestamp("2027-03-14T00:00:00Z")
+        let end = try Event.timestamp("2027-03-15T00:00:00Z")
+        let cutoff = try Event.timestamp("2027-03-14T08:59:00Z")
+        let alarm = try Event.timestamp("2027-03-14T09:00:00Z")
+        let slot = Import.AuditedSlot(identity: last, startMs: start, endMs: end)
+        let proof = Import.RecurrenceEvidence(referenceMs: cutoff, alertPolicy: .init(enabled: true, offsetMs: nil),
+                                             masterETag: etag, exceptions: [], ordinarySlots: [slot])
+        let review = try Import.Review(account: account, calendar: calendar, event: master, now: cutoff, recurrenceEvidence: proof)
+        let next = try review.upcoming(.init(), after: cutoff)
+        let elapsed = try review.upcoming(.init(), after: alarm)
+        precondition(next == [.init(nominalSlot: last.nominalSlot, eventStartMs: start, alarmAtMs: alarm)] && elapsed.isEmpty)
+        _ = try Import.Capture(operationID: UUID(), review: review, choices: .init(), now: cutoff)
+        do {
+            _ = try Import.Capture(operationID: UUID(), review: review, choices: .init(), now: alarm)
+            preconditionFailure("The final occurrence must not register after its alarm elapsed")
+        } catch Import.Failure.alertExpired {}
     }
 
     private static func remote(id: String, etag: String, date: String = "2027-03-15", recurrence: [String]? = nil) throws -> Transport.Event {
