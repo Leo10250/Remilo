@@ -5,11 +5,13 @@ enum RemiloIOSSeries {
     typealias Rule = RemiloIOSRecurrence.Rule
     typealias Slot = RemiloIOSRecurrence.Slot
 
-    static func rule(for record: IOSReminder, spec: [String: Any]) throws -> Rule {
+    static func rule(for record: IOSReminder, spec: [String: Any],
+                     calendarBounds: (anchor: String, endExclusive: String?)? = nil) throws -> Rule {
         let input = IOSInput(values: spec)
         guard let zone = TimeZone(identifier: record.zoneID) else { throw input.invalid("zoneId") }
-        let anchor = civil(record.eventStartMs, zone: zone)
+        let anchor = calendarBounds?.anchor ?? civil(record.eventStartMs, zone: zone)
         let mode = try input.choice("zoneMode", fallback: "floating", from: ["floating", "pinned"])
+        guard calendarBounds == nil || mode == "pinned" else { throw input.invalid("zoneMode") }
         var weekdays: [Int]?
         if let raw = spec["weekdays"] {
             guard let values = raw as? [Any], values.count <= 7 else { throw input.invalid("weekdays") }
@@ -25,7 +27,12 @@ enum RemiloIOSSeries {
             ? nil : try input.text("until", maximum: 10)
         let endOffset = record.allDay ? 86_400_000 : record.eventEndMs - record.eventStartMs
         let dueOffset = record.allDay && record.dueLinked ? 86_400_000 : civilOffset(record.dueAtMs, from: record.eventStartMs, zone: zone)
-        let alarmOffset = civilOffset(record.alarmAtMs, from: record.eventStartMs, zone: zone)
+        let alarmOffset: Int64
+        if let calendarBounds {
+            alarmOffset = try RemiloIOSRecurrence.civilOffset(record.alarmAtMs, fromNominal: calendarBounds.anchor, zone: zone)
+        } else {
+            alarmOffset = civilOffset(record.alarmAtMs, from: record.eventStartMs, zone: zone)
+        }
         return try Rule(
             anchor: anchor, frequency: input.text("frequency", maximum: 32),
             interval: Int(input.integer("interval", fallback: 1, range: 1...999)),
@@ -34,6 +41,7 @@ enum RemiloIOSSeries {
             weekday: optionalInteger("weekday", 1...7), month: optionalInteger("month", 1...12),
             count: optionalInteger("count", 1...100_000), until: until,
             zoneID: mode == "pinned" ? zone.identifier : nil,
+            endExclusive: calendarBounds?.endExclusive,
             allDay: record.allDay, endOffsetMs: endOffset, dueOffsetMs: dueOffset, alarmOffsetMs: alarmOffset
         )
     }

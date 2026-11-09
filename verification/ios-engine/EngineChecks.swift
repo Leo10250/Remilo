@@ -93,6 +93,7 @@ struct EngineChecks {
         try await alarmDismissalLeavesReminderOpen()
         try await routineEditsRetainProgressAndTrashRestoresFamily()
         try routineAlarmActionsKeepDatedProgress()
+        try await calendarCreateUsesExactLocalReceiptAndBounds()
         try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
         try await groupCompletionDoesNotTouchLaterArrivals()
         try await preparedImportCommitsOnceAndReplaysAfterStageRemoval()
@@ -423,6 +424,91 @@ struct EngineChecks {
         precondition(stopped.registration == nil && stopped.deliveryState == "Stopped" && !stopped.completed)
         precondition(dismissed.routineSessions[reminder.id]?.done == Set(["first"]))
         precondition(dismissed.routineSessions[reminder.id]?.revision == 2)
+    }
+
+    private static func calendarCreateUsesExactLocalReceiptAndBounds() async throws {
+        let store = FixtureStore()
+        RemiloIOSDelivery.registrations = [:]
+        RemiloIOSDelivery.attempts = []
+        defer {
+            store.remove()
+            RemiloIOSDelivery.onRegister = nil
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let operation = "ios-calendar-import:" + UUID().uuidString.lowercased()
+        let draft = createCommand(id: operation)
+        let untrusted = try await engine.apply(draft)
+        precondition(untrusted["errorCode"] as? String == "UNSUPPORTED")
+        let testAlarm = try await engine.scheduleTestAlarm(operationId: operation)
+        precondition(testAlarm["errorCode"] as? String == "UNSUPPORTED")
+        do {
+            _ = try await engine.applyImport(handle: "fixture", copies: [], operationID: operation) {
+                preconditionFailure("Portable import must reject the Calendar operation namespace before loading the archive")
+            }
+            preconditionFailure("Expected the reserved Calendar operation namespace to be rejected")
+        } catch let failure as IOSInputFailure {
+            precondition(failure.code == "UNSUPPORTED")
+        }
+        let stale = try await engine.applyCalendarCreate(draft, authorize: { false })
+        precondition(stale["errorCode"] as? String == "STALE_CONNECTION")
+        let uncommitted = try engine.calendarCreateReceipt(draft)
+        precondition(uncommitted == nil)
+        RemiloIOSDelivery.onRegister = { _ in store.interruptNextWrite = true }
+        do {
+            _ = try await engine.applyCalendarCreate(draft, authorize: { true })
+            preconditionFailure("Expected scheduler acknowledgement write interruption")
+        } catch FixtureStore.Failure.writeInterrupted {}
+        RemiloIOSDelivery.onRegister = nil
+        let restarted = store.engine()
+        let recovered = try await restarted.applyCalendarCreate(draft) {
+            preconditionFailure("A durable local create receipt must not reauthorize")
+        }
+        precondition(recovered["status"] as? String == "Pending" && recovered["eligibleForLink"] as? Bool == true)
+        let persisted = try store.load()
+        precondition(persisted.reminders.count == 1 && RemiloIOSDelivery.attempts.count == 1)
+
+        let format = ISO8601DateFormatter()
+        let first = iosMillis(format.date(from: "2037-01-04T09:00:00Z")!)
+        let anchor = "2037-01-04T09:00"
+        let bound = "2037-01-05T08:30:00.001"
+        let series: [String: Any] = [
+            "kind": "CreateSeries", "operationId": "ios-calendar-import:" + UUID().uuidString.lowercased(),
+            "title": "Calendar family", "mode": "None", "zoneId": "UTC",
+            "eventStartMs": first, "eventEndMs": first + 1_800_000, "dueAtMs": first, "alarmAtMs": first,
+            "recurrence": ["frequency": "daily", "interval": 1, "zoneMode": "pinned", "until": "2037-01-05"],
+            "nativeCalendarAnchor": anchor, "nativeCalendarEndExclusive": bound,
+        ]
+        var foreign = series
+        foreign["operationId"] = UUID().uuidString
+        let blocked = try await restarted.apply(foreign)
+        precondition(blocked["errorCode"] as? String == "UNSUPPORTED")
+        let created = try await restarted.applyCalendarCreate(series, authorize: { true })
+        precondition(created["localKind"] as? String == "series" && created["eligibleForLink"] as? Bool == true)
+        let stored = try store.load()
+        let rule = stored.series[created["localId"] as! String]!.rule
+        precondition(rule.zoneID == TimeZone(identifier: "UTC")?.identifier && rule.anchor == anchor && rule.endExclusive == bound)
+        let slots = try RemiloIOSRecurrence.future(rule, afterMs: first - 1, deviceZone: .current, mode: "None", limit: 2)
+        precondition(slots.count == 1 && slots[0].eventStartMs == first)
+
+        // São Paulo advanced from midnight to 01:00 on this civil date.
+        let gapStart = iosMillis(format.date(from: "2018-11-04T03:00:00Z")!)
+        let nextMidnight = iosMillis(format.date(from: "2018-11-05T02:00:00Z")!)
+        let gapAlert = iosMillis(format.date(from: "2018-11-04T11:00:00Z")!)
+        let allDay: [String: Any] = [
+            "kind": "Create", "operationId": "ios-calendar-import:" + UUID().uuidString.lowercased(),
+            "title": "Calendar all-day", "mode": "None", "zoneId": "America/Sao_Paulo", "allDay": true,
+            "eventStartMs": gapStart, "eventEndMs": nextMidnight, "dueAtMs": nextMidnight, "alarmAtMs": gapAlert,
+        ]
+        let allDayResult = try await restarted.applyCalendarCreate(allDay, authorize: { true })
+        let allDayState = try store.load()
+        let allDayRecord = allDayState.reminders[allDayResult["localId"] as! String]!
+        precondition(allDayRecord.eventStartMs == gapStart && allDayRecord.eventEndMs == nextMidnight)
+        let allDayRule = try RemiloIOSSeries.rule(for: allDayRecord, spec: ["frequency": "daily", "zoneMode": "pinned"],
+                                                calendarBounds: ("2018-11-04T00:00", nil))
+        let gapSlots = try RemiloIOSRecurrence.future(allDayRule, afterMs: gapStart - 1, deviceZone: .current, limit: 2)
+        precondition(gapSlots.count == 2 && gapSlots[0].alarmAtMs == gapAlert && gapSlots[1].alarmAtMs == nextMidnight + 9 * 3_600_000)
     }
 
     private static func preparedImportCommitsOnceAndReplaysAfterStageRemoval() async throws {

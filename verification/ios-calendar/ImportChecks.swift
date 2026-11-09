@@ -1,0 +1,159 @@
+import Foundation
+
+enum ImportChecks {
+    private typealias Import = RemiloIOSGoogleCalendarImport
+    private typealias Journal = RemiloIOSGoogleCalendarImportJournal
+    private typealias Event = RemiloIOSGoogleCalendarEvent
+    private typealias Transport = RemiloIOSGoogleCalendarTransport
+    private static let account = Import.Account(subject: "subject-A", clientID: "fixture-client", connectionRevision: 2, accountGeneration: 1)
+
+    static func run() async throws {
+        let now = try Event.timestamp("2027-03-15T08:00:00Z")
+        let calendar = try JSONDecoder().decode(Transport.OwnedCalendar.self, from: Data(#"{"id":"owned","timeZone":"UTC","accessRole":"owner"}"#.utf8))
+        let event = try remote(id: "one-off", etag: #""reviewed""#)
+        let review = try Import.Review(account: account, calendar: calendar, event: event, now: now)
+        let choices = Import.Choices(mode: .notification, alarmAtMs: now + 10 * 60_000, sound: .system,
+                                     automaticSync: false, disableGoogleReminders: true)
+        let operation = UUID()
+        let captured = try Import.Capture(operationID: operation, review: review, choices: choices, now: now)
+        precondition(captured.command.title == "读书" && captured.command.notes == "  原始备注\n换行  ")
+        precondition(captured.command.alarmAtMs == now + 10 * 60_000 && !captured.command.alarmLinked)
+        precondition(captured.command.schedule.zoneId == "UTC" && captured.command.mode == .notification)
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-calendar-import-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: path) }
+        let journal = Journal(directory: path, now: { now })
+        let scheduled = LocalFixture(loseReply: true, status: .blocked)
+        let scheduler = adapter(scheduled)
+        let available = authority(review.source)
+        _ = try await journal.capture(operationID: operation, review: review, choices: choices)
+        _ = try await journal.capture(operationID: operation, review: review, choices: choices)
+        try await rejects(.operationPending) {
+            _ = try await journal.capture(operationID: UUID(), review: review, choices: choices)
+        }
+        try await rejects(.operationReused) {
+            _ = try await journal.capture(operationID: operation, review: review, choices: Import.Choices(mode: .none))
+        }
+        do {
+            _ = try await journal.run(operation, authority: available, scheduler: scheduler)
+            preconditionFailure("Expected a lost scheduler reply")
+        } catch LocalFixture.LostReply.outcomeUnknown {}
+        let recreated = Journal(directory: path, now: { now + 3_600_000 })
+        let disconnected = Journal.Authority(current: { _ in false }, observe: { _, _ in
+            preconditionFailure("An existing durable scheduler receipt must be checked before the stale remote")
+        })
+        let recovered = try await recreated.run(operation, authority: disconnected, scheduler: scheduler)
+        precondition(recovered.local?.status == .blocked && recovered.relationship == .suspended && recovered.suppression == .suspended)
+        let exact = try await recreated.capture(operationID: operation, review: review, choices: choices)
+        precondition(exact == recovered)
+        let attempts = await scheduled.attempts
+        precondition(attempts == 1)
+        let state = try String(contentsOf: path.appendingPathComponent("import-journal.json"), encoding: .utf8)
+        precondition(!state.contains("原始备注") && state.contains("one-off"))
+        try await rejects(.alreadyImported) {
+            _ = try await journal.capture(operationID: UUID(), review: review, choices: choices)
+        }
+
+        let changedEvent = try remote(id: "stale", etag: #""before""#)
+        let old = try Import.Review(account: account, calendar: calendar, event: changedEvent, now: now)
+        let newer = try Import.Source(account: account, calendar: calendar, event: remote(id: "stale", etag: #""after""#))
+        let changed = UUID()
+        _ = try await journal.capture(operationID: changed, review: old, choices: Import.Choices())
+        let stale = try await journal.run(changed, authority: authority(newer), scheduler: scheduler)
+        precondition(stale.errorCode == "STALE_REMOTE" && stale.local == nil)
+        let finalAttempts = await scheduled.attempts
+        precondition(finalAttempts == 1)
+
+        let healthy = LocalFixture(loseReply: false, status: .pending)
+        let pendingReview = try Import.Review(account: account, calendar: calendar, event: remote(id: "pending", etag: #""etag""#), now: now)
+        let pendingOperation = UUID()
+        _ = try await journal.capture(operationID: pendingOperation, review: pendingReview, choices: choices)
+        let pending = try await journal.run(pendingOperation, authority: authority(pendingReview.source), scheduler: adapter(healthy))
+        precondition(pending.local?.status == .pending && pending.relationship == .manual && pending.suppression == .deferredUntilLocalDelivery)
+        try expiryAndRecurrence(calendar, now: now)
+    }
+
+    private static func expiryAndRecurrence(_ calendar: Transport.OwnedCalendar, now: Int64) throws {
+        let past = try remote(id: "past", etag: #""past""#, date: "2027-03-14")
+        let pastReview = try Import.Review(account: account, calendar: calendar, event: past, now: now)
+        do {
+            _ = try Import.Capture(operationID: UUID(), review: pastReview, choices: .init(), now: now)
+            preconditionFailure("An elapsed alert requires an explicit future target or No alert")
+        } catch Import.Failure.alertExpired {}
+        let noAlert = try Import.Capture(operationID: UUID(), review: pastReview, choices: .init(mode: .none), now: now)
+        precondition(noAlert.command.mode == .none && noAlert.command.alarmAtMs < now)
+
+        let master = try remote(id: "master", etag: #""master""#, recurrence: ["RRULE:FREQ=DAILY;UNTIL=20270316T083000Z"])
+        do {
+            _ = try Import.Review(account: account, calendar: calendar, event: master, now: now)
+            preconditionFailure("A recurrence needs native Google instances and exception audit evidence")
+        } catch Import.Failure.recurrenceReviewRequired {}
+        let identity = Event.InstanceIdentity(eventID: "google-instance-id", masterID: "master",
+                                              nominalSlot: "2027-03-15T09:00", cancelled: false)
+        let slot = try Import.AuditedSlot(identity: identity, startMs: Event.timestamp("2027-03-15T09:00:00Z"),
+                                          endMs: Event.timestamp("2027-03-15T09:30:00Z"))
+        let proof = Import.RecurrenceEvidence(etag: #""master""#, inspectedExceptions: true, ordinarySlots: [slot])
+        let reviewed = try Import.Review(account: account, calendar: calendar, event: master, now: now, recurrenceEvidence: proof)
+        let capture = try Import.Capture(operationID: UUID(), review: reviewed, choices: .init(), now: now)
+        precondition(capture.command.rule?.endExclusive == "2027-03-16T08:30:00.001")
+        precondition(capture.command.rule?.payload["zoneMode"] as? String == "pinned")
+        precondition(reviewed.matches(Import.Observation(source: reviewed.source, recurrenceEvidence: proof)))
+        precondition(!reviewed.matches(Import.Observation(source: reviewed.source, recurrenceEvidence: nil)))
+    }
+
+    private static func remote(id: String, etag: String, date: String = "2027-03-15", recurrence: [String]? = nil) throws -> Transport.Event {
+        var fields: [String: Any] = [
+            "id": id, "etag": etag, "summary": "读书", "description": "  原始备注\n换行  ",
+            "start": ["dateTime": date + "T09:00:00Z", "timeZone": "UTC"],
+            "end": ["dateTime": date + "T09:30:00Z", "timeZone": "UTC"],
+        ]
+        fields["recurrence"] = recurrence
+        return Transport.Event(id: id, etag: etag, cancelled: false, json: try JSONSerialization.data(withJSONObject: fields))
+    }
+
+    private static func authority(_ source: Import.Source) -> Journal.Authority {
+        Journal.Authority(current: { $0 == account }, observe: { _, key in
+            precondition(key == source.key)
+            return Import.Observation(source: source, recurrenceEvidence: nil)
+        })
+    }
+
+    private static func adapter(_ fixture: LocalFixture) -> Journal.Scheduler {
+        Journal.Scheduler(receipt: { try await fixture.receipt($0) }, create: { try await fixture.create($0, permit: $1) })
+    }
+
+    private static func rejects(_ expected: Import.Failure, _ block: () async throws -> Void) async throws {
+        do {
+            try await block()
+            preconditionFailure("Expected \(expected.rawValue)")
+        } catch let failure as Import.Failure { precondition(failure == expected) }
+    }
+
+    private actor LocalFixture {
+        enum LostReply: Error { case outcomeUnknown }
+        private let loseReply: Bool
+        private let status: Journal.LocalReceipt.Status
+        private var saved: (Import.Command, Journal.LocalReceipt)?
+        private(set) var attempts = 0
+
+        init(loseReply: Bool, status: Journal.LocalReceipt.Status) {
+            self.loseReply = loseReply
+            self.status = status
+        }
+
+        func receipt(_ command: Import.Command) throws -> Journal.LocalReceipt? {
+            guard let saved else { return nil }
+            precondition(command == saved.0)
+            return saved.1
+        }
+
+        func create(_ command: Import.Command, permit: Journal.Scheduler.Permit) async throws -> Journal.LocalResult {
+            guard try await permit() else { return .rejected("STALE_CONNECTION") }
+            precondition(command.id.hasPrefix(Import.Command.privatePrefix) && saved == nil)
+            attempts += 1
+            let receipt = Journal.LocalReceipt(id: "one-native-id", kind: .reminder, status: status, eligibleForLink: true)
+            saved = (command, receipt)
+            if loseReply { throw LostReply.outcomeUnknown }
+            return .acknowledged(receipt)
+        }
+    }
+}

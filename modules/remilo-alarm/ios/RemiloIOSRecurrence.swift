@@ -69,6 +69,11 @@ enum RemiloIOSRecurrence {
         nominalString(try parse(value, field: "nominalSlot"))
     }
 
+    static func civilOffset(_ targetMs: Int64, fromNominal anchor: String, zone: TimeZone) throws -> Int64 {
+        let nominal = try parse(anchor, field: "anchor")
+        return milliseconds(localCoordinate(instant(targetMs), in: zone)) - milliseconds(nominal)
+    }
+
     static func resolve(_ rule: Rule, nominal: String, deviceZone: TimeZone, index: Int = 0) throws -> Slot {
         let prepared = try Prepared(rule)
         return try resolved(rule, try parse(nominal, field: "nominalSlot"), index, prepared.zone ?? deviceZone)

@@ -4,6 +4,7 @@ import Foundation
 /// All native mutations and delivery reconciliation share this process-owned queue.
 @MainActor
 final class RemiloIOSEngine {
+    private static let calendarCreatePrefix = "ios-calendar-import:"
     static let shared = RemiloIOSEngine(
         imageExists: RemiloIOSExerciseImages.exists,
         collectImages: { try RemiloIOSExerciseMedia.shared.collect(referenced: $0) }
@@ -36,6 +37,9 @@ final class RemiloIOSEngine {
             let input = IOSInput(values: payload)
             let kind = try input.text("kind", maximum: 60)
             guard kind != "TestAlarm" else { throw IOSInputFailure("UNSUPPORTED") }
+            let operationID = try input.text("operationId", maximum: 200)
+            guard !operationID.hasPrefix(Self.calendarCreatePrefix), payload["nativeCalendarAnchor"] == nil,
+                  payload["nativeCalendarEndExclusive"] == nil else { throw IOSInputFailure("UNSUPPORTED") }
             return try await execute(input, kind: kind)
         } catch let error as IOSInputFailure {
             return error.bridge
@@ -44,10 +48,74 @@ final class RemiloIOSEngine {
         }
     }
 
+    /// Native Calendar capture only. The ordinary Expo command entry never
+    /// supplies these exact source-derived recurrence bounds.
+    func applyCalendarCreate(_ payload: [String: Any], authorize: @Sendable () async throws -> Bool) async throws -> [String: Any] {
+        await acquire()
+        defer { release() }
+        do {
+            let input = IOSInput(values: payload)
+            let kind = try input.text("kind", maximum: 60)
+            if let recovered = try calendarCreateReceipt(payload) { return recovered }
+            guard try await authorize() else { throw IOSInputFailure("STALE_CONNECTION") }
+            try Task.checkCancellation()
+            let bounds: (anchor: String, endExclusive: String?)?
+            if kind == "CreateSeries" {
+                let anchor = try input.text("nativeCalendarAnchor", maximum: 24)
+                guard !anchor.isEmpty else { throw input.invalid("nativeCalendarAnchor") }
+                let end = payload["nativeCalendarEndExclusive"] == nil || payload["nativeCalendarEndExclusive"] is NSNull
+                    ? nil : try input.text("nativeCalendarEndExclusive", maximum: 24)
+                bounds = (anchor, end)
+            } else {
+                guard payload["nativeCalendarAnchor"] == nil, payload["nativeCalendarEndExclusive"] == nil else {
+                    throw IOSInputFailure("UNSUPPORTED")
+                }
+                bounds = nil
+            }
+            _ = try await execute(input, kind: kind, calendarBounds: bounds)
+            guard let committed = try calendarCreateReceipt(payload) else { throw IOSInputFailure("NOT_FOUND") }
+            return committed
+        } catch let error as IOSInputFailure {
+            return error.bridge
+        } catch let error as RemiloIOSRecurrence.InvalidRule {
+            return IOSInputFailure("INVALID_INPUT", field: error.field).bridge
+        }
+    }
+
+    func calendarCreateReceipt(_ payload: [String: Any]) throws -> [String: Any]? {
+        let input = IOSInput(values: payload)
+        let kind = try input.text("kind", maximum: 60)
+        let operationID = try input.text("operationId", maximum: 200)
+        guard ["Create", "CreateSeries"].contains(kind), operationID.hasPrefix(Self.calendarCreatePrefix),
+              UUID(uuidString: String(operationID.dropFirst(Self.calendarCreatePrefix.count))) != nil else {
+            throw IOSInputFailure("UNSUPPORTED")
+        }
+        let state = try read()
+        guard let receipt = state.receipts[operationID] else { return nil }
+        guard receipt.fingerprint == (try fingerprint(input)) else { throw IOSInputFailure("OPERATION_REUSED") }
+        let stored = try result(from: receipt.result)
+        let id: String
+        let eligible: Bool
+        if kind == "CreateSeries", let segmentID = receipt.seriesSegmentID {
+            id = segmentID
+            eligible = state.series[segmentID]?.state == "Active" && state.series[segmentID]?.revision == receipt.seriesRevision
+        } else if kind == "Create", let occurrenceID = receipt.occurrenceID {
+            id = occurrenceID
+            let captured = stored["occurrence"] as? [String: Any]
+            let record = state.reminders[occurrenceID]
+            eligible = record?.active == true && record?.revision == (captured?["revision"] as? Int)
+                && record?.generation == (stored["generation"] as? Int)
+        } else { throw IOSInputFailure("OPERATION_REUSED") }
+        let status = receipt.finalized ? (stored["status"] as? String ?? "Pending") : "Pending"
+        return ["status": status, "localId": id, "localKind": kind == "CreateSeries" ? "series" : "reminder",
+                "eligibleForLink": eligible]
+    }
+
     func scheduleTestAlarm(operationId: String) async throws -> [String: Any] {
         await acquire()
         defer { release() }
         do {
+            guard !operationId.hasPrefix(Self.calendarCreatePrefix) else { throw IOSInputFailure("UNSUPPORTED") }
             return try await execute(IOSInput(values: ["kind": "TestAlarm", "operationId": operationId]), kind: "TestAlarm")
         } catch let error as IOSInputFailure {
             return error.bridge
@@ -60,6 +128,7 @@ final class RemiloIOSEngine {
     ) async throws -> [String: Any] {
         await acquire()
         defer { release() }
+        guard !operationID.hasPrefix(Self.calendarCreatePrefix) else { throw IOSInputFailure("UNSUPPORTED") }
         return try await execute(
             IOSInput(values: ["kind": "Import", "operationId": operationID, "handle": handle, "copyIds": copies.sorted()]),
             kind: "Import", loadImport: load
@@ -191,13 +260,12 @@ final class RemiloIOSEngine {
     }
 
     private func execute(
-        _ input: IOSInput, kind: String, loadImport: (() async throws -> IOSPreparedImport)? = nil
+        _ input: IOSInput, kind: String, loadImport: (() async throws -> IOSPreparedImport)? = nil,
+        calendarBounds: (anchor: String, endExclusive: String?)? = nil
     ) async throws -> [String: Any] {
         let operationID = try input.text("operationId", maximum: 200)
         guard !operationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw input.invalid("operationId") }
-        guard JSONSerialization.isValidJSONObject(input.values) else { throw input.invalid("operationId") }
-        let canonical = try JSONSerialization.data(withJSONObject: input.values, options: [.sortedKeys])
-        let fingerprint = Data(SHA256.hash(data: canonical))
+        let fingerprint = try self.fingerprint(input)
         var state = try read()
         if let receipt = state.receipts[operationID] {
             guard receipt.fingerprint == fingerprint else { throw IOSInputFailure("OPERATION_REUSED") }
@@ -260,7 +328,7 @@ final class RemiloIOSEngine {
                 applied = result(for: record, state: state, now: now, scheduling: registrationID != nil)
             }
         case "CreateSeries", "EditSeries", "EditFollowing", "PauseSeries", "ResumeSeries":
-            let segment = try mutateSeries(kind, input: input, state: &state, now: now)
+            let segment = try mutateSeries(kind, input: input, state: &state, now: now, calendarBounds: calendarBounds)
             seriesSegmentID = segment.id
             applied = ["status": "Applied", "segmentId": segment.id]
         case "CreateRoutine", "EditRoutine", "PauseRoutine", "ResumeRoutine", "TrashRoutine", "RestoreRoutine", "PurgeRoutine":
@@ -326,6 +394,12 @@ final class RemiloIOSEngine {
         try await drain()
         if needsDeliveryResult { return try finalize(operationID) }
         return applied
+    }
+
+    private func fingerprint(_ input: IOSInput) throws -> Data {
+        guard JSONSerialization.isValidJSONObject(input.values) else { throw input.invalid("operationId") }
+        let canonical = try JSONSerialization.data(withJSONObject: input.values, options: [.sortedKeys])
+        return Data(SHA256.hash(data: canonical))
     }
 
     func mutate(

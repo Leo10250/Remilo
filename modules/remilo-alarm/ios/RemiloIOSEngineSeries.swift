@@ -31,7 +31,8 @@ extension RemiloIOSEngine {
                 "remainingCount": iosBridgeValue(segment.rule.count.map { $0 - index + 1 })]
     }
 
-    func mutateSeries(_ kind: String, input: IOSInput, state: inout IOSDatabase, now: Int64) throws -> IOSSeriesSegment {
+    func mutateSeries(_ kind: String, input: IOSInput, state: inout IOSDatabase, now: Int64,
+                      calendarBounds: (anchor: String, endExclusive: String?)? = nil) throws -> IOSSeriesSegment {
         let old: IOSSeriesSegment?
         if kind == "CreateSeries" {
             old = nil
@@ -74,7 +75,7 @@ extension RemiloIOSEngine {
         template.id = id
         template.segmentID = nil
         template.nominalSlot = nil
-        let rule = try RemiloIOSSeries.rule(for: template, spec: spec)
+        let rule = try RemiloIOSSeries.rule(for: template, spec: spec, calendarBounds: calendarBounds)
         guard try !RemiloIOSRecurrence.future(rule, afterMs: now, deviceZone: .current, mode: template.mode, limit: 1).isEmpty else {
             throw input.invalid("recurrence")
         }

@@ -34,7 +34,7 @@ enum RemiloIOSProjection {
         let end: Int64
         if allDay {
             guard let nextDay = calendar.date(byAdding: .day, value: 1, to: day) else { throw input.invalid("eventEndMs") }
-            end = iosMillis(nextDay)
+            end = iosMillis(calendar.startOfDay(for: nextDay))
         } else {
             end = try input.integer("eventEndMs", fallback: (previous?.eventEndMs ?? start + 1_800_000) + shift, range: epoch)
         }
