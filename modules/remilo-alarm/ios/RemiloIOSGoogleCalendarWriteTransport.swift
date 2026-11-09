@@ -136,9 +136,10 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                  permitSend: @Sendable (Publication.Request) async throws -> Permission) async throws -> Publication.Outcome {
         let request = try request.validated()
         guard request.account.matches(access) else { throw Failure.accountChanged }
+        let identity = try request.readbackIdentity()
         _ = try await transport.ownedCalendar(access, id: request.calendarID, budget: budget)
         let existing = try await transport.lookup(access, calendarID: request.calendarID, eventID: request.eventID, budget: budget)
-        if let known = Publication.inspect(existing, for: request) { return known }
+        if let known = Publication.inspect(existing, for: identity) { return known }
         guard phase == .notSent else { return .unconfirmed(nil) }
         let bounds = try Publication.Bounds(request.fields.schedule)
         let payload = InsertPayload(id: request.eventID, summary: request.fields.title, description: request.fields.notes,
@@ -148,21 +149,30 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         guard !Task.isCancelled else { return .notSent(.cancelled) }
         switch try await permitSend(request) {
         case .granted: break
-        case .alreadySent: return await readBackPublication(request, access: access, budget: budget, failure: nil)
+        case .alreadySent: return await readBackPublication(identity, access: access, budget: budget, failure: nil)
         case .denied(let reason): return .notSent(reason)
         }
         switch await send(wire, expectedID: request.eventID, budget: budget) {
         case .accepted(let event):
-            return Publication.inspect(.found(event), for: request) ?? .unconfirmed(.invalidResponse)
+            return Publication.inspect(.found(event), for: identity) ?? .unconfirmed(.invalidResponse)
         case .duplicate:
-            return await readBackPublication(request, access: access, budget: budget, failure: nil)
+            return await readBackPublication(identity, access: access, budget: budget, failure: nil)
         case .uncertain(let failure):
-            return await readBackPublication(request, access: access, budget: budget, failure: failure)
+            return await readBackPublication(identity, access: access, budget: budget, failure: failure)
         case .staleRemote:
             return .rejected(.apiError)
         case .rejected(let failure):
             return .rejected(failure)
         }
+    }
+
+    func checkPublication(_ identity: Publication.ReadbackIdentity, access: RemiloIOSGoogleCalendarAccess,
+                          budget: HTTP.Budget = .init()) async throws -> Publication.Outcome {
+        try identity.validate()
+        guard identity.account.matches(access) else { throw Failure.accountChanged }
+        _ = try await transport.ownedCalendar(access, id: identity.calendarID, budget: budget)
+        let lookup = try await transport.lookup(access, calendarID: identity.calendarID, eventID: identity.eventID, budget: budget)
+        return Publication.inspect(lookup, for: identity) ?? .unconfirmed(nil)
     }
 
     func patch(_ patch: Patch, access: RemiloIOSGoogleCalendarAccess, phase: Phase,
@@ -236,11 +246,11 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         }
     }
 
-    private func readBackPublication(_ request: Publication.Request, access: RemiloIOSGoogleCalendarAccess,
+    private func readBackPublication(_ identity: Publication.ReadbackIdentity, access: RemiloIOSGoogleCalendarAccess,
                                      budget: HTTP.Budget, failure: Failure?) async -> Publication.Outcome {
         do {
-            let lookup = try await transport.lookup(access, calendarID: request.calendarID, eventID: request.eventID, budget: budget)
-            return Publication.inspect(lookup, for: request) ?? .unconfirmed(failure)
+            let lookup = try await transport.lookup(access, calendarID: identity.calendarID, eventID: identity.eventID, budget: budget)
+            return Publication.inspect(lookup, for: identity) ?? .unconfirmed(failure)
         } catch { return .unconfirmed(error as? Failure ?? failure ?? .network) }
     }
 

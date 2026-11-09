@@ -101,6 +101,7 @@ struct EngineChecks {
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
+        try await queuedCalendarPublicationRechecksLocalVersion()
         try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
         try await groupCompletionDoesNotTouchLaterArrivals()
         try await preparedImportCommitsOnceAndReplaysAfterStageRemoval()
@@ -592,6 +593,10 @@ struct EngineChecks {
         precondition(recovered["status"] as? String == "Pending" && recovered["eligibleForLink"] as? Bool == true)
         let persisted = try store.load()
         precondition(persisted.reminders.count == 1 && RemiloIOSDelivery.attempts.count == 1)
+        do {
+            _ = try restarted.calendarPublicationSnapshot(recovered["localId"] as! String)
+            preconditionFailure("A committed Calendar import must stay ineligible while its journal receipt is pending")
+        } catch IOSCalendarPublicationSnapshot.Failure.alreadyImported {}
 
         let format = ISO8601DateFormatter()
         let first = iosMillis(format.date(from: "2037-01-04T09:00:00Z")!)
@@ -891,6 +896,77 @@ struct EngineChecks {
     private final class CalendarCommitProof {
         var current = true
         var checks = 0
+    }
+
+    private static func queuedCalendarPublicationRechecksLocalVersion() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let start = iosMillis(Date()) + 3_600_000
+        let end = start + 1_800_000
+        let zone = "America/Los_Angeles"
+        let created = try await engine.apply([
+            "kind": "Create", "operationId": "local-publication-source", "title": "Authored title", "notes": "Authored notes",
+            "eventStartMs": start, "eventEndMs": end, "alarmAtMs": start, "zoneId": zone,
+        ])
+        let id = created["occurrenceId"] as! String
+        let snapshot = try engine.calendarPublicationSnapshot(id)
+        precondition(snapshot == IOSCalendarPublicationSnapshot(occurrenceID: id, revision: 1,
+            generation: created["generation"] as! Int, title: "Authored title", notes: "Authored notes",
+            eventStartMs: start, eventEndMs: end, allDay: false, zoneID: zone))
+        let attempts = RemiloIOSDelivery.attempts
+        store.interruptNextWrite = true
+        let permitted = try await engine.withCalendarPublicationPermit(for: snapshot) { true }
+        precondition(permitted && store.interruptNextWrite && RemiloIOSDelivery.attempts == attempts)
+        store.interruptNextWrite = false
+
+        let (held, markHeld) = AsyncStream<Void>.makeStream()
+        let (release, resume) = AsyncStream<Void>.makeStream()
+        let earlier = Task {
+            try await engine.applyImport(handle: "publication-queue-hold", copies: [], operationID: "publication-queue-hold") {
+                markHeld.yield(())
+                markHeld.finish()
+                for await _ in release { break }
+                return IOSPreparedImport(content: .init())
+            }
+        }
+        var heldIterator = held.makeAsyncIterator()
+        _ = await heldIterator.next()
+        let (queued, markQueued) = AsyncStream<Void>.makeStream()
+        let postpone = Task {
+            markQueued.yield(())
+            markQueued.finish()
+            return try await engine.apply([
+                "kind": "Postpone", "occurrenceId": id, "operationId": "publication-postpone",
+                "expectedGeneration": snapshot.generation, "alarmAtMs": start + 60_000,
+            ])
+        }
+        var queuedIterator = queued.makeAsyncIterator()
+        _ = await queuedIterator.next()
+        resume.yield(())
+        resume.finish()
+        do {
+            let _: Bool = try await engine.withCalendarPublicationPermit(for: snapshot) {
+                preconditionFailure("A publication queued behind a new delivery generation must not reach the send checkpoint")
+            }
+            preconditionFailure("Expected a stale publication preview")
+        } catch IOSCalendarPublicationSnapshot.Failure.stalePreview {}
+        _ = try await earlier.value
+        let postponed = try await postpone.value
+        precondition(postponed["status"] as? String == "Scheduled")
+        let next = try engine.calendarPublicationSnapshot(id)
+        precondition(next.revision == snapshot.revision && next.generation != snapshot.generation)
+        _ = try await engine.apply([
+            "kind": "Delete", "occurrenceId": id, "operationId": "publication-delete", "expectedRevision": next.revision,
+        ])
+        do {
+            _ = try engine.calendarPublicationSnapshot(id)
+            preconditionFailure("A reminder in Trash cannot be published")
+        } catch IOSCalendarPublicationSnapshot.Failure.ineligible {}
     }
 
     private static func preparedImportCommitsOnceAndReplaysAfterStageRemoval() async throws {

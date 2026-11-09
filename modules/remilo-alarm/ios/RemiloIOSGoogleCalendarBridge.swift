@@ -7,6 +7,7 @@ final class RemiloIOSGoogleCalendarBridge {
     typealias Import = Runtime.Import
     typealias Operation = Runtime.ImportJournal.SavedOperation
     typealias Failure = Runtime.Failure
+    typealias PublicationRuntime = RemiloIOSGoogleCalendarPublicationRuntime
 
     private enum PageCursor {
         case calendars(Connection.Cursor)
@@ -41,6 +42,7 @@ final class RemiloIOSGoogleCalendarBridge {
         switch intent {
         case "connectOrChangeAccount": authorization = .connectOrChangeAccount
         case "reauthorizeCurrentAccount": authorization = .reauthorizeCurrentAccount
+        case "authorizeOwnedCalendarWrites": authorization = .writeOwnedEvents
         default: throw Failure.invalidInput
         }
         let revision = try Self.revision(expectedRevision)
@@ -120,6 +122,32 @@ final class RemiloIOSGoogleCalendarBridge {
         ]
     }
 
+    func publications(expectedRevision: Double?) async throws -> [[String: Any]] {
+        let revision = try Self.revision(expectedRevision)
+        let runtime = try runtime()
+        let view = try await runtime.view()
+        guard view.revision == revision else { throw Failure.staleConnection }
+        guard view.connected else { return [] }
+        return try Self.publicationRuntime(runtime).operations(expectedConnectionRevision: revision).map {
+            Self.publication($0, connection: view)
+        }
+    }
+
+    func previewPublication(_ id: String, expectedRevision: Double?) throws -> [String: Any] {
+        guard !id.isEmpty, id.utf16.count <= 200 else { throw Failure.invalidInput }
+        let revision = try Self.revision(expectedRevision)
+        let preview = try Self.publicationRuntime(runtime()).preview(occurrenceID: id, expectedConnectionRevision: revision)
+        let fields = preview.local.fields
+        let schedule = fields.schedule
+        return [
+            "occurrenceId": preview.local.version.occurrenceID, "reminderRevision": preview.local.version.revision,
+            "connectionRevision": preview.account.connectionRevision, "fingerprint": preview.fingerprint,
+            "title": fields.title, "notes": fields.notes, "eventStartMs": schedule.eventStartMs,
+            "eventEndMs": schedule.eventEndMs, "allDay": schedule.allDay, "zoneId": schedule.zoneId,
+            "pinsZone": false, "email": preview.email, "calendarName": preview.calendar.name,
+        ]
+    }
+
     func apply(_ command: [String: Any]) async throws -> [String: Any] {
         let input = IOSInput(values: command)
         let kind = try input.text("kind", maximum: 60)
@@ -132,7 +160,33 @@ final class RemiloIOSGoogleCalendarBridge {
             let result = try await runtime.disconnectFromUserAction(operationID: operation.uuidString, expectedRevision: revision)
             discard(before: result.revision)
             return ["revision": result.revision, "available": true, "connected": false, "email": "", "calendarId": "",
-                    "calendarName": "", "message": "", "access": "disconnected", "revocation": result.revocation.rawValue]
+                    "calendarName": "", "message": "", "access": "disconnected", "canWriteOwnedEvents": false,
+                    "revocation": result.revocation.rawValue]
+        case "SelectCalendar":
+            let selected = try await Self.publicationRuntime(runtime).selectDestination(
+                input.text("calendarId", maximum: 4_096), operationID: operation, expectedConnectionRevision: revision
+            )
+            let view = try await runtime.view()
+            guard view.revision == selected else { throw Failure.staleConnection }
+            discard(before: selected)
+            return Self.connection(view)
+        case "PublishOneOff":
+            let entry = try await Self.publicationRuntime(runtime).confirm(
+                operationID: operation, occurrenceID: input.text("occurrenceId", maximum: 200),
+                expectedLocalRevision: Int(input.integer("expectedRevision", range: 0...9_007_199_254_740_991)),
+                expectedConnectionRevision: revision, fingerprint: input.text("fingerprint", maximum: 44)
+            )
+            return try await publicationResult(entry, runtime: runtime, revision: revision)
+        case "RetryPublication":
+            let entry = try await Self.publicationRuntime(runtime).retry(operation, expectedConnectionRevision: revision)
+            return try await publicationResult(entry, runtime: runtime, revision: revision)
+        case "CancelPublication":
+            let publication = try Self.publicationRuntime(runtime)
+            let entries = try publication.operations(expectedConnectionRevision: revision)
+            guard let status = entries.first(where: { $0.entry.identity.operationID == operation }) else { throw Failure.notFound }
+            guard status.entry.phase == .waiting || status.entry.phase == .cancelled else { throw Failure.invalidInput }
+            let entry = try publication.retire(operation, expectedConnectionRevision: revision)
+            return try await publicationResult(entry, runtime: runtime, revision: revision)
         case "ImportCalendarEvent":
             guard try !input.flag("automaticSync", fallback: false), command["selections"] == nil else { throw Failure.invalidInput }
             let id = try Self.uuid(input, "previewId")
@@ -160,6 +214,18 @@ final class RemiloIOSGoogleCalendarBridge {
     private func runtime() throws -> Runtime {
         guard let runtime = try Runtime.configuredForegroundRuntime() else { throw Failure.invalidConfiguration }
         return runtime
+    }
+
+    private static func publicationRuntime(_ runtime: Runtime) throws -> PublicationRuntime {
+        guard let publication = runtime.publication else { throw Failure.invalidConfiguration }
+        return publication
+    }
+
+    private func publicationResult(_ entry: PublicationRuntime.Journal.Entry, runtime: Runtime,
+                                   revision: Int) async throws -> [String: Any] {
+        let view = try await runtime.view()
+        guard view.revision == revision else { throw Failure.staleConnection }
+        return Self.publication(try Self.publicationRuntime(runtime).status(entry), connection: view)
     }
 
     private func discard(before revision: Int) {
@@ -217,8 +283,35 @@ final class RemiloIOSGoogleCalendarBridge {
 
     private static func connection(_ view: Connection.View?) -> [String: Any] {
         ["revision": view?.revision ?? 0, "available": view?.available ?? false, "connected": view?.connected ?? false,
-         "email": view?.connected == true ? view?.email ?? "" : "", "calendarId": "", "calendarName": "", "message": "",
+         "email": view?.connected == true ? view?.email ?? "" : "", "calendarId": view?.publicationDestination?.id ?? "",
+         "calendarName": view?.publicationDestination?.name ?? "", "message": "",
+         "canWriteOwnedEvents": view?.canWriteOwnedEvents ?? false,
          "access": view?.access.rawValue ?? "unavailable", "revocation": view?.revocation.rawValue ?? "notRequested"]
+    }
+
+    private static func publication(_ status: PublicationRuntime.Status, connection view: Connection.View) -> [String: Any] {
+        let entry = status.entry
+        let currentWriteScope = entry.identity.account.connectionRevision == view.revision
+            && entry.identity.calendarID == view.publicationDestination?.id
+        let presentation: (state: String, retryMode: String)
+        switch entry.phase {
+        case .waiting:
+            let retry = status.canRetry && currentWriteScope
+            presentation = (retry && !view.canWriteOwnedEvents ? "NeedsAccess" : "Waiting", retry ? "send" : "none")
+        case .sent:
+            presentation = (view.access == .needsAccess ? "NeedsAccess" : "Unconfirmed", "check")
+        case .published: presentation = ("Published", "none")
+        case .conflict: presentation = ("Conflict", "none")
+        case .failed: presentation = ("Failed", "none")
+        case .cancelled: presentation = ("Cancelled", "none")
+        }
+        return [
+            "operationId": entry.identity.operationID.uuidString, "occurrenceId": entry.identity.local.occurrenceID,
+            "calendarName": entry.calendarName, "email": view.email, "state": presentation.state,
+            "message": "", "htmlLink": entry.confirmation?.htmlLink ?? "",
+            "publishedAtMs": iosBridgeValue(entry.confirmedAtMs), "differs": status.differs, "readOnly": status.readOnly,
+            "retryMode": presentation.retryMode, "canReviewAgain": status.canReviewAgain, "canCancel": entry.phase == .waiting,
+        ]
     }
 
     private static func event(_ value: Connection.Event.Row) -> [String: Any] {
@@ -283,6 +376,9 @@ final class RemiloIOSGoogleCalendarBridge {
     nonisolated static func errorCode(_ error: Error) -> String {
         switch error {
         case let failure as Failure: return failure.rawValue
+        case let failure as PublicationRuntime.Rejection: return failure.rawValue
+        case let failure as PublicationRuntime.Journal.Rejection: return failure.rawValue
+        case let failure as IOSCalendarPublicationSnapshot.Failure: return failure.rawValue
         case let failure as Import.Failure: return bridgeErrorCode(failure.rawValue)
         case let failure as RemiloIOSGoogleCalendarRecurringReview.Failure: return bridgeErrorCode(failure.rawValue)
         case let failure as Connection.Event.Reason: return bridgeErrorCode(failure.rawValue)

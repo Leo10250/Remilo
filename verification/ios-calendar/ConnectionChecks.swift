@@ -120,6 +120,129 @@ enum ConnectionChecks {
         } catch RemiloIOSGoogleCalendarStore.Failure.unsupportedSchema {}
         let preserved = try Data(contentsOf: file)
         precondition(preserved == future)
+        try await publicationDestinationChecks(configuration: configuration, readAccess: access, now: now)
+    }
+
+    private static func publicationDestinationChecks(
+        configuration: RemiloIOSGoogleCalendarConfiguration, readAccess: RemiloIOSGoogleCalendarAccess,
+        now: @escaping @Sendable () -> Date
+    ) async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-calendar-destination-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = RemiloIOSGoogleCalendarStore(directory: directory)
+        let fixture = PublicationFixture()
+        let http = HTTP(send: { request, _, _ in try await fixture.send(request) })
+        let connection = Connection(configuration: configuration, store: store, http: http, now: now)
+        let authorize: Connection.Authorize = { subject, purpose in
+            precondition(subject == nil || subject == "subject-A")
+            precondition(purpose == .ownedCalendars || purpose == .writeOwnedEvents)
+            return readAccess
+        }
+
+        try await rejects(.needsAccess) {
+            _ = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount, canCommit: { false }) { _, _ in
+                preconditionFailure("A closed foreground must not start consent")
+            }
+        }
+        let connected = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount,
+                                                                  authorize: authorize)
+        precondition(connected.access == .ownedCalendars && !connected.canWriteOwnedEvents)
+        let unselected = try await connection.publicationDestination(expectedRevision: connected.revision)
+        precondition(unselected == nil)
+        try await rejects(.notOwner) {
+            _ = try await connection.selectPublicationDestination(operationID: UUID(), expectedRevision: connected.revision,
+                                                                  calendarID: "writer")
+        }
+
+        let selectionID = UUID()
+        let selection = Task {
+            try await connection.selectPublicationDestination(operationID: selectionID, expectedRevision: connected.revision,
+                                                               calendarID: "owned")
+        }
+        let duplicate = try await connection.selectPublicationDestination(operationID: selectionID, expectedRevision: connected.revision,
+                                                                           calendarID: "owned")
+        let revision = try await selection.value
+        precondition(revision == 2 && duplicate == revision)
+        try await rejects(.operationReused) {
+            _ = try await connection.selectPublicationDestination(operationID: selectionID, expectedRevision: connected.revision,
+                                                                  calendarID: "writer")
+        }
+        try await rejects(.operationReused) {
+            _ = try await connection.disconnect(operationID: selectionID.uuidString, expectedRevision: revision)
+        }
+        let repeated = try await connection.selectPublicationDestination(operationID: UUID(), expectedRevision: revision,
+                                                                         calendarID: "owned")
+        precondition(repeated == revision)
+        let destination = try await connection.publicationDestination(expectedRevision: revision)
+        precondition(destination?.calendar.name == "Personal" && destination?.account.subject == "subject-A")
+        try await rejects(.needsAccess) {
+            _ = try await connection.publicationDestination(expectedRevision: revision, canRead: { false })
+        }
+        let relaunched = Connection(configuration: configuration, store: store, http: http, now: now)
+        let retained = try relaunched.view()
+        precondition(retained.revision == revision && retained.publicationDestination?.id == "owned"
+                     && retained.access == .needsAccess && !retained.canWriteOwnedEvents)
+        await fixture.setOwner(false)
+        try await rejects(.notOwner) { _ = try await connection.publicationDestination(expectedRevision: revision) }
+        await fixture.setOwner(true)
+        try await rejects(.needsAccess) {
+            try connection.requirePublicationSend(account: connection.account(expectedRevision: revision), calendarID: "owned")
+        }
+        try await rejects(.needsAccess) {
+            _ = try await connection.connectFromUserAction(expectedRevision: revision, consent: .writeOwnedEvents,
+                                                           authorize: authorize)
+        }
+        let stillReadOnly = try connection.view()
+        precondition(stillReadOnly.revision == revision && !stillReadOnly.canWriteOwnedEvents
+                     && stillReadOnly.publicationDestination?.id == "owned")
+
+        let authorization = RemiloIOSGoogleCalendarAuthorization(http: http, now: now)
+        let writeGrant = try RemiloIOSGoogleCalendarGrant(token: "publication-write", scopes: Connection.Purpose.writeOwnedEvents.required,
+                                                          expiresAt: now().addingTimeInterval(3_600))
+        let writeAccess = try await authorization.verify(writeGrant, configuration: configuration, expectedSubject: "subject-A",
+                                                          purpose: .writeOwnedEvents)
+        let upgraded = try await connection.connectFromUserAction(expectedRevision: revision, consent: .writeOwnedEvents) { subject, purpose in
+            precondition(subject == "subject-A" && purpose == .writeOwnedEvents)
+            return writeAccess
+        }
+        precondition(upgraded.revision == 3 && upgraded.accountGeneration == connected.accountGeneration
+                     && upgraded.access == .ownedCalendars && upgraded.canWriteOwnedEvents && upgraded.publicationDestination?.id == "owned")
+        let captured = try connection.account(expectedRevision: upgraded.revision)
+        try connection.requirePublicationSend(account: captured, calendarID: "owned")
+        try await rejects(.staleConnection) { try connection.requirePublicationSend(account: captured, calendarID: "writer") }
+        let refreshed = try await connection.connectFromUserAction(expectedRevision: upgraded.revision, consent: .reauthorizeCurrentAccount,
+                                                                   authorize: authorize)
+        precondition(refreshed.revision == 4 && !refreshed.canWriteOwnedEvents && refreshed.publicationDestination?.id == "owned")
+        try await rejects(.staleConnection) { try connection.requirePublicationSend(account: captured, calendarID: "owned") }
+        let canRecover = try await connection.withPublicationAccess(captured: captured, expectedRevision: refreshed.revision) { _, grant in
+            grant.supports(.ownedCalendars, now: now()) && !grant.supports(.writeOwnedEvents, now: now())
+        }
+        precondition(canRecover)
+
+        let otherGrant = try RemiloIOSGoogleCalendarGrant(token: "publication-other", scopes: Connection.Purpose.ownedCalendars.required,
+                                                          expiresAt: now().addingTimeInterval(3_600))
+        let otherAccess = try await authorization.verify(otherGrant, configuration: configuration, expectedSubject: "subject-B")
+        try await rejects(.accountChanged) {
+            _ = try await connection.connectFromUserAction(expectedRevision: refreshed.revision, consent: .writeOwnedEvents) { _, _ in otherAccess }
+        }
+        let switched = try await connection.connectFromUserAction(expectedRevision: refreshed.revision, consent: .connectOrChangeAccount) { _, _ in
+            otherAccess
+        }
+        precondition(switched.revision == 5 && switched.accountGeneration == 2 && switched.email == refreshed.email
+                     && switched.publicationDestination == nil)
+        try await rejects(.accountChanged) {
+            _ = try await connection.withPublicationAccess(captured: captured, expectedRevision: switched.revision) { _, _ in true }
+        }
+        let newDestination = try await connection.selectPublicationDestination(operationID: UUID(), expectedRevision: switched.revision,
+                                                                              calendarID: "owned")
+        let disconnected = try await connection.disconnect(operationID: "publication-disconnect", expectedRevision: newDestination)
+        precondition(disconnected.revision == 7 && disconnected.revocation == .revoked)
+        let replay = try await connection.selectPublicationDestination(operationID: selectionID, expectedRevision: connected.revision,
+                                                                       calendarID: "owned")
+        let final = try connection.view()
+        precondition(replay == revision && !final.connected && final.publicationDestination == nil)
+        let bytes = try String(contentsOf: directory.appendingPathComponent("connection.json"), encoding: .utf8)
+        precondition(!bytes.contains("publication-write") && !bytes.contains("publication-other"))
     }
 
     private static func rejects(_ expected: Failure, _ block: () async throws -> Void) async throws {
@@ -201,6 +324,31 @@ enum ConnectionChecks {
             var payload: [String: Any] = ["items": items]
             if index < 11 { payload["nextPageToken"] = String(index + 1) }
             return HTTP.Response(status: 200, body: try JSONSerialization.data(withJSONObject: payload))
+        }
+    }
+
+    private actor PublicationFixture {
+        private var owner = true
+
+        func setOwner(_ value: Bool) { owner = value }
+
+        func send(_ request: URLRequest) throws -> HTTP.Response {
+            guard let url = request.url else { throw Failure.invalidInput }
+            if url.path == "/revoke" {
+                precondition(request.httpMethod == "POST" && request.httpBody == Data("token=publication-other".utf8))
+                return .init(status: 200, body: Data())
+            }
+            precondition(request.httpMethod == "GET")
+            if url.path == "/v1/userinfo" {
+                let subject = request.value(forHTTPHeaderField: "Authorization") == "Bearer publication-other" ? "subject-B" : "subject-A"
+                let user: [String: Any] = ["sub": subject, "email": "owner@example.test", "email_verified": true]
+                return .init(status: 200, body: try JSONSerialization.data(withJSONObject: user))
+            }
+            let id = url.lastPathComponent
+            precondition(url.path.hasPrefix("/calendar/v3/users/me/calendarList/") && ["owned", "writer"].contains(id))
+            let role = id == "owned" && owner ? "owner" : "writer"
+            let calendar = ["id": id, "accessRole": role, "summary": "Personal", "timeZone": "America/Los_Angeles"]
+            return .init(status: 200, body: try JSONSerialization.data(withJSONObject: calendar))
         }
     }
 }

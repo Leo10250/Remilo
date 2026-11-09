@@ -4,7 +4,7 @@ import Foundation
 /// All native mutations and delivery reconciliation share this process-owned queue.
 @MainActor
 final class RemiloIOSEngine {
-    private static let calendarCreatePrefix = "ios-calendar-import:"
+    static let calendarCreatePrefix = "ios-calendar-import:"
     static let shared = RemiloIOSEngine(
         imageExists: RemiloIOSExerciseImages.exists,
         collectImages: { try RemiloIOSExerciseMedia.shared.collect(referenced: $0) }
@@ -111,6 +111,20 @@ final class RemiloIOSEngine {
         let status = receipt.finalized ? (stored["status"] as? String ?? "Pending") : "Pending"
         return ["status": status, "localId": id, "localKind": kind == "CreateSeries" ? "series" : "reminder",
                 "eligibleForLink": eligible]
+    }
+
+    /// Only the synchronous authority check and durable Calendar checkpoint run under this permit.
+    func withCalendarPublicationPermit<Value: Sendable>(for snapshot: IOSCalendarPublicationSnapshot,
+                                                          commit: @MainActor @Sendable () throws -> Value) async throws -> Value {
+        await acquire()
+        defer { release() }
+        try Task.checkCancellation()
+        typealias Failure = IOSCalendarPublicationSnapshot.Failure
+        let current: IOSCalendarPublicationSnapshot
+        do { current = try calendarPublicationSnapshot(snapshot.occurrenceID) }
+        catch is Failure { throw Failure.stalePreview }
+        guard current == snapshot else { throw Failure.stalePreview }
+        return try commit()
     }
 
     func scheduleTestAlarm(operationId: String) async throws -> [String: Any] {

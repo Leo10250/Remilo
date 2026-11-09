@@ -17,6 +17,22 @@ struct RemiloIOSCalendarConnectionState: Codable, Sendable {
         var revocation: RemiloIOSCalendarRevocation
     }
 
+    struct PublicationDestination: Codable, Sendable {
+        let subject: String
+        let clientID: String
+        let calendar: RemiloIOSCalendarOwnedRecord
+
+        func matches(_ account: Account?) -> Bool {
+            account?.subject == subject && account?.clientID == clientID
+        }
+    }
+
+    struct DestinationReceipt: Codable, Sendable {
+        let calendarID: String
+        let expectedRevision: Int
+        let revision: Int
+    }
+
     struct Discovery: Codable, Sendable {
         let id: UUID
         var candidates: [String: RemiloIOSCalendarOwnedRecord] = [:]
@@ -32,6 +48,8 @@ struct RemiloIOSCalendarConnectionState: Codable, Sendable {
     var revocation: RemiloIOSCalendarRevocation = .notRequested
     var discovery: Discovery?
     var disconnectReceipts: [String: DisconnectReceipt] = [:]
+    var publicationDestination: PublicationDestination?
+    var destinationReceipts: [String: DestinationReceipt]?
 }
 
 /// Kept outside the alarm store, OS delivery and portable archive. Credentials
@@ -57,6 +75,10 @@ struct RemiloIOSGoogleCalendarStore: Sendable {
             guard header.schemaVersion == 1 else { throw Failure.unsupportedSchema }
             let state = try JSONDecoder().decode(RemiloIOSCalendarConnectionState.self, from: data)
             guard state.revision >= 0, state.accountGeneration >= 0, !state.connected || state.account != nil else {
+                throw Failure.invalidState
+            }
+            if let destination = state.publicationDestination,
+               !state.connected || !destination.matches(state.account) || destination.calendar.id.isEmpty {
                 throw Failure.invalidState
             }
             return state

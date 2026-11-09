@@ -64,9 +64,15 @@ enum RemiloIOSGoogleCalendarPublication {
             return Data(SHA256.hash(data: try encoder.encode(self)))
         }
 
+        func readbackIdentity() throws -> ReadbackIdentity {
+            ReadbackIdentity(operationID: operationID, account: account, local: local, calendarID: calendarID,
+                             eventID: eventID, zoneID: fields.schedule.zoneId,
+                             fieldsDigest: try RemiloIOSGoogleCalendarPublication.digest(fields))
+        }
+
         /// Android's UUID.nameUUIDFromBytes over its JSONStringer output. MD5
         /// is used only for this existing opaque identifier, never for trust.
-        private static func stableID(subject: String, calendarID: String, occurrenceID: String) -> String {
+        fileprivate static func stableID(subject: String, calendarID: String, occurrenceID: String) -> String {
             let parts = ["remilo-calendar-v1", subject, calendarID, occurrenceID].map { value in
                 var encoded = "\""
                 for scalar in value.unicodeScalars {
@@ -82,11 +88,42 @@ enum RemiloIOSGoogleCalendarPublication {
             return digest.map { String(format: "%02x", $0) }.joined()
         }
 
-        private static func validID(_ value: String, maximum: Int) -> Bool {
+        fileprivate static func validID(_ value: String, maximum: Int) -> Bool {
             (1...maximum).contains(value.utf8.count) && value != "." && value != ".."
                 && value == value.trimmingCharacters(in: .whitespacesAndNewlines)
                 && !value.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains)
         }
+    }
+
+    /// Retain the exact Google identity and reviewed digest without copying
+    /// authored titles and notes into the operation journal.
+    struct ReadbackIdentity: Codable, Equatable, Sendable {
+        let operationID: UUID
+        let account: Account
+        let local: Local
+        let calendarID: String
+        let eventID: String
+        let zoneID: String
+        let fieldsDigest: Data
+
+        func validate() throws {
+            guard account.connectionRevision > 0, account.accountGeneration > 0, local.revision > 0, local.generation >= 0,
+                  Request.validID(account.subject, maximum: 255), Request.validID(account.clientID, maximum: 255),
+                  Request.validID(local.occurrenceID, maximum: 200), Request.validID(calendarID, maximum: 4096),
+                  eventID == Request.stableID(subject: account.subject, calendarID: calendarID, occurrenceID: local.occurrenceID),
+                  fieldsDigest.count == 32 else { throw Failure.invalidInput }
+            _ = try Event.namedZone(zoneID)
+        }
+
+        func matches(_ fields: Event.Fields) throws -> Bool {
+            try RemiloIOSGoogleCalendarPublication.digest(fields) == fieldsDigest
+        }
+    }
+
+    private static func digest(_ fields: Event.Fields) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return Data(SHA256.hash(data: try encoder.encode(fields)))
     }
 
     struct Bound: Encodable, Sendable {
@@ -122,14 +159,14 @@ enum RemiloIOSGoogleCalendarPublication {
         }
     }
 
-    struct Confirmation: Equatable, Sendable {
+    struct Confirmation: Codable, Equatable, Sendable {
         let eventID: String
         let etag: String?
         let htmlLink: String?
         let remoteDiffers: Bool
     }
 
-    enum Conflict: Sendable { case foreignIdentity, removed }
+    enum Conflict: String, Codable, Sendable { case foreignIdentity, removed }
     enum Outcome: Sendable {
         case confirmed(Confirmation)
         case conflict(Conflict)
@@ -138,19 +175,22 @@ enum RemiloIOSGoogleCalendarPublication {
         case unconfirmed(Failure?)
     }
 
-    static func inspect(_ lookup: RemiloIOSGoogleCalendarTransport.EventLookup, for request: Request) -> Outcome? {
+    static func inspect(_ lookup: RemiloIOSGoogleCalendarTransport.EventLookup, for identity: ReadbackIdentity) -> Outcome? {
         switch lookup {
         case .missing: return nil
         case .deleted: return .conflict(.removed)
         case .found(let event):
             if event.cancelled { return .conflict(.removed) }
-            guard event.id == request.eventID, let object = (try? JSONSerialization.jsonObject(with: event.json)) as? [String: Any],
+            guard event.id == identity.eventID, let object = (try? JSONSerialization.jsonObject(with: event.json)) as? [String: Any],
                   let extended = object["extendedProperties"] as? [String: Any],
                   let properties = extended["private"] as? [String: Any],
-                  properties["remiloPublication"] as? String == request.eventID else { return .conflict(.foreignIdentity) }
-            let fields = try? Event.fields(object, calendarZone: request.fields.schedule.zoneId).fields
-            let unchanged = object["summary"] as? String == request.fields.title && fields?.notes == request.fields.notes
-                && fields?.schedule == request.fields.schedule
+                  properties["remiloPublication"] as? String == identity.eventID else { return .conflict(.foreignIdentity) }
+            let unchanged: Bool
+            if let title = object["summary"] as? String, let fields = try? Event.fields(object, calendarZone: identity.zoneID).fields {
+                unchanged = (try? identity.matches(.init(title: title, notes: fields.notes, schedule: fields.schedule))) == true
+            } else {
+                unchanged = false
+            }
             return .confirmed(Confirmation(eventID: event.id, etag: event.etag,
                                            htmlLink: calendarLink(object["htmlLink"] as? String), remoteDiffers: !unchanged))
         }

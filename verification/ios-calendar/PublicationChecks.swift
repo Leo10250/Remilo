@@ -8,7 +8,8 @@ enum PublicationChecks {
     private static let calendar = "owned/id@example.test"
     private static let zone = "America/Los_Angeles"
 
-    static func run(access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess,
+    static func run(configuration: RemiloIOSGoogleCalendarConfiguration,
+                    access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess,
                     now: @escaping @Sendable () -> Date) async throws {
         let request = try makeRequest(access)
         precondition(request.eventID == "93ef9c833ce630dbb744728da6abc718")
@@ -83,9 +84,167 @@ enum PublicationChecks {
         guard case .conflict(.removed) = removedResult else { preconditionFailure("An explicit cancellation is a conflict") }
 
         try await patchChecks(request: request, access: access, readOnly: readOnly, now: now)
+        try await journalChecks(request: request, readOnly: readOnly, now: now)
+        try await runtimeChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
         let allDay = try Event.fields(["start": ["date": "2027-03-14"], "end": ["date": "2027-03-15"]], calendarZone: zone)
         let bounds = try Publication.Bounds(allDay.fields.schedule)
         precondition(bounds.start.date == "2027-03-14" && bounds.end.date == "2027-03-15" && bounds.end.dateTime == nil)
+    }
+
+    @MainActor
+    private static func runtimeChecks(configuration: RemiloIOSGoogleCalendarConfiguration, request: Publication.Request,
+                                      access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess,
+                                      now: @escaping @Sendable () -> Date) async throws {
+        typealias Runtime = RemiloIOSGoogleCalendarPublicationRuntime
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-publication-runtime-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: path) }
+        let fixture = Fixture(.missing, request: request)
+        let http = HTTP(send: { wire, _, _ in try await fixture.send(wire) })
+        let connection = Runtime.Connection(configuration: configuration, store: .init(directory: path), http: http, now: now)
+        let clock: @Sendable () -> Int64 = { Int64(now().timeIntervalSince1970 * 1_000) }
+        let snapshot = Runtime.LocalSnapshot(version: request.local, fields: request.fields)
+        let local = RuntimeLocal(snapshot)
+        let authority = Runtime.LocalAuthority(read: { _ in local.snapshot }, permit: { expected, checkpoint in
+            if local.invalidateAtPermit {
+                local.snapshot = nil
+                local.invalidateAtPermit = false
+            }
+            guard local.snapshot == expected else { throw Runtime.Rejection.stalePreview }
+            let result = try checkpoint()
+            if case .granted = result { _ = await fixture.permit() }
+            return result
+        })
+        func newRuntime() -> Runtime {
+            Runtime(connection: connection, journal: .init(directory: path, now: clock), local: authority,
+                    canUseForeground: { true }, now: clock)
+        }
+        let runtime = newRuntime()
+        let connected = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount) { _, _ in readOnly }
+        let selected = try await runtime.selectDestination(calendar, operationID: UUID(), expectedConnectionRevision: connected.revision)
+        let preview = try runtime.preview(occurrenceID: request.local.occurrenceID, expectedConnectionRevision: selected)
+        func confirm(_ preview: Runtime.Preview, id: UUID = UUID()) async throws -> Runtime.Journal.Entry {
+            try await runtime.confirm(operationID: id, occurrenceID: request.local.occurrenceID,
+                                      expectedLocalRevision: request.local.revision, expectedConnectionRevision: preview.account.connectionRevision,
+                                      fingerprint: preview.fingerprint)
+        }
+        do {
+            _ = try await confirm(preview)
+            preconditionFailure("A review with read access cannot authorize a write")
+        } catch Runtime.Failure.needsAccess {}
+        let granted = try await connection.connectFromUserAction(expectedRevision: selected, consent: .writeOwnedEvents) { _, _ in access }
+        let reviewed = try runtime.preview(occurrenceID: request.local.occurrenceID, expectedConnectionRevision: granted.revision)
+        local.invalidateAtPermit = true
+        let cancelled = try await confirm(reviewed)
+        let noWrites = await fixture.writes
+        precondition(cancelled.phase == .cancelled && noWrites == 0)
+        local.snapshot = snapshot
+        let fresh = try runtime.preview(occurrenceID: request.local.occurrenceID, expectedConnectionRevision: granted.revision)
+        let sent = try await confirm(fresh)
+        precondition(sent.phase == .sent && sent.confirmation == nil)
+        let replay = try await newRuntime().confirm(operationID: sent.identity.operationID, occurrenceID: request.local.occurrenceID,
+                                                     expectedLocalRevision: request.local.revision, expectedConnectionRevision: granted.revision,
+                                                     fingerprint: fresh.fingerprint)
+        precondition(replay.identity == sent.identity && replay.phase == .sent)
+        do {
+            _ = try await newRuntime().confirm(operationID: sent.identity.operationID, occurrenceID: request.local.occurrenceID,
+                                               expectedLocalRevision: request.local.revision, expectedConnectionRevision: granted.revision,
+                                               fingerprint: reviewed.fingerprint)
+            preconditionFailure("A restart cannot change the original review token")
+        } catch Runtime.Failure.operationReused {}
+        local.snapshot = nil
+        try await fixture.completeRemotePublication()
+        let renewed = try await connection.connectFromUserAction(expectedRevision: granted.revision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
+        let recovered = try await newRuntime().retry(sent.identity.operationID, expectedConnectionRevision: renewed.revision)
+        let writes = await fixture.writes
+        precondition(recovered.phase == .published && recovered.identity == sent.identity && writes == 1)
+        let coldConnection = Runtime.Connection(configuration: configuration, store: .init(directory: path), http: http, now: now)
+        let coldRuntime = Runtime(connection: coldConnection, journal: .init(directory: path, now: clock),
+                                  local: authority, canUseForeground: { true }, now: clock)
+        let offline = try coldRuntime.operations(expectedConnectionRevision: renewed.revision)
+        let result = offline.first(where: { $0.entry.identity.operationID == sent.identity.operationID })
+        precondition(result?.readOnly == true && result?.entry.phase == .published)
+        let changedFields = Event.Fields(title: "Local edit", notes: snapshot.fields.notes, schedule: snapshot.fields.schedule)
+        local.snapshot = .init(version: snapshot.version, fields: changedFields)
+        let edited = try coldRuntime.status(recovered)
+        precondition(edited.differs && !edited.readOnly && !edited.canRetry)
+        let viewer = try coldConnection.savedAccount(expectedRevision: renewed.revision)
+        let reserved = try coldRuntime.reservedEvents(viewingAs: viewer, calendarID: calendar)
+        precondition(reserved == Set([request.eventID]))
+    }
+
+    @MainActor
+    private final class RuntimeLocal {
+        var snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot?
+        var invalidateAtPermit = false
+
+        init(_ snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot) { self.snapshot = snapshot }
+    }
+
+    @MainActor
+    private static func journalChecks(request: Publication.Request, readOnly: RemiloIOSGoogleCalendarAccess,
+                                      now: @escaping @Sendable () -> Date) async throws {
+        typealias Journal = RemiloIOSGoogleCalendarPublicationJournal
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-publication-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: path) }
+        let journal = Journal(directory: path, now: { Int64(now().timeIntervalSince1970 * 1_000) })
+        let reviewFingerprint = try request.fingerprint().base64EncodedString()
+        let entry = try journal.capture(request, reviewFingerprint: reviewFingerprint, calendarName: "Personal")
+        let replay = try journal.capture(request, reviewFingerprint: reviewFingerprint, calendarName: "Renamed")
+        precondition(entry.phase == .waiting && replay == entry)
+        let edited = Event.Fields(title: "Different title", notes: request.fields.notes, schedule: request.fields.schedule)
+        let changed = try Publication.Request(operationID: request.operationID, account: request.account,
+                                              local: request.local, calendarID: request.calendarID,
+                                              reviewed: edited, source: .localOneOff)
+        do {
+            _ = try journal.capture(changed, reviewFingerprint: reviewFingerprint, calendarName: "Personal")
+            preconditionFailure("An operation ID must retain its reviewed content digest")
+        } catch RemiloIOSGoogleCalendarFailure.operationReused {}
+        let replacement = try Publication.Request(operationID: UUID(), account: request.account,
+                                                  local: request.local, calendarID: "other-owned",
+                                                  reviewed: request.fields, source: .localOneOff)
+        do {
+            _ = try journal.capture(replacement, reviewFingerprint: reviewFingerprint, calendarName: "Other")
+            preconditionFailure("A second destination cannot replace a pending operation")
+        } catch Journal.Rejection.operationPending {}
+        let text = try String(contentsOf: path.appendingPathComponent("publication-journal.json"), encoding: .utf8)
+        precondition(!text.contains("\"title\"") && !text.contains("\"notes\"") && !text.contains(request.fields.title))
+
+        guard case .granted = try journal.beginSend(request) else { preconditionFailure("The first exact send is allowed") }
+        let reopened = Journal(directory: path)
+        guard case .alreadySent = try reopened.beginSend(request) else {
+            preconditionFailure("The send checkpoint survives relaunch")
+        }
+        let other = Publication.Account(subject: "other", clientID: request.account.clientID,
+                                        connectionRevision: 2, accountGeneration: 2)
+        let hidden = try reopened.operation(request.operationID, viewingAs: other)
+        precondition(hidden == nil)
+        let foreignReplacement = try Publication.Request(operationID: UUID(), account: other, local: request.local,
+                                                         calendarID: request.calendarID, reviewed: request.fields, source: .localOneOff)
+        do {
+            _ = try reopened.capture(foreignReplacement, reviewFingerprint: reviewFingerprint, calendarName: "Other account")
+            preconditionFailure("The pending remote identity stays reserved after an account change")
+        } catch Journal.Rejection.operationPending {}
+        let refreshed = Publication.Account(subject: request.account.subject, clientID: request.account.clientID,
+                                            connectionRevision: 2, accountGeneration: 1)
+        let retired = try reopened.retire(request.operationID, viewingAs: refreshed)
+        precondition(retired.retired && retired.phase == .sent)
+        let fixture = Fixture(.existingEdited, request: request)
+        let checked = try await writer(fixture, now).checkPublication(retired.identity, access: readOnly)
+        let confirmed = try reopened.record(retired.identity, outcome: checked)
+        let writes = await fixture.writes
+        precondition(confirmed.phase == .published && confirmed.retired && confirmed.confirmation?.remoteDiffers == true && writes == 0)
+        let lateFailure = try reopened.record(retired.identity, outcome: .unconfirmed(.network))
+        precondition(lateFailure == confirmed)
+
+        let otherLocal = Publication.Local(occurrenceID: "another-local", revision: 1, generation: 0)
+        let unsent = try Publication.Request(operationID: UUID(), account: request.account, local: otherLocal,
+                                             calendarID: request.calendarID, reviewed: request.fields, source: .localOneOff)
+        _ = try reopened.capture(unsent, reviewFingerprint: reviewFingerprint, calendarName: "Personal")
+        let cancelled = try reopened.retire(unsent.operationID, viewingAs: refreshed)
+        precondition(cancelled.retired && cancelled.phase == .cancelled)
+        guard case .denied(.cancelled) = try reopened.beginSend(unsent) else {
+            preconditionFailure("A retired unsent operation cannot authorize a POST")
+        }
     }
 
     private static func patchChecks(request: Publication.Request, access: RemiloIOSGoogleCalendarAccess,
@@ -152,6 +311,11 @@ enum PublicationChecks {
             if sent { return .alreadySent }
             sent = true
             return .granted
+        }
+
+        func completeRemotePublication() throws {
+            precondition(writes == 1)
+            result = try Self.remote(request: request, edited: false).json
         }
 
         func send(_ wire: URLRequest) throws -> HTTP.Response {

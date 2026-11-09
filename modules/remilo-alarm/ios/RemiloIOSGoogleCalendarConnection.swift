@@ -28,12 +28,13 @@ final class RemiloIOSGoogleCalendarConnection {
     typealias Purpose = RemiloIOSGoogleCalendarPurpose
     typealias State = RemiloIOSCalendarConnectionState
     typealias Transport = RemiloIOSGoogleCalendarTransport
+    typealias WriteTransport = RemiloIOSGoogleCalendarWriteTransport
     typealias Event = RemiloIOSGoogleCalendarEvent
     typealias Import = RemiloIOSGoogleCalendarImport
     typealias Authorize = @Sendable (_ expectedSubject: String?, _ purpose: Purpose) async throws -> RemiloIOSGoogleCalendarAccess
 
     enum Consent: Equatable, Sendable {
-        case connectOrChangeAccount, reauthorizeCurrentAccount, managedCreation
+        case connectOrChangeAccount, reauthorizeCurrentAccount, writeOwnedEvents, managedCreation
     }
 
     enum Access: String, Sendable {
@@ -47,7 +48,14 @@ final class RemiloIOSGoogleCalendarConnection {
         let available: Bool
         let email: String
         let access: Access
+        let canWriteOwnedEvents: Bool
+        let publicationDestination: RemiloIOSCalendarOwnedRecord?
         let revocation: RemiloIOSCalendarRevocation
+    }
+
+    struct PublicationDestination: Sendable {
+        let account: Import.Account
+        let calendar: RemiloIOSCalendarOwnedRecord
     }
 
     struct DisconnectResult: Sendable {
@@ -140,7 +148,7 @@ final class RemiloIOSGoogleCalendarConnection {
                                authorize: Authorize) async throws -> View {
         guard let configuration else { throw Failure.invalidConfiguration }
         guard revocationInFlight == nil else { throw Failure.revocationInProgress }
-        guard !consentInFlight else { throw Failure.needsAccess }
+        guard !consentInFlight, canCommit() else { throw Failure.needsAccess }
         let original = try store.read()
         guard original.revision == expectedRevision else { throw Failure.staleConnection }
         let subject: String?
@@ -149,12 +157,16 @@ final class RemiloIOSGoogleCalendarConnection {
         case .connectOrChangeAccount:
             subject = nil
             purpose = .ownedCalendars
-        case .reauthorizeCurrentAccount, .managedCreation:
+        case .reauthorizeCurrentAccount, .writeOwnedEvents, .managedCreation:
             guard let account = original.account, original.connected, account.clientID == configuration.clientID else {
                 throw Failure.needsAccess
             }
             subject = account.subject
-            purpose = consent == .managedCreation ? .createManagedCalendar : .ownedCalendars
+            switch consent {
+            case .writeOwnedEvents: purpose = .writeOwnedEvents
+            case .managedCreation: purpose = .createManagedCalendar
+            default: purpose = .ownedCalendars
+            }
         }
 
         try Task.checkCancellation()
@@ -178,6 +190,7 @@ final class RemiloIOSGoogleCalendarConnection {
         guard access.supports(purpose, now: now()) else { throw Failure.needsAccess }
         let changedAccount = current.account?.subject != access.account.subject || current.account?.clientID != access.clientID
         if !current.connected || changedAccount { current.accountGeneration = try advance(current.accountGeneration) }
+        if changedAccount { current.publicationDestination = nil }
         current.revision = try advance(current.revision)
         current.connected = true
         current.account = State.Account(subject: access.account.subject, email: access.account.email, clientID: access.clientID)
@@ -195,6 +208,7 @@ final class RemiloIOSGoogleCalendarConnection {
         guard !operationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               operationID.utf8.count <= 200 else { throw Failure.invalidInput }
         var state = try store.read()
+        guard state.destinationReceipts?[operationID] == nil else { throw Failure.operationReused }
         if let receipt = state.disconnectReceipts[operationID] {
             guard receipt.expectedRevision == expectedRevision else { throw Failure.operationReused }
             return DisconnectResult(revision: receipt.revision,
@@ -214,6 +228,7 @@ final class RemiloIOSGoogleCalendarConnection {
         state.accountGeneration = try advance(state.accountGeneration)
         state.connected = false
         state.discovery = nil
+        state.publicationDestination = nil
         state.revocation = revocationStatus
         state.disconnectReceipts[operationID] = State.DisconnectReceipt(expectedRevision: expectedRevision, revision: revision,
                                                                         revocation: revocationStatus)
@@ -246,6 +261,95 @@ final class RemiloIOSGoogleCalendarConnection {
         let page = try await readOwnedPage(live, next: nextCursor?.page, budget: .init())
         return OwnedPage(items: try page.items.map(RemiloIOSCalendarOwnedRecord.init),
                          nextCursor: page.next.map { Cursor(fence: live.fence, page: $0) }, connectionRevision: live.fence.revision)
+    }
+
+    /// Selecting a manual destination is read-only on Google. Capture the exact
+    /// resulting revision so an acknowledged selection never retargets a retry.
+    func selectPublicationDestination(operationID: UUID, expectedRevision: Int, calendarID: String,
+                                      canCommit: @MainActor () -> Bool = { true }) async throws -> Int {
+        let id = operationID.uuidString
+        func replay(_ state: State) throws -> Int? {
+            guard state.disconnectReceipts[id] == nil else { throw Failure.operationReused }
+            guard let receipt = state.destinationReceipts?[id] else { return nil }
+            guard receipt.calendarID == calendarID, receipt.expectedRevision == expectedRevision else {
+                throw Failure.operationReused
+            }
+            return receipt.revision
+        }
+
+        guard canCommit() else { throw Failure.needsAccess }
+        if let revision = try replay(store.read()) { return revision }
+        let live = try requireAccess(expectedRevision)
+        let calendar: RemiloIOSCalendarOwnedRecord
+        do {
+            calendar = try await verifiedPublicationCalendar(calendarID, live: live)
+        } catch {
+            guard canCommit() else { throw Failure.needsAccess }
+            if let revision = try replay(store.read()) { return revision }
+            throw error
+        }
+        guard canCommit() else { throw Failure.needsAccess }
+        var state = try current(live.fence)
+        if let revision = try replay(state) { return revision }
+        if state.publicationDestination?.calendar.id != calendar.id {
+            state.revision = try advance(state.revision)
+            state.discovery = nil
+        }
+        state.publicationDestination = .init(subject: live.fence.subject, clientID: live.fence.clientID, calendar: calendar)
+        var receipts = state.destinationReceipts ?? [:]
+        receipts[id] = .init(calendarID: calendar.id, expectedRevision: expectedRevision, revision: state.revision)
+        state.destinationReceipts = receipts
+        guard let fence = Fence(state) else { throw Failure.staleConnection }
+        try store.write(state)
+        if fence != live.fence {
+            credentials = LiveAccess(fence: fence, access: live.access)
+            cancelReads()
+        }
+        return state.revision
+    }
+
+    func publicationDestination(expectedRevision: Int, canRead: @MainActor () -> Bool = { true }) async throws -> PublicationDestination? {
+        guard canRead() else { throw Failure.needsAccess }
+        let live = try requireAccess(expectedRevision)
+        let state = try current(live.fence)
+        guard let destination = state.publicationDestination else { return nil }
+        let calendar = try await verifiedPublicationCalendar(destination.calendar.id, live: live)
+        guard canRead() else { throw Failure.needsAccess }
+        return PublicationDestination(account: live.fence.importAccount, calendar: calendar)
+    }
+
+    /// This synchronous check is called under the scheduler's mutation gate
+    /// immediately before the journal commits the sent checkpoint.
+    func requirePublicationSend(account: Import.Account, calendarID: String) throws {
+        let live = try requireAccess(account.connectionRevision)
+        let state = try current(live.fence)
+        guard live.fence.importAccount == account, state.publicationDestination?.calendar.id == calendarID else {
+            throw Failure.staleConnection
+        }
+        guard live.access.supports(.writeOwnedEvents, now: now()) else { throw Failure.needsAccess }
+    }
+
+    /// A current read grant for the captured subject and OAuth client may
+    /// inspect the original event after reauthorization. The send permit
+    /// separately requires the exact capture epoch, destination and write grant.
+    func withPublicationAccess<Value: Sendable>(
+        captured: Import.Account, expectedRevision: Int, canRead: @MainActor () -> Bool = { true },
+        operation: @escaping @Sendable (WriteTransport, RemiloIOSGoogleCalendarAccess) async throws -> Value
+    ) async throws -> Value {
+        guard canRead() else { throw Failure.needsAccess }
+        let live = try requireAccess(expectedRevision)
+        guard captured.matches(live.access) else { throw Failure.accountChanged }
+        let writer = WriteTransport(http: http, now: now)
+        let result = try await read(live) { _, access in try await operation(writer, access) }
+        guard canRead() else { throw Failure.needsAccess }
+        return result
+    }
+
+    private func verifiedPublicationCalendar(_ calendarID: String, live: LiveAccess) async throws -> RemiloIOSCalendarOwnedRecord {
+        let calendar = try await read(live) { transport, access in
+            try await transport.ownedCalendar(access, id: calendarID, budget: .init())
+        }
+        return try RemiloIOSCalendarOwnedRecord(calendar)
     }
 
     func browseEvents(expectedRevision: Int, calendarID: String, from: String, until: String,
@@ -310,6 +414,17 @@ final class RemiloIOSGoogleCalendarConnection {
 
     func account(expectedRevision: Int) throws -> Import.Account {
         try requireAccess(expectedRevision).fence.importAccount
+    }
+
+    /// Saved results and preview context are local projections. They never
+    /// acquire credentials or authorize Google I/O.
+    func savedAccount(expectedRevision: Int) throws -> Import.Account {
+        let state = try store.read()
+        guard state.revision == expectedRevision else { throw Failure.staleConnection }
+        guard let configuration, let fence = Fence(state), fence.clientID == configuration.clientID else {
+            throw Failure.needsAccess
+        }
+        return fence.importAccount
     }
 
     func isCurrentAccount(_ captured: Import.Account) throws -> Bool {
@@ -445,14 +560,18 @@ final class RemiloIOSGoogleCalendarConnection {
 
     private func project(_ state: State) -> View {
         let connected = state.connected && configuration?.clientID == state.account?.clientID
+        let grant = credentials.flatMap { $0.fence == Fence(state) ? $0.access : nil }
+        let checkedAt = now()
         let access: Access
         if configuration == nil { access = .unavailable }
         else if !connected { access = .disconnected }
-        else if let credentials, credentials.fence == Fence(state), credentials.access.supports(.ownedCalendars, now: now()) {
-            access = credentials.access.supports(.createManagedCalendar, now: now()) ? .managedCreation : .ownedCalendars
+        else if let grant, grant.supports(.ownedCalendars, now: checkedAt) {
+            access = grant.supports(.createManagedCalendar, now: checkedAt) ? .managedCreation : .ownedCalendars
         } else { access = .needsAccess }
         return View(revision: state.revision, accountGeneration: state.accountGeneration, connected: connected,
                     available: configuration != nil, email: state.account?.email ?? "", access: access,
+                    canWriteOwnedEvents: connected && grant?.supports(.writeOwnedEvents, now: checkedAt) == true,
+                    publicationDestination: connected ? state.publicationDestination?.calendar : nil,
                     revocation: revocation(state.revocation, inFlight: revocationInFlight != nil))
     }
 

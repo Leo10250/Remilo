@@ -95,7 +95,7 @@ enum CalendarChecks {
                                                 purpose: .writeOwnedEvents)
         try check(!access.supports(.writeOwnedEvents, now: date) && writeAccess.supports(.ownedCalendars, now: date),
                   "write grants can read and browse grants cannot write")
-        try await PublicationChecks.run(access: writeAccess, readOnly: access, now: now)
+        try await PublicationChecks.run(configuration: configuration, access: writeAccess, readOnly: access, now: now)
         ComparisonChecks.run()
         try await ImportChecks.run()
         print("Swift Google Calendar checks passed")
