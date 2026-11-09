@@ -29,6 +29,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         let kind: Kind
         let importMode: Mode
         let initialRecovery: Bool
+        var instanceCancelled: Bool? = nil
     }
 
     struct Request: Sendable {
@@ -84,8 +85,12 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         for event in page.items {
             let existing = state.observations[event.id]
             if let kind = Self.classify(event, zoneID: request.scope.binding.record.zoneId, now: now) {
+                let instanceCancelled: Bool?
+                if case .changedInstance = kind { instanceCancelled = event.cancelled }
+                else { instanceCancelled = nil }
                 state.observations[event.id] = Observation(eventID: event.id, etag: event.strongETag, kind: kind,
-                    importMode: existing?.importMode ?? mode, initialRecovery: existing?.initialRecovery ?? recovery)
+                    importMode: existing?.importMode ?? mode, initialRecovery: existing?.initialRecovery ?? recovery,
+                    instanceCancelled: instanceCancelled)
             } else if let existing {
                 state.observations[event.id] = Observation(eventID: event.id, etag: event.strongETag,
                     kind: .needsReview(reason: "ELAPSED_EVENT"), importMode: existing.importMode, initialRecovery: existing.initialRecovery)

@@ -85,7 +85,7 @@ enum ImportChecks {
         try await revokedBeforeCommit(journal, calendar: calendar, now: now)
         try expiryAndRecurrence(calendar, now: now)
         try finalAllDayAlarm(calendar)
-        try await exactRecurringExceptions(journal, calendar: calendar, now: now)
+        try await exactRecurringExceptions(journal, directory: path, calendar: calendar, now: now)
     }
 
     @MainActor
@@ -150,7 +150,7 @@ enum ImportChecks {
         precondition(!reviewed.matches(Import.Observation(source: reviewed.source, recurrenceEvidence: nil)))
     }
 
-    private static func exactRecurringExceptions(_ journal: Journal, calendar: Transport.OwnedCalendar, now: Int64) async throws {
+    private static func exactRecurringExceptions(_ journal: Journal, directory: URL, calendar: Transport.OwnedCalendar, now: Int64) async throws {
         typealias Exception = RemiloIOSGoogleCalendarRecurringReview.Exception
         let master = try remote(id: "exception-master", etag: #""master""#, recurrence: ["RRULE:FREQ=DAILY;COUNT=5"])
         let skipped = Exception(identity: Event.InstanceIdentity(eventID: "google-skip", masterID: master.id,
@@ -216,6 +216,68 @@ enum ImportChecks {
         let rejected = try await journal.run(id, authority: authority, scheduler: adapter(local))
         let attempts = await local.attempts
         precondition(rejected.errorCode == "STALE_REMOTE" && rejected.local == nil && attempts == 0)
+
+        let managedEvidence = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: .eventsOnly, masterETag: evidence.masterETag,
+                                                        exceptions: evidence.exceptions, ordinarySlots: ordinary)
+        let managedReview = try Import.Review(account: account, calendar: calendar, event: master, now: now, recurrenceEvidence: managedEvidence)
+        try await managedSeriesRecovery(journal, directory: directory, calendar: calendar, review: managedReview, now: now)
+    }
+
+    private static func managedSeriesRecovery(_ journal: Journal, directory: URL, calendar: Transport.OwnedCalendar,
+                                              review: Import.Review, now: Int64) async throws {
+        typealias Inbox = RemiloIOSGoogleCalendarManagedInbox
+        let binding = Inbox.Journal.Binding(operationID: UUID(), account: account, record: try RemiloIOSCalendarOwnedRecord(calendar),
+                                            revision: 1, authEpoch: 1, initialImport: nil)
+        let policy = Inbox.Journal.Policy(importMode: .none)
+        let scope = Inbox.Scope(binding: binding, policy: policy)
+        let master = Inbox.Observation(eventID: review.source.key.eventID, etag: review.source.etag, kind: .recurringMaster,
+                                       importMode: .none, initialRecovery: false)
+        let permit = Inbox.Permit(scope: scope, observation: master)
+        let operation = try await journal.captureManaged(permit, review: review,
+                                                         choices: .init(mode: .none, allDayAlarmMinutes: policy.allDayAlarmMinutes))
+        let fixture = LocalFixture(loseReply: true, status: .applied)
+        let scheduler = adapter(fixture)
+        let authority = Journal.Authority(current: { $0 == account }, observe: { checked in
+            .init(source: checked.source, recurrenceEvidence: checked.recurrenceEvidence)
+        }, managedCurrent: { $0 == permit && $1 == account })
+        do {
+            _ = try await journal.run(operation, authority: authority, scheduler: scheduler)
+            preconditionFailure("Expected an interruption after the series was saved")
+        } catch LocalFixture.LostReply.outcomeUnknown {}
+        let restarted = Journal(directory: directory, now: { now })
+        let recovered = try await restarted.run(operation, authority: authority, scheduler: scheduler)
+        let attempts = await fixture.attempts
+        precondition(recovered.local?.kind == .series && recovered.relationship == .automaticRequested && attempts == 1)
+
+        let moved = Inbox.Observation(eventID: "google-move", etag: #""moved-v1""#, kind: .changedInstance(masterID: master.eventID),
+                                      importMode: .none, initialRecovery: false, instanceCancelled: false)
+        let skipped = Inbox.Observation(eventID: "google-skip", etag: nil, kind: .changedInstance(masterID: master.eventID),
+                                        importMode: .none, initialRecovery: false, instanceCancelled: true)
+        func scan(_ pending: [Inbox.Observation], scope active: Inbox.Scope? = nil) -> Inbox.Progress {
+            .init(scope: active ?? scope, pages: 1, initialComplete: true, continuation: false, pending: pending)
+        }
+        let reopened = Journal(directory: directory, now: { now })
+        let unchanged = try await reopened.reconcileManagedSeries(scan([master, moved, skipped]), viewingAs: account, limit: 10)
+        precondition(unchanged.count == 3 && !unchanged.contains(where: \.recordedIssue),
+                     "Exact reviewed exceptions survive recovery, including a sparse cancelled instance")
+        let providerUpdate = Inbox.Observation(eventID: moved.eventID, etag: #""moved-v2""#, kind: moved.kind,
+                                                importMode: .none, initialRecovery: false, instanceCancelled: false)
+        let staleBinding = Inbox.Journal.Binding(operationID: UUID(), account: account, record: binding.record,
+                                                 revision: 2, authEpoch: 2, initialImport: nil)
+        let fenced = try await reopened.reconcileManagedSeries(scan([providerUpdate], scope: .init(binding: staleBinding, policy: policy)),
+                                                              viewingAs: account, limit: 10)
+        precondition(fenced.isEmpty, "A replacement binding cannot adopt the old imported family")
+        let changed = try await reopened.reconcileManagedSeries(scan([providerUpdate]), viewingAs: account, limit: 10)
+        let replay = try await restarted.reconcileManagedSeries(scan([providerUpdate]), viewingAs: account, limit: 10)
+        let changedOperation = try await restarted.savedOperation(operation, viewingAs: account)
+        precondition(changed.first?.recordedIssue == true && replay.first?.recordedIssue == false &&
+                     changedOperation?.recurringIssue?.eventID == moved.eventID && changedOperation?.recurringIssue?.code == "STALE_REMOTE")
+        let removed = Inbox.Observation(eventID: master.eventID, etag: nil, kind: .removed, importMode: .none, initialRecovery: false)
+        _ = try await reopened.reconcileManagedSeries(scan([removed]), viewingAs: account, limit: 10)
+        let removedOperation = try await restarted.savedOperation(operation, viewingAs: account)
+        precondition(removedOperation?.recurringIssue?.code == "REMOTE_REMOVED" && removedOperation?.receipt == recovered)
+        let persisted = try String(contentsOf: directory.appendingPathComponent("import-journal.json"), encoding: .utf8)
+        precondition(!persisted.contains("moved notes") && persisted.contains("google-skip"))
     }
 
     private static func finalAllDayAlarm(_ calendar: Transport.OwnedCalendar) throws {
@@ -296,7 +358,8 @@ enum ImportChecks {
             guard try await permit() else { return .rejected("STALE_CONNECTION") }
             precondition(command.id.hasPrefix(Import.Command.privatePrefix) && saved == nil)
             attempts += 1
-            let receipt = Journal.LocalReceipt(id: "one-native-id", kind: .reminder, status: status, eligibleForLink: true)
+            let kind: Journal.LocalReceipt.Kind = command.rule == nil ? .reminder : .series
+            let receipt = Journal.LocalReceipt(id: "one-native-id", kind: kind, status: status, eligibleForLink: true)
             saved = (command, receipt)
             if loseReply { throw LostReply.outcomeUnknown }
             return .acknowledged(receipt)

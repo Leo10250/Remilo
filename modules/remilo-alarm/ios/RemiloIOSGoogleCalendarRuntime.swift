@@ -210,8 +210,18 @@ final class RemiloIOSGoogleCalendarRuntime {
                 result.continuation = true
                 return result
             }
+            let recurring = try await importJournal.reconcileManagedSeries(scan, viewingAs: account, limit: 10 - attempted)
+            try requireCurrentAccount(account)
+            for match in recurring {
+                let permit = RemiloIOSGoogleCalendarManagedInbox.Permit(scope: scan.scope, observation: match.observation)
+                try managedSetup.finishIncoming(permit, account: account, reviewReason: nil)
+                if match.recordedIssue { result.needsReview += 1 }
+            }
+            attempted += recurring.count
+            if attempted == 10 { result.continuation = true }
+            let reconciled = Set(recurring.map(\.observation.eventID))
             let reserved = try await reservedEvents(account, calendarID: scan.scope.binding.record.id)
-            for observation in scan.pending where !reserved.contains(observation.eventID) {
+            for observation in scan.pending where !reconciled.contains(observation.eventID) && !reserved.contains(observation.eventID) {
                 guard [.oneTime, .recurringMaster].contains(observation.kind) else { continue }
                 guard attempted < 10, budget.hasTimeRemaining else {
                     result.continuation = true

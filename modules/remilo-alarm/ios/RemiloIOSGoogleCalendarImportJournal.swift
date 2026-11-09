@@ -4,6 +4,7 @@ import Foundation
 actor RemiloIOSGoogleCalendarImportJournal {
     typealias Import = RemiloIOSGoogleCalendarImport
     typealias Failure = Import.Failure
+    typealias Inbox = RemiloIOSGoogleCalendarManagedInbox
 
     struct LocalReceipt: Codable, Equatable, Sendable {
         enum Kind: String, Codable, Sendable { case reminder, series }
@@ -54,6 +55,28 @@ actor RemiloIOSGoogleCalendarImportJournal {
         case needsReview(String)
     }
 
+    struct RecurringIssue: Codable, Equatable, Sendable {
+        let eventID: String
+        let etag: String?
+        let code: String
+    }
+
+    struct RecurringObservationResult: Sendable {
+        let observation: Inbox.Observation
+        let recordedIssue: Bool
+    }
+
+    private struct RecurringInstanceVersion: Codable {
+        let identity: Import.Event.InstanceIdentity
+        let etag: String?
+
+        func matches(_ observation: Inbox.Observation) -> Bool {
+            guard identity.eventID == observation.eventID, identity.cancelled == observation.instanceCancelled else { return false }
+            if identity.cancelled { return true }
+            return etag != nil && etag == observation.etag
+        }
+    }
+
     struct Receipt: Codable, Equatable, Sendable {
         enum Suppression: String, Codable, Sendable { case none, deferredUntilLocalDelivery, requiresRemoteCheck, suspended }
 
@@ -77,14 +100,15 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let calendarName: String?
         let title: String?
         let receipt: Receipt?
+        let recurringIssue: RecurringIssue?
 
-        init(receipt: Receipt) {
+        init(receipt: Receipt, recurringIssue: RecurringIssue? = nil) {
             self.init(operationID: receipt.operationID, account: receipt.account, source: receipt.source,
-                      phase: .settled, calendarName: nil, title: nil, receipt: receipt)
+                      phase: .settled, calendarName: nil, title: nil, receipt: receipt, recurringIssue: recurringIssue)
         }
 
         fileprivate init(operationID: UUID, account: Import.Account, source: Import.SourceKey, phase: Phase,
-                         calendarName: String?, title: String?, receipt: Receipt?) {
+                         calendarName: String?, title: String?, receipt: Receipt?, recurringIssue: RecurringIssue? = nil) {
             self.operationID = operationID
             self.account = account
             self.source = source
@@ -92,6 +116,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
             self.calendarName = calendarName
             self.title = title
             self.receipt = receipt
+            self.recurringIssue = recurringIssue
         }
     }
 
@@ -116,6 +141,8 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var receipt: Receipt?
         var managed: RemiloIOSGoogleCalendarManagedInbox.Permit?
         var managedLink: ManagedLinkDisposition?
+        var recurringInstances: [RecurringInstanceVersion]?
+        var recurringIssue: RecurringIssue?
     }
 
     private struct State: Codable {
@@ -202,6 +229,57 @@ actor RemiloIOSGoogleCalendarImportJournal {
         try write(state)
     }
 
+    /// Save changes against an existing series before clearing observations
+    /// from the inbox. Replaying the same provider version is harmless.
+    func reconcileManagedSeries(_ scan: Inbox.Progress, viewingAs account: Import.Account,
+                                limit: Int) throws -> [RecurringObservationResult] {
+        guard limit > 0, scan.initialComplete, !scan.continuation, scan.scope.binding.belongs(to: account),
+              scan.scope.binding.account.accountGeneration == account.accountGeneration,
+              scan.scope.policy.automaticImport else { return [] }
+        var state = try read()
+        var masters: [String: UUID] = [:]
+        for (id, entry) in state.entries {
+            guard let origin = entry.managed, origin.scope.binding.linkLease == scan.scope.binding.linkLease,
+                  let receipt = entry.receipt, receipt.local?.kind == .series, receipt.relationship == .automaticRequested,
+                  receipt.account.subject == account.subject, receipt.account.clientID == account.clientID,
+                  receipt.account.accountGeneration == account.accountGeneration else { continue }
+            masters[receipt.source.eventID] = id
+        }
+        var results: [RecurringObservationResult] = []
+        for observation in scan.pending {
+            let masterID: String
+            if case .changedInstance(let id) = observation.kind { masterID = id }
+            else { masterID = observation.eventID }
+            guard let id = masters[masterID], var entry = state.entries[id], let receipt = entry.receipt else { continue }
+            let unchanged: Bool
+            if case .changedInstance = observation.kind {
+                unchanged = entry.recurringInstances?.contains(where: { $0.matches(observation) }) == true
+            } else {
+                unchanged = observation.kind == .recurringMaster && receipt.reviewedETag == observation.etag
+            }
+            var recorded = false
+            if !unchanged {
+                let code: String
+                switch observation.kind {
+                case .removed: code = "REMOTE_REMOVED"
+                case .needsReview(let reason): code = reason
+                default: code = Failure.staleRemote.rawValue
+                }
+                // One review covers the family. Explicit removal supersedes a
+                // version change so it cannot be lost during an inbox replay.
+                if entry.recurringIssue == nil || (entry.recurringIssue?.code != code && code == "REMOTE_REMOVED") {
+                    entry.recurringIssue = RecurringIssue(eventID: observation.eventID, etag: observation.etag, code: code)
+                    state.entries[id] = entry
+                    recorded = true
+                }
+            }
+            results.append(.init(observation: observation, recordedIssue: recorded))
+            if results.count == limit { break }
+        }
+        if results.contains(where: \.recordedIssue) { try write(state) }
+        return results
+    }
+
     private func capture(operationID: UUID, review: Import.Review, choices: Import.Choices,
                          managed: RemiloIOSGoogleCalendarManagedInbox.Permit?) throws -> Receipt? {
         let fingerprint = try Request(operationID: operationID, review: review, choices: choices).fingerprint()
@@ -248,7 +326,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
     private func savedOperation(_ operationID: UUID, entry: Entry, viewingAs viewer: Import.Account) -> SavedOperation? {
         guard let owner = entry.receipt?.account ?? entry.capture?.review.account,
               owner.subject == viewer.subject, owner.clientID == viewer.clientID else { return nil }
-        if let receipt = entry.receipt { return SavedOperation(receipt: receipt) }
+        if let receipt = entry.receipt { return SavedOperation(receipt: receipt, recurringIssue: entry.recurringIssue) }
         guard let capture = entry.capture else { return nil }
         let phase: SavedOperation.Phase
         if running.contains(operationID) { phase = entry.submitted ? .creating : .checking }
@@ -363,6 +441,9 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var state = try read()
         guard var entry = state.entries[receipt.operationID] else { throw Failure.notFound }
         if let confirmed = entry.receipt { return confirmed }
+        if receipt.local?.kind == .series, let proof = entry.capture?.review.recurrenceEvidence {
+            entry.recurringInstances = proof.exceptions.map { .init(identity: $0.identity, etag: $0.etag) }
+        }
         entry.capture = nil // no completed preview content in the recovery journal
         entry.receipt = receipt
         state.entries[receipt.operationID] = entry
