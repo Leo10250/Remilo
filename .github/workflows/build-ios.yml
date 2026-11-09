@@ -20,13 +20,13 @@ on:
       - package*.json
       - .nvmrc
       - .github/workflows/build-ios.yml
-concurrency:
-  group: remilo-ios-${{ github.ref }}
-  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   unsigned-ipa:
+    concurrency:
+      group: remilo-ios-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: macos-26
     timeout-minutes: 35
     steps:
@@ -94,6 +94,9 @@ jobs:
           if-no-files-found: error
           retention-days: 3
   widget-and-calendar:
+    concurrency:
+      group: remilo-ios-checks-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: macos-26
     timeout-minutes: 15
     steps:

@@ -183,7 +183,8 @@ The [iOS build workflow](../.github/workflows/build-ios.yml) runs the Swift
 engine, widget policy, Calendar, archive and photo checks on macOS. It compiles
 the optional WidgetKit extension separately. The standard unsigned Release
 package checks for bundled JavaScript, sound, App Intents metadata and
-iPhone/iPad device families.
+iPhone/iPad device families. A running IPA build can finish while Calendar
+checks run for a newer commit. The newest pending IPA build follows it.
 Device installation requires separate signing. The AlarmKit probe checks OS
 feasibility. Physical acceptance uses a signed build of Remilo itself.
 
