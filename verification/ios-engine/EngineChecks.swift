@@ -100,6 +100,7 @@ struct EngineChecks {
         try await datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore()
         try routineAlarmActionsKeepDatedProgress()
         try await calendarCreateUsesExactLocalReceiptAndBounds()
+        try calendarInstallationOriginComesFromNativeStateCreation()
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
@@ -117,6 +118,20 @@ struct EngineChecks {
         try await WidgetProjectionChecks.run()
         #endif
         print("Remilo iOS native engine checks passed")
+    }
+
+    private static func calendarInstallationOriginComesFromNativeStateCreation() throws {
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-install-\(UUID()).json")
+        defer { try? FileManager.default.removeItem(at: path) }
+        let fresh = try IOSStore.read(at: path)
+        precondition(fresh.isFreshCalendarInstallation)
+        try JSONEncoder().encode(fresh).write(to: path)
+        let reopened = try IOSStore.read(at: path)
+        precondition(reopened.isFreshCalendarInstallation)
+        try JSONEncoder().encode(IOSDatabase()).write(to: path)
+        let oldEmptyInstall = try IOSStore.read(at: path)
+        precondition(oldEmptyInstall.reminders.isEmpty && !oldEmptyInstall.isFreshCalendarInstallation,
+                     "An empty preexisting state file is an upgrade, not a fresh install")
     }
 
     private static func interruptedAcknowledgementReplaysSameRegistration() async throws {

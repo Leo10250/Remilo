@@ -33,6 +33,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         case create(zoneID: String)
     }
 
+    struct InitialImport: Codable, Equatable, Sendable {
+        let mode: RemiloIOSGoogleCalendarImport.Mode
+        let recoveringExistingCalendar: Bool
+    }
+
     struct Review: Codable, Equatable, Sendable {
         let id: UUID
         let account: Account
@@ -42,6 +47,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let calendarName: String
         let calendarZoneID: String
         let replacesOperationID: UUID?
+        let initialImport: InitialImport?
         fileprivate let bindingRevision: Int
         fileprivate let authEpoch: Int
         fileprivate let checkedAtMs: Int64
@@ -74,6 +80,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let record: Record
         let revision: Int
         let authEpoch: Int
+        let initialImport: InitialImport?
 
         func belongs(to account: Account) -> Bool {
             self.account.subject == account.subject && self.account.clientID == account.clientID
@@ -148,8 +155,18 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         return entry
     }
 
+    func incomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope {
+        let state = try read()
+        guard let binding = state.binding, binding.belongs(to: account), binding.account.accountGeneration == account.accountGeneration,
+              binding.revision == state.bindingRevision, binding.authEpoch == state.authEpoch,
+              state.pendingOperationID == nil, state.policy.automaticImport else { throw Failure.staleConnection }
+        return .init(binding: binding, policy: state.policy)
+    }
+
+    func managedInbox() -> RemiloIOSGoogleCalendarManagedInbox { .init(directory: directory) }
+
     func review(_ discovery: Connection.ManagedDiscoveryResult, account: Account, policy: Policy? = nil,
-                calendarZoneID: String, replacing: UUID? = nil) throws -> Review {
+                calendarZoneID: String, replacing: UUID? = nil, freshInstallation: Bool = false) throws -> Review {
         guard account.connectionRevision > 0, account.accountGeneration > 0 else { throw Failure.invalidInput }
         guard discovery.account == account, discovery.preparingCreation == nil else { throw Failure.staleConnection }
         let state = try read()
@@ -159,6 +176,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let target: Target
         let name: String
         let zoneID: String
+        let recovering: Bool
         switch discovery.selection.outcome {
         case .incomplete: throw Rejection.discoveryIncomplete
         case .savedUnavailable: throw discovery.selection.savedFailure ?? Failure.remoteUnavailable
@@ -168,12 +186,14 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
             target = .create(zoneID: calendarZoneID)
             name = "Remilo"
             zoneID = calendarZoneID
+            recovering = false
         case .candidate:
             guard let candidate = discovery.selection.selected else { throw Rejection.selectionRequired }
             if let failure = candidate.failure { throw failure }
             target = .select(calendarID: candidate.record.id)
             name = candidate.record.name
             zoneID = candidate.record.zoneId
+            recovering = freshInstallation
         }
 
         if let pending = state.pendingOperationID, let entry = state.operations[pending], Self.sameOwner(entry.account, account) {
@@ -186,6 +206,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         }
         return Review(id: UUID(), account: account, scanID: discovery.scanID, policy: proposed, target: target,
                       calendarName: name, calendarZoneID: zoneID, replacesOperationID: replacing,
+                      initialImport: InitialImport(mode: recovering ? .none : proposed.importMode, recoveringExistingCalendar: recovering),
                       bindingRevision: state.bindingRevision, authEpoch: state.authEpoch, checkedAtMs: now())
     }
 
@@ -303,7 +324,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         entry.phase = .confirmed
         entry.confirmedCalendar = record
         state.binding = Binding(operationID: id, account: currentAccount, record: record,
-                                revision: entry.bindingRevision, authEpoch: entry.authEpoch)
+                                revision: entry.bindingRevision, authEpoch: entry.authEpoch, initialImport: entry.review.initialImport)
         state.policy = entry.review.policy
         state.policy.revision = try Self.advance(state.policy.revision)
         state.pendingOperationID = nil

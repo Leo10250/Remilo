@@ -13,6 +13,7 @@ xcrun swiftc -swift-version 5 -parse-as-library -o "$build_dir/checks" \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarManagedDiscovery.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarManagedSetupJournal.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarManagedSetup.swift \
+  modules/remilo-alarm/ios/RemiloIOSGoogleCalendarManagedInbox.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarConnection.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarRuntime.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarEvent.swift \

@@ -132,6 +132,7 @@ struct IOSDeliveryWork: Codable {
 
 struct IOSDatabase: Codable {
     var schemaVersion = 1
+    private var freshCalendarInstallation: Bool?
     var reminders: [String: IOSReminder] = [:]
     var lists: [String: IOSList] = [:]
     var settings = IOSSettings()
@@ -144,6 +145,14 @@ struct IOSDatabase: Codable {
     var purgedRoutines: Set<String>?
     private var routinePlans: [String: IOSRoutinePlan]?
     private var routineDates: [String: IOSRoutineSession]?
+
+    var isFreshCalendarInstallation: Bool { freshCalendarInstallation == true }
+
+    static func freshInstallation() -> Self {
+        var state = Self()
+        state.freshCalendarInstallation = true
+        return state
+    }
 
     var series: [String: IOSSeriesSegment] {
         get { seriesSegments ?? [:] }
@@ -186,13 +195,17 @@ enum IOSStore {
     private enum Failure: Error { case unsupportedSchema }
 
     static func read() throws -> IOSDatabase {
+        try read(at: url())
+    }
+
+    static func read(at stateURL: URL) throws -> IOSDatabase {
         do {
-            let data = try Data(contentsOf: url())
+            let data = try Data(contentsOf: stateURL)
             let header = try JSONDecoder().decode(Version.self, from: data)
             guard header.schemaVersion == 1 else { throw Failure.unsupportedSchema }
             return try JSONDecoder().decode(IOSDatabase.self, from: data)
         } catch CocoaError.fileReadNoSuchFile {
-            return IOSDatabase()
+            return IOSDatabase.freshInstallation()
         }
     }
 

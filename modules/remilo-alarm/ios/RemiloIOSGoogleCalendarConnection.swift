@@ -115,6 +115,19 @@ final class RemiloIOSGoogleCalendarConnection {
         }
     }
 
+    struct ManagedSample: Sendable {
+        enum Kind: Equatable, Sendable { case ongoingOrUpcoming, repeating, review(Event.Reason) }
+
+        struct Item: Sendable {
+            let title: String
+            let kind: Kind
+        }
+
+        let inspectedCount: Int
+        let complete: Bool
+        let items: [Item]
+    }
+
     enum ManagedCreationCheck: Sendable {
         case incomplete(resume: UUID?)
         case unconfirmed
@@ -664,14 +677,62 @@ final class RemiloIOSGoogleCalendarConnection {
     }
 
     func verifyManagedAdoption(calendarID: String, account: Import.Account,
+                               budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
                                canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> RemiloIOSCalendarOwnedRecord {
         let live = try requireAccess(account.connectionRevision)
         guard live.fence.importAccount == account else { throw Failure.staleConnection }
         let beforeRead = importReadPermission(account, canRead: canRead)
-        let record = try await readOwnedRecord(live, id: calendarID, budget: .init(), beforeRead: beforeRead)
+        let record = try await readOwnedRecord(live, id: calendarID, budget: budget, beforeRead: beforeRead)
         try requireCurrentImportRead(account, canRead: canRead)
         if let failure = ManagedDiscovery.eligibility(record, verifiedEmail: live.access.account.email) { throw failure }
         return record
+    }
+
+    func managedEventPage(_ request: RemiloIOSGoogleCalendarManagedInbox.Request, account: Import.Account,
+                          budget: RemiloIOSGoogleCalendarHTTP.Budget,
+                          beforeRead: @escaping @MainActor @Sendable () throws -> Void) async throws -> Transport.Page<Transport.Event> {
+        let live = try requireAccess(account.connectionRevision)
+        guard live.fence.importAccount == account else { throw Failure.staleConnection }
+        return try await read(live) { transport, access in
+            try await beforeRead()
+            return try await transport.events(access, calendarID: request.scope.binding.record.id,
+                listing: .incremental(since: request.since), next: request.next, budget: budget)
+        }
+    }
+
+    /// The setup review shows context from the first page. Its results neither
+    /// checkpoint incremental sync nor grant permission to import any event.
+    func sampleManagedCalendar(_ discovery: ManagedDiscoveryResult,
+                               canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> ManagedSample? {
+        guard discovery.preparingCreation == nil, let candidate = discovery.selection.selected,
+              candidate.failure == nil else { return nil }
+        let live = try requireAccess(discovery.account.connectionRevision)
+        guard live.fence.importAccount == discovery.account else { throw Failure.staleConnection }
+        try validateDiscovery(discovery.scanID, live: live, canRead: canRead)
+        let calendar = candidate.record
+        let beforeRead = importReadPermission(discovery.account, canRead: canRead)
+        let page = try await read(live) { transport, access in
+            try await beforeRead()
+            return try await transport.events(access, calendarID: calendar.id, listing: .incremental(since: nil), budget: .init())
+        }
+        try validateDiscovery(discovery.scanID, live: live, canRead: canRead)
+        let reviewedAt = Int64((now().timeIntervalSince1970 * 1_000).rounded())
+        var items: [ManagedSample.Item] = []
+        for event in page.items where !event.cancelled {
+            guard let row = Event.row(event, calendarZone: calendar.zoneId) else { continue }
+            let kind: ManagedSample.Kind
+            if let reason = row.unsupportedReason {
+                guard reason != .instanceRequiresMaster, reason != .removed else { continue }
+                kind = .review(reason)
+            } else if let schedule = row.fields?.schedule {
+                if schedule.recurrence != nil { kind = .repeating }
+                else if schedule.eventEndMs > reviewedAt { kind = .ongoingOrUpcoming }
+                else { continue }
+            } else { continue }
+            items.append(.init(title: String(row.title.prefix(200)), kind: kind))
+            if items.count == 5 { break }
+        }
+        return ManagedSample(inspectedCount: page.items.count, complete: page.next == nil, items: items)
     }
 
     private func validateDiscovery(_ id: UUID, live: LiveAccess, canRead: @MainActor () -> Bool) throws {

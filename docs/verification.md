@@ -19,7 +19,7 @@ in the relevant task or [backlog](backlog.md).
 | `npm run verify:android` | Spotless, native unit tests, module/app lint and bundled release assembly |
 | `sh verification/ios-engine/run.sh` (macOS) | Swift storage, commands, simulated delivery, civil recurrence and dated routine progress |
 | `sh verification/ios-archive/run.sh` and `sh verification/ios-media/run.sh` (macOS, after `pod install`) | Portable archives and normalized routine photos |
-| `sh verification/ios-calendar/run.sh` (macOS) | Protected Google account state, authorization fences, event normalization, and managed setup from discovery through recovery and binding |
+| `sh verification/ios-calendar/run.sh` (macOS) | Protected Google account state, authorization fences, event normalization, managed setup and resumable incoming scans |
 | `npm run verify:all` | Shared plus Android checks and assembly, with a private summary |
 | `npm run release:prepare` | Combined checks and existing-key signed assembly; no installation/publication |
 

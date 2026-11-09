@@ -22,17 +22,18 @@ enum ManagedSetupChecks {
         let connection = Setup.Connection(configuration: configuration, store: .init(directory: directory), http: http, now: now)
         let connected = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount) { _, _ in readOnly }
         let journal = Setup.Journal(directory: directory)
-        let setup = Setup(connection: connection, journal: journal, canUseForeground: { true }) { subject, purpose in
+        let setup = Setup(connection: connection, journal: journal, canUseForeground: { true }, freshInstallation: { true }, now: now) { subject, purpose in
             try await fixture.consent(subject, purpose)
         }
         let proposal = try await setup.preview(expectedRevision: connected.revision, zoneID: "UTC")
         guard let review = proposal.review, review.target == .create(zoneID: "UTC") else {
             preconditionFailure("Complete read-only discovery must precede a proposed creation")
         }
+        precondition(review.initialImport == .init(mode: .alarm, recoveringExistingCalendar: false))
         let id = UUID()
         let capture = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision)
         let replay = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision)
-        precondition(capture == replay && fixture.posts == 0 && fixture.consents.isEmpty)
+        precondition(capture == replay && proposal.sample == nil && fixture.posts == 0 && fixture.consents.isEmpty)
         do {
             _ = try await setup.advance(id, expectedRevision: connected.revision)
             preconditionFailure("A native retry must never request consent or send without a grant")
@@ -53,13 +54,42 @@ enum ManagedSetupChecks {
             guard let review = replacement.review, review.target == .select(calendarID: Fixture.calendarID) else {
                 preconditionFailure("Review the available calendar before adoption")
             }
+            precondition(review.initialImport == .init(mode: .none, recoveringExistingCalendar: true) && review.policy.importMode == .alarm,
+                         "Recovery starts silently and preserves the reviewed continuing default")
+            let upgrade = try journal.review(replacement.discovery, account: authorized.account, calendarZoneID: "UTC", replacing: id)
+            precondition(upgrade.initialImport == .init(mode: .alarm, recoveringExistingCalendar: false),
+                         "An existing installation uses its reviewed policy when adopting a calendar")
+            guard let sample = replacement.sample else { preconditionFailure("Show context for an existing calendar") }
+            precondition(sample.inspectedCount == 5 && !sample.complete && sample.items.map(\.title) == ["Upcoming", "Meeting"])
+            precondition(sample.items.map(\.kind) == [.ongoingOrUpcoming, .review(.meeting)] && fixture.samples == 1 && fixture.posts == 0,
+                         "A bounded sample skips ended events and instances without granting import authority")
             let selected = UUID()
             _ = try setup.capture(selected, reviewID: review.id, expectedRevision: revision)
             let result = try await setup.advance(selected, expectedRevision: revision)
             guard case .finished(let entry) = result, entry.phase == .confirmed else { preconditionFailure("Adopt the exact reviewed calendar") }
             let saved = try setup.view(expectedRevision: revision)
             let old = try setup.operation(id, expectedRevision: revision)
-            precondition(saved.binding?.record.id == Fixture.calendarID && old?.retired == true && fixture.posts == 0)
+            precondition(saved.binding?.record.id == Fixture.calendarID && saved.binding?.initialImport == review.initialImport &&
+                         old?.retired == true && fixture.posts == 0)
+            fixture.startIncoming()
+            let partial = try await setup.scanIncoming(expectedRevision: revision)
+            precondition(partial.pages == 10 && partial.continuation && !partial.initialComplete &&
+                         partial.pending.first?.importMode == .some(.none) && partial.pending.first?.initialRecovery == true)
+            let reopened = Setup(connection: connection, journal: .init(directory: directory), canUseForeground: { true }, now: now) { _, _ in
+                preconditionFailure("An authorized read pass never opens consent")
+            }
+            let completed = try await reopened.scanIncoming(expectedRevision: revision)
+            precondition(completed.pages == 2 && !completed.continuation && completed.initialComplete &&
+                         fixture.initialPages == Array(0..<12), "Resume the durable provider page without replaying the first ten")
+            let delta = try await reopened.scanIncoming(expectedRevision: revision)
+            let byID = Dictionary(uniqueKeysWithValues: delta.pending.map { ($0.eventID, $0) })
+            precondition(byID["recovered"]?.importMode == .some(.none) && byID["recovered"]?.etag == "\"v2\"" &&
+                         byID["continuing"]?.importMode == .some(.alarm) && byID["cancelled"]?.kind == .removed)
+            let expired = try await reopened.scanIncoming(expectedRevision: revision)
+            precondition(expired.pages == 0 && expired.continuation && expired.initialComplete && expired.pending == delta.pending)
+            let rebuilt = try await reopened.scanIncoming(expectedRevision: revision)
+            precondition(rebuilt.pending == delta.pending && fixture.deltaTokens == ["baseline", "next"],
+                         "Rebuild after token expiry without inferring removals from absent events")
             return
         }
 
@@ -94,6 +124,10 @@ enum ManagedSetupChecks {
         private var name: String?
         private var marker: String?
         private(set) var posts = 0
+        private(set) var samples = 0
+        private var incoming = false
+        private(set) var initialPages: [Int] = []
+        private(set) var deltaTokens: [String] = []
         private(set) var consents: [RemiloIOSGoogleCalendarPurpose] = []
 
         init(email: String, creation: RemiloIOSGoogleCalendarAccess) {
@@ -112,6 +146,8 @@ enum ManagedSetupChecks {
             self.marker = marker
         }
 
+        func startIncoming() { incoming = true }
+
         func send(_ request: URLRequest) throws -> HTTP.Response {
             guard let url = request.url else { throw Failure.invalidInput }
             if request.httpMethod == "POST", url.path == "/calendar/v3/calendars" {
@@ -128,9 +164,52 @@ enum ManagedSetupChecks {
             if url.path == "/calendar/v3/users/me/calendarList" {
                 return .init(status: 200, body: try JSONEncoder().encode(["items": record.map { [$0] } ?? []]))
             }
+            if url.lastPathComponent == "events" {
+                if incoming { return try incomingPage(url) }
+                precondition(url.deletingLastPathComponent().lastPathComponent == Self.calendarID && samples == 0)
+                samples += 1
+                let future = ["dateTime": "2030-01-01T10:00:00Z", "timeZone": "UTC"]
+                let futureEnd = ["dateTime": "2030-01-01T11:00:00Z", "timeZone": "UTC"]
+                let events: [[String: Any]] = [
+                    ["id": "past", "summary": "Ended", "start": ["dateTime": "2020-01-01T10:00:00Z", "timeZone": "UTC"],
+                     "end": ["dateTime": "2020-01-01T11:00:00Z", "timeZone": "UTC"]],
+                    ["id": "upcoming", "summary": "Upcoming", "start": future, "end": futureEnd],
+                    ["id": "meeting", "summary": "Meeting", "start": future, "end": futureEnd, "attendees": [["email": "other@example.test"]]],
+                    ["id": "instance", "summary": "Instance", "start": future, "end": futureEnd, "recurringEventId": "master"],
+                    ["id": "cancelled", "status": "cancelled"],
+                ]
+                return .init(status: 200, body: try JSONSerialization.data(withJSONObject: ["items": events, "nextPageToken": "more"]))
+            }
             precondition(url.lastPathComponent == Self.calendarID)
             guard let record else { return .init(status: 404, body: Data("{}".utf8)) }
             return .init(status: 200, body: try JSONEncoder().encode(record))
+        }
+
+        private func incomingPage(_ url: URL) throws -> HTTP.Response {
+            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            func event(_ id: String, version: String) -> [String: Any] {
+                ["id": id, "etag": "\"\(version)\"", "summary": id,
+                 "start": ["dateTime": "2030-01-01T10:00:00Z", "timeZone": "UTC"],
+                 "end": ["dateTime": "2030-01-01T11:00:00Z", "timeZone": "UTC"]]
+            }
+            let payload: [String: Any]
+            if let token = query.first(where: { $0.name == "syncToken" })?.value {
+                deltaTokens.append(token)
+                if token == "next" { return .init(status: 410, body: Data("{}".utf8)) }
+                precondition(token == "baseline")
+                payload = ["items": [event("recovered", version: "v2"), event("continuing", version: "v1"),
+                                     ["id": "cancelled", "status": "cancelled"]], "nextSyncToken": "next"]
+            } else if deltaTokens.last == "next" {
+                precondition(!query.contains { $0.name == "pageToken" })
+                payload = ["items": [], "nextSyncToken": "rebuilt"]
+            } else {
+                let page = query.first(where: { $0.name == "pageToken" })?.value.flatMap(Int.init) ?? 0
+                initialPages.append(page)
+                let tokenKey = page == 11 ? "nextSyncToken" : "nextPageToken"
+                payload = ["items": page == 0 ? [event("recovered", version: "v1")] : [],
+                           tokenKey: page == 11 ? "baseline" : String(page + 1)]
+            }
+            return .init(status: 200, body: try JSONSerialization.data(withJSONObject: payload))
         }
     }
 }

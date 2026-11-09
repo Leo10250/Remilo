@@ -8,10 +8,12 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     typealias Journal = RemiloIOSGoogleCalendarManagedSetupJournal
     typealias Account = Journal.Account
     typealias Failure = RemiloIOSGoogleCalendarFailure
+    typealias Inbox = RemiloIOSGoogleCalendarManagedInbox
 
     struct Preview: Sendable {
         let discovery: Connection.ManagedDiscoveryResult
         let review: Journal.Review?
+        let sample: Connection.ManagedSample?
     }
 
     enum Progress: Sendable {
@@ -23,15 +25,64 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     private let journal: Journal
     private let canUseForeground: @MainActor @Sendable () -> Bool
     private let authorize: Connection.Authorize
+    private let freshInstallation: @MainActor () throws -> Bool
+    private let inbox: Inbox
+    private let now: @Sendable () -> Date
     private var reviews: [Journal.Review] = []
     private var running: Set<UUID> = []
+    private var scanningIncoming = false
 
     init(connection: Connection, journal: Journal, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
+         freshInstallation: @escaping @MainActor () throws -> Bool = { false },
+         now: @escaping @Sendable () -> Date = { Date() },
          authorize: @escaping Connection.Authorize) {
         self.connection = connection
         self.journal = journal
         self.canUseForeground = canUseForeground
         self.authorize = authorize
+        self.freshInstallation = freshInstallation
+        self.inbox = journal.managedInbox()
+        self.now = now
+    }
+
+    /// One bounded foreground pass. The durable inbox stages source versions
+    /// for subsequent exact import or reconciliation, independent of delivery.
+    func scanIncoming(expectedRevision: Int) async throws -> Inbox.Progress {
+        guard !scanningIncoming else { throw Journal.Rejection.operationPending }
+        scanningIncoming = true
+        defer { scanningIncoming = false }
+        let account = try currentAccount(expectedRevision)
+        let scope = try journal.incomingScope(account)
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        let calendar = try await connection.verifyManagedAdoption(calendarID: scope.binding.record.id, account: account,
+                                                                  budget: budget, canRead: canUseForeground)
+        let fence: @MainActor @Sendable () throws -> Void = { [self] in
+            guard try currentAccount(expectedRevision) == account, try journal.incomingScope(account) == scope else {
+                throw Failure.staleConnection
+            }
+        }
+        try fence()
+        guard calendar.zoneId == scope.binding.record.zoneId else { throw Journal.Rejection.stalePreview }
+        var pages = 0
+        while pages < 10 {
+            let request = try inbox.request(scope)
+            let page: Connection.Transport.Page<Connection.Transport.Event>
+            do {
+                page = try await connection.managedEventPage(request, account: account, budget: budget, beforeRead: fence)
+            } catch Failure.budget {
+                try fence()
+                return try inbox.progress(scope, pages: pages, continuation: true)
+            } catch Failure.syncTokenExpired {
+                try fence()
+                try inbox.expire(request)
+                return try inbox.progress(scope, pages: pages, continuation: true)
+            }
+            try fence()
+            try inbox.record(page, request: request, now: Int64((now().timeIntervalSince1970 * 1_000).rounded()))
+            pages += 1
+            if page.next == nil { return try inbox.progress(scope, pages: pages, continuation: false) }
+        }
+        return try inbox.progress(scope, pages: pages, continuation: true)
     }
 
     func view(expectedRevision: Int) throws -> Journal.View {
@@ -62,18 +113,20 @@ final class RemiloIOSGoogleCalendarManagedSetup {
             expectedRevision: expectedRevision, resume: resume, savedID: state.binding?.record.id, selectedID: selectedID,
             replacingUnavailable: replacement, canRead: canUseForeground
         )
+        let sample = try await connection.sampleManagedCalendar(discovery, canRead: canUseForeground)
         guard try currentAccount(expectedRevision) == account, try journal.view(viewingAs: account) == state else {
             throw Journal.Rejection.stalePreview
         }
         guard discovery.selection.outcome == .create || discovery.selection.outcome == .candidate else {
-            return Preview(discovery: discovery, review: nil)
+            return Preview(discovery: discovery, review: nil, sample: nil)
         }
         let replacing = replacement ? state.pendingOperationID ?? state.binding?.operationID : nil
-        let review = try journal.review(discovery, account: account, policy: policy, calendarZoneID: zoneID, replacing: replacing)
+        let review = try journal.review(discovery, account: account, policy: policy, calendarZoneID: zoneID,
+                                        replacing: replacing, freshInstallation: freshInstallation())
         reviews.removeAll { $0.account != account }
         if reviews.count == 8 { reviews.removeFirst() }
         reviews.append(review)
-        return Preview(discovery: discovery, review: review)
+        return Preview(discovery: discovery, review: review, sample: sample)
     }
 
     func capture(_ id: UUID, reviewID: UUID, expectedRevision: Int) throws -> Journal.Entry {
