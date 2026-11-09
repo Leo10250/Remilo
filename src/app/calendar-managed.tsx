@@ -16,6 +16,7 @@ import { calendarError } from '../domain/calendar';
 import { calendarCaptureRejected } from '../domain/calendar-link';
 import { managedCalendarCapture } from '../domain/calendar-managed';
 import { deviceZone } from '../domain/time';
+import { modeLabel } from '../domain/presentation';
 import {
   retainedOriginParams,
   secondaryOriginRoute,
@@ -31,6 +32,7 @@ import {
   DateField,
   Disclosure,
   Page,
+  ReadOnlyRow,
   RowSupport,
   SettingRow,
   Sheet,
@@ -52,6 +54,9 @@ import { RootNotice } from '../ui/navigation';
 export default function ManagedCalendar() {
   'use no memo';
   const t = useTranslation();
+  const calendarTrigger = useRef<View>(null);
+  const alertTrigger = useRef<View>(null);
+  const googleTrigger = useRef<View>(null);
   const calendarAction = useCalendarAction();
   const params = useLocalSearchParams<
     OriginParams & {
@@ -304,6 +309,7 @@ export default function ManagedCalendar() {
   return (
     <Page
       compact
+      sectionSpacing
       title={title}
       onBack={back}
       footer={
@@ -358,17 +364,26 @@ export default function ManagedCalendar() {
           </Copy>
           {mode === 'setup' && (
             <ConnectedGroup title={t('m_4daf4f599e5c')}>
-              <SettingRow
-                intent="action"
-                icon="event"
+              <ReadOnlyRow
                 label={t('m_7da2bcb6bb6b')}
-                value={connection.data?.connected ? connection.data.email : t('m_0303e1824670')}
-                description={connection.data?.connected ? undefined : t('m_e3b0eada86d6')}
+                value={
+                  connection.data?.connected ? (
+                    connection.data.email
+                  ) : (
+                    <View style={{ gap: 4 }}>
+                      <Copy>{t('m_0303e1824670')}</Copy>
+                      <Copy muted size={14}>
+                        {t('m_e3b0eada86d6')}
+                      </Copy>
+                    </View>
+                  )
+                }
               />
               <SettingRow
                 intent="picker"
                 icon="event"
                 label={t('m_d1f78591d052')}
+                buttonRef={calendarTrigger}
                 value={
                   source?.name ||
                   (preview?.createCalendar
@@ -420,7 +435,9 @@ export default function ManagedCalendar() {
             <CalendarStatusCard
               title={t('m_39d845bcc1d7')}
               description={error}
-              warning
+              tone={
+                ['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason) ? 'danger' : 'warning'
+              }
               label={
                 ['NEEDS_ACCESS', 'AUTH', 'ACCOUNT_MISMATCH'].includes(reason)
                   ? t('m_b724411569e0')
@@ -497,9 +514,8 @@ export default function ManagedCalendar() {
                         intent="picker"
                         icon="alarm"
                         label={t('m_ab30d609b7e2')}
-                        value={
-                          policy.importMode === 'None' ? t('m_d1af410eb4d0') : policy.importMode
-                        }
+                        value={modeLabel(policy.importMode)}
+                        buttonRef={alertTrigger}
                         disabled={locked}
                         onPress={() => setSheet('alerts')}
                       />
@@ -532,6 +548,7 @@ export default function ManagedCalendar() {
                       intent="picker"
                       icon="notifications"
                       label={t('m_2d7a7719bc44')}
+                      buttonRef={googleTrigger}
                       value={
                         policy.disableGoogleReminders ? t('m_372ce595191c') : t('m_2856380acc3a')
                       }
@@ -629,6 +646,7 @@ export default function ManagedCalendar() {
         visible={sheet === 'calendar'}
         title={t('m_52b3ea7b7158')}
         onClose={() => setSheet(null)}
+        returnFocusRef={calendarTrigger}
       >
         <Copy muted>{t('m_383e35928dfb')}</Copy>
         <ConnectedGroup>
@@ -652,12 +670,13 @@ export default function ManagedCalendar() {
         visible={sheet === 'alerts'}
         title={t('m_3c4de8d775a1')}
         onClose={() => setSheet(null)}
+        returnFocusRef={alertTrigger}
       >
         <ConnectedGroup>
           {(['Alarm', 'Notification', 'None'] as const).map((importMode) => (
             <Choice
               key={importMode}
-              label={importMode === 'None' ? t('m_d1af410eb4d0') : importMode}
+              label={modeLabel(importMode)}
               selected={policy.importMode === importMode}
               onPress={() => {
                 updatePolicy({ importMode });
@@ -672,6 +691,7 @@ export default function ManagedCalendar() {
         visible={sheet === 'google'}
         title={t('m_2d7a7719bc44')}
         onClose={() => setSheet(null)}
+        returnFocusRef={googleTrigger}
       >
         <ConnectedGroup>
           <Choice

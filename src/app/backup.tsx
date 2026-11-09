@@ -10,20 +10,27 @@ import { View } from 'react-native';
 import type { ImportPreview } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { RestoreOperation } from '../domain/restore';
 import { retainedOriginParams, type OriginParams } from '../domain/navigation';
+import { BackupContentsDisclosure } from '../ui/backup-contents';
 import {
   ActionFeedback,
+  ActionPair,
   BottomActionBar,
   Button,
   Choice,
+  ConnectedGroup,
   Copy,
-  Disclosure,
-  Group,
   Page,
+  ReadOnlyRow,
+  RowSupport,
+  SectionStack,
   SettingRow,
 } from '../ui/components';
 import { engine, nativeAvailable } from '../ui/native';
 import { useAppearanceHold } from '../ui/theme';
 import { useAppearanceConfirmation } from '../ui/confirmation';
+import { space } from '../ui/tokens';
+
+type PreparedPreview = ImportPreview & { imageCount: number; fileName: string };
 
 export default function Backup() {
   'use no memo';
@@ -33,9 +40,8 @@ export default function Backup() {
   const confirm = useAppearanceConfirmation();
   const [phase, setPhase] = useState<'idle' | 'reading' | 'restoring'>('idle');
   const working = useRef(false);
-  const [json, setJson] = useState(''),
-    [imageCount, setImageCount] = useState(0);
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [json, setJson] = useState('');
+  const [preview, setPreview] = useState<PreparedPreview | null>(null);
   const [copies, setCopies] = useState<string[]>([]);
   const [previewLimit, setPreviewLimit] = useState(25);
   const [uncertain, setUncertain] = useState(false);
@@ -82,11 +88,11 @@ export default function Backup() {
         type: ['application/json', 'application/zip', 'text/plain', 'application/octet-stream'],
       });
       if (selected.canceled) return;
-      const next = await engine().prepareBackupImport(selected.assets[0].uri);
+      const asset = selected.assets[0];
+      const next = await engine().prepareBackupImport(asset.uri);
       if (json) void engine().releasePreparedImport(json);
       setJson(next.handle);
-      setImageCount(next.imageCount);
-      setPreview(next);
+      setPreview({ ...next, fileName: asset.name });
       setCopies([]);
       setPreviewLimit(25);
     } catch {
@@ -143,7 +149,7 @@ export default function Backup() {
       footer={
         preview ? (
           <BottomActionBar>
-            <View style={{ flex: 1, gap: 8 }}>
+            <View style={{ flex: 1, gap: space.sm }}>
               {(phase === 'restoring' || uncertain || feedback) && (
                 <ActionFeedback
                   loading={phase === 'restoring'}
@@ -151,162 +157,181 @@ export default function Backup() {
                   tone={phase === 'restoring' ? 'muted' : feedback?.tone}
                 />
               )}
-              <Button
-                label={
-                  phase === 'restoring'
-                    ? t('m_5a4918e0201c')
-                    : uncertain
-                      ? t('m_24be300a8083')
-                      : t('m_6da1c554212c')
-                }
-                disabled={!nativeAvailable || busy}
-                onPress={() => void restore()}
-              />
-              <Button
-                label={t('m_f657ed08c403')}
-                variant="secondary"
-                disabled={busy || uncertain}
-                onPress={() => {
-                  if (json) void engine().releasePreparedImport(json);
-                  setPreview(null);
-                  setJson('');
-                  setCopies([]);
-                  setFeedback(undefined);
-                }}
-              />
+              <ActionPair>
+                <Button
+                  label={
+                    phase === 'restoring'
+                      ? t('m_5a4918e0201c')
+                      : uncertain
+                        ? t('m_24be300a8083')
+                        : t('m_6da1c554212c')
+                  }
+                  disabled={!nativeAvailable || busy}
+                  onPress={() => void restore()}
+                />
+                <Button
+                  label={t('m_f657ed08c403')}
+                  variant="secondary"
+                  disabled={busy || uncertain}
+                  onPress={() => {
+                    if (json) void engine().releasePreparedImport(json);
+                    setPreview(null);
+                    setJson('');
+                    setCopies([]);
+                    setFeedback(undefined);
+                  }}
+                />
+              </ActionPair>
             </View>
           </BottomActionBar>
         ) : undefined
       }
     >
-      <Copy muted>{t('m_1034ca31a970')}</Copy>
-      <Copy muted>{t('backup_photo_hint')}</Copy>
-      {!nativeAvailable && <Copy muted>{t('m_fd7ada1a6f59')}</Copy>}
-      <Group>
-        <SettingRow
-          intent="action"
-          label={
-            phase === 'reading'
-              ? t('m_e72fbb36b74a')
-              : preview
-                ? t('m_3d56dc86536d')
-                : t('m_5eba2dbd12f9')
-          }
-          icon="download"
-          disabled={!nativeAvailable || busy || uncertain}
-          onPress={() => void choose()}
-        />
-      </Group>
-      {(!preview || phase === 'reading') && (
-        <ActionFeedback
-          loading={phase === 'reading'}
-          message={phase === 'reading' ? t('m_e72fbb36b74a') : feedback?.message}
-          tone={phase === 'reading' ? 'muted' : feedback?.tone}
-        />
-      )}
-      {preview && (
-        <>
-          <Copy size={20}>
-            {preview.count} {t('m_5e9e09782c22')}
-          </Copy>
-          {!!imageCount && <Copy muted>{t('backup_photos', { count: imageCount })}</Copy>}
-          <Copy muted>{t('m_6377003ff6b8')}</Copy>
-          <Copy muted size={14}>
-            {t('m_55163370572c')}
-          </Copy>
-          {!!preview.lists?.length && (
-            <Group title={t('m_cd0502b3a59a', { arg0: String(preview.lists.length) })}>
-              <Copy muted size={14}>
-                {t('m_d028075f15ca')}
-              </Copy>
-              {preview.lists.map((list) => (
-                <SettingRow
-                  intent="action"
-                  key={list.id}
-                  label={list.name}
-                  value={
-                    list.restoredName !== list.name
-                      ? t('m_488e1fe2c9c6', { arg0: String(list.restoredName) })
-                      : list.conflict
-                        ? t('m_60ab6223678c')
-                        : t('m_e8bf5cca37b0')
-                  }
-                />
-              ))}
-            </Group>
-          )}
-          <Group title={t('m_b13d60535b1f')}>
-            <Copy muted size={14}>
-              {t('m_63a3c9c9cac7')}
-            </Copy>
-            <Copy muted size={14}>
-              {t('m_dbcf624f9669')}
-            </Copy>
-            {preview.items.slice(0, previewLimit).map((item) => (
-              <View key={item.id} style={{ paddingVertical: 12, gap: 8 }}>
-                <Copy heading>{item.title}</Copy>
-                <Copy muted size={14}>
-                  {item.calendarCollision
-                    ? t('m_6bc9b1c63bb2')
-                    : item.conflict
-                      ? t('m_1a3503399c91')
-                      : t('m_9e8f821a26a5')}
-                </Copy>
-                {item.calendarCollision && <Copy muted>{t('m_380f30e3f29a')}</Copy>}
-                <Copy muted size={14}>
-                  {item.futureAlert ? t('m_f2131f6ed0be') : t('m_ac8de684100b')}
-                </Copy>
-                {item.conflict &&
-                  (busy || uncertain ? (
-                    <Copy>
-                      {copies.includes(item.id) ? t('m_e9aae96f529b') : t('m_ff3222a89b5a')}
-                    </Copy>
-                  ) : (
-                    <View
-                      accessibilityRole="radiogroup"
-                      accessibilityLabel={t('m_6c0ea235fd27', { arg0: String(item.title) })}
-                    >
-                      <Choice
-                        label={t('m_ff3222a89b5a')}
-                        selected={!copies.includes(item.id)}
-                        onPress={() =>
-                          setCopies((current) => current.filter((id) => id !== item.id))
-                        }
-                      />
-                      <Choice
-                        label={t('m_e9aae96f529b')}
-                        selected={copies.includes(item.id)}
-                        onPress={() =>
-                          setCopies((current) =>
-                            current.includes(item.id) ? current : [...current, item.id],
-                          )
-                        }
-                      />
-                    </View>
-                  ))}
+      <SectionStack>
+        <View style={{ gap: space.sm }}>
+          <Copy muted>{t('m_1034ca31a970')}</Copy>
+          <Copy muted>{t('backup_photo_hint')}</Copy>
+          {!nativeAvailable && <Copy muted>{t('m_fd7ada1a6f59')}</Copy>}
+        </View>
+        <ConnectedGroup title={t('ui_backup_file')}>
+          <SettingRow
+            key="choose"
+            intent="action"
+            label={
+              phase === 'reading'
+                ? t('m_e72fbb36b74a')
+                : preview
+                  ? t('m_3d56dc86536d')
+                  : t('m_5eba2dbd12f9')
+            }
+            icon="download"
+            disabled={!nativeAvailable || busy || uncertain}
+            onPress={() => void choose()}
+          />
+          <BackupContentsDisclosure key="contents" />
+        </ConnectedGroup>
+        {(!preview || phase === 'reading') && (
+          <ActionFeedback
+            loading={phase === 'reading'}
+            message={phase === 'reading' ? t('m_e72fbb36b74a') : feedback?.message}
+            tone={phase === 'reading' ? 'muted' : feedback?.tone}
+          />
+        )}
+        {preview && (
+          <>
+            <ConnectedGroup title={t('ui_backup_restore_review')}>
+              <View style={{ paddingTop: space.md }}>
+                <RowSupport>
+                  <Copy heading>{preview.fileName}</Copy>
+                  {preview.count > 0 && (
+                    <Copy>{t('ui_backup_review_count', { count: preview.count })}</Copy>
+                  )}
+                  {!!preview.imageCount && (
+                    <Copy muted>{t('backup_photos', { count: preview.imageCount })}</Copy>
+                  )}
+                  <Copy muted size={14}>
+                    {t('m_6377003ff6b8')}
+                  </Copy>
+                  <Copy muted size={14}>
+                    {t('m_55163370572c')}
+                  </Copy>
+                </RowSupport>
               </View>
-            ))}
-          </Group>
-          {previewLimit < preview.items.length && (
-            <Button
-              label={t('m_433dbdeec045')}
-              variant="secondary"
-              onPress={() => setPreviewLimit((current) => current + 25)}
-            />
-          )}
-        </>
-      )}
-      <Disclosure title={t('m_6b92feecd7ad')}>
-        <Copy muted size={14}>
-          {t('m_743811479f87')}
-        </Copy>
-        <Copy muted size={14}>
-          {t('m_89abfb77e41f')}
-        </Copy>
-        <Copy muted size={14}>
-          {t('m_4948269089d8')}
-        </Copy>
-      </Disclosure>
+            </ConnectedGroup>
+            {!!preview.lists?.length && (
+              <ConnectedGroup
+                title={t('m_cd0502b3a59a', { arg0: String(preview.lists.length) })}
+                footer={
+                  <Copy muted size={14}>
+                    {t('m_d028075f15ca')}
+                  </Copy>
+                }
+              >
+                {preview.lists.map((list) => (
+                  <ReadOnlyRow
+                    key={list.id}
+                    label={list.name}
+                    value={
+                      list.restoredName !== list.name
+                        ? t('m_488e1fe2c9c6', { arg0: String(list.restoredName) })
+                        : list.conflict
+                          ? t('m_60ab6223678c')
+                          : t('m_e8bf5cca37b0')
+                    }
+                  />
+                ))}
+              </ConnectedGroup>
+            )}
+            <ConnectedGroup
+              title={t('m_b13d60535b1f')}
+              footer={
+                <>
+                  <Copy muted size={14}>
+                    {t('m_63a3c9c9cac7')}
+                  </Copy>
+                  <Copy muted size={14}>
+                    {t('m_dbcf624f9669')}
+                  </Copy>
+                </>
+              }
+            >
+              {preview.items.slice(0, previewLimit).map((item) => (
+                <View key={item.id} style={{ paddingTop: space.md }}>
+                  <RowSupport>
+                    <Copy heading>{item.title}</Copy>
+                    <Copy muted size={14}>
+                      {item.calendarCollision
+                        ? t('m_6bc9b1c63bb2')
+                        : item.conflict
+                          ? t('m_1a3503399c91')
+                          : t('m_9e8f821a26a5')}
+                    </Copy>
+                    {item.calendarCollision && <Copy muted>{t('m_380f30e3f29a')}</Copy>}
+                    <Copy muted size={14}>
+                      {item.futureAlert ? t('m_f2131f6ed0be') : t('m_ac8de684100b')}
+                    </Copy>
+                    {item.conflict &&
+                      (busy || uncertain ? (
+                        <Copy>
+                          {copies.includes(item.id) ? t('m_e9aae96f529b') : t('m_ff3222a89b5a')}
+                        </Copy>
+                      ) : (
+                        <View
+                          accessibilityRole="radiogroup"
+                          accessibilityLabel={t('m_6c0ea235fd27', { arg0: String(item.title) })}
+                        >
+                          <Choice
+                            label={t('m_ff3222a89b5a')}
+                            selected={!copies.includes(item.id)}
+                            onPress={() =>
+                              setCopies((current) => current.filter((id) => id !== item.id))
+                            }
+                          />
+                          <Choice
+                            label={t('m_e9aae96f529b')}
+                            selected={copies.includes(item.id)}
+                            onPress={() =>
+                              setCopies((current) =>
+                                current.includes(item.id) ? current : [...current, item.id],
+                              )
+                            }
+                          />
+                        </View>
+                      ))}
+                  </RowSupport>
+                </View>
+              ))}
+            </ConnectedGroup>
+            {previewLimit < preview.items.length && (
+              <Button
+                label={t('m_433dbdeec045')}
+                variant="secondary"
+                onPress={() => setPreviewLimit((current) => current + 25)}
+              />
+            )}
+          </>
+        )}
+      </SectionStack>
     </Page>
   );
 }

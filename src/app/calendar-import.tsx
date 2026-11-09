@@ -3,6 +3,7 @@ import { useLocalizedState, useTranslation } from '../localization/react';
 import { useQuery } from '@tanstack/react-query';
 import { router, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { View } from 'react-native';
 import type {
   CalendarEventPage,
   OwnedCalendar,
@@ -23,11 +24,14 @@ import {
 } from '../domain/calendar-import';
 import {
   ActionFeedback,
+  ActionPair,
   Button,
+  Choice,
   ConnectedGroup,
   Copy,
   DateField,
   Page,
+  ReadOnlyRow,
   SettingRow,
   Sheet,
 } from '../ui/components';
@@ -38,6 +42,7 @@ export default function CalendarImportBrowser() {
   'use no memo';
   const t = useTranslation();
   const { scheduleDateTime, formatDate } = useTimeFormatting();
+  const sourceTrigger = useRef<View>(null);
   const rawParams = useLocalSearchParams<
       OriginParams & { managedHistory?: string; calendarId?: string }
     >(),
@@ -202,6 +207,7 @@ export default function CalendarImportBrowser() {
   };
   return (
     <Page
+      sectionSpacing
       title={t('m_357bcb0ce661')}
       scrollKey="calendar-import"
       onBack={() =>
@@ -217,8 +223,7 @@ export default function CalendarImportBrowser() {
         />
       )}
       <ConnectedGroup title={t('m_3a7d9a6a0b83')}>
-        <SettingRow
-          intent="action"
+        <ReadOnlyRow
           key="account"
           label={t('m_7da2bcb6bb6b')}
           value={connection.data?.email || t('m_0303e1824670')}
@@ -226,8 +231,10 @@ export default function CalendarImportBrowser() {
         <SettingRow
           intent="picker"
           key="calendar"
+          icon="event"
           label={t('m_cd51d907caec')}
           value={calendar?.name || t('m_28d7adf0d759')}
+          buttonRef={sourceTrigger}
           disabled={busy || !connection.data?.connected}
           onPress={() => void loadCalendars()}
         />
@@ -252,36 +259,39 @@ export default function CalendarImportBrowser() {
       </ConnectedGroup>
       <Copy muted>{t('m_84b365775dfd')}</Copy>
       {!range.valid && <ActionFeedback tone="warning" message={t('m_58f5140118ac')} />}
-      <Button
-        label={t('m_8d71009f1092')}
-        disabled={busy || !calendar || !connection.data?.connected || !range.valid}
-        onPress={() => void load()}
-      />
-      {calendar && loaded && resultKey === filterKey && (
+      <ActionPair>
         <Button
-          label={t('m_3843add32c04')}
-          variant="secondary"
-          disabled={busy || !range.valid || !connection.data?.connected}
-          onPress={() =>
-            router.push({
-              pathname: '/calendar-import-all',
-              params: {
-                ...params,
-                calendarId: calendar.id,
-                from: range.from,
-                until: range.until,
-                managedHistory: rawParams.managedHistory,
-              },
-            } as Href)
-          }
+          label={t('m_8d71009f1092')}
+          disabled={busy || !calendar || !connection.data?.connected || !range.valid}
+          onPress={() => void load()}
         />
-      )}
+        {calendar && loaded && resultKey === filterKey && (
+          <Button
+            label={t('m_3843add32c04')}
+            variant="secondary"
+            disabled={busy || !range.valid || !connection.data?.connected}
+            onPress={() =>
+              router.push({
+                pathname: '/calendar-import-all',
+                params: {
+                  ...params,
+                  calendarId: calendar.id,
+                  from: range.from,
+                  until: range.until,
+                  managedHistory: rawParams.managedHistory,
+                },
+              } as Href)
+            }
+          />
+        )}
+      </ActionPair>
       {!!error && <ActionFeedback message={error} tone="warning" />}
       {busy && <ActionFeedback loading message={t('m_5136714ef7f2')} />}
       {loaded && resultKey === filterKey && visibleRows.length === 0 && (
         <Copy>
-          {t('m_7474f431c818')}
-          {visibleCursor ? t('m_c0da945b464e') : t('m_df0e214cb7cf')}
+          {[t('m_7474f431c818'), t(visibleCursor ? 'm_c0da945b464e' : 'm_df0e214cb7cf')]
+            .map((part) => part.trim())
+            .join(' ')}
         </Copy>
       )}
       {!!visibleRows.length && (
@@ -334,6 +344,7 @@ export default function CalendarImportBrowser() {
       <Sheet
         title={t('m_f2b326341a44')}
         visible={selecting}
+        returnFocusRef={sourceTrigger}
         onClose={() => {
           if (!busy) setSelecting(false);
         }}
@@ -341,11 +352,11 @@ export default function CalendarImportBrowser() {
         <Copy muted>{t('m_8c7cc2cc4d98')}</Copy>
         <ConnectedGroup>
           {calendars.map((row) => (
-            <SettingRow
-              intent="action"
+            <Choice
               key={row.id}
               label={row.name}
               description={row.zoneId}
+              selected={calendar?.id === row.id}
               disabled={busy}
               onPress={() => {
                 setCalendar(row);

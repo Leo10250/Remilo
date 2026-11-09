@@ -19,7 +19,6 @@ import {
   AtmosphericHeader,
   Button,
   Copy,
-  Field,
   IconButton,
   Page,
   QueryState,
@@ -35,7 +34,12 @@ import {
   type BrowseFilterField,
   type BrowseFilters,
 } from '../domain/browse-filters';
-import { BrowseFilterButton, BrowseFilterChips, BrowseFilterSheet } from '../ui/browse-filters';
+import {
+  BrowseControls,
+  BrowseFilterButton,
+  BrowseFilterChips,
+  BrowseFilterSheet,
+} from '../ui/browse-filters';
 import {
   CommandRecovery,
   notifyTrash,
@@ -50,6 +54,7 @@ import { PurgeConfirmation } from '../ui/purge-confirmation';
 import { useRootState } from '../ui/root-state';
 import { useAppearanceHold } from '../ui/theme';
 import { routineDayKeys } from '../ui/routine-editor';
+import { space, typography } from '../ui/tokens';
 
 export default function Records() {
   'use no memo';
@@ -99,6 +104,7 @@ function RecordsContent({
     [trashHelpOpen, setTrashHelpOpen] = useState(false);
   const filterOpen = filterDraft !== null,
     searchInput = useRef<TextInput>(null),
+    filterTrigger = useRef<View>(null),
     searchFocusRequested = useRef(false);
   const active = useRef(false);
   useFocusEffect(
@@ -152,6 +158,12 @@ function RecordsContent({
     setMenuOpen(false);
     bulk.clear();
   };
+  const closeSearch = () => {
+    searchFocusRequested.current = false;
+    searchInput.current?.blur();
+    Keyboard.dismiss();
+    setSearching(false);
+  };
   const back = useDestinationNavigation(
     destination,
     () => {
@@ -181,10 +193,7 @@ function RecordsContent({
         return true;
       }
       if (searching) {
-        searchFocusRequested.current = false;
-        searchInput.current?.blur();
-        Keyboard.dismiss();
-        setSearching(false);
+        closeSearch();
         return true;
       }
       return false;
@@ -371,13 +380,15 @@ function RecordsContent({
   };
   const emptyMessage = !nativeAvailable
     ? t('m_2ff2d9a672c5')
-    : search || (!scoped && listId !== undefined)
-      ? t('m_75bf15d2c28d')
-      : view === 'deleted'
-        ? t('m_4ff140671613')
-        : appliedFilters.includeSkipped
-          ? t('m_e6d3bf1ca046')
-          : t('m_30a5147eb7de');
+    : search.trim()
+      ? t('ui_search_empty')
+      : !scoped && listId !== undefined
+        ? t('m_75bf15d2c28d')
+        : view === 'deleted'
+          ? t('m_4ff140671613')
+          : appliedFilters.includeSkipped
+            ? t('m_e6d3bf1ca046')
+            : t('m_30a5147eb7de');
   return (
     <Page
       title={title}
@@ -396,29 +407,16 @@ function RecordsContent({
           onBack={guardedBack}
           actions={
             <>
-              {!selecting && (
+              {!selecting && !searching && (
                 <IconButton
                   icon="search"
-                  label={
-                    searching ? t('m_1655ed829a84') : t('m_fc9f7623b53e') + title.toLowerCase()
-                  }
+                  label={t('m_be16218d3058')}
                   disabled={guarded}
                   onPress={() => {
                     if (isGuarded() || selectingRef.current) return;
-                    Keyboard.dismiss();
-                    searchFocusRequested.current = !searching;
-                    if (searching) searchInput.current?.blur();
-                    setSearching(!searching);
+                    searchFocusRequested.current = true;
+                    setSearching(true);
                   }}
-                />
-              )}
-              {(view === 'completed' || !scoped) && !selecting && (
-                <BrowseFilterButton
-                  presentation="icon"
-                  count={chips.length}
-                  disabled={guarded}
-                  expanded={filterOpen}
-                  onPress={openFilters}
                 />
               )}
               <IconButton
@@ -508,39 +506,29 @@ function RecordsContent({
         </>
       }
     >
-      {searching && (
-        <View style={{ gap: 8 }}>
-          <Field
-            inputRef={searchInput}
-            label={t('m_fc9f7623b53e') + title.toLowerCase()}
-            placeholder={t('m_2796b78f7c5e')}
-            value={search}
-            onChangeText={(value) => {
-              if (!isGuarded() && !selectingRef.current) setSearch(value);
-            }}
-            editable={!guarded && !selecting}
-          />
-          {!!search && (
-            <Button
-              label={t('m_3b7ea51793e9')}
-              variant="secondary"
-              disabled={guarded || selecting}
-              onPress={() => {
-                if (!isGuarded() && !selectingRef.current) setSearch('');
-              }}
-            />
-          )}
-        </View>
-      )}
-      {!!search && !searching && (
-        <SettingRow
-          intent="action"
-          label={t('m_3363e5f143b7') + search}
-          value={t('m_3b7ea51793e9')}
+      {(searching || !!search || ((view === 'completed' || !scoped) && !selecting)) && (
+        <BrowseControls
+          searching={searching}
+          query={search}
+          inputRef={searchInput}
           disabled={guarded || selecting}
-          onPress={() => {
-            if (!isGuarded() && !selectingRef.current) setSearch('');
+          onChangeQuery={(value) => {
+            if (!isGuarded() && !selectingRef.current) setSearch(value);
           }}
+          onExitSearch={() => {
+            if (!isGuarded() && !selectingRef.current) closeSearch();
+          }}
+          filter={
+            (view === 'completed' || !scoped) && !selecting ? (
+              <BrowseFilterButton
+                buttonRef={filterTrigger}
+                count={chips.length}
+                disabled={guarded}
+                expanded={filterOpen}
+                onPress={openFilters}
+              />
+            ) : undefined
+          }
         />
       )}
       {scoped && (
@@ -565,6 +553,11 @@ function RecordsContent({
         </Copy>
       )}
       {selecting && <BulkRecovery action={bulk} />}
+      {(searching || !!search.trim()) && (
+        <Copy heading size={typography.heading}>
+          {t('ui_search_results')}
+        </Copy>
+      )}
       {!!query.error && !!items.length ? (
         <View style={{ gap: 8 }}>
           <ActionFeedback message={t('m_3d982a3fc277')} tone="danger" />
@@ -588,45 +581,33 @@ function RecordsContent({
           }}
         />
       )}
-      {!items.length && !!search && (
-        <Button
-          label={t('m_3b7ea51793e9')}
-          variant="secondary"
-          disabled={guarded || selecting}
-          onPress={() => {
-            if (!isGuarded() && !selectingRef.current) setSearch('');
-          }}
-        />
+      {!!items.length && (
+        <View style={{ gap: space.md }}>
+          {items.map((item) => (
+            <ReminderRow
+              key={item.id}
+              item={item}
+              onOpen={() => open(item)}
+              onMore={() => {
+                if (!isGuarded()) setSelected(item);
+              }}
+              onTrash={
+                !selecting && view === 'completed' ? () => update(item, 'Delete') : undefined
+              }
+              restore={view === 'deleted'}
+              busy={guarded}
+              selection={
+                selecting
+                  ? {
+                      selected: selectionIds.includes(item.id),
+                      onToggle: () => toggleSelection(item.id),
+                    }
+                  : undefined
+              }
+            />
+          ))}
+        </View>
       )}
-      {!items.length && !!chips.length && (
-        <Button
-          label={t('m_10afa98480f2')}
-          variant="secondary"
-          disabled={guarded || selecting}
-          onPress={resetFilters}
-        />
-      )}
-      {items.map((item) => (
-        <ReminderRow
-          key={item.id}
-          item={item}
-          onOpen={() => open(item)}
-          onMore={() => {
-            if (!isGuarded()) setSelected(item);
-          }}
-          onTrash={!selecting && view === 'completed' ? () => update(item, 'Delete') : undefined}
-          restore={view === 'deleted'}
-          busy={guarded}
-          selection={
-            selecting
-              ? {
-                  selected: selectionIds.includes(item.id),
-                  onToggle: () => toggleSelection(item.id),
-                }
-              : undefined
-          }
-        />
-      ))}
       {query.hasNextPage && (
         <Button
           label={
@@ -721,6 +702,7 @@ function RecordsContent({
         )}
       </Sheet>
       <BrowseFilterSheet
+        returnFocusRef={filterTrigger}
         title={t('m_167cef2f2f60') + title.toLowerCase()}
         kind={view}
         draft={filterDraft}

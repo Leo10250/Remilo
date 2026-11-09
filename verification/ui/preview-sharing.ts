@@ -5,8 +5,9 @@ const reviewShare =
     : new URLSearchParams(window.location.search).get('reviewShare');
 let attempts = 0;
 export async function isAvailableAsync() {
-  return reviewShare === 'failed-once';
+  return reviewShare === 'failed-once' || reviewShare === 'available';
 }
 export async function shareAsync() {
-  if (attempts++ === 0) throw new Error('Synthetic preview: share sheet unavailable.');
+  if (reviewShare === 'failed-once' && attempts++ === 0)
+    throw new Error('Synthetic preview: share sheet unavailable.');
 }

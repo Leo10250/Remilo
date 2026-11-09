@@ -29,6 +29,7 @@ import {
   Icon,
   Page,
   QueryState,
+  ReadOnlyRow,
   SettingRow,
   Status,
 } from '../ui/components';
@@ -262,6 +263,7 @@ export default function CalendarManagement() {
   const timing = item ? detailSchedulePresentation(item) : null;
   return (
     <Page
+      sectionSpacing
       compact
       title={t('m_f2cef547cca3')}
       scrollKey={'calendar-manage:' + id}
@@ -311,7 +313,10 @@ export default function CalendarManagement() {
           )}
           {status && (
             <CalendarStatusCard
-              {...status}
+              title={status.title}
+              description={status.description}
+              tone={status.tone}
+              icon={status.paused ? 'pause' : undefined}
               label={
                 status.action === 'Connect'
                   ? t('m_b724411569e0')
@@ -346,10 +351,11 @@ export default function CalendarManagement() {
               }
               busy={checking || guarded}
             >
-              {status.title === 'Automatic sync on' && link?.successfulAtMs != null && (
+              {status.lastSyncedAtMs != null && (
                 <Copy muted size={14}>
-                  {t('m_52f55f8ae5c2')}
-                  {scheduleDateTime(link.successfulAtMs)}
+                  {t('ui_calendar_last_successful_sync', {
+                    time: scheduleDateTime(status.lastSyncedAtMs),
+                  })}
                 </Copy>
               )}
             </CalendarStatusCard>
@@ -362,7 +368,7 @@ export default function CalendarManagement() {
                   <Copy muted>{calendarReviewReason(disposition.data.message)}</Copy>
                 )}
                 {disposition.data.calendarName && <Copy>{disposition.data.calendarName}</Copy>}
-                {active && disposition.data.state === 'LocalOnly' && managed.data?.calendarId && (
+                {active && disposition.data.state === 'LocalOnly' && !!managed.data?.calendarId && (
                   <Button
                     label={t('m_657efab6d3ac')}
                     variant="secondary"
@@ -488,35 +494,44 @@ export default function CalendarManagement() {
                 icon="info"
                 forceOpen={checking || syncRequest.working || syncRequest.unknown}
               >
-                <Copy muted size={14}>
-                  {link.calendarName} · {link.accountEmail}
-                </Copy>
-                <Copy muted size={14}>
-                  {item.zoneId || t('m_c32bf24e99e7')}
-                </Copy>
+                {!!link.calendarName && (
+                  <ReadOnlyRow compact label={t('m_d5d0a30b517e')} value={link.calendarName} />
+                )}
+                {!!link.accountEmail && (
+                  <ReadOnlyRow compact label={t('m_7da2bcb6bb6b')} value={link.accountEmail} />
+                )}
+                <ReadOnlyRow
+                  compact
+                  label={t('m_b9fe1464783e')}
+                  value={item.zoneId || t('m_c32bf24e99e7')}
+                />
                 {link.successfulAtMs != null && (
-                  <Copy muted size={14}>
-                    {t('m_07330d3b86d7')}
-                    {scheduleDateTime(link.successfulAtMs)}
-                  </Copy>
+                  <ReadOnlyRow
+                    compact
+                    label={t('m_07330d3b86d7')}
+                    value={scheduleDateTime(link.successfulAtMs)}
+                  />
                 )}
                 {link.observedAtMs != null && (
-                  <Copy muted size={14}>
-                    {t('m_3ca2b1323cd4')}
-                    {scheduleDateTime(link.observedAtMs)}
-                  </Copy>
+                  <ReadOnlyRow
+                    compact
+                    label={t('m_3ca2b1323cd4')}
+                    value={scheduleDateTime(link.observedAtMs)}
+                  />
                 )}
                 {!!link.googleUpdated && Number.isFinite(Date.parse(link.googleUpdated)) && (
-                  <Copy muted size={14}>
-                    {t('m_9fa139adaa61')}
-                    {scheduleDateTime(Date.parse(link.googleUpdated))}
-                  </Copy>
+                  <ReadOnlyRow
+                    compact
+                    label={t('m_9fa139adaa61')}
+                    value={scheduleDateTime(Date.parse(link.googleUpdated))}
+                  />
                 )}
                 {link.lastCheckAttemptAtMs != null && (
-                  <Copy muted size={14}>
-                    {t('m_57bbbcf15421')}
-                    {scheduleDateTime(link.lastCheckAttemptAtMs)}
-                  </Copy>
+                  <ReadOnlyRow
+                    compact
+                    label={t('m_57bbbcf15421')}
+                    value={scheduleDateTime(link.lastCheckAttemptAtMs)}
+                  />
                 )}
                 {!!link.lastCheckErrorCode && (
                   <Copy muted size={14}>

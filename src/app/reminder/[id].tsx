@@ -37,6 +37,7 @@ import { canPostponeReminder } from '../../domain/postpone';
 import { PostponeHost, usePostponeController } from '../../ui/postpone-host';
 import {
   ActionFeedback,
+  ActionPair,
   BottomActionBar,
   Button,
   ConnectedGroup,
@@ -51,7 +52,7 @@ import {
 } from '../../ui/components';
 
 import { CommandError, engine, nativeAvailable, useCommand, useSettings } from '../../ui/native';
-import { typography } from '../../ui/tokens';
+import { space, typography } from '../../ui/tokens';
 import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
@@ -86,7 +87,7 @@ type Feedback = { message: string; tone: Tone };
 export default function ReminderDetails() {
   'use no memo';
   const t = useTranslation();
-  const { formatDate, formatTime, scheduleDateTime, alertPresentation } = useTimeFormatting();
+  const { formatDate, formatTime, scheduleDateTime } = useTimeFormatting();
   const params = useLocalSearchParams<OriginParams & { id: string; action?: string }>(),
     { id, action } = params;
   const origin = useMemo(
@@ -154,7 +155,7 @@ export default function ReminderDetails() {
   const [unlinkBusy, setUnlinkBusy] = useState(false),
     [unlinkUncertain, setUnlinkUncertain] = useState(false);
   const scale = useFontScaleOverride(),
-    { fontScale } = useWindowDimensions();
+    { fontScale, width } = useWindowDimensions();
   const confirm = useAppearanceConfirmation();
   const itemId = item?.id,
     segmentId = item?.segmentId;
@@ -171,6 +172,7 @@ export default function ReminderDetails() {
   const family = families.data?.find((candidate) => candidate.seriesId === series.data?.seriesId);
   const scopeTrigger = useRef<View>(null),
     postponeTrigger = useRef<View>(null),
+    menuTrigger = useRef<View>(null),
     focused = useIsFocused();
   const postponeAction = usePostponeController();
   const [scope, setScope] = useState(action === 'edit'),
@@ -384,6 +386,7 @@ export default function ReminderDetails() {
             <IconButton
               icon="more_vert"
               label={t('m_3ddd2c824c07')}
+              buttonRef={menuTrigger}
               disabled={command.isPending || uncertain}
               onPress={() => setMenu(true)}
             />
@@ -402,7 +405,7 @@ export default function ReminderDetails() {
                       {t('m_1ce1890d9f80')}
                     </Copy>
                   )}
-                  <View style={{ width: '100%' }}>
+                  <ActionPair>
                     <Button
                       icon="check"
                       label={t('m_62aa4b87cc52')}
@@ -413,9 +416,7 @@ export default function ReminderDetails() {
                           : content('Done'))
                       }
                     />
-                  </View>
-                  {postponeEligible && (
-                    <View style={{ width: '100%' }}>
+                    {postponeEligible && (
                       <Button
                         buttonRef={postponeTrigger}
                         icon="schedule"
@@ -424,8 +425,8 @@ export default function ReminderDetails() {
                         disabled={command.isPending || uncertain || !settings.data}
                         onPress={openPostpone}
                       />
-                    </View>
-                  )}
+                    )}
+                  </ActionPair>
                 </>
               )}
               {item.deleted ? (
@@ -495,71 +496,75 @@ export default function ReminderDetails() {
             </>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-            <View
-              style={{
-                height: typography.title * scale * fontScale * 1.4,
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="event" color={colors.muted} size={28} />
-            </View>
+            {(width >= 400 || Math.max(fontScale, scale) < 1.6) && (
+              <View
+                style={{
+                  height: typography.title * scale * fontScale * 1.4,
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name="event" color={colors.muted} size={28} />
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Copy heading size={typography.title}>
                 {item.title}
               </Copy>
             </View>
           </View>
-          <SchedulePrimary item={item} />
-          {item.deleted ? (
-            <Status icon="delete" label={t('m_5693d1b43930')} />
-          ) : item.completed ? (
-            <Status
-              label={
-                completion == null
-                  ? t('m_22a970d2e5b1')
-                  : t('m_c6af4d5c4f15') + scheduleDateTime(completion)
-              }
-              tone="success"
-            />
-          ) : item.skipped ? (
-            <Status icon="cancel" label={t('m_12698ce1ea5c')} />
-          ) : (
-            <View style={{ gap: 8 }}>
-              {overdueStatus && (
+          <ConnectedGroup title={t('ui_reminder_task_status')}>
+            <View style={{ padding: space.gutter, gap: space.sm }}>
+              {item.deleted ? (
+                <Status icon="delete" label={t('m_5693d1b43930')} />
+              ) : item.completed ? (
+                <Status
+                  label={
+                    completion == null
+                      ? t('m_22a970d2e5b1')
+                      : t('ui_reminder_completed_at', { time: scheduleDateTime(completion) })
+                  }
+                  tone="success"
+                />
+              ) : item.skipped ? (
+                <Status icon="cancel" label={t('m_12698ce1ea5c')} />
+              ) : overdueStatus ? (
                 <View accessible accessibilityLabel={overdueStatus.spokenLabel}>
                   <Status icon="warning" label={overdueStatus.label} tone="warning" />
                 </View>
+              ) : (
+                <Status icon="radio_button_unchecked" label={t('ui_reminder_unfinished')} />
               )}
-              {alertPresentation(item).confirmed && (
-                <Status label={t('m_4724f344c1c0')} tone="success" />
-              )}
-              {!explanation && item.mode !== 'None' && !!stateLabel(item) && (
-                <Status icon={stateIcon(item)} label={stateLabel(item)} tone={stateTone(item)} />
+              {item.deleted && (
+                <>
+                  <Status
+                    label={
+                      item.skipped
+                        ? t('m_6f7c81dca6fc')
+                        : item.completed
+                          ? completion == null
+                            ? t('m_dd7ffd5a0bba')
+                            : t('m_66fa7cc10b3a') + scheduleDateTime(completion)
+                          : t('m_1649e237dea3')
+                    }
+                    tone={item.completed ? 'success' : 'muted'}
+                  />
+                  <Copy muted size={typography.supporting}>
+                    {t('m_66a114557e1d')}
+                  </Copy>
+                </>
               )}
             </View>
-          )}
-          {explanation && !item.deleted && (
-            <Status icon={stateIcon(item)} label={explanation} tone={stateTone(item)} />
-          )}
-          {item.deleted && (
-            <>
-              <Status
-                label={
-                  item.skipped
-                    ? t('m_6f7c81dca6fc')
-                    : item.completed
-                      ? completion == null
-                        ? t('m_dd7ffd5a0bba')
-                        : t('m_66fa7cc10b3a') + scheduleDateTime(completion)
-                      : t('m_1649e237dea3')
-                }
-                tone={item.completed ? 'success' : 'muted'}
-              />
-              <Copy muted size={14}>
-                {t('m_66a114557e1d')}
-              </Copy>
-            </>
-          )}
+          </ConnectedGroup>
+          <SchedulePrimary item={item}>
+            {!item.deleted &&
+              (explanation || (active && item.mode !== 'None' && stateLabel(item))) && (
+                <Status
+                  icon={stateIcon(item)}
+                  label={explanation || stateLabel(item)}
+                  tone={stateTone(item)}
+                />
+              )}
+          </SchedulePrimary>
           {item.deliveryState === 'Blocked' && active && (
             <Button
               icon="settings"
@@ -709,7 +714,13 @@ export default function ReminderDetails() {
           )}
         </>
       )}
-      <Sheet title={t('m_3ddd2c824c07')} visible={menu} onClose={() => setMenu(false)}>
+      <Sheet
+        title={t('m_3ddd2c824c07')}
+        visible={menu}
+        onClose={() => setMenu(false)}
+        returnFocusRef={menuTrigger}
+        returnFocusWhen={() => focused && !!item}
+      >
         {item && !item.deleted && (
           <SettingRow intent="action" icon="edit" label={t('m_464c4ffd019e')} onPress={edit} />
         )}

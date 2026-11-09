@@ -19,6 +19,11 @@ if (process.env.REMILO_UI_PREVIEW === '1') {
         type: 'sourceFile',
         filePath: path.join(__dirname, 'verification/ui/preview-files.ts'),
       };
+    if (platform === 'web' && name === 'expo-document-picker')
+      return {
+        type: 'sourceFile',
+        filePath: path.join(__dirname, 'verification/ui/preview-document-picker.ts'),
+      };
     if (platform === 'web' && name === 'expo-sharing')
       return {
         type: 'sourceFile',

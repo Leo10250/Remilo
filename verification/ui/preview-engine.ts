@@ -1258,6 +1258,8 @@ const calendarBridge = previewCalendar(
   },
 );
 onCalendarCreation = calendarBridge.captureCalendarCreation;
+const preparedBackups = new Map<string, ImportPreview>();
+const backupReceipts = new Set<string>();
 const preview = {
   ...calendarBridge,
   getWidgetSupport: async () => ({ pinSupported: false, instanceCount: 0 }),
@@ -1269,17 +1271,56 @@ const preview = {
   },
   getExerciseImage: async () => null,
   releaseExerciseImage: async () => true,
-  prepareBackupExport: async () => {
-    throw new Error('Photo-inclusive backup requires the Android app.');
-  },
-  prepareBackupImport: async () => {
-    throw new Error('File restoration requires the Android app.');
-  },
-  releasePreparedImport: async () => true,
-  applyPreparedImport: async (): Promise<CommandResult> => ({
-    status: 'Rejected',
-    errorMessage: 'File restoration requires the Android app.',
+  prepareBackupExport: async () => ({
+    uri: 'memory://backup/remilo-backup.zip',
+    imageCount: 2,
+    bytes: 240,
   }),
+  prepareBackupImport: async (uri: string) => {
+    if (uri !== 'memory://backup/remilo-backup.zip') throw new Error('Invalid synthetic backup.');
+    const items =
+      review.get('reviewBackup') === 'lists'
+        ? []
+        : [
+            {
+              id: 'backup-dentist',
+              title: 'Book the dentist',
+              conflict: true,
+              futureAlert: true,
+            },
+            {
+              id: 'backup-plants',
+              title: 'Water the plants',
+              conflict: false,
+              futureAlert: false,
+            },
+          ];
+    const content: ImportPreview = {
+      count: items.length,
+      items,
+      lists: [{ id: 'backup-home', name: 'Home', restoredName: 'Home', conflict: false }],
+    };
+    const handle = nextId();
+    preparedBackups.set(handle, content);
+    return { ...clone(content), imageCount: items.length, handle };
+  },
+  releasePreparedImport: async (handle: string) => preparedBackups.delete(handle),
+  applyPreparedImport: async (
+    handle: string,
+    copies: string[],
+    operationId: string,
+  ): Promise<CommandResult> => {
+    if (backupReceipts.has(operationId)) return { status: 'Applied', retry: true };
+    const backup = preparedBackups.get(handle);
+    if (!backup) return { status: 'Rejected' };
+    backupReceipts.add(operationId);
+    if (review.get('reviewBackup') === 'lost-reply')
+      throw new Error('Synthetic backup reply lost.');
+    const preserved = backup.items.filter(
+      (item) => item.conflict && !copies.includes(item.id),
+    ).length;
+    return { status: 'Applied', added: backup.count - preserved, preserved };
+  },
   queryRoutines: routines.queryRoutines,
   getRoutineSession: routines.getRoutineSession,
   queryRoutineHistory: routines.queryRoutineHistory,

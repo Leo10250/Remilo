@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
+import type { RefObject } from 'react';
+import type { View } from 'react-native';
 import { useTranslation } from '../localization/react';
 import { CommandRecovery, useCapturedCommand } from './navigation';
 import { notify } from './feedback';
@@ -14,13 +16,18 @@ export function RoutineActions({
   onClose,
   onRemoved,
   onCorrect,
+  showOpenToday = true,
+  returnFocusRef,
 }: {
   target: RoutineActionTarget | null;
   onClose: () => void;
   onRemoved?: () => void;
   onCorrect?: () => void;
+  showOpenToday?: boolean;
+  returnFocusRef?: RefObject<View | null>;
 }) {
   const t = useTranslation();
+  const focused = useIsFocused();
   const plans = useQuery({
     queryKey: ['routines'],
     queryFn: () => engine().queryRoutines(),
@@ -79,7 +86,13 @@ export function RoutineActions({
   return (
     <>
       <CommandRecovery action={action} />
-      <Sheet title={plan?.title ?? t('routine_more')} visible={!!target} onClose={close}>
+      <Sheet
+        title={plan?.title ?? t('routine_more')}
+        visible={!!target}
+        onClose={close}
+        returnFocusRef={returnFocusRef}
+        returnFocusWhen={() => focused}
+      >
         <QueryState
           loading={plans.isLoading && !!target}
           error={plans.error}
@@ -88,18 +101,20 @@ export function RoutineActions({
           onRetry={() => void plans.refetch()}
         />
         <CommandRecovery action={action} />
+        {showOpenToday && (
+          <SettingRow
+            intent="navigation"
+            label={t('routine_open_today')}
+            disabled={action.guarded || !plan}
+            onPress={() =>
+              navigate(() =>
+                router.push({ pathname: '/routine-session', params: { id: target!.id } }),
+              )
+            }
+          />
+        )}
         <SettingRow
-          intent="action"
-          label={t('routine_open_today')}
-          disabled={action.guarded || !plan}
-          onPress={() =>
-            navigate(() =>
-              router.push({ pathname: '/routine-session', params: { id: target!.id } }),
-            )
-          }
-        />
-        <SettingRow
-          intent="action"
+          intent="navigation"
           label={t('routine_edit')}
           icon="edit"
           disabled={action.guarded || !plan}
@@ -111,7 +126,7 @@ export function RoutineActions({
         />
         <WidgetSetupRow routineId={target?.id} disabled={action.guarded || !plan} onOpen={close} />
         <SettingRow
-          intent="action"
+          intent="navigation"
           label={t('routine_duplicate')}
           icon="content_copy"
           disabled={action.guarded || !plan}

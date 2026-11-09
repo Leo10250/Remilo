@@ -2,7 +2,7 @@ import { useLocale, useTranslation } from '../../localization/react';
 
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ListRecord } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -14,11 +14,12 @@ import {
   ConnectedGroup,
   Copy,
   Icon,
-  IconButton,
   Page,
   QueryState,
+  SectionStack,
   SettingRow,
   Sheet,
+  SplitDestinationRow,
   Status,
 } from '../../ui/components';
 import {
@@ -64,6 +65,9 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const [editing, setEditing] = useState<ListRecord | 'create' | null>(null),
     [selected, setSelected] = useState<ListRecord | null>(null),
     [formGuarded, setFormGuarded] = useState(false);
+  const menuTrigger = useRef<View>(null);
+  const menuButtons = useRef(new Map<string, View>());
+  const createTrigger = useRef<View>(null);
   const [footerHeight, setFooterHeight] = useState(64),
     insets = useSafeAreaInsets(),
     colors = useTheme();
@@ -133,32 +137,38 @@ function ListLibrary({ management = false }: { management?: boolean }) {
       },
     ]);
   };
-  const row = (name: string, id: string | null, count: number, record?: ListRecord) => (
-    <View key={'list:' + JSON.stringify(id)} style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ flex: 1 }}>
-        <SettingRow
-          intent="action"
-          label={name}
-          icon="checklist"
-          minHeight={72}
-          disabled={guarded || !nativeAvailable}
-          statusLabel={count ? count + t('m_ca72dba87f89') : undefined}
-          supporting={
-            count > 0 ? <Status label={count + t('m_c907a3d4b61b')} tone="warning" /> : undefined
-          }
-          onPress={() => open(id)}
-        />
-      </View>
-      {record && (
-        <IconButton
-          icon="more_vert"
-          label={t('m_05d82d5eb6ee') + name}
-          disabled={guarded || !nativeAvailable}
-          onPress={() => setSelected(record)}
-        />
-      )}
-    </View>
-  );
+  const rememberMenuButton = (id: string, node: View | null) => {
+    if (node) menuButtons.current.set(id, node);
+    else menuButtons.current.delete(id);
+  };
+  const showMenu = (record: ListRecord) => {
+    menuTrigger.current = menuButtons.current.get(record.id) ?? null;
+    setSelected(record);
+  };
+  const row = (name: string, id: string | null, count: number, record?: ListRecord) => {
+    const props = {
+      label: name,
+      icon: 'checklist' as const,
+      disabled: guarded || !nativeAvailable,
+      statusLabel: count > 0 ? t('ui_list_overdue_spoken_count', { count }) : undefined,
+      supporting:
+        count > 0 ? (
+          <Status label={t('ui_list_overdue_count', { count })} tone="warning" />
+        ) : undefined,
+      onPress: () => open(id),
+    };
+    return record ? (
+      <SplitDestinationRow
+        key={record.id}
+        {...props}
+        overflowLabel={t('ui_more_actions', { name })}
+        overflowButtonRef={(node) => rememberMenuButton(record.id, node)}
+        onOverflowPress={() => showMenu(record)}
+      />
+    ) : (
+      <SettingRow key="no-list" intent="navigation" {...props} />
+    );
+  };
   return (
     <View style={{ flex: 1 }}>
       <Page
@@ -192,17 +202,18 @@ function ListLibrary({ management = false }: { management?: boolean }) {
           </View>
         }
       >
-        <View style={{ gap: space.md }}>
+        <SectionStack>
           {management && (
-            <>
+            <View style={{ gap: space.sm }}>
               <Copy muted>{t('m_6395ef0c2432')}</Copy>
               <Button
                 label={t('m_3fb9aa9bdbb5')}
                 icon="add"
+                buttonRef={createTrigger}
                 disabled={!nativeAvailable || guarded}
                 onPress={() => setEditing('create')}
               />
-            </>
+            </View>
           )}
           {!management && (
             <ConnectedGroup title={t('m_ff3b424445ad')}>
@@ -211,7 +222,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
                 key="repeats"
                 label={t('m_92ee0233f013')}
                 icon="repeat"
-                description={t('m_baa6cb3b3dc6')}
+                description={t('ui_repeats_summary')}
                 disabled={guarded || !nativeAvailable}
                 onPress={() =>
                   router.push({ pathname: '/series', params: originParams({ kind: 'repeats' }) })
@@ -221,8 +232,8 @@ function ListLibrary({ management = false }: { management?: boolean }) {
                 intent="navigation"
                 key="routines"
                 label={t('routine_library')}
-                icon="checklist"
-                description={t('routine_library_hint')}
+                icon="format_list_numbered"
+                description={t('ui_routines_summary')}
                 disabled={guarded || !nativeAvailable}
                 onPress={() => router.push('/routines')}
               />
@@ -243,9 +254,9 @@ function ListLibrary({ management = false }: { management?: boolean }) {
                   key={list.id}
                   label={list.name}
                   icon="checklist"
-                  minHeight={72}
                   disabled={guarded}
-                  onPress={() => setSelected(list)}
+                  buttonRef={(node) => rememberMenuButton(list.id, node)}
+                  onPress={() => showMenu(list)}
                 />
               ))}
             </ConnectedGroup>
@@ -256,16 +267,17 @@ function ListLibrary({ management = false }: { management?: boolean }) {
             </ConnectedGroup>
           )}
           {!management && <View style={{ height: 88 }} />}
-        </View>
+        </SectionStack>
       </Page>
       {!management && (
         <Pressable
+          ref={createTrigger}
           accessibilityRole="button"
           accessibilityLabel={t('m_4408d1a48e1e')}
           accessibilityState={{ disabled: guarded || !nativeAvailable }}
           disabled={guarded || !nativeAvailable}
           onPress={() => setEditing('create')}
-          style={{
+          style={({ pressed }) => ({
             position: 'absolute',
             right: 16,
             bottom: footerHeight + insets.bottom + 16,
@@ -276,7 +288,8 @@ function ListLibrary({ management = false }: { management?: boolean }) {
             alignItems: 'center',
             justifyContent: 'center',
             elevation: 3,
-          }}
+            opacity: pressed ? 0.8 : 1,
+          })}
         >
           <Icon name="add" color={colors.accentInk} size={28} />
         </Pressable>
@@ -285,6 +298,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
         title={selected?.name ?? t('m_abc46aaef9ad')}
         visible={!!selected}
         onClose={() => setSelected(null)}
+        returnFocusRef={editing ? undefined : menuTrigger}
       >
         <SettingRow
           intent="action"

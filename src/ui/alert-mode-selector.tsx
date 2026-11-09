@@ -1,10 +1,10 @@
 import { chineseTextMetrics, lineHeightFor, shape, space, typography } from './tokens';
 import { useTranslation } from '../localization/react';
 import { t, live } from '../localization';
-import { Fragment, useState } from 'react';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Fragment, useRef, useState } from 'react';
+import { Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { ReminderDraft } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { Copy, Icon, type IconName } from './components';
+import { Choice, Copy, Icon, SettingRow, Sheet, type IconName } from './components';
 import { useFontScaleOverride, useFoundationStyle, useTheme } from './theme';
 
 type AlertMode = NonNullable<ReminderDraft['mode']>;
@@ -25,6 +25,61 @@ const choices: { value: AlertMode; label: string; icon: IconName; description: s
     },
   ],
 );
+
+export function AlertModePicker({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: AlertMode;
+  onChange: (value: AlertMode) => void;
+  disabled?: boolean;
+}) {
+  'use no memo';
+  const t = useTranslation();
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<View>(null);
+  const label = t('m_ab30d609b7e2');
+  return (
+    <>
+      <SettingRow
+        intent="picker"
+        label={label}
+        value={choices.find((choice) => choice.value === value)?.label}
+        icon="notifications"
+        buttonRef={trigger}
+        disabled={disabled}
+        onPress={() => {
+          Keyboard.dismiss();
+          setOpen(true);
+        }}
+      />
+      <Sheet
+        title={label}
+        visible={open}
+        onClose={() => setOpen(false)}
+        returnFocusRef={trigger}
+        returnFocusWhen={() => !disabled}
+      >
+        <View accessibilityRole="radiogroup" accessibilityLabel={label}>
+          {choices.map((choice) => (
+            <Choice
+              key={choice.value}
+              label={choice.label}
+              description={choice.description}
+              selected={choice.value === value}
+              disabled={disabled}
+              onPress={() => {
+                if (!disabled && choice.value !== value) onChange(choice.value);
+                setOpen(false);
+              }}
+            />
+          ))}
+        </View>
+      </Sheet>
+    </>
+  );
+}
 
 /** All three modes stay visible; choosing one changes only the guarded editor draft. */
 export function AlertModeSelector({

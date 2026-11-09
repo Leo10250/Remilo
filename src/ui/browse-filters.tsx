@@ -1,8 +1,7 @@
-import { chineseTextMetrics } from './tokens';
 import { useLocale, useTranslation } from '../localization/react';
 
-import { useState } from 'react';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { useState, type ReactNode, type RefObject } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import type { ListRecord } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import {
   resetBrowseFilters,
@@ -12,6 +11,7 @@ import {
   type BrowseKind,
 } from '../domain/browse-filters';
 import {
+  ActionPair,
   Button,
   Choice,
   ConnectedGroup,
@@ -22,79 +22,126 @@ import {
   Sheet,
 } from './components';
 import { useFontScaleOverride, useFoundationStyle, useTheme } from './theme';
+import { chineseTextMetrics, shape, space, typography } from './tokens';
+
+/** Shared browsing controls. Each destination still owns the query and focus lifecycle. */
+export function BrowseControls({
+  searching,
+  query,
+  inputRef,
+  onChangeQuery,
+  onExitSearch,
+  disabled = false,
+  filter,
+  children,
+}: {
+  searching: boolean;
+  query: string;
+  inputRef: RefObject<TextInput | null>;
+  onChangeQuery: (query: string) => void;
+  onExitSearch: () => void;
+  disabled?: boolean;
+  filter?: ReactNode;
+  children?: ReactNode;
+}) {
+  const t = useTranslation();
+  const colors = useTheme();
+  const scale = useFontScaleOverride();
+  return (
+    <View style={{ gap: space.sm }}>
+      {searching && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderRadius: shape.field,
+            backgroundColor: colors.surface,
+          }}
+        >
+          <IconButton
+            icon="arrow_back"
+            label={t('m_1655ed829a84')}
+            disabled={disabled}
+            onPress={onExitSearch}
+          />
+          <TextInput
+            ref={inputRef}
+            accessibilityLabel={t('m_608e5f5e0f40')}
+            value={query}
+            onChangeText={onChangeQuery}
+            placeholder={t('m_2796b78f7c5e')}
+            editable={!disabled}
+            placeholderTextColor={colors.muted}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              minHeight: 48,
+              padding: space.sm,
+              color: colors.ink,
+              fontSize: typography.body * scale,
+              ...chineseTextMetrics(typography.body, scale),
+            }}
+          />
+          {!!query && (
+            <IconButton
+              icon="close"
+              label={t('m_48a1982ccf79')}
+              disabled={disabled}
+              onPress={() => onChangeQuery('')}
+            />
+          )}
+        </View>
+      )}
+      {(children || filter) && (
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: space.sm,
+          }}
+        >
+          {children}
+          {filter}
+        </View>
+      )}
+      {!searching && !!query && (
+        <View style={{ alignItems: 'flex-start' }}>
+          <RemovableChip
+            label={t('ui_search_chip', { query })}
+            accessibilityLabel={t('ui_remove_search', { query })}
+            disabled={disabled}
+            onRemove={() => onChangeQuery('')}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
 
 export function BrowseFilterButton({
   count,
   onPress,
   disabled = false,
   expanded = false,
-  presentation = 'label',
+  buttonRef,
 }: {
   count: number;
   onPress: () => void;
   disabled?: boolean;
   expanded?: boolean;
-  presentation?: 'label' | 'icon';
+  buttonRef?: RefObject<View | null>;
 }) {
   'use no memo';
   const t = useTranslation();
   const colors = useTheme(),
-    foundation = useFoundationStyle(),
     scale = useFontScaleOverride(),
     [focused, setFocused] = useState(false);
-  const { fontScale } = useWindowDimensions();
   const label = t('m_546ebb8eb993') + (count ? ', ' + count + t('m_2a222bd79b1a') : '');
-  // Reserve extra badge space as text grows rather than covering the toolbar glyph.
-  const iconWidth = 48 + (count > 0 ? 24 * Math.max(0, scale * fontScale - 1) : 0);
-  if (presentation === 'icon')
-    return (
-      <View style={{ minWidth: iconWidth, minHeight: 48 }}>
-        <IconButton
-          icon="filter_list"
-          label={label}
-          disabled={disabled}
-          expanded={expanded}
-          onPress={onPress}
-        />
-        {count > 0 && (
-          <View
-            pointerEvents="none"
-            aria-hidden
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={{
-              position: 'absolute',
-              top: 0,
-              end: 0,
-              minWidth: 18,
-              minHeight: 18,
-              paddingHorizontal: 4,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.soft,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: disabled ? 0.4 : 1,
-            }}
-          >
-            <Text
-              style={{
-                color: foundation?.colors.ink ?? colors.ink,
-                fontSize: 11 * scale,
-                lineHeight: 16 * scale,
-                fontWeight: '600',
-                ...chineseTextMetrics(11, scale, '600'),
-              }}
-            >
-              {count}
-            </Text>
-          </View>
-        )}
-      </View>
-    );
   return (
     <Pressable
+      ref={buttonRef}
       accessibilityRole="button"
       accessibilityLabel={label}
       aria-expanded={expanded}
@@ -133,27 +180,29 @@ export function BrowseFilterButton({
     </Pressable>
   );
 }
-function RemovableFilter({
-  chip,
+function RemovableChip({
+  label,
+  accessibilityLabel,
   onRemove,
   disabled,
 }: {
-  chip: BrowseFilterChip;
-  onRemove: (field: BrowseFilterField) => void;
+  label: string;
+  accessibilityLabel: string;
+  onRemove: () => void;
   disabled: boolean;
 }) {
   'use no memo';
-  const t = useTranslation();
+  useLocale();
   const colors = useTheme(),
     scale = useFontScaleOverride(),
     [focused, setFocused] = useState(false);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t('m_e8fe96a2bdd3') + chip.label}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={() => onRemove(chip.field)}
+      onPress={onRemove}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       style={({ pressed }) => ({
@@ -180,7 +229,7 @@ function RemovableFilter({
           ...chineseTextMetrics(14, scale),
         }}
       >
-        {chip.label}
+        {label}
       </Text>
       <Icon name="close" size={18} />
     </Pressable>
@@ -198,12 +247,18 @@ export function BrowseFilterChips({
   disabled?: boolean;
 }) {
   'use no memo';
-  useLocale();
+  const t = useTranslation();
   if (!chips.length) return null;
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
       {chips.map((chip) => (
-        <RemovableFilter key={chip.field} chip={chip} onRemove={onRemove} disabled={disabled} />
+        <RemovableChip
+          key={chip.field}
+          label={chip.label}
+          accessibilityLabel={t('m_e8fe96a2bdd3') + chip.label}
+          onRemove={() => onRemove(chip.field)}
+          disabled={disabled}
+        />
       ))}
       <ResetFiltersAction disabled={disabled} onPress={onReset} />
     </View>
@@ -330,6 +385,7 @@ export function BrowseFilterSheet({
   onRetryLists,
   fixedListId,
   fixedListName,
+  returnFocusRef,
 }: {
   title: string;
   kind: BrowseKind;
@@ -344,6 +400,7 @@ export function BrowseFilterSheet({
   onRetryLists: () => void;
   fixedListId?: string | null;
   fixedListName?: string;
+  returnFocusRef?: RefObject<View | null>;
 }) {
   'use no memo';
   const t = useTranslation();
@@ -355,14 +412,13 @@ export function BrowseFilterSheet({
       title={title}
       visible={draft !== null}
       onClose={onCancel}
+      returnFocusRef={returnFocusRef}
       footer={
-        <View style={{ padding: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <View style={{ flexGrow: 1, flexBasis: 140 }}>
+        <View style={{ padding: space.gutter }}>
+          <ActionPair>
             <Button label={t('m_d80ab19b7edb')} disabled={disabled} onPress={onApply} />
-          </View>
-          <View style={{ flexGrow: 1, flexBasis: 140 }}>
             <Button label={t('m_19766ed6ccb2')} variant="outlined" onPress={onCancel} />
-          </View>
+          </ActionPair>
         </View>
       }
     >

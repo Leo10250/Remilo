@@ -148,13 +148,14 @@ describe('Calendar explicit action feedback', () => {
     );
     const link = (await api.getCalendarLinks())[0],
       managed = await api.getManagedCalendarState();
+    expect(calendarLinkStatus({ ...link, successfulAtMs: 1000 }).lastSyncedAtMs).toBe(1000);
     expect(
       calendarLinkStatus(link, [], {
         ...managed,
         calendarId: link.source!.calendarId,
         mode: 'Paused',
       }),
-    ).toMatchObject({ title: 'Calendar sync is paused', tone: 'muted' });
+    ).toMatchObject({ title: 'Calendar sync is paused', tone: 'muted', paused: true });
     expect(calendarLinkStatus({ ...link, syncStatus: 'Unconfirmed' }, [], managed)).toMatchObject({
       tone: 'warning',
       action: 'Inspect',

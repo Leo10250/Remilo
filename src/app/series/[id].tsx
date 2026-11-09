@@ -35,7 +35,7 @@ import { engine, nativeAvailable } from '../../ui/native';
 
 import { repeatLabel } from '../../ui/recurrence';
 import { ReminderRow } from '../../ui/reminder-row';
-import { typography } from '../../ui/tokens';
+import { space, typography } from '../../ui/tokens';
 import { ZoneSummary } from '../../ui/schedule';
 import { deviceZone } from '../../domain/time';
 
@@ -342,23 +342,27 @@ export default function SeriesDetails() {
               emptyMessage={t('m_01f414f4301a')}
               onRetry={() => void occurrences.refetch()}
             />
-            {items.map((item) => (
-              <ReminderRow
-                key={item.id}
-                item={item}
-                onOpen={() => {
-                  if (!action.guarded)
-                    router.push({
-                      pathname: '/reminder/[id]',
-                      params: {
-                        id: item.id,
-                        ...familyOriginParams(params, seriesId ?? series.seriesId, series.id),
-                      },
-                    });
-                }}
-                busy={action.guarded}
-              />
-            ))}
+            {!!items.length && (
+              <View style={{ gap: space.md }}>
+                {items.map((item) => (
+                  <ReminderRow
+                    key={item.id}
+                    item={item}
+                    onOpen={() => {
+                      if (!action.guarded)
+                        router.push({
+                          pathname: '/reminder/[id]',
+                          params: {
+                            id: item.id,
+                            ...familyOriginParams(params, seriesId ?? series.seriesId, series.id),
+                          },
+                        });
+                    }}
+                    busy={action.guarded}
+                  />
+                ))}
+              </View>
+            )}
             {occurrences.isFetchNextPageError && (
               <ActionFeedback message={t('m_7e0b4261ae6e')} tone="danger" />
             )}

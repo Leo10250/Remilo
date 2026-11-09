@@ -94,6 +94,10 @@ post; unresolved notifications retain eligible Postpone. Group actions apply onl
 to an ordinary-only captured group. Capture displayed occurrence IDs/generations,
 session and count; later arrivals are excluded. Mixed ordinary/routine groups keep
 per-member actions rather than ambiguous bulk completion or Postpone.
+On main Agenda, Ringing now shows the current group's members and actions above
+the reminder results, including during search and filtering. Search results have
+their own heading and empty state. Bulk actions require all members to match the
+displayed session. List-scoped pages retain per-member actions.
 
 Postpone changes only the captured occurrences' next delivery and leaves them
 unfinished. It preserves original overdue, Event/Due and future recurring slots.
@@ -149,9 +153,11 @@ icons use the shared neutral event/checklist roles; categories remain deferred.
 A genuine unconstrained empty All Agenda offers creation without duplicate actions.
 Retained query errors keep known content and contextual recovery.
 
-Ordinary editors lead with required Title, then alert Date/Time and visible Alarm /
-Notification / No alert choices. Date and Time have independent pickers; all-day
-uses Date only. Constrained layouts stack controls without shrinking targets.
+Ordinary editors lead with required Title, then alert Date/Time and an Alert type
+row showing the current mode. Its picker offers Alarm, Notification and No alert.
+Selecting a mode changes the draft; dismissing the picker preserves it. Date and
+Time have independent pickers. All-day uses Date only. Constrained layouts stack
+controls without shrinking targets.
 Optional Calendar event details are collapsed. Preserve independent Event/Due/Alert,
 existing publication context and untapped instants; opening details publishes nothing.
 An All day round trip preserves the draft's timed values. No alert hides inapplicable
@@ -216,6 +222,11 @@ Validation bounds are application limits, not claims about Android alarm capacit
 
 ## Routines and widgets
 
+The Routines library groups saved plans under Your routines and keeps New routine
+in the bottom action bar. The routine row opens today's device-local view and
+offers Edit and management in its overflow. On rest days, the view explains that
+no steps or alert are scheduled and keeps History available.
+
 Create offers separate reminder and routine destinations with separate owning drafts.
 New routines are empty General/ByWeekday plans; nonempty weekdays determine scheduling.
 Exercise is an optional presentation preset, not another task type and not sample
@@ -276,9 +287,13 @@ Preference changes save through one native-confirmed controller. Failed/uncertai
 changes retain exact recovery without losing newer queued choices. Sound selection,
 preview and saved preference are separate. Preview has its own native identity and
 five-second cutoff; replacement, backgrounding and real alarm startup stop/release it.
+The Tomorrow shortcuts page labels the three saved slots Morning, Afternoon and
+Evening. The Android time picker changes only the selected slot on confirmation.
 A preview error cannot block a real alarm. The Settings permissions tile and the
 alarm check screen keep the last observed permission status visible during routine
 checks and surface failed checks. An accepted Test request is not proof of sound.
+Notification details open when blocking is first observed or returns after access
+was allowed. People can collapse the details while recovery stays visible.
 
 English and Simplified Chinese are required for every new or changed app-owned feature,
 including native/widget/notification/accessibility copy and error/recovery states.
