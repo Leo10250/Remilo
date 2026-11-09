@@ -47,13 +47,12 @@ final class RemiloIOSGoogleCalendarManagedSetup {
 
     /// One bounded foreground pass. The durable inbox stages source versions
     /// for subsequent exact import or reconciliation, independent of delivery.
-    func scanIncoming(expectedRevision: Int) async throws -> Inbox.Progress {
+    func scanIncoming(expectedRevision: Int, budget: RemiloIOSGoogleCalendarHTTP.Budget = .init()) async throws -> Inbox.Progress {
         guard !scanningIncoming else { throw Journal.Rejection.operationPending }
         scanningIncoming = true
         defer { scanningIncoming = false }
         let account = try currentAccount(expectedRevision)
         let scope = try journal.incomingScope(account)
-        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
         let calendar = try await connection.verifyManagedAdoption(calendarID: scope.binding.record.id, account: account,
                                                                   budget: budget, canRead: canUseForeground)
         let fence: @MainActor @Sendable () throws -> Void = { [self] in
@@ -89,6 +88,24 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         try requireForeground()
         do { return try journal.view(viewingAs: connection.savedAccount(expectedRevision: expectedRevision)) }
         catch Failure.needsAccess { return try journal.view() }
+    }
+
+    func permitsIncoming(_ permit: Inbox.Permit, account: Account) throws -> Bool {
+        guard canUseForeground(), try connection.isCurrentAccount(account) else { return false }
+        let scope: Inbox.Scope
+        do { scope = try journal.incomingScope(account) }
+        catch Failure.staleConnection { return false }
+        guard scope == permit.scope else { return false }
+        return try inbox.permits(permit)
+    }
+
+    func finishIncoming(_ permit: Inbox.Permit, account: Account, reviewReason: String?) throws {
+        guard canUseForeground(), try connection.isCurrentAccount(account) else { throw Failure.staleConnection }
+        let scope: Inbox.Scope
+        do { scope = try journal.incomingScope(account) }
+        catch Failure.staleConnection { return }
+        guard scope == permit.scope else { return }
+        try inbox.finish(permit, reviewReason: reviewReason)
     }
 
     func operation(_ id: UUID, expectedRevision: Int) throws -> Journal.Entry? {

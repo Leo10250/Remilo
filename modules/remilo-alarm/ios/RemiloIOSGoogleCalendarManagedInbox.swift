@@ -39,10 +39,20 @@ final class RemiloIOSGoogleCalendarManagedInbox {
     }
 
     struct Progress: Sendable {
+        let scope: Scope
         let pages: Int
         let initialComplete: Bool
         let continuation: Bool
         let pending: [Observation]
+    }
+
+    struct Permit: Codable, Equatable, Sendable {
+        let scope: Scope
+        let observation: Observation
+
+        var source: RemiloIOSGoogleCalendarImport.SourceKey {
+            .init(subject: scope.binding.account.subject, calendarID: scope.binding.record.id, eventID: observation.eventID)
+        }
     }
 
     private struct State: Codable {
@@ -102,8 +112,28 @@ final class RemiloIOSGoogleCalendarManagedInbox {
 
     func progress(_ scope: Scope, pages: Int, continuation: Bool) throws -> Progress {
         let state = try read(scope)
-        return Progress(pages: pages, initialComplete: state.initialComplete,
+        return Progress(scope: scope, pages: pages, initialComplete: state.initialComplete,
                         continuation: continuation, pending: state.observations.values.sorted { $0.eventID < $1.eventID })
+    }
+
+    func permits(_ permit: Permit) throws -> Bool {
+        let state = try read(permit.scope)
+        guard state.initialComplete, state.next == nil, state.since != nil, permit.observation.etag != nil,
+              state.observations[permit.observation.eventID] == permit.observation else { return false }
+        return [.oneTime, .recurringMaster].contains(permit.observation.kind)
+    }
+
+    func finish(_ permit: Permit, reviewReason: String?) throws {
+        var state = try read(permit.scope)
+        let event = permit.observation
+        guard state.observations[event.eventID] == event else { return }
+        if let reviewReason {
+            state.observations[event.eventID] = Observation(eventID: event.eventID, etag: event.etag,
+                kind: .needsReview(reason: reviewReason), importMode: event.importMode, initialRecovery: event.initialRecovery)
+        } else {
+            state.observations.removeValue(forKey: event.eventID)
+        }
+        try advance(&state)
     }
 
     private static func classify(_ event: Transport.Event, zoneID: String, now: Int64) -> Observation.Kind? {

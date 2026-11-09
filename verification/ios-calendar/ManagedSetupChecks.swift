@@ -5,6 +5,7 @@ enum ManagedSetupChecks {
     private typealias Setup = RemiloIOSGoogleCalendarManagedSetup
     private typealias Failure = RemiloIOSGoogleCalendarFailure
     private typealias HTTP = RemiloIOSGoogleCalendarHTTP
+    private typealias Runtime = RemiloIOSGoogleCalendarRuntime
 
     static func run(configuration: RemiloIOSGoogleCalendarConfiguration, readOnly: RemiloIOSGoogleCalendarAccess,
                     creation: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date) async throws {
@@ -50,7 +51,8 @@ enum ManagedSetupChecks {
                 preconditionFailure("A newly appeared calendar requires another review")
             } catch Setup.Journal.Rejection.selectionRequired {}
             precondition(fixture.posts == 0, "Recheck discovery after consent before claiming a send")
-            let replacement = try await setup.preview(expectedRevision: revision, zoneID: "UTC", replacement: true)
+            let policy = Setup.Journal.Policy(allDayAlarmMinutes: 495)
+            let replacement = try await setup.preview(expectedRevision: revision, policy: policy, zoneID: "UTC", replacement: true)
             guard let review = replacement.review, review.target == .select(calendarID: Fixture.calendarID) else {
                 preconditionFailure("Review the available calendar before adoption")
             }
@@ -90,6 +92,31 @@ enum ManagedSetupChecks {
             let rebuilt = try await reopened.scanIncoming(expectedRevision: revision)
             precondition(rebuilt.pending == delta.pending && fixture.deltaTokens == ["baseline", "next"],
                          "Rebuild after token expiry without inferring removals from absent events")
+            let local = LocalImports()
+            let scheduler = Runtime.ImportJournal.Scheduler(receipt: { await local.receipts[$0.id] }, create: { command, permit in
+                try await local.create(command, permit: permit)
+            })
+            func runtime() -> Runtime {
+                Runtime(connection: connection, canUseForeground: { true },
+                        importJournal: .init(directory: directory, now: { Int64((now().timeIntervalSince1970 * 1_000).rounded()) }),
+                        scheduler: scheduler, managedSetupJournal: .init(directory: directory), managedImportSound: { .system }) { _, _ in
+                    preconditionFailure("Managed import uses the saved grant")
+                }
+            }
+            do {
+                _ = try await runtime().syncManagedIncoming(expectedRevision: revision)
+                preconditionFailure("Simulate interruption after the scheduler has stored the local receipt")
+            } catch LocalImports.Failure.interrupted {}
+            let resumed = try await runtime().syncManagedIncoming(expectedRevision: revision)
+            precondition(resumed.imported == 2 && resumed.needsReview == 1 && local.commands.count == 2,
+                         "Recover the committed receipt and reject the event that changed between list and lookup")
+            let allDay = local.commands.first { $0.title == "all-day" }
+            let recovered = local.commands.first { $0.title == "recovered" }
+            let alarm = try Runtime.Import.Event.timestamp("2030-01-01T08:15:00Z")
+            precondition(allDay?.mode == .some(.alarm) && allDay?.alarmAtMs == alarm && allDay?.alarmLinked == true && allDay?.sound == .system)
+            precondition(recovered?.mode == .some(.none) && !local.commands.contains { $0.title == "continuing" })
+            let repeated = try await runtime().syncManagedIncoming(expectedRevision: revision)
+            precondition(repeated.imported == 0 && local.commands.count == 2, "No duplicate local creates after recovery")
             return
         }
 
@@ -114,6 +141,23 @@ enum ManagedSetupChecks {
         }
         let state = try reopened.view(expectedRevision: revision)
         precondition(state.binding?.record.name == "Renamed after creation" && state.pendingOperationID == nil && fixture.posts == 1)
+    }
+
+    @MainActor
+    private final class LocalImports {
+        enum Failure: Error { case interrupted }
+        private(set) var receipts: [String: Runtime.ImportJournal.LocalReceipt] = [:]
+        private(set) var commands: [Runtime.Import.Command] = []
+
+        func create(_ command: Runtime.Import.Command, permit: Runtime.ImportJournal.Scheduler.Permit) throws -> Runtime.ImportJournal.LocalResult {
+            guard try permit() else { return .rejected("STALE_CONNECTION") }
+            precondition(receipts[command.id] == nil)
+            commands.append(command)
+            let receipt = Runtime.ImportJournal.LocalReceipt(id: command.id, kind: .reminder, status: .applied, eligibleForLink: true)
+            receipts[command.id] = receipt
+            if commands.count == 1 { throw Failure.interrupted }
+            return .acknowledged(receipt)
+        }
     }
 
     @MainActor
@@ -180,6 +224,11 @@ enum ManagedSetupChecks {
                 ]
                 return .init(status: 200, body: try JSONSerialization.data(withJSONObject: ["items": events, "nextPageToken": "more"]))
             }
+            if url.deletingLastPathComponent().lastPathComponent == "events" {
+                let id = url.lastPathComponent
+                let event = id == "all-day" ? allDayEvent() : timedEvent(id, version: "v2")
+                return .init(status: 200, body: try JSONSerialization.data(withJSONObject: event))
+            }
             precondition(url.lastPathComponent == Self.calendarID)
             guard let record else { return .init(status: 404, body: Data("{}".utf8)) }
             return .init(status: 200, body: try JSONEncoder().encode(record))
@@ -187,18 +236,18 @@ enum ManagedSetupChecks {
 
         private func incomingPage(_ url: URL) throws -> HTTP.Response {
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
-            func event(_ id: String, version: String) -> [String: Any] {
-                ["id": id, "etag": "\"\(version)\"", "summary": id,
-                 "start": ["dateTime": "2030-01-01T10:00:00Z", "timeZone": "UTC"],
-                 "end": ["dateTime": "2030-01-01T11:00:00Z", "timeZone": "UTC"]]
-            }
             let payload: [String: Any]
             if let token = query.first(where: { $0.name == "syncToken" })?.value {
                 deltaTokens.append(token)
                 if token == "next" { return .init(status: 410, body: Data("{}".utf8)) }
-                precondition(token == "baseline")
-                payload = ["items": [event("recovered", version: "v2"), event("continuing", version: "v1"),
-                                     ["id": "cancelled", "status": "cancelled"]], "nextSyncToken": "next"]
+                switch token {
+                case "baseline":
+                    payload = ["items": [timedEvent("recovered", version: "v2"), timedEvent("continuing", version: "v1"),
+                                         ["id": "cancelled", "status": "cancelled"]], "nextSyncToken": "next"]
+                case "rebuilt": payload = ["items": [allDayEvent()], "nextSyncToken": "stable"]
+                case "stable": payload = ["items": [], "nextSyncToken": "stable"]
+                default: preconditionFailure("Unexpected provider checkpoint")
+                }
             } else if deltaTokens.last == "next" {
                 precondition(!query.contains { $0.name == "pageToken" })
                 payload = ["items": [], "nextSyncToken": "rebuilt"]
@@ -206,10 +255,21 @@ enum ManagedSetupChecks {
                 let page = query.first(where: { $0.name == "pageToken" })?.value.flatMap(Int.init) ?? 0
                 initialPages.append(page)
                 let tokenKey = page == 11 ? "nextSyncToken" : "nextPageToken"
-                payload = ["items": page == 0 ? [event("recovered", version: "v1")] : [],
+                payload = ["items": page == 0 ? [timedEvent("recovered", version: "v1")] : [],
                            tokenKey: page == 11 ? "baseline" : String(page + 1)]
             }
             return .init(status: 200, body: try JSONSerialization.data(withJSONObject: payload))
+        }
+
+        private func timedEvent(_ id: String, version: String) -> [String: Any] {
+            ["id": id, "etag": "\"\(version)\"", "summary": id,
+             "start": ["dateTime": "2030-01-01T10:00:00Z", "timeZone": "UTC"],
+             "end": ["dateTime": "2030-01-01T11:00:00Z", "timeZone": "UTC"]]
+        }
+
+        private func allDayEvent() -> [String: Any] {
+            ["id": "all-day", "etag": "\"v1\"", "summary": "all-day",
+             "start": ["date": "2030-01-01"], "end": ["date": "2030-01-02"]]
         }
     }
 }

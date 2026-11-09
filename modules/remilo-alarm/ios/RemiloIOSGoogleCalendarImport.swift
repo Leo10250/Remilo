@@ -34,6 +34,7 @@ enum RemiloIOSGoogleCalendarImport {
         var sound: Sound = .remilo
         var automaticSync = true
         var disableGoogleReminders = false
+        var allDayAlarmMinutes: Int?
     }
 
     struct SourceKey: Codable, Equatable, Sendable {
@@ -124,11 +125,12 @@ enum RemiloIOSGoogleCalendarImport {
             let schedule = source.fields.schedule
             let due = schedule.allDay ? schedule.eventEndMs : schedule.eventStartMs
             let alert: Int64
+            let clock = try RemiloIOSGoogleCalendarImport.allDayClockOffset(schedule, choices: choices)
             if let explicit = choices.alarmAtMs { alert = explicit }
             else if schedule.allDay {
                 let zone = try Event.namedZone(schedule.zoneId)
                 let day = String(Event.nominal(schedule.eventStartMs, zone: zone).prefix(10))
-                alert = try Event.resolveNominal(day + "T09:00", zone: zone)
+                alert = try RemiloIOSRecurrence.resolveOffset(day + "T00:00", by: clock ?? 32_400_000, in: zone)
             } else { alert = schedule.eventStartMs }
             guard RemiloIOSGoogleCalendarImport.epoch.contains(alert) else { throw Failure.invalidInput }
             return (due, alert)
@@ -157,7 +159,8 @@ enum RemiloIOSGoogleCalendarImport {
             let zone = try Event.namedZone(source.fields.schedule.zoneId)
             let excluded = Set(evidence.exceptions.map(\.identity.nominalSlot))
             let exceptions = try evidence.exceptions.map {
-                try Self.localException($0, title: title, policy: policy, referenceMs: evidence.referenceMs, now: now)
+                try Self.localException($0, title: title, policy: policy, alarmLinked: choices.alarmAtMs == nil,
+                                        referenceMs: evidence.referenceMs, now: now)
             }
             let ordinary = try RemiloIOSRecurrence.future(effective, afterMs: now, deviceZone: zone,
                                                          mode: choices.mode.rawValue, limit: limit) {
@@ -181,7 +184,7 @@ enum RemiloIOSGoogleCalendarImport {
         }
 
         private static func localException(_ exception: RemiloIOSGoogleCalendarRecurringReview.Exception, title: String,
-                                           policy: RecurringAlertPolicy, referenceMs: Int64, now: Int64) throws -> LocalException {
+                                           policy: RecurringAlertPolicy, alarmLinked: Bool, referenceMs: Int64, now: Int64) throws -> LocalException {
             let nominal = exception.identity.nominalSlot
             if exception.identity.cancelled { return .skip(nominalSlot: nominal) }
             guard let authored = exception.fields else { throw Failure.recurrenceReviewRequired }
@@ -194,7 +197,7 @@ enum RemiloIOSGoogleCalendarImport {
             if policy.enabled, (eligible ? alert <= now : schedule.eventStartMs > referenceMs) { throw Failure.alertExpired }
             let fields = Event.Fields(title: authored.title.isEmpty ? title : authored.title, notes: authored.notes, schedule: schedule)
             return .override(nominalSlot: nominal, fields: fields, dueAtMs: due, alarmAtMs: alert,
-                             alarmLinked: policy.offsetMs == nil, alertEligible: eligible)
+                             alarmLinked: alarmLinked, alertEligible: eligible)
         }
 
         private static func validate(_ proof: RecurrenceEvidence, source: Source, rule: RemiloIOSRecurrence.Rule,
@@ -349,11 +352,13 @@ enum RemiloIOSGoogleCalendarImport {
     static func observe(_ key: SourceKey, account: Account, access: RemiloIOSGoogleCalendarAccess,
                         transport: Transport, budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
                         beforeRead: @Sendable () async throws -> Void,
+                        verifyCalendar: (@Sendable (Transport.OwnedCalendar) throws -> Void)? = nil,
                         audit: (@Sendable (Transport.OwnedCalendar, Transport.Event) async throws -> RecurrenceEvidence)? = nil)
         async throws -> Observation {
         guard account.matches(access), key.subject == account.subject else { throw Failure.staleConnection }
         try await beforeRead()
         let calendar = try await transport.ownedCalendar(access, id: key.calendarID, budget: budget)
+        try verifyCalendar?(calendar)
         try await beforeRead()
         let result = try await transport.lookup(access, calendarID: key.calendarID, eventID: key.eventID, budget: budget)
         guard case .found(let event) = result, !event.cancelled else { throw Failure.staleRemote }
@@ -368,12 +373,19 @@ enum RemiloIOSGoogleCalendarImport {
 
     static func alertPolicy(for source: Source, choices: Choices) throws -> RecurringAlertPolicy {
         let enabled = choices.mode != .none
-        guard let alert = choices.alarmAtMs else { return RecurringAlertPolicy(enabled: enabled, offsetMs: nil) }
+        let clock = try allDayClockOffset(source.fields.schedule, choices: choices)
+        guard let alert = choices.alarmAtMs else { return RecurringAlertPolicy(enabled: enabled, offsetMs: clock) }
         guard epoch.contains(alert), let rule = try recurrence(source) else { throw Failure.invalidInput }
         let zone = try Event.namedZone(source.fields.schedule.zoneId)
         let offset = try RemiloIOSRecurrence.civilOffset(alert, fromNominal: rule.anchor, zone: zone)
         guard abs(offset) <= RemiloIOSRecurrence.maximumOffsetMs else { throw Failure.invalidInput }
         return RecurringAlertPolicy(enabled: enabled, offsetMs: offset)
+    }
+
+    private static func allDayClockOffset(_ schedule: Event.Schedule, choices: Choices) throws -> Int64? {
+        guard schedule.allDay, let minutes = choices.allDayAlarmMinutes else { return nil }
+        guard choices.alarmAtMs == nil, (0...1439).contains(minutes) else { throw Failure.invalidInput }
+        return Int64(minutes) * 60_000
     }
 
     private static func recurrence(_ source: Source) throws -> RemiloIOSRecurrence.Rule? {

@@ -445,26 +445,44 @@ final class RemiloIOSGoogleCalendarConnection {
     }
 
     func prepareImport(expectedRevision: Int, calendarID: String, eventID: String, recurringChoices: Import.Choices?,
+                       managed: RemiloIOSGoogleCalendarManagedInbox.Permit? = nil,
+                       budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
                        canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Import.Review {
         let live = try requireAccess(expectedRevision)
         guard canRead() else { throw Failure.needsAccess }
-        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        let account = live.fence.importAccount
+        let beforeRead = importReadPermission(account, canRead: canRead)
         let calendar = try await read(live) { transport, access in
-            try await transport.ownedCalendar(access, id: calendarID, budget: budget)
+            try await beforeRead()
+            return try await transport.ownedCalendar(access, id: calendarID, budget: budget)
+        }
+        if let managed {
+            guard managed.source == .init(subject: account.subject, calendarID: calendarID, eventID: eventID) else {
+                throw Import.Failure.staleRemote
+            }
+            try Self.verifyManagedImportCalendar(calendar, managed: managed, email: live.access.account.email)
         }
         guard canRead() else { throw Failure.needsAccess }
         let lookup = try await read(live) { transport, access in
-            try await transport.lookup(access, calendarID: calendar.id, eventID: eventID, budget: budget)
+            try await beforeRead()
+            return try await transport.lookup(access, calendarID: calendar.id, eventID: eventID, budget: budget)
         }
         guard case .found(let event) = lookup, !event.cancelled else { throw Import.Failure.staleRemote }
+        if let managed {
+            guard event.strongETag == managed.observation.etag else { throw Import.Failure.staleRemote }
+            if let payload = (try? JSONSerialization.jsonObject(with: event.json)) as? [String: Any],
+               let properties = payload["extendedProperties"] as? [String: Any],
+               let privateValues = properties["private"] as? [String: Any],
+               let marker = privateValues["remiloPublication"], marker as? String != event.id {
+                throw Import.Failure.staleRemote
+            }
+        }
         let reviewedAt = Int64((now().timeIntervalSince1970 * 1_000).rounded())
-        let account = live.fence.importAccount
         var evidence: Import.RecurrenceEvidence?
         if let recurringChoices {
             let source = try Import.Source(account: account, calendar: calendar, event: event)
             if source.fields.schedule.recurrence != nil {
                 let policy = try Import.alertPolicy(for: source, choices: recurringChoices)
-                let beforeRead = importReadPermission(account, canRead: canRead)
                 evidence = try await read(live) { transport, access in
                     try await RemiloIOSGoogleCalendarRecurringReview.inspect(
                         access: access, calendar: calendar, master: event, now: reviewedAt, alertPolicy: policy,
@@ -474,6 +492,13 @@ final class RemiloIOSGoogleCalendarConnection {
             }
         }
         return try Import.Review(account: account, calendar: calendar, event: event, now: reviewedAt, recurrenceEvidence: evidence)
+    }
+
+    nonisolated private static func verifyManagedImportCalendar(_ calendar: Transport.OwnedCalendar,
+        managed: RemiloIOSGoogleCalendarManagedInbox.Permit, email: String) throws {
+        let record = try RemiloIOSCalendarOwnedRecord(calendar)
+        guard record.id == managed.source.calendarID, record.zoneId == managed.scope.binding.record.zoneId,
+              ManagedDiscovery.eligibility(record, verifiedEmail: email) == nil else { throw Import.Failure.staleRemote }
     }
 
     func account(expectedRevision: Int) throws -> Import.Account {
@@ -498,15 +523,18 @@ final class RemiloIOSGoogleCalendarConnection {
     }
 
     func observeImport(_ review: Import.Review,
+                       managed: RemiloIOSGoogleCalendarManagedInbox.Permit? = nil,
+                       budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
                        canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Import.Observation {
         let captured = review.account
         let live = try requireAccess(captured.connectionRevision)
         guard live.fence.importAccount == captured else { throw Failure.staleConnection }
         let beforeRead = importReadPermission(captured, canRead: canRead)
         return try await read(live) { transport, access in
-            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
             return try await Import.observe(review.source.key, account: captured, access: access, transport: transport,
-                                            budget: budget, beforeRead: beforeRead) { calendar, event in
+                                            budget: budget, beforeRead: beforeRead, verifyCalendar: { calendar in
+                if let managed { try Self.verifyManagedImportCalendar(calendar, managed: managed, email: access.account.email) }
+            }) { calendar, event in
                 guard let previous = review.recurrenceEvidence, event.strongETag == previous.masterETag else {
                     throw Import.Failure.staleRemote
                 }

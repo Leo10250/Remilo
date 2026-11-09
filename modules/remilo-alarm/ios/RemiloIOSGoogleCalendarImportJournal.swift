@@ -28,6 +28,20 @@ actor RemiloIOSGoogleCalendarImportJournal {
     struct Authority: Sendable {
         let current: @MainActor @Sendable (Import.Account) throws -> Bool
         let observe: @Sendable (Import.Review) async throws -> Import.Observation
+        var managedCurrent: (@MainActor @Sendable (RemiloIOSGoogleCalendarManagedInbox.Permit, Import.Account) throws -> Bool)? = nil
+
+        func scoped(to permit: RemiloIOSGoogleCalendarManagedInbox.Permit?) -> Self {
+            guard let permit else { return self }
+            return Self(current: { [current, managedCurrent] account in
+                guard try current(account) else { return false }
+                return try managedCurrent?(permit, account) ?? false
+            }, observe: observe)
+        }
+    }
+
+    struct ManagedWork: Sendable {
+        let id: UUID
+        let permit: RemiloIOSGoogleCalendarManagedInbox.Permit
     }
 
     struct Receipt: Codable, Equatable, Sendable {
@@ -90,6 +104,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var capture: Import.Capture?
         var submitted = false
         var receipt: Receipt?
+        var managed: RemiloIOSGoogleCalendarManagedInbox.Permit?
     }
 
     private struct State: Codable {
@@ -122,10 +137,46 @@ actor RemiloIOSGoogleCalendarImportJournal {
     /// This capture is a consequence of confirmation, not of opening a preview.
     /// The current connection is revalidated before any new local create.
     func capture(operationID: UUID, review: Import.Review, choices: Import.Choices) throws -> Receipt? {
+        try capture(operationID: operationID, review: review, choices: choices, managed: nil)
+    }
+
+    func captureManaged(_ permit: RemiloIOSGoogleCalendarManagedInbox.Permit, review: Import.Review,
+                        choices: Import.Choices) throws -> UUID {
+        guard permit.source == review.source.key, permit.observation.etag == review.source.etag,
+              permit.scope.binding.belongs(to: review.account), permit.scope.binding.account.accountGeneration == review.account.accountGeneration,
+              choices.mode == permit.observation.importMode, choices.allDayAlarmMinutes == permit.scope.policy.allDayAlarmMinutes,
+              choices.title == nil, choices.alarmAtMs == nil, choices.listID == nil,
+              choices.automaticSync, !choices.disableGoogleReminders else {
+            throw Failure.staleRemote
+        }
+        if let existing = try read().entries.first(where: {
+            $0.value.managed == permit && $0.value.receipt?.errorCode != Failure.staleConnection.rawValue
+        }) { return existing.key }
+        let id = UUID()
+        _ = try capture(operationID: id, review: review, choices: choices, managed: permit)
+        return id
+    }
+
+    func pendingManaged(viewingAs account: Import.Account) throws -> [ManagedWork] {
+        try read().entries.sorted {
+            ($0.value.createdAtMs ?? 0, $0.key.uuidString) < ($1.value.createdAtMs ?? 0, $1.key.uuidString)
+        }.compactMap { id, entry in
+            guard entry.receipt == nil, let permit = entry.managed, permit.scope.binding.belongs(to: account) else { return nil }
+            return ManagedWork(id: id, permit: permit)
+        }
+    }
+
+    func managedPermit(_ id: UUID, viewingAs account: Import.Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Permit? {
+        guard let permit = try read().entries[id]?.managed, permit.scope.binding.belongs(to: account) else { return nil }
+        return permit
+    }
+
+    private func capture(operationID: UUID, review: Import.Review, choices: Import.Choices,
+                         managed: RemiloIOSGoogleCalendarManagedInbox.Permit?) throws -> Receipt? {
         let fingerprint = try Request(operationID: operationID, review: review, choices: choices).fingerprint()
         var state = try read()
         if let existing = state.entries[operationID] {
-            guard existing.fingerprint == fingerprint else { throw Failure.operationReused }
+            guard existing.fingerprint == fingerprint, existing.managed == managed else { throw Failure.operationReused }
             return existing.receipt
         }
         for existing in state.entries.values where existing.source == review.source.key {
@@ -134,7 +185,8 @@ actor RemiloIOSGoogleCalendarImportJournal {
         }
         let capturedAt = now()
         let capture = try Import.Capture(operationID: operationID, review: review, choices: choices, now: capturedAt)
-        state.entries[operationID] = Entry(fingerprint: fingerprint, source: review.source.key, createdAtMs: capturedAt, capture: capture)
+        state.entries[operationID] = Entry(fingerprint: fingerprint, source: review.source.key, createdAtMs: capturedAt,
+                                          capture: capture, managed: managed)
         try write(state)
         return nil
     }
@@ -195,6 +247,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
     func run(_ operationID: UUID, authority: Authority, scheduler: Scheduler) async throws -> Receipt {
         let state = try read()
         guard let entry = state.entries[operationID] else { throw Failure.notFound }
+        let authority = authority.scoped(to: entry.managed)
         if let receipt = entry.receipt { return receipt }
         guard let capture = entry.capture else { throw Failure.notFound }
         let fingerprint = try Request(operationID: operationID, review: capture.review, choices: capture.choices).fingerprint()
