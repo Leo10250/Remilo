@@ -416,7 +416,9 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         try requireUnreserved(occurrenceID, source: source, in: state)
         let consent = AutomaticConsent(phase: .active, activationRevision: 1, lifecycleRevision: lifecycleRevision,
                                        accountGeneration: account.accountGeneration, operationID: nil, managedLease: lease)
-        let record = Record(occurrenceID: occurrenceID, source: source, origin: .imported, revision: 1, state: .linked,
+        // Revision one is the activation checkpoint. An active link always
+        // has a newer record revision than the consent that established it.
+        let record = Record(occurrenceID: occurrenceID, source: source, origin: .imported, revision: 2, state: .linked,
                             baseline: baseline, calendarName: remote.calendarName, observedAtMs: observedAtMs, automatic: consent)
         state.links[occurrenceID] = record
         try write(state)
