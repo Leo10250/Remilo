@@ -352,6 +352,25 @@ final class RemiloIOSGoogleCalendarConnection {
         return try RemiloIOSCalendarOwnedRecord(calendar)
     }
 
+    func observeManualLink(_ evidence: RemiloIOSGoogleCalendarManualLink.Evidence, account: Import.Account,
+                           canRead: @escaping @MainActor @Sendable () -> Bool) async throws
+        -> RemiloIOSGoogleCalendarManualLink.Observation {
+        let live = try requireAccess(account.connectionRevision)
+        let source = evidence.source
+        guard live.fence.importAccount == account, source.belongs(to: account) else { throw Failure.staleConnection }
+        let beforeRead = importReadPermission(account, canRead: canRead)
+        let observation = try await read(live) { transport, access in
+            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+            try await beforeRead()
+            let calendar = try await transport.ownedCalendar(access, id: source.calendarID, budget: budget)
+            try await beforeRead()
+            let result = try await transport.lookup(access, calendarID: calendar.id, eventID: source.eventID, budget: budget)
+            return try RemiloIOSGoogleCalendarManualLink.Observation(evidence: evidence, calendar: calendar, lookup: result)
+        }
+        guard canRead() else { throw Failure.needsAccess }
+        return observation
+    }
+
     func browseEvents(expectedRevision: Int, calendarID: String, from: String, until: String,
                       nextCursor: EventCursor? = nil, zone: TimeZone = .current,
                       dispositions: [Event.SourceKey: Event.SourceDisposition] = [:],

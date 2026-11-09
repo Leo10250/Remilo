@@ -182,6 +182,16 @@ actor RemiloIOSGoogleCalendarImportJournal {
         })
     }
 
+    func importedSource(_ occurrenceID: String, viewingAs account: Import.Account) throws -> Import.SourceKey? {
+        let matches = try read().entries.values.compactMap { entry -> Import.SourceKey? in
+            guard let receipt = entry.receipt, receipt.account.subject == account.subject, receipt.account.clientID == account.clientID,
+                  receipt.local?.kind == .reminder, receipt.local?.id == occurrenceID else { return nil }
+            return receipt.source
+        }
+        guard matches.count <= 1 else { throw Failure.invalidInput }
+        return matches.first
+    }
+
     func run(_ operationID: UUID, authority: Authority, scheduler: Scheduler) async throws -> Receipt {
         let state = try read()
         guard let entry = state.entries[operationID] else { throw Failure.notFound }

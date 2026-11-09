@@ -378,7 +378,7 @@ final class RemiloIOSGoogleCalendarBridge {
         case let failure as Failure: return failure.rawValue
         case let failure as PublicationRuntime.Rejection: return failure.rawValue
         case let failure as PublicationRuntime.Journal.Rejection: return failure.rawValue
-        case let failure as IOSCalendarPublicationSnapshot.Failure: return failure.rawValue
+        case let failure as IOSCalendarOneTimeSnapshot.Failure: return failure.rawValue
         case let failure as Import.Failure: return bridgeErrorCode(failure.rawValue)
         case let failure as RemiloIOSGoogleCalendarRecurringReview.Failure: return bridgeErrorCode(failure.rawValue)
         case let failure as Connection.Event.Reason: return bridgeErrorCode(failure.rawValue)

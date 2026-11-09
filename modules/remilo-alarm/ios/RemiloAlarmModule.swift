@@ -211,7 +211,14 @@ public final class RemiloAlarmModule: Module {
       resolve(promise) { try RemiloIOSEngine.shared.preview(draft) }
     }
     AsyncFunction("applyCommand") { (command: [String: Any], promise: Promise) in
-      resolve(promise) { try await RemiloIOSEngine.shared.apply(command) }
+      resolve(promise) {
+        defer {
+          if command["kind"] as? String == "Purge" {
+            try? RemiloIOSGoogleCalendarRuntime.reconcileManualLinkPurges()
+          }
+        }
+        return try await RemiloIOSEngine.shared.apply(command)
+      }
     }
     AsyncFunction("scheduleTestAlarm") { (operationId: String, promise: Promise) in
       resolve(promise) { try await RemiloIOSEngine.shared.scheduleTestAlarm(operationId: operationId) }
@@ -219,6 +226,7 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("reconcile") { (promise: Promise) in
       resolve(promise) {
         try await RemiloIOSEngine.shared.reconcile()
+        try? RemiloIOSGoogleCalendarRuntime.reconcileManualLinkPurges()
         return nil
       }
     }

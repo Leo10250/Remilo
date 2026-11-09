@@ -21,17 +21,20 @@ final class RemiloIOSGoogleCalendarRuntime {
     private let importJournal: ImportJournal
     private let scheduler: ImportJournal.Scheduler
     let publication: RemiloIOSGoogleCalendarPublicationRuntime?
+    let manualLink: RemiloIOSGoogleCalendarManualLinkRuntime?
     private var reviews: [Import.Review] = []
 
     init(connection: Connection, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
          importJournal: ImportJournal, scheduler: ImportJournal.Scheduler,
          publication: RemiloIOSGoogleCalendarPublicationRuntime? = nil,
+         manualLink: RemiloIOSGoogleCalendarManualLinkRuntime? = nil,
          authorize: @escaping Connection.Authorize) {
         self.connection = connection
         self.canUseForeground = canUseForeground
         self.importJournal = importJournal
         self.scheduler = scheduler
         self.publication = publication
+        self.manualLink = manualLink
         self.authorize = authorize
     }
 
@@ -114,7 +117,7 @@ final class RemiloIOSGoogleCalendarRuntime {
             throw Import.Failure.stalePreview
         }
         guard !choices.automaticSync, !choices.disableGoogleReminders else { throw Import.Failure.invalidInput }
-        if try publication?.reservedEvents(viewingAs: account, calendarID: review.source.key.calendarID).contains(review.source.key.eventID) == true {
+        if try outboundAndLinkedEvents(account, calendarID: review.source.key.calendarID).contains(review.source.key.eventID) {
             throw Import.Failure.alreadyImported
         }
         let saved = try await importJournal.capture(operationID: operationID, review: review, choices: choices)
@@ -169,8 +172,13 @@ final class RemiloIOSGoogleCalendarRuntime {
 
     private func reservedEvents(_ account: Import.Account, calendarID: String) async throws -> Set<String> {
         let imported = try await importJournal.reservedEvents(subject: account.subject, calendarID: calendarID)
+        return try imported.union(outboundAndLinkedEvents(account, calendarID: calendarID))
+    }
+
+    private func outboundAndLinkedEvents(_ account: Import.Account, calendarID: String) throws -> Set<String> {
         let outgoing = try publication?.reservedEvents(viewingAs: account, calendarID: calendarID) ?? []
-        return imported.union(outgoing)
+        let linked = try manualLink?.reservedEvents(viewingAs: account, calendarID: calendarID) ?? []
+        return outgoing.union(linked)
     }
 
     private func requireForeground() throws {
@@ -180,21 +188,34 @@ final class RemiloIOSGoogleCalendarRuntime {
     #if os(iOS)
     private static var live: RemiloIOSGoogleCalendarRuntime?
 
+    static func reconcileManualLinkPurges() throws {
+        guard foregroundWindow() != nil else { return }
+        let purged = try RemiloIOSEngine.shared.read().purgedLocalOccurrences ?? []
+        guard !purged.isEmpty else { return }
+        try RemiloIOSGoogleCalendarManualLinkStore.local().redactPurged(purged)
+    }
+
     /// Missing or mismatched signed-bundle configuration keeps the runtime
     /// unavailable without opening protected storage.
     static func configuredForegroundRuntime() throws -> RemiloIOSGoogleCalendarRuntime? {
         guard let configuration = RemiloIOSGoogleCalendarConfiguration() else { return nil }
         guard foregroundWindow() != nil else { throw Failure.needsAccess }
+        try reconcileManualLinkPurges()
         if let live { return live }
         let connection = try Connection(configuration: configuration, store: .local())
         let presenter = RemiloIOSGoogleCalendarWebAuthorization()
         let canUseForeground: @MainActor @Sendable () -> Bool = { Self.foregroundWindow() != nil }
+        let imports = try ImportJournal.local()
         let publication = try RemiloIOSGoogleCalendarPublicationRuntime(
             connection: connection, journal: .local(), local: .localEngine(.shared), canUseForeground: canUseForeground
         )
+        let manualLink = try RemiloIOSGoogleCalendarManualLinkRuntime(
+            connection: connection, publication: publication, imports: imports, store: .local(),
+            local: .localEngine(.shared), canUseForeground: canUseForeground
+        )
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,
-            importJournal: try .local(), scheduler: .localEngine(.shared), publication: publication
+            importJournal: imports, scheduler: .localEngine(.shared), publication: publication, manualLink: manualLink
         ) {
             subject, purpose in
             try await Self.authorize(presenter: presenter, subject: subject, purpose: purpose)

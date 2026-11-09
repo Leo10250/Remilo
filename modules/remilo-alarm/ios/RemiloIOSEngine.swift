@@ -5,6 +5,7 @@ import Foundation
 @MainActor
 final class RemiloIOSEngine {
     static let calendarCreatePrefix = "ios-calendar-import:"
+    nonisolated static let calendarInboundPrefix = "ios-calendar-link:"
     static let shared = RemiloIOSEngine(
         imageExists: RemiloIOSExerciseImages.exists,
         collectImages: { try RemiloIOSExerciseMedia.shared.collect(referenced: $0) }
@@ -38,7 +39,7 @@ final class RemiloIOSEngine {
             let kind = try input.text("kind", maximum: 60)
             guard kind != "TestAlarm" else { throw IOSInputFailure("UNSUPPORTED") }
             let operationID = try input.text("operationId", maximum: 200)
-            guard !operationID.hasPrefix(Self.calendarCreatePrefix), payload["nativeCalendarAnchor"] == nil,
+            guard !Self.reservedCalendarOperationID(operationID), payload["nativeCalendarAnchor"] == nil,
                   payload["nativeCalendarEndExclusive"] == nil, payload["nativeCalendarExceptions"] == nil else {
                 throw IOSInputFailure("UNSUPPORTED")
             }
@@ -113,15 +114,39 @@ final class RemiloIOSEngine {
                 "eligibleForLink": eligible]
     }
 
-    /// Only the synchronous authority check and durable Calendar checkpoint run under this permit.
-    func withCalendarPublicationPermit<Value: Sendable>(for snapshot: IOSCalendarPublicationSnapshot,
+    func calendarInboundReceipt(operationID: UUID, for snapshot: IOSCalendarOneTimeSnapshot,
+                                change: IOSCalendarInboundChange) throws -> [String: Any]? {
+        let input = change.input(operationID: operationID, snapshot: snapshot)
+        let id = try input.text("operationId", maximum: 200)
+        guard let receipt = try read().receipts[id] else { return nil }
+        guard receipt.fingerprint == (try fingerprint(input)) else { throw IOSInputFailure("OPERATION_REUSED") }
+        return try result(from: receipt.result)
+    }
+
+    func applyCalendarInbound(operationID: UUID, for snapshot: IOSCalendarOneTimeSnapshot,
+                              change: IOSCalendarInboundChange,
+                              authorize: @escaping @MainActor @Sendable () throws -> Bool) async throws -> [String: Any] {
+        await acquire()
+        defer { release() }
+        return try await execute(change.input(operationID: operationID, snapshot: snapshot), kind: "ApplyCalendarInbound",
+                                 calendarPermit: authorize, calendarInbound: (snapshot, change))
+    }
+
+    func withCalendarPublicationPermit<Value: Sendable>(for snapshot: IOSCalendarOneTimeSnapshot,
                                                           commit: @MainActor @Sendable () throws -> Value) async throws -> Value {
+        try await withCalendarOneTimePermit(for: snapshot, purpose: .publication, commit: commit)
+    }
+
+    /// Only the synchronous authority check and durable Calendar checkpoint run under this permit.
+    func withCalendarOneTimePermit<Value: Sendable>(for snapshot: IOSCalendarOneTimeSnapshot,
+                                                    purpose: IOSCalendarOneTimeSnapshot.Purpose,
+                                                    commit: @MainActor @Sendable () throws -> Value) async throws -> Value {
         await acquire()
         defer { release() }
         try Task.checkCancellation()
-        typealias Failure = IOSCalendarPublicationSnapshot.Failure
-        let current: IOSCalendarPublicationSnapshot
-        do { current = try calendarPublicationSnapshot(snapshot.occurrenceID) }
+        typealias Failure = IOSCalendarOneTimeSnapshot.Failure
+        let current: IOSCalendarOneTimeSnapshot
+        do { current = try calendarOneTimeSnapshot(snapshot.occurrenceID, for: purpose) }
         catch is Failure { throw Failure.stalePreview }
         guard current == snapshot else { throw Failure.stalePreview }
         return try commit()
@@ -131,7 +156,7 @@ final class RemiloIOSEngine {
         await acquire()
         defer { release() }
         do {
-            guard !operationId.hasPrefix(Self.calendarCreatePrefix) else { throw IOSInputFailure("UNSUPPORTED") }
+            guard !Self.reservedCalendarOperationID(operationId) else { throw IOSInputFailure("UNSUPPORTED") }
             return try await execute(IOSInput(values: ["kind": "TestAlarm", "operationId": operationId]), kind: "TestAlarm")
         } catch let error as IOSInputFailure {
             return error.bridge
@@ -144,7 +169,7 @@ final class RemiloIOSEngine {
     ) async throws -> [String: Any] {
         await acquire()
         defer { release() }
-        guard !operationID.hasPrefix(Self.calendarCreatePrefix) else { throw IOSInputFailure("UNSUPPORTED") }
+        guard !Self.reservedCalendarOperationID(operationID) else { throw IOSInputFailure("UNSUPPORTED") }
         return try await execute(
             IOSInput(values: ["kind": "Import", "operationId": operationID, "handle": handle, "copyIds": copies.sorted()]),
             kind: "Import", loadImport: load
@@ -278,7 +303,8 @@ final class RemiloIOSEngine {
     private func execute(
         _ input: IOSInput, kind: String, loadImport: (() async throws -> IOSPreparedImport)? = nil,
         calendarBounds: (anchor: String, endExclusive: String?)? = nil,
-        calendarPermit: (@MainActor @Sendable () throws -> Bool)? = nil
+        calendarPermit: (@MainActor @Sendable () throws -> Bool)? = nil,
+        calendarInbound: (snapshot: IOSCalendarOneTimeSnapshot, change: IOSCalendarInboundChange)? = nil
     ) async throws -> [String: Any] {
         let operationID = try input.text("operationId", maximum: 200)
         guard !operationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw input.invalid("operationId") }
@@ -322,6 +348,24 @@ final class RemiloIOSEngine {
             state.reminders[id] = record
             occurrenceID = id
             registrationID = record.registration?.systemID
+            applied = result(for: record, state: state, now: now, scheduling: registrationID != nil)
+        case "ApplyCalendarInbound":
+            guard let calendarInbound, calendarPermit != nil else { throw IOSInputFailure("UNSUPPORTED") }
+            let projection = try calendarInboundProjection(for: calendarInbound.snapshot, change: calendarInbound.change,
+                                                           state: state, now: now)
+            var record = projection.record
+            if projection.changed {
+                record.revision += 1
+                record.history.append(IOSHistory(kind: "Edit", atMs: now, targetMs: nil))
+                if projection.replacesRegistration {
+                    record.adjustment = nil
+                    record.retainedAlertMs = nil
+                    replaceRegistration(&record, target: record.alarmAtMs, state: &state, now: now)
+                    registrationID = record.registration?.systemID
+                }
+                state.reminders[record.id] = record
+            }
+            occurrenceID = record.id
             applied = result(for: record, state: state, now: now, scheduling: registrationID != nil)
         case "Edit", "Done", "Reopen", "Delete", "UndoDelete", "Skip", "Purge", "CompleteDelivery", "Stop", "DismissDelivery", "Snooze", "Postpone":
             let id = try input.text("occurrenceId", maximum: 200)
@@ -408,8 +452,10 @@ final class RemiloIOSEngine {
             throw IOSInputFailure("UNSUPPORTED")
         }
 
-        _ = try replenishSeries(state: &state, now: now)
-        _ = try replenishRoutines(state: &state, now: now)
+        if calendarInbound == nil {
+            _ = try replenishSeries(state: &state, now: now)
+            _ = try replenishRoutines(state: &state, now: now)
+        }
         let importRegistrationIDs = imported.map { additions in
             Set(state.reminders.values.compactMap { record in
                 let included = additions.reminders[record.id] != nil
@@ -432,7 +478,7 @@ final class RemiloIOSEngine {
             guard try calendarPermit() else { throw IOSInputFailure("STALE_CONNECTION") }
         }
         try commit(state)
-        try await drain()
+        if calendarInbound == nil || needsDeliveryResult { try await drain() }
         if needsDeliveryResult { return try finalize(operationID) }
         return applied
     }
@@ -441,6 +487,10 @@ final class RemiloIOSEngine {
         guard JSONSerialization.isValidJSONObject(input.values) else { throw input.invalid("operationId") }
         let canonical = try JSONSerialization.data(withJSONObject: input.values, options: [.sortedKeys])
         return Data(SHA256.hash(data: canonical))
+    }
+
+    private static func reservedCalendarOperationID(_ id: String) -> Bool {
+        id.hasPrefix(calendarCreatePrefix) || id.hasPrefix(calendarInboundPrefix)
     }
 
     func mutate(

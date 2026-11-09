@@ -163,6 +163,8 @@ enum PublicationChecks {
         let offline = try coldRuntime.operations(expectedConnectionRevision: renewed.revision)
         let result = offline.first(where: { $0.entry.identity.operationID == sent.identity.operationID })
         precondition(result?.readOnly == true && result?.entry.phase == .published)
+        try await manualLinkChecks(connection: connection, publication: newRuntime(), local: local, snapshot: snapshot,
+                                   fixture: fixture, directory: path, revision: renewed.revision, clock: clock)
         let changedFields = Event.Fields(title: "Local edit", notes: snapshot.fields.notes, schedule: snapshot.fields.schedule)
         local.snapshot = .init(version: snapshot.version, fields: changedFields)
         let edited = try coldRuntime.status(recovered)
@@ -170,6 +172,55 @@ enum PublicationChecks {
         let viewer = try coldConnection.savedAccount(expectedRevision: renewed.revision)
         let reserved = try coldRuntime.reservedEvents(viewingAs: viewer, calendarID: calendar)
         precondition(reserved == Set([request.eventID]))
+    }
+
+    @MainActor
+    private static func manualLinkChecks(
+        connection: RemiloIOSGoogleCalendarConnection, publication: RemiloIOSGoogleCalendarPublicationRuntime,
+        local: RuntimeLocal, snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot,
+        fixture: Fixture, directory: URL, revision: Int, clock: @escaping @Sendable () -> Int64
+    ) async throws {
+        typealias Runtime = RemiloIOSGoogleCalendarManualLinkRuntime
+        let store = Runtime.Store(directory: directory)
+        let runtime = Runtime(connection: connection, publication: publication, imports: .init(directory: directory),
+                              store: store, local: .init(read: { _ in local.snapshot }, permit: { expected, commit in
+            guard local.snapshot == expected else { throw Runtime.Link.Failure.stalePreview }
+            return try commit()
+        }), canUseForeground: { true }, now: clock)
+        local.snapshot = snapshot
+        let occurrenceID = snapshot.version.occurrenceID
+        let stale = try await runtime.preview(occurrenceID, expectedConnectionRevision: revision)
+        precondition(stale.evidence.origin == .published && stale.baseline == nil && stale.local.fields == stale.remote.fields)
+        try await fixture.changeRemoteTag()
+        do {
+            _ = try await runtime.confirmAgreement(operationID: UUID(), reviewID: stale.id, expectedConnectionRevision: revision, choices: [:])
+            preconditionFailure("A changed remote ETag requires fresh review even when fields still match")
+        } catch Runtime.Link.Failure.staleRemote {}
+        let review = try await runtime.preview(occurrenceID, expectedConnectionRevision: revision)
+        let operation = UUID()
+        let linked = try await runtime.confirmAgreement(operationID: operation, reviewID: review.id,
+                                                        expectedConnectionRevision: revision, choices: [:])
+        let saved = try store.link(occurrenceID)
+        precondition(linked.state == .linked && saved?.baseline?.title == snapshot.fields.title)
+        let detached = try runtime.unlink(operationID: UUID(), occurrenceID: occurrenceID, expectedConnectionRevision: revision,
+                                          expectedLinkRevision: linked.revision)
+        let replay = try await runtime.confirmAgreement(operationID: operation, reviewID: review.id,
+                                                        expectedConnectionRevision: revision, choices: [:])
+        let afterReplay = try store.link(occurrenceID)
+        let writes = await fixture.writes
+        precondition(replay == linked && afterReplay?.revision == detached.revision && afterReplay?.state == .detached && writes == 1)
+
+        let edited = Event.Fields(title: "Edited locally", notes: snapshot.fields.notes, schedule: snapshot.fields.schedule)
+        local.snapshot = .init(version: snapshot.version, fields: edited)
+        let differing = try await runtime.preview(occurrenceID, expectedConnectionRevision: revision)
+        let result = try differing.resolve([.title: .remilo])
+        precondition(differing.baseline == nil && result.outbound == [.title] && result.inbound.isEmpty)
+        precondition(differing.suggestedSelections == [.notes: .remilo, .schedule: .remilo])
+        do {
+            _ = try await runtime.confirmAgreement(operationID: UUID(), reviewID: differing.id,
+                                                  expectedConnectionRevision: revision, choices: [.title: .remilo])
+            preconditionFailure("A divergent review cannot be attached as an agreement")
+        } catch Runtime.Link.Failure.resolutionRequired {}
     }
 
     @MainActor
@@ -252,8 +303,22 @@ enum PublicationChecks {
                                     now: @escaping @Sendable () -> Date) async throws {
         let original = try Fixture.remote(request: request, edited: false)
         let desired = Event.Fields(title: request.fields.title, notes: "只改备注", schedule: request.fields.schedule)
+        let identity = try request.readbackIdentity()
         let patch = try Writer.Patch(operationID: UUID(), account: request.account, local: request.local, calendarID: calendar,
-                                     reviewedRemote: original, calendarZone: zone, desired: desired)
+                                     reviewedRemote: original, calendarZone: zone, desired: desired, evidence: .published(identity))
+        let foreign = Fixture(.foreign, request: request)
+        let foreignResult = try await writer(foreign, now).patch(patch, access: access, phase: .notSent) { _ in
+            preconditionFailure("A replaced publication marker cannot reach the send checkpoint")
+        }
+        guard case .staleRemote = foreignResult else { preconditionFailure("A changed source identity requires a fresh review") }
+        let removed = try await writer(Fixture(.removed, request: request), now).patch(patch, access: readOnly, phase: .sent) { _ in
+            preconditionFailure("A cancelled resource cannot be patched during recovery")
+        }
+        guard case .remoteRemoved = removed else { preconditionFailure("An explicit cancellation must stay distinct from a missing read") }
+        let missing = try await writer(Fixture(.missing, request: request), now).patch(patch, access: readOnly, phase: .sent) { _ in
+            preconditionFailure("A sent retry cannot request another PATCH")
+        }
+        guard case .unconfirmed = missing else { preconditionFailure("A missing response cannot prove remote deletion") }
         let stale = Fixture(.stalePatch, request: request)
         do {
             _ = try await writer(stale, now).patch(patch, access: readOnly, phase: .notSent) { _ in
@@ -275,6 +340,16 @@ enum PublicationChecks {
         guard case .confirmed = patchedRetry else { preconditionFailure("Retain the matching readback") }
         let delayedWrites = await delayed.writes
         precondition(delayedWrites == 1)
+
+        let allDay = try Event.fields(["start": ["date": "2027-03-16"], "end": ["date": "2027-03-17"]], calendarZone: zone).fields.schedule
+        let moved = Event.Fields(title: request.fields.title, notes: request.fields.notes, schedule: allDay)
+        let schedulePatch = try Writer.Patch(operationID: UUID(), account: request.account, local: request.local, calendarID: calendar,
+                                             reviewedRemote: original, calendarZone: zone, desired: moved, evidence: .published(identity))
+        let scheduleFixture = Fixture(.schedulePatch, request: request)
+        let scheduleResult = try await writer(scheduleFixture, now).patch(schedulePatch, access: access, phase: .notSent) { _ in
+            await scheduleFixture.permit()
+        }
+        guard case .confirmed = scheduleResult else { preconditionFailure("A one-time schedule can change to an all-day event") }
     }
 
     private static func makeRequest(_ access: RemiloIOSGoogleCalendarAccess) throws -> Publication.Request {
@@ -295,7 +370,9 @@ enum PublicationChecks {
     }
 
     private actor Fixture {
-        enum Scenario: Equatable { case duplicate, uncertainButCreated, missing, existingEdited, foreign, removed, stalePatch, uncertainPatch }
+        enum Scenario: Equatable {
+            case duplicate, uncertainButCreated, missing, existingEdited, foreign, removed, stalePatch, uncertainPatch, schedulePatch
+        }
         private let scenario: Scenario
         private let request: Publication.Request
         private var sent = false
@@ -318,6 +395,12 @@ enum PublicationChecks {
             result = try Self.remote(request: request, edited: false).json
         }
 
+        func changeRemoteTag() throws {
+            var event = try JSONSerialization.jsonObject(with: result!) as! [String: Any]
+            event["etag"] = #""after""#
+            result = try JSONSerialization.data(withJSONObject: event)
+        }
+
         func send(_ wire: URLRequest) throws -> HTTP.Response {
             let url = wire.url!
             precondition(url.absoluteString.contains("owned%2Fid%40example.test"))
@@ -328,7 +411,7 @@ enum PublicationChecks {
                 precondition(url.path.hasSuffix(request.eventID))
                 if let result { return HTTP.Response(status: 200, body: result) }
                 switch scenario {
-                case .existingEdited, .foreign, .stalePatch, .uncertainPatch:
+                case .existingEdited, .foreign, .stalePatch, .uncertainPatch, .schedulePatch:
                     let remote = try Self.remote(request: request, edited: scenario == .existingEdited, foreign: scenario == .foreign)
                     return HTTP.Response(status: 200, body: remote.json)
                 case .removed:
@@ -343,11 +426,27 @@ enum PublicationChecks {
             let body = try JSONSerialization.jsonObject(with: wire.httpBody!) as! [String: Any]
             if wire.httpMethod == "PATCH" {
                 precondition(wire.value(forHTTPHeaderField: "If-Match") == #""before""#)
-                precondition(Set(body.keys) == Set(["description"]) && body["description"] as? String == "只改备注")
+                if scenario == .schedulePatch {
+                    precondition(Set(body.keys) == Set(["start", "end"]))
+                    for (key, date) in [("start", "2027-03-16"), ("end", "2027-03-17")] {
+                        let bound = body[key] as! [String: Any]
+                        precondition(Set(bound.keys) == ["date", "dateTime", "timeZone"])
+                        precondition(bound["date"] as? String == date && bound["dateTime"] is NSNull && bound["timeZone"] is NSNull)
+                    }
+                } else {
+                    precondition(Set(body.keys) == Set(["description"]) && body["description"] as? String == "只改备注")
+                }
                 if scenario == .stalePatch { return HTTP.Response(status: 412, body: Data()) }
                 let previous = try Self.remote(request: request, edited: false)
                 var updated = try JSONSerialization.jsonObject(with: previous.json) as! [String: Any]
-                updated["description"] = body["description"]
+                for (key, value) in body {
+                    if let changes = value as? [String: Any], var old = updated[key] as? [String: Any] {
+                        for (field, change) in changes { old[field] = change is NSNull ? nil : change }
+                        updated[key] = old
+                    } else {
+                        updated[key] = value
+                    }
+                }
                 updated["etag"] = #""after""#
                 result = try JSONSerialization.data(withJSONObject: updated)
                 return HTTP.Response(status: 503, body: Data())

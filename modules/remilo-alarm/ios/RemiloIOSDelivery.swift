@@ -112,6 +112,12 @@ enum RemiloIOSDelivery {
         }
     }
 
+    static func isAlarmAlerting(_ systemID: UUID) throws -> Bool {
+        let manager = AlarmManager.shared
+        guard manager.authorizationState == .authorized else { return false }
+        return try manager.alarms.contains { $0.id == systemID && $0.state == .alerting }
+    }
+
     static func observedStates() async throws -> [UUID: String] {
         var states: [UUID: String] = [:]
         if AlarmManager.shared.authorizationState == .authorized {

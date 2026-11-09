@@ -97,6 +97,7 @@ enum CalendarChecks {
                   "write grants can read and browse grants cannot write")
         try await PublicationChecks.run(configuration: configuration, access: writeAccess, readOnly: access, now: now)
         ComparisonChecks.run()
+        try await ManualLinkStoreChecks.run()
         try await ImportChecks.run()
         print("Swift Google Calendar checks passed")
     }

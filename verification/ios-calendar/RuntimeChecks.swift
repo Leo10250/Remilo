@@ -123,8 +123,32 @@ enum RuntimeChecks {
         let afterSeries = try await page(runtime, revision: connected.revision)
         precondition(afterSeries.items.isEmpty && afterSeries.nextCursor != nil)
 
+        typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
+        let savedImports = Journal(directory: path)
+        let publication = Manual.Publication(connection: connection, journal: .init(directory: path),
+                                             local: .init(read: { _ in nil }, permit: { _, _ in .denied(.invalidInput) }),
+                                             canUseForeground: { foreground.active })
+        let importedSnapshot = Manual.Publication.LocalSnapshot(
+            version: .init(occurrenceID: imported.local!.id, revision: 1, generation: 0), fields: fresh.source.fields
+        )
+        let manual = Manual(connection: connection, publication: publication, imports: savedImports, store: .init(directory: path),
+                            local: .init(read: { id in id == importedSnapshot.version.occurrenceID ? importedSnapshot : nil },
+                                         permit: { _, commit in try commit() }),
+                            canUseForeground: { foreground.active }, now: { Int64(clock.now().timeIntervalSince1970 * 1_000) })
+        let importReview = try await manual.preview(importedSnapshot.version.occurrenceID, expectedConnectionRevision: connected.revision)
+        precondition(importReview.evidence.origin == .imported && importReview.remote.source.eventID == "ordinary")
+        let linkOperation = UUID()
+        let link = try await manual.confirmAgreement(operationID: linkOperation, reviewID: importReview.id,
+                                                     expectedConnectionRevision: connected.revision, choices: [:])
+        let importedLinks = try manual.links(expectedConnectionRevision: connected.revision)
+        precondition(link.state == .linked && importedLinks.first?.baseline?.title == fresh.source.fields.title)
+        let recurringSource = try await savedImports.importedSource(importedSeries.local!.id, viewingAs: fresh.account)
+        precondition(recurringSource == nil)
+
         let refresh = try await runtime.authorizeFromUserAction(expectedRevision: connected.revision, intent: .reauthorizeCurrentAccount)
         precondition(refresh.revision == 2 && refresh.accountGeneration == connected.accountGeneration)
+        let recoveredLink = try manual.operation(linkOperation, expectedConnectionRevision: refresh.revision)
+        precondition(recoveredLink == link)
         try await rejects(.staleCursor) { _ = try await page(runtime, revision: refresh.revision, cursor: cursor) }
         try await rejects(.staleConnection) {
             _ = try await runtime.prepareImport(expectedRevision: connected.revision, calendarID: "owned",
@@ -170,6 +194,9 @@ enum RuntimeChecks {
         precondition(switched.revision == 3 && switched.accountGeneration == 2 && switched.email == refresh.email)
         await fixture.releaseEvents()
         try await rejects(.staleConnection) { _ = try await oldAccountRead.value }
+        let switchedLinks = try manual.links(expectedConnectionRevision: switched.revision)
+        let switchedOutcome = try manual.operation(linkOperation, expectedConnectionRevision: switched.revision)
+        precondition(switchedLinks.isEmpty && switchedOutcome == nil)
         do {
             _ = try await relaunched.recoverImport(operationID: operationID, expectedRevision: switched.revision)
             preconditionFailure("Another Google subject cannot recover the prior receipt")

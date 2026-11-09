@@ -51,6 +51,8 @@ enum RemiloIOSDelivery {
         registrations.removeValue(forKey: registration.systemID)
     }
 
+    static func isAlarmAlerting(_ id: UUID) throws -> Bool { alerting.contains(id) }
+
     static func observedStates() async throws -> [UUID: String] {
         registrations.mapValues { alerting.contains($0.systemID) ? "Alerting" : "Scheduled" }
     }
@@ -101,7 +103,10 @@ struct EngineChecks {
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
-        try await queuedCalendarPublicationRechecksLocalVersion()
+        try await queuedCalendarReviewRechecksLocalVersion()
+        try await calendarInboundPreservesDeliveryAndFencesRinging()
+        try await calendarInboundReplaysInterruptedDelivery()
+        try calendarInboundProjectsIndependentAndAllDayTiming()
         try await pausedRoutineDoesNotCreateHistoryForUnopenedDates()
         try await groupCompletionDoesNotTouchLaterArrivals()
         try await preparedImportCommitsOnceAndReplaysAfterStageRemoval()
@@ -593,10 +598,21 @@ struct EngineChecks {
         precondition(recovered["status"] as? String == "Pending" && recovered["eligibleForLink"] as? Bool == true)
         let persisted = try store.load()
         precondition(persisted.reminders.count == 1 && RemiloIOSDelivery.attempts.count == 1)
+        let importedID = recovered["localId"] as! String
+        let imported = try restarted.calendarOneTimeSnapshot(importedID, for: .manualLink)
+        precondition(imported.title == "Private title" && imported.occurrenceID == importedID)
+        let linkPermit = try await restarted.withCalendarOneTimePermit(for: imported, purpose: .manualLink) { true }
+        precondition(linkPermit)
         do {
-            _ = try restarted.calendarPublicationSnapshot(recovered["localId"] as! String)
+            _ = try restarted.calendarPublicationSnapshot(importedID)
             preconditionFailure("A committed Calendar import must stay ineligible while its journal receipt is pending")
-        } catch IOSCalendarPublicationSnapshot.Failure.alreadyImported {}
+        } catch IOSCalendarOneTimeSnapshot.Failure.alreadyImported {}
+        do {
+            let _: Bool = try await restarted.withCalendarPublicationPermit(for: imported) {
+                preconditionFailure("A manual link snapshot cannot authorize publication of imported work")
+            }
+            preconditionFailure("Expected imported publication to remain ineligible at the send checkpoint")
+        } catch IOSCalendarOneTimeSnapshot.Failure.stalePreview {}
 
         let format = ISO8601DateFormatter()
         let first = iosMillis(format.date(from: "2037-01-04T09:00:00Z")!)
@@ -898,7 +914,7 @@ struct EngineChecks {
         var checks = 0
     }
 
-    private static func queuedCalendarPublicationRechecksLocalVersion() async throws {
+    private static func queuedCalendarReviewRechecksLocalVersion() async throws {
         let store = FixtureStore()
         defer {
             store.remove()
@@ -915,7 +931,7 @@ struct EngineChecks {
         ])
         let id = created["occurrenceId"] as! String
         let snapshot = try engine.calendarPublicationSnapshot(id)
-        precondition(snapshot == IOSCalendarPublicationSnapshot(occurrenceID: id, revision: 1,
+        precondition(snapshot == IOSCalendarOneTimeSnapshot(occurrenceID: id, revision: 1,
             generation: created["generation"] as! Int, title: "Authored title", notes: "Authored notes",
             eventStartMs: start, eventEndMs: end, allDay: false, zoneID: zone))
         let attempts = RemiloIOSDelivery.attempts
@@ -950,23 +966,177 @@ struct EngineChecks {
         resume.yield(())
         resume.finish()
         do {
-            let _: Bool = try await engine.withCalendarPublicationPermit(for: snapshot) {
-                preconditionFailure("A publication queued behind a new delivery generation must not reach the send checkpoint")
+            let _: Bool = try await engine.withCalendarOneTimePermit(for: snapshot, purpose: .manualLink) {
+                preconditionFailure("A link queued behind a new delivery generation must not reach the checkpoint")
             }
-            preconditionFailure("Expected a stale publication preview")
-        } catch IOSCalendarPublicationSnapshot.Failure.stalePreview {}
+            preconditionFailure("Expected a stale link preview")
+        } catch IOSCalendarOneTimeSnapshot.Failure.stalePreview {}
         _ = try await earlier.value
         let postponed = try await postpone.value
         precondition(postponed["status"] as? String == "Scheduled")
         let next = try engine.calendarPublicationSnapshot(id)
         precondition(next.revision == snapshot.revision && next.generation != snapshot.generation)
+        do {
+            let _: Bool = try await engine.withCalendarPublicationPermit(for: snapshot) {
+                preconditionFailure("The old local version must remain stale for publication")
+            }
+            preconditionFailure("Expected a stale publication preview")
+        } catch IOSCalendarOneTimeSnapshot.Failure.stalePreview {}
         _ = try await engine.apply([
             "kind": "Delete", "occurrenceId": id, "operationId": "publication-delete", "expectedRevision": next.revision,
         ])
         do {
             _ = try engine.calendarPublicationSnapshot(id)
             preconditionFailure("A reminder in Trash cannot be published")
-        } catch IOSCalendarPublicationSnapshot.Failure.ineligible {}
+        } catch IOSCalendarOneTimeSnapshot.Failure.ineligible {}
+    }
+
+    private static func calendarInboundPreservesDeliveryAndFencesRinging() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.alerting = []
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let list = try await engine.apply(["kind": "CreateList", "operationId": "inbound-list", "name": "Private list"])
+        let listID = (list["list"] as! [String: Any])["id"] as! String
+        let start = iosMillis(Date()) + 3_600_000
+        let source = try await engine.apply([
+            "kind": "Create", "operationId": "inbound-source", "title": "Original title", "notes": "Original notes",
+            "eventStartMs": start, "alarmAtMs": start, "zoneId": "UTC", "sound": "system", "listId": listID,
+        ])
+        let id = source["occurrenceId"] as! String
+        let original = try store.load().reminders[id]!
+        let registrationID = original.registration!.systemID
+        RemiloIOSDelivery.alerting.insert(registrationID)
+        let snapshot = try engine.calendarOneTimeSnapshot(id, for: .manualLink)
+        let metadata = IOSCalendarInboundChange(title: "Reviewed title", notes: "Reviewed notes", schedule: .init(original))
+        let metadataOperation = UUID()
+        let publicResult = try await engine.apply(metadata.input(operationID: metadataOperation, snapshot: snapshot).values)
+        precondition(publicResult["errorCode"] as? String == "UNSUPPORTED")
+        let privateID = RemiloIOSEngine.calendarInboundPrefix + metadataOperation.uuidString.lowercased()
+        let test = try await engine.scheduleTestAlarm(operationId: privateID)
+        precondition(test["errorCode"] as? String == "UNSUPPORTED")
+        do {
+            _ = try await engine.applyImport(handle: "calendar-inbound", copies: [], operationID: privateID) {
+                preconditionFailure("Portable imports must reject the reserved Calendar link namespace")
+            }
+            preconditionFailure("Expected reserved Calendar link namespace to be rejected")
+        } catch let error as IOSInputFailure { precondition(error.code == "UNSUPPORTED") }
+        let attempts = RemiloIOSDelivery.attempts
+        let result = try await engine.applyCalendarInbound(operationID: metadataOperation, for: snapshot, change: metadata, authorize: { true })
+        let renamed = try store.load().reminders[id]!
+        precondition(result["status"] as? String == "Applied" && renamed.title == metadata.title && renamed.notes == metadata.notes)
+        precondition(renamed.generation == original.generation && renamed.registration?.systemID == registrationID
+                     && RemiloIOSDelivery.attempts == attempts && RemiloIOSDelivery.alerting.contains(registrationID))
+        let changedSchedule = IOSCalendarInboundChange(title: renamed.title, notes: renamed.notes,
+            schedule: .init(eventStartMs: start + 600_000, eventEndMs: renamed.eventEndMs + 600_000, allDay: false, zoneID: "UTC"))
+        let reviewed = try engine.calendarOneTimeSnapshot(id, for: .manualLink)
+        let deferred = UUID()
+        do {
+            _ = try await engine.applyCalendarInbound(operationID: deferred, for: reviewed, change: changedSchedule) {
+                preconditionFailure("A ringing alarm cannot reach the Calendar commit permit for a schedule change")
+            }
+            preconditionFailure("Expected ringing schedule change to be deferred")
+        } catch let error as IOSInputFailure { precondition(error.code == "RINGING_DEFERRED") }
+        let deferredReceipt = try engine.calendarInboundReceipt(operationID: deferred, for: reviewed, change: changedSchedule)
+        precondition(deferredReceipt == nil)
+        RemiloIOSDelivery.alerting.remove(registrationID)
+        let target = start + 3_600_000
+        _ = try await engine.apply([
+            "kind": "Postpone", "operationId": "inbound-postpone", "occurrenceId": id,
+            "expectedGeneration": renamed.generation, "alarmAtMs": target,
+        ])
+        let postponed = try store.load().reminders[id]!
+        let moving = try engine.calendarOneTimeSnapshot(id, for: .manualLink)
+        let past = start - 7_200_000
+        let move = IOSCalendarInboundChange(title: postponed.title, notes: postponed.notes,
+            schedule: .init(eventStartMs: past, eventEndMs: past + 1_800_000, allDay: false, zoneID: "UTC"))
+        let timing = try engine.previewCalendarInbound(for: moving, change: move)
+        precondition(timing.dueAtMs == past && timing.alarmAtMs == past && timing.retainedAlertMs == target)
+        let moveOperation = UUID()
+        do {
+            _ = try await engine.applyCalendarInbound(operationID: moveOperation, for: moving, change: move, authorize: { false })
+            preconditionFailure("A stale Calendar authority must prevent local commit")
+        } catch let error as IOSInputFailure { precondition(error.code == "STALE_CONNECTION") }
+        let blockedReceipt = try engine.calendarInboundReceipt(operationID: moveOperation, for: moving, change: move)
+        precondition(blockedReceipt == nil)
+        let beforeMove = RemiloIOSDelivery.attempts
+        _ = try await engine.applyCalendarInbound(operationID: moveOperation, for: moving, change: move, authorize: { true })
+        let moved = try store.load().reminders[id]!
+        precondition(moved.eventStartMs == past && moved.alarmAtMs == past && moved.nextAlertMs == target)
+        precondition(moved.adjustment == "Postponed" && moved.generation == postponed.generation
+                     && moved.registration?.systemID == postponed.registration?.systemID && RemiloIOSDelivery.attempts == beforeMove)
+        precondition(moved.sound == "system" && moved.listID == listID && moved.mode == "Alarm")
+    }
+
+    private static func calendarInboundReplaysInterruptedDelivery() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.onRegister = nil
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let created = try await engine.apply(createCommand(id: "inbound-replay-source"))
+        let id = created["occurrenceId"] as! String
+        let snapshot = try engine.calendarOneTimeSnapshot(id, for: .manualLink)
+        let change = IOSCalendarInboundChange(title: snapshot.title, notes: snapshot.notes,
+            schedule: .init(eventStartMs: snapshot.eventStartMs + 600_000, eventEndMs: snapshot.eventEndMs + 600_000,
+                            allDay: false, zoneID: snapshot.zoneID))
+        let timing = try engine.previewCalendarInbound(for: snapshot, change: change)
+        let operation = UUID()
+        RemiloIOSDelivery.onRegister = { _ in store.interruptNextWrite = true }
+        do {
+            _ = try await engine.applyCalendarInbound(operationID: operation, for: snapshot, change: change, authorize: { true })
+            preconditionFailure("Expected an interrupted acknowledgement after the inbound schedule commit")
+        } catch FixtureStore.Failure.writeInterrupted {}
+        RemiloIOSDelivery.onRegister = nil
+        let restarted = store.engine()
+        let pending = try restarted.calendarInboundReceipt(operationID: operation, for: snapshot, change: change)
+        precondition(pending?["status"] as? String == "Pending")
+        let recovered = try await restarted.applyCalendarInbound(operationID: operation, for: snapshot, change: change) {
+            preconditionFailure("A committed Calendar mutation is recovered from its exact engine receipt")
+        }
+        let row = try store.load().reminders[id]!
+        precondition(recovered["status"] as? String == "Scheduled" && row.alarmAtMs == timing.alarmAtMs)
+        precondition(row.generation == snapshot.generation + 1 && row.history.filter { $0.kind == "Edit" }.count == 1)
+        precondition(RemiloIOSDelivery.attempts.suffix(2) == [row.registration!.systemID, row.registration!.systemID])
+        do {
+            _ = try restarted.calendarInboundReceipt(operationID: operation, for: snapshot,
+                change: .init(title: "Different", notes: change.notes, schedule: change.schedule))
+            preconditionFailure("An operation ID cannot recover a different reviewed choice")
+        } catch let error as IOSInputFailure { precondition(error.code == "OPERATION_REUSED") }
+    }
+
+    private static func calendarInboundProjectsIndependentAndAllDayTiming() throws {
+        let format = ISO8601DateFormatter()
+        let january = iosMillis(format.date(from: "2037-01-08T00:00:00Z")!)
+        let midnight = iosMillis(format.date(from: "2037-01-10T08:00:00Z")!)
+        let day: Int64 = 86_400_000
+        let clock: Int64 = 33_345_123
+        var old = IOSReminder(id: "inbound-allday", title: "All day", notes: "", listID: nil,
+            eventStartMs: january, eventEndMs: january + day, dueAtMs: january + day, alarmAtMs: january + clock,
+            zoneID: "UTC", mode: "Notification", allDay: true, dueLinked: true, alarmLinked: true)
+        let change = IOSCalendarInboundChange(title: old.title, notes: old.notes,
+            schedule: .init(eventStartMs: midnight, eventEndMs: midnight + day, allDay: true, zoneID: "America/Los_Angeles"))
+        let linked = try IOSCalendarInboundProjection(change, from: old, state: .init(), now: january - 1)
+        precondition(linked.timing.dueAtMs == midnight + day && linked.timing.alarmAtMs == midnight + clock && linked.replacesRegistration)
+        old.allDay = false
+        let timedToAllDay = try IOSCalendarInboundProjection(change, from: old, state: .init(), now: january - 1)
+        precondition(timedToAllDay.timing == linked.timing && timedToAllDay.record.allDay)
+        do {
+            _ = try IOSCalendarInboundProjection(change, from: old, state: .init(), now: midnight + clock)
+            preconditionFailure("An elapsed newly authored alert must not be scheduled")
+        } catch let error as IOSInputFailure { precondition(error.code == "ELAPSED_ALERT") }
+        old.dueLinked = false
+        old.alarmLinked = false
+        let independent = try IOSCalendarInboundProjection(change, from: old, state: .init(), now: midnight + clock)
+        precondition(independent.timing.dueAtMs == old.dueAtMs && independent.timing.alarmAtMs == old.alarmAtMs
+                     && !independent.replacesRegistration && independent.timing.mode == "Notification")
     }
 
     private static func preparedImportCommitsOnceAndReplaysAfterStageRemoval() async throws {

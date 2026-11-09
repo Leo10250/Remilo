@@ -130,6 +130,12 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         try journal.reservedEvents(viewingAs: account, calendarID: calendarID)
     }
 
+    func publishedIdentity(_ occurrenceID: String, viewingAs account: Publication.Account) throws -> Publication.ReadbackIdentity? {
+        try journal.operations(viewingAs: account).first {
+            $0.identity.local.occurrenceID == occurrenceID && $0.phase == .published && $0.confirmation != nil
+        }?.identity
+    }
+
     private func run(_ entry: Journal.Entry, viewer: Publication.Account) async throws -> Journal.Entry {
         let identity = entry.identity
         guard entry.phase == .waiting || entry.phase == .sent else { return entry }

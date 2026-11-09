@@ -20,21 +20,25 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         let eventID: String
         let etag: String
         fileprivate let payload: PatchPayload
+        private let evidence: RemiloIOSGoogleCalendarManualLink.Evidence?
         private let schedule: Event.Schedule?
         private let calendarZone: String
 
         init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
              reviewedRemote: Transport.Event, calendarZone: String, desired: Event.Fields,
-             suppressGoogleReminders: Bool = false) throws {
-            guard let etag = reviewedRemote.etag, Self.validETag(etag), !reviewedRemote.cancelled,
+             suppressGoogleReminders: Bool = false, evidence: RemiloIOSGoogleCalendarManualLink.Evidence? = nil) throws {
+            guard let etag = reviewedRemote.strongETag, !reviewedRemote.cancelled,
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(reviewedRemote.json),
                   account.connectionRevision > 0, account.accountGeneration > 0, local.revision > 0, local.generation >= 0,
                   !local.occurrenceID.isEmpty, !calendarID.isEmpty, !reviewedRemote.id.isEmpty,
                   !desired.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                   desired.title.utf16.count <= 200, desired.notes.utf16.count <= 10_000 else { throw Failure.invalidInput }
+            if let evidence {
+                guard evidence.source.belongs(to: account), evidence.source.calendarID == calendarID,
+                      evidence.identifies(reviewedRemote) else { throw Failure.invalidInput }
+            }
             let before = try Event.fields(object, calendarZone: calendarZone).fields
-            guard before.schedule.recurrence == nil, desired.schedule.recurrence == nil,
-                  before.schedule.allDay == desired.schedule.allDay else { throw Failure.invalidInput }
+            guard before.schedule.recurrence == nil, desired.schedule.recurrence == nil else { throw Failure.invalidInput }
             let title = before.title == desired.title ? nil : desired.title
             let notes = before.notes == desired.notes ? nil : desired.notes
             let schedule = before.schedule == desired.schedule ? nil : desired.schedule
@@ -46,16 +50,21 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             self.calendarID = calendarID
             eventID = reviewedRemote.id
             self.etag = etag
+            self.evidence = evidence
             self.schedule = schedule
             self.calendarZone = calendarZone
-            payload = PatchPayload(summary: title, description: notes, start: bounds?.start, end: bounds?.end,
+            let switchesRepresentation = before.schedule.allDay != desired.schedule.allDay
+            payload = PatchPayload(summary: title, description: notes,
+                                   start: bounds.map { PatchBound(value: $0.start, switchesRepresentation: switchesRepresentation) },
+                                   end: bounds.map { PatchBound(value: $0.end, switchesRepresentation: switchesRepresentation) },
                                    reminders: suppressGoogleReminders ? NoReminders() : nil)
         }
 
         func matches(_ observed: Transport.Event) -> Bool {
-            guard observed.id == eventID, !observed.cancelled,
+            guard identifies(observed),
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(observed.json),
-                  let fields = try? Event.fields(object, calendarZone: calendarZone).fields else { return false }
+                  let fields = try? Event.fields(object, calendarZone: calendarZone).fields,
+                  fields.schedule.recurrence == nil else { return false }
             if let summary = payload.summary, object["summary"] as? String != summary { return false }
             if let description = payload.description, fields.notes != description { return false }
             if let schedule, fields.schedule != schedule { return false }
@@ -67,15 +76,14 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         }
 
         fileprivate func mayWrite(_ observed: Transport.Event) -> Bool {
-            guard observed.id == eventID, !observed.cancelled, observed.etag == etag,
+            guard identifies(observed), observed.strongETag == etag,
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(observed.json),
                   let fields = try? Event.fields(object, calendarZone: calendarZone).fields else { return false }
             return fields.schedule.recurrence == nil
         }
 
-        private static func validETag(_ value: String) -> Bool {
-            guard (2...512).contains(value.utf8.count), value.first == "\"", value.last == "\"" else { return false }
-            return value.utf8.dropFirst().dropLast().allSatisfy { $0 == 33 || (35...126).contains($0) }
+        fileprivate func identifies(_ observed: Transport.Event) -> Bool {
+            observed.id == eventID && !observed.cancelled && (evidence?.identifies(observed) ?? true)
         }
     }
 
@@ -83,6 +91,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         case confirmed(Transport.Event)
         case staleRemote
         case remoteUnavailable
+        case remoteRemoved
         case notSent(Failure)
         case rejected(Failure)
         case unconfirmed(Failure?)
@@ -96,9 +105,32 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
     fileprivate struct PatchPayload: Encodable, Sendable {
         let summary: String?
         let description: String?
-        let start: Publication.Bound?
-        let end: Publication.Bound?
+        let start: PatchBound?
+        let end: PatchBound?
         let reminders: NoReminders?
+    }
+
+    fileprivate struct PatchBound: Encodable, Sendable {
+        let value: Publication.Bound
+        let switchesRepresentation: Bool
+
+        private enum CodingKeys: String, CodingKey { case date, dateTime, timeZone }
+
+        func encode(to encoder: Encoder) throws {
+            var fields = encoder.container(keyedBy: CodingKeys.self)
+            try fields.encodeIfPresent(value.date, forKey: .date)
+            try fields.encodeIfPresent(value.dateTime, forKey: .dateTime)
+            try fields.encodeIfPresent(value.timeZone, forKey: .timeZone)
+            // A PATCH leaves omitted nested fields in place.
+            if switchesRepresentation {
+                if value.date == nil {
+                    try fields.encodeNil(forKey: .date)
+                } else {
+                    try fields.encodeNil(forKey: .dateTime)
+                    try fields.encodeNil(forKey: .timeZone)
+                }
+            }
+        }
     }
 
     private struct InsertPayload: Encodable {
@@ -181,7 +213,12 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         guard patch.account.matches(access) else { throw Failure.accountChanged }
         _ = try await transport.ownedCalendar(access, id: patch.calendarID, budget: budget)
         let lookup = try await transport.lookup(access, calendarID: patch.calendarID, eventID: patch.eventID, budget: budget)
-        guard case .found(let observed) = lookup, !observed.cancelled else { return .remoteUnavailable }
+        guard case .found(let observed) = lookup else {
+            if case .deleted = lookup { return .remoteRemoved }
+            return phase == .sent ? .unconfirmed(nil) : .remoteUnavailable
+        }
+        guard !observed.cancelled else { return .remoteRemoved }
+        guard patch.identifies(observed) else { return .staleRemote }
         if patch.matches(observed) { return .confirmed(observed) }
         guard phase == .notSent else { return .unconfirmed(nil) }
         guard patch.mayWrite(observed) else { return .staleRemote }
@@ -258,7 +295,11 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                                failure: Failure?) async -> PatchOutcome {
         do {
             let lookup = try await transport.lookup(access, calendarID: patch.calendarID, eventID: patch.eventID, budget: budget)
-            if case .found(let event) = lookup, patch.matches(event) { return .confirmed(event) }
+            if case .deleted = lookup { return .remoteRemoved }
+            if case .found(let event) = lookup {
+                guard patch.identifies(event) else { return event.cancelled ? .remoteRemoved : .staleRemote }
+                if patch.matches(event) { return .confirmed(event) }
+            }
             return .unconfirmed(failure)
         } catch { return .unconfirmed(error as? Failure ?? failure ?? .network) }
     }
